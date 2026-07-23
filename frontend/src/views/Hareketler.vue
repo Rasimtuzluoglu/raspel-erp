@@ -1,0 +1,470 @@
+<template>
+  <div class="hareketler-container">
+    <h1>Cari Hareket Yönetimi</h1>
+
+    <Toolbar class="toolbar">
+      <template #start>
+        <Button 
+          label="Yeni Hareket" 
+          icon="pi pi-plus"
+          @click="openDialog"
+          class="p-button-success"
+        />
+      </template>
+      <template #end>
+        <Button 
+          label="CSV" 
+          icon="pi pi-download"
+          @click="csvExport"
+          class="p-button-sm p-button-outlined"
+          style="margin-right: 8px"
+        />
+        <DatePicker 
+          v-model="filtreBaslangic" 
+          placeholder="Başlangıç" 
+          date-format="dd.mm.yy"
+          class="filter-date"
+          @update:modelValue="filtrele"
+        />
+        <DatePicker 
+          v-model="filtreBitis" 
+          placeholder="Bitiş" 
+          date-format="dd.mm.yy"
+          class="filter-date"
+          @update:modelValue="filtrele"
+        />
+        <Button 
+          v-if="filtreBaslangic || filtreBitis"
+          icon="pi pi-times"
+          @click="filtreTemizle"
+          class="p-button-rounded p-button-text p-button-sm"
+          title="Filtreyi Temizle"
+        />
+      </template>
+    </Toolbar>
+
+    <div class="loading" v-if="loading">
+      <p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p>
+    </div>
+
+    <div class="table-container" v-if="!loading">
+      <DataTable
+        :value="tümHareketler"
+        responsive-layout="scroll"
+        striped-rows
+        :rows="10"
+        :paginator="true"
+        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        :rows-per-page-options="[10, 20, 50]"
+        current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+      >
+        <Column field="cariHesapAd" header="Cari Hesap" style="width: 200px"></Column>
+        <Column field="tur" header="Tür" style="width: 100px">
+          <template #body="slotProps">
+            <span :class="['badge', slotProps.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
+              {{ slotProps.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
+            </span>
+          </template>
+        </Column>
+        <Column field="tutar" header="Tutar" style="width: 120px">
+          <template #body="slotProps">
+            <span :class="slotProps.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
+              {{ formatCurrency(slotProps.data.tutar) }}
+            </span>
+          </template>
+        </Column>
+        <Column field="hareketTarihi" header="Tarih" style="width: 120px">
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.hareketTarihi) }}
+          </template>
+        </Column>
+        <Column field="aciklama" header="Açıklama"></Column>
+        <Column header="İşlemler" style="width: 140px">
+          <template #body="slotProps">
+            <Button 
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-info p-button-sm"
+              @click="openEditDialog(slotProps.data)"
+              title="Düzenle"
+              style="margin-right: 6px"
+            />
+            <Button 
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click="confirmDelete(slotProps.data.id)"
+              title="Sil"
+            />
+          </template>
+        </Column>
+      </DataTable>
+
+      <Message v-if="tümHareketler.length === 0" severity="info" text="Hareket bulunmamaktadır." />
+    </div>
+
+    <!-- Hareket Ekleme/Düzenleme Dialog -->
+    <Dialog 
+      v-model:visible="showDialog"
+      :header="editingId ? 'Hareket Düzenle' : 'Yeni Hareket Ekle'"
+      :modal="true"
+      style="width: 500px"
+    >
+      <div class="form-group">
+        <label for="cariHesapId">Cari Hesap *</label>
+        <Dropdown 
+          v-model="form.cariHesapId"
+          id="cariHesapId"
+          :options="cariHesapSeçenekleri"
+          option-label="ad"
+          option-value="id"
+          placeholder="Cari hesap seçiniz"
+          class="w-full"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="tur">Hareket Türü *</label>
+        <Dropdown 
+          v-model="form.tur"
+          id="tur"
+          :options="hareketTurleri"
+          placeholder="Hareket türü seçiniz"
+          class="w-full"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="tutar">Tutar *</label>
+        <InputNumber 
+          v-model="form.tutar"
+          id="tutar"
+          :use-grouping="false"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          placeholder="0,00"
+          class="w-full"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="hareketTarihi">Hareket Tarihi *</label>
+        <DatePicker 
+          v-model="form.hareketTarihi"
+          id="hareketTarihi"
+          date-format="dd.mm.yy"
+          class="w-full"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="aciklama">Açıklama</label>
+        <Textarea 
+          v-model="form.aciklama"
+          id="aciklama"
+          placeholder="Hareket açıklamasını giriniz"
+          rows="3"
+          class="w-full"
+        />
+      </div>
+
+      <template #footer>
+        <Button 
+          label="İptal" 
+          icon="pi pi-times"
+          @click="closeDialog"
+          class="p-button-text"
+        />
+        <Button 
+          label="Kaydet" 
+          icon="pi pi-check"
+          @click="saveHareket"
+          :loading="saving"
+        />
+      </template>
+    </Dialog>
+
+    <Message v-if="error" severity="error" :text="error" />
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
+import { useCariHesapStore } from '../stores/cariHesapStore.js'
+import { useHareketStore } from '../stores/hareketStore.js'
+import { hareketAPI, cariHesapAPI } from '../api/index.js'
+
+const toast = useToast()
+const confirm = useConfirm()
+const cariHesapStore = useCariHesapStore()
+const hareketStore = useHareketStore()
+
+const showDialog = ref(false)
+const loading = ref(false)
+const saving = ref(false)
+const error = ref(null)
+const editingId = ref(null)
+const tümHareketler = ref([])
+const filtreBaslangic = ref(null)
+const filtreBitis = ref(null)
+let aramaZaman = null
+onUnmounted(() => { if (aramaZaman) clearTimeout(aramaZaman) })
+
+const form = ref({
+  cariHesapId: null,
+  tur: '',
+  tutar: null,
+  hareketTarihi: new Date(),
+  aciklama: ''
+})
+
+const hareketTurleri = [
+  { label: 'Tahsilat', value: 'TAHSILAT' },
+  { label: 'Ödeme', value: 'ÖDEME' }
+]
+
+const cariHesapSeçenekleri = computed(() => {
+  return cariHesapStore.cariHesaplar || []
+})
+
+onMounted(async () => {
+  await loadData()
+})
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    await cariHesapStore.getAllCariHesaplar()
+    const hareketler = await hareketStore.getAllHareketler()
+    tümHareketler.value = hareketler
+  } catch (err) {
+    error.value = 'Veriler yüklenirken hata oluştu'
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu' })
+  } finally {
+    loading.value = false
+  }
+}
+
+const openDialog = () => {
+  editingId.value = null
+  form.value = {
+    cariHesapId: null,
+    tur: '',
+    tutar: null,
+    hareketTarihi: new Date(),
+    aciklama: ''
+  }
+  showDialog.value = true
+}
+
+const openEditDialog = (hareket) => {
+  editingId.value = hareket.id
+  form.value = {
+    cariHesapId: hareket.cariHesapId,
+    tur: hareket.tur,
+    tutar: hareket.tutar,
+    hareketTarihi: new Date(hareket.hareketTarihi),
+    aciklama: hareket.aciklama || ''
+  }
+  showDialog.value = true
+}
+
+const closeDialog = () => {
+  showDialog.value = false
+}
+
+const saveHareket = async () => {
+  if (!form.value.cariHesapId) {
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari hesap seçiniz' })
+    return
+  }
+
+  if (!form.value.tur) {
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Hareket türü seçiniz' })
+    return
+  }
+
+  if (!form.value.tutar || form.value.tutar <= 0) {
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli bir tutar giriniz' })
+    return
+  }
+
+  saving.value = true
+  try {
+    const hareketDTO = {
+      cariHesapId: form.value.cariHesapId,
+      tur: form.value.tur,
+      tutar: form.value.tutar,
+      hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().split('T')[0] : null,
+      aciklama: form.value.aciklama
+    }
+
+    if (editingId.value) {
+      await hareketStore.updateHareket(editingId.value, hareketDTO)
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket güncellendi' })
+    } else {
+      await hareketStore.addHareket(hareketDTO)
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi' })
+    }
+
+    tümHareketler.value = await hareketStore.getAllHareketler()
+    closeDialog()
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu' })
+  } finally {
+    saving.value = false
+  }
+}
+
+const confirmDelete = (id) => {
+  confirm.require({
+    message: 'Bu hareketi silmek istediğinizden emin misiniz?',
+    header: 'Onay',
+    icon: 'pi pi-exclamation-triangle',
+    accept: () => deleteHareket(id),
+    reject: () => {}
+  })
+}
+
+const deleteHareket = async (id) => {
+  try {
+    await hareketStore.deleteHareket(id)
+    tümHareketler.value = await hareketStore.getAllHareketler()
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi' })
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareket silinirken hata oluştu' })
+  }
+}
+
+const filtrele = async () => {
+  try {
+    const params = {}
+    if (filtreBaslangic.value) params.baslangic = filtreBaslangic.value.toISOString().split('T')[0]
+    if (filtreBitis.value) params.bitis = filtreBitis.value.toISOString().split('T')[0]
+    const response = await hareketAPI.filtrele(params)
+    tümHareketler.value = response.data
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Filtreleme başarısız' })
+  }
+}
+
+const filtreTemizle = async () => {
+  filtreBaslangic.value = null
+  filtreBitis.value = null
+  await loadData()
+}
+
+const csvExport = () => {
+  window.open('/api/hareketler/export/csv', '_blank')
+}
+
+const formatCurrency = (value) => {
+  if (value === null || value === undefined) return '0,00 ₺'
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY'
+  }).format(value)
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('tr-TR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date)
+}
+</script>
+
+<style scoped>
+.hareketler-container {
+  padding: 20px;
+}
+
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+
+.table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  overflow-x: auto;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group :deep(.p-inputtext),
+.form-group :deep(.p-dropdown),
+.form-group :deep(.p-inputnumber),
+.form-group :deep(.p-datepicker),
+.form-group :deep(.p-textarea) {
+  width: 100%;
+}
+
+.positive {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.negative {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.badge.tahsilat {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge.odeme {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.w-full {
+  width: 100% !important;
+}
+
+.filter-date {
+  width: 140px !important;
+  margin-left: 8px;
+}
+</style>

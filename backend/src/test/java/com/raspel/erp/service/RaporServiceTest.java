@@ -1,0 +1,121 @@
+package com.raspel.erp.service;
+
+import com.raspel.erp.dto.HareketDTO;
+import com.raspel.erp.dto.RaporDTO;
+import com.raspel.erp.entity.CariHesap;
+import com.raspel.erp.entity.Fatura;
+import com.raspel.erp.entity.Hareket;
+import com.raspel.erp.repository.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class RaporServiceTest {
+
+    @Mock private CariHesapRepository cariHesapRepository;
+    @Mock private HareketRepository hareketRepository;
+    @Mock private FaturaRepository faturaRepository;
+    @Mock private CariHesapService cariHesapService;
+    @Mock private HareketService hareketService;
+    @InjectMocks private RaporService raporService;
+
+    private CariHesap createCariHesap() {
+        CariHesap c = new CariHesap();
+        c.setId(1L);
+        c.setAd("Test Cari");
+        c.setBakiye(BigDecimal.valueOf(5000));
+        c.setOlusturmaTarihi(LocalDateTime.now());
+        c.setGuncellemeTarihi(LocalDateTime.now());
+        return c;
+    }
+
+    private Hareket createHareket() {
+        CariHesap cari = createCariHesap();
+        Hareket h = new Hareket();
+        h.setId(1L);
+        h.setCariHesap(cari);
+        h.setTur(Hareket.HareketTuru.TAHSILAT);
+        h.setTutar(BigDecimal.valueOf(1000));
+        h.setHareketTarihi(LocalDate.now());
+        h.setOlusturmaTarihi(LocalDateTime.now());
+        return h;
+    }
+
+    @Test
+    void cariEkstreGetir_returnsEkstre() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(java.util.Optional.of(cari));
+        Hareket hareket = createHareket();
+        when(hareketRepository.findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(any(), any(), any()))
+                .thenReturn(List.of(hareket));
+        HareketDTO dto = HareketDTO.builder().tur("TAHSILAT").tutar(BigDecimal.valueOf(1000)).build();
+        when(hareketService.entityDTOyeCevir(any(Hareket.class))).thenReturn(dto);
+        var result = raporService.cariEkstreGetir(1L, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+        assertEquals("Test Cari", result.getCariAd());
+    }
+
+    @Test
+    void cariEkstreGetir_throwsWhenCariNotFound() {
+        when(cariHesapRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+        assertThrows(RuntimeException.class, () -> raporService.cariEkstreGetir(99L, LocalDate.now(), LocalDate.now()));
+    }
+
+    @Test
+    void gelirGiderOzeti_returnsOzet() {
+        Hareket tahsilat = createHareket();
+        Hareket odeme = createHareket();
+        odeme.setTur(Hareket.HareketTuru.ODEME);
+        when(hareketRepository.findByHareketTarihiBetweenOrderByHareketTarihiAsc(any(), any()))
+                .thenReturn(List.of(tahsilat, odeme));
+        var result = raporService.gelirGiderOzeti(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+        assertEquals(BigDecimal.valueOf(1000), result.getToplamGelir());
+    }
+
+    @Test
+    void kdvRaporu_returnsKdv() {
+        Fatura fatura = new Fatura();
+        fatura.setTur(Fatura.FaturaTur.SATIS);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        fatura.setKdv(BigDecimal.valueOf(200));
+        fatura.setTarih(LocalDate.now());
+        Fatura faturaAlis = new Fatura();
+        faturaAlis.setTur(Fatura.FaturaTur.ALIS);
+        faturaAlis.setDurum(Fatura.FaturaDurum.KESILDI);
+        faturaAlis.setKdv(BigDecimal.valueOf(100));
+        faturaAlis.setTarih(LocalDate.now());
+        when(faturaRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(fatura, faturaAlis));
+        var result = raporService.kdvRaporu(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+        assertEquals(BigDecimal.valueOf(200), result.getToplamKdvCikis());
+        assertEquals(BigDecimal.valueOf(100), result.getToplamKdvGiris());
+        assertEquals(BigDecimal.valueOf(100), result.getKdvFarki());
+    }
+
+    @Test
+    void yaslandirmaRaporu_returnsYaslandirma() {
+        CariHesap cari1 = createCariHesap();
+        cari1.setBakiye(BigDecimal.valueOf(-3000));
+        cari1.setGuncellemeTarihi(LocalDateTime.now().minusDays(45));
+        CariHesap cari2 = createCariHesap();
+        cari2.setId(2L);
+        cari2.setAd("Cari 2");
+        cari2.setBakiye(BigDecimal.valueOf(-1000));
+        cari2.setGuncellemeTarihi(LocalDateTime.now().minusDays(15));
+        when(cariHesapRepository.findAll()).thenReturn(List.of(cari1, cari2));
+        var result = raporService.yaslandirmaRaporu();
+        assertEquals(2, result.size());
+        assertEquals("31-60 Gün", result.get(0).getAralik());
+        assertEquals("0-30 Gün", result.get(1).getAralik());
+    }
+}

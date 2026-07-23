@@ -1,0 +1,40 @@
+package com.raspel.erp.service;
+
+import com.raspel.erp.dto.KategoriDTO;
+import com.raspel.erp.entity.GelirGiderKategori;
+import com.raspel.erp.repository.KategoriRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class KategoriService {
+
+    private final KategoriRepository kategoriRepository;
+
+    public List<KategoriDTO> tumunuGetir(Long sirketId) {
+        return kategoriRepository.findBySirketId(sirketId).stream().map(this::entityToDTO).collect(Collectors.toList());
+    }
+
+    public List<KategoriDTO> turuGetir(String tur) {
+        return kategoriRepository.findByTurOrderByAd(tur).stream().map(this::entityToDTO).collect(Collectors.toList());
+    }
+
+    public KategoriDTO olustur(KategoriDTO dto, Long sirketId) {
+        GelirGiderKategori k = GelirGiderKategori.builder().ad(dto.getAd()).tur(dto.getTur()).sirketId(sirketId).build();
+        return entityToDTO(kategoriRepository.save(k));
+    }
+
+    public void sil(Long id) {
+        kategoriRepository.deleteById(id);
+    }
+
+    private KategoriDTO entityToDTO(GelirGiderKategori k) {
+        return KategoriDTO.builder().id(k.getId()).ad(k.getAd()).tur(k.getTur()).olusturmaTarihi(k.getOlusturmaTarihi()).build();
+    }
+}

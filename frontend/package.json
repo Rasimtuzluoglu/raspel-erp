@@ -1,0 +1,32 @@
+{
+  "name": "on-muhasebe",
+  "version": "1.0.0",
+  "description": "Ön Muhasebe Uygulaması - Vue 3 Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@primevue/themes": "^4.5.4",
+    "axios": "^1.6.0",
+    "chart.js": "^4.5.1",
+    "pinia": "^2.1.0",
+    "primeicons": "^8.0.0",
+    "primevue": "^4.5.0",
+    "vue": "^3.3.0",
+    "vue-chartjs": "^5.3.4",
+    "vue-i18n": "^9.14.5",
+    "vue-router": "^4.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
+  }
+}

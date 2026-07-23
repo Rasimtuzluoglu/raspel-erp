@@ -1,0 +1,42 @@
+{
+  "app": {
+    "title": "Accounting",
+    "subtitle": "Demo Application"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "sirketler": "Companies",
+    "donemler": "Periods",
+    "personel": "HR",
+    "satinalma": "Purchasing",
+    "siparisler": "Orders",
+    "ceksenet": "Check/Note",
+    "irsaliye": "Waybill",
+    "proje": "Project",
+    "denetim": "Audit",
+    "rapor": "Report",
+    "cikis": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "sirket": "Select Company"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "new": "New",
+    "loading": "Loading...",
+    "search": "Search",
+    "noData": "No records found"
+  },
+  "language": "Language",
+  "theme": {
+    "light": "Light Theme",
+    "dark": "Dark Theme"
+  }
+}

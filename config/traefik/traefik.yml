@@ -1,0 +1,27 @@
+global:
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      middlewares:
+        - ratelimit
+  traefik:
+    address: ":8080"
+  metrics:
+    address: ":8083"
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+
+accessLog: {}

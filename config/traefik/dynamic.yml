@@ -1,0 +1,74 @@
+http:
+  middlewares:
+    ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    cors-headers:
+      headers:
+        accessControlAllowOriginList:
+          - "http://localhost:5173"
+          - "http://localhost:8000"
+          - "http://localhost"
+        accessControlAllowMethods: "GET,POST,PUT,DELETE,OPTIONS"
+        accessControlAllowHeaders: "*"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 3600
+
+  routers:
+    dashboard:
+      rule: "PathPrefix(`/dashboard`)"
+      service: api@internal
+      entryPoints:
+        - traefik
+      priority: 10
+
+    frontend:
+      rule: "PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`)"
+      service: frontend
+      middlewares:
+        - cors-headers
+      priority: 1
+
+    api:
+      rule: "PathPrefix(`/api`)"
+      service: backend
+      middlewares:
+        - cors-headers
+        - ratelimit
+      priority: 2
+
+    adminer:
+      rule: "PathPrefix(`/adminer`)"
+      service: adminer
+      middlewares:
+        - cors-headers
+      priority: 3
+
+  services:
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://raspel-frontend:80"
+        healthCheck:
+          path: /
+          interval: 10s
+          timeout: 3s
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://raspel-backend:8081"
+        healthCheck:
+          path: /actuator/health
+          interval: 10s
+          timeout: 3s
+
+    adminer:
+      loadBalancer:
+        servers:
+          - url: "http://raspel-adminer:8080"
+        healthCheck:
+          interval: 10s
+          timeout: 3s

@@ -1,0 +1,76 @@
+package com.raspel.erp.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "fatura", schema = "fatura")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Fatura {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "fatura_numarasi", nullable = false, unique = true)
+    private String faturaNumarasi;
+
+    @Column(nullable = false)
+    private LocalDate tarih;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FaturaTur tur;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FaturaDurum durum;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cari_hesap_id")
+    private CariHesap cariHesap;
+
+    @Column(length = 500)
+    private String aciklama;
+
+    @Column(name = "ara_toplam", nullable = false, precision = 19, scale = 2)
+    private BigDecimal araToplam;
+
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal kdv;
+
+    @Column(name = "genel_toplam", nullable = false, precision = 19, scale = 2)
+    private BigDecimal genelToplam;
+
+    @OneToMany(mappedBy = "fatura", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<FaturaKalem> kalemler = new ArrayList<>();
+
+    @Column(name = "sirket_id")
+    private Long sirketId;
+
+    @Column(name = "olusturma_tarihi", nullable = false)
+    private LocalDateTime olusturmaTarihi;
+
+    @PrePersist
+    protected void onCreate() {
+        olusturmaTarihi = LocalDateTime.now();
+        if (durum == null) durum = FaturaDurum.TASLAK;
+    }
+
+    public enum FaturaTur {
+        SATIS, ALIS
+    }
+
+    public enum FaturaDurum {
+        TASLAK, KESILDI, IPTAL
+    }
+}

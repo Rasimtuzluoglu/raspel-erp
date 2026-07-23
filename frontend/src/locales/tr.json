@@ -1,0 +1,42 @@
+{
+  "app": {
+    "title": "Ön Muhasebe",
+    "subtitle": "Demo Uygulama"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "sirketler": "Şirketler",
+    "donemler": "Dönemler",
+    "personel": "Personel",
+    "satinalma": "Satın Alma",
+    "siparisler": "Siparişler",
+    "ceksenet": "Çek/Senet",
+    "irsaliye": "İrsaliye",
+    "proje": "Proje",
+    "denetim": "Denetim",
+    "rapor": "Rapor",
+    "cikis": "Çıkış"
+  },
+  "auth": {
+    "login": "Giriş",
+    "logout": "Çıkış",
+    "username": "Kullanıcı Adı",
+    "password": "Şifre",
+    "sirket": "Şirket Seçiniz"
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "new": "Yeni",
+    "loading": "Yükleniyor...",
+    "search": "Ara",
+    "noData": "Kayıt bulunamadı"
+  },
+  "language": "Dil",
+  "theme": {
+    "light": "Açık Tema",
+    "dark": "Koyu Tema"
+  }
+}
