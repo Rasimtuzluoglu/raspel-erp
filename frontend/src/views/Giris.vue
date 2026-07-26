@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
@@ -80,6 +80,10 @@ const firmalariGetir = async () => {
     sirketler.value = res.data?.content || res.data || []
   } catch {}
 }
+
+watch(selectedSirket, (sirket) => {
+  sirketLogo.value = sirket?.logoUrl || ''
+})
 
 const odaklanKullanici = () => kullaniciInput.value?.$el?.querySelector('input')?.focus()
 const odaklanSifre = () => sifreInput.value?.$el?.querySelector('input')?.focus()

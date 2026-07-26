@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const init = () => {
     try {
-      const stored = sessionStorage.getItem('raspel_erp_auth')
+      const stored = localStorage.getItem('raspel_erp_auth')
       if (stored) {
         const data = JSON.parse(stored)
         kullanici.value = data.kullanici
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
         sirketId.value = data.sirketId || null
         sirketAdi.value = data.sirketAdi || ''
       }
-    } catch { sessionStorage.removeItem('raspel_erp_auth') }
+    } catch { localStorage.removeItem('raspel_erp_auth') }
   }
 
   const girisYap = async (username, password, sirketAdiParam, sirketIdParam) => {
@@ -36,7 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
       companyName.value = sirketAdiParam || res.data.companyName || ''
       sirketId.value = res.data.sirketId || null
       sirketAdi.value = res.data.sirketAdi || ''
-      sessionStorage.setItem('raspel_erp_auth', JSON.stringify({
+      localStorage.setItem('raspel_erp_auth', JSON.stringify({
         kullanici: kullanici.value,
         companyName: companyName.value,
         sirketId: sirketId.value,
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
     companyName.value = ''
     sirketId.value = null
     sirketAdi.value = ''
-    sessionStorage.removeItem('raspel_erp_auth')
+    localStorage.removeItem('raspel_erp_auth')
   }
 
   const kullanicilariGetir = async () => {
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
       const r = await kullaniciAPI.getById(kullanici.value.id)
       kullanici.value = r.data
       companyName.value = r.data.companyName || companyName.value
-      sessionStorage.setItem('raspel_erp_auth', JSON.stringify({
+      localStorage.setItem('raspel_erp_auth', JSON.stringify({
         kullanici: kullanici.value,
         companyName: companyName.value,
         sirketId: sirketId.value,

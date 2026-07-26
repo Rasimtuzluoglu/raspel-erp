@@ -35,7 +35,7 @@
         <template #body="{ data }">
           <Button v-if="data.durum === 'BEKLEMEDE'" icon="pi pi-check" class="p-button-rounded p-button-sm p-button-success" @click="onayla(data)" title="Onayla" />
           <Button v-if="data.durum === 'BEKLEMEDE'" icon="pi pi-times" class="p-button-rounded p-button-sm p-button-danger" @click="reddet(data)" title="Reddet" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-sm p-button-text" @click="sil(data)" title="Sil" />
+          <Button v-if="authStore.kullanici?.role === 'ADMIN'" icon="pi pi-trash" class="p-button-rounded p-button-sm p-button-text" @click="sil(data)" title="Sil" />
         </template>
       </Column>
     </DataTable>
@@ -46,10 +46,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
+import { useAuthStore } from '../stores/authStore.js'
 import { personelIzinAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
+const authStore = useAuthStore()
 
 const yukleniyor = ref(false)
 const tumIzinler = ref([])
@@ -97,7 +99,7 @@ const onayla = (data) => {
     acceptLabel: 'Onayla', rejectLabel: 'İptal',
     accept: async () => {
       try {
-        await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', 'Admin')
+        await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
         tumIzinler.value = (await personelIzinAPI.getAll()).data
         toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin onaylandı', life: 5000 })
       } catch (err) {
@@ -114,7 +116,7 @@ const reddet = (data) => {
     acceptLabel: 'Reddet', rejectLabel: 'İptal',
     accept: async () => {
       try {
-        await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', 'Admin')
+        await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
         tumIzinler.value = (await personelIzinAPI.getAll()).data
         toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin reddedildi', life: 5000 })
       } catch (err) {
@@ -123,6 +125,8 @@ const reddet = (data) => {
     }
   })
 }
+
+const kullaniciAdi = computed(() => authStore.kullanici?.displayName || authStore.kullanici?.username || 'Admin')
 
 const sil = (data) => {
   confirm.require({

@@ -218,6 +218,16 @@ export const sirketAPI = {
   delete(id) { return apiClient.delete(`/sirketler/${id}`) }
 }
 
+export const uploadAPI = {
+  uploadSirketLogo(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.post('/upload/sirket-logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
+}
+
 /**
  * Dönem API'si
  */

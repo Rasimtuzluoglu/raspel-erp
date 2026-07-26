@@ -27,7 +27,7 @@
         <div class="serial-search">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="seriNoArama" placeholder="Seri No ile ara..." class="w-full" @input="debounceSeriAra" />
+            <InputText v-model="seriNoArama" placeholder="Seri No ile ara..." class="w-full" />
           </span>
         </div>
 
@@ -254,7 +254,6 @@ const sirketAdi = computed(() => authStore.sirketAdi || '')
 
 const aramaMetni = ref('')
 const seriNoArama = ref('')
-let aramaTimer = null
 
 const filtreKategori = ref(null)
 const filtreArac = ref(null)
@@ -350,8 +349,7 @@ const filtrelenmisUrunler = computed(() => {
   let list = stokStore.stoklar || []
 
   if (filtreKategori.value) {
-    const kid = filtreKategori.value.id || filtreKategori.value.ad
-    list = list.filter(u => u.kategori === kid || u.kategoriId === filtreKategori.value.id)
+    list = list.filter(u => u.kategori === filtreKategori.value.ad)
   }
 
   if (filtreArac.value) {
@@ -393,11 +391,6 @@ onMounted(async () => {
     console.error('Yukleme hatasi', e)
   }
 })
-
-const debounceSeriAra = () => {
-  if (aramaTimer) clearTimeout(aramaTimer)
-  aramaTimer = setTimeout(() => {}, 300)
-}
 
 const filtreleriTemizle = () => {
   filtreKategori.value = null

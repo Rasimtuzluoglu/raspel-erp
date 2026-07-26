@@ -45,5 +45,6 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
 
     List<CariHesap> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String query);
 
-    long countBySirketId(Long sirketId);
+    @Query("SELECT COUNT(c) FROM CariHesap c WHERE c.sirketId = :sirketId")
+    long countBySirketId(@Param("sirketId") Long sirketId);
 }

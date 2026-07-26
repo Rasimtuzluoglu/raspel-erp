@@ -40,6 +40,7 @@ public class SirketService {
                 .telefon(dto.getTelefon())
                 .email(dto.getEmail())
                 .webSite(dto.getWebSite())
+                .logoUrl(dto.getLogoUrl())
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .build();
         return entityToDTO(sirketRepository.save(s));
@@ -65,6 +66,7 @@ public class SirketService {
         if (dto.getTelefon() != null) s.setTelefon(dto.getTelefon());
         if (dto.getEmail() != null) s.setEmail(dto.getEmail());
         if (dto.getWebSite() != null) s.setWebSite(dto.getWebSite());
+        if (dto.getLogoUrl() != null) s.setLogoUrl(dto.getLogoUrl());
         if (dto.getAktif() != null) s.setAktif(dto.getAktif());
         return entityToDTO(sirketRepository.save(s));
     }
@@ -80,6 +82,7 @@ public class SirketService {
                 .vergiNo(s.getVergiNo()).vergiDairesi(s.getVergiDairesi())
                 .adres(s.getAdres()).telefon(s.getTelefon())
                 .email(s.getEmail()).webSite(s.getWebSite())
+                .logoUrl(s.getLogoUrl())
                 .aktif(s.getAktif()).olusturmaTarihi(s.getOlusturmaTarihi())
                 .sonAdGuncellemeTarihi(s.getSonAdGuncellemeTarihi())
                 .build();

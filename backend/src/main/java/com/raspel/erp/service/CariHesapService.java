@@ -172,6 +172,10 @@ public class CariHesapService {
     }
 
     public Long toplamCariSayisiGetir(Long sirketId) {
+        if (sirketId == null) {
+            log.warn("sirketId is null, falling back to global count. Check user/sirket association.");
+            return cariHesapRepository.count();
+        }
         return cariHesapRepository.countBySirketId(sirketId);
     }
 
@@ -183,6 +187,10 @@ public class CariHesapService {
     }
 
     public BigDecimal toplamBakiyeGetir(Long sirketId) {
+        if (sirketId == null) {
+            log.warn("sirketId is null, falling back to global bakiye. Check user/sirket association.");
+            return cariHesapRepository.toplamBakiyeHesapla();
+        }
         return cariHesapRepository.toplamBakiyeHesaplaBySirketId(sirketId);
     }
 
@@ -191,6 +199,10 @@ public class CariHesapService {
     }
 
     public BigDecimal toplamPozitifBakiyeGetir(Long sirketId) {
+        if (sirketId == null) {
+            log.warn("sirketId is null, falling back to global pozitif bakiye.");
+            return cariHesapRepository.toplamPozitifBakiye();
+        }
         return cariHesapRepository.toplamPozitifBakiyeBySirketId(sirketId);
     }
 
@@ -199,6 +211,10 @@ public class CariHesapService {
     }
 
     public BigDecimal toplamNegatifBakiyeGetir(Long sirketId) {
+        if (sirketId == null) {
+            log.warn("sirketId is null, falling back to global negatif bakiye.");
+            return cariHesapRepository.toplamNegatifBakiye();
+        }
         return cariHesapRepository.toplamNegatifBakiyeBySirketId(sirketId);
     }
 

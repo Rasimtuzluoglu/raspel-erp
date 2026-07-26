@@ -330,7 +330,7 @@ public class FaturaService {
                         .map(FaturaKalem::getStokId)
                         .filter(id -> id != null)
                         .collect(Collectors.toList())
-        ).stream().collect(Collectors.toMap(Stok::getId, s -> s));
+        ).stream().collect(Collectors.toMap(Stok::getId, s -> s, (s1, s2) -> s1));
 
         List<FaturaKalemDTO> kalemDTO = fatura.getKalemler().stream().map(k -> {
             String stokAd = null;

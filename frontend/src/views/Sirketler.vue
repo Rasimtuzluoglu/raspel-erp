@@ -55,8 +55,12 @@
           <InputText v-model="form.webSite" class="w-full" />
         </div>
         <div class="field">
-          <label>Logo URL</label>
-          <InputText v-model="form.logoUrl" class="w-full" placeholder="https://..." />
+          <label>Logo</label>
+          <div class="logo-upload-row">
+            <InputText v-model="form.logoUrl" class="w-full" placeholder="URL girin veya dosya seçin" />
+            <Button icon="pi pi-upload" class="p-button-outlined" @click="$refs.logoInput.click()" :loading="logoYukleniyor" />
+            <input ref="logoInput" type="file" accept="image/*" style="display:none" @change="logoSec" />
+          </div>
           <img v-if="form.logoUrl" :src="form.logoUrl" class="logo-preview" alt="Logo Önizleme" />
         </div>
         <div class="field">
@@ -80,7 +84,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
-import { sirketAPI } from '../api/index.js'
+import { sirketAPI, uploadAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -93,6 +97,7 @@ const kaydediliyor = ref(false)
 const seciliId = ref(null)
 const form = ref({ ad: '', vergiNo: '', vergiDairesi: '', adres: '', telefon: '', email: '', webSite: '', logoUrl: '', aktif: true })
 const uyariMesaji = ref('')
+const logoYukleniyor = ref(false)
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -118,6 +123,19 @@ const dialogAc = (data) => {
     }
   }
   dialog.value = true
+}
+
+const logoSec = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  logoYukleniyor.value = true
+  try {
+    const res = await uploadAPI.uploadSirketLogo(file)
+    form.value.logoUrl = res.data.url
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Logo yüklenemedi', life: 5000 })
+  }
+  logoYukleniyor.value = false
 }
 
 const kaydet = async () => {
@@ -170,5 +188,6 @@ const sil = async (data) => {
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 .w-full { width: 100%; }
+.logo-upload-row { display: flex; gap: 8px; align-items: center; }
 .logo-preview { max-width: 120px; max-height: 60px; margin-top: 8px; border-radius: 6px; object-fit: contain; }
 </style>
