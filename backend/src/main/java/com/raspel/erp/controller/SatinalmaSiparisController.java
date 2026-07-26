@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/satinalma-siparisler")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class SatinalmaSiparisController {
 
@@ -30,12 +32,12 @@ public class SatinalmaSiparisController {
     }
 
     @PostMapping
-    public ResponseEntity<SatinalmaSiparisDTO> olustur(@RequestBody SatinalmaSiparisDTO dto) {
+    public ResponseEntity<SatinalmaSiparisDTO> olustur(@Valid @RequestBody SatinalmaSiparisDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(satinalmaSiparisService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SatinalmaSiparisDTO> guncelle(@PathVariable Long id, @RequestBody SatinalmaSiparisDTO dto) {
+    public ResponseEntity<SatinalmaSiparisDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SatinalmaSiparisDTO dto) {
         return ResponseEntity.ok(satinalmaSiparisService.guncelle(id, dto));
     }
 

@@ -8,6 +8,8 @@
       </div>
     </div>
 
+    <ConfirmDialog />
+
     <Message v-if="hata" severity="error" :closable="true" @close="hata = ''">{{ hata }}</Message>
     <Message v-if="basari" severity="success" :closable="true" @close="basari = ''">{{ basari }}</Message>
 
@@ -79,7 +81,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
 import { backupAPI } from '../api/index.js'
+
+const confirm = useConfirm()
 
 const tipler = [
   { value: 'DAILY', label: 'Günlük' },
@@ -151,15 +156,23 @@ const indir = (filename) => {
   })
 }
 
-const sil = async (filename) => {
-  if (!confirm(`"${filename}" dosyasını silmek istediğinize emin misiniz?`)) return
-  try {
-    await backupAPI.delete(filename)
-    basari.value = `"${filename}" silindi`
-    await yukle()
-  } catch (err) {
-    hata.value = err.response?.data?.message || 'Silme başarısız'
-  }
+const sil = (filename) => {
+  confirm.require({
+    message: `"${filename}" dosyasını silmek istediğinize emin misiniz?`,
+    header: 'Yedek Sil',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Evet, Sil',
+    rejectLabel: 'İptal',
+    accept: async () => {
+      try {
+        await backupAPI.delete(filename)
+        basari.value = `"${filename}" silindi`
+        await yukle()
+      } catch (err) {
+        hata.value = err.response?.data?.message || 'Silme başarısız'
+      }
+    }
+  })
 }
 
 const formatSize = (bytes) => {
@@ -185,7 +198,7 @@ onMounted(yukle)
 .page-header h1 { margin: 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
 .header-islem { display: flex; align-items: center; gap: 10px; }
 .tip-select { width: 140px; }
-.tip-select :deep(.p-dropdown) { min-height: 40px; }
+.tip-select :deep(.p-select) { min-height: 40px; }
 
 .ozet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
 .ozet-kart .p-card-title { font-size: 14px !important; }

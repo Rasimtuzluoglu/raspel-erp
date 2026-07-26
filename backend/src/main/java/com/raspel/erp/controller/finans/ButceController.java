@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -32,13 +33,13 @@ public class ButceController {
     }
 
     @PostMapping
-    public ResponseEntity<ButceDTO> olustur(@RequestBody ButceDTO dto, HttpServletRequest request) {
+    public ResponseEntity<ButceDTO> olustur(@Valid @RequestBody ButceDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(butceService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ButceDTO> guncelle(@PathVariable Long id, @RequestBody ButceDTO dto) {
+    public ResponseEntity<ButceDTO> guncelle(@PathVariable Long id, @Valid @RequestBody ButceDTO dto) {
         return ResponseEntity.ok(butceService.guncelle(id, dto));
     }
 

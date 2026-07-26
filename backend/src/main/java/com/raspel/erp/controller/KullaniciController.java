@@ -12,6 +12,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class KullaniciController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<KullaniciDTO> guncelle(@PathVariable Long id, @RequestBody KullaniciDTO dto) {
+    public ResponseEntity<KullaniciDTO> guncelle(@PathVariable Long id, @Valid @RequestBody KullaniciDTO dto) {
         return ResponseEntity.ok(kullaniciService.guncelle(id, dto));
     }
 

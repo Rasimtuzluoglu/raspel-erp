@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/projeler")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class ProjeController {
 
@@ -31,12 +33,12 @@ public class ProjeController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjeDTO> olustur(@RequestBody ProjeDTO dto) {
+    public ResponseEntity<ProjeDTO> olustur(@Valid @RequestBody ProjeDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(projeService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjeDTO> guncelle(@PathVariable Long id, @RequestBody ProjeDTO dto) {
+    public ResponseEntity<ProjeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody ProjeDTO dto) {
         return ResponseEntity.ok(projeService.guncelle(id, dto));
     }
 
@@ -51,7 +53,7 @@ public class ProjeController {
     }
 
     @PostMapping("/{projeId}/gorevler")
-    public ResponseEntity<ProjeDTO> gorevEkle(@PathVariable Long projeId, @RequestBody GorevDTO dto) {
+    public ResponseEntity<ProjeDTO> gorevEkle(@PathVariable Long projeId, @Valid @RequestBody GorevDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(projeService.gorevEkle(projeId, dto));
     }
 

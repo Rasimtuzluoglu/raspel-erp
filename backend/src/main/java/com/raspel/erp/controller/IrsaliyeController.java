@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/irsaliyeler")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class IrsaliyeController {
 
@@ -30,12 +32,12 @@ public class IrsaliyeController {
     }
 
     @PostMapping
-    public ResponseEntity<IrsaliyeDTO> olustur(@RequestBody IrsaliyeDTO dto) {
+    public ResponseEntity<IrsaliyeDTO> olustur(@Valid @RequestBody IrsaliyeDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(irsaliyeService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<IrsaliyeDTO> guncelle(@PathVariable Long id, @RequestBody IrsaliyeDTO dto) {
+    public ResponseEntity<IrsaliyeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody IrsaliyeDTO dto) {
         return ResponseEntity.ok(irsaliyeService.guncelle(id, dto));
     }
 

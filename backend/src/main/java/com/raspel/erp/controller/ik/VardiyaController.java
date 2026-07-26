@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -32,13 +33,13 @@ public class VardiyaController {
     }
 
     @PostMapping
-    public ResponseEntity<VardiyaDTO> olustur(@RequestBody VardiyaDTO dto, HttpServletRequest request) {
+    public ResponseEntity<VardiyaDTO> olustur(@Valid @RequestBody VardiyaDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(vardiyaService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VardiyaDTO> guncelle(@PathVariable Long id, @RequestBody VardiyaDTO dto) {
+    public ResponseEntity<VardiyaDTO> guncelle(@PathVariable Long id, @Valid @RequestBody VardiyaDTO dto) {
         return ResponseEntity.ok(vardiyaService.guncelle(id, dto));
     }
 

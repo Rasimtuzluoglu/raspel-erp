@@ -21,6 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 public class FileUploadController {
 
     private final Path uploadDir = Paths.get("uploads/avatars");

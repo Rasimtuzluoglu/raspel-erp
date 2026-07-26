@@ -14,6 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/backups")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasRole('ADMIN')")
 public class BackupController {
 

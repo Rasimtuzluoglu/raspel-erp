@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -49,7 +50,7 @@ public class FaturaController {
     }
 
     @PutMapping("/{id}/durum")
-    public ResponseEntity<FaturaDTO> faturaDurumGuncelle(@PathVariable Long id, @RequestBody DurumRequest request) {
+    public ResponseEntity<FaturaDTO> faturaDurumGuncelle(@PathVariable Long id, @Valid @RequestBody DurumRequest request) {
         return ResponseEntity.ok(faturaService.faturaDurumGuncelle(id, request.durum));
     }
 

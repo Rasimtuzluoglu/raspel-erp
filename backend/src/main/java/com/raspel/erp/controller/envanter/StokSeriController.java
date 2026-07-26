@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -37,12 +38,12 @@ public class StokSeriController {
     }
 
     @PostMapping
-    public ResponseEntity<StokSeriDTO> olustur(@RequestBody StokSeriDTO dto) {
+    public ResponseEntity<StokSeriDTO> olustur(@Valid @RequestBody StokSeriDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(stokSeriService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StokSeriDTO> guncelle(@PathVariable Long id, @RequestBody StokSeriDTO dto) {
+    public ResponseEntity<StokSeriDTO> guncelle(@PathVariable Long id, @Valid @RequestBody StokSeriDTO dto) {
         return ResponseEntity.ok(stokSeriService.guncelle(id, dto));
     }
 

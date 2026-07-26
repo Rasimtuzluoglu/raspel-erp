@@ -7,12 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/donemler")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class DonemController {
 
@@ -39,12 +41,12 @@ public class DonemController {
     }
 
     @PostMapping
-    public ResponseEntity<DonemDTO> olustur(@RequestBody DonemDTO dto) {
+    public ResponseEntity<DonemDTO> olustur(@Valid @RequestBody DonemDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(donemService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DonemDTO> guncelle(@PathVariable Long id, @RequestBody DonemDTO dto) {
+    public ResponseEntity<DonemDTO> guncelle(@PathVariable Long id, @Valid @RequestBody DonemDTO dto) {
         return ResponseEntity.ok(donemService.guncelle(id, dto));
     }
 

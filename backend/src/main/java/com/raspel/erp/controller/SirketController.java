@@ -7,12 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/sirketler")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class SirketController {
 
@@ -34,12 +36,12 @@ public class SirketController {
     }
 
     @PostMapping
-    public ResponseEntity<SirketDTO> olustur(@RequestBody SirketDTO dto) {
+    public ResponseEntity<SirketDTO> olustur(@Valid @RequestBody SirketDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(sirketService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SirketDTO> guncelle(@PathVariable Long id, @RequestBody SirketDTO dto) {
+    public ResponseEntity<SirketDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SirketDTO dto) {
         return ResponseEntity.ok(sirketService.guncelle(id, dto));
     }
 

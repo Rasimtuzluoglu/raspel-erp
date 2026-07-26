@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/depolar")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class DepoController {
 
@@ -34,14 +36,14 @@ public class DepoController {
     }
 
     @PostMapping
-    public ResponseEntity<DepoDTO> olustur(@RequestBody DepoDTO dto, HttpServletRequest req) {
+    public ResponseEntity<DepoDTO> olustur(@Valid @RequestBody DepoDTO dto, HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         dto.setSirketId(sirketId);
         return ResponseEntity.status(HttpStatus.CREATED).body(depoService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DepoDTO> guncelle(@PathVariable Long id, @RequestBody DepoDTO dto) {
+    public ResponseEntity<DepoDTO> guncelle(@PathVariable Long id, @Valid @RequestBody DepoDTO dto) {
         return ResponseEntity.ok(depoService.guncelle(id, dto));
     }
 

@@ -8,12 +8,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/subeler")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class SubeController {
 
@@ -37,14 +39,14 @@ public class SubeController {
     }
 
     @PostMapping
-    public ResponseEntity<SubeDTO> olustur(@RequestBody SubeDTO dto, HttpServletRequest req) {
+    public ResponseEntity<SubeDTO> olustur(@Valid @RequestBody SubeDTO dto, HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         dto.setSirketId(sirketId);
         return ResponseEntity.status(HttpStatus.CREATED).body(subeService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SubeDTO> guncelle(@PathVariable Long id, @RequestBody SubeDTO dto) {
+    public ResponseEntity<SubeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SubeDTO dto) {
         return ResponseEntity.ok(subeService.guncelle(id, dto));
     }
 

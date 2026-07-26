@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/personel-izin")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class PersonelIzinController {
 
@@ -37,12 +39,12 @@ public class PersonelIzinController {
     }
 
     @PostMapping
-    public ResponseEntity<PersonelIzinDTO> olustur(@RequestBody PersonelIzinDTO dto) {
+    public ResponseEntity<PersonelIzinDTO> olustur(@Valid @RequestBody PersonelIzinDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(personelIzinService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PersonelIzinDTO> guncelle(@PathVariable Long id, @RequestBody PersonelIzinDTO dto) {
+    public ResponseEntity<PersonelIzinDTO> guncelle(@PathVariable Long id, @Valid @RequestBody PersonelIzinDTO dto) {
         return ResponseEntity.ok(personelIzinService.guncelle(id, dto));
     }
 

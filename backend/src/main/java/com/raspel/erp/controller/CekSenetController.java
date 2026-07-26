@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/cek-senet")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class CekSenetController {
 
@@ -30,12 +32,12 @@ public class CekSenetController {
     }
 
     @PostMapping
-    public ResponseEntity<CekSenetDTO> olustur(@RequestBody CekSenetDTO dto) {
+    public ResponseEntity<CekSenetDTO> olustur(@Valid @RequestBody CekSenetDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(cekSenetService.olustur(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CekSenetDTO> guncelle(@PathVariable Long id, @RequestBody CekSenetDTO dto) {
+    public ResponseEntity<CekSenetDTO> guncelle(@PathVariable Long id, @Valid @RequestBody CekSenetDTO dto) {
         return ResponseEntity.ok(cekSenetService.guncelle(id, dto));
     }
 
