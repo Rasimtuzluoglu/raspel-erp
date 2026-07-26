@@ -5,6 +5,7 @@ import com.raspel.erp.service.PersonelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/personel")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class PersonelController {
 
     private final PersonelService personelService;
@@ -37,6 +39,7 @@ public class PersonelController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         personelService.sil(id);
         return ResponseEntity.noContent().build();

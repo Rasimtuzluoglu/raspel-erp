@@ -28,6 +28,11 @@ public class DashboardDTO {
     private BigDecimal pozitifBakiye;
     private BigDecimal negatifBakiye;
 
+    private BigDecimal bugunkuTahsilat;
+    private BigDecimal bugunkuOdeme;
+    private Long bekleyenIzinSayisi;
+    private List<AylikGelirGiderDTO> aylikGelirGider;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -36,5 +41,15 @@ public class DashboardDTO {
         private String stokAd;
         private String stokKodu;
         private BigDecimal satisMiktari;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AylikGelirGiderDTO {
+        private String ay;
+        private BigDecimal gelir;
+        private BigDecimal gider;
     }
 }

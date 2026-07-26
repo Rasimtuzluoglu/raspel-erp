@@ -7,6 +7,7 @@
         <Button label="Toplu Fiyat Güncelle" icon="pi pi-dollar" @click="batchFiyatDialog = true" class="p-button-help" style="margin-left: 8px" />
       </template>
       <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:8px" @click="excelIndir" />
         <div class="toolbar-end">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
@@ -17,6 +18,19 @@
         </div>
       </template>
     </Toolbar>
+
+    <div class="filter-bar">
+      <span class="p-input-icon-left">
+        <i class="pi pi-search" />
+        <InputText v-model="filtreArama" placeholder="Urun adi, kod, barkod..." @input="filtrele" />
+      </span>
+      <InputText v-model="filtreKategori" placeholder="Kategori" @input="filtrele" class="filter-input" />
+      <InputText v-model="filtreMarka" placeholder="Marka" @input="filtrele" class="filter-input" />
+      <Dropdown v-model="filtreStokGrubu" :options="['','Hammadde','Mamul','Yari Mamul','Sarf','Aksesuar']" placeholder="Stok Grubu" @change="filtrele" class="filter-dropdown" />
+      <InputNumber v-model="filtreMinFiyat" placeholder="Min Fiyat" @input="filtrele" class="filter-input-sm" />
+      <InputNumber v-model="filtreMaxFiyat" placeholder="Max Fiyat" @input="filtrele" class="filter-input-sm" />
+      <Button icon="pi pi-times" class="p-button-text p-button-sm" @click="filtreTemizle" title="Temizle" />
+    </div>
 
     <div class="loading" v-if="stokStore.loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
 
@@ -174,6 +188,16 @@
             <InputText v-model="form.rafNo" placeholder="Örn: A-12" class="w-full" />
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-grup">
+            <label>2. Birim</label>
+            <InputText v-model="form.birim2" placeholder="İkinci birim" class="w-full" />
+          </div>
+          <div class="form-grup">
+            <label>Çevrim Katsayısı</label>
+            <InputNumber v-model="form.cevrimKatsayisi" :min="0" :min-fraction-digits="4" class="w-full" placeholder="1.0000" />
+          </div>
+        </div>
       </div>
       <div class="form-section">
         <div class="form-section-title">Fiyat & Stok</div>
@@ -205,6 +229,37 @@
           <div class="form-grup">
             <label>Min. Stok Seviyesi</label>
             <InputNumber v-model="form.minMiktar" :min="0" :min-fraction-digits="0" class="w-full" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-grup">
+            <label>Maliyet Yöntemi</label>
+            <Dropdown v-model="form.maliyetYontemi" :options="maliyetYontemiSecenekleri" class="w-full" />
+          </div>
+          <div class="form-grup">
+            <label></label>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Tedarikçi Bilgileri</div>
+        <div class="form-row">
+          <div class="form-grup">
+            <label>Tedarikçi</label>
+            <Dropdown v-model="form.tedarikciId" :options="cariHesapStore.cariHesaplar" option-label="ad" option-value="id" placeholder="Tedarikçi seçin" class="w-full" />
+          </div>
+          <div class="form-grup">
+            <label>Tedarikçi Stok Kodu</label>
+            <InputText v-model="form.tedarikciStokKodu" placeholder="Tedarikçideki stok kodu" class="w-full" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-grup">
+            <label>Tedarikçi Fiyatı</label>
+            <InputNumber v-model="form.tedarikciFiyat" :min="0" :min-fraction-digits="2" class="w-full" />
+          </div>
+          <div class="form-grup">
+            <label></label>
           </div>
         </div>
       </div>
@@ -276,7 +331,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { stokAPI } from '../api/index.js'
+import { stokAPI, excelAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -286,6 +341,14 @@ const cariHesapStore = useCariHesapStore()
 const aramaMetni = ref('')
 let aramaZaman = null
 onUnmounted(() => { if (aramaZaman) clearTimeout(aramaZaman) })
+
+const filtreArama = ref('')
+const filtreKategori = ref('')
+const filtreMarka = ref('')
+const filtreStokGrubu = ref('')
+const filtreMinFiyat = ref(null)
+const filtreMaxFiyat = ref(null)
+
 const seciliStok = ref(null)
 const seciliStokId = ref(null)
 const stokHareketler = ref([])
@@ -294,7 +357,12 @@ const gosterim = ref('tablo')
 
 const showDialog = ref(false)
 const editingId = ref(null)
-const form = ref({ stokKodu: '', barkod: '', ad: '', birim: '', marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, aciklama: '' })
+const maliyetYontemiSecenekleri = [
+  { label: 'Ortalama Maliyet', value: 'ORTALAMA' },
+  { label: 'FIFO', value: 'FIFO' },
+  { label: 'LIFO', value: 'LIFO' }
+]
+const form = ref({ stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '' })
 
 const showHareketDialog = ref(false)
 const hareketTur = ref('GIRIS')
@@ -303,13 +371,16 @@ const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: 
 const hareketBaslik = computed(() => hareketTur.value === 'GIRIS' ? 'Stok Girişi' : 'Stok Çıkışı')
 
 const filtrelenmisStoklar = computed(() => {
-  if (!aramaMetni.value.trim()) return stokStore.stoklar
-  const q = aramaMetni.value.toLowerCase()
-  return stokStore.stoklar.filter(s =>
-    s.ad?.toLowerCase().includes(q) ||
-    s.stokKodu?.toLowerCase().includes(q) ||
-    s.birim?.toLowerCase().includes(q)
-  )
+  return stokStore.stoklar.filter(s => {
+    const q = filtreArama.value.toLowerCase()
+    if (filtreArama.value && !s.ad?.toLowerCase().includes(q) && !s.stokKodu?.toLowerCase().includes(q) && !s.barkod?.toLowerCase().includes(q)) return false
+    if (filtreKategori.value && s.kategori !== filtreKategori.value) return false
+    if (filtreMarka.value && !s.marka?.toLowerCase().includes(filtreMarka.value.toLowerCase())) return false
+    if (filtreStokGrubu.value && s.stokGrubu !== filtreStokGrubu.value) return false
+    if (filtreMinFiyat.value != null && (s.fiyat || 0) < filtreMinFiyat.value) return false
+    if (filtreMaxFiyat.value != null && (s.fiyat || 0) > filtreMaxFiyat.value) return false
+    return true
+  })
 })
 
 const kritikAdet = computed(() => stokStore.stoklar.filter(s => s.minMiktar && s.miktar <= s.minMiktar).length)
@@ -322,6 +393,19 @@ const ara = () => {
   stokStore.aramaMetni = aramaMetni.value
 }
 
+const filtrele = () => {
+  // reactivity handles filtering via computed
+}
+
+const filtreTemizle = () => {
+  filtreArama.value = ''
+  filtreKategori.value = ''
+  filtreMarka.value = ''
+  filtreStokGrubu.value = ''
+  filtreMinFiyat.value = null
+  filtreMaxFiyat.value = null
+}
+
 const stokSec = async (s) => {
   seciliStok.value = s; seciliStokId.value = s.id
   try { const r = await stokAPI.getHareketler(s.id); stokHareketler.value = r.data }
@@ -329,21 +413,21 @@ const stokSec = async (s) => {
 }
 
 const openDialog = () => {
-  editingId.value = null; form.value = { stokKodu: '', barkod: '', ad: '', birim: '', marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, aciklama: '' }
+  editingId.value = null; form.value = { stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '' }
   showDialog.value = true
 }
 
 const editStok = (s) => {
-  editingId.value = s.id; form.value = { stokKodu: s.stokKodu || '', barkod: s.barkod || '', ad: s.ad, birim: s.birim || '', marka: s.marka || '', stokGrubu: s.stokGrubu || '', kategori: s.kategori || '', rafNo: s.rafNo || '', fiyat: s.fiyat, satisFiyati: s.satisFiyati, kdvOrani: s.kdvOrani, agirlik: s.agirlik, miktar: s.miktar, minMiktar: s.minMiktar, aciklama: s.aciklama || '' }
+  editingId.value = s.id; form.value = { stokKodu: s.stokKodu || '', barkod: s.barkod || '', ad: s.ad, birim: s.birim || '', birim2: s.birim2 || '', cevrimKatsayisi: s.cevrimKatsayisi || null, marka: s.marka || '', stokGrubu: s.stokGrubu || '', kategori: s.kategori || '', rafNo: s.rafNo || '', fiyat: s.fiyat, satisFiyati: s.satisFiyati, kdvOrani: s.kdvOrani, agirlik: s.agirlik, miktar: s.miktar, minMiktar: s.minMiktar, tedarikciId: s.tedarikciId || null, tedarikciStokKodu: s.tedarikciStokKodu || '', tedarikciFiyat: s.tedarikciFiyat || null, maliyetYontemi: s.maliyetYontemi || 'ORTALAMA', aciklama: s.aciklama || '' }
   showDialog.value = true
 }
 
 const saveStok = async () => {
-  if (!form.value.ad.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Ürün adı giriniz' }); return }
+  if (!form.value.ad.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Ürün adı giriniz', life: 5000 }); return }
   saving.value = true
   try {
-    if (editingId.value) { await stokStore.updateStok(editingId.value, form.value); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün güncellendi' }) }
-    else { await stokStore.addStok(form.value); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün eklendi' }) }
+    if (editingId.value) { await stokStore.updateStok(editingId.value, form.value); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün güncellendi', life: 5000 }) }
+    else { await stokStore.addStok(form.value); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün eklendi', life: 5000 }) }
     showDialog.value = false
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
   finally { saving.value = false }
@@ -354,7 +438,7 @@ const confirmDel = (id) => {
     message: 'Bu ürünü silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] }; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün silindi' }) }
+      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] }; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün silindi', life: 5000 }) }
       catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
     }
   })
@@ -366,7 +450,7 @@ const openHareketDialog = (tur) => {
 }
 
 const saveHareket = async () => {
-  if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli miktar giriniz' }); return }
+  if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli miktar giriniz', life: 5000 }); return }
   saving.value = true
   try {
     await stokAPI.addHareket(seciliStokId.value, {
@@ -376,7 +460,7 @@ const saveHareket = async () => {
     })
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll()])
     stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
-    showHareketDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi' })
+    showHareketDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
   finally { saving.value = false }
 }
@@ -386,7 +470,7 @@ const delHareket = async (id) => {
     await stokAPI.deleteHareket(id)
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll()])
     stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi' })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
 }
 
@@ -408,8 +492,22 @@ const batchFiyatUygula = async () => {
   }
   await stokStore.getAll()
   batchFiyatDialog.value = false
-  toast.add({ severity: 'success', summary: 'Başarılı', detail: `${guncellenen} ürün güncellendi` })
+  toast.add({ severity: 'success', summary: 'Başarılı', detail: `${guncellenen} ürün güncellendi`, life: 5000 })
   batchLoading.value = false
+}
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.stoklar()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Stoklar.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
 }
 
 const formatCurrency = (v) => v ?? 0 ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v) : '0,00 ₺'
@@ -464,4 +562,8 @@ h2 { color: var(--text-primary); font-size: 20px; margin: 0; }
 .negative { color: #f87171; font-weight: 700; }
 .w-full { width: 100% !important; }
 .full-width { grid-column: 1/-1; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-input { width: 150px !important; }
+.filter-input-sm { width: 120px !important; }
+.filter-dropdown { width: 160px !important; }
 </style>

@@ -93,7 +93,6 @@ class FaturaServiceTest {
     void faturaOlustur_creates() {
         CariHesap cari = createCariHesap();
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
-        when(faturaRepository.count()).thenReturn(0L);
         FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())

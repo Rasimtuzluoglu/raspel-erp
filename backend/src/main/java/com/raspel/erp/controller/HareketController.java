@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class HareketController {
     
     private final HareketService hareketService;
@@ -136,6 +138,7 @@ public class HareketController {
      * DELETE /api/hareketler/{id}
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> hareketSil(@PathVariable Long id) {
         log.info("DELETE /api/hareketler/{} - Hareket siliniliyor", id);
         hareketService.hareketSil(id);

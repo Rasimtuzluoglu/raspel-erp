@@ -43,6 +43,16 @@ public class PersonelPuantajService {
         return entityToDTO(puantajRepository.save(p));
     }
 
+    public PersonelPuantajDTO guncelle(Long id, PersonelPuantajDTO dto) {
+        PersonelPuantaj p = puantajRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Puantaj kaydi", id));
+        p.setPersonelId(dto.getPersonelId());
+        p.setTarih(dto.getTarih());
+        p.setDurum(dto.getDurum());
+        p.setAciklama(dto.getAciklama());
+        return entityToDTO(puantajRepository.save(p));
+    }
+
     public void sil(Long id) {
         if (!puantajRepository.existsById(id))
             throw new ResourceNotFoundException("Puantaj kaydi", id);

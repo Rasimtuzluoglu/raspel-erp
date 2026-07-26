@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequestMapping("/api/kasalar")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class KasaController {
 
     private final KasaService kasaService;
@@ -40,6 +42,7 @@ public class KasaController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) { kasaService.kasaSil(id); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/{id}/hareketler")
@@ -54,6 +57,7 @@ public class KasaController {
     }
 
     @DeleteMapping("/hareketler/{hareketId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> hareketSil(@PathVariable Long hareketId) {
         kasaService.hareketSil(hareketId);
         return ResponseEntity.noContent().build();

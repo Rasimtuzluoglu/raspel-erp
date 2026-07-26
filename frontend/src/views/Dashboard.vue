@@ -2,7 +2,13 @@
   <div class="dashboard-container">
     <div class="dashboard-header">
       <h1>Raspel ERP Özeti</h1>
-      <Button icon="pi pi-cog" class="p-button-rounded p-button-text" @click="widgetAyarlariGoster = true" title="Widget Ayarları" />
+      <div class="header-sag">
+        <div class="dashboard-datetime">
+          <i class="pi pi-calendar"></i> {{ simdikiTarih }}
+        </div>
+        <Button icon="pi pi-refresh" class="p-button-rounded p-button-text" @click="refresh" :loading="loading" title="Yenile" />
+        <Button icon="pi pi-cog" class="p-button-rounded p-button-text" @click="widgetAyarlariGoster = true" title="Widget Ayarları" />
+      </div>
     </div>
 
     <Card v-if="widgetAyarlariGoster" class="widget-ayarlari">
@@ -21,8 +27,13 @@
       </template>
     </Card>
 
-    <div class="loading" v-if="loading">
-      <i class="pi pi-spin pi-spinner"></i> Yükleniyor...
+    <div class="skeleton-grid" v-if="loading">
+      <div v-for="i in 7" :key="i" class="skeleton-card"><Skeleton width="100%" height="90px" /></div>
+      <div style="grid-column:1/-1"><Skeleton width="100%" height="200px" /></div>
+      <div style="grid-column:1/-1"><Skeleton width="100%" height="120px" /></div>
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <Skeleton width="100%" height="220px" /><Skeleton width="100%" height="220px" />
+      </div>
     </div>
 
     <template v-if="!loading">
@@ -114,6 +125,20 @@
             <p class="stat-value">{{ dashboardStore.stokDevirHizi || 0 }}x</p>
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-icon tahsilat"><i class="pi pi-arrow-down"></i></div>
+          <div class="stat-content">
+            <p class="stat-label">Bugünkü Tahsilat</p>
+            <p class="stat-value positive">{{ formatCurrency(dashboardStore.bugunkuTahsilat) }}</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon odeme"><i class="pi pi-arrow-up"></i></div>
+          <div class="stat-content">
+            <p class="stat-label">Bugünkü Ödeme</p>
+            <p class="stat-value negative">{{ formatCurrency(dashboardStore.bugunkuOdeme) }}</p>
+          </div>
+        </div>
       </div>
 
       <!-- INSAN KAYNAKLARI -->
@@ -138,6 +163,24 @@
             <p class="stat-label">Bu Ay İşe Başlayacak</p>
             <p class="stat-value">{{ dashboardStore.buAyIseBaslayacak }}</p>
           </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon bekleyen-izin"><i class="pi pi-clock"></i></div>
+          <div class="stat-content">
+            <p class="stat-label">Onay Bekleyen İzin</p>
+            <p class="stat-value" :class="dashboardStore.bekleyenIzinSayisi > 0 ? 'negative' : 'positive'">{{ dashboardStore.bekleyenIzinSayisi }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- HIZLI ISLEMLER -->
+      <div class="hizli-islemler" v-if="widgets.hizliIslemler.gorunur">
+        <h2 class="section-title"><i class="pi pi-bolt"></i> Hizli Islemler</h2>
+        <div class="islem-grid">
+          <Button label="Hizli Satis (POS)" icon="pi pi-shopping-cart" class="p-button-success p-button-lg" @click="$router.push('/hizli-satis')" />
+          <Button label="Yeni Stok" icon="pi pi-box" class="p-button-info p-button-lg" @click="$router.push('/stoklar')" />
+          <Button label="Yeni Cari" icon="pi pi-user-plus" class="p-button-help p-button-lg" @click="$router.push('/cari-hesaplar')" />
+          <Button label="Yeni Fatura" icon="pi pi-file" class="p-button-warning p-button-lg" @click="$router.push('/faturalar')" />
         </div>
       </div>
 
@@ -165,6 +208,25 @@
             <div v-else class="chart-empty">Henüz satış verisi yok</div>
           </template>
         </Card>
+
+        <Card>
+          <template #title><i class="pi pi-chart-bar" style="margin-right:8px"></i>Aylık Gelir / Gider (Son 6 Ay)</template>
+          <template #content>
+            <div class="chart-wrapper" v-if="gelirGiderChart.datasets.length" style="max-width:100%">
+              <Bar :data="gelirGiderChart" :options="gelirGiderOptions" />
+            </div>
+            <div v-else class="chart-empty">Henüz hareket verisi yok</div>
+          </template>
+        </Card>
+      </div>
+
+      <!-- NOTLAR -->
+      <div class="notlar-widget" v-if="widgets.notlar.gorunur">
+        <div class="notlar-header">
+          <h2><i class="pi pi-pencil"></i> Notlar</h2>
+          <Button icon="pi pi-save" class="p-button-sm p-button-text" @click="notlariKaydet" :disabled="notKaydediliyor" :label="notKaydedildi ? 'Kaydedildi' : ''" />
+        </div>
+        <Textarea v-model="notMetni" :autoResize="true" rows="4" placeholder="Hizli notlarinizi buraya yazin..." class="not-textarea" @keydown.ctrl.enter="notlariKaydet" />
       </div>
 
       <!-- SON HAREKETLER & HATIRLATICI -->
@@ -225,7 +287,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useFaturaStore } from '../stores/faturaStore.js'
@@ -233,9 +296,9 @@ import { useBankaStore } from '../stores/bankaStore.js'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { Doughnut, Bar, Line } from 'vue-chartjs'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement } from 'chart.js'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler } from 'chart.js'
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement)
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
 const widgetVarsayilan = () => ({
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
@@ -243,7 +306,9 @@ const widgetVarsayilan = () => ({
   insanKaynaklari: { gorunur: true, etiket: 'İnsan Kaynakları' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
-  hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' }
+  hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' },
+  hizliIslemler: { gorunur: true, etiket: 'Hizli Islemler' },
+  notlar: { gorunur: true, etiket: 'Notlar' }
 })
 
 const widgetListesi = ref(Object.entries(widgetVarsayilan()).map(([k, v]) => ({ key: k, ...v })))
@@ -268,13 +333,47 @@ const kasaStore = useKasaStore()
 const stokStore = useStokStore()
 const loading = ref(true)
 
+const simdikiTarih = ref('')
+const notMetni = ref(localStorage.getItem('raspel_erp_notlar') || '')
+const notKaydediliyor = ref(false)
+const notKaydedildi = ref(false)
+const notlariKaydet = () => {
+  localStorage.setItem('raspel_erp_notlar', notMetni.value)
+  notKaydedildi.value = true
+  setTimeout(() => { notKaydedildi.value = false }, 2000)
+}
+const refresh = async () => {
+  loading.value = true
+  try {
+    await Promise.all([
+      dashboardStore.getDashboardData(),
+      cariHesapStore.getAllCariHesaplar(),
+      faturaStore.getAllFaturalar(),
+      bankaStore.getAllBankalar(),
+      kasaStore.getAllKasalar(),
+      stokStore.getAll()
+    ])
+    grafikleriHesapla()
+  } catch (error) {
+    console.error('Dashboard yenilenirken hata:', error)
+  }
+  loading.value = false
+}
+const tarihSaat = () => {
+  const now = new Date()
+  simdikiTarih.value = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' ' + now.toLocaleTimeString('tr-TR')
+}
+let tarihInterval = null
+
 const bakiyeChart = ref({ labels: [], datasets: [] })
 const barChart = ref({ labels: [], datasets: [] })
 const hareketChart = ref({ labels: [], datasets: [] })
+const gelirGiderChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const barOptions = { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
 const lineOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
+const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 
 const pozitifCariSayisi = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye >= 0).length)
 const negatifCariSayisi = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye < 0).length)
@@ -323,9 +422,30 @@ const grafikleriHesapla = () => {
       }]
     }
   }
+
+  if (dashboardStore.aylikGelirGider?.length) {
+    gelirGiderChart.value = {
+      labels: dashboardStore.aylikGelirGider.map(a => a.ay),
+      datasets: [
+        {
+          label: 'Gelir',
+          data: dashboardStore.aylikGelirGider.map(a => a.gelir),
+          backgroundColor: '#4caf50',
+          borderRadius: 4
+        },
+        {
+          label: 'Gider',
+          data: dashboardStore.aylikGelirGider.map(a => a.gider),
+          backgroundColor: '#f44336',
+          borderRadius: 4
+        }
+      ]
+    }
+  }
 }
 
 onMounted(async () => {
+  tarihSaat(); tarihInterval = setInterval(tarihSaat, 1000)
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_widgets'))
     if (kayitli) {
@@ -350,6 +470,8 @@ onMounted(async () => {
   loading.value = false
 })
 
+onUnmounted(() => { if (tarihInterval) clearInterval(tarihInterval) })
+
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
@@ -362,10 +484,13 @@ const formatDate = (d) => {
 
 <style scoped>
 .dashboard-container { padding: 0; }
-.dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
 .dashboard-header h1 { margin: 0; font-size: 28px; font-weight: 700; }
-.loading { text-align: center; padding: 60px; color: #94a3b8; font-size: 16px; }
-.loading i { margin-right: 8px; }
+.header-sag { display: flex; align-items: center; gap: 12px; }
+.dashboard-datetime { font-size: 13px; color: #94a3b8; white-space: nowrap; }
+.dashboard-datetime i { margin-right: 6px; }
+.skeleton-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-bottom:24px; }
+.skeleton-card { border-radius:14px; overflow:hidden; }
 
 .widget-ayarlari { margin-bottom: 24px; }
 .widget-togglar { display: flex; flex-wrap: wrap; gap: 16px; }
@@ -386,6 +511,9 @@ const formatDate = (d) => {
 .stat-icon.beklemede { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .stat-icon.iade { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .stat-icon.devir { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.stat-icon.tahsilat { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.stat-icon.odeme { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-icon.bekleyen-izin { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .stat-icon.calisan { background: linear-gradient(135deg, #22c55e, #16a34a); }
 .stat-icon.izinli { background: linear-gradient(135deg, #eab308, #ca8a04); }
 .stat-icon.ise-baslayacak { background: linear-gradient(135deg, #3b82f6, #2563eb); }
@@ -397,7 +525,7 @@ const formatDate = (d) => {
 .stat-value.negative { color: #f87171; }
 .critical-hint { margin: 4px 0 0; font-size: 11px; color: #f87171; }
 
-.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+.charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 24px; }
 .chart-wrapper { max-width: 350px; margin: 0 auto; }
 .chart-wrapper.line-chart { max-width: 100%; }
 .chart-summary { text-align: center; margin-top: 12px; font-size: 13px; color: #94a3b8; display: flex; justify-content: center; gap: 20px; }
@@ -425,6 +553,17 @@ const formatDate = (d) => {
 .badge.odeme { background: rgba(244,67,54,0.15); color: #f87171; }
 .positive { color: #4caf50; font-weight: bold; }
 .negative { color: #f44336; font-weight: bold; }
+
+.notlar-widget { background: var(--bg-card); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 24px; }
+.notlar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.notlar-header h2 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+.not-textarea { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; padding: 12px; resize: vertical; }
+.not-textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); outline: none; }
+
+.section-title { font-size: 16px; margin: 24px 0 12px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+.hizli-islemler { margin-bottom: 24px; }
+.islem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.islem-grid .p-button { height: 56px; font-size: 13px; justify-content: center; }
 
 @media (max-width: 900px) {
   .charts-row, .bottom-grid { grid-template-columns: 1fr; }

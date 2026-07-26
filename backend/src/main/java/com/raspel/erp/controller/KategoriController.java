@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequestMapping("/api/kategoriler")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class KategoriController {
 
     private final KategoriService kategoriService;
@@ -35,6 +37,12 @@ public class KategoriController {
         return ResponseEntity.status(HttpStatus.CREATED).body(kategoriService.olustur(dto, sirketId));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<KategoriDTO> guncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid KategoriDTO dto) {
+        return ResponseEntity.ok(kategoriService.guncelle(id, dto));
+    }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) { kategoriService.sil(id); return ResponseEntity.noContent().build(); }
 }

@@ -27,6 +27,7 @@
         </div>
       </template>
       <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:4px" @click="excelIndir" />
         <Button 
           label="CSV" 
           icon="pi pi-download"
@@ -73,6 +74,10 @@
         </Column>
         <Column field="yetkiliKisi" header="Yetkili" style="width: 130px"></Column>
         <Column field="telefon" header="Telefon" style="width: 130px"></Column>
+        <Column field="krediLimiti" header="Kredi Limiti" style="width: 120px">
+          <template #body="s">{{ s.data.krediLimiti ? formatCurrency(s.data.krediLimiti) : '-' }}</template>
+        </Column>
+        <Column field="odemeVadesi" header="Vade (Gün)" style="width: 80px"></Column>
         <Column field="bakiye" header="Bakiye" style="width: 120px">
           <template #body="slotProps">
             <span :class="slotProps.data.bakiye >= 0 ? 'positive' : 'negative'">
@@ -187,6 +192,20 @@
         </div>
 
         <div class="form-section">
+          <div class="form-section-title">Kredi & Vade</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="krediLimiti">Kredi Limiti (TL)</label>
+              <InputNumber v-model="form.krediLimiti" id="krediLimiti" :min="0" :min-fraction-digits="2" class="w-full" />
+            </div>
+            <div class="form-group">
+              <label for="odemeVadesi">Ödeme Vadesi (Gün)</label>
+              <InputNumber v-model="form.odemeVadesi" id="odemeVadesi" :min="0" :min-fraction-digits="0" class="w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
           <div class="form-section-title">Ek Bilgiler</div>
           <div class="form-group">
             <label for="notlar">Notlar</label>
@@ -281,6 +300,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
+import { excelAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -305,6 +325,7 @@ const form = ref({
   telefon: '', email: '', iban: '',
   il: '', ilce: '', adres: '',
   yetkiliKisi: '', yetkiliTelefon: '',
+  krediLimiti: null, odemeVadesi: 0,
   notlar: '', aktif: true
 })
 
@@ -317,7 +338,7 @@ const loadCariHesaplar = async () => {
   try {
     await cariHesapStore.getAllCariHesaplar()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesaplar yüklenirken hata oluştu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesaplar yüklenirken hata oluştu', life: 5000 })
   } finally {
     loading.value = false
   }
@@ -336,7 +357,7 @@ const ara = () => {
 
 const openDialog = () => {
   editingId.value = null
-  form.value = { ad: '', tur: '', vergiNumarasi: '', vergiDairesi: '', telefon: '', email: '', iban: '', il: '', ilce: '', adres: '', yetkiliKisi: '', yetkiliTelefon: '', notlar: '', aktif: true }
+  form.value = { ad: '', tur: '', vergiNumarasi: '', vergiDairesi: '', telefon: '', email: '', iban: '', il: '', ilce: '', adres: '', yetkiliKisi: '', yetkiliTelefon: '', krediLimiti: null, odemeVadesi: 0, notlar: '', aktif: true }
   submitted.value = false
   showDialog.value = true
 }
@@ -354,6 +375,7 @@ const editCariHesap = (cariHesap) => {
     telefon: cariHesap.telefon || '', email: cariHesap.email || '', iban: cariHesap.iban || '',
     il: cariHesap.il || '', ilce: cariHesap.ilce || '', adres: cariHesap.adres || '',
     yetkiliKisi: cariHesap.yetkiliKisi || '', yetkiliTelefon: cariHesap.yetkiliTelefon || '',
+    krediLimiti: cariHesap.krediLimiti || null, odemeVadesi: cariHesap.odemeVadesi ?? 0,
     notlar: cariHesap.notlar || '', aktif: cariHesap.aktif !== false
   }
   submitted.value = false
@@ -363,7 +385,7 @@ const editCariHesap = (cariHesap) => {
 const saveCariHesap = async () => {
   submitted.value = true
   if (!form.value.ad.trim()) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari adı boş olamaz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari adı boş olamaz', life: 5000 })
     return
   }
 
@@ -371,14 +393,14 @@ const saveCariHesap = async () => {
   try {
     if (editingId.value) {
       await cariHesapStore.updateCariHesap(editingId.value, form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap güncellendi', life: 5000 })
     } else {
       await cariHesapStore.addCariHesap(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap oluşturuldu' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap oluşturuldu', life: 5000 })
     }
     closeDialog()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -397,9 +419,9 @@ const confirmDelete = (id) => {
 const deleteCariHesap = async (id) => {
   try {
     await cariHesapStore.deleteCariHesap(id)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap silindi' })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap silindi', life: 5000 })
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesap silinirken hata oluştu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesap silinirken hata oluştu', life: 5000 })
   }
 }
 
@@ -422,7 +444,7 @@ const batchSil = () => {
       })
       selectedCariHesaplar.value = []
       await loadCariHesaplar()
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Seçili cari hesaplar silindi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Seçili cari hesaplar silindi', life: 5000 })
     }
   })
 }
@@ -439,12 +461,26 @@ const viewHareketler = async (cariHesap) => {
     hareketler.value = data
     showHareketlerDialog.value = true
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareketler yüklenirken hata oluştu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareketler yüklenirken hata oluştu', life: 5000 })
   }
 }
 
 const csvExport = () => {
   window.open('/api/cari-hesaplar/export/csv', '_blank')
+}
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.cariHesaplar()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'CariHesaplar.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
 }
 
 const formatCurrency = (value) => {

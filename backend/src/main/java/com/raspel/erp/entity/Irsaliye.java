@@ -23,7 +23,7 @@ public class Irsaliye {
     @Column(nullable = false)
     private LocalDate tarih;
 
-    @Column(name = "cari_hesap_id", nullable = false)
+    @Column(name = "cari_hesap_id", nullable = true)
     private Long cariHesapId;
 
     @Column(name = "fatura_id")

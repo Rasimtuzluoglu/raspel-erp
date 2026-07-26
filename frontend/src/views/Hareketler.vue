@@ -12,6 +12,7 @@
         />
       </template>
       <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:4px" @click="excelIndir" />
         <Button 
           label="CSV" 
           icon="pi pi-download"
@@ -64,6 +65,12 @@
             <span :class="['badge', slotProps.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
               {{ slotProps.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
             </span>
+          </template>
+        </Column>
+        <Column field="odemeSekli" header="Ödeme Şekli" style="width: 120px">
+          <template #body="slotProps">
+            <span v-if="slotProps.data.odemeSekli">{{ odemeSekliLabel(slotProps.data.odemeSekli) }}</span>
+            <span v-else class="muted">-</span>
           </template>
         </Column>
         <Column field="tutar" header="Tutar" style="width: 120px">
@@ -133,6 +140,17 @@
       </div>
 
       <div class="form-group">
+        <label for="odemeSekli">Ödeme Şekli</label>
+        <Dropdown 
+          v-model="form.odemeSekli"
+          id="odemeSekli"
+          :options="odemeSekliSecenekleri"
+          placeholder="Ödeme şekli seçiniz"
+          class="w-full"
+        />
+      </div>
+
+      <div class="form-group">
         <label for="tutar">Tutar *</label>
         <InputNumber 
           v-model="form.tutar"
@@ -192,7 +210,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
-import { hareketAPI, cariHesapAPI } from '../api/index.js'
+import { hareketAPI, excelAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -213,6 +231,7 @@ onUnmounted(() => { if (aramaZaman) clearTimeout(aramaZaman) })
 const form = ref({
   cariHesapId: null,
   tur: '',
+  odemeSekli: null,
   tutar: null,
   hareketTarihi: new Date(),
   aciklama: ''
@@ -222,6 +241,20 @@ const hareketTurleri = [
   { label: 'Tahsilat', value: 'TAHSILAT' },
   { label: 'Ödeme', value: 'ÖDEME' }
 ]
+
+const odemeSekliSecenekleri = [
+  { label: 'Nakit', value: 'NAKIT' },
+  { label: 'Kredi Kartı', value: 'KREDI_KARTI' },
+  { label: 'Havale/EFT', value: 'HAVALE_EFT' },
+  { label: 'Çek', value: 'CEK' },
+  { label: 'Senet', value: 'SENET' },
+  { label: 'Banka', value: 'BANKA' }
+]
+
+const odemeSekliLabel = (val) => {
+  const item = odemeSekliSecenekleri.find(s => s.value === val)
+  return item ? item.label : val
+}
 
 const cariHesapSeçenekleri = computed(() => {
   return cariHesapStore.cariHesaplar || []
@@ -239,7 +272,7 @@ const loadData = async () => {
     tümHareketler.value = hareketler
   } catch (err) {
     error.value = 'Veriler yüklenirken hata oluştu'
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu', life: 5000 })
   } finally {
     loading.value = false
   }
@@ -250,6 +283,7 @@ const openDialog = () => {
   form.value = {
     cariHesapId: null,
     tur: '',
+    odemeSekli: null,
     tutar: null,
     hareketTarihi: new Date(),
     aciklama: ''
@@ -262,6 +296,7 @@ const openEditDialog = (hareket) => {
   form.value = {
     cariHesapId: hareket.cariHesapId,
     tur: hareket.tur,
+    odemeSekli: hareket.odemeSekli || null,
     tutar: hareket.tutar,
     hareketTarihi: new Date(hareket.hareketTarihi),
     aciklama: hareket.aciklama || ''
@@ -275,17 +310,17 @@ const closeDialog = () => {
 
 const saveHareket = async () => {
   if (!form.value.cariHesapId) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari hesap seçiniz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari hesap seçiniz', life: 5000 })
     return
   }
 
   if (!form.value.tur) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Hareket türü seçiniz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Hareket türü seçiniz', life: 5000 })
     return
   }
 
   if (!form.value.tutar || form.value.tutar <= 0) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli bir tutar giriniz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli bir tutar giriniz', life: 5000 })
     return
   }
 
@@ -294,6 +329,7 @@ const saveHareket = async () => {
     const hareketDTO = {
       cariHesapId: form.value.cariHesapId,
       tur: form.value.tur,
+      odemeSekli: form.value.odemeSekli || null,
       tutar: form.value.tutar,
       hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().split('T')[0] : null,
       aciklama: form.value.aciklama
@@ -301,16 +337,16 @@ const saveHareket = async () => {
 
     if (editingId.value) {
       await hareketStore.updateHareket(editingId.value, hareketDTO)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket güncellendi', life: 5000 })
     } else {
       await hareketStore.addHareket(hareketDTO)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
     }
 
     tümHareketler.value = await hareketStore.getAllHareketler()
     closeDialog()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -330,9 +366,9 @@ const deleteHareket = async (id) => {
   try {
     await hareketStore.deleteHareket(id)
     tümHareketler.value = await hareketStore.getAllHareketler()
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi' })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareket silinirken hata oluştu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareket silinirken hata oluştu', life: 5000 })
   }
 }
 
@@ -344,7 +380,7 @@ const filtrele = async () => {
     const response = await hareketAPI.filtrele(params)
     tümHareketler.value = response.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Filtreleme başarısız' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Filtreleme başarısız', life: 5000 })
   }
 }
 
@@ -356,6 +392,20 @@ const filtreTemizle = async () => {
 
 const csvExport = () => {
   window.open('/api/hareketler/export/csv', '_blank')
+}
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.hareketler()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Hareketler.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
 }
 
 const formatCurrency = (value) => {
@@ -468,3 +518,4 @@ h1 {
   margin-left: 8px;
 }
 </style>
+

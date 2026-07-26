@@ -31,5 +31,7 @@ public class HareketDTO {
     @Size(max = 500, message = "Açıklama en fazla 500 karakter olabilir")
     private String aciklama;
 
+    private String odemeSekli;
+
     private LocalDateTime olusturmaTarihi;
 }

@@ -18,8 +18,8 @@
 ### 💰 Finans
 | Modül | Açıklama |
 |-------|----------|
-| **Cari Hesap** | Müşteri/tedarikçi yönetimi, bakiye takibi, tahsilat/ödeme |
-| **Fatura** | Alış/satış faturası, KDV hesaplama, e-fatura entegrasyonu |
+| **Cari Hesap** | Müşteri/tedarikçi yönetimi, bakiye takibi, kredi limiti, ödeme vadesi, tahsilat/ödeme |
+| **Fatura** | Alış/satış faturası, iskonto, ödeme, KDV hesaplama, e-fatura entegrasyonu |
 | **Banka & Kasa** | Hesap takibi, havale/EFT, kasa hareketleri |
 | **Çek/Senet** | Portföy takibi, vade yönetimi, cirolama |
 | **Bütçe** | Gelir/gider bütçesi, aylık/yıllık planlama |
@@ -28,17 +28,17 @@
 ### 🛒 Ticaret
 | Modül | Açıklama |
 |-------|----------|
-| **Satış (POS)** | Barkod okuyuculu hızlı satış, anlık sepet, para üstü |
+| **Satış (POS)** | Barkod okuyuculu hızlı satış, anlık sepet, seri no arama, termal yazıcı fiş, para üstü |
 | **Sipariş** | Teklif → Sipariş dönüşümü, durum takibi |
 | **Satın Alma** | Talep → Sipariş akışı, tedarikçi yönetimi |
-| **İrsaliye** | Sevk irsaliyesi, irsaliye bazlı fatura |
-| **İade** | İade yönetimi, durum takibi |
+| **İrsaliye** | Sevk irsaliyesi, irsaliye bazlı fatura, stok hareketi |
+| **İade** | İade yönetimi, iade kalemleri, durum takibi |
 | **Fiyat Listesi** | Ürün bazlı alış/satış fiyatı, geçerlilik tarihi |
 
 ### 📦 Envanter
 | Modül | Açıklama |
 |-------|----------|
-| **Stok Yönetimi** | Ürün kartı, barkod, marka, KDV, raf no, ağırlık, kategori |
+| **Stok Yönetimi** | Ürün kartı, barkod, marka, KDV, raf no, ağırlık, kategori, çoklu birim, tedarikçi bilgisi, maliyet yöntemi |
 | **Depo** | Çoklu depo desteği, depo bazlı stok takibi |
 | **Seri/Lot** | Seri no, lot no, son kullanma tarihi |
 | **Stok Sayım** | Sayım fişi, beklenen/sayılan farkı, otomatik hesaplama |
@@ -50,27 +50,29 @@
 |-------|----------|
 | **Personel** | Künye, iletişim, maaş bilgisi |
 | **Puantaj** | Günlük devam takibi, raporlama |
-| **İzin** | İzin talebi, onay mekanizması |
+| **İzin** | İzin talebi, onay/ret mekanizması, durum filtresi |
 | **Maaş Bordro** | Brüt/kesinti/net, dönemsel hesaplama |
 | **Vardiya** | Sabah/Akşam/Gece vardiya planlaması |
 
 ### 📊 Rapor & Analiz
-- Anlık dashboard (cari, bakiye, fatura, stok)
-- Satış/sipariş istatistikleri
-- İK özet kartları
-- Bakiye grafiği (pasta)
-- En çok satan ürünler (bar grafik)
-- Son hareketler (çizgi grafik + tablo)
+- Anlık dashboard (cari sayısı, bakiye, tahsilat/ödeme, bekleyen izin, aylık gelir/gider grafiği)
+- Satış/sipariş istatistikleri, en çok satan ürünler
+- İK özet kartları (aktif çalışan, bugün izinli, bu ay işe başlayacak)
+- Bakiye grafiği (pasta), son hareketler (çizgi grafik + tablo)
 - Vade yaşlandırma, KDV raporu
+- Excel export (Cari, Fatura, Hareket, Stok, Banka, Kasa, Personel)
+- PDF rapor
 
 ### ⚙️ Sistem
 | Özellik | Açıklama |
 |---------|----------|
-| **Yetkilendirme** | Admin/User rolleri, sayfa bazlı erişim |
-| **Çoklu Şirket** | Tenant izolasyonu, her şirket kendi verisini görür |
+| **Yetkilendirme** | Admin/User rolleri, sayfa bazlı erişim, `requiresAdmin` route guard |
+| **Çoklu Şirket** | Tenant izolasyonu, girişte firma seçimi |
 | **Denetim Log** | Tüm işlemler kayıt altına alınır |
+| **Yedekleme** | Otomatik/manuel, Günlük/Haftalık/Aylık/Yıllık rotasyon |
 | **Hızlı Arama** | Ctrl+K ile evrensel arama |
-| **Tema** | Açık/Koyu mod desteği |
+| **Tema** | Açık/Koyu mod desteği, light mode tema fix'leri |
+| **Avatar Yükleme** | Kullanıcı profil fotoğrafı yükleme |
 | **Dil** | i18n altyapısı (şu an TR, EN eklenebilir) |
 
 ---
@@ -80,21 +82,21 @@
 ```
 raspel-erp/
 ├── backend/              # Spring Boot 3.2 + Java 21
-│   ├── src/main/java/    # 170+ Java sınıfı
+│   ├── src/main/java/    # 210+ Java sınıfı
 │   │   ├── controller/   # REST API (50+ endpoint)
 │   │   ├── service/      # İş mantığı
 │   │   ├── repository/   # Veri erişim (JPA)
 │   │   ├── entity/       # JPA entity'leri (40+ tablo)
 │   │   ├── dto/          # Veri transfer objeleri
-│   │   ├── config/       # Security, JWT, Redis, RabbitMQ
-│   │   └── exception/    # Custom exception'lar
+│   │   ├── config/       # Security, JWT, Redis, RabbitMQ, Rate Limiter
+│   │   └── exception/    # Custom exception + GlobalExceptionHandler
 │   └── src/main/resources/
-│       └── db/migration/ # Flyway (12 migration)
-├── frontend/             # Vue 3 + PrimeVue 4 + Pinia
-│   └── src/views/        # 30+ sayfa
+│       └── db/migration/ # Flyway (17 migration)
+├── frontend/             # Vue 3 + PrimeVue 4 + Pinia + Chart.js
+│   └── src/views/        # 35+ sayfa (Dashboard, POS, Tüm CRUD sayfaları)
 ├── config/               # Traefik, Prometheus, Grafana
 ├── scripts/              # Yedekleme script'leri
-└── docker-compose.yml    # Tek komutla ayağa kalkar
+└── docker-compose.yml    # 9 container, tek komutla ayağa kalkar
 ```
 
 ### 🛠️ Teknoloji Yığını
@@ -106,7 +108,9 @@ raspel-erp/
 | **Veritabanı** | PostgreSQL 16 |
 | **Cache** | Redis 7 |
 | **Message** | RabbitMQ 3 |
-| **Auth** | JWT (jjwt 0.12) + httpOnly cookie |
+| **Auth** | JWT (jjwt 0.12) + httpOnly cookie + Login rate limit |
+| **Excel** | Apache POI 5.2.5 (.xlsx export) |
+| **E2E Test** | Cypress 15 |
 | **Monitoring** | Prometheus + Grafana |
 | **Reverse Proxy** | Traefik 3 |
 | **Container** | Docker + Docker Compose |
@@ -155,7 +159,7 @@ open http://localhost
 
 | Ana Sayfa | Hızlı Satış | Stok Yönetimi |
 |-----------|-------------|---------------|
-| Dashboard | Barkod okut, sepete ekle, ödeme | Ürün kartı, depo, sayım |
+| Dashboard (grafikler, kartlar, notlar) | Barkod okut, sepete ekle, ödeme | Ürün kartı, depo, sayım |
 
 *(Ekran görüntüleri eklenecek)*
 
@@ -186,6 +190,26 @@ open http://localhost
 | V10 | Finans, Ticaret, Envanter, İK modülleri |
 | V11 | Cari hesap detay alanları |
 | V12 | Stok detay alanları (marka, kategori, satış fiyatı) |
+| V13 | Cari hesap ID null izni, entity fix'leri |
+| V14 | Fatura kalem `olusturma_tarihi` default |
+| V15 | Siparis/ÇekSenet/Irsaliye `cari_hesap_id` DROP NOT NULL |
+| V16 | Fatura iskonto/ödeme, hareket `odeme_sekli`, iade kalemleri |
+| V17 | Cari kredi limiti/ödeme vadesi, Stok çoklu birim/tedarikçi/maliyet yöntemi |
+
+---
+
+## 🧪 Test
+
+```bash
+# Backend testleri (374 test)
+cd backend
+./mvnw test
+
+# Frontend E2E testleri (Cypress)
+cd frontend
+npm run cypress:open   # interaktif
+npm run cypress:run    # headless
+```
 
 ---
 

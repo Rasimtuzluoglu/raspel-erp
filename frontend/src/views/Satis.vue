@@ -140,7 +140,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
-import { faturaAPI, stokAPI } from '../api/index.js'
+import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 
@@ -174,7 +174,7 @@ const satislariYukle = async () => {
     const r = await faturaAPI.getAll()
     satislar.value = r.data.filter(f => f.tur === 'SATIS')
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Satışlar yüklenemedi' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Satışlar yüklenemedi', life: 5000 })
   }
 }
 
@@ -203,7 +203,7 @@ const urunEkle = () => {
   const u = stokStore.stoklar.find(s => s.id === seciliUrun.value)
   if (!u) return
   if (u.miktar < yeniUrunAdet.value) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: `Yetersiz stok! Mevcut: ${u.miktar} ${u.birim || 'Adet'}` })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: `Yetersiz stok! Mevcut: ${u.miktar} ${u.birim || 'Adet'}`, life: 5000 })
     return
   }
   const brf = yeniUrunFiyat.value || u.fiyat
@@ -237,11 +237,11 @@ const openSatis = () => {
 
 const satisiTamamla = async () => {
   if (satisModu.value === 'SATIS' && !satisForm.value.cariHesapId) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Müşteri seçiniz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Müşteri seçiniz', life: 5000 })
     return
   }
   if (satisForm.value.kalemler.length === 0) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'En az bir ürün ekleyin' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'En az bir ürün ekleyin', life: 5000 })
     return
   }
   saving.value = true
@@ -263,12 +263,12 @@ const satisiTamamla = async () => {
     }
     await faturaAPI.create(payload)
     const msg = durum === 'TEKLIF' ? 'Teklif kaydedildi' : 'Satış tamamlandı ve stok düşüldü'
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: msg })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: msg, life: 5000 })
     showSatisDialog.value = false
     await satislariYukle()
   } catch (err) {
     const msg = err.response?.data?.message || 'Satış başarısız'
-    toast.add({ severity: 'error', summary: 'Hata', detail: msg })
+    toast.add({ severity: 'error', summary: 'Hata', detail: msg, life: 5000 })
   } finally {
     saving.value = false
   }
@@ -308,3 +308,4 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .modu-option.active { background: #3b82f6; color: #fff; }
 .w-full { width: 100% !important; }
 </style>
+

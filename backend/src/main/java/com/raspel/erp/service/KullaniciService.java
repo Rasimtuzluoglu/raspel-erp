@@ -89,7 +89,7 @@ public class KullaniciService {
         String company = req.getCompanyName() != null && !req.getCompanyName().isBlank()
                 ? req.getCompanyName() : k.getCompanyName();
 
-        Long sirketId = k.getSirketId();
+        Long sirketId = req.getSirketId() != null ? req.getSirketId() : k.getSirketId();
         String sirketAdi = null;
         if (sirketId != null) {
             sirketAdi = sirketRepository.findById(sirketId).map(Sirket::getAd).orElse(null);

@@ -92,6 +92,7 @@ class SatinalmaTalepServiceTest {
 
     @Test
     void sil_deletes() {
+        when(talepRepository.existsById(1L)).thenReturn(true);
         satinalmaTalepService.sil(1L);
         verify(kalemRepository).deleteByTalepId(1L);
         verify(talepRepository).deleteById(1L);

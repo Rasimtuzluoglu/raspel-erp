@@ -6,6 +6,9 @@
       <template #start>
         <Button label="Yeni Kasa" icon="pi pi-plus" @click="openKasaDialog" class="p-button-success" />
       </template>
+      <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+      </template>
     </Toolbar>
 
     <div class="loading" v-if="kasaStore.loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
@@ -118,7 +121,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { kasaAPI } from '../api/index.js'
+import { kasaAPI, excelAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -168,15 +171,15 @@ const editKasa = (kasa) => {
 }
 
 const saveKasa = async () => {
-  if (!kasaForm.value.ad.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kasa adı giriniz' }); return }
+  if (!kasaForm.value.ad.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kasa adı giriniz', life: 5000 }); return }
   saving.value = true
   try {
     if (editingKasaId.value) {
       await kasaStore.updateKasa(editingKasaId.value, kasaForm.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa güncellendi', life: 5000 })
     } else {
       await kasaStore.addKasa(kasaForm.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa oluşturuldu' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa oluşturuldu', life: 5000 })
     }
     showKasaDialog.value = false
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
@@ -188,7 +191,7 @@ const confirmDel = (id) => {
     message: 'Bu kasayı silmek istediğinizden emin misiniz?',
     header: 'Onay', icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] }; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa silindi' }) }
+      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] }; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa silindi', life: 5000 }) }
       catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
     }
   })
@@ -202,7 +205,7 @@ const openHareketDialog = (tur) => {
 
 const saveHareket = async () => {
   if (!hareketForm.value.tutar || hareketForm.value.tutar <= 0) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli tutar giriniz' }); return
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli tutar giriniz', life: 5000 }); return
   }
   saving.value = true
   try {
@@ -219,7 +222,7 @@ const saveHareket = async () => {
     const guncel = kasaStore.kasalar.find(k => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
     showHareketDialog.value = false
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi' })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
   finally { saving.value = false }
 }
@@ -231,8 +234,22 @@ const delHareket = async (id) => {
     await kasaStore.getAllKasalar()
     const guncel = kasaStore.kasalar.find(k => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi' })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
+}
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.kasalar()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Kasalar.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
 }
 
 const formatCurrency = (v) => {

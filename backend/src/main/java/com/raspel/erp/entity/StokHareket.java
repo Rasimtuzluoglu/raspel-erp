@@ -35,7 +35,7 @@ public class StokHareket {
     private String aciklama;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cari_hesap_id")
+    @JoinColumn(name = "cari_hesap_id", nullable = true)
     private CariHesap cariHesap;
 
     @Column(name = "olusturma_tarihi", nullable = false)

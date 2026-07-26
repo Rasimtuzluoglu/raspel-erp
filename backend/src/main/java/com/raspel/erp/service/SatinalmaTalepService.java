@@ -63,6 +63,29 @@ public class SatinalmaTalepService {
         return entityToDTO(t);
     }
 
+    public SatinalmaTalepDTO guncelle(Long id, SatinalmaTalepDTO dto) {
+        SatinalmaTalep t = talepRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
+        t.setTalepNo(dto.getTalepNo());
+        t.setTarih(dto.getTarih());
+        t.setTalepEden(dto.getTalepEden());
+        t.setDepartman(dto.getDepartman());
+        if (dto.getDurum() != null) t.setDurum(dto.getDurum());
+        t.setAciklama(dto.getAciklama());
+        t = talepRepository.save(t);
+        if (dto.getKalemler() != null) {
+            kalemRepository.deleteByTalepId(t.getId());
+            for (SatinalmaTalepKalemDTO k : dto.getKalemler()) {
+                kalemRepository.save(SatinalmaTalepKalem.builder()
+                        .talepId(t.getId()).stokId(k.getStokId())
+                        .aciklama(k.getAciklama()).miktar(k.getMiktar())
+                        .birim(k.getBirim()).tahminiBirimFiyat(k.getTahminiBirimFiyat())
+                        .build());
+            }
+        }
+        return entityToDTO(t);
+    }
+
     public SatinalmaTalepDTO durumGuncelle(Long id, String durum) {
         SatinalmaTalep t = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Talep", id));

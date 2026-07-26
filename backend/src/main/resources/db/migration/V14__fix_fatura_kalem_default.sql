@@ -1,0 +1,1 @@
+ALTER TABLE fatura.fatura_kalem ALTER COLUMN olusturma_tarihi SET DEFAULT CURRENT_TIMESTAMP;

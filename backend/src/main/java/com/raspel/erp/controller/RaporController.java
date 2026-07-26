@@ -5,6 +5,7 @@ import com.raspel.erp.service.RaporService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequestMapping("/api/raporlar")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class RaporController {
 
     private final RaporService raporService;

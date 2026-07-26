@@ -26,5 +26,11 @@ public class StokDTO {
     private BigDecimal agirlik;
     private String kategori;
     private String aciklama;
+    private String birim2;
+    private BigDecimal cevrimKatsayisi;
+    private Long tedarikciId;
+    private String tedarikciStokKodu;
+    private BigDecimal tedarikciFiyat;
+    private String maliyetYontemi;
     private LocalDateTime olusturmaTarihi;
 }

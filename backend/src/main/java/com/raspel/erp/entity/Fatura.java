@@ -35,7 +35,7 @@ public class Fatura {
     private FaturaDurum durum;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cari_hesap_id")
+    @JoinColumn(name = "cari_hesap_id", nullable = true)
     private CariHesap cariHesap;
 
     @Column(length = 500)
@@ -49,6 +49,22 @@ public class Fatura {
 
     @Column(name = "genel_toplam", nullable = false, precision = 19, scale = 2)
     private BigDecimal genelToplam;
+
+    @Column(name = "genel_iskonto_tutari", nullable = false, precision = 19, scale = 2)
+    @Builder.Default
+    private BigDecimal genelIskontoTutari = BigDecimal.ZERO;
+
+    @Column(name = "odeme_durumu", nullable = false, length = 20)
+    @Builder.Default
+    private String odemeDurumu = "ODENMEDI";
+
+    @Column(name = "odenen_tutar", nullable = false, precision = 19, scale = 2)
+    @Builder.Default
+    private BigDecimal odenenTutar = BigDecimal.ZERO;
+
+    @Column(name = "kalan_tutar", nullable = false, precision = 19, scale = 2)
+    @Builder.Default
+    private BigDecimal kalanTutar = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "fatura", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
@@ -71,6 +87,6 @@ public class Fatura {
     }
 
     public enum FaturaDurum {
-        TASLAK, KESILDI, IPTAL
+        TASLAK, TEKLIF, KESILDI, IPTAL
     }
 }

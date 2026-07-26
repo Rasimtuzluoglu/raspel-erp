@@ -83,6 +83,8 @@ public class CariHesapService {
                 .yetkiliTelefon(dto.getYetkiliTelefon())
                 .iban(dto.getIban())
                 .notlar(dto.getNotlar())
+                .krediLimiti(dto.getKrediLimiti())
+                .odemeVadesi(dto.getOdemeVadesi())
                 .bakiye(BigDecimal.ZERO)
                 .sirketId(sirketId)
                 .build();
@@ -117,6 +119,8 @@ public class CariHesapService {
         if (dto.getIban() != null) cariHesap.setIban(dto.getIban());
         if (dto.getNotlar() != null) cariHesap.setNotlar(dto.getNotlar());
         if (dto.getAktif() != null) cariHesap.setAktif(dto.getAktif());
+        if (dto.getKrediLimiti() != null) cariHesap.setKrediLimiti(dto.getKrediLimiti());
+        if (dto.getOdemeVadesi() != null) cariHesap.setOdemeVadesi(dto.getOdemeVadesi());
         
         CariHesap guncellenenCariHesap = cariHesapRepository.save(cariHesap);
         log.info("Cari hesap başarıyla güncellendi - ID: {}", id);
@@ -158,13 +162,19 @@ public class CariHesapService {
         cariHesapRepository.save(cariHesap);
     }
     
+
+
     /**
      * Toplam cari sayısını getir
      */
     public Long toplamCariSayisiGetir() {
         return cariHesapRepository.count();
     }
-    
+
+    public Long toplamCariSayisiGetir(Long sirketId) {
+        return cariHesapRepository.countBySirketId(sirketId);
+    }
+
     /**
      * Toplam bakiyeyi getir
      */
@@ -172,14 +182,26 @@ public class CariHesapService {
         return cariHesapRepository.toplamBakiyeHesapla();
     }
 
+    public BigDecimal toplamBakiyeGetir(Long sirketId) {
+        return cariHesapRepository.toplamBakiyeHesaplaBySirketId(sirketId);
+    }
+
     public BigDecimal toplamPozitifBakiyeGetir() {
         return cariHesapRepository.toplamPozitifBakiye();
+    }
+
+    public BigDecimal toplamPozitifBakiyeGetir(Long sirketId) {
+        return cariHesapRepository.toplamPozitifBakiyeBySirketId(sirketId);
     }
 
     public BigDecimal toplamNegatifBakiyeGetir() {
         return cariHesapRepository.toplamNegatifBakiye();
     }
-    
+
+    public BigDecimal toplamNegatifBakiyeGetir(Long sirketId) {
+        return cariHesapRepository.toplamNegatifBakiyeBySirketId(sirketId);
+    }
+
     /**
      * Entity'yi DTO'ya çevir
      */
@@ -200,6 +222,8 @@ public class CariHesapService {
                 .iban(cariHesap.getIban())
                 .notlar(cariHesap.getNotlar())
                 .aktif(cariHesap.getAktif())
+                .krediLimiti(cariHesap.getKrediLimiti())
+                .odemeVadesi(cariHesap.getOdemeVadesi())
                 .bakiye(cariHesap.getBakiye())
                 .olusturmaTarihi(cariHesap.getOlusturmaTarihi())
                 .guncellemeTarihi(cariHesap.getGuncellemeTarihi())

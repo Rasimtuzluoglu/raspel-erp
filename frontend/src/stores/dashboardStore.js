@@ -16,6 +16,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const enCokSatanlar = ref([])
   const pozitifBakiye = ref(0)
   const negatifBakiye = ref(0)
+  const bugunkuTahsilat = ref(0)
+  const bugunkuOdeme = ref(0)
+  const bekleyenIzinSayisi = ref(0)
+  const aylikGelirGider = ref([])
   const loading = ref(false)
   const error = ref(null)
 
@@ -38,6 +42,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
       enCokSatanlar.value = d.enCokSatanlar || []
       pozitifBakiye.value = d.pozitifBakiye || 0
       negatifBakiye.value = d.negatifBakiye || 0
+      bugunkuTahsilat.value = d.bugunkuTahsilat || 0
+      bugunkuOdeme.value = d.bugunkuOdeme || 0
+      bekleyenIzinSayisi.value = d.bekleyenIzinSayisi || 0
+      aylikGelirGider.value = d.aylikGelirGider || []
       return d
     } catch (err) {
       error.value = err.message
@@ -54,6 +62,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     bugunkuSiparis, bekleyenTeslimat, iadeOrani,
     stokDevirHizi, enCokSatanlar,
     pozitifBakiye, negatifBakiye,
+    bugunkuTahsilat, bugunkuOdeme, bekleyenIzinSayisi, aylikGelirGider,
     loading, error, getDashboardData
   }
 })

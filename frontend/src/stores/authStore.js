@@ -25,10 +25,12 @@ export const useAuthStore = defineStore('auth', () => {
     } catch { sessionStorage.removeItem('raspel_erp_auth') }
   }
 
-  const girisYap = async (username, password, sirketAdiParam) => {
+  const girisYap = async (username, password, sirketAdiParam, sirketIdParam) => {
     loading.value = true
     try {
-      const res = await kullaniciAPI.giris({ username, password, companyName: sirketAdiParam })
+      const loginData = { username, password, companyName: sirketAdiParam }
+      if (sirketIdParam) loginData.sirketId = sirketIdParam
+      const res = await kullaniciAPI.giris(loginData)
       kullanici.value = { id: res.data.id, username: res.data.username, displayName: res.data.displayName, avatarUrl: res.data.avatarUrl, companyName: res.data.companyName, role: res.data.role }
       token.value = res.data.token
       companyName.value = sirketAdiParam || res.data.companyName || ''

@@ -62,6 +62,24 @@ public class Stok {
     @Column(length = 500)
     private String aciklama;
 
+    @Column(length = 50)
+    private String birim2;
+
+    @Column(name = "cevrim_katsayisi", precision = 19, scale = 4)
+    private BigDecimal cevrimKatsayisi;
+
+    @Column(name = "tedarikci_id")
+    private Long tedarikciId;
+
+    @Column(name = "tedarikci_stok_kodu", length = 100)
+    private String tedarikciStokKodu;
+
+    @Column(name = "tedarikci_fiyat", precision = 19, scale = 2)
+    private BigDecimal tedarikciFiyat;
+
+    @Column(name = "maliyet_yontemi", length = 20)
+    private String maliyetYontemi;
+
     @Version
     private Integer version;
 

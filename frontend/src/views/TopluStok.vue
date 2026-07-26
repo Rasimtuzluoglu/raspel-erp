@@ -82,7 +82,7 @@ const csvSec = (e) => {
   sonuc.value = null
   const reader = new FileReader()
   reader.onload = (ev) => {
-    try { csvVeri.value = parseCSV(ev.target.result) } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Dosya okunamadı' }) }
+    try { csvVeri.value = parseCSV(ev.target.result) } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Dosya okunamadı', life: 5000 }) }
   }
   reader.readAsText(file, 'UTF-8')
 }

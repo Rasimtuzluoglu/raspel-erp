@@ -3,9 +3,12 @@ package com.raspel.erp.repository;
 import com.raspel.erp.entity.Hareket;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * Hareket Repository
@@ -13,6 +16,16 @@ import java.util.List;
  */
 @Repository
 public interface HareketRepository extends JpaRepository<Hareket, Long> {
+
+    @Query("SELECT COALESCE(SUM(h.tutar), 0) FROM Hareket h WHERE h.tur = :tur AND h.hareketTarihi = :tarih")
+    BigDecimal sumTutarByTurAndHareketTarihi(@Param("tur") Hareket.HareketTuru tur, @Param("tarih") LocalDate tarih);
+
+    @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM') AS ay, " +
+           "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
+           "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +
+           "FROM hareket h WHERE h.hareket_tarihi >= :baslangic " +
+           "GROUP BY ay ORDER BY ay", nativeQuery = true)
+    List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic);
     
     /**
      * Belirli bir cari hesaba ait hareketleri getir

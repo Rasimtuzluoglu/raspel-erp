@@ -3,6 +3,7 @@ package com.raspel.erp.repository;
 import com.raspel.erp.entity.CariHesap;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,7 +32,18 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.bakiye < 0")
     BigDecimal toplamNegatifBakiye();
 
+    @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.sirketId = :sirketId")
+    BigDecimal toplamBakiyeHesaplaBySirketId(@Param("sirketId") Long sirketId);
+
+    @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.bakiye > 0 AND c.sirketId = :sirketId")
+    BigDecimal toplamPozitifBakiyeBySirketId(@Param("sirketId") Long sirketId);
+
+    @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.bakiye < 0 AND c.sirketId = :sirketId")
+    BigDecimal toplamNegatifBakiyeBySirketId(@Param("sirketId") Long sirketId);
+
     List<CariHesap> findBySirketId(Long sirketId);
 
     List<CariHesap> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String query);
+
+    long countBySirketId(Long sirketId);
 }

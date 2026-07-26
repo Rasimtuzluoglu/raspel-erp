@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.raspel.erp.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,14 @@ public class KategoriService {
 
     public KategoriDTO olustur(KategoriDTO dto, Long sirketId) {
         GelirGiderKategori k = GelirGiderKategori.builder().ad(dto.getAd()).tur(dto.getTur()).sirketId(sirketId).build();
+        return entityToDTO(kategoriRepository.save(k));
+    }
+
+    public KategoriDTO guncelle(Long id, KategoriDTO dto) {
+        GelirGiderKategori k = kategoriRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kategori", id));
+        k.setAd(dto.getAd());
+        k.setTur(dto.getTur());
         return entityToDTO(kategoriRepository.save(k));
     }
 

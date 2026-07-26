@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class FaturaController {
 
     private final FaturaService faturaService;
@@ -52,6 +54,7 @@ public class FaturaController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> faturaSil(@PathVariable Long id) {
         faturaService.faturaSil(id);
         return ResponseEntity.noContent().build();

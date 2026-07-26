@@ -92,6 +92,7 @@ public class HareketService {
                 .tutar(dto.getTutar())
                 .hareketTarihi(dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now())
                 .aciklama(dto.getAciklama())
+                .odemeSekli(dto.getOdemeSekli())
                 .sirketId(sirketId)
                 .build();
         
@@ -169,6 +170,7 @@ public class HareketService {
         hareket.setTutar(dto.getTutar());
         hareket.setHareketTarihi(dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now());
         hareket.setAciklama(dto.getAciklama());
+        if (dto.getOdemeSekli() != null) hareket.setOdemeSekli(dto.getOdemeSekli());
 
         Hareket guncellenen = hareketRepository.save(hareket);
 
@@ -210,6 +212,7 @@ public class HareketService {
                 .tutar(hareket.getTutar())
                 .hareketTarihi(hareket.getHareketTarihi())
                 .aciklama(hareket.getAciklama())
+                .odemeSekli(hareket.getOdemeSekli())
                 .olusturmaTarihi(hareket.getOlusturmaTarihi())
                 .build();
     }

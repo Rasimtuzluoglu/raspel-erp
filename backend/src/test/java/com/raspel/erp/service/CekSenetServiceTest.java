@@ -91,6 +91,7 @@ class CekSenetServiceTest {
 
     @Test
     void sil_deletes() {
+        when(cekSenetRepository.existsById(1L)).thenReturn(true);
         cekSenetService.sil(1L);
         verify(cekSenetRepository).deleteById(1L);
     }

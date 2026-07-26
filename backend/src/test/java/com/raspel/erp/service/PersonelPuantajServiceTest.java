@@ -66,6 +66,7 @@ class PersonelPuantajServiceTest {
 
     @Test
     void sil_deletes() {
+        when(puantajRepository.existsById(1L)).thenReturn(true);
         personelPuantajService.sil(1L);
         verify(puantajRepository).deleteById(1L);
     }

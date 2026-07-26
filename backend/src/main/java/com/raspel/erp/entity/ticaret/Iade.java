@@ -5,6 +5,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "iade", schema = "ticaret")
@@ -33,11 +35,14 @@ public class Iade {
     @Column(nullable = false, length = 20)
     private String durum;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
+
+    @Transient
+    private List<IadeKalem> kalemler = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

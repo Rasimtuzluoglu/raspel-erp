@@ -138,16 +138,16 @@ const kaydetAction = async () => {
   try {
     if (duzenleme.value) {
       await sirketAPI.update(seciliId.value, form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şirket güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şirket güncellendi', life: 5000 })
     } else {
       await sirketAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şirket oluşturuldu' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şirket oluşturuldu', life: 5000 })
     }
     dialog.value = false
     const r = await sirketAPI.getAll()
     sirketler.value = r.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }
   kaydediliyor.value = false
 }

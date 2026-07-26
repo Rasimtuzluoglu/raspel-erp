@@ -94,6 +94,7 @@ class SatinalmaSiparisServiceTest {
 
     @Test
     void sil_deletes() {
+        when(siparisRepository.existsById(1L)).thenReturn(true);
         satinalmaSiparisService.sil(1L);
         verify(kalemRepository).deleteBySiparisId(1L);
         verify(siparisRepository).deleteById(1L);

@@ -5,6 +5,12 @@
       <Button label="Yeni Personel" icon="pi pi-plus" @click="personelDialogAc()" />
     </div>
 
+    <Toolbar class="toolbar">
+      <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+      </template>
+    </Toolbar>
+
     <TabView>
       <TabPanel header="Personel Listesi">
         <DataTable :value="personeller" stripedRows :loading="yukleniyor">
@@ -100,7 +106,7 @@
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
-import { personelAPI, personelIzinAPI } from '../api/index.js'
+import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -130,6 +136,20 @@ onMounted(async () => {
   }
   yukleniyor.value = false
 })
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.personel()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Personel.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
+}
 
 const personelDialogAc = (data) => {
   duzenleme.value = !!data

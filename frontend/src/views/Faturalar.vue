@@ -6,6 +6,9 @@
       <template #start>
         <Button label="Yeni Fatura" icon="pi pi-plus" @click="openCreateDialog" class="p-button-success" />
       </template>
+      <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+      </template>
     </Toolbar>
 
     <div class="loading" v-if="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
@@ -70,7 +73,7 @@
         </div>
         <div class="form-group">
           <label>Fatura Türü *</label>
-          <Dropdown v-model="form.tur" :options="turSecenekler" placeholder="Seçiniz" class="w-full" />
+          <Dropdown v-model="form.tur" :options="turSecenekler" optionLabel="label" optionValue="value" placeholder="Seçiniz" class="w-full" />
         </div>
         <div class="form-group">
           <label>Tarih *</label>
@@ -125,7 +128,12 @@
             <InputNumber v-model="s.data.birimFiyat" :min="0" :min-fraction-digits="2" :max-fraction-digits="2" class="w-full" />
           </template>
         </Column>
-        <Column header="KDV %" style="width:90px">
+        <Column header="İskonto %" style="width:100px">
+          <template #body="s">
+            <InputNumber v-model="s.data.iskontoOrani" :min="0" :max="100" :min-fraction-digits="0" class="w-full" />
+          </template>
+        </Column>
+        <Column header="KDV %" style="width:80px">
           <template #body="s">
             <Dropdown v-model="s.data.kdvOrani" :options="[0,10,20]" class="w-full" />
           </template>
@@ -168,6 +176,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import { excelAPI } from '../api/index.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -205,14 +214,14 @@ onMounted(async () => {
       stokStore.getAll()
     ])
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu', life: 5000 })
   } finally {
     loading.value = false
   }
 })
 
 const addKalem = () => {
-  form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 })
+  form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })
 }
 
 const urunSecildi = () => {
@@ -229,6 +238,7 @@ const urunEkleKalem = () => {
     aciklama: u.ad,
     adet: urunAdet.value,
     birimFiyat: u.fiyat,
+    iskontoOrani: 0,
     kdvOrani: 20,
     stokId: u.id
   })
@@ -243,18 +253,27 @@ const removeKalem = (index) => {
 const kalemTutar = (kalem) => {
   const brf = kalem.birimFiyat || 0
   const adt = kalem.adet || 0
+  const iskontoOran = (kalem.iskontoOrani || 0) / 100
+  const net = (brf * adt) * (1 - iskontoOran)
   const kdvOran = (kalem.kdvOrani || 0) / 100
-  const net = brf * adt
   return net + (net * kdvOran)
 }
 
 const araToplam = computed(() => {
-  return form.value.kalemler.reduce((t, k) => t + ((k.birimFiyat || 0) * (k.adet || 0)), 0)
+  return form.value.kalemler.reduce((t, k) => {
+    const brf = k.birimFiyat || 0
+    const adt = k.adet || 0
+    const iskontoOran = (k.iskontoOrani || 0) / 100
+    return t + (brf * adt * (1 - iskontoOran))
+  }, 0)
 })
 
 const kdvToplam = computed(() => {
   return form.value.kalemler.reduce((t, k) => {
-    const net = (k.birimFiyat || 0) * (k.adet || 0)
+    const brf = k.birimFiyat || 0
+    const adt = k.adet || 0
+    const iskontoOran = (k.iskontoOrani || 0) / 100
+    const net = brf * adt * (1 - iskontoOran)
     return t + (net * ((k.kdvOrani || 0) / 100))
   }, 0)
 })
@@ -285,6 +304,7 @@ const editFatura = (fatura) => {
       aciklama: k.aciklama,
       adet: k.adet,
       birimFiyat: k.birimFiyat,
+      iskontoOrani: k.iskontoOrani || 0,
       kdvOrani: k.kdvOrani,
       stokId: k.stokId || null
     }))
@@ -296,12 +316,12 @@ const closeDialog = () => { showDialog.value = false }
 
 const saveFatura = async () => {
   if (!form.value.tur) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Fatura türü seçiniz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Fatura türü seçiniz', life: 5000 })
     return
   }
   const gecersiz = form.value.kalemler.some(k => !k.aciklama.trim() || !k.adet || !k.birimFiyat)
   if (gecersiz) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm kalemleri eksiksiz doldurun' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm kalemleri eksiksiz doldurun', life: 5000 })
     return
   }
 
@@ -310,11 +330,15 @@ const saveFatura = async () => {
     tur: form.value.tur,
     tarih: form.value.tarih ? form.value.tarih.toISOString().split('T')[0] : null,
     aciklama: form.value.aciklama,
+    genelIskontoTutari: 0,
+    odenenTutar: 0,
+    odemeDurumu: 'ODENMEDI',
     kalemler: form.value.kalemler.map(k => ({
       id: k.id || null,
       aciklama: k.aciklama,
       adet: k.adet,
       birimFiyat: k.birimFiyat,
+      iskontoOrani: k.iskontoOrani || 0,
       kdvOrani: k.kdvOrani || 0,
       stokId: k.stokId || null
     }))
@@ -324,15 +348,15 @@ const saveFatura = async () => {
   try {
     if (editingId.value) {
       await faturaStore.updateFatura(editingId.value, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura güncellendi', life: 5000 })
     } else {
       await faturaStore.addFatura(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura oluşturuldu' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura oluşturuldu', life: 5000 })
     }
     closeDialog()
   } catch (err) {
     const msg = err.response?.data?.message || 'İşlem başarısız'
-    toast.add({ severity: 'error', summary: 'Hata', detail: msg })
+    toast.add({ severity: 'error', summary: 'Hata', detail: msg, life: 5000 })
   } finally {
     saving.value = false
   }
@@ -349,8 +373,8 @@ const confirmKes = (id) => {
     accept: async () => {
       try {
         await faturaStore.updateDurum(id, 'KESILDI')
-        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura kesildi' })
-      } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız' }) }
+        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura kesildi', life: 5000 })
+      } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
     }
   })
 }
@@ -363,15 +387,29 @@ const confirmIptal = (id) => {
     accept: async () => {
       try {
         await faturaStore.updateDurum(id, 'IPTAL')
-        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura iptal edildi' })
-      } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız' }) }
+        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura iptal edildi', life: 5000 })
+      } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
     }
   })
 }
 
 const durumLabel = (d) => {
-  const lbl = { TASLAK: 'Taslak', KESILDI: 'Kesildi', IPTAL: 'İptal' }
+  const lbl = { TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' }
   return lbl[d] || d
+}
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.faturalar()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Faturalar.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
 }
 
 const formatCurrency = (value) => {
@@ -403,6 +441,7 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .badge.alis { background: rgba(239,68,68,0.15); color: #f87171; }
 .durum-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
 .durum-badge.taslak { background: rgba(255,152,0,0.15); color: #fb923c; }
+.durum-badge.teklif { background: rgba(96,165,250,0.15); color: #60a5fa; }
 .durum-badge.kesildi { background: rgba(34,197,94,0.15); color: #4ade80; }
 .durum-badge.iptal { background: rgba(148,163,184,0.1); color: #94a3b8; }
 .w-full { width: 100% !important; }

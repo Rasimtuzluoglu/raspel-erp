@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class CariHesapController {
     
     private final CariHesapService cariHesapService;
@@ -126,6 +128,7 @@ public class CariHesapController {
      * DELETE /api/cari-hesaplar/{id}
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> cariHesapSil(@PathVariable Long id) {
         log.info("DELETE /api/cari-hesaplar/{} - Cari hesap siliniliyor", id);
         cariHesapService.cariHesapSil(id);

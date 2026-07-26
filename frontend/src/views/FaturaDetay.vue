@@ -2,7 +2,7 @@
   <div class="fatura-detay" :class="{ 'print-mode': printMode }">
     <div class="detay-header">
       <Button label="Geri" icon="pi pi-arrow-left" @click="$router.push('/faturalar')" class="p-button-text no-print" />
-      <Button v-if="!printMode" label="Yazdır" icon="pi pi-print" @click="window.print()" class="no-print" />
+      <Button v-if="!printMode" label="Yazdır" icon="pi pi-print" @click="win.print()" class="no-print" />
     </div>
 
     <div v-if="loading" class="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
@@ -35,8 +35,8 @@
             <th>Açıklama</th>
             <th>Adet</th>
             <th>Birim Fiyat</th>
+            <th>İskonto %</th>
             <th>KDV %</th>
-            <th>KDV Tutarı</th>
             <th>Toplam</th>
           </tr>
         </thead>
@@ -46,8 +46,8 @@
             <td>{{ k.aciklama }}</td>
             <td>{{ k.adet }}</td>
             <td>{{ formatCurrency(k.birimFiyat) }}</td>
+            <td>{{ k.iskontoOrani || 0 }}%</td>
             <td>{{ k.kdvOrani }}%</td>
-            <td>{{ formatCurrency(kdvTutari(k)) }}</td>
             <td class="text-right">{{ formatCurrency(k.tutar) }}</td>
           </tr>
         </tbody>
@@ -56,7 +56,11 @@
       <div class="fatura-ozet">
         <div class="ozet-row"><span>Ara Toplam:</span><span>{{ formatCurrency(fatura.araToplam) }}</span></div>
         <div class="ozet-row"><span>KDV Toplam:</span><span>{{ formatCurrency(fatura.kdv) }}</span></div>
+        <div class="ozet-row" v-if="fatura.genelIskontoTutari > 0"><span>Genel İskonto:</span><span class="negative">-{{ formatCurrency(fatura.genelIskontoTutari) }}</span></div>
         <div class="ozet-row total"><span>Genel Toplam:</span><span>{{ formatCurrency(fatura.genelToplam) }}</span></div>
+        <div class="ozet-row odeme" v-if="fatura.odemeDurumu"><span>Ödeme Durumu:</span><span :class="fatura.odemeDurumu === 'ODENDI' ? 'positive' : 'negative'">{{ odemeDurumLabel(fatura.odemeDurumu) }}</span></div>
+        <div class="ozet-row odeme" v-if="fatura.odenenTutar > 0"><span>Ödenen:</span><span>{{ formatCurrency(fatura.odenenTutar) }}</span></div>
+        <div class="ozet-row odeme" v-if="fatura.kalanTutar > 0"><span>Kalan:</span><span class="negative">{{ formatCurrency(fatura.kalanTutar) }}</span></div>
       </div>
 
       <div class="fatura-yazi" v-if="fatura.aciklama">
@@ -106,7 +110,8 @@ const kdvTutari = (k) => {
   return (brf * adt) * ((k.kdvOrani || 0) / 100)
 }
 
-const durumLabel = (d) => ({ TASLAK: 'Taslak', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
+const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
+const odemeDurumLabel = (d) => ({ ODENMEDI: 'Ödenmedi', KISMI_ODENDI: 'Kısmi Ödendi', ODENDI: 'Ödendi' })[d] || d
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
@@ -144,10 +149,14 @@ const formatDateTime = (d) => {
 .fatura-ozet { margin-left: auto; width: 300px; background: #f8f9fa; padding: 15px; border-radius: 8px; }
 .ozet-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
 .ozet-row.total { font-weight: bold; font-size: 18px; border-top: 2px solid #1976d2; margin-top: 5px; padding-top: 10px; }
+.ozet-row.odeme { font-size: 13px; color: #666; }
+.ozet-row .negative { color: #f44336; }
+.ozet-row .positive { color: #4caf50; }
 .fatura-yazi { margin-top: 20px; padding: 15px; background: #fff8e1; border-radius: 4px; }
 .fatura-alt { margin-top: 30px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px; }
 .durum-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
 .durum-badge.taslak { background: #fff3e0; color: #e65100; }
+.durum-badge.teklif { background: #e3f2fd; color: #1565c0; }
 .durum-badge.kesildi { background: #e8f5e9; color: #2e7d32; }
 .durum-badge.iptal { background: #f5f5f5; color: #9e9e9e; }
 .error-card { text-align: center; padding: 60px; }

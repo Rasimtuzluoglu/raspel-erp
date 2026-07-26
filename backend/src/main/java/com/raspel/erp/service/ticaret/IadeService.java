@@ -1,22 +1,41 @@
 package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.dto.ticaret.IadeDTO;
+import com.raspel.erp.dto.ticaret.IadeKalemDTO;
+import com.raspel.erp.entity.Stok;
+import com.raspel.erp.entity.StokHareket;
 import com.raspel.erp.entity.ticaret.Iade;
+import com.raspel.erp.entity.ticaret.IadeKalem;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.repository.StokHareketRepository;
+import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class IadeService {
 
     private final IadeRepository iadeRepository;
+    private final IadeKalemRepository iadeKalemRepository;
+    private final StokRepository stokRepository;
+    private final StokHareketRepository stokHareketRepository;
 
     @Transactional(readOnly = true)
     public List<IadeDTO> tumunuGetir(Long sirketId) {
@@ -31,39 +50,159 @@ public class IadeService {
     }
 
     public IadeDTO olustur(IadeDTO dto, Long sirketId) {
+        BigDecimal toplamTutar = BigDecimal.ZERO;
+        if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
+            for (IadeKalemDTO k : dto.getKalemler()) {
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+                BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
+                BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal kalemTutar = netTutar.add(kdvTutari);
+                toplamTutar = toplamTutar.add(kalemTutar);
+            }
+        } else if (dto.getTutar() != null) {
+            toplamTutar = dto.getTutar();
+        }
+
         Iade iade = Iade.builder()
                 .faturaId(dto.getFaturaId())
                 .tarih(dto.getTarih())
-                .tutar(dto.getTutar())
+                .tutar(toplamTutar)
                 .aciklama(dto.getAciklama())
                 .durum(dto.getDurum() != null ? dto.getDurum() : "TASLAK")
                 .sirketId(sirketId)
                 .build();
-        return entityToDTO(iadeRepository.save(iade));
+        iade = iadeRepository.save(iade);
+
+        if (dto.getKalemler() != null) {
+            for (IadeKalemDTO k : dto.getKalemler()) {
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+                BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
+                BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                iadeKalemRepository.save(IadeKalem.builder()
+                        .iadeId(iade.getId()).stokId(k.getStokId())
+                        .aciklama(k.getAciklama()).miktar(k.getMiktar())
+                        .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
+                        .kdvOrani(kdvOrani).tutar(netTutar.add(kdvTutari))
+                        .build());
+            }
+        }
+
+        if ("TAMAMLANDI".equals(iade.getDurum())) {
+            stokHareketleriIsle(iade);
+        }
+
+        return entityToDTO(iade);
     }
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public IadeDTO guncelle(Long id, IadeDTO dto) {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
         if (dto.getFaturaId() != null) iade.setFaturaId(dto.getFaturaId());
         if (dto.getTarih() != null) iade.setTarih(dto.getTarih());
-        if (dto.getTutar() != null) iade.setTutar(dto.getTutar());
         if (dto.getAciklama() != null) iade.setAciklama(dto.getAciklama());
         if (dto.getDurum() != null) iade.setDurum(dto.getDurum());
+
+        BigDecimal toplamTutar = BigDecimal.ZERO;
+        if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
+            iadeKalemRepository.deleteByIadeId(iade.getId());
+            for (IadeKalemDTO k : dto.getKalemler()) {
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+                BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
+                BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal kalemTutar = netTutar.add(kdvTutari);
+                toplamTutar = toplamTutar.add(kalemTutar);
+                iadeKalemRepository.save(IadeKalem.builder()
+                        .iadeId(iade.getId()).stokId(k.getStokId())
+                        .aciklama(k.getAciklama()).miktar(k.getMiktar())
+                        .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
+                        .kdvOrani(kdvOrani).tutar(kalemTutar)
+                        .build());
+            }
+            iade.setTutar(toplamTutar);
+        } else if (dto.getTutar() != null) {
+            iade.setTutar(dto.getTutar());
+        }
+
+        boolean yeniTamamlandi = "TAMAMLANDI".equals(iade.getDurum())
+                && !"TAMAMLANDI".equals(dto.getDurum() != null ? null : iade.getDurum());
+        if (yeniTamamlandi) {
+            stokHareketleriIsle(iade);
+        } else if ("IPTAL".equals(iade.getDurum()) && "TAMAMLANDI".equals(dto.getDurum() != null ? dto.getDurum() : null)) {
+            stokHareketleriniTersineCevir(iade);
+        }
+
         return entityToDTO(iadeRepository.save(iade));
     }
 
     public void sil(Long id) {
         if (!iadeRepository.existsById(id))
             throw new ResourceNotFoundException("Iade", id);
+        iadeKalemRepository.deleteByIadeId(id);
         iadeRepository.deleteById(id);
     }
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    private void stokHareketleriIsle(Iade iade) {
+        List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
+        for (IadeKalem k : kalemler) {
+            if (k.getStokId() == null) continue;
+            Stok stok = stokRepository.findById(k.getStokId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
+            stokRepository.save(stok);
+            stokHareketRepository.save(StokHareket.builder()
+                    .stok(stok).tur("GIRIS")
+                    .miktar(k.getMiktar())
+                    .hareketTarihi(LocalDate.now())
+                    .aciklama("İade #" + iade.getId())
+                    .build());
+        }
+    }
+
+    private void stokHareketleriniTersineCevir(Iade iade) {
+        List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
+        for (IadeKalem k : kalemler) {
+            if (k.getStokId() == null) continue;
+            Stok stok = stokRepository.findById(k.getStokId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
+            stokRepository.save(stok);
+            stokHareketRepository.save(StokHareket.builder()
+                    .stok(stok).tur("CIKIS")
+                    .miktar(k.getMiktar())
+                    .hareketTarihi(LocalDate.now())
+                    .aciklama("İade iptal #" + iade.getId())
+                    .build());
+        }
+    }
+
     private IadeDTO entityToDTO(Iade i) {
+        List<IadeKalemDTO> kalemler = iadeKalemRepository.findByIadeId(i.getId()).stream()
+                .map(k -> {
+                    String stokAd = null;
+                    String stokKodu = null;
+                    if (k.getStokId() != null) {
+                        var stokOpt = stokRepository.findById(k.getStokId());
+                        if (stokOpt.isPresent()) {
+                            stokAd = stokOpt.get().getAd();
+                            stokKodu = stokOpt.get().getStokKodu();
+                        }
+                    }
+                    return IadeKalemDTO.builder()
+                            .id(k.getId()).stokId(k.getStokId())
+                            .stokAd(stokAd).stokKodu(stokKodu)
+                            .aciklama(k.getAciklama()).miktar(k.getMiktar())
+                            .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
+                            .kdvOrani(k.getKdvOrani()).tutar(k.getTutar())
+                            .build();
+                }).collect(Collectors.toList());
+
         return IadeDTO.builder()
                 .id(i.getId()).faturaId(i.getFaturaId()).tarih(i.getTarih())
                 .tutar(i.getTutar()).aciklama(i.getAciklama()).durum(i.getDurum())
                 .sirketId(i.getSirketId()).olusturmaTarihi(i.getOlusturmaTarihi())
+                .kalemler(kalemler)
                 .build();
     }
 }

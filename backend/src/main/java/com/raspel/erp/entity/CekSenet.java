@@ -21,7 +21,7 @@ public class CekSenet {
     @Column(nullable = false, length = 10)
     private String tur;
 
-    @Column(name = "cari_hesap_id", nullable = false)
+    @Column(name = "cari_hesap_id", nullable = true)
     private Long cariHesapId;
 
     @Column(name = "banka_adi", length = 100)

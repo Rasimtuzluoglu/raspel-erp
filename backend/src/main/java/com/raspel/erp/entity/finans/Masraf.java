@@ -36,7 +36,7 @@ public class Masraf {
     @Column(name = "belge_no", length = 50)
     private String belgeNo;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(name = "olusturma_tarihi", nullable = false)

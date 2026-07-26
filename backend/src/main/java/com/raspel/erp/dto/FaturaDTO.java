@@ -34,6 +34,10 @@ public class FaturaDTO {
     private BigDecimal araToplam;
     private BigDecimal kdv;
     private BigDecimal genelToplam;
+    private BigDecimal genelIskontoTutari;
+    private String odemeDurumu;
+    private BigDecimal odenenTutar;
+    private BigDecimal kalanTutar;
 
     @NotEmpty(message = "En az bir kalem eklenmelidir")
     @Valid

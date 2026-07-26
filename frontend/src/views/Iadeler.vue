@@ -12,6 +12,9 @@
       <Column field="tutar" header="Tutar">
         <template #body="{ data }">{{ formatCurrency(data.tutar) }}</template>
       </Column>
+      <Column field="kalemSayisi" header="Kalem">
+        <template #body="{ data }">{{ data.kalemler?.length || 0 }} kalem</template>
+      </Column>
       <Column field="durum" header="Durum">
         <template #body="{ data }">
           <Tag :value="data.durum" :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'" />
@@ -27,11 +30,29 @@
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '500px' }">
+    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '700px' }">
       <div class="form-grid">
         <div class="field"><label>Tarih *</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Tutar *</label><InputNumber v-model="form.tutar" mode="currency" currency="TRY" class="w-full" /></div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="3" class="w-full" /></div>
+        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+
+        <div class="kalem-section">
+          <div class="kalem-header">
+            <h3>İade Kalemleri</h3>
+            <Button label="Kalem Ekle" icon="pi pi-plus" size="small" @click="kalemEkle" />
+          </div>
+
+          <div v-for="(k, i) in form.kalemler" :key="i" class="kalem-row">
+            <Dropdown v-model="k.stokId" :options="stokList" option-label="ad" option-value="id" placeholder="Stok seç" class="kalem-stok" filter />
+            <InputNumber v-model="k.miktar" :min="0" :min-fraction-digits="0" placeholder="Miktar" class="kalem-miktar" />
+            <InputNumber v-model="k.birimFiyat" :min="0" :min-fraction-digits="2" placeholder="Br. Fiyat" class="kalem-fiyat" />
+            <Dropdown v-model="k.kdvOrani" :options="[0,10,20]" class="kalem-kdv" />
+            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click="form.kalemler.splice(i, 1)" />
+          </div>
+
+          <div class="kalem-tutar" v-if="form.kalemler.length">
+            <span>Toplam: {{ formatCurrency(kalemToplam) }}</span>
+          </div>
+        </div>
       </div>
       <template #footer>
         <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
@@ -45,18 +66,23 @@
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
-import { iadeAPI } from '../api/index.js'
+import { iadeAPI, stokAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
 const list = ref([])
+const stokList = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ tarih: new Date(), tutar: 0, aciklama: '' })
+const form = ref({ tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] })
 
 const dialogHeader = computed(() => duzenleme.value ? 'İade Düzenle' : 'Yeni İade')
+
+const kalemToplam = computed(() => {
+  return form.value.kalemler.reduce((t, k) => t + ((k.miktar || 0) * (k.birimFiyat || 0)), 0)
+})
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
@@ -69,22 +95,42 @@ const formatDate = (d) => {
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { list.value = (await iadeAPI.getAll()).data } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İadeler yüklenemedi', life: 5000 })
+  try {
+    list.value = (await iadeAPI.getAll()).data
+    const stokRes = await stokAPI.getAll()
+    stokList.value = stokRes.data?.content || stokRes.data || []
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
   }
   yukleniyor.value = false
 })
 
+const kalemEkle = () => {
+  form.value.kalemler.push({ stokId: null, miktar: 1, birimFiyat: 0, kdvOrani: 20 })
+}
+
 const dialogAc = (data) => {
   duzenleme.value = !!data
-  form.value = data ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date() } : { tarih: new Date(), tutar: 0, aciklama: '' }
+  form.value = data
+    ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date(), kalemler: data.kalemler?.map(k => ({ ...k })) || [] }
+    : { tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
   dialog.value = true
 }
 
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih }
+    const payload = {
+      ...form.value,
+      tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih,
+      tutar: kalemToplam.value,
+      kalemler: form.value.kalemler.map(k => ({
+        stokId: k.stokId,
+        miktar: k.miktar,
+        birimFiyat: k.birimFiyat,
+        kdvOrani: k.kdvOrani
+      }))
+    }
     if (duzenleme.value) {
       await iadeAPI.update(form.value.id, payload)
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İade güncellendi', life: 3000 })
@@ -137,4 +183,13 @@ const sil = (data) => {
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 .w-full { width: 100%; }
+.kalem-section { border-top: 1px solid var(--border); padding-top: 12px; }
+.kalem-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.kalem-header h3 { margin: 0; font-size: 15px; }
+.kalem-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.kalem-stok { flex: 2; min-width: 160px; }
+.kalem-miktar { flex: 1; min-width: 80px; }
+.kalem-fiyat { flex: 1; min-width: 100px; }
+.kalem-kdv { width: 70px; }
+.kalem-tutar { text-align: right; font-weight: bold; font-size: 15px; padding: 8px 0; border-top: 1px solid var(--border); margin-top: 4px; }
 </style>

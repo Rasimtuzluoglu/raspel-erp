@@ -238,6 +238,7 @@ export const satinalmaTalepAPI = {
   getAll(params) { return apiClient.get('/satinalma-talepler', { params }) },
   getById(id) { return apiClient.get(`/satinalma-talepler/${id}`) },
   create(data) { return apiClient.post('/satinalma-talepler', data) },
+  update(id, data) { return apiClient.put(`/satinalma-talepler/${id}`, data) },
   durumGuncelle(id, durum) { return apiClient.put(`/satinalma-talepler/${id}/durum`, { durum }) },
   delete(id) { return apiClient.delete(`/satinalma-talepler/${id}`) }
 }
@@ -249,6 +250,7 @@ export const satinalmaSiparisAPI = {
   getAll(params) { return apiClient.get('/satinalma-siparisler', { params }) },
   getById(id) { return apiClient.get(`/satinalma-siparisler/${id}`) },
   create(data) { return apiClient.post('/satinalma-siparisler', data) },
+  update(id, data) { return apiClient.put(`/satinalma-siparisler/${id}`, data) },
   durumGuncelle(id, durum) { return apiClient.put(`/satinalma-siparisler/${id}/durum`, { durum }) },
   delete(id) { return apiClient.delete(`/satinalma-siparisler/${id}`) }
 }
@@ -383,6 +385,7 @@ export const iadeAPI = {
   getAll() { return apiClient.get('/iadeler') },
   getById(id) { return apiClient.get(`/iadeler/${id}`) },
   create(data) { return apiClient.post('/iadeler', data) },
+  update(id, data) { return apiClient.put(`/iadeler/${id}`, data) },
   durumGuncelle(id, durum) { return apiClient.put(`/iadeler/${id}/durum`, { durum }) },
   delete(id) { return apiClient.delete(`/iadeler/${id}`) }
 }
@@ -391,6 +394,7 @@ export const stokSeriAPI = {
   getAll() { return apiClient.get('/stok-seri') },
   getByStok(stokId) { return apiClient.get(`/stok-seri/stok/${stokId}`) },
   create(data) { return apiClient.post('/stok-seri', data) },
+  update(id, data) { return apiClient.put(`/stok-seri/${id}`, data) },
   delete(id) { return apiClient.delete(`/stok-seri/${id}`) }
 }
 
@@ -414,7 +418,33 @@ export const vardiyaAPI = {
   getAll() { return apiClient.get('/vardiyalar') },
   getByPersonel(personelId) { return apiClient.get(`/vardiyalar/personel/${personelId}`) },
   create(data) { return apiClient.post('/vardiyalar', data) },
+  update(id, data) { return apiClient.put(`/vardiyalar/${id}`, data) },
   delete(id) { return apiClient.delete(`/vardiyalar/${id}`) }
+}
+
+export const puantajAPI = {
+  getByPersonel(personelId, baslangic, bitis) { return apiClient.get(`/personel-puantaj/personel/${personelId}`, { params: { baslangic, bitis } }) },
+  create(data) { return apiClient.post('/personel-puantaj', data) },
+  update(id, data) { return apiClient.put(`/personel-puantaj/${id}`, data) },
+  delete(id) { return apiClient.delete(`/personel-puantaj/${id}`) }
+}
+
+export const backupAPI = {
+  manual(type) { return apiClient.post(`/backups/manual?type=${type || 'DAILY'}`) },
+  list() { return apiClient.get('/backups') },
+  download(filename) { return apiClient.get(`/backups/download/${filename}`, { responseType: 'blob' }) },
+  delete(filename) { return apiClient.delete(`/backups/${filename}`) },
+  getSchedule() { return apiClient.get('/backups/schedule') }
+}
+
+export const excelAPI = {
+  cariHesaplar() { return apiClient.get('/exports/cari-hesaplar', { responseType: 'blob' }) },
+  faturalar() { return apiClient.get('/exports/faturalar', { responseType: 'blob' }) },
+  hareketler() { return apiClient.get('/exports/hareketler', { responseType: 'blob' }) },
+  stoklar() { return apiClient.get('/exports/stoklar', { responseType: 'blob' }) },
+  personel() { return apiClient.get('/exports/personel', { responseType: 'blob' }) },
+  bankalar() { return apiClient.get('/exports/bankalar', { responseType: 'blob' }) },
+  kasalar() { return apiClient.get('/exports/kasalar', { responseType: 'blob' }) }
 }
 
 export default apiClient

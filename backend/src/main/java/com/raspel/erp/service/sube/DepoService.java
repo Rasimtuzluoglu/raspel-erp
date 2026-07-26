@@ -74,11 +74,14 @@ public class DepoService {
 
     @Transactional(readOnly = true)
     public List<DepoStokDTO> depoStoklari(Long depoId) {
-        Map<Long, String> stokHaritasi = stokRepository.findAll().stream()
+        List<com.raspel.erp.entity.Stok> tumStoklar = stokRepository.findAll();
+        Map<Long, String> stokHaritasi = tumStoklar.stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd()));
-        Map<Long, String> stokKodHaritasi = stokRepository.findAll().stream()
+        Map<Long, String> stokKodHaritasi = tumStoklar.stream()
+                .filter(s -> s.getStokKodu() != null)
                 .collect(Collectors.toMap(s -> s.getId(), s -> s.getStokKodu()));
-        Map<Long, String> birimHaritasi = stokRepository.findAll().stream()
+        Map<Long, String> birimHaritasi = tumStoklar.stream()
+                .filter(s -> s.getBirim() != null)
                 .collect(Collectors.toMap(s -> s.getId(), s -> s.getBirim()));
 
         return depoStokRepository.findByDepoId(depoId).stream()

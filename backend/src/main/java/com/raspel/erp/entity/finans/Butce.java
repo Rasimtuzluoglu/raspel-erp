@@ -35,7 +35,7 @@ public class Butce {
     @Column(length = 100)
     private String kategori;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(length = 500)

@@ -35,7 +35,7 @@ public class Vardiya {
     @Column(nullable = false, length = 10)
     private String tur;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(name = "olusturma_tarihi", nullable = false)

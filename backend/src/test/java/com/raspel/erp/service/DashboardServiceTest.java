@@ -1,6 +1,7 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.dto.HareketDTO;
+import com.raspel.erp.repository.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,24 +19,30 @@ class DashboardServiceTest {
 
     @Mock private CariHesapService cariHesapService;
     @Mock private HareketService hareketService;
+    @Mock private HareketRepository hareketRepository;
+    @Mock private SiparisRepository siparisRepository;
+    @Mock private PersonelRepository personelRepository;
+    @Mock private PersonelIzinRepository personelIzinRepository;
+    @Mock private StokHareketRepository stokHareketRepository;
+    @Mock private StokRepository stokRepository;
     @InjectMocks private DashboardService dashboardService;
 
     @Test
     void dashboardVerileriGetir_returnsData() {
-        when(cariHesapService.toplamCariSayisiGetir()).thenReturn(10L);
-        when(cariHesapService.toplamBakiyeGetir()).thenReturn(BigDecimal.valueOf(100000));
+        when(cariHesapService.toplamCariSayisiGetir(1L)).thenReturn(10L);
+        when(cariHesapService.toplamBakiyeGetir(1L)).thenReturn(BigDecimal.valueOf(100000));
         when(hareketService.sonHareketleriGetir(5)).thenReturn(List.of());
-        var result = dashboardService.dashboardVerileriGetir();
+        var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(10L, result.getToplamCariSayisi());
         assertEquals(BigDecimal.valueOf(100000), result.getToplamBakiye());
         assertTrue(result.getSonHareketler().isEmpty());
     }
 
     @Test
-    void dashboardFallback_returnsEmpty() {
-        var result = dashboardService.dashboardFallback(new RuntimeException("error"));
+    void dashboard_returnsDefaultsOnError() {
+        when(cariHesapService.toplamCariSayisiGetir(1L)).thenThrow(new RuntimeException("DB error"));
+        var result = dashboardService.dashboardVerileriGetir(1L);
+        assertNotNull(result);
         assertEquals(0L, result.getToplamCariSayisi());
-        assertEquals(BigDecimal.ZERO, result.getToplamBakiye());
-        assertTrue(result.getSonHareketler().isEmpty());
     }
 }

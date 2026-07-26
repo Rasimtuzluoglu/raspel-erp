@@ -48,6 +48,27 @@ public class ProjeService {
         return entityToDTO(p);
     }
 
+    public ProjeDTO guncelle(Long id, ProjeDTO dto) {
+        Proje p = projeRepository.findById(id).orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + id));
+        p.setAd(dto.getAd());
+        p.setAciklama(dto.getAciklama());
+        p.setBaslangic(dto.getBaslangic());
+        p.setBitis(dto.getBitis());
+        if (dto.getDurum() != null) p.setDurum(dto.getDurum());
+        p.setSorumlu(dto.getSorumlu());
+        p = projeRepository.save(p);
+        if (dto.getGorevler() != null) {
+            gorevRepository.findByProjeIdOrderByBaslangicAsc(p.getId()).forEach(g -> gorevRepository.deleteById(g.getId()));
+            for (GorevDTO g : dto.getGorevler()) {
+                gorevRepository.save(Gorev.builder().projeId(p.getId()).ad(g.getAd())
+                        .aciklama(g.getAciklama()).durum("YAPILACAK")
+                        .atanan(g.getAtanan()).baslangic(g.getBaslangic())
+                        .bitis(g.getBitis()).build());
+            }
+        }
+        return entityToDTO(p);
+    }
+
     public ProjeDTO durumGuncelle(Long id, String durum) {
         Proje p = projeRepository.findById(id).orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + id));
         p.setDurum(durum);

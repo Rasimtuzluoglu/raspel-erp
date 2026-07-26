@@ -41,7 +41,7 @@ public class MaasBordro {
     @Column(name = "odeme_tarihi")
     private LocalDate odemeTarihi;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(length = 500)

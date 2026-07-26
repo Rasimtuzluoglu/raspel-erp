@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,37 +68,57 @@ public class FaturaService {
             throw new BusinessException("Geçersiz fatura türü: " + dto.getTur());
         }
 
-        String faturaNo = "FTR-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))
+        String faturaNo = "FTR-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))
                 + "-" + String.format("%03d", (int)(Math.random() * 900) + 100);
 
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
-            BigDecimal birimTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
-            BigDecimal kdvTutari = birimTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal kalemTutar = birimTutar.add(kdvTutari);
+            BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
+            BigDecimal brütTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+            BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
+            BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal kalemTutar = netTutar.add(kdvTutari);
 
             return FaturaKalem.builder()
                     .aciklama(k.getAciklama())
                     .adet(k.getAdet())
                     .birimFiyat(k.getBirimFiyat())
                     .kdvOrani(kdvOrani)
+                    .iskontoOrani(iskontoOrani)
                     .tutar(kalemTutar)
                     .stokId(k.getStokId())
                     .build();
         }).collect(Collectors.toList());
 
         BigDecimal araToplam = kalemler.stream()
-                .map(k -> k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet())))
+                .map(k -> {
+                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    return brüt.subtract(iskonto);
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal kdv = kalemler.stream()
                 .map(k -> {
-                    BigDecimal birimTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
-                    return birimTutar.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    BigDecimal net = brüt.subtract(iskonto);
+                    return net.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal genelToplam = araToplam.add(kdv);
+        BigDecimal genelIskonto = dto.getGenelIskontoTutari() != null ? dto.getGenelIskontoTutari() : BigDecimal.ZERO;
+        BigDecimal genelToplam = araToplam.add(kdv).subtract(genelIskonto);
+        if (genelToplam.compareTo(BigDecimal.ZERO) < 0) genelToplam = BigDecimal.ZERO;
+
+        BigDecimal odenenTutar = dto.getOdenenTutar() != null ? dto.getOdenenTutar() : BigDecimal.ZERO;
+        BigDecimal kalanTutar = genelToplam.subtract(odenenTutar);
+        String odemeDurumu = dto.getOdemeDurumu();
+        if (odemeDurumu == null) {
+            odemeDurumu = kalanTutar.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
+                    : odenenTutar.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI";
+        }
 
         Fatura.FaturaDurum faturaDurum;
         try {
@@ -118,6 +139,10 @@ public class FaturaService {
                 .araToplam(araToplam)
                 .kdv(kdv)
                 .genelToplam(genelToplam)
+                .genelIskontoTutari(genelIskonto)
+                .odemeDurumu(odemeDurumu)
+                .odenenTutar(odenenTutar)
+                .kalanTutar(kalanTutar)
                 .sirketId(sirketId)
                 .build();
 
@@ -187,31 +212,51 @@ public class FaturaService {
 
         List<FaturaKalem> yeniKalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
-            BigDecimal birimTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
-            BigDecimal kdvTutari = birimTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal kalemTutar = birimTutar.add(kdvTutari);
+            BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
+            BigDecimal brütTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+            BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
+            BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal kalemTutar = netTutar.add(kdvTutari);
             return FaturaKalem.builder()
                     .aciklama(k.getAciklama())
                     .adet(k.getAdet())
                     .birimFiyat(k.getBirimFiyat())
                     .kdvOrani(kdvOrani)
+                    .iskontoOrani(iskontoOrani)
                     .tutar(kalemTutar)
                     .stokId(k.getStokId())
                     .build();
         }).collect(Collectors.toList());
 
         BigDecimal araToplam = yeniKalemler.stream()
-                .map(k -> k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet())))
+                .map(k -> {
+                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    return brüt.subtract(iskonto);
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal kdv = yeniKalemler.stream()
                 .map(k -> {
-                    BigDecimal birimTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
-                    return birimTutar.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    BigDecimal net = brüt.subtract(iskonto);
+                    return net.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal genelToplam = araToplam.add(kdv);
+        BigDecimal genelIskonto = dto.getGenelIskontoTutari() != null ? dto.getGenelIskontoTutari() : BigDecimal.ZERO;
+        BigDecimal genelToplam = araToplam.add(kdv).subtract(genelIskonto);
+        if (genelToplam.compareTo(BigDecimal.ZERO) < 0) genelToplam = BigDecimal.ZERO;
+
+        BigDecimal odenenTutar = dto.getOdenenTutar() != null ? dto.getOdenenTutar() : BigDecimal.ZERO;
+        BigDecimal kalanTutar = genelToplam.subtract(odenenTutar);
+        String odemeDurumu = dto.getOdemeDurumu();
+        if (odemeDurumu == null) {
+            odemeDurumu = kalanTutar.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
+                    : odenenTutar.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI";
+        }
 
         fatura.setCariHesap(cariHesap);
         fatura.setTur(tur);
@@ -220,6 +265,10 @@ public class FaturaService {
         fatura.setAraToplam(araToplam);
         fatura.setKdv(kdv);
         fatura.setGenelToplam(genelToplam);
+        fatura.setGenelIskontoTutari(genelIskonto);
+        fatura.setOdemeDurumu(odemeDurumu);
+        fatura.setOdenenTutar(odenenTutar);
+        fatura.setKalanTutar(kalanTutar);
 
         fatura.getKalemler().clear();
         yeniKalemler.forEach(k -> k.setFatura(fatura));
@@ -297,6 +346,7 @@ public class FaturaService {
                     .adet(k.getAdet())
                     .birimFiyat(k.getBirimFiyat())
                     .kdvOrani(k.getKdvOrani())
+                    .iskontoOrani(k.getIskontoOrani())
                     .tutar(k.getTutar())
                     .stokId(k.getStokId())
                     .stokAd(stokAd)
@@ -316,6 +366,10 @@ public class FaturaService {
                 .araToplam(fatura.getAraToplam())
                 .kdv(fatura.getKdv())
                 .genelToplam(fatura.getGenelToplam())
+                .genelIskontoTutari(fatura.getGenelIskontoTutari())
+                .odemeDurumu(fatura.getOdemeDurumu())
+                .odenenTutar(fatura.getOdenenTutar())
+                .kalanTutar(fatura.getKalanTutar())
                 .kalemler(kalemDTO)
                 .olusturmaTarihi(fatura.getOlusturmaTarihi())
                 .build();

@@ -69,6 +69,33 @@ public class SatinalmaSiparisService {
         return entityToDTO(s);
     }
 
+    public SatinalmaSiparisDTO guncelle(Long id, SatinalmaSiparisDTO dto) {
+        SatinalmaSiparis s = siparisRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        s.setSiparisNo(dto.getSiparisNo());
+        s.setTarih(dto.getTarih());
+        s.setCariHesapId(dto.getCariHesapId());
+        s.setTalepId(dto.getTalepId());
+        if (dto.getDurum() != null) s.setDurum(dto.getDurum());
+        s.setAciklama(dto.getAciklama());
+        s.setAraToplam(dto.getAraToplam());
+        s.setKdv(dto.getKdv());
+        s.setGenelToplam(dto.getGenelToplam());
+        s = siparisRepository.save(s);
+        if (dto.getKalemler() != null) {
+            kalemRepository.deleteBySiparisId(s.getId());
+            for (SatinalmaSiparisKalemDTO k : dto.getKalemler()) {
+                kalemRepository.save(SatinalmaSiparisKalem.builder()
+                        .siparisId(s.getId()).stokId(k.getStokId())
+                        .aciklama(k.getAciklama()).miktar(k.getMiktar())
+                        .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
+                        .kdvOrani(k.getKdvOrani()).tutar(k.getTutar())
+                        .build());
+            }
+        }
+        return entityToDTO(s);
+    }
+
     public SatinalmaSiparisDTO durumGuncelle(Long id, String durum) {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));

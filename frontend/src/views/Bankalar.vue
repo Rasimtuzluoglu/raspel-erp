@@ -6,6 +6,9 @@
       <template #start>
         <Button label="Yeni Banka Hesabı" icon="pi pi-plus" @click="openDialog" class="p-button-success" />
       </template>
+      <template #end>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+      </template>
     </Toolbar>
 
     <div class="loading" v-if="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
@@ -75,6 +78,7 @@ import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
+import { excelAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -90,7 +94,7 @@ const form = ref({ ad: '', hesapNo: '', iban: '', bakiye: 0 })
 onMounted(async () => {
   loading.value = true
   try { await bankaStore.getAllBankalar() }
-  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Bankalar yüklenirken hata oluştu' }) }
+  catch {     toast.add({ severity: 'error', summary: 'Hata', detail: 'Bankalar yüklenirken hata oluştu', life: 5000 }) }
   finally { loading.value = false }
 })
 
@@ -110,20 +114,20 @@ const editBanka = (banka) => {
 
 const saveBanka = async () => {
   if (!form.value.ad.trim()) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Banka adı boş olamaz' })
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Banka adı boş olamaz', life: 5000 })
     return
   }
   saving.value = true
   try {
     if (editingId.value) {
       await bankaStore.updateBanka(editingId.value, { ad: form.value.ad, hesapNo: form.value.hesapNo, iban: form.value.iban })
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı güncellendi', life: 5000 })
     } else {
       await bankaStore.addBanka(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı oluşturuldu' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı oluşturuldu', life: 5000 })
     }
     closeDialog()
-  } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız' }) }
+  } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
   finally { saving.value = false }
 }
 
@@ -132,10 +136,24 @@ const confirmDelete = (id) => {
     message: 'Bu banka hesabını silmek istediğinizden emin misiniz?',
     header: 'Onay', icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await bankaStore.deleteBanka(id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı silindi' }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız' }) }
+      try { await bankaStore.deleteBanka(id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı silindi', life: 5000 }) }
+      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
     }
   })
+}
+
+const excelIndir = async () => {
+  try {
+    const res = await excelAPI.bankalar()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Bankalar.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch { /* silent */ }
 }
 
 const formatCurrency = (v) => {

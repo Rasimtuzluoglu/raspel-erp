@@ -4,6 +4,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,4 +19,5 @@ public class IadeDTO {
     private String durum;
     private Long sirketId;
     private LocalDateTime olusturmaTarihi;
+    private List<IadeKalemDTO> kalemler;
 }

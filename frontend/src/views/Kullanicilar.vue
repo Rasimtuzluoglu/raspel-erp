@@ -51,9 +51,20 @@
         <InputText v-model="form.password" type="password" placeholder="••••••" class="w-full" />
       </div>
       <div class="form-grup">
-        <label>Avatar URL</label>
-        <InputText v-model="form.avatarUrl" placeholder="https://..." class="w-full" />
-        <small style="color:#64748b;margin-top:4px;display:block">Örn: https://api.dicebear.com/7.x/initials/svg?seed=AD</small>
+        <label>Avatar</label>
+        <div class="avatar-upload">
+          <div class="avatar-upload-preview">
+            <img v-if="avatarPreview" :src="avatarPreview" class="avatar-preview-img" />
+            <span v-else class="avatar-preview-yedek">{{ (form.displayName || '?').charAt(0) }}</span>
+          </div>
+          <div class="avatar-upload-inputs">
+            <input type="file" accept="image/*" @change="avatarDosyaSec" ref="avatarInput" style="display:none" />
+            <Button label="Dosya Seç" icon="pi pi-upload" @click="$refs.avatarInput.click()" size="small" class="p-button-outlined" />
+            <span v-if="avatarDosyaAdi" class="avatar-dosya-adi">{{ avatarDosyaAdi }}</span>
+            <span v-else class="avatar-veya">veya URL girin</span>
+            <InputText v-model="form.avatarUrl" placeholder="https://..." class="w-full" />
+          </div>
+        </div>
       </div>
       <div class="form-grup">
         <label>Şirket Adı</label>
@@ -78,11 +89,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
-import { kullaniciAPI } from '../api/index.js'
+import apiClient, { kullaniciAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -99,10 +110,27 @@ const form = ref({
   avatarUrl: '', companyName: '', role: 'USER', active: true
 })
 
+const avatarInput = ref(null)
+const avatarDosyaAdi = ref('')
+const avatarDosya = ref(null)
+const avatarYukleniyor = ref(false)
+
+const avatarPreview = computed(() => {
+  if (avatarDosya.value) return URL.createObjectURL(avatarDosya.value)
+  return form.value.avatarUrl || null
+})
+
+const avatarDosyaSec = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  avatarDosya.value = file
+  avatarDosyaAdi.value = file.name
+}
+
 onMounted(async () => {
   loading.value = true
   try { const r = await kullaniciAPI.getAll(); kullanicilar.value = r.data }
-  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Kullanıcılar yüklenemedi' }) }
+  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Kullanıcılar yüklenemedi', life: 5000 }) }
   finally { loading.value = false }
 })
 
@@ -124,25 +152,44 @@ const editKullanici = (u) => {
 
 const closeDialog = () => { showDialog.value = false }
 
+const avatarYukle = async () => {
+  if (!avatarDosya.value) return
+  avatarYukleniyor.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', avatarDosya.value)
+    const r = await apiClient.post('/upload/avatar', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    form.value.avatarUrl = r.data.url
+    avatarDosya.value = null
+    avatarDosyaAdi.value = ''
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Avatar yüklenemedi', life: 3000 })
+    throw e
+  } finally { avatarYukleniyor.value = false }
+}
+
 const save = async () => {
-  if (!form.value.displayName.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Görünen ad giriniz' }); return }
-  if (!editingId && !form.value.username.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kullanıcı adı giriniz' }); return }
+  if (!form.value.displayName.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Görünen ad giriniz', life: 5000 }); return }
+  if (!editingId && !form.value.username.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kullanıcı adı giriniz', life: 5000 }); return }
   saving.value = true
   try {
+    if (avatarDosya.value) await avatarYukle()
     if (editingId.value) {
       await kullaniciAPI.update(editingId.value, form.value)
       if (editingId.value === authStore.kullanici?.id) await authStore.kullaniciGuncelle()
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı güncellendi' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı güncellendi', life: 5000 })
     } else {
-      if (!form.value.password) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Şifre giriniz' }); return }
+      if (!form.value.password) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Şifre giriniz', life: 5000 }); return }
       await kullaniciAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı oluşturuldu' })
+      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı oluşturuldu', life: 5000 })
     }
     closeDialog()
     const r = await kullaniciAPI.getAll()
     kullanicilar.value = r.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız' })
+    toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız', life: 5000 })
   } finally { saving.value = false }
 }
 
@@ -151,8 +198,8 @@ const confirmDel = (id) => {
     message: 'Bu kullanıcıyı silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kullaniciAPI.delete(id); kullanicilar.value = kullanicilar.value.filter(u => u.id !== id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı silindi' }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız' }) }
+      try { await kullaniciAPI.delete(id); kullanicilar.value = kullanicilar.value.filter(u => u.id !== id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı silindi', life: 5000 }) }
+      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
     }
   })
 }
@@ -197,4 +244,11 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .w-full { width: 100% !important; }
 .full-width { grid-column: 1/-1; }
+.avatar-upload { display: flex; gap: 12px; align-items: flex-start; }
+.avatar-upload-preview { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(59,130,246,0.3); }
+.avatar-preview-img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-preview-yedek { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#3b82f6,#1d4ed8); color: white; font-weight: 700; font-size: 20px; }
+.avatar-upload-inputs { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.avatar-dosya-adi { font-size: 12px; color: var(--text-muted); }
+.avatar-veya { font-size: 11px; color: var(--text-muted); text-align: center; }
 </style>

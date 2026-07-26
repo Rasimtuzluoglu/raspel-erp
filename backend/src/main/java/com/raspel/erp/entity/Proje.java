@@ -26,6 +26,7 @@ public class Proje {
     @Column(nullable = false)
     private LocalDate baslangic;
 
+    @Column
     private LocalDate bitis;
 
     @Column(nullable = false, length = 20)

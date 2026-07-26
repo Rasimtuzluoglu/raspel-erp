@@ -38,7 +38,7 @@ public class StokSayim {
     @Column(nullable = false, length = 20)
     private String durum;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(length = 500)

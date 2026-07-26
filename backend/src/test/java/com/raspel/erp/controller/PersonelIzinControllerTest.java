@@ -41,7 +41,7 @@ class PersonelIzinControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(PersonelIzinDTO.builder().id(1L).izinTuru("YILLIK_IZIN").durum("BEKLEMEDE").build());
-        when(personelIzinService.tumunuGetir()).thenReturn(list);
+        when(personelIzinService.tumunuGetir(any())).thenReturn(list);
 
         mockMvc.perform(get("/api/personel-izin"))
                 .andExpect(status().isOk())

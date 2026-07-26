@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,8 +23,10 @@ public class CekSenetService {
 
     @Transactional(readOnly = true)
     public List<CekSenetDTO> tumunuGetir(Long sirketId) {
+        Map<Long, String> cariHaritasi = cariHesapRepository.findAll().stream()
+                .collect(Collectors.toMap(c -> c.getId(), c -> c.getAd(), (a, b) -> a));
         return cekSenetRepository.findBySirketIdOrderByVadeTarihiAsc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+                .map(cs -> entityToDTO(cs, cariHaritasi)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -43,6 +46,23 @@ public class CekSenetService {
         return entityToDTO(cekSenetRepository.save(cs));
     }
 
+    public CekSenetDTO guncelle(Long id, CekSenetDTO dto) {
+        CekSenet cs = cekSenetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
+        cs.setTur(dto.getTur());
+        cs.setCariHesapId(dto.getCariHesapId());
+        cs.setBankaAdi(dto.getBankaAdi());
+        cs.setSube(dto.getSube());
+        cs.setCekNo(dto.getCekNo());
+        cs.setHesapNo(dto.getHesapNo());
+        cs.setVadeTarihi(dto.getVadeTarihi());
+        cs.setKesinmeTarihi(dto.getKesinmeTarihi());
+        cs.setTutar(dto.getTutar());
+        if (dto.getDurum() != null) cs.setDurum(dto.getDurum());
+        cs.setAciklama(dto.getAciklama());
+        return entityToDTO(cekSenetRepository.save(cs));
+    }
+
     public CekSenetDTO durumGuncelle(Long id, String durum) {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
@@ -58,11 +78,25 @@ public class CekSenetService {
 
     @Transactional(readOnly = true)
     public CekSenetDTO entityToDTO(CekSenet cs) {
+        return entityToDTO(cs, null);
+    }
+
+    @Transactional(readOnly = true)
+    public CekSenetDTO entityToDTO(CekSenet cs, Map<Long, String> cariHaritasi) {
+        String cariAdi = null;
+        if (cs.getCariHesapId() != null) {
+            if (cariHaritasi != null) {
+                cariAdi = cariHaritasi.get(cs.getCariHesapId());
+            }
+            if (cariAdi == null) {
+                cariAdi = cariHesapRepository.findById(cs.getCariHesapId())
+                        .map(c -> c.getAd()).orElse(null);
+            }
+        }
         return CekSenetDTO.builder()
                 .id(cs.getId()).tur(cs.getTur())
                 .cariHesapId(cs.getCariHesapId())
-                .cariHesapAdi(cs.getCariHesapId() != null ?
-                        cariHesapRepository.findById(cs.getCariHesapId()).map(c -> c.getAd()).orElse(null) : null)
+                .cariHesapAdi(cariAdi)
                 .bankaAdi(cs.getBankaAdi()).sube(cs.getSube())
                 .cekNo(cs.getCekNo()).hesapNo(cs.getHesapNo())
                 .vadeTarihi(cs.getVadeTarihi()).kesinmeTarihi(cs.getKesinmeTarihi())

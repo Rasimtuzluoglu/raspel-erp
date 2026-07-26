@@ -89,6 +89,7 @@ class IrsaliyeServiceTest {
 
     @Test
     void sil_deletes() {
+        when(irsaliyeRepository.existsById(1L)).thenReturn(true);
         irsaliyeService.sil(1L);
         verify(kalemRepository).deleteByIrsaliyeId(1L);
         verify(irsaliyeRepository).deleteById(1L);

@@ -82,7 +82,6 @@ class KullaniciServiceTest {
     @Test
     void olustur_throwsWhenUsernameExists() {
         KullaniciDTO dto = KullaniciDTO.builder().username("existing").displayName("Existing").build();
-        when(kullaniciRepository.findByUsername("existing")).thenReturn(Optional.of(createKullanici(1L)));
         assertThrows(RuntimeException.class, () -> kullaniciService.olustur(dto));
     }
 

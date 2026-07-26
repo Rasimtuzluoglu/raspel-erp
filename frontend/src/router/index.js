@@ -34,6 +34,7 @@ import StokSeriler from '../views/StokSeriler.vue'
 import StokSayim from '../views/StokSayim.vue'
 import MaasBordro from '../views/MaasBordro.vue'
 import Vardiyalar from '../views/Vardiyalar.vue'
+import Yedekler from '../views/Yedekler.vue'
 import NotFound from '../views/NotFound.vue'
 
 const routes = [
@@ -102,7 +103,7 @@ const routes = [
     path: '/kullanicilar',
     name: 'Kullanicilar',
     component: Kullanicilar,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/stoklar',
@@ -132,7 +133,7 @@ const routes = [
     path: '/sirketler',
     name: 'Sirketler',
     component: Sirketler,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/donemler',
@@ -150,6 +151,18 @@ const routes = [
     path: '/personel',
     name: 'Personel',
     component: Personel,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/izinler',
+    name: 'Izinler',
+    component: () => import('../views/Izinler.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/puantaj',
+    name: 'Puantaj',
+    component: () => import('../views/Puantaj.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -180,7 +193,13 @@ const routes = [
     path: '/denetim',
     name: 'Denetim',
     component: Denetim,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/yedekler',
+    name: 'Yedekler',
+    component: Yedekler,
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/subeler',
@@ -198,7 +217,7 @@ const routes = [
     path: '/butceler',
     name: 'Butceler',
     component: Butceler,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/masraflar',
@@ -234,7 +253,7 @@ const routes = [
     path: '/maas-bordro',
     name: 'MaasBordro',
     component: MaasBordro,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/vardiyalar',
@@ -260,7 +279,7 @@ router.beforeEach((to, from, next) => {
     next('/giris')
   } else if (to.path === '/giris' && authStore.isLoggedIn && to.name === 'Giris') {
     next('/')
-  } else if (to.path === '/kullanicilar' && authStore.kullanici?.role !== 'ADMIN') {
+  } else if (to.meta.requiresAdmin && authStore.kullanici?.role !== 'ADMIN') {
     next('/')
   } else {
     next()

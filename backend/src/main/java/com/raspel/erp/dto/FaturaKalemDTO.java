@@ -25,6 +25,8 @@ public class FaturaKalemDTO {
 
     private BigDecimal kdvOrani;
 
+    private BigDecimal iskontoOrani;
+
     private BigDecimal tutar;
 
     private Long stokId;

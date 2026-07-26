@@ -64,10 +64,10 @@ onMounted(() => kategoriStore.getAllKategoriler())
 const openDialog = () => { form.value = { ad: '', tur: '' }; showDialog.value = true }
 
 const save = async () => {
-  if (!form.value.ad.trim() || !form.value.tur) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm alanları doldurun' }); return }
+  if (!form.value.ad.trim() || !form.value.tur) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm alanları doldurun', life: 5000 }); return }
   saving.value = true
-  try { await kategoriStore.addKategori(form.value); showDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kategori eklendi' }) }
-  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız' }) }
+  try { await kategoriStore.addKategori(form.value); showDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kategori eklendi', life: 5000 }) }
+  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
   finally { saving.value = false }
 }
 
@@ -76,8 +76,8 @@ const confirmDel = (id) => {
     message: 'Bu kategoriyi silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kategoriStore.deleteKategori(id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kategori silindi' }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız' }) }
+      try { await kategoriStore.deleteKategori(id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kategori silindi', life: 5000 }) }
+      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
     }
   })
 }

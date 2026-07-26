@@ -2,6 +2,7 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.BankaDTO;
 import com.raspel.erp.entity.Banka;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.BankaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,15 +21,17 @@ public class BankaService {
 
     private final BankaRepository bankaRepository;
 
+    @Transactional(readOnly = true)
     public List<BankaDTO> tumBankalariGetir(Long sirketId) {
         return bankaRepository.findBySirketId(sirketId).stream()
                 .map(this::entityDTOyeCevir)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public BankaDTO bankaGetir(Long id) {
         Banka banka = bankaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Banka bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
         return entityDTOyeCevir(banka);
     }
 
@@ -47,7 +50,7 @@ public class BankaService {
 
     public BankaDTO bankaGuncelle(Long id, BankaDTO dto) {
         Banka banka = bankaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Banka bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
         if (dto.getAd() != null) banka.setAd(dto.getAd());
         if (dto.getHesapNo() != null) banka.setHesapNo(dto.getHesapNo());
         if (dto.getIban() != null) banka.setIban(dto.getIban());
@@ -57,7 +60,7 @@ public class BankaService {
 
     public void bankaSil(Long id) {
         if (!bankaRepository.existsById(id)) {
-            throw new RuntimeException("Banka bulunamadı: " + id);
+            throw new ResourceNotFoundException("Banka", id);
         }
         bankaRepository.deleteById(id);
     }

@@ -6,6 +6,7 @@ import com.raspel.erp.service.ProjeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/projeler")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class ProjeController {
 
     private final ProjeService projeService;
@@ -33,6 +35,11 @@ public class ProjeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(projeService.olustur(dto));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjeDTO> guncelle(@PathVariable Long id, @RequestBody ProjeDTO dto) {
+        return ResponseEntity.ok(projeService.guncelle(id, dto));
+    }
+
     @PutMapping("/{id}/durum")
     public ResponseEntity<ProjeDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(projeService.durumGuncelle(id, body.get("durum")));
@@ -49,6 +56,7 @@ public class ProjeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         projeService.sil(id);
         return ResponseEntity.noContent().build();

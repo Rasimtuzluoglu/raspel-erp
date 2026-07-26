@@ -34,7 +34,12 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(PrimeVue, { theme: { preset: Lara } })
+app.use(PrimeVue, {
+  theme: {
+    preset: Lara,
+    options: { darkModeSelector: false }
+  }
+})
 app.use(ToastService)
 app.use(ConfirmationService)
 app.use(i18n)

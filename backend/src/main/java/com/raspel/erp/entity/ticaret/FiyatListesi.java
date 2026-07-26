@@ -35,7 +35,7 @@ public class FiyatListesi {
     @Column(name = "gecerli_bitis")
     private LocalDate gecerliBitis;
 
-    @Column(name = "sirket_id")
+    @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 
     @Column(length = 500)

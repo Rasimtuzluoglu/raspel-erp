@@ -46,6 +46,7 @@
           <div class="menu-grup">Yönetim</div>
           <router-link to="/subeler" :class="{ active: $route.path === '/subeler' }" title="Şubeler"><i class="pi pi-sitemap"></i><span>Şube</span><i class="pi pi-star-fav" :class="{ favori: isFav('/subeler') }" @click.prevent.stop="toggleFav('/subeler')"></i></router-link>
           <router-link to="/personel" :class="{ active: $route.path === '/personel' }" title="Personel"><i class="pi pi-id-card"></i><span>Personel</span><i class="pi pi-star-fav" :class="{ favori: isFav('/personel') }" @click.prevent.stop="toggleFav('/personel')"></i></router-link>
+          <router-link to="/izinler" :class="{ active: $route.path === '/izinler' }" title="İzin Talepleri"><i class="pi pi-calendar"></i><span>İzin</span><i class="pi pi-star-fav" :class="{ favori: isFav('/izinler') }" @click.prevent.stop="toggleFav('/izinler')"></i></router-link>
           <router-link to="/projeler" :class="{ active: $route.path === '/projeler' }" title="Projeler"><i class="pi pi-folder"></i><span>Proje</span><i class="pi pi-star-fav" :class="{ favori: isFav('/projeler') }" @click.prevent.stop="toggleFav('/projeler')"></i></router-link>
           <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/maas-bordro" :class="{ active: $route.path === '/maas-bordro' }" title="Maaş Bordro"><i class="pi pi-credit-card"></i><span>Maaş Bordro</span><i class="pi pi-star-fav" :class="{ favori: isFav('/maas-bordro') }" @click.prevent.stop="toggleFav('/maas-bordro')"></i></router-link>
           <router-link to="/vardiyalar" :class="{ active: $route.path === '/vardiyalar' }" title="Vardiyalar"><i class="pi pi-clock"></i><span>Vardiya</span><i class="pi pi-star-fav" :class="{ favori: isFav('/vardiyalar') }" @click.prevent.stop="toggleFav('/vardiyalar')"></i></router-link>
@@ -54,6 +55,7 @@
           <router-link to="/donemler" :class="{ active: $route.path === '/donemler' }" title="Dönemler"><i class="pi pi-calendar"></i><span>Dönem</span><i class="pi pi-star-fav" :class="{ favori: isFav('/donemler') }" @click.prevent.stop="toggleFav('/donemler')"></i></router-link>
           <router-link to="/kullanicilar" v-if="authStore.kullanici?.role === 'ADMIN'" :class="{ active: $route.path === '/kullanicilar' }" title="Kullanıcılar"><i class="pi pi-user"></i><span>Kullanıcı</span><i class="pi pi-star-fav" :class="{ favori: isFav('/kullanicilar') }" @click.prevent.stop="toggleFav('/kullanicilar')"></i></router-link>
           <router-link to="/kategoriler" :class="{ active: $route.path === '/kategoriler' }" title="Kategoriler"><i class="pi pi-tags"></i><span>Kategori</span><i class="pi pi-star-fav" :class="{ favori: isFav('/kategoriler') }" @click.prevent.stop="toggleFav('/kategoriler')"></i></router-link>
+          <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/yedekler" :class="{ active: $route.path === '/yedekler' }" title="Yedekleme"><i class="pi pi-save"></i><span>Yedek</span><i class="pi pi-star-fav" :class="{ favori: isFav('/yedekler') }" @click.prevent.stop="toggleFav('/yedekler')"></i></router-link>
           <div class="menu-grup">Rapor</div>
           <router-link to="/raporlar" :class="{ active: $route.path === '/raporlar' }" title="Raporlar"><i class="pi pi-chart-bar"></i><span>Rapor</span><i class="pi pi-star-fav" :class="{ favori: isFav('/raporlar') }" @click.prevent.stop="toggleFav('/raporlar')"></i></router-link>
           <router-link to="/hareketler" :class="{ active: $route.path === '/hareketler' }" title="Hareketler"><i class="pi pi-chart-line"></i><span>Hareket</span><i class="pi pi-star-fav" :class="{ favori: isFav('/hareketler') }" @click.prevent.stop="toggleFav('/hareketler')"></i></router-link>
@@ -114,6 +116,7 @@ const isDark = computed(() => theme.value === 'dark')
 
 watch(theme, (t) => {
   document.documentElement.setAttribute('data-theme', t)
+  document.documentElement.classList.toggle('p-dark', t === 'dark')
   localStorage.setItem('raspel_erp_theme', t)
 })
 
@@ -152,6 +155,7 @@ const tumMenuler = [
   { path: '/stok-seriler', label: 'Seri/Lot', icon: 'pi pi-qrcode', grup: 'Envanter' },
   { path: '/stok-sayim', label: 'Stok Sayım', icon: 'pi pi-sort-alt', grup: 'Envanter' },
   { path: '/personel', label: 'Personel', icon: 'pi pi-id-card', grup: 'Yönetim' },
+  { path: '/izinler', label: 'İzin', icon: 'pi pi-calendar', grup: 'Yönetim' },
   { path: '/projeler', label: 'Proje', icon: 'pi pi-folder', grup: 'Yönetim' },
   { path: '/maas-bordro', label: 'Maaş Bordro', icon: 'pi pi-credit-card', grup: 'Yönetim', admin: true },
   { path: '/vardiyalar', label: 'Vardiya', icon: 'pi pi-clock', grup: 'Yönetim' },
@@ -161,7 +165,8 @@ const tumMenuler = [
   { path: '/kategoriler', label: 'Kategori', icon: 'pi pi-tags', grup: 'Sistem' },
   { path: '/raporlar', label: 'Rapor', icon: 'pi pi-chart-bar', grup: 'Rapor' },
   { path: '/hareketler', label: 'Hareket', icon: 'pi pi-chart-line', grup: 'Rapor' },
-  { path: '/denetim', label: 'Denetim', icon: 'pi pi-shield', grup: 'Rapor', admin: true }
+  { path: '/denetim', label: 'Denetim', icon: 'pi pi-shield', grup: 'Rapor', admin: true },
+  { path: '/yedekler', label: 'Yedek', icon: 'pi pi-save', grup: 'Sistem', admin: true }
 ]
 
 const favoriMenuler = computed(() => tumMenuler.filter(m => favoriler.value.includes(m.path) && (!m.admin || authStore.kullanici?.role === 'ADMIN')))
@@ -193,6 +198,7 @@ const kisaYolHandler = (e) => {
 
 onMounted(() => {
   document.documentElement.setAttribute('data-theme', theme.value)
+  document.documentElement.classList.toggle('p-dark', theme.value === 'dark')
   document.addEventListener('keydown', kisaYolHandler)
 })
 onUnmounted(() => document.removeEventListener('keydown', kisaYolHandler))

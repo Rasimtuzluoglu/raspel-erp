@@ -5,6 +5,7 @@ import com.raspel.erp.service.SatinalmaSiparisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/satinalma-siparisler")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class SatinalmaSiparisController {
 
     private final SatinalmaSiparisService satinalmaSiparisService;
@@ -32,12 +34,18 @@ public class SatinalmaSiparisController {
         return ResponseEntity.status(HttpStatus.CREATED).body(satinalmaSiparisService.olustur(dto));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<SatinalmaSiparisDTO> guncelle(@PathVariable Long id, @RequestBody SatinalmaSiparisDTO dto) {
+        return ResponseEntity.ok(satinalmaSiparisService.guncelle(id, dto));
+    }
+
     @PutMapping("/{id}/durum")
     public ResponseEntity<SatinalmaSiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(satinalmaSiparisService.durumGuncelle(id, body.get("durum")));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         satinalmaSiparisService.sil(id);
         return ResponseEntity.noContent().build();

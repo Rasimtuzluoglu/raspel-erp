@@ -32,8 +32,10 @@ public class Gorev {
     @Column(length = 100)
     private String atanan;
 
+    @Column
     private LocalDate baslangic;
 
+    @Column
     private LocalDate bitis;
 
     @Column(name = "olusturma_tarihi", nullable = false)

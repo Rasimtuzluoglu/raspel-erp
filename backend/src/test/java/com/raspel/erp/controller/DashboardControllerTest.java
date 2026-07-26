@@ -39,7 +39,7 @@ class DashboardControllerTest {
                 .toplamBakiye(BigDecimal.valueOf(100000))
                 .sonHareketler(List.of(HareketDTO.builder().id(1L).tur("TAHSILAT").build()))
                 .build();
-        when(dashboardService.dashboardVerileriGetir()).thenReturn(dto);
+        when(dashboardService.dashboardVerileriGetir(any())).thenReturn(dto);
 
         mockMvc.perform(get("/api/dashboard"))
                 .andExpect(status().isOk())

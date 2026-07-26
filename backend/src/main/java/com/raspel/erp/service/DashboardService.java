@@ -2,18 +2,17 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.DashboardDTO;
 import com.raspel.erp.dto.HareketDTO;
+import com.raspel.erp.entity.Hareket;
 import com.raspel.erp.repository.*;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,39 +22,39 @@ public class DashboardService {
 
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
+    private final HareketRepository hareketRepository;
     private final SiparisRepository siparisRepository;
     private final PersonelRepository personelRepository;
     private final PersonelIzinRepository personelIzinRepository;
     private final StokHareketRepository stokHareketRepository;
     private final StokRepository stokRepository;
 
-    @Cacheable(value = "dashboard", key = "'veriler'")
-    @CircuitBreaker(name = "dashboardService", fallbackMethod = "dashboardFallback")
-    public DashboardDTO dashboardVerileriGetir() {
-        log.debug("Dashboard verileri getiriliyor...");
+    @Transactional(readOnly = true)
+    public DashboardDTO dashboardVerileriGetir(Long sirketId) {
+        log.debug("Dashboard verileri getiriliyor... sirketId: {}", sirketId);
 
-        Long toplamCariSayisi = cariHesapService.toplamCariSayisiGetir();
-        var toplamBakiye = cariHesapService.toplamBakiyeGetir();
-        List<HareketDTO> sonHareketler = hareketService.sonHareketleriGetir(5);
+        Long toplamCariSayisi = safeGet(() -> cariHesapService.toplamCariSayisiGetir(sirketId), 0L);
+        BigDecimal toplamBakiye = safeGet(() -> cariHesapService.toplamBakiyeGetir(sirketId), BigDecimal.ZERO);
+        List<HareketDTO> sonHareketler = safeGetList(() -> hareketService.sonHareketleriGetir(5), Collections.emptyList());
 
-        Long aktifCalisan = personelRepository.countByAktifTrue();
-        Long bugunIzinli = personelIzinRepository.countBugunIzinli(LocalDate.now());
+        Long aktifCalisan = safeGet(() -> personelRepository.countByAktifTrue(), 0L);
+        Long bugunIzinli = safeGet(() -> personelIzinRepository.countBugunIzinli(LocalDate.now()), 0L);
         var ayBaslangic = LocalDate.now().withDayOfMonth(1);
         var ayBitis = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
-        Long buAyIseBaslayacak = personelRepository.countByIseGirisTarihiBetween(ayBaslangic, ayBitis);
+        Long buAyIseBaslayacak = safeGet(() -> personelRepository.countByIseGirisTarihiBetween(ayBaslangic, ayBitis), 0L);
 
-        Long bugunkuSiparis = siparisRepository.countByTarih(LocalDate.now());
-        Long bekleyenTeslimat = siparisRepository.countByDurumNot("TAMAMLANDI");
+        Long bugunkuSiparis = safeGet(() -> siparisRepository.countByTarih(LocalDate.now()), 0L);
+        Long bekleyenTeslimat = safeGet(() -> siparisRepository.countByDurumNot("TAMAMLANDI"), 0L);
         BigDecimal iadeOrani = BigDecimal.ZERO;
 
-        long toplamStok = stokRepository.count();
-        long toplamCikis = stokHareketRepository.countByTur("CIKIS");
+        long toplamStok = safeGet(() -> stokRepository.count(), 0L);
+        long toplamCikis = safeGet(() -> stokHareketRepository.countByTur("CIKIS"), 0L);
         BigDecimal stokDevirHizi = toplamStok > 0
                 ? BigDecimal.valueOf(toplamCikis).divide(BigDecimal.valueOf(toplamStok), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        List<DashboardDTO.EnCokSatanDTO> enCokSatanlar = stokHareketRepository.enCokSatanlar().stream()
-                .limit(5)
+        List<DashboardDTO.EnCokSatanDTO> enCokSatanlar = safeGetList(() -> stokHareketRepository.enCokSatanlar(), Collections.emptyList())
+                .stream().limit(5)
                 .map(m -> DashboardDTO.EnCokSatanDTO.builder()
                         .stokAd((String) m.get("stokAd"))
                         .stokKodu((String) m.get("stokKodu"))
@@ -63,8 +62,21 @@ public class DashboardService {
                         .build())
                 .collect(Collectors.toList());
 
-        var pozitifBakiye = cariHesapService.toplamPozitifBakiyeGetir();
-        var negatifBakiye = cariHesapService.toplamNegatifBakiyeGetir();
+        BigDecimal pozitifBakiye = safeGet(() -> cariHesapService.toplamPozitifBakiyeGetir(sirketId), BigDecimal.ZERO);
+        BigDecimal negatifBakiye = safeGet(() -> cariHesapService.toplamNegatifBakiyeGetir(sirketId), BigDecimal.ZERO);
+
+        BigDecimal bugunkuTahsilat = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.TAHSILAT, LocalDate.now()), BigDecimal.ZERO);
+        BigDecimal bugunkuOdeme = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.ODEME, LocalDate.now()), BigDecimal.ZERO);
+        Long bekleyenIzinSayisi = safeGet(() -> personelIzinRepository.countByDurum("BEKLEMEDE"), 0L);
+
+        var altiAyOnce = LocalDate.now().minusMonths(6).withDayOfMonth(1);
+        var aylikGelirGider = safeGetList(() -> hareketRepository.aylikGelirGider(altiAyOnce), Collections.emptyList())
+                .stream().map(row -> DashboardDTO.AylikGelirGiderDTO.builder()
+                        .ay((String) row[0])
+                        .gelir((BigDecimal) row[1])
+                        .gider((BigDecimal) row[2])
+                        .build())
+                .collect(Collectors.toList());
 
         return DashboardDTO.builder()
                 .toplamCariSayisi(toplamCariSayisi)
@@ -80,15 +92,33 @@ public class DashboardService {
                 .enCokSatanlar(enCokSatanlar)
                 .pozitifBakiye(pozitifBakiye)
                 .negatifBakiye(negatifBakiye)
+                .bugunkuTahsilat(bugunkuTahsilat)
+                .bugunkuOdeme(bugunkuOdeme)
+                .bekleyenIzinSayisi(bekleyenIzinSayisi)
+                .aylikGelirGider(aylikGelirGider)
                 .build();
     }
 
-    public DashboardDTO dashboardFallback(Throwable t) {
-        log.warn("Dashboard circuit breaker calisti: {}", t.getMessage());
-        return DashboardDTO.builder()
-                .toplamCariSayisi(0L).toplamBakiye(BigDecimal.ZERO)
-                .sonHareketler(Collections.emptyList())
-                .enCokSatanlar(Collections.emptyList())
-                .build();
+    private <T> T safeGet(SafeSupplier<T> supplier, T defaultValue) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            log.error("Dashboard verisi alinirken hata: {}", e.getMessage(), e);
+            return defaultValue;
+        }
+    }
+
+    private <T> List<T> safeGetList(SafeSupplier<List<T>> supplier, List<T> defaultValue) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            log.error("Dashboard listesi alinirken hata: {}", e.getMessage(), e);
+            return defaultValue;
+        }
+    }
+
+    @FunctionalInterface
+    private interface SafeSupplier<T> {
+        T get();
     }
 }

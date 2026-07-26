@@ -1,6 +1,7 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.dto.PersonelIzinDTO;
+import com.raspel.erp.entity.Personel;
 import com.raspel.erp.entity.PersonelIzin;
 import com.raspel.erp.repository.PersonelIzinRepository;
 import com.raspel.erp.repository.PersonelRepository;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,8 +42,14 @@ class PersonelIzinServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
+        var personel = new Personel();
+        personel.setId(1L);
+        personel.setAd("Test");
+        personel.setSoyad("User");
+        when(personelRepository.findAll()).thenReturn(List.of(personel));
+        when(personelRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(personel));
         when(izinRepository.findAll()).thenReturn(List.of(createIzin(1L), createIzin(2L)));
-        var result = personelIzinService.tumunuGetir();
+        var result = personelIzinService.tumunuGetir(1L);
         assertEquals(2, result.size());
     }
 
@@ -96,6 +103,7 @@ class PersonelIzinServiceTest {
 
     @Test
     void sil_deletes() {
+        when(izinRepository.existsById(1L)).thenReturn(true);
         personelIzinService.sil(1L);
         verify(izinRepository).deleteById(1L);
     }

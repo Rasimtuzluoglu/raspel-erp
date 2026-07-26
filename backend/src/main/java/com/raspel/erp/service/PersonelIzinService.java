@@ -22,13 +22,16 @@ public class PersonelIzinService {
     private final PersonelRepository personelRepository;
 
     @Transactional(readOnly = true)
-    public List<PersonelIzinDTO> tumunuGetir() {
+    public List<PersonelIzinDTO> tumunuGetir(Long sirketId) {
         Map<Long, String> personelHaritasi = personelRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         p -> p.getId(),
                         p -> p.getAd() + " " + p.getSoyad()
                 ));
+        List<Long> personelIds = personelRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
+                .map(p -> p.getId()).collect(Collectors.toList());
         return izinRepository.findAll().stream()
+                .filter(i -> personelIds.contains(i.getPersonelId()))
                 .map(i -> entityToDTO(i, personelHaritasi))
                 .collect(Collectors.toList());
     }
@@ -56,6 +59,20 @@ public class PersonelIzinService {
                 .durum("BEKLEMEDE")
                 .aciklama(dto.getAciklama())
                 .build();
+        return entityToDTO(izinRepository.save(izin));
+    }
+
+    public PersonelIzinDTO guncelle(Long id, PersonelIzinDTO dto) {
+        PersonelIzin izin = izinRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Izin kaydi", id));
+        izin.setPersonelId(dto.getPersonelId());
+        izin.setIzinTuru(dto.getIzinTuru());
+        izin.setBaslangic(dto.getBaslangic());
+        izin.setBitis(dto.getBitis());
+        izin.setGunSayisi(dto.getGunSayisi());
+        if (dto.getDurum() != null) izin.setDurum(dto.getDurum());
+        izin.setAciklama(dto.getAciklama());
+        izin.setOnaylayan(dto.getOnaylayan());
         return entityToDTO(izinRepository.save(izin));
     }
 

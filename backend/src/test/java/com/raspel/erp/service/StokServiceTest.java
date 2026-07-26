@@ -23,6 +23,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class StokServiceTest {
@@ -47,8 +50,9 @@ class StokServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(stokRepository.findAllByOrderByAd()).thenReturn(List.of(createStok(1L), createStok(2L)));
-        var result = stokService.tumunuGetir(1L, org.springframework.data.domain.Pageable.unpaged());
+        Page<Stok> page = new PageImpl<>(List.of(createStok(1L), createStok(2L)));
+        when(stokRepository.findBySirketIdOrderByAd(1L, Pageable.unpaged())).thenReturn(page);
+        var result = stokService.tumunuGetir(1L, Pageable.unpaged());
         assertEquals(2, result.getContent().size());
     }
 

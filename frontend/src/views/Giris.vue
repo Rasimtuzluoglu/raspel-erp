@@ -23,7 +23,15 @@
           <label>Şifre</label>
           <div class="input-wrapper">
             <i class="pi pi-lock"></i>
-            <InputText ref="sifreInput" v-model="password" type="password" placeholder="••••••" @keyup.enter="girisYap" />
+            <InputText ref="sifreInput" v-model="password" type="password" placeholder="••••••" @keyup.enter="odaklanSirket" />
+          </div>
+        </div>
+
+        <div v-if="sirketler.length > 0" class="form-grup">
+          <label>Firma Seçin</label>
+          <div class="input-wrapper">
+            <i class="pi pi-building"></i>
+            <Select ref="sirketSelect" v-model="selectedSirket" :options="sirketler" optionLabel="ad" placeholder="Firma seçiniz" class="sirket-select" @keyup.enter="girisYap" scrollHeight="250px" />
           </div>
         </div>
 
@@ -45,24 +53,37 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
+import { sirketAPI } from '../api/index.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const kullaniciInput = ref(null)
 const sifreInput = ref(null)
+const sirketSelect = ref(null)
 
 const username = ref('')
 const password = ref('')
 const hata = ref('')
 const sirketLogo = ref('')
+const sirketler = ref([])
+const selectedSirket = ref(null)
 
 onMounted(() => {
   if (authStore.isLoggedIn) { router.push('/') }
+  firmalariGetir()
 })
+
+const firmalariGetir = async () => {
+  try {
+    const res = await sirketAPI.getAktif()
+    sirketler.value = res.data?.content || res.data || []
+  } catch {}
+}
 
 const odaklanKullanici = () => kullaniciInput.value?.$el?.querySelector('input')?.focus()
 const odaklanSifre = () => sifreInput.value?.$el?.querySelector('input')?.focus()
+const odaklanSirket = () => sirketSelect.value?.$el?.querySelector('input')?.focus()
 
 const girisYap = async () => {
   hata.value = ''
@@ -71,7 +92,7 @@ const girisYap = async () => {
     return
   }
   try {
-    await authStore.girisYap(username.value, password.value, '')
+    await authStore.girisYap(username.value, password.value, '', selectedSirket.value?.id)
     router.push('/')
   } catch (err) {
     hata.value = err.response?.data?.message || 'Giriş başarısız'
@@ -86,7 +107,7 @@ const girisYap = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
   padding: 20px;
 }
 
@@ -121,7 +142,7 @@ const girisYap = async () => {
 .logo-icon i { font-size: 36px; color: white; }
 
 .giris-logo h1 {
-  color: #f1f5f9;
+  color: var(--text-primary);
   font-size: 28px;
   margin: 0 0 6px;
   font-weight: 700;
@@ -129,7 +150,7 @@ const girisYap = async () => {
 }
 
 .alt-baslik {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
 }
@@ -137,7 +158,7 @@ const girisYap = async () => {
 .versiyon {
   display: inline-block;
   font-size: 10px;
-  color: #64748b;
+  color: var(--text-muted);
   margin-left: 6px;
   padding: 2px 6px;
   border: 1px solid rgba(148,163,184,0.2);
@@ -145,11 +166,11 @@ const girisYap = async () => {
 }
 
 .giris-form {
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 30px;
+  box-shadow: var(--shadow);
 }
 
 .form-grup {
@@ -158,7 +179,7 @@ const girisYap = async () => {
 
 .form-grup label {
   display: block;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -171,20 +192,21 @@ const girisYap = async () => {
 }
 .input-wrapper i {
   position: absolute;
-  left: 14px; top: 50%; transform: translateY(-50%);
-  color: #64748b;
-  font-size: 16px;
+  left: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 18px;
   z-index: 2;
   pointer-events: none;
 }
 .input-wrapper :deep(.p-inputtext) {
   width: 100%;
-  padding: 12px 14px 12px 42px !important;
-  background: #1e293b;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 14px 16px 14px 44px !important;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  color: #f1f5f9;
-  font-size: 14px;
+  color: var(--text-primary);
+  font-size: 16px;
+  min-height: 52px;
 }
 
 .input-wrapper :deep(.p-inputtext:focus) {
@@ -193,8 +215,44 @@ const girisYap = async () => {
   outline: none;
 }
 
-.input-wrapper :deep(.p-inputtext::placeholder) {
-  color: #475569;
+.sirket-select {
+  width: 100%;
+}
+.sirket-select :deep(.p-select) {
+  width: 100%;
+  padding-left: 42px !important;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 16px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+.sirket-select :deep(.p-select:not(.p-disabled):hover) {
+  border-color: #3b82f6;
+}
+.sirket-select :deep(.p-select-overlay) {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 100%;
+}
+.sirket-select :deep(.p-select-option) {
+  color: var(--text-primary);
+  padding: 16px 18px;
+  font-size: 16px;
+}
+.sirket-select :deep(.p-select-option:hover) {
+  background: rgba(59, 130, 246, 0.1);
+}
+.sirket-select :deep(.p-select-label) {
+  padding: 14px 14px 14px 0 !important;
+  font-size: 16px;
+}
+.sirket-select :deep(.p-select-dropdown) {
+  width: 44px;
 }
 
 .giris-buton {
@@ -221,7 +279,7 @@ const girisYap = async () => {
   align-items: center;
   gap: 15px;
   margin: 25px 0 18px;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -246,18 +304,17 @@ const girisYap = async () => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .kullanici-kart:hover {
-  background: rgba(30, 41, 59, 0.9);
   border-color: rgba(59, 130, 246, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow);
 }
 
 .avatar {
@@ -266,7 +323,7 @@ const girisYap = async () => {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: #1e293b;
+  background: var(--bg-primary);
 }
 
 .avatar img {

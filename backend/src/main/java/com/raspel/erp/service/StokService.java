@@ -64,7 +64,10 @@ public class StokService {
                 .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
                 .barkod(dto.getBarkod()).rafNo(dto.getRafNo()).marka(dto.getMarka())
                 .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
-                .aciklama(dto.getAciklama()).sirketId(sirketId).build();
+                .aciklama(dto.getAciklama()).birim2(dto.getBirim2())
+                .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
+                .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
+                .maliyetYontemi(dto.getMaliyetYontemi()).sirketId(sirketId).build();
         return entityToDTO(stokRepository.save(s));
     }
 
@@ -80,6 +83,12 @@ public class StokService {
         s.setRafNo(dto.getRafNo()); s.setMarka(dto.getMarka());
         s.setAgirlik(dto.getAgirlik()); s.setKategori(dto.getKategori());
         s.setAciklama(dto.getAciklama());
+        if (dto.getBirim2() != null) s.setBirim2(dto.getBirim2());
+        if (dto.getCevrimKatsayisi() != null) s.setCevrimKatsayisi(dto.getCevrimKatsayisi());
+        if (dto.getTedarikciId() != null) s.setTedarikciId(dto.getTedarikciId());
+        if (dto.getTedarikciStokKodu() != null) s.setTedarikciStokKodu(dto.getTedarikciStokKodu());
+        if (dto.getTedarikciFiyat() != null) s.setTedarikciFiyat(dto.getTedarikciFiyat());
+        if (dto.getMaliyetYontemi() != null) s.setMaliyetYontemi(dto.getMaliyetYontemi());
         return entityToDTO(stokRepository.save(s));
     }
 
@@ -156,7 +165,11 @@ public class StokService {
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar()).kdvOrani(s.getKdvOrani())
                 .stokGrubu(s.getStokGrubu()).barkod(s.getBarkod()).rafNo(s.getRafNo())
                 .marka(s.getMarka()).agirlik(s.getAgirlik()).kategori(s.getKategori())
-                .aciklama(s.getAciklama()).olusturmaTarihi(s.getOlusturmaTarihi()).build();
+                .aciklama(s.getAciklama()).birim2(s.getBirim2())
+                .cevrimKatsayisi(s.getCevrimKatsayisi()).tedarikciId(s.getTedarikciId())
+                .tedarikciStokKodu(s.getTedarikciStokKodu()).tedarikciFiyat(s.getTedarikciFiyat())
+                .maliyetYontemi(s.getMaliyetYontemi())
+                .olusturmaTarihi(s.getOlusturmaTarihi()).build();
     }
 
     private StokHareketDTO hareketToDTO(StokHareket h) {

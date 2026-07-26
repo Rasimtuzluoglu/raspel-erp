@@ -68,6 +68,14 @@ public class CariHesap {
     @Column(nullable = false)
     private Boolean aktif;
 
+    /** Kredi limiti (TL) */
+    @Column(name = "kredi_limiti", precision = 19, scale = 2)
+    private BigDecimal krediLimiti;
+
+    /** Ödeme vadesi (gün) */
+    @Column(name = "odeme_vadesi")
+    private Integer odemeVadesi;
+
     /** Cari hesabın bakiyesi (Tahsilat pozitif, Ödeme negatif) */
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal bakiye;

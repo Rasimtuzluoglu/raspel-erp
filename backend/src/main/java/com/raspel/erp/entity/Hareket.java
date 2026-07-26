@@ -43,6 +43,9 @@ public class Hareket {
     /** Hareket açıklaması */
     @Column(length = 500)
     private String aciklama;
+
+    @Column(name = "odeme_sekli", length = 20)
+    private String odemeSekli;
     
     @Column(name = "sirket_id")
     private Long sirketId;
