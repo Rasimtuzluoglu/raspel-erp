@@ -458,4 +458,12 @@ export const excelAPI = {
   kasalar() { return apiClient.get('/exports/kasalar', { responseType: 'blob' }) }
 }
 
+export const notAPI = {
+  getAll(params) { return apiClient.get('/notlar', { params }) },
+  getById(id) { return apiClient.get(`/notlar/${id}`) },
+  create(data) { return apiClient.post('/notlar', data) },
+  update(id, data) { return apiClient.put(`/notlar/${id}`, data) },
+  delete(id) { return apiClient.delete(`/notlar/${id}`) }
+}
+
 export default apiClient

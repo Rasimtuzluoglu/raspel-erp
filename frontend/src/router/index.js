@@ -34,6 +34,7 @@ import StokSeriler from '../views/StokSeriler.vue'
 import StokSayim from '../views/StokSayim.vue'
 import MaasBordro from '../views/MaasBordro.vue'
 import Vardiyalar from '../views/Vardiyalar.vue'
+import Notlar from '../views/Notlar.vue'
 import Yedekler from '../views/Yedekler.vue'
 import NotFound from '../views/NotFound.vue'
 
@@ -265,6 +266,12 @@ const routes = [
     path: '/anomaliler',
     name: 'Anomaliler',
     component: () => import('../views/Anomaliler.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/notlar',
+    name: 'Notlar',
+    component: Notlar,
     meta: { requiresAuth: true }
   },
   {

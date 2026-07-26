@@ -76,8 +76,8 @@ onMounted(() => {
   padding: 1.5rem;
 }
 .empty-box {
-  background: var(--surface-card, #1e293b);
-  border: 1px solid var(--surface-border, rgba(255,255,255,0.1));
+  background: var(--bg-card, #1e293b);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 3rem;
   text-align: center;
@@ -95,8 +95,8 @@ onMounted(() => {
   margin-top: 1.5rem;
 }
 .anomali-card {
-  background: var(--surface-card, #1e293b);
-  border: 1px solid var(--surface-border, rgba(255,255,255,0.1));
+  background: var(--bg-card, #1e293b);
+  border: 1px solid var(--border);
   border-left: 6px solid #3b82f6;
   border-radius: 10px;
   padding: 1.25rem;
@@ -118,9 +118,9 @@ onMounted(() => {
   font-weight: 700;
   text-transform: uppercase;
 }
-.badge.yuksek { background: rgba(239,68,68,0.2); color: #ef4444; }
-.badge.orta { background: rgba(245,158,11,0.2); color: #f59e0b; }
-.badge.dusuk { background: rgba(59,130,246,0.2); color: #3b82f6; }
+.badge.yuksek { background: rgba(239,68,68,0.25); color: #f87171; }
+.badge.orta { background: rgba(245,158,11,0.25); color: #fbbf24; }
+.badge.dusuk { background: rgba(59,130,246,0.25); color: #60a5fa; }
 
 .tur-label {
   margin-left: 0.5rem;
@@ -145,10 +145,28 @@ onMounted(() => {
   font-size: 0.95rem;
 }
 .oneri-box {
-  background: rgba(255,255,255,0.05);
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.15);
   border-radius: 6px;
   padding: 0.6rem 0.8rem;
   font-size: 0.875rem;
   color: #38bdf8;
+}
+
+[data-theme="light"] .anomali-card {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+[data-theme="light"] .empty-box {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+[data-theme="light"] .badge.yuksek { background: rgba(239,68,68,0.1); color: #dc2626; }
+[data-theme="light"] .badge.orta { background: rgba(245,158,11,0.12); color: #d97706; }
+[data-theme="light"] .badge.dusuk { background: rgba(59,130,246,0.1); color: #2563eb; }
+[data-theme="light"] .oneri-box {
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #0284c7;
 }
 </style>
