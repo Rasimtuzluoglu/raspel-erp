@@ -47,8 +47,7 @@ public class EFatura {
     @Column(name = "odenecek_tutar", precision = 19, scale = 2)
     private BigDecimal odenecekTutar;
 
-    @Lob
-    @Column(name = "ubl_xml")
+    @Column(name = "ubl_xml", columnDefinition = "TEXT")
     private String ublXml;
 
     @Column(name = "sirket_id", nullable = false)
