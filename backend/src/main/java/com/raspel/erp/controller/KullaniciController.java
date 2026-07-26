@@ -78,6 +78,23 @@ public class KullaniciController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/setup-2fa")
+    @Operation(summary = "2FA Kurulumu", description = "Oturum açmış kullanıcı için 2FA secret ve QR kod URI üretir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<com.raspel.erp.dto.TwoFactorDTO> setup2FA(HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(kullaniciService.setupTwoFactor(kullaniciId));
+    }
+
+    @PostMapping("/enable-2fa")
+    @Operation(summary = "2FA Etkinleştir", description = "2FA doğrulama kodunu kontrol eder ve 2FA'yi aktif eder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Void> enable2FA(@RequestBody com.raspel.erp.dto.TwoFactorDTO dto, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        kullaniciService.enableTwoFactor(kullaniciId, dto.getCode());
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/giris")
     @Operation(summary = "Kullanıcı girişi", description = "Kullanıcı adı ve şifre ile giriş yapar, JWT token döndürür")
     public ResponseEntity<LoginResponse> giris(@RequestBody @jakarta.validation.Valid LoginRequest req,

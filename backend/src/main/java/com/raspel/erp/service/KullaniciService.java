@@ -97,6 +97,31 @@ public class KullaniciService {
         log.info("Kullanıcı şifresi sıfırlandı: {}", req.getUsername());
     }
 
+    public com.raspel.erp.dto.TwoFactorDTO setupTwoFactor(Long kullaniciId) {
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
+        String secret = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
+        k.setTwoFactorSecret(secret);
+        kullaniciRepository.save(k);
+        String qrCodeUri = String.format("otpauth://totp/RasPelERP:%s?secret=%s&issuer=RasPelERP", k.getUsername(), secret);
+        return com.raspel.erp.dto.TwoFactorDTO.builder()
+                .enabled(k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled())
+                .secret(secret)
+                .qrCodeUri(qrCodeUri)
+                .build();
+    }
+
+    public void enableTwoFactor(Long kullaniciId, String code) {
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
+        if (code == null || code.length() < 4) {
+            throw new BusinessException("Geçersiz 2FA doğrulama kodu");
+        }
+        k.setTwoFactorEnabled(true);
+        kullaniciRepository.save(k);
+        log.info("Kullanıcı için 2FA aktif edildi: {}", k.getUsername());
+    }
+
     public LoginResponse giris(LoginRequest req) {
         log.info("Giriş denemesi: {}", req.getUsername());
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())

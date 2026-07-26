@@ -1,0 +1,29 @@
+groups:
+  - name: raspel_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Servis çökmesi: {{ $labels.instance }}"
+          description: "{{ $labels.instance }} adresindeki servis 1 dakikadır yanıt vermiyor."
+
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yüksek Heap Bellek Kullanımı (%85+)"
+          description: "JVM Heap bellek kullanımı %85 eşiğini aştı."
+
+      - alert: HighHttpServerErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yüksek 5xx Hata Oranı (%5+)"
+          description: "HTTP 5xx sunucu hata oranı son 5 dakikada %5'i aştı."

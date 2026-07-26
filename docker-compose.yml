@@ -188,3 +188,11 @@ volumes:
   grafana_data:
   backup_data:
   rabbitmq_data:
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+  db-net:
+    driver: bridge

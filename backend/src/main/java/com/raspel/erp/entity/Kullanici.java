@@ -42,6 +42,14 @@ public class Kullanici {
     @Column(nullable = false)
     private Boolean active;
 
+    @Column(name = "two_factor_enabled")
+    @Builder.Default
+    private Boolean twoFactorEnabled = false;
+
+    @Column(name = "two_factor_secret", length = 100)
+    @JsonIgnore
+    private String twoFactorSecret;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
