@@ -65,7 +65,7 @@ class IrsaliyeServiceTest {
 
     @Test
     void olustur_creates() {
-        IrsaliyeKalemDTO kalem = IrsaliyeKalemDTO.builder().stokId(1L).aciklama("K").miktar(5.0).birim("Adet").build();
+        IrsaliyeKalemDTO kalem = IrsaliyeKalemDTO.builder().stokId(1L).aciklama("K").miktar(java.math.BigDecimal.valueOf(5)).birim("Adet").build();
         IrsaliyeDTO dto = IrsaliyeDTO.builder().irsaliyeNo("IRS-999").tarih(LocalDate.now())
                 .cariHesapId(1L).aciklama("Test").tur("SATIS").sirketId(1L).kalemler(List.of(kalem)).build();
         Irsaliye saved = createIrsaliye(1L);

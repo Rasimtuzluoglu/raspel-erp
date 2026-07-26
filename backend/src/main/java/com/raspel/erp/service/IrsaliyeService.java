@@ -99,7 +99,7 @@ public class IrsaliyeService {
                 if (k.getStokId() == null) continue;
                 Stok stok = stokRepository.findById(k.getStokId())
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
-                BigDecimal adet = BigDecimal.valueOf(k.getMiktar());
+                BigDecimal adet = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur()) && stok.getMiktar().compareTo(adet) < 0) {
                     throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
                             + ", Mevcut: " + stok.getMiktar() + ", İstenen: " + adet);
@@ -124,16 +124,17 @@ public class IrsaliyeService {
                 if (k.getStokId() == null) continue;
                 Stok stok = stokRepository.findById(k.getStokId())
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+                BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur())) {
-                    stok.setMiktar(stok.getMiktar().add(BigDecimal.valueOf(k.getMiktar())));
+                    stok.setMiktar(stok.getMiktar().add(miktar));
                 } else {
-                    stok.setMiktar(stok.getMiktar().subtract(BigDecimal.valueOf(k.getMiktar())));
+                    stok.setMiktar(stok.getMiktar().subtract(miktar));
                 }
                 stokRepository.save(stok);
                 stokHareketRepository.save(StokHareket.builder()
                         .stok(stok)
                         .tur("SATIS".equals(i.getTur()) ? "GIRIS" : "CIKIS")
-                        .miktar(BigDecimal.valueOf(k.getMiktar()))
+                        .miktar(miktar)
                         .hareketTarihi(LocalDate.now())
                         .aciklama("İrsaliye iptal #" + i.getIrsaliyeNo())
                         .build());

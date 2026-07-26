@@ -13,7 +13,7 @@ public class IrsaliyeKalemDTO {
     private Long stokId;
     private String stokAdi;
     private String aciklama;
-    private Double miktar;
+    private java.math.BigDecimal miktar;
     private String birim;
     private LocalDateTime olusturmaTarihi;
 }

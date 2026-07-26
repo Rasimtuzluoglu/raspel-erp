@@ -66,7 +66,7 @@ class PdfRaporServiceTest {
         IrsaliyeKalem kalem = new IrsaliyeKalem();
         kalem.setId(1L);
         kalem.setAciklama("Test Urun");
-        kalem.setMiktar(10.0);
+        kalem.setMiktar(java.math.BigDecimal.valueOf(10));
         when(irsaliyeKalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of(kalem));
         var result = pdfRaporService.irsaliyeRaporu(1L);
         assertNotNull(result);

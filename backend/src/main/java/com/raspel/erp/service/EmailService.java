@@ -1,7 +1,7 @@
 package com.raspel.erp.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -9,11 +9,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     @Value("${spring.mail.username:noreply@raspel-erp.com}")
     private String fromEmail;
@@ -21,14 +21,18 @@ public class EmailService {
     @Async
     public void emailGonder(String to, String subject, String body) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
+            if (mailSender != null) {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(to);
+                message.setSubject(subject);
+                message.setText(body);
 
-            mailSender.send(message);
-            log.info("E-posta başarıyla gönderildi -> To: {}, Subject: {}", to, subject);
+                mailSender.send(message);
+                log.info("E-posta başarıyla gönderildi -> To: {}, Subject: {}", to, subject);
+            } else {
+                log.info("[E-POSTA MOCK] MailSender yapılandırılmadığı için e-posta loga yazıldı -> To: {}, Subject: {}\nBody: {}", to, subject, body);
+            }
         } catch (Exception e) {
             log.error("E-posta gönderilirken hata oluştu -> To: {}, Error: {}", to, e.getMessage());
         }
