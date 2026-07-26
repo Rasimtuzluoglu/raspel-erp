@@ -5,11 +5,10 @@ import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.MasrafRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,9 +18,8 @@ public class MasrafService {
     private final MasrafRepository masrafRepository;
 
     @Transactional(readOnly = true)
-    public List<MasrafDTO> tumunuGetir(Long sirketId) {
-        return masrafRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return masrafRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

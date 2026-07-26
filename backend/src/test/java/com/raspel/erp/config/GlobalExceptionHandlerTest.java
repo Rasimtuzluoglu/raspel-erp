@@ -25,14 +25,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleRuntimeException_returnsBadRequestWithMessage() {
+    void handleRuntimeException_returnsInternalServerError() {
         RuntimeException ex = new RuntimeException("Bir hata oluştu");
 
         ResponseEntity<Map<String, Object>> response = handler.handleRuntimeException(ex);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Bir hata oluştu", response.getBody().get("message"));
-        assertEquals(400, response.getBody().get("status"));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Sunucu hatası: Bir hata oluştu", response.getBody().get("message"));
+        assertEquals(500, response.getBody().get("status"));
         assertNotNull(response.getBody().get("timestamp"));
     }
 

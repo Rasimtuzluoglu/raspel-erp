@@ -11,10 +11,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -41,21 +44,21 @@ class SiparisControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").durum("TEKLIF").build());
-        when(siparisService.tumunuGetir(null)).thenReturn(list);
+        when(siparisService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/siparisler"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].siparisNo").value("SPR-001"));
+                .andExpect(jsonPath("$.content[0].siparisNo").value("SPR-001"));
     }
 
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").build());
-        when(siparisService.tumunuGetir(1L)).thenReturn(list);
+        when(siparisService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/siparisler").param("sirketId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].siparisNo").value("SPR-001"));
+                .andExpect(jsonPath("$.content[0].siparisNo").value("SPR-001"));
     }
 
     @Test
@@ -70,10 +73,10 @@ class SiparisControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(siparisService.getir(anyLong())).thenThrow(new RuntimeException("Sipariş bulunamadı: 999"));
+        when(siparisService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Sipariş bulunamadı: 999"));
 
         mockMvc.perform(get("/api/siparisler/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

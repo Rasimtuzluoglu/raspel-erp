@@ -59,7 +59,7 @@ const form = ref({ irsaliyeNo: '', tarih: new Date(), cariHesapId: null, tur: 'S
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const [r, c] = await Promise.all([irsaliyeAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data; cariler.value = c.data } catch (err) {
+  try { const [r, c] = await Promise.all([irsaliyeAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data?.content || r.data || []; cariler.value = c.data?.content || c.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İrsaliyeler yüklenirken hata oluştu', life: 5000 })
   }
   yukleniyor.value = false
@@ -68,12 +68,12 @@ onMounted(async () => {
 const dialogAc = () => { form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '' }; dialog.value = true }
 const kaydet = async () => {
   kaydediliyor.value = true
-  try { await irsaliyeAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }); dialog.value = false; list.value = (await irsaliyeAPI.getAll()).data } catch (err) {
+  try { await irsaliyeAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }); dialog.value = false; const r = await irsaliyeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İrsaliye kaydedilirken hata oluştu', life: 5000 })
   }
   kaydediliyor.value = false
 }
-const durumGuncelle = async (data, durum) => { try { await irsaliyeAPI.durumGuncelle(data.id, durum); list.value = (await irsaliyeAPI.getAll()).data } catch (err) {
+const durumGuncelle = async (data, durum) => { try { await irsaliyeAPI.durumGuncelle(data.id, durum); const r = await irsaliyeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
   } }
 const sil = (data) => {

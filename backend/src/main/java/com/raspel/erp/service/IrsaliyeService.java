@@ -16,6 +16,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -35,9 +37,8 @@ public class IrsaliyeService {
     private final StokHareketRepository stokHareketRepository;
 
     @Transactional(readOnly = true)
-    public List<IrsaliyeDTO> tumunuGetir(Long sirketId) {
-        return irsaliyeRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return irsaliyeRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

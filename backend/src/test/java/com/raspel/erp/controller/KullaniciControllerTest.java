@@ -3,6 +3,8 @@ package com.raspel.erp.controller;
 import com.raspel.erp.dto.KullaniciDTO;
 import com.raspel.erp.dto.LoginRequest;
 import com.raspel.erp.dto.LoginResponse;
+import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.KullaniciService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,8 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -42,12 +46,12 @@ class KullaniciControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(KullaniciDTO.builder().id(1L).username("admin").displayName("Admin").build());
-        when(kullaniciService.tumunuGetir()).thenReturn(list);
+        when(kullaniciService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/kullanicilar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].username").value("admin"));
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].username").value("admin"));
     }
 
     @Test
@@ -63,10 +67,10 @@ class KullaniciControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(kullaniciService.getir(anyLong())).thenThrow(new RuntimeException("Kullanıcı bulunamadı: 999"));
+        when(kullaniciService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Kullanıcı", 999L));
 
         mockMvc.perform(get("/api/kullanicilar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -118,7 +122,7 @@ class KullaniciControllerTest {
     void shouldLoginWithInvalidCredentials() throws Exception {
         var request = new LoginRequest("admin", "wrong", null, null);
         when(kullaniciService.giris(any(LoginRequest.class)))
-                .thenThrow(new RuntimeException("Kullanıcı adı veya şifre hatalı"));
+                .thenThrow(new BusinessException("Kullanıcı adı veya şifre hatalı"));
 
         mockMvc.perform(post("/api/kullanicilar/giris")
                         .contentType(MediaType.APPLICATION_JSON)

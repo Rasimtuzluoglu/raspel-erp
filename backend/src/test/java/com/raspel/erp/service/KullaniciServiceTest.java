@@ -14,6 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,9 +51,9 @@ class KullaniciServiceTest {
 
     @Test
     void tumunuGetir_returnsAllUsers() {
-        when(kullaniciRepository.findAll()).thenReturn(List.of(createKullanici(1L), createKullanici(2L)));
-        List<KullaniciDTO> result = kullaniciService.tumunuGetir();
-        assertEquals(2, result.size());
+        when(kullaniciRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createKullanici(1L), createKullanici(2L))));
+        Page<KullaniciDTO> result = kullaniciService.tumunuGetir(Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

@@ -12,10 +12,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -42,21 +45,21 @@ class ProjeControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(ProjeDTO.builder().id(1L).ad("Proje A").durum("DEVAM_EDIYOR").build());
-        when(projeService.tumunuGetir(null)).thenReturn(list);
+        when(projeService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/projeler"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Proje A"));
+                .andExpect(jsonPath("$.content[0].ad").value("Proje A"));
     }
 
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(ProjeDTO.builder().id(1L).ad("Proje A").build());
-        when(projeService.tumunuGetir(1L)).thenReturn(list);
+        when(projeService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/projeler").param("sirketId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Proje A"));
+                .andExpect(jsonPath("$.content[0].ad").value("Proje A"));
     }
 
     @Test
@@ -71,10 +74,10 @@ class ProjeControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(projeService.getir(anyLong())).thenThrow(new RuntimeException("Proje bulunamadı: 999"));
+        when(projeService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Proje bulunamadı: 999"));
 
         mockMvc.perform(get("/api/projeler/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

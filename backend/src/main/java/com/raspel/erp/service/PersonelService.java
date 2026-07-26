@@ -2,11 +2,14 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.PersonelDTO;
 import com.raspel.erp.entity.Personel;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.PersonelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,14 +20,14 @@ public class PersonelService {
 
     private final PersonelRepository personelRepository;
 
-    public List<PersonelDTO> tumunuGetir(Long sirketId) {
-        return personelRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<PersonelDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return personelRepository.findBySirketIdOrderByAdAsc(sirketId, pageable)
+                .map(this::entityToDTO);
     }
 
     public PersonelDTO getir(Long id) {
         return entityToDTO(personelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Personel bulunamadı: " + id)));
+                .orElseThrow(() -> new ResourceNotFoundException("Personel", id)));
     }
 
     public PersonelDTO olustur(PersonelDTO dto) {
@@ -43,7 +46,7 @@ public class PersonelService {
 
     public PersonelDTO guncelle(Long id, PersonelDTO dto) {
         Personel p = personelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Personel bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
         if (dto.getAd() != null) p.setAd(dto.getAd());
         if (dto.getSoyad() != null) p.setSoyad(dto.getSoyad());
         if (dto.getTcKimlik() != null) p.setTcKimlik(dto.getTcKimlik());
@@ -59,7 +62,7 @@ public class PersonelService {
     }
 
     public void sil(Long id) {
-        if (!personelRepository.existsById(id)) throw new RuntimeException("Personel bulunamadı: " + id);
+        if (!personelRepository.existsById(id)) throw new ResourceNotFoundException("Personel", id);
         personelRepository.deleteById(id);
     }
 

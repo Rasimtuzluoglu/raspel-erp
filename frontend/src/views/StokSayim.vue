@@ -90,7 +90,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [sR, stR] = await Promise.all([stokSayimAPI.getAll(), stokAPI.getAll()])
-    list.value = sR.data
+    list.value = sR.data?.content || sR.data || []
     stokListesi.value = stR.data.content || stR.data
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
@@ -126,7 +126,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Sayım oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await stokSayimAPI.getAll()).data
+    const r = await stokSayimAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }
@@ -136,7 +136,7 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await stokSayimAPI.durumGuncelle(data.id, durum)
-    list.value = (await stokSayimAPI.getAll()).data
+    const r = await stokSayimAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `Sayım durumu "${durum}" olarak güncellendi`, life: 3000 })
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Durum güncellenirken hata oluştu', life: 5000 })

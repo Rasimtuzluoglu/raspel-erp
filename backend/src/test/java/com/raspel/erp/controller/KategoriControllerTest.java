@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import org.springframework.test.annotation.DirtiesContext;
@@ -39,11 +41,11 @@ class KategoriControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(KategoriDTO.builder().id(1L).ad("Gelir").tur("GELIR").build());
-        when(kategoriService.tumunuGetir(anyLong())).thenReturn(list);
+        when(kategoriService.tumunuGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/kategoriler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Gelir"));
+                .andExpect(jsonPath("$.content[0].ad").value("Gelir"));
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.StokDTO;
 import com.raspel.erp.dto.StokHareketDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.StokService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -71,10 +72,10 @@ class StokControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(stokService.getir(anyLong())).thenThrow(new RuntimeException("Stok bulunamadı: 999"));
+        when(stokService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Stok", 999L));
 
         mockMvc.perform(get("/api/stoklar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

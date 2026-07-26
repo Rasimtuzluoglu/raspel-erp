@@ -5,11 +5,10 @@ import com.raspel.erp.entity.finans.Butce;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.ButceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,9 +18,8 @@ public class ButceService {
     private final ButceRepository butceRepository;
 
     @Transactional(readOnly = true)
-    public List<ButceDTO> tumunuGetir(Long sirketId) {
-        return butceRepository.findBySirketIdOrderByYilDescAyDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<ButceDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return butceRepository.findBySirketIdOrderByYilDescAyDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

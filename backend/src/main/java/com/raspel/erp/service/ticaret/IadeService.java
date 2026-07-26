@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,9 +40,8 @@ public class IadeService {
     private final StokHareketRepository stokHareketRepository;
 
     @Transactional(readOnly = true)
-    public List<IadeDTO> tumunuGetir(Long sirketId) {
-        return iadeRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<IadeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return iadeRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

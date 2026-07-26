@@ -78,7 +78,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [vR, pR] = await Promise.all([vardiyaAPI.getAll(), personelAPI.getAll()])
-    list.value = vR.data
+    list.value = vR.data?.content || vR.data || []
     personelListesi.value = pR.data.map(p => ({ ...p, displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id }))
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
@@ -109,7 +109,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Vardiya oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await vardiyaAPI.getAll()).data
+    const r = await vardiyaAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

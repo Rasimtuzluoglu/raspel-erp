@@ -1,6 +1,7 @@
 package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.SirketDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.SirketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.context.annotation.Import;
 
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -39,11 +42,11 @@ class SirketControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SirketDTO.builder().id(1L).ad("Raspel A.Ş.").build());
-        when(sirketService.tumunuGetir()).thenReturn(list);
+        when(sirketService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/sirketler"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Raspel A.Ş."));
+                .andExpect(jsonPath("$.content[0].ad").value("Raspel A.Ş."));
     }
 
     @Test
@@ -68,10 +71,10 @@ class SirketControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(sirketService.getir(anyLong())).thenThrow(new RuntimeException("Şirket bulunamadı: 999"));
+        when(sirketService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Şirket", 999L));
 
         mockMvc.perform(get("/api/sirketler/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -108,7 +108,7 @@ const hataGoster = (err) => {
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { list.value = (await projeAPI.getAll()).data } catch (e) { hataGoster(e) }
+  try { const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (e) { hataGoster(e) }
   yukleniyor.value = false
 })
 
@@ -118,7 +118,7 @@ const kaydet = async () => {
   try {
     await projeAPI.create({ ...form.value, baslangic: form.value.baslangic?.toISOString().split('T')[0], bitis: form.value.bitis?.toISOString().split('T')[0] })
     dialog.value = false
-    list.value = (await projeAPI.getAll()).data
+    const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Proje oluşturuldu', life: 3000 })
   } catch (e) { hataGoster(e) }
   kaydediliyor.value = false
@@ -126,7 +126,7 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await projeAPI.durumGuncelle(data.id, durum)
-    list.value = (await projeAPI.getAll()).data
+    const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Durum güncellendi', life: 3000 })
   } catch (e) { hataGoster(e) }
 }
@@ -154,14 +154,14 @@ const gorevKaydet = async () => {
   try {
     const g = { ...gorevForm.value, baslangic: gorevForm.value.baslangic?.toISOString().split('T')[0], bitis: gorevForm.value.bitis?.toISOString().split('T')[0] }
     await projeAPI.gorevEkle(seciliProje.value.id, g)
-    gorevDialog.value = false; list.value = (await projeAPI.getAll()).data
+    gorevDialog.value = false; const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Görev eklendi', life: 3000 })
   } catch (e) { hataGoster(e) }; kaydediliyor.value = false
 }
 const gorevTamamla = async (g) => {
   try {
     await projeAPI.gorevDurumGuncelle(g.id, 'TAMAMLANDI')
-    list.value = (await projeAPI.getAll()).data
+    const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Görev tamamlandı', life: 3000 })
   } catch (e) { hataGoster(e) }
 }

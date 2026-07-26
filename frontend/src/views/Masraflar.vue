@@ -67,7 +67,7 @@ const formatDate = (d) => {
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { list.value = (await masrafAPI.getAll()).data } catch (err) {
+  try { const r = await masrafAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Masraflar yüklenemedi', life: 5000 })
   }
   yukleniyor.value = false
@@ -91,7 +91,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Masraf oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await masrafAPI.getAll()).data
+    const r = await masrafAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

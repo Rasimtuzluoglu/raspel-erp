@@ -11,10 +11,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -41,11 +44,11 @@ class PersonelIzinControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(PersonelIzinDTO.builder().id(1L).izinTuru("YILLIK_IZIN").durum("BEKLEMEDE").build());
-        when(personelIzinService.tumunuGetir(any())).thenReturn(list);
+        when(personelIzinService.tumunuGetir(any(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/personel-izin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].izinTuru").value("YILLIK_IZIN"));
+                .andExpect(jsonPath("$.content[0].izinTuru").value("YILLIK_IZIN"));
     }
 
     @Test
@@ -70,10 +73,10 @@ class PersonelIzinControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(personelIzinService.getir(anyLong())).thenThrow(new RuntimeException("İzin kaydı bulunamadı: 999"));
+        when(personelIzinService.getir(anyLong())).thenThrow(new ResourceNotFoundException("İzin kaydı bulunamadı: 999"));
 
         mockMvc.perform(get("/api/personel-izin/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -84,7 +84,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [mR, pR] = await Promise.all([maasBordroAPI.getAll(), personelAPI.getAll()])
-    list.value = mR.data
+    list.value = mR.data?.content || mR.data || []
     personelListesi.value = pR.data.map(p => ({ ...p, displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id }))
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
@@ -117,7 +117,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Bordro oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await maasBordroAPI.getAll()).data
+    const r = await maasBordroAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

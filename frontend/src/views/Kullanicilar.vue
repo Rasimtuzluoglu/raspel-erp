@@ -129,7 +129,7 @@ const avatarDosyaSec = (e) => {
 
 onMounted(async () => {
   loading.value = true
-  try { const r = await kullaniciAPI.getAll(); kullanicilar.value = r.data }
+  try { const r = await kullaniciAPI.getAll(); kullanicilar.value = r.data?.content || r.data || [] }
   catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Kullanıcılar yüklenemedi', life: 5000 }) }
   finally { loading.value = false }
 })
@@ -187,7 +187,7 @@ const save = async () => {
     }
     closeDialog()
     const r = await kullaniciAPI.getAll()
-    kullanicilar.value = r.data
+    kullanicilar.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız', life: 5000 })
   } finally { saving.value = false }

@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,9 +24,8 @@ public class FiyatListesiService {
     private final StokRepository stokRepository;
 
     @Transactional(readOnly = true)
-    public List<FiyatListesiDTO> tumunuGetir(Long sirketId) {
-        return fiyatListesiRepository.findBySirketId(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<FiyatListesiDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return fiyatListesiRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

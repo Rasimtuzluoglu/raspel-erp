@@ -8,10 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -22,10 +22,8 @@ public class BankaService {
     private final BankaRepository bankaRepository;
 
     @Transactional(readOnly = true)
-    public List<BankaDTO> tumBankalariGetir(Long sirketId) {
-        return bankaRepository.findBySirketId(sirketId).stream()
-                .map(this::entityDTOyeCevir)
-                .collect(Collectors.toList());
+    public Page<BankaDTO> tumBankalariGetir(Long sirketId, Pageable pageable) {
+        return bankaRepository.findBySirketId(sirketId, pageable).map(this::entityDTOyeCevir);
     }
 
     @Transactional(readOnly = true)

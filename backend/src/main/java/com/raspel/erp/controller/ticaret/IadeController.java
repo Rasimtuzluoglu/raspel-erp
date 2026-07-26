@@ -10,8 +10,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
+@Tag(name = "İadeler", description = "İade yönetimi API")
 @RestController
 @RequestMapping("/api/iadeler")
 @RequiredArgsConstructor
@@ -22,28 +27,33 @@ public class IadeController {
     private final IadeService iadeService;
 
     @GetMapping
-    public ResponseEntity<List<IadeDTO>> tumu(HttpServletRequest request) {
+    @Operation(summary = "Tüm iadeleri getir", description = "Tüm iade kayıtlarını listeler")
+    public ResponseEntity<Page<IadeDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(iadeService.tumunuGetir(sirketId));
+        return ResponseEntity.ok(iadeService.tumunuGetir(sirketId, pageable));
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "ID'ye göre iade getir", description = "İade ID'sine göre detayları getirir")
     public ResponseEntity<IadeDTO> getir(@PathVariable Long id) {
         return ResponseEntity.ok(iadeService.getir(id));
     }
 
     @PostMapping
+    @Operation(summary = "Yeni iade oluştur", description = "Yeni bir iade kaydı oluşturur")
     public ResponseEntity<IadeDTO> olustur(@Valid @RequestBody IadeDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(iadeService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "İade güncelle", description = "İade bilgilerini günceller")
     public ResponseEntity<IadeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody IadeDTO dto) {
         return ResponseEntity.ok(iadeService.guncelle(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "İade sil", description = "İade kaydını siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         iadeService.sil(id);

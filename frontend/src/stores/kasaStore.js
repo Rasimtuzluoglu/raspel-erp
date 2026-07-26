@@ -8,7 +8,7 @@ export const useKasaStore = defineStore('kasa', () => {
 
   const getAllKasalar = async () => {
     loading.value = true
-    try { const r = await kasaAPI.getAll(); kasalar.value = r.data; return r.data }
+    try { const r = await kasaAPI.getAll(); kasalar.value = r.data?.content || r.data || []; return kasalar.value }
     finally { loading.value = false }
   }
 

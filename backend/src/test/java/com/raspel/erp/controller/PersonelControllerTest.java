@@ -11,9 +11,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -40,21 +43,21 @@ class PersonelControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").soyad("Yılmaz").build());
-        when(personelService.tumunuGetir(null)).thenReturn(list);
+        when(personelService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/personel"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Ahmet"));
+                .andExpect(jsonPath("$.content[0].ad").value("Ahmet"));
     }
 
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").build());
-        when(personelService.tumunuGetir(1L)).thenReturn(list);
+        when(personelService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/personel").param("sirketId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Ahmet"));
+                .andExpect(jsonPath("$.content[0].ad").value("Ahmet"));
     }
 
     @Test
@@ -69,10 +72,10 @@ class PersonelControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(personelService.getir(anyLong())).thenThrow(new RuntimeException("Personel bulunamadı: 999"));
+        when(personelService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Personel bulunamadı: 999"));
 
         mockMvc.perform(get("/api/personel/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

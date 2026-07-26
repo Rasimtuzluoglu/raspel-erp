@@ -58,7 +58,7 @@ const dialogHeader = computed(() => duzenleme.value ? 'Şube Düzenle' : 'Yeni �
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { list.value = (await subeAPI.getAll()).data } catch (err) {
+  try { const r = await subeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Şubeler yüklenemedi', life: 5000 })
   }
   yukleniyor.value = false
@@ -81,7 +81,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şube oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await subeAPI.getAll()).data
+    const r = await subeAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

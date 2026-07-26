@@ -129,8 +129,8 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [pR, iR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll()])
-    personeller.value = pR.data
-    tumIzinler.value = iR.data
+    personeller.value = pR.data?.content || pR.data || []
+    tumIzinler.value = iR.data?.content || iR.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Personel verileri yüklenirken hata oluştu', life: 5000 })
   }
@@ -164,7 +164,7 @@ const personelKaydet = async () => {
     if (duzenleme.value) await personelAPI.update(personelForm.value.id, p)
     else await personelAPI.create(p)
     personelDialog.value = false
-    personeller.value = (await personelAPI.getAll()).data
+    const r2 = await personelAPI.getAll(); personeller.value = r2.data?.content || r2.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Personel kaydedilirken hata oluştu', life: 5000 })
   }
@@ -203,7 +203,7 @@ const izinKaydet = async () => {
     const gunSayisi = Math.ceil((izinForm.value.bitis - izinForm.value.baslangic) / (1000 * 60 * 60 * 24)) + 1
     await personelIzinAPI.create({ personelId: izinPersonelId.value, izinTuru: izinForm.value.izinTuru, baslangic: izinForm.value.baslangic?.toISOString().split('T')[0], bitis: izinForm.value.bitis?.toISOString().split('T')[0], gunSayisi, aciklama: izinForm.value.aciklama })
     izinDialog.value = false
-    tumIzinler.value = (await personelIzinAPI.getAll()).data
+    const r3 = await personelIzinAPI.getAll(); tumIzinler.value = r3.data?.content || r3.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İzin kaydedilirken hata oluştu', life: 5000 })
   }

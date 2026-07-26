@@ -1,6 +1,7 @@
 package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.CariHesapDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.CariHesapService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -40,11 +43,11 @@ class CariHesapControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(CariHesapDTO.builder().id(1L).ad("ABC Müşteri").bakiye(BigDecimal.valueOf(5000)).build());
-        when(cariHesapService.tumCariHesaplariGetir(anyLong())).thenReturn(list);
+        when(cariHesapService.tumCariHesaplariGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/cari-hesaplar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("ABC Müşteri"));
+                .andExpect(jsonPath("$.content[0].ad").value("ABC Müşteri"));
     }
 
     @Test
@@ -69,10 +72,10 @@ class CariHesapControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(cariHesapService.cariHesapGetir(anyLong())).thenThrow(new RuntimeException("Cari Hesap bulunamadı: 999"));
+        when(cariHesapService.cariHesapGetir(anyLong())).thenThrow(new ResourceNotFoundException("Cari Hesap", 999L));
 
         mockMvc.perform(get("/api/cari-hesaplar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -111,7 +114,7 @@ class CariHesapControllerTest {
     @Test
     void shouldExportCsv() throws Exception {
         var list = List.of(CariHesapDTO.builder().id(1L).ad("Test").build());
-        when(cariHesapService.tumCariHesaplariGetir(anyLong())).thenReturn(list);
+        when(cariHesapService.tumCariHesaplariGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/cari-hesaplar/export/csv").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())

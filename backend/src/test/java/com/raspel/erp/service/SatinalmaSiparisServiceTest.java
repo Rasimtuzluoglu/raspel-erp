@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,9 +48,9 @@ class SatinalmaSiparisServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(siparisRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(createSiparis(1L)));
-        var result = satinalmaSiparisService.tumunuGetir(1L);
-        assertEquals(1, result.size());
+        when(siparisRepository.findBySirketIdOrderByTarihDesc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createSiparis(1L))));
+        var result = satinalmaSiparisService.tumunuGetir(1L, Pageable.unpaged());
+        assertEquals(1, result.getContent().size());
     }
 
     @Test

@@ -221,10 +221,7 @@ const girisYap = async () => {
 
 .sirket-select {
   width: 100%;
-}
-.sirket-select :deep(.p-select) {
-  width: 100%;
-  padding-left: 42px !important;
+  padding: 14px 44px 14px 44px !important;
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -234,8 +231,13 @@ const girisYap = async () => {
   display: flex;
   align-items: center;
 }
-.sirket-select :deep(.p-select:not(.p-disabled):hover) {
+.sirket-select:hover {
   border-color: #3b82f6;
+}
+.sirket-select.p-focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
 }
 .sirket-select :deep(.p-select-overlay) {
   background: var(--bg-card);
@@ -251,12 +253,19 @@ const girisYap = async () => {
 .sirket-select :deep(.p-select-option:hover) {
   background: rgba(59, 130, 246, 0.1);
 }
+.sirket-select :deep(.p-select-option.p-select-option-selected) {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
 .sirket-select :deep(.p-select-label) {
-  padding: 14px 14px 14px 0 !important;
   font-size: 16px;
+  padding: 0 !important;
 }
 .sirket-select :deep(.p-select-dropdown) {
-  width: 44px;
+  width: 40px;
+}
+.sirket-select :deep(.p-placeholder) {
+  color: var(--text-muted);
 }
 
 .giris-buton {

@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,9 +45,9 @@ class IrsaliyeServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(irsaliyeRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(createIrsaliye(1L)));
-        var result = irsaliyeService.tumunuGetir(1L);
-        assertEquals(1, result.size());
+        when(irsaliyeRepository.findBySirketIdOrderByTarihDesc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createIrsaliye(1L))));
+        var result = irsaliyeService.tumunuGetir(1L, Pageable.unpaged());
+        assertEquals(1, result.getContent().size());
     }
 
     @Test

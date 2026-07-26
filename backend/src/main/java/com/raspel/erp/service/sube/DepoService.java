@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +32,11 @@ public class DepoService {
     private final StokRepository stokRepository;
 
     @Transactional(readOnly = true)
-    public List<DepoDTO> tumunuGetir(Long sirketId) {
-        Map<Long, String> subeHaritasi = subeRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
+    public Page<DepoDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        Map<Long, String> subeHaritasi = subeRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd()));
-        return depoRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                .map(d -> entityToDTO(d, subeHaritasi.get(d.getSubeId())))
-                .collect(Collectors.toList());
+        return depoRepository.findBySirketIdOrderByAdAsc(sirketId, pageable)
+                .map(d -> entityToDTO(d, subeHaritasi.get(d.getSubeId())));
     }
 
     @Transactional(readOnly = true)

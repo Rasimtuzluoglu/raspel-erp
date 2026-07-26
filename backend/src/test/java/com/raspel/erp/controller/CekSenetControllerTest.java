@@ -11,11 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -42,21 +45,21 @@ class CekSenetControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(CekSenetDTO.builder().id(1L).tur("CEK").cekNo("12345").durum("PORTFOY").build());
-        when(cekSenetService.tumunuGetir(null)).thenReturn(list);
+        when(cekSenetService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/cek-senet"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tur").value("CEK"));
+                .andExpect(jsonPath("$.content[0].tur").value("CEK"));
     }
 
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(CekSenetDTO.builder().id(1L).tur("CEK").build());
-        when(cekSenetService.tumunuGetir(1L)).thenReturn(list);
+        when(cekSenetService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/cek-senet").param("sirketId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tur").value("CEK"));
+                .andExpect(jsonPath("$.content[0].tur").value("CEK"));
     }
 
     @Test
@@ -71,10 +74,10 @@ class CekSenetControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(cekSenetService.getir(anyLong())).thenThrow(new RuntimeException("Çek/Senet bulunamadı: 999"));
+        when(cekSenetService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Çek/Senet bulunamadı: 999"));
 
         mockMvc.perform(get("/api/cek-senet/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

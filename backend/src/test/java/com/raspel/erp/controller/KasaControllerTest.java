@@ -2,6 +2,7 @@ package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.KasaDTO;
 import com.raspel.erp.dto.KasaHareketDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.KasaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,8 @@ import org.springframework.context.annotation.Import;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -42,11 +45,11 @@ class KasaControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(KasaDTO.builder().id(1L).ad("Ana Kasa").bakiye(BigDecimal.valueOf(10000)).build());
-        when(kasaService.tumKasalarGetir(anyLong())).thenReturn(list);
+        when(kasaService.tumKasalarGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/kasalar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Ana Kasa"));
+                .andExpect(jsonPath("$.content[0].ad").value("Ana Kasa"));
     }
 
     @Test
@@ -61,10 +64,10 @@ class KasaControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(kasaService.kasaGetir(anyLong())).thenThrow(new RuntimeException("Kasa bulunamadı: 999"));
+        when(kasaService.kasaGetir(anyLong())).thenThrow(new ResourceNotFoundException("Kasa", 999L));
 
         mockMvc.perform(get("/api/kasalar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

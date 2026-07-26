@@ -85,7 +85,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const r = await personelIzinAPI.getAll()
-    tumIzinler.value = r.data
+    tumIzinler.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
   }
@@ -100,7 +100,7 @@ const onayla = (data) => {
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
-        tumIzinler.value = (await personelIzinAPI.getAll()).data
+        const r = await personelIzinAPI.getAll(); tumIzinler.value = r.data?.content || r.data || []
         toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin onaylandı', life: 5000 })
       } catch (err) {
         toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
@@ -117,7 +117,7 @@ const reddet = (data) => {
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
-        tumIzinler.value = (await personelIzinAPI.getAll()).data
+        const r = await personelIzinAPI.getAll(); tumIzinler.value = r.data?.content || r.data || []
         toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin reddedildi', life: 5000 })
       } catch (err) {
         toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })

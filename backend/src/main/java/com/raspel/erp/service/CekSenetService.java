@@ -8,8 +8,9 @@ import com.raspel.erp.repository.CekSenetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -22,11 +23,11 @@ public class CekSenetService {
     private final CariHesapRepository cariHesapRepository;
 
     @Transactional(readOnly = true)
-    public List<CekSenetDTO> tumunuGetir(Long sirketId) {
+    public Page<CekSenetDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         Map<Long, String> cariHaritasi = cariHesapRepository.findAll().stream()
                 .collect(Collectors.toMap(c -> c.getId(), c -> c.getAd(), (a, b) -> a));
-        return cekSenetRepository.findBySirketIdOrderByVadeTarihiAsc(sirketId).stream()
-                .map(cs -> entityToDTO(cs, cariHaritasi)).collect(Collectors.toList());
+        return cekSenetRepository.findBySirketIdOrderByVadeTarihiAsc(sirketId, pageable)
+                .map(cs -> entityToDTO(cs, cariHaritasi));
     }
 
     @Transactional(readOnly = true)

@@ -10,7 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -104,9 +106,9 @@ class HareketServiceTest {
 
     @Test
     void tumHareketleriGetir_returnsAll() {
-        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(anyLong())).thenReturn(List.of(createHareket(1L)));
-        var result = hareketService.tumHareketleriGetir(1L);
-        assertEquals(1, result.size());
+        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createHareket(1L))));
+        var result = hareketService.tumHareketleriGetir(1L, Pageable.unpaged());
+        assertEquals(1, result.getContent().size());
     }
 
     @Test

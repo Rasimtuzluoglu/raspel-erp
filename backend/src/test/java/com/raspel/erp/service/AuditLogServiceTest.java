@@ -7,6 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -30,8 +32,8 @@ class AuditLogServiceTest {
     void tumunuGetir_returnsAll() {
         AuditLog log1 = AuditLog.builder().id(1L).islem("CREATE").build();
         AuditLog log2 = AuditLog.builder().id(2L).islem("UPDATE").build();
-        when(auditLogRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(log1, log2));
-        var result = auditLogService.tumunuGetir();
-        assertEquals(2, result.size());
+        when(auditLogRepository.findAllByOrderByTarihDesc(Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(log1, log2)));
+        var result = auditLogService.tumunuGetir(Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 }

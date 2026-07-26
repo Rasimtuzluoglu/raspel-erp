@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,14 +40,14 @@ class DonemServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(donemRepository.findAll()).thenReturn(List.of(createDonem(1L), createDonem(2L)));
-        var result = donemService.tumunuGetir();
-        assertEquals(2, result.size());
+        when(donemRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createDonem(1L), createDonem(2L))));
+        var result = donemService.tumunuGetir(Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test
     void sirketeGoreGetir_returnsForSirket() {
-        when(donemRepository.findBySirketIdOrderByBaslangicDesc(1L)).thenReturn(List.of(createDonem(1L)));
+        when(donemRepository.findBySirketIdOrderByBaslangicDesc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createDonem(1L))));
         var result = donemService.sirketeGoreGetir(1L);
         assertEquals(1, result.size());
     }

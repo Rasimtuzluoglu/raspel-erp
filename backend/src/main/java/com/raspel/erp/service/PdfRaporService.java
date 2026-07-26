@@ -78,7 +78,7 @@ public class PdfRaporService {
             doc.save(baos);
             return baos.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("PDF olusturulamadi", e);
+            throw new RuntimeException("PDF oluşturulamadı", e);
         }
     }
 }

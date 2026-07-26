@@ -13,6 +13,8 @@ import com.raspel.erp.repository.StokRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,9 +31,8 @@ public class SatinalmaSiparisService {
     private final StokRepository stokRepository;
 
     @Transactional(readOnly = true)
-    public List<SatinalmaSiparisDTO> tumunuGetir(Long sirketId) {
-        return siparisRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

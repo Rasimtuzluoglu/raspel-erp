@@ -78,6 +78,7 @@
                 <span class="kullanici-ad">{{ authStore.kullanici?.displayName }}</span>
                 <span class="kullanici-rol">{{ authStore.kullanici?.role }}</span>
               </div>
+              <Button icon="pi pi-lock" class="p-button-rounded p-button-text sifre-btn" @click="sifreDialog = true" title="Şifre Değiştir" />
               <Button icon="pi pi-sign-out" class="p-button-rounded p-button-text cikis-btn" @click="cikis" title="Çıkış Yap" />
             </div>
           </div>
@@ -97,19 +98,67 @@
     <QuickSearch :visible="quickSearchVisible" @update:visible="quickSearchVisible = $event" />
     <Toast position="top-right" :life="5000" />
     <ConfirmDialog />
+
+    <Dialog v-model:visible="sifreDialog" header="Şifre Değiştir" modal :style="{ width: '400px' }">
+      <div class="form-grid">
+        <div class="field">
+          <label>Mevcut Şifre</label>
+          <InputText v-model="sifreForm.mevcutSifre" type="password" class="w-full" />
+        </div>
+        <div class="field">
+          <label>Yeni Şifre</label>
+          <InputText v-model="sifreForm.yeniSifre" type="password" class="w-full" />
+        </div>
+        <div class="field">
+          <label>Yeni Şifre Tekrar</label>
+          <InputText v-model="sifreForm.yeniSifreTekrar" type="password" class="w-full" />
+        </div>
+      </div>
+      <template #footer>
+        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="sifreDialog = false" />
+        <Button label="Değiştir" icon="pi pi-check" @click="sifreDegistir" :loading="sifreDegistiriliyor" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from './stores/authStore.js'
-import { sirketAPI } from './api/index.js'
+import { sirketAPI, kullaniciAPI } from './api/index.js'
 import QuickSearch from './components/QuickSearch.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToast()
 const quickSearchVisible = ref(false)
+
+const sifreDialog = ref(false)
+const sifreDegistiriliyor = ref(false)
+const sifreForm = ref({ mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' })
+
+const sifreDegistir = async () => {
+  if (!sifreForm.value.yeniSifre || sifreForm.value.yeniSifre.length < 3) {
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Yeni şifre en az 3 karakter olmalıdır', life: 5000 })
+    return
+  }
+  if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Yeni şifreler eşleşmiyor', life: 5000 })
+    return
+  }
+  sifreDegistiriliyor.value = true
+  try {
+    await kullaniciAPI.sifreDegistir({ mevcutSifre: sifreForm.value.mevcutSifre, yeniSifre: sifreForm.value.yeniSifre })
+    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şifreniz değiştirildi', life: 5000 })
+    sifreDialog.value = false
+    sifreForm.value = { mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' }
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Şifre değiştirilemedi', life: 5000 })
+  }
+  sifreDegistiriliyor.value = false
+}
 
 const theme = ref(localStorage.getItem('raspel_erp_theme') || 'dark')
 const isDark = computed(() => theme.value === 'dark')

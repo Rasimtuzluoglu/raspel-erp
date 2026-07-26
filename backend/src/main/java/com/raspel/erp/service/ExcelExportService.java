@@ -61,7 +61,7 @@ public class ExcelExportService {
             wb.write(out);
             return out.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("Excel export failed", e);
+            throw new RuntimeException("Excel dışa aktarma hatası", e);
         }
     }
 }

@@ -96,7 +96,7 @@ const formatDate = (d) => {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    list.value = (await iadeAPI.getAll()).data
+    const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
     const stokRes = await stokAPI.getAll()
     stokList.value = stokRes.data?.content || stokRes.data || []
   } catch (err) {
@@ -139,7 +139,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İade oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await iadeAPI.getAll()).data
+    const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }
@@ -149,7 +149,7 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await iadeAPI.durumGuncelle(data.id, durum)
-    list.value = (await iadeAPI.getAll()).data
+    const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `İade durumu "${durum}" olarak güncellendi`, life: 3000 })
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Durum güncellenirken hata oluştu', life: 5000 })

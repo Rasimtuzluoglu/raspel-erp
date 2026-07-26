@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -19,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Dosya Yükleme", description = "Dosya yükleme ve sunma API")
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
@@ -28,6 +31,7 @@ public class FileUploadController {
     private final Path sirketLogoDir = Paths.get("uploads/sirket-logos");
 
     @PostMapping("/upload/avatar")
+    @Operation(summary = "Avatar yükle", description = "Kullanıcı avatarı yükler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -55,6 +59,7 @@ public class FileUploadController {
     }
 
     @GetMapping("/uploads/avatars/{filename}")
+    @Operation(summary = "Avatar getir", description = "Kullanıcı avatarını döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Resource> getAvatar(@PathVariable String filename) {
         try {
@@ -80,6 +85,7 @@ public class FileUploadController {
     }
 
     @PostMapping("/upload/sirket-logo")
+    @Operation(summary = "Şirket logosu yükle", description = "Şirket logosu yükler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadSirketLogo(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -107,6 +113,7 @@ public class FileUploadController {
     }
 
     @GetMapping("/uploads/sirket-logos/{filename}")
+    @Operation(summary = "Şirket logosu getir", description = "Şirket logosunu döndürür (public)")
     public ResponseEntity<Resource> getSirketLogo(@PathVariable String filename) {
         try {
             Path file = sirketLogoDir.resolve(filename);

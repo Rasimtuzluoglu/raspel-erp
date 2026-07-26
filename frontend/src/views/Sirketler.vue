@@ -101,7 +101,7 @@ const logoYukleniyor = ref(false)
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { sirketler.value = (await sirketAPI.getAll()).data } catch (err) {
+  try { const r = await sirketAPI.getAll(); sirketler.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu', life: 5000 })
   }
   yukleniyor.value = false
@@ -163,7 +163,7 @@ const kaydetAction = async () => {
     }
     dialog.value = false
     const r = await sirketAPI.getAll()
-    sirketler.value = r.data
+    sirketler.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

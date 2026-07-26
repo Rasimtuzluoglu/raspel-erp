@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,9 +41,9 @@ class KasaServiceTest {
 
     @Test
     void tumKasalarGetir_returnsAll() {
-        when(kasaRepository.findBySirketId(anyLong())).thenReturn(List.of(createKasa(1L), createKasa(2L)));
-        var result = kasaService.tumKasalarGetir(1L);
-        assertEquals(2, result.size());
+        when(kasaRepository.findBySirketId(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createKasa(1L), createKasa(2L))));
+        var result = kasaService.tumKasalarGetir(1L, Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

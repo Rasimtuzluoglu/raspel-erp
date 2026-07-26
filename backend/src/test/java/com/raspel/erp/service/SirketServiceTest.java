@@ -9,6 +9,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +40,9 @@ class SirketServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(sirketRepository.findAll()).thenReturn(List.of(createSirket(1L), createSirket(2L)));
-        var result = sirketService.tumunuGetir();
-        assertEquals(2, result.size());
+        when(sirketRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createSirket(1L), createSirket(2L))));
+        var result = sirketService.tumunuGetir(Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

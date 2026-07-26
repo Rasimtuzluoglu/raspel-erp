@@ -3,10 +3,13 @@ package com.raspel.erp.service;
 import com.raspel.erp.dto.HareketDTO;
 import com.raspel.erp.entity.CariHesap;
 import com.raspel.erp.entity.Hareket;
+import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.CariHesapRepository;
 import com.raspel.erp.repository.HareketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,7 +42,7 @@ public class HareketService {
         
         // Cari hesabın var olduğunu kontrol et
         if (!cariHesapRepository.existsById(cariHesapId)) {
-            throw new RuntimeException("Cari Hesap bulunamadı: " + cariHesapId);
+            throw new ResourceNotFoundException("Cari Hesap", cariHesapId);
         }
         
         return hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(cariHesapId)
@@ -70,14 +73,14 @@ public class HareketService {
         
         // Cari hesabın var olduğunu kontrol et
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
-                .orElseThrow(() -> new RuntimeException("Cari Hesap bulunamadı: " + dto.getCariHesapId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
         
         // Hareket türünü valide et
         Hareket.HareketTuru hareketTuru;
         try {
             hareketTuru = Hareket.HareketTuru.valueOf(dto.getTur().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Geçersiz hareket türü: " + dto.getTur());
+            throw new BusinessException("Geçersiz hareket türü: " + dto.getTur());
         }
         
         // Bakiye güncelleme tutarını hesapla (Tahsilat +, Ödeme -)
@@ -106,16 +109,11 @@ public class HareketService {
         return entityDTOyeCevir(kaydedilenHareket);
     }
     
-    /**
-     * Tüm hareketleri getir
-     */
     @Transactional(readOnly = true)
-    public List<HareketDTO> tumHareketleriGetir(Long sirketId) {
+    public Page<HareketDTO> tumHareketleriGetir(Long sirketId, Pageable pageable) {
         log.debug("Tüm hareketler getiriliyor, sirketId: {}", sirketId);
-        return hareketRepository.findBySirketIdOrderByHareketTarihiDesc(sirketId)
-                .stream()
-                .map(this::entityDTOyeCevir)
-                .collect(Collectors.toList());
+        return hareketRepository.findBySirketIdOrderByHareketTarihiDesc(sirketId, pageable)
+                .map(this::entityDTOyeCevir);
     }
 
     /**
@@ -147,16 +145,16 @@ public class HareketService {
         log.info("Hareket güncelleniyor - ID: {}", id);
 
         Hareket hareket = hareketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Hareket bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
 
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
-                .orElseThrow(() -> new RuntimeException("Cari Hesap bulunamadı: " + dto.getCariHesapId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
 
         Hareket.HareketTuru yeniTur;
         try {
             yeniTur = Hareket.HareketTuru.valueOf(dto.getTur().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Geçersiz hareket türü: " + dto.getTur());
+            throw new BusinessException("Geçersiz hareket türü: " + dto.getTur());
         }
 
         BigDecimal eskiBakiyeEtkisi = hareket.getTur() == Hareket.HareketTuru.TAHSILAT
@@ -187,7 +185,7 @@ public class HareketService {
         log.info("Hareket siliniliyor - ID: {}", id);
         
         Hareket hareket = hareketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Hareket bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
         
         // Bakiye güncellemeyi ters işlemle yap
         BigDecimal bakiyeGuncellemeTutari = hareket.getTur() == Hareket.HareketTuru.TAHSILAT 

@@ -7,12 +7,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * Dashboard Controller
  * Dashboard'un ihtiyaç duyduğu veriler için API endpoint'lerini sağlar.
  */
+@Tag(name = "Dashboard", description = "Dashboard verileri API")
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
@@ -23,11 +26,8 @@ public class DashboardController {
     
     private final DashboardService dashboardService;
     
-    /**
-     * Dashboard verilerini getir
-     * GET /api/dashboard
-     */
     @GetMapping
+    @Operation(summary = "Dashboard verilerini getir", description = "Dashboard için özet istatistikleri ve grafik verilerini döndürür")
     public ResponseEntity<DashboardDTO> dashboardVerileriGetir(HttpServletRequest request) {
         log.info("GET /api/dashboard - Dashboard verileri getiriliyor");
         Long sirketId = (Long) request.getAttribute("sirketId");

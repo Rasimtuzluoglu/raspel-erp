@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -70,9 +72,9 @@ class FaturaServiceTest {
 
     @Test
     void tumFaturalariGetir_returnsAll() {
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong())).thenReturn(List.of(createFatura(1L)));
-        var result = faturaService.tumFaturalariGetir(1L);
-        assertEquals(1, result.size());
+        when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+        var result = faturaService.tumFaturalariGetir(1L, Pageable.unpaged());
+        assertEquals(1, result.getContent().size());
     }
 
     @Test

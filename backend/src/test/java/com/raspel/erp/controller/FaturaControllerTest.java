@@ -2,6 +2,7 @@ package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.FaturaDTO;
 import com.raspel.erp.dto.FaturaKalemDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.FaturaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -42,11 +45,11 @@ class FaturaControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tur("SATIS").build());
-        when(faturaService.tumFaturalariGetir(anyLong())).thenReturn(list);
+        when(faturaService.tumFaturalariGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/faturalar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].faturaNumarasi").value("FTR-001"));
+                .andExpect(jsonPath("$.content[0].faturaNumarasi").value("FTR-001"));
     }
 
     @Test
@@ -61,10 +64,10 @@ class FaturaControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(faturaService.faturaGetir(anyLong())).thenThrow(new RuntimeException("Fatura bulunamadı: 999"));
+        when(faturaService.faturaGetir(anyLong())).thenThrow(new ResourceNotFoundException("Fatura", 999L));
 
         mockMvc.perform(get("/api/faturalar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

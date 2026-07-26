@@ -12,8 +12,8 @@ export const useFaturaStore = defineStore('fatura', () => {
     error.value = null
     try {
       const response = await faturaAPI.getAll()
-      faturalar.value = response.data
-      return response.data
+      faturalar.value = response.data?.content || response.data || []
+      return faturalar.value
     } catch (err) {
       error.value = err.message
       throw err

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,10 +49,10 @@ class PersonelIzinServiceTest {
         personel.setAd("Test");
         personel.setSoyad("User");
         when(personelRepository.findAll()).thenReturn(List.of(personel));
-        when(personelRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(personel));
+        when(personelRepository.findBySirketIdOrderByAdAsc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(personel)));
         when(izinRepository.findAll()).thenReturn(List.of(createIzin(1L), createIzin(2L)));
-        var result = personelIzinService.tumunuGetir(1L);
-        assertEquals(2, result.size());
+        var result = personelIzinService.tumunuGetir(1L, Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,9 +35,9 @@ class KategoriServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(kategoriRepository.findBySirketId(anyLong())).thenReturn(List.of(createKategori(1L), createKategori(2L)));
-        var result = kategoriService.tumunuGetir(1L);
-        assertEquals(2, result.size());
+        when(kategoriRepository.findBySirketId(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createKategori(1L), createKategori(2L))));
+        var result = kategoriService.tumunuGetir(1L, Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

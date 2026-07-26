@@ -27,6 +27,13 @@ import Calendar from 'primevue/calendar'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import InputSwitch from 'primevue/inputswitch'
+import Skeleton from 'primevue/skeleton'
+
+import AppDataTable from './components/AppDataTable.vue'
+import PageHeader from './components/PageHeader.vue'
+import EmptyState from './components/EmptyState.vue'
+import SkeletonLoader from './components/SkeletonLoader.vue'
+
 import 'primeicons/primeicons.css'
 import './assets/app.css'
 
@@ -63,5 +70,10 @@ app.component('Calendar', Calendar)
 app.component('TabView', TabView)
 app.component('TabPanel', TabPanel)
 app.component('InputSwitch', InputSwitch)
+app.component('Skeleton', Skeleton)
+app.component('AppDataTable', AppDataTable)
+app.component('PageHeader', PageHeader)
+app.component('EmptyState', EmptyState)
+app.component('SkeletonLoader', SkeletonLoader)
 
 app.mount('#app')

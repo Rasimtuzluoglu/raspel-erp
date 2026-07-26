@@ -120,7 +120,7 @@ onMounted(async () => {
     const [depoRes, subeRes, stokRes] = await Promise.all([
       depoAPI.getAll(), subeAPI.getAll(), stokAPI.getAll()
     ])
-    list.value = depoRes.data
+    list.value = depoRes.data?.content || depoRes.data || []
     subeListesi.value = subeRes.data
     stokListesi.value = stokRes.data.content || stokRes.data
   } catch (err) {
@@ -146,7 +146,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Depo oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await depoAPI.getAll()).data
+    const r = await depoAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

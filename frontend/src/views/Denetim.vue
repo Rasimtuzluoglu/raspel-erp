@@ -30,7 +30,7 @@ const yukleniyor = ref(false)
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { list.value = (await auditLogAPI.getAll()).data } catch (err) {
+  try { const r = await auditLogAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Denetim kayıtları yüklenirken hata oluştu', life: 5000 })
   }
   yukleniyor.value = false

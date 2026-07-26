@@ -7,8 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
+@Tag(name = "Denetim Log", description = "Denetim log yönetimi API")
 @RestController
 @RequestMapping("/api/audit-log")
 @RequiredArgsConstructor
@@ -19,7 +24,8 @@ public class AuditLogController {
     private final AuditLogService auditLogService;
 
     @GetMapping
-    public ResponseEntity<List<AuditLog>> tumu() {
-        return ResponseEntity.ok(auditLogService.tumunuGetir());
+    @Operation(summary = "Tüm denetim loglarını getir", description = "Tüm denetim log kayıtlarını listeler")
+    public ResponseEntity<Page<AuditLog>> tumu(@PageableDefault(size = 50) Pageable pageable) {
+        return ResponseEntity.ok(auditLogService.tumunuGetir(pageable));
     }
 }

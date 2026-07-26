@@ -1,6 +1,8 @@
 package com.raspel.erp.repository;
 
 import com.raspel.erp.entity.CariHesap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,7 +43,7 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.bakiye < 0 AND c.sirketId = :sirketId")
     BigDecimal toplamNegatifBakiyeBySirketId(@Param("sirketId") Long sirketId);
 
-    List<CariHesap> findBySirketId(Long sirketId);
+    Page<CariHesap> findBySirketId(Long sirketId, Pageable pageable);
 
     List<CariHesap> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String query);
 

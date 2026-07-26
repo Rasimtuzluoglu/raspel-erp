@@ -137,7 +137,7 @@ onMounted(async () => {
 
 const talepleriYukle = async () => {
   taleplerYukleniyor.value = true
-  try { talepler.value = (await satinalmaTalepAPI.getAll()).data } catch (err) {
+  try { const r = await satinalmaTalepAPI.getAll(); talepler.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Talepler yüklenirken hata oluştu', life: 5000 })
   }
   taleplerYukleniyor.value = false
@@ -145,14 +145,14 @@ const talepleriYukle = async () => {
 
 const siparisleriYukle = async () => {
   siparislerYukleniyor.value = true
-  try { siparisler.value = (await satinalmaSiparisAPI.getAll()).data } catch (err) {
+  try { const r = await satinalmaSiparisAPI.getAll(); siparisler.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu', life: 5000 })
   }
   siparislerYukleniyor.value = false
 }
 
 const carieleriYukle = async () => {
-  try { cariler.value = (await cariHesapAPI.getAll()).data } catch (err) {
+  try { const r = await cariHesapAPI.getAll(); cariler.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Cariler yüklenirken hata oluştu', life: 5000 })
   }
 }

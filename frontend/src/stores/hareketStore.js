@@ -43,8 +43,8 @@ export const useHareketStore = defineStore('hareket', () => {
     error.value = null
     try {
       const response = await hareketAPI.getAll()
-      hareketler.value = response.data
-      return response.data
+      hareketler.value = response.data?.content || response.data || []
+      return hareketler.value
     } catch (err) {
       error.value = err.message
       throw err

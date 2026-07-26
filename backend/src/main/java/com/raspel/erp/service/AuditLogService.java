@@ -5,7 +5,8 @@ import com.raspel.erp.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +20,7 @@ public class AuditLogService {
                 .entityId(entityId).aciklama(aciklama).ipAdresi(ipAdresi).build());
     }
 
-    public List<AuditLog> tumunuGetir() {
-        return auditLogRepository.findAllByOrderByTarihDesc();
+    public Page<AuditLog> tumunuGetir(Pageable pageable) {
+        return auditLogRepository.findAllByOrderByTarihDesc(pageable);
     }
 }

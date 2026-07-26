@@ -63,7 +63,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [sR, stR] = await Promise.all([stokSeriAPI.getAll(), stokAPI.getAll()])
-    list.value = sR.data
+    list.value = sR.data?.content || sR.data || []
     stokListesi.value = stR.data.content || stR.data
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
@@ -89,7 +89,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Seri/Lot oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await stokSeriAPI.getAll()).data
+    const r = await stokSeriAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

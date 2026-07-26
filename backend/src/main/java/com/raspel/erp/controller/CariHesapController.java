@@ -12,6 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +25,7 @@ import java.util.stream.Collectors;
  * Cari Hesap Controller
  * Cari hesap işlemleri için REST API endpoint'lerini sağlar.
  */
+@Tag(name = "Cari Hesaplar", description = "Cari hesap yönetimi API")
 @RestController
 @RequestMapping("/api/cari-hesaplar")
 @RequiredArgsConstructor
@@ -29,27 +36,23 @@ public class CariHesapController {
     
     private final CariHesapService cariHesapService;
     
-    /**
-     * Tüm cari hesapları getir
-     * GET /api/cari-hesaplar
-     */
     @GetMapping
-    public ResponseEntity<List<CariHesapDTO>> tumCariHesaplariGetir(HttpServletRequest request) {
+    @Operation(summary = "Tüm cari hesapları getir (sayfalı)", description = "Şirkete ait tüm cari hesapları sayfalı olarak listeler")
+    public ResponseEntity<Page<CariHesapDTO>> tumCariHesaplariGetir(
+            HttpServletRequest request,
+            @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/cari-hesaplar - Tüm cari hesaplar getiriliyor, sirketId: {}", sirketId);
-        List<CariHesapDTO> cariHesaplar = cariHesapService.tumCariHesaplariGetir(sirketId);
+        Page<CariHesapDTO> cariHesaplar = cariHesapService.tumCariHesaplariGetir(sirketId, pageable);
         return ResponseEntity.ok(cariHesaplar);
     }
     
-    /**
-     * Cari hesapları CSV olarak dışa aktar
-     * GET /api/cari-hesaplar/export/csv
-     */
     @GetMapping("/export/csv")
+    @Operation(summary = "Cari hesapları CSV dışa aktar", description = "Cari hesapları CSV dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> cariHesaplarCsv(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/cari-hesaplar/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId);
+        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Ad,Vergi Numarası,Telefon,Bakiye\n");
@@ -77,11 +80,8 @@ public class CariHesapController {
         return escaped;
     }
 
-    /**
-     * Cari hesapları ada göre ara
-     * GET /api/cari-hesaplar/search?q=abc
-     */
     @GetMapping("/search")
+    @Operation(summary = "Cari hesap ara", description = "Cari hesapları ada göre arar")
     public ResponseEntity<List<CariHesapDTO>> cariHesapAra(@RequestParam String q, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/cari-hesaplar/search - Arama: {}, sirketId: {}", q, sirketId);
@@ -89,22 +89,16 @@ public class CariHesapController {
         return ResponseEntity.ok(sonuclar);
     }
 
-    /**
-     * ID'ye göre cari hesap getir
-     * GET /api/cari-hesaplar/{id}
-     */
     @GetMapping("/{id}")
+    @Operation(summary = "ID'ye göre cari hesap getir", description = "Cari hesap ID'sine göre detayları getirir")
     public ResponseEntity<CariHesapDTO> cariHesapGetir(@PathVariable Long id) {
         log.info("GET /api/cari-hesaplar/{} - Cari hesap getiriliyor", id);
         CariHesapDTO cariHesap = cariHesapService.cariHesapGetir(id);
         return ResponseEntity.ok(cariHesap);
     }
 
-    /**
-     * Yeni cari hesap oluştur
-     * POST /api/cari-hesaplar
-     */
     @PostMapping
+    @Operation(summary = "Yeni cari hesap oluştur", description = "Yeni bir cari hesap oluşturur")
     public ResponseEntity<CariHesapDTO> cariHesapOlustur(@RequestBody @jakarta.validation.Valid CariHesapDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("POST /api/cari-hesaplar - Yeni cari hesap oluşturuluyor: {}, sirketId: {}", dto.getAd(), sirketId);
@@ -112,22 +106,16 @@ public class CariHesapController {
         return ResponseEntity.status(HttpStatus.CREATED).body(olusturulanCariHesap);
     }
 
-    /**
-     * Cari hesap güncelle
-     * PUT /api/cari-hesaplar/{id}
-     */
     @PutMapping("/{id}")
+    @Operation(summary = "Cari hesap güncelle", description = "Cari hesap bilgilerini günceller")
     public ResponseEntity<CariHesapDTO> cariHesapGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid CariHesapDTO dto) {
         log.info("PUT /api/cari-hesaplar/{} - Cari hesap güncelleniyor", id);
         CariHesapDTO guncellenenCariHesap = cariHesapService.cariHesapGuncelle(id, dto);
         return ResponseEntity.ok(guncellenenCariHesap);
     }
 
-    /**
-     * Cari hesap sil
-     * DELETE /api/cari-hesaplar/{id}
-     */
     @DeleteMapping("/{id}")
+    @Operation(summary = "Cari hesap sil", description = "Cari hesabı siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> cariHesapSil(@PathVariable Long id) {
         log.info("DELETE /api/cari-hesaplar/{} - Cari hesap siliniliyor", id);

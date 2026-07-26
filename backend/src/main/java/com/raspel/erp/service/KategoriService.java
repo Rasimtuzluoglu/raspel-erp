@@ -6,6 +6,8 @@ import com.raspel.erp.repository.KategoriRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.raspel.erp.exception.ResourceNotFoundException;
 import java.util.List;
@@ -18,8 +20,8 @@ public class KategoriService {
 
     private final KategoriRepository kategoriRepository;
 
-    public List<KategoriDTO> tumunuGetir(Long sirketId) {
-        return kategoriRepository.findBySirketId(sirketId).stream().map(this::entityToDTO).collect(Collectors.toList());
+    public Page<KategoriDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return kategoriRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
     public List<KategoriDTO> turuGetir(String tur) {

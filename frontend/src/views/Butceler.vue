@@ -73,7 +73,7 @@ const formatCurrency = (v) => {
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { list.value = (await butceAPI.getAll()).data } catch (err) {
+  try { const r = await butceAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Bütçeler yüklenemedi', life: 5000 })
   }
   yukleniyor.value = false
@@ -96,7 +96,7 @@ const kaydet = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Bütçe oluşturuldu', life: 3000 })
     }
     dialog.value = false
-    list.value = (await butceAPI.getAll()).data
+    const r = await butceAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
   }

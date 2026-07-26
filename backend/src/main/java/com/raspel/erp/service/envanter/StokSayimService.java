@@ -7,12 +7,12 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.StokRepository;
 import com.raspel.erp.repository.envanter.StokSayimRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -23,9 +23,8 @@ public class StokSayimService {
     private final StokRepository stokRepository;
 
     @Transactional(readOnly = true)
-    public List<StokSayimDTO> tumunuGetir(Long sirketId) {
-        return stokSayimRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<StokSayimDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return stokSayimRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

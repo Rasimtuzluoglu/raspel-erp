@@ -8,7 +8,7 @@ export const useKategoriStore = defineStore('kategori', () => {
 
   const getAllKategoriler = async () => {
     loading.value = true
-    try { const r = await kategoriAPI.getAll(); kategoriler.value = r.data; return r.data }
+    try { const r = await kategoriAPI.getAll(); kategoriler.value = r.data?.content || r.data || []; return kategoriler.value }
     finally { loading.value = false }
   }
 

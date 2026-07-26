@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,8 +30,8 @@ public class KasaService {
     private final KategoriRepository kategoriRepository;
 
     @Transactional(readOnly = true)
-    public List<KasaDTO> tumKasalarGetir(Long sirketId) {
-        return kasaRepository.findBySirketId(sirketId).stream().map(this::entityToDTO).collect(Collectors.toList());
+    public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
+        return kasaRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

@@ -12,8 +12,8 @@ export const useBankaStore = defineStore('banka', () => {
     error.value = null
     try {
       const response = await bankaAPI.getAll()
-      bankalar.value = response.data
-      return response.data
+      bankalar.value = response.data?.content || response.data || []
+      return bankalar.value
     } catch (err) {
       error.value = err.message
       throw err

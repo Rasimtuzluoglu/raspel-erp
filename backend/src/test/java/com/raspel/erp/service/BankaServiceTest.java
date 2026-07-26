@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,9 +39,9 @@ class BankaServiceTest {
 
     @Test
     void tumBankalariGetir_returnsAll() {
-        when(bankaRepository.findBySirketId(anyLong())).thenReturn(List.of(createBanka(1L), createBanka(2L)));
-        var result = bankaService.tumBankalariGetir(1L);
-        assertEquals(2, result.size());
+        when(bankaRepository.findBySirketId(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createBanka(1L), createBanka(2L))));
+        var result = bankaService.tumBankalariGetir(1L, Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

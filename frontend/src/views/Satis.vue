@@ -172,7 +172,7 @@ onMounted(async () => {
 const satislariYukle = async () => {
   try {
     const r = await faturaAPI.getAll()
-    satislar.value = r.data.filter(f => f.tur === 'SATIS')
+    satislar.value = (r.data?.content || r.data || []).filter(f => f.tur === 'SATIS')
   } catch {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Satışlar yüklenemedi', life: 5000 })
   }

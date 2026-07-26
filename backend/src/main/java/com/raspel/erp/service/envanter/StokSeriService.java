@@ -9,6 +9,8 @@ import com.raspel.erp.repository.StokRepository;
 import com.raspel.erp.repository.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokSeriRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +27,8 @@ public class StokSeriService {
     private final StokHareketRepository stokHareketRepository;
 
     @Transactional(readOnly = true)
-    public List<StokSeriDTO> tumunuGetir(Long sirketId) {
-        return stokSeriRepository.findAll().stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<StokSeriDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return stokSeriRepository.findAll(pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

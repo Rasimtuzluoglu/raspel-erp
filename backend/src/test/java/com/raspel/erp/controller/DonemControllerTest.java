@@ -1,6 +1,7 @@
 package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.DonemDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.DonemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -40,11 +43,11 @@ class DonemControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(DonemDTO.builder().id(1L).ad("2024-1 Dönemi").aktif(true).build());
-        when(donemService.tumunuGetir()).thenReturn(list);
+        when(donemService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/donemler"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("2024-1 Dönemi"));
+                .andExpect(jsonPath("$.content[0].ad").value("2024-1 Dönemi"));
     }
 
     @Test
@@ -79,10 +82,10 @@ class DonemControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(donemService.getir(anyLong())).thenThrow(new RuntimeException("Dönem bulunamadı: 999"));
+        when(donemService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Dönem", 999L));
 
         mockMvc.perform(get("/api/donemler/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

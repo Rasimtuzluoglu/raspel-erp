@@ -1,6 +1,7 @@
 package com.raspel.erp.repository;
 
 import com.raspel.erp.entity.Hareket;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,7 +24,7 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM') AS ay, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +
-           "FROM hareket h WHERE h.hareket_tarihi >= :baslangic " +
+           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic " +
            "GROUP BY ay ORDER BY ay", nativeQuery = true)
     List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic);
     
@@ -32,7 +33,7 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
      */
     List<Hareket> findByCariHesapIdOrderByHareketTarihiDesc(Long cariHesapId);
 
-    List<Hareket> findBySirketIdOrderByHareketTarihiDesc(Long sirketId);
+    Page<Hareket> findBySirketIdOrderByHareketTarihiDesc(Long sirketId, Pageable pageable);
     
     /**
      * Son n hareketi getir

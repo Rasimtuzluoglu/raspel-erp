@@ -1,6 +1,7 @@
 package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.BankaDTO;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.BankaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -40,11 +43,11 @@ class BankaControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(BankaDTO.builder().id(1L).ad("Ziraat Bankası").bakiye(BigDecimal.valueOf(10000)).build());
-        when(bankaService.tumBankalariGetir(anyLong())).thenReturn(list);
+        when(bankaService.tumBankalariGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/bankalar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].ad").value("Ziraat Bankası"));
+                .andExpect(jsonPath("$.content[0].ad").value("Ziraat Bankası"));
     }
 
     @Test
@@ -59,10 +62,10 @@ class BankaControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(bankaService.bankaGetir(anyLong())).thenThrow(new RuntimeException("Banka bulunamadı: 999"));
+        when(bankaService.bankaGetir(anyLong())).thenThrow(new ResourceNotFoundException("Banka", 999L));
 
         mockMvc.perform(get("/api/bankalar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -100,10 +103,10 @@ class BankaControllerTest {
 
     @Test
     void shouldReturnErrorWhenDeleteNonExistent() throws Exception {
-        doThrow(new RuntimeException("Banka bulunamadı: 999")).when(bankaService).bankaSil(999L);
+        doThrow(new ResourceNotFoundException("Banka", 999L)).when(bankaService).bankaSil(999L);
 
         mockMvc.perform(delete("/api/bankalar/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 }
 

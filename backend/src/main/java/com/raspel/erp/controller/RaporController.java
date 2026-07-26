@@ -8,9 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag(name = "Raporlar", description = "Raporlama API")
 @RestController
 @RequestMapping("/api/raporlar")
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class RaporController {
     private final RaporService raporService;
 
     @GetMapping("/cari-ekstre")
+    @Operation(summary = "Cari ekstre getir", description = "Belirli bir cari hesabın belirtilen tarih aralığındaki ekstresini getirir")
     public ResponseEntity<RaporDTO.CariEkstreDTO> cariEkstre(
             @RequestParam Long cariHesapId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
@@ -29,6 +33,7 @@ public class RaporController {
     }
 
     @GetMapping("/gelir-gider")
+    @Operation(summary = "Gelir gider raporu", description = "Belirtilen tarih aralığındaki gelir/gider özetini getirir")
     public ResponseEntity<RaporDTO.GelirGiderOzetDTO> gelirGider(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
@@ -36,6 +41,7 @@ public class RaporController {
     }
 
     @GetMapping("/kdv")
+    @Operation(summary = "KDV raporu", description = "Belirtilen tarih aralığındaki KDV raporunu getirir")
     public ResponseEntity<RaporDTO.KdvRaporDTO> kdvRaporu(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
@@ -43,6 +49,7 @@ public class RaporController {
     }
 
     @GetMapping("/yaslandirma")
+    @Operation(summary = "Yaşlandırma raporu", description = "Cari hesap yaşlandırma raporunu getirir")
     public ResponseEntity<List<RaporDTO.YaslandirmaDTO>> yaslandirma() {
         return ResponseEntity.ok(raporService.yaslandirmaRaporu());
     }

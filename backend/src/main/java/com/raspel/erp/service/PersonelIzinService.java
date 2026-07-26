@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,18 +25,19 @@ public class PersonelIzinService {
     private final PersonelRepository personelRepository;
 
     @Transactional(readOnly = true)
-    public List<PersonelIzinDTO> tumunuGetir(Long sirketId) {
+    public Page<PersonelIzinDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         Map<Long, String> personelHaritasi = personelRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         p -> p.getId(),
                         p -> p.getAd() + " " + p.getSoyad()
                 ));
-        List<Long> personelIds = personelRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
+        List<Long> personelIds = personelRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).stream()
                 .map(p -> p.getId()).collect(Collectors.toList());
-        return izinRepository.findAll().stream()
+        List<PersonelIzinDTO> list = izinRepository.findAll().stream()
                 .filter(i -> personelIds.contains(i.getPersonelId()))
                 .map(i -> entityToDTO(i, personelHaritasi))
                 .collect(Collectors.toList());
+        return new PageImpl<>(list, pageable, list.size());
     }
 
     @Transactional(readOnly = true)

@@ -73,7 +73,7 @@ const form = ref({ tur: 'CEK', cariHesapId: null, bankaAdi: '', cekNo: '', vadeT
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const [r, c] = await Promise.all([cekSenetAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data; cariler.value = c.data } catch (err) {
+  try { const [r, c] = await Promise.all([cekSenetAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data?.content || r.data || []; cariler.value = c.data?.content || c.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Çek/Senet listesi yüklenirken hata oluştu', life: 5000 })
   }
   yukleniyor.value = false
@@ -88,14 +88,14 @@ const kaydet = async () => {
   kaydediliyor.value = true
   try {
     await cekSenetAPI.create({ ...form.value, vadeTarihi: form.value.vadeTarihi?.toISOString().split('T')[0] })
-    dialog.value = false; list.value = (await cekSenetAPI.getAll()).data
+    dialog.value = false; const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Çek/Senet kaydedilirken hata oluştu', life: 5000 })
   }; kaydediliyor.value = false
 }
 
 const durumGuncelle = async (data, durum) => {
-  try { await cekSenetAPI.durumGuncelle(data.id, durum); list.value = (await cekSenetAPI.getAll()).data } catch (err) {
+  try { await cekSenetAPI.durumGuncelle(data.id, durum); const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
   }
 }

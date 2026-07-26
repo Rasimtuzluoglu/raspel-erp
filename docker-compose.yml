@@ -104,6 +104,7 @@ services:
       APP_BACKUP_DB_NAME: raspelerp
       APP_BACKUP_DIR: /app/backups
       APP_BACKUP_RETENTION_DAYS: 30
+      APP_BACKUP_DB_PASSWORD: ${POSTGRES_PASSWORD}
       APP_BACKUP_AUTO_CRON: 0 0 3 * * ?
     volumes:
       - backup_data:/app/backups

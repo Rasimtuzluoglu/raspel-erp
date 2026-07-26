@@ -11,10 +11,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -41,21 +44,21 @@ class IrsaliyeControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(IrsaliyeDTO.builder().id(1L).irsaliyeNo("IRS-001").durum("TASLAK").build());
-        when(irsaliyeService.tumunuGetir(null)).thenReturn(list);
+        when(irsaliyeService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/irsaliyeler"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].irsaliyeNo").value("IRS-001"));
+                .andExpect(jsonPath("$.content[0].irsaliyeNo").value("IRS-001"));
     }
 
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(IrsaliyeDTO.builder().id(1L).irsaliyeNo("IRS-001").build());
-        when(irsaliyeService.tumunuGetir(1L)).thenReturn(list);
+        when(irsaliyeService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/irsaliyeler").param("sirketId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].irsaliyeNo").value("IRS-001"));
+                .andExpect(jsonPath("$.content[0].irsaliyeNo").value("IRS-001"));
     }
 
     @Test
@@ -70,10 +73,10 @@ class IrsaliyeControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(irsaliyeService.getir(anyLong())).thenThrow(new RuntimeException("İrsaliye bulunamadı: 999"));
+        when(irsaliyeService.getir(anyLong())).thenThrow(new ResourceNotFoundException("İrsaliye bulunamadı: 999"));
 
         mockMvc.perform(get("/api/irsaliyeler/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

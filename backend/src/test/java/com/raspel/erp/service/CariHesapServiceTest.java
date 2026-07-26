@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,9 +42,9 @@ class CariHesapServiceTest {
 
     @Test
     void tumCariHesaplariGetir_returnsAll() {
-        when(cariHesapRepository.findBySirketId(anyLong())).thenReturn(List.of(createCariHesap(1L), createCariHesap(2L)));
-        var result = cariHesapService.tumCariHesaplariGetir(1L);
-        assertEquals(2, result.size());
+        when(cariHesapRepository.findBySirketId(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createCariHesap(1L), createCariHesap(2L))));
+        var result = cariHesapService.tumCariHesaplariGetir(1L, Pageable.unpaged());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test

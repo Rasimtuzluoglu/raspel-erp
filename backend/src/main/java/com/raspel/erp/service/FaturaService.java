@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,11 +39,9 @@ public class FaturaService {
     private final StokHareketRepository stokHareketRepository;
 
     @Transactional(readOnly = true)
-    public List<FaturaDTO> tumFaturalariGetir(Long sirketId) {
-        return faturaRepository.findBySirketIdOrderByTarihDesc(sirketId)
-                .stream()
-                .map(this::entityDTOyeCevir)
-                .collect(Collectors.toList());
+    public Page<FaturaDTO> tumFaturalariGetir(Long sirketId, Pageable pageable) {
+        return faturaRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable)
+                .map(this::entityDTOyeCevir);
     }
 
     @Transactional(readOnly = true)

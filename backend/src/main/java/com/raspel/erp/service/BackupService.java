@@ -26,17 +26,20 @@ public class BackupService {
 
     private static final List<String> TYPE_ORDER = List.of("YEARLY", "MONTHLY", "WEEKLY", "DAILY");
 
-    @Value("${app.backup.dir}")
+    @Value("${app.backup.dir:/app/backups}")
     private String backupDir;
 
-    @Value("${app.backup.db-host}")
+    @Value("${app.backup.db-host:localhost}")
     private String dbHost;
 
-    @Value("${app.backup.db-port}")
+    @Value("${app.backup.db-port:5432}")
     private String dbPort;
 
-    @Value("${app.backup.db-name}")
+    @Value("${app.backup.db-name:raspelerp}")
     private String dbName;
+
+    @Value("${app.backup.db-password:}")
+    private String dbPasswordProperty;
 
     private Path backupPath;
     private Path schedulePath;
@@ -60,8 +63,11 @@ public class BackupService {
         Path outputFile = backupPath.resolve(filename);
 
         String dbUser = System.getenv("DB_USERNAME");
-        String dbPass = System.getenv("DB_PASSWORD");
         if (dbUser == null) dbUser = "postgres";
+        String dbPass = dbPasswordProperty;
+        if (dbPass == null || dbPass.isBlank()) {
+            dbPass = System.getenv("DB_PASSWORD");
+        }
         if (dbPass == null) dbPass = "";
 
         try {

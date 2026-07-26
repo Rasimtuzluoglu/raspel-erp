@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.Mockito.*;
@@ -36,12 +38,12 @@ class AuditLogControllerTest {
         var list = List.of(
                 AuditLog.builder().id(1L).islem("GIRIS").entityAdi("Kullanici").entityId(1L).tarih(LocalDateTime.now()).build()
         );
-        when(auditLogService.tumunuGetir()).thenReturn(list);
+        when(auditLogService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/audit-log"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].islem").value("GIRIS"))
-                .andExpect(jsonPath("$[0].entityAdi").value("Kullanici"));
+                .andExpect(jsonPath("$.content[0].islem").value("GIRIS"))
+                .andExpect(jsonPath("$.content[0].entityAdi").value("Kullanici"));
     }
 }
 

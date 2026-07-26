@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Import;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -41,11 +43,11 @@ class HareketControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(HareketDTO.builder().id(1L).tur("TAHSILAT").tutar(BigDecimal.valueOf(1000)).build());
-        when(hareketService.tumHareketleriGetir(anyLong())).thenReturn(list);
+        when(hareketService.tumHareketleriGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/hareketler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tur").value("TAHSILAT"));
+                .andExpect(jsonPath("$.content[0].tur").value("TAHSILAT"));
     }
 
     @Test
@@ -84,7 +86,7 @@ class HareketControllerTest {
     @Test
     void shouldExportCsv() throws Exception {
         var list = List.of(HareketDTO.builder().id(1L).tur("TAHSILAT").tutar(BigDecimal.valueOf(1000)).build());
-        when(hareketService.tumHareketleriGetir(anyLong())).thenReturn(list);
+        when(hareketService.tumHareketleriGetir(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/hareketler/export/csv").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())

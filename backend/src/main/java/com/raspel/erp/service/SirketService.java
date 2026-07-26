@@ -2,11 +2,15 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.SirketDTO;
 import com.raspel.erp.entity.Sirket;
+import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.SirketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,8 +22,8 @@ public class SirketService {
 
     private final SirketRepository sirketRepository;
 
-    public List<SirketDTO> tumunuGetir() {
-        return sirketRepository.findAll().stream().map(this::entityToDTO).collect(Collectors.toList());
+    public Page<SirketDTO> tumunuGetir(Pageable pageable) {
+        return sirketRepository.findAll(pageable).map(this::entityToDTO);
     }
 
     public List<SirketDTO> aktifOlanlariGetir() {
@@ -28,7 +32,7 @@ public class SirketService {
 
     public SirketDTO getir(Long id) {
         return entityToDTO(sirketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Şirket bulunamadı: " + id)));
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", id)));
     }
 
     public SirketDTO olustur(SirketDTO dto) {
@@ -48,13 +52,13 @@ public class SirketService {
 
     public SirketDTO guncelle(Long id, SirketDTO dto) {
         Sirket s = sirketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Şirket bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", id));
         boolean adDegisiyor = dto.getAd() != null && !dto.getAd().equals(s.getAd());
         if (adDegisiyor) {
             if (s.getSonAdGuncellemeTarihi() != null &&
                 s.getSonAdGuncellemeTarihi().plusDays(30).isAfter(LocalDateTime.now())) {
                 long kalanGun = 30 - java.time.temporal.ChronoUnit.DAYS.between(s.getSonAdGuncellemeTarihi(), LocalDateTime.now());
-                throw new RuntimeException("Şirket adı " + kalanGun + " gün içinde tekrar değiştirilemez. Son değişiklik: " +
+                throw new BusinessException("Şirket adı " + kalanGun + " gün içinde tekrar değiştirilemez. Son değişiklik: " +
                         s.getSonAdGuncellemeTarihi().toLocalDate());
             }
             s.setAd(dto.getAd());
@@ -72,7 +76,7 @@ public class SirketService {
     }
 
     public void sil(Long id) {
-        if (!sirketRepository.existsById(id)) throw new RuntimeException("Şirket bulunamadı: " + id);
+        if (!sirketRepository.existsById(id)) throw new ResourceNotFoundException("Şirket", id);
         sirketRepository.deleteById(id);
     }
 

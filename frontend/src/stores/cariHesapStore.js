@@ -19,8 +19,8 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
     error.value = null
     try {
       const response = await cariHesapAPI.getAll()
-      cariHesaplar.value = response.data
-      return response.data
+      cariHesaplar.value = response.data?.content || response.data || []
+      return cariHesaplar.value
     } catch (err) {
       error.value = err.message
       console.error('Cari hesaplar yüklenirken hata:', err)
@@ -79,8 +79,8 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
     error.value = null
     try {
       const response = await cariHesapAPI.search(query)
-      cariHesaplar.value = response.data
-      return response.data
+      cariHesaplar.value = response.data?.content || response.data || []
+      return cariHesaplar.value
     } catch (err) {
       error.value = err.message
       throw err

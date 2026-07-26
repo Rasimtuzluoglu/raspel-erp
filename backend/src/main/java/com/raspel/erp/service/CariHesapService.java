@@ -2,6 +2,8 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.CariHesapDTO;
 import com.raspel.erp.entity.CariHesap;
+import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.CariHesapRepository;
 import com.raspel.erp.repository.HareketRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,12 +36,10 @@ public class CariHesapService {
     /**
      * Tüm cari hesapları getir
      */
-    public List<CariHesapDTO> tumCariHesaplariGetir(Long sirketId) {
+    public Page<CariHesapDTO> tumCariHesaplariGetir(Long sirketId, Pageable pageable) {
         log.debug("Tüm cari hesaplar getiriliyor, sirketId: {}", sirketId);
-        return cariHesapRepository.findBySirketId(sirketId)
-                .stream()
-                .map(this::entityDTOyeCevir)
-                .collect(Collectors.toList());
+        return cariHesapRepository.findBySirketId(sirketId, pageable)
+                .map(this::entityDTOyeCevir);
     }
 
     /**
@@ -58,7 +60,7 @@ public class CariHesapService {
     public CariHesapDTO cariHesapGetir(Long id) {
         log.debug("ID: {} için cari hesap getiriliyor", id);
         CariHesap cariHesap = cariHesapRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cari Hesap bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
         return entityDTOyeCevir(cariHesap);
     }
     
@@ -103,7 +105,7 @@ public class CariHesapService {
         log.info("Cari hesap güncelleniyor - ID: {}", id);
         
         CariHesap cariHesap = cariHesapRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cari Hesap bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
         
         if (dto.getAd() != null) cariHesap.setAd(dto.getAd());
         if (dto.getVergiNumarasi() != null) cariHesap.setVergiNumarasi(dto.getVergiNumarasi());
@@ -136,12 +138,12 @@ public class CariHesapService {
         log.info("Cari hesap siliniliyor - ID: {}", id);
 
         if (!cariHesapRepository.existsById(id)) {
-            throw new RuntimeException("Cari Hesap bulunamadı: " + id);
+            throw new ResourceNotFoundException("Cari Hesap", id);
         }
 
         long hareketSayisi = hareketRepository.countByCariHesapId(id);
         if (hareketSayisi > 0) {
-            throw new RuntimeException("Bu cari hesaba ait " + hareketSayisi + " adet hareket bulunmaktadır. Önce hareketleri siliniz.");
+            throw new BusinessException("Bu cari hesaba ait " + hareketSayisi + " adet hareket bulunmaktadır. Önce hareketleri siliniz.");
         }
 
         cariHesapRepository.deleteById(id);
@@ -155,7 +157,7 @@ public class CariHesapService {
         log.debug("Bakiye güncelleniyor - ID: {}, Tutar: {}", cariHesapId, tutar);
         
         CariHesap cariHesap = cariHesapRepository.findById(cariHesapId)
-                .orElseThrow(() -> new RuntimeException("Cari Hesap bulunamadı: " + cariHesapId));
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
         
         BigDecimal yeniBakiye = cariHesap.getBakiye().add(tutar);
         cariHesap.setBakiye(yeniBakiye);

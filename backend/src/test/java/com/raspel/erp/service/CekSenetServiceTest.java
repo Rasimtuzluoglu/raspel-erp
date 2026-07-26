@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -44,9 +46,9 @@ class CekSenetServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(cekSenetRepository.findBySirketIdOrderByVadeTarihiAsc(1L)).thenReturn(List.of(createCekSenet(1L)));
-        var result = cekSenetService.tumunuGetir(1L);
-        assertEquals(1, result.size());
+        when(cekSenetRepository.findBySirketIdOrderByVadeTarihiAsc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createCekSenet(1L))));
+        var result = cekSenetService.tumunuGetir(1L, Pageable.unpaged());
+        assertEquals(1, result.getContent().size());
     }
 
     @Test

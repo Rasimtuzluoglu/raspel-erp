@@ -7,11 +7,10 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.PersonelRepository;
 import com.raspel.erp.repository.ik.VardiyaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -22,9 +21,8 @@ public class VardiyaService {
     private final PersonelRepository personelRepository;
 
     @Transactional(readOnly = true)
-    public List<VardiyaDTO> tumunuGetir(Long sirketId) {
-        return vardiyaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                .map(this::entityToDTO).collect(Collectors.toList());
+    public Page<VardiyaDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        return vardiyaRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

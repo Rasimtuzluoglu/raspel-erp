@@ -1,6 +1,8 @@
 package com.raspel.erp.repository;
 
 import com.raspel.erp.entity.Personel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +11,7 @@ import java.util.List;
 
 @Repository
 public interface PersonelRepository extends JpaRepository<Personel, Long> {
-    List<Personel> findBySirketIdOrderByAdAsc(Long sirketId);
+    Page<Personel> findBySirketIdOrderByAdAsc(Long sirketId, Pageable pageable);
     List<Personel> findByAktifTrueAndSirketId(Long sirketId);
     long countByAktifTrue();
     long countByIseGirisTarihiBetween(LocalDate baslangic, LocalDate bitis);

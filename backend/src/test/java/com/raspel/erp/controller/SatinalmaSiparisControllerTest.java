@@ -11,10 +11,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -41,21 +44,21 @@ class SatinalmaSiparisControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SatinalmaSiparisDTO.builder().id(1L).siparisNo("SAT-001").durum("TASLAK").build());
-        when(satinalmaSiparisService.tumunuGetir(null)).thenReturn(list);
+        when(satinalmaSiparisService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/satinalma-siparisler"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].siparisNo").value("SAT-001"));
+                .andExpect(jsonPath("$.content[0].siparisNo").value("SAT-001"));
     }
 
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(SatinalmaSiparisDTO.builder().id(1L).siparisNo("SAT-001").build());
-        when(satinalmaSiparisService.tumunuGetir(1L)).thenReturn(list);
+        when(satinalmaSiparisService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/satinalma-siparisler").param("sirketId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].siparisNo").value("SAT-001"));
+                .andExpect(jsonPath("$.content[0].siparisNo").value("SAT-001"));
     }
 
     @Test
@@ -70,10 +73,10 @@ class SatinalmaSiparisControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(satinalmaSiparisService.getir(anyLong())).thenThrow(new RuntimeException("Sipariş bulunamadı: 999"));
+        when(satinalmaSiparisService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Sipariş bulunamadı: 999"));
 
         mockMvc.perform(get("/api/satinalma-siparisler/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

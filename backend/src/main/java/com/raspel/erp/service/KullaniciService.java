@@ -4,8 +4,12 @@ import com.raspel.erp.config.security.JwtUtil;
 import com.raspel.erp.dto.KullaniciDTO;
 import com.raspel.erp.dto.LoginRequest;
 import com.raspel.erp.dto.LoginResponse;
+import com.raspel.erp.dto.SifreDegistirRequest;
 import com.raspel.erp.entity.Kullanici;
 import com.raspel.erp.entity.Sirket;
+import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.DuplicateResourceException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.KullaniciRepository;
 import com.raspel.erp.repository.SirketRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @Transactional
@@ -28,21 +32,21 @@ public class KullaniciService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public List<KullaniciDTO> tumunuGetir() {
-        return kullaniciRepository.findAll().stream().map(this::entityToDTO).collect(Collectors.toList());
+    public Page<KullaniciDTO> tumunuGetir(Pageable pageable) {
+        return kullaniciRepository.findAll(pageable).map(this::entityToDTO);
     }
 
     public KullaniciDTO getir(Long id) {
         return entityToDTO(kullaniciRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id)));
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id)));
     }
 
     public KullaniciDTO olustur(KullaniciDTO dto) {
         if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new RuntimeException("Kullanıcı şifresi zorunludur");
+            throw new BusinessException("Kullanıcı şifresi zorunludur");
         }
         if (kullaniciRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new RuntimeException("Bu kullanıcı adı zaten kullanılıyor: " + dto.getUsername());
+            throw new DuplicateResourceException("Bu kullanıcı adı zaten kullanılıyor: " + dto.getUsername());
         }
         Kullanici k = Kullanici.builder()
                 .username(dto.getUsername())
@@ -59,7 +63,7 @@ public class KullaniciService {
 
     public KullaniciDTO guncelle(Long id, KullaniciDTO dto) {
         Kullanici k = kullaniciRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
         if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
@@ -71,19 +75,29 @@ public class KullaniciService {
     }
 
     public void sil(Long id) {
-        if (!kullaniciRepository.existsById(id)) throw new RuntimeException("Kullanıcı bulunamadı: " + id);
+        if (!kullaniciRepository.existsById(id)) throw new ResourceNotFoundException("Kullanıcı", id);
         kullaniciRepository.deleteById(id);
+    }
+
+    public void sifreDegistir(Long id, SifreDegistirRequest req) {
+        Kullanici k = kullaniciRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
+        if (!passwordEncoder.matches(req.getMevcutSifre(), k.getPassword())) {
+            throw new BusinessException("Mevcut şifre hatalı");
+        }
+        k.setPassword(passwordEncoder.encode(req.getYeniSifre()));
+        kullaniciRepository.save(k);
     }
 
     public LoginResponse giris(LoginRequest req) {
         log.info("Giriş denemesi: {}", req.getUsername());
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
-                .orElseThrow(() -> new RuntimeException("Kullanıcı adı veya şifre hatalı"));
+                .orElseThrow(() -> new BusinessException("Kullanıcı adı veya şifre hatalı"));
 
-        if (!k.getActive()) throw new RuntimeException("Bu kullanıcı aktif değil");
+        if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
 
         if (!passwordEncoder.matches(req.getPassword(), k.getPassword())) {
-            throw new RuntimeException("Kullanıcı adı veya şifre hatalı");
+            throw new BusinessException("Kullanıcı adı veya şifre hatalı");
         }
 
         String company = req.getCompanyName() != null && !req.getCompanyName().isBlank()

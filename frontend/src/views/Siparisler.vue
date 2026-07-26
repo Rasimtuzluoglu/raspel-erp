@@ -63,7 +63,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [sR, cR] = await Promise.all([siparisAPI.getAll(), cariHesapAPI.getAll()])
-    siparisler.value = sR.data
+    siparisler.value = sR.data?.content || sR.data || []
     cariler.value = cR.data
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu', life: 5000 })
@@ -81,7 +81,7 @@ const kaydet = async () => {
   try {
     await siparisAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] })
     dialog.value = false
-    siparisler.value = (await siparisAPI.getAll()).data
+    const r = await siparisAPI.getAll(); siparisler.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu', life: 5000 })
   }
@@ -91,7 +91,7 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await siparisAPI.durumGuncelle(data.id, durum)
-    siparisler.value = (await siparisAPI.getAll()).data
+    const r = await siparisAPI.getAll(); siparisler.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
   }

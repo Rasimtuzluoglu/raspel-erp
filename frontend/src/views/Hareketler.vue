@@ -378,7 +378,7 @@ const filtrele = async () => {
     if (filtreBaslangic.value) params.baslangic = filtreBaslangic.value.toISOString().split('T')[0]
     if (filtreBitis.value) params.bitis = filtreBitis.value.toISOString().split('T')[0]
     const response = await hareketAPI.filtrele(params)
-    tümHareketler.value = response.data
+    tümHareketler.value = response.data?.content || response.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Filtreleme başarısız', life: 5000 })
   }
