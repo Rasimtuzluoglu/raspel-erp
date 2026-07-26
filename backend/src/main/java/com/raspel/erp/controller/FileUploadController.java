@@ -1,6 +1,5 @@
 package com.raspel.erp.controller;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,98 +27,86 @@ import java.util.UUID;
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 public class FileUploadController {
 
-    private final Path avatarDir = Paths.get("uploads/avatars");
-    private final Path sirketLogoDir = Paths.get("uploads/sirket-logos");
+    private final Path avatarDir = Paths.get("uploads/avatars").toAbsolutePath().normalize();
+    private final Path sirketLogoDir = Paths.get("uploads/sirket-logos").toAbsolutePath().normalize();
+
+    private static final List<String> IZIN_VERILEN_UZANTILAR = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif");
+    private static final List<String> IZIN_VERILEN_MIME = List.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
     @PostMapping("/upload/avatar")
     @Operation(summary = "Avatar yükle", description = "Kullanıcı avatarı yükler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));
-        }
-
-        try {
-            Files.createDirectories(avatarDir);
-
-            String ext = "";
-            String originalName = file.getOriginalFilename();
-            if (originalName != null && originalName.contains(".")) {
-                ext = originalName.substring(originalName.lastIndexOf("."));
-            }
-            String filename = UUID.randomUUID().toString() + ext;
-
-            Path target = avatarDir.resolve(filename);
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
-            String url = "/api/uploads/avatars/" + filename;
-            return ResponseEntity.ok(Map.of("url", url));
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi: " + e.getMessage()));
-        }
+        return dosyaYukle(file, avatarDir, "/api/uploads/avatars/");
     }
 
     @GetMapping("/uploads/avatars/{filename}")
     @Operation(summary = "Avatar getir", description = "Kullanıcı avatarını döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Resource> getAvatar(@PathVariable String filename) {
-        try {
-            Path file = avatarDir.resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
-
-            if (resource.exists() && resource.isReadable()) {
-                String contentType = Files.probeContentType(file);
-                if (contentType == null) contentType = "application/octet-stream";
-
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(contentType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                        .body(resource);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (MalformedURLException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return dosyaGetir(filename, avatarDir);
     }
 
     @PostMapping("/upload/sirket-logo")
     @Operation(summary = "Şirket logosu yükle", description = "Şirket logosu yükler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadSirketLogo(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));
-        }
-
-        try {
-            Files.createDirectories(sirketLogoDir);
-
-            String ext = "";
-            String originalName = file.getOriginalFilename();
-            if (originalName != null && originalName.contains(".")) {
-                ext = originalName.substring(originalName.lastIndexOf("."));
-            }
-            String filename = UUID.randomUUID().toString() + ext;
-
-            Path target = sirketLogoDir.resolve(filename);
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
-            String url = "/api/uploads/sirket-logos/" + filename;
-            return ResponseEntity.ok(Map.of("url", url));
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi: " + e.getMessage()));
-        }
+        return dosyaYukle(file, sirketLogoDir, "/api/uploads/sirket-logos/");
     }
 
     @GetMapping("/uploads/sirket-logos/{filename}")
     @Operation(summary = "Şirket logosu getir", description = "Şirket logosunu döndürür (public)")
     public ResponseEntity<Resource> getSirketLogo(@PathVariable String filename) {
-        try {
-            Path file = sirketLogoDir.resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
+        return dosyaGetir(filename, sirketLogoDir);
+    }
 
+    private ResponseEntity<Map<String, String>> dosyaYukle(MultipartFile file, Path baseDir, String urlPrefix) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !IZIN_VERILEN_MIME.contains(contentType.toLowerCase())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya tipi. Yalnızca resim yükleyebilirsiniz (JPG, PNG, WEBP, GIF)."));
+        }
+
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains(".")) {
+            ext = originalName.substring(originalName.lastIndexOf(".")).toLowerCase();
+        }
+
+        if (!IZIN_VERILEN_UZANTILAR.contains(ext)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya uzantısı. Yalnızca resim yükleyebilirsiniz (JPG, PNG, WEBP, GIF)."));
+        }
+
+        try {
+            Files.createDirectories(baseDir);
+
+            String filename = UUID.randomUUID().toString() + ext;
+            Path target = baseDir.resolve(filename).normalize();
+
+            if (!target.startsWith(baseDir)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya yolu"));
+            }
+
+            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            return ResponseEntity.ok(Map.of("url", urlPrefix + filename));
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi: " + e.getMessage()));
+        }
+    }
+
+    private ResponseEntity<Resource> dosyaGetir(String filename, Path baseDir) {
+        try {
+            Path file = baseDir.resolve(filename).normalize();
+
+            // Path Traversal koruması (../../ engelleme)
+            if (!file.startsWith(baseDir)) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            Resource resource = new UrlResource(file.toUri());
             if (resource.exists() && resource.isReadable()) {
                 String contentType = Files.probeContentType(file);
                 if (contentType == null) contentType = "application/octet-stream";
