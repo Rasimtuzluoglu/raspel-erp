@@ -30,6 +30,16 @@ public class PdfRaporController {
                 .body(pdf);
     }
 
+    @GetMapping("/fatura/{id}")
+    @Operation(summary = "Fatura PDF", description = "Fatura detaylarını profesyonel PDF olarak indirir")
+    public ResponseEntity<byte[]> faturaRaporu(@PathVariable Long id) {
+        byte[] pdf = pdfRaporService.faturaRaporu(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fatura_" + id + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @GetMapping("/irsaliye/{id}")
     @Operation(summary = "İrsaliye raporu PDF", description = "İrsaliye detaylarını PDF olarak indirir")
     public ResponseEntity<byte[]> irsaliyeRaporu(@PathVariable Long id) {

@@ -66,6 +66,7 @@
       <router-link to="/yetki-yonetimi" v-if="authStore.kullanici?.role === 'ADMIN'" :class="{ active: $route.path === '/yetki-yonetimi' }" title="Yetki Yönetimi"><i class="pi pi-key"></i><span>Yetkiler</span><i class="pi pi-star-fav" :class="{ favori: isFav('/yetki-yonetimi') }" @click.prevent.stop="toggleFav('/yetki-yonetimi')"></i></router-link>
       <router-link to="/kategoriler" :class="{ active: $route.path === '/kategoriler' }" title="Kategoriler"><i class="pi pi-tags"></i><span>Kategori</span><i class="pi pi-star-fav" :class="{ favori: isFav('/kategoriler') }" @click.prevent.stop="toggleFav('/kategoriler')"></i></router-link>
       <router-link to="/notlar" :class="{ active: $route.path === '/notlar' }" title="Notlar"><i class="pi pi-sticky-note"></i><span>Notlar</span><i class="pi pi-star-fav" :class="{ favori: isFav('/notlar') }" @click.prevent.stop="toggleFav('/notlar')"></i></router-link>
+      <router-link to="/veri-aktar" :class="{ active: $route.path === '/veri-aktar' }" title="Veri Aktar"><i class="pi pi-upload"></i><span>Veri Aktar</span><i class="pi pi-star-fav" :class="{ favori: isFav('/veri-aktar') }" @click.prevent.stop="toggleFav('/veri-aktar')"></i></router-link>
       <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/yedekler" :class="{ active: $route.path === '/yedekler' }" title="Yedekleme"><i class="pi pi-save"></i><span>Yedek</span><i class="pi pi-star-fav" :class="{ favori: isFav('/yedekler') }" @click.prevent.stop="toggleFav('/yedekler')"></i></router-link>
 
       <div class="menu-grup">Rapor</div>
@@ -167,6 +168,7 @@ const tumMenuler = [
   { path: '/kullanicilar', label: 'Kullanıcı', icon: 'pi pi-user', grup: 'Sistem', admin: true },
   { path: '/kategoriler', label: 'Kategori', icon: 'pi pi-tags', grup: 'Sistem' },
   { path: '/notlar', label: 'Notlar', icon: 'pi pi-sticky-note', grup: 'Sistem' },
+  { path: '/veri-aktar', label: 'Veri Aktar', icon: 'pi pi-upload', grup: 'Sistem' },
   { path: '/raporlar', label: 'Rapor', icon: 'pi pi-chart-bar', grup: 'Rapor' },
   { path: '/hareketler', label: 'Hareket', icon: 'pi pi-chart-line', grup: 'Rapor' },
   { path: '/denetim', label: 'Denetim', icon: 'pi pi-shield', grup: 'Rapor', admin: true },

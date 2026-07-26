@@ -368,7 +368,9 @@ export const projeAPI = {
  * Audit Log API'si
  */
 export const auditLogAPI = {
-  getAll() { return apiClient.get('/audit-log') }
+  getAll(params) { return apiClient.get('/audit-log', { params }) },
+  getIslemTipleri() { return apiClient.get('/audit-log/islem-tipleri') },
+  getEntityListesi() { return apiClient.get('/audit-log/entity-listesi') }
 }
 
 /**
@@ -486,6 +488,25 @@ export const excelAPI = {
   personel() { return apiClient.get('/exports/personel', { responseType: 'blob' }) },
   bankalar() { return apiClient.get('/exports/bankalar', { responseType: 'blob' }) },
   kasalar() { return apiClient.get('/exports/kasalar', { responseType: 'blob' }) }
+}
+
+export const importAPI = {
+  stok(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.post('/import/stok', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  cari(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.post('/import/cari', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  }
+}
+
+export const pdfAPI = {
+  fatura(id) { return apiClient.get(`/rapor/fatura/${id}`, { responseType: 'blob' }) },
+  siparis(id) { return apiClient.get(`/rapor/siparis/${id}`, { responseType: 'blob' }) },
+  irsaliye(id) { return apiClient.get(`/rapor/irsaliye/${id}`, { responseType: 'blob' }) }
 }
 
 export const notAPI = {

@@ -50,8 +50,8 @@
           <template #body="s">
             <Button icon="pi pi-eye" class="p-button-rounded p-button-sm p-button-info"
               @click="viewFatura(s.data.id)" title="Görüntüle" />
-            <Button icon="pi pi-print" class="p-button-rounded p-button-sm p-button-help"
-              @click="printFatura(s.data.id)" title="Yazdır" />
+            <Button icon="pi pi-download" class="p-button-rounded p-button-sm p-button-help"
+              @click="pdfIndir(s.data)" title="PDF İndir" />
             <Button icon="pi pi-pencil" class="p-button-rounded p-button-sm p-button-warning"
               @click="editFatura(s.data)" v-if="s.data.durum === 'TASLAK'" title="Düzenle" />
             <Button v-if="s.data.durum === 'TASLAK'" icon="pi pi-check" class="p-button-rounded p-button-sm p-button-success"
@@ -176,7 +176,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
-import { excelAPI } from '../api/index.js'
+import { excelAPI, pdfAPI } from '../api/index.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -363,7 +363,21 @@ const saveFatura = async () => {
 }
 
 const viewFatura = (id) => { router.push(`/faturalar/${id}`) }
-const printFatura = (id) => { window.open(`/faturalar/${id}?print=true`, '_blank') }
+const pdfIndir = async (fatura) => {
+  try {
+    const res = await pdfAPI.fatura(fatura.id)
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `fatura_${fatura.faturaNumarasi || fatura.id}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'PDF indirilemedi', life: 5000 })
+  }
+}
 
 const confirmKes = (id) => {
   confirm.require({

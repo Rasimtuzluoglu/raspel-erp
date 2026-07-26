@@ -3,10 +3,14 @@ package com.raspel.erp.service;
 import com.raspel.erp.entity.AuditLog;
 import com.raspel.erp.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,5 +26,20 @@ public class AuditLogService {
 
     public Page<AuditLog> tumunuGetir(Pageable pageable) {
         return auditLogRepository.findAllByOrderByTarihDesc(pageable);
+    }
+
+    public Page<AuditLog> filtreliGetir(Long kullaniciId, String islem, String entityAdi,
+                                         LocalDate baslangicTarih, LocalDate bitisTarih, Pageable pageable) {
+        LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;
+        LocalDateTime bitis = bitisTarih != null ? bitisTarih.atTime(LocalTime.MAX) : null;
+        return auditLogRepository.filtreliGetir(kullaniciId, islem, entityAdi, baslangic, bitis, pageable);
+    }
+
+    public List<String> islemTipleri() {
+        return auditLogRepository.findDistinctIslem();
+    }
+
+    public List<String> entityListesi() {
+        return auditLogRepository.findDistinctEntityAdi();
     }
 }

@@ -35,6 +35,7 @@ import StokSayim from '../views/StokSayim.vue'
 import MaasBordro from '../views/MaasBordro.vue'
 import Vardiyalar from '../views/Vardiyalar.vue'
 import Notlar from '../views/Notlar.vue'
+import VeriImport from '../views/VeriImport.vue'
 import Yedekler from '../views/Yedekler.vue'
 import NotFound from '../views/NotFound.vue'
 import YetkiReddi from '../views/YetkiReddi.vue'
@@ -273,6 +274,12 @@ const routes = [
     path: '/notlar',
     name: 'Notlar',
     component: Notlar,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/veri-aktar',
+    name: 'VeriImport',
+    component: VeriImport,
     meta: { requiresAuth: true }
   },
   {
