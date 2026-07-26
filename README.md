@@ -155,14 +155,6 @@ open http://localhost
 
 ---
 
-## 📸 Ekran Görüntüleri
-
-| Ana Sayfa | Hızlı Satış | Stok Yönetimi |
-|-----------|-------------|---------------|
-| Dashboard (grafikler, kartlar, notlar) | Barkod okut, sepete ekle, ödeme | Ürün kartı, depo, sayım |
-
-*(Ekran görüntüleri eklenecek)*
-
 ---
 
 ## 📦 Demo Verisi
