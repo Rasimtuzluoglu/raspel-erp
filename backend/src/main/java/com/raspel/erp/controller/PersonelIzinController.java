@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class PersonelIzinController {
     @Operation(summary = "Tüm izinleri getir", description = "Şirkete ait tüm personel izinlerini listeler")
     public ResponseEntity<Page<PersonelIzinDTO>> tumu(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(personelIzinService.tumunuGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)));
+        return ResponseEntity.ok(personelIzinService.tumunuGetir(sirketId, Pageable.unpaged()));
     }
 
     @GetMapping("/personel/{personelId}")

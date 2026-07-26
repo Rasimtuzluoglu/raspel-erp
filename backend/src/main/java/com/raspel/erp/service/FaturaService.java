@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +38,11 @@ public class FaturaService {
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
+    private BigDecimal varsayilanKdvOrani;
+
+    private static final AtomicLong faturaCounter = new AtomicLong(System.currentTimeMillis() % 100000);
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> tumFaturalariGetir(Long sirketId, Pageable pageable) {
@@ -68,11 +74,11 @@ public class FaturaService {
             throw new BusinessException("Geçersiz fatura türü: " + dto.getTur());
         }
 
-        String faturaNo = "FTR-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))
-                + "-" + String.format("%03d", (int)(Math.random() * 900) + 100);
+        String faturaNo = "FTR-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+                + "-" + String.format("%05d", faturaCounter.incrementAndGet() % 100000);
 
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
-            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
             BigDecimal brütTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
             BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -211,7 +217,7 @@ public class FaturaService {
         }
 
         List<FaturaKalem> yeniKalemler = dto.getKalemler().stream().map(k -> {
-            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
             BigDecimal brütTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
             BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);

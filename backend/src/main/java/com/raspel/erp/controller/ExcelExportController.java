@@ -37,7 +37,7 @@ public class ExcelExportController {
     @Operation(summary = "Cari hesapları Excel dışa aktar", description = "Cari hesapları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> cariHesaplar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = cariHesapService.tumCariHesaplariGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        var list = cariHesapService.tumCariHesaplariGetir(sirketId, Pageable.unpaged()).getContent();
         var rows = list.stream().map(c -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", c.getId()); m.put("Ad", c.getAd()); m.put("Vergi No", c.getVergiNumarasi());
@@ -51,7 +51,7 @@ public class ExcelExportController {
     @Operation(summary = "Faturaları Excel dışa aktar", description = "Faturaları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> faturalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = faturaService.tumFaturalariGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        var list = faturaService.tumFaturalariGetir(sirketId, Pageable.unpaged()).getContent();
         var rows = list.stream().map(f -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", f.getId()); m.put("Fatura No", f.getFaturaNumarasi()); m.put("Tarih", f.getTarih());
@@ -65,7 +65,7 @@ public class ExcelExportController {
     @Operation(summary = "Hareketleri Excel dışa aktar", description = "Hareketleri Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> hareketler(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = hareketService.tumHareketleriGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        var list = hareketService.tumHareketleriGetir(sirketId, Pageable.unpaged()).getContent();
         var rows = list.stream().map(h -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", h.getId()); m.put("Cari", h.getCariHesapAd()); m.put("Tür", h.getTur());
@@ -94,7 +94,7 @@ public class ExcelExportController {
     @Operation(summary = "Personeli Excel dışa aktar", description = "Personel kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> personel(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = personelService.tumunuGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        var list = personelService.tumunuGetir(sirketId, Pageable.unpaged()).getContent();
         var rows = list.stream().map(p -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", p.getId()); m.put("Ad", p.getAd()); m.put("Soyad", p.getSoyad());
@@ -109,7 +109,7 @@ public class ExcelExportController {
     @Operation(summary = "Bankaları Excel dışa aktar", description = "Bankaları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> bankalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = bankaService.tumBankalariGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        var list = bankaService.tumBankalariGetir(sirketId, Pageable.unpaged()).getContent();
         var rows = list.stream().map(b -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", b.getId()); m.put("Ad", b.getAd());
@@ -123,7 +123,7 @@ public class ExcelExportController {
     @Operation(summary = "Kasaları Excel dışa aktar", description = "Kasaları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> kasalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = kasaService.tumKasalarGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        var list = kasaService.tumKasalarGetir(sirketId, Pageable.unpaged()).getContent();
         var rows = list.stream().map(k -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", k.getId()); m.put("Ad", k.getAd()); m.put("Bakiye", k.getBakiye());

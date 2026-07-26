@@ -2,6 +2,7 @@ package com.raspel.erp.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,7 +27,7 @@ public class IrsaliyeKalem {
     private String aciklama;
 
     @Column(nullable = false)
-    private Double miktar;
+    private BigDecimal miktar;
 
     @Column(length = 20)
     private String birim;

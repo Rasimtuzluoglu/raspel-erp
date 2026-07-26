@@ -16,12 +16,19 @@ http:
         accessControlAllowCredentials: true
         accessControlMaxAge: 3600
 
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "admin:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+
   routers:
     dashboard:
       rule: "PathPrefix(`/dashboard`)"
       service: api@internal
       entryPoints:
         - traefik
+      middlewares:
+        - dashboard-auth
       priority: 10
 
     frontend:

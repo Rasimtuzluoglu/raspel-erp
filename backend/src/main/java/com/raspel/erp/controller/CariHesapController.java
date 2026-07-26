@@ -52,7 +52,7 @@ public class CariHesapController {
     public ResponseEntity<byte[]> cariHesaplarCsv(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/cari-hesaplar/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId, Pageable.unpaged()).getContent();
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Ad,Vergi Numarası,Telefon,Bakiye\n");

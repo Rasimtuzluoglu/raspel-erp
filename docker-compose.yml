@@ -47,11 +47,12 @@ services:
   redis:
     image: redis:7-alpine
     container_name: raspel-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-raspelRedis2026}
     ports:
       - "6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-raspelRedis2026}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -94,6 +95,7 @@ services:
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-raspelRedis2026}
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}

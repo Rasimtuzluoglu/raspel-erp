@@ -58,7 +58,7 @@ public class HareketController {
     public ResponseEntity<byte[]> hareketlerCsv(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/hareketler/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<HareketDTO> liste = hareketService.tumHareketleriGetir(sirketId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        List<HareketDTO> liste = hareketService.tumHareketleriGetir(sirketId, Pageable.unpaged()).getContent();
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Cari Hesap,Tür,Tutar,Tarih,Açıklama\n");

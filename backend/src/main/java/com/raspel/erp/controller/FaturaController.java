@@ -32,6 +32,7 @@ import java.util.List;
 public class FaturaController {
 
     private final FaturaService faturaService;
+    private final java.util.concurrent.ConcurrentHashMap<String, FaturaDTO> idempotencyCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     @GetMapping
     @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler")
@@ -49,10 +50,19 @@ public class FaturaController {
     }
 
     @PostMapping
-    @Operation(summary = "Yeni fatura oluştur", description = "Yeni bir fatura oluşturur")
-    public ResponseEntity<FaturaDTO> faturaOlustur(@RequestBody @jakarta.validation.Valid FaturaDTO dto, HttpServletRequest request) {
+    @Operation(summary = "Yeni fatura oluştur", description = "Yeni bir fatura oluşturur. X-Idempotency-Key header ile çift kayıt engellenir.")
+    public ResponseEntity<FaturaDTO> faturaOlustur(
+            @RequestBody @jakarta.validation.Valid FaturaDTO dto,
+            HttpServletRequest request,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
+        if (idempotencyKey != null && idempotencyCache.containsKey(idempotencyKey)) {
+            return ResponseEntity.ok(idempotencyCache.get(idempotencyKey));
+        }
         Long sirketId = (Long) request.getAttribute("sirketId");
         FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId);
+        if (idempotencyKey != null) {
+            idempotencyCache.put(idempotencyKey, olusturulan);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
     }
 
@@ -79,7 +89,7 @@ public class FaturaController {
     @GetMapping("/export/csv")
     @Operation(summary = "Faturaları CSV dışa aktar", description = "Faturaları CSV dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> exportCsv(HttpServletRequest request) {
-        List<FaturaDTO> liste = faturaService.tumFaturalariGetir((Long) request.getAttribute("sirketId"), PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+        List<FaturaDTO> liste = faturaService.tumFaturalariGetir((Long) request.getAttribute("sirketId"), Pageable.unpaged()).getContent();
         StringBuilder csv = new StringBuilder("Fatura No,Tarih,Müşteri,Tutar,Durum\n");
         for (FaturaDTO f : liste) {
             csv.append(f.getFaturaNumarasi()).append(",")

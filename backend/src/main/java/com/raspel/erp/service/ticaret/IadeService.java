@@ -39,6 +39,9 @@ public class IadeService {
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
+    private BigDecimal varsayilanKdvOrani;
+
     @Transactional(readOnly = true)
     public Page<IadeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return iadeRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
@@ -54,7 +57,7 @@ public class IadeService {
         BigDecimal toplamTutar = BigDecimal.ZERO;
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
             for (IadeKalemDTO k : dto.getKalemler()) {
-                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
                 BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
                 BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 BigDecimal kalemTutar = netTutar.add(kdvTutari);
@@ -76,7 +79,7 @@ public class IadeService {
 
         if (dto.getKalemler() != null) {
             for (IadeKalemDTO k : dto.getKalemler()) {
-                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
                 BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
                 BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 iadeKalemRepository.save(IadeKalem.builder()
@@ -108,7 +111,7 @@ public class IadeService {
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
             iadeKalemRepository.deleteByIadeId(iade.getId());
             for (IadeKalemDTO k : dto.getKalemler()) {
-                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20);
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
                 BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
                 BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 BigDecimal kalemTutar = netTutar.add(kdvTutari);

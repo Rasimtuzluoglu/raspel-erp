@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
         log.error("RuntimeException: {}", e.getMessage(), e);
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Sunucu hatası: " + e.getMessage());
+        body.put("message", "Beklenmeyen bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.");
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }

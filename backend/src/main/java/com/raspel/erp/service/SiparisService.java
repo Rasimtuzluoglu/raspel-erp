@@ -34,6 +34,9 @@ public class SiparisService {
     private final StokRepository stokRepository;
     private final FaturaService faturaService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
+    private BigDecimal varsayilanKdvOrani;
+
     @Transactional(readOnly = true)
     public Page<SiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
@@ -104,7 +107,7 @@ public class SiparisService {
                             .aciklama(k.getAciklama() != null ? k.getAciklama() : "")
                             .adet(k.getMiktar() != null ? k.getMiktar().intValue() : 1)
                             .birimFiyat(k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO)
-                            .kdvOrani(k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20))
+                            .kdvOrani(k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani)
                             .tutar(k.getTutar() != null ? k.getTutar() : BigDecimal.ZERO)
                             .stokId(k.getStokId())
                             .build())
