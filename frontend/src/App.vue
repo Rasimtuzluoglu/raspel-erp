@@ -9,6 +9,13 @@
     </template>
 
     <main class="main-content" :class="{ 'giris-sayfasi': !authStore.isLoggedIn }">
+      <transition name="slide-down">
+        <div v-if="offlineBannerVisible" class="offline-banner">
+          <i class="pi pi-wifi"></i>
+          İnternet bağlantınız kesildi. Bağlantı sağlandığında işlemlere kaldığınız yerden devam edebilirsiniz.
+          <button class="offline-kapat" @click="networkStatus.showBanner = false">&times;</button>
+        </div>
+      </transition>
       <ErrorBoundary>
         <router-view />
       </ErrorBoundary>
@@ -22,8 +29,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from './stores/authStore.js'
+import { networkStatus } from './api/index.js'
 import AppSidebar from './components/AppSidebar.vue'
 import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
@@ -32,6 +40,7 @@ import QuickSearch from './components/QuickSearch.vue'
 const authStore = useAuthStore()
 const quickSearchVisible = ref(false)
 const sifreDialog = ref(false)
+const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
 
 const kisaYolHandler = (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -50,5 +59,23 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* Main layout container styles */
+.offline-banner {
+  position: sticky; top: 0; z-index: 999;
+  display: flex; align-items: center; gap: 10px;
+  background: #fef3c7; color: #92400e;
+  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  border-bottom: 1px solid #f59e0b;
+}
+[data-theme="dark"] .offline-banner {
+  background: rgba(245,158,11,0.15); color: #fbbf24;
+  border-bottom-color: rgba(245,158,11,0.3);
+}
+.offline-banner i { font-size: 16px; flex-shrink: 0; }
+.offline-kapat {
+  margin-left: auto; background: none; border: none;
+  font-size: 20px; cursor: pointer; color: inherit; opacity: 0.7; padding: 0 4px;
+}
+.offline-kapat:hover { opacity: 1; }
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
+.slide-down-enter-from, .slide-down-leave-to { transform: translateY(-100%); opacity: 0; }
 </style>

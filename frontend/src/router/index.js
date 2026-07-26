@@ -37,6 +37,7 @@ import Vardiyalar from '../views/Vardiyalar.vue'
 import Notlar from '../views/Notlar.vue'
 import Yedekler from '../views/Yedekler.vue'
 import NotFound from '../views/NotFound.vue'
+import YetkiReddi from '../views/YetkiReddi.vue'
 
 const routes = [
   {
@@ -279,6 +280,12 @@ const routes = [
     name: 'YetkiYonetimi',
     component: () => import('../views/YetkiYonetimi.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/yetki-reddi',
+    name: 'YetkiReddi',
+    component: YetkiReddi,
+    meta: { requiresAuth: true }
   },
   {
     path: '/:pathMatch(.*)*',

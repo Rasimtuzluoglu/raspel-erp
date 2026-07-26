@@ -32,21 +32,18 @@
     </div>
 
     <Dialog v-model:visible="dialogGoster" :header="dialogBaslik" :modal="true" style="width:500px">
-      <div class="form-group">
-        <label>Başlık *</label>
-        <InputText v-model="form.baslik" placeholder="Not başlığı" class="w-full" :class="{ 'p-invalid': !form.baslik && gonderildi }" />
-      </div>
-      <div class="form-group">
-        <label>İçerik</label>
+      <FormField label="Başlık" :required="true" :error="gonderildi && !form.baslik?.trim() ? 'Başlık zorunludur' : ''">
+        <InputText v-model="form.baslik" placeholder="Not başlığı" class="w-full" :class="{ 'p-invalid': gonderildi && !form.baslik?.trim() }" />
+      </FormField>
+      <FormField label="İçerik">
         <Textarea v-model="form.icerik" placeholder="Not içeriği..." rows="5" class="w-full" />
-      </div>
-      <div class="form-group">
-        <label>Önem Derecesi</label>
+      </FormField>
+      <FormField label="Önem Derecesi">
         <Dropdown v-model="form.onemDerecesi" :options="onemSecenek" optionLabel="label" optionValue="value" placeholder="Seçiniz" class="w-full" />
-      </div>
+      </FormField>
       <template #footer>
         <Button label="İptal" icon="pi pi-times" @click="dialogGoster = false" class="p-button-text" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" :disabled="!form.baslik?.trim()" />
+        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
       </template>
     </Dialog>
   </div>
@@ -56,6 +53,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useNotStore } from '../stores/notStore.js'
+import FormField from '../components/FormField.vue'
 
 const toast = useToast()
 const store = useNotStore()
@@ -197,8 +195,6 @@ const formatTarih = (t) => {
   border-top: 1px solid var(--border);
   padding-top: 0.5rem;
 }
-.form-group { margin-bottom: 1rem; }
-.form-group label { display: block; margin-bottom: 0.35rem; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); }
 .w-full { width: 100% !important; }
 [data-theme="light"] .onem-badge.normal { background: rgba(100,116,139,0.1); color: #475569; }
 </style>

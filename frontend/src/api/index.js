@@ -1,6 +1,17 @@
 import axios from 'axios'
+import axiosRetry from 'axios-retry'
+import { reactive } from 'vue'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
+export const networkStatus = reactive({
+  online: navigator.onLine,
+  showBanner: false
+})
+
+window.addEventListener('online', () => { networkStatus.online = true; networkStatus.showBanner = false })
+window.addEventListener('offline', () => { networkStatus.online = false; networkStatus.showBanner = true })
+window.addEventListener('focus', () => { if (navigator.onLine) networkStatus.showBanner = false })
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -11,17 +22,36 @@ const apiClient = axios.create({
   }
 })
 
+axiosRetry(apiClient, {
+  retries: 2,
+  retryDelay: (retryCount) => retryCount * 1000,
+  retryCondition: (error) => {
+    return !error.response || error.response.status >= 500
+  },
+  onRetry: (retryCount, error) => {
+    console.warn(`API retry (${retryCount}/2):`, error.config?.url)
+  }
+})
+
 import { useAuthStore } from '../stores/authStore.js'
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if ((error.response?.status === 401 || error.response?.status === 403) && !window.location.pathname.startsWith('/giris')) {
+    if (!error.response) {
+      networkStatus.showBanner = true
+      return Promise.reject(error)
+    }
+    const { status } = error.response
+    if (status === 401 && !window.location.pathname.startsWith('/giris')) {
       try {
         const authStore = useAuthStore()
         authStore.cikisYap()
       } catch {}
       window.location.href = '/giris'
+    }
+    if (status === 403 && !window.location.pathname.startsWith('/giris') && !window.location.pathname.startsWith('/yetki-reddi')) {
+      window.location.href = '/yetki-reddi'
     }
     return Promise.reject(error)
   }
