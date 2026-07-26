@@ -1,20 +1,48 @@
 {
   "app": {
-    "title": "Accounting",
-    "subtitle": "Demo Application"
+    "title": "RasPel ERP",
+    "subtitle": "Next-Gen Enterprise Resource Planning System"
   },
   "nav": {
     "dashboard": "Dashboard",
-    "sirketler": "Companies",
-    "donemler": "Periods",
-    "personel": "HR",
+    "finans": "Finance",
+    "cari": "Current Accounts",
+    "faturalar": "Invoices",
+    "banka": "Banks",
+    "kasa": "Cash Desk",
+    "ceksenet": "Checks & Notes",
+    "butce": "Budget",
+    "masraf": "Expenses",
+    "ticaret": "Trade",
+    "satis": "Sales",
+    "hizliSatis": "POS / Quick Sale",
     "satinalma": "Purchasing",
-    "siparisler": "Orders",
-    "ceksenet": "Check/Note",
-    "irsaliye": "Waybill",
-    "proje": "Project",
-    "denetim": "Audit",
-    "rapor": "Report",
+    "siparis": "Orders",
+    "irsaliye": "Waybills",
+    "fiyatListesi": "Price List",
+    "iade": "Returns",
+    "envanter": "Inventory",
+    "stok": "Stock Management",
+    "topluStok": "Bulk Stock Import",
+    "depo": "Warehouses",
+    "serilot": "Serial / Lot Tracking",
+    "stokSayim": "Stock Count",
+    "yonetim": "Management",
+    "sube": "Branches",
+    "personel": "Human Resources",
+    "izin": "Leave Requests",
+    "proje": "Projects",
+    "maasBordro": "Payroll",
+    "vardiya": "Shifts",
+    "sistem": "System",
+    "sirket": "Companies",
+    "donem": "Periods",
+    "kullanici": "Users",
+    "kategori": "Categories",
+    "yedek": "Backups",
+    "rapor": "Reports",
+    "hareket": "Transactions",
+    "denetim": "Audit Logs",
     "cikis": "Logout"
   },
   "auth": {
@@ -22,21 +50,36 @@
     "logout": "Logout",
     "username": "Username",
     "password": "Password",
-    "sirket": "Select Company"
+    "sirket": "Select Company",
+    "welcome": "Welcome to RasPel ERP"
   },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "new": "New",
+    "new": "Add New",
     "loading": "Loading...",
-    "search": "Search",
-    "noData": "No records found"
+    "search": "Quick Search...",
+    "noData": "No records found",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "amount": "Amount",
+    "description": "Description",
+    "confirmDelete": "Are you sure you want to delete this record?"
   },
-  "language": "Language",
+  "status": {
+    "active": "Active",
+    "passive": "Passive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "paid": "Paid",
+    "unpaid": "Unpaid"
+  },
   "theme": {
-    "light": "Light Theme",
-    "dark": "Dark Theme"
+    "light": "Light Mode",
+    "dark": "Dark Mode"
   }
 }
