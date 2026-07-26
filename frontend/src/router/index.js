@@ -262,6 +262,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/anomaliler',
+    name: 'Anomaliler',
+    component: () => import('../views/Anomaliler.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/yetki-yonetimi',
+    name: 'YetkiYonetimi',
+    component: () => import('../views/YetkiYonetimi.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound
