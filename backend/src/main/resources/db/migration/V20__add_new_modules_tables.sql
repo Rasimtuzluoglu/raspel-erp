@@ -10,17 +10,19 @@ CREATE SCHEMA IF NOT EXISTS sistem;
 -- 1. E-Fatura Tablosu
 CREATE TABLE IF NOT EXISTS fatura.e_fatura (
     id BIGSERIAL PRIMARY KEY,
-    fatura_id BIGINT NOT NULL,
-    ettn VARCHAR(50) NOT NULL UNIQUE,
-    fatura_no VARCHAR(50),
-    senaryo VARCHAR(50) NOT NULL,
-    tip VARCHAR(50) NOT NULL,
+    fatura_id BIGINT,
+    ettn VARCHAR(36) NOT NULL UNIQUE,
+    fatura_no VARCHAR(50) NOT NULL,
+    senaryo VARCHAR(30),
+    tip VARCHAR(30),
     gib_durum_kodu INTEGER DEFAULT 1000,
-    gib_durum_aciklama VARCHAR(255),
+    gib_durum_aciklama VARCHAR(500),
+    alici_vkn_tckn VARCHAR(20),
+    alici_unvan VARCHAR(250),
+    odenecek_tutar NUMERIC(19,2),
     ubl_xml TEXT,
-    sirket_id BIGINT,
-    olusturma_tarihi TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    guncelleme_tarihi TIMESTAMP
+    sirket_id BIGINT NOT NULL,
+    olusturma_tarihi TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. Döviz Kuru Tablosu
