@@ -1,7 +1,7 @@
 {
-  "name": "on-muhasebe",
+  "name": "raspel-erp",
   "version": "1.0.0",
-  "description": "Ön Muhasebe Uygulaması - Vue 3 Frontend",
+  "description": "RasPel ERP - Kurumsal Kaynak Planlama Sistemi Vue 3 Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint src --ext .js,.vue",
+    "format": "prettier --write \"src/**/*.{js,vue,css}\"",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run"
   },

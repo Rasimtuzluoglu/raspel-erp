@@ -24,8 +24,9 @@ import org.springframework.data.web.PageableDefault;
 
 @Tag(name = "Kullanıcılar", description = "Kullanıcı yönetimi ve kimlik doğrulama API")
 @RestController
-@RequestMapping("/api/kullanicilar")
+@RequestMapping({"/api/kullanicilar", "/api/v1/kullanicilar"})
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*", allowCredentials = "true")
 public class KullaniciController {
 
@@ -66,6 +67,14 @@ public class KullaniciController {
     public ResponseEntity<Void> sifreDegistir(@Valid @RequestBody SifreDegistirRequest req, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         kullaniciService.sifreDegistir(kullaniciId, req);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/sifre-sifirla")
+    @Operation(summary = "Şifre sıfırla", description = "Belirtilen kullanıcının şifresini sıfırlar (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> sifreSifirla(@Valid @RequestBody com.raspel.erp.dto.SifreSifirlaRequest req) {
+        kullaniciService.sifreSifirla(req);
         return ResponseEntity.ok().build();
     }
 

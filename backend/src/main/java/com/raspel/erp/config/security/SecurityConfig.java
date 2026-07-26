@@ -37,8 +37,8 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/kullanicilar/giris").permitAll()
-                .requestMatchers("/api/sirketler/aktif").permitAll()
+                .requestMatchers("/api/kullanicilar/giris", "/api/v1/kullanicilar/giris").permitAll()
+                .requestMatchers("/api/sirketler/aktif", "/api/v1/sirketler/aktif").permitAll()
                 .requestMatchers("/actuator/health/**").permitAll()
                 .anyRequest().authenticated()
             )

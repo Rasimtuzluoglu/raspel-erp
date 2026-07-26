@@ -89,6 +89,14 @@ public class KullaniciService {
         kullaniciRepository.save(k);
     }
 
+    public void sifreSifirla(com.raspel.erp.dto.SifreSifirlaRequest req) {
+        Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı adı bulunamadı: " + req.getUsername()));
+        k.setPassword(passwordEncoder.encode(req.getYeniSifre()));
+        kullaniciRepository.save(k);
+        log.info("Kullanıcı şifresi sıfırlandı: {}", req.getUsername());
+    }
+
     public LoginResponse giris(LoginRequest req) {
         log.info("Giriş denemesi: {}", req.getUsername());
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
