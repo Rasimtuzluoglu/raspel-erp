@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import ToastService from 'primevue/toastservice'
 
 describe('App.vue', () => {
   beforeEach(() => {
@@ -16,9 +17,14 @@ describe('App.vue', () => {
           'router-view': true,
           'Button': true,
           'Toast': true,
-          'ConfirmDialog': true
+          'ConfirmDialog': true,
+          'Dialog': true,
+          'InputText': true,
+          'Tag': true,
+          'QuickSearch': true,
+          'PasswordChangeModal': true
         },
-        plugins: [createPinia()]
+        plugins: [createPinia(), ToastService]
       }
     })
     expect(wrapper.exists()).toBe(true)
@@ -34,9 +40,14 @@ describe('App.vue', () => {
           'router-view': true,
           'Button': true,
           'Toast': true,
-          'ConfirmDialog': true
+          'ConfirmDialog': true,
+          'Dialog': true,
+          'InputText': true,
+          'Tag': true,
+          'QuickSearch': true,
+          'PasswordChangeModal': true
         },
-        plugins: [createPinia()]
+        plugins: [createPinia(), ToastService]
       }
     })
     expect(wrapper.find('.sidebar').exists()).toBe(false)

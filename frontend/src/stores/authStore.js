@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (stored) {
         const data = JSON.parse(stored)
         kullanici.value = data.kullanici
+        token.value = data.token || ''
         companyName.value = data.companyName || ''
         sirketId.value = data.sirketId || null
         sirketAdi.value = data.sirketAdi || ''
@@ -32,12 +33,13 @@ export const useAuthStore = defineStore('auth', () => {
       if (sirketIdParam) loginData.sirketId = sirketIdParam
       const res = await kullaniciAPI.giris(loginData)
       kullanici.value = { id: res.data.id, username: res.data.username, displayName: res.data.displayName, avatarUrl: res.data.avatarUrl, companyName: res.data.companyName, role: res.data.role }
-      token.value = res.data.token
+      token.value = res.data.token || ''
       companyName.value = sirketAdiParam || res.data.companyName || ''
       sirketId.value = res.data.sirketId || null
       sirketAdi.value = res.data.sirketAdi || ''
       localStorage.setItem('raspel_erp_auth', JSON.stringify({
         kullanici: kullanici.value,
+        token: token.value,
         companyName: companyName.value,
         sirketId: sirketId.value,
         sirketAdi: sirketAdi.value

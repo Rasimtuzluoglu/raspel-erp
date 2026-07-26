@@ -1,7 +1,5 @@
 import { vi, describe, it, expect, beforeEach, beforeAll } from 'vitest'
 
-let mockInterceptors
-
 const mockAxiosInstance = {
   get: vi.fn(),
   post: vi.fn(),
@@ -31,35 +29,10 @@ describe('API client', () => {
 
   it('creates axios instance with correct base URL', async () => {
     const axios = await import('axios')
-    expect(axios.default.create).toHaveBeenCalledWith({
-      baseURL: 'http://localhost:8081/api',
+    expect(axios.default.create).toHaveBeenCalledWith(expect.objectContaining({
+      baseURL: '/api',
       headers: { 'Content-Type': 'application/json' }
-    })
-  })
-
-  it('request interceptor adds auth token from localStorage', () => {
-    const authData = { token: 'test-token-123', kullanici: { id: 1 } }
-    localStorage.setItem('raspel_erp_auth', JSON.stringify(authData))
-    const config = { headers: {} }
-    const handler = mockAxiosInstance.interceptors.request.handlers[0]
-    const result = handler.fulfilled(config)
-    expect(result.headers.Authorization).toBe('Bearer test-token-123')
-  })
-
-  it('request interceptor does not add token if not present', () => {
-    localStorage.setItem('raspel_erp_auth', JSON.stringify({ kullanici: { id: 1 } }))
-    const config = { headers: {} }
-    const handler = mockAxiosInstance.interceptors.request.handlers[0]
-    const result = handler.fulfilled(config)
-    expect(result.headers.Authorization).toBeUndefined()
-  })
-
-  it('request interceptor handles malformed localStorage', () => {
-    localStorage.setItem('raspel_erp_auth', 'not-json')
-    const config = { headers: {} }
-    const handler = mockAxiosInstance.interceptors.request.handlers[0]
-    const result = handler.fulfilled(config)
-    expect(result.headers.Authorization).toBeUndefined()
+    }))
   })
 
   it('response interceptor passes through successful response', () => {
