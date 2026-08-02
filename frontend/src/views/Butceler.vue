@@ -30,8 +30,8 @@
       <div class="form-grid">
         <div class="field"><label>Ad *</label><InputText v-model="form.ad" class="w-full" /></div>
         <div class="field-row">
-          <div class="field"><label>Yıl</label><InputNumber v-model="form.yil" class="w-full" :min="2000" :max="2100" /></div>
-          <div class="field"><label>Ay (1-12)</label><InputNumber v-model="form.ay" class="w-full" :min="1" :max="12" /></div>
+          <div class="field"><label>Yıl</label><InputNumber v-model="form.yil" class="w-full" :min="2000" :max="2100" :use-grouping="false" /></div>
+          <div class="field"><label>Ay (1-12)</label><InputNumber v-model="form.ay" class="w-full" :min="1" :max="12" :use-grouping="false" /></div>
         </div>
         <div class="field"><label>Tür *</label>
           <Dropdown v-model="form.tur" :options="turSecenekleri" placeholder="Seçin" class="w-full" />

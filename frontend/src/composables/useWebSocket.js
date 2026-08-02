@@ -9,7 +9,7 @@ export function useWebSocket() {
 
   const baglan = () => {
     const authStore = useAuthStore()
-    if (!authStore.isLoggedIn || !authStore.kullanici?.sirketId) return
+    if (!authStore.isLoggedIn || !authStore.sirketId) return
 
     const token = authStore.token || ''
     const SOCKET_URL = import.meta.env.VITE_WS_URL ||
@@ -23,7 +23,7 @@ export function useWebSocket() {
           reconnectDelay: 5000,
           onConnect: () => {
             bagli.value = true
-            const sirketId = authStore.kullanici.sirketId
+            const sirketId = authStore.sirketId
             subscription = stompClient.subscribe(`/topic/bildirimler/${sirketId}`, (msg) => {
               try {
                 sonBildirim.value = JSON.parse(msg.body)

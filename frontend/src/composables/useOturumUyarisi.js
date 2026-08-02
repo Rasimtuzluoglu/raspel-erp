@@ -29,8 +29,11 @@ export function useOturumUyarisi() {
     }, 5000)
   }
 
-  const devamEt = () => {
+  const devamEt = async () => {
     goster.value = false
+    try {
+      await authStore.kullaniciGuncelle()
+    } catch {}
   }
 
   const cikis = () => {

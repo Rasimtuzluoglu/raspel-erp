@@ -68,7 +68,7 @@
       </div>
       <div class="form-grup">
         <label>Şirket Adı</label>
-        <InputText v-model="form.companyName" placeholder="Şirket adı" class="w-full" />
+        <Dropdown v-model="form.companyName" :options="sirketListesi" option-label="ad" option-value="ad" placeholder="Şirket Seçiniz" editable class="w-full" />
       </div>
       <div class="form-row">
         <div class="form-grup">
@@ -129,8 +129,15 @@ const avatarDosyaSec = (e) => {
 
 onMounted(async () => {
   loading.value = true
-  try { const r = await kullaniciAPI.getAll(); kullanicilar.value = r.data?.content || r.data || [] }
-  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Kullanıcılar yüklenemedi', life: 5000 }) }
+  try {
+    const [r, sR] = await Promise.all([
+      kullaniciAPI.getAll(),
+      sirketAPI.getAktifSirketler()
+    ])
+    kullanicilar.value = r.data?.content || r.data || []
+    sirketListesi.value = sR.data || []
+  }
+  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Kullanıcılar veya şirketler yüklenemedi', life: 5000 }) }
   finally { loading.value = false }
 })
 

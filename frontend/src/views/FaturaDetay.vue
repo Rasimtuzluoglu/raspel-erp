@@ -22,7 +22,7 @@
           <h1>{{ fatura.tur === 'SATIS' ? 'SATIŞ FATURASI' : 'ALIŞ FATURASI' }}</h1>
           <p><strong>Fatura No:</strong> {{ fatura.faturaNumarasi }}</p>
           <p><strong>Tarih:</strong> {{ formatDate(fatura.tarih) }}</p>
-          <p><strong>Durum:</strong> <span :class="['durum-badge', fatura.durum.toLowerCase()]">{{ durumLabel(fatura.durum) }}</span></p>
+          <p><strong>Durum:</strong> <span :class="['durum-badge', (fatura.durum || '').toLowerCase()]">{{ durumLabel(fatura.durum) }}</span></p>
         </div>
       </div>
 
@@ -103,8 +103,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
@@ -112,6 +112,7 @@ import { useYakinZamanda } from '../composables/useYakinZamanda.js'
 import { belgeAPI } from '../api/index.js'
 
 const route = useRoute()
+const router = useRouter()
 const faturaStore = useFaturaStore()
 const win = window
 
@@ -119,6 +120,18 @@ const fatura = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const printMode = ref(route.query.print === 'true')
+
+const escListener = (e) => {
+  if (e.key === 'Escape') router.push('/faturalar')
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', escListener)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', escListener)
+})
 
 const toast = useToast()
 const dosyaInput = ref(null)

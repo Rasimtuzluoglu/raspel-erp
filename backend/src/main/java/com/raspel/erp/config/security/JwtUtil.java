@@ -42,11 +42,15 @@ public class JwtUtil {
     }
 
     public Long getUserIdFromToken(String token) {
-        return getClaims(token).getPayload().get("userId", Long.class);
+        Object val = getClaims(token).getPayload().get("userId");
+        if (val instanceof Number) return ((Number) val).longValue();
+        return null;
     }
 
     public Long getSirketIdFromToken(String token) {
-        return getClaims(token).getPayload().get("sirketId", Long.class);
+        Object val = getClaims(token).getPayload().get("sirketId");
+        if (val instanceof Number) return ((Number) val).longValue();
+        return null;
     }
 
     public boolean validateToken(String token) {

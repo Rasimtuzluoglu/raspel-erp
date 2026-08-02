@@ -59,7 +59,7 @@ const offlineBannerVisible = computed(() => !networkStatus.online && networkStat
 const oturum = useOturumUyarisi()
 
 const kisaYolHandler = (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+  if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     quickSearchVisible.value = !quickSearchVisible.value
   }

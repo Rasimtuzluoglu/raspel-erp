@@ -9,6 +9,9 @@
       <Column field="tarih" header="Tarih" sortable>
         <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
       </Column>
+      <Column field="cariHesapAd" header="Cari Hesap" sortable>
+        <template #body="{ data }">{{ data.cariHesapAd || data.cariHesapId || '-' }}</template>
+      </Column>
       <Column field="tutar" header="Tutar">
         <template #body="{ data }">{{ formatCurrency(data.tutar) }}</template>
       </Column>
@@ -32,6 +35,9 @@
 
     <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '700px' }">
       <div class="form-grid">
+        <div class="field"><label>Cari Hesap (Müşteri/Tedarikçi) *</label>
+          <Dropdown v-model="form.cariHesapId" :options="cariList" option-label="ad" option-value="id" placeholder="Cari Hesap Seçiniz" class="w-full" filter @change="cariSecildi" />
+        </div>
         <div class="field"><label>Tarih *</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
         <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
 
@@ -66,17 +72,18 @@
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
-import { iadeAPI, stokAPI } from '../api/index.js'
+import { iadeAPI, stokAPI, cariHesapAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
 const list = ref([])
 const stokList = ref([])
+const cariList = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] })
+const form = ref({ cariHesapId: null, cariHesapAd: '', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] })
 
 const dialogHeader = computed(() => duzenleme.value ? 'İade Düzenle' : 'Yeni İade')
 
@@ -93,12 +100,22 @@ const formatDate = (d) => {
   return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
 }
 
+const cariSecildi = () => {
+  const secilen = cariList.value.find(c => c.id === form.value.cariHesapId)
+  if (secilen) form.value.cariHesapAd = secilen.ad
+}
+
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
-    const stokRes = await stokAPI.getAll()
+    const [r, stokRes, cariRes] = await Promise.all([
+      iadeAPI.getAll(),
+      stokAPI.getAll(),
+      cariHesapAPI.getAll()
+    ])
+    list.value = r.data?.content || r.data || []
     stokList.value = stokRes.data?.content || stokRes.data || []
+    cariList.value = cariRes.data?.content || cariRes.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
   }
@@ -113,7 +130,7 @@ const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
     ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date(), kalemler: data.kalemler?.map(k => ({ ...k })) || [] }
-    : { tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
+    : { cariHesapId: null, cariHesapAd: '', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
   dialog.value = true
 }
 

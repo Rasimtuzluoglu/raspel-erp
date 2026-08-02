@@ -85,7 +85,6 @@ watch(selectedSirket, (sirket) => {
   sirketLogo.value = sirket?.logoUrl || ''
 })
 
-const odaklanKullanici = () => kullaniciInput.value?.$el?.querySelector('input')?.focus()
 const odaklanSifre = () => sifreInput.value?.$el?.querySelector('input')?.focus()
 const odaklanSirket = () => sirketSelect.value?.$el?.querySelector('input')?.focus()
 

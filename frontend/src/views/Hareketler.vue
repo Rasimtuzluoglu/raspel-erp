@@ -62,8 +62,8 @@
         <Column field="cariHesapAd" header="Cari Hesap" style="width: 200px"></Column>
         <Column field="tur" header="Tür" style="width: 100px">
           <template #body="slotProps">
-            <span :class="['badge', slotProps.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
-              {{ slotProps.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
+            <span :class="['badge', String(typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur).toUpperCase() === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
+              {{ String(typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur).toUpperCase() === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
             </span>
           </template>
         </Column>
@@ -239,7 +239,7 @@ const form = ref({
 
 const hareketTurleri = [
   { label: 'Tahsilat', value: 'TAHSILAT' },
-  { label: 'Ödeme', value: 'ÖDEME' }
+  { label: 'Ödeme', value: 'ODEME' }
 ]
 
 const odemeSekliSecenekleri = [
@@ -252,8 +252,10 @@ const odemeSekliSecenekleri = [
 ]
 
 const odemeSekliLabel = (val) => {
-  const item = odemeSekliSecenekleri.find(s => s.value === val)
-  return item ? item.label : val
+  if (!val) return '-'
+  const code = typeof val === 'object' ? (val.value || val.label) : val
+  const item = odemeSekliSecenekleri.find(s => s.value === code || s.label === code)
+  return item ? item.label : String(code)
 }
 
 const cariHesapSeçenekleri = computed(() => {

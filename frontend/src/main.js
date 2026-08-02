@@ -14,6 +14,7 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import DatePicker from 'primevue/datepicker'
 import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Card from 'primevue/card'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
@@ -45,6 +46,30 @@ app.use(PrimeVue, {
   theme: {
     preset: Lara,
     options: { darkModeSelector: false }
+  },
+  locale: {
+    startsWith: 'Başlayan',
+    contains: 'İçeren',
+    notContains: 'İçermeyen',
+    endsWith: 'Biten',
+    equals: 'Eşit',
+    notEquals: 'Eşit Değil',
+    noFilter: 'Filtre Yok',
+    accept: 'Evet',
+    reject: 'Hayır',
+    choose: 'Seç',
+    upload: 'Yükle',
+    cancel: 'İptal',
+    dayNames: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
+    dayNamesShort: ['Pzr', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
+    dayNamesMin: ['Pz', 'Pt', 'Sa', 'Çş', 'Pş', 'Cu', 'Ct'],
+    monthNames: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+    monthNamesShort: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+    today: 'Bugün',
+    clear: 'Temizle',
+    weekHeader: 'Hf',
+    firstDayOfWeek: 1,
+    dateFormat: 'dd.mm.yy'
   }
 })
 app.use(ToastService)
@@ -59,6 +84,7 @@ app.component('InputText', InputText)
 app.component('InputNumber', InputNumber)
 app.component('DatePicker', DatePicker)
 app.component('Dropdown', Dropdown)
+app.component('Select', Select)
 app.component('Card', Card)
 app.component('Toast', Toast)
 app.component('ConfirmDialog', ConfirmDialog)

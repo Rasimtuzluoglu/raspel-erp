@@ -36,9 +36,9 @@
       </div>
     </div>
 
-    <Onboarding v-if="!loading && bosSistem" />
+    <Onboarding v-if="!loading && bosSistem" @demo-loaded="refresh" />
 
-    <template v-if="!loading">
+    <template v-if="!loading && !bosSistem">
       <!-- İSTATİSTİKLER -->
       <div class="stats-grid" v-if="widgets.istatistikler.gorunur">
         <div class="stat-card">

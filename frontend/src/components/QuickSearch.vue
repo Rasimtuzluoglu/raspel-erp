@@ -80,7 +80,7 @@ const typeConfig = {
   personel: { icon: 'pi pi-id-card', severity: 'help', route: '/personel' },
   proje: { icon: 'pi pi-folder', severity: 'contrast', route: '/projeler' },
   siparis: { icon: 'pi pi-receipt', severity: 'info', route: '/siparisler' },
-  not: { icon: 'pi pi-sticky-note', severity: 'info', route: '/notlar' },
+  not: { icon: 'pi pi-pen-to-square', severity: 'info', route: '/notlar' },
   banka: { icon: 'pi pi-building', severity: 'warn', route: '/bankalar' },
   kasa: { icon: 'pi pi-wallet', severity: 'info', route: '/kasa' }
 }

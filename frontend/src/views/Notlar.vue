@@ -18,7 +18,7 @@
     </div>
 
     <div v-else-if="store.notlar.length === 0" class="empty-box">
-      <i class="pi pi-sticky-note empty-icon"></i>
+      <i class="pi pi-pen-to-square empty-icon"></i>
       <h3>Henüz Not Yok</h3>
       <p>İlk notunu eklemek için "Yeni Not" butonuna tıkla.</p>
     </div>

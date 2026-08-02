@@ -1,11 +1,11 @@
 <template>
-  <div class="bildirim-zili">
-    <Button icon="pi pi-bell" class="p-button-rounded p-button-text" @click="panelAcik = !panelAcik" title="Bildirimler">
+  <div class="bildirim-zili" ref="ziliRef">
+    <Button icon="pi pi-bell" class="p-button-rounded p-button-text" @click.stop="panelAcik = !panelAcik" title="Bildirimler">
       <span v-if="filtrelenmisBildirimler.length" class="zil-sayac">{{ filtrelenmisBildirimler.length }}</span>
     </Button>
 
     <transition name="panel">
-      <div v-if="panelAcik" class="bildirim-panel">
+      <div v-if="panelAcik" class="bildirim-panel" @click.stop>
         <div class="panel-baslik">
           <strong>Bildirimler</strong>
           <div class="panel-ayarlar">
@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
@@ -63,8 +63,24 @@ const router = useRouter()
 const panelAcik = ref(false)
 const tercihPaneli = ref(false)
 const bildirimler = ref([])
+const ziliRef = ref(null)
+
 const { sonBildirim } = useWebSocket()
 const masaustu = useMasaustuBildirim()
+
+const disariTiklamaHandler = (e) => {
+  if (panelAcik.value && ziliRef.value && !ziliRef.value.contains(e.target)) {
+    panelAcik.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', disariTiklamaHandler)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', disariTiklamaHandler)
+})
 
 const masaustuIzinVer = () => {
   masaustu.izinIste()
@@ -136,10 +152,10 @@ const temizle = () => { bildirimler.value = [] }
   font-weight: 700; padding: 0 4px;
 }
 .bildirim-panel {
-  position: absolute; top: 48px; right: 0; z-index: 1000;
+  position: fixed; left: 245px; bottom: 70px; top: auto; z-index: 99999;
   width: 340px; max-height: 420px; overflow-y: auto;
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; box-shadow: var(--shadow);
+  border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.35);
 }
 .panel-baslik {
   display: flex; justify-content: space-between; align-items: center;

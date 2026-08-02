@@ -252,18 +252,30 @@ const kdvLoading = ref(false)
 const yasData = ref(null)
 const yasLoading = ref(false)
 
+const formatDateForApi = (d) => {
+  if (!d) return ''
+  if (d instanceof Date) return d.toISOString().split('T')[0]
+  if (typeof d === 'string') return d.split('T')[0]
+  return String(d)
+}
+
 onMounted(async () => {
   await cariHesapStore.getAllCariHesaplar()
+  getGelirGider()
+  getKdv()
 })
 
 const getCariEkstre = async () => {
-  if (!ekstreCariId.value) return
+  if (!ekstreCariId.value) {
+    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Lütfen bir Cari Hesap seçiniz.', life: 3000 })
+    return
+  }
   ekstreLoading.value = true
   try {
     const r = await raporAPI.cariEkstre({
       cariHesapId: ekstreCariId.value,
-      baslangic: ekstreBas.value.toISOString().split('T')[0],
-      bitis: ekstreBit.value.toISOString().split('T')[0]
+      baslangic: formatDateForApi(ekstreBas.value),
+      bitis: formatDateForApi(ekstreBit.value)
     })
     ekstreData.value = r.data
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Cari ekstre yüklenirken hata oluştu', life: 5000 }); ekstreData.value = null }
@@ -274,8 +286,8 @@ const getGelirGider = async () => {
   ggLoading.value = true
   try {
     const r = await raporAPI.gelirGider({
-      baslangic: ggBas.value.toISOString().split('T')[0],
-      bitis: ggBit.value.toISOString().split('T')[0]
+      baslangic: formatDateForApi(ggBas.value),
+      bitis: formatDateForApi(ggBit.value)
     })
     ggData.value = r.data
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Gelir/gider raporu yüklenirken hata oluştu', life: 5000 }); ggData.value = null }
@@ -286,8 +298,8 @@ const getKdv = async () => {
   kdvLoading.value = true
   try {
     const r = await raporAPI.kdv({
-      baslangic: kdvBas.value.toISOString().split('T')[0],
-      bitis: kdvBit.value.toISOString().split('T')[0]
+      baslangic: formatDateForApi(kdvBas.value),
+      bitis: formatDateForApi(kdvBit.value)
     })
     kdvData.value = r.data
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'KDV raporu yüklenirken hata oluştu', life: 5000 }); kdvData.value = null }

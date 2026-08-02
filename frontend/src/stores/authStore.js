@@ -75,6 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
       companyName.value = r.data.companyName || companyName.value
       localStorage.setItem('raspel_erp_auth', JSON.stringify({
         kullanici: kullanici.value,
+        token: token.value,
         companyName: companyName.value,
         sirketId: sirketId.value,
         sirketAdi: sirketAdi.value
@@ -84,5 +85,5 @@ export const useAuthStore = defineStore('auth', () => {
 
   init()
 
-  return { kullanici, token, companyName, sirketId, sirketAdi, loading, isLoggedIn, girisYap, cikisYap, kullanicilariGetir, init }
+  return { kullanici, token, companyName, sirketId, sirketAdi, loading, isLoggedIn, girisYap, cikisYap, kullanicilariGetir, kullaniciGuncelle, init }
 })

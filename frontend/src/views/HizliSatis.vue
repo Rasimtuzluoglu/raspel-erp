@@ -3,7 +3,7 @@
     <div class="pos-header">
       <div class="breadcrumb"><i class="pi pi-home"></i> Anasayfa / POS / Yeni Satış</div>
       <div class="user-info" v-if="authStore.kullanici">
-        <i class="pi pi-user"></i> {{ authStore.kullanici.ad || authStore.kullanici.kullaniciAdi }}
+        <i class="pi pi-user"></i> {{ authStore.kullanici.displayName || authStore.kullanici.username }}
       </div>
     </div>
 
@@ -90,7 +90,12 @@
                 <Button icon="pi pi-minus" rounded text severity="secondary" size="small" @click="miktarAzalt(idx)" />
                 <span class="sepet-adet">{{ item.miktar }}</span>
                 <Button icon="pi pi-plus" rounded text severity="secondary" size="small" @click="item.miktar++" />
-                <span class="sepet-birimfiyat">{{ formatCurrency(item.fiyat) }}</span>
+                <select v-model="item.fiyatTipi" class="fiyat-tip-select" @change="fiyatTipiDegisti(item)">
+                  <option value="perakende">Perakende</option>
+                  <option value="toptan">Toptan (-10%)</option>
+                  <option value="ozel">Özel (-20%)</option>
+                </select>
+                <input type="number" step="0.01" v-model.number="item.fiyat" class="fiyat-giris-input" title="Birim Fiyatı Düzenle" />
                 <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
                 <Button icon="pi pi-times" rounded text severity="danger" size="small" @click="sepetSil(idx)" />
               </div>
@@ -208,32 +213,38 @@
       </div>
     </div>
 
-    <Dialog v-model:visible="yeniMusteriDialog" header="Yeni Cari Hesap" :modal="true" :style="{ width: '450px' }" class="yeni-musteri-dialog">
-      <div class="p-fluid">
-        <div class="field">
+    <Dialog v-model:visible="yeniMusteriDialog" header="Yeni Cari Hesap Ekle" :modal="true" :style="{ width: '520px' }" class="yeni-musteri-dialog">
+      <div class="ym-form-grid">
+        <div class="field full-width">
           <label for="ym-ad">Ad / Firma Adı <span class="required">*</span></label>
-          <InputText id="ym-ad" v-model="yeniMusteri.ad" />
+          <InputText id="ym-ad" v-model="yeniMusteri.ad" placeholder="Örn: Ahmet Yılmaz veya Yılmaz A.Ş." class="w-full" />
         </div>
         <div class="field">
           <label for="ym-telefon">Telefon</label>
-          <InputText id="ym-telefon" v-model="yeniMusteri.telefon" />
+          <InputText id="ym-telefon" v-model="yeniMusteri.telefon" placeholder="05XX XXX XX XX" class="w-full" />
         </div>
         <div class="field">
           <label for="ym-email">E-posta</label>
-          <InputText id="ym-email" v-model="yeniMusteri.email" />
+          <InputText id="ym-email" v-model="yeniMusteri.email" placeholder="ornek@domain.com" class="w-full" />
         </div>
         <div class="field">
+          <label for="ym-vergi">Vergi / TC No</label>
+          <InputText id="ym-vergi" v-model="yeniMusteri.vergiNo" placeholder="10 veya 11 haneli numara" class="w-full" />
+        </div>
+        <div class="field">
+          <label for="ym-tur">Cari Türü</label>
+          <Dropdown id="ym-tur" v-model="yeniMusteri.tur" :options="['MUSTERI','TEDARIKCI','HEPSI']" placeholder="MÜŞTERİ" class="w-full" />
+        </div>
+        <div class="field full-width">
           <label for="ym-adres">Adres</label>
-          <Textarea id="ym-adres" v-model="yeniMusteri.adres" rows="3" />
-        </div>
-        <div class="field">
-          <label for="ym-vergi">Vergi No</label>
-          <InputText id="ym-vergi" v-model="yeniMusteri.vergiNo" />
+          <Textarea id="ym-adres" v-model="yeniMusteri.adres" rows="2" placeholder="Fatura adresi..." class="w-full" />
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="yeniMusteriDialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="musteriKaydet" :loading="musteriKaydediliyor" />
+        <div class="dialog-footer-btns">
+          <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="yeniMusteriDialog = false" />
+          <Button label="Kaydet & Seç" icon="pi pi-check" class="p-button-primary" @click="musteriKaydet" :loading="musteriKaydediliyor" />
+        </div>
       </template>
     </Dialog>
   </div>
@@ -466,17 +477,30 @@ const sepeteEkle = (u) => {
   if (varOlan) {
     varOlan.miktar++
   } else {
+    const stdFiyat = u.fiyat || u.satisFiyati || 0
+    const toptan = u.toptanFiyati || Math.round(stdFiyat * 0.9 * 100) / 100
+    const ozel = u.ozelFiyati || Math.round(stdFiyat * 0.8 * 100) / 100
     sepet.value.push({
       id: u.id,
       ad: u.ad,
       stokKodu: u.stokKodu,
       barkod: u.barkod,
       miktar: 1,
-      fiyat: u.fiyat || u.satisFiyati || 0,
+      fiyat: stdFiyat,
+      perakendeFiyati: stdFiyat,
+      toptanFiyati: toptan,
+      ozelFiyati: ozel,
+      fiyatTipi: 'perakende',
       birim: u.birim || 'adet',
       birimHacim: u.birimHacim || 1
     })
   }
+}
+
+const fiyatTipiDegisti = (item) => {
+  if (item.fiyatTipi === 'toptan') item.fiyat = item.toptanFiyati
+  else if (item.fiyatTipi === 'ozel') item.fiyat = item.ozelFiyati
+  else item.fiyat = item.perakendeFiyati
 }
 
 const miktarAzalt = (idx) => {
@@ -737,8 +761,25 @@ const satisiTamamla = async () => {
 
 .satis-buton { margin-top: 4px; }
 
+.ym-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.ym-form-grid .full-width { grid-column: span 2; }
+.dialog-footer-btns { display: flex; gap: 8px; justify-content: flex-end; width: 100%; }
+
 .field { margin-bottom: 12px; }
 .required { color: #f87171; }
+
+.fiyat-tip-select {
+  background: var(--bg-primary); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 11px; padding: 2px 4px; outline: none;
+}
+.fiyat-giris-input {
+  width: 70px; background: var(--bg-primary); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; padding: 2px 4px; text-align: right; outline: none;
+}
 
 @media (max-width: 1100px) {
   .pos-body { flex-direction: column; }

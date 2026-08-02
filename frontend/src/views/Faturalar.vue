@@ -41,7 +41,7 @@
         </Column>
         <Column field="durum" header="Durum" style="width:110px">
           <template #body="s">
-            <span :class="['durum-badge', s.data.durum.toLowerCase()]">
+            <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">
               {{ durumLabel(s.data.durum) }}
             </span>
           </template>

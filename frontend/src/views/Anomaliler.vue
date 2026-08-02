@@ -17,10 +17,10 @@
     </div>
 
     <div v-else class="anomali-grid">
-      <div v-for="item in anomaliler" :key="item.id" class="anomali-card" :class="item.seviye.toLowerCase()">
+      <div v-for="item in anomaliler" :key="item.id" class="anomali-card" :class="(item.seviye || '').toLowerCase()">
         <div class="card-header">
           <div class="header-left">
-            <span class="badge" :class="item.seviye.toLowerCase()">{{ item.seviye }} ÖNCELİK</span>
+            <span class="badge" :class="(item.seviye || '').toLowerCase()">{{ item.seviye }} ÖNCELİK</span>
             <span class="tur-label">{{ item.tur }}</span>
           </div>
           <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
