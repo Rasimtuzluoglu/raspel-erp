@@ -18,12 +18,13 @@
           <Tag :value="data.durum" :severity="data.durum === 'SIPARIS' ? 'info' : data.durum === 'FATURA_KESILDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'" />
         </template>
       </Column>
-      <Column header="İşlem" style="width:180px">
+      <Column header="İşlemler" style="width:220px">
         <template #body="{ data }">
           <Button icon="pi pi-check-circle" class="p-button-rounded p-button-text p-button-info" v-if="data.durum === 'TEKLIF'" @click="durumGuncelle(data, 'SIPARIS')" title="Siparişe Çevir" />
           <Button icon="pi pi-file" class="p-button-rounded p-button-text p-button-success" v-if="data.durum === 'SIPARIS'" @click="durumGuncelle(data, 'FATURA_KESILDI')" title="Faturalaştır" />
+          <Button icon="pi pi-undo" class="p-button-rounded p-button-text p-button-help" v-if="data.durum === 'FATURA_KESILDI' || data.durum === 'IPTAL'" @click="durumGuncelle(data, 'SIPARIS')" title="Siparişe Geri Al" />
           <Button icon="pi pi-times-circle" class="p-button-rounded p-button-text p-button-warning" v-if="data.durum !== 'IPTAL' && data.durum !== 'FATURA_KESILDI'" @click="durumGuncelle(data, 'IPTAL')" title="İptal Et" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="sil(data)" :disabled="data.durum === 'FATURA_KESILDI'" />
+          <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="sil(data)" />
         </template>
       </Column>
     </DataTable>

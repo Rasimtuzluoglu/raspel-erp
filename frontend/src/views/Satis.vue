@@ -33,10 +33,11 @@
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">{{ durumLabel(s.data.durum) }}</span>
           </template>
         </Column>
-        <Column header="" style="width:160px">
+        <Column header="İşlemler" style="width:180px">
           <template #body="s">
             <Button icon="pi pi-eye" class="p-button-rounded p-button-sm p-button-info" @click="$router.push(`/faturalar/${s.data.id}`)" title="Görüntüle" />
-            <Button icon="pi pi-print" class="p-button-rounded p-button-sm p-button-help" @click="printFatura(s.data.id)" title="Yazdır" />
+            <Button icon="pi pi-print" class="p-button-rounded p-button-sm p-button-help" @click="printFatura(s.data.id)" title="A4 Fatura Yazdır" />
+            <Button icon="pi pi-receipt" class="p-button-rounded p-button-sm p-button-warning" @click="printTermalFis(s.data)" title="Termal Fiş Yazdır (80mm)" />
           </template>
         </Column>
       </DataTable>
@@ -278,6 +279,87 @@ const printFatura = (id) => window.open(`/faturalar/${id}?print=true`, '_blank')
 const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
 const formatCurrency = (v) => v ?? 0 ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v) : '0,00 ₺'
 const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(d)) : '-'
+const printTermalFis = (satisData) => {
+  const fisWindow = window.open('', '_blank', 'width=380,height=600')
+  if (!fisWindow) return
+
+  const kalemlerHtml = (satisData.kalemler || []).map(k => `
+    <tr>
+      <td style="text-align:left;">${k.stokAd || k.ad || 'Ürün'} x${k.miktar || k.adet || 1}</td>
+      <td style="text-align:right;">${formatCurrency(k.toplamTutar || (k.miktar * k.birimFiyat) || (k.adet * k.birimFiyat))}</td>
+    </tr>
+  `).join('')
+
+  const content = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Termal Fiş</title>
+      <style>
+        @page { size: 80mm auto; margin: 0; }
+        body { font-family: 'Courier New', Courier, monospace; width: 72mm; margin: 0 auto; padding: 8px 0; font-size: 12px; color: #000; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 6px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 6px 0; }
+        td, th { padding: 3px 0; vertical-align: top; font-size: 11px; }
+        .header { margin-bottom: 8px; }
+        .header h2 { margin: 0; font-size: 16px; font-weight: bold; }
+        .header p { margin: 2px 0; font-size: 10px; }
+        .footer { margin-top: 10px; text-align: center; font-size: 10px; }
+      </style>
+    </head>
+    <body>
+      <div class="header text-center">
+        <h2>RASPEL ERP</h2>
+        <p>SATIŞ FİŞİ</p>
+        <p>Fiş No: ${satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now())}</p>
+        <p>Tarih: ${formatDate(satisData.tarih || new Date())}</p>
+        <p>Müşteri: ${satisData.cariHesapAd || 'Perakende Müşteri'}</p>
+      </div>
+      <div class="line"></div>
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;">Ürün / Miktar</th>
+            <th style="text-align:right;">Tutar</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${kalemlerHtml.length ? kalemlerHtml : '<tr><td colspan="2">1 Adet Satış Kalemi</td></tr>'}
+        </tbody>
+      </table>
+      <div class="line"></div>
+      <table>
+        <tr>
+          <td>ARA TOPLAM:</td>
+          <td class="text-right bold">${formatCurrency(satisData.araToplam || satisData.genelToplam || 0)}</td>
+        </tr>
+        <tr>
+          <td>KDV:</td>
+          <td class="text-right">${formatCurrency(satisData.kdvToplam || 0)}</td>
+        </tr>
+        <tr style="font-size:13px;">
+          <td class="bold">GENEL TOPLAM:</td>
+          <td class="text-right bold">${formatCurrency(satisData.genelToplam || 0)}</td>
+        </tr>
+      </table>
+      <div class="line"></div>
+      <div class="footer">
+        <p>Bizi tercih ettiğiniz için teşekkür ederiz!</p>
+        <p>Yazılım: RasPel ERP</p>
+      </div>
+      <script>
+        window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); }
+      <\/script>
+    </body>
+    </html>
+  `
+  fisWindow.document.write(content)
+  fisWindow.document.close()
+}
 </script>
 
 <style scoped>

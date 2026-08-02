@@ -608,7 +608,7 @@ h3 {
 .form-section { margin-bottom: 20px; }
 .form-section:last-child { margin-bottom: 0; }
 .form-section-title {
-  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  font-size: 14px; font-weight: 700; color: #60a5fa;
   text-transform: uppercase; letter-spacing: 0.5px;
   margin-bottom: 16px; padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
@@ -620,8 +620,8 @@ h3 {
 .form-group label {
   display: block;
   margin-bottom: 6px;
-  font-weight: 600;
-  color: #cbd5e1;
+  font-weight: 700;
+  color: var(--text-primary) !important;
   font-size: 13px;
 }
 .form-group .required { color: #f87171; }

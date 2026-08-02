@@ -637,6 +637,7 @@ const satisiTamamla = async () => {
       }))
     })
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `Satış tamamlandı - ${formatCurrency(genelToplam.value)}`, life: 5000 })
+    try { fisBaskiPenceresi(true) } catch {}
     sepet.value = []
     seciliMusteri.value = null
     musteriModu.value = 'musteri'
