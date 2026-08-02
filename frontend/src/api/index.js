@@ -59,11 +59,34 @@ apiClient.interceptors.response.use(
       window.location.href = '/giris'
     }
     if (status === 403 && !window.location.pathname.startsWith('/giris') && !window.location.pathname.startsWith('/yetki-reddi')) {
-      window.location.href = '/yetki-reddi'
+      const tokenSuresiDolmus = tokenSuresiDolduMu()
+      if (tokenSuresiDolmus) {
+        try {
+          const authStore = useAuthStore()
+          authStore.cikisYap()
+        } catch {}
+        window.location.href = '/giris'
+      } else {
+        window.location.href = '/yetki-reddi'
+      }
     }
     return Promise.reject(error)
   }
 )
+
+const tokenSuresiDolduMu = () => {
+  try {
+    const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
+    const token = kayitli.token || ''
+    if (!token) return true
+    const payload = token.split('.')[1]
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+    if (!decoded.exp) return false
+    return decoded.exp * 1000 < Date.now()
+  } catch {
+    return false
+  }
+}
 
 axiosRetry(apiClient, {
   retries: 2,
