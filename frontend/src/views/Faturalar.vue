@@ -178,6 +178,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { excelAPI, pdfAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
+import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -217,6 +218,8 @@ const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
     toast.add({ severity: 'info', summary: 'Taslak Geri Yüklendi', detail: 'Kesilmemiş faturanız geri yüklendi.', life: 5000 })
   }
 })
+
+const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
   loading.value = true
@@ -302,6 +305,7 @@ const openCreateDialog = () => {
     aciklama: '',
     kalemler: [{ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 }]
   }
+  formTemizle()
   showDialog.value = true
 }
 
@@ -322,6 +326,7 @@ const editFatura = (fatura) => {
       stokId: k.stokId || null
     }))
   }
+  formTemizle()
   showDialog.value = true
 }
 
@@ -367,6 +372,7 @@ const saveFatura = async () => {
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura oluşturuldu', life: 5000 })
     }
     taslakTemizle()
+    formTemizle()
     closeDialog()
   } catch (err) {
     const msg = err.response?.data?.message || 'İşlem başarısız'

@@ -19,6 +19,17 @@
             <Checkbox :model-value="tercihler[t.tur] !== false" :binary="true" @update:model-value="tercihDegistir(t.tur, $event)" />
             <span>{{ t.etiket }}</span>
           </label>
+          <div class="tercih-ayrac"></div>
+          <div class="tercih-baslik">Masaüstü Bildirimleri</div>
+          <div v-if="masaustu.izinli" class="tercih-satir">
+            <i class="pi pi-check-circle" style="color:#4ade80"></i>
+            <span>Masaüstü bildirimleri açık</span>
+          </div>
+          <div v-else class="tercih-satir">
+            <i class="pi pi-exclamation-triangle" style="color:#fbbf24"></i>
+            <span>Tarayıcı izni gerekli</span>
+            <Button label="İzin Ver" size="small" class="p-button-sm p-button-outlined" @click="masaustuIzinVer" />
+          </div>
         </div>
         <div v-if="filtrelenmisBildirimler.length === 0 && !tercihPaneli" class="panel-bos">
           <i class="pi pi-inbox"></i>
@@ -45,12 +56,18 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
+import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
 
 const router = useRouter()
 const panelAcik = ref(false)
 const tercihPaneli = ref(false)
 const bildirimler = ref([])
 const { sonBildirim } = useWebSocket()
+const masaustu = useMasaustuBildirim()
+
+const masaustuIzinVer = () => {
+  masaustu.izinIste()
+}
 
 const TERCIH_ANAHTAR = 'raspel_bildirim_tercihleri'
 const tercihListesi = [
@@ -74,7 +91,12 @@ const tercihDegistir = (tur, val) => {
 }
 
 watch(sonBildirim, (yeni) => {
-  if (yeni) bildirimler.value.unshift(yeni)
+  if (yeni) {
+    bildirimler.value.unshift(yeni)
+    if (tercihler.value[yeni.tur] !== false) {
+      masaustu.goster(yeni.baslik || 'Bildirim', yeni.mesaj || '')
+    }
+  }
 })
 
 const ikonSinifi = (tur) => {
@@ -127,6 +149,7 @@ const temizle = () => { bildirimler.value = [] }
 .tercih-paneli { padding: 12px 16px; }
 .tercih-baslik { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
 .tercih-satir { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; cursor: pointer; }
+.tercih-ayrac { border-top: 1px solid var(--border); margin: 10px 0; }
 .panel-baslik strong { font-size: 14px; }
 .panel-bos { text-align: center; padding: 32px; color: var(--text-muted); }
 .panel-bos i { font-size: 32px; display: block; margin-bottom: 8px; }

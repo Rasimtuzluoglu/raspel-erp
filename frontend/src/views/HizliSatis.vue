@@ -508,11 +508,22 @@ const fisiYazdir = () => {
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Fiş</title>
+<title>Fiş Önizleme</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Courier New', monospace; width: 80mm; margin: 0 auto; color: #000; font-size: 12px; }
-  .fis { padding: 6px 4px; }
+  .aracubuk {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    width: 100%; padding: 10px; text-align: center;
+    background: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .aracubuk button {
+    font-family: Arial, sans-serif; font-size: 14px; font-weight: 600;
+    padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer;
+    background: #3b82f6; color: #fff; margin: 0 4px;
+  }
+  .aracubuk button.iptal { background: #475569; }
+  .fis { padding: 6px 4px; margin-top: 52px; }
   .baslik { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 4px; }
   .tarih, .fisno { text-align: center; font-size: 10px; margin-top: 2px; }
   .musteri { margin-top: 6px; font-size: 11px; }
@@ -522,9 +533,17 @@ const fisiYazdir = () => {
   .satir .tutar { white-space: nowrap; }
   .satir.genel { border-top: 2px solid #000; font-weight: bold; padding-top: 4px; margin-top: 4px; }
   .tesekkur { text-align: center; margin-top: 8px; font-size: 10px; }
+  @media print {
+    .aracubuk { display: none !important; }
+    .fis { margin-top: 0; }
+  }
 </style>
 </head>
 <body>
+  <div class="aracubuk">
+    <button onclick="window.print()">Yazdır</button>
+    <button class="iptal" onclick="window.close()">Kapat</button>
+  </div>
   <div class="fis">
     <div class="baslik">${escapeHtml(sirketAdi.value || 'RASPEL ERP')}</div>
     <div class="tarih">${simdikiTarih.value}</div>
@@ -538,7 +557,6 @@ const fisiYazdir = () => {
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     <div class="tesekkur">İyi günler dileriz</div>
   </div>
-  <script>window.onload = function() { window.focus(); window.print(); }<\/script>
 </body>
 </html>`
 

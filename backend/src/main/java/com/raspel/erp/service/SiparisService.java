@@ -33,6 +33,7 @@ public class SiparisService {
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
     private final FaturaService faturaService;
+    private final SeriNoServisi seriNoServisi;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -49,8 +50,11 @@ public class SiparisService {
     }
 
     public SiparisDTO olustur(SiparisDTO dto) {
+        String siparisNo = dto.getSiparisNo() != null && !dto.getSiparisNo().isBlank()
+                ? dto.getSiparisNo()
+                : seriNoServisi.siparisNoUret();
         Siparis s = Siparis.builder()
-                .siparisNo(dto.getSiparisNo()).tarih(dto.getTarih())
+                .siparisNo(siparisNo).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).tur("SATIS")
                 .durum("TEKLIF").aciklama(dto.getAciklama())
                 .araToplam(dto.getAraToplam()).kdv(dto.getKdv())

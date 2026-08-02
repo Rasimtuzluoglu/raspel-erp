@@ -2,8 +2,19 @@
   <div class="raporlar-container">
     <h1>Raporlar</h1>
 
-    <TabView>
-      <TabPanel header="Cari Ekstre">
+    <div v-if="favoriRaporlar.length" class="favori-raporlar">
+      <span class="favori-baslik"><i class="pi pi-star-fill" style="color:#fbbf24"></i> Sık Kullanılanlar:</span>
+      <Button v-for="r in favoriRaporlar" :key="r.key" :label="r.ad" size="small" class="p-button-sm p-button-outlined" @click="aktifSekme = r.index" />
+    </div>
+
+    <TabView v-model:activeIndex="aktifSekme">
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i class="pi pi-star-fav" :class="{ favori: raporFavori('cariEkstre') }" @click.stop="raporFavoriDegistir('cariEkstre', 0, 'Cari Ekstre')"></i>
+            Cari Ekstre
+          </div>
+        </template>
         <div class="rapor-filtre">
           <div class="form-group">
             <label>Cari Hesap</label>
@@ -57,7 +68,13 @@
         </div>
       </TabPanel>
 
-      <TabPanel header="Gelir/Gider Özeti">
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i class="pi pi-star-fav" :class="{ favori: raporFavori('gelirGider') }" @click.stop="raporFavoriDegistir('gelirGider', 1, 'Gelir/Gider Özeti')"></i>
+            Gelir/Gider Özeti
+          </div>
+        </template>
         <div class="rapor-filtre">
           <div class="form-group">
             <label>Başlangıç</label>
@@ -98,7 +115,13 @@
         </div>
       </TabPanel>
 
-      <TabPanel header="KDV Raporu">
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i class="pi pi-star-fav" :class="{ favori: raporFavori('kdv') }" @click.stop="raporFavoriDegistir('kdv', 2, 'KDV Raporu')"></i>
+            KDV Raporu
+          </div>
+        </template>
         <div class="rapor-filtre">
           <div class="form-group">
             <label>Başlangıç</label>
@@ -125,7 +148,13 @@
         </div>
       </TabPanel>
 
-      <TabPanel header="Yaşlandırma">
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i class="pi pi-star-fav" :class="{ favori: raporFavori('yaslandirma') }" @click.stop="raporFavoriDegistir('yaslandirma', 3, 'Yaşlandırma')"></i>
+            Yaşlandırma
+          </div>
+        </template>
         <div class="rapor-filtre">
           <Button label="Rapor Getir" icon="pi pi-search" @click="getYaslandirma" :loading="yasLoading" />
         </div>
@@ -158,6 +187,22 @@ import { raporAPI } from '../api/index.js'
 const toast = useToast()
 
 const cariHesapStore = useCariHesapStore()
+
+const FAVORI_ANAHTAR = 'raspel_favori_raporlar'
+const aktifSekme = ref(0)
+const favoriRaporlar = ref(JSON.parse(localStorage.getItem(FAVORI_ANAHTAR) || '[]'))
+
+const raporFavori = (key) => favoriRaporlar.value.some(r => r.key === key)
+
+const raporFavoriDegistir = (key, index, ad) => {
+  const mevcut = favoriRaporlar.value.findIndex(r => r.key === key)
+  if (mevcut > -1) {
+    favoriRaporlar.value.splice(mevcut, 1)
+  } else {
+    favoriRaporlar.value.push({ key, index, ad })
+  }
+  localStorage.setItem(FAVORI_ANAHTAR, JSON.stringify(favoriRaporlar.value))
+}
 
 const ekstreKart = ref(null)
 const ggKart = ref(null)
@@ -280,6 +325,16 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .filtre-btn { min-width: auto; }
 .rapor-sonuc { margin-top: 20px; }
 .rapor-aksiyonlar { display: flex; gap: 8px; margin-top: 12px; }
+.rapor-sekme-baslik { display: flex; align-items: center; gap: 6px; }
+.rapor-sekme-baslik .pi-star-fav { font-size: 13px; opacity: 0.35; cursor: pointer; }
+.rapor-sekme-baslik .pi-star-fav:hover { opacity: 0.8; color: #fbbf24; }
+.rapor-sekme-baslik .pi-star-fav.favori { opacity: 1; color: #fbbf24; }
+.favori-raporlar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+}
+.favori-baslik { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
 .rapor-bilgi { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 .rapor-bilgi h3 { margin: 0 0 10px 0; color: #1976d2; }
 .rapor-bilgi p { margin: 5px 0; }

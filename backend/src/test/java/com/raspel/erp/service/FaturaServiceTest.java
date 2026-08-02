@@ -30,6 +30,7 @@ class FaturaServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
+    @Mock private SeriNoServisi seriNoServisi;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {

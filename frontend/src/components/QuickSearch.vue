@@ -16,6 +16,13 @@
       </div>
       <div v-if="!query" class="qs-hint">
         <p>Bir şey yazmaya başlayın...</p>
+        <div v-if="sonAramalar.length" class="qs-son-aramalar">
+          <div class="qs-son-baslik">Son Aramalar</div>
+          <div v-for="(a, i) in sonAramalar" :key="i" class="qs-son-item" @click="query = a">
+            <i class="pi pi-history"></i>{{ a }}
+            <i class="pi pi-times qs-son-sil" @click.stop="sonAramaSil(i)"></i>
+          </div>
+        </div>
         <div class="qs-hint-items">
           <span><kbd>c</kbd> Cari Hesaplar</span>
           <span><kbd>s</kbd> Stoklar</span>
@@ -84,6 +91,23 @@ watch(() => props.visible, (v) => {
 const ac = () => { query.value = ''; results.value = []; selectedIndex.value = 0; nextTick(() => inputRef.value?.focus()) }
 const kapat = () => { emit('update:visible', false); query.value = ''; results.value = [] }
 
+const SON_ARAMA_ANAHTAR = 'raspel_son_aramalar'
+const sonAramalar = ref(JSON.parse(localStorage.getItem(SON_ARAMA_ANAHTAR) || '[]'))
+
+const sonAramaKaydet = (q) => {
+  const temiz = (q || '').trim()
+  if (!temiz) return
+  const liste = sonAramalar.value.filter(x => x !== temiz)
+  liste.unshift(temiz)
+  sonAramalar.value = liste.slice(0, 8)
+  localStorage.setItem(SON_ARAMA_ANAHTAR, JSON.stringify(sonAramalar.value))
+}
+
+const sonAramaSil = (i) => {
+  sonAramalar.value.splice(i, 1)
+  localStorage.setItem(SON_ARAMA_ANAHTAR, JSON.stringify(sonAramalar.value))
+}
+
 const handleKeydown = (e) => {
   if (e.key === 'Escape') return kapat()
   if (e.key === 'ArrowDown') { e.preventDefault(); selectedIndex.value = Math.min(selectedIndex.value + 1, results.value.length - 1) }
@@ -92,6 +116,7 @@ const handleKeydown = (e) => {
 }
 
 const navigate = (item) => {
+  sonAramaKaydet(query.value)
   kapat()
   if (item.type === 'cari' || item.type === 'fatura' || item.type === 'proje' || item.type === 'siparis') {
     router.push(`${typeConfig[item.type].route}/${item.id}`)
@@ -163,6 +188,18 @@ onUnmounted(() => {
 .qs-esc { background: rgba(148,163,184,0.1); color: #64748b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: inherit; flex-shrink: 0; }
 .qs-hint { padding: 24px 20px; text-align: center; color: #64748b; font-size: 13px; }
 .qs-hint p { margin: 0 0 12px; }
+.qs-son-aramalar { text-align: left; margin-bottom: 14px; }
+.qs-son-baslik { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px; }
+.qs-son-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; color: #94a3b8;
+}
+.qs-son-item:hover { background: rgba(148,163,184,0.08); color: #e2e8f0; }
+.qs-son-item i:first-child { font-size: 12px; color: #475569; }
+.qs-son-sil { margin-left: auto; font-size: 11px; opacity: 0; }
+.qs-son-item:hover .qs-son-sil { opacity: 0.7; }
+.qs-son-sil:hover { opacity: 1 !important; color: #f87171; }
 .qs-hint-items { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .qs-hint-items span { font-size: 12px; color: #94a3b8; }
 .qs-hint-items kbd { background: rgba(148,163,184,0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #cbd5e1; font-family: inherit; border: 1px solid rgba(148,163,184,0.15); }

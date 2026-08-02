@@ -38,11 +38,10 @@ public class FaturaService {
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+    private final SeriNoServisi seriNoServisi;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
-
-    private static final AtomicLong faturaCounter = new AtomicLong(System.currentTimeMillis() % 100000);
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> tumFaturalariGetir(Long sirketId, Pageable pageable) {
@@ -74,8 +73,9 @@ public class FaturaService {
             throw new BusinessException("Geçersiz fatura türü: " + dto.getTur());
         }
 
-        String faturaNo = "FTR-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
-                + "-" + String.format("%05d", faturaCounter.incrementAndGet() % 100000);
+        String faturaNo = dto.getFaturaNumarasi() != null && !dto.getFaturaNumarasi().isBlank()
+                ? dto.getFaturaNumarasi()
+                : seriNoServisi.faturaNoUret();
 
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
