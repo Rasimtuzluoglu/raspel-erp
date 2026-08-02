@@ -7,14 +7,6 @@ api:
 entryPoints:
   web:
     address: ":80"
-    http:
-      middlewares:
-        - ratelimit
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true
   websecure:
     address: ":443"
   traefik:

@@ -139,8 +139,6 @@ services:
   frontend:
     build: ./frontend
     container_name: raspel-frontend
-    ports:
-      - "80:80"
     depends_on:
       - backend
     restart: unless-stopped

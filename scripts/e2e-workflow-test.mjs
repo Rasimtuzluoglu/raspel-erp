@@ -2,7 +2,7 @@
 // Akış: Giriş → Cari oluştur → Stok oluştur → Sipariş oluştur → Fatura oluştur → Tahsilat → Doğrula
 // Kullanım: node scripts/e2e-workflow-test.mjs
 
-const BASE = 'http://localhost:8081'
+const BASE = 'http://localhost'
 let TOKEN = ''
 let hataSayisi = 0
 

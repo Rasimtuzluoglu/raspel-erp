@@ -1,5 +1,10 @@
 http:
   middlewares:
+    redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
     ratelimit:
       rateLimit:
         average: 100
@@ -11,6 +16,7 @@ http:
           - "http://localhost:5173"
           - "http://localhost:8000"
           - "http://localhost"
+          - "https://localhost"
         accessControlAllowMethods: "GET,POST,PUT,DELETE,OPTIONS"
         accessControlAllowHeaders: "*"
         accessControlAllowCredentials: true
@@ -22,6 +28,53 @@ http:
           - "admin:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
 
   routers:
+    # HTTP (port 80) — sadece localhost'a izin verir, diğer host'lar HTTPS'e yönlendirilir
+    web-redirect:
+      rule: "PathPrefix(`/`) && !Host(`localhost`)"
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-https
+      priority: 100
+
+    dashboard-http:
+      rule: "PathPrefix(`/dashboard`) && Host(`localhost`)"
+      service: api@internal
+      entryPoints:
+        - web
+      middlewares:
+        - dashboard-auth
+      priority: 10
+
+    frontend-http:
+      rule: "PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`localhost`)"
+      service: frontend
+      entryPoints:
+        - web
+      middlewares:
+        - cors-headers
+      priority: 1
+
+    api-http:
+      rule: "PathPrefix(`/api`) && Host(`localhost`)"
+      service: backend
+      entryPoints:
+        - web
+      middlewares:
+        - cors-headers
+        - ratelimit
+      priority: 2
+
+    adminer-http:
+      rule: "PathPrefix(`/adminer`) && Host(`localhost`)"
+      service: adminer
+      entryPoints:
+        - web
+      middlewares:
+        - cors-headers
+      priority: 3
+
+    # HTTPS (port 443) — production alan adı ile
     dashboard:
       rule: "PathPrefix(`/dashboard`)"
       service: api@internal
@@ -36,6 +89,8 @@ http:
     frontend:
       rule: "PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`)"
       service: frontend
+      entryPoints:
+        - websecure
       middlewares:
         - cors-headers
       tls:
@@ -45,6 +100,8 @@ http:
     api:
       rule: "PathPrefix(`/api`)"
       service: backend
+      entryPoints:
+        - websecure
       middlewares:
         - cors-headers
         - ratelimit
@@ -55,6 +112,8 @@ http:
     adminer:
       rule: "PathPrefix(`/adminer`)"
       service: adminer
+      entryPoints:
+        - websecure
       middlewares:
         - cors-headers
       tls:
