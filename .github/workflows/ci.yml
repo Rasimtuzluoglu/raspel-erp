@@ -71,12 +71,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [backend, frontend]
-    # DEPLOY_HOST vb. secret'lar tanımlı değilse job'u başarıyla atlar
-    # (gerçek dağıtım için repo Settings > Secrets'ı ekleyin)
-    if: github.ref == 'refs/heads/main' && secrets.DEPLOY_HOST != ''
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+      - name: Check deploy secrets
+        id: check
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "DEPLOY secrets not configured in repo settings - skipping deploy."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Deploy via SSH
+        if: steps.check.outputs.skip == 'false'
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
