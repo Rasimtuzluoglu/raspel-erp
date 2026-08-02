@@ -176,8 +176,14 @@ const formatDateTime = (d) => {
 
 @media print {
   .no-print { display: none !important; }
+  body * { visibility: hidden; }
+  .fatura-kagit, .fatura-kagit * { visibility: visible; }
+  .fatura-kagit {
+    position: absolute; left: 0; top: 0;
+    box-shadow: none; padding: 20px; max-width: 100%;
+    border: none; border-radius: 0;
+  }
   .fatura-detay { padding: 0; background: white; }
-  .fatura-kagit { box-shadow: none; padding: 20px; max-width: 100%; }
   .durum-badge.kesildi { border: 1px solid #2e7d32; }
 }
 </style>

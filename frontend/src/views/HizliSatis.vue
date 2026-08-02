@@ -482,8 +482,83 @@ const sepetSil = (idx) => {
 }
 
 const fisiYazdir = () => {
+  if (!sepet.value.length) return
   fisNo.value = 'F-' + Date.now().toString(36).toUpperCase()
-  setTimeout(() => { window.print() }, 200)
+
+  const fiyatli = fisFiyatli.value
+  const kalemHtml = sepet.value.map(i => {
+    const ad = escapeHtml(i.ad || '')
+    const satir = `<div class="satir"><span class="ad">${ad} x${i.miktar}</span>${fiyatli ? `<span class="tutar">${formatCurrency(i.miktar * i.fiyat)}</span>` : ''}</div>`
+    return satir
+  }).join('')
+
+  const ozetHtml = fiyatli ? `
+    <div class="ayrac">- - - - - - - - - - - - - -</div>
+    <div class="satir"><span class="ad">Ara Toplam</span><span class="tutar">${formatCurrency(toplam.value)}</span></div>
+    ${indirimDegeri.value > 0 ? `<div class="satir"><span class="ad">İndirim${indirimTipi.value === 'yuzde' ? ' (' + indirimDegeri.value + '%)' : ''}</span><span class="tutar">-${formatCurrency(indirimTutari.value)}</span></div>` : ''}
+    <div class="satir genel"><span class="ad">GENEL TOPLAM</span><span class="tutar">${formatCurrency(genelToplam.value)}</span></div>
+    <div class="ayrac">- - - - - - - - - - - - - -</div>
+    <div class="satir"><span class="ad">Ödenen</span><span class="tutar">${formatCurrency(odenenTutar.value)}</span></div>
+    ${kalanTutar.value > 0 ? `<div class="satir"><span class="ad">Kalan</span><span class="tutar">${formatCurrency(kalanTutar.value)}</span></div>` : ''}
+  ` : ''
+
+  const musteriHtml = musteriAdi.value ? `<div class="musteri">Müşteri: ${escapeHtml(musteriAdi.value)}</div>` : ''
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fiş</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; width: 80mm; margin: 0 auto; color: #000; font-size: 12px; }
+  .fis { padding: 6px 4px; }
+  .baslik { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+  .tarih, .fisno { text-align: center; font-size: 10px; margin-top: 2px; }
+  .musteri { margin-top: 6px; font-size: 11px; }
+  .ayrac { text-align: center; color: #555; margin: 4px 0; letter-spacing: 1px; }
+  .satir { display: flex; justify-content: space-between; padding: 2px 0; }
+  .satir .ad { flex: 1; white-space: pre-wrap; word-break: break-word; padding-right: 6px; }
+  .satir .tutar { white-space: nowrap; }
+  .satir.genel { border-top: 2px solid #000; font-weight: bold; padding-top: 4px; margin-top: 4px; }
+  .tesekkur { text-align: center; margin-top: 8px; font-size: 10px; }
+</style>
+</head>
+<body>
+  <div class="fis">
+    <div class="baslik">${escapeHtml(sirketAdi.value || 'RASPEL ERP')}</div>
+    <div class="tarih">${simdikiTarih.value}</div>
+    <div class="fisno">Fiş No: ${fisNo.value}</div>
+    ${musteriHtml}
+    <div class="ayrac">- - - - - - - - - - - - - -</div>
+    ${kalemHtml}
+    ${ozetHtml}
+    <div class="satir"><span class="ad">Toplam Ürün</span><span class="tutar">${sepet.value.length}</span></div>
+    <div class="satir"><span class="ad">Durum</span><span class="tutar">${odemeDurumText.value}</span></div>
+    <div class="ayrac">- - - - - - - - - - - - - -</div>
+    <div class="tesekkur">İyi günler dileriz</div>
+  </div>
+  <script>window.onload = function() { window.focus(); window.print(); }<\/script>
+</body>
+</html>`
+
+  const win = window.open('', '_blank', 'width=400,height=600')
+  if (!win) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Pencere engellendi. Pop-up engelleyiciyi kapatın.', life: 5000 })
+    return
+  }
+  win.document.open()
+  win.document.write(html)
+  win.document.close()
+}
+
+const escapeHtml = (metin) => {
+  return String(metin ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 const satisiTamamla = async () => {
