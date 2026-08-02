@@ -18,19 +18,31 @@
             <Select v-model="filtre.entityAdi" :options="entityListesi" placeholder="Tümü" class="w-full" allowClear clearIcon="pi pi-times" @change="filtrele" />
           </div>
           <div class="filtre-alan">
-            <label>Başlangıç Tarihi</label>
-            <DatePicker v-model="filtre.baslangicTarih" dateFormat="dd/mm/yy" placeholder="Seçiniz" class="w-full" @date-select="filtrele" />
+            <label>Tarih Aralığı</label>
+            <TarihHizliSecim v-model="filtre.tarihAraligi" />
           </div>
-          <div class="filtre-alan">
-            <label>Bitiş Tarihi</label>
-            <DatePicker v-model="filtre.bitisTarih" dateFormat="dd/mm/yy" placeholder="Seçiniz" class="w-full" @date-select="filtrele" />
+          <div class="filtre-alan" v-if="filtre.tarihAraligi?.length === 2">
+            <label>Özel Tarih Aralığı</label>
+            <DatePicker v-model="filtre.tarihAraligi" selectionMode="range" dateFormat="dd/mm/yy" placeholder="Başlangıç - Bitiş" class="w-full" @date-select="filtrele" />
           </div>
           <div class="filtre-aksiyon">
+            <Button label="Filtre Kaydet" icon="pi pi-bookmark" class="p-button-sm p-button-text" @click="kayitliFiltreDialog = true" />
+            <Dropdown v-model="seciliKayitliFiltre" :options="kayitliFiltreler" optionLabel="ad" placeholder="Kayıtlı Filtreler" class="kayitli-filtre" @change="kayitliFiltreYukle" />
             <Button label="Temizle" icon="pi pi-filter-slash" class="p-button-sm p-button-text" @click="filtreTemizle" />
           </div>
         </div>
       </template>
     </Card>
+
+    <Dialog v-model:visible="kayitliFiltreDialog" header="Filtreyi Kaydet" :modal="true" style="width: 380px">
+      <FormField label="Filtre Adı" :required="true">
+        <InputText v-model="yeniFiltreAdi" placeholder="Örn: Son 3 ay KESILDI faturalar" class="w-full" />
+      </FormField>
+      <template #footer>
+        <Button label="İptal" icon="pi pi-times" @click="kayitliFiltreDialog = false" class="p-button-text" />
+        <Button label="Kaydet" icon="pi pi-check" @click="filtreKaydet" :disabled="!yeniFiltreAdi?.trim()" />
+      </template>
+    </Dialog>
 
     <Card>
       <template #content>
@@ -60,6 +72,8 @@ import { ref, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { auditLogAPI, excelAPI } from '../api/index.js'
 import axios from 'axios'
+import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import FormField from '../components/FormField.vue'
 
 const toast = useToast()
 const logs = ref([])
@@ -73,9 +87,34 @@ const excelYukleniyor = ref(false)
 const filtre = ref({
   islem: null,
   entityAdi: null,
-  baslangicTarih: null,
-  bitisTarih: null
+  tarihAraligi: []
 })
+
+const KAYITLI_ANAHTAR = 'raspel_kayitli_filtreler_denetim'
+const kayitliFiltreler = ref([])
+const seciliKayitliFiltre = ref(null)
+const kayitliFiltreDialog = ref(false)
+const yeniFiltreAdi = ref('')
+
+const kayitliFiltreleriYukle = () => {
+  try { kayitliFiltreler.value = JSON.parse(localStorage.getItem(KAYITLI_ANAHTAR) || '[]') } catch { kayitliFiltreler.value = [] }
+}
+
+const filtreKaydet = () => {
+  const kayit = { ad: yeniFiltreAdi.value.trim(), filtre: JSON.parse(JSON.stringify(filtre.value)) }
+  kayitliFiltreler.value.push(kayit)
+  localStorage.setItem(KAYITLI_ANAHTAR, JSON.stringify(kayitliFiltreler.value))
+  kayitliFiltreDialog.value = false
+  yeniFiltreAdi.value = ''
+  toast.add({ severity: 'success', summary: 'Kaydedildi', detail: 'Filtre kaydedildi.', life: 3000 })
+}
+
+const kayitliFiltreYukle = () => {
+  if (!seciliKayitliFiltre.value) return
+  filtre.value = JSON.parse(JSON.stringify(seciliKayitliFiltre.value.filtre))
+  filtrele()
+  toast.add({ severity: 'info', summary: 'Filtre Uygulandı', detail: seciliKayitliFiltre.value.ad, life: 3000 })
+}
 
 const yukle = async (page = 0) => {
   yukleniyor.value = true
@@ -83,8 +122,10 @@ const yukle = async (page = 0) => {
     const params = { page, size: 20 }
     if (filtre.value.islem) params.islem = filtre.value.islem
     if (filtre.value.entityAdi) params.entityAdi = filtre.value.entityAdi
-    if (filtre.value.baslangicTarih) params.baslangicTarih = formatISODate(filtre.value.baslangicTarih)
-    if (filtre.value.bitisTarih) params.bitisTarih = formatISODate(filtre.value.bitisTarih)
+    if (filtre.value.tarihAraligi?.length === 2 && filtre.value.tarihAraligi[0]) {
+      params.baslangicTarih = formatISODate(filtre.value.tarihAraligi[0])
+      params.bitisTarih = formatISODate(filtre.value.tarihAraligi[1])
+    }
     const r = await auditLogAPI.getAll(params)
     logs.value = r.data?.content || r.data || []
     toplamKayit.value = r.data?.totalElements || logs.value.length
@@ -103,8 +144,10 @@ const excelIndir = async () => {
     const params = {}
     if (filtre.value.islem) params.islem = filtre.value.islem
     if (filtre.value.entityAdi) params.entityAdi = filtre.value.entityAdi
-    if (filtre.value.baslangicTarih) params.baslangicTarih = formatISODate(filtre.value.baslangicTarih)
-    if (filtre.value.bitisTarih) params.bitisTarih = formatISODate(filtre.value.bitisTarih)
+    if (filtre.value.tarihAraligi?.length === 2 && filtre.value.tarihAraligi[0]) {
+      params.baslangicTarih = formatISODate(filtre.value.tarihAraligi[0])
+      params.bitisTarih = formatISODate(filtre.value.tarihAraligi[1])
+    }
     const res = await excelAPI.denetimLog(params)
     const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const link = document.createElement('a')
@@ -121,7 +164,7 @@ const excelIndir = async () => {
   }
 }
 const filtreTemizle = () => {
-  filtre.value = { islem: null, entityAdi: null, baslangicTarih: null, bitisTarih: null }
+  filtre.value = { islem: null, entityAdi: null, tarihAraligi: [] }
   filtrele()
 }
 const sayfaDegisti = (e) => { sayfa.value = e.page; yukle(e.page) }
@@ -155,6 +198,7 @@ const filtreSecenekleriniYukle = async () => {
 
 onMounted(() => {
   filtreSecenekleriniYukle()
+  kayitliFiltreleriYukle()
   yukle()
 })
 </script>
@@ -166,5 +210,6 @@ onMounted(() => {
 .filtre-alan label { display: block; margin-bottom: 4px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
 .filtre-aksiyon { display: flex; align-items: flex-end; }
 .w-full { width: 100% !important; }
+.kayitli-filtre { min-width: 170px !important; }
 .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
 </style>

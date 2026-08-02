@@ -87,6 +87,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
+import { useYakinZamanda } from '../composables/useYakinZamanda.js'
 
 const route = useRoute()
 const faturaStore = useFaturaStore()
@@ -106,6 +107,7 @@ const fiyatSecenekleri = ref([
 onMounted(async () => {
   try {
     fatura.value = await faturaStore.getFaturaById(route.params.id)
+    useYakinZamanda().kaydet('fatura', fatura.value.id, `#${fatura.value.faturaNumarasi || fatura.value.id}`, fatura.value.cariHesapAd)
   } catch (err) {
     error.value = err.response?.data?.message || 'Fatura bulunamadı'
   } finally {

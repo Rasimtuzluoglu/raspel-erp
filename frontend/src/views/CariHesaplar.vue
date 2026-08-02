@@ -75,7 +75,14 @@
           </template>
         </Column>
         <Column v-if="kolonlar[3].visible" field="yetkiliKisi" header="Yetkili" style="width: 130px"></Column>
-        <Column v-if="kolonlar[4].visible" field="telefon" header="Telefon" style="width: 130px"></Column>
+        <Column v-if="kolonlar[4].visible" field="telefon" header="Telefon" style="width: 130px">
+          <template #body="s">
+            <span v-if="s.data.telefon" class="kopyalanabilir" @click="kopyala(s.data.telefon, 'Telefon Kopyalandı')">
+              {{ s.data.telefon }} <i class="pi pi-copy kopyala-ikon"></i>
+            </span>
+            <span v-else>-</span>
+          </template>
+        </Column>
         <Column v-if="kolonlar[5].visible" field="krediLimiti" header="Kredi Limiti" style="width: 120px">
           <template #body="s">{{ s.data.krediLimiti ? formatCurrency(s.data.krediLimiti) : '-' }}</template>
         </Column>
@@ -87,13 +94,19 @@
             </span>
           </template>
         </Column>
-        <Column header="İşlemler" style="width: 150px">
+        <Column header="İşlemler" style="width: 190px">
           <template #body="slotProps">
             <Button 
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
               @click="editCariHesap(slotProps.data)"
               title="Düzenle"
+            />
+            <Button 
+              icon="pi pi-copy"
+              class="p-button-rounded p-button-secondary p-button-sm"
+              @click="kopyalaCari(slotProps.data)"
+              title="Kopyala (yeni kayıt için şablon)"
             />
             <Button 
               icon="pi pi-list"
@@ -304,12 +317,14 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { excelAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
+import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 
 const toast = useToast()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const hareketStore = useHareketStore()
+const { kopyala } = usePanoyaKopyala()
 
 const tabloYogunluk = ref('comfortable')
 const kolonlar = ref([
@@ -382,6 +397,14 @@ const openDialog = () => {
   form.value = { ad: '', tur: '', vergiNumarasi: '', vergiDairesi: '', telefon: '', email: '', iban: '', il: '', ilce: '', adres: '', yetkiliKisi: '', yetkiliTelefon: '', krediLimiti: null, odemeVadesi: 0, notlar: '', aktif: true }
   submitted.value = false
   showDialog.value = true
+}
+
+const kopyalaCari = (cari) => {
+  editingId.value = null
+  form.value = { ...cari, id: undefined }
+  submitted.value = false
+  showDialog.value = true
+  toast.add({ severity: 'info', summary: 'Kopyalandı', detail: 'Yeni kayıt için şablon oluşturuldu. Kaydetmeden önce bilgileri güncelleyin.', life: 4000 })
 }
 
 const closeDialog = () => {
@@ -658,4 +681,8 @@ h3 {
 .batch-count {
   font-size: 12px; color: #60a5fa; font-weight: 600;
 }
+.kopyalanabilir { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.kopyalanabilir:hover { color: var(--accent); }
+.kopyala-ikon { font-size: 11px; opacity: 0.5; }
+.kopyalanabilir:hover .kopyala-ikon { opacity: 1; }
 </style>

@@ -216,6 +216,20 @@
         </div>
       </div>
 
+      <!-- SON GÖRÜNTÜLENENLER -->
+      <div class="son-goruntulenenler" v-if="widgets.sonGoruntulenenler.gorunur && sonGoruntulenenler.length">
+        <h2 class="section-title"><i class="pi pi-history"></i> Son Görüntülenenler</h2>
+        <div class="sg-grid">
+          <div v-for="(kayit, i) in sonGoruntulenenler" :key="i" class="sg-item" @click="sgGit(kayit)">
+            <i :class="sgIkon(kayit.tur)" :style="{ color: sgRenk(kayit.tur) }"></i>
+            <div class="sg-bilgi">
+              <strong>{{ kayit.baslik }}</strong>
+              <small>{{ kayit.alt }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- GRAFIkLER -->
       <div class="charts-row" v-if="widgets.grafikler.gorunur">
         <Card>
@@ -320,6 +334,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -329,15 +344,18 @@ import { useKasaStore } from '../stores/kasaStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { Doughnut, Bar, Line } from 'vue-chartjs'
 import Onboarding from '../components/Onboarding.vue'
+import { useYakinZamanda, yakinZamandaTurleri } from '../composables/useYakinZamanda.js'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler } from 'chart.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
+const router = useRouter()
 const widgetVarsayilan = () => ({
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
   satisSiparis: { gorunur: true, etiket: 'Satış & Sipariş' },
   insanKaynaklari: { gorunur: true, etiket: 'İnsan Kaynakları' },
   nakitAkisi: { gorunur: true, etiket: 'Nakit Akışı' },
+  sonGoruntulenenler: { gorunur: true, etiket: 'Son Görüntülenenler' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
   hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' },
@@ -416,6 +434,14 @@ const bosSistem = computed(() =>
   stokStore.stoklar.length === 0 &&
   faturaStore.faturalar.length === 0
 )
+
+const sonGoruntulenenler = ref([])
+const sgIkon = (tur) => yakinZamandaTurleri[tur]?.ikon || 'pi pi-history'
+const sgRenk = (tur) => yakinZamandaTurleri[tur]?.renk || '#94a3b8'
+const sgGit = (kayit) => {
+  const yol = yakinZamandaTurleri[kayit.tur]?.yol
+  if (yol) router.push(`${yol}${kayit.id}`)
+}
 const toplamFatura = computed(() => faturaStore.faturalar.length)
 const kesilenFatura = computed(() => faturaStore.faturalar.filter(f => f.durum === 'KESILDI').length)
 const toplamBankaBakiye = computed(() => bankaStore.bankalar.reduce((t, b) => t + (b.bakiye || 0), 0))
@@ -486,6 +512,7 @@ const grafikleriHesapla = () => {
 
 onMounted(async () => {
   tarihSaat(); tarihInterval = setInterval(tarihSaat, 1000)
+  sonGoruntulenenler.value = useYakinZamanda().liste()
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_widgets'))
     if (kayitli) {
@@ -608,6 +635,19 @@ const formatDate = (d) => {
 .nakit-deger { font-size: 20px; font-weight: 700; margin: 0; }
 .nakit-alt { font-size: 11px; color: var(--text-muted); margin: 4px 0 0; }
 .nakit-toplam { border-color: rgba(245,158,11,0.3) !important; }
+.son-goruntulenenler { margin-bottom: 24px; }
+.sg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.sg-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; cursor: pointer;
+  transition: all 0.15s;
+}
+.sg-item:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
+.sg-item i { font-size: 18px; }
+.sg-bilgi { flex: 1; min-width: 0; }
+.sg-bilgi strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sg-bilgi small { display: block; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hizli-islemler { margin-bottom: 24px; }
 .islem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .islem-grid .p-button { height: 56px; font-size: 13px; justify-content: center; }

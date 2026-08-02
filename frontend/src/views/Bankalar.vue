@@ -26,8 +26,13 @@
         <Column field="hesapNo" header="Hesap No" style="width:150px">
           <template #body="s">{{ s.data.hesapNo || '-' }}</template>
         </Column>
-        <Column field="iban" header="IBAN" style="width:200px">
-          <template #body="s">{{ s.data.iban || '-' }}</template>
+        <Column field="iban" header="IBAN" style="width:230px">
+          <template #body="s">
+            <span v-if="s.data.iban" class="kopyalanabilir" @click="kopyala(s.data.iban, 'IBAN Kopyalandı')">
+              {{ s.data.iban }} <i class="pi pi-copy kopyala-ikon"></i>
+            </span>
+            <span v-else>-</span>
+          </template>
         </Column>
         <Column field="bakiye" header="Bakiye" style="width:130px">
           <template #body="s">
@@ -78,11 +83,13 @@ import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
+import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { excelAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
 const bankaStore = useBankaStore()
+const { kopyala } = usePanoyaKopyala()
 
 const showDialog = ref(false)
 const loading = ref(false)
@@ -172,5 +179,9 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
 .positive { color: #4caf50; font-weight: bold; }
 .negative { color: #f44336; font-weight: bold; }
+.kopyalanabilir { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.kopyalanabilir:hover { color: var(--accent); }
+.kopyala-ikon { font-size: 11px; opacity: 0.5; }
+.kopyalanabilir:hover .kopyala-ikon { opacity: 1; }
 .w-full { width: 100% !important; }
 </style>
