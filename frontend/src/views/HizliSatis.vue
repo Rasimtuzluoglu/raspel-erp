@@ -61,12 +61,10 @@
           <template #title>Müşteri</template>
           <template #content>
             <div class="customer-field">
-              <div class="anlik-musteri">
-                <ToggleButton v-model="anlikMusteri" onLabel="Anlık Müşteri" offLabel="Müşteri Seç" :onIcon="anlikMusteri ? 'pi pi-check' : 'pi pi-users'" class="w-full" />
-              </div>
-              <template v-if="!anlikMusteri">
+              <SelectButton v-model="musteriModu" :options="musteriModlari" optionLabel="label" optionValue="value" class="w-full musteri-modu" />
+              <template v-if="musteriModu === 'musteri'">
                 <AutoComplete v-model="seciliMusteri" :suggestions="musteriOnerileri" @complete="musteriAra($event)"
-                  optionLabel="ad" placeholder="Müşteri ara ve seç..." class="w-full" :forceSelection="true">
+                  optionLabel="ad" placeholder="Müşteri ara ve yaz... (isim, vergi no, telefon)" class="w-full" :forceSelection="false">
                   <template #option="slotProps">
                     <div class="musteri-option">{{ slotProps.option.ad }} <span class="musteri-option-detay">{{ slotProps.option.vergiNo || slotProps.option.telefon }}</span></div>
                   </template>
@@ -276,7 +274,16 @@ const filtreKategori = ref(null)
 const filtreArac = ref(null)
 
 const seciliMusteri = ref(null)
-const anlikMusteri = ref(false)
+const musteriModu = ref('musteri')
+const musteriModlari = ref([
+  { label: 'Perakende', value: 'perakende', icon: 'pi pi-shopping-cart' },
+  { label: 'Müşteri', value: 'musteri', icon: 'pi pi-users' }
+])
+const anlikMusteri = computed(() => musteriModu.value === 'perakende')
+
+watch(musteriModu, (mod) => {
+  if (mod === 'perakende') seciliMusteri.value = null
+})
 const musteriOnerileri = ref([])
 const yeniMusteriDialog = ref(false)
 const yeniMusteri = ref({ ad: '', telefon: '', email: '', adres: '', vergiNo: '' })
@@ -608,7 +615,7 @@ const satisiTamamla = async () => {
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `Satış tamamlandı - ${formatCurrency(genelToplam.value)}`, life: 5000 })
     sepet.value = []
     seciliMusteri.value = null
-    anlikMusteri.value = false
+    musteriModu.value = 'musteri'
     indirimDegeri.value = 0
     odemeDurumu.value = 'tam'
     odenenTutar.value = 0
@@ -663,6 +670,8 @@ const satisiTamamla = async () => {
 .customer-card :deep(.p-card-content) { padding-top: 0; }
 .customer-field { display: flex; flex-direction: column; gap: 8px; }
 .anlik-musteri { margin-bottom: 4px; }
+.musteri-modu { display: flex; }
+.musteri-modu .p-selectbutton .p-button { flex: 1; justify-content: center; }
 .musteri-option { display: flex; justify-content: space-between; align-items: center; }
 .musteri-option-detay { font-size: 11px; color: var(--text-muted); }
 
