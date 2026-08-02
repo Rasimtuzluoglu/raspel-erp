@@ -403,11 +403,11 @@ const filtrelenmisStoklar = computed(() => {
 const kritikAdet = computed(() => stokStore.stoklar.filter(s => s.minMiktar && s.miktar <= s.minMiktar).length)
 
 onMounted(async () => {
-  await Promise.all([stokStore.getAll(), cariHesapStore.getAllCariHesaplar()])
+  await Promise.all([stokStore.getAll({ size: 1000 }), cariHesapStore.getAllCariHesaplar()])
 })
 
 const ara = () => {
-  stokStore.aramaMetni = aramaMetni.value
+  filtreArama.value = aramaMetni.value
 }
 
 const filtrele = () => {
@@ -508,7 +508,7 @@ const saveHareket = async () => {
       hareketTarihi: hareketForm.value.hareketTarihi.toISOString().split('T')[0],
       cariHesapId: hareketForm.value.cariHesapId, aciklama: hareketForm.value.aciklama
     })
-    const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll()])
+    const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
     stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
     showHareketDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
@@ -518,7 +518,7 @@ const saveHareket = async () => {
 const delHareket = async (id) => {
   try {
     await stokAPI.deleteHareket(id)
-    const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll()])
+    const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
     stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
     toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
   } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
@@ -540,7 +540,7 @@ const batchFiyatUygula = async () => {
       guncellenen++
     } catch (e) { /* skip */ }
   }
-  await stokStore.getAll()
+  await stokStore.getAll({ size: 1000 })
   batchFiyatDialog.value = false
   toast.add({ severity: 'success', summary: 'Başarılı', detail: `${guncellenen} ürün güncellendi`, life: 5000 })
   batchLoading.value = false

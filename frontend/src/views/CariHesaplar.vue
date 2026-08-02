@@ -60,12 +60,15 @@
         responsive-layout="scroll"
         striped-rows
         :size="tabloYogunluk === 'compact' ? 'small' : 'normal'"
-        :rows="10"
+        :lazy="true"
+        :total-records="cariHesapStore.toplamKayit"
+        :rows="cariSayfaBoyutu"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
-        :virtual-scroll="cariHesapStore.cariHesaplar.length > 100"
+        @page="cariSayfaDegisti"
+        :virtual-scroll="cariHesapStore.toplamKayit > 100 && !aramaMetni"
         :virtual-scroll-options="{ itemSize: tabloYogunluk === 'compact' ? 38 : 46, scrollHeight: '600px', showLoader: true }"
       >        <Column selection-mode="multiple" headerStyle="width: 3rem"></Column>
         <Column v-if="kolonlar[0].visible" field="id" header="ID" style="width: 60px"></Column>
@@ -371,10 +374,15 @@ onMounted(async () => {
   await loadCariHesaplar()
 })
 
-const loadCariHesaplar = async () => {
+const cariSayfa = ref(0)
+const cariSayfaBoyutu = ref(10)
+
+const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu.value) => {
   loading.value = true
   try {
-    await cariHesapStore.getAllCariHesaplar()
+    const params = { page: sayfa, size: boyut }
+    if (aramaMetni.value.trim()) params.q = aramaMetni.value.trim()
+    await cariHesapStore.getAllCariHesaplar(params)
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesaplar yüklenirken hata oluştu', life: 5000 })
   } finally {
@@ -382,11 +390,18 @@ const loadCariHesaplar = async () => {
   }
 }
 
+const cariSayfaDegisti = (e) => {
+  cariSayfa.value = e.page
+  cariSayfaBoyutu.value = e.rows
+  loadCariHesaplar(e.page, e.rows)
+}
+
 const ara = () => {
   if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
   aramaZamanlayici = setTimeout(async () => {
+    cariSayfa.value = 0
     if (!aramaMetni.value.trim()) {
-      await cariHesapStore.getAllCariHesaplar()
+      await loadCariHesaplar(0, cariSayfaBoyutu.value)
     } else {
       await cariHesapStore.ara(aramaMetni.value)
     }

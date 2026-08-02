@@ -2,45 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import Giris from '../views/Giris.vue'
 import Dashboard from '../views/Dashboard.vue'
-import CariHesaplar from '../views/CariHesaplar.vue'
-import Hareketler from '../views/Hareketler.vue'
-import Faturalar from '../views/Faturalar.vue'
-import FaturaDetay from '../views/FaturaDetay.vue'
-import Bankalar from '../views/Bankalar.vue'
-import Kasa from '../views/Kasa.vue'
-import Raporlar from '../views/Raporlar.vue'
-import Kategoriler from '../views/Kategoriler.vue'
-import Kullanicilar from '../views/Kullanicilar.vue'
-import Stoklar from '../views/Stoklar.vue'
-import Satis from '../views/Satis.vue'
-import Sirketler from '../views/Sirketler.vue'
-import Donemler from '../views/Donemler.vue'
-import Satinalma from '../views/Satinalma.vue'
-import Personel from '../views/Personel.vue'
-import Siparisler from '../views/Siparisler.vue'
-import CekSenet from '../views/CekSenet.vue'
-import Irsaliyeler from '../views/Irsaliyeler.vue'
-import Projeler from '../views/Projeler.vue'
-import Denetim from '../views/Denetim.vue'
-import Subeler from '../views/Subeler.vue'
-import Depolar from '../views/Depolar.vue'
-import Butceler from '../views/Butceler.vue'
-import Masraflar from '../views/Masraflar.vue'
-import HizliSatis from '../views/HizliSatis.vue'
-import TopluStok from '../views/TopluStok.vue'
-import FiyatListesi from '../views/FiyatListesi.vue'
-import Iadeler from '../views/Iadeler.vue'
-import StokSeriler from '../views/StokSeriler.vue'
-import StokSayim from '../views/StokSayim.vue'
-import MaasBordro from '../views/MaasBordro.vue'
-import Vardiyalar from '../views/Vardiyalar.vue'
-import Notlar from '../views/Notlar.vue'
-import VeriImport from '../views/VeriImport.vue'
-import KullanimSartlari from '../views/KullanimSartlari.vue'
-import GizlilikPolitikasi from '../views/GizlilikPolitikasi.vue'
-import Yedekler from '../views/Yedekler.vue'
-import NotFound from '../views/NotFound.vue'
-import YetkiReddi from '../views/YetkiReddi.vue'
 
 const routes = [
   {
@@ -58,104 +19,104 @@ const routes = [
   {
     path: '/cari-hesaplar',
     name: 'CariHesaplar',
-    component: CariHesaplar,
+    component: () => import('../views/CariHesaplar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/hareketler',
     name: 'Hareketler',
-    component: Hareketler,
+    component: () => import('../views/Hareketler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/faturalar',
     name: 'Faturalar',
-    component: Faturalar,
+    component: () => import('../views/Faturalar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/faturalar/:id',
     name: 'FaturaDetay',
-    component: FaturaDetay,
+    component: () => import('../views/FaturaDetay.vue'),
     props: true,
     meta: { requiresAuth: true }
   },
   {
     path: '/bankalar',
     name: 'Bankalar',
-    component: Bankalar,
+    component: () => import('../views/Bankalar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/kasa',
     name: 'Kasa',
-    component: Kasa,
+    component: () => import('../views/Kasa.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/raporlar',
     name: 'Raporlar',
-    component: Raporlar,
+    component: () => import('../views/Raporlar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/kategoriler',
     name: 'Kategoriler',
-    component: Kategoriler,
+    component: () => import('../views/Kategoriler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/kullanicilar',
     name: 'Kullanicilar',
-    component: Kullanicilar,
+    component: () => import('../views/Kullanicilar.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/stoklar',
     name: 'Stoklar',
-    component: Stoklar,
+    component: () => import('../views/Stoklar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/toplu-stok',
     name: 'TopluStok',
-    component: TopluStok,
+    component: () => import('../views/TopluStok.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/satislar',
     name: 'Satislar',
-    component: Satis,
+    component: () => import('../views/Satis.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/hizli-satis',
     name: 'HizliSatis',
-    component: HizliSatis,
+    component: () => import('../views/HizliSatis.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/sirketler',
     name: 'Sirketler',
-    component: Sirketler,
+    component: () => import('../views/Sirketler.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/donemler',
     name: 'Donemler',
-    component: Donemler,
+    component: () => import('../views/Donemler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/satinalma',
     name: 'Satinalma',
-    component: Satinalma,
+    component: () => import('../views/Satinalma.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/personel',
     name: 'Personel',
-    component: Personel,
+    component: () => import('../views/Personel.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -173,97 +134,97 @@ const routes = [
   {
     path: '/siparisler',
     name: 'Siparisler',
-    component: Siparisler,
+    component: () => import('../views/Siparisler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/cek-senet',
     name: 'CekSenet',
-    component: CekSenet,
+    component: () => import('../views/CekSenet.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/irsaliyeler',
     name: 'Irsaliyeler',
-    component: Irsaliyeler,
+    component: () => import('../views/Irsaliyeler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/projeler',
     name: 'Projeler',
-    component: Projeler,
+    component: () => import('../views/Projeler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/denetim',
     name: 'Denetim',
-    component: Denetim,
+    component: () => import('../views/Denetim.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/yedekler',
     name: 'Yedekler',
-    component: Yedekler,
+    component: () => import('../views/Yedekler.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/subeler',
     name: 'Subeler',
-    component: Subeler,
+    component: () => import('../views/Subeler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/depolar',
     name: 'Depolar',
-    component: Depolar,
+    component: () => import('../views/Depolar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/butceler',
     name: 'Butceler',
-    component: Butceler,
+    component: () => import('../views/Butceler.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/masraflar',
     name: 'Masraflar',
-    component: Masraflar,
+    component: () => import('../views/Masraflar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/fiyat-listesi',
     name: 'FiyatListesi',
-    component: FiyatListesi,
+    component: () => import('../views/FiyatListesi.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/iadeler',
     name: 'Iadeler',
-    component: Iadeler,
+    component: () => import('../views/Iadeler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/stok-seriler',
     name: 'StokSeriler',
-    component: StokSeriler,
+    component: () => import('../views/StokSeriler.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/stok-sayim',
     name: 'StokSayim',
-    component: StokSayim,
+    component: () => import('../views/StokSayim.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/maas-bordro',
     name: 'MaasBordro',
-    component: MaasBordro,
+    component: () => import('../views/MaasBordro.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/vardiyalar',
     name: 'Vardiyalar',
-    component: Vardiyalar,
+    component: () => import('../views/Vardiyalar.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -275,25 +236,25 @@ const routes = [
   {
     path: '/notlar',
     name: 'Notlar',
-    component: Notlar,
+    component: () => import('../views/Notlar.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/veri-aktar',
     name: 'VeriImport',
-    component: VeriImport,
+    component: () => import('../views/VeriImport.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/kullanim-sartlari',
     name: 'KullanimSartlari',
-    component: KullanimSartlari,
+    component: () => import('../views/KullanimSartlari.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/gizlilik-politikasi',
     name: 'GizlilikPolitikasi',
-    component: GizlilikPolitikasi,
+    component: () => import('../views/GizlilikPolitikasi.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -305,13 +266,13 @@ const routes = [
   {
     path: '/yetki-reddi',
     name: 'YetkiReddi',
-    component: YetkiReddi,
+    component: () => import('../views/YetkiReddi.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: NotFound
+    component: () => import('../views/NotFound.vue')
   }
 ]
 

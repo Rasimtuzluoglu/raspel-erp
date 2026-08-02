@@ -12,6 +12,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -38,13 +40,14 @@ class VeriImportControllerTest {
                      "MDF 18mm;MDF-18;;Adet;850;100;10\n" +
                      "Sunta 16mm;SUNTA-16;;Adet;520;80;10";
         MockMultipartFile dosya = new MockMultipartFile("file", "stoklar.csv", "text/csv", csv.getBytes());
+        when(stokService.topluOlustur(anyList(), eq(1L))).thenReturn(2);
 
         mockMvc.perform(multipart("/api/import/stok").file(dosya).requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.basarili").value(2))
                 .andExpect(jsonPath("$.hatalar").isEmpty());
 
-        verify(stokService, times(2)).olustur(any(), eq(1L));
+        verify(stokService, times(1)).topluOlustur(argThat(list -> ((List<?>) list).size() == 2), eq(1L));
     }
 
     @Test
@@ -53,6 +56,7 @@ class VeriImportControllerTest {
                      "Geçerli Ürün;KOD1;100\n" +
                      ";;50\n"; // ad eksik -> hata
         MockMultipartFile dosya = new MockMultipartFile("file", "stoklar.csv", "text/csv", csv.getBytes());
+        when(stokService.topluOlustur(anyList(), eq(1L))).thenReturn(1);
 
         mockMvc.perform(multipart("/api/import/stok").file(dosya).requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())

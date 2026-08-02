@@ -10,16 +10,19 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
   const cariHesaplar = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const toplamKayit = ref(0)
 
   /**
-   * Tüm cari hesapları getir
+   * Tüm cari hesapları getir (sayfalı)
    */
-  const getAllCariHesaplar = async () => {
+  const getAllCariHesaplar = async (params = {}) => {
     loading.value = true
     error.value = null
     try {
-      const response = await cariHesapAPI.getAll()
-      cariHesaplar.value = response.data?.content || response.data || []
+      const response = await cariHesapAPI.getAll(params)
+      const icerik = response.data?.content || response.data || []
+      cariHesaplar.value = Array.isArray(icerik) ? icerik : []
+      toplamKayit.value = response.data?.totalElements ?? cariHesaplar.value.length
       return cariHesaplar.value
     } catch (err) {
       error.value = err.message
@@ -93,6 +96,7 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
     cariHesaplar,
     loading,
     error,
+    toplamKayit,
     getAllCariHesaplar,
     ara,
     addCariHesap,

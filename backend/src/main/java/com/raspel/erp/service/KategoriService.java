@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.raspel.erp.exception.ResourceNotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,19 +22,25 @@ public class KategoriService {
 
     private final KategoriRepository kategoriRepository;
 
+    @Cacheable(value = "lookup", key = "'kategoriler:' + #sirketId + ':' + #pageable.pageNumber")
+    @Transactional(readOnly = true)
     public Page<KategoriDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return kategoriRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
+    @Cacheable(value = "lookup", key = "'kategoriTur:' + #tur")
+    @Transactional(readOnly = true)
     public List<KategoriDTO> turuGetir(String tur) {
         return kategoriRepository.findByTurOrderByAd(tur).stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public KategoriDTO olustur(KategoriDTO dto, Long sirketId) {
         GelirGiderKategori k = GelirGiderKategori.builder().ad(dto.getAd()).tur(dto.getTur()).sirketId(sirketId).build();
         return entityToDTO(kategoriRepository.save(k));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public KategoriDTO guncelle(Long id, KategoriDTO dto) {
         GelirGiderKategori k = kategoriRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kategori", id));
@@ -41,6 +49,7 @@ public class KategoriService {
         return entityToDTO(kategoriRepository.save(k));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         kategoriRepository.deleteById(id);
     }

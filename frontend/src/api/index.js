@@ -61,8 +61,8 @@ axiosRetry(apiClient, {
  * Cari Hesap API'si
  */
 export const cariHesapAPI = {
-  getAll() {
-    return apiClient.get('/cari-hesaplar')
+  getAll(params) {
+    return apiClient.get('/cari-hesaplar', { params })
   },
 
   getById(id) {

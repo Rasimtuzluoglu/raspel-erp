@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -34,11 +35,12 @@ public class VeriImportController {
 
     @PostMapping("/stok")
     @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar")
+    @Transactional
     public ResponseEntity<Map<String, Object>> stokImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
         List<String> hatalar = new ArrayList<>();
-        int basarili = 0;
+        List<StokDTO> gecerliKayitlar = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String headerLine = br.readLine();
@@ -71,14 +73,22 @@ public class VeriImportController {
                         hatalar.add("Satır " + satirNo + ": ad alanı zorunlu");
                         continue;
                     }
-                    stokService.olustur(dto, sirketId);
-                    basarili++;
+                    gecerliKayitlar.add(dto);
                 } catch (Exception e) {
                     hatalar.add("Satır " + satirNo + ": " + e.getMessage());
                 }
             }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı: " + e.getMessage()));
+        }
+
+        int basarili = 0;
+        if (!gecerliKayitlar.isEmpty()) {
+            try {
+                basarili = stokService.topluOlustur(gecerliKayitlar, sirketId);
+            } catch (Exception e) {
+                hatalar.add("Toplu kayıt hatası: " + e.getMessage());
+            }
         }
 
         result.put("basarili", basarili);

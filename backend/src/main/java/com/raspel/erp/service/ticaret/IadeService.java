@@ -26,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -182,15 +183,28 @@ public class IadeService {
     }
 
     private IadeDTO entityToDTO(Iade i) {
-        List<IadeKalemDTO> kalemler = iadeKalemRepository.findByIadeId(i.getId()).stream()
+        List<IadeKalem> kalemEntities = iadeKalemRepository.findByIadeId(i.getId());
+
+        List<Long> stokIdler = kalemEntities.stream()
+                .map(IadeKalem::getStokId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Stok> stokHaritasi = stokIdler.isEmpty()
+                ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(Stok::getId, s -> s));
+
+        List<IadeKalemDTO> kalemler = kalemEntities.stream()
                 .map(k -> {
                     String stokAd = null;
                     String stokKodu = null;
                     if (k.getStokId() != null) {
-                        var stokOpt = stokRepository.findById(k.getStokId());
-                        if (stokOpt.isPresent()) {
-                            stokAd = stokOpt.get().getAd();
-                            stokKodu = stokOpt.get().getStokKodu();
+                        Stok stok = stokHaritasi.get(k.getStokId());
+                        if (stok != null) {
+                            stokAd = stok.getAd();
+                            stokKodu = stok.getStokKodu();
                         }
                     }
                     return IadeKalemDTO.builder()

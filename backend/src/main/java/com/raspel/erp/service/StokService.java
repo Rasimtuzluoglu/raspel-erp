@@ -72,6 +72,24 @@ public class StokService {
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
+    public int topluOlustur(List<StokDTO> dtolar, Long sirketId) {
+        List<Stok> stoklar = dtolar.stream()
+                .map(dto -> Stok.builder().stokKodu(dto.getStokKodu()).ad(dto.getAd())
+                        .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
+                        .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
+                        .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
+                        .barkod(dto.getBarkod()).rafNo(dto.getRafNo()).marka(dto.getMarka())
+                        .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
+                        .aciklama(dto.getAciklama()).birim2(dto.getBirim2())
+                        .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
+                        .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
+                        .maliyetYontemi(dto.getMaliyetYontemi()).sirketId(sirketId).build())
+                .collect(Collectors.toList());
+        stokRepository.saveAll(stoklar);
+        return stoklar.size();
+    }
+
+    @CacheEvict(value = "stoklar", allEntries = true)
     public StokDTO guncelle(Long id, StokDTO dto) {
         Stok s = stokRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));

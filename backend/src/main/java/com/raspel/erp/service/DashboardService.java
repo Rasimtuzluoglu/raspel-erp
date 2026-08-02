@@ -6,6 +6,7 @@ import com.raspel.erp.entity.Hareket;
 import com.raspel.erp.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class DashboardService {
     private final StokRepository stokRepository;
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "dashboard", key = "'dashboard:' + #sirketId")
     public DashboardDTO dashboardVerileriGetir(Long sirketId) {
         log.debug("Dashboard verileri getiriliyor... sirketId: {}", sirketId);
 

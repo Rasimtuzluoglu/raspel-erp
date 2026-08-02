@@ -5,6 +5,8 @@ import com.raspel.erp.entity.Donem;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.DonemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -20,24 +22,33 @@ public class DonemService {
 
     private final DonemRepository donemRepository;
 
+    @Cacheable(value = "lookup", key = "'donemler:' + #pageable.pageNumber")
+    @Transactional(readOnly = true)
     public Page<DonemDTO> tumunuGetir(Pageable pageable) {
         return donemRepository.findAll(pageable).map(this::entityToDTO);
     }
 
+    @Cacheable(value = "lookup", key = "'donemSirket:' + #sirketId")
+    @Transactional(readOnly = true)
     public List<DonemDTO> sirketeGoreGetir(Long sirketId) {
         return donemRepository.findBySirketIdOrderByBaslangicDesc(sirketId, Pageable.unpaged()).map(this::entityToDTO).getContent();
     }
 
+    @Cacheable(value = "lookup", key = "'donemAktif:' + #sirketId")
+    @Transactional(readOnly = true)
     public List<DonemDTO> aktifDonemler(Long sirketId) {
         return donemRepository.findBySirketIdAndAktifTrue(sirketId).stream()
                 .map(this::entityToDTO).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "lookup", key = "'donemId:' + #id")
+    @Transactional(readOnly = true)
     public DonemDTO getir(Long id) {
         return entityToDTO(donemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dönem", id)));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public DonemDTO olustur(DonemDTO dto) {
         Donem d = Donem.builder()
                 .sirketId(dto.getSirketId())
@@ -49,6 +60,7 @@ public class DonemService {
         return entityToDTO(donemRepository.save(d));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public DonemDTO guncelle(Long id, DonemDTO dto) {
         Donem d = donemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dönem", id));
@@ -59,6 +71,7 @@ public class DonemService {
         return entityToDTO(donemRepository.save(d));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         if (!donemRepository.existsById(id)) throw new ResourceNotFoundException("Dönem", id);
         donemRepository.deleteById(id);
