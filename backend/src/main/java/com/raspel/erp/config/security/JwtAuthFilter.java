@@ -47,19 +47,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         if (token != null && jwtUtil.validateToken(token)) {
-            String username = jwtUtil.getUsernameFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                Long kullaniciId = jwtUtil.getUserIdFromToken(token);
+            Long kullaniciId = jwtUtil.getUserIdFromToken(token);
+            Long sirketId = jwtUtil.getSirketIdFromToken(token);
+            if (kullaniciId != null) {
                 request.setAttribute("kullaniciId", kullaniciId);
-                Long sirketId = jwtUtil.getSirketIdFromToken(token);
+            }
+            if (sirketId != null) {
                 request.setAttribute("sirketId", sirketId);
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                String username = jwtUtil.getUsernameFromToken(token);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if (userDetails != null) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         }
 

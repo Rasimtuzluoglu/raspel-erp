@@ -27,7 +27,6 @@ import java.util.List;
 @RequestMapping("/api/faturalar")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class FaturaController {
 
@@ -84,6 +83,14 @@ public class FaturaController {
     public ResponseEntity<Void> faturaSil(@PathVariable Long id) {
         faturaService.faturaSil(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/gonder-email")
+    @Operation(summary = "Faturayı e-posta ile gönder", description = "Fatura PDF'ini cari hesabın e-posta adresine gönderir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Void> gonderEmail(@PathVariable Long id) {
+        faturaService.gonderEmail(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/export/csv")

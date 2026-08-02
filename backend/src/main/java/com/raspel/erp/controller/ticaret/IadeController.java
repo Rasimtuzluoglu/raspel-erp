@@ -20,7 +20,6 @@ import org.springframework.data.web.PageableDefault;
 @RestController
 @RequestMapping("/api/iadeler")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class IadeController {
 
@@ -50,6 +49,12 @@ public class IadeController {
     @Operation(summary = "İade güncelle", description = "İade bilgilerini günceller")
     public ResponseEntity<IadeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody IadeDTO dto) {
         return ResponseEntity.ok(iadeService.guncelle(id, dto));
+    }
+
+    @PutMapping("/{id}/durum")
+    @Operation(summary = "İade durum güncelle", description = "İade durumunu günceller (TASLAK/TAMAMLANDI/IPTAL)")
+    public ResponseEntity<IadeDTO> durumGuncelle(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(iadeService.durumGuncelle(id, body.get("durum")));
     }
 
     @DeleteMapping("/{id}")

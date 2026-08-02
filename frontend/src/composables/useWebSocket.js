@@ -13,7 +13,7 @@ export function useWebSocket() {
 
     const token = authStore.token || ''
     const SOCKET_URL = import.meta.env.VITE_WS_URL ||
-      (window.location.protocol === 'https:' ? 'https://' : 'http://') + window.location.hostname + ':8081/ws' + (token ? '?token=' + encodeURIComponent(token) : '')
+      (window.location.origin + '/ws' + (token ? '?token=' + encodeURIComponent(token) : ''))
 
     import('sockjs-client').then(SockJS => {
       import('@stomp/stompjs').then(({ Client }) => {

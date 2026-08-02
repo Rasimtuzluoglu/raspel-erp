@@ -30,6 +30,7 @@ class HareketServiceTest {
     @Mock private HareketRepository hareketRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private CariHesapService cariHesapService;
+    @Mock private BildirimService bildirimService;
     @InjectMocks private HareketService hareketService;
 
     private CariHesap createCariHesap() {

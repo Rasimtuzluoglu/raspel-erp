@@ -93,13 +93,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
-import apiClient, { kullaniciAPI } from '../api/index.js'
+import apiClient, { kullaniciAPI, sirketAPI } from '../api/index.js'
 
 const toast = useToast()
 const confirm = useConfirm()
 const authStore = useAuthStore()
 
 const kullanicilar = ref([])
+const sirketListesi = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const showDialog = ref(false)
@@ -132,7 +133,7 @@ onMounted(async () => {
   try {
     const [r, sR] = await Promise.all([
       kullaniciAPI.getAll(),
-      sirketAPI.getAktifSirketler()
+      sirketAPI.getAktif()
     ])
     kullanicilar.value = r.data?.content || r.data || []
     sirketListesi.value = sR.data || []

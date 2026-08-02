@@ -270,6 +270,48 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/muhasebe',
+    name: 'Muhasebe',
+    component: () => import('../views/Muhasebe.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/crm',
+    name: 'Crm',
+    component: () => import('../views/Crm.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/e-fatura',
+    name: 'EFatura',
+    component: () => import('../views/EFatura.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/kritik-stok',
+    name: 'KritikStok',
+    component: () => import('../views/KritikStok.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/hesap-ayarlari',
+    name: 'HesapAyarlari',
+    component: () => import('../views/HesapAyarlari.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/banka-mutabakat',
+    name: 'BankaMutabakat',
+    component: () => import('../views/BankaMutabakat.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/vergi-raporlari',
+    name: 'VergiRaporlari',
+    component: () => import('../views/VergiRaporlari.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')
@@ -287,8 +329,10 @@ router.beforeEach((to, from, next) => {
     next('/giris')
   } else if (to.path === '/giris' && authStore.isLoggedIn && to.name === 'Giris') {
     next('/')
-  } else if (to.meta.requiresAdmin && authStore.kullanici?.role !== 'ADMIN') {
-    next('/')
+  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    next('/yetki-reddi')
+  } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
+    next('/yetki-reddi')
   } else {
     next()
   }

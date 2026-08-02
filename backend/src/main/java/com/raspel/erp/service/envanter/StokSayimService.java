@@ -72,6 +72,24 @@ public class StokSayimService {
         stokSayimRepository.deleteById(id);
     }
 
+    public StokSayimDTO durumGuncelle(Long id, String yeniDurum) {
+        StokSayim sayim = stokSayimRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
+        if (yeniDurum == null || !java.util.List.of("TASLAK", "TAMAMLANDI", "IPTAL").contains(yeniDurum)) {
+            throw new com.raspel.erp.exception.BusinessException("Geçersiz durum: " + yeniDurum);
+        }
+        if ("TAMAMLANDI".equals(yeniDurum) && sayim.getStok() != null) {
+            BigDecimal fark = (sayim.getSayilanMiktar() != null ? sayim.getSayilanMiktar() : BigDecimal.ZERO)
+                    .subtract(sayim.getBeklenenMiktar() != null ? sayim.getBeklenenMiktar() : BigDecimal.ZERO);
+            sayim.setFark(fark);
+            Stok stok = sayim.getStok();
+            stok.setMiktar(stok.getMiktar().add(fark));
+            stokRepository.save(stok);
+        }
+        sayim.setDurum(yeniDurum);
+        return entityToDTO(stokSayimRepository.save(sayim));
+    }
+
     private StokSayimDTO entityToDTO(StokSayim s) {
         return StokSayimDTO.builder()
                 .id(s.getId())

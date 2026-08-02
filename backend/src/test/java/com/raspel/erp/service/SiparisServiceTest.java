@@ -32,6 +32,10 @@ class SiparisServiceTest {
     @Mock private SiparisKalemRepository kalemRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private StokRepository stokRepository;
+    @Mock private FaturaService faturaService;
+    @Mock private SeriNoServisi seriNoServisi;
+    @Mock private BildirimService bildirimService;
+    @Mock private EmailService emailService;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {

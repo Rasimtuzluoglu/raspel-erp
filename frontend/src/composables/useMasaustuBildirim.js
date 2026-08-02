@@ -21,7 +21,7 @@ export function useMasaustuBildirim() {
     }
   }
 
-  const goster = (baslik, mesaj, ikon = '/vite.svg') => {
+  const goster = (baslik, mesaj, ikon = '/icon-192.png') => {
     if (!izinli.value) return false
     try {
       const not = new Notification(baslik, {

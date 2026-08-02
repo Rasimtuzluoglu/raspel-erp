@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface DovizKuruRepository extends JpaRepository<DovizKuru, Long> {
     List<DovizKuru> findByTarihOrderByDovizKoduAsc(LocalDate tarih);
     Optional<DovizKuru> findByDovizKoduAndTarih(String dovizKodu, LocalDate tarih);
+    Optional<DovizKuru> findByDovizKodu(String dovizKodu);
 }

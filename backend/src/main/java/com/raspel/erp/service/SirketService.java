@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
@@ -22,19 +24,23 @@ public class SirketService {
 
     private final SirketRepository sirketRepository;
 
+    @Cacheable(value = "lookup", key = "'sirketler:' + #pageable.pageNumber")
     public Page<SirketDTO> tumunuGetir(Pageable pageable) {
         return sirketRepository.findAll(pageable).map(this::entityToDTO);
     }
 
+    @Cacheable(value = "lookup", key = "'sirketlerAktif'")
     public List<SirketDTO> aktifOlanlariGetir() {
         return sirketRepository.findByAktifTrue().stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "lookup", key = "'sirket:' + #id")
     public SirketDTO getir(Long id) {
         return entityToDTO(sirketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Şirket", id)));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public SirketDTO olustur(SirketDTO dto) {
         Sirket s = Sirket.builder()
                 .ad(dto.getAd())
@@ -50,6 +56,7 @@ public class SirketService {
         return entityToDTO(sirketRepository.save(s));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public SirketDTO guncelle(Long id, SirketDTO dto) {
         Sirket s = sirketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Şirket", id));
@@ -75,6 +82,7 @@ public class SirketService {
         return entityToDTO(sirketRepository.save(s));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         if (!sirketRepository.existsById(id)) throw new ResourceNotFoundException("Şirket", id);
         sirketRepository.deleteById(id);

@@ -10,7 +10,10 @@ import java.time.LocalDateTime;
  * Muhasebede yer alan müşteri veya tedarikçi hesaplarını temsil eder.
  */
 @Entity
-@Table(name = "cari_hesap", schema = "cari")
+@Table(name = "cari_hesap", schema = "cari", indexes = {
+    @Index(name = "idx_cari_hesap_sirket", columnList = "sirket_id"),
+    @Index(name = "idx_cari_hesap_ad", columnList = "ad")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

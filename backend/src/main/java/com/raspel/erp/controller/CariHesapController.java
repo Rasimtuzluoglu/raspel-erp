@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/cari-hesaplar")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class CariHesapController {
     

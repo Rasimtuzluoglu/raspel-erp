@@ -21,7 +21,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/bankalar")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class BankaController {
 

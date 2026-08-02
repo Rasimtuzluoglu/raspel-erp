@@ -33,6 +33,7 @@ class StokServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private CariHesapRepository cariHesapRepository;
+    @Mock private BildirimService bildirimService;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -198,5 +199,32 @@ class StokServiceTest {
         when(stokRepository.toplamMiktar()).thenReturn(BigDecimal.valueOf(100));
         BigDecimal total = stokService.toplamStokMiktari();
         assertEquals(BigDecimal.valueOf(100), total);
+    }
+
+    @Test
+    void hareketEkle_kritikSeviyedeBildirimGonderir() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        stok.setMiktar(BigDecimal.valueOf(4));
+        stok.setMinMiktar(BigDecimal.valueOf(5));
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        StokHareketDTO dto = StokHareketDTO.builder().stokId(1L).tur("CIKIS").miktar(BigDecimal.valueOf(2))
+                .hareketTarihi(LocalDate.now()).build();
+        when(stokHareketRepository.save(any(StokHareket.class)))
+                .thenReturn(StokHareket.builder().id(1L).stok(stok).tur("CIKIS").miktar(BigDecimal.valueOf(2)).build());
+        stokService.hareketEkle(dto);
+        verify(bildirimService, times(1)).bildirimGonder(eq(1L), eq("STOK"), anyString(), anyString());
+    }
+
+    @Test
+    void kritikStoklar_onerilenSiparisMiktariHesaplar() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        stok.setMiktar(BigDecimal.valueOf(5));
+        stok.setMinMiktar(BigDecimal.valueOf(10));
+        when(stokRepository.kritikStoklar(1L)).thenReturn(List.of(stok));
+        var result = stokService.kritikStoklar(1L);
+        assertEquals(1, result.size());
+        assertEquals(BigDecimal.valueOf(15), result.get(0).getOnerilenSiparisMiktari());
     }
 }

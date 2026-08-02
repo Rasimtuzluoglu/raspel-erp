@@ -4,6 +4,7 @@
       <Button label="Geri" icon="pi pi-arrow-left" @click="$router.push('/faturalar')" class="p-button-text no-print" />
       <div class="detay-ayarlar no-print">
         <SelectButton v-model="faturaFiyatli" :options="fiyatSecenekleri" optionLabel="label" optionValue="value" size="small" />
+        <Button label="E-posta Gönder" icon="pi pi-envelope" @click="gonderEmail" :loading="emailGonderiliyor" :disabled="!fatura?.cariHesapAd" />
         <Button label="Yazdır" icon="pi pi-print" @click="win.print()" />
       </div>
     </div>
@@ -14,9 +15,10 @@
       <div class="fatura-baslik">
         <div class="firma-bilgi">
           <h2>ÖN MUHASEBE</h2>
-          <p>Örnek Şirket Ltd. Şti.</p>
-          <p>Vergi Dairesi: Kadıköy V.D.</p>
-          <p>Vergi No: 1234567890</p>
+          <p>{{ sirket?.ad || authStore.sirketAdi || 'RasPel ERP' }}</p>
+          <p v-if="sirket?.vergiDairesi">Vergi Dairesi: {{ sirket.vergiDairesi }}</p>
+          <p v-if="sirket?.vergiNo">Vergi No: {{ sirket.vergiNo }}</p>
+          <p v-if="sirket?.adres">{{ sirket.adres }}</p>
         </div>
         <div class="fatura-bilgi">
           <h1>{{ fatura.tur === 'SATIS' ? 'SATIŞ FATURASI' : 'ALIŞ FATURASI' }}</h1>
@@ -109,14 +111,17 @@ import { useToast } from 'primevue/usetoast'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
 import { useYakinZamanda } from '../composables/useYakinZamanda.js'
-import { belgeAPI } from '../api/index.js'
+import { belgeAPI, faturaAPI, sirketAPI } from '../api/index.js'
+import { useAuthStore } from '../stores/authStore.js'
 
 const route = useRoute()
 const router = useRouter()
 const faturaStore = useFaturaStore()
+const authStore = useAuthStore()
 const win = window
 
 const fatura = ref(null)
+const sirket = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const printMode = ref(route.query.print === 'true')
@@ -137,6 +142,19 @@ const toast = useToast()
 const dosyaInput = ref(null)
 const belgeler = ref([])
 const belgeYukleniyor = ref(false)
+const emailGonderiliyor = ref(false)
+
+const gonderEmail = async () => {
+  if (!fatura.value) return
+  emailGonderiliyor.value = true
+  try {
+    await faturaAPI.gonderEmail(fatura.value.id)
+    toast.add({ severity: 'success', summary: 'Gönderildi', detail: 'Fatura PDF e-posta ile iletildi', life: 3000 })
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'E-posta gönderilemedi', life: 5000 })
+  }
+  emailGonderiliyor.value = false
+}
 
 const belgeleriYukle = async () => {
   try {
@@ -204,6 +222,12 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  try {
+    if (authStore.sirketId) {
+      const r = await sirketAPI.getById(authStore.sirketId)
+      sirket.value = r.data || null
+    }
+  } catch {}
   if (printMode.value) setTimeout(() => { try { win.focus(); win.print() } catch (e) { console.error('Yazdırma hatası:', e) } }, 300)
 })
 

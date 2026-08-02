@@ -33,6 +33,7 @@ public class HareketService {
     private final HareketRepository hareketRepository;
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
+    private final BildirimService bildirimService;
     
     /**
      * Belirli bir cari hesaba ait hareketleri getir
@@ -103,6 +104,16 @@ public class HareketService {
         
         // Cari hesabın bakiyesini güncelle
         cariHesapService.bakiyeGuncelle(dto.getCariHesapId(), bakiyeGuncellemeTutari);
+        
+        try {
+            if (sirketId != null) {
+                bildirimService.bildirimGonder(sirketId, hareketTuru == Hareket.HareketTuru.TAHSILAT ? "TAKSILAT" : "ODEME",
+                        (hareketTuru == Hareket.HareketTuru.TAHSILAT ? "Tahsilat: " : "Ödeme: ") + dto.getTutar() + " ₺",
+                        cariHesap.getAd() + (dto.getAciklama() != null ? " - " + dto.getAciklama() : ""));
+            }
+        } catch (Exception e) {
+            log.warn("Hareket bildirimi gönderilemedi: {}", e.getMessage());
+        }
         
         log.info("Hareket başarıyla oluşturuldu - ID: {}", kaydedilenHareket.getId());
         

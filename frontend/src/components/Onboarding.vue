@@ -41,6 +41,7 @@ const router = useRouter()
 const toast = useToast()
 const demoVeriIsteniyor = ref(true)
 const demoYukleniyor = ref(false)
+const emit = defineEmits(['demo-loaded'])
 
 const adimlar = reactive([
   { baslik: 'Şirket Bilgileri', aciklama: 'Şirket adı, vergi no ve iletişim bilgilerinizi düzenleyin.', buton: 'Şirkete Git', ikon: 'pi pi-building', tamam: false, path: '/sirketler' },
@@ -62,9 +63,9 @@ const demoYukle = async () => {
     await kategoriAPI.create({ ad: 'Satış', tur: 'GELIR' })
 
     const ornekCariler = [
-      { ad: 'Demo Müşteri A', vergiNo: '1111111111', telefon: '0532 111 11 11', eposta: 'musteria@demo.com', il: 'İstanbul' },
-      { ad: 'Demo Müşteri B', vergiNo: '2222222222', telefon: '0532 222 22 22', eposta: 'musterib@demo.com', il: 'Ankara' },
-      { ad: 'Demo Tedarikçi', vergiNo: '3333333333', telefon: '0532 333 33 33', eposta: 'tedarikci@demo.com', il: 'İzmir' }
+      { ad: 'Demo Müşteri A', vergiNo: '1111111111', telefon: '0532 111 11 11', email: 'musteria@demo.com', il: 'İstanbul' },
+      { ad: 'Demo Müşteri B', vergiNo: '2222222222', telefon: '0532 222 22 22', email: 'musterib@demo.com', il: 'Ankara' },
+      { ad: 'Demo Tedarikçi', vergiNo: '3333333333', telefon: '0532 333 33 33', email: 'tedarikci@demo.com', il: 'İzmir' }
     ]
     for (const c of ornekCariler) await cariHesapAPI.create(c)
 
@@ -77,6 +78,7 @@ const demoYukle = async () => {
 
     toast.add({ severity: 'success', summary: 'Demo Veri Yüklendi', detail: 'Örnek cari, stok ve kategoriler eklendi.', life: 5000 })
     adimlar.forEach(a => { a.tamam = true })
+    emit('demo-loaded')
   } catch (e) {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Demo veri yüklenirken hata oluştu.', life: 5000 })
   } finally {

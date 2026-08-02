@@ -38,7 +38,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import axios from 'axios'
+import { apiClient } from '../api/index.js'
 
 const toast = useToast()
 const yukleniyor = ref(false)
@@ -47,7 +47,7 @@ const anomaliler = ref([])
 const anomalileriYukle = async () => {
   yukleniyor.value = true
   try {
-    const res = await axios.get('/api/v1/anomaliler')
+    const res = await apiClient.get('/anomaliler')
     anomaliler.value = res.data || []
     if (anomaliler.value.length > 0) {
       toast.add({ severity: 'warn', summary: 'Anomali Tespiti', detail: `${anomaliler.value.length} adet şüpheli durum tespit edildi.`, life: 5000 })

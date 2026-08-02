@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 @RestController
 @RequestMapping("/api/exports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class ExcelExportController {
 

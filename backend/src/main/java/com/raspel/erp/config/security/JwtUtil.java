@@ -4,6 +4,7 @@ import com.raspel.erp.entity.Kullanici;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtUtil {
 
     private final SecretKey signingKey;
@@ -19,8 +21,15 @@ public class JwtUtil {
     public JwtUtil(
             @Value("${app.jwt.secret}") String jwtSecret,
             @Value("${app.jwt.expiration-ms}") long expirationMs) {
-        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("app.jwt.secret en az 32 bayt (256-bit) olmalıdır");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.expirationMs = expirationMs;
+        if (System.getenv("JWT_SECRET") == null) {
+            log.warn("JWT_SECRET ortam değişkeni tanımlı değil! Üretim ortamında mutlaka güçlü bir JWT_SECRET ayarlayın.");
+        }
     }
 
     public String generateToken(Kullanici kullanici, Long sirketId, String sirketAdi) {

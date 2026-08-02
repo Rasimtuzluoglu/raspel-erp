@@ -20,7 +20,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/irsaliyeler")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class IrsaliyeController {
 

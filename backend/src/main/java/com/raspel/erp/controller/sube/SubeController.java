@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/subeler")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class SubeController {
 

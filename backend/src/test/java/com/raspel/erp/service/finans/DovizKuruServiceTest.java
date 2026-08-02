@@ -3,6 +3,7 @@ package com.raspel.erp.service.finans;
 import com.raspel.erp.dto.finans.DovizKuruDTO;
 import com.raspel.erp.entity.finans.DovizKuru;
 import com.raspel.erp.repository.finans.DovizKuruRepository;
+import com.raspel.erp.service.sistem.TcmbKurService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,9 @@ class DovizKuruServiceTest {
 
     @Mock
     private DovizKuruRepository dovizKuruRepository;
+
+    @Mock
+    private TcmbKurService tcmbKurService;
 
     @InjectMocks
     private DovizKuruService dovizKuruService;
@@ -56,10 +60,21 @@ class DovizKuruServiceTest {
     }
 
     @Test
-    void testGunlukKurlariGetir_BosIseVarsayilanKurlariOlusturur() {
+    void testGunlukKurlariGetir_BosIseTcmbDenTazeler() {
         when(dovizKuruRepository.findByTarihOrderByDovizKoduAsc(any(LocalDate.class)))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(Collections.emptyList(), List.of(mockKur));
 
+        List<DovizKuruDTO> result = dovizKuruService.gunlukKurlariGetir(LocalDate.now());
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(tcmbKurService, times(1)).tcmbKurlariniGuncelle();
+    }
+
+    @Test
+    void testGunlukKurlariGetir_BosVeTcmbCekemezseVarsayilanlariOlusturur() {
+        when(dovizKuruRepository.findByTarihOrderByDovizKoduAsc(any(LocalDate.class)))
+                .thenReturn(Collections.emptyList(), Collections.emptyList());
         when(dovizKuruRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<DovizKuruDTO> result = dovizKuruService.gunlukKurlariGetir(LocalDate.now());

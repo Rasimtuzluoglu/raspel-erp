@@ -62,8 +62,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import axios from 'axios'
-
+import { apiClient } from '../api/index.js'
 const toast = useToast()
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -76,8 +75,8 @@ const verileriYukle = async () => {
   yukleniyor.value = true
   try {
     const [rRes, yRes] = await Promise.all([
-      axios.get('/api/v1/yetkiler/roller'),
-      axios.get('/api/v1/yetkiler')
+      apiClient.get('/yetkiler/roller'),
+      apiClient.get('/yetkiler')
     ])
     roller.value = rRes.data || []
     yetkiler.value = yRes.data || []
@@ -114,7 +113,7 @@ const kaydet = async () => {
   kaydediliyor.value = true
   try {
     const yetkiIds = seciliRol.value.yetkiler.map(y => y.id)
-    await axios.put(`/api/v1/yetkiler/roller/${seciliRol.value.id}`, yetkiIds)
+    await apiClient.put(`/yetkiler/roller/${seciliRol.value.id}`, yetkiIds)
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `${seciliRol.value.ad} yetkileri kaydedildi.`, life: 4000 })
   } catch (e) {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Rol yetkileri güncellenemedi.', life: 5000 })

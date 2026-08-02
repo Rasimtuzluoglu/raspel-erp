@@ -280,8 +280,11 @@ const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesil
 const formatCurrency = (v) => v ?? 0 ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v) : '0,00 ₺'
 const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(d)) : '-'
 const printTermalFis = (satisData) => {
-  const fisWindow = window.open('', '_blank', 'width=380,height=600')
-  if (!fisWindow) return
+  const fisWindow = window.open('', '_blank', 'width=400,height=600')
+  if (!fisWindow) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Pencere açılamadı. Pop-up engelleyicinizi kontrol edin.', life: 5000 })
+    return
+  }
 
   const kalemlerHtml = (satisData.kalemler || []).map(k => `
     <tr>
@@ -295,10 +298,10 @@ const printTermalFis = (satisData) => {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Termal Fiş</title>
+      <title>Termal Fiş - ${satisData.faturaNumarasi || 'SATIŞ'}</title>
       <style>
         @page { size: 80mm auto; margin: 0; }
-        body { font-family: 'Courier New', Courier, monospace; width: 72mm; margin: 0 auto; padding: 8px 0; font-size: 12px; color: #000; }
+        body { font-family: 'Courier New', Courier, monospace; width: 72mm; margin: 0 auto; padding: 10px 0; font-size: 12px; color: #000; }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .bold { font-weight: bold; }
@@ -309,9 +312,16 @@ const printTermalFis = (satisData) => {
         .header h2 { margin: 0; font-size: 16px; font-weight: bold; }
         .header p { margin: 2px 0; font-size: 10px; }
         .footer { margin-top: 10px; text-align: center; font-size: 10px; }
+        .no-print { text-align: center; margin-bottom: 12px; }
+        .no-print button { padding: 6px 16px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        @media print { .no-print { display: none !important; } }
       </style>
     </head>
     <body>
+      <div class="no-print">
+        <button onclick="window.print()">Yazdır (Termal 80mm)</button>
+        <button onclick="window.close()" style="background:#64748b; margin-left:6px;">Kapat</button>
+      </div>
       <div class="header text-center">
         <h2>RASPEL ERP</h2>
         <p>SATIŞ FİŞİ</p>
@@ -351,14 +361,20 @@ const printTermalFis = (satisData) => {
         <p>Bizi tercih ettiğiniz için teşekkür ederiz!</p>
         <p>Yazılım: RasPel ERP</p>
       </div>
-      <script>
-        window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); }
-      <\/script>
     </body>
     </html>
   `
+  fisWindow.document.open()
   fisWindow.document.write(content)
   fisWindow.document.close()
+  setTimeout(() => {
+    try {
+      fisWindow.focus()
+      fisWindow.print()
+    } catch (e) {
+      console.error('Termal yazıcı hatası:', e)
+    }
+  }, 300)
 }
 </script>
 

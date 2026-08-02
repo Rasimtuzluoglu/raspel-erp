@@ -7,6 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,13 +20,18 @@ public class LoginRateLimitFilter implements Filter {
     private static final int MAX_ATTEMPTS = 5;
     private static final long WINDOW_MS = 60_000;
 
+    private boolean girisYolu(String uri) {
+        if (uri == null) return false;
+        return uri.endsWith("/kullanicilar/giris") || uri.endsWith("/kullanicilar/giris-2fa");
+    }
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-        if ("/api/kullanicilar/giris".equals(req.getRequestURI()) && "POST".equalsIgnoreCase(req.getMethod())) {
+        if (girisYolu(req.getRequestURI()) && "POST".equalsIgnoreCase(req.getMethod())) {
             String ip = req.getRemoteAddr();
             LoginAttempt attempt = attempts.computeIfAbsent(ip, k -> new LoginAttempt());
             if (attempt.isBlocked()) {
@@ -37,7 +43,27 @@ public class LoginRateLimitFilter implements Filter {
             attempt.increment();
         }
 
-        chain.doFilter(request, response);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            // Başarılı girişte sayaç sıfırlanır (yanlış denemeler için sınırlama korunur)
+            if (girisYolu(req.getRequestURI()) && res.getStatus() >= 200 && res.getStatus() < 300) {
+                attempts.remove(req.getRemoteAddr());
+            }
+            temizle();
+        }
+    }
+
+    /** Süresi dolmuş kayıtları bellekten temizler. */
+    private void temizle() {
+        long now = System.currentTimeMillis();
+        Iterator<Map.Entry<String, LoginAttempt>> it = attempts.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, LoginAttempt> e = it.next();
+            if (now - e.getValue().windowStart > WINDOW_MS) {
+                it.remove();
+            }
+        }
     }
 
     private static class LoginAttempt {

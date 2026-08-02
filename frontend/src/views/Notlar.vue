@@ -20,7 +20,8 @@
     <div v-else-if="store.notlar.length === 0" class="empty-box">
       <i class="pi pi-pen-to-square empty-icon"></i>
       <h3>Henüz Not Yok</h3>
-      <p>İlk notunu eklemek için "Yeni Not" butonuna tıkla.</p>
+      <p style="margin-bottom: 1rem;">İlk notunu eklemek için aşağıdaki butona tıkla.</p>
+      <Button label="Yeni Not Ekle" icon="pi pi-plus" class="p-button-primary" @click="dialogAc" />
     </div>
 
     <div v-else class="not-grid">
@@ -143,10 +144,10 @@ const sil = async (id) => {
     await store.deleteNot(id)
     toast.add({ severity: 'success', summary: 'Silindi', detail: 'Not silindi.', life: 3000 })
     if (silinen) {
-      silinenSon = silinen
-      geriAlGoster = true
+      silinenSon.value = silinen
+      geriAlGoster.value = true
       if (geriAlZamanlayici) clearTimeout(geriAlZamanlayici)
-      geriAlZamanlayici = setTimeout(() => { geriAlGoster = false; silinenSon = null }, 8000)
+      geriAlZamanlayici = setTimeout(() => { geriAlGoster.value = false; silinenSon.value = null }, 8000)
     }
   } catch {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız.', life: 5000 })
@@ -154,15 +155,15 @@ const sil = async (id) => {
 }
 
 const geriAl = async () => {
-  if (!silinenSon) return
+  if (!silinenSon.value) return
   try {
-    await store.addNot({ baslik: silinenSon.baslik, icerik: silinenSon.icerik, onemDerecesi: silinenSon.onemDerecesi, renk: silinenSon.renk })
+    await store.addNot({ baslik: silinenSon.value.baslik, icerik: silinenSon.value.icerik, onemDerecesi: silinenSon.value.onemDerecesi, renk: silinenSon.value.renk })
     toast.add({ severity: 'success', summary: 'Geri Alındı', detail: 'Not geri yüklendi.', life: 3000 })
   } catch {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Geri alma başarısız.', life: 5000 })
   } finally {
-    geriAlGoster = false
-    silinenSon = null
+    geriAlGoster.value = false
+    silinenSon.value = null
   }
 }
 

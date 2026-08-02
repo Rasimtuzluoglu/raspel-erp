@@ -34,6 +34,8 @@ public class SiparisService {
     private final StokRepository stokRepository;
     private final FaturaService faturaService;
     private final SeriNoServisi seriNoServisi;
+    private final BildirimService bildirimService;
+    private final EmailService emailService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -69,6 +71,15 @@ public class SiparisService {
                         .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
                         .kdvOrani(k.getKdvOrani()).tutar(k.getTutar()).build());
             }
+        }
+        try {
+            if (dto.getSirketId() != null) {
+                bildirimService.bildirimGonder(dto.getSirketId(), "SIPARIS",
+                        "Yeni Sipariş: " + siparisNo,
+                        "Tutar: " + dto.getGenelToplam() + " ₺");
+            }
+        } catch (Exception e) {
+            log.warn("Sipariş bildirimi gönderilemedi: {}", e.getMessage());
         }
         return entityToDTO(s);
     }
@@ -134,7 +145,17 @@ public class SiparisService {
         }
 
         s.setDurum(durum);
-        return entityToDTO(siparisRepository.save(s));
+        SiparisDTO sonuc = entityToDTO(siparisRepository.save(s));
+        try {
+            if (s.getCariHesapId() != null) {
+                cariHesapRepository.findById(s.getCariHesapId())
+                        .filter(c -> c.getEmail() != null && !c.getEmail().isBlank())
+                        .ifPresent(c -> emailService.siparisBildirimiGonder(c.getEmail(), s.getSiparisNo(), durum));
+            }
+        } catch (Exception e) {
+            log.warn("Sipariş bildirim e-postası gönderilemedi: {}", e.getMessage());
+        }
+        return sonuc;
     }
 
     public void sil(Long id) {

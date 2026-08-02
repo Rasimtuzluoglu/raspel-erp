@@ -50,7 +50,7 @@
 [data-theme="light"] .p-datepicker .p-datepicker-header { background: #ffffff !important; }
 [data-theme="light"] .card { background: #ffffff; }
 [data-theme="light"] .page-title { color: #0f172a; }
-[data-theme="light"] .pi-star-fav { color: #cbd5e1; }
+[data-theme="light"] .pi-star { color: #cbd5e1; }
 [data-theme="light"] .sidebar-arama kbd { color: #94a3b8; }
 
 body {
@@ -124,10 +124,11 @@ body {
 .sidebar-menu a:hover { color: var(--text-primary); background: rgba(148, 163, 184, 0.08); }
 .sidebar-menu a.active { color: #60a5fa; background: rgba(59, 130, 246, 0.12); }
 .sidebar-menu a i { font-size: 15px; width: 20px; text-align: center; }
-.pi-star-fav { font-size: 11px !important; width: auto !important; margin-left: auto; color: #475569; cursor: pointer; opacity: 0; transition: all 0.2s; }
-.sidebar-menu a:hover .pi-star-fav { opacity: 1; }
-.pi-star-fav.favori { opacity: 1; color: #fbbf24; }
-.pi-star-fav:hover { color: #fbbf24 !important; }
+.pi-star { font-size: 11px !important; width: auto !important; margin-left: auto; color: #475569; cursor: pointer; opacity: 0; transition: all 0.2s; }
+.sidebar-menu a:hover .pi-star { opacity: 1; }
+.pi-star.favori { opacity: 1; color: #fbbf24; }
+.pi-star.favori:before { content: "\e936"; }
+.pi-star:hover { color: #fbbf24 !important; }
 
 .sidebar-arama {
   display: flex; align-items: center; gap: 8px;

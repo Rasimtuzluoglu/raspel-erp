@@ -17,7 +17,6 @@ import java.util.Set;
 @RestController
 @RequestMapping({"/api/yetkiler", "/api/v1/yetkiler"})
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasRole('ADMIN')")
 public class YetkiController {
 

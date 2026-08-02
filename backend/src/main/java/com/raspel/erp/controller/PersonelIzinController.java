@@ -22,7 +22,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/personel-izin")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class PersonelIzinController {
 

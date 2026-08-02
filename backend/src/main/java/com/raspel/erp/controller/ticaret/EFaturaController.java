@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping({"/api/e-fatura", "/api/v1/e-fatura"})
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class EFaturaController {
 

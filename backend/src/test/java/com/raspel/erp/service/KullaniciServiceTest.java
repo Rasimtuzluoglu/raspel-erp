@@ -154,4 +154,94 @@ class KullaniciServiceTest {
         req.setPassword("pass");
         assertThrows(RuntimeException.class, () -> kullaniciService.giris(req));
     }
+
+    @Test
+    void giris_twoFactorAktifIseJwtUretmez() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setTwoFactorEnabled(true);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+
+        LoginRequest req = new LoginRequest();
+        req.setUsername("testuser1");
+        req.setPassword("pass");
+
+        LoginResponse resp = kullaniciService.giris(req);
+
+        assertTrue(Boolean.TRUE.equals(resp.getTwoFactorGerekli()));
+        assertNotNull(resp.getGirisToken());
+        assertNull(resp.getToken());
+        verify(jwtUtil, never()).generateToken(any(), any(), any());
+    }
+
+    @Test
+    void giris2faTamamla_dogruKodJwtDoner() {
+        Kullanici k = createKullanici(1L);
+        k.setUsername("testuser1");
+        k.setPassword("encoded");
+        k.setTwoFactorEnabled(true);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+        LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").build());
+
+        String dogruKod = com.raspel.erp.util.TotpUtil.generateCode("JBSWY3DPEHPK3PXP", System.currentTimeMillis());
+
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(jwtUtil.generateToken(any(Kullanici.class), any(), any())).thenReturn("token");
+
+        LoginResponse resp = kullaniciService.giris2faTamamla(
+                com.raspel.erp.dto.TwoFactorGirisRequest.builder()
+                        .girisToken(pending.getGirisToken()).code(dogruKod).build());
+
+        assertEquals("token", resp.getToken());
+    }
+
+    @Test
+    void giris2faTamamla_yanlisKodReddedilir() {
+        Kullanici k = createKullanici(1L);
+        k.setUsername("testuser1");
+        k.setPassword("encoded");
+        k.setTwoFactorEnabled(true);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+        LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").build());
+
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+
+        assertThrows(RuntimeException.class, () -> kullaniciService.giris2faTamamla(
+                com.raspel.erp.dto.TwoFactorGirisRequest.builder()
+                        .girisToken(pending.getGirisToken()).code("000000").build()));
+    }
+
+    @Test
+    void enableTwoFactor_gecersizKodReddedilir() {
+        Kullanici k = createKullanici(1L);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+
+        assertThrows(RuntimeException.class, () -> kullaniciService.enableTwoFactor(1L, "000000"));
+        assertFalse(Boolean.TRUE.equals(k.getTwoFactorEnabled()));
+    }
+
+    @Test
+    void profilGuncelle_rolDegistiremez() {
+        Kullanici k = createKullanici(1L);
+        k.setRole("USER");
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(kullaniciRepository.save(any(Kullanici.class))).thenReturn(k);
+
+        KullaniciDTO dto = KullaniciDTO.builder().displayName("Yeni Ad").role("ADMIN").build();
+        KullaniciDTO result = kullaniciService.profilGuncelle(1L, dto);
+
+        assertEquals("Yeni Ad", result.getDisplayName());
+        assertEquals("USER", result.getRole());
+    }
 }

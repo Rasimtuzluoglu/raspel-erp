@@ -2,6 +2,7 @@ package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.StokDTO;
 import com.raspel.erp.dto.StokHareketDTO;
+import com.raspel.erp.dto.KritikStokDTO;
 import com.raspel.erp.service.StokService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/stoklar")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class StokController {
 
@@ -39,6 +39,13 @@ public class StokController {
     @GetMapping("/ara")
     @Operation(summary = "Stok ara", description = "Stokları ada/barkoda göre arar")
     public ResponseEntity<List<StokDTO>> ara(@RequestParam String q) { return ResponseEntity.ok(stokService.ara(q)); }
+
+    @GetMapping("/kritik")
+    @Operation(summary = "Kritik stoklar", description = "Kritik seviyeye düşen stokları ve önerilen sipariş miktarlarını listeler")
+    public ResponseEntity<List<KritikStokDTO>> kritikStoklar(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.kritikStoklar(sirketId));
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre stok getir", description = "Stok ID'sine göre detayları getirir")

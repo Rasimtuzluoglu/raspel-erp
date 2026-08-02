@@ -3,6 +3,7 @@ package com.raspel.erp.service.finans;
 import com.raspel.erp.dto.finans.DovizKuruDTO;
 import com.raspel.erp.entity.finans.DovizKuru;
 import com.raspel.erp.repository.finans.DovizKuruRepository;
+import com.raspel.erp.service.sistem.TcmbKurService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class DovizKuruService {
 
     private final DovizKuruRepository dovizKuruRepository;
+    private final TcmbKurService tcmbKurService;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "dovizKurlari", key = "#tarih.toString()")
@@ -31,7 +33,15 @@ public class DovizKuruService {
         List<DovizKuru> kurlar = dovizKuruRepository.findByTarihOrderByDovizKoduAsc(hedefTarih);
 
         if (kurlar.isEmpty() && hedefTarih.equals(LocalDate.now())) {
-            kurlar = varsayilanKurlariOlustur(hedefTarih);
+            try {
+                tcmbKurService.tcmbKurlariniGuncelle();
+                kurlar = dovizKuruRepository.findByTarihOrderByDovizKoduAsc(hedefTarih);
+            } catch (Exception e) {
+                log.warn("TCMB güncellemesi başarısız, varsayılan kurlar kullanılacak: {}", e.getMessage());
+            }
+            if (kurlar.isEmpty()) {
+                kurlar = varsayilanKurlariOlustur(hedefTarih);
+            }
         }
 
         return kurlar.stream().map(this::entityToDTO).collect(Collectors.toList());
@@ -61,18 +71,18 @@ public class DovizKuruService {
         List<DovizKuru> varsayilanlar = new ArrayList<>();
         varsayilanlar.add(DovizKuru.builder()
                 .dovizKodu("USD").dovizAdi("ABD Doları").tarih(tarih)
-                .alisKuru(BigDecimal.valueOf(32.50)).satisKuru(BigDecimal.valueOf(32.65))
-                .efektifAlis(BigDecimal.valueOf(32.48)).efektifSatis(BigDecimal.valueOf(32.68))
+                .alisKuru(BigDecimal.valueOf(47.35)).satisKuru(BigDecimal.valueOf(47.43))
+                .efektifAlis(BigDecimal.valueOf(47.31)).efektifSatis(BigDecimal.valueOf(47.50))
                 .build());
         varsayilanlar.add(DovizKuru.builder()
                 .dovizKodu("EUR").dovizAdi("Euro").tarih(tarih)
-                .alisKuru(BigDecimal.valueOf(35.20)).satisKuru(BigDecimal.valueOf(35.40))
-                .efektifAlis(BigDecimal.valueOf(35.18)).efektifSatis(BigDecimal.valueOf(35.45))
+                .alisKuru(BigDecimal.valueOf(51.20)).satisKuru(BigDecimal.valueOf(51.30))
+                .efektifAlis(BigDecimal.valueOf(51.18)).efektifSatis(BigDecimal.valueOf(51.35))
                 .build());
         varsayilanlar.add(DovizKuru.builder()
                 .dovizKodu("GBP").dovizAdi("İngiliz Sterlini").tarih(tarih)
-                .alisKuru(BigDecimal.valueOf(41.30)).satisKuru(BigDecimal.valueOf(41.55))
-                .efektifAlis(BigDecimal.valueOf(41.25)).efektifSatis(BigDecimal.valueOf(41.60))
+                .alisKuru(BigDecimal.valueOf(60.40)).satisKuru(BigDecimal.valueOf(60.55))
+                .efektifAlis(BigDecimal.valueOf(60.35)).efektifSatis(BigDecimal.valueOf(60.60))
                 .build());
 
         return dovizKuruRepository.saveAll(varsayilanlar);

@@ -27,8 +27,13 @@
         <div class="serial-search">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="seriNoArama" placeholder="Seri No ile ara..." class="w-full" />
+            <InputText v-model="seriNoArama" placeholder="Seri No / Barkod ile ara..." class="w-full" />
           </span>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search" />
+            <InputText v-model="aramaMetni" placeholder="Ürün adı ile ara..." class="w-full" />
+          </span>
+          <Button icon="pi pi-camera" label="Barkod Oku" severity="secondary" outlined @click="scannerAcik = true" />
         </div>
 
         <div class="product-section">
@@ -140,10 +145,11 @@
         <Card class="fis-card">
           <template #title>
             <div class="fis-card-header">
-              <span><i class="pi pi-print"></i> Termal Yazıcı Fiş Önizlemesi</span>
+              <span><i class="pi pi-print"></i> Termal Fiş Ayarları</span>
               <div class="fis-ayarlar">
+                <InputText v-model="fisAltNotu" placeholder="Fiş alt notu..." size="small" style="width:160px" title="Fiş altı özel mesajı" />
                 <SelectButton v-model="fisFiyatli" :options="fisSecenekleri" optionLabel="label" optionValue="value" size="small" />
-                <Button label="Yazdır" icon="pi pi-print" size="small" @click="fisiYazdir" :disabled="sepet.length === 0" />
+                <Button label="Yazdır (F9)" icon="pi pi-print" size="small" @click="fisiYazdir" :disabled="sepet.length === 0" />
               </div>
             </div>
           </template>
@@ -201,7 +207,7 @@
                 </div>
                 <div class="fis-footer">
                   <div class="fis-ayrac">---</div>
-                  <div class="fis-tesekkur">İyi günler dileriz</div>
+                  <div class="fis-tesekkur">{{ fisAltNotu || 'Bizi tercih ettiğiniz için teşekkür ederiz!' }}</div>
                 </div>
               </div>
             </div>
@@ -233,7 +239,7 @@
         </div>
         <div class="field">
           <label for="ym-tur">Cari Türü</label>
-          <Dropdown id="ym-tur" v-model="yeniMusteri.tur" :options="['MUSTERI','TEDARIKCI','HEPSI']" placeholder="MÜŞTERİ" class="w-full" />
+          <Dropdown id="ym-tur" v-model="yeniMusteri.tur" :options="['Musteri','Tedarikci','Her Ikisi']" placeholder="MÜŞTERİ" class="w-full" />
         </div>
         <div class="field full-width">
           <label for="ym-adres">Adres</label>
@@ -247,15 +253,18 @@
         </div>
       </template>
     </Dialog>
+
+    <BarcodeScannerModal v-model:visible="scannerAcik" @scan="barkodTarandi" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '../stores/authStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import { faturaAPI, cariHesapAPI } from '../api/index.js'
 import AutoComplete from 'primevue/autocomplete'
@@ -276,10 +285,52 @@ useKisayollar({
   yazdir: () => fisiYazdir()
 })
 
+const handlePosKeys = (e) => {
+  if (e.key === 'F2') {
+    e.preventDefault()
+    sepet.value = []
+    toast.add({ severity: 'info', summary: 'Kısayol F2', detail: 'Sepet temizlendi', life: 2000 })
+  } else if (e.key === 'F4') {
+    e.preventDefault()
+    musteriModu.value = 'musteri'
+    toast.add({ severity: 'info', summary: 'Kısayol F4', detail: 'Müşteri seçimi aktif', life: 2000 })
+  } else if (e.key === 'F9') {
+    e.preventDefault()
+    odemeDurumu.value = 'tam'
+    if (sepet.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
+  } else if (e.key === 'F10') {
+    e.preventDefault()
+    odemeDurumu.value = 'kismi'
+    if (sepet.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handlePosKeys)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handlePosKeys)
+})
+
 const sirketAdi = computed(() => authStore.sirketAdi || '')
 
 const aramaMetni = ref('')
 const seriNoArama = ref('')
+const scannerAcik = ref(false)
+
+const barkodTarandi = (barkod) => {
+  scannerAcik.value = false
+  if (!barkod) return
+  const urun = stokStore.stoklar.find(s => s.barkod === barkod)
+  if (urun) {
+    sepeteEkle(urun)
+    toast.add({ severity: 'success', summary: 'Ürün Eklendi', detail: urun.ad, life: 2000 })
+  } else {
+    seriNoArama.value = barkod
+    toast.add({ severity: 'warn', summary: 'Bulunamadı', detail: `"${barkod}" barkodlu ürün bulunamadı`, life: 3000 })
+  }
+}
 
 const filtreKategori = ref(null)
 const filtreArac = ref(null)
@@ -309,6 +360,8 @@ const fisSecenekleri = ref([
   { label: 'Fiyatlı', value: true },
   { label: 'Fiyatsız', value: false }
 ])
+const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
+watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
 
 const indirimTipi = ref('tutar')
 const indirimTipleri = ref([
@@ -599,6 +652,14 @@ const fisiYazdir = () => {
   win.document.open()
   win.document.write(html)
   win.document.close()
+  setTimeout(() => {
+    try {
+      win.focus()
+      win.print()
+    } catch (e) {
+      console.error('Termal yazıcı hatası:', e)
+    }
+  }, 300)
 }
 
 const escapeHtml = (metin) => {
@@ -637,7 +698,7 @@ const satisiTamamla = async () => {
       }))
     })
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `Satış tamamlandı - ${formatCurrency(genelToplam.value)}`, life: 5000 })
-    try { fisBaskiPenceresi(true) } catch {}
+    try { fisiYazdir() } catch {}
     sepet.value = []
     seciliMusteri.value = null
     musteriModu.value = 'musteri'

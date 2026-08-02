@@ -4,6 +4,7 @@ import com.raspel.erp.dto.HareketDTO;
 import com.raspel.erp.dto.RaporDTO;
 import com.raspel.erp.entity.CariHesap;
 import com.raspel.erp.entity.Fatura;
+import com.raspel.erp.entity.FaturaKalem;
 import com.raspel.erp.entity.Hareket;
 import com.raspel.erp.repository.*;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ class RaporServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private HareketRepository hareketRepository;
     @Mock private FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.repository.FaturaKalemRepository faturaKalemRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private HareketService hareketService;
     @InjectMocks private RaporService raporService;
@@ -117,5 +119,63 @@ class RaporServiceTest {
         assertEquals(2, result.size());
         assertEquals("31-60 Gün", result.get(0).getAralik());
         assertEquals("0-30 Gün", result.get(1).getAralik());
+    }
+
+    @Test
+    void kdvBeyannameGetir_hesaplananVeIndirilecekKdv() {
+        LocalDate ayIci = LocalDate.of(2026, 7, 15);
+        Fatura satis = new Fatura();
+        satis.setId(1L);
+        satis.setTur(Fatura.FaturaTur.SATIS);
+        satis.setDurum(Fatura.FaturaDurum.KESILDI);
+        satis.setTarih(ayIci);
+        Fatura alis = new Fatura();
+        alis.setId(2L);
+        alis.setTur(Fatura.FaturaTur.ALIS);
+        alis.setDurum(Fatura.FaturaDurum.KESILDI);
+        alis.setTarih(ayIci);
+
+        when(faturaRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(satis, alis));
+        // 1.180 TL KDV dahil, %18 → matrah 1.000, KDV 180
+        when(faturaKalemRepository.findByFaturaId(1L))
+                .thenReturn(List.of(FaturaKalem.builder().kdvOrani(new BigDecimal("18")).tutar(BigDecimal.valueOf(1180)).build()));
+        when(faturaKalemRepository.findByFaturaId(2L))
+                .thenReturn(List.of(FaturaKalem.builder().kdvOrani(new BigDecimal("20")).tutar(BigDecimal.valueOf(1200)).build()));
+
+        var result = raporService.kdvBeyannameGetir("2026-07");
+
+        assertEquals(0, BigDecimal.valueOf(180).compareTo(result.getToplamHesaplananKdv()));
+        assertEquals(0, BigDecimal.valueOf(200).compareTo(result.getToplamIndirilecekKdv()));
+        assertEquals(0, BigDecimal.valueOf(20).compareTo(result.getDevredenKdv()));
+    }
+
+    @Test
+    void baBsGetir_esiginUzerindekiKayitlariListeler() {
+        LocalDate ayIci = LocalDate.of(2026, 7, 10);
+        Fatura buyuk = new Fatura();
+        buyuk.setId(1L);
+        buyuk.setFaturaNumarasi("FTR-1");
+        buyuk.setTur(Fatura.FaturaTur.SATIS);
+        buyuk.setDurum(Fatura.FaturaDurum.KESILDI);
+        buyuk.setTarih(ayIci);
+        buyuk.setAraToplam(BigDecimal.valueOf(8000));
+        buyuk.setKdv(BigDecimal.valueOf(1440));
+        buyuk.setGenelToplam(BigDecimal.valueOf(9440));
+        Fatura kucuk = new Fatura();
+        kucuk.setId(2L);
+        kucuk.setFaturaNumarasi("FTR-2");
+        kucuk.setTur(Fatura.FaturaTur.SATIS);
+        kucuk.setDurum(Fatura.FaturaDurum.KESILDI);
+        kucuk.setTarih(ayIci);
+        kucuk.setGenelToplam(BigDecimal.valueOf(1000));
+
+        when(faturaRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(buyuk, kucuk));
+
+        var result = raporService.baBsGetir("2026-07", "BS", new BigDecimal("5000"));
+
+        assertEquals("BS", result.getTur());
+        assertEquals(1, result.getKayitlar().size());
+        assertEquals("FTR-1", result.getKayitlar().get(0).getFaturaNo());
+        assertEquals(BigDecimal.valueOf(9440), result.getToplamTutar());
     }
 }

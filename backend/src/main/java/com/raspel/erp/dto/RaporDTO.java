@@ -46,4 +46,42 @@ public class RaporDTO {
         private int gun;
         private String aralik;
     }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class KdvBeyannameSatiriDTO {
+        private BigDecimal kdvOrani;
+        private BigDecimal matrah;
+        private BigDecimal kdv;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class KdvBeyannameDTO {
+        private String donem;
+        private List<KdvBeyannameSatiriDTO> satislar;    // Hesaplanan KDV (1-2 no.lu tablo)
+        private List<KdvBeyannameSatiriDTO> alislar;     // İndirilecek KDV (19-20 no.lu tablo)
+        private BigDecimal toplamHesaplananKdv;
+        private BigDecimal toplamIndirilecekKdv;
+        private BigDecimal odenecekKdv;      // hesaplanan - indirilecek (pozitifse ödenecek)
+        private BigDecimal devredenKdv;      // indirilecek > hesaplanan ise devreden
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class BaBsSatiriDTO {
+        private String faturaNo;
+        private java.time.LocalDate tarih;
+        private String cariAd;
+        private String cariVkn;
+        private BigDecimal matrah;
+        private BigDecimal kdv;
+        private BigDecimal tutar;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class BaBsDTO {
+        private String donem;
+        private String tur; // BA (alış) veya BS (satış)
+        private BigDecimal esik;
+        private List<BaBsSatiriDTO> kayitlar;
+        private BigDecimal toplamTutar;
+    }
 }

@@ -20,5 +20,6 @@ public class KullaniciDTO {
     private Long sirketId;
     private String role;
     private Boolean active;
+    private Boolean twoFactorEnabled;
     private LocalDateTime olusturmaTarihi;
 }

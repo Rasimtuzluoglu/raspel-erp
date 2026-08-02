@@ -39,6 +39,10 @@ public class FaturaService {
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
     private final SeriNoServisi seriNoServisi;
+    private final BildirimService bildirimService;
+    private final EmailService emailService;
+    private final PdfRaporService pdfRaporService;
+    private final SirketRepository sirketRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -158,11 +162,55 @@ public class FaturaService {
         Fatura kaydedilen = faturaRepository.save(fatura);
 
         if (faturaDurum == Fatura.FaturaDurum.KESILDI) {
-            stokHareketleriIsle(fatura, "CIKIS", "Fatura #" + fatura.getFaturaNumarasi());
+            List<Long> kritik = stokHareketleriIsle(fatura, "CIKIS", "Fatura #" + fatura.getFaturaNumarasi());
+            kritikStokUyarisiGonder(kritik, sirketId);
+        }
+
+        try {
+            if (sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
+                emailService.faturaBildirimiGonder(cariHesap.getEmail(), faturaNo, genelToplam.toString());
+            }
+        } catch (Exception e) {
+            log.warn("Fatura bildirim e-postası gönderilemedi: {}", e.getMessage());
         }
 
         log.info("Fatura oluşturuldu - No: {}, ID: {}", faturaNo, kaydedilen.getId());
+        try {
+            if (sirketId != null) {
+                bildirimService.bildirimGonder(sirketId, "FATURA",
+                        "Yeni Fatura: " + faturaNo,
+                        "Tutar: " + genelToplam + " ₺" + (cariHesap != null ? " - " + cariHesap.getAd() : ""));
+            }
+        } catch (Exception e) {
+            log.warn("Fatura bildirimi gönderilemedi: {}", e.getMessage());
+        }
         return entityDTOyeCevir(kaydedilen);
+    }
+
+    /** Fatura PDF'ini cari hesabın e-posta adresine gönderir. */
+    public void gonderEmail(Long id) {
+        Fatura fatura = faturaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        if (fatura.getCariHesap() == null || fatura.getCariHesap().getEmail() == null
+                || fatura.getCariHesap().getEmail().isBlank()) {
+            throw new BusinessException("Bu faturanın cari hesabında e-posta adresi tanımlı değil");
+        }
+        byte[] pdf = pdfRaporService.faturaRaporu(id);
+        emailService.faturaPdfGonder(
+                fatura.getCariHesap().getEmail(),
+                pdf,
+                fatura.getFaturaNumarasi(),
+                fatura.getGenelToplam() != null ? fatura.getGenelToplam().toString() : "0.00",
+                fatura.getCariHesap().getAd());
+        try {
+            if (fatura.getSirketId() != null) {
+                bildirimService.bildirimGonder(fatura.getSirketId(), "FATURA",
+                        "Fatura e-posta ile gönderildi: " + fatura.getFaturaNumarasi(),
+                        "Alıcı: " + fatura.getCariHesap().getEmail());
+            }
+        } catch (Exception e) {
+            log.warn("Fatura gönderim bildirimi başarısız: {}", e.getMessage());
+        }
     }
 
     @CacheEvict(value = "faturalar", allEntries = true)
@@ -182,7 +230,8 @@ public class FaturaService {
         }
 
         if (durum == Fatura.FaturaDurum.KESILDI && fatura.getDurum() != Fatura.FaturaDurum.KESILDI) {
-            stokHareketleriIsle(fatura, "CIKIS", "Fatura #" + fatura.getFaturaNumarasi());
+            List<Long> kritik = stokHareketleriIsle(fatura, "CIKIS", "Fatura #" + fatura.getFaturaNumarasi());
+            kritikStokUyarisiGonder(kritik, fatura.getSirketId());
         } else if (durum == Fatura.FaturaDurum.IPTAL && fatura.getDurum() == Fatura.FaturaDurum.KESILDI) {
             stokHareketleriIsle(fatura, "GIRIS", "Fatura iptal #" + fatura.getFaturaNumarasi());
         }
@@ -328,6 +377,32 @@ public class FaturaService {
             stokHareketRepository.save(h);
         }
         return kritikStokIds;
+    }
+
+    private void kritikStokUyarisiGonder(List<Long> kritikStokIds, Long sirketId) {
+        if (kritikStokIds == null || kritikStokIds.isEmpty()) return;
+        try {
+            String sirketEmail = null;
+            if (sirketId != null) {
+                sirketEmail = sirketRepository.findById(sirketId).map(Sirket::getEmail).orElse(null);
+            }
+            for (Long stokId : kritikStokIds) {
+                Stok stok = stokRepository.findById(stokId).orElse(null);
+                if (stok == null) continue;
+                if (sirketId != null) {
+                    bildirimService.bildirimGonder(sirketId, "STOK",
+                            "Kritik Stok: " + stok.getAd(),
+                            "Mevcut: " + stok.getMiktar() + ", Minimum: " + stok.getMinMiktar());
+                }
+                if (sirketEmail != null && !sirketEmail.isBlank()) {
+                    emailService.stokUyarisiGonder(sirketEmail, stok.getAd(),
+                            stok.getMiktar() != null ? stok.getMiktar().toString() : "0",
+                            stok.getBirim() != null ? stok.getBirim() : "");
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Kritik stok uyarısı gönderilemedi: {}", e.getMessage());
+        }
     }
 
     private FaturaDTO entityDTOyeCevir(Fatura fatura) {

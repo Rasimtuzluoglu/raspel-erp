@@ -134,6 +134,8 @@
           v-model="form.tur"
           id="tur"
           :options="hareketTurleri"
+          option-label="label"
+          option-value="value"
           placeholder="Hareket türü seçiniz"
           class="w-full"
         />
@@ -145,6 +147,8 @@
           v-model="form.odemeSekli"
           id="odemeSekli"
           :options="odemeSekliSecenekleri"
+          option-label="label"
+          option-value="value"
           placeholder="Ödeme şekli seçiniz"
           class="w-full"
         />

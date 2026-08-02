@@ -24,6 +24,7 @@
     <QuickSearch :visible="quickSearchVisible" @update:visible="quickSearchVisible = $event" />
     <PasswordChangeModal :visible="sifreDialog" @update:visible="sifreDialog = $event" />
     <GuncellemeNotlari />
+    <GeriAlToast />
     <Toast position="top-right" :life="5000" />
     <ConfirmDialog />
 
@@ -42,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
@@ -51,27 +52,13 @@ import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
+import GeriAlToast from './components/GeriAlToast.vue'
 
 const authStore = useAuthStore()
 const quickSearchVisible = ref(false)
 const sifreDialog = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
 const oturum = useOturumUyarisi()
-
-const kisaYolHandler = (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 'k') {
-    e.preventDefault()
-    quickSearchVisible.value = !quickSearchVisible.value
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', kisaYolHandler)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', kisaYolHandler)
-})
 </script>
 
 <style>

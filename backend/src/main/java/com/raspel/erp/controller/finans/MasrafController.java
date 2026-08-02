@@ -20,7 +20,6 @@ import org.springframework.data.web.PageableDefault;
 @RestController
 @RequestMapping("/api/masraflar")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class MasrafController {
 

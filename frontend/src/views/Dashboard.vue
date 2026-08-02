@@ -3,6 +3,17 @@
     <div class="dashboard-header">
       <h1>Raspel ERP Özeti</h1>
       <div class="header-sag">
+        <!-- COMPACT TCMB DÖVİZ VE ALTIN KURLARI BANTI -->
+        <div class="doviz-ticker-compact">
+          <div v-for="k in dovizStore.kurlar" :key="k.kod || k.dovizKodu" class="ticker-chip">
+            <span class="chip-kod">{{ k.kod || k.dovizKodu }}:</span>
+            <span class="chip-fiyat">{{ dovizStore.formatPara(k.satisFiyati || k.satisKuru, 'TRY') }}</span>
+          </div>
+          <button class="chip-refresh-btn" @click="dovizStore.kurlariGuncelle" :disabled="dovizStore.loading" title="Kurları Yenile">
+            <i :class="dovizStore.loading ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"></i>
+          </button>
+        </div>
+
         <div class="dashboard-datetime">
           <i class="pi pi-calendar"></i> {{ simdikiTarih }}
         </div>
@@ -342,6 +353,9 @@ import { useFaturaStore } from '../stores/faturaStore.js'
 import { useBankaStore } from '../stores/bankaStore.js'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import { useDovizStore } from '../stores/dovizStore.js'
+
+const dovizStore = useDovizStore()
 import { Doughnut, Bar, Line } from 'vue-chartjs'
 import Onboarding from '../components/Onboarding.vue'
 import { useYakinZamanda, yakinZamandaTurleri } from '../composables/useYakinZamanda.js'
@@ -528,7 +542,8 @@ onMounted(async () => {
       faturaStore.getAllFaturalar(),
       bankaStore.getAllBankalar(),
       kasaStore.getAllKasalar(),
-      stokStore.getAll()
+      stokStore.getAll(),
+      dovizStore.kurlariYukle()
     ])
     grafikleriHesapla()
   } catch (error) {
@@ -654,5 +669,48 @@ const formatDate = (d) => {
 
 @media (max-width: 900px) {
   .charts-row, .bottom-grid { grid-template-columns: 1fr; }
+}
+
+.doviz-ticker-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+
+.ticker-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip-kod {
+  font-weight: 700;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.chip-fiyat {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.chip-refresh-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.chip-refresh-btn:hover {
+  color: #3b82f6;
 }
 </style>

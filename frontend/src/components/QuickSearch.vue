@@ -12,6 +12,15 @@
           @keydown="handleKeydown"
           autofocus
         />
+        <button
+          type="button"
+          class="qs-mic-btn"
+          :class="{ listening: isListening }"
+          @click="toggleVoiceRecognition"
+          :title="isListening ? 'Dinleniyor... Konuşun' : 'Sesli Arama (Mikrofon)'"
+        >
+          <i :class="isListening ? 'pi pi-spin pi-spinner' : 'pi pi-microphone'"></i>
+        </button>
         <kbd class="qs-esc">ESC</kbd>
       </div>
       <div v-if="!query" class="qs-hint">
@@ -72,6 +81,44 @@ const selectedIndex = ref(0)
 const loading = ref(false)
 const error = ref(null)
 const inputRef = ref(null)
+const isListening = ref(false)
+let recognition = null
+
+const toggleVoiceRecognition = () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SpeechRecognition) {
+    alert('Tarayıcınız sesli aramayı desteklemiyor.')
+    return
+  }
+
+  if (isListening.value) {
+    if (recognition) recognition.stop()
+    isListening.value = false
+    return
+  }
+
+  try {
+    recognition = new SpeechRecognition()
+    recognition.lang = 'tr-TR'
+    recognition.interimResults = false
+
+    recognition.onstart = () => { isListening.value = true }
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript
+      if (text) {
+        query.value = text
+      }
+      isListening.value = false
+    }
+    recognition.onerror = () => { isListening.value = false }
+    recognition.onend = () => { isListening.value = false }
+
+    recognition.start()
+  } catch (e) {
+    console.error('Ses tanıma başlatılamadı:', e)
+    isListening.value = false
+  }
+}
 
 const typeConfig = {
   cari: { icon: 'pi pi-users', severity: 'info', route: '/cari-hesaplar' },
@@ -187,6 +234,33 @@ onUnmounted(() => {
 .qs-input { flex: 1; border: none; outline: none; background: transparent; color: var(--text-primary, #f1f5f9); font-size: 16px; font-family: inherit; }
 .qs-input::placeholder { color: #475569; }
 .qs-esc { background: rgba(148,163,184,0.1); color: #64748b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: inherit; flex-shrink: 0; }
+.qs-mic-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.qs-mic-btn:hover {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+.qs-mic-btn.listening {
+  color: #ef4444;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
 .qs-hint { padding: 24px 20px; text-align: center; color: #64748b; font-size: 13px; }
 .qs-hint p { margin: 0 0 12px; }
 .qs-son-aramalar { text-align: left; margin-bottom: 14px; }

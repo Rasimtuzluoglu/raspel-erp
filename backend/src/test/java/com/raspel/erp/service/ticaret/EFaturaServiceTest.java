@@ -29,6 +29,12 @@ class EFaturaServiceTest {
     @Mock
     private FaturaService faturaService;
 
+    @Mock
+    private com.raspel.erp.repository.CariHesapRepository cariHesapRepository;
+
+    @Mock
+    private com.raspel.erp.repository.SirketRepository sirketRepository;
+
     @InjectMocks
     private EFaturaService eFaturaService;
 

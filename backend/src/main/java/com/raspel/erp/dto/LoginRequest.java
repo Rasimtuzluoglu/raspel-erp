@@ -6,6 +6,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class LoginRequest {
     @NotBlank(message = "Kullanıcı adı boş olamaz")
     private String username;

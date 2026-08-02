@@ -192,6 +192,9 @@ export const faturaAPI = {
   },
   delete(id) {
     return apiClient.delete(`/faturalar/${id}`)
+  },
+  gonderEmail(id) {
+    return apiClient.post(`/faturalar/${id}/gonder-email`)
   }
 }
 
@@ -214,6 +217,19 @@ export const bankaAPI = {
   delete(id) {
     return apiClient.delete(`/bankalar/${id}`)
   }
+}
+
+export const bankaMutabakatAPI = {
+  listele(bankaId) { return apiClient.get(`/bankalar/${bankaId}/mutabakat`) },
+  yukle(bankaId, dosya) {
+    const formData = new FormData()
+    formData.append('dosya', dosya)
+    return apiClient.post(`/bankalar/${bankaId}/mutabakat/yukle`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  otomatikEslestir(bankaId) { return apiClient.post(`/bankalar/${bankaId}/mutabakat/otomatik-eslestir`) },
+  eslestir(bankaId, hareketId, faturaId) { return apiClient.post(`/bankalar/${bankaId}/mutabakat/${hareketId}/eslestir/${faturaId}`) },
+  eslestirmeyiKaldir(bankaId, hareketId) { return apiClient.post(`/bankalar/${bankaId}/mutabakat/${hareketId}/eslestirmeyi-kaldir`) },
+  sil(bankaId) { return apiClient.delete(`/bankalar/${bankaId}/mutabakat`) }
 }
 
 /**
@@ -247,7 +263,9 @@ export const raporAPI = {
   cariEkstre(params) { return apiClient.get('/raporlar/cari-ekstre', { params }) },
   gelirGider(params) { return apiClient.get('/raporlar/gelir-gider', { params }) },
   kdv(params) { return apiClient.get('/raporlar/kdv', { params }) },
-  yaslandirma() { return apiClient.get('/raporlar/yaslandirma') }
+  yaslandirma() { return apiClient.get('/raporlar/yaslandirma') },
+  kdvBeyanname(donem) { return apiClient.get('/raporlar/kdv-beyanname', { params: { donem } }) },
+  baBs(params) { return apiClient.get('/raporlar/ba-bs', { params }) }
 }
 
 /**
@@ -260,7 +278,13 @@ export const kullaniciAPI = {
   update(id, data) { return apiClient.put(`/kullanicilar/${id}`, data) },
   delete(id) { return apiClient.delete(`/kullanicilar/${id}`) },
   giris(data) { return apiClient.post('/kullanicilar/giris', data) },
-  sifreDegistir(data) { return apiClient.put('/kullanicilar/sifre-degistir', data) }
+  giris2fa(data) { return apiClient.post('/kullanicilar/giris-2fa', data) },
+  sifreDegistir(data) { return apiClient.put('/kullanicilar/sifre-degistir', data) },
+  ben() { return apiClient.get('/kullanicilar/ben') },
+  beniGuncelle(data) { return apiClient.put('/kullanicilar/ben', data) },
+  setup2fa() { return apiClient.post('/kullanicilar/setup-2fa') },
+  enable2fa(data) { return apiClient.post('/kullanicilar/enable-2fa', data) },
+  disable2fa(data) { return apiClient.post('/kullanicilar/disable-2fa', data) }
 }
 
 /**
@@ -269,6 +293,7 @@ export const kullaniciAPI = {
 export const stokAPI = {
   getAll() { return apiClient.get('/stoklar') },
   ara(q) { return apiClient.get('/stoklar/ara', { params: { q } }) },
+  kritik() { return apiClient.get('/stoklar/kritik') },
   getById(id) { return apiClient.get(`/stoklar/${id}`) },
   create(data) { return apiClient.post('/stoklar', data) },
   update(id, data) { return apiClient.put(`/stoklar/${id}`, data) },
@@ -573,4 +598,41 @@ export const notAPI = {
   delete(id) { return apiClient.delete(`/notlar/${id}`) }
 }
 
+export const dovizAPI = {
+  getKurlar() { return apiClient.get('/doviz/kurlar') },
+  guncelle() { return apiClient.post('/doviz/guncelle') },
+  cevir(tutar, kaynak = 'TRY', hedef = 'USD') { return apiClient.get('/doviz/cevir', { params: { tutar, kaynak, hedef } }) }
+}
+
+export const muhasebeAPI = {
+  getHesapPlani() { return apiClient.get('/muhasebe/hesap-plani') },
+  hesapOlustur(data) { return apiClient.post('/muhasebe/hesap-plani', data) },
+  hesapGuncelle(id, data) { return apiClient.put(`/muhasebe/hesap-plani/${id}`, data) },
+  hesapSil(id) { return apiClient.delete(`/muhasebe/hesap-plani/${id}`) },
+  getFisler(params) { return apiClient.get('/muhasebe/fisler', { params }) },
+  getFis(id) { return apiClient.get(`/muhasebe/fisler/${id}`) },
+  fisOlustur(data) { return apiClient.post('/muhasebe/fisler', data) },
+  fisIptal(id) { return apiClient.post(`/muhasebe/fisler/${id}/iptal`) },
+  fisSil(id) { return apiClient.delete(`/muhasebe/fisler/${id}`) },
+  getMizan(params) { return apiClient.get('/muhasebe/mizan', { params }) },
+  getDefteriKebir(params) { return apiClient.get('/muhasebe/defteri-kebir', { params }) }
+}
+
+export const crmAPI = {
+  getFirsatlar(params) { return apiClient.get('/crm/firsatlar', { params }) },
+  getFirsat(id) { return apiClient.get(`/crm/firsatlar/${id}`) },
+  firsatOlustur(data) { return apiClient.post('/crm/firsatlar', data) },
+  firsatGuncelle(id, data) { return apiClient.put(`/crm/firsatlar/${id}`, data) },
+  firsatSil(id) { return apiClient.delete(`/crm/firsatlar/${id}`) }
+}
+
+export const eFaturaAPI = {
+  getTumu(params) { return apiClient.get('/e-fatura', { params }) },
+  getById(id) { return apiClient.get(`/e-fatura/${id}`) },
+  olustur(faturaId, senaryo = 'TEMELFATURA', tip = 'SATIS') { return apiClient.post(`/e-fatura/olustur/${faturaId}`, null, { params: { senaryo, tip } }) },
+  gibGonder(id) { return apiClient.post(`/e-fatura/${id}/gib-gonder`) },
+  xmlIndir(id) { return apiClient.get(`/e-fatura/${id}/xml`, { responseType: 'blob' }) }
+}
+
 export default apiClient
+export { apiClient }

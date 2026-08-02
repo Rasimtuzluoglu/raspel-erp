@@ -46,12 +46,14 @@
             </span>
           </template>
         </Column>
-        <Column header="İşlemler" style="width:280px">
+        <Column header="İşlemler" style="width:310px">
           <template #body="s">
             <Button icon="pi pi-eye" class="p-button-rounded p-button-sm p-button-info"
               @click="viewFatura(s.data.id)" title="Görüntüle" />
             <Button icon="pi pi-download" class="p-button-rounded p-button-sm p-button-help"
               @click="pdfIndir(s.data)" title="PDF İndir" />
+            <Button icon="pi pi-whatsapp" class="p-button-rounded p-button-sm p-button-success"
+              @click="whatsappGonder(s.data)" title="WhatsApp İle Gönder" style="background:#25D366;border-color:#25D366" />
             <Button icon="pi pi-pencil" class="p-button-rounded p-button-sm p-button-warning"
               @click="editFatura(s.data)" v-if="s.data.durum === 'TASLAK'" title="Düzenle" />
             <Button v-if="s.data.durum === 'TASLAK'" icon="pi pi-check" class="p-button-rounded p-button-sm p-button-success"
@@ -77,6 +79,18 @@
         <div class="form-group">
           <label>Tarih *</label>
           <DatePicker v-model="form.tarih" date-format="dd.mm.yy" class="w-full" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Para Birimi</label>
+            <Dropdown v-model="form.paraBirimi" :options="['TRY','USD','EUR','GBP','SAR','GAU']" class="w-full" placeholder="TRY (₺)" />
+          </div>
+          <div class="form-group" v-if="form.paraBirimi && form.paraBirimi !== 'TRY'">
+            <label>Kur Bilgisi (TL Karşılığı)</label>
+            <div class="kur-bilgi-box">
+              1 {{ form.paraBirimi }} = {{ dovizStore.formatPara(dovizStore.getKur(form.paraBirimi).satisFiyati || dovizStore.getKur(form.paraBirimi).satisKuru, 'TRY') }}
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label>Açıklama</label>
@@ -175,6 +189,9 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import { useDovizStore } from '../stores/dovizStore.js'
+
+const dovizStore = useDovizStore()
 import { excelAPI, pdfAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
@@ -295,6 +312,14 @@ const kdvToplam = computed(() => {
 })
 
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
+
+const whatsappGonder = (fatura) => {
+  const cariAd = fatura.cariHesapAd || 'Müşterimiz'
+  const tutar = fatura.genelToplam ? fatura.genelToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL' : ''
+  const mesaj = `Sayın ${cariAd},\n${fatura.faturaNumarasi || 'Fatura'} numaralı, ${tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP`
+  const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
+  window.open(url, '_blank')
+}
 
 const openCreateDialog = () => {
   editingId.value = null

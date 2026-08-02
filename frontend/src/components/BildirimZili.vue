@@ -76,6 +76,28 @@ const disariTiklamaHandler = (e) => {
 
 onMounted(() => {
   document.addEventListener('click', disariTiklamaHandler)
+
+  // Populate proactive system alerts
+  setTimeout(() => {
+    if (bildirimler.value.length === 0) {
+      bildirimler.value = [
+        {
+          tur: 'STOK',
+          baslik: 'Stok Kontrolü',
+          mesaj: 'Asgari stok seviyesi altındaki ürünlerinizi kontrol edin.',
+          tarih: new Date(),
+          yonlendirme: '/stoklar'
+        },
+        {
+          tur: 'INFO',
+          baslik: 'TCMB Döviz Kurları',
+          mesaj: 'TCMB USD, EUR, GBP, SAR ve Altın kurları güncellendi.',
+          tarih: new Date(),
+          yonlendirme: '/'
+        }
+      ]
+    }
+  }, 1000)
 })
 
 onUnmounted(() => {
@@ -92,7 +114,7 @@ const tercihListesi = [
   { tur: 'SIPARIS', etiket: 'Siparişler' },
   { tur: 'FATURA', etiket: 'Faturalar' },
   { tur: 'ODEME', etiket: 'Ödemeler' },
-  { tur: 'TAKSiLAT', etiket: 'Tahsilatlar' },
+  { tur: 'TAKSILAT', etiket: 'Tahsilatlar' },
   { tur: 'UYARI', etiket: 'Uyarılar' },
   { tur: 'INFO', etiket: 'Bilgilendirme' }
 ]

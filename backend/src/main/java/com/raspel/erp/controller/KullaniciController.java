@@ -28,7 +28,6 @@ import org.springframework.data.web.PageableDefault;
 @RequestMapping({"/api/kullanicilar", "/api/v1/kullanicilar"})
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*", allowCredentials = "true")
 public class KullaniciController {
 
     private final KullaniciService kullaniciService;
@@ -80,7 +79,7 @@ public class KullaniciController {
     }
 
     @PostMapping("/setup-2fa")
-    @Operation(summary = "2FA Kurulumu", description = "Oturum açmış kullanıcı için 2FA secret ve QR kod URI üretir")
+    @Operation(summary = "2FA Kurulumu", description = "Oturum açmış kullanıcı için gerçek TOTP secret ve otpauth URI üretir")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<com.raspel.erp.dto.TwoFactorDTO> setup2FA(HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
@@ -88,12 +87,53 @@ public class KullaniciController {
     }
 
     @PostMapping("/enable-2fa")
-    @Operation(summary = "2FA Etkinleştir", description = "2FA doğrulama kodunu kontrol eder ve 2FA'yi aktif eder")
+    @Operation(summary = "2FA Etkinleştir", description = "TOTP doğrulama kodunu kontrol edip 2FA'yi aktif eder")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Void> enable2FA(@RequestBody com.raspel.erp.dto.TwoFactorDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         kullaniciService.enableTwoFactor(kullaniciId, dto.getCode());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/disable-2fa")
+    @Operation(summary = "2FA Devre Dışı", description = "TOTP kodunu doğrulayıp 2FA'yi kapatır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Void> disable2FA(@RequestBody com.raspel.erp.dto.TwoFactorDTO dto, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        kullaniciService.disableTwoFactor(kullaniciId, dto.getCode());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/ben")
+    @Operation(summary = "Mevcut kullanıcı", description = "Oturum açmış kullanıcının bilgilerini getirir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<KullaniciDTO> ben(HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(kullaniciService.getir(kullaniciId));
+    }
+
+    @PutMapping("/ben")
+    @Operation(summary = "Profil güncelle", description = "Oturum açmış kullanıcının kendi profilini güncellemesine izin verir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<KullaniciDTO> beniGuncelle(@Valid @RequestBody KullaniciDTO dto, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(kullaniciService.profilGuncelle(kullaniciId, dto));
+    }
+
+    @PostMapping("/giris-2fa")
+    @Operation(summary = "2FA giriş adımı", description = "Kullanıcı adı/şifre sonrası 2FA kodunu doğrulayıp JWT token döndürür")
+    public ResponseEntity<LoginResponse> giris2fa(@RequestBody @jakarta.validation.Valid com.raspel.erp.dto.TwoFactorGirisRequest req,
+                                                  HttpServletResponse response) {
+        LoginResponse loginResponse = kullaniciService.giris2faTamamla(req);
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", loginResponse.getToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(86400)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        return ResponseEntity.ok(loginResponse);
     }
 
     @PostMapping("/giris")

@@ -20,7 +20,6 @@ import org.springframework.data.web.PageableDefault;
 @RestController
 @RequestMapping("/api/stok-sayim")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class StokSayimController {
 
@@ -50,6 +49,12 @@ public class StokSayimController {
     @Operation(summary = "Stok sayım güncelle", description = "Stok sayım kaydını günceller")
     public ResponseEntity<StokSayimDTO> guncelle(@PathVariable Long id, @Valid @RequestBody StokSayimDTO dto) {
         return ResponseEntity.ok(stokSayimService.guncelle(id, dto));
+    }
+
+    @PutMapping("/{id}/durum")
+    @Operation(summary = "Stok sayım durum güncelle", description = "Durumu günceller; TAMAMLANDI olursa stok miktarı sayıma göre düzeltilir")
+    public ResponseEntity<StokSayimDTO> durumGuncelle(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(stokSayimService.durumGuncelle(id, body.get("durum")));
     }
 
     @DeleteMapping("/{id}")

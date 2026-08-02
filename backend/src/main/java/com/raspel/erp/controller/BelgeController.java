@@ -31,7 +31,6 @@ import java.util.UUID;
 @RequestMapping("/api/belgeler")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class BelgeController {
 

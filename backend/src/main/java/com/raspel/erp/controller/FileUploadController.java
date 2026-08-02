@@ -24,7 +24,6 @@ import java.util.UUID;
 @Tag(name = "Dosya Yükleme", description = "Dosya yükleme ve sunma API")
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 public class FileUploadController {
 
     private final Path avatarDir = Paths.get("uploads/avatars").toAbsolutePath().normalize();

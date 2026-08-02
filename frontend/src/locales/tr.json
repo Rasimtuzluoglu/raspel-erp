@@ -48,6 +48,13 @@
     "veriAktar": "Veri Aktar",
     "kullanimSartlari": "Kullanım Şartları",
     "gizlilik": "Gizlilik Politikası",
+    "muhasebe": "Muhasebe",
+    "kritikStok": "Kritik Stok",
+    "crm": "CRM",
+    "eFatura": "E-Fatura",
+    "hesapAyarlari": "Hesap Ayarları",
+    "bankaMutabakat": "Banka Mutabakatı",
+    "vergiRaporlari": "KDV & BA/BS",
     "cikis": "Çıkış Yap"
   },
   "auth": {
@@ -73,7 +80,16 @@
     "amount": "Tutar",
     "description": "Açıklama",
     "confirmDelete": "Bu kaydı silmek istediğinize emin misiniz?",
-    "favorites": "Sık Kullanılanlar"
+    "favorites": "Sık Kullanılanlar",
+    "selectedRecords": "{n} kayıt seçildi",
+    "clearSelection": "Seçimi Temizle",
+    "searchPlaceholder": "Ara...",
+    "duplicate": "Çoğalt",
+    "editRow": "Düzenle",
+    "deleteRow": "Sil",
+    "rowsPerPage": "Sayfa başına satır",
+    "tip": "İpucu",
+    "close": "Kapat"
   },
   "status": {
     "active": "Aktif",
@@ -86,6 +102,21 @@
   },
   "theme": {
     "light": "Açık Tema",
-    "dark": "Koyu Tema"
+    "dark": "Koyu Tema",
+    "settings": "Görünüm Ayarları",
+    "mode": "Tema Modu",
+    "accent": "Vurgu Rengi",
+    "lightShort": "Açık",
+    "darkShort": "Koyu"
+  },
+  "shortcuts": {
+    "title": "Klavye Kısayolları",
+    "search": "Hızlı arama",
+    "save": "Kaydet",
+    "print": "Yazdır / PDF",
+    "new": "Yeni kayıt",
+    "close": "Kapat / iptal",
+    "guide": "Bu rehberi aç",
+    "closeHint": "Kapatmak için Esc veya ? tuşunu kullanın."
   }
 }

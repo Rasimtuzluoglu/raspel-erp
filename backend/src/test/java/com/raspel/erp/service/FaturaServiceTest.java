@@ -31,6 +31,10 @@ class FaturaServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private SeriNoServisi seriNoServisi;
+    @Mock private BildirimService bildirimService;
+    @Mock private EmailService emailService;
+    @Mock private PdfRaporService pdfRaporService;
+    @Mock private com.raspel.erp.repository.SirketRepository sirketRepository;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ public class RaporService {
     private final CariHesapRepository cariHesapRepository;
     private final HareketRepository hareketRepository;
     private final FaturaRepository faturaRepository;
+    private final com.raspel.erp.repository.FaturaKalemRepository faturaKalemRepository;
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
 
@@ -115,5 +117,81 @@ public class RaporService {
                 })
                 .sorted(Comparator.comparingInt(RaporDTO.YaslandirmaDTO::getGun).reversed())
                 .collect(Collectors.toList());
+    }
+
+    /** Belirtilen ay (YYYY-MM) için KDV beyannameye hazırlık listesi üretir. */
+    public RaporDTO.KdvBeyannameDTO kdvBeyannameGetir(String donem) {
+        YearMonth ay = YearMonth.parse(donem);
+        LocalDate bas = ay.atDay(1);
+        LocalDate bit = ay.atEndOfMonth();
+
+        List<Fatura> kesilmis = faturaRepository.findAllByOrderByTarihDesc().stream()
+                .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                .filter(f -> !f.getTarih().isBefore(bas) && !f.getTarih().isAfter(bit))
+                .collect(Collectors.toList());
+
+        Map<BigDecimal, BigDecimal[]> satisMap = new TreeMap<>();
+        Map<BigDecimal, BigDecimal[]> alisMap = new TreeMap<>();
+
+        for (Fatura f : kesilmis) {
+            for (com.raspel.erp.entity.FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
+                BigDecimal oran = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
+                BigDecimal matrah = kdvMatrah(k.getTutar(), oran);
+                Map<BigDecimal, BigDecimal[]> hedef = f.getTur() == Fatura.FaturaTur.SATIS ? satisMap : alisMap;
+                BigDecimal[] dizi = hedef.computeIfAbsent(oran, o -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+                dizi[0] = dizi[0].add(matrah);
+                dizi[1] = dizi[1].add(matrah.multiply(oran).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+            }
+        }
+
+        List<RaporDTO.KdvBeyannameSatiriDTO> satislar = satisMap.entrySet().stream()
+                .map(e -> RaporDTO.KdvBeyannameSatiriDTO.builder().kdvOrani(e.getKey()).matrah(e.getValue()[0]).kdv(e.getValue()[1]).build())
+                .collect(Collectors.toList());
+        List<RaporDTO.KdvBeyannameSatiriDTO> alislar = alisMap.entrySet().stream()
+                .map(e -> RaporDTO.KdvBeyannameSatiriDTO.builder().kdvOrani(e.getKey()).matrah(e.getValue()[0]).kdv(e.getValue()[1]).build())
+                .collect(Collectors.toList());
+
+        BigDecimal hesaplanan = satislar.stream().map(RaporDTO.KdvBeyannameSatiriDTO::getKdv).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal indirilecek = alislar.stream().map(RaporDTO.KdvBeyannameSatiriDTO::getKdv).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return RaporDTO.KdvBeyannameDTO.builder()
+                .donem(donem).satislar(satislar).alislar(alislar)
+                .toplamHesaplananKdv(hesaplanan).toplamIndirilecekKdv(indirilecek)
+                .odenecekKdv(hesaplanan.compareTo(indirilecek) > 0 ? hesaplanan.subtract(indirilecek) : BigDecimal.ZERO)
+                .devredenKdv(indirilecek.compareTo(hesaplanan) > 0 ? indirilecek.subtract(hesaplanan) : BigDecimal.ZERO)
+                .build();
+    }
+
+    /** Belirtilen ay (YYYY-MM) için BA (alış) veya BS (satış) bildirimi listesi üretir. */
+    public RaporDTO.BaBsDTO baBsGetir(String donem, String tur, BigDecimal esik) {
+        YearMonth ay = YearMonth.parse(donem);
+        LocalDate bas = ay.atDay(1);
+        LocalDate bit = ay.atEndOfMonth();
+        BigDecimal limit = esik != null ? esik : new BigDecimal("5000");
+
+        Fatura.FaturaTur faturaTur = "BA".equalsIgnoreCase(tur) ? Fatura.FaturaTur.ALIS : Fatura.FaturaTur.SATIS;
+        List<RaporDTO.BaBsSatiriDTO> kayitlar = faturaRepository.findAllByOrderByTarihDesc().stream()
+                .filter(f -> f.getTur() == faturaTur && f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                .filter(f -> !f.getTarih().isBefore(bas) && !f.getTarih().isAfter(bit))
+                .filter(f -> f.getGenelToplam() != null && f.getGenelToplam().compareTo(limit) > 0)
+                .map(f -> RaporDTO.BaBsSatiriDTO.builder()
+                        .faturaNo(f.getFaturaNumarasi()).tarih(f.getTarih())
+                        .cariAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
+                        .cariVkn(f.getCariHesap() != null ? f.getCariHesap().getVergiNumarasi() : null)
+                        .matrah(f.getAraToplam()).kdv(f.getKdv()).tutar(f.getGenelToplam())
+                        .build())
+                .sorted(Comparator.comparing(RaporDTO.BaBsSatiriDTO::getTarih))
+                .collect(Collectors.toList());
+
+        BigDecimal toplam = kayitlar.stream().map(RaporDTO.BaBsSatiriDTO::getTutar).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return RaporDTO.BaBsDTO.builder()
+                .donem(donem).tur(faturaTur == Fatura.FaturaTur.ALIS ? "BA" : "BS")
+                .esik(limit).kayitlar(kayitlar).toplamTutar(toplam).build();
+    }
+
+    private BigDecimal kdvMatrah(BigDecimal kdvliTutar, BigDecimal oran) {
+        if (kdvliTutar == null) return BigDecimal.ZERO;
+        return kdvliTutar.multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(100).add(oran), 2, RoundingMode.HALF_UP);
     }
 }

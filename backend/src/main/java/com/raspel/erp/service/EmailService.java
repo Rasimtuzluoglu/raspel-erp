@@ -106,6 +106,56 @@ public class EmailService {
     }
 
     @Async
+    public void faturaPdfGonder(String to, byte[] pdfBytes, String faturaNo, String tutar, String aliciAdi) {
+        String subject = "Fatura #" + faturaNo + " — RasPel ERP";
+        String html = sablonUst("Fatura Ekinde") + """
+            <p>Sayın %s,</p>
+            <p>Hesabınıza kesilen <strong>#%s</strong> numaralı fatura ektedir.</p>
+            <div class="kutu"><table>
+              <tr><td>Fatura No</td><td>#%s</td></tr>
+              <tr><td>Toplam Tutar</td><td>%s TL</td></tr>
+            </table></div>
+            <p>Ödeme için faturanın üzerindeki vade tarihine dikkat ediniz.</p>
+            <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
+            """.formatted(aliciAdi != null ? aliciAdi : "Müşterimiz", faturaNo, faturaNo, tutar) + sablonAlt();
+        try {
+            if (mailSender != null) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setFrom(fromEmail);
+                helper.setTo(to);
+                helper.setSubject(subject);
+                helper.setText(html, true);
+                helper.addAttachment("fatura-" + faturaNo + ".pdf", new org.springframework.core.io.ByteArrayResource(pdfBytes));
+                mailSender.send(message);
+                log.info("Fatura PDF e-postası gönderildi -> To: {}, Fatura: {}", to, faturaNo);
+            } else {
+                log.info("[E-POSTA MOCK] Fatura PDF e-postası loga yazıldı -> To: {}, Fatura: {}", to, faturaNo);
+            }
+        } catch (Exception e) {
+            log.error("Fatura PDF e-postası gönderilirken hata -> To: {}, Error: {}", to, e.getMessage());
+        }
+    }
+
+    @Async
+    public void odemeHatimlaticiGonder(String to, String faturaNo, String tutar, String kalanTutar, String vade, String cariAdi) {
+        String subject = "Hatırlatma: Fatura #" + faturaNo + " ödemesi bekleniyor";
+        String html = sablonUst("Ödeme Hatırlatması") + """
+            <p>Sayın %s,</p>
+            <p><strong>#%s</strong> numaralı faturanız için ödeme hatırlatması yapmak isteriz.</p>
+            <div class="kutu"><table>
+              <tr><td>Fatura No</td><td>#%s</td></tr>
+              <tr><td>Toplam Tutar</td><td>%s TL</td></tr>
+              <tr><td>Kalan Tutar</td><td style="color:#dc2626">%s TL</td></tr>
+              <tr><td>Vade Tarihi</td><td>%s</td></tr>
+            </table></div>
+            <p>Faturanın ödenmesini rica ederiz. Zaten ödeme yaptıysanız bu e-postayı dikkate almayınız.</p>
+            <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
+            """.formatted(cariAdi != null ? cariAdi : "Müşterimiz", faturaNo, faturaNo, tutar, kalanTutar, vade) + sablonAlt();
+        htmlGonder(to, subject, html);
+    }
+
+    @Async
     public void stokUyarisiGonder(String to, String stokAd, String miktar, String birim) {
         String subject = "RasPel ERP - Kritik Stok Uyarısı: " + stokAd;
         String html = sablonUst("Kritik Stok Uyarısı") + """

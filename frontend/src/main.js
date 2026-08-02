@@ -28,6 +28,8 @@ import Calendar from 'primevue/calendar'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import InputSwitch from 'primevue/inputswitch'
+import Checkbox from 'primevue/checkbox'
+import SelectButton from 'primevue/selectbutton'
 import Skeleton from 'primevue/skeleton'
 
 import AppDataTable from './components/AppDataTable.vue'
@@ -37,6 +39,16 @@ import SkeletonLoader from './components/SkeletonLoader.vue'
 
 import 'primeicons/primeicons.css'
 import './assets/app.css'
+import { useTheme } from './composables/useTheme.js'
+
+const { initTheme } = useTheme()
+initTheme()
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
 
 const app = createApp(App)
 
@@ -96,6 +108,8 @@ app.component('Calendar', Calendar)
 app.component('TabView', TabView)
 app.component('TabPanel', TabPanel)
 app.component('InputSwitch', InputSwitch)
+app.component('Checkbox', Checkbox)
+app.component('SelectButton', SelectButton)
 app.component('Skeleton', Skeleton)
 app.component('AppDataTable', AppDataTable)
 app.component('PageHeader', PageHeader)

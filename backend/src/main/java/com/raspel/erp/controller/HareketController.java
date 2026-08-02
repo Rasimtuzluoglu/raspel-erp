@@ -31,7 +31,6 @@ import java.util.List;
 @RequestMapping("/api/hareketler")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class HareketController {
     

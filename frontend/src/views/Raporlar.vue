@@ -1,6 +1,12 @@
 <template>
   <div class="raporlar-container">
-    <h1>Raporlar</h1>
+    <div class="raporlar-header-bar">
+      <h1>Raporlar</h1>
+      <div class="rapor-doviz-secim">
+        <label><i class="pi pi-dollar"></i> Rapor Para Birimi:</label>
+        <Dropdown v-model="dovizStore.aktifParaBirimi" :options="['TRY','USD','EUR','GBP','SAR','GAU']" class="rapor-doviz-dropdown" />
+      </div>
+    </div>
 
     <div v-if="favoriRaporlar.length" class="favori-raporlar">
       <span class="favori-baslik"><i class="pi pi-star-fill" style="color:#fbbf24"></i> Sık Kullanılanlar:</span>
@@ -11,7 +17,7 @@
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star-fav" :class="{ favori: raporFavori('cariEkstre') }" @click.stop="raporFavoriDegistir('cariEkstre', 0, 'Cari Ekstre')"></i>
+            <i class="pi pi-star" :class="{ favori: raporFavori('cariEkstre') }" @click.stop="raporFavoriDegistir('cariEkstre', 0, 'Cari Ekstre')"></i>
             Cari Ekstre
           </div>
         </template>
@@ -71,7 +77,7 @@
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star-fav" :class="{ favori: raporFavori('gelirGider') }" @click.stop="raporFavoriDegistir('gelirGider', 1, 'Gelir/Gider Özeti')"></i>
+            <i class="pi pi-star" :class="{ favori: raporFavori('gelirGider') }" @click.stop="raporFavoriDegistir('gelirGider', 1, 'Gelir/Gider Özeti')"></i>
             Gelir/Gider Özeti
           </div>
         </template>
@@ -118,7 +124,7 @@
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star-fav" :class="{ favori: raporFavori('kdv') }" @click.stop="raporFavoriDegistir('kdv', 2, 'KDV Raporu')"></i>
+            <i class="pi pi-star" :class="{ favori: raporFavori('kdv') }" @click.stop="raporFavoriDegistir('kdv', 2, 'KDV Raporu')"></i>
             KDV Raporu
           </div>
         </template>
@@ -151,7 +157,7 @@
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star-fav" :class="{ favori: raporFavori('yaslandirma') }" @click.stop="raporFavoriDegistir('yaslandirma', 3, 'Yaşlandırma')"></i>
+            <i class="pi pi-star" :class="{ favori: raporFavori('yaslandirma') }" @click.stop="raporFavoriDegistir('yaslandirma', 3, 'Yaşlandırma')"></i>
             Yaşlandırma
           </div>
         </template>
@@ -183,7 +189,10 @@
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
+import { useDovizStore } from '../stores/dovizStore.js'
 import { raporAPI } from '../api/index.js'
+
+const dovizStore = useDovizStore()
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 const toast = useToast()
 
@@ -320,9 +329,15 @@ const vadeClass = (aralik) => {
   return 'risk-yuksek'
 }
 
-const formatCurrency = (v) => v ?? 0
-  ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-  : '0,00 ₺'
+const formatCurrency = (v) => {
+  const deger = v ?? 0
+  const birim = dovizStore.aktifParaBirimi
+  if (birim && birim !== 'TRY') {
+    const cevrilen = dovizStore.convert(deger, 'TRY', birim)
+    return dovizStore.formatPara(cevrilen, birim)
+  }
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(deger)
+}
 
 const formatDate = (d) => d
   ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
@@ -331,6 +346,29 @@ const formatDate = (d) => d
 
 <style scoped>
 .raporlar-container { padding: 20px; }
+.raporlar-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.raporlar-header-bar h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.rapor-doviz-secim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.rapor-doviz-dropdown {
+  width: 110px;
+}
 h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
 .rapor-filtre { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; }
 .form-group { min-width: 200px; }
@@ -339,9 +377,10 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .rapor-sonuc { margin-top: 20px; }
 .rapor-aksiyonlar { display: flex; gap: 8px; margin-top: 12px; }
 .rapor-sekme-baslik { display: flex; align-items: center; gap: 6px; }
-.rapor-sekme-baslik .pi-star-fav { font-size: 13px; opacity: 0.35; cursor: pointer; }
-.rapor-sekme-baslik .pi-star-fav:hover { opacity: 0.8; color: #fbbf24; }
-.rapor-sekme-baslik .pi-star-fav.favori { opacity: 1; color: #fbbf24; }
+.rapor-sekme-baslik .pi-star { font-size: 13px; opacity: 0.35; cursor: pointer; }
+.rapor-sekme-baslik .pi-star:hover { opacity: 0.8; color: #fbbf24; }
+.rapor-sekme-baslik .pi-star.favori { opacity: 1; color: #fbbf24; }
+.rapor-sekme-baslik .pi-star.favori:before { content: "\e936"; }
 .favori-raporlar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   background: var(--bg-card); border: 1px solid var(--border);

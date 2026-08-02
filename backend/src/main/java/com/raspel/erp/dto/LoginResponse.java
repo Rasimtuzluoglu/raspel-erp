@@ -16,4 +16,7 @@ public class LoginResponse {
     private String companyName;
     private String role;
     private String token;
+
+    private Boolean twoFactorGerekli;
+    private String girisToken;
 }

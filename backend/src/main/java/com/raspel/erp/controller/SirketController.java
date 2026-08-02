@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/sirketler")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 public class SirketController {
 
     private final SirketService sirketService;

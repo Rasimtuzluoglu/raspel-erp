@@ -11,6 +11,21 @@
       </div>
 
       <div class="giris-form">
+        <div v-if="ikiFaktorAdimi">
+          <div class="iki-fa-ikon"><i class="pi pi-shield"></i></div>
+          <h2 class="iki-fa-baslik">İki Faktörlü Doğrulama</h2>
+          <p class="iki-fa-alt">Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.</p>
+          <div class="form-grup">
+            <div class="input-wrapper">
+              <i class="pi pi-key"></i>
+              <InputText v-model="ikiFaktorKod" placeholder="••••••" inputmode="numeric" maxlength="6" @keyup.enter="ikiFaktorDogrula" style="text-align:center;letter-spacing:6px;font-size:20px" />
+            </div>
+          </div>
+          <Button label="Doğrula ve Giriş Yap" icon="pi pi-shield" @click="ikiFaktorDogrula" :loading="authStore.loading" class="giris-buton" />
+          <div class="geri-satir"><a @click="geriDon">← Geri dön</a></div>
+        </div>
+
+        <div v-else>
         <div class="form-grup">
           <label>Kullanıcı Adı</label>
           <div class="input-wrapper">
@@ -36,6 +51,7 @@
         </div>
 
         <Button label="Giriş Yap" icon="pi pi-sign-in" @click="girisYap" :loading="authStore.loading" class="giris-buton" />
+        </div>
 
         <div v-if="hata" class="hata-kutu">
           <i class="pi pi-exclamation-circle"></i> {{ hata }}
@@ -69,6 +85,11 @@ const sirketLogo = ref('')
 const sirketler = ref([])
 const selectedSirket = ref(null)
 
+const ikiFaktorAdimi = ref(false)
+const ikiFaktorKod = ref('')
+const girisToken = ref('')
+const girilenFirma = ref('')
+
 onMounted(() => {
   if (authStore.isLoggedIn) { router.push('/') }
   firmalariGetir()
@@ -95,11 +116,37 @@ const girisYap = async () => {
     return
   }
   try {
-    await authStore.girisYap(username.value, password.value, '', selectedSirket.value?.id)
+    girilenFirma.value = selectedSirket.value?.ad || ''
+    const sonuc = await authStore.girisYap(username.value, password.value, girilenFirma.value, selectedSirket.value?.id)
+    if (sonuc?.twoFactorGerekli) {
+      girisToken.value = sonuc.girisToken
+      ikiFaktorAdimi.value = true
+      return
+    }
     router.push('/')
   } catch (err) {
     hata.value = err.response?.data?.message || 'Giriş başarısız'
   }
+}
+
+const ikiFaktorDogrula = async () => {
+  hata.value = ''
+  if (!ikiFaktorKod.value.trim()) {
+    hata.value = 'Doğrulama kodunu girin'
+    return
+  }
+  try {
+    await authStore.giris2fa(girisToken.value, ikiFaktorKod.value.trim(), girilenFirma.value, selectedSirket.value?.id)
+    router.push('/')
+  } catch (err) {
+    hata.value = err.response?.data?.message || 'Doğrulama başarısız'
+  }
+}
+
+const geriDon = () => {
+  ikiFaktorAdimi.value = false
+  ikiFaktorKod.value = ''
+  girisToken.value = ''
 }
 
 </script>
@@ -408,4 +455,17 @@ const girisYap = async () => {
   .kullanici-listesi { grid-template-columns: 1fr; }
   .giris-form { padding: 22px; }
 }
+
+.iki-fa-ikon {
+  width: 64px; height: 64px; margin: 0 auto 14px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 18px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(16,185,129,0.3);
+}
+.iki-fa-ikon i { font-size: 28px; color: white; }
+.iki-fa-baslik { text-align: center; color: var(--text-primary); font-size: 18px; margin: 0 0 6px; }
+.iki-fa-alt { text-align: center; color: var(--text-secondary); font-size: 13px; margin: 0 0 20px; }
+.geri-satir { text-align: center; margin-top: 16px; }
+.geri-satir a { color: var(--text-muted); font-size: 13px; cursor: pointer; text-decoration: none; }
+.geri-satir a:hover { color: var(--text-primary); }
 </style>

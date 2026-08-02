@@ -148,6 +148,22 @@ public class IadeService {
     }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public IadeDTO durumGuncelle(Long id, String yeniDurum) {
+        Iade iade = iadeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
+        if (yeniDurum == null || !List.of("TASLAK", "TAMAMLANDI", "IPTAL").contains(yeniDurum)) {
+            throw new BusinessException("Geçersiz durum: " + yeniDurum);
+        }
+        if ("TAMAMLANDI".equals(yeniDurum) && !"TAMAMLANDI".equals(iade.getDurum())) {
+            stokHareketleriIsle(iade);
+        } else if ("IPTAL".equals(yeniDurum) && "TAMAMLANDI".equals(iade.getDurum())) {
+            stokHareketleriniTersineCevir(iade);
+        }
+        iade.setDurum(yeniDurum);
+        return entityToDTO(iadeRepository.save(iade));
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     private void stokHareketleriIsle(Iade iade) {
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
         for (IadeKalem k : kalemler) {

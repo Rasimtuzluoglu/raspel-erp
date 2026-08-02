@@ -2,6 +2,7 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.StokDTO;
 import com.raspel.erp.dto.StokHareketDTO;
+import com.raspel.erp.dto.KritikStokDTO;
 import com.raspel.erp.entity.*;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -30,6 +31,7 @@ public class StokService {
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
     private final CariHesapRepository cariHesapRepository;
+    private final BildirimService bildirimService;
 
     @Transactional(readOnly = true)
     public Page<StokDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -152,7 +154,35 @@ public class StokService {
                 .aciklama(dto.getAciklama()).cariHesap(cari).build();
 
         stokRepository.save(stok);
-        return hareketToDTO(stokHareketRepository.save(h));
+        StokHareketDTO sonuc = hareketToDTO(stokHareketRepository.save(h));
+        kritikStokBildirimiGonder(stok);
+        return sonuc;
+    }
+
+    private void kritikStokBildirimiGonder(Stok stok) {
+        try {
+            if (stok.getMinMiktar() != null && stok.getMiktar().compareTo(stok.getMinMiktar()) <= 0 && stok.getSirketId() != null) {
+                bildirimService.bildirimGonder(stok.getSirketId(), "STOK",
+                        "Kritik Stok: " + stok.getAd(),
+                        "Stok miktarı (" + stok.getMiktar() + ") kritik seviyeye (" + stok.getMinMiktar() + ") düştü.");
+            }
+        } catch (Exception e) {
+            log.warn("Kritik stok bildirimi gönderilemedi: {}", e.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<KritikStokDTO> kritikStoklar(Long sirketId) {
+        return stokRepository.kritikStoklar(sirketId).stream().map(s -> KritikStokDTO.builder()
+                .id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd()).birim(s.getBirim())
+                .miktar(s.getMiktar()).minMiktar(s.getMinMiktar())
+                .kategori(s.getKategori()).marka(s.getMarka())
+                .onerilenSiparisMiktari(s.getMinMiktar().multiply(new BigDecimal("2")).subtract(s.getMiktar())
+                        .max(BigDecimal.ZERO))
+                .tedarikciAd(s.getTedarikciId() != null
+                        ? cariHesapRepository.findById(s.getTedarikciId()).map(CariHesap::getAd).orElse(null)
+                        : null)
+                .build()).collect(Collectors.toList());
     }
 
     public void hareketSil(Long hareketId) {
