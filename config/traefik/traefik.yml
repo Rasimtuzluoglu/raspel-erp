@@ -10,10 +10,25 @@ entryPoints:
     http:
       middlewares:
         - ratelimit
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
   traefik:
     address: ":8080"
   metrics:
     address: ":8083"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: ${ACME_EMAIL:-admin@raspel.com}
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
 
 providers:
   file:

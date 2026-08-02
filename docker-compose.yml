@@ -3,11 +3,15 @@ services:
     image: traefik:v3.0
     container_name: raspel-traefik
     ports:
-      - "8000:80"
+      - "80:80"
+      - "443:443"
       - "8080:8080"
+    environment:
+      - ACME_EMAIL=${ACME_EMAIL:-admin@raspel.com}
     volumes:
       - ./config/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./config/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - letsencrypt_data:/letsencrypt
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`)"
@@ -101,6 +105,11 @@ services:
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      SPRING_MAIL_FROM: ${SPRING_MAIL_FROM:-noreply@raspel-erp.com}
       APP_BACKUP_DB_HOST: postgres
       APP_BACKUP_DB_PORT: 5432
       APP_BACKUP_DB_NAME: raspelerp
@@ -188,6 +197,7 @@ volumes:
   grafana_data:
   backup_data:
   rabbitmq_data:
+  letsencrypt_data:
 
 networks:
   frontend-net:

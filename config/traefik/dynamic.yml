@@ -26,9 +26,11 @@ http:
       rule: "PathPrefix(`/dashboard`)"
       service: api@internal
       entryPoints:
-        - traefik
+        - websecure
       middlewares:
         - dashboard-auth
+      tls:
+        certResolver: letsencrypt
       priority: 10
 
     frontend:
@@ -36,6 +38,8 @@ http:
       service: frontend
       middlewares:
         - cors-headers
+      tls:
+        certResolver: letsencrypt
       priority: 1
 
     api:
@@ -44,6 +48,8 @@ http:
       middlewares:
         - cors-headers
         - ratelimit
+      tls:
+        certResolver: letsencrypt
       priority: 2
 
     adminer:
@@ -51,6 +57,8 @@ http:
       service: adminer
       middlewares:
         - cors-headers
+      tls:
+        certResolver: letsencrypt
       priority: 3
 
   services:

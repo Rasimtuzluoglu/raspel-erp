@@ -17,7 +17,7 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:noreply@raspel-erp.com}")
+    @Value("${spring.mail.from:noreply@raspel-erp.com}")
     private String fromEmail;
 
     private static final String TEMPLATE_CSS = """
