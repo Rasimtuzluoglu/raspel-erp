@@ -43,6 +43,11 @@
     "rapor": "Reports",
     "hareket": "Transactions",
     "denetim": "Audit Logs",
+    "anomaliler": "Anomalies",
+    "notlar": "Notes",
+    "veriAktar": "Data Import",
+    "kullanimSartlari": "Terms of Service",
+    "gizlilik": "Privacy Policy",
     "cikis": "Logout"
   },
   "auth": {
@@ -67,7 +72,8 @@
     "date": "Date",
     "amount": "Amount",
     "description": "Description",
-    "confirmDelete": "Are you sure you want to delete this record?"
+    "confirmDelete": "Are you sure you want to delete this record?",
+    "favorites": "Favorites"
   },
   "status": {
     "active": "Active",

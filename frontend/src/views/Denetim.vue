@@ -1,6 +1,10 @@
 <template>
   <div class="denetim-page">
-    <PageHeader title="Denetim Log" subtitle="Sistemdeki tüm işlem kayıtlarını görüntüleyin ve filtreleyin." />
+    <PageHeader title="Denetim Log" subtitle="Sistemdeki tüm işlem kayıtlarını görüntüleyin ve filtreleyin.">
+      <template #actions>
+        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" :loading="excelYukleniyor" />
+      </template>
+    </PageHeader>
 
     <Card class="filtre-karti">
       <template #content>
@@ -54,7 +58,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { auditLogAPI } from '../api/index.js'
+import { auditLogAPI, excelAPI } from '../api/index.js'
 import axios from 'axios'
 
 const toast = useToast()
@@ -64,6 +68,7 @@ const sayfa = ref(0)
 const toplamKayit = ref(0)
 const islemTipleri = ref([])
 const entityListesi = ref([])
+const excelYukleniyor = ref(false)
 
 const filtre = ref({
   islem: null,
@@ -91,6 +96,30 @@ const yukle = async (page = 0) => {
 }
 
 const filtrele = () => { sayfa.value = 0; yukle(0) }
+
+const excelIndir = async () => {
+  excelYukleniyor.value = true
+  try {
+    const params = {}
+    if (filtre.value.islem) params.islem = filtre.value.islem
+    if (filtre.value.entityAdi) params.entityAdi = filtre.value.entityAdi
+    if (filtre.value.baslangicTarih) params.baslangicTarih = formatISODate(filtre.value.baslangicTarih)
+    if (filtre.value.bitisTarih) params.bitisTarih = formatISODate(filtre.value.bitisTarih)
+    const res = await excelAPI.denetimLog(params)
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `denetim-log-${new Date().toISOString().split('T')[0]}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Excel indirilemedi', life: 5000 })
+  } finally {
+    excelYukleniyor.value = false
+  }
+}
 const filtreTemizle = () => {
   filtre.value = { islem: null, entityAdi: null, baslangicTarih: null, bitisTarih: null }
   filtrele()

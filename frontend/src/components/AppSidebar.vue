@@ -12,7 +12,7 @@
     </div>
 
     <div class="sidebar-menu">
-      <div v-if="favoriMenuler.length" class="menu-grup">Sık Kullanılanlar</div>
+      <div v-if="favoriMenuler.length" class="menu-grup">{{ $t('common.favorites') }}</div>
       <router-link
         v-for="m in favoriMenuler"
         :key="m.path"
@@ -26,7 +26,7 @@
 
       <router-link to="/" :class="{ active: $route.path === '/' }" title="Ana Sayfa"><i class="pi pi-home"></i><span>Ana Sayfa</span></router-link>
       
-      <div class="menu-grup">Finans</div>
+      <div class="menu-grup">{{ $t('nav.finans') }}</div>
       <router-link to="/cari-hesaplar" :class="{ active: $route.path === '/cari-hesaplar' }" title="Cari Hesaplar"><i class="pi pi-users"></i><span>Cari</span><i class="pi pi-star-fav" :class="{ favori: isFav('/cari-hesaplar') }" @click.prevent.stop="toggleFav('/cari-hesaplar')"></i></router-link>
       <router-link to="/faturalar" :class="{ active: $route.path.startsWith('/faturalar') }" title="Faturalar"><i class="pi pi-file"></i><span>Faturalar</span><i class="pi pi-star-fav" :class="{ favori: isFav('/faturalar') }" @click.prevent.stop="toggleFav('/faturalar')"></i></router-link>
       <router-link to="/bankalar" :class="{ active: $route.path === '/bankalar' }" title="Bankalar"><i class="pi pi-building"></i><span>Banka</span><i class="pi pi-star-fav" :class="{ favori: isFav('/bankalar') }" @click.prevent.stop="toggleFav('/bankalar')"></i></router-link>
@@ -35,7 +35,7 @@
       <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/butceler" :class="{ active: $route.path === '/butceler' }" title="Bütçe"><i class="pi pi-chart-bar"></i><span>Bütçe</span><i class="pi pi-star-fav" :class="{ favori: isFav('/butceler') }" @click.prevent.stop="toggleFav('/butceler')"></i></router-link>
       <router-link to="/masraflar" :class="{ active: $route.path === '/masraflar' }" title="Masraf"><i class="pi pi-money-bill"></i><span>Masraf</span><i class="pi pi-star-fav" :class="{ favori: isFav('/masraflar') }" @click.prevent.stop="toggleFav('/masraflar')"></i></router-link>
 
-      <div class="menu-grup">Ticaret</div>
+      <div class="menu-grup">{{ $t('nav.ticaret') }}</div>
       <router-link to="/satislar" :class="{ active: $route.path === '/satislar' }" title="Satış"><i class="pi pi-shopping-cart"></i><span>Satış</span><i class="pi pi-star-fav" :class="{ favori: isFav('/satislar') }" @click.prevent.stop="toggleFav('/satislar')"></i></router-link>
       <router-link to="/hizli-satis" :class="{ active: $route.path === '/hizli-satis' }" title="Hızlı Satış"><i class="pi pi-bolt"></i><span>Hızlı Satış</span><i class="pi pi-star-fav" :class="{ favori: isFav('/hizli-satis') }" @click.prevent.stop="toggleFav('/hizli-satis')"></i></router-link>
       <router-link to="/satinalma" :class="{ active: $route.path === '/satinalma' }" title="Satın Alma"><i class="pi pi-shopping-bag"></i><span>Satın Alma</span><i class="pi pi-star-fav" :class="{ favori: isFav('/satinalma') }" @click.prevent.stop="toggleFav('/satinalma')"></i></router-link>
@@ -44,14 +44,14 @@
       <router-link to="/fiyat-listesi" :class="{ active: $route.path === '/fiyat-listesi' }" title="Fiyat Listesi"><i class="pi pi-tag"></i><span>Fiyat Listesi</span><i class="pi pi-star-fav" :class="{ favori: isFav('/fiyat-listesi') }" @click.prevent.stop="toggleFav('/fiyat-listesi')"></i></router-link>
       <router-link to="/iadeler" :class="{ active: $route.path === '/iadeler' }" title="İadeler"><i class="pi pi-replay"></i><span>İade</span><i class="pi pi-star-fav" :class="{ favori: isFav('/iadeler') }" @click.prevent.stop="toggleFav('/iadeler')"></i></router-link>
 
-      <div class="menu-grup">Envanter</div>
+      <div class="menu-grup">{{ $t('nav.envanter') }}</div>
       <router-link to="/stoklar" :class="{ active: $route.path === '/stoklar' }" title="Stoklar"><i class="pi pi-box"></i><span>Stok</span><i class="pi pi-star-fav" :class="{ favori: isFav('/stoklar') }" @click.prevent.stop="toggleFav('/stoklar')"></i></router-link>
       <router-link to="/toplu-stok" :class="{ active: $route.path === '/toplu-stok' }" title="Toplu Stok"><i class="pi pi-database"></i><span>Toplu Stok</span><i class="pi pi-star-fav" :class="{ favori: isFav('/toplu-stok') }" @click.prevent.stop="toggleFav('/toplu-stok')"></i></router-link>
       <router-link to="/depolar" :class="{ active: $route.path === '/depolar' }" title="Depolar"><i class="pi pi-warehouse"></i><span>Depo</span><i class="pi pi-star-fav" :class="{ favori: isFav('/depolar') }" @click.prevent.stop="toggleFav('/depolar')"></i></router-link>
       <router-link to="/stok-seriler" :class="{ active: $route.path === '/stok-seriler' }" title="Seri/Lot Takibi"><i class="pi pi-qrcode"></i><span>Seri/Lot</span><i class="pi pi-star-fav" :class="{ favori: isFav('/stok-seriler') }" @click.prevent.stop="toggleFav('/stok-seriler')"></i></router-link>
       <router-link to="/stok-sayim" :class="{ active: $route.path === '/stok-sayim' }" title="Stok Sayımı"><i class="pi pi-sort-alt"></i><span>Stok Sayım</span><i class="pi pi-star-fav" :class="{ favori: isFav('/stok-sayim') }" @click.prevent.stop="toggleFav('/stok-sayim')"></i></router-link>
 
-      <div class="menu-grup">Yönetim</div>
+      <div class="menu-grup">{{ $t('nav.yonetim') }}</div>
       <router-link to="/subeler" :class="{ active: $route.path === '/subeler' }" title="Şubeler"><i class="pi pi-sitemap"></i><span>Şube</span><i class="pi pi-star-fav" :class="{ favori: isFav('/subeler') }" @click.prevent.stop="toggleFav('/subeler')"></i></router-link>
       <router-link to="/personel" :class="{ active: $route.path === '/personel' }" title="Personel"><i class="pi pi-id-card"></i><span>Personel</span><i class="pi pi-star-fav" :class="{ favori: isFav('/personel') }" @click.prevent.stop="toggleFav('/personel')"></i></router-link>
       <router-link to="/izinler" :class="{ active: $route.path === '/izinler' }" title="İzin Talepleri"><i class="pi pi-calendar"></i><span>İzin</span><i class="pi pi-star-fav" :class="{ favori: isFav('/izinler') }" @click.prevent.stop="toggleFav('/izinler')"></i></router-link>
@@ -59,7 +59,7 @@
       <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/maas-bordro" :class="{ active: $route.path === '/maas-bordro' }" title="Maaş Bordro"><i class="pi pi-credit-card"></i><span>Maaş Bordro</span><i class="pi pi-star-fav" :class="{ favori: isFav('/maas-bordro') }" @click.prevent.stop="toggleFav('/maas-bordro')"></i></router-link>
       <router-link to="/vardiyalar" :class="{ active: $route.path === '/vardiyalar' }" title="Vardiyalar"><i class="pi pi-clock"></i><span>Vardiya</span><i class="pi pi-star-fav" :class="{ favori: isFav('/vardiyalar') }" @click.prevent.stop="toggleFav('/vardiyalar')"></i></router-link>
 
-      <div class="menu-grup">Sistem</div>
+      <div class="menu-grup">{{ $t('nav.sistem') }}</div>
       <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/sirketler" :class="{ active: $route.path === '/sirketler' }" title="Şirketler"><i class="pi pi-building"></i><span>Şirket</span><i class="pi pi-star-fav" :class="{ favori: isFav('/sirketler') }" @click.prevent.stop="toggleFav('/sirketler')"></i></router-link>
       <router-link to="/donemler" :class="{ active: $route.path === '/donemler' }" title="Dönemler"><i class="pi pi-calendar"></i><span>Dönem</span><i class="pi pi-star-fav" :class="{ favori: isFav('/donemler') }" @click.prevent.stop="toggleFav('/donemler')"></i></router-link>
       <router-link to="/kullanicilar" v-if="authStore.kullanici?.role === 'ADMIN'" :class="{ active: $route.path === '/kullanicilar' }" title="Kullanıcılar"><i class="pi pi-user"></i><span>Kullanıcı</span><i class="pi pi-star-fav" :class="{ favori: isFav('/kullanicilar') }" @click.prevent.stop="toggleFav('/kullanicilar')"></i></router-link>
@@ -67,9 +67,11 @@
       <router-link to="/kategoriler" :class="{ active: $route.path === '/kategoriler' }" title="Kategoriler"><i class="pi pi-tags"></i><span>Kategori</span><i class="pi pi-star-fav" :class="{ favori: isFav('/kategoriler') }" @click.prevent.stop="toggleFav('/kategoriler')"></i></router-link>
       <router-link to="/notlar" :class="{ active: $route.path === '/notlar' }" title="Notlar"><i class="pi pi-sticky-note"></i><span>Notlar</span><i class="pi pi-star-fav" :class="{ favori: isFav('/notlar') }" @click.prevent.stop="toggleFav('/notlar')"></i></router-link>
       <router-link to="/veri-aktar" :class="{ active: $route.path === '/veri-aktar' }" title="Veri Aktar"><i class="pi pi-upload"></i><span>Veri Aktar</span><i class="pi pi-star-fav" :class="{ favori: isFav('/veri-aktar') }" @click.prevent.stop="toggleFav('/veri-aktar')"></i></router-link>
+      <router-link to="/kullanim-sartlari" :class="{ active: $route.path === '/kullanim-sartlari' }" title="Kullanım Şartları"><i class="pi pi-file-o"></i><span>Kullanım Şartları</span><i class="pi pi-star-fav" :class="{ favori: isFav('/kullanim-sartlari') }" @click.prevent.stop="toggleFav('/kullanim-sartlari')"></i></router-link>
+      <router-link to="/gizlilik-politikasi" :class="{ active: $route.path === '/gizlilik-politikasi' }" title="Gizlilik Politikası"><i class="pi pi-shield"></i><span>Gizlilik</span><i class="pi pi-star-fav" :class="{ favori: isFav('/gizlilik-politikasi') }" @click.prevent.stop="toggleFav('/gizlilik-politikasi')"></i></router-link>
       <router-link v-if="authStore.kullanici?.role === 'ADMIN'" to="/yedekler" :class="{ active: $route.path === '/yedekler' }" title="Yedekleme"><i class="pi pi-save"></i><span>Yedek</span><i class="pi pi-star-fav" :class="{ favori: isFav('/yedekler') }" @click.prevent.stop="toggleFav('/yedekler')"></i></router-link>
 
-      <div class="menu-grup">Rapor</div>
+      <div class="menu-grup">{{ $t('nav.rapor') }}</div>
       <router-link to="/raporlar" :class="{ active: $route.path === '/raporlar' }" title="Raporlar"><i class="pi pi-chart-bar"></i><span>Rapor</span><i class="pi pi-star-fav" :class="{ favori: isFav('/raporlar') }" @click.prevent.stop="toggleFav('/raporlar')"></i></router-link>
       <router-link to="/anomaliler" :class="{ active: $route.path === '/anomaliler' }" title="Anomali Tespiti"><i class="pi pi-exclamation-triangle"></i><span>Anomaliler</span><i class="pi pi-star-fav" :class="{ favori: isFav('/anomaliler') }" @click.prevent.stop="toggleFav('/anomaliler')"></i></router-link>
       <router-link to="/hareketler" :class="{ active: $route.path === '/hareketler' }" title="Hareketler"><i class="pi pi-chart-line"></i><span>Hareket</span><i class="pi pi-star-fav" :class="{ favori: isFav('/hareketler') }" @click.prevent.stop="toggleFav('/hareketler')"></i></router-link>
@@ -84,6 +86,7 @@
           <kbd>Ctrl+K</kbd>
         </div>
         <div class="kullanici-kart">
+          <BildirimZili class="bildirim-zili-kapsayici" />
           <div class="kullanici-avatar">
             <img v-if="authStore.kullanici?.avatarUrl" :src="authStore.kullanici.avatarUrl" :alt="authStore.kullanici.displayName" />
             <span v-else class="avatar-yedek">{{ authStore.kullanici?.displayName?.charAt(0) }}</span>
@@ -99,6 +102,9 @@
       <button class="theme-btn" @click="toggleTheme" :title="isDark ? 'Açık Tema' : 'Koyu Tema'">
         <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'"></i>
       </button>
+      <button class="theme-btn" @click="toggleDil" title="Dil Değiştir">
+        <i class="pi pi-globe"></i>{{ dilEtiketi }}
+      </button>
       <div class="sidebar-credit">Rasim Tuzluoğlu</div>
     </div>
   </aside>
@@ -109,11 +115,20 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
+import BildirimZili from './BildirimZili.vue'
 
 const emit = defineEmits(['open-search', 'open-password-modal'])
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { locale } = useI18n()
+
+const dilEtiketi = computed(() => locale.value === 'tr' ? 'TR' : 'EN')
+const toggleDil = () => {
+  locale.value = locale.value === 'tr' ? 'en' : 'tr'
+  localStorage.setItem('lang', locale.value)
+}
 
 const theme = ref(localStorage.getItem('raspel_erp_theme') || 'dark')
 const isDark = computed(() => theme.value === 'dark')
@@ -169,6 +184,8 @@ const tumMenuler = [
   { path: '/kategoriler', label: 'Kategori', icon: 'pi pi-tags', grup: 'Sistem' },
   { path: '/notlar', label: 'Notlar', icon: 'pi pi-sticky-note', grup: 'Sistem' },
   { path: '/veri-aktar', label: 'Veri Aktar', icon: 'pi pi-upload', grup: 'Sistem' },
+  { path: '/kullanim-sartlari', label: 'Kullanım Şartları', icon: 'pi pi-file-o', grup: 'Sistem' },
+  { path: '/gizlilik-politikasi', label: 'Gizlilik', icon: 'pi pi-shield', grup: 'Sistem' },
   { path: '/raporlar', label: 'Rapor', icon: 'pi pi-chart-bar', grup: 'Rapor' },
   { path: '/hareketler', label: 'Hareket', icon: 'pi pi-chart-line', grup: 'Rapor' },
   { path: '/denetim', label: 'Denetim', icon: 'pi pi-shield', grup: 'Rapor', admin: true },

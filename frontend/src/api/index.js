@@ -22,17 +22,6 @@ const apiClient = axios.create({
   }
 })
 
-axiosRetry(apiClient, {
-  retries: 2,
-  retryDelay: (retryCount) => retryCount * 1000,
-  retryCondition: (error) => {
-    return !error.response || error.response.status >= 500
-  },
-  onRetry: (retryCount, error) => {
-    console.warn(`API retry (${retryCount}/2):`, error.config?.url)
-  }
-})
-
 import { useAuthStore } from '../stores/authStore.js'
 
 apiClient.interceptors.response.use(
@@ -56,6 +45,17 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+axiosRetry(apiClient, {
+  retries: 2,
+  retryDelay: (retryCount) => retryCount * 1000,
+  retryCondition: (error) => {
+    return !error.response || error.response.status >= 500
+  },
+  onRetry: (retryCount, error) => {
+    console.warn(`API retry (${retryCount}/2):`, error.config?.url)
+  }
+})
 
 /**
  * Cari Hesap API'si
@@ -487,7 +487,8 @@ export const excelAPI = {
   stoklar() { return apiClient.get('/exports/stoklar', { responseType: 'blob' }) },
   personel() { return apiClient.get('/exports/personel', { responseType: 'blob' }) },
   bankalar() { return apiClient.get('/exports/bankalar', { responseType: 'blob' }) },
-  kasalar() { return apiClient.get('/exports/kasalar', { responseType: 'blob' }) }
+  kasalar() { return apiClient.get('/exports/kasalar', { responseType: 'blob' }) },
+  denetimLog(params) { return apiClient.get('/exports/denetim-log', { params, responseType: 'blob' }) }
 }
 
 export const importAPI = {

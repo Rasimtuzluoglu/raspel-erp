@@ -166,6 +166,13 @@ body {
 
 .brand-logo { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; flex-shrink: 0; }
 
+.bildirim-zili-kapsayici { position: relative; margin-right: 4px; }
+.bildirim-zili-kapsayici .p-button { color: var(--text-secondary) !important; }
+.bildirim-zili-kapsayici .p-button:hover { color: var(--text-primary) !important; background: rgba(148, 163, 184, 0.1) !important; }
+.bildirim-zili-kapsayici .bildirim-panel {
+  position: fixed; left: 225px; bottom: 120px; top: auto;
+}
+
 .p-datatable { background: transparent !important; color: var(--text-primary) !important; }
 .p-datatable .p-datatable-thead > tr > th { background: rgba(30, 41, 59, 0.8) !important; color: #94a3b8 !important; border-color: var(--border) !important; font-weight: 600 !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; padding: 12px 14px !important; }
 .p-datatable .p-datatable-tbody > tr { background: transparent !important; color: var(--text-primary) !important; transition: background 0.15s; }

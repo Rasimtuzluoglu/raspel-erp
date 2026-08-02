@@ -63,9 +63,9 @@ public class VeriImportController {
                             .stokKodu(kolonDeger(cols, kolonIndex, "stokkodu", satirNo, null))
                             .barkod(kolonDeger(cols, kolonIndex, "barkod", satirNo, null))
                             .birim(kolonDeger(cols, kolonIndex, "birim", satirNo, null))
-                            .alisFiyati(parseBigDecimal(kolonDeger(cols, kolonIndex, "fiyat", satirNo, null)))
-                            .miktar(parseDouble(kolonDeger(cols, kolonIndex, "miktar", satirNo, null)))
-                            .minMiktar(parseDouble(kolonDeger(cols, kolonIndex, "minmiktar", satirNo, null)))
+                            .fiyat(parseBigDecimal(kolonDeger(cols, kolonIndex, "fiyat", satirNo, null)))
+                            .miktar(parseBigDecimal(kolonDeger(cols, kolonIndex, "miktar", satirNo, null)))
+                            .minMiktar(parseBigDecimal(kolonDeger(cols, kolonIndex, "minmiktar", satirNo, null)))
                             .build();
                     if (dto.getAd() == null) {
                         hatalar.add("Satır " + satirNo + ": ad alanı zorunlu");
@@ -115,9 +115,9 @@ public class VeriImportController {
                 try {
                     CariHesapDTO dto = CariHesapDTO.builder()
                             .ad(kolonDeger(cols, kolonIndex, "ad", satirNo, hatalar))
-                            .vergiNo(kolonDeger(cols, kolonIndex, "vergino", satirNo, null))
+                            .vergiNumarasi(kolonDeger(cols, kolonIndex, "vergino", satirNo, null))
                             .telefon(kolonDeger(cols, kolonIndex, "telefon", satirNo, null))
-                            .eposta(kolonDeger(cols, kolonIndex, "eposta", satirNo, null))
+                            .email(kolonDeger(cols, kolonIndex, "eposta", satirNo, null))
                             .il(kolonDeger(cols, kolonIndex, "il", satirNo, null))
                             .ilce(kolonDeger(cols, kolonIndex, "ilce", satirNo, null))
                             .adres(kolonDeger(cols, kolonIndex, "adres", satirNo, null))
@@ -126,7 +126,7 @@ public class VeriImportController {
                         hatalar.add("Satır " + satirNo + ": ad alanı zorunlu");
                         continue;
                     }
-                    cariHesapService.olustur(dto, sirketId);
+                    cariHesapService.cariHesapOlustur(dto, sirketId);
                     basarili++;
                 } catch (Exception e) {
                     hatalar.add("Satır " + satirNo + ": " + e.getMessage());
@@ -153,10 +153,5 @@ public class VeriImportController {
     private BigDecimal parseBigDecimal(String val) {
         if (val == null) return null;
         try { return new BigDecimal(val.replace(",", ".")); } catch (Exception e) { return null; }
-    }
-
-    private Double parseDouble(String val) {
-        if (val == null) return null;
-        try { return Double.parseDouble(val.replace(",", ".")); } catch (Exception e) { return null; }
     }
 }

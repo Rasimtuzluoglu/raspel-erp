@@ -43,6 +43,11 @@
     "rapor": "Raporlar",
     "hareket": "Hareketler",
     "denetim": "Denetim Logları",
+    "anomaliler": "Anomaliler",
+    "notlar": "Notlar",
+    "veriAktar": "Veri Aktar",
+    "kullanimSartlari": "Kullanım Şartları",
+    "gizlilik": "Gizlilik Politikası",
     "cikis": "Çıkış Yap"
   },
   "auth": {
@@ -67,7 +72,8 @@
     "date": "Tarih",
     "amount": "Tutar",
     "description": "Açıklama",
-    "confirmDelete": "Bu kaydı silmek istediğinize emin misiniz?"
+    "confirmDelete": "Bu kaydı silmek istediğinize emin misiniz?",
+    "favorites": "Sık Kullanılanlar"
   },
   "status": {
     "active": "Aktif",

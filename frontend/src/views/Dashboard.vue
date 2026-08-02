@@ -36,6 +36,8 @@
       </div>
     </div>
 
+    <Onboarding v-if="!loading && bosSistem" />
+
     <template v-if="!loading">
       <!-- İSTATİSTİKLER -->
       <div class="stats-grid" v-if="widgets.istatistikler.gorunur">
@@ -184,6 +186,36 @@
         </div>
       </div>
 
+      <!-- NAKİT AKIŞI -->
+      <div class="nakit-akisi" v-if="widgets.nakitAkisi.gorunur">
+        <h2 class="section-title"><i class="pi pi-money-bill"></i> Nakit Akışı</h2>
+        <div class="nakit-grid">
+          <Card class="nakit-kart">
+            <template #title><i class="pi pi-building" style="margin-right:8px;color:#60a5fa"></i>Banka</template>
+            <template #content><p class="nakit-deger positive">{{ formatCurrency(toplamBankaBakiye) }}</p></template>
+          </Card>
+          <Card class="nakit-kart">
+            <template #title><i class="pi pi-money-bill" style="margin-right:8px;color:#34d399"></i>Kasa</template>
+            <template #content><p class="nakit-deger positive">{{ formatCurrency(toplamKasaBakiye) }}</p></template>
+          </Card>
+          <Card class="nakit-kart">
+            <template #title><i class="pi pi-arrow-down" style="margin-right:8px;color:#4ade80"></i>Bugünkü Tahsilat</template>
+            <template #content><p class="nakit-deger positive">{{ formatCurrency(dashboardStore.bugunkuTahsilat) }}</p></template>
+          </Card>
+          <Card class="nakit-kart">
+            <template #title><i class="pi pi-arrow-up" style="margin-right:8px;color:#f87171"></i>Bugünkü Ödeme</template>
+            <template #content><p class="nakit-deger negative">{{ formatCurrency(dashboardStore.bugunkuOdeme) }}</p></template>
+          </Card>
+          <Card class="nakit-kart nakit-toplam">
+            <template #title><i class="pi pi-wallet" style="margin-right:8px;color:#fbbf24"></i>Toplam Likidite</template>
+            <template #content>
+              <p class="nakit-deger" :class="toplamLikidite >= 0 ? 'positive' : 'negative'">{{ formatCurrency(toplamLikidite) }}</p>
+              <p class="nakit-alt">Banka + Kasa</p>
+            </template>
+          </Card>
+        </div>
+      </div>
+
       <!-- GRAFIkLER -->
       <div class="charts-row" v-if="widgets.grafikler.gorunur">
         <Card>
@@ -296,6 +328,7 @@ import { useBankaStore } from '../stores/bankaStore.js'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { Doughnut, Bar, Line } from 'vue-chartjs'
+import Onboarding from '../components/Onboarding.vue'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler } from 'chart.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
@@ -304,6 +337,7 @@ const widgetVarsayilan = () => ({
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
   satisSiparis: { gorunur: true, etiket: 'Satış & Sipariş' },
   insanKaynaklari: { gorunur: true, etiket: 'İnsan Kaynakları' },
+  nakitAkisi: { gorunur: true, etiket: 'Nakit Akışı' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
   hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' },
@@ -377,10 +411,16 @@ const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bo
 
 const pozitifCariSayisi = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye >= 0).length)
 const negatifCariSayisi = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye < 0).length)
+const bosSistem = computed(() =>
+  cariHesapStore.cariHesaplar.length === 0 &&
+  stokStore.stoklar.length === 0 &&
+  faturaStore.faturalar.length === 0
+)
 const toplamFatura = computed(() => faturaStore.faturalar.length)
 const kesilenFatura = computed(() => faturaStore.faturalar.filter(f => f.durum === 'KESILDI').length)
 const toplamBankaBakiye = computed(() => bankaStore.bankalar.reduce((t, b) => t + (b.bakiye || 0), 0))
 const toplamKasaBakiye = computed(() => kasaStore.kasalar.reduce((t, k) => t + (k.bakiye || 0), 0))
+const toplamLikidite = computed(() => toplamBankaBakiye.value + toplamKasaBakiye.value)
 const toplamStok = computed(() => stokStore.stoklar.length)
 const dusukStokAdet = computed(() => stokStore.dusukStoklar.length)
 const vadesiGecenCari = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye < 0).sort((a, b) => a.bakiye - b.bakiye))
@@ -561,6 +601,13 @@ const formatDate = (d) => {
 .not-textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); outline: none; }
 
 .section-title { font-size: 16px; margin: 24px 0 12px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+.nakit-akisi { margin-bottom: 24px; }
+.nakit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.nakit-kart .p-card-title { font-size: 13px !important; }
+.nakit-kart .p-card-content { padding-top: 0 !important; }
+.nakit-deger { font-size: 20px; font-weight: 700; margin: 0; }
+.nakit-alt { font-size: 11px; color: var(--text-muted); margin: 4px 0 0; }
+.nakit-toplam { border-color: rgba(245,158,11,0.3) !important; }
 .hizli-islemler { margin-bottom: 24px; }
 .islem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .islem-grid .p-button { height: 56px; font-size: 13px; justify-content: center; }

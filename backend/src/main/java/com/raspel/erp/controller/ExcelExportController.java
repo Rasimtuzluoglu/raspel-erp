@@ -32,6 +32,7 @@ public class ExcelExportController {
     private final PersonelService personelService;
     private final BankaService bankaService;
     private final KasaService kasaService;
+    private final AuditLogService auditLogService;
 
     @GetMapping("/cari-hesaplar")
     @Operation(summary = "Cari hesapları Excel dışa aktar", description = "Cari hesapları Excel (.xlsx) dosyası olarak dışa aktarır")
@@ -130,6 +131,25 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("Kasalar", new String[]{"ID", "Ad", "Bakiye"}, rows);
+    }
+
+    @GetMapping("/denetim-log")
+    @Operation(summary = "Denetim loglarını Excel dışa aktar", description = "Denetim log kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
+    public ResponseEntity<byte[]> denetimLog(
+            @RequestParam(required = false) Long kullaniciId,
+            @RequestParam(required = false) String islem,
+            @RequestParam(required = false) String entityAdi,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangicTarih,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitisTarih) {
+        var list = auditLogService.filtreliGetir(kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, Pageable.unpaged()).getContent();
+        var rows = list.stream().map(l -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", l.getId()); m.put("Tarih", l.getTarih()); m.put("Kullanıcı ID", l.getKullaniciId());
+            m.put("İşlem", l.getIslem()); m.put("Entity", l.getEntityAdi()); m.put("Entity ID", l.getEntityId());
+            m.put("Açıklama", l.getAciklama()); m.put("IP", l.getIpAdresi());
+            return m;
+        }).toList();
+        return excel("DenetimLog", new String[]{"ID", "Tarih", "Kullanıcı ID", "İşlem", "Entity", "Entity ID", "Açıklama", "IP"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

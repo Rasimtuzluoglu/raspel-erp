@@ -38,8 +38,12 @@ public class PdfRaporService {
                 .orElseThrow(() -> new RuntimeException("Fatura bulunamadı: " + faturaId));
         List<FaturaKalem> kalemler = faturaKalemRepository.findByFaturaId(faturaId);
         String cariAd = "";
+        String cariId = "-";
         try {
-            cariAd = cariHesapRepository.findById(f.getCariHesapId()).map(CariHesap::getAd).orElse("");
+            if (f.getCariHesap() != null) {
+                cariAd = f.getCariHesap().getAd();
+                cariId = String.valueOf(f.getCariHesap().getId());
+            }
         } catch (Exception ignored) {}
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
@@ -52,11 +56,9 @@ public class PdfRaporService {
                 y -= 10;
                 y = infoSatiri(cs, y, "Fatura No:", "#" + (f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())));
                 y = infoSatiri(cs, y, "Tarih:", f.getOlusturmaTarihi() != null ? f.getOlusturmaTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
-                y = infoSatiri(cs, y, "Durum:", f.getDurum());
+                y = infoSatiri(cs, y, "Durum:", f.getDurum() != null ? f.getDurum().name() : "-");
                 y = infoSatiri(cs, y, "Müşteri:", cariAd);
-                if (f.getCariHesapId() != null) {
-                    infoSatiri(cs, y, "Cari Hesap ID:", String.valueOf(f.getCariHesapId()));
-                }
+                infoSatiri(cs, y, "Cari Hesap ID:", cariId);
                 y -= 20;
 
                 y = cizgi(cs, y);
