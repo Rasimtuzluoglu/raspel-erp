@@ -44,7 +44,7 @@ class SatinalmaTalepControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SatinalmaTalepDTO.builder().id(1L).talepNo("TALEP-001").durum("TASLAK").build());
-        when(satinalmaTalepService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(satinalmaTalepService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/satinalma-talepler"))
                 .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class SatinalmaTalepControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(SatinalmaTalepDTO.builder().id(1L).talepNo("TALEP-001").build());
-        when(satinalmaTalepService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(satinalmaTalepService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/satinalma-talepler").param("sirketId", "1"))
                 .andExpect(status().isOk())

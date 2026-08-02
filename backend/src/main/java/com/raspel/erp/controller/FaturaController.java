@@ -101,7 +101,7 @@ public class FaturaController {
         byte[] bytes = csv.toString().getBytes(StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
-        headers.setContentDispositionFormData("attachment", "faturalar.csv");
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename("faturalar.csv").build());
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 

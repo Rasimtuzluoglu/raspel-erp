@@ -43,7 +43,7 @@ class PersonelControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").soyad("Yılmaz").build());
-        when(personelService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(personelService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/personel"))
                 .andExpect(status().isOk())
@@ -53,7 +53,7 @@ class PersonelControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").build());
-        when(personelService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(personelService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/personel").param("sirketId", "1"))
                 .andExpect(status().isOk())

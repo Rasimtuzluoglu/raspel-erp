@@ -11,7 +11,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "management.health.redis.enabled=false",
+        "management.health.rabbit.enabled=false",
+        "management.health.db.enabled=false"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SecurityConfigTest {

@@ -44,7 +44,7 @@ class IrsaliyeControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(IrsaliyeDTO.builder().id(1L).irsaliyeNo("IRS-001").durum("TASLAK").build());
-        when(irsaliyeService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(irsaliyeService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/irsaliyeler"))
                 .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class IrsaliyeControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(IrsaliyeDTO.builder().id(1L).irsaliyeNo("IRS-001").build());
-        when(irsaliyeService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(irsaliyeService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/irsaliyeler").param("sirketId", "1"))
                 .andExpect(status().isOk())

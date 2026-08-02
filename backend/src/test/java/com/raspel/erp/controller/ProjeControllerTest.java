@@ -45,7 +45,7 @@ class ProjeControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(ProjeDTO.builder().id(1L).ad("Proje A").durum("DEVAM_EDIYOR").build());
-        when(projeService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(projeService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/projeler"))
                 .andExpect(status().isOk())
@@ -55,7 +55,7 @@ class ProjeControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(ProjeDTO.builder().id(1L).ad("Proje A").build());
-        when(projeService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(projeService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/projeler").param("sirketId", "1"))
                 .andExpect(status().isOk())

@@ -44,7 +44,7 @@ class SiparisControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").durum("TEKLIF").build());
-        when(siparisService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(siparisService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/siparisler"))
                 .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class SiparisControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").build());
-        when(siparisService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(siparisService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/siparisler").param("sirketId", "1"))
                 .andExpect(status().isOk())

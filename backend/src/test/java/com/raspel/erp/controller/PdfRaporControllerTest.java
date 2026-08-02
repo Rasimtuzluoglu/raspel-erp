@@ -53,10 +53,11 @@ class PdfRaporControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenSiparisRaporu() throws Exception {
-        when(pdfRaporService.siparisRaporu(anyLong())).thenThrow(new RuntimeException("Sipariş bulunamadı: 999"));
+        when(pdfRaporService.siparisRaporu(anyLong()))
+                .thenThrow(new com.raspel.erp.exception.ResourceNotFoundException("Siparis", 999L));
 
         mockMvc.perform(get("/api/rapor/siparis/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 }
 

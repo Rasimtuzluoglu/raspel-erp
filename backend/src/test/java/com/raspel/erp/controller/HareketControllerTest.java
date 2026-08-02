@@ -91,7 +91,7 @@ class HareketControllerTest {
         mockMvc.perform(get("/api/hareketler/export/csv").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "text/csv;charset=UTF-8"))
-                .andExpect(header().string("Content-Disposition", "attachment; filename=hareketler.csv"));
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"hareketler.csv\""));
     }
 
     @Test

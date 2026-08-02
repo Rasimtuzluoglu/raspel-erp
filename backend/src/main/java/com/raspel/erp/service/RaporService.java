@@ -3,6 +3,7 @@ package com.raspel.erp.service;
 import com.raspel.erp.dto.*;
 import com.raspel.erp.entity.CariHesap;
 import com.raspel.erp.entity.Fatura;
+import com.raspel.erp.entity.Hareket;
 import com.raspel.erp.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +51,11 @@ public class RaporService {
         var hareketler = hareketRepository.findByHareketTarihiBetweenOrderByHareketTarihiAsc(baslangic, bitis);
 
         BigDecimal toplamGelir = hareketler.stream()
-                .filter(h -> "TAHSILAT".equals(h.getTur()))
+                .filter(h -> h.getTur() == Hareket.HareketTuru.TAHSILAT)
                 .map(h -> h.getTutar()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal toplamGider = hareketler.stream()
-                .filter(h -> "ÖDEME".equals(h.getTur()))
+                .filter(h -> h.getTur() == Hareket.HareketTuru.ODEME)
                 .map(h -> h.getTutar()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal net = toplamGelir.subtract(toplamGider);
@@ -62,7 +63,7 @@ public class RaporService {
         Map<String, BigDecimal> aylik = new LinkedHashMap<>();
         for (var h : hareketler) {
             String ay = h.getHareketTarihi().getYear() + "-" + String.format("%02d", h.getHareketTarihi().getMonthValue());
-            BigDecimal ek = "TAHSILAT".equals(h.getTur()) ? h.getTutar() : h.getTutar().negate();
+            BigDecimal ek = h.getTur() == Hareket.HareketTuru.TAHSILAT ? h.getTutar() : h.getTutar().negate();
             aylik.merge(ay, ek, BigDecimal::add);
         }
 

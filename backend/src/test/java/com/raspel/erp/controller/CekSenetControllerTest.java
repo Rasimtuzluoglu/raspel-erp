@@ -45,7 +45,7 @@ class CekSenetControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(CekSenetDTO.builder().id(1L).tur("CEK").cekNo("12345").durum("PORTFOY").build());
-        when(cekSenetService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(cekSenetService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/cek-senet"))
                 .andExpect(status().isOk())
@@ -55,7 +55,7 @@ class CekSenetControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(CekSenetDTO.builder().id(1L).tur("CEK").build());
-        when(cekSenetService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(cekSenetService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/cek-senet").param("sirketId", "1"))
                 .andExpect(status().isOk())

@@ -31,7 +31,7 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<Map<String, Object>> response = handler.handleRuntimeException(ex);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("Sunucu hatası: Bir hata oluştu", response.getBody().get("message"));
+        assertEquals("Beklenmeyen bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.", response.getBody().get("message"));
         assertEquals(500, response.getBody().get("status"));
         assertNotNull(response.getBody().get("timestamp"));
     }

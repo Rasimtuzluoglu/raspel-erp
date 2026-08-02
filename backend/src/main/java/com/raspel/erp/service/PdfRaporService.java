@@ -35,7 +35,7 @@ public class PdfRaporService {
 
     public byte[] faturaRaporu(Long faturaId) {
         Fatura f = faturaRepository.findById(faturaId)
-                .orElseThrow(() -> new RuntimeException("Fatura bulunamadı: " + faturaId));
+                .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Fatura", faturaId));
         List<FaturaKalem> kalemler = faturaKalemRepository.findByFaturaId(faturaId);
         String cariAd = "";
         String cariId = "-";
@@ -101,7 +101,7 @@ public class PdfRaporService {
 
     public byte[] siparisRaporu(Long siparisId) {
         Siparis s = siparisRepository.findById(siparisId)
-                .orElseThrow(() -> new RuntimeException("Siparis bulunamadi: " + siparisId));
+                .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Siparis", siparisId));
         List<SiparisKalem> kalemler = siparisKalemRepository.findBySiparisId(siparisId);
         return generatePdf("SIPARIS RAPORU", "Siparis No: " + s.getSiparisNo(),
                 "Tarih: " + s.getTarih(), "Durum: " + s.getDurum(), "Cari ID: " + s.getCariHesapId(),
@@ -112,7 +112,7 @@ public class PdfRaporService {
 
     public byte[] irsaliyeRaporu(Long irsaliyeId) {
         Irsaliye i = irsaliyeRepository.findById(irsaliyeId)
-                .orElseThrow(() -> new RuntimeException("Irsaliye bulunamadi: " + irsaliyeId));
+                .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Irsaliye", irsaliyeId));
         List<IrsaliyeKalem> kalemler = irsaliyeKalemRepository.findByIrsaliyeId(irsaliyeId);
         return generatePdf("IRSALIYE RAPORU", "Irsaliye No: " + i.getIrsaliyeNo(),
                 "Tarih: " + i.getTarih(), "Durum: " + i.getDurum(), "Cari ID: " + i.getCariHesapId(),

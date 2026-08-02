@@ -67,7 +67,7 @@ public class CariHesapController {
         byte[] bytes = csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
-        headers.setContentDispositionFormData("attachment", "cari-hesaplar.csv");
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename("cari-hesaplar.csv").build());
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 

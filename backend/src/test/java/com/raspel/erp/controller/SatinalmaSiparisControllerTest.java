@@ -44,7 +44,7 @@ class SatinalmaSiparisControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SatinalmaSiparisDTO.builder().id(1L).siparisNo("SAT-001").durum("TASLAK").build());
-        when(satinalmaSiparisService.tumunuGetir(null, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(satinalmaSiparisService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/satinalma-siparisler"))
                 .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class SatinalmaSiparisControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(SatinalmaSiparisDTO.builder().id(1L).siparisNo("SAT-001").build());
-        when(satinalmaSiparisService.tumunuGetir(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(list));
+        when(satinalmaSiparisService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/satinalma-siparisler").param("sirketId", "1"))
                 .andExpect(status().isOk())

@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -38,12 +39,35 @@ class AuditLogControllerTest {
         var list = List.of(
                 AuditLog.builder().id(1L).islem("GIRIS").entityAdi("Kullanici").entityId(1L).tarih(LocalDateTime.now()).build()
         );
-        when(auditLogService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
+        when(auditLogService.filtreliGetir(isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/audit-log"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].islem").value("GIRIS"))
                 .andExpect(jsonPath("$.content[0].entityAdi").value("Kullanici"));
+    }
+
+    @Test
+    void shouldFilterByIslem() throws Exception {
+        var list = List.of(
+                AuditLog.builder().id(1L).islem("SIL").entityAdi("Cari").tarih(LocalDateTime.now()).build()
+        );
+        when(auditLogService.filtreliGetir(isNull(), eq("SIL"), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/audit-log").param("islem", "SIL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].islem").value("SIL"));
+    }
+
+    @Test
+    void shouldGetIslemTipleri() throws Exception {
+        when(auditLogService.islemTipleri()).thenReturn(List.of("GIRIS", "SIL"));
+
+        mockMvc.perform(get("/api/audit-log/islem-tipleri"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").value("GIRIS"));
     }
 }
 

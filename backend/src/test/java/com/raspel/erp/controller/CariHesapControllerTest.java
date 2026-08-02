@@ -119,7 +119,7 @@ class CariHesapControllerTest {
         mockMvc.perform(get("/api/cari-hesaplar/export/csv").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
-                .andExpect(header().string("Content-Disposition", "attachment; filename=cari-hesaplar.csv"));
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"cari-hesaplar.csv\""));
     }
 }
 

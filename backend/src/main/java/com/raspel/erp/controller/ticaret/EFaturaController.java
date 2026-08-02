@@ -67,7 +67,7 @@ public class EFaturaController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
-        headers.setContentDispositionFormData("attachment", "e-fatura-" + id + ".xml");
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename("e-fatura-" + id + ".xml").build());
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 }
