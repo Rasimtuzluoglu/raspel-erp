@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [ main, master ]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -23,6 +28,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node.js 20
@@ -46,21 +52,28 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
           exit-code: '0'
           hide-progress: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [backend, frontend]
-    if: github.ref == 'refs/heads/main'
+    # DEPLOY_HOST vb. secret'lar tanımlı değilse job'u başarıyla atlar
+    # (gerçek dağıtım için repo Settings > Secrets'ı ekleyin)
+    if: github.ref == 'refs/heads/main' && secrets.DEPLOY_HOST != ''
     steps:
       - uses: actions/checkout@v4
       - name: Deploy via SSH
