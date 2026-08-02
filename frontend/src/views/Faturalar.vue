@@ -61,8 +61,7 @@
           </template>
         </Column>
       </DataTable>
-      <Message v-if="faturaStore.faturalar.length === 0" severity="info" text="Fatura bulunmamaktadır." />
-    </div>
+      <EmptyState v-if="faturaStore.faturalar.length === 0" message="Henüz fatura yok" sub-message="İlk faturanızı oluşturarak satış sürecinizi başlatın." icon="pi pi-file" action-label="İlk Faturayı Oluştur" action-icon="pi pi-plus" @action="openCreateDialog" />    </div>
 
     <Dialog v-model:visible="showDialog" :header="dialogBaslik" :modal="true" style="width:750px" :closable="false">
       <div class="form-grid">
@@ -178,6 +177,7 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { excelAPI, pdfAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
+import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -211,6 +211,12 @@ const urunSecimi = ref(null)
 const urunAdet = ref(1)
 
 const dialogBaslik = computed(() => editingId.value ? 'Fatura Düzenle' : 'Yeni Fatura Oluştur')
+
+const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
+  onRestore: () => {
+    toast.add({ severity: 'info', summary: 'Taslak Geri Yüklendi', detail: 'Kesilmemiş faturanız geri yüklendi.', life: 5000 })
+  }
+})
 
 onMounted(async () => {
   loading.value = true
@@ -360,6 +366,7 @@ const saveFatura = async () => {
       await faturaStore.addFatura(payload)
       toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura oluşturuldu', life: 5000 })
     }
+    taslakTemizle()
     closeDialog()
   } catch (err) {
     const msg = err.response?.data?.message || 'İşlem başarısız'

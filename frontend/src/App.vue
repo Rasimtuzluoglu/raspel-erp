@@ -25,6 +25,18 @@
     <PasswordChangeModal :visible="sifreDialog" @update:visible="sifreDialog = $event" />
     <Toast position="top-right" :life="5000" />
     <ConfirmDialog />
+
+    <Dialog v-model:visible="oturum.goster" header="Oturum Süresi Dolmak Üzere" :modal="true" :closable="false" style="width: 400px">
+      <div class="oturum-uyari">
+        <i class="pi pi-exclamation-triangle oturum-ikon"></i>
+        <p>Oturumunuz <strong>{{ oturum.kalanSaniye }} saniye</strong> içinde sona erecek.</p>
+        <p class="oturum-ipucu">Devam etmek için "Oturumu Uzat" butonuna tıklayın.</p>
+      </div>
+      <template #footer>
+        <Button label="Çıkış Yap" icon="pi pi-sign-out" class="p-button-text" @click="oturum.cikis" />
+        <Button label="Oturumu Uzat" icon="pi pi-refresh" class="p-button-primary" @click="oturum.devamEt" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -32,6 +44,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
+import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
 import AppSidebar from './components/AppSidebar.vue'
 import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
@@ -41,6 +54,7 @@ const authStore = useAuthStore()
 const quickSearchVisible = ref(false)
 const sifreDialog = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
+const oturum = useOturumUyarisi()
 
 const kisaYolHandler = (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -78,4 +92,8 @@ onUnmounted(() => {
 .offline-kapat:hover { opacity: 1; }
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
 .slide-down-enter-from, .slide-down-leave-to { transform: translateY(-100%); opacity: 0; }
+.oturum-uyari { text-align: center; }
+.oturum-ikon { font-size: 2.5rem; color: #f59e0b; margin-bottom: 0.75rem; }
+.oturum-uyari p { margin: 0 0 0.5rem; color: var(--text-secondary); }
+.oturum-ipucu { font-size: 0.85rem; color: var(--text-muted); }
 </style>

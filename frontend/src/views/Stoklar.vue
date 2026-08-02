@@ -52,6 +52,9 @@
             <span v-if="kritikAdet > 0" class="kritik-bilgi"><i class="pi pi-exclamation-triangle"></i> {{ kritikAdet }} kritik</span>
           </div>
         </template>
+        <template #empty>
+          <EmptyState message="Henüz ürün yok" sub-message="Stok ürünlerinizi ekleyerek envanterinizi oluşturun." icon="pi pi-box" action-label="İlk Ürünü Ekle" action-icon="pi pi-plus" @action="openDialog" />
+        </template>
         <Column selection-mode="multiple" headerStyle="width: 2.5rem"></Column>
         <Column field="stokKodu" header="Stok Kodu" sortable style="width:120px" />
         <Column field="ad" header="Ürün Adı" sortable style="min-width:180px" />

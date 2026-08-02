@@ -6,6 +6,13 @@
       </template>
     </PageHeader>
 
+    <div v-if="geriAlGoster" class="geri-al-banner">
+      <i class="pi pi-history"></i>
+      <span>"{{ silinenSon?.baslik }}" silindi.</span>
+      <Button label="Geri Al" icon="pi pi-undo" size="small" @click="geriAl" />
+      <Button icon="pi pi-times" class="p-button-text p-button-sm" @click="geriAlGoster = false" />
+    </div>
+
     <div v-if="store.loading" class="p-4">
       <SkeletonLoader :count="3" />
     </div>
@@ -70,6 +77,9 @@ const duzenlemeModu = ref(false)
 const kaydediliyor = ref(false)
 const gonderildi = ref(false)
 const form = ref({ baslik: '', icerik: '', onemDerecesi: 'NORMAL' })
+const geriAlGoster = ref(false)
+const silinenSon = ref(null)
+let geriAlZamanlayici = null
 
 const dialogBaslik = computed(() => duzenlemeModu.value ? 'Notu Düzenle' : 'Yeni Not')
 
@@ -110,11 +120,31 @@ const kaydet = async () => {
 }
 
 const sil = async (id) => {
+  const silinen = store.notlar.find(n => n.id === id)
   try {
     await store.deleteNot(id)
     toast.add({ severity: 'success', summary: 'Silindi', detail: 'Not silindi.', life: 3000 })
+    if (silinen) {
+      silinenSon = silinen
+      geriAlGoster = true
+      if (geriAlZamanlayici) clearTimeout(geriAlZamanlayici)
+      geriAlZamanlayici = setTimeout(() => { geriAlGoster = false; silinenSon = null }, 8000)
+    }
   } catch {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız.', life: 5000 })
+  }
+}
+
+const geriAl = async () => {
+  if (!silinenSon) return
+  try {
+    await store.addNot({ baslik: silinenSon.baslik, icerik: silinenSon.icerik, onemDerecesi: silinenSon.onemDerecesi })
+    toast.add({ severity: 'success', summary: 'Geri Alındı', detail: 'Not geri yüklendi.', life: 3000 })
+  } catch {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Geri alma başarısız.', life: 5000 })
+  } finally {
+    geriAlGoster = false
+    silinenSon = null
   }
 }
 
@@ -126,6 +156,13 @@ const formatTarih = (t) => {
 
 <style scoped>
 .notlar-page { padding: 1.5rem; }
+.geri-al-banner {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 10px; padding: 10px 16px; margin-bottom: 1rem;
+  font-size: 0.9rem; color: #fbbf24;
+}
+.geri-al-banner i { font-size: 16px; }
 .empty-box {
   background: var(--bg-card);
   border: 1px solid var(--border);

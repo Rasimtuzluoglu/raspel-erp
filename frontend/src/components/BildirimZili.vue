@@ -1,21 +1,31 @@
 <template>
   <div class="bildirim-zili">
     <Button icon="pi pi-bell" class="p-button-rounded p-button-text" @click="panelAcik = !panelAcik" title="Bildirimler">
-      <span v-if="bildirimler.length" class="zil-sayac">{{ bildirimler.length }}</span>
+      <span v-if="filtrelenmisBildirimler.length" class="zil-sayac">{{ filtrelenmisBildirimler.length }}</span>
     </Button>
 
     <transition name="panel">
       <div v-if="panelAcik" class="bildirim-panel">
         <div class="panel-baslik">
           <strong>Bildirimler</strong>
-          <Button icon="pi pi-check" class="p-button-sm p-button-text" @click="temizle" title="Temizle" />
+          <div class="panel-ayarlar">
+            <Button icon="pi pi-cog" class="p-button-sm p-button-text" @click="tercihPaneli = !tercihPaneli" title="Bildirim Tercihleri" />
+            <Button icon="pi pi-check" class="p-button-sm p-button-text" @click="temizle" title="Temizle" />
+          </div>
         </div>
-        <div v-if="bildirimler.length === 0" class="panel-bos">
+        <div v-if="tercihPaneli" class="tercih-paneli">
+          <div class="tercih-baslik">Bildirim Türleri</div>
+          <label v-for="t in tercihListesi" :key="t.tur" class="tercih-satir">
+            <Checkbox :model-value="tercihler[t.tur] !== false" :binary="true" @update:model-value="tercihDegistir(t.tur, $event)" />
+            <span>{{ t.etiket }}</span>
+          </label>
+        </div>
+        <div v-if="filtrelenmisBildirimler.length === 0 && !tercihPaneli" class="panel-bos">
           <i class="pi pi-inbox"></i>
           <p>Bildirim yok</p>
         </div>
-        <div v-else class="panel-liste">
-          <div v-for="(b, i) in bildirimler" :key="i" class="panel-item" @click="bildirimTikla(b)">
+        <div v-else-if="!tercihPaneli" class="panel-liste">
+          <div v-for="(b, i) in filtrelenmisBildirimler" :key="i" class="panel-item" @click="bildirimTikla(b)">
             <div class="item-ikon" :class="ikonSinifi(b.tur)">
               <i :class="ikonSinifi(b.tur)"></i>
             </div>
@@ -32,14 +42,36 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 
 const router = useRouter()
 const panelAcik = ref(false)
+const tercihPaneli = ref(false)
 const bildirimler = ref([])
 const { sonBildirim } = useWebSocket()
+
+const TERCIH_ANAHTAR = 'raspel_bildirim_tercihleri'
+const tercihListesi = [
+  { tur: 'STOK', etiket: 'Stok Uyarıları' },
+  { tur: 'SIPARIS', etiket: 'Siparişler' },
+  { tur: 'FATURA', etiket: 'Faturalar' },
+  { tur: 'ODEME', etiket: 'Ödemeler' },
+  { tur: 'TAKSiLAT', etiket: 'Tahsilatlar' },
+  { tur: 'UYARI', etiket: 'Uyarılar' },
+  { tur: 'INFO', etiket: 'Bilgilendirme' }
+]
+const tercihler = ref(JSON.parse(localStorage.getItem(TERCIH_ANAHTAR) || '{}'))
+
+const filtrelenmisBildirimler = computed(() =>
+  bildirimler.value.filter(b => tercihler.value[b.tur] !== false)
+)
+
+const tercihDegistir = (tur, val) => {
+  tercihler.value[tur] = val
+  localStorage.setItem(TERCIH_ANAHTAR, JSON.stringify(tercihler.value))
+}
 
 watch(sonBildirim, (yeni) => {
   if (yeni) bildirimler.value.unshift(yeni)
@@ -91,6 +123,10 @@ const temizle = () => { bildirimler.value = [] }
   padding: 12px 16px; border-bottom: 1px solid var(--border);
   position: sticky; top: 0; background: var(--bg-card);
 }
+.panel-ayarlar { display: flex; align-items: center; }
+.tercih-paneli { padding: 12px 16px; }
+.tercih-baslik { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+.tercih-satir { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; cursor: pointer; }
 .panel-baslik strong { font-size: 14px; }
 .panel-bos { text-align: center; padding: 32px; color: var(--text-muted); }
 .panel-bos i { font-size: 32px; display: block; margin-bottom: 8px; }

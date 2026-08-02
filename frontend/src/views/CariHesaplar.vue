@@ -124,7 +124,7 @@
         </Column>
       </DataTable>
 
-      <Message v-if="cariHesapStore.cariHesaplar.length === 0" severity="info" text="Cari hesap bulunmamaktadır." />
+      <EmptyState v-if="cariHesapStore.cariHesaplar.length === 0" message="Henüz cari hesap yok" sub-message="Müşteri ve tedarikçilerinizi ekleyerek başlayın." icon="pi pi-users" action-label="İlk Cari Hesabı Ekle" action-icon="pi pi-plus" @action="openDialog" />
     </div>
 
     <!-- Cari Hesap Dialog -->
