@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/kullanicilar/giris", "/api/v1/kullanicilar/giris").permitAll()
                 .requestMatchers("/api/sirketler/aktif", "/api/v1/sirketler/aktif").permitAll()
                 .requestMatchers("/actuator/health/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

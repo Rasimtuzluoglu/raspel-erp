@@ -7,11 +7,13 @@ export function useWebSocket() {
   let stompClient = null
   let subscription = null
 
-  const SOCKET_URL = import.meta.env.VITE_WS_URL || (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.hostname + ':8081/ws'
-
   const baglan = () => {
     const authStore = useAuthStore()
     if (!authStore.isLoggedIn || !authStore.kullanici?.sirketId) return
+
+    const token = authStore.token || ''
+    const SOCKET_URL = import.meta.env.VITE_WS_URL ||
+      (window.location.protocol === 'https:' ? 'https://' : 'http://') + window.location.hostname + ':8081/ws' + (token ? '?token=' + encodeURIComponent(token) : '')
 
     import('sockjs-client').then(SockJS => {
       import('@stomp/stompjs').then(({ Client }) => {

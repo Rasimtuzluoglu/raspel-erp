@@ -24,6 +24,25 @@ const apiClient = axios.create({
 
 import { useAuthStore } from '../stores/authStore.js'
 
+apiClient.interceptors.request.use((config) => {
+  let token = ''
+  try {
+    const authStore = useAuthStore()
+    token = authStore.token || ''
+  } catch {}
+  if (!token) {
+    try {
+      const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
+      token = kayitli.token || ''
+    } catch {}
+  }
+  if (token) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
