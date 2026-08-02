@@ -25,6 +25,9 @@ public class Not {
     @Column(name = "onem_derecesi", length = 20)
     private String onemDerecesi;
 
+    @Column(length = 20)
+    private String renk;
+
     @Column(name = "kullanici_id")
     private Long kullaniciId;
 

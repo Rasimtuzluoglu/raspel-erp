@@ -23,6 +23,7 @@
 
     <QuickSearch :visible="quickSearchVisible" @update:visible="quickSearchVisible = $event" />
     <PasswordChangeModal :visible="sifreDialog" @update:visible="sifreDialog = $event" />
+    <GuncellemeNotlari />
     <Toast position="top-right" :life="5000" />
     <ConfirmDialog />
 
@@ -48,6 +49,7 @@ import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
 import AppSidebar from './components/AppSidebar.vue'
 import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
+import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
 
 const authStore = useAuthStore()

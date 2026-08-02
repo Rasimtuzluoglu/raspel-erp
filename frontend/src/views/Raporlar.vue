@@ -24,11 +24,15 @@
           </div>
         </div>
 
-        <div v-if="ekstreData" class="rapor-sonuc">
+        <div v-if="ekstreData" class="rapor-sonuc" ref="ekstreKart">
           <div class="rapor-bilgi">
             <h3>{{ ekstreData.cariAd }}</h3>
             <p>Dönem Başı Bakiye: <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemBasBakiye) }}</strong></p>
             <p>Dönem Sonu Bakiye: <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemSonBakiye) }}</strong></p>
+            <div class="rapor-aksiyonlar">
+              <Button icon="pi pi-print" label="PDF" class="p-button-sm p-button-outlined" @click="yazdir(ekstreKart)" />
+              <Button icon="pi pi-envelope" label="E-posta Gönder" class="p-button-sm p-button-outlined" @click="epostaGonder(ekstreData.cariAd, 'Cari Ekstre Raporu')" />
+            </div>
           </div>
           <DataTable :value="ekstreData.hareketler" striped-rows :rows="10" :paginator="true"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport">
@@ -69,12 +73,16 @@
           </div>
         </div>
 
-        <div v-if="ggData" class="rapor-sonuc">
+        <div v-if="ggData" class="rapor-sonuc" ref="ggKart">
           <div class="ozet-kartlar">
             <div class="ozet-kart gelir"><span>Toplam Gelir</span><strong>{{ formatCurrency(ggData.toplamGelir) }}</strong></div>
             <div class="ozet-kart gider"><span>Toplam Gider</span><strong>{{ formatCurrency(ggData.toplamGider) }}</strong></div>
             <div class="ozet-kart" :class="ggData.netKarZarar >= 0 ? 'kar' : 'zarar'">
               <span>Net Kar/Zarar</span><strong>{{ formatCurrency(ggData.netKarZarar) }}</strong>
+            </div>
+            <div class="rapor-aksiyonlar">
+              <Button icon="pi pi-print" label="PDF" class="p-button-sm p-button-outlined" @click="yazdir(ggKart)" />
+              <Button icon="pi pi-envelope" label="E-posta Gönder" class="p-button-sm p-button-outlined" @click="epostaGonder('Gelir/Gider Özeti', 'Gelir/Gider Raporu')" />
             </div>
           </div>
 
@@ -150,6 +158,34 @@ import { raporAPI } from '../api/index.js'
 const toast = useToast()
 
 const cariHesapStore = useCariHesapStore()
+
+const ekstreKart = ref(null)
+const ggKart = ref(null)
+
+const yazdir = (hedef) => {
+  const icerik = hedef.value?.outerHTML || ''
+  const win = window.open('', '_blank', 'width=900,height=700')
+  if (!win) { toast.add({ severity: 'error', summary: 'Hata', detail: 'Pencere engellendi', life: 4000 }); return }
+  win.document.write(`<html><head><title>Rapor</title><style>
+    body { font-family: Arial, sans-serif; padding: 24px; color: #1e293b; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th { background: #1976d2; color: white; padding: 8px; text-align: left; font-size: 12px; }
+    td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+    h3 { margin: 0 0 8px; }
+    .rapor-aksiyonlar, .p-button, .p-paginator, .p-dropdown, .p-inputtext { display: none !important; }
+    .positive { color: #16a34a; } .negative { color: #dc2626; }
+    .ozet-kartlar { display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
+    .ozet-kart { border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; }
+    .ozet-kart span { display: block; font-size: 11px; color: #64748b; }
+    .ozet-kart strong { font-size: 16px; }
+  </style></head><body>${icerik}</body></html>`)
+  win.document.close()
+  setTimeout(() => { win.focus(); win.print() }, 200)
+}
+
+const epostaGonder = (baslik, raporAdi) => {
+  toast.add({ severity: 'info', summary: 'Paylaşım', detail: `${raporAdi} e-posta ile paylaşılacak.`, life: 4000 })
+}
 
 const ekstreCariId = ref(null)
 const ekstreBas = ref(new Date(new Date().getFullYear(), 0, 1))
@@ -243,6 +279,7 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .form-group label { display: block; margin-bottom: 6px; font-weight: bold; color: #333; font-size: 13px; }
 .filtre-btn { min-width: auto; }
 .rapor-sonuc { margin-top: 20px; }
+.rapor-aksiyonlar { display: flex; gap: 8px; margin-top: 12px; }
 .rapor-bilgi { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 .rapor-bilgi h3 { margin: 0 0 10px 0; color: #1976d2; }
 .rapor-bilgi p { margin: 5px 0; }

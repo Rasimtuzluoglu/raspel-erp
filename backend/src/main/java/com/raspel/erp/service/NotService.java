@@ -43,6 +43,7 @@ public class NotService {
                 .baslik(dto.getBaslik())
                 .icerik(dto.getIcerik())
                 .onemDerecesi(dto.getOnemDerecesi() != null ? dto.getOnemDerecesi() : "NORMAL")
+                .renk(dto.getRenk() != null ? dto.getRenk() : "MAVI")
                 .kullaniciId(kullaniciId)
                 .sirketId(sirketId)
                 .build();
@@ -55,6 +56,7 @@ public class NotService {
         not.setBaslik(dto.getBaslik());
         not.setIcerik(dto.getIcerik());
         not.setOnemDerecesi(dto.getOnemDerecesi() != null ? dto.getOnemDerecesi() : "NORMAL");
+        not.setRenk(dto.getRenk() != null ? dto.getRenk() : "MAVI");
         return entityToDTO(notRepository.save(not));
     }
 
@@ -68,6 +70,7 @@ public class NotService {
                 .baslik(not.getBaslik())
                 .icerik(not.getIcerik())
                 .onemDerecesi(not.getOnemDerecesi())
+                .renk(not.getRenk())
                 .kullaniciId(not.getKullaniciId())
                 .olusturmaTarihi(not.getOlusturmaTarihi())
                 .guncellemeTarihi(not.getGuncellemeTarihi())

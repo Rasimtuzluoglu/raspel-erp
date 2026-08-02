@@ -19,6 +19,8 @@ public class NotDTO {
 
     private String onemDerecesi;
 
+    private String renk;
+
     private Long kullaniciId;
 
     private LocalDateTime olusturmaTarihi;

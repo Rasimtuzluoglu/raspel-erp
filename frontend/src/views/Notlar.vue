@@ -24,7 +24,7 @@
     </div>
 
     <div v-else class="not-grid">
-      <div v-for="item in store.notlar" :key="item.id" class="not-card" :class="item.onemDerecesi?.toLowerCase()">
+      <div v-for="item in store.notlar" :key="item.id" class="not-card" :class="[item.onemDerecesi?.toLowerCase(), renkSinif(item.renk)]">
         <div class="not-card-header">
           <span class="onem-badge" :class="item.onemDerecesi?.toLowerCase()">{{ item.onemDerecesi || 'NORMAL' }}</span>
           <span class="not-tarih">{{ formatTarih(item.olusturmaTarihi) }}</span>
@@ -47,6 +47,12 @@
       </FormField>
       <FormField label="Önem Derecesi">
         <Dropdown v-model="form.onemDerecesi" :options="onemSecenek" optionLabel="label" optionValue="value" placeholder="Seçiniz" class="w-full" />
+      </FormField>
+      <FormField label="Renk">
+        <div class="renk-secici">
+          <button v-for="r in renkSecenekler" :key="r.deger" type="button" class="renk-nokta" :class="{ secili: form.renk === r.deger }"
+            :style="{ background: r.renk }" :title="r.etiket" @click="form.renk = r.deger"></button>
+        </div>
       </FormField>
       <template #footer>
         <Button label="İptal" icon="pi pi-times" @click="dialogGoster = false" class="p-button-text" />
@@ -72,6 +78,18 @@ const onemSecenek = [
   { label: 'Kritik', value: 'KRITIK' }
 ]
 
+const renkSecenekler = [
+  { deger: 'MAVI', renk: '#3b82f6', etiket: 'Mavi' },
+  { deger: 'YESIL', renk: '#22c55e', etiket: 'Yeşil' },
+  { deger: 'SARI', renk: '#f59e0b', etiket: 'Sarı' },
+  { deger: 'KIRMIZI', renk: '#ef4444', etiket: 'Kırmızı' },
+  { deger: 'MOR', renk: '#8b5cf6', etiket: 'Mor' },
+  { deger: 'PEMBE', renk: '#ec4899', etiket: 'Pembe' },
+  { deger: 'GRİ', renk: '#64748b', etiket: 'Gri' }
+]
+
+const renkSinif = (r) => `renk-${(r || 'MAVI').toLowerCase()}`
+
 const dialogGoster = ref(false)
 const duzenlemeModu = ref(false)
 const kaydediliyor = ref(false)
@@ -87,7 +105,7 @@ onMounted(() => store.getAllNotlar())
 
 const dialogAc = () => {
   duzenlemeModu.value = false
-  form.value = { baslik: '', icerik: '', onemDerecesi: 'NORMAL' }
+  form.value = { baslik: '', icerik: '', onemDerecesi: 'NORMAL', renk: 'MAVI' }
   gonderildi.value = false
   dialogGoster.value = true
 }
@@ -138,7 +156,7 @@ const sil = async (id) => {
 const geriAl = async () => {
   if (!silinenSon) return
   try {
-    await store.addNot({ baslik: silinenSon.baslik, icerik: silinenSon.icerik, onemDerecesi: silinenSon.onemDerecesi })
+    await store.addNot({ baslik: silinenSon.baslik, icerik: silinenSon.icerik, onemDerecesi: silinenSon.onemDerecesi, renk: silinenSon.renk })
     toast.add({ severity: 'success', summary: 'Geri Alındı', detail: 'Not geri yüklendi.', life: 3000 })
   } catch {
     toast.add({ severity: 'error', summary: 'Hata', detail: 'Geri alma başarısız.', life: 5000 })
@@ -210,6 +228,20 @@ const formatTarih = (t) => {
 .onem-badge.normal { background: rgba(100,116,139,0.2); color: #94a3b8; }
 .onem-badge.yuksek { background: rgba(245,158,11,0.2); color: #fbbf24; }
 .onem-badge.kritik { background: rgba(239,68,68,0.2); color: #f87171; }
+.not-card.renk-mavi { border-left: 4px solid #3b82f6; }
+.not-card.renk-yesil { border-left: 4px solid #22c55e; }
+.not-card.renk-sari { border-left: 4px solid #f59e0b; }
+.not-card.renk-kirmizi { border-left: 4px solid #ef4444; }
+.not-card.renk-mor { border-left: 4px solid #8b5cf6; }
+.not-card.renk-pembe { border-left: 4px solid #ec4899; }
+.not-card.renk-gri { border-left: 4px solid #64748b; }
+.renk-secici { display: flex; gap: 8px; flex-wrap: wrap; }
+.renk-nokta {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: all 0.15s;
+}
+.renk-nokta:hover { transform: scale(1.15); }
+.renk-nokta.secili { border-color: var(--text-primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
 .not-tarih { font-size: 0.75rem; color: var(--text-muted); }
 .not-baslik {
   margin: 0 0 0.5rem;
