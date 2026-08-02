@@ -61,6 +61,7 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI } from '../api/index.js'
+import { safeGet, safeSet } from '../utils/safeStorage.js'
 
 const props = defineProps({ visible: Boolean })
 const emit = defineEmits(['update:visible'])
@@ -92,7 +93,7 @@ const ac = () => { query.value = ''; results.value = []; selectedIndex.value = 0
 const kapat = () => { emit('update:visible', false); query.value = ''; results.value = [] }
 
 const SON_ARAMA_ANAHTAR = 'raspel_son_aramalar'
-const sonAramalar = ref(JSON.parse(localStorage.getItem(SON_ARAMA_ANAHTAR) || '[]'))
+const sonAramalar = ref(safeGet(SON_ARAMA_ANAHTAR, []))
 
 const sonAramaKaydet = (q) => {
   const temiz = (q || '').trim()
@@ -100,12 +101,12 @@ const sonAramaKaydet = (q) => {
   const liste = sonAramalar.value.filter(x => x !== temiz)
   liste.unshift(temiz)
   sonAramalar.value = liste.slice(0, 8)
-  localStorage.setItem(SON_ARAMA_ANAHTAR, JSON.stringify(sonAramalar.value))
+  safeSet(SON_ARAMA_ANAHTAR, sonAramalar.value)
 }
 
 const sonAramaSil = (i) => {
   sonAramalar.value.splice(i, 1)
-  localStorage.setItem(SON_ARAMA_ANAHTAR, JSON.stringify(sonAramalar.value))
+  safeSet(SON_ARAMA_ANAHTAR, sonAramalar.value)
 }
 
 const handleKeydown = (e) => {

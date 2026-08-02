@@ -117,6 +117,7 @@ import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
 import BildirimZili from './BildirimZili.vue'
+import { safeGet, safeSet } from '../utils/safeStorage.js'
 
 const emit = defineEmits(['open-search', 'open-password-modal'])
 
@@ -143,8 +144,8 @@ const toggleTheme = () => {
   theme.value = isDark.value ? 'light' : 'dark'
 }
 
-const favoriler = ref(JSON.parse(localStorage.getItem('raspel_erp_favorites') || '[]'))
-watch(favoriler, (f) => localStorage.setItem('raspel_erp_favorites', JSON.stringify(f)), { deep: true })
+const favoriler = ref(safeGet('raspel_erp_favorites', []))
+watch(favoriler, (f) => safeSet('raspel_erp_favorites', f), { deep: true })
 
 const toggleFav = (path) => {
   const idx = favoriler.value.indexOf(path)

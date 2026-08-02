@@ -57,6 +57,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
+import { safeGet, safeSet } from '../utils/safeStorage.js'
 
 const router = useRouter()
 const panelAcik = ref(false)
@@ -79,7 +80,7 @@ const tercihListesi = [
   { tur: 'UYARI', etiket: 'Uyarılar' },
   { tur: 'INFO', etiket: 'Bilgilendirme' }
 ]
-const tercihler = ref(JSON.parse(localStorage.getItem(TERCIH_ANAHTAR) || '{}'))
+const tercihler = ref(safeGet(TERCIH_ANAHTAR, {}))
 
 const filtrelenmisBildirimler = computed(() =>
   bildirimler.value.filter(b => tercihler.value[b.tur] !== false)
@@ -87,7 +88,7 @@ const filtrelenmisBildirimler = computed(() =>
 
 const tercihDegistir = (tur, val) => {
   tercihler.value[tur] = val
-  localStorage.setItem(TERCIH_ANAHTAR, JSON.stringify(tercihler.value))
+  safeSet(TERCIH_ANAHTAR, tercihler.value)
 }
 
 watch(sonBildirim, (yeni) => {

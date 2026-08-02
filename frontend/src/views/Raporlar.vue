@@ -184,13 +184,14 @@ import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { raporAPI } from '../api/index.js'
+import { safeGet, safeSet } from '../utils/safeStorage.js'
 const toast = useToast()
 
 const cariHesapStore = useCariHesapStore()
 
 const FAVORI_ANAHTAR = 'raspel_favori_raporlar'
 const aktifSekme = ref(0)
-const favoriRaporlar = ref(JSON.parse(localStorage.getItem(FAVORI_ANAHTAR) || '[]'))
+const favoriRaporlar = ref(safeGet(FAVORI_ANAHTAR, []))
 
 const raporFavori = (key) => favoriRaporlar.value.some(r => r.key === key)
 
@@ -201,7 +202,7 @@ const raporFavoriDegistir = (key, index, ad) => {
   } else {
     favoriRaporlar.value.push({ key, index, ad })
   }
-  localStorage.setItem(FAVORI_ANAHTAR, JSON.stringify(favoriRaporlar.value))
+  safeSet(FAVORI_ANAHTAR, favoriRaporlar.value)
 }
 
 const ekstreKart = ref(null)
