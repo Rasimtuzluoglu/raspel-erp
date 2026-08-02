@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface SirketRepository extends JpaRepository<Sirket, Long> {
     List<Sirket> findByAktifTrue();
+    Sirket findFirstByAktifTrueOrderByIdAsc();
 }

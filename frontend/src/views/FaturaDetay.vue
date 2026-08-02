@@ -70,6 +70,26 @@
         <p><strong>Açıklama:</strong> {{ fatura.aciklama }}</p>
       </div>
 
+      <div class="belgeler no-print">
+        <div class="belgeler-baslik">
+          <h3><i class="pi pi-paperclip"></i> Belgeler</h3>
+          <div class="belge-yukleme">
+            <input ref="dosyaInput" type="file" hidden @change="dosyaSecildi" />
+            <Button label="Belge Ekle" icon="pi pi-plus" size="small" class="p-button-sm p-button-outlined" @click="dosyaInput.click()" :loading="belgeYukleniyor" />
+          </div>
+        </div>
+        <div v-if="belgeler.length === 0" class="belge-bos">Henüz belge eklenmemiş.</div>
+        <div v-else class="belge-liste">
+          <div v-for="b in belgeler" :key="b.id" class="belge-item">
+            <i class="pi pi-file belge-ikon"></i>
+            <span class="belge-ad">{{ b.dosyaAdi }}</span>
+            <span class="belge-tarih">{{ formatDateTime(b.olusturmaTarihi) }}</span>
+            <Button icon="pi pi-download" class="p-button-rounded p-button-text p-button-sm" @click="belgeIndir(b)" title="İndir" />
+            <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" @click="belgeSil(b.id)" title="Sil" />
+          </div>
+        </div>
+      </div>
+
       <div class="fatura-alt">
         <p>Oluşturma: {{ formatDateTime(fatura.olusturmaTarihi) }}</p>
       </div>
@@ -85,9 +105,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
 import { useYakinZamanda } from '../composables/useYakinZamanda.js'
+import { belgeAPI } from '../api/index.js'
 
 const route = useRoute()
 const faturaStore = useFaturaStore()
@@ -97,6 +119,61 @@ const fatura = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const printMode = ref(route.query.print === 'true')
+
+const toast = useToast()
+const dosyaInput = ref(null)
+const belgeler = ref([])
+const belgeYukleniyor = ref(false)
+
+const belgeleriYukle = async () => {
+  try {
+    const r = await belgeAPI.kayitBelgeleri('FATURA', route.params.id)
+    belgeler.value = r.data || []
+  } catch {}
+}
+
+const dosyaSecildi = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  belgeYukleniyor.value = true
+  try {
+    await belgeAPI.yukle('FATURA', route.params.id, file)
+    toast.add({ severity: 'success', summary: 'Eklendi', detail: 'Belge yüklendi.', life: 3000 })
+    await belgeleriYukle()
+  } catch {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Belge yüklenemedi.', life: 5000 })
+  } finally {
+    belgeYukleniyor.value = false
+    e.target.value = ''
+  }
+}
+
+const belgeIndir = async (b) => {
+  try {
+    const filename = b.url.split('/').pop()
+    const res = await belgeAPI.indir(filename)
+    const blobUrl = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.setAttribute('download', b.dosyaAdi)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(blobUrl)
+  } catch {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Belge indirilemedi.', life: 5000 })
+  }
+}
+
+const belgeSil = async (id) => {
+  try {
+    await belgeAPI.sil(id)
+    belgeler.value = belgeler.value.filter(b => b.id !== id)
+    toast.add({ severity: 'success', summary: 'Silindi', detail: 'Belge silindi.', life: 3000 })
+  } catch {
+    toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız.', life: 5000 })
+  }
+}
 
 const faturaFiyatli = ref(true)
 const fiyatSecenekleri = ref([
@@ -108,6 +185,7 @@ onMounted(async () => {
   try {
     fatura.value = await faturaStore.getFaturaById(route.params.id)
     useYakinZamanda().kaydet('fatura', fatura.value.id, `#${fatura.value.faturaNumarasi || fatura.value.id}`, fatura.value.cariHesapAd)
+    belgeleriYukle()
   } catch (err) {
     error.value = err.response?.data?.message || 'Fatura bulunamadı'
   } finally {
@@ -166,6 +244,16 @@ const formatDateTime = (d) => {
 .ozet-row .negative { color: #f44336; }
 .ozet-row .positive { color: #4caf50; }
 .fatura-yazi { margin-top: 20px; padding: 15px; background: #fff8e1; border-radius: 4px; }
+.belgeler { margin-top: 20px; padding: 15px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+.belgeler-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.belgeler-baslik h3 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.belge-bos { font-size: 13px; color: var(--text-muted); }
+.belge-liste { display: flex; flex-direction: column; gap: 6px; }
+.belge-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; }
+.belge-ikon { color: #60a5fa; font-size: 16px; }
+.belge-ad { flex: 1; font-size: 13px; word-break: break-all; }
+.belge-tarih { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+@media print { .belgeler { display: none !important; } }
 .fatura-alt { margin-top: 30px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px; }
 .durum-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
 .durum-badge.taslak { background: #fff3e0; color: #e65100; }

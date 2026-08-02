@@ -510,6 +510,19 @@ export const pdfAPI = {
   irsaliye(id) { return apiClient.get(`/rapor/irsaliye/${id}`, { responseType: 'blob' }) }
 }
 
+export const belgeAPI = {
+  yukle(entityAdi, entityId, file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('entityAdi', entityAdi)
+    formData.append('entityId', entityId)
+    return apiClient.post('/belgeler/yukle', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  kayitBelgeleri(entityAdi, entityId) { return apiClient.get(`/belgeler/kayit/${entityAdi}/${entityId}`) },
+  indir(filename) { return apiClient.get(`/belgeler/indir/${filename}`, { responseType: 'blob' }) },
+  sil(id) { return apiClient.delete(`/belgeler/${id}`) }
+}
+
 export const notAPI = {
   getAll(params) { return apiClient.get('/notlar', { params }) },
   getById(id) { return apiClient.get(`/notlar/${id}`) },

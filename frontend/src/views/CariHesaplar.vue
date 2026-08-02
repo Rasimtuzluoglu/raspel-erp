@@ -65,8 +65,9 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
-      >
-        <Column selection-mode="multiple" headerStyle="width: 3rem"></Column>
+        :virtual-scroll="cariHesapStore.cariHesaplar.length > 100"
+        :virtual-scroll-options="{ itemSize: tabloYogunluk === 'compact' ? 38 : 46, scrollHeight: '600px', showLoader: true }"
+      >        <Column selection-mode="multiple" headerStyle="width: 3rem"></Column>
         <Column v-if="kolonlar[0].visible" field="id" header="ID" style="width: 60px"></Column>
         <Column v-if="kolonlar[1].visible" field="ad" header="Adı" sortable style="width: 200px"></Column>
         <Column v-if="kolonlar[2].visible" field="tur" header="Tür" style="width: 100px">

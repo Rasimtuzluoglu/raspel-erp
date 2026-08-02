@@ -7,11 +7,16 @@ import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -26,6 +31,7 @@ public class PdfRaporService {
     private final FaturaRepository faturaRepository;
     private final FaturaKalemRepository faturaKalemRepository;
     private final CariHesapRepository cariHesapRepository;
+    private final SirketRepository sirketRepository;
 
     private static final PDType1Font BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
     private static final PDType1Font REGULAR = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
@@ -124,11 +130,35 @@ public class PdfRaporService {
     private float header(PDPageContentStream cs, float y, String title) throws IOException {
         cs.setFont(BOLD, 22);
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RasPel ERP"); cs.endText();
+
+        PDImageXObject logo = sirketLogosuBul();
+        if (logo != null) {
+            try {
+                float logoGenislik = 90;
+                float logoYukseklik = logoGenislik * logo.getHeight() / logo.getWidth();
+                cs.drawImage(logo, PAGE_WIDTH - logoGenislik + MARGIN, y - logoYukseklik + 18, logoGenislik, logoYukseklik);
+            } catch (Exception ignored) {}
+        }
+
         y -= 28;
         cs.setFont(BOLD, 16);
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(title); cs.endText();
         y -= 30;
         return y;
+    }
+
+    private PDImageXObject sirketLogosuBul() {
+        try {
+            Sirket sirket = sirketRepository.findFirstByAktifTrueOrderByIdAsc();
+            if (sirket == null || sirket.getLogoUrl() == null || sirket.getLogoUrl().isBlank()) return null;
+            String filename = sirket.getLogoUrl().substring(sirket.getLogoUrl().lastIndexOf('/') + 1);
+            Path logoYolu = Paths.get("uploads/sirket-logos").toAbsolutePath().normalize().resolve(filename);
+            File logoDosyasi = logoYolu.toFile();
+            if (!logoDosyasi.exists() || !logoDosyasi.isFile()) return null;
+            return PDImageXObject.createFromFileByContent(logoDosyasi, null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private float infoSatiri(PDPageContentStream cs, float y, String label, String value) throws IOException {
