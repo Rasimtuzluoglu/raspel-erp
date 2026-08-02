@@ -2,7 +2,10 @@
   <div class="fatura-detay" :class="{ 'print-mode': printMode }">
     <div class="detay-header">
       <Button label="Geri" icon="pi pi-arrow-left" @click="$router.push('/faturalar')" class="p-button-text no-print" />
-      <Button v-if="!printMode" label="Yazdır" icon="pi pi-print" @click="win.print()" class="no-print" />
+      <div class="detay-ayarlar no-print">
+        <SelectButton v-model="faturaFiyatli" :options="fiyatSecenekleri" optionLabel="label" optionValue="value" size="small" />
+        <Button label="Yazdır" icon="pi pi-print" @click="win.print()" />
+      </div>
     </div>
 
     <div v-if="loading" class="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
@@ -34,10 +37,10 @@
             <th>#</th>
             <th>Açıklama</th>
             <th>Adet</th>
-            <th>Birim Fiyat</th>
-            <th>İskonto %</th>
-            <th>KDV %</th>
-            <th>Toplam</th>
+            <th v-if="faturaFiyatli">Birim Fiyat</th>
+            <th v-if="faturaFiyatli">İskonto %</th>
+            <th v-if="faturaFiyatli">KDV %</th>
+            <th v-if="faturaFiyatli">Toplam</th>
           </tr>
         </thead>
         <tbody>
@@ -45,15 +48,15 @@
             <td>{{ i + 1 }}</td>
             <td>{{ k.aciklama }}</td>
             <td>{{ k.adet }}</td>
-            <td>{{ formatCurrency(k.birimFiyat) }}</td>
-            <td>{{ k.iskontoOrani || 0 }}%</td>
-            <td>{{ k.kdvOrani }}%</td>
-            <td class="text-right">{{ formatCurrency(k.tutar) }}</td>
+            <td v-if="faturaFiyatli">{{ formatCurrency(k.birimFiyat) }}</td>
+            <td v-if="faturaFiyatli">{{ k.iskontoOrani || 0 }}%</td>
+            <td v-if="faturaFiyatli">{{ k.kdvOrani }}%</td>
+            <td v-if="faturaFiyatli" class="text-right">{{ formatCurrency(k.tutar) }}</td>
           </tr>
         </tbody>
       </table>
 
-      <div class="fatura-ozet">
+      <div class="fatura-ozet" v-if="faturaFiyatli">
         <div class="ozet-row"><span>Ara Toplam:</span><span>{{ formatCurrency(fatura.araToplam) }}</span></div>
         <div class="ozet-row"><span>KDV Toplam:</span><span>{{ formatCurrency(fatura.kdv) }}</span></div>
         <div class="ozet-row" v-if="fatura.genelIskontoTutari > 0"><span>Genel İskonto:</span><span class="negative">-{{ formatCurrency(fatura.genelIskontoTutari) }}</span></div>
@@ -83,6 +86,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useFaturaStore } from '../stores/faturaStore.js'
+import SelectButton from 'primevue/selectbutton'
 
 const route = useRoute()
 const faturaStore = useFaturaStore()
@@ -92,6 +96,12 @@ const fatura = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const printMode = ref(route.query.print === 'true')
+
+const faturaFiyatli = ref(true)
+const fiyatSecenekleri = ref([
+  { label: 'Fiyatlı', value: true },
+  { label: 'Fiyatsız', value: false }
+])
 
 onMounted(async () => {
   try {
@@ -131,7 +141,8 @@ const formatDateTime = (d) => {
 
 <style scoped>
 .fatura-detay { padding: 20px; }
-.detay-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.detay-header { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detay-ayarlar { display: flex; align-items: center; gap: 8px; }
 .loading { text-align: center; padding: 60px; color: #666; }
 .fatura-kagit { background: var(--bg-card); padding: 40px; border: 1px solid var(--border); border-radius: 14px; max-width: 800px; margin: 0 auto; }
 .fatura-baslik { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #1976d2; padding-bottom: 20px; }

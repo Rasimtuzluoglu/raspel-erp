@@ -138,7 +138,10 @@
           <template #title>
             <div class="fis-card-header">
               <span><i class="pi pi-print"></i> Termal Yazıcı Fiş Önizlemesi</span>
-              <Button label="Yazdır" icon="pi pi-print" size="small" @click="fisiYazdir" :disabled="sepet.length === 0" />
+              <div class="fis-ayarlar">
+                <SelectButton v-model="fisFiyatli" :options="fisSecenekleri" optionLabel="label" optionValue="value" size="small" />
+                <Button label="Yazdır" icon="pi pi-print" size="small" @click="fisiYazdir" :disabled="sepet.length === 0" />
+              </div>
             </div>
           </template>
           <template #content>
@@ -156,31 +159,37 @@
                 <div class="fis-kalemler">
                   <div v-for="i in sepet" :key="i.id" class="fis-kalem">
                     <div class="fis-kalem-ad">{{ i.ad }} x{{ i.miktar }}</div>
-                    <div class="fis-kalem-tutar">{{ formatCurrency(i.miktar * i.fiyat) }}</div>
+                    <div class="fis-kalem-tutar" v-if="fisFiyatli">{{ formatCurrency(i.miktar * i.fiyat) }}</div>
                   </div>
                 </div>
                 <div class="fis-ayrac">---</div>
-                <div class="fis-toplam">
-                  <span>Ara Toplam</span>
-                  <span>{{ formatCurrency(toplam) }}</span>
-                </div>
-                <div class="fis-indirim" v-if="indirimDegeri > 0">
-                  <span>İndirim ({{ indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }})</span>
-                  <span>-{{ formatCurrency(indirimTutari) }}</span>
-                </div>
-                <div class="fis-genel-toplam">
-                  <span>GENEL TOPLAM</span>
-                  <span class="fis-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
-                </div>
-                <div class="fis-ayrac">---</div>
+                <template v-if="fisFiyatli">
+                  <div class="fis-toplam">
+                    <span>Ara Toplam</span>
+                    <span>{{ formatCurrency(toplam) }}</span>
+                  </div>
+                  <div class="fis-indirim" v-if="indirimDegeri > 0">
+                    <span>İndirim ({{ indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }})</span>
+                    <span>-{{ formatCurrency(indirimTutari) }}</span>
+                  </div>
+                  <div class="fis-genel-toplam">
+                    <span>GENEL TOPLAM</span>
+                    <span class="fis-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
+                  </div>
+                  <div class="fis-ayrac">---</div>
+                </template>
                 <div class="fis-odeme">
-                  <div class="fis-odeme-satir">
+                  <div class="fis-odeme-satir" v-if="fisFiyatli">
                     <span>Ödenen</span>
                     <span>{{ formatCurrency(odenenTutar) }}</span>
                   </div>
-                  <div class="fis-odeme-satir" v-if="kalanTutar > 0">
+                  <div class="fis-odeme-satir" v-if="fisFiyatli && kalanTutar > 0">
                     <span>Kalan</span>
                     <span>{{ formatCurrency(kalanTutar) }}</span>
+                  </div>
+                  <div class="fis-odeme-satir fis-odeme-durum">
+                    <span>Toplam Ürün</span>
+                    <span>{{ sepet.length }}</span>
                   </div>
                   <div class="fis-odeme-satir fis-odeme-durum">
                     <span>Durum</span>
@@ -268,6 +277,12 @@ const musteriKaydediliyor = ref(false)
 const sepet = ref([])
 const kaydediliyor = ref(false)
 const fisNo = ref('')
+
+const fisFiyatli = ref(true)
+const fisSecenekleri = ref([
+  { label: 'Fiyatlı', value: true },
+  { label: 'Fiyatsız', value: false }
+])
 
 const indirimTipi = ref('tutar')
 const indirimTipleri = ref([
@@ -580,7 +595,9 @@ const satisiTamamla = async () => {
 .kalan-deger { font-weight: 700; color: var(--accent); }
 
 .fis-card :deep(.p-card-content) { padding: 0; }
-.fis-card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.fis-card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 8px; flex-wrap: wrap; }
+.fis-ayarlar { display: flex; align-items: center; gap: 8px; }
+.fis-ayarlar .p-selectbutton .p-button { padding: 4px 10px; font-size: 11px; }
 .fis-onizleme-kapsam { overflow-x: auto; padding: 12px; background: var(--bg-secondary); border-radius: 0 0 8px 8px; }
 .fis-onizleme {
   width: 80mm; margin: 0 auto; padding: 12px 8px;
