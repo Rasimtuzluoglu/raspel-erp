@@ -252,12 +252,20 @@ import { faturaAPI, cariHesapAPI } from '../api/index.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import ToggleButton from 'primevue/togglebutton'
+import { useKisayollar } from '../composables/useKisayollar.js'
 
 const toast = useToast()
 const authStore = useAuthStore()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const kategoriStore = useKategoriStore()
+
+useKisayollar({
+  kaydet: () => satisiTamamla(),
+  iptal: () => { if (yeniMusteriDialog.value) yeniMusteriDialog.value = false },
+  yeni: () => { aramaMetni.value = ''; sepet.value = [] },
+  yazdir: () => fisiYazdir()
+})
 
 const sirketAdi = computed(() => authStore.sirketAdi || '')
 

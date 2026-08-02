@@ -5,6 +5,11 @@
       <template #start>
         <Button label="Yeni Ürün" icon="pi pi-plus" @click="openDialog" class="p-button-success" />
         <Button label="Toplu Fiyat Güncelle" icon="pi pi-dollar" @click="batchFiyatDialog = true" class="p-button-help" style="margin-left: 8px" />
+        <div v-if="seciliStoklar.length > 0" class="batch-actions">
+          <span class="batch-count">{{ seciliStoklar.length }} seçili</span>
+          <Button label="Toplu Sil" icon="pi pi-trash" class="p-button-sm p-button-danger" @click="batchSil" />
+          <Button label="CSV Aktar" icon="pi pi-download" class="p-button-sm p-button-outlined" @click="batchCsvExport" />
+        </div>
       </template>
       <template #end>
         <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:8px" @click="excelIndir" />
@@ -38,7 +43,7 @@
       <DataTable :value="filtrelenmisStoklar" :paginator="true" :rows="25" :rows-per-page-options="[15,25,50,100]"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
         current-page-report-template="{totalRecords} kayıttan {first}-{last}"
-        selection-mode="single" data-key="id" @row-click="stokSec($event.data)"
+        selection-mode="multiple" v-model:selection="seciliStoklar" data-key="id" @row-click="stokSec($event.data)"
         striped-rows sort-field="miktar" :sort-order="1"
         class="p-datatable-sm" :global-filter-fields="['ad','stokKodu','birim']">
         <template #header>
@@ -47,6 +52,7 @@
             <span v-if="kritikAdet > 0" class="kritik-bilgi"><i class="pi pi-exclamation-triangle"></i> {{ kritikAdet }} kritik</span>
           </div>
         </template>
+        <Column selection-mode="multiple" headerStyle="width: 2.5rem"></Column>
         <Column field="stokKodu" header="Stok Kodu" sortable style="width:120px" />
         <Column field="ad" header="Ürün Adı" sortable style="min-width:180px" />
         <Column field="birim" header="Birim" sortable style="width:90px" />
@@ -332,11 +338,18 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { stokAPI, excelAPI } from '../api/index.js'
+import { useKisayollar } from '../composables/useKisayollar.js'
 
 const toast = useToast()
 const confirm = useConfirm()
 const stokStore = useStokStore()
 const cariHesapStore = useCariHesapStore()
+
+useKisayollar({
+  yeni: () => openDialog(),
+  iptal: () => { showDialog.value = false },
+  kaydet: () => saveStok()
+})
 
 const aramaMetni = ref('')
 let aramaZaman = null
@@ -351,6 +364,7 @@ const filtreMaxFiyat = ref(null)
 
 const seciliStok = ref(null)
 const seciliStokId = ref(null)
+const seciliStoklar = ref([])
 const stokHareketler = ref([])
 const saving = ref(false)
 const gosterim = ref('tablo')
@@ -447,6 +461,39 @@ const confirmDel = (id) => {
 const openHareketDialog = (tur) => {
   hareketTur.value = tur; hareketForm.value = { miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' }
   showHareketDialog.value = true
+}
+
+const batchSil = () => {
+  if (!seciliStoklar.value.length) return
+  confirm.require({
+    message: `${seciliStoklar.value.length} ürün silinecek. Emin misiniz?`, header: 'Toplu Silme Onayı',
+    icon: 'pi pi-exclamation-triangle',
+    accept: async () => {
+      let basarili = 0, hatali = 0
+      for (const s of [...seciliStoklar.value]) {
+        try { await stokStore.deleteStok(s.id); basarili++ } catch { hatali++ }
+      }
+      seciliStoklar.value = []
+      toast.add({ severity: hatali ? 'warn' : 'success', summary: 'Tamamlandı', detail: `${basarili} silindi${hatali ? ', ' + hatali + ' hata' : ''}`, life: 5000 })
+    }
+  })
+}
+
+const batchCsvExport = () => {
+  if (!seciliStoklar.value.length) return
+  const kolonlar = ['ad', 'stokKodu', 'barkod', 'birim', 'fiyat', 'miktar', 'minMiktar']
+  const baslik = kolonlar.join(';')
+  const satirlar = seciliStoklar.value.map(s => kolonlar.map(k => s[k] ?? '').join(';'))
+  const csv = '\uFEFF' + [baslik, ...satirlar].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', `stoklar-${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
 
 const saveHareket = async () => {
@@ -566,4 +613,12 @@ h2 { color: var(--text-primary); font-size: 20px; margin: 0; }
 .filter-input { width: 150px !important; }
 .filter-input-sm { width: 120px !important; }
 .filter-dropdown { width: 160px !important; }
+.batch-actions {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-left: 12px; padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+.batch-count {
+  font-size: 12px; color: #60a5fa; font-weight: 600;
+}
 </style>

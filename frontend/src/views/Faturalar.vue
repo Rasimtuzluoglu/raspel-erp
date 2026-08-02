@@ -177,6 +177,7 @@ import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { excelAPI, pdfAPI } from '../api/index.js'
+import { useKisayollar } from '../composables/useKisayollar.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -184,6 +185,12 @@ const confirm = useConfirm()
 const faturaStore = useFaturaStore()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
+
+useKisayollar({
+  yeni: () => openCreateDialog(),
+  iptal: () => { showDialog.value = false },
+  kaydet: () => saveFatura()
+})
 
 const showDialog = ref(false)
 const loading = ref(false)

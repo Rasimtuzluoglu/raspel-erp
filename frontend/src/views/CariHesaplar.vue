@@ -27,6 +27,7 @@
         </div>
       </template>
       <template #end>
+        <TabloAyarlari tablo-key="cari" :kolonlar="kolonlar" @update:yogunluk="tabloYogunluk = $event" />
         <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:4px" @click="excelIndir" />
         <Button 
           label="CSV" 
@@ -58,6 +59,7 @@
         data-key="id"
         responsive-layout="scroll"
         striped-rows
+        :size="tabloYogunluk === 'compact' ? 'small' : 'normal'"
         :rows="10"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
@@ -65,20 +67,20 @@
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
       >
         <Column selection-mode="multiple" headerStyle="width: 3rem"></Column>
-        <Column field="id" header="ID" style="width: 60px"></Column>
-        <Column field="ad" header="Adı" sortable style="width: 200px"></Column>
-        <Column field="tur" header="Tür" style="width: 100px">
+        <Column v-if="kolonlar[0].visible" field="id" header="ID" style="width: 60px"></Column>
+        <Column v-if="kolonlar[1].visible" field="ad" header="Adı" sortable style="width: 200px"></Column>
+        <Column v-if="kolonlar[2].visible" field="tur" header="Tür" style="width: 100px">
           <template #body="s">
             <Tag :value="s.data.tur || '-'" :severity="s.data.tur === 'Musteri' ? 'info' : s.data.tur === 'Tedarikci' ? 'warn' : 'secondary'" />
           </template>
         </Column>
-        <Column field="yetkiliKisi" header="Yetkili" style="width: 130px"></Column>
-        <Column field="telefon" header="Telefon" style="width: 130px"></Column>
-        <Column field="krediLimiti" header="Kredi Limiti" style="width: 120px">
+        <Column v-if="kolonlar[3].visible" field="yetkiliKisi" header="Yetkili" style="width: 130px"></Column>
+        <Column v-if="kolonlar[4].visible" field="telefon" header="Telefon" style="width: 130px"></Column>
+        <Column v-if="kolonlar[5].visible" field="krediLimiti" header="Kredi Limiti" style="width: 120px">
           <template #body="s">{{ s.data.krediLimiti ? formatCurrency(s.data.krediLimiti) : '-' }}</template>
         </Column>
-        <Column field="odemeVadesi" header="Vade (Gün)" style="width: 80px"></Column>
-        <Column field="bakiye" header="Bakiye" style="width: 120px">
+        <Column v-if="kolonlar[6].visible" field="odemeVadesi" header="Vade (Gün)" style="width: 80px"></Column>
+        <Column v-if="kolonlar[7].visible" field="bakiye" header="Bakiye" style="width: 120px">
           <template #body="slotProps">
             <span :class="slotProps.data.bakiye >= 0 ? 'positive' : 'negative'">
               {{ formatCurrency(slotProps.data.bakiye) }}
@@ -301,11 +303,31 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { excelAPI } from '../api/index.js'
+import { useKisayollar } from '../composables/useKisayollar.js'
+import TabloAyarlari from '../components/TabloAyarlari.vue'
 
 const toast = useToast()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const hareketStore = useHareketStore()
+
+const tabloYogunluk = ref('comfortable')
+const kolonlar = ref([
+  { field: 'id', header: 'ID', visible: true },
+  { field: 'ad', header: 'Adı', visible: true },
+  { field: 'tur', header: 'Tür', visible: true },
+  { field: 'yetkiliKisi', header: 'Yetkili', visible: true },
+  { field: 'telefon', header: 'Telefon', visible: true },
+  { field: 'krediLimiti', header: 'Kredi Limiti', visible: true },
+  { field: 'odemeVadesi', header: 'Vade (Gün)', visible: true },
+  { field: 'bakiye', header: 'Bakiye', visible: true }
+])
+
+useKisayollar({
+  yeni: () => openDialog(),
+  iptal: () => { showDialog.value = false },
+  kaydet: () => saveCariHesap()
+})
 
 const showDialog = ref(false)
 const showHareketlerDialog = ref(false)

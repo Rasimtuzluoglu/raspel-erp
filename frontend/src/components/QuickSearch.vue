@@ -53,7 +53,7 @@
 <script setup>
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI } from '../api/index.js'
+import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI } from '../api/index.js'
 
 const props = defineProps({ visible: Boolean })
 const emit = defineEmits(['update:visible'])
@@ -71,7 +71,10 @@ const typeConfig = {
   fatura: { icon: 'pi pi-file', severity: 'warn', route: '/faturalar' },
   personel: { icon: 'pi pi-id-card', severity: 'help', route: '/personel' },
   proje: { icon: 'pi pi-folder', severity: 'contrast', route: '/projeler' },
-  siparis: { icon: 'pi pi-receipt', severity: 'info', route: '/siparisler' }
+  siparis: { icon: 'pi pi-receipt', severity: 'info', route: '/siparisler' },
+  not: { icon: 'pi pi-sticky-note', severity: 'info', route: '/notlar' },
+  banka: { icon: 'pi pi-building', severity: 'warn', route: '/bankalar' },
+  kasa: { icon: 'pi pi-wallet', severity: 'info', route: '/kasa' }
 }
 
 watch(() => props.visible, (v) => {
@@ -99,33 +102,29 @@ const navigate = (item) => {
 
 let searchTimer = null
 
+const icindeAra = (val, q) => (val || '').toString().toLowerCase().includes(q)
+
 watch(query, (val) => {
   if (searchTimer) clearTimeout(searchTimer)
   if (!val || val.length < 1) { results.value = []; return }
   searchTimer = setTimeout(async () => {
     loading.value = true; error.value = null; selectedIndex.value = 0
     const q = val.trim().toLowerCase()
-    const firstChar = q[0]
-    const allCategories = !['c', 's', 'f', 'p', 'r'].includes(firstChar)
     try {
-      const promises = []
-      if (firstChar === 'c' || allCategories) {
-        promises.push(cariHesapAPI.search(q).then(r => r.data.map(d => ({ ...d, type: 'cari', ...typeConfig.cari, title: d.ad, subtitle: `Vergi: ${d.vergiNumarasi || '-'} | Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => []))
-      }
-      if (firstChar === 's' || allCategories) {
-        promises.push(stokAPI.ara(q).then(r => r.data.map(d => ({ ...d, type: 'stok', ...typeConfig.stok, title: d.ad, subtitle: `Kod: ${d.stokKodu} | Miktar: ${d.miktar} ${d.birim}` }))).catch(() => []))
-      }
-      if (firstChar === 'f' || allCategories) {
-        promises.push(faturaAPI.getAll().then(r => r.data.filter(f => f.faturaNumarasi?.toLowerCase().includes(q) || f.cariHesapAd?.toLowerCase().includes(q)).map(d => ({ ...d, type: 'fatura', ...typeConfig.fatura, title: `#${d.faturaNumarasi || d.id}`, subtitle: `${d.cariHesapAd} | ${formatCur(d.genelToplam)}` }))).catch(() => []))
-      }
-      if (firstChar === 'p' || allCategories) {
-        promises.push(personelAPI.search(q).then(r => r.data.map(d => ({ ...d, type: 'personel', ...typeConfig.personel, title: d.ad, subtitle: `${d.pozisyon || ''}` }))).catch(() => []))
-      }
-      if (firstChar === 'r' || allCategories) {
-        promises.push(projeAPI.search(q).then(r => r.data.map(d => ({ ...d, type: 'proje', ...typeConfig.proje, title: d.ad, subtitle: `${d.durum || ''}` }))).catch(() => []))
-      }
-      const all = await Promise.all(promises)
-      results.value = all.flat().slice(0, 12)
+      const [cariler, stoklar, faturalar, personeller, projeler, siparisler, notlar, bankalar, kasalar] = await Promise.all([
+        cariHesapAPI.search(q).then(r => r.data.map(d => ({ ...d, type: 'cari', ...typeConfig.cari, title: d.ad, subtitle: `Vergi: ${d.vergiNumarasi || '-'} | Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => []),
+        stokAPI.ara(q).then(r => r.data.map(d => ({ ...d, type: 'stok', ...typeConfig.stok, title: d.ad, subtitle: `Kod: ${d.stokKodu || '-'} | Miktar: ${d.miktar || 0} ${d.birim || ''}` }))).catch(() => []),
+        faturaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(f => icindeAra(f.faturaNumarasi, q) || icindeAra(f.cariHesapAd, q)).slice(0, 5).map(d => ({ ...d, type: 'fatura', ...typeConfig.fatura, title: `#${d.faturaNumarasi || d.id}`, subtitle: `${d.cariHesapAd || '-'} | ${formatCur(d.genelToplam)}` }))).catch(() => []),
+        personelAPI.getAll().then(r => (r.data?.content || r.data || []).filter(p => icindeAra(p.ad, q) || icindeAra(p.soyad, q) || icindeAra(p.pozisyon, q)).slice(0, 5).map(d => ({ ...d, type: 'personel', ...typeConfig.personel, title: `${d.ad || ''} ${d.soyad || ''}`, subtitle: `${d.pozisyon || '-'}` }))).catch(() => []),
+        projeAPI.getAll().then(r => (r.data?.content || r.data || []).filter(p => icindeAra(p.ad, q) || icindeAra(p.kod, q)).slice(0, 5).map(d => ({ ...d, type: 'proje', ...typeConfig.proje, title: d.ad, subtitle: `Durum: ${d.durum || '-'}` }))).catch(() => []),
+        siparisAPI.getAll().then(r => (r.data?.content || r.data || []).filter(s => icindeAra(s.siparisNo, q) || icindeAra(s.durum, q)).slice(0, 5).map(d => ({ ...d, type: 'siparis', ...typeConfig.siparis, title: `#${d.siparisNo || d.id}`, subtitle: `Durum: ${d.durum || '-'}` }))).catch(() => []),
+        notAPI.getAll().then(r => (r.data?.content || r.data || []).filter(n => icindeAra(n.baslik, q)).slice(0, 3).map(d => ({ ...d, type: 'not', ...typeConfig.not, title: d.baslik, subtitle: `Önem: ${d.onemDerecesi || 'NORMAL'}` }))).catch(() => []),
+        bankaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(b => icindeAra(b.ad, q) || icindeAra(b.iban, q)).slice(0, 3).map(d => ({ ...d, type: 'banka', ...typeConfig.banka, title: d.ad, subtitle: `IBAN: ${d.iban || '-'}` }))).catch(() => []),
+        kasaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(k => icindeAra(k.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'kasa', ...typeConfig.kasa, title: d.ad, subtitle: `Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => [])
+      ])
+      const birlesik = [...cariler, ...stoklar, ...faturalar, ...personeller, ...projeler, ...siparisler, ...notlar, ...bankalar, ...kasalar]
+      const sirali = birlesik.filter(i => i.title?.toLowerCase().startsWith(q)).concat(birlesik.filter(i => !i.title?.toLowerCase().startsWith(q)))
+      results.value = sirali.slice(0, 15)
     } catch (e) { error.value = 'Arama sırasında hata oluştu' }
     finally { loading.value = false }
   }, 300)
