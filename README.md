@@ -1,15 +1,31 @@
-# <img src="https://img.icons8.com/fluency/48/calculator.png" width="32" /> RasPel - Yeni Nesil ERP
+# <img src="https://img.icons8.com/fluency/48/calculator.png" width="32" /> RasPel — Yeni Nesil ERP
 
 > **Ras**im **Tuz**luoğlu tarafından geliştirilmiş, modern ve kapsamlı Kurumsal Kaynak Planlama sistemi.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white" />
-  <img src="https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?style=flat&logo=spring&logoColor=white" />
+  <img src="https://img.shields.io/badge/Spring_Boot-3.2.12-6DB33F?style=flat&logo=spring&logoColor=white" />
   <img src="https://img.shields.io/badge/Vue.js-3.3-4FC08D?style=flat&logo=vuedotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tests-551-green?style=flat" />
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" />
+  <img src="https://img.shields.io/badge/SSL-Let's_Encrypt-0b7d3d?style=flat" />
 </p>
+
+<p align="center">
+  <b>Finans · Ticaret · Envanter · İK · Rapor — Tek platformda</b>
+</p>
+
+---
+
+## ✨ Öne Çıkanlar
+
+- 🧠 **Akıllı Anomali Tespiti** — Mükerrer fatura ve çift ödemeleri otomatik bulur
+- 🔔 **Anlık Bildirimler** — WebSocket + masaüstü bildirimleri, kullanıcı tercihleri
+- 🖨️ **Termal Fiş** — Fiyatlı/fiyatsız yazdırma, önizleme penceresi
+- 🔍 **Evrensel Arama** — Ctrl+K ile 9 modülde anlık arama + son aramalar
+- 📎 **Belge Yönetimi** — Fatura/siparişe dosya iliştirme
+- 🔐 **Production Hazır** — Let's Encrypt SSL, SMTP, otomatik yedekleme, felaket kurtarma testi
 
 ---
 
@@ -19,61 +35,52 @@
 | Modül | Açıklama |
 |-------|----------|
 | **Cari Hesap** | Müşteri/tedarikçi yönetimi, bakiye takibi, kredi limiti, ödeme vadesi, tahsilat/ödeme |
-| **Fatura** | Alış/satış faturası, iskonto, ödeme, KDV hesaplama, e-fatura entegrasyonu |
-| **Banka & Kasa** | Hesap takibi, havale/EFT, kasa hareketleri |
-| **Çek/Senet** | Portföy takibi, vade yönetimi, cirolama |
-| **Bütçe** | Gelir/gider bütçesi, aylık/yıllık planlama |
-| **Masraf** | Gider takibi, belge no ile kayıt |
+| **Fatura** | Alış/satış faturası, iskonto, KDV, e-fatura, **otomatik fatura no** (`FTR-2026-000001`), PDF (fiyatlı/fiyatsız) |
+| **Banka & Kasa** | Hesap takibi, IBAN tıkla-kopyala |
+| **Çek/Senet** | Portföy takibi, vade yönetimi |
+| **Bütçe & Masraf** | Aylık/yıllık planlama ve gider takibi |
 
 ### 🛒 Ticaret
 | Modül | Açıklama |
 |-------|----------|
-| **Satış (POS)** | Barkod okuyuculu hızlı satış, anlık sepet, seri no arama, termal yazıcı fiş, para üstü |
-| **Sipariş** | Teklif → Sipariş dönüşümü, durum takibi |
-| **Satın Alma** | Talep → Sipariş akışı, tedarikçi yönetimi |
-| **İrsaliye** | Sevk irsaliyesi, irsaliye bazlı fatura, stok hareketi |
-| **İade** | İade yönetimi, iade kalemleri, durum takibi |
-| **Fiyat Listesi** | Ürün bazlı alış/satış fiyatı, geçerlilik tarihi |
+| **Hızlı Satış (POS)** | Barkod arama, anlık sepet, **termal fiş yazdırma (fiyatlı/fiyatsız + önizleme)** |
+| **Sipariş** | Otomatik sipariş no (`SIP-2026-000001`), durum takibi |
+| **Satın Alma** | Talep → Sipariş akışı |
+| **İrsaliye & İade** | Sevk ve iade süreçleri, stok hareketi |
+| **Fiyat Listesi** | Ürün bazlı alış/satış fiyatı |
 
 ### 📦 Envanter
 | Modül | Açıklama |
 |-------|----------|
-| **Stok Yönetimi** | Ürün kartı, barkod, marka, KDV, raf no, ağırlık, kategori, çoklu birim, tedarikçi bilgisi, maliyet yöntemi |
-| **Depo** | Çoklu depo desteği, depo bazlı stok takibi |
-| **Seri/Lot** | Seri no, lot no, son kullanma tarihi |
-| **Stok Sayım** | Sayım fişi, beklenen/sayılan farkı, otomatik hesaplama |
-| **Toplu Stok İmport** | CSV'den toplu ürün yükleme |
-| **Depolar Arası Transfer** | Depodan depoya stok taşıma |
+| **Stok Yönetimi** | Ürün kartı, barkod, marka, çoklu birim, kritik stok uyarısı, tablo/kart görünümü |
+| **Depo** | Çoklu depo, depo bazlı stok, transfer |
+| **Seri/Lot & Sayım** | Seri takibi, sayım fişi |
+| **Veri Aktar** | CSV ile toplu stok/cari (batch insert) |
 
 ### 👥 İnsan Kaynakları
 | Modül | Açıklama |
 |-------|----------|
-| **Personel** | Künye, iletişim, maaş bilgisi |
-| **Puantaj** | Günlük devam takibi, raporlama |
-| **İzin** | İzin talebi, onay/ret mekanizması, durum filtresi |
-| **Maaş Bordro** | Brüt/kesinti/net, dönemsel hesaplama |
-| **Vardiya** | Sabah/Akşam/Gece vardiya planlaması |
+| **Personel, Puantaj, İzin** | Künye, devam takibi, onay mekanizması |
+| **Maaş Bordro & Vardiya** | Brüt/kesinti/net hesaplama, vardiya planlama |
 
 ### 📊 Rapor & Analiz
-- Anlık dashboard (cari sayısı, bakiye, tahsilat/ödeme, bekleyen izin, aylık gelir/gider grafiği)
-- Satış/sipariş istatistikleri, en çok satan ürünler
-- İK özet kartları (aktif çalışan, bugün izinli, bu ay işe başlayacak)
-- Bakiye grafiği (pasta), son hareketler (çizgi grafik + tablo)
-- Vade yaşlandırma, KDV raporu
-- Excel export (Cari, Fatura, Hareket, Stok, Banka, Kasa, Personel)
-- PDF rapor
+- Dashboard: nakit akışı, son görüntülenenler, kritik stok, gelir/gider grafikleri
+- Cari ekstre, KDV, yaşlandırma, **favori raporlar**
+- Excel export + PDF rapor (şirket logolu)
+- **Denetim Log** — filtreleme, kayıtlı filtreler, Excel export
+- **Anomaliler** — mükerrer kayıt taraması
 
 ### ⚙️ Sistem
 | Özellik | Açıklama |
 |---------|----------|
-| **Yetkilendirme** | Admin/User rolleri, sayfa bazlı erişim, `requiresAdmin` route guard |
-| **Çoklu Şirket** | Tenant izolasyonu, girişte firma seçimi |
-| **Denetim Log** | Tüm işlemler kayıt altına alınır |
-| **Yedekleme** | Otomatik/manuel, Günlük/Haftalık/Aylık/Yıllık rotasyon |
-| **Hızlı Arama** | Ctrl+K ile evrensel arama |
-| **Tema** | Açık/Koyu mod desteği, light mode tema fix'leri |
-| **Avatar Yükleme** | Kullanıcı profil fotoğrafı yükleme |
-| **Dil** | i18n altyapısı (şu an TR, EN eklenebilir) |
+| **Güvenlik** | JWT + Admin/User rolleri + login rate limit + oturum zaman aşımı uyarısı |
+| **Çoklu Şirket** | Tenant izolasyonu, dönem yönetimi |
+| **Notlar** | Renkli etiketler, önem derecesi, silme geri alma |
+| **Yedekleme** | Otomatik rotasyon (Günlük/Haftalık/Aylık/Yıllık) + felaket kurtarma |
+| **Bildirimler** | WebSocket + masaüstü, tür bazlı tercihler |
+| **Tema & Dil** | Açık/Koyu tema, TR/EN dil seçici |
+| **Klavye Kısayolları** | Ctrl+K arama, Ctrl+S kaydet, F2 yeni kayıt, Ctrl+P yazdır, Esc kapat |
+| **Kullanıcı Dostu** | Taslak otomatik kayıt, boş tablo yönlendirmeleri, şifre güç göstergesi, sütun ayarları, toplu işlemler |
 
 ---
 
@@ -81,21 +88,22 @@
 
 ```
 raspel-erp/
-├── backend/              # Spring Boot 3.2 + Java 21
-│   ├── src/main/java/    # 210+ Java sınıfı
-│   │   ├── controller/   # REST API (50+ endpoint)
-│   │   ├── service/      # İş mantığı
+├── backend/              # Spring Boot 3.2.12 + Java 21
+│   ├── src/main/java/    # 240+ Java sınıfı
+│   │   ├── controller/   # REST API (60+ endpoint)
+│   │   ├── service/      # İş mantığı (Redis cache, batch, N+1 optimizasyonu)
 │   │   ├── repository/   # Veri erişim (JPA)
 │   │   ├── entity/       # JPA entity'leri (40+ tablo)
 │   │   ├── dto/          # Veri transfer objeleri
-│   │   ├── config/       # Security, JWT, Redis, RabbitMQ, Rate Limiter
-│   │   └── exception/    # Custom exception + GlobalExceptionHandler
+│   │   ├── config/       # Security, JWT, Redis, RabbitMQ, WebSocket, Rate Limiter
+│   │   └── exception/    # GlobalExceptionHandler (Türkçe hata mesajları)
 │   └── src/main/resources/
-│       └── db/migration/ # Flyway (17 migration)
+│       └── db/migration/ # Flyway (V1..V26 + performans index'leri)
 ├── frontend/             # Vue 3 + PrimeVue 4 + Pinia + Chart.js
-│   └── src/views/        # 35+ sayfa (Dashboard, POS, Tüm CRUD sayfaları)
-├── config/               # Traefik, Prometheus, Grafana
-├── scripts/              # Yedekleme script'leri
+│   └── src/views/        # 35+ sayfa (chunk-split + lazy loading)
+├── config/               # Traefik (SSL), Prometheus, Grafana
+├── docs/                 # Kurulum, kullanım ve API kılavuzları
+├── scripts/              # Yedekleme, felaket kurtarma, E2E ve yük testleri
 └── docker-compose.yml    # 9 container, tek komutla ayağa kalkar
 ```
 
@@ -103,44 +111,40 @@ raspel-erp/
 
 | Katman | Teknoloji |
 |--------|-----------|
-| **Backend** | Java 21, Spring Boot 3.2, Spring Security, JPA/Hibernate, Flyway |
+| **Backend** | Java 21, Spring Boot 3.2.12, Spring Security, JPA/Hibernate, Flyway, Resilience4j |
 | **Frontend** | Vue 3, Vite, PrimeVue 4, Pinia, Chart.js, Axios |
-| **Veritabanı** | PostgreSQL 16 |
-| **Cache** | Redis 7 |
-| **Message** | RabbitMQ 3 |
-| **Auth** | JWT (jjwt 0.12) + httpOnly cookie + Login rate limit |
-| **Excel** | Apache POI 5.2.5 (.xlsx export) |
-| **E2E Test** | Cypress 15 |
+| **Veritabanı** | PostgreSQL 16 (24 performans index'i) |
+| **Cache** | Redis 7 (Jackson serializer, 5 cache bölgesi) |
+| **Message** | RabbitMQ 3 + STOMP WebSocket |
+| **Auth** | JWT + login rate limit |
+| **E-posta** | SMTP HTML şablonları (fatura, sipariş, şifre, stok uyarısı) |
 | **Monitoring** | Prometheus + Grafana |
-| **Reverse Proxy** | Traefik 3 |
-| **Container** | Docker + Docker Compose |
-| **CI/CD** | GitHub Actions (+ Trivy security scan) |
+| **Reverse Proxy** | Traefik 3 + Let's Encrypt SSL |
+| **CI/CD** | GitHub Actions (build + test + Trivy) |
 
 ---
 
 ## 🚀 Hızlı Başlangıç
 
 ```bash
-# Projeyi klonla
 git clone https://github.com/Rasimtuzluoglu/raspel-erp.git
 cd raspel-erp
 
-# .env dosyasını oluştur
-cp .env.example .env
+cp .env.example .env   # parolaları değiştirin
 
-# Tüm servisleri ayağa kaldır
 docker compose up -d --build
 
-# Tarayıcıda aç
 open http://localhost
 ```
 
-### Giriş Bilgileri
+### Giriş Bilgileri (dev)
 
 | Kullanıcı | Şifre | Rol |
 |-----------|-------|-----|
 | `admin` | `admin123` | ADMIN (tüm sayfalar) |
 | `muhasebe` | `123456` | USER (kısıtlı erişim) |
+
+> ⚠️ Varsayılan parolaları ilk girişte değiştirin!
 
 ### Servisler
 
@@ -155,70 +159,63 @@ open http://localhost
 
 ---
 
----
+## 🔐 Production Kurulumu (SSL)
 
-## 📦 Demo Verisi
-
-İlk çalıştırmada otomatik olarak yüklenen veriler:
-- 👤 4 kullanıcı (admin, muhasebe, ali, zeynep)
-- 🏢 2 şirket
-- 📅 3 dönem (2024-2026)
-- 🏪 4 şube + 4 depo
-- 📦 20 örnek ürün (yazıcı, monitör, aksesuar...)
-- 👥 8 cari hesap (müşteri/tedarikçi)
-- 🏦 3 banka hesabı
-- 💵 3 kasa
+1. Alan adınızı sunucuya yönlendirin
+2. `.env` içinde `ACME_EMAIL` ve `APP_DOMAIN` ayarlayın
+3. `docker compose up -d traefik` — Let's Encrypt sertifikası otomatik alınır
+4. Detaylı kılavuz: **[docs/KURULUM.md](docs/KURULUM.md)**
 
 ---
 
-## 📜 Migration'lar
+## 🧪 Testler
+
+| Katman | Adet | Komut |
+|--------|------|-------|
+| Backend (JUnit) | **477** | `cd backend && mvn test` |
+| Frontend (Vitest) | **74** | `cd frontend && npm run test` |
+
+### Operasyonel Testler (`scripts/`)
+- **Felaket Kurtarma** — `disaster-recovery-test.ps1` (yedek → sil → geri yükle → doğrula)
+- **Uçtan Uca İş Akışı** — `e2e-workflow-test.mjs` (giriş→cari→stok→sipariş→fatura→tahsilat→PDF)
+- **Yük Testi** — `load-test.mjs 50 5` (50 eşzamanlı: %100 başarı, ~600 istek/sn)
+
+---
+
+## 📚 Dokümantasyon
+
+- **[KURULUM.md](docs/KURULUM.md)** — Kurulum, SSL, yedekleme, sorun giderme
+- **[KULLANIM.md](docs/KULLANIM.md)** — Modül rehberi, kısayollar, iş akışları
+- **[API.md](docs/API.md)** — Endpoint listesi, kimlik doğrulama, hata formatları
+
+---
+
+## 📜 Migration'lar (Flyway)
 
 | Versiyon | Açıklama |
 |----------|----------|
-| V1 | İlk şema (28 tablo, 7 schema) |
-| V4 | Şube & Depo yapısı |
-| V5 | Tenant izolasyonu (`sirket_id`) |
-| V6 | `Double` → `BigDecimal` dönüşümü |
-| V10 | Finans, Ticaret, Envanter, İK modülleri |
-| V11 | Cari hesap detay alanları |
-| V12 | Stok detay alanları (marka, kategori, satış fiyatı) |
-| V13 | Cari hesap ID null izni, entity fix'leri |
-| V14 | Fatura kalem `olusturma_tarihi` default |
-| V15 | Siparis/ÇekSenet/Irsaliye `cari_hesap_id` DROP NOT NULL |
-| V16 | Fatura iskonto/ödeme, hareket `odeme_sekli`, iade kalemleri |
-| V17 | Cari kredi limiti/ödeme vadesi, Stok çoklu birim/tedarikçi/maliyet yöntemi |
-
----
-
-## 🧪 Test
-
-```bash
-# Backend testleri (374 test)
-cd backend
-./mvnw test
-
-# Frontend E2E testleri (Cypress)
-cd frontend
-npm run cypress:open   # interaktif
-npm run cypress:run    # headless
-```
+| V1-V21 | Temel şema, modüller, tenant izolasyonu, e-fatura |
+| V22 | Notlar tablosu |
+| V23 | Not renk alanı |
+| V24 | `sistem.not` → `sistem.notlar` (H2 uyumu) |
+| V25 | Belge yönetimi tablosu |
+| V26 | **24 performans index'i** |
 
 ---
 
 ## 🤝 Katkı
 
-Geliştirme sürecinde katkıda bulunmak için:
 1. Fork'la
 2. Feature branch oluştur (`git checkout -b feature/yeni-ozellik`)
-3. Değişiklikleri commit'le (`git commit -m 'feat: yeni özellik'`)
-4. Branch'i push'la (`git push origin feature/yeni-ozellik`)
+3. Değişiklikleri commit'le
+4. Branch'i push'la
 5. Pull Request aç
 
 ---
 
 ## 📄 Lisans
 
-**© 2026 Rasim Tuzluoğlu** - Tüm hakları saklıdır.
+**© 2026 Rasim Tuzluoğlu** — Tüm hakları saklıdır.
 
 ---
 
