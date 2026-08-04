@@ -70,7 +70,6 @@
       </router-link>
 
       <div
-        v-if="authStore.isAdmin"
         class="menu-grup gelismis-mod-btn"
         @click="toggleGelismisMod"
       >
@@ -281,10 +280,9 @@ const tumMenuler = [
 ]
 
 const gorunenMenuler = computed(() => {
-  const adminMod = gelismisMod.value && authStore.isAdmin
   return tumMenuler.filter(m => {
     if (m.path === '/') return false
-    if (!adminMod && m.gelismis) return false
+    if (!gelismisMod.value && m.gelismis) return false
     if (m.admin && !authStore.isAdmin) return false
     return true
   })
