@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.entity.ticaret.Fatura;
 
 @Tag(name = "Banka Mutabakatı", description = "Banka hesap özeti yükleme ve fatura eşleştirme API")
 @RestController

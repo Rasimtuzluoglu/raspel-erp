@@ -200,7 +200,7 @@ open http://localhost
 
 | Katman | Adet | Komut |
 |--------|------|-------|
-| Backend (JUnit) | **512** | `cd backend && mvn test` |
+| Backend (JUnit) | **510** | `cd backend && mvn test` |
 | Frontend (Vitest) | **84** | `cd frontend && npm run test` |
 
 ### Operasyonel Testler (`scripts/`)
@@ -220,27 +220,57 @@ open http://localhost
 
 ## 📜 Migration'lar (Flyway)
 
-| Versiyon | Açıklama |
+19 migration ile temizlenmis schema. Tum DOUBLE→NUMERIC fix'leri, nullable cari_hesap_id ve version kolonlari V1'de birlestirildi.
+
+| Versiyon | Aciklama |
 |----------|----------|
-| V1-V21 | Temel şema, modüller, tenant izolasyonu, e-fatura |
-| V22 | Notlar tablosu |
-| V23 | Not renk alanı |
-| V24 | `sistem.not` → `sistem.notlar` (H2 uyumu) |
-| V25 | Belge yönetimi tablosu |
+| V1-V5 | Temel schema, cari, sirket, sube/depo, tenant izolasyonu |
+| V8-V12 | Logo, stok alanlari, moduller, cari detay, stok detay |
+| V16-V17 | Fatura/hareket/iade gelistirme, cari/stok batch3 |
+| V20 | E-Fatura, doviz kuru, rol & yetki matrisi |
+| V22 | Notlar tablosu (`sistem.notlar`) |
+| V25 | Belge yonetimi |
 | V26 | **24 performans index'i** |
-| V27 | Genel muhasebe (hesap planı, fiş, kalem) + CRM fırsatları |
-| V28 | Banka mutabakatı (hesap özeti hareketleri) |
-| V29 | 2FA kolonları + döviz kuru efektif kur kolonları |
+| V27 | Genel muhasebe + CRM |
+| V28 | Banka mutabakati |
+| V29 | 2FA + doviz kuru efektif kur |
 
 ---
 
-## 🤝 Katkı
+## 🤝 Katki
 
-1. Fork'la
-2. Feature branch oluştur (`git checkout -b feature/yeni-ozellik`)
-3. Değişiklikleri commit'le
-4. Branch'i push'la
-5. Pull Request aç
+1. `AGENTS.md` dosyasini okuyun (AI araclar ve gelistiriciler icin rehber)
+2. Fork'la
+3. Feature branch olustur (`git checkout -b feature/yeni-ozellik`)
+4. Degisiklikleri commit'le
+5. Branch'i push'la
+6. Pull Request ac
+
+## 🚀 Hizli Baslangic (Dev)
+
+```bash
+# Altyapi (PostgreSQL, Redis, RabbitMQ, Adminer)
+docker-compose -f docker-compose.dev.yml up -d
+
+# Backend (port 8081)
+cd backend && mvn spring-boot:run
+
+# Frontend (port 5173)
+cd frontend && npm run dev
+```
+
+Ilk giris: `admin` / `admin` → http://localhost:5173
+
+## 🧹 Son Sadeleştirme (v1.4.0)
+
+- **API client**: 638 satir tek dosya → 7 domain modulu (`frontend/src/api/modules/`)
+- **Backend package**: 155 dosya 7 alt package'a tasindi (`envanter`, `finans`, `ik`, `muhasebe`, `sistem`, `sube`, `ticaret`)
+- **Flyway**: 29 → 19 migration (duplicate/fix migration'lar temizlendi)
+- **ESLint**: 5464 problem → 0 (lint/test CI'da zorunlu)
+- **Menu**: Gelismis/Temel mod toggle, 802 → 313 satir sidebar
+- **Docker**: `docker-compose.dev.yml` ile sadece altyapi (4 container)
+- **Health check**: Redis + RabbitMQ health indicator
+- **Prod profili**: `application-prod.properties` eklendi
 
 ---
 

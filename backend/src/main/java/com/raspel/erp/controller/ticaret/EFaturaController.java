@@ -17,10 +17,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
+import com.raspel.erp.entity.ticaret.Fatura;
 
 @Tag(name = "E-Fatura", description = "E-Fatura & E-İrsaliye entegrasyon API")
 @RestController
-@RequestMapping({"/api/e-fatura", "/api/v1/e-fatura"})
+@RequestMapping("/api/e-fatura")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class EFaturaController {

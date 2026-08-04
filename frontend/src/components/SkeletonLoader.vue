@@ -1,6 +1,14 @@
 <template>
-  <div v-for="i in count" :key="i" class="skeleton-item">
-    <Skeleton :width="width" :height="height" :borderRadius="borderRadius" />
+  <div
+    v-for="i in count"
+    :key="i"
+    class="skeleton-item"
+  >
+    <Skeleton
+      :width="width"
+      :height="height"
+      :border-radius="borderRadius"
+    />
   </div>
 </template>
 

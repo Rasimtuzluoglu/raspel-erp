@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.SiparisDTO;
-import com.raspel.erp.service.SiparisService;
+import com.raspel.erp.dto.ticaret.SiparisDTO;
+import com.raspel.erp.service.ticaret.SiparisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.ticaret.SiparisController;
 
 @WebMvcTest(SiparisController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -111,9 +112,6 @@ class SiparisControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

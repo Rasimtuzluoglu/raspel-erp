@@ -1,11 +1,11 @@
 package com.raspel.erp.service.finans;
 
 import com.raspel.erp.dto.finans.BankaHareketiDTO;
-import com.raspel.erp.entity.Fatura;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.finans.BankaHareketi;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.FaturaRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.repository.finans.BankaHareketiRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +25,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.raspel.erp.entity.finans.Banka;
 
 @Service
 @Transactional

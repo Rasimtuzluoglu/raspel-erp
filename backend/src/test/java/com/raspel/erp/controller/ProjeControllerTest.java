@@ -1,8 +1,8 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.GorevDTO;
-import com.raspel.erp.dto.ProjeDTO;
-import com.raspel.erp.service.ProjeService;
+import com.raspel.erp.dto.sistem.GorevDTO;
+import com.raspel.erp.dto.sistem.ProjeDTO;
+import com.raspel.erp.service.sistem.ProjeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +25,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.sistem.Gorev;
+import com.raspel.erp.entity.sistem.Proje;
+import com.raspel.erp.controller.sistem.ProjeController;
 
 @WebMvcTest(ProjeController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -137,10 +140,6 @@ class ProjeControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
-
 
 
 

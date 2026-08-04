@@ -6,7 +6,7 @@ import com.raspel.erp.entity.sube.Depo;
 import com.raspel.erp.entity.sube.DepoStok;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.exception.BusinessException;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.sube.DepoRepository;
 import com.raspel.erp.repository.sube.DepoStokRepository;
 import com.raspel.erp.repository.sube.SubeRepository;
@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.raspel.erp.entity.envanter.Stok;
 
 @Service
 @Transactional
@@ -75,7 +76,7 @@ public class DepoService {
 
     @Transactional(readOnly = true)
     public List<DepoStokDTO> depoStoklari(Long depoId) {
-        List<com.raspel.erp.entity.Stok> tumStoklar = stokRepository.findAll();
+        List<com.raspel.erp.entity.envanter.Stok> tumStoklar = stokRepository.findAll();
         Map<Long, String> stokHaritasi = tumStoklar.stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd()));
         Map<Long, String> stokKodHaritasi = tumStoklar.stream()

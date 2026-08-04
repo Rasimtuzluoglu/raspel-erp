@@ -1,12 +1,12 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.SiparisDTO;
-import com.raspel.erp.dto.SiparisKalemDTO;
-import com.raspel.erp.entity.Siparis;
-import com.raspel.erp.repository.CariHesapRepository;
-import com.raspel.erp.repository.SiparisKalemRepository;
-import com.raspel.erp.repository.SiparisRepository;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.dto.ticaret.SiparisDTO;
+import com.raspel.erp.dto.ticaret.SiparisKalemDTO;
+import com.raspel.erp.entity.ticaret.Siparis;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +24,11 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.EmailService;
+import com.raspel.erp.service.ticaret.FaturaService;
+import com.raspel.erp.service.sistem.SeriNoServisi;
+import com.raspel.erp.service.ticaret.SiparisService;
 
 @ExtendWith(MockitoExtension.class)
 class SiparisServiceTest {

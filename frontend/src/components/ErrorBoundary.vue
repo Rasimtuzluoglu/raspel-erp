@@ -1,20 +1,31 @@
 <template>
-  <div v-if="error" class="error-boundary">
+  <div
+    v-if="error"
+    class="error-boundary"
+  >
     <div class="error-card">
-      <i class="pi pi-exclamation-triangle error-icon"></i>
+      <i class="pi pi-exclamation-triangle error-icon" />
       <h2>Bir Hata Oluştu</h2>
-      <p class="error-message">{{ error.message || 'Beklenmeyen bir sayfa hatası meydana geldi.' }}</p>
+      <p class="error-message">
+        {{ error.message || 'Beklenmeyen bir sayfa hatası meydana geldi.' }}
+      </p>
       <div class="error-actions">
-        <button class="retry-btn" @click="resetError">
-          <i class="pi pi-refresh"></i> Tekrar Dene
+        <button
+          class="retry-btn"
+          @click="resetError"
+        >
+          <i class="pi pi-refresh" /> Tekrar Dene
         </button>
-        <button class="home-btn" @click="goHome">
-          <i class="pi pi-home"></i> Ana Sayfaya Dön
+        <button
+          class="home-btn"
+          @click="goHome"
+        >
+          <i class="pi pi-home" /> Ana Sayfaya Dön
         </button>
       </div>
     </div>
   </div>
-  <slot v-else></slot>
+  <slot v-else />
 </template>
 
 <script setup>

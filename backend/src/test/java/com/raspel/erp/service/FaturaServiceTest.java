@@ -1,9 +1,7 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.FaturaDTO;
-import com.raspel.erp.dto.FaturaKalemDTO;
-import com.raspel.erp.entity.*;
-import com.raspel.erp.repository.*;
+import com.raspel.erp.dto.ticaret.FaturaDTO;
+import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +20,20 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.service.sistem.EmailService;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.ticaret.FaturaKalem;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.service.ticaret.FaturaService;
+import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.service.sistem.SeriNoServisi;
+import com.raspel.erp.repository.sistem.SirketRepository;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 
 @ExtendWith(MockitoExtension.class)
 class FaturaServiceTest {
@@ -34,7 +46,7 @@ class FaturaServiceTest {
     @Mock private BildirimService bildirimService;
     @Mock private EmailService emailService;
     @Mock private PdfRaporService pdfRaporService;
-    @Mock private com.raspel.erp.repository.SirketRepository sirketRepository;
+    @Mock private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {

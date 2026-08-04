@@ -1,10 +1,22 @@
 <template>
   <transition name="undo">
-    <div v-if="durum.gorunur" class="geri-al-bar">
-      <i class="pi pi-replay"></i>
+    <div
+      v-if="durum.gorunur"
+      class="geri-al-bar"
+    >
+      <i class="pi pi-replay" />
       <span>{{ durum.metin }}</span>
-      <Button label="Geri Al" icon="pi pi-undo" class="p-button-sm p-button-outlined" @click="geriAl" />
-      <Button icon="pi pi-times" class="p-button-sm p-button-text" @click="gizle" />
+      <Button
+        label="Geri Al"
+        icon="pi pi-undo"
+        class="p-button-sm p-button-outlined"
+        @click="geriAl"
+      />
+      <Button
+        icon="pi pi-times"
+        class="p-button-sm p-button-text"
+        @click="gizle"
+      />
     </div>
   </transition>
 </template>

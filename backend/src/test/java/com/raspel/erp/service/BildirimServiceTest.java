@@ -1,6 +1,6 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.service.BildirimService;
+import com.raspel.erp.service.sistem.BildirimService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -14,6 +14,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.entity.envanter.Stok;
 
 @ExtendWith(MockitoExtension.class)
 class BildirimServiceTest {

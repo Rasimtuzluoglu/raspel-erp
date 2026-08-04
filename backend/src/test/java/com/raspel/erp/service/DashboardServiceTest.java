@@ -1,7 +1,6 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.HareketDTO;
-import com.raspel.erp.repository.*;
+import com.raspel.erp.dto.finans.HareketDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +12,15 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.finans.CariHesapService;
+import com.raspel.erp.service.sistem.DashboardService;
+import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.service.finans.HareketService;
+import com.raspel.erp.repository.ik.PersonelIzinRepository;
+import com.raspel.erp.repository.ik.PersonelRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {

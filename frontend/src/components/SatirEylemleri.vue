@@ -1,12 +1,40 @@
 <template>
   <div class="satir-eylemler">
-    <Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-text" @click="acik = !acik" title="İşlemler" aria-haspopup="true" />
+    <Button
+      icon="pi pi-ellipsis-v"
+      class="p-button-rounded p-button-text"
+      title="İşlemler"
+      aria-haspopup="true"
+      @click="acik = !acik"
+    />
     <transition name="fade">
-      <div v-if="acik" class="eylem-menu" @click.stop>
-        <button v-if="gorunur.duzenle" class="eylem-item" @click="calistir('duzenle')"><i class="pi pi-pencil"></i> Düzenle</button>
-        <button v-if="gorunur.cogalt" class="eylem-item" @click="calistir('cogalt')"><i class="pi pi-copy"></i> Çoğalt</button>
+      <div
+        v-if="acik"
+        class="eylem-menu"
+        @click.stop
+      >
+        <button
+          v-if="gorunur.duzenle"
+          class="eylem-item"
+          @click="calistir('duzenle')"
+        >
+          <i class="pi pi-pencil" /> Düzenle
+        </button>
+        <button
+          v-if="gorunur.cogalt"
+          class="eylem-item"
+          @click="calistir('cogalt')"
+        >
+          <i class="pi pi-copy" /> Çoğalt
+        </button>
         <slot />
-        <button v-if="gorunur.sil" class="eylem-item eylem-sil" @click="calistir('sil')"><i class="pi pi-trash"></i> Sil</button>
+        <button
+          v-if="gorunur.sil"
+          class="eylem-item eylem-sil"
+          @click="calistir('sil')"
+        >
+          <i class="pi pi-trash" /> Sil
+        </button>
       </div>
     </transition>
   </div>
@@ -15,7 +43,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({
+defineProps({
   gorunur: { type: Object, default: () => ({ duzenle: true, cogalt: false, sil: true }) }
 })
 

@@ -1,10 +1,10 @@
 package com.raspel.erp.service.envanter;
 
 import com.raspel.erp.dto.envanter.StokSayimDTO;
-import com.raspel.erp.entity.Stok;
+import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokSayim;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.envanter.StokSayimRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import com.raspel.erp.exception.BusinessException;
 
 @Service
 @Transactional

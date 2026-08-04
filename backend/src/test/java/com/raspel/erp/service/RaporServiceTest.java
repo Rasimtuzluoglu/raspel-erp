@@ -1,12 +1,11 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.HareketDTO;
-import com.raspel.erp.dto.RaporDTO;
-import com.raspel.erp.entity.CariHesap;
-import com.raspel.erp.entity.Fatura;
-import com.raspel.erp.entity.FaturaKalem;
-import com.raspel.erp.entity.Hareket;
-import com.raspel.erp.repository.*;
+import com.raspel.erp.dto.finans.HareketDTO;
+import com.raspel.erp.dto.sistem.RaporDTO;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.ticaret.FaturaKalem;
+import com.raspel.erp.entity.finans.Hareket;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +20,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.service.finans.CariHesapService;
+import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.service.finans.HareketService;
+import com.raspel.erp.service.sistem.RaporService;
 
 @ExtendWith(MockitoExtension.class)
 class RaporServiceTest {
@@ -28,7 +34,7 @@ class RaporServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private HareketRepository hareketRepository;
     @Mock private FaturaRepository faturaRepository;
-    @Mock private com.raspel.erp.repository.FaturaKalemRepository faturaKalemRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private HareketService hareketService;
     @InjectMocks private RaporService raporService;

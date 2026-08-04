@@ -4,77 +4,174 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Banka Hesabı" icon="pi pi-plus" @click="openDialog" class="p-button-success" />
+        <Button
+          label="Yeni Banka Hesabı"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openDialog"
+        />
       </template>
       <template #end>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          @click="excelIndir"
+        />
       </template>
     </Toolbar>
 
-    <div class="loading" v-if="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+    </div>
 
-    <div class="table-container" v-if="!loading">
+    <div
+      v-if="!loading"
+      class="table-container"
+    >
       <DataTable
         :value="bankaStore.bankalar"
-        responsive-layout="scroll" striped-rows
-        :rows="10" :paginator="true"
+        responsive-layout="scroll"
+        striped-rows
+        :rows="10"
+        :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10,20,50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
       >
-        <Column field="ad" header="Banka Adı" style="width:200px"></Column>
-        <Column field="hesapNo" header="Hesap No" style="width:150px">
-          <template #body="s">{{ s.data.hesapNo || '-' }}</template>
-        </Column>
-        <Column field="iban" header="IBAN" style="width:230px">
+        <Column
+          field="ad"
+          header="Banka Adı"
+          style="width:200px"
+        />
+        <Column
+          field="hesapNo"
+          header="Hesap No"
+          style="width:150px"
+        >
           <template #body="s">
-            <span v-if="s.data.iban" class="kopyalanabilir" @click="kopyala(s.data.iban, 'IBAN Kopyalandı')">
-              {{ s.data.iban }} <i class="pi pi-copy kopyala-ikon"></i>
+            {{ s.data.hesapNo || '-' }}
+          </template>
+        </Column>
+        <Column
+          field="iban"
+          header="IBAN"
+          style="width:230px"
+        >
+          <template #body="s">
+            <span
+              v-if="s.data.iban"
+              class="kopyalanabilir"
+              @click="kopyala(s.data.iban, 'IBAN Kopyalandı')"
+            >
+              {{ s.data.iban }} <i class="pi pi-copy kopyala-ikon" />
             </span>
             <span v-else>-</span>
           </template>
         </Column>
-        <Column field="bakiye" header="Bakiye" style="width:130px">
+        <Column
+          field="bakiye"
+          header="Bakiye"
+          style="width:130px"
+        >
           <template #body="s">
             <span :class="s.data.bakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.bakiye) }}</span>
           </template>
         </Column>
-        <Column header="İşlemler" style="width:140px">
+        <Column
+          header="İşlemler"
+          style="width:140px"
+        >
           <template #body="s">
-            <Button icon="pi pi-pencil" class="p-button-rounded p-button-info p-button-sm"
-              @click="editBanka(s.data)" title="Düzenle" />
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
-              @click="confirmDelete(s.data.id)" title="Sil" />
+            <Button
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-info p-button-sm"
+              title="Düzenle"
+              @click="editBanka(s.data)"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              title="Sil"
+              @click="confirmDelete(s.data.id)"
+            />
           </template>
         </Column>
       </DataTable>
-      <Message v-if="bankaStore.bankalar.length === 0" severity="info" text="Banka hesabı bulunmamaktadır." />
+      <Message
+        v-if="bankaStore.bankalar.length === 0"
+        severity="info"
+        text="Banka hesabı bulunmamaktadır."
+      />
     </div>
 
-    <Dialog v-model:visible="showDialog" :header="editingId ? 'Banka Hesabı Düzenle' : 'Yeni Banka Hesabı'" :modal="true" style="width:500px">
+    <Dialog
+      v-model:visible="showDialog"
+      :header="editingId ? 'Banka Hesabı Düzenle' : 'Yeni Banka Hesabı'"
+      :modal="true"
+      style="width:500px"
+    >
       <div class="form-group">
         <label>Banka Adı *</label>
-        <InputText v-model="form.ad" placeholder="Banka adını giriniz" class="w-full" />
+        <InputText
+          v-model="form.ad"
+          placeholder="Banka adını giriniz"
+          class="w-full"
+        />
       </div>
       <div class="form-group">
         <label>Hesap No</label>
-        <InputText v-model="form.hesapNo" placeholder="Hesap numarası" class="w-full" />
+        <InputText
+          v-model="form.hesapNo"
+          placeholder="Hesap numarası"
+          class="w-full"
+        />
       </div>
       <div class="form-group">
         <label>IBAN</label>
-        <InputText v-model="form.iban" placeholder="IBAN numarası" class="w-full" />
+        <InputText
+          v-model="form.iban"
+          placeholder="IBAN numarası"
+          class="w-full"
+        />
       </div>
-      <div class="form-group" v-if="!editingId">
+      <div
+        v-if="!editingId"
+        class="form-group"
+      >
         <label>Açılış Bakiyesi</label>
-        <InputNumber v-model="form.bakiye" :min="0" :min-fraction-digits="2" :max-fraction-digits="2" class="w-full" />
+        <InputNumber
+          v-model="form.bakiye"
+          :min="0"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+        />
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="closeDialog" class="p-button-text" />
-        <Button :label="editingId ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" @click="saveBanka" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="closeDialog"
+        />
+        <Button
+          :label="editingId ? 'Güncelle' : 'Kaydet'"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveBanka"
+        />
       </template>
     </Dialog>
 
-    <Message v-if="bankaStore.error" severity="error" :text="bankaStore.error" />
+    <Message
+      v-if="bankaStore.error"
+      severity="error"
+      :text="bankaStore.error"
+    />
   </div>
 </template>
 

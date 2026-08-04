@@ -1,50 +1,141 @@
 <template>
   <div class="vardiya-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Vardiya Yönetimi</h1>
-      <Button label="Yeni Vardiya" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Vardiya Yönetimi
+      </h1>
+      <Button
+        label="Yeni Vardiya"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="personelAd" header="Personel" sortable />
-      <Column field="tarih" header="Tarih" sortable>
-        <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
-      </Column>
-      <Column field="baslangic" header="Başlangıç">
-        <template #body="{ data }">{{ data.baslangic }}</template>
-      </Column>
-      <Column field="bitis" header="Bitiş">
-        <template #body="{ data }">{{ data.bitis }}</template>
-      </Column>
-      <Column field="tur" header="Tür">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="personelAd"
+        header="Personel"
+        sortable
+      />
+      <Column
+        field="tarih"
+        header="Tarih"
+        sortable
+      >
         <template #body="{ data }">
-          <Tag :value="data.tur" :severity="data.tur === 'SABAH' ? 'info' : data.tur === 'AKSAM' ? 'warn' : 'contrast'" />
+          {{ formatDate(data.tarih) }}
         </template>
       </Column>
-      <Column header="İşlem" style="width:120px">
+      <Column
+        field="baslangic"
+        header="Başlangıç"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          {{ data.baslangic }}
+        </template>
+      </Column>
+      <Column
+        field="bitis"
+        header="Bitiş"
+      >
+        <template #body="{ data }">
+          {{ data.bitis }}
+        </template>
+      </Column>
+      <Column
+        field="tur"
+        header="Tür"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="data.tur"
+            :severity="data.tur === 'SABAH' ? 'info' : data.tur === 'AKSAM' ? 'warn' : 'contrast'"
+          />
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:120px"
+      >
+        <template #body="{ data }">
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Personel *</label>
-          <Dropdown v-model="form.personelId" :options="personelListesi" optionLabel="displayName" optionValue="id" placeholder="Personel Seç" class="w-full" filter />
+        <div class="field">
+          <label>Personel *</label>
+          <Dropdown
+            v-model="form.personelId"
+            :options="personelListesi"
+            option-label="displayName"
+            option-value="id"
+            placeholder="Personel Seç"
+            class="w-full"
+            filter
+          />
         </div>
-        <div class="field"><label>Tarih *</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
+        <div class="field">
+          <label>Tarih *</label><DatePicker
+            v-model="form.tarih"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
         <div class="field-row">
-          <div class="field"><label>Başlangıç *</label><InputText v-model="form.baslangic" placeholder="08:00" class="w-full" /></div>
-          <div class="field"><label>Bitiş *</label><InputText v-model="form.bitis" placeholder="16:00" class="w-full" /></div>
+          <div class="field">
+            <label>Başlangıç *</label><InputText
+              v-model="form.baslangic"
+              placeholder="08:00"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Bitiş *</label><InputText
+              v-model="form.bitis"
+              placeholder="16:00"
+              class="w-full"
+            />
+          </div>
         </div>
-        <div class="field"><label>Tür *</label>
-          <Dropdown v-model="form.tur" :options="turSecenekleri" placeholder="Seçin" class="w-full" />
+        <div class="field">
+          <label>Tür *</label>
+          <Dropdown
+            v-model="form.tur"
+            :options="turSecenekleri"
+            placeholder="Seçin"
+            class="w-full"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

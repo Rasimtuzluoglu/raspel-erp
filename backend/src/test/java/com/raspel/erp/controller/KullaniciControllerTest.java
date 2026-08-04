@@ -1,11 +1,11 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.KullaniciDTO;
-import com.raspel.erp.dto.LoginRequest;
-import com.raspel.erp.dto.LoginResponse;
+import com.raspel.erp.dto.sistem.KullaniciDTO;
+import com.raspel.erp.dto.sistem.LoginRequest;
+import com.raspel.erp.dto.sistem.LoginResponse;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.KullaniciService;
+import com.raspel.erp.service.sistem.KullaniciService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.KullaniciController;
 
 @WebMvcTest(KullaniciController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -130,9 +131,6 @@ class KullaniciControllerTest {
                 .andExpect(status().isBadRequest());
     }
 }
-
-
-
 
 
 

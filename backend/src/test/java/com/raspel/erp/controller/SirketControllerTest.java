@@ -1,8 +1,8 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.SirketDTO;
+import com.raspel.erp.dto.sistem.SirketDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.SirketService;
+import com.raspel.erp.service.sistem.SirketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.SirketController;
 
 @WebMvcTest(SirketController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -109,9 +110,6 @@ class SirketControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

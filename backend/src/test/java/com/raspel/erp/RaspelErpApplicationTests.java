@@ -1,7 +1,7 @@
 package com.raspel.erp;
 
-import com.raspel.erp.entity.Kullanici;
-import com.raspel.erp.repository.KullaniciRepository;
+import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

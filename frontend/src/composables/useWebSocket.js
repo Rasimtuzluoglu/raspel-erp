@@ -27,7 +27,7 @@ export function useWebSocket() {
             subscription = stompClient.subscribe(`/topic/bildirimler/${sirketId}`, (msg) => {
               try {
                 sonBildirim.value = JSON.parse(msg.body)
-              } catch {}
+              } catch { /* empty */ }
             })
           },
           onDisconnect: () => { bagli.value = false }

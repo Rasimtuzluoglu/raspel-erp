@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.entity.finans.Kasa;
 
 @ExtendWith(MockitoExtension.class)
 class MuhasebeServiceTest {

@@ -1,10 +1,10 @@
 package com.raspel.erp.service.ik;
 
 import com.raspel.erp.dto.ik.VardiyaDTO;
-import com.raspel.erp.entity.Personel;
+import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.ik.Vardiya;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.PersonelRepository;
+import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ik.VardiyaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

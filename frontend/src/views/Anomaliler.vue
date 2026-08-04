@@ -1,34 +1,64 @@
 <template>
   <div class="anomaliler-page">
-    <PageHeader title="Akıllı Anomali & Mükerrer Tespiti" subtitle="Sistemdeki mükerrer faturalar, çift ödemeler ve finansal risklerin yapay zeka tespiti">
+    <PageHeader
+      title="Akıllı Anomali & Mükerrer Tespiti"
+      subtitle="Sistemdeki mükerrer faturalar, çift ödemeler ve finansal risklerin yapay zeka tespiti"
+    >
       <template #actions>
-        <Button label="Yeniden Tara" icon="pi pi-refresh" class="p-button-primary" @click="anomalileriYukle" :loading="yukleniyor" />
+        <Button
+          label="Yeniden Tara"
+          icon="pi pi-refresh"
+          class="p-button-primary"
+          :loading="yukleniyor"
+          @click="anomalileriYukle"
+        />
       </template>
     </PageHeader>
 
-    <div v-if="yukleniyor" class="p-4">
+    <div
+      v-if="yukleniyor"
+      class="p-4"
+    >
       <SkeletonLoader :count="3" />
     </div>
 
-    <div v-else-if="anomaliler.length === 0" class="empty-box">
-      <i class="pi pi-check-circle success-icon"></i>
+    <div
+      v-else-if="anomaliler.length === 0"
+      class="empty-box"
+    >
+      <i class="pi pi-check-circle success-icon" />
       <h3>Harika! Hiçbir Şüpheli Durum Veya Mükerrer Kayıt Bulunamadı.</h3>
       <p>Sistemdeki tüm faturalar, hareketler ve bakiyeler tutarlı görünmektedir.</p>
     </div>
 
-    <div v-else class="anomali-grid">
-      <div v-for="item in anomaliler" :key="item.id" class="anomali-card" :class="(item.seviye || '').toLowerCase()">
+    <div
+      v-else
+      class="anomali-grid"
+    >
+      <div
+        v-for="item in anomaliler"
+        :key="item.id"
+        class="anomali-card"
+        :class="(item.seviye || '').toLowerCase()"
+      >
         <div class="card-header">
           <div class="header-left">
-            <span class="badge" :class="(item.seviye || '').toLowerCase()">{{ item.seviye }} ÖNCELİK</span>
+            <span
+              class="badge"
+              :class="(item.seviye || '').toLowerCase()"
+            >{{ item.seviye }} ÖNCELİK</span>
             <span class="tur-label">{{ item.tur }}</span>
           </div>
           <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
         </div>
-        <h4 class="card-title"><i class="pi pi-exclamation-triangle"></i> {{ item.baslik }}</h4>
-        <p class="card-desc">{{ item.aciklama }}</p>
+        <h4 class="card-title">
+          <i class="pi pi-exclamation-triangle" /> {{ item.baslik }}
+        </h4>
+        <p class="card-desc">
+          {{ item.aciklama }}
+        </p>
         <div class="oneri-box">
-          <strong><i class="pi pi-lightbulb"></i> Öneri:</strong> {{ item.oneri }}
+          <strong><i class="pi pi-lightbulb" /> Öneri:</strong> {{ item.oneri }}
         </div>
       </div>
     </div>

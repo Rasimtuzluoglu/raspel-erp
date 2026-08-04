@@ -2,12 +2,12 @@ package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.dto.ticaret.IadeDTO;
 import com.raspel.erp.dto.ticaret.IadeKalemDTO;
-import com.raspel.erp.entity.Stok;
+import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.ticaret.Iade;
 import com.raspel.erp.entity.ticaret.IadeKalem;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.StokHareketRepository;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
 import org.junit.jupiter.api.Test;

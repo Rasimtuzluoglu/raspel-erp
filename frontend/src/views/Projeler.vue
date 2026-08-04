@@ -2,46 +2,132 @@
   <Toast />
   <div class="proje-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Projeler & Görevler</h1>
-      <Button label="Yeni Proje" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Projeler & Görevler
+      </h1>
+      <Button
+        label="Yeni Proje"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor" :expandedRowKeys="expanded" @rowExpand="rowExpand" @rowCollapse="rowCollapse" dataKey="id">
-      <Column :expander="true" style="width:40px" />
-      <Column field="ad" header="Proje Adı" sortable />
-      <Column field="sorumlu" header="Sorumlu" />
-      <Column field="baslangic" header="Başlangıç" />
-      <Column field="bitis" header="Bitiş" />
-      <Column field="durum" header="Durum">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+      :expanded-row-keys="expanded"
+      data-key="id"
+      @row-expand="rowExpand"
+      @row-collapse="rowCollapse"
+    >
+      <Column
+        :expander="true"
+        style="width:40px"
+      />
+      <Column
+        field="ad"
+        header="Proje Adı"
+        sortable
+      />
+      <Column
+        field="sorumlu"
+        header="Sorumlu"
+      />
+      <Column
+        field="baslangic"
+        header="Başlangıç"
+      />
+      <Column
+        field="bitis"
+        header="Bitiş"
+      />
+      <Column
+        field="durum"
+        header="Durum"
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum" :severity="data.durum === 'TAMAMLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'info'" />
+          <Tag
+            :value="data.durum"
+            :severity="data.durum === 'TAMAMLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'info'"
+          />
         </template>
       </Column>
-      <Column header="İşlem" style="width:120px">
+      <Column
+        header="İşlem"
+        style="width:120px"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-check-circle" class="p-button-rounded p-button-text p-button-success" v-if="data.durum === 'DEVAM_EDIYOR'" @click="durumGuncelle(data, 'TAMAMLANDI')" title="Tamamla" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          <Button
+            v-if="data.durum === 'DEVAM_EDIYOR'"
+            icon="pi pi-check-circle"
+            class="p-button-rounded p-button-text p-button-success"
+            title="Tamamla"
+            @click="durumGuncelle(data, 'TAMAMLANDI')"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
       <template #expansion="{ data }">
         <div class="gorevler">
           <div class="gorev-baslik">
             <h3>Görevler</h3>
-            <Button label="Görev Ekle" icon="pi pi-plus" size="small" @click="gorevDialogAc(data)" />
+            <Button
+              label="Görev Ekle"
+              icon="pi pi-plus"
+              size="small"
+              @click="gorevDialogAc(data)"
+            />
           </div>
-          <DataTable :value="data.gorevler || []" stripedRows size="small">
-            <Column field="ad" header="Görev" />
-            <Column field="atanan" header="Atanan" />
-            <Column field="baslangic" header="Başlangıç" />
-            <Column field="bitis" header="Bitiş" />
-            <Column field="durum" header="Durum">
+          <DataTable
+            :value="data.gorevler || []"
+            striped-rows
+            size="small"
+          >
+            <Column
+              field="ad"
+              header="Görev"
+            />
+            <Column
+              field="atanan"
+              header="Atanan"
+            />
+            <Column
+              field="baslangic"
+              header="Başlangıç"
+            />
+            <Column
+              field="bitis"
+              header="Bitiş"
+            />
+            <Column
+              field="durum"
+              header="Durum"
+            >
               <template #body="{ data: g }">
-                <Tag :value="g.durum" :severity="g.durum === 'TAMAMLANDI' ? 'success' : g.durum === 'DEVAM_EDIYOR' ? 'info' : 'warn'" />
+                <Tag
+                  :value="g.durum"
+                  :severity="g.durum === 'TAMAMLANDI' ? 'success' : g.durum === 'DEVAM_EDIYOR' ? 'info' : 'warn'"
+                />
               </template>
             </Column>
-            <Column header="İşlem" style="width:80px">
+            <Column
+              header="İşlem"
+              style="width:80px"
+            >
               <template #body="{ data: g }">
-                <Button icon="pi pi-check" class="p-button-rounded p-button-text p-button-success" size="small" v-if="g.durum !== 'TAMAMLANDI'" @click="gorevTamamla(g)" title="Tamamla" />
+                <Button
+                  v-if="g.durum !== 'TAMAMLANDI'"
+                  icon="pi pi-check"
+                  class="p-button-rounded p-button-text p-button-success"
+                  size="small"
+                  title="Tamamla"
+                  @click="gorevTamamla(g)"
+                />
               </template>
             </Column>
           </DataTable>
@@ -49,37 +135,123 @@
       </template>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" header="Yeni Proje" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      header="Yeni Proje"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Proje Adı *</label><InputText v-model="form.ad" class="w-full" /></div>
-        <div class="field-row">
-          <div class="field"><label>Sorumlu</label><InputText v-model="form.sorumlu" class="w-full" /></div>
+        <div class="field">
+          <label>Proje Adı *</label><InputText
+            v-model="form.ad"
+            class="w-full"
+          />
         </div>
         <div class="field-row">
-          <div class="field"><label>Başlangıç</label><DatePicker v-model="form.baslangic" dateFormat="dd/mm/yy" class="w-full" /></div>
-          <div class="field"><label>Bitiş</label><DatePicker v-model="form.bitis" dateFormat="dd/mm/yy" class="w-full" /></div>
+          <div class="field">
+            <label>Sorumlu</label><InputText
+              v-model="form.sorumlu"
+              class="w-full"
+            />
+          </div>
         </div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="3" class="w-full" /></div>
+        <div class="field-row">
+          <div class="field">
+            <label>Başlangıç</label><DatePicker
+              v-model="form.baslangic"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Bitiş</label><DatePicker
+              v-model="form.bitis"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="3"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="gorevDialog" header="Görev Ekle" modal :style="{ width: '450px' }">
+    <Dialog
+      v-model:visible="gorevDialog"
+      header="Görev Ekle"
+      modal
+      :style="{ width: '450px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Görev Adı *</label><InputText v-model="gorevForm.ad" class="w-full" /></div>
-        <div class="field"><label>Atanan</label><InputText v-model="gorevForm.atanan" class="w-full" /></div>
-        <div class="field-row">
-          <div class="field"><label>Başlangıç</label><DatePicker v-model="gorevForm.baslangic" dateFormat="dd/mm/yy" class="w-full" /></div>
-          <div class="field"><label>Bitiş</label><DatePicker v-model="gorevForm.bitis" dateFormat="dd/mm/yy" class="w-full" /></div>
+        <div class="field">
+          <label>Görev Adı *</label><InputText
+            v-model="gorevForm.ad"
+            class="w-full"
+          />
         </div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="gorevForm.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Atanan</label><InputText
+            v-model="gorevForm.atanan"
+            class="w-full"
+          />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Başlangıç</label><DatePicker
+              v-model="gorevForm.baslangic"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Bitiş</label><DatePicker
+              v-model="gorevForm.bitis"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="gorevForm.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="gorevDialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="gorevKaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="gorevDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="gorevKaydet"
+        />
       </template>
     </Dialog>
   </div>
@@ -156,7 +328,7 @@ const gorevKaydet = async () => {
     await projeAPI.gorevEkle(seciliProje.value.id, g)
     gorevDialog.value = false; const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
     toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Görev eklendi', life: 3000 })
-  } catch (e) { hataGoster(e) }; kaydediliyor.value = false
+  } catch (e) { hataGoster(e) } kaydediliyor.value = false
 }
 const gorevTamamla = async (g) => {
   try {

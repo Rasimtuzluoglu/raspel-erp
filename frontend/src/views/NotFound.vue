@@ -4,7 +4,10 @@
       <h1>404</h1>
       <p>Aradığınız sayfa bulunamadı.</p>
       <router-link to="/">
-        <Button label="Ana Sayfaya Dön" icon="pi pi-home" />
+        <Button
+          label="Ana Sayfaya Dön"
+          icon="pi pi-home"
+        />
       </router-link>
     </div>
   </div>

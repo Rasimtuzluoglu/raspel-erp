@@ -6,7 +6,6 @@ export function useOturumUyarisi() {
   const goster = ref(false)
   const kalanSaniye = ref(0)
   let interval = null
-  let islemZamani = Date.now()
 
   const decodeExp = (token) => {
     try {
@@ -33,7 +32,7 @@ export function useOturumUyarisi() {
     goster.value = false
     try {
       await authStore.kullaniciGuncelle()
-    } catch {}
+    } catch { /* empty */ }
   }
 
   const cikis = () => {

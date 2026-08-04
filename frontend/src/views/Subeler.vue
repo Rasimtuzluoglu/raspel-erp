@@ -1,39 +1,120 @@
 <template>
   <div class="subeler-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Şubeler</h1>
-      <Button label="Yeni Şube" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Şubeler
+      </h1>
+      <Button
+        label="Yeni Şube"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="ad" header="Şube Adı" sortable />
-      <Column field="yetkili" header="Yetkili" />
-      <Column field="telefon" header="Telefon" />
-      <Column field="adres" header="Adres" />
-      <Column field="aktif" header="Durum">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="ad"
+        header="Şube Adı"
+        sortable
+      />
+      <Column
+        field="yetkili"
+        header="Yetkili"
+      />
+      <Column
+        field="telefon"
+        header="Telefon"
+      />
+      <Column
+        field="adres"
+        header="Adres"
+      />
+      <Column
+        field="aktif"
+        header="Durum"
+      >
         <template #body="{ data }">
-          <Tag :value="data.aktif ? 'Aktif' : 'Pasif'" :severity="data.aktif ? 'success' : 'danger'" />
+          <Tag
+            :value="data.aktif ? 'Aktif' : 'Pasif'"
+            :severity="data.aktif ? 'success' : 'danger'"
+          />
         </template>
       </Column>
-      <Column header="İşlem" style="width:120px">
+      <Column
+        header="İşlem"
+        style="width:120px"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-text" @click="dialogAc(data)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-text"
+            @click="dialogAc(data)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Şube Adı *</label><InputText v-model="form.ad" class="w-full" /></div>
-        <div class="field"><label>Yetkili</label><InputText v-model="form.yetkili" class="w-full" /></div>
-        <div class="field"><label>Telefon</label><InputText v-model="form.telefon" class="w-full" /></div>
-        <div class="field"><label>Adres</label><Textarea v-model="form.adres" rows="3" class="w-full" /></div>
-        <div class="field" v-if="duzenleme"><label>Aktif</label><InputSwitch v-model="form.aktif" /></div>
+        <div class="field">
+          <label>Şube Adı *</label><InputText
+            v-model="form.ad"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Yetkili</label><InputText
+            v-model="form.yetkili"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Telefon</label><InputText
+            v-model="form.telefon"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Adres</label><Textarea
+            v-model="form.adres"
+            rows="3"
+            class="w-full"
+          />
+        </div>
+        <div
+          v-if="duzenleme"
+          class="field"
+        >
+          <label>Aktif</label><InputSwitch v-model="form.aktif" />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

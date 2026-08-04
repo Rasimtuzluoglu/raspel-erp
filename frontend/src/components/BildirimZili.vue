@@ -1,44 +1,115 @@
 <template>
-  <div class="bildirim-zili" ref="ziliRef">
-    <Button icon="pi pi-bell" class="p-button-rounded p-button-text" @click.stop="panelAcik = !panelAcik" title="Bildirimler">
-      <span v-if="filtrelenmisBildirimler.length" class="zil-sayac">{{ filtrelenmisBildirimler.length }}</span>
+  <div
+    ref="ziliRef"
+    class="bildirim-zili"
+  >
+    <Button
+      icon="pi pi-bell"
+      class="p-button-rounded p-button-text"
+      title="Bildirimler"
+      @click.stop="panelAcik = !panelAcik"
+    >
+      <span
+        v-if="filtrelenmisBildirimler.length"
+        class="zil-sayac"
+      >{{ filtrelenmisBildirimler.length }}</span>
     </Button>
 
     <transition name="panel">
-      <div v-if="panelAcik" class="bildirim-panel" @click.stop>
+      <div
+        v-if="panelAcik"
+        class="bildirim-panel"
+        @click.stop
+      >
         <div class="panel-baslik">
           <strong>Bildirimler</strong>
           <div class="panel-ayarlar">
-            <Button icon="pi pi-cog" class="p-button-sm p-button-text" @click="tercihPaneli = !tercihPaneli" title="Bildirim Tercihleri" />
-            <Button icon="pi pi-check" class="p-button-sm p-button-text" @click="temizle" title="Temizle" />
+            <Button
+              icon="pi pi-cog"
+              class="p-button-sm p-button-text"
+              title="Bildirim Tercihleri"
+              @click="tercihPaneli = !tercihPaneli"
+            />
+            <Button
+              icon="pi pi-check"
+              class="p-button-sm p-button-text"
+              title="Temizle"
+              @click="temizle"
+            />
           </div>
         </div>
-        <div v-if="tercihPaneli" class="tercih-paneli">
-          <div class="tercih-baslik">Bildirim Türleri</div>
-          <label v-for="t in tercihListesi" :key="t.tur" class="tercih-satir">
-            <Checkbox :model-value="tercihler[t.tur] !== false" :binary="true" @update:model-value="tercihDegistir(t.tur, $event)" />
+        <div
+          v-if="tercihPaneli"
+          class="tercih-paneli"
+        >
+          <div class="tercih-baslik">
+            Bildirim Türleri
+          </div>
+          <label
+            v-for="t in tercihListesi"
+            :key="t.tur"
+            class="tercih-satir"
+          >
+            <Checkbox
+              :model-value="tercihler[t.tur] !== false"
+              :binary="true"
+              @update:model-value="tercihDegistir(t.tur, $event)"
+            />
             <span>{{ t.etiket }}</span>
           </label>
-          <div class="tercih-ayrac"></div>
-          <div class="tercih-baslik">Masaüstü Bildirimleri</div>
-          <div v-if="masaustu.izinli" class="tercih-satir">
-            <i class="pi pi-check-circle" style="color:#4ade80"></i>
+          <div class="tercih-ayrac" />
+          <div class="tercih-baslik">
+            Masaüstü Bildirimleri
+          </div>
+          <div
+            v-if="masaustu.izinli"
+            class="tercih-satir"
+          >
+            <i
+              class="pi pi-check-circle"
+              style="color:#4ade80"
+            />
             <span>Masaüstü bildirimleri açık</span>
           </div>
-          <div v-else class="tercih-satir">
-            <i class="pi pi-exclamation-triangle" style="color:#fbbf24"></i>
+          <div
+            v-else
+            class="tercih-satir"
+          >
+            <i
+              class="pi pi-exclamation-triangle"
+              style="color:#fbbf24"
+            />
             <span>Tarayıcı izni gerekli</span>
-            <Button label="İzin Ver" size="small" class="p-button-sm p-button-outlined" @click="masaustuIzinVer" />
+            <Button
+              label="İzin Ver"
+              size="small"
+              class="p-button-sm p-button-outlined"
+              @click="masaustuIzinVer"
+            />
           </div>
         </div>
-        <div v-if="filtrelenmisBildirimler.length === 0 && !tercihPaneli" class="panel-bos">
-          <i class="pi pi-inbox"></i>
+        <div
+          v-if="filtrelenmisBildirimler.length === 0 && !tercihPaneli"
+          class="panel-bos"
+        >
+          <i class="pi pi-inbox" />
           <p>Bildirim yok</p>
         </div>
-        <div v-else-if="!tercihPaneli" class="panel-liste">
-          <div v-for="(b, i) in filtrelenmisBildirimler" :key="i" class="panel-item" @click="bildirimTikla(b)">
-            <div class="item-ikon" :class="ikonSinifi(b.tur)">
-              <i :class="ikonSinifi(b.tur)"></i>
+        <div
+          v-else-if="!tercihPaneli"
+          class="panel-liste"
+        >
+          <div
+            v-for="(b, i) in filtrelenmisBildirimler"
+            :key="i"
+            class="panel-item"
+            @click="bildirimTikla(b)"
+          >
+            <div
+              class="item-ikon"
+              :class="ikonSinifi(b.tur)"
+            >
+              <i :class="ikonSinifi(b.tur)" />
             </div>
             <div class="item-icerik">
               <strong>{{ b.baslik }}</strong>

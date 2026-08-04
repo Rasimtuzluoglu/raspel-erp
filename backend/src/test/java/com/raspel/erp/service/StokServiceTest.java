@@ -1,13 +1,13 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.StokDTO;
-import com.raspel.erp.dto.StokHareketDTO;
-import com.raspel.erp.entity.CariHesap;
-import com.raspel.erp.entity.Stok;
-import com.raspel.erp.entity.StokHareket;
-import com.raspel.erp.repository.CariHesapRepository;
-import com.raspel.erp.repository.StokHareketRepository;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.dto.envanter.StokDTO;
+import com.raspel.erp.dto.envanter.StokHareketDTO;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.envanter.StokHareket;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +26,9 @@ import static org.mockito.Mockito.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.service.envanter.StokService;
 
 @ExtendWith(MockitoExtension.class)
 class StokServiceTest {

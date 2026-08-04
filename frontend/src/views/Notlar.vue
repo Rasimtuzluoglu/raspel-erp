@@ -1,63 +1,165 @@
 <template>
   <div class="notlar-page">
-    <PageHeader title="Notlar" subtitle="Hızlı not al, düzenle, yönet. Artık başka uygulamaya gerek yok.">
+    <PageHeader
+      title="Notlar"
+      subtitle="Hızlı not al, düzenle, yönet. Artık başka uygulamaya gerek yok."
+    >
       <template #actions>
-        <Button label="Yeni Not" icon="pi pi-plus" class="p-button-primary" @click="dialogAc" />
+        <Button
+          label="Yeni Not"
+          icon="pi pi-plus"
+          class="p-button-primary"
+          @click="dialogAc"
+        />
       </template>
     </PageHeader>
 
-    <div v-if="geriAlGoster" class="geri-al-banner">
-      <i class="pi pi-history"></i>
+    <div
+      v-if="geriAlGoster"
+      class="geri-al-banner"
+    >
+      <i class="pi pi-history" />
       <span>"{{ silinenSon?.baslik }}" silindi.</span>
-      <Button label="Geri Al" icon="pi pi-undo" size="small" @click="geriAl" />
-      <Button icon="pi pi-times" class="p-button-text p-button-sm" @click="geriAlGoster = false" />
+      <Button
+        label="Geri Al"
+        icon="pi pi-undo"
+        size="small"
+        @click="geriAl"
+      />
+      <Button
+        icon="pi pi-times"
+        class="p-button-text p-button-sm"
+        @click="geriAlGoster = false"
+      />
     </div>
 
-    <div v-if="store.loading" class="p-4">
+    <div
+      v-if="store.loading"
+      class="p-4"
+    >
       <SkeletonLoader :count="3" />
     </div>
 
-    <div v-else-if="store.notlar.length === 0" class="empty-box">
-      <i class="pi pi-pen-to-square empty-icon"></i>
+    <div
+      v-else-if="store.notlar.length === 0"
+      class="empty-box"
+    >
+      <i class="pi pi-pen-to-square empty-icon" />
       <h3>Henüz Not Yok</h3>
-      <p style="margin-bottom: 1rem;">İlk notunu eklemek için aşağıdaki butona tıkla.</p>
-      <Button label="Yeni Not Ekle" icon="pi pi-plus" class="p-button-primary" @click="dialogAc" />
+      <p style="margin-bottom: 1rem;">
+        İlk notunu eklemek için aşağıdaki butona tıkla.
+      </p>
+      <Button
+        label="Yeni Not Ekle"
+        icon="pi pi-plus"
+        class="p-button-primary"
+        @click="dialogAc"
+      />
     </div>
 
-    <div v-else class="not-grid">
-      <div v-for="item in store.notlar" :key="item.id" class="not-card" :class="[item.onemDerecesi?.toLowerCase(), renkSinif(item.renk)]">
+    <div
+      v-else
+      class="not-grid"
+    >
+      <div
+        v-for="item in store.notlar"
+        :key="item.id"
+        class="not-card"
+        :class="[item.onemDerecesi?.toLowerCase(), renkSinif(item.renk)]"
+      >
         <div class="not-card-header">
-          <span class="onem-badge" :class="item.onemDerecesi?.toLowerCase()">{{ item.onemDerecesi || 'NORMAL' }}</span>
+          <span
+            class="onem-badge"
+            :class="item.onemDerecesi?.toLowerCase()"
+          >{{ item.onemDerecesi || 'NORMAL' }}</span>
           <span class="not-tarih">{{ formatTarih(item.olusturmaTarihi) }}</span>
         </div>
-        <h4 class="not-baslik">{{ item.baslik }}</h4>
-        <p class="not-icerik">{{ item.icerik || 'Açıklama yok' }}</p>
+        <h4 class="not-baslik">
+          {{ item.baslik }}
+        </h4>
+        <p class="not-icerik">
+          {{ item.icerik || 'Açıklama yok' }}
+        </p>
         <div class="not-card-actions">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-sm" @click="dialogDuzenle(item)" title="Düzenle" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" @click="sil(item.id)" title="Sil" />
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-text p-button-sm"
+            title="Düzenle"
+            @click="dialogDuzenle(item)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text p-button-danger p-button-sm"
+            title="Sil"
+            @click="sil(item.id)"
+          />
         </div>
       </div>
     </div>
 
-    <Dialog v-model:visible="dialogGoster" :header="dialogBaslik" :modal="true" style="width:500px">
-      <FormField label="Başlık" :required="true" :error="gonderildi && !form.baslik?.trim() ? 'Başlık zorunludur' : ''">
-        <InputText v-model="form.baslik" placeholder="Not başlığı" class="w-full" :class="{ 'p-invalid': gonderildi && !form.baslik?.trim() }" />
+    <Dialog
+      v-model:visible="dialogGoster"
+      :header="dialogBaslik"
+      :modal="true"
+      style="width:500px"
+    >
+      <FormField
+        label="Başlık"
+        :required="true"
+        :error="gonderildi && !form.baslik?.trim() ? 'Başlık zorunludur' : ''"
+      >
+        <InputText
+          v-model="form.baslik"
+          placeholder="Not başlığı"
+          class="w-full"
+          :class="{ 'p-invalid': gonderildi && !form.baslik?.trim() }"
+        />
       </FormField>
       <FormField label="İçerik">
-        <Textarea v-model="form.icerik" placeholder="Not içeriği..." rows="5" class="w-full" />
+        <Textarea
+          v-model="form.icerik"
+          placeholder="Not içeriği..."
+          rows="5"
+          class="w-full"
+        />
       </FormField>
       <FormField label="Önem Derecesi">
-        <Dropdown v-model="form.onemDerecesi" :options="onemSecenek" optionLabel="label" optionValue="value" placeholder="Seçiniz" class="w-full" />
+        <Dropdown
+          v-model="form.onemDerecesi"
+          :options="onemSecenek"
+          option-label="label"
+          option-value="value"
+          placeholder="Seçiniz"
+          class="w-full"
+        />
       </FormField>
       <FormField label="Renk">
         <div class="renk-secici">
-          <button v-for="r in renkSecenekler" :key="r.deger" type="button" class="renk-nokta" :class="{ secili: form.renk === r.deger }"
-            :style="{ background: r.renk }" :title="r.etiket" @click="form.renk = r.deger"></button>
+          <button
+            v-for="r in renkSecenekler"
+            :key="r.deger"
+            type="button"
+            class="renk-nokta"
+            :class="{ secili: form.renk === r.deger }"
+            :style="{ background: r.renk }"
+            :title="r.etiket"
+            @click="form.renk = r.deger"
+          />
         </div>
       </FormField>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="dialogGoster = false" class="p-button-text" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialogGoster = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

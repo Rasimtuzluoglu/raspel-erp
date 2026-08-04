@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (userRol && userRol.yetkiler) {
         yetkiler.value = userRol.yetkiler.map(y => y.kod)
       }
-    } catch {}
+    } catch { /* empty */ }
   }
 
   const init = () => {
@@ -138,7 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
         sirketAdi: sirketAdi.value,
         yetkiler: yetkiler.value
       }))
-    } catch {}
+    } catch { /* empty */ }
   }
 
   init()

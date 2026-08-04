@@ -1,7 +1,9 @@
 <template>
   <div class="vergi-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Vergi Raporları</h1>
+      <h1 class="page-title">
+        Vergi Raporları
+      </h1>
     </div>
 
     <IlkZiyaretIpuclari
@@ -12,16 +14,37 @@
 
     <div class="donem-secim">
       <label>Dönem (Ay)</label>
-      <InputText v-model="donem" placeholder="YYYY-MM" class="donem-input" @keyup.enter="yukle" />
-      <Button icon="pi pi-search" label="Getir" @click="yukle" />
+      <InputText
+        v-model="donem"
+        placeholder="YYYY-MM"
+        class="donem-input"
+        @keyup.enter="yukle"
+      />
+      <Button
+        icon="pi pi-search"
+        label="Getir"
+        @click="yukle"
+      />
     </div>
 
-    <div v-if="kdvBeyanname" class="vergi-seksiyon">
-      <h2 class="seksiyon-baslik"><i class="pi pi-file-edit"></i> KDV Beyannamesi — {{ kdvBeyanname.donem }}</h2>
+    <div
+      v-if="kdvBeyanname"
+      class="vergi-seksiyon"
+    >
+      <h2 class="seksiyon-baslik">
+        <i class="pi pi-file-edit" /> KDV Beyannamesi — {{ kdvBeyanname.donem }}
+      </h2>
       <div class="kdv-ozet">
-        <div class="ozet-kutu"><span>Hesaplanan KDV (Satış)</span><strong>{{ formatCurrency(kdvBeyanname.toplamHesaplananKdv) }}</strong></div>
-        <div class="ozet-kutu"><span>İndirilecek KDV (Alış)</span><strong>{{ formatCurrency(kdvBeyanname.toplamIndirilecekKdv) }}</strong></div>
-        <div class="ozet-kutu" :class="kdvBeyanname.odenecekKdv > 0 ? 'odenecek' : 'devreden'">
+        <div class="ozet-kutu">
+          <span>Hesaplanan KDV (Satış)</span><strong>{{ formatCurrency(kdvBeyanname.toplamHesaplananKdv) }}</strong>
+        </div>
+        <div class="ozet-kutu">
+          <span>İndirilecek KDV (Alış)</span><strong>{{ formatCurrency(kdvBeyanname.toplamIndirilecekKdv) }}</strong>
+        </div>
+        <div
+          class="ozet-kutu"
+          :class="kdvBeyanname.odenecekKdv > 0 ? 'odenecek' : 'devreden'"
+        >
           <span>{{ kdvBeyanname.odenecekKdv > 0 ? 'Ödenecek KDV' : 'Devreden KDV' }}</span>
           <strong>{{ formatCurrency(kdvBeyanname.odenecekKdv > 0 ? kdvBeyanname.odenecekKdv : kdvBeyanname.devredenKdv) }}</strong>
         </div>
@@ -30,41 +53,145 @@
       <div class="kdv-tablolar">
         <div class="kdv-tablo">
           <h3>1-2 no.lu Tablo (Hesaplanan KDV)</h3>
-          <DataTable :value="kdvBeyanname.satislar" stripedRows>
-            <Column field="kdvOrani" header="KDV Oranı"><template #body="{ data }">%{{ data.kdvOrani }}</template></Column>
-            <Column field="matrah" header="Matrah"><template #body="{ data }">{{ formatCurrency(data.matrah) }}</template></Column>
-            <Column field="kdv" header="KDV"><template #body="{ data }">{{ formatCurrency(data.kdv) }}</template></Column>
+          <DataTable
+            :value="kdvBeyanname.satislar"
+            striped-rows
+          >
+            <Column
+              field="kdvOrani"
+              header="KDV Oranı"
+            >
+              <template #body="{ data }">
+                %{{ data.kdvOrani }}
+              </template>
+            </Column>
+            <Column
+              field="matrah"
+              header="Matrah"
+            >
+              <template #body="{ data }">
+                {{ formatCurrency(data.matrah) }}
+              </template>
+            </Column>
+            <Column
+              field="kdv"
+              header="KDV"
+            >
+              <template #body="{ data }">
+                {{ formatCurrency(data.kdv) }}
+              </template>
+            </Column>
           </DataTable>
         </div>
         <div class="kdv-tablo">
           <h3>19-20 no.lu Tablo (İndirilecek KDV)</h3>
-          <DataTable :value="kdvBeyanname.alislar" stripedRows>
-            <Column field="kdvOrani" header="KDV Oranı"><template #body="{ data }">%{{ data.kdvOrani }}</template></Column>
-            <Column field="matrah" header="Matrah"><template #body="{ data }">{{ formatCurrency(data.matrah) }}</template></Column>
-            <Column field="kdv" header="KDV"><template #body="{ data }">{{ formatCurrency(data.kdv) }}</template></Column>
+          <DataTable
+            :value="kdvBeyanname.alislar"
+            striped-rows
+          >
+            <Column
+              field="kdvOrani"
+              header="KDV Oranı"
+            >
+              <template #body="{ data }">
+                %{{ data.kdvOrani }}
+              </template>
+            </Column>
+            <Column
+              field="matrah"
+              header="Matrah"
+            >
+              <template #body="{ data }">
+                {{ formatCurrency(data.matrah) }}
+              </template>
+            </Column>
+            <Column
+              field="kdv"
+              header="KDV"
+            >
+              <template #body="{ data }">
+                {{ formatCurrency(data.kdv) }}
+              </template>
+            </Column>
           </DataTable>
         </div>
       </div>
     </div>
 
-    <div v-if="bsRapor || baRapor" class="vergi-seksiyon">
-      <h2 class="seksiyon-baslik"><i class="pi pi-chart-bar"></i> BA/BS Bildirim Formu (eşik: {{ formatCurrency(bsRapor?.esik || baRapor?.esik) }})</h2>
+    <div
+      v-if="bsRapor || baRapor"
+      class="vergi-seksiyon"
+    >
+      <h2 class="seksiyon-baslik">
+        <i class="pi pi-chart-bar" /> BA/BS Bildirim Formu (eşik: {{ formatCurrency(bsRapor?.esik || baRapor?.esik) }})
+      </h2>
       <div class="ba-bs-secim">
-        <SelectButton v-model="aktifBs" :options="[{label:'BS (Satış)', value:true},{label:'BA (Alış)', value:false}]" optionLabel="label" optionValue="value" />
+        <SelectButton
+          v-model="aktifBs"
+          :options="[{label:'BS (Satış)', value:true},{label:'BA (Alış)', value:false}]"
+          option-label="label"
+          option-value="value"
+        />
       </div>
-      <DataTable :value="aktifBs ? (bsRapor?.kayitlar || []) : (baRapor?.kayitlar || [])" stripedRows>
-        <Column field="faturaNo" header="Fatura No" />
-        <Column field="tarih" header="Tarih"><template #body="{ data }">{{ formatDate(data.tarih) }}</template></Column>
-        <Column field="cariAd" header="Cari" />
-        <Column field="cariVkn" header="VKN/TCKN" />
-        <Column field="matrah" header="Matrah"><template #body="{ data }">{{ formatCurrency(data.matrah) }}</template></Column>
-        <Column field="kdv" header="KDV"><template #body="{ data }">{{ formatCurrency(data.kdv) }}</template></Column>
-        <Column field="tutar" header="Tutar"><template #body="{ data }"><strong>{{ formatCurrency(data.tutar) }}</strong></template></Column>
+      <DataTable
+        :value="aktifBs ? (bsRapor?.kayitlar || []) : (baRapor?.kayitlar || [])"
+        striped-rows
+      >
+        <Column
+          field="faturaNo"
+          header="Fatura No"
+        />
+        <Column
+          field="tarih"
+          header="Tarih"
+        >
+          <template #body="{ data }">
+            {{ formatDate(data.tarih) }}
+          </template>
+        </Column>
+        <Column
+          field="cariAd"
+          header="Cari"
+        />
+        <Column
+          field="cariVkn"
+          header="VKN/TCKN"
+        />
+        <Column
+          field="matrah"
+          header="Matrah"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.matrah) }}
+          </template>
+        </Column>
+        <Column
+          field="kdv"
+          header="KDV"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.kdv) }}
+          </template>
+        </Column>
+        <Column
+          field="tutar"
+          header="Tutar"
+        >
+          <template #body="{ data }">
+            <strong>{{ formatCurrency(data.tutar) }}</strong>
+          </template>
+        </Column>
       </DataTable>
-      <div class="ba-bs-toplam" v-if="(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)">
+      <div
+        v-if="(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)"
+        class="ba-bs-toplam"
+      >
         Toplam Tutar: <strong>{{ formatCurrency(aktifBs ? bsRapor?.toplamTutar : baRapor?.toplamTutar) }}</strong>
       </div>
-      <EmptyState v-if="!(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)" message="Eşik üstü kayıt yok" />
+      <EmptyState
+        v-if="!(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)"
+        message="Eşik üstü kayıt yok"
+      />
     </div>
   </div>
 </template>

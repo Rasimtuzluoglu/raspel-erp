@@ -1,48 +1,120 @@
 <template>
   <div class="donemler-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Dönemler</h1>
+      <h1 class="page-title">
+        Dönemler
+      </h1>
       <div class="baslik-aksiyon">
-        <Dropdown v-model="seciliSirketId" :options="sirketler" optionLabel="ad" optionValue="id" placeholder="Şirket Seçin" @change="donemleriYukle" class="sirket-dropdown" />
-        <Button label="Yeni Dönem" icon="pi pi-plus" @click="dialogAc" :disabled="!seciliSirketId" />
+        <Dropdown
+          v-model="seciliSirketId"
+          :options="sirketler"
+          option-label="ad"
+          option-value="id"
+          placeholder="Şirket Seçin"
+          class="sirket-dropdown"
+          @change="donemleriYukle"
+        />
+        <Button
+          label="Yeni Dönem"
+          icon="pi pi-plus"
+          :disabled="!seciliSirketId"
+          @click="dialogAc"
+        />
       </div>
     </div>
 
-    <DataTable :value="donemler" stripedRows responsiveLayout="scroll" :loading="yukleniyor">
-      <Column field="id" header="#" style="width:60px" />
-      <Column field="ad" header="Dönem Adı" sortable />
-      <Column field="baslangic" header="Başlangıç">
-        <template #body="{ data }">{{ data.baslangic }}</template>
-      </Column>
-      <Column field="bitis" header="Bitiş">
-        <template #body="{ data }">{{ data.bitis }}</template>
-      </Column>
-      <Column field="aktif" header="Durum">
+    <DataTable
+      :value="donemler"
+      striped-rows
+      responsive-layout="scroll"
+      :loading="yukleniyor"
+    >
+      <Column
+        field="id"
+        header="#"
+        style="width:60px"
+      />
+      <Column
+        field="ad"
+        header="Dönem Adı"
+        sortable
+      />
+      <Column
+        field="baslangic"
+        header="Başlangıç"
+      >
         <template #body="{ data }">
-          <Tag :value="data.aktif ? 'Aktif' : 'Pasif'" :severity="data.aktif ? 'success' : 'danger'" />
+          {{ data.baslangic }}
         </template>
       </Column>
-      <Column header="İşlem" style="width:120px">
+      <Column
+        field="bitis"
+        header="Bitiş"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-text" @click="dialogAc(data)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="sil(data)" />
+          {{ data.bitis }}
+        </template>
+      </Column>
+      <Column
+        field="aktif"
+        header="Durum"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="data.aktif ? 'Aktif' : 'Pasif'"
+            :severity="data.aktif ? 'success' : 'danger'"
+          />
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:120px"
+      >
+        <template #body="{ data }">
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-text"
+            @click="dialogAc(data)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text p-button-danger"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="duzenleme ? 'Dönem Düzenle' : 'Yeni Dönem'" modal :style="{ width: '450px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="duzenleme ? 'Dönem Düzenle' : 'Yeni Dönem'"
+      modal
+      :style="{ width: '450px' }"
+    >
       <div class="form-grid">
         <div class="field">
           <label>Dönem Adı *</label>
-          <InputText v-model="form.ad" class="w-full" placeholder="Örn: 2026 Yılı" />
+          <InputText
+            v-model="form.ad"
+            class="w-full"
+            placeholder="Örn: 2026 Yılı"
+          />
         </div>
         <div class="field">
           <label>Başlangıç Tarihi *</label>
-          <DatePicker v-model="form.baslangic" dateFormat="dd/mm/yy" class="w-full" />
+          <DatePicker
+            v-model="form.baslangic"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label>Bitiş Tarihi *</label>
-          <DatePicker v-model="form.bitis" dateFormat="dd/mm/yy" class="w-full" />
+          <DatePicker
+            v-model="form.bitis"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label>Aktif</label>
@@ -50,15 +122,25 @@
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { donemAPI, sirketAPI } from '../api/index.js'

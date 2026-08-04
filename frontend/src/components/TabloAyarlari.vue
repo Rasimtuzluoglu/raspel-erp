@@ -1,21 +1,59 @@
 <template>
   <div class="tablo-ayarlari">
-    <Button icon="pi pi-filter" class="p-button-sm p-button-text" :badge="gizliKolonSayisi" badgeClass="p-badge-warning" @click="panelAcik = !panelAcik" title="Sütun Ayarları" />
+    <Button
+      icon="pi pi-filter"
+      class="p-button-sm p-button-text"
+      :badge="gizliKolonSayisi"
+      badge-class="p-badge-warning"
+      title="Sütun Ayarları"
+      @click="panelAcik = !panelAcik"
+    />
     <transition name="panel">
-      <div v-if="panelAcik" class="ayar-panel">
-        <div class="ayar-baslik">Sütunlar</div>
-        <label v-for="(k, i) in kolonlar" :key="i" class="ayar-satir">
-          <Checkbox :model-value="k.visible" :binary="true" @update:model-value="degistir(i, $event)" />
+      <div
+        v-if="panelAcik"
+        class="ayar-panel"
+      >
+        <div class="ayar-baslik">
+          Sütunlar
+        </div>
+        <label
+          v-for="(k, i) in localKolonlar"
+          :key="i"
+          class="ayar-satir"
+        >
+          <Checkbox
+            :model-value="k.visible"
+            :binary="true"
+            @update:model-value="degistir(i, $event)"
+          />
           <span>{{ k.header }}</span>
         </label>
-        <div class="ayar-ayrac"></div>
-        <div class="ayar-baslik">Yoğunluk</div>
-        <div class="ayar-yogunluk">
-          <Button :label="'Kompakt'" :class="{ 'p-button-sm': true, 'p-button-outlined': yogunluk !== 'compact' }" size="small" @click="yogunlukSec('compact')" />
-          <Button :label="'Rahat'" :class="{ 'p-button-sm': true, 'p-button-outlined': yogunluk !== 'comfortable' }" size="small" @click="yogunlukSec('comfortable')" />
+        <div class="ayar-ayrac" />
+        <div class="ayar-baslik">
+          Yoğunluk
         </div>
-        <div class="ayar-ayrac"></div>
-        <Button label="Hepsini Göster" icon="pi pi-eye" size="small" class="p-button-sm w-full" @click="hepsiniGoster" />
+        <div class="ayar-yogunluk">
+          <Button
+            :label="'Kompakt'"
+            :class="{ 'p-button-sm': true, 'p-button-outlined': yogunluk !== 'compact' }"
+            size="small"
+            @click="yogunlukSec('compact')"
+          />
+          <Button
+            :label="'Rahat'"
+            :class="{ 'p-button-sm': true, 'p-button-outlined': yogunluk !== 'comfortable' }"
+            size="small"
+            @click="yogunlukSec('comfortable')"
+          />
+        </div>
+        <div class="ayar-ayrac" />
+        <Button
+          label="Hepsini Göster"
+          icon="pi pi-eye"
+          size="small"
+          class="p-button-sm w-full"
+          @click="hepsiniGoster"
+        />
       </div>
     </transition>
   </div>
@@ -33,13 +71,19 @@ const emit = defineEmits(['update:kolonlar', 'update:yogunluk'])
 const panelAcik = ref(false)
 const yogunluk = ref('comfortable')
 
-const gizliKolonSayisi = computed(() => props.kolonlar.filter(k => k.visible === false).length)
+const localKolonlar = ref(props.kolonlar.map(k => ({ ...k })))
+
+watch(() => props.kolonlar, (yeni) => {
+  localKolonlar.value = yeni.map(k => ({ ...k }))
+})
+
+const gizliKolonSayisi = computed(() => localKolonlar.value.filter(k => k.visible === false).length)
 
 const localStorageAnahtari = () => `raspel_tablo_${props.tabloKey}`
 
-watch(() => props.kolonlar, () => {
+watch(localKolonlar, () => {
   localStorage.setItem(localStorageAnahtari(), JSON.stringify({
-    kolonlar: props.kolonlar.map(k => ({ field: k.field, visible: k.visible !== false })),
+    kolonlar: localKolonlar.value.map(k => ({ field: k.field, visible: k.visible !== false })),
     yogunluk: yogunluk.value
   }))
 }, { deep: true })
@@ -48,19 +92,24 @@ const init = () => {
   try {
     const kayitli = JSON.parse(localStorage.getItem(localStorageAnahtari()))
     if (kayitli?.kolonlar) {
+      const yeniKolonlar = localKolonlar.value.map(k => ({ ...k }))
       kayitli.kolonlar.forEach(k => {
-        const kolon = props.kolonlar.find(c => c.field === k.field)
+        const kolon = yeniKolonlar.find(c => c.field === k.field)
         if (kolon) kolon.visible = k.visible
       })
+      localKolonlar.value = yeniKolonlar
+      emit('update:kolonlar', yeniKolonlar)
     }
     if (kayitli?.yogunluk) yogunluk.value = kayitli.yogunluk
-  } catch {}
+  } catch { /* empty */ }
   emit('update:yogunluk', yogunluk.value)
 }
 
 const degistir = (idx, val) => {
-  props.kolonlar[idx].visible = val
-  emit('update:kolonlar', [...props.kolonlar])
+  const yeniKolonlar = localKolonlar.value.map(k => ({ ...k }))
+  yeniKolonlar[idx].visible = val
+  localKolonlar.value = yeniKolonlar
+  emit('update:kolonlar', yeniKolonlar)
 }
 
 const yogunlukSec = (y) => {
@@ -69,8 +118,9 @@ const yogunlukSec = (y) => {
 }
 
 const hepsiniGoster = () => {
-  props.kolonlar.forEach(k => { k.visible = true })
-  emit('update:kolonlar', [...props.kolonlar])
+  const yeniKolonlar = localKolonlar.value.map(k => ({ ...k, visible: true }))
+  localKolonlar.value = yeniKolonlar
+  emit('update:kolonlar', yeniKolonlar)
 }
 
 init()

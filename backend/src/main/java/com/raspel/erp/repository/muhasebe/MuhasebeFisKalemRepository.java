@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import com.raspel.erp.entity.muhasebe.MuhasebeFisi;
 
 @Repository
 public interface MuhasebeFisKalemRepository extends JpaRepository<MuhasebeFisKalem, Long> {

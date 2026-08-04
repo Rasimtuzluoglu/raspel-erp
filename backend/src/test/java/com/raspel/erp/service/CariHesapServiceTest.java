@@ -1,9 +1,9 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.CariHesapDTO;
-import com.raspel.erp.entity.CariHesap;
-import com.raspel.erp.repository.CariHesapRepository;
-import com.raspel.erp.repository.HareketRepository;
+import com.raspel.erp.dto.finans.CariHesapDTO;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.finans.HareketRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.finans.CariHesapService;
 
 @ExtendWith(MockitoExtension.class)
 class CariHesapServiceTest {

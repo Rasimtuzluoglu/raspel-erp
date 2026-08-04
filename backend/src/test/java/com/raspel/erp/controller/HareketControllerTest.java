@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.HareketDTO;
-import com.raspel.erp.service.HareketService;
+import com.raspel.erp.dto.finans.HareketDTO;
+import com.raspel.erp.service.finans.HareketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.finans.HareketController;
 
 @WebMvcTest(HareketController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -127,9 +128,6 @@ class HareketControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

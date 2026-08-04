@@ -1,11 +1,11 @@
 package com.raspel.erp.service.ticaret;
 
-import com.raspel.erp.dto.FaturaDTO;
+import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.EFaturaDTO;
 import com.raspel.erp.entity.ticaret.EFatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.ticaret.EFaturaRepository;
-import com.raspel.erp.service.FaturaService;
+import com.raspel.erp.service.ticaret.FaturaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +19,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.sistem.SirketRepository;
 
 @ExtendWith(MockitoExtension.class)
 class EFaturaServiceTest {
@@ -30,10 +32,10 @@ class EFaturaServiceTest {
     private FaturaService faturaService;
 
     @Mock
-    private com.raspel.erp.repository.CariHesapRepository cariHesapRepository;
+    private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
 
     @Mock
-    private com.raspel.erp.repository.SirketRepository sirketRepository;
+    private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
 
     @InjectMocks
     private EFaturaService eFaturaService;

@@ -7,48 +7,60 @@
         <Button 
           label="Yeni Hareket" 
           icon="pi pi-plus"
-          @click="openDialog"
           class="p-button-success"
+          @click="openDialog"
         />
       </template>
       <template #end>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:4px" @click="excelIndir" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          style="margin-right:4px"
+          @click="excelIndir"
+        />
         <Button 
           label="CSV" 
           icon="pi pi-download"
-          @click="csvExport"
           class="p-button-sm p-button-outlined"
           style="margin-right: 8px"
+          @click="csvExport"
         />
         <DatePicker 
           v-model="filtreBaslangic" 
           placeholder="Başlangıç" 
           date-format="dd.mm.yy"
           class="filter-date"
-          @update:modelValue="filtrele"
+          @update:model-value="filtrele"
         />
         <DatePicker 
           v-model="filtreBitis" 
           placeholder="Bitiş" 
           date-format="dd.mm.yy"
           class="filter-date"
-          @update:modelValue="filtrele"
+          @update:model-value="filtrele"
         />
         <Button 
           v-if="filtreBaslangic || filtreBitis"
           icon="pi pi-times"
-          @click="filtreTemizle"
           class="p-button-rounded p-button-text p-button-sm"
           title="Filtreyi Temizle"
+          @click="filtreTemizle"
         />
       </template>
     </Toolbar>
 
-    <div class="loading" v-if="loading">
-      <p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
     </div>
 
-    <div class="table-container" v-if="!loading">
+    <div
+      v-if="!loading"
+      class="table-container"
+    >
       <DataTable
         :value="tümHareketler"
         responsive-layout="scroll"
@@ -59,53 +71,86 @@
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
       >
-        <Column field="cariHesapAd" header="Cari Hesap" style="width: 200px"></Column>
-        <Column field="tur" header="Tür" style="width: 100px">
+        <Column
+          field="cariHesapAd"
+          header="Cari Hesap"
+          style="width: 200px"
+        />
+        <Column
+          field="tur"
+          header="Tür"
+          style="width: 100px"
+        >
           <template #body="slotProps">
             <span :class="['badge', String(typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur).toUpperCase() === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
               {{ String(typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur).toUpperCase() === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
             </span>
           </template>
         </Column>
-        <Column field="odemeSekli" header="Ödeme Şekli" style="width: 120px">
+        <Column
+          field="odemeSekli"
+          header="Ödeme Şekli"
+          style="width: 120px"
+        >
           <template #body="slotProps">
             <span v-if="slotProps.data.odemeSekli">{{ odemeSekliLabel(slotProps.data.odemeSekli) }}</span>
-            <span v-else class="muted">-</span>
+            <span
+              v-else
+              class="muted"
+            >-</span>
           </template>
         </Column>
-        <Column field="tutar" header="Tutar" style="width: 120px">
+        <Column
+          field="tutar"
+          header="Tutar"
+          style="width: 120px"
+        >
           <template #body="slotProps">
             <span :class="slotProps.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
               {{ formatCurrency(slotProps.data.tutar) }}
             </span>
           </template>
         </Column>
-        <Column field="hareketTarihi" header="Tarih" style="width: 120px">
+        <Column
+          field="hareketTarihi"
+          header="Tarih"
+          style="width: 120px"
+        >
           <template #body="slotProps">
             {{ formatDate(slotProps.data.hareketTarihi) }}
           </template>
         </Column>
-        <Column field="aciklama" header="Açıklama"></Column>
-        <Column header="İşlemler" style="width: 140px">
+        <Column
+          field="aciklama"
+          header="Açıklama"
+        />
+        <Column
+          header="İşlemler"
+          style="width: 140px"
+        >
           <template #body="slotProps">
             <Button 
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
-              @click="openEditDialog(slotProps.data)"
               title="Düzenle"
               style="margin-right: 6px"
+              @click="openEditDialog(slotProps.data)"
             />
             <Button 
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
-              @click="confirmDelete(slotProps.data.id)"
               title="Sil"
+              @click="confirmDelete(slotProps.data.id)"
             />
           </template>
         </Column>
       </DataTable>
 
-      <Message v-if="tümHareketler.length === 0" severity="info" text="Hareket bulunmamaktadır." />
+      <Message
+        v-if="tümHareketler.length === 0"
+        severity="info"
+        text="Hareket bulunmamaktadır."
+      />
     </div>
 
     <!-- Hareket Ekleme/Düzenleme Dialog -->
@@ -118,8 +163,8 @@
       <div class="form-group">
         <label for="cariHesapId">Cari Hesap *</label>
         <Dropdown 
-          v-model="form.cariHesapId"
           id="cariHesapId"
+          v-model="form.cariHesapId"
           :options="cariHesapSeçenekleri"
           option-label="ad"
           option-value="id"
@@ -131,8 +176,8 @@
       <div class="form-group">
         <label for="tur">Hareket Türü *</label>
         <Dropdown 
-          v-model="form.tur"
           id="tur"
+          v-model="form.tur"
           :options="hareketTurleri"
           option-label="label"
           option-value="value"
@@ -144,8 +189,8 @@
       <div class="form-group">
         <label for="odemeSekli">Ödeme Şekli</label>
         <Dropdown 
-          v-model="form.odemeSekli"
           id="odemeSekli"
+          v-model="form.odemeSekli"
           :options="odemeSekliSecenekleri"
           option-label="label"
           option-value="value"
@@ -157,8 +202,8 @@
       <div class="form-group">
         <label for="tutar">Tutar *</label>
         <InputNumber 
-          v-model="form.tutar"
           id="tutar"
+          v-model="form.tutar"
           :use-grouping="false"
           :min-fraction-digits="2"
           :max-fraction-digits="2"
@@ -170,8 +215,8 @@
       <div class="form-group">
         <label for="hareketTarihi">Hareket Tarihi *</label>
         <DatePicker 
-          v-model="form.hareketTarihi"
           id="hareketTarihi"
+          v-model="form.hareketTarihi"
           date-format="dd.mm.yy"
           class="w-full"
         />
@@ -180,8 +225,8 @@
       <div class="form-group">
         <label for="aciklama">Açıklama</label>
         <Textarea 
-          v-model="form.aciklama"
           id="aciklama"
+          v-model="form.aciklama"
           placeholder="Hareket açıklamasını giriniz"
           rows="3"
           class="w-full"
@@ -192,19 +237,23 @@
         <Button 
           label="İptal" 
           icon="pi pi-times"
-          @click="closeDialog"
           class="p-button-text"
+          @click="closeDialog"
         />
         <Button 
           label="Kaydet" 
           icon="pi pi-check"
-          @click="saveHareket"
           :loading="saving"
+          @click="saveHareket"
         />
       </template>
     </Dialog>
 
-    <Message v-if="error" severity="error" :text="error" />
+    <Message
+      v-if="error"
+      severity="error"
+      :text="error"
+    />
   </div>
 </template>
 

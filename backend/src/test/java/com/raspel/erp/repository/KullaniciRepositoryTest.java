@@ -1,6 +1,6 @@
 package com.raspel.erp.repository;
 
-import com.raspel.erp.entity.Kullanici;
+import com.raspel.erp.entity.sistem.Kullanici;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")

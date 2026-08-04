@@ -1,9 +1,9 @@
 package com.raspel.erp.service.sistem;
 
-import com.raspel.erp.entity.CariHesap;
-import com.raspel.erp.entity.Fatura;
-import com.raspel.erp.repository.FaturaRepository;
-import com.raspel.erp.service.EmailService;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.service.sistem.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

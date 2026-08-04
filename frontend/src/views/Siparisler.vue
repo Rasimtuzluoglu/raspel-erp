@@ -1,46 +1,151 @@
 <template>
   <div class="siparisler-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Siparişler & Teklifler</h1>
-      <Button label="Yeni Teklif" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Siparişler & Teklifler
+      </h1>
+      <Button
+        label="Yeni Teklif"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="siparisler" stripedRows :loading="yukleniyor">
-      <Column field="siparisNo" header="No" sortable />
-      <Column field="tarih" header="Tarih" />
-      <Column field="cariHesapAdi" header="Müşteri" />
-      <Column field="tur" header="Tür" />
-      <Column field="genelToplam" header="Tutar">
-        <template #body="{ data }">{{ data.genelToplam?.toFixed(2) }} ₺</template>
-      </Column>
-      <Column field="durum" header="Durum">
+    <DataTable
+      :value="siparisler"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="siparisNo"
+        header="No"
+        sortable
+      />
+      <Column
+        field="tarih"
+        header="Tarih"
+      />
+      <Column
+        field="cariHesapAdi"
+        header="Müşteri"
+      />
+      <Column
+        field="tur"
+        header="Tür"
+      />
+      <Column
+        field="genelToplam"
+        header="Tutar"
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum" :severity="data.durum === 'SIPARIS' ? 'info' : data.durum === 'FATURA_KESILDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'" />
+          {{ data.genelToplam?.toFixed(2) }} ₺
         </template>
       </Column>
-      <Column header="İşlemler" style="width:220px">
+      <Column
+        field="durum"
+        header="Durum"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-check-circle" class="p-button-rounded p-button-text p-button-info" v-if="data.durum === 'TEKLIF'" @click="durumGuncelle(data, 'SIPARIS')" title="Siparişe Çevir" />
-          <Button icon="pi pi-file" class="p-button-rounded p-button-text p-button-success" v-if="data.durum === 'SIPARIS'" @click="durumGuncelle(data, 'FATURA_KESILDI')" title="Faturalaştır" />
-          <Button icon="pi pi-undo" class="p-button-rounded p-button-text p-button-help" v-if="data.durum === 'FATURA_KESILDI' || data.durum === 'IPTAL'" @click="durumGuncelle(data, 'SIPARIS')" title="Siparişe Geri Al" />
-          <Button icon="pi pi-times-circle" class="p-button-rounded p-button-text p-button-warning" v-if="data.durum !== 'IPTAL' && data.durum !== 'FATURA_KESILDI'" @click="durumGuncelle(data, 'IPTAL')" title="İptal Et" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="sil(data)" />
+          <Tag
+            :value="data.durum"
+            :severity="data.durum === 'SIPARIS' ? 'info' : data.durum === 'FATURA_KESILDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+          />
+        </template>
+      </Column>
+      <Column
+        header="İşlemler"
+        style="width:220px"
+      >
+        <template #body="{ data }">
+          <Button
+            v-if="data.durum === 'TEKLIF'"
+            icon="pi pi-check-circle"
+            class="p-button-rounded p-button-text p-button-info"
+            title="Siparişe Çevir"
+            @click="durumGuncelle(data, 'SIPARIS')"
+          />
+          <Button
+            v-if="data.durum === 'SIPARIS'"
+            icon="pi pi-file"
+            class="p-button-rounded p-button-text p-button-success"
+            title="Faturalaştır"
+            @click="durumGuncelle(data, 'FATURA_KESILDI')"
+          />
+          <Button
+            v-if="data.durum === 'FATURA_KESILDI' || data.durum === 'IPTAL'"
+            icon="pi pi-undo"
+            class="p-button-rounded p-button-text p-button-help"
+            title="Siparişe Geri Al"
+            @click="durumGuncelle(data, 'SIPARIS')"
+          />
+          <Button
+            v-if="data.durum !== 'IPTAL' && data.durum !== 'FATURA_KESILDI'"
+            icon="pi pi-times-circle"
+            class="p-button-rounded p-button-text p-button-warning"
+            title="İptal Et"
+            @click="durumGuncelle(data, 'IPTAL')"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text p-button-danger"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" header="Yeni Teklif / Sipariş" modal :style="{ width: '550px' }">
+    <Dialog
+      v-model:visible="dialog"
+      header="Yeni Teklif / Sipariş"
+      modal
+      :style="{ width: '550px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Teklif No *</label><InputText v-model="form.siparisNo" class="w-full" /></div>
-        <div class="field"><label>Tarih</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Müşteri *</label>
-          <Dropdown v-model="form.cariHesapId" :options="cariler" optionLabel="ad" optionValue="id" placeholder="Seçin" class="w-full" />
+        <div class="field">
+          <label>Teklif No *</label><InputText
+            v-model="form.siparisNo"
+            class="w-full"
+          />
         </div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Tarih</label><DatePicker
+            v-model="form.tarih"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Müşteri *</label>
+          <Dropdown
+            v-model="form.cariHesapId"
+            :options="cariler"
+            option-label="ad"
+            option-value="id"
+            placeholder="Seçin"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

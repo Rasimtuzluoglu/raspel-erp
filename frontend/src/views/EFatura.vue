@@ -1,9 +1,15 @@
 <template>
   <div class="efatura-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">E-Fatura</h1>
+      <h1 class="page-title">
+        E-Fatura
+      </h1>
       <div class="sag-butonlar">
-        <Button label="Faturadan Oluştur" icon="pi pi-file-plus" @click="olusturDialogAc" />
+        <Button
+          label="Faturadan Oluştur"
+          icon="pi pi-file-plus"
+          @click="olusturDialogAc"
+        />
       </div>
     </div>
 
@@ -14,54 +20,109 @@
     />
 
     <div class="bilgi-kutu">
-      <i class="pi pi-info-circle"></i>
+      <i class="pi pi-info-circle" />
       GİB entegratör uç noktası (<code>app.efatura.gib-endpoint</code>) tanımlı değilse gönderimler yerel onay (simülasyon) olarak işaretlenir.
     </div>
 
     <AppDataTable
       :value="list"
       :loading="yukleniyor"
-      aramaAktif
-      aramaPlaceholder="E-Faturalarda ara..."
-      gorunumAnahtari="efatura_liste"
+      arama-aktif
+      arama-placeholder="E-Faturalarda ara..."
+      gorunum-anahtari="efatura_liste"
     >
-      <Column field="faturaNo" header="Fatura No" sortable />
-      <Column field="ettn" header="ETTN">
-        <template #body="{ data }"><span class="mono">{{ kisaEttn(data.ettn) }}</span></template>
-      </Column>
-      <Column field="aliciUnvan" header="Alıcı" />
-      <Column field="odenecekTutar" header="Tutar">
-        <template #body="{ data }">{{ formatCurrency(data.odenecekTutar) }}</template>
-      </Column>
-      <Column field="senaryo" header="Senaryo" />
-      <Column field="gibDurumKodu" header="GİB Durumu">
+      <Column
+        field="faturaNo"
+        header="Fatura No"
+        sortable
+      />
+      <Column
+        field="ettn"
+        header="ETTN"
+      >
         <template #body="{ data }">
-          <Tag :value="durumEtiketi(data.gibDurumKodu)" :severity="durumSeverity(data.gibDurumKodu)" />
-          <div class="durum-aciklama" :title="data.gibDurumAciklama">{{ data.gibDurumAciklama }}</div>
+          <span class="mono">{{ kisaEttn(data.ettn) }}</span>
         </template>
       </Column>
-      <Column field="olusturmaTarihi" header="Oluşturulma">
-        <template #body="{ data }">{{ formatDateTime(data.olusturmaTarihi) }}</template>
+      <Column
+        field="aliciUnvan"
+        header="Alıcı"
+      />
+      <Column
+        field="odenecekTutar"
+        header="Tutar"
+      >
+        <template #body="{ data }">
+          {{ formatCurrency(data.odenecekTutar) }}
+        </template>
       </Column>
-      <Column header="İşlem" style="width:90px">
+      <Column
+        field="senaryo"
+        header="Senaryo"
+      />
+      <Column
+        field="gibDurumKodu"
+        header="GİB Durumu"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="durumEtiketi(data.gibDurumKodu)"
+            :severity="durumSeverity(data.gibDurumKodu)"
+          />
+          <div
+            class="durum-aciklama"
+            :title="data.gibDurumAciklama"
+          >
+            {{ data.gibDurumAciklama }}
+          </div>
+        </template>
+      </Column>
+      <Column
+        field="olusturmaTarihi"
+        header="Oluşturulma"
+      >
+        <template #body="{ data }">
+          {{ formatDateTime(data.olusturmaTarihi) }}
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:90px"
+      >
         <template #body="{ data }">
           <div class="eylem-btns">
-            <Button v-if="data.gibDurumKodu < 1200" icon="pi pi-send" class="p-button-rounded p-button-text" @click="gibGonder(data)" title="GİB'e Gönder" />
-            <Button icon="pi pi-download" class="p-button-rounded p-button-text" @click="xmlIndir(data)" title="XML İndir" />
+            <Button
+              v-if="data.gibDurumKodu < 1200"
+              icon="pi pi-send"
+              class="p-button-rounded p-button-text"
+              title="GİB'e Gönder"
+              @click="gibGonder(data)"
+            />
+            <Button
+              icon="pi pi-download"
+              class="p-button-rounded p-button-text"
+              title="XML İndir"
+              @click="xmlIndir(data)"
+            />
           </div>
         </template>
       </Column>
     </AppDataTable>
 
-    <Dialog v-model:visible="olusturDialog" header="Faturadan E-Fatura Oluştur" modal :style="{ width: '520px' }">
+    <Dialog
+      v-model:visible="olusturDialog"
+      header="Faturadan E-Fatura Oluştur"
+      modal
+      :style="{ width: '520px' }"
+    >
       <div class="form-grid">
         <div class="field">
           <label>Fatura</label>
           <Select
             v-model="olusturForm.faturaId"
             :options="faturalar"
-            optionLabel="etiket"
-            optionValue="id"
+            option-label="etiket"
+            option-value="id"
             class="w-full"
             filter
             placeholder="Fatura seçin"
@@ -69,16 +130,34 @@
         </div>
         <div class="field">
           <label>Senaryo</label>
-          <Select v-model="olusturForm.senaryo" :options="['TEMELFATURA','TICARIFATURA','EARSIVEFATURA']" class="w-full" />
+          <Select
+            v-model="olusturForm.senaryo"
+            :options="['TEMELFATURA','TICARIFATURA','EARSIVEFATURA']"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label>Tip</label>
-          <Select v-model="olusturForm.tip" :options="['SATIS','IADE','TEVKIFAT','ISTISNA']" class="w-full" />
+          <Select
+            v-model="olusturForm.tip"
+            :options="['SATIS','IADE','TEVKIFAT','ISTISNA']"
+            class="w-full"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="olusturDialog = false" />
-        <Button label="Oluştur" icon="pi pi-file-plus" @click="olustur" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="olusturDialog = false"
+        />
+        <Button
+          label="Oluştur"
+          icon="pi pi-file-plus"
+          :loading="kaydediliyor"
+          @click="olustur"
+        />
       </template>
     </Dialog>
   </div>
@@ -126,7 +205,7 @@ const faturalariYukle = async () => {
     const r = await faturaAPI.getAll()
     const data = r.data?.content || r.data || []
     faturalar.value = data.map(f => ({ ...f, etiket: `${f.faturaNumarasi} - ${f.cariHesapAd || ''} (${formatCurrency(f.genelToplam)})` }))
-  } catch {}
+  } catch { /* empty */ }
 }
 
 const olusturDialogAc = () => {

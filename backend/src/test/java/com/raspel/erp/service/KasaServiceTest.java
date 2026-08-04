@@ -1,9 +1,7 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.KasaDTO;
-import com.raspel.erp.dto.KasaHareketDTO;
-import com.raspel.erp.entity.*;
-import com.raspel.erp.repository.*;
+import com.raspel.erp.dto.finans.KasaDTO;
+import com.raspel.erp.dto.finans.KasaHareketDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +19,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.entity.finans.Kasa;
+import com.raspel.erp.entity.finans.KasaHareket;
+import com.raspel.erp.repository.finans.KasaHareketRepository;
+import com.raspel.erp.repository.finans.KasaRepository;
+import com.raspel.erp.service.finans.KasaService;
+import com.raspel.erp.repository.sistem.KategoriRepository;
 
 @ExtendWith(MockitoExtension.class)
 class KasaServiceTest {

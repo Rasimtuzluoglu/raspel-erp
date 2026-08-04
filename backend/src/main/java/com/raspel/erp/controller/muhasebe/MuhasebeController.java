@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.entity.muhasebe.HesapPlani;
 
 @Tag(name = "Genel Muhasebe", description = "Hesap planı, yevmiye, mizan ve defteri kebir API")
 @RestController
-@RequestMapping({"/api/muhasebe", "/api/v1/muhasebe"})
+@RequestMapping("/api/muhasebe")
 @RequiredArgsConstructor
 public class MuhasebeController {
 

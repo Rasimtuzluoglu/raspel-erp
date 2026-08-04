@@ -1,8 +1,8 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.DonemDTO;
+import com.raspel.erp.dto.sistem.DonemDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.DonemService;
+import com.raspel.erp.service.sistem.DonemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.DonemController;
+import com.raspel.erp.entity.sistem.Sirket;
 
 @WebMvcTest(DonemController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -120,10 +122,6 @@ class DonemControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
-
 
 
 

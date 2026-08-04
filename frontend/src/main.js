@@ -90,17 +90,21 @@ app.use(i18n)
 
 app.component('DataTable', DataTable)
 app.component('Column', Column)
+// eslint-disable-next-line vue/no-reserved-component-names
 app.component('Button', Button)
+// eslint-disable-next-line vue/no-reserved-component-names
 app.component('Dialog', Dialog)
 app.component('InputText', InputText)
 app.component('InputNumber', InputNumber)
 app.component('DatePicker', DatePicker)
 app.component('Dropdown', Dropdown)
+// eslint-disable-next-line vue/no-reserved-component-names
 app.component('Select', Select)
 app.component('Card', Card)
 app.component('Toast', Toast)
 app.component('ConfirmDialog', ConfirmDialog)
 app.component('Toolbar', Toolbar)
+// eslint-disable-next-line vue/no-reserved-component-names
 app.component('Textarea', Textarea)
 app.component('Message', Message)
 app.component('Tag', Tag)

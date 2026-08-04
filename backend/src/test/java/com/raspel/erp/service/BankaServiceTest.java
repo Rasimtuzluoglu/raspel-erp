@@ -1,8 +1,8 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.BankaDTO;
-import com.raspel.erp.entity.Banka;
-import com.raspel.erp.repository.BankaRepository;
+import com.raspel.erp.dto.finans.BankaDTO;
+import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.repository.finans.BankaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.finans.BankaService;
 
 @ExtendWith(MockitoExtension.class)
 class BankaServiceTest {

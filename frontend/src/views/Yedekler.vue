@@ -1,79 +1,212 @@
 <template>
   <div class="yedekler-container">
     <div class="page-header">
-      <h1><i class="pi pi-save"></i> Yedekleme</h1>
+      <h1><i class="pi pi-save" /> Yedekleme</h1>
       <div class="header-islem">
-        <Select v-model="yedekTipi" :options="tipler" optionLabel="label" optionValue="value" class="tip-select" />
-        <Button label="Yedek Al" icon="pi pi-plus-circle" class="p-button-success" @click="manuelYedek" :loading="yedekAliniyor" />
+        <Select
+          v-model="yedekTipi"
+          :options="tipler"
+          option-label="label"
+          option-value="value"
+          class="tip-select"
+        />
+        <Button
+          label="Yedek Al"
+          icon="pi pi-plus-circle"
+          class="p-button-success"
+          :loading="yedekAliniyor"
+          @click="manuelYedek"
+        />
       </div>
     </div>
 
     <ConfirmDialog />
 
-    <Message v-if="hata" severity="error" :closable="true" @close="hata = ''">{{ hata }}</Message>
-    <Message v-if="basari" severity="success" :closable="true" @close="basari = ''">{{ basari }}</Message>
+    <Message
+      v-if="hata"
+      severity="error"
+      :closable="true"
+      @close="hata = ''"
+    >
+      {{ hata }}
+    </Message>
+    <Message
+      v-if="basari"
+      severity="success"
+      :closable="true"
+      @close="basari = ''"
+    >
+      {{ basari }}
+    </Message>
 
     <div class="ozet-grid">
       <Card class="ozet-kart">
-        <template #title><i class="pi pi-calendar" style="margin-right:8px"></i>Günlük</template>
+        <template #title>
+          <i
+            class="pi pi-calendar"
+            style="margin-right:8px"
+          />Günlük
+        </template>
         <template #content>
-          <div class="ozet-satir"><span>Adet</span><strong>{{ schedule.counts?.DAILY || 0 }}</strong></div>
-          <div class="ozet-satir"><span>Saklama</span><strong>30 gün</strong></div>
-          <div class="ozet-saat"><i class="pi pi-clock"></i> Her gün 03:00</div>
+          <div class="ozet-satir">
+            <span>Adet</span><strong>{{ schedule.counts?.DAILY || 0 }}</strong>
+          </div>
+          <div class="ozet-satir">
+            <span>Saklama</span><strong>30 gün</strong>
+          </div>
+          <div class="ozet-saat">
+            <i class="pi pi-clock" /> Her gün 03:00
+          </div>
         </template>
       </Card>
       <Card class="ozet-kart">
-        <template #title><i class="pi pi-calendar-week" style="margin-right:8px"></i>Haftalık</template>
+        <template #title>
+          <i
+            class="pi pi-calendar-week"
+            style="margin-right:8px"
+          />Haftalık
+        </template>
         <template #content>
-          <div class="ozet-satir"><span>Adet</span><strong>{{ schedule.counts?.WEEKLY || 0 }}</strong></div>
-          <div class="ozet-satir"><span>Saklama</span><strong>180 gün</strong></div>
-          <div class="ozet-saat"><i class="pi pi-clock"></i> Pazar 03:00</div>
+          <div class="ozet-satir">
+            <span>Adet</span><strong>{{ schedule.counts?.WEEKLY || 0 }}</strong>
+          </div>
+          <div class="ozet-satir">
+            <span>Saklama</span><strong>180 gün</strong>
+          </div>
+          <div class="ozet-saat">
+            <i class="pi pi-clock" /> Pazar 03:00
+          </div>
         </template>
       </Card>
       <Card class="ozet-kart">
-        <template #title><i class="pi pi-calendar-plus" style="margin-right:8px"></i>Aylık</template>
+        <template #title>
+          <i
+            class="pi pi-calendar-plus"
+            style="margin-right:8px"
+          />Aylık
+        </template>
         <template #content>
-          <div class="ozet-satir"><span>Adet</span><strong>{{ schedule.counts?.MONTHLY || 0 }}</strong></div>
-          <div class="ozet-satir"><span>Saklama</span><strong>365 gün</strong></div>
-          <div class="ozet-saat"><i class="pi pi-clock"></i> Ayın 1'i 03:00</div>
+          <div class="ozet-satir">
+            <span>Adet</span><strong>{{ schedule.counts?.MONTHLY || 0 }}</strong>
+          </div>
+          <div class="ozet-satir">
+            <span>Saklama</span><strong>365 gün</strong>
+          </div>
+          <div class="ozet-saat">
+            <i class="pi pi-clock" /> Ayın 1'i 03:00
+          </div>
         </template>
       </Card>
       <Card class="ozet-kart">
-        <template #title><i class="pi pi-calendar-star" style="margin-right:8px"></i>Yıllık</template>
+        <template #title>
+          <i
+            class="pi pi-calendar-star"
+            style="margin-right:8px"
+          />Yıllık
+        </template>
         <template #content>
-          <div class="ozet-satir"><span>Adet</span><strong>{{ schedule.counts?.YEARLY || 0 }}</strong></div>
-          <div class="ozet-satir"><span>Saklama</span><strong>Sınırsız</strong></div>
-          <div class="ozet-saat"><i class="pi pi-clock"></i> 1 Ocak 03:00</div>
+          <div class="ozet-satir">
+            <span>Adet</span><strong>{{ schedule.counts?.YEARLY || 0 }}</strong>
+          </div>
+          <div class="ozet-satir">
+            <span>Saklama</span><strong>Sınırsız</strong>
+          </div>
+          <div class="ozet-saat">
+            <i class="pi pi-clock" /> 1 Ocak 03:00
+          </div>
         </template>
       </Card>
     </div>
 
     <Card class="yedek-listesi">
-      <template #title><i class="pi pi-list" style="margin-right:8px"></i>Yedek Dosyaları</template>
+      <template #title>
+        <i
+          class="pi pi-list"
+          style="margin-right:8px"
+        />Yedek Dosyaları
+      </template>
       <template #content>
-        <DataTable :value="yedekler" :loading="yedeklerYukleniyor" stripedRows size="small" :rows="10" :paginator="yedekler.length > 10" sortField="lastModified" :sortOrder="-1">
-          <Column field="filename" header="Dosya Adı" sortable>
-            <template #body="s"><i class="pi pi-file-archive" style="margin-right:8px;color:#3b82f6"></i>{{ s.data.filename }}</template>
-          </Column>
-          <Column field="type" header="Tür" sortable style="width:100px">
+        <DataTable
+          :value="yedekler"
+          :loading="yedeklerYukleniyor"
+          striped-rows
+          size="small"
+          :rows="10"
+          :paginator="yedekler.length > 10"
+          sort-field="lastModified"
+          :sort-order="-1"
+        >
+          <Column
+            field="filename"
+            header="Dosya Adı"
+            sortable
+          >
             <template #body="s">
-              <Tag :value="typeLabel(s.data.type)" :severity="typeSeverity(s.data.type)" />
+              <i
+                class="pi pi-file-archive"
+                style="margin-right:8px;color:#3b82f6"
+              />{{ s.data.filename }}
             </template>
           </Column>
-          <Column field="size" header="Boyut" sortable style="width:100px">
-            <template #body="s">{{ formatSize(s.data.size) }}</template>
-          </Column>
-          <Column field="lastModified" header="Tarih" sortable style="width:170px">
-            <template #body="s">{{ formatDate(s.data.lastModified) }}</template>
-          </Column>
-          <Column header="İşlem" style="width:100px">
+          <Column
+            field="type"
+            header="Tür"
+            sortable
+            style="width:100px"
+          >
             <template #body="s">
-              <Button icon="pi pi-download" class="p-button-sm p-button-text" @click="indir(s.data.filename)" title="İndir" />
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="sil(s.data.filename)" title="Sil" />
+              <Tag
+                :value="typeLabel(s.data.type)"
+                :severity="typeSeverity(s.data.type)"
+              />
+            </template>
+          </Column>
+          <Column
+            field="size"
+            header="Boyut"
+            sortable
+            style="width:100px"
+          >
+            <template #body="s">
+              {{ formatSize(s.data.size) }}
+            </template>
+          </Column>
+          <Column
+            field="lastModified"
+            header="Tarih"
+            sortable
+            style="width:170px"
+          >
+            <template #body="s">
+              {{ formatDate(s.data.lastModified) }}
+            </template>
+          </Column>
+          <Column
+            header="İşlem"
+            style="width:100px"
+          >
+            <template #body="s">
+              <Button
+                icon="pi pi-download"
+                class="p-button-sm p-button-text"
+                title="İndir"
+                @click="indir(s.data.filename)"
+              />
+              <Button
+                icon="pi pi-trash"
+                class="p-button-sm p-button-text p-button-danger"
+                title="Sil"
+                @click="sil(s.data.filename)"
+              />
             </template>
           </Column>
         </DataTable>
-        <div v-if="!yedekler.length && !yedeklerYukleniyor" class="empty-state">Henüz yedek alınmamış</div>
+        <div
+          v-if="!yedekler.length && !yedeklerYukleniyor"
+          class="empty-state"
+        >
+          Henüz yedek alınmamış
+        </div>
       </template>
     </Card>
   </div>

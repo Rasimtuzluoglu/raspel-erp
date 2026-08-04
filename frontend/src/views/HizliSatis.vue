@@ -1,9 +1,14 @@
 <template>
   <div class="pos-container">
     <div class="pos-header">
-      <div class="breadcrumb"><i class="pi pi-home"></i> Anasayfa / POS / Yeni Satış</div>
-      <div class="user-info" v-if="authStore.kullanici">
-        <i class="pi pi-user"></i> {{ authStore.kullanici.displayName || authStore.kullanici.username }}
+      <div class="breadcrumb">
+        <i class="pi pi-home" /> Anasayfa / POS / Yeni Satış
+      </div>
+      <div
+        v-if="authStore.kullanici"
+        class="user-info"
+      >
+        <i class="pi pi-user" /> {{ authStore.kullanici.displayName || authStore.kullanici.username }}
       </div>
     </div>
 
@@ -13,13 +18,31 @@
           <template #title>
             <div class="filter-title">
               <span>Hızlı Filtreler</span>
-              <Button label="Temizle" severity="secondary" size="small" @click="filtreleriTemizle" />
+              <Button
+                label="Temizle"
+                severity="secondary"
+                size="small"
+                @click="filtreleriTemizle"
+              />
             </div>
           </template>
           <template #content>
             <div class="filter-row">
-              <Dropdown v-model="filtreKategori" :options="kategoriler" optionLabel="ad" placeholder="Kategori" class="filter-select" showClear />
-              <Dropdown v-model="filtreArac" :options="aracListesi" placeholder="Araç" class="filter-select" showClear />
+              <Dropdown
+                v-model="filtreKategori"
+                :options="kategoriler"
+                option-label="ad"
+                placeholder="Kategori"
+                class="filter-select"
+                show-clear
+              />
+              <Dropdown
+                v-model="filtreArac"
+                :options="aracListesi"
+                placeholder="Araç"
+                class="filter-select"
+                show-clear
+              />
             </div>
           </template>
         </Card>
@@ -27,13 +50,27 @@
         <div class="serial-search">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="seriNoArama" placeholder="Seri No / Barkod ile ara..." class="w-full" />
+            <InputText
+              v-model="seriNoArama"
+              placeholder="Seri No / Barkod ile ara..."
+              class="w-full"
+            />
           </span>
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="aramaMetni" placeholder="Ürün adı ile ara..." class="w-full" />
+            <InputText
+              v-model="aramaMetni"
+              placeholder="Ürün adı ile ara..."
+              class="w-full"
+            />
           </span>
-          <Button icon="pi pi-camera" label="Barkod Oku" severity="secondary" outlined @click="scannerAcik = true" />
+          <Button
+            icon="pi pi-camera"
+            label="Barkod Oku"
+            severity="secondary"
+            outlined
+            @click="scannerAcik = true"
+          />
         </div>
 
         <div class="product-section">
@@ -41,11 +78,20 @@
             <h3>Mevcut Ahşap ({{ filtrelenmisUrunler.length }})</h3>
           </div>
           <div class="product-grid">
-            <div v-for="u in filtrelenmisUrunler" :key="u.id" class="product-card" @click="sepeteEkle(u)">
+            <div
+              v-for="u in filtrelenmisUrunler"
+              :key="u.id"
+              class="product-card"
+              @click="sepeteEkle(u)"
+            >
               <div class="product-img">
-                <i class="pi pi-box"></i>
+                <i class="pi pi-box" />
               </div>
-              <Tag :value="(u.miktar || 0) + ' ' + (u.birim || 'adet')" severity="info" class="stock-badge" />
+              <Tag
+                :value="(u.miktar || 0) + ' ' + (u.birim || 'adet')"
+                severity="info"
+                class="stock-badge"
+              />
               <div class="product-details">
                 <span class="product-name">{{ u.ad }}</span>
                 <span class="product-serial">{{ u.barkod || '-' }}</span>
@@ -53,8 +99,11 @@
                 <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
               </div>
             </div>
-            <div v-if="filtrelenmisUrunler.length === 0" class="empty-products">
-              <i class="pi pi-inbox"></i>
+            <div
+              v-if="filtrelenmisUrunler.length === 0"
+              class="empty-products"
+            >
+              <i class="pi pi-inbox" />
               <p>Ürün bulunamadı</p>
             </div>
           </div>
@@ -63,18 +112,40 @@
 
       <div class="col-4 pos-right">
         <Card class="customer-card">
-          <template #title>Müşteri</template>
+          <template #title>
+            Müşteri
+          </template>
           <template #content>
             <div class="customer-field">
-              <SelectButton v-model="musteriModu" :options="musteriModlari" optionLabel="label" optionValue="value" class="w-full musteri-modu" />
+              <SelectButton
+                v-model="musteriModu"
+                :options="musteriModlari"
+                option-label="label"
+                option-value="value"
+                class="w-full musteri-modu"
+              />
               <template v-if="musteriModu === 'musteri'">
-                <AutoComplete v-model="seciliMusteri" :suggestions="musteriOnerileri" @complete="musteriAra($event)"
-                  optionLabel="ad" placeholder="Müşteri ara ve yaz... (isim, vergi no, telefon)" class="w-full" :forceSelection="false">
+                <AutoComplete
+                  v-model="seciliMusteri"
+                  :suggestions="musteriOnerileri"
+                  option-label="ad"
+                  placeholder="Müşteri ara ve yaz... (isim, vergi no, telefon)"
+                  class="w-full"
+                  :force-selection="false"
+                  @complete="musteriAra($event)"
+                >
                   <template #option="slotProps">
-                    <div class="musteri-option">{{ slotProps.option.ad }} <span class="musteri-option-detay">{{ slotProps.option.vergiNo || slotProps.option.telefon }}</span></div>
+                    <div class="musteri-option">
+                      {{ slotProps.option.ad }} <span class="musteri-option-detay">{{ slotProps.option.vergiNo || slotProps.option.telefon }}</span>
+                    </div>
                   </template>
                 </AutoComplete>
-                <Button label="+ Yeni" severity="secondary" size="small" @click="yeniMusteriDialog = true" />
+                <Button
+                  label="+ Yeni"
+                  severity="secondary"
+                  size="small"
+                  @click="yeniMusteriDialog = true"
+                />
               </template>
             </div>
           </template>
@@ -84,28 +155,83 @@
           <template #title>
             <div class="sepet-header">
               <span>Sipariş Özeti ({{ sepet.length }})</span>
-              <Button v-if="sepet.length" label="Temizle" icon="pi pi-trash" severity="danger" size="small" @click="sepet = []" />
+              <Button
+                v-if="sepet.length"
+                label="Temizle"
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                @click="sepet = []"
+              />
             </div>
           </template>
           <template #content>
-            <div v-if="sepet.length === 0" class="sepet-bos">Sepete ürün ekleyin</div>
-            <div v-for="(item, idx) in sepet" :key="idx" class="sepet-item">
-              <div class="sepet-ad">{{ item.ad }}</div>
+            <div
+              v-if="sepet.length === 0"
+              class="sepet-bos"
+            >
+              Sepete ürün ekleyin
+            </div>
+            <div
+              v-for="(item, idx) in sepet"
+              :key="idx"
+              class="sepet-item"
+            >
+              <div class="sepet-ad">
+                {{ item.ad }}
+              </div>
               <div class="sepet-satir">
-                <Button icon="pi pi-minus" rounded text severity="secondary" size="small" @click="miktarAzalt(idx)" />
+                <Button
+                  icon="pi pi-minus"
+                  rounded
+                  text
+                  severity="secondary"
+                  size="small"
+                  @click="miktarAzalt(idx)"
+                />
                 <span class="sepet-adet">{{ item.miktar }}</span>
-                <Button icon="pi pi-plus" rounded text severity="secondary" size="small" @click="item.miktar++" />
-                <select v-model="item.fiyatTipi" class="fiyat-tip-select" @change="fiyatTipiDegisti(item)">
-                  <option value="perakende">Perakende</option>
-                  <option value="toptan">Toptan (-10%)</option>
-                  <option value="ozel">Özel (-20%)</option>
+                <Button
+                  icon="pi pi-plus"
+                  rounded
+                  text
+                  severity="secondary"
+                  size="small"
+                  @click="item.miktar++"
+                />
+                <select
+                  v-model="item.fiyatTipi"
+                  class="fiyat-tip-select"
+                  @change="fiyatTipiDegisti(item)"
+                >
+                  <option value="perakende">
+                    Perakende
+                  </option>
+                  <option value="toptan">
+                    Toptan (-10%)
+                  </option>
+                  <option value="ozel">
+                    Özel (-20%)
+                  </option>
                 </select>
-                <input type="number" step="0.01" v-model.number="item.fiyat" class="fiyat-giris-input" title="Birim Fiyatı Düzenle" />
+                <input
+                  v-model.number="item.fiyat"
+                  type="number"
+                  step="0.01"
+                  class="fiyat-giris-input"
+                  title="Birim Fiyatı Düzenle"
+                >
                 <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
-                <Button icon="pi pi-times" rounded text severity="danger" size="small" @click="sepetSil(idx)" />
+                <Button
+                  icon="pi pi-times"
+                  rounded
+                  text
+                  severity="danger"
+                  size="small"
+                  @click="sepetSil(idx)"
+                />
               </div>
             </div>
-            <hr class="ozet-ayrac" />
+            <hr class="ozet-ayrac">
             <div class="ozet-satir">
               <span>Toplam Ft³</span>
               <span>{{ toplamFt3.toFixed(2) }} ft³</span>
@@ -113,8 +239,19 @@
             <div class="ozet-satir">
               <span>İndirim</span>
               <div class="ozet-indirim">
-                <SelectButton v-model="indirimTipi" :options="indirimTipleri" optionLabel="label" optionValue="value" />
-                <InputNumber v-model="indirimDegeri" :min="0" :max="indirimTipi === 'yuzde' ? 100 : toplam" :suffix="indirimTipi === 'yuzde' ? '%' : ' ₺'" class="indirim-input" />
+                <SelectButton
+                  v-model="indirimTipi"
+                  :options="indirimTipleri"
+                  option-label="label"
+                  option-value="value"
+                />
+                <InputNumber
+                  v-model="indirimDegeri"
+                  :min="0"
+                  :max="indirimTipi === 'yuzde' ? 100 : toplam"
+                  :suffix="indirimTipi === 'yuzde' ? '%' : ' ₺'"
+                  class="indirim-input"
+                />
               </div>
             </div>
             <div class="ozet-satir ozet-genel">
@@ -125,17 +262,43 @@
         </Card>
 
         <Card class="odeme-card">
-          <template #title>Ödeme</template>
+          <template #title>
+            Ödeme
+          </template>
           <template #content>
-            <SelectButton v-model="odemeDurumu" :options="odemeTipleri" optionLabel="label" optionValue="value" class="w-full" />
-            <div class="odenen-satir" v-if="odemeDurumu !== 'yok'">
+            <SelectButton
+              v-model="odemeDurumu"
+              :options="odemeTipleri"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+            <div
+              v-if="odemeDurumu !== 'yok'"
+              class="odenen-satir"
+            >
               <label>Ödenen Tutar</label>
-              <InputNumber v-model="odenenTutar" :min="0" :max="genelToplam" mode="currency" currency="TRY" locale="tr-TR" class="w-full" />
+              <InputNumber
+                v-model="odenenTutar"
+                :min="0"
+                :max="genelToplam"
+                mode="currency"
+                currency="TRY"
+                locale="tr-TR"
+                class="w-full"
+              />
             </div>
             <div class="odeme-durum">
-              <Tag :value="odemeDurumText" :severity="odemeDurumSeverity" class="w-full" />
+              <Tag
+                :value="odemeDurumText"
+                :severity="odemeDurumSeverity"
+                class="w-full"
+              />
             </div>
-            <div class="odeme-kalan" v-if="kalanTutar > 0">
+            <div
+              v-if="kalanTutar > 0"
+              class="odeme-kalan"
+            >
               <span>Kalan:</span>
               <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
             </div>
@@ -145,39 +308,87 @@
         <Card class="fis-card">
           <template #title>
             <div class="fis-card-header">
-              <span><i class="pi pi-print"></i> Termal Fiş Ayarları</span>
+              <span><i class="pi pi-print" /> Termal Fiş Ayarları</span>
               <div class="fis-ayarlar">
-                <InputText v-model="fisAltNotu" placeholder="Fiş alt notu..." size="small" style="width:160px" title="Fiş altı özel mesajı" />
-                <SelectButton v-model="fisFiyatli" :options="fisSecenekleri" optionLabel="label" optionValue="value" size="small" />
-                <Button label="Yazdır (F9)" icon="pi pi-print" size="small" @click="fisiYazdir" :disabled="sepet.length === 0" />
+                <InputText
+                  v-model="fisAltNotu"
+                  placeholder="Fiş alt notu..."
+                  size="small"
+                  style="width:160px"
+                  title="Fiş altı özel mesajı"
+                />
+                <SelectButton
+                  v-model="fisFiyatli"
+                  :options="fisSecenekleri"
+                  option-label="label"
+                  option-value="value"
+                  size="small"
+                />
+                <Button
+                  label="Yazdır (F9)"
+                  icon="pi pi-print"
+                  size="small"
+                  :disabled="sepet.length === 0"
+                  @click="fisiYazdir"
+                />
               </div>
             </div>
           </template>
           <template #content>
             <div class="fis-onizleme-kapsam">
-              <div class="fis-onizleme" id="fisOnizleme">
+              <div
+                id="fisOnizleme"
+                class="fis-onizleme"
+              >
                 <div class="fis-header">
-                  <div class="fis-baslik">{{ sirketAdi || 'RASPEL ERP' }}</div>
-                  <div class="fis-tarih">{{ simdikiTarih }}</div>
-                  <div class="fis-fisno">Fiş No: {{ fisNo || '-------' }}</div>
-                </div>
-                <div class="fis-musteri" v-if="musteriAdi">
-                  <span>Müşteri: {{ musteriAdi }}</span>
-                </div>
-                <div class="fis-ayrac">---</div>
-                <div class="fis-kalemler">
-                  <div v-for="i in sepet" :key="i.id" class="fis-kalem">
-                    <div class="fis-kalem-ad">{{ i.ad }} x{{ i.miktar }}</div>
-                    <div class="fis-kalem-tutar" v-if="fisFiyatli">{{ formatCurrency(i.miktar * i.fiyat) }}</div>
+                  <div class="fis-baslik">
+                    {{ sirketAdi || 'RASPEL ERP' }}
+                  </div>
+                  <div class="fis-tarih">
+                    {{ simdikiTarih }}
+                  </div>
+                  <div class="fis-fisno">
+                    Fiş No: {{ fisNo || '-------' }}
                   </div>
                 </div>
-                <div class="fis-ayrac">---</div>
+                <div
+                  v-if="musteriAdi"
+                  class="fis-musteri"
+                >
+                  <span>Müşteri: {{ musteriAdi }}</span>
+                </div>
+                <div class="fis-ayrac">
+                  ---
+                </div>
+                <div class="fis-kalemler">
+                  <div
+                    v-for="i in sepet"
+                    :key="i.id"
+                    class="fis-kalem"
+                  >
+                    <div class="fis-kalem-ad">
+                      {{ i.ad }} x{{ i.miktar }}
+                    </div>
+                    <div
+                      v-if="fisFiyatli"
+                      class="fis-kalem-tutar"
+                    >
+                      {{ formatCurrency(i.miktar * i.fiyat) }}
+                    </div>
+                  </div>
+                </div>
+                <div class="fis-ayrac">
+                  ---
+                </div>
                 <template v-if="fisFiyatli">
                   <div class="fis-toplam">
                     <span>Ara Toplam</span>
                     <span>{{ formatCurrency(toplam) }}</span>
                   </div>
-                  <div class="fis-indirim" v-if="indirimDegeri > 0">
+                  <div
+                    v-if="indirimDegeri > 0"
+                    class="fis-indirim"
+                  >
                     <span>İndirim ({{ indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }})</span>
                     <span>-{{ formatCurrency(indirimTutari) }}</span>
                   </div>
@@ -185,14 +396,22 @@
                     <span>GENEL TOPLAM</span>
                     <span class="fis-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
                   </div>
-                  <div class="fis-ayrac">---</div>
+                  <div class="fis-ayrac">
+                    ---
+                  </div>
                 </template>
                 <div class="fis-odeme">
-                  <div class="fis-odeme-satir" v-if="fisFiyatli">
+                  <div
+                    v-if="fisFiyatli"
+                    class="fis-odeme-satir"
+                  >
                     <span>Ödenen</span>
                     <span>{{ formatCurrency(odenenTutar) }}</span>
                   </div>
-                  <div class="fis-odeme-satir" v-if="fisFiyatli && kalanTutar > 0">
+                  <div
+                    v-if="fisFiyatli && kalanTutar > 0"
+                    class="fis-odeme-satir"
+                  >
                     <span>Kalan</span>
                     <span>{{ formatCurrency(kalanTutar) }}</span>
                   </div>
@@ -206,55 +425,117 @@
                   </div>
                 </div>
                 <div class="fis-footer">
-                  <div class="fis-ayrac">---</div>
-                  <div class="fis-tesekkur">{{ fisAltNotu || 'Bizi tercih ettiğiniz için teşekkür ederiz!' }}</div>
+                  <div class="fis-ayrac">
+                    ---
+                  </div>
+                  <div class="fis-tesekkur">
+                    {{ fisAltNotu || 'Bizi tercih ettiğiniz için teşekkür ederiz!' }}
+                  </div>
                 </div>
               </div>
             </div>
           </template>
         </Card>
 
-        <Button label="Satışı Tamamla" icon="pi pi-check" class="p-button-success w-full satis-buton" @click="satisiTamamla"
-          :loading="kaydediliyor" :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)" />
+        <Button
+          label="Satışı Tamamla"
+          icon="pi pi-check"
+          class="p-button-success w-full satis-buton"
+          :loading="kaydediliyor"
+          :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
+          @click="satisiTamamla"
+        />
       </div>
     </div>
 
-    <Dialog v-model:visible="yeniMusteriDialog" header="Yeni Cari Hesap Ekle" :modal="true" :style="{ width: '520px' }" class="yeni-musteri-dialog">
+    <Dialog
+      v-model:visible="yeniMusteriDialog"
+      header="Yeni Cari Hesap Ekle"
+      :modal="true"
+      :style="{ width: '520px' }"
+      class="yeni-musteri-dialog"
+    >
       <div class="ym-form-grid">
         <div class="field full-width">
           <label for="ym-ad">Ad / Firma Adı <span class="required">*</span></label>
-          <InputText id="ym-ad" v-model="yeniMusteri.ad" placeholder="Örn: Ahmet Yılmaz veya Yılmaz A.Ş." class="w-full" />
+          <InputText
+            id="ym-ad"
+            v-model="yeniMusteri.ad"
+            placeholder="Örn: Ahmet Yılmaz veya Yılmaz A.Ş."
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label for="ym-telefon">Telefon</label>
-          <InputText id="ym-telefon" v-model="yeniMusteri.telefon" placeholder="05XX XXX XX XX" class="w-full" />
+          <InputText
+            id="ym-telefon"
+            v-model="yeniMusteri.telefon"
+            placeholder="05XX XXX XX XX"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label for="ym-email">E-posta</label>
-          <InputText id="ym-email" v-model="yeniMusteri.email" placeholder="ornek@domain.com" class="w-full" />
+          <InputText
+            id="ym-email"
+            v-model="yeniMusteri.email"
+            placeholder="ornek@domain.com"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label for="ym-vergi">Vergi / TC No</label>
-          <InputText id="ym-vergi" v-model="yeniMusteri.vergiNo" placeholder="10 veya 11 haneli numara" class="w-full" />
+          <InputText
+            id="ym-vergi"
+            v-model="yeniMusteri.vergiNo"
+            placeholder="10 veya 11 haneli numara"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label for="ym-tur">Cari Türü</label>
-          <Dropdown id="ym-tur" v-model="yeniMusteri.tur" :options="['Musteri','Tedarikci','Her Ikisi']" placeholder="MÜŞTERİ" class="w-full" />
+          <Dropdown
+            id="ym-tur"
+            v-model="yeniMusteri.tur"
+            :options="['Musteri','Tedarikci','Her Ikisi']"
+            placeholder="MÜŞTERİ"
+            class="w-full"
+          />
         </div>
         <div class="field full-width">
           <label for="ym-adres">Adres</label>
-          <Textarea id="ym-adres" v-model="yeniMusteri.adres" rows="2" placeholder="Fatura adresi..." class="w-full" />
+          <Textarea
+            id="ym-adres"
+            v-model="yeniMusteri.adres"
+            rows="2"
+            placeholder="Fatura adresi..."
+            class="w-full"
+          />
         </div>
       </div>
       <template #footer>
         <div class="dialog-footer-btns">
-          <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="yeniMusteriDialog = false" />
-          <Button label="Kaydet & Seç" icon="pi pi-check" class="p-button-primary" @click="musteriKaydet" :loading="musteriKaydediliyor" />
+          <Button
+            label="İptal"
+            icon="pi pi-times"
+            class="p-button-text"
+            @click="yeniMusteriDialog = false"
+          />
+          <Button
+            label="Kaydet & Seç"
+            icon="pi pi-check"
+            class="p-button-primary"
+            :loading="musteriKaydediliyor"
+            @click="musteriKaydet"
+          />
         </div>
       </template>
     </Dialog>
 
-    <BarcodeScannerModal v-model:visible="scannerAcik" @scan="barkodTarandi" />
+    <BarcodeScannerModal
+      v-model:visible="scannerAcik"
+      @scan="barkodTarandi"
+    />
   </div>
 </template>
 
@@ -269,7 +550,6 @@ import { useKategoriStore } from '../stores/kategoriStore.js'
 import { faturaAPI, cariHesapAPI } from '../api/index.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
-import ToggleButton from 'primevue/togglebutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
 
 const toast = useToast()
@@ -297,11 +577,11 @@ const handlePosKeys = (e) => {
   } else if (e.key === 'F9') {
     e.preventDefault()
     odemeDurumu.value = 'tam'
-    if (sepet.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
+    if (sepet.value.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
   } else if (e.key === 'F10') {
     e.preventDefault()
     odemeDurumu.value = 'kismi'
-    if (sepet.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
+    if (sepet.value.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
   }
 }
 
@@ -402,12 +682,6 @@ const indirimTutari = computed(() => {
 })
 
 const genelToplam = computed(() => Math.max(0, toplam.value - indirimTutari.value))
-
-const odenenTutarComputed = computed(() => {
-  if (odemeDurumu.value === 'tam') return genelToplam.value
-  if (odemeDurumu.value === 'yarim') return genelToplam.value / 2
-  return 0
-})
 
 watch(odemeDurumu, (v) => {
   if (v === 'tam') odenenTutar.value = genelToplam.value
@@ -698,7 +972,7 @@ const satisiTamamla = async () => {
       }))
     })
     toast.add({ severity: 'success', summary: 'Başarılı', detail: `Satış tamamlandı - ${formatCurrency(genelToplam.value)}`, life: 5000 })
-    try { fisiYazdir() } catch {}
+    try { fisiYazdir() } catch { /* empty */ }
     sepet.value = []
     seciliMusteri.value = null
     musteriModu.value = 'musteri'

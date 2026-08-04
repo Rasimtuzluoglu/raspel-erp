@@ -1,8 +1,8 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.SirketDTO;
-import com.raspel.erp.entity.Sirket;
-import com.raspel.erp.repository.SirketRepository;
+import com.raspel.erp.dto.sistem.SirketDTO;
+import com.raspel.erp.entity.sistem.Sirket;
+import com.raspel.erp.repository.sistem.SirketRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.SirketService;
 
 @ExtendWith(MockitoExtension.class)
 class SirketServiceTest {

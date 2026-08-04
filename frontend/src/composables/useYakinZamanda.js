@@ -8,7 +8,7 @@ export function useYakinZamanda() {
       const filtrelenmis = liste.filter(i => !(i.tur === tur && i.id === id))
       filtrelenmis.unshift(yeni)
       localStorage.setItem(ANAHTAR, JSON.stringify(filtrelenmis.slice(0, 10)))
-    } catch {}
+    } catch { /* empty */ }
   }
 
   const liste = () => {

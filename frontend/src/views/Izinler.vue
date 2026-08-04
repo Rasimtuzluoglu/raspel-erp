@@ -1,41 +1,113 @@
 <template>
   <div class="izinler-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">İzin Talepleri</h1>
+      <h1 class="page-title">
+        İzin Talepleri
+      </h1>
       <div class="filtre-grup">
-        <SelectButton v-model="durumFiltre" :options="filtreSecenekleri" optionLabel="label" optionValue="value" />
+        <SelectButton
+          v-model="durumFiltre"
+          :options="filtreSecenekleri"
+          option-label="label"
+          option-value="value"
+        />
       </div>
     </div>
 
-    <DataTable :value="filtrelenmisIzinler" stripedRows :loading="yukleniyor" :paginator="true" :rows="20"
+    <DataTable
+      :value="filtrelenmisIzinler"
+      striped-rows
+      :loading="yukleniyor"
+      :paginator="true"
+      :rows="20"
       paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-      current-page-report-template="{totalRecords} kayıttan {first}-{last}" sort-field="baslangic" :sort-order="-1">
-      <Column field="personelAdi" header="Personel" sortable />
-      <Column field="izinTuru" header="İzin Türü" sortable>
+      current-page-report-template="{totalRecords} kayıttan {first}-{last}"
+      sort-field="baslangic"
+      :sort-order="-1"
+    >
+      <Column
+        field="personelAdi"
+        header="Personel"
+        sortable
+      />
+      <Column
+        field="izinTuru"
+        header="İzin Türü"
+        sortable
+      >
         <template #body="{ data }">
           {{ izinTuruLabel(data.izinTuru) }}
         </template>
       </Column>
-      <Column field="baslangic" header="Başlangıç" sortable>
-        <template #body="{ data }">{{ formatDate(data.baslangic) }}</template>
-      </Column>
-      <Column field="bitis" header="Bitiş" sortable>
-        <template #body="{ data }">{{ formatDate(data.bitis) }}</template>
-      </Column>
-      <Column field="gunSayisi" header="Gün" sortable />
-      <Column field="durum" header="Durum" sortable>
+      <Column
+        field="baslangic"
+        header="Başlangıç"
+        sortable
+      >
         <template #body="{ data }">
-          <Tag :value="durumLabel(data.durum)" :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'REDDEDILDI' ? 'danger' : 'warn'" />
+          {{ formatDate(data.baslangic) }}
         </template>
       </Column>
-      <Column field="aciklama" header="Açıklama">
-        <template #body="{ data }">{{ data.aciklama || '-' }}</template>
-      </Column>
-      <Column header="İşlem" style="width:180px">
+      <Column
+        field="bitis"
+        header="Bitiş"
+        sortable
+      >
         <template #body="{ data }">
-          <Button v-if="data.durum === 'BEKLEMEDE'" icon="pi pi-check" class="p-button-rounded p-button-sm p-button-success" @click="onayla(data)" title="Onayla" />
-          <Button v-if="data.durum === 'BEKLEMEDE'" icon="pi pi-times" class="p-button-rounded p-button-sm p-button-danger" @click="reddet(data)" title="Reddet" />
-          <Button v-if="authStore.kullanici?.role === 'ADMIN'" icon="pi pi-trash" class="p-button-rounded p-button-sm p-button-text" @click="sil(data)" title="Sil" />
+          {{ formatDate(data.bitis) }}
+        </template>
+      </Column>
+      <Column
+        field="gunSayisi"
+        header="Gün"
+        sortable
+      />
+      <Column
+        field="durum"
+        header="Durum"
+        sortable
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="durumLabel(data.durum)"
+            :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'REDDEDILDI' ? 'danger' : 'warn'"
+          />
+        </template>
+      </Column>
+      <Column
+        field="aciklama"
+        header="Açıklama"
+      >
+        <template #body="{ data }">
+          {{ data.aciklama || '-' }}
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:180px"
+      >
+        <template #body="{ data }">
+          <Button
+            v-if="data.durum === 'BEKLEMEDE'"
+            icon="pi pi-check"
+            class="p-button-rounded p-button-sm p-button-success"
+            title="Onayla"
+            @click="onayla(data)"
+          />
+          <Button
+            v-if="data.durum === 'BEKLEMEDE'"
+            icon="pi pi-times"
+            class="p-button-rounded p-button-sm p-button-danger"
+            title="Reddet"
+            @click="reddet(data)"
+          />
+          <Button
+            v-if="authStore.kullanici?.role === 'ADMIN'"
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-sm p-button-text"
+            title="Sil"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>

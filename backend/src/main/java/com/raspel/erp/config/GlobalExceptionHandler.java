@@ -25,6 +25,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.entity.sistem.Not;
 
 @ControllerAdvice
 @Slf4j

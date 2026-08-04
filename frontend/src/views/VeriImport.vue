@@ -1,47 +1,128 @@
 <template>
   <div class="import-page">
-    <PageHeader title="Veri İçe Aktar" subtitle="CSV dosyaları ile toplu stok ve cari hesap aktarımı yapın." />
+    <PageHeader
+      title="Veri İçe Aktar"
+      subtitle="CSV dosyaları ile toplu stok ve cari hesap aktarımı yapın."
+    />
 
     <div class="import-grid">
       <Card>
-        <template #title><i class="pi pi-box" style="margin-right:8px"></i>Stok Aktar</template>
+        <template #title>
+          <i
+            class="pi pi-box"
+            style="margin-right:8px"
+          />Stok Aktar
+        </template>
         <template #content>
-          <p class="import-desc">CSV dosyası ile toplu stok girişi. Kolonlar: <code>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar</code></p>
-          <div class="import-dropzone" @dragover.prevent @drop.prevent="dosyaSec($event, 'stok')" @click="$refs.stokInput.click()">
-            <input ref="stokInput" type="file" accept=".csv" hidden @change="dosyaDegisti($event, 'stok')" />
-            <i class="pi pi-upload"></i>
+          <p class="import-desc">
+            CSV dosyası ile toplu stok girişi. Kolonlar: <code>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar</code>
+          </p>
+          <div
+            class="import-dropzone"
+            @dragover.prevent
+            @drop.prevent="dosyaSec($event, 'stok')"
+            @click="$refs.stokInput.click()"
+          >
+            <input
+              ref="stokInput"
+              type="file"
+              accept=".csv"
+              hidden
+              @change="dosyaDegisti($event, 'stok')"
+            >
+            <i class="pi pi-upload" />
             <span>{{ stokDosya ? stokDosya.name : 'CSV dosyasını seçin veya sürükleyin' }}</span>
           </div>
-          <Button v-if="stokDosya" label="Aktar" icon="pi pi-upload" class="p-button-success w-full" @click="aktar('stok')" :loading="stokYukleniyor" />
-          <div class="import-sonuc" v-if="stokSonuc">
-            <Message :severity="stokSonuc.hatalar?.length ? 'warn' : 'success'" :closable="true">
+          <Button
+            v-if="stokDosya"
+            label="Aktar"
+            icon="pi pi-upload"
+            class="p-button-success w-full"
+            :loading="stokYukleniyor"
+            @click="aktar('stok')"
+          />
+          <div
+            v-if="stokSonuc"
+            class="import-sonuc"
+          >
+            <Message
+              :severity="stokSonuc.hatalar?.length ? 'warn' : 'success'"
+              :closable="true"
+            >
               <strong>{{ stokSonuc.basarili }} stok aktarıldı.</strong>
               <span v-if="stokSonuc.hatalar?.length"> {{ stokSonuc.hatalar.length }} hata.</span>
             </Message>
-            <ul v-if="stokSonuc.hatalar?.length" class="hata-listesi">
-              <li v-for="h in stokSonuc.hatalar" :key="h">{{ h }}</li>
+            <ul
+              v-if="stokSonuc.hatalar?.length"
+              class="hata-listesi"
+            >
+              <li
+                v-for="h in stokSonuc.hatalar"
+                :key="h"
+              >
+                {{ h }}
+              </li>
             </ul>
           </div>
         </template>
       </Card>
 
       <Card>
-        <template #title><i class="pi pi-users" style="margin-right:8px"></i>Cari Hesap Aktar</template>
+        <template #title>
+          <i
+            class="pi pi-users"
+            style="margin-right:8px"
+          />Cari Hesap Aktar
+        </template>
         <template #content>
-          <p class="import-desc">CSV dosyası ile toplu cari hesap girişi. Kolonlar: <code>ad;vergiNo;telefon;eposta;il;ilce;adres</code></p>
-          <div class="import-dropzone" @dragover.prevent @drop.prevent="dosyaSec($event, 'cari')" @click="$refs.cariInput.click()">
-            <input ref="cariInput" type="file" accept=".csv" hidden @change="dosyaDegisti($event, 'cari')" />
-            <i class="pi pi-upload"></i>
+          <p class="import-desc">
+            CSV dosyası ile toplu cari hesap girişi. Kolonlar: <code>ad;vergiNo;telefon;eposta;il;ilce;adres</code>
+          </p>
+          <div
+            class="import-dropzone"
+            @dragover.prevent
+            @drop.prevent="dosyaSec($event, 'cari')"
+            @click="$refs.cariInput.click()"
+          >
+            <input
+              ref="cariInput"
+              type="file"
+              accept=".csv"
+              hidden
+              @change="dosyaDegisti($event, 'cari')"
+            >
+            <i class="pi pi-upload" />
             <span>{{ cariDosya ? cariDosya.name : 'CSV dosyasını seçin veya sürükleyin' }}</span>
           </div>
-          <Button v-if="cariDosya" label="Aktar" icon="pi pi-upload" class="p-button-success w-full" @click="aktar('cari')" :loading="cariYukleniyor" />
-          <div class="import-sonuc" v-if="cariSonuc">
-            <Message :severity="cariSonuc.hatalar?.length ? 'warn' : 'success'" :closable="true">
+          <Button
+            v-if="cariDosya"
+            label="Aktar"
+            icon="pi pi-upload"
+            class="p-button-success w-full"
+            :loading="cariYukleniyor"
+            @click="aktar('cari')"
+          />
+          <div
+            v-if="cariSonuc"
+            class="import-sonuc"
+          >
+            <Message
+              :severity="cariSonuc.hatalar?.length ? 'warn' : 'success'"
+              :closable="true"
+            >
               <strong>{{ cariSonuc.basarili }} cari hesap aktarıldı.</strong>
               <span v-if="cariSonuc.hatalar?.length"> {{ cariSonuc.hatalar.length }} hata.</span>
             </Message>
-            <ul v-if="cariSonuc.hatalar?.length" class="hata-listesi">
-              <li v-for="h in cariSonuc.hatalar" :key="h">{{ h }}</li>
+            <ul
+              v-if="cariSonuc.hatalar?.length"
+              class="hata-listesi"
+            >
+              <li
+                v-for="h in cariSonuc.hatalar"
+                :key="h"
+              >
+                {{ h }}
+              </li>
             </ul>
           </div>
         </template>

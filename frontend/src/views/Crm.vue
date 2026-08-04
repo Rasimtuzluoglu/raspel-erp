@@ -1,8 +1,14 @@
 <template>
   <div class="crm-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">CRM — Fırsat Takibi</h1>
-      <Button label="Yeni Fırsat" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        CRM — Fırsat Takibi
+      </h1>
+      <Button
+        label="Yeni Fırsat"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
     <IlkZiyaretIpuclari
@@ -42,25 +48,60 @@
     <AppDataTable
       :value="firsatlar"
       :loading="yukleniyor"
-      aramaAktif
-      aramaPlaceholder="Fırsatlarda ara..."
-      gorunumAnahtari="crm_firsatlar"
+      arama-aktif
+      arama-placeholder="Fırsatlarda ara..."
+      gorunum-anahtari="crm_firsatlar"
     >
-      <Column field="ad" header="Fırsat" sortable />
-      <Column field="cariHesapAd" header="Cari Hesap">
-        <template #body="{ data }">{{ data.cariHesapAd || '-' }}</template>
+      <Column
+        field="ad"
+        header="Fırsat"
+        sortable
+      />
+      <Column
+        field="cariHesapAd"
+        header="Cari Hesap"
+      >
+        <template #body="{ data }">
+          {{ data.cariHesapAd || '-' }}
+        </template>
       </Column>
-      <Column field="deger" header="Değer" sortable>
-        <template #body="{ data }">{{ formatCurrency(data.deger) }}</template>
+      <Column
+        field="deger"
+        header="Değer"
+        sortable
+      >
+        <template #body="{ data }">
+          {{ formatCurrency(data.deger) }}
+        </template>
       </Column>
-      <Column field="durum" header="Durum">
-        <template #body="{ data }"><Tag :value="durumEtiketi(data.durum)" :severity="durumSeverity(data.durum)" /></template>
+      <Column
+        field="durum"
+        header="Durum"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="durumEtiketi(data.durum)"
+            :severity="durumSeverity(data.durum)"
+          />
+        </template>
       </Column>
-      <Column field="kaynak" header="Kaynak" />
-      <Column field="tahminiKapanis" header="Tahmini Kapanış" sortable>
-        <template #body="{ data }">{{ formatDate(data.tahminiKapanis) }}</template>
+      <Column
+        field="kaynak"
+        header="Kaynak"
+      />
+      <Column
+        field="tahminiKapanis"
+        header="Tahmini Kapanış"
+        sortable
+      >
+        <template #body="{ data }">
+          {{ formatDate(data.tahminiKapanis) }}
+        </template>
       </Column>
-      <Column header="İşlem" style="width:60px">
+      <Column
+        header="İşlem"
+        style="width:60px"
+      >
         <template #body="{ data }">
           <SatirEylemleri
             :gorunur="{ duzenle: true, cogalt: true, sil: true }"
@@ -72,32 +113,92 @@
       </Column>
     </AppDataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '540px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '540px' }"
+    >
       <div class="form-grid">
         <div class="field">
           <label class="zorunlu">Fırsat Adı</label>
-          <InputText v-model="form.ad" class="w-full" :class="{ 'p-invalid': formHatali.ad }" />
-          <small v-if="formHatali.ad" class="hata-mesaj">Fırsat adı zorunludur</small>
+          <InputText
+            v-model="form.ad"
+            class="w-full"
+            :class="{ 'p-invalid': formHatali.ad }"
+          />
+          <small
+            v-if="formHatali.ad"
+            class="hata-mesaj"
+          >Fırsat adı zorunludur</small>
         </div>
         <div class="field">
           <label>Durum</label>
-          <Select v-model="form.durum" :options="durumlar" optionLabel="label" optionValue="value" class="w-full" />
+          <Select
+            v-model="form.durum"
+            :options="durumlar"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+          />
         </div>
         <div class="field">
           <label>Cari Hesap</label>
-          <Select v-model="form.cariHesapId" :options="cariler" optionLabel="ad" optionValue="id" class="w-full" showClear filter />
+          <Select
+            v-model="form.cariHesapId"
+            :options="cariler"
+            option-label="ad"
+            option-value="id"
+            class="w-full"
+            show-clear
+            filter
+          />
         </div>
-        <div class="field"><label>Değer (₺)</label><InputNumber v-model="form.deger" mode="currency" currency="TRY" class="w-full" /></div>
+        <div class="field">
+          <label>Değer (₺)</label><InputNumber
+            v-model="form.deger"
+            mode="currency"
+            currency="TRY"
+            class="w-full"
+          />
+        </div>
         <div class="field">
           <label>Kaynak</label>
-          <Select v-model="form.kaynak" :options="['Web','Telefon','Referans','Fuarlar','Sosyal Medya','E-Posta']" class="w-full" showClear />
+          <Select
+            v-model="form.kaynak"
+            :options="['Web','Telefon','Referans','Fuarlar','Sosyal Medya','E-Posta']"
+            class="w-full"
+            show-clear
+          />
         </div>
-        <div class="field"><label>Tahmini Kapanış</label><DatePicker v-model="form.tahminiKapanis" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="3" class="w-full" /></div>
+        <div class="field">
+          <label>Tahmini Kapanış</label><DatePicker
+            v-model="form.tahminiKapanis"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="3"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>
@@ -153,7 +254,7 @@ onMounted(async () => {
   try {
     const r = await cariHesapAPI.getAll()
     cariler.value = r.data?.content || r.data || []
-  } catch {}
+  } catch { /* empty */ }
 })
 
 const firsatlariYukle = async () => {

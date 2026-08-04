@@ -1,6 +1,14 @@
 <template>
   <div class="tarih-hizli">
-    <Button v-for="p in presetler" :key="p.id" :label="p.label" size="small" class="p-button-sm" :class="{ 'p-button-outlined': secili !== p.id }" @click="sec(p)" />
+    <Button
+      v-for="p in presetler"
+      :key="p.id"
+      :label="p.label"
+      size="small"
+      class="p-button-sm"
+      :class="{ 'p-button-outlined': secili !== p.id }"
+      @click="sec(p)"
+    />
   </div>
 </template>
 

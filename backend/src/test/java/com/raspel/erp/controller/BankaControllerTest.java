@@ -1,8 +1,8 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.BankaDTO;
+import com.raspel.erp.dto.finans.BankaDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.BankaService;
+import com.raspel.erp.service.finans.BankaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.controller.finans.BankaController;
 
 @WebMvcTest(BankaController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -109,10 +111,6 @@ class BankaControllerTest {
                 .andExpect(status().isNotFound());
     }
 }
-
-
-
-
 
 
 

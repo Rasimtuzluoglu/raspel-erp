@@ -1,56 +1,175 @@
 <template>
   <div class="ceksenet-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Çek / Senet Portföyü</h1>
-      <Button label="Yeni Çek/Senet" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Çek / Senet Portföyü
+      </h1>
+      <Button
+        label="Yeni Çek/Senet"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="tur" header="Tür">
-        <template #body="{ data }"><Tag :value="data.tur" :severity="data.tur === 'CEK' ? 'info' : 'warn'" /></template>
-      </Column>
-      <Column field="cariHesapAdi" header="Cari Hesap" />
-      <Column field="cekNo" header="Çek No" />
-      <Column field="bankaAdi" header="Banka" />
-      <Column field="vadeTarihi" header="Vade" />
-      <Column field="tutar" header="Tutar">
-        <template #body="{ data }">{{ data.tutar?.toFixed(2) }} ₺</template>
-      </Column>
-      <Column field="durum" header="Durum">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="tur"
+        header="Tür"
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum" :severity="data.durum === 'PORTFOY' ? 'info' : data.durum === 'TAHSIL_EDILDI' ? 'success' : data.durum === 'PROTESTO' ? 'danger' : 'warn'" />
+          <Tag
+            :value="data.tur"
+            :severity="data.tur === 'CEK' ? 'info' : 'warn'"
+          />
         </template>
       </Column>
-      <Column header="İşlem" style="width:160px">
+      <Column
+        field="cariHesapAdi"
+        header="Cari Hesap"
+      />
+      <Column
+        field="cekNo"
+        header="Çek No"
+      />
+      <Column
+        field="bankaAdi"
+        header="Banka"
+      />
+      <Column
+        field="vadeTarihi"
+        header="Vade"
+      />
+      <Column
+        field="tutar"
+        header="Tutar"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-check" class="p-button-rounded p-button-text p-button-success" v-if="data.durum === 'PORTFOY'" @click="durumGuncelle(data, 'TAHSIL_EDILDI')" title="Tahsil Et" />
-          <Button icon="pi pi-sync" class="p-button-rounded p-button-text p-button-info" v-if="data.durum === 'PORTFOY'" @click="durumGuncelle(data, 'CIRO_EDILDI')" title="Ciro Et" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          {{ data.tutar?.toFixed(2) }} ₺
+        </template>
+      </Column>
+      <Column
+        field="durum"
+        header="Durum"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="data.durum"
+            :severity="data.durum === 'PORTFOY' ? 'info' : data.durum === 'TAHSIL_EDILDI' ? 'success' : data.durum === 'PROTESTO' ? 'danger' : 'warn'"
+          />
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:160px"
+      >
+        <template #body="{ data }">
+          <Button
+            v-if="data.durum === 'PORTFOY'"
+            icon="pi pi-check"
+            class="p-button-rounded p-button-text p-button-success"
+            title="Tahsil Et"
+            @click="durumGuncelle(data, 'TAHSIL_EDILDI')"
+          />
+          <Button
+            v-if="data.durum === 'PORTFOY'"
+            icon="pi pi-sync"
+            class="p-button-rounded p-button-text p-button-info"
+            title="Ciro Et"
+            @click="durumGuncelle(data, 'CIRO_EDILDI')"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" header="Yeni Çek/Senet" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      header="Yeni Çek/Senet"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
         <div class="field-row">
-          <div class="field"><label>Tür *</label>
-            <Dropdown v-model="form.tur" :options="['CEK','SENET']" class="w-full" /></div>
-          <div class="field"><label>Cari Hesap *</label>
-            <Dropdown v-model="form.cariHesapId" :options="cariler" optionLabel="ad" optionValue="id" placeholder="Seçin" class="w-full" /></div>
+          <div class="field">
+            <label>Tür *</label>
+            <Dropdown
+              v-model="form.tur"
+              :options="['CEK','SENET']"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Cari Hesap *</label>
+            <Dropdown
+              v-model="form.cariHesapId"
+              :options="cariler"
+              option-label="ad"
+              option-value="id"
+              placeholder="Seçin"
+              class="w-full"
+            />
+          </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Banka</label><InputText v-model="form.bankaAdi" class="w-full" /></div>
-          <div class="field"><label>Çek No</label><InputText v-model="form.cekNo" class="w-full" /></div>
+          <div class="field">
+            <label>Banka</label><InputText
+              v-model="form.bankaAdi"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Çek No</label><InputText
+              v-model="form.cekNo"
+              class="w-full"
+            />
+          </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Vade Tarihi *</label><DatePicker v-model="form.vadeTarihi" dateFormat="dd/mm/yy" class="w-full" /></div>
-          <div class="field"><label>Tutar *</label><InputNumber v-model="form.tutar" mode="currency" currency="TRY" class="w-full" /></div>
+          <div class="field">
+            <label>Vade Tarihi *</label><DatePicker
+              v-model="form.vadeTarihi"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Tutar *</label><InputNumber
+              v-model="form.tutar"
+              mode="currency"
+              currency="TRY"
+              class="w-full"
+            />
+          </div>
         </div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>
@@ -91,7 +210,7 @@ const kaydet = async () => {
     dialog.value = false; const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Çek/Senet kaydedilirken hata oluştu', life: 5000 })
-  }; kaydediliyor.value = false
+  } kaydediliyor.value = false
 }
 
 const durumGuncelle = async (data, durum) => {

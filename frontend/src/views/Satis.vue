@@ -4,76 +4,178 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Satış" icon="pi pi-plus" @click="openSatis" class="p-button-success" />
+        <Button
+          label="Yeni Satış"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openSatis"
+        />
       </template>
       <template #end>
         <span class="p-input-icon-left">
           <i class="pi pi-search" />
-          <InputText v-model="filtre" placeholder="Fatura no veya cari ara..." />
+          <InputText
+            v-model="filtre"
+            placeholder="Fatura no veya cari ara..."
+          />
         </span>
       </template>
     </Toolbar>
 
     <div class="table-container">
-      <DataTable :value="filtrelenmisSatislar" :paginator="true" :rows="15"
+      <DataTable
+        :value="filtrelenmisSatislar"
+        :paginator="true"
+        :rows="15"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-        current-page-report-template="{totalRecords} kayıttan {first}-{last}" striped-rows sort-field="tarih" :sort-order="-1">
-        <Column field="faturaNumarasi" header="Fatura No" style="width:160px" />
-        <Column field="tarih" header="Tarih" style="width:110px">
-          <template #body="s">{{ formatDate(s.data.tarih) }}</template>
+        current-page-report-template="{totalRecords} kayıttan {first}-{last}"
+        striped-rows
+        sort-field="tarih"
+        :sort-order="-1"
+      >
+        <Column
+          field="faturaNumarasi"
+          header="Fatura No"
+          style="width:160px"
+        />
+        <Column
+          field="tarih"
+          header="Tarih"
+          style="width:110px"
+        >
+          <template #body="s">
+            {{ formatDate(s.data.tarih) }}
+          </template>
         </Column>
-        <Column field="cariHesapAd" header="Müşteri" style="width:200px">
-          <template #body="s">{{ s.data.cariHesapAd || '-' }}</template>
+        <Column
+          field="cariHesapAd"
+          header="Müşteri"
+          style="width:200px"
+        >
+          <template #body="s">
+            {{ s.data.cariHesapAd || '-' }}
+          </template>
         </Column>
-        <Column field="genelToplam" header="Tutar" style="width:130px">
-          <template #body="s">{{ formatCurrency(s.data.genelToplam) }}</template>
+        <Column
+          field="genelToplam"
+          header="Tutar"
+          style="width:130px"
+        >
+          <template #body="s">
+            {{ formatCurrency(s.data.genelToplam) }}
+          </template>
         </Column>
-        <Column field="durum" header="Durum" style="width:100px">
+        <Column
+          field="durum"
+          header="Durum"
+          style="width:100px"
+        >
           <template #body="s">
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">{{ durumLabel(s.data.durum) }}</span>
           </template>
         </Column>
-        <Column header="İşlemler" style="width:180px">
+        <Column
+          header="İşlemler"
+          style="width:180px"
+        >
           <template #body="s">
-            <Button icon="pi pi-eye" class="p-button-rounded p-button-sm p-button-info" @click="$router.push(`/faturalar/${s.data.id}`)" title="Görüntüle" />
-            <Button icon="pi pi-print" class="p-button-rounded p-button-sm p-button-help" @click="printFatura(s.data.id)" title="A4 Fatura Yazdır" />
-            <Button icon="pi pi-receipt" class="p-button-rounded p-button-sm p-button-warning" @click="printTermalFis(s.data)" title="Termal Fiş Yazdır (80mm)" />
+            <Button
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-sm p-button-info"
+              title="Görüntüle"
+              @click="$router.push(`/faturalar/${s.data.id}`)"
+            />
+            <Button
+              icon="pi pi-print"
+              class="p-button-rounded p-button-sm p-button-help"
+              title="A4 Fatura Yazdır"
+              @click="printFatura(s.data.id)"
+            />
+            <Button
+              icon="pi pi-receipt"
+              class="p-button-rounded p-button-sm p-button-warning"
+              title="Termal Fiş Yazdır (80mm)"
+              @click="printTermalFis(s.data)"
+            />
           </template>
         </Column>
       </DataTable>
-      <Message v-if="filtrelenmisSatislar.length === 0" severity="info" text="Satış bulunamadı." />
+      <Message
+        v-if="filtrelenmisSatislar.length === 0"
+        severity="info"
+        text="Satış bulunamadı."
+      />
     </div>
 
-    <Dialog v-model:visible="showSatisDialog" :header="dialogBaslik" :modal="true" style="width:800px" :closable="false">
+    <Dialog
+      v-model:visible="showSatisDialog"
+      :header="dialogBaslik"
+      :modal="true"
+      style="width:800px"
+      :closable="false"
+    >
       <div class="satis-modu">
         <label style="color:#94a3b8;font-weight:600;font-size:12px;text-transform:uppercase;margin-right:12px">İşlem Modu</label>
         <div class="modu-radio-group">
-          <div :class="['modu-option', { active: satisModu === 'SATIS' }]" @click="satisModu = 'SATIS'">
+          <div
+            :class="['modu-option', { active: satisModu === 'SATIS' }]"
+            @click="satisModu = 'SATIS'"
+          >
             <i class="pi pi-shopping-cart" /> Satış Yap
           </div>
-          <div :class="['modu-option', { active: satisModu === 'TEKLIF' }]" @click="satisModu = 'TEKLIF'">
+          <div
+            :class="['modu-option', { active: satisModu === 'TEKLIF' }]"
+            @click="satisModu = 'TEKLIF'"
+          >
             <i class="pi pi-file" /> Teklif Oluştur
           </div>
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group" style="flex:2">
+        <div
+          class="form-group"
+          style="flex:2"
+        >
           <label>Müşteri <span v-if="satisModu === 'SATIS'">*</span></label>
-          <Dropdown v-model="satisForm.cariHesapId" :options="cariHesapStore.cariHesaplar"
-            option-label="ad" option-value="id" placeholder="Müşteri seçiniz" class="w-full" />
+          <Dropdown
+            v-model="satisForm.cariHesapId"
+            :options="cariHesapStore.cariHesaplar"
+            option-label="ad"
+            option-value="id"
+            placeholder="Müşteri seçiniz"
+            class="w-full"
+          />
         </div>
-        <div class="form-group" style="flex:1">
+        <div
+          class="form-group"
+          style="flex:1"
+        >
           <label>Tarih *</label>
-          <DatePicker v-model="satisForm.tarih" date-format="dd.mm.yy" class="w-full" />
+          <DatePicker
+            v-model="satisForm.tarih"
+            date-format="dd.mm.yy"
+            class="w-full"
+          />
         </div>
       </div>
 
       <div class="urun-ekleme">
         <div class="form-row">
-          <div class="form-group" style="flex:3">
+          <div
+            class="form-group"
+            style="flex:3"
+          >
             <label>Ürün Seç</label>
-            <Dropdown v-model="seciliUrun" :options="stokStore.stoklar" filter option-label="ad" option-value="id"
-              placeholder="Ürün ara ve seç..." class="w-full" @change="urunSecildi">
+            <Dropdown
+              v-model="seciliUrun"
+              :options="stokStore.stoklar"
+              filter
+              option-label="ad"
+              option-value="id"
+              placeholder="Ürün ara ve seç..."
+              class="w-full"
+              @change="urunSecildi"
+            >
               <template #value="slotProps">
                 <span v-if="slotProps.value">{{ stokAdi(slotProps.value) }}</span>
                 <span v-else>{{ slotProps.placeholder }}</span>
@@ -87,51 +189,145 @@
               </template>
             </Dropdown>
           </div>
-          <div class="form-group" style="flex:1">
+          <div
+            class="form-group"
+            style="flex:1"
+          >
             <label>Miktar *</label>
-            <InputNumber v-model="yeniUrunAdet" :min="1" class="w-full" />
+            <InputNumber
+              v-model="yeniUrunAdet"
+              :min="1"
+              class="w-full"
+            />
           </div>
-          <div class="form-group" style="flex:1">
+          <div
+            class="form-group"
+            style="flex:1"
+          >
             <label>Birim Fiyat</label>
-            <InputNumber v-model="yeniUrunFiyat" :min="0" :min-fraction-digits="2" class="w-full" />
+            <InputNumber
+              v-model="yeniUrunFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
           </div>
-          <div class="form-group" style="flex:0 0 auto;display:flex;align-items:flex-end">
-            <Button icon="pi pi-plus" class="p-button-success" @click="urunEkle" :disabled="!seciliUrun || !yeniUrunAdet" />
+          <div
+            class="form-group"
+            style="flex:0 0 auto;display:flex;align-items:flex-end"
+          >
+            <Button
+              icon="pi pi-plus"
+              class="p-button-success"
+              :disabled="!seciliUrun || !yeniUrunAdet"
+              @click="urunEkle"
+            />
           </div>
         </div>
         <small style="color:#64748b">Ürün seçince fiyat otomatik gelir, değiştirebilirsiniz</small>
       </div>
 
-      <h3 style="margin:18px 0 10px;color:#f1f5f9;font-size:15px">Satış Kalemleri</h3>
-      <DataTable :value="satisForm.kalemler" striped-rows>
-        <Column header="#" style="width:40px"><template #body="s">{{ s.index + 1 }}</template></Column>
-        <Column header="Ürün"><template #body="s">{{ s.data.aciklama }}</template></Column>
-        <Column header="Adet" style="width:80px"><template #body="s">{{ s.data.adet }}</template></Column>
-        <Column header="Birim Fiyat" style="width:120px"><template #body="s">{{ formatCurrency(s.data.birimFiyat) }}</template></Column>
-        <Column header="KDV" style="width:60px"><template #body="s">%{{ s.data.kdvOrani }}</template></Column>
-        <Column header="Tutar" style="width:120px"><template #body="s">{{ formatCurrency(s.data.tutar || (s.data.birimFiyat * s.data.adet)) }}</template></Column>
-        <Column header="" style="width:50px">
+      <h3 style="margin:18px 0 10px;color:#f1f5f9;font-size:15px">
+        Satış Kalemleri
+      </h3>
+      <DataTable
+        :value="satisForm.kalemler"
+        striped-rows
+      >
+        <Column
+          header="#"
+          style="width:40px"
+        >
           <template #body="s">
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click="satisForm.kalemler.splice(s.index,1)" />
+            {{ s.index + 1 }}
+          </template>
+        </Column>
+        <Column header="Ürün">
+          <template #body="s">
+            {{ s.data.aciklama }}
+          </template>
+        </Column>
+        <Column
+          header="Adet"
+          style="width:80px"
+        >
+          <template #body="s">
+            {{ s.data.adet }}
+          </template>
+        </Column>
+        <Column
+          header="Birim Fiyat"
+          style="width:120px"
+        >
+          <template #body="s">
+            {{ formatCurrency(s.data.birimFiyat) }}
+          </template>
+        </Column>
+        <Column
+          header="KDV"
+          style="width:60px"
+        >
+          <template #body="s">
+            %{{ s.data.kdvOrani }}
+          </template>
+        </Column>
+        <Column
+          header="Tutar"
+          style="width:120px"
+        >
+          <template #body="s">
+            {{ formatCurrency(s.data.tutar || (s.data.birimFiyat * s.data.adet)) }}
+          </template>
+        </Column>
+        <Column
+          header=""
+          style="width:50px"
+        >
+          <template #body="s">
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click="satisForm.kalemler.splice(s.index,1)"
+            />
           </template>
         </Column>
       </DataTable>
 
       <div class="summary-box">
-        <div class="summary-row"><span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span></div>
-        <div class="summary-row"><span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span></div>
-        <div class="summary-row total"><span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span></div>
+        <div class="summary-row">
+          <span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span>
+        </div>
       </div>
 
       <div class="form-group">
         <label>Açıklama</label>
-        <Textarea v-model="satisForm.aciklama" rows="2" class="w-full" />
+        <Textarea
+          v-model="satisForm.aciklama"
+          rows="2"
+          class="w-full"
+        />
       </div>
 
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="showSatisDialog = false" class="p-button-text" />
-        <Button :label="satisModu === 'TEKLIF' ? 'Teklifi Kaydet' : 'Satışı Tamamla'" icon="pi pi-check" @click="satisiTamamla" :loading="saving"
-          :disabled="satisForm.kalemler.length === 0 || (satisModu === 'SATIS' && !satisForm.cariHesapId)" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showSatisDialog = false"
+        />
+        <Button
+          :label="satisModu === 'TEKLIF' ? 'Teklifi Kaydet' : 'Satışı Tamamla'"
+          icon="pi pi-check"
+          :loading="saving"
+          :disabled="satisForm.kalemler.length === 0 || (satisModu === 'SATIS' && !satisForm.cariHesapId)"
+          @click="satisiTamamla"
+        />
       </template>
     </Dialog>
   </div>
@@ -140,13 +336,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { useRouter } from 'vue-router'
 import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 
 const toast = useToast()
-const router = useRouter()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 

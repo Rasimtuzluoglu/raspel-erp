@@ -7,10 +7,13 @@
         <Button 
           label="Yeni Cari Hesap" 
           icon="pi pi-plus"
-          @click="openDialog"
           class="p-button-success"
+          @click="openDialog"
         />
-        <div v-if="selectedCariHesaplar.length > 0" class="batch-actions">
+        <div
+          v-if="selectedCariHesaplar.length > 0"
+          class="batch-actions"
+        >
           <span class="batch-count">{{ selectedCariHesaplar.length }} seçili</span>
           <Button 
             label="Toplu Sil" 
@@ -27,14 +30,24 @@
         </div>
       </template>
       <template #end>
-        <TabloAyarlari tablo-key="cari" :kolonlar="kolonlar" @update:yogunluk="tabloYogunluk = $event" />
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:4px" @click="excelIndir" />
+        <TabloAyarlari
+          tablo-key="cari"
+          :kolonlar="kolonlar"
+          @update:yogunluk="tabloYogunluk = $event"
+        />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          style="margin-right:4px"
+          @click="excelIndir"
+        />
         <Button 
           label="CSV" 
           icon="pi pi-download"
-          @click="csvExport"
           class="p-button-sm p-button-outlined"
           style="margin-right: 8px"
+          @click="csvExport"
         />
         <span class="p-input-icon-left">
           <i class="pi pi-search" />
@@ -47,14 +60,20 @@
       </template>
     </Toolbar>
 
-    <div class="loading" v-if="loading">
-      <p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
     </div>
 
-    <div class="table-container" v-if="!loading">
+    <div
+      v-if="!loading"
+      class="table-container"
+    >
       <DataTable
-        :value="cariHesapStore.cariHesaplar"
         v-model:selection="selectedCariHesaplar"
+        :value="cariHesapStore.cariHesaplar"
         selection-mode="multiple"
         data-key="id"
         responsive-layout="scroll"
@@ -67,68 +86,133 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
-        @page="cariSayfaDegisti"
         :virtual-scroll="cariHesapStore.toplamKayit > 100 && !aramaMetni"
         :virtual-scroll-options="{ itemSize: tabloYogunluk === 'compact' ? 38 : 46, scrollHeight: '600px', showLoader: true }"
-      >        <Column selection-mode="multiple" headerStyle="width: 3rem"></Column>
-        <Column v-if="kolonlar[0].visible" field="id" header="ID" style="width: 60px"></Column>
-        <Column v-if="kolonlar[1].visible" field="ad" header="Adı" sortable style="width: 200px"></Column>
-        <Column v-if="kolonlar[2].visible" field="tur" header="Tür" style="width: 100px">
+        @page="cariSayfaDegisti"
+      >
+        <Column
+          selection-mode="multiple"
+          header-style="width: 3rem"
+        />
+        <Column
+          v-if="kolonlar[0].visible"
+          field="id"
+          header="ID"
+          style="width: 60px"
+        />
+        <Column
+          v-if="kolonlar[1].visible"
+          field="ad"
+          header="Adı"
+          sortable
+          style="width: 200px"
+        />
+        <Column
+          v-if="kolonlar[2].visible"
+          field="tur"
+          header="Tür"
+          style="width: 100px"
+        >
           <template #body="s">
-            <Tag :value="s.data.tur || '-'" :severity="s.data.tur === 'Musteri' ? 'info' : s.data.tur === 'Tedarikci' ? 'warn' : 'secondary'" />
+            <Tag
+              :value="s.data.tur || '-'"
+              :severity="s.data.tur === 'Musteri' ? 'info' : s.data.tur === 'Tedarikci' ? 'warn' : 'secondary'"
+            />
           </template>
         </Column>
-        <Column v-if="kolonlar[3].visible" field="yetkiliKisi" header="Yetkili" style="width: 130px"></Column>
-        <Column v-if="kolonlar[4].visible" field="telefon" header="Telefon" style="width: 130px">
+        <Column
+          v-if="kolonlar[3].visible"
+          field="yetkiliKisi"
+          header="Yetkili"
+          style="width: 130px"
+        />
+        <Column
+          v-if="kolonlar[4].visible"
+          field="telefon"
+          header="Telefon"
+          style="width: 130px"
+        >
           <template #body="s">
-            <span v-if="s.data.telefon" class="kopyalanabilir" @click="kopyala(s.data.telefon, 'Telefon Kopyalandı')">
-              {{ s.data.telefon }} <i class="pi pi-copy kopyala-ikon"></i>
+            <span
+              v-if="s.data.telefon"
+              class="kopyalanabilir"
+              @click="kopyala(s.data.telefon, 'Telefon Kopyalandı')"
+            >
+              {{ s.data.telefon }} <i class="pi pi-copy kopyala-ikon" />
             </span>
             <span v-else>-</span>
           </template>
         </Column>
-        <Column v-if="kolonlar[5].visible" field="krediLimiti" header="Kredi Limiti" style="width: 120px">
-          <template #body="s">{{ s.data.krediLimiti ? formatCurrency(s.data.krediLimiti) : '-' }}</template>
+        <Column
+          v-if="kolonlar[5].visible"
+          field="krediLimiti"
+          header="Kredi Limiti"
+          style="width: 120px"
+        >
+          <template #body="s">
+            {{ s.data.krediLimiti ? formatCurrency(s.data.krediLimiti) : '-' }}
+          </template>
         </Column>
-        <Column v-if="kolonlar[6].visible" field="odemeVadesi" header="Vade (Gün)" style="width: 80px"></Column>
-        <Column v-if="kolonlar[7].visible" field="bakiye" header="Bakiye" style="width: 120px">
+        <Column
+          v-if="kolonlar[6].visible"
+          field="odemeVadesi"
+          header="Vade (Gün)"
+          style="width: 80px"
+        />
+        <Column
+          v-if="kolonlar[7].visible"
+          field="bakiye"
+          header="Bakiye"
+          style="width: 120px"
+        >
           <template #body="slotProps">
             <span :class="slotProps.data.bakiye >= 0 ? 'positive' : 'negative'">
               {{ formatCurrency(slotProps.data.bakiye) }}
             </span>
           </template>
         </Column>
-        <Column header="İşlemler" style="width: 190px">
+        <Column
+          header="İşlemler"
+          style="width: 190px"
+        >
           <template #body="slotProps">
             <Button 
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
-              @click="editCariHesap(slotProps.data)"
               title="Düzenle"
+              @click="editCariHesap(slotProps.data)"
             />
             <Button 
               icon="pi pi-copy"
               class="p-button-rounded p-button-secondary p-button-sm"
-              @click="kopyalaCari(slotProps.data)"
               title="Kopyala (yeni kayıt için şablon)"
+              @click="kopyalaCari(slotProps.data)"
             />
             <Button 
               icon="pi pi-list"
               class="p-button-rounded p-button-warning p-button-sm"
-              @click="viewHareketler(slotProps.data)"
               title="Hareketleri Göster"
+              @click="viewHareketler(slotProps.data)"
             />
             <Button 
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
-              @click="confirmDelete(slotProps.data.id)"
               title="Sil"
+              @click="confirmDelete(slotProps.data.id)"
             />
           </template>
         </Column>
       </DataTable>
 
-      <EmptyState v-if="cariHesapStore.cariHesaplar.length === 0" message="Henüz cari hesap yok" sub-message="Müşteri ve tedarikçilerinizi ekleyerek başlayın." icon="pi pi-users" action-label="İlk Cari Hesabı Ekle" action-icon="pi pi-plus" @action="openDialog" />
+      <EmptyState
+        v-if="cariHesapStore.cariHesaplar.length === 0"
+        message="Henüz cari hesap yok"
+        sub-message="Müşteri ve tedarikçilerinizi ekleyerek başlayın."
+        icon="pi pi-users"
+        action-label="İlk Cari Hesabı Ekle"
+        action-icon="pi pi-plus"
+        @action="openDialog"
+      />
     </div>
 
     <!-- Cari Hesap Dialog -->
@@ -141,96 +225,188 @@
     >
       <div class="dialog-form">
         <div class="form-section">
-          <div class="form-section-title">Genel Bilgiler</div>
+          <div class="form-section-title">
+            Genel Bilgiler
+          </div>
           <div class="form-group">
             <label for="ad">Cari Adı <span class="required">*</span></label>
-            <InputText v-model="form.ad" id="ad" placeholder="Müşteri veya tedarikçi adı" class="w-full" />
+            <InputText
+              id="ad"
+              v-model="form.ad"
+              placeholder="Müşteri veya tedarikçi adı"
+              class="w-full"
+            />
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="tur">Cari Türü</label>
-              <Dropdown v-model="form.tur" :options="['Musteri','Tedarikci','Her Ikisi']" placeholder="Seçiniz" class="w-full" />
+              <Dropdown
+                v-model="form.tur"
+                :options="['Musteri','Tedarikci','Her Ikisi']"
+                placeholder="Seçiniz"
+                class="w-full"
+              />
             </div>
             <div class="form-group">
               <label for="vergiNumarasi">Vergi No / TC Kimlik</label>
-              <InputText v-model="form.vergiNumarasi" id="vergiNumarasi" placeholder="Vergi veya TC kimlik no" class="w-full" />
+              <InputText
+                id="vergiNumarasi"
+                v-model="form.vergiNumarasi"
+                placeholder="Vergi veya TC kimlik no"
+                class="w-full"
+              />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="telefon">Telefon</label>
-              <InputText v-model="form.telefon" id="telefon" placeholder="05XX XXX XX XX" class="w-full" />
+              <InputText
+                id="telefon"
+                v-model="form.telefon"
+                placeholder="05XX XXX XX XX"
+                class="w-full"
+              />
             </div>
             <div class="form-group">
               <label for="email">E-posta</label>
-              <InputText v-model="form.email" id="email" placeholder="ornek@firma.com" class="w-full" />
+              <InputText
+                id="email"
+                v-model="form.email"
+                placeholder="ornek@firma.com"
+                class="w-full"
+              />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="vergiDairesi">Vergi Dairesi</label>
-              <InputText v-model="form.vergiDairesi" id="vergiDairesi" placeholder="Bağlı olunan vergi dairesi" class="w-full" />
+              <InputText
+                id="vergiDairesi"
+                v-model="form.vergiDairesi"
+                placeholder="Bağlı olunan vergi dairesi"
+                class="w-full"
+              />
             </div>
             <div class="form-group">
               <label for="iban">IBAN</label>
-              <InputText v-model="form.iban" id="iban" placeholder="TR..." class="w-full" />
+              <InputText
+                id="iban"
+                v-model="form.iban"
+                placeholder="TR..."
+                class="w-full"
+              />
             </div>
           </div>
         </div>
 
         <div class="form-section">
-          <div class="form-section-title">Adres Bilgileri</div>
+          <div class="form-section-title">
+            Adres Bilgileri
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="il">İl</label>
-              <InputText v-model="form.il" id="il" placeholder="İl" class="w-full" />
+              <InputText
+                id="il"
+                v-model="form.il"
+                placeholder="İl"
+                class="w-full"
+              />
             </div>
             <div class="form-group">
               <label for="ilce">İlçe</label>
-              <InputText v-model="form.ilce" id="ilce" placeholder="İlçe" class="w-full" />
+              <InputText
+                id="ilce"
+                v-model="form.ilce"
+                placeholder="İlçe"
+                class="w-full"
+              />
             </div>
           </div>
           <div class="form-group">
             <label for="adres">Adres</label>
-            <Textarea v-model="form.adres" id="adres" placeholder="Mahalle, cadde, sokak, no..." rows="2" class="w-full" />
+            <Textarea
+              id="adres"
+              v-model="form.adres"
+              placeholder="Mahalle, cadde, sokak, no..."
+              rows="2"
+              class="w-full"
+            />
           </div>
         </div>
 
         <div class="form-section">
-          <div class="form-section-title">Yetkili Kişi</div>
+          <div class="form-section-title">
+            Yetkili Kişi
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="yetkiliKisi">Ad Soyad</label>
-              <InputText v-model="form.yetkiliKisi" id="yetkiliKisi" placeholder="Yetkili kişi adı soyadı" class="w-full" />
+              <InputText
+                id="yetkiliKisi"
+                v-model="form.yetkiliKisi"
+                placeholder="Yetkili kişi adı soyadı"
+                class="w-full"
+              />
             </div>
             <div class="form-group">
               <label for="yetkiliTelefon">Telefon</label>
-              <InputText v-model="form.yetkiliTelefon" id="yetkiliTelefon" placeholder="0XXX XXX XX XX" class="w-full" />
+              <InputText
+                id="yetkiliTelefon"
+                v-model="form.yetkiliTelefon"
+                placeholder="0XXX XXX XX XX"
+                class="w-full"
+              />
             </div>
           </div>
         </div>
 
         <div class="form-section">
-          <div class="form-section-title">Kredi & Vade</div>
+          <div class="form-section-title">
+            Kredi & Vade
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="krediLimiti">Kredi Limiti (TL)</label>
-              <InputNumber v-model="form.krediLimiti" id="krediLimiti" :min="0" :min-fraction-digits="2" class="w-full" />
+              <InputNumber
+                id="krediLimiti"
+                v-model="form.krediLimiti"
+                :min="0"
+                :min-fraction-digits="2"
+                class="w-full"
+              />
             </div>
             <div class="form-group">
               <label for="odemeVadesi">Ödeme Vadesi (Gün)</label>
-              <InputNumber v-model="form.odemeVadesi" id="odemeVadesi" :min="0" :min-fraction-digits="0" class="w-full" />
+              <InputNumber
+                id="odemeVadesi"
+                v-model="form.odemeVadesi"
+                :min="0"
+                :min-fraction-digits="0"
+                class="w-full"
+              />
             </div>
           </div>
         </div>
 
         <div class="form-section">
-          <div class="form-section-title">Ek Bilgiler</div>
+          <div class="form-section-title">
+            Ek Bilgiler
+          </div>
           <div class="form-group">
             <label for="notlar">Notlar</label>
-            <Textarea v-model="form.notlar" id="notlar" placeholder="Özel notlar..." rows="3" class="w-full" />
+            <Textarea
+              id="notlar"
+              v-model="form.notlar"
+              placeholder="Özel notlar..."
+              rows="3"
+              class="w-full"
+            />
           </div>
-          <div class="form-group" v-if="editingId">
+          <div
+            v-if="editingId"
+            class="form-group"
+          >
             <label>Aktif</label>
             <InputSwitch v-model="form.aktif" />
           </div>
@@ -242,14 +418,14 @@
           <Button 
             label="İptal" 
             icon="pi pi-times"
-            @click="closeDialog"
             class="p-button-text"
+            @click="closeDialog"
           />
           <Button 
             :label="editingId ? 'Güncelle' : 'Kaydet'" 
             icon="pi pi-check"
-            @click="saveCariHesap"
             :loading="saving"
+            @click="saveCariHesap"
           />
         </div>
       </template>
@@ -275,29 +451,48 @@
           :rows="10"
           :paginator="true"
         >
-          <Column field="tur" header="Tür" style="width: 100px">
+          <Column
+            field="tur"
+            header="Tür"
+            style="width: 100px"
+          >
             <template #body="slotProps">
               <span :class="['badge', slotProps.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
                 {{ slotProps.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
               </span>
             </template>
           </Column>
-          <Column field="tutar" header="Tutar" style="width: 120px">
+          <Column
+            field="tutar"
+            header="Tutar"
+            style="width: 120px"
+          >
             <template #body="slotProps">
               <span :class="slotProps.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
                 {{ formatCurrency(slotProps.data.tutar) }}
               </span>
             </template>
           </Column>
-          <Column field="hareketTarihi" header="Tarih" style="width: 120px">
+          <Column
+            field="hareketTarihi"
+            header="Tarih"
+            style="width: 120px"
+          >
             <template #body="slotProps">
               {{ formatDate(slotProps.data.hareketTarihi) }}
             </template>
           </Column>
-          <Column field="aciklama" header="Açıklama"></Column>
+          <Column
+            field="aciklama"
+            header="Açıklama"
+          />
         </DataTable>
 
-        <Message v-if="hareketler.length === 0" severity="info" text="Bu cari hesaba ait hareket bulunmamaktadır." />
+        <Message
+          v-if="hareketler.length === 0"
+          severity="info"
+          text="Bu cari hesaba ait hareket bulunmamaktadır."
+        />
       </div>
 
       <template #footer>
@@ -309,7 +504,11 @@
       </template>
     </Dialog>
 
-    <Message v-if="cariHesapStore.error" severity="error" :text="cariHesapStore.error" />
+    <Message
+      v-if="cariHesapStore.error"
+      severity="error"
+      :text="cariHesapStore.error"
+    />
   </div>
 </template>
 

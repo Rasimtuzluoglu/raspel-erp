@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.SatinalmaTalepDTO;
-import com.raspel.erp.service.SatinalmaTalepService;
+import com.raspel.erp.dto.ticaret.SatinalmaTalepDTO;
+import com.raspel.erp.service.ticaret.SatinalmaTalepService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.ticaret.SatinalmaTalepController;
 
 @WebMvcTest(SatinalmaTalepController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -111,9 +112,6 @@ class SatinalmaTalepControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

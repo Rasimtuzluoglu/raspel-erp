@@ -1,21 +1,35 @@
 <template>
   <div class="yasal-page">
-    <PageHeader title="Gizlilik Politikası & KVKK" subtitle="Verilerinizin toplama, işlenme, saklanma ve korunma prensipleri.">
+    <PageHeader
+      title="Gizlilik Politikası & KVKK"
+      subtitle="Verilerinizin toplama, işlenme, saklanma ve korunma prensipleri."
+    >
       <template #actions>
-        <Button label="Yazdır" icon="pi pi-print" class="p-button-outlined p-button-secondary" @click="yazdir" />
+        <Button
+          label="Yazdır"
+          icon="pi pi-print"
+          class="p-button-outlined p-button-secondary"
+          @click="yazdir"
+        />
       </template>
     </PageHeader>
 
     <div class="hero-card">
-      <div class="hero-icon"><i class="pi pi-shield"></i></div>
+      <div class="hero-icon">
+        <i class="pi pi-shield" />
+      </div>
       <div class="hero-text">
         <h2>Veri Güvenliği ve Gizlilik Taahhüdü</h2>
         <p>6698 Sayılı KVKK Uyumlu | SSL Encrypted 256-bit | Son Güncelleme: 01 Ağustos 2026</p>
       </div>
       <div class="search-box">
         <span class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
-          <InputText v-model="aramaMetni" placeholder="Gizlilik şartlarında ara... (örn. kvkk, güvenlik, imha)" class="w-full search-input" />
+          <i class="pi pi-search" />
+          <InputText
+            v-model="aramaMetni"
+            placeholder="Gizlilik şartlarında ara... (örn. kvkk, güvenlik, imha)"
+            class="w-full search-input"
+          />
         </span>
       </div>
     </div>
@@ -23,7 +37,7 @@
     <div class="layout-grid">
       <!-- Sol Taraf: İçindekiler Navigasyon Barı -->
       <div class="toc-card">
-        <h3><i class="pi pi-list"></i> İçindekiler</h3>
+        <h3><i class="pi pi-list" /> İçindekiler</h3>
         <nav class="toc-nav">
           <a
             v-for="(s, idx) in filtrelenmisMadde"
@@ -41,10 +55,18 @@
 
       <!-- Sağ Taraf: Kart Bazlı Dağıtılmış İçerik Grid -->
       <div class="content-cards">
-        <div v-if="filtrelenmisMadde.length === 0" class="no-results">
-          <i class="pi pi-filter-slash"></i>
+        <div
+          v-if="filtrelenmisMadde.length === 0"
+          class="no-results"
+        >
+          <i class="pi pi-filter-slash" />
           <h4>Aramanızla eşleşen gizlilik maddesi bulunamadı.</h4>
-          <Button label="Filtreyi Temizle" icon="pi pi-refresh" class="p-button-text" @click="aramaMetni = ''" />
+          <Button
+            label="Filtreyi Temizle"
+            icon="pi pi-refresh"
+            class="p-button-text"
+            @click="aramaMetni = ''"
+          />
         </div>
 
         <div
@@ -55,17 +77,25 @@
           :class="{ highlighted: aktifSecim === s.id }"
         >
           <div class="card-header">
-            <div class="icon-badge" :style="{ background: s.iconBg, color: s.iconColor }">
-              <i :class="s.icon"></i>
+            <div
+              class="icon-badge"
+              :style="{ background: s.iconBg, color: s.iconColor }"
+            >
+              <i :class="s.icon" />
             </div>
             <div class="title-wrap">
               <span class="card-tag">{{ s.kategori }}</span>
               <h3>{{ idx + 1 }}. {{ s.baslik }}</h3>
             </div>
           </div>
-          <p class="card-text">{{ s.icerik }}</p>
-          <div v-if="s.ipucu" class="card-tip">
-            <i class="pi pi-shield"></i>
+          <p class="card-text">
+            {{ s.icerik }}
+          </p>
+          <div
+            v-if="s.ipucu"
+            class="card-tip"
+          >
+            <i class="pi pi-shield" />
             <span>{{ s.ipucu }}</span>
           </div>
         </div>

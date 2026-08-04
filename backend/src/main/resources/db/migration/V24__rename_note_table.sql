@@ -1,1 +1,0 @@
-ALTER TABLE IF EXISTS sistem.not RENAME TO notlar;

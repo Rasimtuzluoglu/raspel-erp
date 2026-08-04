@@ -1,9 +1,9 @@
 package com.raspel.erp.config.security;
 
-import com.raspel.erp.entity.Kullanici;
+import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.entity.sistem.Rol;
 import com.raspel.erp.entity.sistem.Yetki;
-import com.raspel.erp.repository.KullaniciRepository;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.sistem.RolRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;

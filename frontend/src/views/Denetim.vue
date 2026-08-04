@@ -1,8 +1,17 @@
 <template>
   <div class="denetim-page">
-    <PageHeader title="Denetim Log" subtitle="Sistemdeki tüm işlem kayıtlarını görüntüleyin ve filtreleyin.">
+    <PageHeader
+      title="Denetim Log"
+      subtitle="Sistemdeki tüm işlem kayıtlarını görüntüleyin ve filtreleyin."
+    >
       <template #actions>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" :loading="excelYukleniyor" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          :loading="excelYukleniyor"
+          @click="excelIndir"
+        />
       </template>
     </PageHeader>
 
@@ -11,67 +20,181 @@
         <div class="filtre-grid">
           <div class="filtre-alan">
             <label>İşlem Türü</label>
-            <Select v-model="filtre.islem" :options="islemTipleri" placeholder="Tümü" class="w-full" allowClear clearIcon="pi pi-times" @change="filtrele" />
+            <Select
+              v-model="filtre.islem"
+              :options="islemTipleri"
+              placeholder="Tümü"
+              class="w-full"
+              allow-clear
+              clear-icon="pi pi-times"
+              @change="filtrele"
+            />
           </div>
           <div class="filtre-alan">
             <label>Entity</label>
-            <Select v-model="filtre.entityAdi" :options="entityListesi" placeholder="Tümü" class="w-full" allowClear clearIcon="pi pi-times" @change="filtrele" />
+            <Select
+              v-model="filtre.entityAdi"
+              :options="entityListesi"
+              placeholder="Tümü"
+              class="w-full"
+              allow-clear
+              clear-icon="pi pi-times"
+              @change="filtrele"
+            />
           </div>
           <div class="filtre-alan">
             <label>Tarih Aralığı</label>
             <TarihHizliSecim v-model="filtre.tarihAraligi" />
           </div>
-          <div class="filtre-alan" v-if="filtre.tarihAraligi?.length === 2">
+          <div
+            v-if="filtre.tarihAraligi?.length === 2"
+            class="filtre-alan"
+          >
             <label>Özel Tarih Aralığı</label>
-            <DatePicker v-model="filtre.tarihAraligi" selectionMode="range" dateFormat="dd/mm/yy" placeholder="Başlangıç - Bitiş" class="w-full" @date-select="filtrele" />
+            <DatePicker
+              v-model="filtre.tarihAraligi"
+              selection-mode="range"
+              date-format="dd/mm/yy"
+              placeholder="Başlangıç - Bitiş"
+              class="w-full"
+              @date-select="filtrele"
+            />
           </div>
           <div class="filtre-aksiyon">
-            <Button label="Filtre Kaydet" icon="pi pi-bookmark" class="p-button-sm p-button-text" @click="kayitliFiltreDialog = true" />
-            <Dropdown v-model="seciliKayitliFiltre" :options="kayitliFiltreler" optionLabel="ad" placeholder="Kayıtlı Filtreler" class="kayitli-filtre" @change="kayitliFiltreYukle" />
-            <Button label="Temizle" icon="pi pi-filter-slash" class="p-button-sm p-button-text" @click="filtreTemizle" />
+            <Button
+              label="Filtre Kaydet"
+              icon="pi pi-bookmark"
+              class="p-button-sm p-button-text"
+              @click="kayitliFiltreDialog = true"
+            />
+            <Dropdown
+              v-model="seciliKayitliFiltre"
+              :options="kayitliFiltreler"
+              option-label="ad"
+              placeholder="Kayıtlı Filtreler"
+              class="kayitli-filtre"
+              @change="kayitliFiltreYukle"
+            />
+            <Button
+              label="Temizle"
+              icon="pi pi-filter-slash"
+              class="p-button-sm p-button-text"
+              @click="filtreTemizle"
+            />
           </div>
         </div>
       </template>
     </Card>
 
-    <Dialog v-model:visible="kayitliFiltreDialog" header="Filtreyi Kaydet" :modal="true" style="width: 380px">
-      <FormField label="Filtre Adı" :required="true">
-        <InputText v-model="yeniFiltreAdi" placeholder="Örn: Son 3 ay KESILDI faturalar" class="w-full" />
+    <Dialog
+      v-model:visible="kayitliFiltreDialog"
+      header="Filtreyi Kaydet"
+      :modal="true"
+      style="width: 380px"
+    >
+      <FormField
+        label="Filtre Adı"
+        :required="true"
+      >
+        <InputText
+          v-model="yeniFiltreAdi"
+          placeholder="Örn: Son 3 ay KESILDI faturalar"
+          class="w-full"
+        />
       </FormField>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="kayitliFiltreDialog = false" class="p-button-text" />
-        <Button label="Kaydet" icon="pi pi-check" @click="filtreKaydet" :disabled="!yeniFiltreAdi?.trim()" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="kayitliFiltreDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :disabled="!yeniFiltreAdi?.trim()"
+          @click="filtreKaydet"
+        />
       </template>
     </Dialog>
 
     <Card>
       <template #content>
-        <DataTable :value="logs" :loading="yukleniyor" stripedRows :rows="20" :paginator="true" :totalRecords="toplamKayit" lazy :first="sayfa * 20" @page="sayfaDegisti" size="small" sortField="tarih" :sortOrder="-1">
-          <Column field="tarih" header="Tarih" style="width: 150px">
-            <template #body="s">{{ formatDate(s.data.tarih) }}</template>
-          </Column>
-          <Column field="kullaniciId" header="Kullanıcı ID" style="width: 100px" />
-          <Column field="islem" header="İşlem" style="width: 100px">
+        <DataTable
+          :value="logs"
+          :loading="yukleniyor"
+          striped-rows
+          :rows="20"
+          :paginator="true"
+          :total-records="toplamKayit"
+          lazy
+          :first="sayfa * 20"
+          size="small"
+          sort-field="tarih"
+          :sort-order="-1"
+          @page="sayfaDegisti"
+        >
+          <Column
+            field="tarih"
+            header="Tarih"
+            style="width: 150px"
+          >
             <template #body="s">
-              <Tag :value="s.data.islem" :severity="islemSeverity(s.data.islem)" />
+              {{ formatDate(s.data.tarih) }}
             </template>
           </Column>
-          <Column field="entityAdi" header="Entity" style="width: 110px" />
-          <Column field="entityId" header="Entity ID" style="width: 90px" />
-          <Column field="aciklama" header="Açıklama" />
-          <Column field="ipAdresi" header="IP" style="width: 120px" />
+          <Column
+            field="kullaniciId"
+            header="Kullanıcı ID"
+            style="width: 100px"
+          />
+          <Column
+            field="islem"
+            header="İşlem"
+            style="width: 100px"
+          >
+            <template #body="s">
+              <Tag
+                :value="s.data.islem"
+                :severity="islemSeverity(s.data.islem)"
+              />
+            </template>
+          </Column>
+          <Column
+            field="entityAdi"
+            header="Entity"
+            style="width: 110px"
+          />
+          <Column
+            field="entityId"
+            header="Entity ID"
+            style="width: 90px"
+          />
+          <Column
+            field="aciklama"
+            header="Açıklama"
+          />
+          <Column
+            field="ipAdresi"
+            header="IP"
+            style="width: 120px"
+          />
         </DataTable>
-        <div v-if="!logs.length && !yukleniyor" class="empty-state">Henüz denetim kaydı bulunamadı.</div>
+        <div
+          v-if="!logs.length && !yukleniyor"
+          class="empty-state"
+        >
+          Henüz denetim kaydı bulunamadı.
+        </div>
       </template>
     </Card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { auditLogAPI, excelAPI } from '../api/index.js'
-import axios from 'axios'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import FormField from '../components/FormField.vue'
 
@@ -193,7 +316,7 @@ const filtreSecenekleriniYukle = async () => {
     ])
     islemTipleri.value = islemRes.data || []
     entityListesi.value = entityRes.data || []
-  } catch {}
+  } catch { /* empty */ }
 }
 
 onMounted(() => {

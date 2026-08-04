@@ -1,7 +1,9 @@
 <template>
   <div class="mutabakat-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Banka Mutabakatı</h1>
+      <h1 class="page-title">
+        Banka Mutabakatı
+      </h1>
     </div>
 
     <IlkZiyaretIpuclari
@@ -13,55 +15,152 @@
     <div class="mutabakat-ust">
       <div class="banka-secim">
         <label>Banka</label>
-        <Select v-model="seciliBanka" :options="bankalar" optionLabel="ad" optionValue="id" placeholder="Banka seçin" class="w-full" filter showClear @change="bankaDegisti" />
+        <Select
+          v-model="seciliBanka"
+          :options="bankalar"
+          option-label="ad"
+          option-value="id"
+          placeholder="Banka seçin"
+          class="w-full"
+          filter
+          show-clear
+          @change="bankaDegisti"
+        />
       </div>
       <div class="ust-butonlar">
-        <input ref="dosyaInput" type="file" accept=".csv,.xlsx,.txt" hidden @change="dosyaSecildi" />
-        <Button label="Hesap Özeti Yükle" icon="pi pi-upload" :disabled="!seciliBanka" @click="dosyaInput.click()" :loading="yukleniyor" />
-        <Button label="Otomatik Eşleştir" icon="pi pi-link" severity="secondary" outlined :disabled="!seciliBanka" @click="otomatikEslestir" />
+        <input
+          ref="dosyaInput"
+          type="file"
+          accept=".csv,.xlsx,.txt"
+          hidden
+          @change="dosyaSecildi"
+        >
+        <Button
+          label="Hesap Özeti Yükle"
+          icon="pi pi-upload"
+          :disabled="!seciliBanka"
+          :loading="yukleniyor"
+          @click="dosyaInput.click()"
+        />
+        <Button
+          label="Otomatik Eşleştir"
+          icon="pi pi-link"
+          severity="secondary"
+          outlined
+          :disabled="!seciliBanka"
+          @click="otomatikEslestir"
+        />
       </div>
     </div>
 
-    <div v-if="eslesenSayisi !== null" class="mutabakat-ozet">
-      <div class="ozet-kutu"><span>Toplam Hareket</span><strong>{{ hareketler.length }}</strong></div>
-      <div class="ozet-kutu"><span>Eşleşen</span><strong class="pozitif">{{ eslesenSayisi }}</strong></div>
-      <div class="ozet-kutu"><span>Eşleşmeyen</span><strong class="negatif">{{ eslesmeyenSayisi }}</strong></div>
-      <div class="ozet-kutu"><span>Eşleşme Oranı</span><strong>{{ eslesmeOrani }}</strong></div>
+    <div
+      v-if="eslesenSayisi !== null"
+      class="mutabakat-ozet"
+    >
+      <div class="ozet-kutu">
+        <span>Toplam Hareket</span><strong>{{ hareketler.length }}</strong>
+      </div>
+      <div class="ozet-kutu">
+        <span>Eşleşen</span><strong class="pozitif">{{ eslesenSayisi }}</strong>
+      </div>
+      <div class="ozet-kutu">
+        <span>Eşleşmeyen</span><strong class="negatif">{{ eslesmeyenSayisi }}</strong>
+      </div>
+      <div class="ozet-kutu">
+        <span>Eşleşme Oranı</span><strong>{{ eslesmeOrani }}</strong>
+      </div>
     </div>
 
     <AppDataTable
       :value="hareketler"
       :loading="yukleniyor"
-      aramaAktif
-      aramaPlaceholder="Hareketlerde ara..."
-      gorunumAnahtari="banka_mutabakat"
-      emptyMessage="Hesap özeti yüklenmedi"
+      arama-aktif
+      arama-placeholder="Hareketlerde ara..."
+      gorunum-anahtari="banka_mutabakat"
+      empty-message="Hesap özeti yüklenmedi"
     >
-      <Column field="tarih" header="Tarih" sortable>
-        <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
-      </Column>
-      <Column field="aciklama" header="Açıklama" />
-      <Column field="borc" header="Borç">
-        <template #body="{ data }"><span class="negatif">{{ formatCurrency(data.borc) }}</span></template>
-      </Column>
-      <Column field="alacak" header="Alacak">
-        <template #body="{ data }"><span class="pozitif">{{ formatCurrency(data.alacak) }}</span></template>
-      </Column>
-      <Column field="bakiye" header="Bakiye">
-        <template #body="{ data }">{{ data.bakiye != null ? formatCurrency(data.bakiye) : '-' }}</template>
-      </Column>
-      <Column field="eslestirildi" header="Eşleşme" sortable>
+      <Column
+        field="tarih"
+        header="Tarih"
+        sortable
+      >
         <template #body="{ data }">
-          <Tag :value="data.eslestirildi ? 'Eşleşti' : 'Eşleşmedi'" :severity="data.eslestirildi ? 'success' : 'danger'" />
-          <div v-if="data.eslesenFaturaNo" class="eslesen-fatura">#{{ data.eslesenFaturaNo }}</div>
+          {{ formatDate(data.tarih) }}
         </template>
       </Column>
-      <Column header="İşlem" style="width:70px">
+      <Column
+        field="aciklama"
+        header="Açıklama"
+      />
+      <Column
+        field="borc"
+        header="Borç"
+      >
         <template #body="{ data }">
-          <div v-if="!data.eslestirildi" class="eylem-btns">
-            <Select v-model="data.eslesenFaturaId" :options="faturalar" optionLabel="etiket" optionValue="id" placeholder="Fatura bağla" filter class="fatura-bagla" @change="manuelEslestir(data)" />
+          <span class="negatif">{{ formatCurrency(data.borc) }}</span>
+        </template>
+      </Column>
+      <Column
+        field="alacak"
+        header="Alacak"
+      >
+        <template #body="{ data }">
+          <span class="pozitif">{{ formatCurrency(data.alacak) }}</span>
+        </template>
+      </Column>
+      <Column
+        field="bakiye"
+        header="Bakiye"
+      >
+        <template #body="{ data }">
+          {{ data.bakiye != null ? formatCurrency(data.bakiye) : '-' }}
+        </template>
+      </Column>
+      <Column
+        field="eslestirildi"
+        header="Eşleşme"
+        sortable
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="data.eslestirildi ? 'Eşleşti' : 'Eşleşmedi'"
+            :severity="data.eslestirildi ? 'success' : 'danger'"
+          />
+          <div
+            v-if="data.eslesenFaturaNo"
+            class="eslesen-fatura"
+          >
+            #{{ data.eslesenFaturaNo }}
           </div>
-          <Button v-else icon="pi pi-times" class="p-button-rounded p-button-text" title="Eşleştirmeyi kaldır" @click="eslestirmeyiKaldir(data)" />
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:70px"
+      >
+        <template #body="{ data }">
+          <div
+            v-if="!data.eslestirildi"
+            class="eylem-btns"
+          >
+            <Select
+              v-model="data.eslesenFaturaId"
+              :options="faturalar"
+              option-label="etiket"
+              option-value="id"
+              placeholder="Fatura bağla"
+              filter
+              class="fatura-bagla"
+              @change="manuelEslestir(data)"
+            />
+          </div>
+          <Button
+            v-else
+            icon="pi pi-times"
+            class="p-button-rounded p-button-text"
+            title="Eşleştirmeyi kaldır"
+            @click="eslestirmeyiKaldir(data)"
+          />
         </template>
       </Column>
     </AppDataTable>
@@ -99,12 +198,12 @@ onMounted(async () => {
   try {
     const r = await bankaAPI.getAll()
     bankalar.value = r.data || []
-  } catch {}
+  } catch { /* empty */ }
   try {
     const rf = await faturaAPI.getAll()
     const data = rf.data?.content || rf.data || []
     faturalar.value = data.map(f => ({ ...f, etiket: `${f.faturaNumarasi} (${formatCurrency(f.genelToplam)})` }))
-  } catch {}
+  } catch { /* empty */ }
 })
 
 const bankaDegisti = () => {

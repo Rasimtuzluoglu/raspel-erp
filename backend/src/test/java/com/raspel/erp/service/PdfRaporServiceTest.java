@@ -1,10 +1,9 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.entity.Irsaliye;
-import com.raspel.erp.entity.IrsaliyeKalem;
-import com.raspel.erp.entity.Siparis;
-import com.raspel.erp.entity.SiparisKalem;
-import com.raspel.erp.repository.*;
+import com.raspel.erp.entity.muhasebe.Irsaliye;
+import com.raspel.erp.entity.muhasebe.IrsaliyeKalem;
+import com.raspel.erp.entity.ticaret.Siparis;
+import com.raspel.erp.entity.ticaret.SiparisKalem;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +17,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.repository.muhasebe.IrsaliyeKalemRepository;
+import com.raspel.erp.repository.muhasebe.IrsaliyeRepository;
+import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PdfRaporServiceTest {

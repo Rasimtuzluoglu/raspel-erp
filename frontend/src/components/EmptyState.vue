@@ -1,9 +1,25 @@
 <template>
   <div class="empty-state">
-    <i :class="icon" class="empty-state-icon"></i>
-    <p class="empty-state-text">{{ message }}</p>
-    <p v-if="subMessage" class="empty-state-sub">{{ subMessage }}</p>
-    <Button v-if="actionLabel" :label="actionLabel" :icon="actionIcon" class="p-button-sm p-button-outlined empty-state-action" @click="$emit('action')" />
+    <i
+      :class="icon"
+      class="empty-state-icon"
+    />
+    <p class="empty-state-text">
+      {{ message }}
+    </p>
+    <p
+      v-if="subMessage"
+      class="empty-state-sub"
+    >
+      {{ subMessage }}
+    </p>
+    <Button
+      v-if="actionLabel"
+      :label="actionLabel"
+      :icon="actionIcon"
+      class="p-button-sm p-button-outlined empty-state-action"
+      @click="$emit('action')"
+    />
   </div>
 </template>
 

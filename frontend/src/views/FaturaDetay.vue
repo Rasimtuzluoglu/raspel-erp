@@ -1,24 +1,62 @@
 <template>
-  <div class="fatura-detay" :class="{ 'print-mode': printMode }">
+  <div
+    class="fatura-detay"
+    :class="{ 'print-mode': printMode }"
+  >
     <div class="detay-header">
-      <Button label="Geri" icon="pi pi-arrow-left" @click="$router.push('/faturalar')" class="p-button-text no-print" />
+      <Button
+        label="Geri"
+        icon="pi pi-arrow-left"
+        class="p-button-text no-print"
+        @click="$router.push('/faturalar')"
+      />
       <div class="detay-ayarlar no-print">
-        <SelectButton v-model="faturaFiyatli" :options="fiyatSecenekleri" optionLabel="label" optionValue="value" size="small" />
-        <Button label="E-posta Gönder" icon="pi pi-envelope" @click="gonderEmail" :loading="emailGonderiliyor" :disabled="!fatura?.cariHesapAd" />
-        <Button label="Yazdır" icon="pi pi-print" @click="win.print()" />
+        <SelectButton
+          v-model="faturaFiyatli"
+          :options="fiyatSecenekleri"
+          option-label="label"
+          option-value="value"
+          size="small"
+        />
+        <Button
+          label="E-posta Gönder"
+          icon="pi pi-envelope"
+          :loading="emailGonderiliyor"
+          :disabled="!fatura?.cariHesapAd"
+          @click="gonderEmail"
+        />
+        <Button
+          label="Yazdır"
+          icon="pi pi-print"
+          @click="win.print()"
+        />
       </div>
     </div>
 
-    <div v-if="loading" class="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+    </div>
 
-    <div v-if="fatura && !loading" class="fatura-kagit">
+    <div
+      v-if="fatura && !loading"
+      class="fatura-kagit"
+    >
       <div class="fatura-baslik">
         <div class="firma-bilgi">
           <h2>ÖN MUHASEBE</h2>
           <p>{{ sirket?.ad || authStore.sirketAdi || 'RasPel ERP' }}</p>
-          <p v-if="sirket?.vergiDairesi">Vergi Dairesi: {{ sirket.vergiDairesi }}</p>
-          <p v-if="sirket?.vergiNo">Vergi No: {{ sirket.vergiNo }}</p>
-          <p v-if="sirket?.adres">{{ sirket.adres }}</p>
+          <p v-if="sirket?.vergiDairesi">
+            Vergi Dairesi: {{ sirket.vergiDairesi }}
+          </p>
+          <p v-if="sirket?.vergiNo">
+            Vergi No: {{ sirket.vergiNo }}
+          </p>
+          <p v-if="sirket?.adres">
+            {{ sirket.adres }}
+          </p>
         </div>
         <div class="fatura-bilgi">
           <h1>{{ fatura.tur === 'SATIS' ? 'SATIŞ FATURASI' : 'ALIŞ FATURASI' }}</h1>
@@ -28,7 +66,10 @@
         </div>
       </div>
 
-      <div class="cari-bilgi" v-if="fatura.cariHesapAd">
+      <div
+        v-if="fatura.cariHesapAd"
+        class="cari-bilgi"
+      >
         <h3>Müşteri / Tedarikçi Bilgisi</h3>
         <p><strong>{{ fatura.cariHesapAd }}</strong></p>
       </div>
@@ -39,55 +80,143 @@
             <th>#</th>
             <th>Açıklama</th>
             <th>Adet</th>
-            <th v-if="faturaFiyatli">Birim Fiyat</th>
-            <th v-if="faturaFiyatli">İskonto %</th>
-            <th v-if="faturaFiyatli">KDV %</th>
-            <th v-if="faturaFiyatli">Toplam</th>
+            <th v-if="faturaFiyatli">
+              Birim Fiyat
+            </th>
+            <th v-if="faturaFiyatli">
+              İskonto %
+            </th>
+            <th v-if="faturaFiyatli">
+              KDV %
+            </th>
+            <th v-if="faturaFiyatli">
+              Toplam
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(k, i) in fatura.kalemler" :key="k.id">
+          <tr
+            v-for="(k, i) in fatura.kalemler"
+            :key="k.id"
+          >
             <td>{{ i + 1 }}</td>
             <td>{{ k.aciklama }}</td>
             <td>{{ k.adet }}</td>
-            <td v-if="faturaFiyatli">{{ formatCurrency(k.birimFiyat) }}</td>
-            <td v-if="faturaFiyatli">{{ k.iskontoOrani || 0 }}%</td>
-            <td v-if="faturaFiyatli">{{ k.kdvOrani }}%</td>
-            <td v-if="faturaFiyatli" class="text-right">{{ formatCurrency(k.tutar) }}</td>
+            <td v-if="faturaFiyatli">
+              {{ formatCurrency(k.birimFiyat) }}
+            </td>
+            <td v-if="faturaFiyatli">
+              {{ k.iskontoOrani || 0 }}%
+            </td>
+            <td v-if="faturaFiyatli">
+              {{ k.kdvOrani }}%
+            </td>
+            <td
+              v-if="faturaFiyatli"
+              class="text-right"
+            >
+              {{ formatCurrency(k.tutar) }}
+            </td>
           </tr>
         </tbody>
       </table>
 
-      <div class="fatura-ozet" v-if="faturaFiyatli">
-        <div class="ozet-row"><span>Ara Toplam:</span><span>{{ formatCurrency(fatura.araToplam) }}</span></div>
-        <div class="ozet-row"><span>KDV Toplam:</span><span>{{ formatCurrency(fatura.kdv) }}</span></div>
-        <div class="ozet-row" v-if="fatura.genelIskontoTutari > 0"><span>Genel İskonto:</span><span class="negative">-{{ formatCurrency(fatura.genelIskontoTutari) }}</span></div>
-        <div class="ozet-row total"><span>Genel Toplam:</span><span>{{ formatCurrency(fatura.genelToplam) }}</span></div>
-        <div class="ozet-row odeme" v-if="fatura.odemeDurumu"><span>Ödeme Durumu:</span><span :class="fatura.odemeDurumu === 'ODENDI' ? 'positive' : 'negative'">{{ odemeDurumLabel(fatura.odemeDurumu) }}</span></div>
-        <div class="ozet-row odeme" v-if="fatura.odenenTutar > 0"><span>Ödenen:</span><span>{{ formatCurrency(fatura.odenenTutar) }}</span></div>
-        <div class="ozet-row odeme" v-if="fatura.kalanTutar > 0"><span>Kalan:</span><span class="negative">{{ formatCurrency(fatura.kalanTutar) }}</span></div>
+      <div
+        v-if="faturaFiyatli"
+        class="fatura-ozet"
+      >
+        <div class="ozet-row">
+          <span>Ara Toplam:</span><span>{{ formatCurrency(fatura.araToplam) }}</span>
+        </div>
+        <div class="ozet-row">
+          <span>KDV Toplam:</span><span>{{ formatCurrency(fatura.kdv) }}</span>
+        </div>
+        <div
+          v-if="fatura.genelIskontoTutari > 0"
+          class="ozet-row"
+        >
+          <span>Genel İskonto:</span><span class="negative">-{{ formatCurrency(fatura.genelIskontoTutari) }}</span>
+        </div>
+        <div class="ozet-row total">
+          <span>Genel Toplam:</span><span>{{ formatCurrency(fatura.genelToplam) }}</span>
+        </div>
+        <div
+          v-if="fatura.odemeDurumu"
+          class="ozet-row odeme"
+        >
+          <span>Ödeme Durumu:</span><span :class="fatura.odemeDurumu === 'ODENDI' ? 'positive' : 'negative'">{{ odemeDurumLabel(fatura.odemeDurumu) }}</span>
+        </div>
+        <div
+          v-if="fatura.odenenTutar > 0"
+          class="ozet-row odeme"
+        >
+          <span>Ödenen:</span><span>{{ formatCurrency(fatura.odenenTutar) }}</span>
+        </div>
+        <div
+          v-if="fatura.kalanTutar > 0"
+          class="ozet-row odeme"
+        >
+          <span>Kalan:</span><span class="negative">{{ formatCurrency(fatura.kalanTutar) }}</span>
+        </div>
       </div>
 
-      <div class="fatura-yazi" v-if="fatura.aciklama">
+      <div
+        v-if="fatura.aciklama"
+        class="fatura-yazi"
+      >
         <p><strong>Açıklama:</strong> {{ fatura.aciklama }}</p>
       </div>
 
       <div class="belgeler no-print">
         <div class="belgeler-baslik">
-          <h3><i class="pi pi-paperclip"></i> Belgeler</h3>
+          <h3><i class="pi pi-paperclip" /> Belgeler</h3>
           <div class="belge-yukleme">
-            <input ref="dosyaInput" type="file" hidden @change="dosyaSecildi" />
-            <Button label="Belge Ekle" icon="pi pi-plus" size="small" class="p-button-sm p-button-outlined" @click="dosyaInput.click()" :loading="belgeYukleniyor" />
+            <input
+              ref="dosyaInput"
+              type="file"
+              hidden
+              @change="dosyaSecildi"
+            >
+            <Button
+              label="Belge Ekle"
+              icon="pi pi-plus"
+              size="small"
+              class="p-button-sm p-button-outlined"
+              :loading="belgeYukleniyor"
+              @click="dosyaInput.click()"
+            />
           </div>
         </div>
-        <div v-if="belgeler.length === 0" class="belge-bos">Henüz belge eklenmemiş.</div>
-        <div v-else class="belge-liste">
-          <div v-for="b in belgeler" :key="b.id" class="belge-item">
-            <i class="pi pi-file belge-ikon"></i>
+        <div
+          v-if="belgeler.length === 0"
+          class="belge-bos"
+        >
+          Henüz belge eklenmemiş.
+        </div>
+        <div
+          v-else
+          class="belge-liste"
+        >
+          <div
+            v-for="b in belgeler"
+            :key="b.id"
+            class="belge-item"
+          >
+            <i class="pi pi-file belge-ikon" />
             <span class="belge-ad">{{ b.dosyaAdi }}</span>
             <span class="belge-tarih">{{ formatDateTime(b.olusturmaTarihi) }}</span>
-            <Button icon="pi pi-download" class="p-button-rounded p-button-text p-button-sm" @click="belgeIndir(b)" title="İndir" />
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" @click="belgeSil(b.id)" title="Sil" />
+            <Button
+              icon="pi pi-download"
+              class="p-button-rounded p-button-text p-button-sm"
+              title="İndir"
+              @click="belgeIndir(b)"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              title="Sil"
+              @click="belgeSil(b.id)"
+            />
           </div>
         </div>
       </div>
@@ -97,9 +226,19 @@
       </div>
     </div>
 
-    <div v-if="error && !loading" class="error-card">
-      <Message severity="error" :text="error" />
-      <Button label="Faturalara Dön" icon="pi pi-arrow-left" @click="$router.push('/faturalar')" />
+    <div
+      v-if="error && !loading"
+      class="error-card"
+    >
+      <Message
+        severity="error"
+        :text="error"
+      />
+      <Button
+        label="Faturalara Dön"
+        icon="pi pi-arrow-left"
+        @click="$router.push('/faturalar')"
+      />
     </div>
   </div>
 </template>
@@ -160,7 +299,7 @@ const belgeleriYukle = async () => {
   try {
     const r = await belgeAPI.kayitBelgeleri('FATURA', route.params.id)
     belgeler.value = r.data || []
-  } catch {}
+  } catch { /* empty */ }
 }
 
 const dosyaSecildi = async (e) => {
@@ -227,15 +366,9 @@ onMounted(async () => {
       const r = await sirketAPI.getById(authStore.sirketId)
       sirket.value = r.data || null
     }
-  } catch {}
+  } catch { /* empty */ }
   if (printMode.value) setTimeout(() => { try { win.focus(); win.print() } catch (e) { console.error('Yazdırma hatası:', e) } }, 300)
 })
-
-const kdvTutari = (k) => {
-  const brf = k.birimFiyat || 0
-  const adt = k.adet || 0
-  return (brf * adt) * ((k.kdvOrani || 0) / 100)
-}
 
 const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
 const odemeDurumLabel = (d) => ({ ODENMEDI: 'Ödenmedi', KISMI_ODENDI: 'Kısmi Ödendi', ODENDI: 'Ödendi' })[d] || d

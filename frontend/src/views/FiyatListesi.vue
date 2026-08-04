@@ -1,48 +1,149 @@
 <template>
   <div class="fiyat-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Fiyat Listesi</h1>
-      <Button label="Yeni Fiyat" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Fiyat Listesi
+      </h1>
+      <Button
+        label="Yeni Fiyat"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="stokAd" header="Ürün" sortable />
-      <Column field="alisFiyati" header="Alış Fiyatı">
-        <template #body="{ data }">{{ formatCurrency(data.alisFiyati) }}</template>
-      </Column>
-      <Column field="satisFiyati" header="Satış Fiyatı">
-        <template #body="{ data }">{{ formatCurrency(data.satisFiyati) }}</template>
-      </Column>
-      <Column field="gecerlilikBaslangic" header="Başlangıç">
-        <template #body="{ data }">{{ formatDate(data.gecerlilikBaslangic) }}</template>
-      </Column>
-      <Column field="gecerlilikBitis" header="Bitiş">
-        <template #body="{ data }">{{ formatDate(data.gecerlilikBitis) }}</template>
-      </Column>
-      <Column header="İşlem" style="width:120px">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="stokAd"
+        header="Ürün"
+        sortable
+      />
+      <Column
+        field="alisFiyati"
+        header="Alış Fiyatı"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-text" @click="dialogAc(data)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          {{ formatCurrency(data.alisFiyati) }}
+        </template>
+      </Column>
+      <Column
+        field="satisFiyati"
+        header="Satış Fiyatı"
+      >
+        <template #body="{ data }">
+          {{ formatCurrency(data.satisFiyati) }}
+        </template>
+      </Column>
+      <Column
+        field="gecerlilikBaslangic"
+        header="Başlangıç"
+      >
+        <template #body="{ data }">
+          {{ formatDate(data.gecerlilikBaslangic) }}
+        </template>
+      </Column>
+      <Column
+        field="gecerlilikBitis"
+        header="Bitiş"
+      >
+        <template #body="{ data }">
+          {{ formatDate(data.gecerlilikBitis) }}
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:120px"
+      >
+        <template #body="{ data }">
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-text"
+            @click="dialogAc(data)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Ürün *</label>
-          <Dropdown v-model="form.stokId" :options="stokListesi" optionLabel="ad" optionValue="id" placeholder="Ürün Seç" class="w-full" filter />
+        <div class="field">
+          <label>Ürün *</label>
+          <Dropdown
+            v-model="form.stokId"
+            :options="stokListesi"
+            option-label="ad"
+            option-value="id"
+            placeholder="Ürün Seç"
+            class="w-full"
+            filter
+          />
         </div>
-        <div class="field"><label>Alış Fiyatı</label><InputNumber v-model="form.alisFiyati" mode="currency" currency="TRY" class="w-full" /></div>
-        <div class="field"><label>Satış Fiyatı *</label><InputNumber v-model="form.satisFiyati" mode="currency" currency="TRY" class="w-full" /></div>
+        <div class="field">
+          <label>Alış Fiyatı</label><InputNumber
+            v-model="form.alisFiyati"
+            mode="currency"
+            currency="TRY"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Satış Fiyatı *</label><InputNumber
+            v-model="form.satisFiyati"
+            mode="currency"
+            currency="TRY"
+            class="w-full"
+          />
+        </div>
         <div class="field-row">
-          <div class="field"><label>Geçerlilik Başlangıç</label><DatePicker v-model="form.gecerlilikBaslangic" dateFormat="dd/mm/yy" class="w-full" /></div>
-          <div class="field"><label>Geçerlilik Bitiş</label><DatePicker v-model="form.gecerlilikBitis" dateFormat="dd/mm/yy" class="w-full" /></div>
+          <div class="field">
+            <label>Geçerlilik Başlangıç</label><DatePicker
+              v-model="form.gecerlilikBaslangic"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Geçerlilik Bitiş</label><DatePicker
+              v-model="form.gecerlilikBitis"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
         </div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

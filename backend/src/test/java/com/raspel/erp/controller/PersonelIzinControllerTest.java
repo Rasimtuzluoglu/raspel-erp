@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.PersonelIzinDTO;
-import com.raspel.erp.service.PersonelIzinService;
+import com.raspel.erp.dto.ik.PersonelIzinDTO;
+import com.raspel.erp.service.ik.PersonelIzinService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +24,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.ik.Personel;
+import com.raspel.erp.controller.ik.PersonelIzinController;
 
 @WebMvcTest(PersonelIzinController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -111,10 +113,6 @@ class PersonelIzinControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
-
 
 
 

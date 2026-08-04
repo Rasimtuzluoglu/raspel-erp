@@ -1,7 +1,9 @@
 <template>
   <div class="hesap-ayarlari">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Hesap Ayarları</h1>
+      <h1 class="page-title">
+        Hesap Ayarları
+      </h1>
     </div>
 
     <IlkZiyaretIpuclari
@@ -13,66 +15,172 @@
     <div class="ayarlar-grid">
       <!-- PROFİL -->
       <Card class="ayar-kart">
-        <template #title><i class="pi pi-user" style="margin-right:8px"></i>Profil</template>
+        <template #title>
+          <i
+            class="pi pi-user"
+            style="margin-right:8px"
+          />Profil
+        </template>
         <template #content>
           <div class="form-grid">
-            <div class="field"><label>Kullanıcı Adı</label><InputText :model-value="kullanici?.username" disabled class="w-full" /></div>
-            <div class="field"><label>Görünen Ad</label><InputText v-model="profilForm.displayName" class="w-full" /></div>
-            <div class="field"><label>Firma Adı</label><InputText v-model="profilForm.companyName" class="w-full" /></div>
-            <div class="field"><label>Avatar URL</label><InputText v-model="profilForm.avatarUrl" class="w-full" /></div>
-            <Button label="Profili Kaydet" icon="pi pi-check" @click="profilKaydet" :loading="kaydediliyor" />
+            <div class="field">
+              <label>Kullanıcı Adı</label><InputText
+                :model-value="kullanici?.username"
+                disabled
+                class="w-full"
+              />
+            </div>
+            <div class="field">
+              <label>Görünen Ad</label><InputText
+                v-model="profilForm.displayName"
+                class="w-full"
+              />
+            </div>
+            <div class="field">
+              <label>Firma Adı</label><InputText
+                v-model="profilForm.companyName"
+                class="w-full"
+              />
+            </div>
+            <div class="field">
+              <label>Avatar URL</label><InputText
+                v-model="profilForm.avatarUrl"
+                class="w-full"
+              />
+            </div>
+            <Button
+              label="Profili Kaydet"
+              icon="pi pi-check"
+              :loading="kaydediliyor"
+              @click="profilKaydet"
+            />
           </div>
         </template>
       </Card>
 
       <!-- ŞİFRE -->
       <Card class="ayar-kart">
-        <template #title><i class="pi pi-lock" style="margin-right:8px"></i>Şifre Değiştir</template>
+        <template #title>
+          <i
+            class="pi pi-lock"
+            style="margin-right:8px"
+          />Şifre Değiştir
+        </template>
         <template #content>
           <div class="form-grid">
-            <div class="field"><label>Mevcut Şifre</label><InputText v-model="sifreForm.mevcutSifre" type="password" class="w-full" /></div>
-            <div class="field"><label>Yeni Şifre</label><InputText v-model="sifreForm.yeniSifre" type="password" class="w-full" /></div>
-            <div class="field"><label>Yeni Şifre (Tekrar)</label><InputText v-model="sifreForm.yeniSifreTekrar" type="password" class="w-full" /></div>
-            <Button label="Şifreyi Güncelle" icon="pi pi-key" @click="sifreKaydet" :loading="kaydediliyor" />
+            <div class="field">
+              <label>Mevcut Şifre</label><InputText
+                v-model="sifreForm.mevcutSifre"
+                type="password"
+                class="w-full"
+              />
+            </div>
+            <div class="field">
+              <label>Yeni Şifre</label><InputText
+                v-model="sifreForm.yeniSifre"
+                type="password"
+                class="w-full"
+              />
+            </div>
+            <div class="field">
+              <label>Yeni Şifre (Tekrar)</label><InputText
+                v-model="sifreForm.yeniSifreTekrar"
+                type="password"
+                class="w-full"
+              />
+            </div>
+            <Button
+              label="Şifreyi Güncelle"
+              icon="pi pi-key"
+              :loading="kaydediliyor"
+              @click="sifreKaydet"
+            />
           </div>
         </template>
       </Card>
 
       <!-- 2FA -->
       <Card class="ayar-kart">
-        <template #title><i class="pi pi-shield" style="margin-right:8px"></i>İki Faktörlü Doğrulama (2FA)</template>
+        <template #title>
+          <i
+            class="pi pi-shield"
+            style="margin-right:8px"
+          />İki Faktörlü Doğrulama (2FA)
+        </template>
         <template #content>
-          <div v-if="twoFactorDurum === 'ACIK'" class="iki-fa-acik">
+          <div
+            v-if="twoFactorDurum === 'ACIK'"
+            class="iki-fa-acik"
+          >
             <div class="iki-fa-baslik">
-              <i class="pi pi-check-circle" style="color:#10b981"></i>
+              <i
+                class="pi pi-check-circle"
+                style="color:#10b981"
+              />
               <span>2FA <strong>aktif</strong>. Hesabınız güvende.</span>
             </div>
-            <div class="field" style="margin-top:14px">
+            <div
+              class="field"
+              style="margin-top:14px"
+            >
               <label>Kapatmak için doğrulama kodu</label>
               <div class="kod-satir">
-                <InputText v-model="kapatmaKodu" class="w-full" placeholder="6 haneli kod" />
-                <Button label="2FA'yı Kapat" icon="pi pi-shield" severity="danger" outlined @click="ikiFakapat" :loading="kaydediliyor" />
+                <InputText
+                  v-model="kapatmaKodu"
+                  class="w-full"
+                  placeholder="6 haneli kod"
+                />
+                <Button
+                  label="2FA'yı Kapat"
+                  icon="pi pi-shield"
+                  severity="danger"
+                  outlined
+                  :loading="kaydediliyor"
+                  @click="ikiFakapat"
+                />
               </div>
             </div>
           </div>
 
           <div v-else>
             <template v-if="!kurulumData">
-              <p class="iki-fa-aciklama">Google Authenticator / Authy gibi bir uygulama ile girişlerinize ikinci bir güvenlik katmanı ekleyin.</p>
-              <Button label="2FA Kur" icon="pi pi-qrcode" @click="kurulumBaslat" :loading="kaydediliyor" />
+              <p class="iki-fa-aciklama">
+                Google Authenticator / Authy gibi bir uygulama ile girişlerinize ikinci bir güvenlik katmanı ekleyin.
+              </p>
+              <Button
+                label="2FA Kur"
+                icon="pi pi-qrcode"
+                :loading="kaydediliyor"
+                @click="kurulumBaslat"
+              />
             </template>
             <template v-else>
               <div class="iki-fa-kurulum">
                 <p><strong>1.</strong> Aşağıdaki gizli anahtarı (veya otpauth URI'sini) kimlik doğrulayıcı uygulamanıza ekleyin:</p>
                 <div class="secret-kutu">
                   <code>{{ kurulumData.secret }}</code>
-                  <Button icon="pi pi-copy" class="p-button-rounded p-button-text" @click="kopyala(kurulumData.secret)" />
+                  <Button
+                    icon="pi pi-copy"
+                    class="p-button-rounded p-button-text"
+                    @click="kopyala(kurulumData.secret)"
+                  />
                 </div>
-                <p class="otpauth-satir"><small>{{ kurulumData.qrCodeUri }}</small></p>
+                <p class="otpauth-satir">
+                  <small>{{ kurulumData.qrCodeUri }}</small>
+                </p>
                 <p><strong>2.</strong> Uygulamanın ürettiği 6 haneli kodu girin:</p>
                 <div class="kod-satir">
-                  <InputText v-model="dogrulamaKodu" class="w-full" placeholder="6 haneli kod" />
-                  <Button label="Doğrula ve Aktif Et" icon="pi pi-check" @click="ikiFakAktifEt" :loading="kaydediliyor" />
+                  <InputText
+                    v-model="dogrulamaKodu"
+                    class="w-full"
+                    placeholder="6 haneli kod"
+                  />
+                  <Button
+                    label="Doğrula ve Aktif Et"
+                    icon="pi pi-check"
+                    :loading="kaydediliyor"
+                    @click="ikiFakAktifEt"
+                  />
                 </div>
               </div>
             </template>
@@ -82,14 +190,31 @@
 
       <!-- GÖRÜNÜM -->
       <Card class="ayar-kart">
-        <template #title><i class="pi pi-palette" style="margin-right:8px"></i>Görünüm</template>
+        <template #title>
+          <i
+            class="pi pi-palette"
+            style="margin-right:8px"
+          />Görünüm
+        </template>
         <template #content>
           <div class="form-grid">
             <div class="field">
               <label>Tema Modu</label>
               <div class="tema-butonlari">
-                <Button label="Açık" icon="pi pi-sun" :severity="!isDark ? 'primary' : 'secondary'" :outlined="isDark" @click="applyMode('light')" />
-                <Button label="Koyu" icon="pi pi-moon" :severity="isDark ? 'primary' : 'secondary'" :outlined="!isDark" @click="applyMode('dark')" />
+                <Button
+                  label="Açık"
+                  icon="pi pi-sun"
+                  :severity="!isDark ? 'primary' : 'secondary'"
+                  :outlined="isDark"
+                  @click="applyMode('light')"
+                />
+                <Button
+                  label="Koyu"
+                  icon="pi pi-moon"
+                  :severity="isDark ? 'primary' : 'secondary'"
+                  :outlined="!isDark"
+                  @click="applyMode('dark')"
+                />
               </div>
             </div>
             <div class="field">
@@ -103,7 +228,7 @@
                   :style="{ background: c.value }"
                   :title="c.name"
                   @click="applyColor(c.value)"
-                ></button>
+                />
               </div>
             </div>
           </div>
@@ -153,7 +278,7 @@ onMounted(async () => {
     const r = await kullaniciAPI.ben()
     const ben = r.data
     twoFactorDurum.value = ben.twoFactorEnabled ? 'ACIK' : 'KAPALI'
-  } catch {}
+  } catch { /* empty */ }
 })
 
 const profilKaydet = async () => {
@@ -235,7 +360,7 @@ const kopyala = async (text) => {
   try {
     await navigator.clipboard.writeText(text)
     toast.add({ severity: 'success', summary: 'Kopyalandı', detail: 'Gizli anahtar panoya kopyalandı', life: 2000 })
-  } catch {}
+  } catch { /* empty */ }
 }
 </script>
 

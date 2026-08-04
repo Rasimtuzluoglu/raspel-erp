@@ -3,116 +3,245 @@
     <div class="raporlar-header-bar">
       <h1>Raporlar</h1>
       <div class="rapor-doviz-secim">
-        <label><i class="pi pi-dollar"></i> Rapor Para Birimi:</label>
-        <Dropdown v-model="dovizStore.aktifParaBirimi" :options="['TRY','USD','EUR','GBP','SAR','GAU']" class="rapor-doviz-dropdown" />
+        <label><i class="pi pi-dollar" /> Rapor Para Birimi:</label>
+        <Dropdown
+          v-model="dovizStore.aktifParaBirimi"
+          :options="['TRY','USD','EUR','GBP','SAR','GAU']"
+          class="rapor-doviz-dropdown"
+        />
       </div>
     </div>
 
-    <div v-if="favoriRaporlar.length" class="favori-raporlar">
-      <span class="favori-baslik"><i class="pi pi-star-fill" style="color:#fbbf24"></i> Sık Kullanılanlar:</span>
-      <Button v-for="r in favoriRaporlar" :key="r.key" :label="r.ad" size="small" class="p-button-sm p-button-outlined" @click="aktifSekme = r.index" />
+    <div
+      v-if="favoriRaporlar.length"
+      class="favori-raporlar"
+    >
+      <span class="favori-baslik"><i
+        class="pi pi-star-fill"
+        style="color:#fbbf24"
+      /> Sık Kullanılanlar:</span>
+      <Button
+        v-for="r in favoriRaporlar"
+        :key="r.key"
+        :label="r.ad"
+        size="small"
+        class="p-button-sm p-button-outlined"
+        @click="aktifSekme = r.index"
+      />
     </div>
 
-    <TabView v-model:activeIndex="aktifSekme">
+    <TabView v-model:active-index="aktifSekme">
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star" :class="{ favori: raporFavori('cariEkstre') }" @click.stop="raporFavoriDegistir('cariEkstre', 0, 'Cari Ekstre')"></i>
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('cariEkstre') }"
+              @click.stop="raporFavoriDegistir('cariEkstre', 0, 'Cari Ekstre')"
+            />
             Cari Ekstre
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
             <label>Cari Hesap</label>
-            <Dropdown v-model="ekstreCariId" :options="cariHesapStore.cariHesaplar"
-              option-label="ad" option-value="id" placeholder="Seçiniz" class="w-full" />
+            <Dropdown
+              v-model="ekstreCariId"
+              :options="cariHesapStore.cariHesaplar"
+              option-label="ad"
+              option-value="id"
+              placeholder="Seçiniz"
+              class="w-full"
+            />
           </div>
           <div class="form-group">
             <label>Başlangıç</label>
-            <DatePicker v-model="ekstreBas" date-format="dd.mm.yy" class="w-full" />
+            <DatePicker
+              v-model="ekstreBas"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
           </div>
           <div class="form-group">
             <label>Bitiş</label>
-            <DatePicker v-model="ekstreBit" date-format="dd.mm.yy" class="w-full" />
+            <DatePicker
+              v-model="ekstreBit"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
           </div>
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
-            <Button label="Rapor Getir" icon="pi pi-search" @click="getCariEkstre" :loading="ekstreLoading" />
+            <Button
+              label="Rapor Getir"
+              icon="pi pi-search"
+              :loading="ekstreLoading"
+              @click="getCariEkstre"
+            />
           </div>
         </div>
 
-        <div v-if="ekstreData" class="rapor-sonuc" ref="ekstreKart">
+        <div
+          v-if="ekstreData"
+          ref="ekstreKart"
+          class="rapor-sonuc"
+        >
           <div class="rapor-bilgi">
             <h3>{{ ekstreData.cariAd }}</h3>
             <p>Dönem Başı Bakiye: <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemBasBakiye) }}</strong></p>
             <p>Dönem Sonu Bakiye: <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemSonBakiye) }}</strong></p>
             <div class="rapor-aksiyonlar">
-              <Button icon="pi pi-print" label="PDF" class="p-button-sm p-button-outlined" @click="yazdir(ekstreKart)" />
-              <Button icon="pi pi-envelope" label="E-posta Gönder" class="p-button-sm p-button-outlined" @click="epostaGonder(ekstreData.cariAd, 'Cari Ekstre Raporu')" />
+              <Button
+                icon="pi pi-print"
+                label="PDF"
+                class="p-button-sm p-button-outlined"
+                @click="yazdir(ekstreKart)"
+              />
+              <Button
+                icon="pi pi-envelope"
+                label="E-posta Gönder"
+                class="p-button-sm p-button-outlined"
+                @click="epostaGonder(ekstreData.cariAd, 'Cari Ekstre Raporu')"
+              />
             </div>
           </div>
-          <DataTable :value="ekstreData.hareketler" striped-rows :rows="10" :paginator="true"
-            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport">
-            <Column field="hareketTarihi" header="Tarih" style="width:100px">
-              <template #body="s">{{ formatDate(s.data.hareketTarihi) }}</template>
+          <DataTable
+            :value="ekstreData.hareketler"
+            striped-rows
+            :rows="10"
+            :paginator="true"
+            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+          >
+            <Column
+              field="hareketTarihi"
+              header="Tarih"
+              style="width:100px"
+            >
+              <template #body="s">
+                {{ formatDate(s.data.hareketTarihi) }}
+              </template>
             </Column>
-            <Column field="tur" header="Tür" style="width:90px">
+            <Column
+              field="tur"
+              header="Tür"
+              style="width:90px"
+            >
               <template #body="s">
                 <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
                   {{ s.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
                 </span>
               </template>
             </Column>
-            <Column field="tutar" header="Tutar" style="width:120px">
+            <Column
+              field="tutar"
+              header="Tutar"
+              style="width:120px"
+            >
               <template #body="s">
                 <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{ formatCurrency(s.data.tutar) }}</span>
               </template>
             </Column>
-            <Column field="aciklama" header="Açıklama"></Column>
+            <Column
+              field="aciklama"
+              header="Açıklama"
+            />
           </DataTable>
-          <Message v-if="ekstreData.hareketler.length === 0" severity="info" text="Bu dönemde hareket bulunmamaktadır." />
+          <Message
+            v-if="ekstreData.hareketler.length === 0"
+            severity="info"
+            text="Bu dönemde hareket bulunmamaktadır."
+          />
         </div>
       </TabPanel>
 
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star" :class="{ favori: raporFavori('gelirGider') }" @click.stop="raporFavoriDegistir('gelirGider', 1, 'Gelir/Gider Özeti')"></i>
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('gelirGider') }"
+              @click.stop="raporFavoriDegistir('gelirGider', 1, 'Gelir/Gider Özeti')"
+            />
             Gelir/Gider Özeti
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
             <label>Başlangıç</label>
-            <DatePicker v-model="ggBas" date-format="dd.mm.yy" class="w-full" />
+            <DatePicker
+              v-model="ggBas"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
           </div>
           <div class="form-group">
             <label>Bitiş</label>
-            <DatePicker v-model="ggBit" date-format="dd.mm.yy" class="w-full" />
+            <DatePicker
+              v-model="ggBit"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
           </div>
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
-            <Button label="Rapor Getir" icon="pi pi-search" @click="getGelirGider" :loading="ggLoading" />
+            <Button
+              label="Rapor Getir"
+              icon="pi pi-search"
+              :loading="ggLoading"
+              @click="getGelirGider"
+            />
           </div>
         </div>
 
-        <div v-if="ggData" class="rapor-sonuc" ref="ggKart">
+        <div
+          v-if="ggData"
+          ref="ggKart"
+          class="rapor-sonuc"
+        >
           <div class="ozet-kartlar">
-            <div class="ozet-kart gelir"><span>Toplam Gelir</span><strong>{{ formatCurrency(ggData.toplamGelir) }}</strong></div>
-            <div class="ozet-kart gider"><span>Toplam Gider</span><strong>{{ formatCurrency(ggData.toplamGider) }}</strong></div>
-            <div class="ozet-kart" :class="ggData.netKarZarar >= 0 ? 'kar' : 'zarar'">
+            <div class="ozet-kart gelir">
+              <span>Toplam Gelir</span><strong>{{ formatCurrency(ggData.toplamGelir) }}</strong>
+            </div>
+            <div class="ozet-kart gider">
+              <span>Toplam Gider</span><strong>{{ formatCurrency(ggData.toplamGider) }}</strong>
+            </div>
+            <div
+              class="ozet-kart"
+              :class="ggData.netKarZarar >= 0 ? 'kar' : 'zarar'"
+            >
               <span>Net Kar/Zarar</span><strong>{{ formatCurrency(ggData.netKarZarar) }}</strong>
             </div>
             <div class="rapor-aksiyonlar">
-              <Button icon="pi pi-print" label="PDF" class="p-button-sm p-button-outlined" @click="yazdir(ggKart)" />
-              <Button icon="pi pi-envelope" label="E-posta Gönder" class="p-button-sm p-button-outlined" @click="epostaGonder('Gelir/Gider Özeti', 'Gelir/Gider Raporu')" />
+              <Button
+                icon="pi pi-print"
+                label="PDF"
+                class="p-button-sm p-button-outlined"
+                @click="yazdir(ggKart)"
+              />
+              <Button
+                icon="pi pi-envelope"
+                label="E-posta Gönder"
+                class="p-button-sm p-button-outlined"
+                @click="epostaGonder('Gelir/Gider Özeti', 'Gelir/Gider Raporu')"
+              />
             </div>
           </div>
 
-          <h3 style="margin-top:25px">Aylık Dağılım</h3>
-          <DataTable :value="ggData.aylikDagilim" striped-rows>
-            <Column field="ay" header="Ay"></Column>
-            <Column field="net" header="Net Tutar">
+          <h3 style="margin-top:25px">
+            Aylık Dağılım
+          </h3>
+          <DataTable
+            :value="ggData.aylikDagilim"
+            striped-rows
+          >
+            <Column
+              field="ay"
+              header="Ay"
+            />
+            <Column
+              field="net"
+              header="Net Tutar"
+            >
               <template #body="s">
                 <span :class="s.data.net >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.net) }}</span>
               </template>
@@ -124,30 +253,57 @@
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star" :class="{ favori: raporFavori('kdv') }" @click.stop="raporFavoriDegistir('kdv', 2, 'KDV Raporu')"></i>
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('kdv') }"
+              @click.stop="raporFavoriDegistir('kdv', 2, 'KDV Raporu')"
+            />
             KDV Raporu
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
             <label>Başlangıç</label>
-            <DatePicker v-model="kdvBas" date-format="dd.mm.yy" class="w-full" />
+            <DatePicker
+              v-model="kdvBas"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
           </div>
           <div class="form-group">
             <label>Bitiş</label>
-            <DatePicker v-model="kdvBit" date-format="dd.mm.yy" class="w-full" />
+            <DatePicker
+              v-model="kdvBit"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
           </div>
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
-            <Button label="Rapor Getir" icon="pi pi-search" @click="getKdv" :loading="kdvLoading" />
+            <Button
+              label="Rapor Getir"
+              icon="pi pi-search"
+              :loading="kdvLoading"
+              @click="getKdv"
+            />
           </div>
         </div>
 
-        <div v-if="kdvData" class="rapor-sonuc">
+        <div
+          v-if="kdvData"
+          class="rapor-sonuc"
+        >
           <div class="ozet-kartlar">
-            <div class="ozet-kart gelir"><span>Çıkış KDV (Satış)</span><strong>{{ formatCurrency(kdvData.toplamKdvCikis) }}</strong></div>
-            <div class="ozet-kart gider"><span>Giriş KDV (Alış)</span><strong>{{ formatCurrency(kdvData.toplamKdvGiris) }}</strong></div>
-            <div class="ozet-kart" :class="kdvData.kdvFarki >= 0 ? 'kar' : 'zarar'">
+            <div class="ozet-kart gelir">
+              <span>Çıkış KDV (Satış)</span><strong>{{ formatCurrency(kdvData.toplamKdvCikis) }}</strong>
+            </div>
+            <div class="ozet-kart gider">
+              <span>Giriş KDV (Alış)</span><strong>{{ formatCurrency(kdvData.toplamKdvGiris) }}</strong>
+            </div>
+            <div
+              class="ozet-kart"
+              :class="kdvData.kdvFarki >= 0 ? 'kar' : 'zarar'"
+            >
               <span>KDV Farkı</span><strong>{{ formatCurrency(kdvData.kdvFarki) }}</strong>
             </div>
           </div>
@@ -157,28 +313,66 @@
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
-            <i class="pi pi-star" :class="{ favori: raporFavori('yaslandirma') }" @click.stop="raporFavoriDegistir('yaslandirma', 3, 'Yaşlandırma')"></i>
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('yaslandirma') }"
+              @click.stop="raporFavoriDegistir('yaslandirma', 3, 'Yaşlandırma')"
+            />
             Yaşlandırma
           </div>
         </template>
         <div class="rapor-filtre">
-          <Button label="Rapor Getir" icon="pi pi-search" @click="getYaslandirma" :loading="yasLoading" />
+          <Button
+            label="Rapor Getir"
+            icon="pi pi-search"
+            :loading="yasLoading"
+            @click="getYaslandirma"
+          />
         </div>
-        <div v-if="yasData" class="rapor-sonuc">
-          <DataTable :value="yasData" striped-rows :rows="10" :paginator="true"
-            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport">
-            <Column field="cariAd" header="Cari Hesap"></Column>
-            <Column field="bakiye" header="Borç Bakiyesi" style="width:140px">
-              <template #body="s"><span class="negative">{{ formatCurrency(s.data.bakiye) }}</span></template>
+        <div
+          v-if="yasData"
+          class="rapor-sonuc"
+        >
+          <DataTable
+            :value="yasData"
+            striped-rows
+            :rows="10"
+            :paginator="true"
+            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+          >
+            <Column
+              field="cariAd"
+              header="Cari Hesap"
+            />
+            <Column
+              field="bakiye"
+              header="Borç Bakiyesi"
+              style="width:140px"
+            >
+              <template #body="s">
+                <span class="negative">{{ formatCurrency(s.data.bakiye) }}</span>
+              </template>
             </Column>
-            <Column field="gun" header="Gün" style="width:80px"></Column>
-            <Column field="aralik" header="Vade Aralığı" style="width:130px">
+            <Column
+              field="gun"
+              header="Gün"
+              style="width:80px"
+            />
+            <Column
+              field="aralik"
+              header="Vade Aralığı"
+              style="width:130px"
+            >
               <template #body="s">
                 <span :class="['vade-badge', vadeClass(s.data.aralik)]">{{ s.data.aralik }}</span>
               </template>
             </Column>
           </DataTable>
-          <Message v-if="yasData.length === 0" severity="info" text="Borçlu cari hesap bulunmamaktadır." />
+          <Message
+            v-if="yasData.length === 0"
+            severity="info"
+            text="Borçlu cari hesap bulunmamaktadır."
+          />
         </div>
       </TabPanel>
     </TabView>

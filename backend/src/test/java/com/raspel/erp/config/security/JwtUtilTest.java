@@ -1,6 +1,6 @@
 package com.raspel.erp.config.security;
 
-import com.raspel.erp.entity.Kullanici;
+import com.raspel.erp.entity.sistem.Kullanici;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;

@@ -4,88 +4,209 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Fatura" icon="pi pi-plus" @click="openCreateDialog" class="p-button-success" />
+        <Button
+          label="Yeni Fatura"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openCreateDialog"
+        />
       </template>
       <template #end>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          @click="excelIndir"
+        />
       </template>
     </Toolbar>
 
-    <div class="loading" v-if="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+    </div>
 
-    <div class="table-container" v-if="!loading">
+    <div
+      v-if="!loading"
+      class="table-container"
+    >
       <DataTable
         :value="faturaStore.faturalar"
-        responsive-layout="scroll" striped-rows
-        :rows="10" :paginator="true"
+        responsive-layout="scroll"
+        striped-rows
+        :rows="10"
+        :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10,20,50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
       >
-        <Column field="faturaNumarasi" header="Fatura No" style="width:160px"></Column>
-        <Column field="tarih" header="Tarih" style="width:110px">
-          <template #body="s">{{ formatDate(s.data.tarih) }}</template>
+        <Column
+          field="faturaNumarasi"
+          header="Fatura No"
+          style="width:160px"
+        />
+        <Column
+          field="tarih"
+          header="Tarih"
+          style="width:110px"
+        >
+          <template #body="s">
+            {{ formatDate(s.data.tarih) }}
+          </template>
         </Column>
-        <Column field="tur" header="Tür" style="width:90px">
+        <Column
+          field="tur"
+          header="Tür"
+          style="width:90px"
+        >
           <template #body="s">
             <span :class="['badge', s.data.tur === 'SATIS' ? 'satis' : 'alis']">
               {{ s.data.tur === 'SATIS' ? 'Satış' : 'Alış' }}
             </span>
           </template>
         </Column>
-        <Column field="cariHesapAd" header="Cari Hesap" style="width:180px">
-          <template #body="s">{{ s.data.cariHesapAd || '-' }}</template>
+        <Column
+          field="cariHesapAd"
+          header="Cari Hesap"
+          style="width:180px"
+        >
+          <template #body="s">
+            {{ s.data.cariHesapAd || '-' }}
+          </template>
         </Column>
-        <Column field="genelToplam" header="Toplam" style="width:130px">
-          <template #body="s">{{ formatCurrency(s.data.genelToplam) }}</template>
+        <Column
+          field="genelToplam"
+          header="Toplam"
+          style="width:130px"
+        >
+          <template #body="s">
+            {{ formatCurrency(s.data.genelToplam) }}
+          </template>
         </Column>
-        <Column field="durum" header="Durum" style="width:110px">
+        <Column
+          field="durum"
+          header="Durum"
+          style="width:110px"
+        >
           <template #body="s">
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">
               {{ durumLabel(s.data.durum) }}
             </span>
           </template>
         </Column>
-        <Column header="İşlemler" style="width:310px">
+        <Column
+          header="İşlemler"
+          style="width:310px"
+        >
           <template #body="s">
-            <Button icon="pi pi-eye" class="p-button-rounded p-button-sm p-button-info"
-              @click="viewFatura(s.data.id)" title="Görüntüle" />
-            <Button icon="pi pi-download" class="p-button-rounded p-button-sm p-button-help"
-              @click="pdfIndir(s.data)" title="PDF İndir" />
-            <Button icon="pi pi-whatsapp" class="p-button-rounded p-button-sm p-button-success"
-              @click="whatsappGonder(s.data)" title="WhatsApp İle Gönder" style="background:#25D366;border-color:#25D366" />
-            <Button icon="pi pi-pencil" class="p-button-rounded p-button-sm p-button-warning"
-              @click="editFatura(s.data)" v-if="s.data.durum === 'TASLAK'" title="Düzenle" />
-            <Button v-if="s.data.durum === 'TASLAK'" icon="pi pi-check" class="p-button-rounded p-button-sm p-button-success"
-              @click="confirmKes(s.data.id)" title="Kes" />
-            <Button v-if="s.data.durum !== 'IPTAL'" icon="pi pi-ban" class="p-button-rounded p-button-sm p-button-danger"
-              @click="confirmIptal(s.data.id)" title="İptal" />
+            <Button
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-sm p-button-info"
+              title="Görüntüle"
+              @click="viewFatura(s.data.id)"
+            />
+            <Button
+              icon="pi pi-download"
+              class="p-button-rounded p-button-sm p-button-help"
+              title="PDF İndir"
+              @click="pdfIndir(s.data)"
+            />
+            <Button
+              icon="pi pi-whatsapp"
+              class="p-button-rounded p-button-sm p-button-success"
+              title="WhatsApp İle Gönder"
+              style="background:#25D366;border-color:#25D366"
+              @click="whatsappGonder(s.data)"
+            />
+            <Button
+              v-if="s.data.durum === 'TASLAK'"
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-sm p-button-warning"
+              title="Düzenle"
+              @click="editFatura(s.data)"
+            />
+            <Button
+              v-if="s.data.durum === 'TASLAK'"
+              icon="pi pi-check"
+              class="p-button-rounded p-button-sm p-button-success"
+              title="Kes"
+              @click="confirmKes(s.data.id)"
+            />
+            <Button
+              v-if="s.data.durum !== 'IPTAL'"
+              icon="pi pi-ban"
+              class="p-button-rounded p-button-sm p-button-danger"
+              title="İptal"
+              @click="confirmIptal(s.data.id)"
+            />
           </template>
         </Column>
       </DataTable>
-      <EmptyState v-if="faturaStore.faturalar.length === 0" message="Henüz fatura yok" sub-message="İlk faturanızı oluşturarak satış sürecinizi başlatın." icon="pi pi-file" action-label="İlk Faturayı Oluştur" action-icon="pi pi-plus" @action="openCreateDialog" />    </div>
+      <EmptyState
+        v-if="faturaStore.faturalar.length === 0"
+        message="Henüz fatura yok"
+        sub-message="İlk faturanızı oluşturarak satış sürecinizi başlatın."
+        icon="pi pi-file"
+        action-label="İlk Faturayı Oluştur"
+        action-icon="pi pi-plus"
+        @action="openCreateDialog"
+      />
+    </div>
 
-    <Dialog v-model:visible="showDialog" :header="dialogBaslik" :modal="true" style="width:750px" :closable="false">
+    <Dialog
+      v-model:visible="showDialog"
+      :header="dialogBaslik"
+      :modal="true"
+      style="width:750px"
+      :closable="false"
+    >
       <div class="form-grid">
         <div class="form-group">
           <label>Cari Hesap</label>
-          <Dropdown v-model="form.cariHesapId" :options="cariHesapStore.cariHesaplar"
-            option-label="ad" option-value="id" placeholder="Seçiniz (isteğe bağlı)" class="w-full" />
+          <Dropdown
+            v-model="form.cariHesapId"
+            :options="cariHesapStore.cariHesaplar"
+            option-label="ad"
+            option-value="id"
+            placeholder="Seçiniz (isteğe bağlı)"
+            class="w-full"
+          />
         </div>
         <div class="form-group">
           <label>Fatura Türü *</label>
-          <Dropdown v-model="form.tur" :options="turSecenekler" optionLabel="label" optionValue="value" placeholder="Seçiniz" class="w-full" />
+          <Dropdown
+            v-model="form.tur"
+            :options="turSecenekler"
+            option-label="label"
+            option-value="value"
+            placeholder="Seçiniz"
+            class="w-full"
+          />
         </div>
         <div class="form-group">
           <label>Tarih *</label>
-          <DatePicker v-model="form.tarih" date-format="dd.mm.yy" class="w-full" />
+          <DatePicker
+            v-model="form.tarih"
+            date-format="dd.mm.yy"
+            class="w-full"
+          />
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Para Birimi</label>
-            <Dropdown v-model="form.paraBirimi" :options="['TRY','USD','EUR','GBP','SAR','GAU']" class="w-full" placeholder="TRY (₺)" />
+            <Dropdown
+              v-model="form.paraBirimi"
+              :options="['TRY','USD','EUR','GBP','SAR','GAU']"
+              class="w-full"
+              placeholder="TRY (₺)"
+            />
           </div>
-          <div class="form-group" v-if="form.paraBirimi && form.paraBirimi !== 'TRY'">
+          <div
+            v-if="form.paraBirimi && form.paraBirimi !== 'TRY'"
+            class="form-group"
+          >
             <label>Kur Bilgisi (TL Karşılığı)</label>
             <div class="kur-bilgi-box">
               1 {{ form.paraBirimi }} = {{ dovizStore.formatPara(dovizStore.getKur(form.paraBirimi).satisFiyati || dovizStore.getKur(form.paraBirimi).satisKuru, 'TRY') }}
@@ -94,16 +215,35 @@
         </div>
         <div class="form-group">
           <label>Açıklama</label>
-          <Textarea v-model="form.aciklama" rows="2" placeholder="İsteğe bağlı" class="w-full" />
+          <Textarea
+            v-model="form.aciklama"
+            rows="2"
+            placeholder="İsteğe bağlı"
+            class="w-full"
+          />
         </div>
       </div>
 
       <div class="urun-ekleme">
-        <div class="form-row" style="display:flex;gap:10px;align-items:flex-end">
-          <div class="form-group" style="flex:3;margin:0">
+        <div
+          class="form-row"
+          style="display:flex;gap:10px;align-items:flex-end"
+        >
+          <div
+            class="form-group"
+            style="flex:3;margin:0"
+          >
             <label>Ürün Seç (Stoktan Otomatik Ekle)</label>
-            <Dropdown v-model="urunSecimi" :options="stokStore.stoklar" filter option-label="ad" option-value="id"
-              placeholder="Ürün ara ve seç..." class="w-full" @change="urunSecildi">
+            <Dropdown
+              v-model="urunSecimi"
+              :options="stokStore.stoklar"
+              filter
+              option-label="ad"
+              option-value="id"
+              placeholder="Ürün ara ve seç..."
+              class="w-full"
+              @change="urunSecildi"
+            >
               <template #option="s">
                 <div style="display:flex;align-items:center;gap:10px">
                   <span style="flex:1;color:#f1f5f9">{{ s.option.ad }}</span>
@@ -113,71 +253,166 @@
               </template>
             </Dropdown>
           </div>
-          <div class="form-group" style="flex:1;margin:0">
+          <div
+            class="form-group"
+            style="flex:1;margin:0"
+          >
             <label>Miktar</label>
-            <InputNumber v-model="urunAdet" :min="1" class="w-full" />
+            <InputNumber
+              v-model="urunAdet"
+              :min="1"
+              class="w-full"
+            />
           </div>
-          <Button icon="pi pi-plus" class="p-button-success" style="margin-bottom:2px" @click="urunEkleKalem" :disabled="!urunSecimi || !urunAdet" />
+          <Button
+            icon="pi pi-plus"
+            class="p-button-success"
+            style="margin-bottom:2px"
+            :disabled="!urunSecimi || !urunAdet"
+            @click="urunEkleKalem"
+          />
         </div>
       </div>
 
-      <h3 style="margin:20px 0 10px">Fatura Kalemleri</h3>
-      <DataTable :value="form.kalemler" striped-rows>
-        <Column header="#" style="width:40px">
-          <template #body="s">{{ s.index + 1 }}</template>
+      <h3 style="margin:20px 0 10px">
+        Fatura Kalemleri
+      </h3>
+      <DataTable
+        :value="form.kalemler"
+        striped-rows
+      >
+        <Column
+          header="#"
+          style="width:40px"
+        >
+          <template #body="s">
+            {{ s.index + 1 }}
+          </template>
         </Column>
         <Column header="Açıklama *">
           <template #body="s">
-            <InputText v-model="s.data.aciklama" placeholder="Kalem açıklaması" class="w-full" />
+            <InputText
+              v-model="s.data.aciklama"
+              placeholder="Kalem açıklaması"
+              class="w-full"
+            />
           </template>
         </Column>
-        <Column header="Adet *" style="width:90px">
+        <Column
+          header="Adet *"
+          style="width:90px"
+        >
           <template #body="s">
-            <InputNumber v-model="s.data.adet" :min="1" class="w-full" />
+            <InputNumber
+              v-model="s.data.adet"
+              :min="1"
+              class="w-full"
+            />
           </template>
         </Column>
-        <Column header="Birim Fiyat *" style="width:130px">
+        <Column
+          header="Birim Fiyat *"
+          style="width:130px"
+        >
           <template #body="s">
-            <InputNumber v-model="s.data.birimFiyat" :min="0" :min-fraction-digits="2" :max-fraction-digits="2" class="w-full" />
+            <InputNumber
+              v-model="s.data.birimFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              class="w-full"
+            />
           </template>
         </Column>
-        <Column header="İskonto %" style="width:100px">
+        <Column
+          header="İskonto %"
+          style="width:100px"
+        >
           <template #body="s">
-            <InputNumber v-model="s.data.iskontoOrani" :min="0" :max="100" :min-fraction-digits="0" class="w-full" />
+            <InputNumber
+              v-model="s.data.iskontoOrani"
+              :min="0"
+              :max="100"
+              :min-fraction-digits="0"
+              class="w-full"
+            />
           </template>
         </Column>
-        <Column header="KDV %" style="width:80px">
+        <Column
+          header="KDV %"
+          style="width:80px"
+        >
           <template #body="s">
-            <Dropdown v-model="s.data.kdvOrani" :options="[0,10,20]" class="w-full" />
+            <Dropdown
+              v-model="s.data.kdvOrani"
+              :options="[0,10,20]"
+              class="w-full"
+            />
           </template>
         </Column>
-        <Column header="Tutar" style="width:120px">
-          <template #body="s">{{ formatCurrency(kalemTutar(s.data)) }}</template>
-        </Column>
-        <Column header="" style="width:50px">
+        <Column
+          header="Tutar"
+          style="width:120px"
+        >
           <template #body="s">
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
-              @click="removeKalem(s.index)" />
+            {{ formatCurrency(kalemTutar(s.data)) }}
+          </template>
+        </Column>
+        <Column
+          header=""
+          style="width:50px"
+        >
+          <template #body="s">
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click="removeKalem(s.index)"
+            />
           </template>
         </Column>
       </DataTable>
       <div style="margin-top:10px">
-        <Button label="+ Kalem Ekle" icon="pi pi-plus" @click="addKalem" class="p-button-sm p-button-outlined" />
+        <Button
+          label="+ Kalem Ekle"
+          icon="pi pi-plus"
+          class="p-button-sm p-button-outlined"
+          @click="addKalem"
+        />
       </div>
 
       <div class="summary-box">
-        <div class="summary-row"><span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span></div>
-        <div class="summary-row"><span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span></div>
-        <div class="summary-row total"><span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span></div>
+        <div class="summary-row">
+          <span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span>
+        </div>
       </div>
 
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="closeDialog" class="p-button-text" />
-        <Button :label="editingId ? 'Faturayı Güncelle' : 'Faturayı Oluştur'" icon="pi pi-check" @click="saveFatura" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="closeDialog"
+        />
+        <Button
+          :label="editingId ? 'Faturayı Güncelle' : 'Faturayı Oluştur'"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveFatura"
+        />
       </template>
     </Dialog>
 
-    <Message v-if="faturaStore.error" severity="error" :text="faturaStore.error" />
+    <Message
+      v-if="faturaStore.error"
+      severity="error"
+      :text="faturaStore.error"
+    />
   </div>
 </template>
 

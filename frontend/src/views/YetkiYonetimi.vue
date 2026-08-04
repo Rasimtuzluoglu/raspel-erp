@@ -1,16 +1,31 @@
 <template>
   <div class="yetki-page">
-    <PageHeader title="Rol & Yetki Matrisi (RBAC)" subtitle="Sistemdeki rollerin modül bazlı okuma, yazma, silme ve dışa aktarım izinleri">
+    <PageHeader
+      title="Rol & Yetki Matrisi (RBAC)"
+      subtitle="Sistemdeki rollerin modül bazlı okuma, yazma, silme ve dışa aktarım izinleri"
+    >
       <template #actions>
-        <Button label="Değişiklikleri Kaydet" icon="pi pi-check" class="p-button-success" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="Değişiklikleri Kaydet"
+          icon="pi pi-check"
+          class="p-button-success"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </PageHeader>
 
-    <div v-if="yukleniyor" class="p-4">
+    <div
+      v-if="yukleniyor"
+      class="p-4"
+    >
       <SkeletonLoader :count="4" />
     </div>
 
-    <div v-else class="matrix-container">
+    <div
+      v-else
+      class="matrix-container"
+    >
       <div class="roles-tabs">
         <button
           v-for="r in roller"
@@ -19,11 +34,14 @@
           :class="{ active: seciliRol?.id === r.id }"
           @click="seciliRol = r"
         >
-          <i class="pi pi-shield"></i> {{ r.ad }}
+          <i class="pi pi-shield" /> {{ r.ad }}
         </button>
       </div>
 
-      <div v-if="seciliRol" class="role-details-card">
+      <div
+        v-if="seciliRol"
+        class="role-details-card"
+      >
         <div class="role-info">
           <h3>{{ seciliRol.ad }} Yetkileri</h3>
           <p>{{ seciliRol.aciklama }}</p>
@@ -35,11 +53,16 @@
               <th>Modül</th>
               <th>Yetki Kodu</th>
               <th>Açıklama</th>
-              <th style="width: 100px; text-align: center;">Erişim İzni</th>
+              <th style="width: 100px; text-align: center;">
+                Erişim İzni
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="y in yetkiler" :key="y.id">
+            <tr
+              v-for="y in yetkiler"
+              :key="y.id"
+            >
               <td><span class="modul-tag">{{ y.modul }}</span></td>
               <td><code>{{ y.kod }}</code></td>
               <td>{{ y.aciklama }}</td>
@@ -49,7 +72,7 @@
                   class="yetki-checkbox"
                   :checked="yetkiVarmis(y.id)"
                   @change="yetkiToggle(y.id)"
-                />
+                >
               </td>
             </tr>
           </tbody>

@@ -1,7 +1,7 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.entity.AuditLog;
-import com.raspel.erp.repository.AuditLogRepository;
+import com.raspel.erp.entity.sistem.AuditLog;
+import com.raspel.erp.repository.sistem.AuditLogRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +15,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.AuditLogService;
+import com.raspel.erp.entity.sistem.Kullanici;
 
 @ExtendWith(MockitoExtension.class)
 class AuditLogServiceTest {

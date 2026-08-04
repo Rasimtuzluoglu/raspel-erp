@@ -1,13 +1,21 @@
 <template>
   <div class="muhasebe-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Genel Muhasebe</h1>
+      <h1 class="page-title">
+        Genel Muhasebe
+      </h1>
       <Button
         v-if="aktifSekme === 0"
-        label="Yeni Hesap" icon="pi pi-plus" @click="hesapDialogAc()" />
+        label="Yeni Hesap"
+        icon="pi pi-plus"
+        @click="hesapDialogAc()"
+      />
       <Button
         v-else-if="aktifSekme === 1"
-        label="Yeni Yevmiye Fişi" icon="pi pi-plus" @click="fisDialogAc()" />
+        label="Yeni Yevmiye Fişi"
+        icon="pi pi-plus"
+        @click="fisDialogAc()"
+      />
     </div>
 
     <IlkZiyaretIpuclari
@@ -16,23 +24,49 @@
       metin="Hesap planını düzenleyin, dengeli yevmiye fişleri (borç = alacak) kaydedin ve Mizan ile Defter-i Kebir raporlarını görüntüleyin."
     />
 
-    <TabView v-model:activeIndex="aktifSekme" class="muhasebe-tabs">
+    <TabView
+      v-model:active-index="aktifSekme"
+      class="muhasebe-tabs"
+    >
       <!-- HESAP PLANI -->
       <TabPanel header="Hesap Planı">
         <AppDataTable
           :value="hesaplar"
           :loading="yukleniyor"
-          aramaAktif
-          aramaPlaceholder="Hesap ara..."
-          gorunumAnahtari="muhasebe_hesap_plani"
+          arama-aktif
+          arama-placeholder="Hesap ara..."
+          gorunum-anahtari="muhasebe_hesap_plani"
         >
-          <Column field="kod" header="Kod" sortable style="width:110px" />
-          <Column field="ad" header="Hesap Adı" sortable />
-          <Column field="tip" header="Tip">
-            <template #body="{ data }"><Tag :value="tipEtiketi(data.tip)" :severity="tipSeverity(data.tip)" /></template>
+          <Column
+            field="kod"
+            header="Kod"
+            sortable
+            style="width:110px"
+          />
+          <Column
+            field="ad"
+            header="Hesap Adı"
+            sortable
+          />
+          <Column
+            field="tip"
+            header="Tip"
+          >
+            <template #body="{ data }">
+              <Tag
+                :value="tipEtiketi(data.tip)"
+                :severity="tipSeverity(data.tip)"
+              />
+            </template>
           </Column>
-          <Column field="grup" header="Grup" />
-          <Column header="İşlem" style="width:60px">
+          <Column
+            field="grup"
+            header="Grup"
+          />
+          <Column
+            header="İşlem"
+            style="width:60px"
+          >
             <template #body="{ data }">
               <SatirEylemleri
                 :gorunur="{ duzenle: true, cogalt: true, sil: true }"
@@ -48,29 +82,92 @@
       <!-- YEVMIYE FİŞLERİ -->
       <TabPanel header="Yevmiye Fişleri">
         <div class="filtre-bar">
-          <DatePicker v-model="filtreBaslangic" dateFormat="dd/mm/yy" placeholder="Başlangıç" />
-          <DatePicker v-model="filtreBitis" dateFormat="dd/mm/yy" placeholder="Bitiş" />
-          <Button icon="pi pi-refresh" label="Yenile" class="p-button-sm p-button-text" @click="fisleriYukle" />
+          <DatePicker
+            v-model="filtreBaslangic"
+            date-format="dd/mm/yy"
+            placeholder="Başlangıç"
+          />
+          <DatePicker
+            v-model="filtreBitis"
+            date-format="dd/mm/yy"
+            placeholder="Bitiş"
+          />
+          <Button
+            icon="pi pi-refresh"
+            label="Yenile"
+            class="p-button-sm p-button-text"
+            @click="fisleriYukle"
+          />
         </div>
-        <DataTable :value="fisler" stripedRows :loading="fisYukleniyor">
-          <Column field="fisNo" header="Fiş No" sortable style="width:150px" />
-          <Column field="tarih" header="Tarih" sortable>
-            <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
-          </Column>
-          <Column field="aciklama" header="Açıklama" />
-          <Column field="toplamBorc" header="Borç">
-            <template #body="{ data }">{{ formatCurrency(data.toplamBorc) }}</template>
-          </Column>
-          <Column field="toplamAlacak" header="Alacak">
-            <template #body="{ data }">{{ formatCurrency(data.toplamAlacak) }}</template>
-          </Column>
-          <Column field="durum" header="Durum">
-            <template #body="{ data }"><Tag :value="data.durum" :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'info'" /></template>
-          </Column>
-          <Column header="İşlem" style="width:140px">
+        <DataTable
+          :value="fisler"
+          striped-rows
+          :loading="fisYukleniyor"
+        >
+          <Column
+            field="fisNo"
+            header="Fiş No"
+            sortable
+            style="width:150px"
+          />
+          <Column
+            field="tarih"
+            header="Tarih"
+            sortable
+          >
             <template #body="{ data }">
-              <Button icon="pi pi-eye" class="p-button-rounded p-button-text" @click="fisDetayAc(data)" title="Görüntüle" />
-              <Button v-if="data.durum !== 'IPTAL'" icon="pi pi-ban" class="p-button-rounded p-button-text p-button-danger" @click="fisIptal(data)" title="İptal Et" />
+              {{ formatDate(data.tarih) }}
+            </template>
+          </Column>
+          <Column
+            field="aciklama"
+            header="Açıklama"
+          />
+          <Column
+            field="toplamBorc"
+            header="Borç"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.toplamBorc) }}
+            </template>
+          </Column>
+          <Column
+            field="toplamAlacak"
+            header="Alacak"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.toplamAlacak) }}
+            </template>
+          </Column>
+          <Column
+            field="durum"
+            header="Durum"
+          >
+            <template #body="{ data }">
+              <Tag
+                :value="data.durum"
+                :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'info'"
+              />
+            </template>
+          </Column>
+          <Column
+            header="İşlem"
+            style="width:140px"
+          >
+            <template #body="{ data }">
+              <Button
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text"
+                title="Görüntüle"
+                @click="fisDetayAc(data)"
+              />
+              <Button
+                v-if="data.durum !== 'IPTAL'"
+                icon="pi pi-ban"
+                class="p-button-rounded p-button-text p-button-danger"
+                title="İptal Et"
+                @click="fisIptal(data)"
+              />
             </template>
           </Column>
         </DataTable>
@@ -79,24 +176,69 @@
       <!-- MİZAN -->
       <TabPanel header="Mizan">
         <div class="filtre-bar">
-          <DatePicker v-model="mizanBaslangic" dateFormat="dd/mm/yy" placeholder="Başlangıç" />
-          <DatePicker v-model="mizanBitis" dateFormat="dd/mm/yy" placeholder="Bitiş" />
-          <Button icon="pi pi-refresh" label="Hesapla" class="p-button-sm" @click="mizanYukle" />
+          <DatePicker
+            v-model="mizanBaslangic"
+            date-format="dd/mm/yy"
+            placeholder="Başlangıç"
+          />
+          <DatePicker
+            v-model="mizanBitis"
+            date-format="dd/mm/yy"
+            placeholder="Bitiş"
+          />
+          <Button
+            icon="pi pi-refresh"
+            label="Hesapla"
+            class="p-button-sm"
+            @click="mizanYukle"
+          />
         </div>
-        <DataTable :value="mizan" stripedRows :loading="mizanYukleniyor">
-          <Column field="hesapKodu" header="Hesap Kodu" sortable style="width:110px" />
-          <Column field="hesapAdi" header="Hesap Adı" />
-          <Column field="borc" header="Borç">
-            <template #body="{ data }">{{ formatCurrency(data.borc) }}</template>
+        <DataTable
+          :value="mizan"
+          striped-rows
+          :loading="mizanYukleniyor"
+        >
+          <Column
+            field="hesapKodu"
+            header="Hesap Kodu"
+            sortable
+            style="width:110px"
+          />
+          <Column
+            field="hesapAdi"
+            header="Hesap Adı"
+          />
+          <Column
+            field="borc"
+            header="Borç"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.borc) }}
+            </template>
           </Column>
-          <Column field="alacak" header="Alacak">
-            <template #body="{ data }">{{ formatCurrency(data.alacak) }}</template>
+          <Column
+            field="alacak"
+            header="Alacak"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.alacak) }}
+            </template>
           </Column>
-          <Column field="borcBakiye" header="Borç Bakiye">
-            <template #body="{ data }"><span class="pozitif">{{ formatCurrency(data.borcBakiye) }}</span></template>
+          <Column
+            field="borcBakiye"
+            header="Borç Bakiye"
+          >
+            <template #body="{ data }">
+              <span class="pozitif">{{ formatCurrency(data.borcBakiye) }}</span>
+            </template>
           </Column>
-          <Column field="alacakBakiye" header="Alacak Bakiye">
-            <template #body="{ data }"><span class="negatif">{{ formatCurrency(data.alacakBakiye) }}</span></template>
+          <Column
+            field="alacakBakiye"
+            header="Alacak Bakiye"
+          >
+            <template #body="{ data }">
+              <span class="negatif">{{ formatCurrency(data.alacakBakiye) }}</span>
+            </template>
           </Column>
         </DataTable>
       </TabPanel>
@@ -104,95 +246,278 @@
       <!-- DEFTER-İ KEBİR -->
       <TabPanel header="Defter-i Kebir">
         <div class="filtre-bar">
-          <Select v-model="kebirHesap" :options="hesapSecenekleri" optionLabel="ad" optionValue="kod" placeholder="Hesap seçin" class="kebir-select" showClear />
-          <DatePicker v-model="kebirBaslangic" dateFormat="dd/mm/yy" placeholder="Başlangıç" />
-          <DatePicker v-model="kebirBitis" dateFormat="dd/mm/yy" placeholder="Bitiş" />
-          <Button icon="pi pi-refresh" label="Listele" class="p-button-sm" @click="kebirYukle" />
+          <Select
+            v-model="kebirHesap"
+            :options="hesapSecenekleri"
+            option-label="ad"
+            option-value="kod"
+            placeholder="Hesap seçin"
+            class="kebir-select"
+            show-clear
+          />
+          <DatePicker
+            v-model="kebirBaslangic"
+            date-format="dd/mm/yy"
+            placeholder="Başlangıç"
+          />
+          <DatePicker
+            v-model="kebirBitis"
+            date-format="dd/mm/yy"
+            placeholder="Bitiş"
+          />
+          <Button
+            icon="pi pi-refresh"
+            label="Listele"
+            class="p-button-sm"
+            @click="kebirYukle"
+          />
         </div>
-        <DataTable :value="kebir" stripedRows :loading="kebirYukleniyor">
-          <Column field="tarih" header="Tarih">
-            <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
+        <DataTable
+          :value="kebir"
+          striped-rows
+          :loading="kebirYukleniyor"
+        >
+          <Column
+            field="tarih"
+            header="Tarih"
+          >
+            <template #body="{ data }">
+              {{ formatDate(data.tarih) }}
+            </template>
           </Column>
-          <Column field="fisNo" header="Fiş No" />
-          <Column field="aciklama" header="Açıklama" />
-          <Column field="borc" header="Borç">
-            <template #body="{ data }">{{ formatCurrency(data.borc) }}</template>
+          <Column
+            field="fisNo"
+            header="Fiş No"
+          />
+          <Column
+            field="aciklama"
+            header="Açıklama"
+          />
+          <Column
+            field="borc"
+            header="Borç"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.borc) }}
+            </template>
           </Column>
-          <Column field="alacak" header="Alacak">
-            <template #body="{ data }">{{ formatCurrency(data.alacak) }}</template>
+          <Column
+            field="alacak"
+            header="Alacak"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.alacak) }}
+            </template>
           </Column>
-          <Column field="bakiye" header="Bakiye">
-            <template #body="{ data }">{{ formatCurrency(data.bakiye) }}</template>
+          <Column
+            field="bakiye"
+            header="Bakiye"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.bakiye) }}
+            </template>
           </Column>
         </DataTable>
       </TabPanel>
     </TabView>
 
     <!-- HESAP DIALOG -->
-    <Dialog v-model:visible="hesapDialog" :header="hesapDialogBaslik" modal :style="{ width: '480px' }">
+    <Dialog
+      v-model:visible="hesapDialog"
+      :header="hesapDialogBaslik"
+      modal
+      :style="{ width: '480px' }"
+    >
       <div class="form-grid">
         <div class="field">
           <label class="zorunlu">Hesap Kodu</label>
-          <InputText v-model="hesapForm.kod" class="w-full" placeholder="Ör: 100, 120, 320" :class="{ 'p-invalid': hesapFormHatali.kod }" />
-          <small v-if="hesapFormHatali.kod" class="hata-mesaj">Hesap kodu zorunludur</small>
+          <InputText
+            v-model="hesapForm.kod"
+            class="w-full"
+            placeholder="Ör: 100, 120, 320"
+            :class="{ 'p-invalid': hesapFormHatali.kod }"
+          />
+          <small
+            v-if="hesapFormHatali.kod"
+            class="hata-mesaj"
+          >Hesap kodu zorunludur</small>
         </div>
         <div class="field">
           <label class="zorunlu">Hesap Adı</label>
-          <InputText v-model="hesapForm.ad" class="w-full" :class="{ 'p-invalid': hesapFormHatali.ad }" />
-          <small v-if="hesapFormHatali.ad" class="hata-mesaj">Hesap adı zorunludur</small>
+          <InputText
+            v-model="hesapForm.ad"
+            class="w-full"
+            :class="{ 'p-invalid': hesapFormHatali.ad }"
+          />
+          <small
+            v-if="hesapFormHatali.ad"
+            class="hata-mesaj"
+          >Hesap adı zorunludur</small>
         </div>
         <div class="field">
           <label>Tip *</label>
-          <Select v-model="hesapForm.tip" :options="['AKTIF','PASIF','GELIR','GIDER']" class="w-full" />
+          <Select
+            v-model="hesapForm.tip"
+            :options="['AKTIF','PASIF','GELIR','GIDER']"
+            class="w-full"
+          />
         </div>
-        <div class="field"><label>Grup</label><InputText v-model="hesapForm.grup" class="w-full" /></div>
+        <div class="field">
+          <label>Grup</label><InputText
+            v-model="hesapForm.grup"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="hesapDialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="hesapKaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="hesapDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="hesapKaydet"
+        />
       </template>
     </Dialog>
 
     <!-- YEVMIYE FİŞİ DIALOG -->
-    <Dialog v-model:visible="fisDialog" header="Yeni Yevmiye Fişi" modal :style="{ width: '640px' }">
+    <Dialog
+      v-model:visible="fisDialog"
+      header="Yeni Yevmiye Fişi"
+      modal
+      :style="{ width: '640px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Tarih *</label><DatePicker v-model="fisForm.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Açıklama</label><InputText v-model="fisForm.aciklama" class="w-full" /></div>
+        <div class="field">
+          <label>Tarih *</label><DatePicker
+            v-model="fisForm.tarih"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Açıklama</label><InputText
+            v-model="fisForm.aciklama"
+            class="w-full"
+          />
+        </div>
       </div>
       <div class="fis-kalemler">
         <div class="fis-kalem-baslik">
-          <span>Hesap</span><span>Borç</span><span>Alacak</span><span></span>
+          <span>Hesap</span><span>Borç</span><span>Alacak</span><span />
         </div>
-        <div v-for="(k, i) in fisForm.kalemler" :key="i" class="fis-kalem">
-          <Select v-model="k.hesapKodu" :options="hesapSecenekleri" optionLabel="ad" optionValue="kod" placeholder="Hesap seçin" class="kalem-hesap" />
-          <InputNumber v-model="k.borc" mode="currency" currency="TRY" class="kalem-tutar" />
-          <InputNumber v-model="k.alacak" mode="currency" currency="TRY" class="kalem-tutar" />
-          <Button icon="pi pi-times" class="p-button-rounded p-button-text p-button-danger" @click="fisForm.kalemler.splice(i, 1)" />
+        <div
+          v-for="(k, i) in fisForm.kalemler"
+          :key="i"
+          class="fis-kalem"
+        >
+          <Select
+            v-model="k.hesapKodu"
+            :options="hesapSecenekleri"
+            option-label="ad"
+            option-value="kod"
+            placeholder="Hesap seçin"
+            class="kalem-hesap"
+          />
+          <InputNumber
+            v-model="k.borc"
+            mode="currency"
+            currency="TRY"
+            class="kalem-tutar"
+          />
+          <InputNumber
+            v-model="k.alacak"
+            mode="currency"
+            currency="TRY"
+            class="kalem-tutar"
+          />
+          <Button
+            icon="pi pi-times"
+            class="p-button-rounded p-button-text p-button-danger"
+            @click="fisForm.kalemler.splice(i, 1)"
+          />
         </div>
-        <Button label="Kalem Ekle" icon="pi pi-plus" class="p-button-sm p-button-text" @click="kalemEkle" />
+        <Button
+          label="Kalem Ekle"
+          icon="pi pi-plus"
+          class="p-button-sm p-button-text"
+          @click="kalemEkle"
+        />
       </div>
       <div class="fis-toplam">
         Toplam Borç: <strong>{{ formatCurrency(fisToplamBorc) }}</strong>
         &nbsp;|&nbsp; Toplam Alacak: <strong>{{ formatCurrency(fisToplamAlacak) }}</strong>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="fisDialog = false" />
-        <Button label="Fişi Kaydet" icon="pi pi-check" @click="fisKaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="fisDialog = false"
+        />
+        <Button
+          label="Fişi Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="fisKaydet"
+        />
       </template>
     </Dialog>
 
     <!-- FİŞ DETAY DIALOG -->
-    <Dialog v-model:visible="fisDetayDialog" header="Fiş Detayı" modal :style="{ width: '560px' }">
+    <Dialog
+      v-model:visible="fisDetayDialog"
+      header="Fiş Detayı"
+      modal
+      :style="{ width: '560px' }"
+    >
       <div class="fis-detay-baslik">
         <strong>{{ fisDetay?.fisNo }}</strong> — {{ formatDate(fisDetay?.tarih) }}
-        <Tag :value="fisDetay?.durum" :severity="fisDetay?.durum === 'ONAYLANDI' ? 'success' : fisDetay?.durum === 'IPTAL' ? 'danger' : 'info'" />
+        <Tag
+          :value="fisDetay?.durum"
+          :severity="fisDetay?.durum === 'ONAYLANDI' ? 'success' : fisDetay?.durum === 'IPTAL' ? 'danger' : 'info'"
+        />
       </div>
-      <p v-if="fisDetay?.aciklama" class="fis-detay-aciklama">{{ fisDetay.aciklama }}</p>
-      <DataTable :value="fisDetay?.kalemler || []" stripedRows>
-        <Column field="hesapKodu" header="Hesap" style="width:90px" />
-        <Column field="hesapAdi" header="Hesap Adı" />
-        <Column field="borc" header="Borç"><template #body="{ data }">{{ formatCurrency(data.borc) }}</template></Column>
-        <Column field="alacak" header="Alacak"><template #body="{ data }">{{ formatCurrency(data.alacak) }}</template></Column>
+      <p
+        v-if="fisDetay?.aciklama"
+        class="fis-detay-aciklama"
+      >
+        {{ fisDetay.aciklama }}
+      </p>
+      <DataTable
+        :value="fisDetay?.kalemler || []"
+        striped-rows
+      >
+        <Column
+          field="hesapKodu"
+          header="Hesap"
+          style="width:90px"
+        />
+        <Column
+          field="hesapAdi"
+          header="Hesap Adı"
+        />
+        <Column
+          field="borc"
+          header="Borç"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.borc) }}
+          </template>
+        </Column>
+        <Column
+          field="alacak"
+          header="Alacak"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.alacak) }}
+          </template>
+        </Column>
       </DataTable>
     </Dialog>
   </div>

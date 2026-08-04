@@ -1,42 +1,137 @@
 <template>
   <div class="irsaliye-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">İrsaliyeler</h1>
-      <Button label="Yeni İrsaliye" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        İrsaliyeler
+      </h1>
+      <Button
+        label="Yeni İrsaliye"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="irsaliyeNo" header="İrsaliye No" sortable />
-      <Column field="tarih" header="Tarih" />
-      <Column field="cariHesapAdi" header="Cari Hesap" />
-      <Column field="tur" header="Tür" />
-      <Column field="durum" header="Durum">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="irsaliyeNo"
+        header="İrsaliye No"
+        sortable
+      />
+      <Column
+        field="tarih"
+        header="Tarih"
+      />
+      <Column
+        field="cariHesapAdi"
+        header="Cari Hesap"
+      />
+      <Column
+        field="tur"
+        header="Tür"
+      />
+      <Column
+        field="durum"
+        header="Durum"
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum" :severity="data.durum === 'KESILDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'" />
+          <Tag
+            :value="data.durum"
+            :severity="data.durum === 'KESILDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+          />
         </template>
       </Column>
-      <Column header="İşlem" style="width:140px">
+      <Column
+        header="İşlem"
+        style="width:140px"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-check" class="p-button-rounded p-button-text p-button-success" v-if="data.durum === 'TASLAK'" @click="durumGuncelle(data, 'KESILDI')" title="Kes" />
-          <Button icon="pi pi-times" class="p-button-rounded p-button-text p-button-danger" v-if="data.durum !== 'IPTAL'" @click="durumGuncelle(data, 'IPTAL')" title="İptal" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          <Button
+            v-if="data.durum === 'TASLAK'"
+            icon="pi pi-check"
+            class="p-button-rounded p-button-text p-button-success"
+            title="Kes"
+            @click="durumGuncelle(data, 'KESILDI')"
+          />
+          <Button
+            v-if="data.durum !== 'IPTAL'"
+            icon="pi pi-times"
+            class="p-button-rounded p-button-text p-button-danger"
+            title="İptal"
+            @click="durumGuncelle(data, 'IPTAL')"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" header="Yeni İrsaliye" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      header="Yeni İrsaliye"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>İrsaliye No *</label><InputText v-model="form.irsaliyeNo" class="w-full" /></div>
-        <div class="field"><label>Tarih</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Cari Hesap *</label>
-          <Dropdown v-model="form.cariHesapId" :options="cariler" optionLabel="ad" optionValue="id" placeholder="Seçin" class="w-full" /></div>
-        <div class="field"><label>Tür</label>
-          <Dropdown v-model="form.tur" :options="['SATIS','ALIS']" class="w-full" /></div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>İrsaliye No *</label><InputText
+            v-model="form.irsaliyeNo"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Tarih</label><DatePicker
+            v-model="form.tarih"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Cari Hesap *</label>
+          <Dropdown
+            v-model="form.cariHesapId"
+            :options="cariler"
+            option-label="ad"
+            option-value="id"
+            placeholder="Seçin"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Tür</label>
+          <Dropdown
+            v-model="form.tur"
+            :options="['SATIS','ALIS']"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

@@ -2,21 +2,37 @@
   <div class="onboarding">
     <div class="onboard-kart">
       <div class="onboard-ust">
-        <i class="pi pi-rocket onboard-ikon"></i>
+        <i class="pi pi-rocket onboard-ikon" />
         <h2>RasPel ERP'ye Hoş Geldiniz!</h2>
         <p>Sisteminiz şu anda boş görünüyor. Başlamak için birkaç adım:</p>
       </div>
 
       <div class="onboard-adimlar">
-        <div class="adim" v-for="(adim, i) in adimlar" :key="i" :class="{ tamamlandi: adim.tamam }">
-          <span class="adim-no" :class="{ 'adim-yesil': adim.tamam }">
-            <i v-if="adim.tamam" class="pi pi-check"></i>
+        <div
+          v-for="(adim, i) in adimlar"
+          :key="i"
+          class="adim"
+          :class="{ tamamlandi: adim.tamam }"
+        >
+          <span
+            class="adim-no"
+            :class="{ 'adim-yesil': adim.tamam }"
+          >
+            <i
+              v-if="adim.tamam"
+              class="pi pi-check"
+            />
             <template v-else>{{ i + 1 }}</template>
           </span>
           <div class="adim-icerik">
             <strong>{{ adim.baslik }}</strong>
             <p>{{ adim.aciklama }}</p>
-            <Button :label="adim.buton" :icon="adim.ikon" class="p-button-sm p-button-outlined" @click="adimTikla(adim)" />
+            <Button
+              :label="adim.buton"
+              :icon="adim.ikon"
+              class="p-button-sm p-button-outlined"
+              @click="adimTikla(adim)"
+            />
           </div>
         </div>
       </div>
@@ -26,7 +42,13 @@
           <InputSwitch v-model="demoVeriIsteniyor" />
           <span>Demo verileriyle doldurulsun</span>
         </div>
-        <Button label="Demo Veriyi Yükle" icon="pi pi-download" class="p-button-success" :loading="demoYukleniyor" @click="demoYukle" />
+        <Button
+          label="Demo Veriyi Yükle"
+          icon="pi pi-download"
+          class="p-button-success"
+          :loading="demoYukleniyor"
+          @click="demoYukle"
+        />
       </div>
     </div>
   </div>
@@ -57,7 +79,7 @@ const adimTikla = (adim) => {
 const demoYukle = async () => {
   demoYukleniyor.value = true
   try {
-    const { cariHesapAPI, stokAPI, faturaAPI, kategoriAPI } = await import('../api/index.js')
+    const { cariHesapAPI, stokAPI, kategoriAPI } = await import('../api/index.js')
 
     await kategoriAPI.create({ ad: 'Mobilya', tur: 'GIDER' })
     await kategoriAPI.create({ ad: 'Satış', tur: 'GELIR' })

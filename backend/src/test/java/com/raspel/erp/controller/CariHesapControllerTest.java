@@ -1,8 +1,8 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.CariHesapDTO;
+import com.raspel.erp.dto.finans.CariHesapDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.CariHesapService;
+import com.raspel.erp.service.finans.CariHesapService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.finans.CariHesapController;
 
 @WebMvcTest(CariHesapController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -122,9 +123,6 @@ class CariHesapControllerTest {
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"cari-hesaplar.csv\""));
     }
 }
-
-
-
 
 
 

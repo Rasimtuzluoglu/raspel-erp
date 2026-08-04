@@ -1,32 +1,42 @@
 <template>
-  <Dialog v-model:visible="goster" header="Yenilikler" :modal="true" style="width: 520px" :closable="true">
+  <Dialog
+    v-model:visible="goster"
+    header="Yenilikler"
+    :modal="true"
+    style="width: 520px"
+    :closable="true"
+  >
     <div class="changelog">
       <div class="surum">
         <span class="surum-etiketi">v1.1.0</span>
         <ul>
-          <li><i class="pi pi-check-circle"></i> Notlar modülü eklendi (renkli etiketler, önem derecesi)</li>
-          <li><i class="pi pi-check-circle"></i> Fiyatlı / fiyatsız fiş ve fatura yazdırma seçeneği</li>
-          <li><i class="pi pi-check-circle"></i> Klavye kısayolları (Ctrl+S, F2, Ctrl+P, Esc)</li>
-          <li><i class="pi pi-check-circle"></i> Genel arama artık 9 modülü tarıyor</li>
-          <li><i class="pi pi-check-circle"></i> Tablo sütun ayarları ve yoğunluk seçimi</li>
-          <li><i class="pi pi-check-circle"></i> Toplu işlemler (stok ve cari)</li>
-          <li><i class="pi pi-check-circle"></i> Silme geri alma, taslak otomatik kayıt</li>
-          <li><i class="pi pi-check-circle"></i> Denetim log filtreleme + Excel export</li>
-          <li><i class="pi pi-check-circle"></i> WebSocket anlık bildirimler ve bildirim tercihleri</li>
-          <li><i class="pi pi-check-circle"></i> CSV toplu veri aktarımı (stok, cari)</li>
-          <li><i class="pi pi-check-circle"></i> Profesyonel fatura PDF şablonu</li>
-          <li><i class="pi pi-check-circle"></i> Oturum zaman aşımı uyarısı</li>
+          <li><i class="pi pi-check-circle" /> Notlar modülü eklendi (renkli etiketler, önem derecesi)</li>
+          <li><i class="pi pi-check-circle" /> Fiyatlı / fiyatsız fiş ve fatura yazdırma seçeneği</li>
+          <li><i class="pi pi-check-circle" /> Klavye kısayolları (Ctrl+S, F2, Ctrl+P, Esc)</li>
+          <li><i class="pi pi-check-circle" /> Genel arama artık 9 modülü tarıyor</li>
+          <li><i class="pi pi-check-circle" /> Tablo sütun ayarları ve yoğunluk seçimi</li>
+          <li><i class="pi pi-check-circle" /> Toplu işlemler (stok ve cari)</li>
+          <li><i class="pi pi-check-circle" /> Silme geri alma, taslak otomatik kayıt</li>
+          <li><i class="pi pi-check-circle" /> Denetim log filtreleme + Excel export</li>
+          <li><i class="pi pi-check-circle" /> WebSocket anlık bildirimler ve bildirim tercihleri</li>
+          <li><i class="pi pi-check-circle" /> CSV toplu veri aktarımı (stok, cari)</li>
+          <li><i class="pi pi-check-circle" /> Profesyonel fatura PDF şablonu</li>
+          <li><i class="pi pi-check-circle" /> Oturum zaman aşımı uyarısı</li>
         </ul>
       </div>
       <div class="surum">
         <span class="surum-etiketi">v1.0.0</span>
         <ul>
-          <li><i class="pi pi-check-circle"></i> İlk sürüm: finans, ticaret, envanter, İK ve sistem modülleri</li>
+          <li><i class="pi pi-check-circle" /> İlk sürüm: finans, ticaret, envanter, İK ve sistem modülleri</li>
         </ul>
       </div>
     </div>
     <template #footer>
-      <Button label="Tamam" icon="pi pi-check" @click="kapat" />
+      <Button
+        label="Tamam"
+        icon="pi pi-check"
+        @click="kapat"
+      />
     </template>
   </Dialog>
 </template>

@@ -16,6 +16,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.entity.envanter.Stok;
 
 @ExtendWith(MockitoExtension.class)
 class YetkiServiceTest {

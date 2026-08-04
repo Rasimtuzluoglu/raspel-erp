@@ -21,7 +21,7 @@ import java.util.Map;
 
 @Tag(name = "Döviz Kurları", description = "TCMB güncel ve günlük döviz/altın kurları API")
 @RestController
-@RequestMapping({"/api/doviz-kurlari", "/api/v1/doviz-kurlari", "/api/doviz", "/api/v1/doviz"})
+@RequestMapping({"/api/doviz-kurlari", "/api/doviz"})
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class DovizKuruController {

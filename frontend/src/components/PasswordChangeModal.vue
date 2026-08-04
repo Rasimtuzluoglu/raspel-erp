@@ -1,28 +1,66 @@
 <template>
-  <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)" header="Şifre Değiştir" modal :style="{ width: '400px' }">
+  <Dialog
+    :visible="visible"
+    header="Şifre Değiştir"
+    modal
+    :style="{ width: '400px' }"
+    @update:visible="$emit('update:visible', $event)"
+  >
     <div class="form-grid">
       <div class="field">
         <label>Mevcut Şifre</label>
-        <InputText v-model="sifreForm.mevcutSifre" type="password" class="w-full" />
+        <InputText
+          v-model="sifreForm.mevcutSifre"
+          type="password"
+          class="w-full"
+        />
       </div>
       <div class="field">
         <label>Yeni Şifre</label>
-        <InputText v-model="sifreForm.yeniSifre" type="password" class="w-full" />
-        <div class="sifre-guc" v-if="sifreForm.yeniSifre">
+        <InputText
+          v-model="sifreForm.yeniSifre"
+          type="password"
+          class="w-full"
+        />
+        <div
+          v-if="sifreForm.yeniSifre"
+          class="sifre-guc"
+        >
           <div class="guc-cubuk">
-            <div class="guc-dolgu" :class="gucSinif" :style="{ width: gucYuzde + '%' }"></div>
+            <div
+              class="guc-dolgu"
+              :class="gucSinif"
+              :style="{ width: gucYuzde + '%' }"
+            />
           </div>
-          <span class="guc-etiket" :class="gucSinif">{{ gucEtiket }}</span>
+          <span
+            class="guc-etiket"
+            :class="gucSinif"
+          >{{ gucEtiket }}</span>
         </div>
       </div>
       <div class="field">
         <label>Yeni Şifre Tekrar</label>
-        <InputText v-model="sifreForm.yeniSifreTekrar" type="password" class="w-full" />
+        <InputText
+          v-model="sifreForm.yeniSifreTekrar"
+          type="password"
+          class="w-full"
+        />
       </div>
     </div>
     <template #footer>
-      <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="$emit('update:visible', false)" />
-      <Button label="Değiştir" icon="pi pi-check" @click="sifreDegistir" :loading="sifreDegistiriliyor" />
+      <Button
+        label="İptal"
+        icon="pi pi-times"
+        class="p-button-text"
+        @click="$emit('update:visible', false)"
+      />
+      <Button
+        label="Değiştir"
+        icon="pi pi-check"
+        :loading="sifreDegistiriliyor"
+        @click="sifreDegistir"
+      />
     </template>
   </Dialog>
 </template>
@@ -32,7 +70,7 @@ import { ref, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { kullaniciAPI } from '../api/index.js'
 
-const props = defineProps({
+defineProps({
   visible: {
     type: Boolean,
     default: false

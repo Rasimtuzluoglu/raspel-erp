@@ -4,112 +4,265 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Kasa" icon="pi pi-plus" @click="openKasaDialog" class="p-button-success" />
+        <Button
+          label="Yeni Kasa"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openKasaDialog"
+        />
       </template>
       <template #end>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          @click="excelIndir"
+        />
       </template>
     </Toolbar>
 
-    <div class="loading" v-if="kasaStore.loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
+    <div
+      v-if="kasaStore.loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+    </div>
 
-    <div class="kasa-cards" v-if="!kasaStore.loading">
-      <div v-for="kasa in kasaStore.kasalar" :key="kasa.id" class="kasa-card"
-        :class="{ active: seciliKasaId === kasa.id }" @click="kasaSec(kasa)">
+    <div
+      v-if="!kasaStore.loading"
+      class="kasa-cards"
+    >
+      <div
+        v-for="kasa in kasaStore.kasalar"
+        :key="kasa.id"
+        class="kasa-card"
+        :class="{ active: seciliKasaId === kasa.id }"
+        @click="kasaSec(kasa)"
+      >
         <div class="kasa-ust">
-          <i class="pi pi-wallet"></i>
+          <i class="pi pi-wallet" />
           <h3>{{ kasa.ad }}</h3>
         </div>
-        <p class="kasa-bakiye" :class="kasa.bakiye >= 0 ? 'positive' : 'negative'">
+        <p
+          class="kasa-bakiye"
+          :class="kasa.bakiye >= 0 ? 'positive' : 'negative'"
+        >
           {{ formatCurrency(kasa.bakiye) }}
         </p>
         <div class="kasa-islem">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-info p-button-sm" @click.stop="editKasa(kasa)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click.stop="confirmDel(kasa.id)" />
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-info p-button-sm"
+            @click.stop="editKasa(kasa)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-danger p-button-sm"
+            @click.stop="confirmDel(kasa.id)"
+          />
         </div>
       </div>
-      <Message v-if="kasaStore.kasalar.length === 0" severity="info" text="Kasa hesabı bulunmamaktadır." class="full-width" />
+      <Message
+        v-if="kasaStore.kasalar.length === 0"
+        severity="info"
+        text="Kasa hesabı bulunmamaktadır."
+        class="full-width"
+      />
     </div>
 
-    <Dialog v-model:visible="showKasaDialog" :header="editingKasaId ? 'Kasa Düzenle' : 'Yeni Kasa'" :modal="true" style="width:400px">
+    <Dialog
+      v-model:visible="showKasaDialog"
+      :header="editingKasaId ? 'Kasa Düzenle' : 'Yeni Kasa'"
+      :modal="true"
+      style="width:400px"
+    >
       <div class="form-group">
         <label>Kasa Adı *</label>
-        <InputText v-model="kasaForm.ad" placeholder="Kasa adı" class="w-full" />
+        <InputText
+          v-model="kasaForm.ad"
+          placeholder="Kasa adı"
+          class="w-full"
+        />
       </div>
-      <div class="form-group" v-if="!editingKasaId">
+      <div
+        v-if="!editingKasaId"
+        class="form-group"
+      >
         <label>Açılış Bakiyesi</label>
-        <InputNumber v-model="kasaForm.bakiye" :min="0" :min-fraction-digits="2" :max-fraction-digits="2" class="w-full" />
+        <InputNumber
+          v-model="kasaForm.bakiye"
+          :min="0"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+        />
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="showKasaDialog = false" class="p-button-text" />
-        <Button :label="editingKasaId ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" @click="saveKasa" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showKasaDialog = false"
+        />
+        <Button
+          :label="editingKasaId ? 'Güncelle' : 'Kaydet'"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveKasa"
+        />
       </template>
     </Dialog>
 
-    <div v-if="seciliKasa" class="hareket-bolumu">
+    <div
+      v-if="seciliKasa"
+      class="hareket-bolumu"
+    >
       <div class="hareket-header">
         <h2>{{ seciliKasa.ad }} - Hareketler</h2>
-        <Button label="+ Gelir Ekle" icon="pi pi-plus-circle" class="p-button-success p-button-sm"
-          @click="openHareketDialog('GELIR')" />
-        <Button label="+ Gider Ekle" icon="pi pi-minus-circle" class="p-button-danger p-button-sm"
-          @click="openHareketDialog('GIDER')" />
+        <Button
+          label="+ Gelir Ekle"
+          icon="pi pi-plus-circle"
+          class="p-button-success p-button-sm"
+          @click="openHareketDialog('GELIR')"
+        />
+        <Button
+          label="+ Gider Ekle"
+          icon="pi pi-minus-circle"
+          class="p-button-danger p-button-sm"
+          @click="openHareketDialog('GIDER')"
+        />
       </div>
 
       <div class="table-container">
-        <DataTable :value="kasaHareketler" striped-rows :rows="10" :paginator="true"
+        <DataTable
+          :value="kasaHareketler"
+          striped-rows
+          :rows="10"
+          :paginator="true"
           paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-          current-page-report-template="{first} - {last} ({totalRecords} kayıt)">
-          <Column field="tarih" header="Tarih" style="width:100px">
-            <template #body="s">{{ formatDate(s.data.hareketTarihi) }}</template>
+          current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        >
+          <Column
+            field="tarih"
+            header="Tarih"
+            style="width:100px"
+          >
+            <template #body="s">
+              {{ formatDate(s.data.hareketTarihi) }}
+            </template>
           </Column>
-          <Column field="tur" header="Tür" style="width:80px">
+          <Column
+            field="tur"
+            header="Tür"
+            style="width:80px"
+          >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GELIR' ? 'gelir' : 'gider']">
                 {{ s.data.tur === 'GELIR' ? 'Gelir' : 'Gider' }}
               </span>
             </template>
           </Column>
-          <Column field="tutar" header="Tutar" style="width:120px">
+          <Column
+            field="tutar"
+            header="Tutar"
+            style="width:120px"
+          >
             <template #body="s">
               <span :class="s.data.tur === 'GELIR' ? 'positive' : 'negative'">
                 {{ formatCurrency(s.data.tutar) }}
               </span>
             </template>
           </Column>
-          <Column field="kategoriAd" header="Kategori" style="width:140px">
-            <template #body="s">{{ s.data.kategoriAd || '-' }}</template>
-          </Column>
-          <Column field="aciklama" header="Açıklama"></Column>
-          <Column header="" style="width:60px">
+          <Column
+            field="kategoriAd"
+            header="Kategori"
+            style="width:140px"
+          >
             <template #body="s">
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click="delHareket(s.data.id)" />
+              {{ s.data.kategoriAd || '-' }}
+            </template>
+          </Column>
+          <Column
+            field="aciklama"
+            header="Açıklama"
+          />
+          <Column
+            header=""
+            style="width:60px"
+          >
+            <template #body="s">
+              <Button
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-sm"
+                @click="delHareket(s.data.id)"
+              />
             </template>
           </Column>
         </DataTable>
-        <Message v-if="kasaHareketler.length === 0" severity="info" text="Hareket bulunmamaktadır." />
+        <Message
+          v-if="kasaHareketler.length === 0"
+          severity="info"
+          text="Hareket bulunmamaktadır."
+        />
       </div>
     </div>
 
-    <Dialog v-model:visible="showHareketDialog" :header="hareketBaslik" :modal="true" style="width:500px">
+    <Dialog
+      v-model:visible="showHareketDialog"
+      :header="hareketBaslik"
+      :modal="true"
+      style="width:500px"
+    >
       <div class="form-group">
         <label>Tutar *</label>
-        <InputNumber v-model="hareketForm.tutar" :min="0.01" :min-fraction-digits="2" :max-fraction-digits="2" class="w-full" />
+        <InputNumber
+          v-model="hareketForm.tutar"
+          :min="0.01"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+        />
       </div>
       <div class="form-group">
         <label>Tarih *</label>
-        <DatePicker v-model="hareketForm.hareketTarihi" date-format="dd.mm.yy" class="w-full" />
+        <DatePicker
+          v-model="hareketForm.hareketTarihi"
+          date-format="dd.mm.yy"
+          class="w-full"
+        />
       </div>
       <div class="form-group">
         <label>Kategori</label>
-        <Dropdown v-model="hareketForm.kategoriId" :options="kategoriSecenekler" option-label="ad" option-value="id" placeholder="Seçiniz" class="w-full" />
+        <Dropdown
+          v-model="hareketForm.kategoriId"
+          :options="kategoriSecenekler"
+          option-label="ad"
+          option-value="id"
+          placeholder="Seçiniz"
+          class="w-full"
+        />
       </div>
       <div class="form-group">
         <label>Açıklama</label>
-        <Textarea v-model="hareketForm.aciklama" rows="2" class="w-full" />
+        <Textarea
+          v-model="hareketForm.aciklama"
+          rows="2"
+          class="w-full"
+        />
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="showHareketDialog = false" class="p-button-text" />
-        <Button label="Kaydet" icon="pi pi-check" @click="saveHareket" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showHareketDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveHareket"
+        />
       </template>
     </Dialog>
   </div>
@@ -191,7 +344,7 @@ const confirmDel = (id) => {
     message: 'Bu kasayı silmek istediğinizden emin misiniz?',
     header: 'Onay', icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] }; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa silindi', life: 5000 }) }
+      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] } toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa silindi', life: 5000 }) }
       catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
     }
   })

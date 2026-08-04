@@ -1,8 +1,8 @@
 package com.raspel.erp.service.finans;
 
-import com.raspel.erp.entity.Fatura;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.finans.BankaHareketi;
-import com.raspel.erp.repository.FaturaRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.repository.finans.BankaHareketiRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.entity.finans.Hareket;
 
 @ExtendWith(MockitoExtension.class)
 class BankaMutabakatServiceTest {

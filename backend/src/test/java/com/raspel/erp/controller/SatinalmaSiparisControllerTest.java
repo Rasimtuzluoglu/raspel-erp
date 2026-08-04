@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.SatinalmaSiparisDTO;
-import com.raspel.erp.service.SatinalmaSiparisService;
+import com.raspel.erp.dto.ticaret.SatinalmaSiparisDTO;
+import com.raspel.erp.service.ticaret.SatinalmaSiparisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.ticaret.SatinalmaSiparisController;
 
 @WebMvcTest(SatinalmaSiparisController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -111,9 +112,6 @@ class SatinalmaSiparisControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

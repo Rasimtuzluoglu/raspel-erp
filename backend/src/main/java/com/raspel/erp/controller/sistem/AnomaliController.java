@@ -11,10 +11,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.raspel.erp.entity.ticaret.Fatura;
 
 @Tag(name = "Akıllı Anomali Tespiti", description = "Mükerrer fatura, ödeme ve finansal anomali tespit API")
 @RestController
-@RequestMapping({"/api/anomaliler", "/api/v1/anomaliler"})
+@RequestMapping("/api/anomaliler")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class AnomaliController {

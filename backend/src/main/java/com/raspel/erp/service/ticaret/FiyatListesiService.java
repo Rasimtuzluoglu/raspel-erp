@@ -1,10 +1,10 @@
 package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.dto.ticaret.FiyatListesiDTO;
-import com.raspel.erp.entity.Stok;
+import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.ticaret.FiyatListesi;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.ticaret.FiyatListesiRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

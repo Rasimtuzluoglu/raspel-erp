@@ -1,13 +1,18 @@
 <template>
   <div class="yetki-reddi">
     <div class="hata-kart">
-      <i class="pi pi-lock hata-icon"></i>
+      <i class="pi pi-lock hata-icon" />
       <h1>Yetkiniz Yok</h1>
       <p>Bu sayfaya erişmek için gerekli yetkiye sahip değilsiniz.</p>
-      <p class="ipucu">Yöneticinizle iletişime geçerek yetki talep edebilirsiniz.</p>
+      <p class="ipucu">
+        Yöneticinizle iletişime geçerek yetki talep edebilirsiniz.
+      </p>
       <div class="hata-aksiyon">
-        <router-link to="/" class="p-button p-button-primary">
-          <i class="pi pi-home"></i> Ana Sayfaya Dön
+        <router-link
+          to="/"
+          class="p-button p-button-primary"
+        >
+          <i class="pi pi-home" /> Ana Sayfaya Dön
         </router-link>
       </div>
     </div>

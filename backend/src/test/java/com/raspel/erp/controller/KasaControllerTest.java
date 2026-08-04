@@ -1,9 +1,9 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.KasaDTO;
-import com.raspel.erp.dto.KasaHareketDTO;
+import com.raspel.erp.dto.finans.KasaDTO;
+import com.raspel.erp.dto.finans.KasaHareketDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.KasaService;
+import com.raspel.erp.service.finans.KasaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +25,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.finans.Kasa;
+import com.raspel.erp.controller.finans.KasaController;
 
 @WebMvcTest(KasaController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -133,10 +135,6 @@ class KasaControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
-
 
 
 

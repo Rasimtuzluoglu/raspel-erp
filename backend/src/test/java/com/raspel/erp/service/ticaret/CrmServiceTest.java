@@ -17,12 +17,13 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CrmServiceTest {
 
     @Mock private CariFirsatRepository cariFirsatRepository;
-    @Mock private com.raspel.erp.repository.CariHesapRepository cariHesapRepository;
+    @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
 
     @InjectMocks private CrmService crmService;
 

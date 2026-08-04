@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import com.raspel.erp.entity.ik.Vardiya;
 
 @Tag(name = "Vardiyalar", description = "Vardiya yönetimi API")
 @RestController

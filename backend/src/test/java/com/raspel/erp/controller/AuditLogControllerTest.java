@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.entity.AuditLog;
-import com.raspel.erp.service.AuditLogService;
+import com.raspel.erp.entity.sistem.AuditLog;
+import com.raspel.erp.service.sistem.AuditLogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,6 +20,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.AuditLogController;
+import com.raspel.erp.entity.sistem.Kullanici;
 
 @WebMvcTest(AuditLogController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -70,10 +72,6 @@ class AuditLogControllerTest {
                 .andExpect(jsonPath("$[0]").value("GIRIS"));
     }
 }
-
-
-
-
 
 
 

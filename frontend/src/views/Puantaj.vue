@@ -3,43 +3,147 @@
     <h1>Personel Puantaj Yönetimi</h1>
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Kayıt" icon="pi pi-plus" @click="dialogAc()" class="p-button-success" />
+        <Button
+          label="Yeni Kayıt"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="dialogAc()"
+        />
       </template>
       <template #end>
-        <Dropdown v-model="seciliPersonelId" :options="personelList" option-label="ad" option-value="id" placeholder="Personel seçin" class="personel-dropdown" @change="loadData" />
-        <DatePicker v-model="filtreBaslangic" placeholder="Başlangıç" date-format="dd.mm.yy" class="filter-date" @update:modelValue="loadData" />
-        <DatePicker v-model="filtreBitis" placeholder="Bitiş" date-format="dd.mm.yy" class="filter-date" @update:modelValue="loadData" />
+        <Dropdown
+          v-model="seciliPersonelId"
+          :options="personelList"
+          option-label="ad"
+          option-value="id"
+          placeholder="Personel seçin"
+          class="personel-dropdown"
+          @change="loadData"
+        />
+        <DatePicker
+          v-model="filtreBaslangic"
+          placeholder="Başlangıç"
+          date-format="dd.mm.yy"
+          class="filter-date"
+          @update:model-value="loadData"
+        />
+        <DatePicker
+          v-model="filtreBitis"
+          placeholder="Bitiş"
+          date-format="dd.mm.yy"
+          class="filter-date"
+          @update:model-value="loadData"
+        />
       </template>
     </Toolbar>
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="tarih" header="Tarih">
-        <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
-      </Column>
-      <Column field="personelAdi" header="Personel" />
-      <Column field="durum" header="Durum">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="tarih"
+        header="Tarih"
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum || 'GELMEDI'" :severity="data.durum === 'GELDI' ? 'success' : data.durum === 'IZINLI' ? 'warn' : 'danger'" />
+          {{ formatDate(data.tarih) }}
         </template>
       </Column>
-      <Column field="aciklama" header="Açıklama" />
-      <Column header="İşlem" style="width:120px">
+      <Column
+        field="personelAdi"
+        header="Personel"
+      />
+      <Column
+        field="durum"
+        header="Durum"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-info p-button-sm" @click="dialogAc(data)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click="sil(data)" />
+          <Tag
+            :value="data.durum || 'GELMEDI'"
+            :severity="data.durum === 'GELDI' ? 'success' : data.durum === 'IZINLI' ? 'warn' : 'danger'"
+          />
+        </template>
+      </Column>
+      <Column
+        field="aciklama"
+        header="Açıklama"
+      />
+      <Column
+        header="İşlem"
+        style="width:120px"
+      >
+        <template #body="{ data }">
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-info p-button-sm"
+            @click="dialogAc(data)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-danger p-button-sm"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
-    <Message v-if="list.length === 0" severity="info" text="Kayıt bulunamadı." />
-    <Dialog v-model:visible="dialog" :header="duzenleme ? 'Puantaj Düzenle' : 'Yeni Puantaj'" modal :style="{ width: '500px' }">
+    <Message
+      v-if="list.length === 0"
+      severity="info"
+      text="Kayıt bulunamadı."
+    />
+    <Dialog
+      v-model:visible="dialog"
+      :header="duzenleme ? 'Puantaj Düzenle' : 'Yeni Puantaj'"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Personel *</label><Dropdown v-model="form.personelId" :options="personelList" option-label="ad" option-value="id" placeholder="Seçiniz" class="w-full" filter /></div>
-        <div class="field"><label>Tarih *</label><DatePicker v-model="form.tarih" dateFormat="dd.mm.yy" class="w-full" /></div>
-        <div class="field"><label>Durum</label><Dropdown v-model="form.durum" :options="durumList" class="w-full" /></div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Personel *</label><Dropdown
+            v-model="form.personelId"
+            :options="personelList"
+            option-label="ad"
+            option-value="id"
+            placeholder="Seçiniz"
+            class="w-full"
+            filter
+          />
+        </div>
+        <div class="field">
+          <label>Tarih *</label><DatePicker
+            v-model="form.tarih"
+            date-format="dd.mm.yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Durum</label><Dropdown
+            v-model="form.durum"
+            :options="durumList"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

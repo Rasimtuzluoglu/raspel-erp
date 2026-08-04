@@ -5,15 +5,26 @@
         @open-search="quickSearchVisible = true"
         @open-password-modal="sifreDialog = true"
       />
-      <div class="sidebar-spacer"></div>
+      <div class="sidebar-spacer" />
     </template>
 
-    <main class="main-content" :class="{ 'giris-sayfasi': !authStore.isLoggedIn }">
+    <main
+      class="main-content"
+      :class="{ 'giris-sayfasi': !authStore.isLoggedIn }"
+    >
       <transition name="slide-down">
-        <div v-if="offlineBannerVisible" class="offline-banner">
-          <i class="pi pi-wifi"></i>
+        <div
+          v-if="offlineBannerVisible"
+          class="offline-banner"
+        >
+          <i class="pi pi-wifi" />
           İnternet bağlantınız kesildi. Bağlantı sağlandığında işlemlere kaldığınız yerden devam edebilirsiniz.
-          <button class="offline-kapat" @click="networkStatus.showBanner = false">&times;</button>
+          <button
+            class="offline-kapat"
+            @click="networkStatus.showBanner = false"
+          >
+            &times;
+          </button>
         </div>
       </transition>
       <ErrorBoundary>
@@ -21,22 +32,49 @@
       </ErrorBoundary>
     </main>
 
-    <QuickSearch :visible="quickSearchVisible" @update:visible="quickSearchVisible = $event" />
-    <PasswordChangeModal :visible="sifreDialog" @update:visible="sifreDialog = $event" />
+    <QuickSearch
+      :visible="quickSearchVisible"
+      @update:visible="quickSearchVisible = $event"
+    />
+    <PasswordChangeModal
+      :visible="sifreDialog"
+      @update:visible="sifreDialog = $event"
+    />
     <GuncellemeNotlari />
     <GeriAlToast />
-    <Toast position="top-right" :life="5000" />
+    <Toast
+      position="top-right"
+      :life="5000"
+    />
     <ConfirmDialog />
 
-    <Dialog v-model:visible="oturum.goster" header="Oturum Süresi Dolmak Üzere" :modal="true" :closable="false" style="width: 400px">
+    <Dialog
+      v-model:visible="oturum.goster"
+      header="Oturum Süresi Dolmak Üzere"
+      :modal="true"
+      :closable="false"
+      style="width: 400px"
+    >
       <div class="oturum-uyari">
-        <i class="pi pi-exclamation-triangle oturum-ikon"></i>
+        <i class="pi pi-exclamation-triangle oturum-ikon" />
         <p>Oturumunuz <strong>{{ oturum.kalanSaniye }} saniye</strong> içinde sona erecek.</p>
-        <p class="oturum-ipucu">Devam etmek için "Oturumu Uzat" butonuna tıklayın.</p>
+        <p class="oturum-ipucu">
+          Devam etmek için "Oturumu Uzat" butonuna tıklayın.
+        </p>
       </div>
       <template #footer>
-        <Button label="Çıkış Yap" icon="pi pi-sign-out" class="p-button-text" @click="oturum.cikis" />
-        <Button label="Oturumu Uzat" icon="pi pi-refresh" class="p-button-primary" @click="oturum.devamEt" />
+        <Button
+          label="Çıkış Yap"
+          icon="pi pi-sign-out"
+          class="p-button-text"
+          @click="oturum.cikis"
+        />
+        <Button
+          label="Oturumu Uzat"
+          icon="pi pi-refresh"
+          class="p-button-primary"
+          @click="oturum.devamEt"
+        />
       </template>
     </Dialog>
   </div>

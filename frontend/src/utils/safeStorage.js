@@ -4,7 +4,7 @@ export function safeGet(anahtar, varsayilan = null) {
     if (deger === null || deger === undefined) return varsayilan
     return JSON.parse(deger)
   } catch {
-    try { localStorage.removeItem(anahtar) } catch {}
+    try { localStorage.removeItem(anahtar) } catch { /* empty */ }
     return varsayilan
   }
 }
@@ -12,5 +12,5 @@ export function safeGet(anahtar, varsayilan = null) {
 export function safeSet(anahtar, deger) {
   try {
     localStorage.setItem(anahtar, JSON.stringify(deger))
-  } catch {}
+  } catch { /* empty */ }
 }

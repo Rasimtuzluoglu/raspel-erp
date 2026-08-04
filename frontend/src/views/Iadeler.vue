@@ -1,68 +1,205 @@
 <template>
   <div class="iade-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">İade Yönetimi</h1>
-      <Button label="Yeni İade" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        İade Yönetimi
+      </h1>
+      <Button
+        label="Yeni İade"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="tarih" header="Tarih" sortable>
-        <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
-      </Column>
-      <Column field="cariHesapAd" header="Cari Hesap" sortable>
-        <template #body="{ data }">{{ data.cariHesapAd || data.cariHesapId || '-' }}</template>
-      </Column>
-      <Column field="tutar" header="Tutar">
-        <template #body="{ data }">{{ formatCurrency(data.tutar) }}</template>
-      </Column>
-      <Column field="kalemSayisi" header="Kalem">
-        <template #body="{ data }">{{ data.kalemler?.length || 0 }} kalem</template>
-      </Column>
-      <Column field="durum" header="Durum">
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="tarih"
+        header="Tarih"
+        sortable
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum" :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'" />
+          {{ formatDate(data.tarih) }}
         </template>
       </Column>
-      <Column field="aciklama" header="Açıklama" />
-      <Column header="İşlem" style="width:200px">
+      <Column
+        field="cariHesapAd"
+        header="Cari Hesap"
+        sortable
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-check-circle" class="p-button-rounded p-button-text p-button-success" v-if="data.durum !== 'ONAYLANDI'" @click="durumGuncelle(data, 'ONAYLANDI')" title="Onayla" />
-          <Button icon="pi pi-times-circle" class="p-button-rounded p-button-text p-button-danger" v-if="data.durum !== 'IPTAL'" @click="durumGuncelle(data, 'IPTAL')" title="İptal" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          {{ data.cariHesapAd || data.cariHesapId || '-' }}
+        </template>
+      </Column>
+      <Column
+        field="tutar"
+        header="Tutar"
+      >
+        <template #body="{ data }">
+          {{ formatCurrency(data.tutar) }}
+        </template>
+      </Column>
+      <Column
+        field="kalemSayisi"
+        header="Kalem"
+      >
+        <template #body="{ data }">
+          {{ data.kalemler?.length || 0 }} kalem
+        </template>
+      </Column>
+      <Column
+        field="durum"
+        header="Durum"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="data.durum"
+            :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+          />
+        </template>
+      </Column>
+      <Column
+        field="aciklama"
+        header="Açıklama"
+      />
+      <Column
+        header="İşlem"
+        style="width:200px"
+      >
+        <template #body="{ data }">
+          <Button
+            v-if="data.durum !== 'ONAYLANDI'"
+            icon="pi pi-check-circle"
+            class="p-button-rounded p-button-text p-button-success"
+            title="Onayla"
+            @click="durumGuncelle(data, 'ONAYLANDI')"
+          />
+          <Button
+            v-if="data.durum !== 'IPTAL'"
+            icon="pi pi-times-circle"
+            class="p-button-rounded p-button-text p-button-danger"
+            title="İptal"
+            @click="durumGuncelle(data, 'IPTAL')"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '700px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '700px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Cari Hesap (Müşteri/Tedarikçi) *</label>
-          <Dropdown v-model="form.cariHesapId" :options="cariList" option-label="ad" option-value="id" placeholder="Cari Hesap Seçiniz" class="w-full" filter @change="cariSecildi" />
+        <div class="field">
+          <label>Cari Hesap (Müşteri/Tedarikçi) *</label>
+          <Dropdown
+            v-model="form.cariHesapId"
+            :options="cariList"
+            option-label="ad"
+            option-value="id"
+            placeholder="Cari Hesap Seçiniz"
+            class="w-full"
+            filter
+            @change="cariSecildi"
+          />
         </div>
-        <div class="field"><label>Tarih *</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="form.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Tarih *</label><DatePicker
+            v-model="form.tarih"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
 
         <div class="kalem-section">
           <div class="kalem-header">
             <h3>İade Kalemleri</h3>
-            <Button label="Kalem Ekle" icon="pi pi-plus" size="small" @click="kalemEkle" />
+            <Button
+              label="Kalem Ekle"
+              icon="pi pi-plus"
+              size="small"
+              @click="kalemEkle"
+            />
           </div>
 
-          <div v-for="(k, i) in form.kalemler" :key="i" class="kalem-row">
-            <Dropdown v-model="k.stokId" :options="stokList" option-label="ad" option-value="id" placeholder="Stok seç" class="kalem-stok" filter />
-            <InputNumber v-model="k.miktar" :min="0" :min-fraction-digits="0" placeholder="Miktar" class="kalem-miktar" />
-            <InputNumber v-model="k.birimFiyat" :min="0" :min-fraction-digits="2" placeholder="Br. Fiyat" class="kalem-fiyat" />
-            <Dropdown v-model="k.kdvOrani" :options="[0,10,20]" class="kalem-kdv" />
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click="form.kalemler.splice(i, 1)" />
+          <div
+            v-for="(k, i) in form.kalemler"
+            :key="i"
+            class="kalem-row"
+          >
+            <Dropdown
+              v-model="k.stokId"
+              :options="stokList"
+              option-label="ad"
+              option-value="id"
+              placeholder="Stok seç"
+              class="kalem-stok"
+              filter
+            />
+            <InputNumber
+              v-model="k.miktar"
+              :min="0"
+              :min-fraction-digits="0"
+              placeholder="Miktar"
+              class="kalem-miktar"
+            />
+            <InputNumber
+              v-model="k.birimFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              placeholder="Br. Fiyat"
+              class="kalem-fiyat"
+            />
+            <Dropdown
+              v-model="k.kdvOrani"
+              :options="[0,10,20]"
+              class="kalem-kdv"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click="form.kalemler.splice(i, 1)"
+            />
           </div>
 
-          <div class="kalem-tutar" v-if="form.kalemler.length">
+          <div
+            v-if="form.kalemler.length"
+            class="kalem-tutar"
+          >
             <span>Toplam: {{ formatCurrency(kalemToplam) }}</span>
           </div>
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

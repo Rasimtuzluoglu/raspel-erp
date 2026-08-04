@@ -1,9 +1,57 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 target/
-*.log
-.env
-.DS_Store
 dist/
+build/
+out/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.local
+
+# Logs
+logs/
+*.log
+
+# IDEs
 .idea/
-*.iml
 .vscode/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.flattened-pom.xml
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# Vite
+.vite/
+
+# Misc
+*.pem

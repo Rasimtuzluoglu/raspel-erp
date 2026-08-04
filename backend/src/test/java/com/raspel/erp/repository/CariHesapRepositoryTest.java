@@ -1,6 +1,6 @@
 package com.raspel.erp.repository;
 
-import com.raspel.erp.entity.CariHesap;
+import com.raspel.erp.entity.finans.CariHesap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")

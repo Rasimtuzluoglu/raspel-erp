@@ -12,6 +12,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.EmailService;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {

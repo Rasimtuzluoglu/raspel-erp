@@ -4,18 +4,42 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Kullanıcı" icon="pi pi-plus" @click="openDialog" class="p-button-success" />
+        <Button
+          label="Yeni Kullanıcı"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openDialog"
+        />
       </template>
     </Toolbar>
 
-    <div class="loading" v-if="loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+    </div>
 
-    <div class="kullanici-grid" v-if="!loading">
-      <div v-for="u in kullanicilar" :key="u.id" class="kullanici-kart">
+    <div
+      v-if="!loading"
+      class="kullanici-grid"
+    >
+      <div
+        v-for="u in kullanicilar"
+        :key="u.id"
+        class="kullanici-kart"
+      >
         <div class="kart-ust">
           <div class="avatar">
-            <img v-if="u.avatarUrl" :src="u.avatarUrl" :alt="u.displayName" />
-            <span v-else class="avatar-yedek">{{ u.displayName?.charAt(0) }}</span>
+            <img
+              v-if="u.avatarUrl"
+              :src="u.avatarUrl"
+              :alt="u.displayName"
+            >
+            <span
+              v-else
+              class="avatar-yedek"
+            >{{ u.displayName?.charAt(0) }}</span>
           </div>
           <div class="kart-bilgi">
             <h3>{{ u.displayName }}</h3>
@@ -24,65 +48,168 @@
           <span :class="['rol-badge', u.role?.toLowerCase()]">{{ u.role }}</span>
         </div>
         <div class="kart-alt">
-          <span class="sirket" v-if="u.companyName"><i class="pi pi-building"></i> {{ u.companyName }}</span>
-          <span class="durum" :class="u.active ? 'aktif' : 'pasif'">
+          <span
+            v-if="u.companyName"
+            class="sirket"
+          ><i class="pi pi-building" /> {{ u.companyName }}</span>
+          <span
+            class="durum"
+            :class="u.active ? 'aktif' : 'pasif'"
+          >
             {{ u.active ? 'Aktif' : 'Pasif' }}
           </span>
         </div>
         <div class="kart-islem">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-sm islem-btn duzenle" @click="editKullanici(u)" v-tooltip.top="'Düzenle'" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-sm islem-btn sil" @click="confirmDel(u.id)" v-tooltip.top="'Sil'" :disabled="u.id === authStore.kullanici?.id" />
+          <Button
+            v-tooltip.top="'Düzenle'"
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-sm islem-btn duzenle"
+            @click="editKullanici(u)"
+          />
+          <Button
+            v-tooltip.top="'Sil'"
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-sm islem-btn sil"
+            :disabled="u.id === authStore.kullanici?.id"
+            @click="confirmDel(u.id)"
+          />
         </div>
       </div>
-      <Message v-if="kullanicilar.length === 0" severity="info" text="Kullanıcı bulunmamaktadır." class="full-width" />
+      <Message
+        v-if="kullanicilar.length === 0"
+        severity="info"
+        text="Kullanıcı bulunmamaktadır."
+        class="full-width"
+      />
     </div>
 
-    <Dialog v-model:visible="showDialog" :header="editingId ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'" :modal="true" style="width:500px">
+    <Dialog
+      v-model:visible="showDialog"
+      :header="editingId ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'"
+      :modal="true"
+      style="width:500px"
+    >
       <div class="form-grup">
         <label>Kullanıcı Adı *</label>
-        <InputText v-model="form.username" placeholder="Kullanıcı adı" class="w-full" :disabled="!!editingId" />
+        <InputText
+          v-model="form.username"
+          placeholder="Kullanıcı adı"
+          class="w-full"
+          :disabled="!!editingId"
+        />
       </div>
       <div class="form-grup">
         <label>Görünen Ad *</label>
-        <InputText v-model="form.displayName" placeholder="Ad soyad" class="w-full" />
+        <InputText
+          v-model="form.displayName"
+          placeholder="Ad soyad"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>{{ editingId ? 'Yeni Şifre (boş bırakılırsa değişmez)' : 'Şifre' }}</label>
-        <InputText v-model="form.password" type="password" placeholder="••••••" class="w-full" />
+        <InputText
+          v-model="form.password"
+          type="password"
+          placeholder="••••••"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Avatar</label>
         <div class="avatar-upload">
           <div class="avatar-upload-preview">
-            <img v-if="avatarPreview" :src="avatarPreview" class="avatar-preview-img" />
-            <span v-else class="avatar-preview-yedek">{{ (form.displayName || '?').charAt(0) }}</span>
+            <img
+              v-if="avatarPreview"
+              :src="avatarPreview"
+              class="avatar-preview-img"
+            >
+            <span
+              v-else
+              class="avatar-preview-yedek"
+            >{{ (form.displayName || '?').charAt(0) }}</span>
           </div>
           <div class="avatar-upload-inputs">
-            <input type="file" accept="image/*" @change="avatarDosyaSec" ref="avatarInput" style="display:none" />
-            <Button label="Dosya Seç" icon="pi pi-upload" @click="$refs.avatarInput.click()" size="small" class="p-button-outlined" />
-            <span v-if="avatarDosyaAdi" class="avatar-dosya-adi">{{ avatarDosyaAdi }}</span>
-            <span v-else class="avatar-veya">veya URL girin</span>
-            <InputText v-model="form.avatarUrl" placeholder="https://..." class="w-full" />
+            <input
+              ref="avatarInput"
+              type="file"
+              accept="image/*"
+              style="display:none"
+              @change="avatarDosyaSec"
+            >
+            <Button
+              label="Dosya Seç"
+              icon="pi pi-upload"
+              size="small"
+              class="p-button-outlined"
+              @click="$refs.avatarInput.click()"
+            />
+            <span
+              v-if="avatarDosyaAdi"
+              class="avatar-dosya-adi"
+            >{{ avatarDosyaAdi }}</span>
+            <span
+              v-else
+              class="avatar-veya"
+            >veya URL girin</span>
+            <InputText
+              v-model="form.avatarUrl"
+              placeholder="https://..."
+              class="w-full"
+            />
           </div>
         </div>
       </div>
       <div class="form-grup">
         <label>Şirket Adı</label>
-        <Dropdown v-model="form.companyName" :options="sirketListesi" option-label="ad" option-value="ad" placeholder="Şirket Seçiniz" editable class="w-full" />
+        <Dropdown
+          v-model="form.companyName"
+          :options="sirketListesi"
+          option-label="ad"
+          option-value="ad"
+          placeholder="Şirket Seçiniz"
+          editable
+          class="w-full"
+        />
       </div>
       <div class="form-row">
         <div class="form-grup">
           <label>Rol</label>
-          <Dropdown v-model="form.role" :options="[{label:'Admin',value:'ADMIN'},{label:'Kullanıcı',value:'USER'}]" option-label="label" option-value="value" class="w-full" />
+          <Dropdown
+            v-model="form.role"
+            :options="[{label:'Admin',value:'ADMIN'},{label:'Kullanıcı',value:'USER'}]"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+          />
         </div>
-        <div class="form-grup" v-if="editingId">
+        <div
+          v-if="editingId"
+          class="form-grup"
+        >
           <label>Durum</label>
-          <Dropdown v-model="form.active" :options="[{label:'Aktif',value:true},{label:'Pasif',value:false}]" option-label="label" option-value="value" class="w-full" />
+          <Dropdown
+            v-model="form.active"
+            :options="[{label:'Aktif',value:true},{label:'Pasif',value:false}]"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="closeDialog" class="p-button-text" />
-        <Button :label="editingId ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" @click="save" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="closeDialog"
+        />
+        <Button
+          :label="editingId ? 'Güncelle' : 'Kaydet'"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="save"
+        />
       </template>
     </Dialog>
   </div>
@@ -180,7 +307,7 @@ const avatarYukle = async () => {
 
 const save = async () => {
   if (!form.value.displayName.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Görünen ad giriniz', life: 5000 }); return }
-  if (!editingId && !form.value.username.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kullanıcı adı giriniz', life: 5000 }); return }
+  if (!editingId.value && !form.value.username.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kullanıcı adı giriniz', life: 5000 }); return }
   saving.value = true
   try {
     if (avatarDosya.value) await avatarYukle()

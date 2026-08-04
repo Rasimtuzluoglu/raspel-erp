@@ -1,60 +1,123 @@
 <template>
-    <div class="giris-sayfasi">
+  <div class="giris-sayfasi">
     <div class="giris-kutu">
       <div class="giris-logo">
         <div class="logo-icon">
-          <img v-if="sirketLogo" :src="sirketLogo" class="sirket-logo" alt="logo" />
-          <i v-else class="pi pi-calculator"></i>
+          <img
+            v-if="sirketLogo"
+            :src="sirketLogo"
+            class="sirket-logo"
+            alt="logo"
+          >
+          <i
+            v-else
+            class="pi pi-calculator"
+          />
         </div>
         <h1>RasPel</h1>
-        <p class="alt-baslik">RasPel Yeni Nesil ERP <span class="versiyon">v1.0.0</span></p>
+        <p class="alt-baslik">
+          RasPel Yeni Nesil ERP <span class="versiyon">v1.0.0</span>
+        </p>
       </div>
 
       <div class="giris-form">
         <div v-if="ikiFaktorAdimi">
-          <div class="iki-fa-ikon"><i class="pi pi-shield"></i></div>
-          <h2 class="iki-fa-baslik">İki Faktörlü Doğrulama</h2>
-          <p class="iki-fa-alt">Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.</p>
+          <div class="iki-fa-ikon">
+            <i class="pi pi-shield" />
+          </div>
+          <h2 class="iki-fa-baslik">
+            İki Faktörlü Doğrulama
+          </h2>
+          <p class="iki-fa-alt">
+            Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.
+          </p>
           <div class="form-grup">
             <div class="input-wrapper">
-              <i class="pi pi-key"></i>
-              <InputText v-model="ikiFaktorKod" placeholder="••••••" inputmode="numeric" maxlength="6" @keyup.enter="ikiFaktorDogrula" style="text-align:center;letter-spacing:6px;font-size:20px" />
+              <i class="pi pi-key" />
+              <InputText
+                v-model="ikiFaktorKod"
+                placeholder="••••••"
+                inputmode="numeric"
+                maxlength="6"
+                style="text-align:center;letter-spacing:6px;font-size:20px"
+                @keyup.enter="ikiFaktorDogrula"
+              />
             </div>
           </div>
-          <Button label="Doğrula ve Giriş Yap" icon="pi pi-shield" @click="ikiFaktorDogrula" :loading="authStore.loading" class="giris-buton" />
-          <div class="geri-satir"><a @click="geriDon">← Geri dön</a></div>
+          <Button
+            label="Doğrula ve Giriş Yap"
+            icon="pi pi-shield"
+            :loading="authStore.loading"
+            class="giris-buton"
+            @click="ikiFaktorDogrula"
+          />
+          <div class="geri-satir">
+            <a @click="geriDon">← Geri dön</a>
+          </div>
         </div>
 
         <div v-else>
-        <div class="form-grup">
-          <label>Kullanıcı Adı</label>
-          <div class="input-wrapper">
-            <i class="pi pi-user"></i>
-            <InputText ref="kullaniciInput" v-model="username" placeholder="Kullanıcı adı" @keyup.enter="odaklanSifre" />
+          <div class="form-grup">
+            <label>Kullanıcı Adı</label>
+            <div class="input-wrapper">
+              <i class="pi pi-user" />
+              <InputText
+                ref="kullaniciInput"
+                v-model="username"
+                placeholder="Kullanıcı adı"
+                @keyup.enter="odaklanSifre"
+              />
+            </div>
           </div>
-        </div>
 
-        <div class="form-grup">
-          <label>Şifre</label>
-          <div class="input-wrapper">
-            <i class="pi pi-lock"></i>
-            <InputText ref="sifreInput" v-model="password" type="password" placeholder="••••••" @keyup.enter="odaklanSirket" />
+          <div class="form-grup">
+            <label>Şifre</label>
+            <div class="input-wrapper">
+              <i class="pi pi-lock" />
+              <InputText
+                ref="sifreInput"
+                v-model="password"
+                type="password"
+                placeholder="••••••"
+                @keyup.enter="odaklanSirket"
+              />
+            </div>
           </div>
-        </div>
 
-        <div v-if="sirketler.length > 0" class="form-grup">
-          <label>Firma Seçin</label>
-          <div class="input-wrapper">
-            <i class="pi pi-building"></i>
-            <Select ref="sirketSelect" v-model="selectedSirket" :options="sirketler" optionLabel="ad" placeholder="Firma seçiniz" class="sirket-select" @keyup.enter="girisYap" scrollHeight="250px" />
+          <div
+            v-if="sirketler.length > 0"
+            class="form-grup"
+          >
+            <label>Firma Seçin</label>
+            <div class="input-wrapper">
+              <i class="pi pi-building" />
+              <Select
+                ref="sirketSelect"
+                v-model="selectedSirket"
+                :options="sirketler"
+                option-label="ad"
+                placeholder="Firma seçiniz"
+                class="sirket-select"
+                scroll-height="250px"
+                @keyup.enter="girisYap"
+              />
+            </div>
           </div>
+
+          <Button
+            label="Giriş Yap"
+            icon="pi pi-sign-in"
+            :loading="authStore.loading"
+            class="giris-buton"
+            @click="girisYap"
+          />
         </div>
 
-        <Button label="Giriş Yap" icon="pi pi-sign-in" @click="girisYap" :loading="authStore.loading" class="giris-buton" />
-        </div>
-
-        <div v-if="hata" class="hata-kutu">
-          <i class="pi pi-exclamation-circle"></i> {{ hata }}
+        <div
+          v-if="hata"
+          class="hata-kutu"
+        >
+          <i class="pi pi-exclamation-circle" /> {{ hata }}
         </div>
       </div>
 
@@ -99,7 +162,7 @@ const firmalariGetir = async () => {
   try {
     const res = await sirketAPI.getAktif()
     sirketler.value = res.data?.content || res.data || []
-  } catch {}
+  } catch { /* empty */ }
 }
 
 watch(selectedSirket, (sirket) => {

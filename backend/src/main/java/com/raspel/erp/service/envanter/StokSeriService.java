@@ -1,12 +1,12 @@
 package com.raspel.erp.service.envanter;
 
 import com.raspel.erp.dto.envanter.StokSeriDTO;
-import com.raspel.erp.entity.Stok;
-import com.raspel.erp.entity.StokHareket;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.entity.envanter.StokSeri;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.StokRepository;
-import com.raspel.erp.repository.StokHareketRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokSeriRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.raspel.erp.entity.finans.Hareket;
 
 @Service
 @Transactional

@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.CekSenetDTO;
-import com.raspel.erp.service.CekSenetService;
+import com.raspel.erp.dto.finans.CekSenetDTO;
+import com.raspel.erp.service.finans.CekSenetService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.finans.CekSenetController;
 
 @WebMvcTest(CekSenetController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -112,9 +113,6 @@ class CekSenetControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

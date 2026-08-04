@@ -1,17 +1,17 @@
 package com.raspel.erp.service.ticaret;
 
-import com.raspel.erp.dto.FaturaDTO;
-import com.raspel.erp.dto.FaturaKalemDTO;
+import com.raspel.erp.dto.ticaret.FaturaDTO;
+import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.EFaturaDTO;
-import com.raspel.erp.entity.CariHesap;
-import com.raspel.erp.entity.Sirket;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.entity.ticaret.EFatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.CariHesapRepository;
-import com.raspel.erp.repository.SirketRepository;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.repository.ticaret.EFaturaRepository;
-import com.raspel.erp.service.FaturaService;
+import com.raspel.erp.service.ticaret.FaturaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import com.raspel.erp.entity.ticaret.Fatura;
 
 @Service
 @Transactional

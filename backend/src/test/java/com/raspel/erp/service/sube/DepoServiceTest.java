@@ -6,7 +6,7 @@ import com.raspel.erp.entity.sube.Depo;
 import com.raspel.erp.entity.sube.DepoStok;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.sube.DepoRepository;
 import com.raspel.erp.repository.sube.DepoStokRepository;
 import com.raspel.erp.repository.sube.SubeRepository;

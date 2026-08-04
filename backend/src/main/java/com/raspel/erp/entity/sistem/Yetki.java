@@ -2,6 +2,9 @@ package com.raspel.erp.entity.sistem;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.ik.Personel;
+import com.raspel.erp.entity.envanter.Stok;
 
 @Entity
 @Table(name = "yetki", schema = "sistem")

@@ -3,7 +3,7 @@ package com.raspel.erp.service.ticaret;
 import com.raspel.erp.dto.ticaret.CariFirsatDTO;
 import com.raspel.erp.entity.ticaret.CariFirsat;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.CariHesapRepository;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.ticaret.CariFirsatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

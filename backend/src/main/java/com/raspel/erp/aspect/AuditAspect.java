@@ -1,6 +1,6 @@
 package com.raspel.erp.aspect;
 
-import com.raspel.erp.service.AuditLogService;
+import com.raspel.erp.service.sistem.AuditLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

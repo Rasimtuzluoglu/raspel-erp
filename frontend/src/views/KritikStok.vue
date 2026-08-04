@@ -1,8 +1,16 @@
 <template>
   <div class="kritik-stok-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Kritik Stok & Yeniden Sipariş</h1>
-      <Button icon="pi pi-refresh" label="Yenile" class="p-button-text" @click="yukle" :loading="yukleniyor" />
+      <h1 class="page-title">
+        Kritik Stok & Yeniden Sipariş
+      </h1>
+      <Button
+        icon="pi pi-refresh"
+        label="Yenile"
+        class="p-button-text"
+        :loading="yukleniyor"
+        @click="yukle"
+      />
     </div>
 
     <IlkZiyaretIpuclari
@@ -11,38 +19,94 @@
       metin="Kritik seviyeye (min. miktar) düşen ürünler otomatik listelenir. 'Önerilen Sipariş' sütunu, güvenli stoğa dönmek için önerilen sipariş miktarını gösterir."
     />
 
-    <div v-if="!yukleniyor && list.length === 0" class="bos-durum">
-      <i class="pi pi-check-circle"></i>
+    <div
+      v-if="!yukleniyor && list.length === 0"
+      class="bos-durum"
+    >
+      <i class="pi pi-check-circle" />
       <p>Kritik seviyede stok yok. Tüm ürünler güvenli seviyede.</p>
     </div>
 
-    <div v-if="list.length" class="onem-uyari">
-      <i class="pi pi-exclamation-triangle"></i>
+    <div
+      v-if="list.length"
+      class="onem-uyari"
+    >
+      <i class="pi pi-exclamation-triangle" />
       <strong>{{ list.length }} ürün</strong> kritik seviyede — yeniden sipariş önerisi oluşturuldu.
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="stokKodu" header="Stok Kodu" style="width:110px" />
-      <Column field="ad" header="Ürün" sortable />
-      <Column field="miktar" header="Mevcut Stok" sortable>
-        <template #body="{ data }"><strong class="kritik-miktar">{{ data.miktar }} {{ data.birim }}</strong></template>
-      </Column>
-      <Column field="minMiktar" header="Kritik Seviye">
-        <template #body="{ data }">{{ data.minMiktar }} {{ data.birim }}</template>
-      </Column>
-      <Column field="onerilenSiparisMiktari" header="Önerilen Sipariş" sortable>
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="stokKodu"
+        header="Stok Kodu"
+        style="width:110px"
+      />
+      <Column
+        field="ad"
+        header="Ürün"
+        sortable
+      />
+      <Column
+        field="miktar"
+        header="Mevcut Stok"
+        sortable
+      >
         <template #body="{ data }">
-          <Tag :value="`${data.onerilenSiparisMiktari} ${data.birim}`" severity="warning" />
+          <strong class="kritik-miktar">{{ data.miktar }} {{ data.birim }}</strong>
         </template>
       </Column>
-      <Column field="marka" header="Marka" />
-      <Column field="tedarikciAd" header="Tedarikçi">
-        <template #body="{ data }">{{ data.tedarikciAd || '-' }}</template>
-      </Column>
-      <Column header="İşlem" style="width:90px">
+      <Column
+        field="minMiktar"
+        header="Kritik Seviye"
+      >
         <template #body="{ data }">
-          <router-link :to="`/stoklar`" custom v-slot="{ navigate }">
-            <Button icon="pi pi-box" class="p-button-rounded p-button-text" title="Stoklara Git" @click="navigate" />
+          {{ data.minMiktar }} {{ data.birim }}
+        </template>
+      </Column>
+      <Column
+        field="onerilenSiparisMiktari"
+        header="Önerilen Sipariş"
+        sortable
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="`${data.onerilenSiparisMiktari} ${data.birim}`"
+            severity="warning"
+          />
+        </template>
+      </Column>
+      <Column
+        field="marka"
+        header="Marka"
+      />
+      <Column
+        field="tedarikciAd"
+        header="Tedarikçi"
+      >
+        <template #body="{ data }">
+          {{ data.tedarikciAd || '-' }}
+        </template>
+      </Column>
+      <Column
+        header="İşlem"
+        style="width:90px"
+      >
+        <template #body>
+          <router-link
+            v-slot="{ navigate }"
+            :to="`/stoklar`"
+            custom
+          >
+            <Button
+              icon="pi pi-box"
+              class="p-button-rounded p-button-text"
+              title="Stoklara Git"
+              @click="navigate"
+            />
           </router-link>
         </template>
       </Column>

@@ -1,9 +1,9 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.FaturaDTO;
-import com.raspel.erp.dto.FaturaKalemDTO;
+import com.raspel.erp.dto.ticaret.FaturaDTO;
+import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.FaturaService;
+import com.raspel.erp.service.ticaret.FaturaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +26,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.controller.ticaret.FaturaController;
 
 @WebMvcTest(FaturaController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -116,10 +118,6 @@ class FaturaControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
-
 
 
 

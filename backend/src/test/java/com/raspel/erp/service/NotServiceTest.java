@@ -1,9 +1,9 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.NotDTO;
-import com.raspel.erp.entity.Not;
+import com.raspel.erp.dto.sistem.NotDTO;
+import com.raspel.erp.entity.sistem.Not;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.repository.NotRepository;
+import com.raspel.erp.repository.sistem.NotRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.NotService;
 
 @ExtendWith(MockitoExtension.class)
 class NotServiceTest {

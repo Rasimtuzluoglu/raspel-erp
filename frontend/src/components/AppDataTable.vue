@@ -1,22 +1,42 @@
 <template>
   <div class="app-datatable-wrapper">
     <transition name="fade">
-      <div v-if="selection && selection.length > 0" class="batch-action-bar">
+      <div
+        v-if="selection && selection.length > 0"
+        class="batch-action-bar"
+      >
         <div class="batch-info">
-          <i class="pi pi-check-square"></i>
+          <i class="pi pi-check-square" />
           <span><strong>{{ selection.length }}</strong> {{ $t('common.selectedRecords', { n: selection.length }) }}</span>
         </div>
         <div class="batch-buttons">
-          <slot name="batch-actions"></slot>
-          <Button :label="$t('common.clearSelection')" icon="pi pi-times" class="p-button-text p-button-sm" @click="$emit('update:selection', [])" />
+          <slot name="batch-actions" />
+          <Button
+            :label="$t('common.clearSelection')"
+            icon="pi pi-times"
+            class="p-button-text p-button-sm"
+            @click="$emit('update:selection', [])"
+          />
         </div>
       </div>
     </transition>
 
-    <div v-if="aramaAktif" class="tablo-arama">
-      <i class="pi pi-search"></i>
-      <InputText v-model="aramaTerimi" :placeholder="aramaPlaceholder || $t('common.searchPlaceholder')" class="arama-input" />
-      <Button v-if="aramaTerimi" icon="pi pi-times" class="p-button-rounded p-button-text" @click="aramaTerimi = ''" />
+    <div
+      v-if="aramaAktif"
+      class="tablo-arama"
+    >
+      <i class="pi pi-search" />
+      <InputText
+        v-model="aramaTerimi"
+        :placeholder="aramaPlaceholder || $t('common.searchPlaceholder')"
+        class="arama-input"
+      />
+      <Button
+        v-if="aramaTerimi"
+        icon="pi pi-times"
+        class="p-button-rounded p-button-text"
+        @click="aramaTerimi = ''"
+      />
     </div>
 
     <DataTable
@@ -26,9 +46,9 @@
       :paginator="paginator"
       :rows="aktifRows"
       :lazy="lazy"
-      :totalRecords="totalRecords"
-      :rowsPerPageOptions="rowsPerPageOptions"
-      responsiveLayout="scroll"
+      :total-records="totalRecords"
+      :rows-per-page-options="rowsPerPageOptions"
+      responsive-layout="scroll"
       :selection="selection"
       @update:selection="$emit('update:selection', $event)"
       @page="$emit('page', $event)"
@@ -36,7 +56,10 @@
       @update:rows="rowsDegisti"
     >
       <template #empty>
-        <EmptyState v-if="!loading" :message="emptyMessage" />
+        <EmptyState
+          v-if="!loading"
+          :message="emptyMessage"
+        />
       </template>
       <slot />
     </DataTable>
@@ -64,7 +87,7 @@ const props = defineProps({
   aramaPlaceholder: { type: String, default: 'Ara...' }
 })
 
-const emit = defineEmits(['page', 'sort', 'update:selection'])
+defineEmits(['page', 'sort', 'update:selection'])
 
 const ROWS_KEY = 'raspel_tablo_rows'
 const aktifRows = ref(props.rows)
@@ -89,7 +112,7 @@ const rowsDegisti = (yeniSatirSayisi) => {
       const kayitli = JSON.parse(localStorage.getItem(ROWS_KEY) || '{}')
       kayitli[props.gorunumAnahtari] = yeniSatirSayisi
       localStorage.setItem(ROWS_KEY, JSON.stringify(kayitli))
-    } catch {}
+    } catch { /* empty */ }
   }
 }
 
@@ -98,7 +121,7 @@ onMounted(() => {
     try {
       const kayitli = JSON.parse(localStorage.getItem(ROWS_KEY) || '{}')
       if (kayitli[props.gorunumAnahtari]) aktifRows.value = kayitli[props.gorunumAnahtari]
-    } catch {}
+    } catch { /* empty */ }
   }
 })
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { dovizAPI } from '../api/index.js'
 
 export const useDovizStore = defineStore('doviz', () => {

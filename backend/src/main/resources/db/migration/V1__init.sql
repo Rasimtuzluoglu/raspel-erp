@@ -1,5 +1,6 @@
 -- =============================================================
--- NewERP - V1: Initial Schema & Table Creation
+-- RasPel ERP - V1: Initial Schema & Table Creation (consolidated)
+-- V6/V7/V13/V14/V15/V18/V19 absorbed into this migration
 -- =============================================================
 
 -- 1. CREATE SCHEMAS
@@ -95,7 +96,7 @@ CREATE TABLE cari.hareket (
     olusturma_tarihi TIMESTAMP NOT NULL
 );
 
--- 4. STOK SCHEMA
+-- 4. STOK SCHEMA (all NUMERIC types - fixed from V6/V19)
 -- =============================================================
 
 CREATE TABLE stok.stok (
@@ -104,24 +105,25 @@ CREATE TABLE stok.stok (
     ad VARCHAR(300) NOT NULL,
     birim VARCHAR(50),
     fiyat NUMERIC(19,2) NOT NULL DEFAULT 0,
-    miktar DOUBLE PRECISION NOT NULL DEFAULT 0,
-    min_miktar DOUBLE PRECISION,
+    miktar NUMERIC(19,2) NOT NULL DEFAULT 0,
+    min_miktar NUMERIC(19,2),
     aciklama VARCHAR(500),
-    olusturma_tarihi TIMESTAMP NOT NULL
+    olusturma_tarihi TIMESTAMP NOT NULL,
+    version INTEGER DEFAULT 0
 );
 
 CREATE TABLE stok.stok_hareket (
     id BIGSERIAL PRIMARY KEY,
     stok_id BIGINT NOT NULL REFERENCES stok.stok(id),
     tur VARCHAR(20) NOT NULL,
-    miktar DOUBLE PRECISION NOT NULL,
+    miktar NUMERIC(19,2) NOT NULL,
     hareket_tarihi DATE NOT NULL,
     aciklama VARCHAR(500),
     cari_hesap_id BIGINT,
     olusturma_tarihi TIMESTAMP NOT NULL
 );
 
--- 5. FATURA SCHEMA
+-- 5. FATURA SCHEMA (cari_hesap_id nullable for walk-in customers - from V13)
 -- =============================================================
 
 CREATE TABLE fatura.fatura (
@@ -130,7 +132,7 @@ CREATE TABLE fatura.fatura (
     tarih DATE NOT NULL,
     tur VARCHAR(20) NOT NULL,
     durum VARCHAR(20) NOT NULL DEFAULT 'TASLAK',
-    cari_hesap_id BIGINT NOT NULL,
+    cari_hesap_id BIGINT,
     aciklama VARCHAR(500),
     ara_toplam NUMERIC(19,2) NOT NULL,
     kdv NUMERIC(19,2) NOT NULL,
@@ -147,22 +149,22 @@ CREATE TABLE fatura.fatura_kalem (
     kdv_orani NUMERIC(19,2) NOT NULL,
     tutar NUMERIC(19,2) NOT NULL,
     stok_id BIGINT,
-    olusturma_tarihi TIMESTAMP NOT NULL
+    olusturma_tarihi TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. SIPARIS SCHEMA
+-- 6. SIPARIS SCHEMA (cari_hesap_id nullable, all NUMERIC - from V15/V6)
 -- =============================================================
 
 CREATE TABLE siparis.siparis (
     id BIGSERIAL PRIMARY KEY,
     siparis_no VARCHAR(50) NOT NULL UNIQUE,
     tarih DATE NOT NULL,
-    cari_hesap_id BIGINT NOT NULL,
+    cari_hesap_id BIGINT,
     tur VARCHAR(20) DEFAULT 'SATIS',
     durum VARCHAR(20) NOT NULL DEFAULT 'TEKLIF',
-    ara_toplam DOUBLE PRECISION,
-    kdv DOUBLE PRECISION,
-    genel_toplam DOUBLE PRECISION,
+    ara_toplam NUMERIC(19,2),
+    kdv NUMERIC(19,2),
+    genel_toplam NUMERIC(19,2),
     aciklama VARCHAR(500),
     sirket_id BIGINT,
     olusturma_tarihi TIMESTAMP NOT NULL
@@ -173,15 +175,15 @@ CREATE TABLE siparis.siparis_kalem (
     siparis_id BIGINT NOT NULL REFERENCES siparis.siparis(id),
     stok_id BIGINT,
     aciklama VARCHAR(200),
-    miktar DOUBLE PRECISION NOT NULL,
+    miktar NUMERIC(19,2) NOT NULL,
     birim VARCHAR(20),
-    birim_fiyat DOUBLE PRECISION,
-    kdv_orani DOUBLE PRECISION,
-    tutar DOUBLE PRECISION,
+    birim_fiyat NUMERIC(19,2),
+    kdv_orani NUMERIC(5,2),
+    tutar NUMERIC(19,2),
     olusturma_tarihi TIMESTAMP NOT NULL
 );
 
--- 7. SATINALMA SCHEMA
+-- 7. SATINALMA SCHEMA (all NUMERIC - from V6)
 -- =============================================================
 
 CREATE TABLE satinalma.satinalma_talep (
@@ -201,9 +203,9 @@ CREATE TABLE satinalma.satinalma_talep_kalem (
     talep_id BIGINT NOT NULL REFERENCES satinalma.satinalma_talep(id),
     stok_id BIGINT,
     aciklama VARCHAR(200),
-    miktar DOUBLE PRECISION NOT NULL,
+    miktar NUMERIC(19,2) NOT NULL,
     birim VARCHAR(20),
-    tahmini_birim_fiyat DOUBLE PRECISION,
+    tahmini_birim_fiyat NUMERIC(19,2),
     olusturma_tarihi TIMESTAMP NOT NULL
 );
 
@@ -214,9 +216,9 @@ CREATE TABLE satinalma.satinalma_siparis (
     cari_hesap_id BIGINT NOT NULL,
     talep_id BIGINT,
     durum VARCHAR(20) NOT NULL DEFAULT 'TASLAK',
-    ara_toplam DOUBLE PRECISION,
-    kdv DOUBLE PRECISION,
-    genel_toplam DOUBLE PRECISION,
+    ara_toplam NUMERIC(19,2),
+    kdv NUMERIC(19,2),
+    genel_toplam NUMERIC(19,2),
     aciklama VARCHAR(500),
     sirket_id BIGINT,
     olusturma_tarihi TIMESTAMP NOT NULL
@@ -227,22 +229,23 @@ CREATE TABLE satinalma.satinalma_siparis_kalem (
     siparis_id BIGINT NOT NULL REFERENCES satinalma.satinalma_siparis(id),
     stok_id BIGINT,
     aciklama VARCHAR(200),
-    miktar DOUBLE PRECISION NOT NULL,
+    miktar NUMERIC(19,2) NOT NULL,
     birim VARCHAR(20),
-    birim_fiyat DOUBLE PRECISION,
-    kdv_orani DOUBLE PRECISION,
-    tutar DOUBLE PRECISION,
+    birim_fiyat NUMERIC(19,2),
+    kdv_orani NUMERIC(5,2),
+    tutar NUMERIC(19,2),
     olusturma_tarihi TIMESTAMP NOT NULL
 );
 
--- 8. MUHASEBE SCHEMA
+-- 8. MUHASEBE SCHEMA (all NUMERIC, cari_hesap_id nullable - from V6/V15)
 -- =============================================================
 
 CREATE TABLE muhasebe.kasa (
     id BIGSERIAL PRIMARY KEY,
     ad VARCHAR(200) NOT NULL,
     bakiye NUMERIC(19,2) NOT NULL DEFAULT 0,
-    olusturma_tarihi TIMESTAMP NOT NULL
+    olusturma_tarihi TIMESTAMP NOT NULL,
+    version INTEGER DEFAULT 0
 );
 
 CREATE TABLE muhasebe.kasa_hareket (
@@ -268,14 +271,14 @@ CREATE TABLE muhasebe.banka (
 CREATE TABLE muhasebe.cek_senet (
     id BIGSERIAL PRIMARY KEY,
     tur VARCHAR(10) NOT NULL,
-    cari_hesap_id BIGINT NOT NULL,
+    cari_hesap_id BIGINT,
     banka_adi VARCHAR(100),
     sube VARCHAR(100),
     cek_no VARCHAR(50),
     hesap_no VARCHAR(50),
     vade_tarihi DATE NOT NULL,
     kesinme_tarihi DATE,
-    tutar DOUBLE PRECISION NOT NULL,
+    tutar NUMERIC(19,2) NOT NULL,
     durum VARCHAR(20) NOT NULL DEFAULT 'PORTFOY',
     aciklama VARCHAR(500),
     sirket_id BIGINT,
@@ -286,7 +289,7 @@ CREATE TABLE muhasebe.irsaliye (
     id BIGSERIAL PRIMARY KEY,
     irsaliye_no VARCHAR(50) NOT NULL UNIQUE,
     tarih DATE NOT NULL,
-    cari_hesap_id BIGINT NOT NULL,
+    cari_hesap_id BIGINT,
     fatura_id BIGINT,
     durum VARCHAR(20) NOT NULL DEFAULT 'TASLAK',
     tur VARCHAR(10) NOT NULL DEFAULT 'SATIS',
@@ -300,12 +303,12 @@ CREATE TABLE muhasebe.irsaliye_kalem (
     irsaliye_id BIGINT NOT NULL REFERENCES muhasebe.irsaliye(id),
     stok_id BIGINT,
     aciklama VARCHAR(200),
-    miktar DOUBLE PRECISION NOT NULL,
+    miktar NUMERIC(19,2) NOT NULL,
     birim VARCHAR(20),
     olusturma_tarihi TIMESTAMP NOT NULL
 );
 
--- 9. PERSONEL SCHEMA
+-- 9. PERSONEL SCHEMA (maas NUMERIC - from V6)
 -- =============================================================
 
 CREATE TABLE personel.personel (
@@ -318,7 +321,7 @@ CREATE TABLE personel.personel (
     cikis_tarihi DATE,
     departman VARCHAR(100),
     pozisyon VARCHAR(100),
-    maas DOUBLE PRECISION,
+    maas NUMERIC(19,2),
     telefon VARCHAR(20),
     email VARCHAR(100),
     adres VARCHAR(500),

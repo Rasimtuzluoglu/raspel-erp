@@ -1,59 +1,165 @@
 <template>
   <div class="stoksayim-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Stok Sayımı</h1>
-      <Button label="Yeni Sayım" icon="pi pi-plus" @click="dialogAc()" />
+      <h1 class="page-title">
+        Stok Sayımı
+      </h1>
+      <Button
+        label="Yeni Sayım"
+        icon="pi pi-plus"
+        @click="dialogAc()"
+      />
     </div>
 
-    <DataTable :value="list" stripedRows :loading="yukleniyor">
-      <Column field="tarih" header="Tarih" sortable>
-        <template #body="{ data }">{{ formatDate(data.tarih) }}</template>
+    <DataTable
+      :value="list"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="tarih"
+        header="Tarih"
+        sortable
+      >
+        <template #body="{ data }">
+          {{ formatDate(data.tarih) }}
+        </template>
       </Column>
-      <Column field="stokAd" header="Ürün" sortable />
-      <Column field="beklenenMiktar" header="Beklenen">
-        <template #body="{ data }">{{ formatNumber(data.beklenenMiktar) }}</template>
+      <Column
+        field="stokAd"
+        header="Ürün"
+        sortable
+      />
+      <Column
+        field="beklenenMiktar"
+        header="Beklenen"
+      >
+        <template #body="{ data }">
+          {{ formatNumber(data.beklenenMiktar) }}
+        </template>
       </Column>
-      <Column field="sayilanMiktar" header="Sayılan">
-        <template #body="{ data }">{{ formatNumber(data.sayilanMiktar) }}</template>
+      <Column
+        field="sayilanMiktar"
+        header="Sayılan"
+      >
+        <template #body="{ data }">
+          {{ formatNumber(data.sayilanMiktar) }}
+        </template>
       </Column>
-      <Column field="fark" header="Fark">
+      <Column
+        field="fark"
+        header="Fark"
+      >
         <template #body="{ data }">
           <span :class="(data.fark ?? data.sayilanMiktar - data.beklenenMiktar) >= 0 ? 'positive' : 'negative'">
             {{ formatNumber(data.fark ?? data.sayilanMiktar - data.beklenenMiktar) }}
           </span>
         </template>
       </Column>
-      <Column field="durum" header="Durum">
+      <Column
+        field="durum"
+        header="Durum"
+      >
         <template #body="{ data }">
-          <Tag :value="data.durum" :severity="data.durum === 'TAMAMLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'" />
+          <Tag
+            :value="data.durum"
+            :severity="data.durum === 'TAMAMLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+          />
         </template>
       </Column>
-      <Column header="İşlem" style="width:200px">
+      <Column
+        header="İşlem"
+        style="width:200px"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-check-circle" class="p-button-rounded p-button-text p-button-success" v-if="data.durum !== 'TAMAMLANDI'" @click="durumGuncelle(data, 'TAMAMLANDI')" title="Tamamla" />
-          <Button icon="pi pi-times-circle" class="p-button-rounded p-button-text p-button-danger" v-if="data.durum !== 'IPTAL'" @click="durumGuncelle(data, 'IPTAL')" title="İptal" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+          <Button
+            v-if="data.durum !== 'TAMAMLANDI'"
+            icon="pi pi-check-circle"
+            class="p-button-rounded p-button-text p-button-success"
+            title="Tamamla"
+            @click="durumGuncelle(data, 'TAMAMLANDI')"
+          />
+          <Button
+            v-if="data.durum !== 'IPTAL'"
+            icon="pi pi-times-circle"
+            class="p-button-rounded p-button-text p-button-danger"
+            title="İptal"
+            @click="durumGuncelle(data, 'IPTAL')"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Tarih *</label><DatePicker v-model="form.tarih" dateFormat="dd/mm/yy" class="w-full" /></div>
-        <div class="field"><label>Ürün *</label>
-          <Dropdown v-model="form.stokId" :options="stokListesi" optionLabel="ad" optionValue="id" placeholder="Ürün Seç" class="w-full" filter @change="onStokSec" />
+        <div class="field">
+          <label>Tarih *</label><DatePicker
+            v-model="form.tarih"
+            date-format="dd/mm/yy"
+            class="w-full"
+          />
         </div>
-        <div class="field"><label>Beklenen Miktar</label><InputNumber v-model="form.beklenenMiktar" class="w-full" :min="0" disabled /></div>
-        <div class="field"><label>Sayılan Miktar *</label><InputNumber v-model="form.sayilanMiktar" class="w-full" :min="0" /></div>
-        <div class="field"><label>Fark</label>
-          <span :class="{ positive: (form.sayilanMiktar - form.beklenenMiktar) >= 0, negative: (form.sayilanMiktar - form.beklenenMiktar) < 0 }" style="font-weight:700;font-size:18px;">
+        <div class="field">
+          <label>Ürün *</label>
+          <Dropdown
+            v-model="form.stokId"
+            :options="stokListesi"
+            option-label="ad"
+            option-value="id"
+            placeholder="Ürün Seç"
+            class="w-full"
+            filter
+            @change="onStokSec"
+          />
+        </div>
+        <div class="field">
+          <label>Beklenen Miktar</label><InputNumber
+            v-model="form.beklenenMiktar"
+            class="w-full"
+            :min="0"
+            disabled
+          />
+        </div>
+        <div class="field">
+          <label>Sayılan Miktar *</label><InputNumber
+            v-model="form.sayilanMiktar"
+            class="w-full"
+            :min="0"
+          />
+        </div>
+        <div class="field">
+          <label>Fark</label>
+          <span
+            :class="{ positive: (form.sayilanMiktar - form.beklenenMiktar) >= 0, negative: (form.sayilanMiktar - form.beklenenMiktar) < 0 }"
+            style="font-weight:700;font-size:18px;"
+          >
             {{ formatNumber(form.sayilanMiktar - form.beklenenMiktar) }}
           </span>
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
   </div>

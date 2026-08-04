@@ -1,9 +1,9 @@
 package com.raspel.erp.service.sistem;
 
-import com.raspel.erp.entity.CariHesap;
-import com.raspel.erp.entity.Fatura;
-import com.raspel.erp.repository.FaturaRepository;
-import com.raspel.erp.service.EmailService;
+import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.service.sistem.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -15,7 +15,7 @@ import java.util.Set;
 
 @Tag(name = "Rol & Yetki Matrisi", description = "Rol ve detaylı modül yetki yönetimi API")
 @RestController
-@RequestMapping({"/api/yetkiler", "/api/v1/yetkiler"})
+@RequestMapping("/api/yetkiler")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class YetkiController {

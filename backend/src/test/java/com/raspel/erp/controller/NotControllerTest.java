@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.NotDTO;
-import com.raspel.erp.service.NotService;
+import com.raspel.erp.dto.sistem.NotDTO;
+import com.raspel.erp.service.sistem.NotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.NotController;
 
 @WebMvcTest(NotController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

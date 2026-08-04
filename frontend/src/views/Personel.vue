@@ -1,102 +1,305 @@
 <template>
   <div class="personel-sayfasi">
     <div class="sayfa-baslik">
-      <h1 class="page-title">İnsan Kaynakları</h1>
-      <Button label="Yeni Personel" icon="pi pi-plus" @click="personelDialogAc()" />
+      <h1 class="page-title">
+        İnsan Kaynakları
+      </h1>
+      <Button
+        label="Yeni Personel"
+        icon="pi pi-plus"
+        @click="personelDialogAc()"
+      />
     </div>
 
     <Toolbar class="toolbar">
       <template #end>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" @click="excelIndir" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          @click="excelIndir"
+        />
       </template>
     </Toolbar>
 
     <TabView>
       <TabPanel header="Personel Listesi">
-        <DataTable :value="personeller" stripedRows :loading="yukleniyor">
-          <Column field="ad" header="Ad" sortable />
-          <Column field="soyad" header="Soyad" sortable />
-          <Column field="departman" header="Departman" />
-          <Column field="pozisyon" header="Pozisyon" />
-          <Column field="telefon" header="Telefon" />
-          <Column field="email" header="E-posta" />
-          <Column field="aktif" header="Durum">
+        <DataTable
+          :value="personeller"
+          striped-rows
+          :loading="yukleniyor"
+        >
+          <Column
+            field="ad"
+            header="Ad"
+            sortable
+          />
+          <Column
+            field="soyad"
+            header="Soyad"
+            sortable
+          />
+          <Column
+            field="departman"
+            header="Departman"
+          />
+          <Column
+            field="pozisyon"
+            header="Pozisyon"
+          />
+          <Column
+            field="telefon"
+            header="Telefon"
+          />
+          <Column
+            field="email"
+            header="E-posta"
+          />
+          <Column
+            field="aktif"
+            header="Durum"
+          >
             <template #body="{ data }">
-              <Tag :value="data.aktif ? 'Aktif' : 'Pasif'" :severity="data.aktif ? 'success' : 'danger'" />
+              <Tag
+                :value="data.aktif ? 'Aktif' : 'Pasif'"
+                :severity="data.aktif ? 'success' : 'danger'"
+              />
             </template>
           </Column>
-          <Column header="İşlem" style="width:140px">
+          <Column
+            header="İşlem"
+            style="width:140px"
+          >
             <template #body="{ data }">
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-text" @click="personelDialogAc(data)" />
-              <Button icon="pi pi-calendar-plus" class="p-button-rounded p-button-text p-button-info" @click="izinDialogAc(data)" title="İzin Ekle" />
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="personelSil(data)" />
+              <Button
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text"
+                @click="personelDialogAc(data)"
+              />
+              <Button
+                icon="pi pi-calendar-plus"
+                class="p-button-rounded p-button-text p-button-info"
+                title="İzin Ekle"
+                @click="izinDialogAc(data)"
+              />
+              <Button
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text p-button-danger"
+                @click="personelSil(data)"
+              />
             </template>
           </Column>
         </DataTable>
       </TabPanel>
 
       <TabPanel header="İzin Talepleri">
-        <DataTable :value="tumIzinler" stripedRows>
-          <Column field="personelAdi" header="Personel" />
-          <Column field="izinTuru" header="İzin Türü" />
-          <Column field="baslangic" header="Başlangıç" />
-          <Column field="bitis" header="Bitiş" />
-          <Column field="gunSayisi" header="Gün" />
-          <Column field="durum" header="Durum">
+        <DataTable
+          :value="tumIzinler"
+          striped-rows
+        >
+          <Column
+            field="personelAdi"
+            header="Personel"
+          />
+          <Column
+            field="izinTuru"
+            header="İzin Türü"
+          />
+          <Column
+            field="baslangic"
+            header="Başlangıç"
+          />
+          <Column
+            field="bitis"
+            header="Bitiş"
+          />
+          <Column
+            field="gunSayisi"
+            header="Gün"
+          />
+          <Column
+            field="durum"
+            header="Durum"
+          >
             <template #body="{ data }">
-              <Tag :value="data.durum" :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'REDDEDILDI' ? 'danger' : 'warn'" />
+              <Tag
+                :value="data.durum"
+                :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'REDDEDILDI' ? 'danger' : 'warn'"
+              />
             </template>
           </Column>
         </DataTable>
       </TabPanel>
     </TabView>
 
-    <Dialog v-model:visible="personelDialog" :header="duzenleme ? 'Personel Düzenle' : 'Yeni Personel'" modal :style="{ width: '600px' }">
+    <Dialog
+      v-model:visible="personelDialog"
+      :header="duzenleme ? 'Personel Düzenle' : 'Yeni Personel'"
+      modal
+      :style="{ width: '600px' }"
+    >
       <div class="form-grid">
         <div class="field-row">
-          <div class="field"><label>Ad *</label><InputText v-model="personelForm.ad" class="w-full" /></div>
-          <div class="field"><label>Soyad *</label><InputText v-model="personelForm.soyad" class="w-full" /></div>
+          <div class="field">
+            <label>Ad *</label><InputText
+              v-model="personelForm.ad"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Soyad *</label><InputText
+              v-model="personelForm.soyad"
+              class="w-full"
+            />
+          </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>TC Kimlik</label><InputText v-model="personelForm.tcKimlik" class="w-full" /></div>
-          <div class="field"><label>Doğum Tarihi</label><DatePicker v-model="personelForm.dogumTarihi" dateFormat="dd/mm/yy" class="w-full" /></div>
+          <div class="field">
+            <label>TC Kimlik</label><InputText
+              v-model="personelForm.tcKimlik"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Doğum Tarihi</label><DatePicker
+              v-model="personelForm.dogumTarihi"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Departman</label><InputText v-model="personelForm.departman" class="w-full" /></div>
-          <div class="field"><label>Pozisyon</label><InputText v-model="personelForm.pozisyon" class="w-full" /></div>
+          <div class="field">
+            <label>Departman</label><InputText
+              v-model="personelForm.departman"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Pozisyon</label><InputText
+              v-model="personelForm.pozisyon"
+              class="w-full"
+            />
+          </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Maaş</label><InputNumber v-model="personelForm.maas" mode="currency" currency="TRY" class="w-full" /></div>
-          <div class="field"><label>İşe Giriş</label><DatePicker v-model="personelForm.iseGirisTarihi" dateFormat="dd/mm/yy" class="w-full" /></div>
+          <div class="field">
+            <label>Maaş</label><InputNumber
+              v-model="personelForm.maas"
+              mode="currency"
+              currency="TRY"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>İşe Giriş</label><DatePicker
+              v-model="personelForm.iseGirisTarihi"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Telefon</label><InputText v-model="personelForm.telefon" class="w-full" /></div>
-          <div class="field"><label>E-posta</label><InputText v-model="personelForm.email" class="w-full" /></div>
+          <div class="field">
+            <label>Telefon</label><InputText
+              v-model="personelForm.telefon"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>E-posta</label><InputText
+              v-model="personelForm.email"
+              class="w-full"
+            />
+          </div>
         </div>
-        <div class="field"><label>Adres</label><Textarea v-model="personelForm.adres" rows="2" class="w-full" /></div>
-        <div class="field"><label>Aktif</label><InputSwitch v-model="personelForm.aktif" /></div>
+        <div class="field">
+          <label>Adres</label><Textarea
+            v-model="personelForm.adres"
+            rows="2"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Aktif</label><InputSwitch v-model="personelForm.aktif" />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="personelDialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="personelKaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="personelDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="personelKaydet"
+        />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="izinDialog" header="İzin Ekle" modal :style="{ width: '450px' }">
+    <Dialog
+      v-model:visible="izinDialog"
+      header="İzin Ekle"
+      modal
+      :style="{ width: '450px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Personel</label><InputText :value="izinPersonelAdi" disabled class="w-full" /></div>
-        <div class="field"><label>İzin Türü *</label>
-          <Dropdown v-model="izinForm.izinTuru" :options="izinTurleri" placeholder="Seçin" class="w-full" />
+        <div class="field">
+          <label>Personel</label><InputText
+            :value="izinPersonelAdi"
+            disabled
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>İzin Türü *</label>
+          <Dropdown
+            v-model="izinForm.izinTuru"
+            :options="izinTurleri"
+            placeholder="Seçin"
+            class="w-full"
+          />
         </div>
         <div class="field-row">
-          <div class="field"><label>Başlangıç</label><DatePicker v-model="izinForm.baslangic" dateFormat="dd/mm/yy" class="w-full" /></div>
-          <div class="field"><label>Bitiş</label><DatePicker v-model="izinForm.bitis" dateFormat="dd/mm/yy" class="w-full" /></div>
+          <div class="field">
+            <label>Başlangıç</label><DatePicker
+              v-model="izinForm.baslangic"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Bitiş</label><DatePicker
+              v-model="izinForm.bitis"
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </div>
         </div>
-        <div class="field"><label>Açıklama</label><Textarea v-model="izinForm.aciklama" rows="2" class="w-full" /></div>
+        <div class="field">
+          <label>Açıklama</label><Textarea
+            v-model="izinForm.aciklama"
+            rows="2"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="izinDialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="izinKaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="izinDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="izinKaydet"
+        />
       </template>
     </Dialog>
   </div>

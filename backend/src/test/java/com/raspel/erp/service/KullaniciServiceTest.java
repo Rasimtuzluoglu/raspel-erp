@@ -1,13 +1,13 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.config.security.JwtUtil;
-import com.raspel.erp.dto.KullaniciDTO;
-import com.raspel.erp.dto.LoginRequest;
-import com.raspel.erp.dto.LoginResponse;
-import com.raspel.erp.entity.Kullanici;
-import com.raspel.erp.entity.Sirket;
-import com.raspel.erp.repository.KullaniciRepository;
-import com.raspel.erp.repository.SirketRepository;
+import com.raspel.erp.dto.sistem.KullaniciDTO;
+import com.raspel.erp.dto.sistem.LoginRequest;
+import com.raspel.erp.dto.sistem.LoginResponse;
+import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.entity.sistem.Sirket;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
+import com.raspel.erp.repository.sistem.SirketRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.KullaniciService;
+import com.raspel.erp.util.TotpUtil;
+import com.raspel.erp.dto.sistem.TwoFactorGirisRequest;
 
 @ExtendWith(MockitoExtension.class)
 class KullaniciServiceTest {
@@ -195,7 +198,7 @@ class KullaniciServiceTest {
         when(jwtUtil.generateToken(any(Kullanici.class), any(), any())).thenReturn("token");
 
         LoginResponse resp = kullaniciService.giris2faTamamla(
-                com.raspel.erp.dto.TwoFactorGirisRequest.builder()
+                com.raspel.erp.dto.sistem.TwoFactorGirisRequest.builder()
                         .girisToken(pending.getGirisToken()).code(dogruKod).build());
 
         assertEquals("token", resp.getToken());
@@ -217,7 +220,7 @@ class KullaniciServiceTest {
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
 
         assertThrows(RuntimeException.class, () -> kullaniciService.giris2faTamamla(
-                com.raspel.erp.dto.TwoFactorGirisRequest.builder()
+                com.raspel.erp.dto.sistem.TwoFactorGirisRequest.builder()
                         .girisToken(pending.getGirisToken()).code("000000").build()));
     }
 

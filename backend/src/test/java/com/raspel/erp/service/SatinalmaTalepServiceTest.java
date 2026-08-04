@@ -1,11 +1,11 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.SatinalmaTalepDTO;
-import com.raspel.erp.dto.SatinalmaTalepKalemDTO;
-import com.raspel.erp.entity.SatinalmaTalep;
-import com.raspel.erp.repository.SatinalmaTalepKalemRepository;
-import com.raspel.erp.repository.SatinalmaTalepRepository;
-import com.raspel.erp.repository.StokRepository;
+import com.raspel.erp.dto.ticaret.SatinalmaTalepDTO;
+import com.raspel.erp.dto.ticaret.SatinalmaTalepKalemDTO;
+import com.raspel.erp.entity.ticaret.SatinalmaTalep;
+import com.raspel.erp.repository.ticaret.SatinalmaTalepKalemRepository;
+import com.raspel.erp.repository.ticaret.SatinalmaTalepRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.ticaret.SatinalmaTalepService;
 
 @ExtendWith(MockitoExtension.class)
 class SatinalmaTalepServiceTest {

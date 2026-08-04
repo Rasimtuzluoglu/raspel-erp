@@ -1,11 +1,11 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.GorevDTO;
-import com.raspel.erp.dto.ProjeDTO;
-import com.raspel.erp.entity.Gorev;
-import com.raspel.erp.entity.Proje;
-import com.raspel.erp.repository.GorevRepository;
-import com.raspel.erp.repository.ProjeRepository;
+import com.raspel.erp.dto.sistem.GorevDTO;
+import com.raspel.erp.dto.sistem.ProjeDTO;
+import com.raspel.erp.entity.sistem.Gorev;
+import com.raspel.erp.entity.sistem.Proje;
+import com.raspel.erp.repository.sistem.GorevRepository;
+import com.raspel.erp.repository.sistem.ProjeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +22,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.ProjeService;
 
 @ExtendWith(MockitoExtension.class)
 class ProjeServiceTest {

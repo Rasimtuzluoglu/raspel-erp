@@ -1,11 +1,27 @@
 <template>
-  <div class="form-field" :class="{ 'has-error': error }">
-    <label v-if="label" :for="inputId" class="form-label">
-      {{ label }} <span v-if="required" class="required-star">*</span>
+  <div
+    class="form-field"
+    :class="{ 'has-error': error }"
+  >
+    <label
+      v-if="label"
+      :for="inputId"
+      class="form-label"
+    >
+      {{ label }} <span
+        v-if="required"
+        class="required-star"
+      >*</span>
     </label>
     <slot />
-    <small v-if="error" class="form-error">{{ error }}</small>
-    <small v-else-if="hint" class="form-hint">{{ hint }}</small>
+    <small
+      v-if="error"
+      class="form-error"
+    >{{ error }}</small>
+    <small
+      v-else-if="hint"
+      class="form-hint"
+    >{{ hint }}</small>
   </div>
 </template>
 

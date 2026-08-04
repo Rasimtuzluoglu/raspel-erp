@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import com.raspel.erp.entity.sube.Depo;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.envanter.Stok;
 
 @Service
 @Transactional

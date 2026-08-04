@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.service.StokService;
-import com.raspel.erp.service.CariHesapService;
+import com.raspel.erp.service.envanter.StokService;
+import com.raspel.erp.service.finans.CariHesapService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -18,6 +18,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.controller.sistem.VeriImportController;
 
 @WebMvcTest(VeriImportController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

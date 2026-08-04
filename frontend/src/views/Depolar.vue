@@ -1,50 +1,144 @@
 <template>
   <div class="depolar-container">
     <div class="sayfa-baslik">
-      <h1 class="page-title">Depolar & Stok Yönetimi</h1>
+      <h1 class="page-title">
+        Depolar & Stok Yönetimi
+      </h1>
       <div class="toolbar-end">
-        <Button label="Depolar Arası Transfer" icon="pi pi-exchange" class="p-button-info p-button-outlined" @click="transferDialog = true" />
-        <Button label="Yeni Depo" icon="pi pi-plus" @click="dialogAc()" />
+        <Button
+          label="Depolar Arası Transfer"
+          icon="pi pi-exchange"
+          class="p-button-info p-button-outlined"
+          @click="transferDialog = true"
+        />
+        <Button
+          label="Yeni Depo"
+          icon="pi pi-plus"
+          @click="dialogAc()"
+        />
       </div>
     </div>
 
     <TabView>
       <TabPanel header="Depolar">
-        <DataTable :value="list" stripedRows :loading="yukleniyor">
-          <Column field="ad" header="Depo Adı" sortable />
-          <Column field="subeAdi" header="Bağlı Şube" />
-          <Column field="yetkili" header="Sorumlu" />
-          <Column field="aktif" header="Durum">
+        <DataTable
+          :value="list"
+          striped-rows
+          :loading="yukleniyor"
+        >
+          <Column
+            field="ad"
+            header="Depo Adı"
+            sortable
+          />
+          <Column
+            field="subeAdi"
+            header="Bağlı Şube"
+          />
+          <Column
+            field="yetkili"
+            header="Sorumlu"
+          />
+          <Column
+            field="aktif"
+            header="Durum"
+          >
             <template #body="{ data }">
-              <Tag :value="data.aktif ? 'Aktif' : 'Pasif'" :severity="data.aktif ? 'success' : 'danger'" />
+              <Tag
+                :value="data.aktif ? 'Aktif' : 'Pasif'"
+                :severity="data.aktif ? 'success' : 'danger'"
+              />
             </template>
           </Column>
-          <Column header="İşlem" style="width:160px">
+          <Column
+            header="İşlem"
+            style="width:160px"
+          >
             <template #body="{ data }">
-              <Button icon="pi pi-box" class="p-button-rounded p-button-text" @click="stokGoruntule(data)" title="Stokları Gör" />
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-text" @click="dialogAc(data)" />
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-text" @click="sil(data)" />
+              <Button
+                icon="pi pi-box"
+                class="p-button-rounded p-button-text"
+                title="Stokları Gör"
+                @click="stokGoruntule(data)"
+              />
+              <Button
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text"
+                @click="dialogAc(data)"
+              />
+              <Button
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text"
+                @click="sil(data)"
+              />
             </template>
           </Column>
         </DataTable>
       </TabPanel>
 
-      <TabPanel :header="seciliDepo ? seciliDepo.ad + ' - Stoklar' : 'Depo Stokları'" :disabled="!seciliDepo">
-        <div v-if="seciliDepo" class="stok-islemleri">
+      <TabPanel
+        :header="seciliDepo ? seciliDepo.ad + ' - Stoklar' : 'Depo Stokları'"
+        :disabled="!seciliDepo"
+      >
+        <div
+          v-if="seciliDepo"
+          class="stok-islemleri"
+        >
           <div class="stok-ekle-form">
             <h3>Stok Ekle/Çıkar</h3>
             <div class="form-row">
-              <Dropdown v-model="stokForm.stokId" :options="stokListesi" optionLabel="ad" optionValue="id" placeholder="Ürün Seç" class="w-full" filter />
-              <InputNumber v-model="stokForm.miktar" placeholder="Miktar" :min="0" />
-              <Button label="Ekle" icon="pi pi-plus" class="p-button-success" @click="stokEkle" :loading="stokLoading" />
-              <Button label="Çıkar" icon="pi pi-minus" class="p-button-warning" @click="stokCikar" :loading="stokLoading" />
+              <Dropdown
+                v-model="stokForm.stokId"
+                :options="stokListesi"
+                option-label="ad"
+                option-value="id"
+                placeholder="Ürün Seç"
+                class="w-full"
+                filter
+              />
+              <InputNumber
+                v-model="stokForm.miktar"
+                placeholder="Miktar"
+                :min="0"
+              />
+              <Button
+                label="Ekle"
+                icon="pi pi-plus"
+                class="p-button-success"
+                :loading="stokLoading"
+                @click="stokEkle"
+              />
+              <Button
+                label="Çıkar"
+                icon="pi pi-minus"
+                class="p-button-warning"
+                :loading="stokLoading"
+                @click="stokCikar"
+              />
             </div>
           </div>
-          <DataTable :value="depoStoklari" stripedRows size="small">
-            <Column field="stokKodu" header="Stok Kodu" />
-            <Column field="stokAd" header="Ürün Adı" />
-            <Column field="birim" header="Birim" />
-            <Column field="miktar" header="Miktar" sortable>
+          <DataTable
+            :value="depoStoklari"
+            striped-rows
+            size="small"
+          >
+            <Column
+              field="stokKodu"
+              header="Stok Kodu"
+            />
+            <Column
+              field="stokAd"
+              header="Ürün Adı"
+            />
+            <Column
+              field="birim"
+              header="Birim"
+            />
+            <Column
+              field="miktar"
+              header="Miktar"
+              sortable
+            >
               <template #body="{ data }">
                 <span :class="{ 'text-danger': data.miktar <= 0 }">{{ formatCurrency(data.miktar) }}</span>
               </template>
@@ -54,30 +148,124 @@
       </TabPanel>
     </TabView>
 
-    <Dialog v-model:visible="dialog" :header="dialogHeader" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="dialog"
+      :header="dialogHeader"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Depo Adı *</label><InputText v-model="form.ad" class="w-full" /></div>
-        <div class="field"><label>Bağlı Şube *</label><Dropdown v-model="form.subeId" :options="subeListesi" optionLabel="ad" optionValue="id" placeholder="Şube Seç" class="w-full" /></div>
-        <div class="field"><label>Sorumlu</label><InputText v-model="form.yetkili" class="w-full" /></div>
-        <div class="field"><label>Adres</label><Textarea v-model="form.adres" rows="2" class="w-full" /></div>
-        <div class="field" v-if="duzenleme"><label>Aktif</label><InputSwitch v-model="form.aktif" /></div>
+        <div class="field">
+          <label>Depo Adı *</label><InputText
+            v-model="form.ad"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Bağlı Şube *</label><Dropdown
+            v-model="form.subeId"
+            :options="subeListesi"
+            option-label="ad"
+            option-value="id"
+            placeholder="Şube Seç"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Sorumlu</label><InputText
+            v-model="form.yetkili"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Adres</label><Textarea
+            v-model="form.adres"
+            rows="2"
+            class="w-full"
+          />
+        </div>
+        <div
+          v-if="duzenleme"
+          class="field"
+        >
+          <label>Aktif</label><InputSwitch v-model="form.aktif" />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="dialog = false" />
-        <Button label="Kaydet" icon="pi pi-check" @click="kaydet" :loading="kaydediliyor" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="dialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="kaydet"
+        />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="transferDialog" header="Depolar Arası Transfer" modal :style="{ width: '500px' }">
+    <Dialog
+      v-model:visible="transferDialog"
+      header="Depolar Arası Transfer"
+      modal
+      :style="{ width: '500px' }"
+    >
       <div class="form-grid">
-        <div class="field"><label>Kaynak Depo *</label><Dropdown v-model="transferForm.kaynakDepoId" :options="list" optionLabel="ad" optionValue="id" placeholder="Kaynak Depo" class="w-full" /></div>
-        <div class="field"><label>Hedef Depo *</label><Dropdown v-model="transferForm.hedefDepoId" :options="list" optionLabel="ad" optionValue="id" placeholder="Hedef Depo" class="w-full" /></div>
-        <div class="field"><label>Ürün *</label><Dropdown v-model="transferForm.stokId" :options="stokListesi" optionLabel="ad" optionValue="id" placeholder="Ürün Seç" class="w-full" filter /></div>
-        <div class="field"><label>Miktar *</label><InputNumber v-model="transferForm.miktar" :min="0" class="w-full" /></div>
+        <div class="field">
+          <label>Kaynak Depo *</label><Dropdown
+            v-model="transferForm.kaynakDepoId"
+            :options="list"
+            option-label="ad"
+            option-value="id"
+            placeholder="Kaynak Depo"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Hedef Depo *</label><Dropdown
+            v-model="transferForm.hedefDepoId"
+            :options="list"
+            option-label="ad"
+            option-value="id"
+            placeholder="Hedef Depo"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Ürün *</label><Dropdown
+            v-model="transferForm.stokId"
+            :options="stokListesi"
+            option-label="ad"
+            option-value="id"
+            placeholder="Ürün Seç"
+            class="w-full"
+            filter
+          />
+        </div>
+        <div class="field">
+          <label>Miktar *</label><InputNumber
+            v-model="transferForm.miktar"
+            :min="0"
+            class="w-full"
+          />
+        </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="transferDialog = false" />
-        <Button label="Transfer Et" icon="pi pi-send" @click="transferYap" :loading="transferLoading" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="transferDialog = false"
+        />
+        <Button
+          label="Transfer Et"
+          icon="pi pi-send"
+          :loading="transferLoading"
+          @click="transferYap"
+        />
       </template>
     </Dialog>
   </div>

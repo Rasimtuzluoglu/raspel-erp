@@ -1,9 +1,8 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.IrsaliyeDTO;
-import com.raspel.erp.dto.IrsaliyeKalemDTO;
-import com.raspel.erp.entity.Irsaliye;
-import com.raspel.erp.repository.*;
+import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
+import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
+import com.raspel.erp.entity.muhasebe.Irsaliye;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +19,11 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.muhasebe.IrsaliyeKalemRepository;
+import com.raspel.erp.repository.muhasebe.IrsaliyeRepository;
+import com.raspel.erp.service.muhasebe.IrsaliyeService;
+import com.raspel.erp.repository.envanter.StokRepository;
 
 @ExtendWith(MockitoExtension.class)
 class IrsaliyeServiceTest {

@@ -12,6 +12,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.entity.sube.Depo;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.finans.Kasa;
+import com.raspel.erp.entity.finans.Masraf;
+import com.raspel.erp.entity.ik.Personel;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.ik.Vardiya;
+import com.raspel.erp.entity.sistem.Yetki;
 
 @Configuration
 public class OpenAPIConfig {

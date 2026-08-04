@@ -1,9 +1,9 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.StokDTO;
-import com.raspel.erp.dto.StokHareketDTO;
+import com.raspel.erp.dto.envanter.StokDTO;
+import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import com.raspel.erp.service.StokService;
+import com.raspel.erp.service.envanter.StokService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.controller.envanter.StokController;
 
 @WebMvcTest(StokController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -151,10 +153,6 @@ class StokControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
-
 
 
 

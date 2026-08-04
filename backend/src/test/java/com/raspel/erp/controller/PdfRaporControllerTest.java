@@ -1,6 +1,6 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.service.PdfRaporService;
+import com.raspel.erp.service.sistem.PdfRaporService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -13,6 +13,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.PdfRaporController;
+import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.entity.ticaret.Siparis;
 
 @WebMvcTest(PdfRaporController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -60,10 +63,6 @@ class PdfRaporControllerTest {
                 .andExpect(status().isNotFound());
     }
 }
-
-
-
-
 
 
 

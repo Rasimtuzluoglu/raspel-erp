@@ -1,6 +1,6 @@
 package com.raspel.erp.entity.envanter;
 
-import com.raspel.erp.entity.Stok;
+import com.raspel.erp.entity.envanter.Stok;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

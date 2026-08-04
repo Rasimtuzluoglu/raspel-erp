@@ -1,28 +1,60 @@
 <template>
-  <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)" header="Kameralı Barkod Okuyucu" modal :style="{ width: '500px' }">
+  <Dialog
+    :visible="visible"
+    header="Kameralı Barkod Okuyucu"
+    modal
+    :style="{ width: '500px' }"
+    @update:visible="$emit('update:visible', $event)"
+  >
     <div class="scanner-container">
-      <div v-if="cameraError" class="error-msg">
-        <i class="pi pi-exclamation-triangle"></i>
+      <div
+        v-if="cameraError"
+        class="error-msg"
+      >
+        <i class="pi pi-exclamation-triangle" />
         <span>{{ cameraError }}</span>
       </div>
 
-      <div v-else class="video-wrapper">
-        <video ref="videoRef" autoplay playsinline muted class="camera-video"></video>
+      <div
+        v-else
+        class="video-wrapper"
+      >
+        <video
+          ref="videoRef"
+          autoplay
+          playsinline
+          muted
+          class="camera-video"
+        />
         <div class="scan-overlay">
-          <div class="scan-laser"></div>
+          <div class="scan-laser" />
         </div>
       </div>
 
       <div class="manual-input-box">
         <label>Veya Manuel Barkod Girin:</label>
         <div class="input-group">
-          <InputText v-model="manualBarcode" placeholder="Barkod No..." @keyup.enter="submitManual" class="w-full" />
-          <Button icon="pi pi-check" label="Ekle" @click="submitManual" />
+          <InputText
+            v-model="manualBarcode"
+            placeholder="Barkod No..."
+            class="w-full"
+            @keyup.enter="submitManual"
+          />
+          <Button
+            icon="pi pi-check"
+            label="Ekle"
+            @click="submitManual"
+          />
         </div>
       </div>
     </div>
     <template #footer>
-      <Button label="Kapat" icon="pi pi-times" class="p-button-text" @click="closeModal" />
+      <Button
+        label="Kapat"
+        icon="pi pi-times"
+        class="p-button-text"
+        @click="closeModal"
+      />
     </template>
   </Dialog>
 </template>
@@ -83,12 +115,12 @@ const detectBarcode = async () => {
             closeModal()
             return
           }
-        } catch {}
+        } catch { /* empty */ }
       }
       animationFrameId = requestAnimationFrame(scanFrame)
     }
     scanFrame()
-  } catch {}
+  } catch { /* empty */ }
 }
 
 const submitManual = () => {

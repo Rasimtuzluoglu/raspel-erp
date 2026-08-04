@@ -1,11 +1,11 @@
 package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.dto.sistem.AnomaliDTO;
-import com.raspel.erp.entity.Fatura;
-import com.raspel.erp.entity.Hareket;
-import com.raspel.erp.repository.FaturaRepository;
-import com.raspel.erp.repository.HareketRepository;
-import com.raspel.erp.repository.StokHareketRepository;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.entity.finans.Kasa;
 
 @Service
 @Transactional(readOnly = true)

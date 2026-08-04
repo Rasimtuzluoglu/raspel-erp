@@ -1,13 +1,14 @@
 package com.raspel.erp.config;
 
-import com.raspel.erp.entity.Kullanici;
-import com.raspel.erp.repository.KullaniciRepository;
+import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.raspel.erp.entity.sistem.Rol;
 
 /**
  * İlk kurulum: veritabanında hiç kullanıcı yoksa varsayılan ADMIN kullanıcısı oluşturur.

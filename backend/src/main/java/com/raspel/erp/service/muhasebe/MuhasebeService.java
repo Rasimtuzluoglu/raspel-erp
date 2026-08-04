@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.raspel.erp.entity.finans.Kasa;
 
 @Service
 @Transactional

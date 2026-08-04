@@ -1,10 +1,10 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.PersonelIzinDTO;
-import com.raspel.erp.entity.Personel;
-import com.raspel.erp.entity.PersonelIzin;
-import com.raspel.erp.repository.PersonelIzinRepository;
-import com.raspel.erp.repository.PersonelRepository;
+import com.raspel.erp.dto.ik.PersonelIzinDTO;
+import com.raspel.erp.entity.ik.Personel;
+import com.raspel.erp.entity.ik.PersonelIzin;
+import com.raspel.erp.repository.ik.PersonelIzinRepository;
+import com.raspel.erp.repository.ik.PersonelRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.ik.PersonelIzinService;
 
 @ExtendWith(MockitoExtension.class)
 class PersonelIzinServiceTest {

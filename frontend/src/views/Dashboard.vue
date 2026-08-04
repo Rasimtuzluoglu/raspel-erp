@@ -5,234 +5,516 @@
       <div class="header-sag">
         <!-- COMPACT TCMB DÖVİZ VE ALTIN KURLARI BANTI -->
         <div class="doviz-ticker-compact">
-          <div v-for="k in dovizStore.kurlar" :key="k.kod || k.dovizKodu" class="ticker-chip">
+          <div
+            v-for="k in dovizStore.kurlar"
+            :key="k.kod || k.dovizKodu"
+            class="ticker-chip"
+          >
             <span class="chip-kod">{{ k.kod || k.dovizKodu }}:</span>
             <span class="chip-fiyat">{{ dovizStore.formatPara(k.satisFiyati || k.satisKuru, 'TRY') }}</span>
           </div>
-          <button class="chip-refresh-btn" @click="dovizStore.kurlariGuncelle" :disabled="dovizStore.loading" title="Kurları Yenile">
-            <i :class="dovizStore.loading ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"></i>
+          <button
+            class="chip-refresh-btn"
+            :disabled="dovizStore.loading"
+            title="Kurları Yenile"
+            @click="dovizStore.kurlariGuncelle"
+          >
+            <i :class="dovizStore.loading ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" />
           </button>
         </div>
 
         <div class="dashboard-datetime">
-          <i class="pi pi-calendar"></i> {{ simdikiTarih }}
+          <i class="pi pi-calendar" /> {{ simdikiTarih }}
         </div>
-        <Button icon="pi pi-refresh" class="p-button-rounded p-button-text" @click="refresh" :loading="loading" title="Yenile" />
-        <Button icon="pi pi-cog" class="p-button-rounded p-button-text" @click="widgetAyarlariGoster = true" title="Widget Ayarları" />
+        <Button
+          icon="pi pi-refresh"
+          class="p-button-rounded p-button-text"
+          :loading="loading"
+          title="Yenile"
+          @click="refresh"
+        />
+        <Button
+          icon="pi pi-cog"
+          class="p-button-rounded p-button-text"
+          title="Widget Ayarları"
+          @click="widgetAyarlariGoster = true"
+        />
       </div>
     </div>
 
-    <Card v-if="widgetAyarlariGoster" class="widget-ayarlari">
-      <template #title><i class="pi pi-sliders-h" style="margin-right:8px"></i>Gösterilecek Widget'lar</template>
+    <Card
+      v-if="widgetAyarlariGoster"
+      class="widget-ayarlari"
+    >
+      <template #title>
+        <i
+          class="pi pi-sliders-h"
+          style="margin-right:8px"
+        />Gösterilecek Widget'lar
+      </template>
       <template #content>
         <div class="widget-togglar">
-          <label v-for="w in widgetListesi" :key="w.key" class="widget-toggle">
+          <label
+            v-for="w in widgetListesi"
+            :key="w.key"
+            class="widget-toggle"
+          >
             <InputSwitch v-model="w.gorunur" />
             <span>{{ w.etiket }}</span>
           </label>
         </div>
         <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
-          <Button label="Uygula" icon="pi pi-check" class="p-button-sm" @click="kaydetWidget" />
-          <Button label="İptal" icon="pi pi-times" class="p-button-sm p-button-text" @click="iptalWidget" />
+          <Button
+            label="Uygula"
+            icon="pi pi-check"
+            class="p-button-sm"
+            @click="kaydetWidget"
+          />
+          <Button
+            label="İptal"
+            icon="pi pi-times"
+            class="p-button-sm p-button-text"
+            @click="iptalWidget"
+          />
         </div>
       </template>
     </Card>
 
-    <div class="skeleton-grid" v-if="loading">
-      <div v-for="i in 7" :key="i" class="skeleton-card"><Skeleton width="100%" height="90px" /></div>
-      <div style="grid-column:1/-1"><Skeleton width="100%" height="200px" /></div>
-      <div style="grid-column:1/-1"><Skeleton width="100%" height="120px" /></div>
+    <div
+      v-if="loading"
+      class="skeleton-grid"
+    >
+      <div
+        v-for="i in 7"
+        :key="i"
+        class="skeleton-card"
+      >
+        <Skeleton
+          width="100%"
+          height="90px"
+        />
+      </div>
+      <div style="grid-column:1/-1">
+        <Skeleton
+          width="100%"
+          height="200px"
+        />
+      </div>
+      <div style="grid-column:1/-1">
+        <Skeleton
+          width="100%"
+          height="120px"
+        />
+      </div>
       <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:18px">
-        <Skeleton width="100%" height="220px" /><Skeleton width="100%" height="220px" />
+        <Skeleton
+          width="100%"
+          height="220px"
+        /><Skeleton
+          width="100%"
+          height="220px"
+        />
       </div>
     </div>
 
-    <Onboarding v-if="!loading && bosSistem" @demo-loaded="refresh" />
+    <Onboarding
+      v-if="!loading && bosSistem"
+      @demo-loaded="refresh"
+    />
 
     <template v-if="!loading && !bosSistem">
       <!-- İSTATİSTİKLER -->
-      <div class="stats-grid" v-if="widgets.istatistikler.gorunur">
+      <div
+        v-if="widgets.istatistikler.gorunur"
+        class="stats-grid"
+      >
         <div class="stat-card">
-          <div class="stat-icon cari"><i class="pi pi-users"></i></div>
+          <div class="stat-icon cari">
+            <i class="pi pi-users" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Toplam Cari</p>
-            <p class="stat-value">{{ dashboardStore.toplamCariSayisi }}</p>
+            <p class="stat-label">
+              Toplam Cari
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.toplamCariSayisi }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon finans"><i class="pi pi-wallet"></i></div>
+          <div class="stat-icon finans">
+            <i class="pi pi-wallet" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Toplam Bakiye</p>
-            <p class="stat-value" :class="dashboardStore.toplamBakiye >= 0 ? 'positive' : 'negative'">
+            <p class="stat-label">
+              Toplam Bakiye
+            </p>
+            <p
+              class="stat-value"
+              :class="dashboardStore.toplamBakiye >= 0 ? 'positive' : 'negative'"
+            >
               {{ formatCurrency(dashboardStore.toplamBakiye) }}
             </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon fatura"><i class="pi pi-file"></i></div>
+          <div class="stat-icon fatura">
+            <i class="pi pi-file" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Kesilen / Toplam Fatura</p>
-            <p class="stat-value">{{ kesilenFatura }} / {{ toplamFatura }}</p>
+            <p class="stat-label">
+              Kesilen / Toplam Fatura
+            </p>
+            <p class="stat-value">
+              {{ kesilenFatura }} / {{ toplamFatura }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon banka"><i class="pi pi-building"></i></div>
+          <div class="stat-icon banka">
+            <i class="pi pi-building" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Banka Hesapları</p>
-            <p class="stat-value">{{ bankaStore.bankalar.length }}</p>
+            <p class="stat-label">
+              Banka Hesapları
+            </p>
+            <p class="stat-value">
+              {{ bankaStore.bankalar.length }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon banka-bakiye"><i class="pi pi-credit-card"></i></div>
+          <div class="stat-icon banka-bakiye">
+            <i class="pi pi-credit-card" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Banka Bakiyesi</p>
-            <p class="stat-value positive">{{ formatCurrency(toplamBankaBakiye) }}</p>
+            <p class="stat-label">
+              Banka Bakiyesi
+            </p>
+            <p class="stat-value positive">
+              {{ formatCurrency(toplamBankaBakiye) }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon kasa"><i class="pi pi-money-bill"></i></div>
+          <div class="stat-icon kasa">
+            <i class="pi pi-money-bill" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Kasa Bakiyesi</p>
-            <p class="stat-value positive">{{ formatCurrency(toplamKasaBakiye) }}</p>
+            <p class="stat-label">
+              Kasa Bakiyesi
+            </p>
+            <p class="stat-value positive">
+              {{ formatCurrency(toplamKasaBakiye) }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon stok"><i class="pi pi-box"></i></div>
+          <div class="stat-icon stok">
+            <i class="pi pi-box" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Stoktaki Ürünler</p>
-            <p class="stat-value">{{ toplamStok }} <small>ürün</small></p>
-            <p v-if="dusukStokAdet > 0" class="critical-hint">
-              <i class="pi pi-exclamation-triangle"></i> {{ dusukStokAdet }} kritik
+            <p class="stat-label">
+              Stoktaki Ürünler
+            </p>
+            <p class="stat-value">
+              {{ toplamStok }} <small>ürün</small>
+            </p>
+            <p
+              v-if="dusukStokAdet > 0"
+              class="critical-hint"
+            >
+              <i class="pi pi-exclamation-triangle" /> {{ dusukStokAdet }} kritik
             </p>
           </div>
         </div>
       </div>
 
       <!-- SATIS / SIPARIS -->
-      <div class="stats-grid" v-if="widgets.satisSiparis.gorunur">
+      <div
+        v-if="widgets.satisSiparis.gorunur"
+        class="stats-grid"
+      >
         <div class="stat-card">
-          <div class="stat-icon ticaret"><i class="pi pi-shopping-cart"></i></div>
+          <div class="stat-icon ticaret">
+            <i class="pi pi-shopping-cart" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Bugünkü Siparişler</p>
-            <p class="stat-value">{{ dashboardStore.bugunkuSiparis }}</p>
+            <p class="stat-label">
+              Bugünkü Siparişler
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.bugunkuSiparis }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon beklemede"><i class="pi pi-clock"></i></div>
+          <div class="stat-icon beklemede">
+            <i class="pi pi-clock" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Teslim Edilmeyi Bekleyen</p>
-            <p class="stat-value">{{ dashboardStore.bekleyenTeslimat }}</p>
+            <p class="stat-label">
+              Teslim Edilmeyi Bekleyen
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.bekleyenTeslimat }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon iade"><i class="pi pi-replay"></i></div>
+          <div class="stat-icon iade">
+            <i class="pi pi-replay" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">İade Oranı</p>
-            <p class="stat-value">%{{ dashboardStore.iadeOrani || 0 }}</p>
+            <p class="stat-label">
+              İade Oranı
+            </p>
+            <p class="stat-value">
+              %{{ dashboardStore.iadeOrani || 0 }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon devir"><i class="pi pi-chart-line"></i></div>
+          <div class="stat-icon devir">
+            <i class="pi pi-chart-line" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Stok Devir Hızı</p>
-            <p class="stat-value">{{ dashboardStore.stokDevirHizi || 0 }}x</p>
+            <p class="stat-label">
+              Stok Devir Hızı
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.stokDevirHizi || 0 }}x
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon tahsilat"><i class="pi pi-arrow-down"></i></div>
+          <div class="stat-icon tahsilat">
+            <i class="pi pi-arrow-down" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Bugünkü Tahsilat</p>
-            <p class="stat-value positive">{{ formatCurrency(dashboardStore.bugunkuTahsilat) }}</p>
+            <p class="stat-label">
+              Bugünkü Tahsilat
+            </p>
+            <p class="stat-value positive">
+              {{ formatCurrency(dashboardStore.bugunkuTahsilat) }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon odeme"><i class="pi pi-arrow-up"></i></div>
+          <div class="stat-icon odeme">
+            <i class="pi pi-arrow-up" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Bugünkü Ödeme</p>
-            <p class="stat-value negative">{{ formatCurrency(dashboardStore.bugunkuOdeme) }}</p>
+            <p class="stat-label">
+              Bugünkü Ödeme
+            </p>
+            <p class="stat-value negative">
+              {{ formatCurrency(dashboardStore.bugunkuOdeme) }}
+            </p>
           </div>
         </div>
       </div>
 
       <!-- INSAN KAYNAKLARI -->
-      <div class="stats-grid" v-if="widgets.insanKaynaklari.gorunur">
+      <div
+        v-if="widgets.insanKaynaklari.gorunur"
+        class="stats-grid"
+      >
         <div class="stat-card">
-          <div class="stat-icon calisan"><i class="pi pi-id-card"></i></div>
+          <div class="stat-icon calisan">
+            <i class="pi pi-id-card" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Aktif Çalışan</p>
-            <p class="stat-value">{{ dashboardStore.aktifCalisan }}</p>
+            <p class="stat-label">
+              Aktif Çalışan
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.aktifCalisan }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon izinli"><i class="pi pi-calendar-times"></i></div>
+          <div class="stat-icon izinli">
+            <i class="pi pi-calendar-times" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Bugün İzinli</p>
-            <p class="stat-value">{{ dashboardStore.bugunIzinli }}</p>
+            <p class="stat-label">
+              Bugün İzinli
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.bugunIzinli }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon ise-baslayacak"><i class="pi pi-user-plus"></i></div>
+          <div class="stat-icon ise-baslayacak">
+            <i class="pi pi-user-plus" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Bu Ay İşe Başlayacak</p>
-            <p class="stat-value">{{ dashboardStore.buAyIseBaslayacak }}</p>
+            <p class="stat-label">
+              Bu Ay İşe Başlayacak
+            </p>
+            <p class="stat-value">
+              {{ dashboardStore.buAyIseBaslayacak }}
+            </p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon bekleyen-izin"><i class="pi pi-clock"></i></div>
+          <div class="stat-icon bekleyen-izin">
+            <i class="pi pi-clock" />
+          </div>
           <div class="stat-content">
-            <p class="stat-label">Onay Bekleyen İzin</p>
-            <p class="stat-value" :class="dashboardStore.bekleyenIzinSayisi > 0 ? 'negative' : 'positive'">{{ dashboardStore.bekleyenIzinSayisi }}</p>
+            <p class="stat-label">
+              Onay Bekleyen İzin
+            </p>
+            <p
+              class="stat-value"
+              :class="dashboardStore.bekleyenIzinSayisi > 0 ? 'negative' : 'positive'"
+            >
+              {{ dashboardStore.bekleyenIzinSayisi }}
+            </p>
           </div>
         </div>
       </div>
 
       <!-- HIZLI ISLEMLER -->
-      <div class="hizli-islemler" v-if="widgets.hizliIslemler.gorunur">
-        <h2 class="section-title"><i class="pi pi-bolt"></i> Hizli Islemler</h2>
+      <div
+        v-if="widgets.hizliIslemler.gorunur"
+        class="hizli-islemler"
+      >
+        <h2 class="section-title">
+          <i class="pi pi-bolt" /> Hizli Islemler
+        </h2>
         <div class="islem-grid">
-          <Button label="Hizli Satis (POS)" icon="pi pi-shopping-cart" class="p-button-success p-button-lg" @click="$router.push('/hizli-satis')" />
-          <Button label="Yeni Stok" icon="pi pi-box" class="p-button-info p-button-lg" @click="$router.push('/stoklar')" />
-          <Button label="Yeni Cari" icon="pi pi-user-plus" class="p-button-help p-button-lg" @click="$router.push('/cari-hesaplar')" />
-          <Button label="Yeni Fatura" icon="pi pi-file" class="p-button-warning p-button-lg" @click="$router.push('/faturalar')" />
+          <Button
+            label="Hizli Satis (POS)"
+            icon="pi pi-shopping-cart"
+            class="p-button-success p-button-lg"
+            @click="$router.push('/hizli-satis')"
+          />
+          <Button
+            label="Yeni Stok"
+            icon="pi pi-box"
+            class="p-button-info p-button-lg"
+            @click="$router.push('/stoklar')"
+          />
+          <Button
+            label="Yeni Cari"
+            icon="pi pi-user-plus"
+            class="p-button-help p-button-lg"
+            @click="$router.push('/cari-hesaplar')"
+          />
+          <Button
+            label="Yeni Fatura"
+            icon="pi pi-file"
+            class="p-button-warning p-button-lg"
+            @click="$router.push('/faturalar')"
+          />
         </div>
       </div>
 
       <!-- NAKİT AKIŞI -->
-      <div class="nakit-akisi" v-if="widgets.nakitAkisi.gorunur">
-        <h2 class="section-title"><i class="pi pi-money-bill"></i> Nakit Akışı</h2>
+      <div
+        v-if="widgets.nakitAkisi.gorunur"
+        class="nakit-akisi"
+      >
+        <h2 class="section-title">
+          <i class="pi pi-money-bill" /> Nakit Akışı
+        </h2>
         <div class="nakit-grid">
           <Card class="nakit-kart">
-            <template #title><i class="pi pi-building" style="margin-right:8px;color:#60a5fa"></i>Banka</template>
-            <template #content><p class="nakit-deger positive">{{ formatCurrency(toplamBankaBakiye) }}</p></template>
+            <template #title>
+              <i
+                class="pi pi-building"
+                style="margin-right:8px;color:#60a5fa"
+              />Banka
+            </template>
+            <template #content>
+              <p class="nakit-deger positive">
+                {{ formatCurrency(toplamBankaBakiye) }}
+              </p>
+            </template>
           </Card>
           <Card class="nakit-kart">
-            <template #title><i class="pi pi-money-bill" style="margin-right:8px;color:#34d399"></i>Kasa</template>
-            <template #content><p class="nakit-deger positive">{{ formatCurrency(toplamKasaBakiye) }}</p></template>
+            <template #title>
+              <i
+                class="pi pi-money-bill"
+                style="margin-right:8px;color:#34d399"
+              />Kasa
+            </template>
+            <template #content>
+              <p class="nakit-deger positive">
+                {{ formatCurrency(toplamKasaBakiye) }}
+              </p>
+            </template>
           </Card>
           <Card class="nakit-kart">
-            <template #title><i class="pi pi-arrow-down" style="margin-right:8px;color:#4ade80"></i>Bugünkü Tahsilat</template>
-            <template #content><p class="nakit-deger positive">{{ formatCurrency(dashboardStore.bugunkuTahsilat) }}</p></template>
+            <template #title>
+              <i
+                class="pi pi-arrow-down"
+                style="margin-right:8px;color:#4ade80"
+              />Bugünkü Tahsilat
+            </template>
+            <template #content>
+              <p class="nakit-deger positive">
+                {{ formatCurrency(dashboardStore.bugunkuTahsilat) }}
+              </p>
+            </template>
           </Card>
           <Card class="nakit-kart">
-            <template #title><i class="pi pi-arrow-up" style="margin-right:8px;color:#f87171"></i>Bugünkü Ödeme</template>
-            <template #content><p class="nakit-deger negative">{{ formatCurrency(dashboardStore.bugunkuOdeme) }}</p></template>
+            <template #title>
+              <i
+                class="pi pi-arrow-up"
+                style="margin-right:8px;color:#f87171"
+              />Bugünkü Ödeme
+            </template>
+            <template #content>
+              <p class="nakit-deger negative">
+                {{ formatCurrency(dashboardStore.bugunkuOdeme) }}
+              </p>
+            </template>
           </Card>
           <Card class="nakit-kart nakit-toplam">
-            <template #title><i class="pi pi-wallet" style="margin-right:8px;color:#fbbf24"></i>Toplam Likidite</template>
+            <template #title>
+              <i
+                class="pi pi-wallet"
+                style="margin-right:8px;color:#fbbf24"
+              />Toplam Likidite
+            </template>
             <template #content>
-              <p class="nakit-deger" :class="toplamLikidite >= 0 ? 'positive' : 'negative'">{{ formatCurrency(toplamLikidite) }}</p>
-              <p class="nakit-alt">Banka + Kasa</p>
+              <p
+                class="nakit-deger"
+                :class="toplamLikidite >= 0 ? 'positive' : 'negative'"
+              >
+                {{ formatCurrency(toplamLikidite) }}
+              </p>
+              <p class="nakit-alt">
+                Banka + Kasa
+              </p>
             </template>
           </Card>
         </div>
       </div>
 
       <!-- SON GÖRÜNTÜLENENLER -->
-      <div class="son-goruntulenenler" v-if="widgets.sonGoruntulenenler.gorunur && sonGoruntulenenler.length">
-        <h2 class="section-title"><i class="pi pi-history"></i> Son Görüntülenenler</h2>
+      <div
+        v-if="widgets.sonGoruntulenenler.gorunur && sonGoruntulenenler.length"
+        class="son-goruntulenenler"
+      >
+        <h2 class="section-title">
+          <i class="pi pi-history" /> Son Görüntülenenler
+        </h2>
         <div class="sg-grid">
-          <div v-for="(kayit, i) in sonGoruntulenenler" :key="i" class="sg-item" @click="sgGit(kayit)">
-            <i :class="sgIkon(kayit.tur)" :style="{ color: sgRenk(kayit.tur) }"></i>
+          <div
+            v-for="(kayit, i) in sonGoruntulenenler"
+            :key="i"
+            class="sg-item"
+            @click="sgGit(kayit)"
+          >
+            <i
+              :class="sgIkon(kayit.tur)"
+              :style="{ color: sgRenk(kayit.tur) }"
+            />
             <div class="sg-bilgi">
               <strong>{{ kayit.baslik }}</strong>
               <small>{{ kayit.alt }}</small>
@@ -242,96 +524,252 @@
       </div>
 
       <!-- GRAFIkLER -->
-      <div class="charts-row" v-if="widgets.grafikler.gorunur">
+      <div
+        v-if="widgets.grafikler.gorunur"
+        class="charts-row"
+      >
         <Card>
-          <template #title><i class="pi pi-chart-pie" style="margin-right:8px"></i>Bakiye Dağılımı</template>
+          <template #title>
+            <i
+              class="pi pi-chart-pie"
+              style="margin-right:8px"
+            />Bakiye Dağılımı
+          </template>
           <template #content>
-            <div class="chart-wrapper" v-if="bakiyeChart.datasets.length">
-              <Doughnut :data="bakiyeChart" :options="pieOptions" />
+            <div
+              v-if="bakiyeChart.datasets.length"
+              class="chart-wrapper"
+            >
+              <Doughnut
+                :data="bakiyeChart"
+                :options="pieOptions"
+              />
             </div>
             <div class="chart-summary">
-              <span class="dot pos"></span> Pozitif: {{ formatCurrency(dashboardStore.pozitifBakiye) }}
-              <span class="dot neg"></span> Negatif: {{ formatCurrency(Math.abs(dashboardStore.negatifBakiye)) }}
+              <span class="dot pos" /> Pozitif: {{ formatCurrency(dashboardStore.pozitifBakiye) }}
+              <span class="dot neg" /> Negatif: {{ formatCurrency(Math.abs(dashboardStore.negatifBakiye)) }}
             </div>
           </template>
         </Card>
 
         <Card>
-          <template #title><i class="pi pi-star-fill" style="margin-right:8px"></i>En Çok Satan 5 Ürün</template>
+          <template #title>
+            <i
+              class="pi pi-star-fill"
+              style="margin-right:8px"
+            />En Çok Satan 5 Ürün
+          </template>
           <template #content>
-            <div class="chart-wrapper" v-if="barChart.datasets.length">
-              <Bar :data="barChart" :options="barOptions" />
+            <div
+              v-if="barChart.datasets.length"
+              class="chart-wrapper"
+            >
+              <Bar
+                :data="barChart"
+                :options="barOptions"
+              />
             </div>
-            <div v-else class="chart-empty">Henüz satış verisi yok</div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz satış verisi yok
+            </div>
           </template>
         </Card>
 
         <Card>
-          <template #title><i class="pi pi-chart-bar" style="margin-right:8px"></i>Aylık Gelir / Gider (Son 6 Ay)</template>
+          <template #title>
+            <i
+              class="pi pi-chart-bar"
+              style="margin-right:8px"
+            />Aylık Gelir / Gider (Son 6 Ay)
+          </template>
           <template #content>
-            <div class="chart-wrapper" v-if="gelirGiderChart.datasets.length" style="max-width:100%">
-              <Bar :data="gelirGiderChart" :options="gelirGiderOptions" />
+            <div
+              v-if="gelirGiderChart.datasets.length"
+              class="chart-wrapper"
+              style="max-width:100%"
+            >
+              <Bar
+                :data="gelirGiderChart"
+                :options="gelirGiderOptions"
+              />
             </div>
-            <div v-else class="chart-empty">Henüz hareket verisi yok</div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz hareket verisi yok
+            </div>
           </template>
         </Card>
       </div>
 
       <!-- NOTLAR -->
-      <div class="notlar-widget" v-if="widgets.notlar.gorunur">
+      <div
+        v-if="widgets.notlar.gorunur"
+        class="notlar-widget"
+      >
         <div class="notlar-header">
-          <h2><i class="pi pi-pencil"></i> Notlar</h2>
-          <Button icon="pi pi-save" class="p-button-sm p-button-text" @click="notlariKaydet" :disabled="notKaydediliyor" :label="notKaydedildi ? 'Kaydedildi' : ''" />
+          <h2><i class="pi pi-pencil" /> Notlar</h2>
+          <Button
+            icon="pi pi-save"
+            class="p-button-sm p-button-text"
+            :disabled="notKaydediliyor"
+            :label="notKaydedildi ? 'Kaydedildi' : ''"
+            @click="notlariKaydet"
+          />
         </div>
-        <Textarea v-model="notMetni" :autoResize="true" rows="4" placeholder="Hizli notlarinizi buraya yazin..." class="not-textarea" @keydown.ctrl.enter="notlariKaydet" />
+        <Textarea
+          v-model="notMetni"
+          :auto-resize="true"
+          rows="4"
+          placeholder="Hizli notlarinizi buraya yazin..."
+          class="not-textarea"
+          @keydown.ctrl.enter="notlariKaydet"
+        />
       </div>
 
       <!-- SON HAREKETLER & HATIRLATICI -->
       <div class="bottom-grid">
-        <div class="recent-transactions" v-if="widgets.sonHareketler.gorunur">
+        <div
+          v-if="widgets.sonHareketler.gorunur"
+          class="recent-transactions"
+        >
           <h2>Son Hareketler</h2>
-          <div class="chart-wrapper line-chart" v-if="hareketChart.datasets.length">
-            <Line :data="hareketChart" :options="lineOptions" />
+          <div
+            v-if="hareketChart.datasets.length"
+            class="chart-wrapper line-chart"
+          >
+            <Line
+              :data="hareketChart"
+              :options="lineOptions"
+            />
           </div>
-          <DataTable :value="dashboardStore.sonHareketler" :rows="5" stripedRows size="small">
-            <Column field="cariHesapAd" header="Cari Hesap"><template #body="s"><strong>{{ s.data.cariHesapAd }}</strong></template></Column>
-            <Column field="tur" header="Tür" style="width:100px">
-              <template #body="s"><span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">{{ s.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}</span></template>
+          <DataTable
+            :value="dashboardStore.sonHareketler"
+            :rows="5"
+            striped-rows
+            size="small"
+          >
+            <Column
+              field="cariHesapAd"
+              header="Cari Hesap"
+            >
+              <template #body="s">
+                <strong>{{ s.data.cariHesapAd }}</strong>
+              </template>
             </Column>
-            <Column field="tutar" header="Tutar" style="width:120px">
-              <template #body="s"><span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{ formatCurrency(s.data.tutar) }}</span></template>
+            <Column
+              field="tur"
+              header="Tür"
+              style="width:100px"
+            >
+              <template #body="s">
+                <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">{{ s.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}</span>
+              </template>
             </Column>
-            <Column field="hareketTarihi" header="Tarih" style="width:120px"><template #body="s">{{ formatDate(s.data.hareketTarihi) }}</template></Column>
+            <Column
+              field="tutar"
+              header="Tutar"
+              style="width:120px"
+            >
+              <template #body="s">
+                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{ formatCurrency(s.data.tutar) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="hareketTarihi"
+              header="Tarih"
+              style="width:120px"
+            >
+              <template #body="s">
+                {{ formatDate(s.data.hareketTarihi) }}
+              </template>
+            </Column>
           </DataTable>
-          <Message v-if="!dashboardStore.sonHareketler.length" severity="info" text="Henüz hareket yok" />
+          <Message
+            v-if="!dashboardStore.sonHareketler.length"
+            severity="info"
+            text="Henüz hareket yok"
+          />
         </div>
 
-        <div class="reminder-grid" v-if="widgets.hatirlaticilar.gorunur">
+        <div
+          v-if="widgets.hatirlaticilar.gorunur"
+          class="reminder-grid"
+        >
           <Card class="reminder-card vadesi-gecen">
-            <template #title><i class="pi pi-exclamation-triangle" style="color:#f87171;margin-right:8px"></i>Vadesi Geçen Cari</template>
+            <template #title>
+              <i
+                class="pi pi-exclamation-triangle"
+                style="color:#f87171;margin-right:8px"
+              />Vadesi Geçen Cari
+            </template>
             <template #content>
-              <div v-if="!vadesiGecenCari.length" class="reminder-empty"><i class="pi pi-check-circle"></i> Vadesi geçen cari yok</div>
-              <div v-for="c in vadesiGecenCari.slice(0, 5)" :key="c.id" class="reminder-item">
+              <div
+                v-if="!vadesiGecenCari.length"
+                class="reminder-empty"
+              >
+                <i class="pi pi-check-circle" /> Vadesi geçen cari yok
+              </div>
+              <div
+                v-for="c in vadesiGecenCari.slice(0, 5)"
+                :key="c.id"
+                class="reminder-item"
+              >
                 <span class="reminder-ad">{{ c.ad }}</span>
                 <span class="reminder-tutar negative">{{ formatCurrency(Math.abs(c.bakiye)) }}</span>
               </div>
             </template>
           </Card>
           <Card class="reminder-card dusuk-stok">
-            <template #title><i class="pi pi-box" style="color:#fbbf24;margin-right:8px"></i>Kritik Stok</template>
+            <template #title>
+              <i
+                class="pi pi-box"
+                style="color:#fbbf24;margin-right:8px"
+              />Kritik Stok
+            </template>
             <template #content>
-              <div v-if="!dusukStokAdet" class="reminder-empty"><i class="pi pi-check-circle"></i> Kritik stok yok</div>
-              <div v-for="s in stokStore.dusukStoklar.slice(0, 5)" :key="s.id" class="reminder-item">
+              <div
+                v-if="!dusukStokAdet"
+                class="reminder-empty"
+              >
+                <i class="pi pi-check-circle" /> Kritik stok yok
+              </div>
+              <div
+                v-for="s in stokStore.dusukStoklar.slice(0, 5)"
+                :key="s.id"
+                class="reminder-item"
+              >
                 <span class="reminder-ad">{{ s.ad }}</span>
-                <span class="reminder-tutar" style="color:#fbbf24">{{ s.miktar }} {{ s.birim }}</span>
+                <span
+                  class="reminder-tutar"
+                  style="color:#fbbf24"
+                >{{ s.miktar }} {{ s.birim }}</span>
               </div>
             </template>
           </Card>
           <Card class="reminder-card son-faturalar">
-            <template #title><i class="pi pi-file" style="color:#60a5fa;margin-right:8px"></i>Son Faturalar</template>
+            <template #title>
+              <i
+                class="pi pi-file"
+                style="color:#60a5fa;margin-right:8px"
+              />Son Faturalar
+            </template>
             <template #content>
-              <div v-if="!sonFaturalar.length" class="reminder-empty">Henüz fatura yok</div>
-              <div v-for="f in sonFaturalar" :key="f.id" class="reminder-item">
+              <div
+                v-if="!sonFaturalar.length"
+                class="reminder-empty"
+              >
+                Henüz fatura yok
+              </div>
+              <div
+                v-for="f in sonFaturalar"
+                :key="f.id"
+                class="reminder-item"
+              >
                 <span class="reminder-ad">#{{ f.faturaNumarasi || f.id }}</span>
                 <span class="reminder-tutar">{{ formatCurrency(f.genelToplam) }}</span>
               </div>
@@ -441,8 +879,6 @@ const barOptions = { responsive: true, indexAxis: 'y', plugins: { legend: { disp
 const lineOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 
-const pozitifCariSayisi = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye >= 0).length)
-const negatifCariSayisi = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye < 0).length)
 const bosSistem = computed(() =>
   cariHesapStore.cariHesaplar.length === 0 &&
   stokStore.stoklar.length === 0 &&

@@ -4,39 +4,106 @@
 
     <div class="islem-grid">
       <Card>
-        <template #title><i class="pi pi-file-import" style="margin-right:8px;color:#60a5fa"></i>CSV ile Stok Aktar</template>
+        <template #title>
+          <i
+            class="pi pi-file-import"
+            style="margin-right:8px;color:#60a5fa"
+          />CSV ile Stok Aktar
+        </template>
         <template #content>
           <div class="csv-aciklama">
             <p>CSV dosyasından toplu stok girişi yapın. CSV formatı:</p>
             <pre>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar;stokGrubu;rafNo</pre>
-            <a href="#" @click.prevent="ornekCsv" style="color:#60a5fa;font-size:13px">Örnek CSV indir</a>
+            <a
+              href="#"
+              style="color:#60a5fa;font-size:13px"
+              @click.prevent="ornekCsv"
+            >Örnek CSV indir</a>
           </div>
           <div class="csv-upload">
-            <input type="file" accept=".csv" @change="csvSec" ref="fileInput" style="display:none" />
-            <Button label="CSV Seç" icon="pi pi-upload" @click="$refs.fileInput.click()" class="p-button-outlined" />
-            <span v-if="seciliDosya" class="dosya-adi">{{ seciliDosya }}</span>
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".csv"
+              style="display:none"
+              @change="csvSec"
+            >
+            <Button
+              label="CSV Seç"
+              icon="pi pi-upload"
+              class="p-button-outlined"
+              @click="$refs.fileInput.click()"
+            />
+            <span
+              v-if="seciliDosya"
+              class="dosya-adi"
+            >{{ seciliDosya }}</span>
           </div>
-          <div v-if="csvVeri.length" class="csv-preview">
+          <div
+            v-if="csvVeri.length"
+            class="csv-preview"
+          >
             <h3>Önizleme ({{ csvVeri.length }} kayıt)</h3>
-            <DataTable :value="csvVeri.slice(0, 5)" size="small" stripedRows>
+            <DataTable
+              :value="csvVeri.slice(0, 5)"
+              size="small"
+              striped-rows
+            >
               <Column header="Satır #">
-                <template #body="s">{{ s.index + 1 }}</template>
+                <template #body="s">
+                  {{ s.index + 1 }}
+                </template>
               </Column>
-              <Column field="stokKodu" header="Kod" />
-              <Column field="ad" header="Ad" />
-              <Column field="barkod" header="Barkod" />
-              <Column field="birim" header="Birim" />
-              <Column field="fiyat" header="Fiyat" />
-              <Column field="miktar" header="Miktar" />
+              <Column
+                field="stokKodu"
+                header="Kod"
+              />
+              <Column
+                field="ad"
+                header="Ad"
+              />
+              <Column
+                field="barkod"
+                header="Barkod"
+              />
+              <Column
+                field="birim"
+                header="Birim"
+              />
+              <Column
+                field="fiyat"
+                header="Fiyat"
+              />
+              <Column
+                field="miktar"
+                header="Miktar"
+              />
             </DataTable>
             <small v-if="csvVeri.length > 5">...ve {{ csvVeri.length - 5 }} kayıt daha</small>
             <div class="csv-actions">
-              <Button label="Tümünü Aktar" icon="pi pi-check" class="p-button-success" @click="csvAktar" :loading="aktariyor" />
-              <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="csvVeri = []; seciliDosya = ''" />
+              <Button
+                label="Tümünü Aktar"
+                icon="pi pi-check"
+                class="p-button-success"
+                :loading="aktariyor"
+                @click="csvAktar"
+              />
+              <Button
+                label="İptal"
+                icon="pi pi-times"
+                class="p-button-text"
+                @click="csvVeri = []; seciliDosya = ''"
+              />
             </div>
           </div>
-          <div v-if="sonuc" class="csv-sonuc">
-            <Message :severity="sonuc.hata === 0 ? 'success' : 'warn'" :closable="false">
+          <div
+            v-if="sonuc"
+            class="csv-sonuc"
+          >
+            <Message
+              :severity="sonuc.hata === 0 ? 'success' : 'warn'"
+              :closable="false"
+            >
               <strong>{{ sonuc.basari }} başarılı</strong>
               <span v-if="sonuc.hata > 0">, {{ sonuc.hata }} hatalı</span>
             </Message>

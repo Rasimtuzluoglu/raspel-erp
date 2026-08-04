@@ -1,6 +1,6 @@
 package com.raspel.erp.entity.ik;
 
-import com.raspel.erp.entity.Personel;
+import com.raspel.erp.entity.ik.Personel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

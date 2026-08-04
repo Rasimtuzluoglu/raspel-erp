@@ -1,46 +1,43 @@
 param(
+    [string]$OutputDir = ".\backups",
     [string]$ContainerName = "raspel-postgres",
     [string]$DbName = "raspelerp",
-    [string]$DbUser = "postgres",
-    [string]$BackupDir = "$env:USERPROFILE\Documents\RaspelERP Backups"
+    [string]$DbUser = "postgres"
 )
 
-if (-not (Test-Path -LiteralPath $BackupDir)) {
-    New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null
+$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$backupFile = Join-Path $OutputDir "raspelerp-$timestamp.backup"
+$tempFile = Join-Path $env:TEMP "raspelerp-$timestamp.sql"
+
+if (!(Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null }
+
+Write-Host "RasPel ERP Veritabani Yedekleme" -ForegroundColor Cyan
+Write-Host "================================"
+
+$envFile = Join-Path (Split-Path $PSScriptRoot -Parent) ".env"
+$password = $env:PGPASSWORD
+if (!$password -and (Test-Path $envFile)) {
+    $envContent = Get-Content $envFile | Where-Object { $_ -match "POSTGRES_PASSWORD=" }
+    if ($envContent) { $password = ($envContent -split "=", 2)[1].Trim() }
 }
+if (!$password) { $password = Read-Host "PostgreSQL sifresi" -AsSecureString; $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)) }
 
-$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$filename = "raspelerp_$timestamp.sql"
-$filepath = Join-Path $BackupDir $filename
+Write-Host "Yedekleniyor: $DbName"
+$env:PGPASSWORD = $password
 
-Write-Host "Backing up '$DbName' from container '$ContainerName'..." -ForegroundColor Cyan
-
-$result = docker exec $ContainerName pg_dump -U $DbUser $DbName 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Backup FAILED: $result" -ForegroundColor Red
-    exit 1
+try {
+    docker exec $ContainerName pg_dump -U $DbUser -d $DbName -f "/tmp/$timestamp.sql"
+    docker cp "$ContainerName`:/tmp/$timestamp.sql" $tempFile
+    docker exec $ContainerName rm -f "/tmp/$timestamp.sql"
+    
+    Compress-Archive -Path $tempFile -DestinationPath $backupFile -Force
+    Remove-Item $tempFile -Force
+    
+    $size = (Get-Item $backupFile).Length / 1KB
+    Write-Host "BASARILI: $backupFile ($([math]::Round($size, 1)) KB)" -ForegroundColor Green
+} catch {
+    Write-Host "HATA: $($_.Exception.Message)" -ForegroundColor Red
+} finally {
+    Remove-Item $tempFile -ErrorAction SilentlyContinue
+    if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
 }
-
-$result | Out-File -FilePath $filepath -Encoding utf8
-
-# Compress with gzip
-$gzipped = "$filepath.gz"
-if (Get-Command gzip -ErrorAction SilentlyContinue) {
-    gzip -f $filepath
-    Write-Host "Backup saved: $gzipped" -ForegroundColor Green
-} else {
-    # PowerShell-native compression
-    $compressed = "$filepath.zip"
-    Compress-Archive -Path $filepath -DestinationPath $compressed -Force
-    Remove-Item -Path $filepath -Force
-    Write-Host "Backup saved: $compressed" -ForegroundColor Green
-}
-
-# Keep last 7 backups, remove older ones
-$backups = Get-ChildItem -Path $BackupDir -Filter "raspelerp_*" | Sort-Object Name -Descending
-if ($backups.Count -gt 7) {
-    $backups | Select-Object -Skip 7 | Remove-Item -Force
-    Write-Host "Old backups cleaned. Keeping last 7." -ForegroundColor Yellow
-}
-
-Write-Host "Backup completed successfully." -ForegroundColor Green

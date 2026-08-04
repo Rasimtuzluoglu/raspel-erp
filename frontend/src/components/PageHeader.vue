@@ -3,14 +3,28 @@
     <div class="page-header-main">
       <div class="page-header-content">
         <div class="page-header-title">
-          <i v-if="icon" :class="icon" class="page-header-icon"></i>
-          <h1 class="page-header-heading">{{ title }}</h1>
+          <i
+            v-if="icon"
+            :class="icon"
+            class="page-header-icon"
+          />
+          <h1 class="page-header-heading">
+            {{ title }}
+          </h1>
         </div>
-        <p v-if="headerDesc" class="page-header-desc">{{ headerDesc }}</p>
+        <p
+          v-if="headerDesc"
+          class="page-header-desc"
+        >
+          {{ headerDesc }}
+        </p>
       </div>
-      <div v-if="$slots.actions || $slots.default" class="page-header-actions">
-        <slot name="actions"></slot>
-        <slot></slot>
+      <div
+        v-if="$slots.actions || $slots.default"
+        class="page-header-actions"
+      >
+        <slot name="actions" />
+        <slot />
       </div>
     </div>
   </div>

@@ -1,9 +1,9 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.CekSenetDTO;
-import com.raspel.erp.entity.CekSenet;
-import com.raspel.erp.repository.CariHesapRepository;
-import com.raspel.erp.repository.CekSenetRepository;
+import com.raspel.erp.dto.finans.CekSenetDTO;
+import com.raspel.erp.entity.finans.CekSenet;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.finans.CekSenetRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.finans.CekSenetService;
 
 @ExtendWith(MockitoExtension.class)
 class CekSenetServiceTest {

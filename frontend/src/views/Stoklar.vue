@@ -3,23 +3,61 @@
     <h1>Stok Yönetimi</h1>
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Ürün" icon="pi pi-plus" @click="openDialog" class="p-button-success" />
-        <Button label="Toplu Fiyat Güncelle" icon="pi pi-dollar" @click="batchFiyatDialog = true" class="p-button-help" style="margin-left: 8px" />
-        <div v-if="seciliStoklar.length > 0" class="batch-actions">
+        <Button
+          label="Yeni Ürün"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openDialog"
+        />
+        <Button
+          label="Toplu Fiyat Güncelle"
+          icon="pi pi-dollar"
+          class="p-button-help"
+          style="margin-left: 8px"
+          @click="batchFiyatDialog = true"
+        />
+        <div
+          v-if="seciliStoklar.length > 0"
+          class="batch-actions"
+        >
           <span class="batch-count">{{ seciliStoklar.length }} seçili</span>
-          <Button label="Toplu Sil" icon="pi pi-trash" class="p-button-sm p-button-danger" @click="batchSil" />
-          <Button label="CSV Aktar" icon="pi pi-download" class="p-button-sm p-button-outlined" @click="batchCsvExport" />
+          <Button
+            label="Toplu Sil"
+            icon="pi pi-trash"
+            class="p-button-sm p-button-danger"
+            @click="batchSil"
+          />
+          <Button
+            label="CSV Aktar"
+            icon="pi pi-download"
+            class="p-button-sm p-button-outlined"
+            @click="batchCsvExport"
+          />
         </div>
       </template>
       <template #end>
-        <Button label="Excel" icon="pi pi-file-excel" class="p-button-sm p-button-outlined" style="margin-right:8px" @click="excelIndir" />
+        <Button
+          label="Excel"
+          icon="pi pi-file-excel"
+          class="p-button-sm p-button-outlined"
+          style="margin-right:8px"
+          @click="excelIndir"
+        />
         <div class="toolbar-end">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="aramaMetni" placeholder="Ürün adı, kod veya birim..." @input="ara" />
+            <InputText
+              v-model="aramaMetni"
+              placeholder="Ürün adı, kod veya birim..."
+              @input="ara"
+            />
           </span>
-          <Button :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'" class="p-button-text p-button-sm"
-            @click="gosterim = gosterim === 'tablo' ? 'kart' : 'tablo'" :title="gosterim === 'tablo' ? 'Kart Görünümü' : 'Tablo Görünümü'" />
+          <Button
+            :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'"
+            class="p-button-text p-button-sm"
+            :title="gosterim === 'tablo' ? 'Kart Görünümü' : 'Tablo Görünümü'"
+            @click="gosterim = gosterim === 'tablo' ? 'kart' : 'tablo'"
+          />
         </div>
       </template>
     </Toolbar>
@@ -27,77 +65,212 @@
     <div class="filter-bar">
       <span class="p-input-icon-left">
         <i class="pi pi-search" />
-        <InputText v-model="filtreArama" placeholder="Urun adi, kod, barkod..." @input="filtrele" />
+        <InputText
+          v-model="filtreArama"
+          placeholder="Urun adi, kod, barkod..."
+          @input="filtrele"
+        />
       </span>
-      <InputText v-model="filtreKategori" placeholder="Kategori" @input="filtrele" class="filter-input" />
-      <InputText v-model="filtreMarka" placeholder="Marka" @input="filtrele" class="filter-input" />
-      <Dropdown v-model="filtreStokGrubu" :options="['','Hammadde','Mamul','Yari Mamul','Sarf','Aksesuar']" placeholder="Stok Grubu" @change="filtrele" class="filter-dropdown" />
-      <InputNumber v-model="filtreMinFiyat" placeholder="Min Fiyat" @input="filtrele" class="filter-input-sm" />
-      <InputNumber v-model="filtreMaxFiyat" placeholder="Max Fiyat" @input="filtrele" class="filter-input-sm" />
-      <Button icon="pi pi-times" class="p-button-text p-button-sm" @click="filtreTemizle" title="Temizle" />
+      <InputText
+        v-model="filtreKategori"
+        placeholder="Kategori"
+        class="filter-input"
+        @input="filtrele"
+      />
+      <InputText
+        v-model="filtreMarka"
+        placeholder="Marka"
+        class="filter-input"
+        @input="filtrele"
+      />
+      <Dropdown
+        v-model="filtreStokGrubu"
+        :options="['','Hammadde','Mamul','Yari Mamul','Sarf','Aksesuar']"
+        placeholder="Stok Grubu"
+        class="filter-dropdown"
+        @change="filtrele"
+      />
+      <InputNumber
+        v-model="filtreMinFiyat"
+        placeholder="Min Fiyat"
+        class="filter-input-sm"
+        @input="filtrele"
+      />
+      <InputNumber
+        v-model="filtreMaxFiyat"
+        placeholder="Max Fiyat"
+        class="filter-input-sm"
+        @input="filtrele"
+      />
+      <Button
+        icon="pi pi-times"
+        class="p-button-text p-button-sm"
+        title="Temizle"
+        @click="filtreTemizle"
+      />
     </div>
 
-    <div class="loading" v-if="stokStore.loading"><p><i class="pi pi-spin pi-spinner"></i> Yükleniyor...</p></div>
+    <div
+      v-if="stokStore.loading"
+      class="loading"
+    >
+      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+    </div>
 
     <template v-if="!stokStore.loading && gosterim === 'tablo'">
-      <DataTable :value="filtrelenmisStoklar" :paginator="true" :rows="25" :rows-per-page-options="[15,25,50,100]"
+      <DataTable
+        v-model:selection="seciliStoklar"
+        :value="filtrelenmisStoklar"
+        :paginator="true"
+        :rows="25"
+        :rows-per-page-options="[15,25,50,100]"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
         current-page-report-template="{totalRecords} kayıttan {first}-{last}"
-        selection-mode="multiple" v-model:selection="seciliStoklar" data-key="id" @row-click="stokSec($event.data)"
-        striped-rows sort-field="miktar" :sort-order="1"
-        class="p-datatable-sm" :global-filter-fields="['ad','stokKodu','birim']">
+        selection-mode="multiple"
+        data-key="id"
+        striped-rows
+        sort-field="miktar"
+        :sort-order="1"
+        class="p-datatable-sm"
+        :global-filter-fields="['ad','stokKodu','birim']"
+        @row-click="stokSec($event.data)"
+      >
         <template #header>
           <div class="table-header">
             <span class="toplam-bilgi">{{ stokStore.stoklar.length }} ürün</span>
-            <span v-if="kritikAdet > 0" class="kritik-bilgi"><i class="pi pi-exclamation-triangle"></i> {{ kritikAdet }} kritik</span>
+            <span
+              v-if="kritikAdet > 0"
+              class="kritik-bilgi"
+            ><i class="pi pi-exclamation-triangle" /> {{ kritikAdet }} kritik</span>
           </div>
         </template>
         <template #empty>
-          <EmptyState message="Henüz ürün yok" sub-message="Stok ürünlerinizi ekleyerek envanterinizi oluşturun." icon="pi pi-box" action-label="İlk Ürünü Ekle" action-icon="pi pi-plus" @action="openDialog" />
+          <EmptyState
+            message="Henüz ürün yok"
+            sub-message="Stok ürünlerinizi ekleyerek envanterinizi oluşturun."
+            icon="pi pi-box"
+            action-label="İlk Ürünü Ekle"
+            action-icon="pi pi-plus"
+            @action="openDialog"
+          />
         </template>
-        <Column selection-mode="multiple" headerStyle="width: 2.5rem"></Column>
-        <Column field="stokKodu" header="Stok Kodu" sortable style="width:120px" />
-        <Column field="ad" header="Ürün Adı" sortable style="min-width:180px" />
-        <Column field="birim" header="Birim" sortable style="width:90px" />
-        <Column field="miktar" header="Miktar" sortable style="width:110px">
+        <Column
+          selection-mode="multiple"
+          header-style="width: 2.5rem"
+        />
+        <Column
+          field="stokKodu"
+          header="Stok Kodu"
+          sortable
+          style="width:120px"
+        />
+        <Column
+          field="ad"
+          header="Ürün Adı"
+          sortable
+          style="min-width:180px"
+        />
+        <Column
+          field="birim"
+          header="Birim"
+          sortable
+          style="width:90px"
+        />
+        <Column
+          field="miktar"
+          header="Miktar"
+          sortable
+          style="width:110px"
+        >
           <template #body="s">
             <span :class="s.data.minMiktar && s.data.miktar <= s.data.minMiktar ? 'kritik' : 'normal'">
               {{ s.data.miktar }} {{ s.data.birim || '' }}
             </span>
           </template>
         </Column>
-        <Column field="fiyat" header="Birim Fiyat" sortable style="width:130px">
-          <template #body="s">{{ formatCurrency(s.data.fiyat) }}</template>
-        </Column>
-        <Column header="Stok Değeri" sortable style="width:130px">
-          <template #body="s">{{ formatCurrency((s.data.miktar || 0) * (s.data.fiyat || 0)) }}</template>
-        </Column>
-        <Column header="Kritik" style="width:80px">
+        <Column
+          field="fiyat"
+          header="Birim Fiyat"
+          sortable
+          style="width:130px"
+        >
           <template #body="s">
-            <i v-if="s.data.minMiktar && s.data.miktar <= s.data.minMiktar" class="pi pi-exclamation-triangle" style="color:#f87171;font-size:16px" />
+            {{ formatCurrency(s.data.fiyat) }}
           </template>
         </Column>
-        <Column header="" style="width:100px">
+        <Column
+          header="Stok Değeri"
+          sortable
+          style="width:130px"
+        >
           <template #body="s">
-            <Button icon="pi pi-pencil" class="p-button-rounded p-button-info p-button-sm" @click.stop="editStok(s.data)" style="margin-right: 6px" />
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click.stop="confirmDel(s.data.id)" />
+            {{ formatCurrency((s.data.miktar || 0) * (s.data.fiyat || 0)) }}
+          </template>
+        </Column>
+        <Column
+          header="Kritik"
+          style="width:80px"
+        >
+          <template #body="s">
+            <i
+              v-if="s.data.minMiktar && s.data.miktar <= s.data.minMiktar"
+              class="pi pi-exclamation-triangle"
+              style="color:#f87171;font-size:16px"
+            />
+          </template>
+        </Column>
+        <Column
+          header=""
+          style="width:100px"
+        >
+          <template #body="s">
+            <Button
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-info p-button-sm"
+              style="margin-right: 6px"
+              @click.stop="editStok(s.data)"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click.stop="confirmDel(s.data.id)"
+            />
           </template>
         </Column>
       </DataTable>
     </template>
 
-    <div class="stok-kartlar" v-if="!stokStore.loading && gosterim === 'kart'">
-      <div v-for="s in filtrelenmisStoklar" :key="s.id" class="stok-kart"
-        :class="{ 'dusuk-stok': s.minMiktar && s.miktar <= s.minMiktar }" @click="stokSec(s)">
+    <div
+      v-if="!stokStore.loading && gosterim === 'kart'"
+      class="stok-kartlar"
+    >
+      <div
+        v-for="s in filtrelenmisStoklar"
+        :key="s.id"
+        class="stok-kart"
+        :class="{ 'dusuk-stok': s.minMiktar && s.miktar <= s.minMiktar }"
+        @click="stokSec(s)"
+      >
         <div class="kart-ust">
-          <div class="stok-kod" v-if="s.stokKodu">{{ s.stokKodu }}</div>
-          <span v-if="s.minMiktar && s.miktar <= s.minMiktar" class="uyari-eti"><i class="pi pi-exclamation-triangle"></i> Kritik</span>
+          <div
+            v-if="s.stokKodu"
+            class="stok-kod"
+          >
+            {{ s.stokKodu }}
+          </div>
+          <span
+            v-if="s.minMiktar && s.miktar <= s.minMiktar"
+            class="uyari-eti"
+          ><i class="pi pi-exclamation-triangle" /> Kritik</span>
         </div>
         <h3>{{ s.ad }}</h3>
         <div class="kart-bilgi">
           <div class="bilgi-item">
             <span class="bilgi-label">Miktar</span>
-            <span class="bilgi-deger" :class="s.miktar <= (s.minMiktar || 0) ? 'kritik' : 'normal'">
+            <span
+              class="bilgi-deger"
+              :class="s.miktar <= (s.minMiktar || 0) ? 'kritik' : 'normal'"
+            >
               {{ s.miktar }} {{ s.birim || '' }}
             </span>
           </div>
@@ -107,228 +280,479 @@
           </div>
         </div>
         <div class="kart-islem">
-          <Button icon="pi pi-pencil" class="p-button-rounded p-button-info p-button-sm" @click.stop="editStok(s)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click.stop="confirmDel(s.id)" />
+          <Button
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-info p-button-sm"
+            @click.stop="editStok(s)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-danger p-button-sm"
+            @click.stop="confirmDel(s.id)"
+          />
         </div>
       </div>
-      <Message v-if="filtrelenmisStoklar.length === 0" severity="info" text="Eşleşen ürün bulunamadı." class="full-width" />
+      <Message
+        v-if="filtrelenmisStoklar.length === 0"
+        severity="info"
+        text="Eşleşen ürün bulunamadı."
+        class="full-width"
+      />
     </div>
 
-    <div v-if="seciliStok" class="hareket-bolumu">
+    <div
+      v-if="seciliStok"
+      class="hareket-bolumu"
+    >
       <div class="hareket-header">
         <h2>{{ seciliStok.ad }} <small style="color:#64748b;font-weight:400">({{ seciliStok.miktar }} {{ seciliStok.birim || 'Adet' }})</small></h2>
-        <Button label="+ Stok Giriş" icon="pi pi-plus-circle" class="p-button-success p-button-sm" @click="openHareketDialog('GIRIS')" />
-        <Button label="- Stok Çıkış" icon="pi pi-minus-circle" class="p-button-danger p-button-sm" @click="openHareketDialog('CIKIS')" />
-        <Button icon="pi pi-chevron-up" class="p-button-text p-button-sm" @click="seciliStok = null" title="Kapat" />
+        <Button
+          label="+ Stok Giriş"
+          icon="pi pi-plus-circle"
+          class="p-button-success p-button-sm"
+          @click="openHareketDialog('GIRIS')"
+        />
+        <Button
+          label="- Stok Çıkış"
+          icon="pi pi-minus-circle"
+          class="p-button-danger p-button-sm"
+          @click="openHareketDialog('CIKIS')"
+        />
+        <Button
+          icon="pi pi-chevron-up"
+          class="p-button-text p-button-sm"
+          title="Kapat"
+          @click="seciliStok = null"
+        />
       </div>
       <div class="table-container">
-        <DataTable :value="stokHareketler" striped-rows :rows="8" :paginator="true"
+        <DataTable
+          :value="stokHareketler"
+          striped-rows
+          :rows="8"
+          :paginator="true"
           paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-          current-page-report-template="{first} - {last} ({totalRecords} kayıt)">
-          <Column header="Tarih" style="width:100px">
-            <template #body="s">{{ formatDate(s.data.hareketTarihi) }}</template>
+          current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        >
+          <Column
+            header="Tarih"
+            style="width:100px"
+          >
+            <template #body="s">
+              {{ formatDate(s.data.hareketTarihi) }}
+            </template>
           </Column>
-          <Column header="Tür" style="width:90px">
+          <Column
+            header="Tür"
+            style="width:90px"
+          >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
                 {{ s.data.tur === 'GIRIS' ? 'Giriş' : 'Çıkış' }}
               </span>
             </template>
           </Column>
-          <Column header="Miktar" style="width:90px">
+          <Column
+            header="Miktar"
+            style="width:90px"
+          >
             <template #body="s">
               <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
             </template>
           </Column>
-          <Column header="Cari Hesap" style="width:160px">
-            <template #body="s">{{ s.data.cariHesapAd || '-' }}</template>
-          </Column>
-          <Column header="Açıklama"></Column>
-          <Column header="" style="width:60px">
+          <Column
+            header="Cari Hesap"
+            style="width:160px"
+          >
             <template #body="s">
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" @click="delHareket(s.data.id)" />
+              {{ s.data.cariHesapAd || '-' }}
+            </template>
+          </Column>
+          <Column header="Açıklama" />
+          <Column
+            header=""
+            style="width:60px"
+          >
+            <template #body="s">
+              <Button
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-sm"
+                @click="delHareket(s.data.id)"
+              />
             </template>
           </Column>
         </DataTable>
-        <Message v-if="stokHareketler.length === 0" severity="info" text="Hareket bulunmamaktadır." />
+        <Message
+          v-if="stokHareketler.length === 0"
+          severity="info"
+          text="Hareket bulunmamaktadır."
+        />
       </div>
     </div>
 
-    <Dialog v-model:visible="showDialog" :header="editingId ? 'Ürün Düzenle' : 'Yeni Ürün'" :modal="true" style="width:650px">
+    <Dialog
+      v-model:visible="showDialog"
+      :header="editingId ? 'Ürün Düzenle' : 'Yeni Ürün'"
+      :modal="true"
+      style="width:650px"
+    >
       <div class="form-section">
-        <div class="form-section-title">Temel Bilgiler</div>
+        <div class="form-section-title">
+          Temel Bilgiler
+        </div>
         <div class="form-row">
           <div class="form-grup flex-2">
             <label>Ürün Adı *</label>
-            <InputText v-model="form.ad" placeholder="Ürün adı" class="w-full" />
+            <InputText
+              v-model="form.ad"
+              placeholder="Ürün adı"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Birim</label>
-            <Dropdown v-model="form.birim" :options="['Adet','Koli','Kg','Metre','Litre','Paket']" placeholder="Seçiniz" class="w-full" />
+            <Dropdown
+              v-model="form.birim"
+              :options="['Adet','Koli','Kg','Metre','Litre','Paket']"
+              placeholder="Seçiniz"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Stok Kodu</label>
-            <InputText v-model="form.stokKodu" placeholder="Örn: URN-001" class="w-full" />
+            <InputText
+              v-model="form.stokKodu"
+              placeholder="Örn: URN-001"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Barkod</label>
-            <InputText v-model="form.barkod" placeholder="Barkod numarası" class="w-full" />
+            <InputText
+              v-model="form.barkod"
+              placeholder="Barkod numarası"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Marka</label>
-            <InputText v-model="form.marka" placeholder="Ürün markası" class="w-full" />
+            <InputText
+              v-model="form.marka"
+              placeholder="Ürün markası"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Kategori</label>
-            <InputText v-model="form.kategori" placeholder="Ürün kategorisi" class="w-full" />
+            <InputText
+              v-model="form.kategori"
+              placeholder="Ürün kategorisi"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Stok Grubu</label>
-            <InputText v-model="form.stokGrubu" placeholder="Örn: Hammadde, Mamül" class="w-full" />
+            <InputText
+              v-model="form.stokGrubu"
+              placeholder="Örn: Hammadde, Mamül"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Raf No</label>
-            <InputText v-model="form.rafNo" placeholder="Örn: A-12" class="w-full" />
+            <InputText
+              v-model="form.rafNo"
+              placeholder="Örn: A-12"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>2. Birim</label>
-            <InputText v-model="form.birim2" placeholder="İkinci birim" class="w-full" />
+            <InputText
+              v-model="form.birim2"
+              placeholder="İkinci birim"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Çevrim Katsayısı</label>
-            <InputNumber v-model="form.cevrimKatsayisi" :min="0" :min-fraction-digits="4" class="w-full" placeholder="1.0000" />
+            <InputNumber
+              v-model="form.cevrimKatsayisi"
+              :min="0"
+              :min-fraction-digits="4"
+              class="w-full"
+              placeholder="1.0000"
+            />
           </div>
         </div>
       </div>
       <div class="form-section">
-        <div class="form-section-title">Fiyat & Stok</div>
+        <div class="form-section-title">
+          Fiyat & Stok
+        </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Alış Fiyatı *</label>
-            <InputNumber v-model="form.fiyat" :min="0" :min-fraction-digits="2" class="w-full" />
+            <InputNumber
+              v-model="form.fiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Satış Fiyatı</label>
-            <InputNumber v-model="form.satisFiyati" :min="0" :min-fraction-digits="2" class="w-full" />
+            <InputNumber
+              v-model="form.satisFiyati"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>KDV Oranı (%)</label>
-            <InputNumber v-model="form.kdvOrani" :min="0" :max="100" class="w-full" placeholder="%" />
+            <InputNumber
+              v-model="form.kdvOrani"
+              :min="0"
+              :max="100"
+              class="w-full"
+              placeholder="%"
+            />
           </div>
           <div class="form-grup">
             <label>Ağırlık (kg)</label>
-            <InputNumber v-model="form.agirlik" :min="0" :min-fraction-digits="2" class="w-full" />
+            <InputNumber
+              v-model="form.agirlik"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Mevcut Miktar</label>
-            <InputNumber v-model="form.miktar" :min="0" :min-fraction-digits="0" class="w-full" />
+            <InputNumber
+              v-model="form.miktar"
+              :min="0"
+              :min-fraction-digits="0"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Min. Stok Seviyesi</label>
-            <InputNumber v-model="form.minMiktar" :min="0" :min-fraction-digits="0" class="w-full" />
+            <InputNumber
+              v-model="form.minMiktar"
+              :min="0"
+              :min-fraction-digits="0"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Maliyet Yöntemi</label>
-            <Dropdown v-model="form.maliyetYontemi" :options="maliyetYontemiSecenekleri" class="w-full" />
+            <Dropdown
+              v-model="form.maliyetYontemi"
+              :options="maliyetYontemiSecenekleri"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
-            <label></label>
+            <label />
           </div>
         </div>
       </div>
       <div class="form-section">
-        <div class="form-section-title">Tedarikçi Bilgileri</div>
+        <div class="form-section-title">
+          Tedarikçi Bilgileri
+        </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Tedarikçi</label>
-            <Dropdown v-model="form.tedarikciId" :options="cariHesapStore.cariHesaplar" option-label="ad" option-value="id" placeholder="Tedarikçi seçin" class="w-full" />
+            <Dropdown
+              v-model="form.tedarikciId"
+              :options="cariHesapStore.cariHesaplar"
+              option-label="ad"
+              option-value="id"
+              placeholder="Tedarikçi seçin"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
             <label>Tedarikçi Stok Kodu</label>
-            <InputText v-model="form.tedarikciStokKodu" placeholder="Tedarikçideki stok kodu" class="w-full" />
+            <InputText
+              v-model="form.tedarikciStokKodu"
+              placeholder="Tedarikçideki stok kodu"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>Tedarikçi Fiyatı</label>
-            <InputNumber v-model="form.tedarikciFiyat" :min="0" :min-fraction-digits="2" class="w-full" />
+            <InputNumber
+              v-model="form.tedarikciFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
           </div>
           <div class="form-grup">
-            <label></label>
+            <label />
           </div>
         </div>
       </div>
       <div class="form-section">
-        <div class="form-section-title">Ek Bilgiler</div>
+        <div class="form-section-title">
+          Ek Bilgiler
+        </div>
         <div class="form-grup">
           <label>Açıklama</label>
-          <Textarea v-model="form.aciklama" rows="2" class="w-full" />
+          <Textarea
+            v-model="form.aciklama"
+            rows="2"
+            class="w-full"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="showDialog = false" class="p-button-text" />
-        <Button :label="editingId ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" @click="saveStok" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showDialog = false"
+        />
+        <Button
+          :label="editingId ? 'Güncelle' : 'Kaydet'"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveStok"
+        />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="showHareketDialog" :header="hareketBaslik" :modal="true" style="width:500px">
+    <Dialog
+      v-model:visible="showHareketDialog"
+      :header="hareketBaslik"
+      :modal="true"
+      style="width:500px"
+    >
       <div class="form-grup">
         <label>Miktar *</label>
-        <InputNumber v-model="hareketForm.miktar" :min="0.01" :min-fraction-digits="1" class="w-full" />
+        <InputNumber
+          v-model="hareketForm.miktar"
+          :min="0.01"
+          :min-fraction-digits="1"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Tarih *</label>
-        <DatePicker v-model="hareketForm.hareketTarihi" date-format="dd.mm.yy" class="w-full" />
+        <DatePicker
+          v-model="hareketForm.hareketTarihi"
+          date-format="dd.mm.yy"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Cari Hesap</label>
-        <Dropdown v-model="hareketForm.cariHesapId" :options="cariHesapStore.cariHesaplar"
-          option-label="ad" option-value="id" placeholder="İsteğe bağlı" class="w-full" />
+        <Dropdown
+          v-model="hareketForm.cariHesapId"
+          :options="cariHesapStore.cariHesaplar"
+          option-label="ad"
+          option-value="id"
+          placeholder="İsteğe bağlı"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Açıklama</label>
-        <Textarea v-model="hareketForm.aciklama" rows="2" class="w-full" />
+        <Textarea
+          v-model="hareketForm.aciklama"
+          rows="2"
+          class="w-full"
+        />
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="showHareketDialog = false" class="p-button-text" />
-        <Button label="Kaydet" icon="pi pi-check" @click="saveHareket" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showHareketDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveHareket"
+        />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="batchFiyatDialog" header="Toplu Fiyat Güncelleme" :modal="true" style="width:480px">
+    <Dialog
+      v-model:visible="batchFiyatDialog"
+      header="Toplu Fiyat Güncelleme"
+      :modal="true"
+      style="width:480px"
+    >
       <div class="form-grup">
         <label>İşlem Yönü</label>
-        <Dropdown v-model="batchFiyatForm.yon" :options="['ARTIR','AZALT']" class="w-full" />
+        <Dropdown
+          v-model="batchFiyatForm.yon"
+          :options="['ARTIR','AZALT']"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Oran (%)</label>
-        <InputNumber v-model="batchFiyatForm.oran" :min="0" :max="100" :min-fraction-digits="1" class="w-full" />
+        <InputNumber
+          v-model="batchFiyatForm.oran"
+          :min="0"
+          :max="100"
+          :min-fraction-digits="1"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Kategori Filtre (opsiyonel)</label>
-        <InputText v-model="batchFiyatForm.kategori" placeholder="Tüm kategoriler" class="w-full" />
+        <InputText
+          v-model="batchFiyatForm.kategori"
+          placeholder="Tüm kategoriler"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Stok Grubu Filtre (opsiyonel)</label>
-        <InputText v-model="batchFiyatForm.stokGrubu" placeholder="Tüm gruplar" class="w-full" />
+        <InputText
+          v-model="batchFiyatForm.stokGrubu"
+          placeholder="Tüm gruplar"
+          class="w-full"
+        />
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="batchFiyatDialog = false" class="p-button-text" />
-        <Button label="Uygula" icon="pi pi-check" @click="batchFiyatUygula" :loading="batchLoading" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="batchFiyatDialog = false"
+        />
+        <Button
+          label="Uygula"
+          icon="pi pi-check"
+          :loading="batchLoading"
+          @click="batchFiyatUygula"
+        />
       </template>
     </Dialog>
   </div>
@@ -455,7 +879,7 @@ const confirmDel = (id) => {
     message: 'Bu ürünü silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] }; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün silindi', life: 5000 }) }
+      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] } toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün silindi', life: 5000 }) }
       catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
     }
   })

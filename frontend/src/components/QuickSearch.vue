@@ -1,35 +1,55 @@
 <template>
-  <div v-if="visible" class="qs-overlay" @click.self="kapat">
+  <div
+    v-if="visible"
+    class="qs-overlay"
+    @click.self="kapat"
+  >
     <div class="qs-modal">
       <div class="qs-input-wrapper">
-        <i class="pi pi-search qs-icon"></i>
+        <i class="pi pi-search qs-icon" />
         <input
           ref="inputRef"
           v-model="query"
           type="text"
           class="qs-input"
           placeholder="Ara (cari, stok, fatura, personel, proje...)"
-          @keydown="handleKeydown"
           autofocus
-        />
+          @keydown="handleKeydown"
+        >
         <button
           type="button"
           class="qs-mic-btn"
           :class="{ listening: isListening }"
-          @click="toggleVoiceRecognition"
           :title="isListening ? 'Dinleniyor... Konuşun' : 'Sesli Arama (Mikrofon)'"
+          @click="toggleVoiceRecognition"
         >
-          <i :class="isListening ? 'pi pi-spin pi-spinner' : 'pi pi-microphone'"></i>
+          <i :class="isListening ? 'pi pi-spin pi-spinner' : 'pi pi-microphone'" />
         </button>
         <kbd class="qs-esc">ESC</kbd>
       </div>
-      <div v-if="!query" class="qs-hint">
+      <div
+        v-if="!query"
+        class="qs-hint"
+      >
         <p>Bir şey yazmaya başlayın...</p>
-        <div v-if="sonAramalar.length" class="qs-son-aramalar">
-          <div class="qs-son-baslik">Son Aramalar</div>
-          <div v-for="(a, i) in sonAramalar" :key="i" class="qs-son-item" @click="query = a">
-            <i class="pi pi-history"></i>{{ a }}
-            <i class="pi pi-times qs-son-sil" @click.stop="sonAramaSil(i)"></i>
+        <div
+          v-if="sonAramalar.length"
+          class="qs-son-aramalar"
+        >
+          <div class="qs-son-baslik">
+            Son Aramalar
+          </div>
+          <div
+            v-for="(a, i) in sonAramalar"
+            :key="i"
+            class="qs-son-item"
+            @click="query = a"
+          >
+            <i class="pi pi-history" />{{ a }}
+            <i
+              class="pi pi-times qs-son-sil"
+              @click.stop="sonAramaSil(i)"
+            />
           </div>
         </div>
         <div class="qs-hint-items">
@@ -40,9 +60,22 @@
           <span><kbd>r</kbd> Projeler</span>
         </div>
       </div>
-      <div v-if="loading" class="qs-loading"><i class="pi pi-spin pi-spinner"></i> Aranıyor...</div>
-      <div v-if="error" class="qs-error">{{ error }}</div>
-      <div v-if="results.length > 0 && !loading" class="qs-results">
+      <div
+        v-if="loading"
+        class="qs-loading"
+      >
+        <i class="pi pi-spin pi-spinner" /> Aranıyor...
+      </div>
+      <div
+        v-if="error"
+        class="qs-error"
+      >
+        {{ error }}
+      </div>
+      <div
+        v-if="results.length > 0 && !loading"
+        class="qs-results"
+      >
         <div
           v-for="(item, idx) in results"
           :key="`${item.type}-${item.id}`"
@@ -50,16 +83,25 @@
           @click="navigate(item)"
           @mouseenter="selectedIndex = idx"
         >
-          <i :class="item.icon" class="qs-item-icon"></i>
+          <i
+            :class="item.icon"
+            class="qs-item-icon"
+          />
           <div class="qs-item-info">
             <span class="qs-item-title">{{ item.title }}</span>
             <span class="qs-item-sub">{{ item.subtitle }}</span>
           </div>
-          <Tag :value="item.type" :severity="item.severity" />
+          <Tag
+            :value="item.type"
+            :severity="item.severity"
+          />
         </div>
       </div>
-      <div v-if="query && results.length === 0 && !loading" class="qs-empty">
-        <i class="pi pi-search"></i>
+      <div
+        v-if="query && results.length === 0 && !loading"
+        class="qs-empty"
+      >
+        <i class="pi pi-search" />
         <p>"{{ query }}" için sonuç bulunamadı</p>
       </div>
     </div>

@@ -1,23 +1,50 @@
 <template>
-  <div class="theme-switcher-wrapper" ref="wrapperRef">
-    <button class="theme-toggle-btn" @click="menuAc" :title="`Tema & Renk Ayarları (${isDark ? 'Koyu' : 'Açık'})`">
-      <i :class="isDark ? 'pi pi-moon' : 'pi pi-sun'" class="theme-icon"></i>
+  <div
+    ref="wrapperRef"
+    class="theme-switcher-wrapper"
+  >
+    <button
+      class="theme-toggle-btn"
+      :title="`Tema & Renk Ayarları (${isDark ? 'Koyu' : 'Açık'})`"
+      @click="menuAc"
+    >
+      <i
+        :class="isDark ? 'pi pi-moon' : 'pi pi-sun'"
+        class="theme-icon"
+      />
     </button>
 
-    <div v-if="menuAcik" ref="menuRef" class="theme-menu" :style="menuStil" @click.stop>
+    <div
+      v-if="menuAcik"
+      ref="menuRef"
+      class="theme-menu"
+      :style="menuStil"
+      @click.stop
+    >
       <div class="menu-header">
         <span>{{ $t('theme.settings') }}</span>
-        <i class="pi pi-times close-btn" @click="menuAcik = false"></i>
+        <i
+          class="pi pi-times close-btn"
+          @click="menuAcik = false"
+        />
       </div>
 
       <div class="menu-section">
         <label class="section-label">{{ $t('theme.mode') }}</label>
         <div class="mode-toggle-group">
-          <button class="mode-btn" :class="{ active: !isDark }" @click="applyMode('light')">
-            <i class="pi pi-sun"></i> {{ $t('theme.lightShort') }}
+          <button
+            class="mode-btn"
+            :class="{ active: !isDark }"
+            @click="applyMode('light')"
+          >
+            <i class="pi pi-sun" /> {{ $t('theme.lightShort') }}
           </button>
-          <button class="mode-btn" :class="{ active: isDark }" @click="applyMode('dark')">
-            <i class="pi pi-moon"></i> {{ $t('theme.darkShort') }}
+          <button
+            class="mode-btn"
+            :class="{ active: isDark }"
+            @click="applyMode('dark')"
+          >
+            <i class="pi pi-moon" /> {{ $t('theme.darkShort') }}
           </button>
         </div>
       </div>
@@ -33,7 +60,7 @@
             :style="{ background: c.value }"
             :title="c.name"
             @click="applyColor(c.value)"
-          ></button>
+          />
         </div>
       </div>
     </div>

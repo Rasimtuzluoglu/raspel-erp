@@ -1,7 +1,7 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.repository.FaturaRepository;
-import com.raspel.erp.repository.SiparisRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.SeriNoServisi;
 
 @ExtendWith(MockitoExtension.class)
 class SeriNoServisiTest {

@@ -16,7 +16,7 @@ import java.util.List;
 
 @Tag(name = "CRM", description = "Potansiyel müşteri / fırsat takibi API")
 @RestController
-@RequestMapping({"/api/crm", "/api/v1/crm"})
+@RequestMapping("/api/crm")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class CrmController {

@@ -1,15 +1,30 @@
 <template>
   <transition name="dialog-fade">
-    <div v-if="goster" class="rehber-overlay" @click.self="kapat">
+    <div
+      v-if="goster"
+      class="rehber-overlay"
+      @click.self="kapat"
+    >
       <div class="rehber-kutu">
         <div class="rehber-baslik">
           <strong>{{ $t('shortcuts.title') }}</strong>
-          <Button icon="pi pi-times" class="p-button-rounded p-button-text" @click="kapat" />
+          <Button
+            icon="pi pi-times"
+            class="p-button-rounded p-button-text"
+            @click="kapat"
+          />
         </div>
         <div class="rehber-icerik">
-          <div v-for="k in kisayollar" :key="k.kod" class="rehber-satir">
+          <div
+            v-for="k in kisayollar"
+            :key="k.kod"
+            class="rehber-satir"
+          >
             <span class="kisa-tuslar">
-              <kbd v-for="t in k.tuslar" :key="t">{{ t }}</kbd>
+              <kbd
+                v-for="t in k.tuslar"
+                :key="t"
+              >{{ t }}</kbd>
             </span>
             <span class="kisa-aciklama">{{ $t(k.aciklamaAnahtar) }}</span>
           </div>

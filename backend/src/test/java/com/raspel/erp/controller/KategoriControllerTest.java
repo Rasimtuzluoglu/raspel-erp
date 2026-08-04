@@ -1,7 +1,7 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.KategoriDTO;
-import com.raspel.erp.service.KategoriService;
+import com.raspel.erp.dto.sistem.KategoriDTO;
+import com.raspel.erp.service.sistem.KategoriService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.KategoriController;
 
 @WebMvcTest(KategoriController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -79,9 +80,6 @@ class KategoriControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
-
-
 
 
 

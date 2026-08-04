@@ -1,8 +1,8 @@
 package com.raspel.erp.service;
 
-import com.raspel.erp.dto.DonemDTO;
-import com.raspel.erp.entity.Donem;
-import com.raspel.erp.repository.DonemRepository;
+import com.raspel.erp.dto.sistem.DonemDTO;
+import com.raspel.erp.entity.sistem.Donem;
+import com.raspel.erp.repository.sistem.DonemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.service.sistem.DonemService;
 
 @ExtendWith(MockitoExtension.class)
 class DonemServiceTest {

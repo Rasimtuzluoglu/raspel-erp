@@ -1,8 +1,8 @@
 package com.raspel.erp.controller;
 
-import com.raspel.erp.dto.DashboardDTO;
-import com.raspel.erp.dto.HareketDTO;
-import com.raspel.erp.service.DashboardService;
+import com.raspel.erp.dto.sistem.DashboardDTO;
+import com.raspel.erp.dto.finans.HareketDTO;
+import com.raspel.erp.service.sistem.DashboardService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -18,6 +18,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.raspel.erp.controller.sistem.DashboardController;
 
 @WebMvcTest(DashboardController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -47,9 +48,6 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.toplamBakiye").value(100000));
     }
 }
-
-
-
 
 
 

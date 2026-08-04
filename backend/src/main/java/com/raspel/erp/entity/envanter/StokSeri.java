@@ -1,7 +1,7 @@
 package com.raspel.erp.entity.envanter;
 
-import com.raspel.erp.entity.Stok;
-import com.raspel.erp.entity.StokHareket;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.envanter.StokHareket;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;

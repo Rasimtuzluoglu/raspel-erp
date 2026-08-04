@@ -1,13 +1,20 @@
 <template>
   <transition name="ipucu">
-    <div v-if="gorunur" class="ipucu-balon">
-      <i class="pi pi-lightbulb ipucu-ikon"></i>
+    <div
+      v-if="gorunur"
+      class="ipucu-balon"
+    >
+      <i class="pi pi-lightbulb ipucu-ikon" />
       <div class="ipucu-icerik">
         <strong>{{ baslik }}</strong>
         <p>{{ metin }}</p>
       </div>
-      <button class="ipucu-kapat" title="Kapat" @click="kapat">
-        <i class="pi pi-times"></i>
+      <button
+        class="ipucu-kapat"
+        title="Kapat"
+        @click="kapat"
+      >
+        <i class="pi pi-times" />
       </button>
     </div>
   </transition>
@@ -15,7 +22,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 
 const props = defineProps({
   anahtar: { type: String, required: true },
@@ -23,7 +29,6 @@ const props = defineProps({
   metin: { type: String, default: '' }
 })
 
-const route = useRoute()
 const gorunur = ref(false)
 const STORE_KEY = 'raspel_gosterilen_ipuclari'
 
@@ -44,7 +49,7 @@ const kapat = () => {
       gosterilenler.push(props.anahtar)
       localStorage.setItem(STORE_KEY, JSON.stringify(gosterilenler))
     }
-  } catch {}
+  } catch { /* empty */ }
 }
 </script>
 

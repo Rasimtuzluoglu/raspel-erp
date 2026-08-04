@@ -4,42 +4,92 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button label="Yeni Kategori" icon="pi pi-plus" @click="openDialog" class="p-button-success" />
+        <Button
+          label="Yeni Kategori"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="openDialog"
+        />
       </template>
     </Toolbar>
 
     <div class="table-container">
-      <DataTable :value="kategoriStore.kategoriler" striped-rows :rows="20">
-        <Column field="ad" header="Kategori Adı"></Column>
-        <Column field="tur" header="Tür" style="width:100px">
+      <DataTable
+        :value="kategoriStore.kategoriler"
+        striped-rows
+        :rows="20"
+      >
+        <Column
+          field="ad"
+          header="Kategori Adı"
+        />
+        <Column
+          field="tur"
+          header="Tür"
+          style="width:100px"
+        >
           <template #body="s">
             <span :class="['badge', s.data.tur === 'GELIR' ? 'gelir' : 'gider']">
               {{ s.data.tur === 'GELIR' ? 'Gelir' : 'Gider' }}
             </span>
           </template>
         </Column>
-        <Column header="" style="width:80px">
+        <Column
+          header=""
+          style="width:80px"
+        >
           <template #body="s">
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
-              @click="confirmDel(s.data.id)" />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click="confirmDel(s.data.id)"
+            />
           </template>
         </Column>
       </DataTable>
-      <Message v-if="kategoriStore.kategoriler.length === 0" severity="info" text="Kategori bulunmamaktadır." />
+      <Message
+        v-if="kategoriStore.kategoriler.length === 0"
+        severity="info"
+        text="Kategori bulunmamaktadır."
+      />
     </div>
 
-    <Dialog v-model:visible="showDialog" header="Yeni Kategori" :modal="true" style="width:400px">
+    <Dialog
+      v-model:visible="showDialog"
+      header="Yeni Kategori"
+      :modal="true"
+      style="width:400px"
+    >
       <div class="form-group">
         <label>Kategori Adı *</label>
-        <InputText v-model="form.ad" placeholder="Kategori adı" class="w-full" />
+        <InputText
+          v-model="form.ad"
+          placeholder="Kategori adı"
+          class="w-full"
+        />
       </div>
       <div class="form-group">
         <label>Tür *</label>
-        <Dropdown v-model="form.tur" :options="[{label:'Gelir',value:'GELIR'},{label:'Gider',value:'GIDER'}]" placeholder="Seçiniz" class="w-full" />
+        <Dropdown
+          v-model="form.tur"
+          :options="[{label:'Gelir',value:'GELIR'},{label:'Gider',value:'GIDER'}]"
+          placeholder="Seçiniz"
+          class="w-full"
+        />
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" @click="showDialog = false" class="p-button-text" />
-        <Button label="Kaydet" icon="pi pi-check" @click="save" :loading="saving" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="save"
+        />
       </template>
     </Dialog>
   </div>

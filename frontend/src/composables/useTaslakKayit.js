@@ -10,7 +10,7 @@ export function useTaslakKayit(anahtar, form, opts = {}) {
   watch(form, () => {
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => {
-      try { localStorage.setItem(storageAnahtari, JSON.stringify(form.value)) } catch {}
+      try { localStorage.setItem(storageAnahtari, JSON.stringify(form.value)) } catch { /* empty */ }
     }, timeout)
   }, { deep: true })
 
@@ -23,12 +23,12 @@ export function useTaslakKayit(anahtar, form, opts = {}) {
         if (onRestore) onRestore(veri)
         return true
       }
-    } catch {}
+    } catch { /* empty */ }
     return false
   }
 
   const temizle = () => {
-    try { localStorage.removeItem(storageAnahtari) } catch {}
+    try { localStorage.removeItem(storageAnahtari) } catch { /* empty */ }
   }
 
   if (restore) geriYukle()

@@ -1,11 +1,11 @@
 package com.raspel.erp.config;
 
-import com.raspel.erp.entity.Donem;
-import com.raspel.erp.entity.Kullanici;
-import com.raspel.erp.entity.Sirket;
-import com.raspel.erp.repository.DonemRepository;
-import com.raspel.erp.repository.KullaniciRepository;
-import com.raspel.erp.repository.SirketRepository;
+import com.raspel.erp.entity.sistem.Donem;
+import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.entity.sistem.Sirket;
+import com.raspel.erp.repository.sistem.DonemRepository;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
+import com.raspel.erp.repository.sistem.SirketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
