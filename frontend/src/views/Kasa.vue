@@ -270,13 +270,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import { kasaAPI, excelAPI } from '../api/index.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const kasaStore = useKasaStore()
 const kategoriStore = useKategoriStore()
@@ -308,7 +308,7 @@ const kasaSec = async (kasa) => {
   try {
     const r = await kasaAPI.getHareketler(kasa.id)
     kasaHareketler.value = r.data
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi', life: 5000 }) }
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi') }
 }
 
 const openKasaDialog = () => {
@@ -324,18 +324,18 @@ const editKasa = (kasa) => {
 }
 
 const saveKasa = async () => {
-  if (!kasaForm.value.ad.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kasa adı giriniz', life: 5000 }); return }
+  if (!kasaForm.value.ad.trim()) { toastBildirim.uyari('Kasa adı giriniz'); return }
   saving.value = true
   try {
     if (editingKasaId.value) {
       await kasaStore.updateKasa(editingKasaId.value, kasaForm.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa güncellendi', life: 5000 })
+      toastBildirim.basarili('Kasa güncellendi')
     } else {
       await kasaStore.addKasa(kasaForm.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa oluşturuldu', life: 5000 })
+      toastBildirim.basarili('Kasa oluşturuldu')
     }
     showKasaDialog.value = false
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
   finally { saving.value = false }
 }
 
@@ -344,8 +344,8 @@ const confirmDel = (id) => {
     message: 'Bu kasayı silmek istediğinizden emin misiniz?',
     header: 'Onay', icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] } toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kasa silindi', life: 5000 }) }
-      catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
+      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] } toastBildirim.basarili('Kasa silindi') }
+      catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
     }
   })
 }
@@ -358,7 +358,7 @@ const openHareketDialog = (tur) => {
 
 const saveHareket = async () => {
   if (!hareketForm.value.tutar || hareketForm.value.tutar <= 0) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli tutar giriniz', life: 5000 }); return
+    toastBildirim.uyari('Geçerli tutar giriniz'); return
   }
   saving.value = true
   try {
@@ -375,8 +375,8 @@ const saveHareket = async () => {
     const guncel = kasaStore.kasalar.find(k => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
     showHareketDialog.value = false
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
+    toastBildirim.basarili('Hareket eklendi')
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
   finally { saving.value = false }
 }
 
@@ -387,8 +387,8 @@ const delHareket = async (id) => {
     await kasaStore.getAllKasalar()
     const guncel = kasaStore.kasalar.find(k => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
+    toastBildirim.basarili('Hareket silindi')
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
 }
 
 const excelIndir = async () => {

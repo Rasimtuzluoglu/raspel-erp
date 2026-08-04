@@ -170,11 +170,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { bankaAPI, bankaMutabakatAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const bankalar = ref([])
@@ -217,7 +219,7 @@ const yukle = async () => {
     const r = await bankaMutabakatAPI.listele(seciliBanka.value)
     hareketler.value = r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Hareketler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Hareketler yüklenemedi')
   }
   yukleniyor.value = false
 }
@@ -231,7 +233,7 @@ const dosyaSecildi = async (e) => {
     toast.add({ severity: 'success', summary: 'Yüklendi', detail: 'Hesap özeti yüklendi ve eşleştirildi', life: 3000 })
     await yukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Yükleme başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Yükleme başarısız')
   }
   yukleniyor.value = false
   e.target.value = ''
@@ -244,7 +246,7 @@ const otomatikEslestir = async () => {
     toast.add({ severity: 'success', summary: 'Eşleştirildi', detail: 'Otomatik eşleştirme tamamlandı', life: 3000 })
     await yukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Eşleştirme başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Eşleştirme başarısız')
   }
   yukleniyor.value = false
 }
@@ -256,7 +258,7 @@ const manuelEslestir = async (hareket) => {
     toast.add({ severity: 'success', summary: 'Eşleşti', detail: 'Hareket fatura ile eşleştirildi', life: 3000 })
     await yukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Eşleştirme başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Eşleştirme başarısız')
   }
 }
 
@@ -271,7 +273,7 @@ const eslestirmeyiKaldir = (hareket) => {
         toast.add({ severity: 'success', summary: 'Kaldırıldı', detail: 'Eşleştirme kaldırıldı', life: 3000 })
         await yukle()
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
       }
     }
   })

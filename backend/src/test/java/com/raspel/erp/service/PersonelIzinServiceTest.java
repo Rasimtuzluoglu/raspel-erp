@@ -49,9 +49,9 @@ class PersonelIzinServiceTest {
         personel.setId(1L);
         personel.setAd("Test");
         personel.setSoyad("User");
-        when(personelRepository.findAll()).thenReturn(List.of(personel));
         when(personelRepository.findBySirketIdOrderByAdAsc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(personel)));
-        when(izinRepository.findAll()).thenReturn(List.of(createIzin(1L), createIzin(2L)));
+        when(izinRepository.findByPersonelIdIn(eq(List.of(1L)), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createIzin(1L), createIzin(2L))));
         var result = personelIzinService.tumunuGetir(1L, Pageable.unpaged());
         assertEquals(2, result.getContent().size());
     }

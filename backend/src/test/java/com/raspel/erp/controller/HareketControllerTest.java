@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Import;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
@@ -54,14 +55,14 @@ class HareketControllerTest {
     @Test
     void shouldGetWithFilters() throws Exception {
         var list = List.of(HareketDTO.builder().id(1L).tur("TAHSILAT").build());
-        when(hareketService.hareketleriFiltrele(any(), any(), any())).thenReturn(list);
+        when(hareketService.hareketleriFiltrele(any(), any(), any(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/hareketler")
                         .param("cariHesapId", "1")
                         .param("baslangic", "2024-01-01")
                         .param("bitis", "2024-12-31"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].tur").value("TAHSILAT"));
+                .andExpect(jsonPath("$.content[0].tur").value("TAHSILAT"));
     }
 
     @Test

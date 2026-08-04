@@ -207,6 +207,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { crmAPI, cariHesapAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
@@ -214,6 +215,7 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { silVeGeriAl } = useGeriAl()
 
@@ -264,7 +266,7 @@ const firsatlariYukle = async () => {
     const r = await crmAPI.getFirsatlar(params)
     firsatlar.value = r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Fırsatlar yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Fırsatlar yüklenemedi')
   }
   yukleniyor.value = false
 }
@@ -287,7 +289,7 @@ const cogalt = (data) => {
 const kaydet = async () => {
   if (!form.value.ad.trim()) {
     formHatali.value.ad = true
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Fırsat adı zorunludur', life: 3000 }); return
+    toastBildirim.uyari('Fırsat adı zorunludur'); return
   }
   formHatali.value.ad = false
   kaydediliyor.value = true
@@ -295,11 +297,11 @@ const kaydet = async () => {
     const payload = { ...form.value, tahminiKapanis: form.value.tahminiKapanis ? (form.value.tahminiKapanis.toISOString?.().split('T')[0] ?? form.value.tahminiKapanis) : null }
     if (duzenleme.value) await crmAPI.firsatGuncelle(form.value.id, payload)
     else await crmAPI.firsatOlustur(payload)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fırsat kaydedildi', life: 3000 })
+    toastBildirim.basarili('Fırsat kaydedildi')
     dialog.value = false
     firsatlariYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -323,7 +325,7 @@ const sil = (data) => {
         })
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Fırsat silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

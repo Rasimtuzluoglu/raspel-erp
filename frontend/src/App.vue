@@ -27,6 +27,7 @@
           </button>
         </div>
       </transition>
+      <AppBreadcrumb v-if="authStore.isLoggedIn" />
       <ErrorBoundary>
         <router-view />
       </ErrorBoundary>
@@ -91,6 +92,7 @@ import ErrorBoundary from './components/ErrorBoundary.vue'
 import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
+import AppBreadcrumb from './components/AppBreadcrumb.vue'
 
 const authStore = useAuthStore()
 const quickSearchVisible = ref(false)

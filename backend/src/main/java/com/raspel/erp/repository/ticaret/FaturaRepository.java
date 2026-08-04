@@ -13,19 +13,24 @@ import com.raspel.erp.entity.finans.CariHesap;
 
 @Repository
 public interface FaturaRepository extends JpaRepository<Fatura, Long> {
-    @EntityGraph(attributePaths = {"cariHesap"})
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findAllByOrderByTarihDesc();
 
-    @EntityGraph(attributePaths = {"cariHesap"})
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    List<Fatura> findAll();
+
     long count();
 
     @Query("SELECT f.faturaNumarasi FROM Fatura f WHERE f.faturaNumarasi LIKE :prefix%")
     List<String> findFaturaNumarasiByPrefix(@Param("prefix") String prefix);
 
-    @EntityGraph(attributePaths = {"cariHesap"})
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findByTurAndDurumAndOdemeDurumuNotIn(Fatura.FaturaTur tur, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);
 
-    @EntityGraph(attributePaths = {"cariHesap"})
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findByTurAndOdemeDurumuNotIn(Fatura.FaturaTur tur, java.util.List<String> odemeDurumlari);
 }

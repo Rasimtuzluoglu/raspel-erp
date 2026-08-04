@@ -177,13 +177,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { excelAPI } from '../api/index.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const bankaStore = useBankaStore()
 const { kopyala } = usePanoyaKopyala()
@@ -198,7 +198,7 @@ const form = ref({ ad: '', hesapNo: '', iban: '', bakiye: 0 })
 onMounted(async () => {
   loading.value = true
   try { await bankaStore.getAllBankalar() }
-  catch {     toast.add({ severity: 'error', summary: 'Hata', detail: 'Bankalar yüklenirken hata oluştu', life: 5000 }) }
+  catch {     toastBildirim.hata('Bankalar yüklenirken hata oluştu') }
   finally { loading.value = false }
 })
 
@@ -218,20 +218,20 @@ const editBanka = (banka) => {
 
 const saveBanka = async () => {
   if (!form.value.ad.trim()) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Banka adı boş olamaz', life: 5000 })
+    toastBildirim.uyari('Banka adı boş olamaz')
     return
   }
   saving.value = true
   try {
     if (editingId.value) {
       await bankaStore.updateBanka(editingId.value, { ad: form.value.ad, hesapNo: form.value.hesapNo, iban: form.value.iban })
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı güncellendi', life: 5000 })
+      toastBildirim.basarili('Banka hesabı güncellendi')
     } else {
       await bankaStore.addBanka(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı oluşturuldu', life: 5000 })
+      toastBildirim.basarili('Banka hesabı oluşturuldu')
     }
     closeDialog()
-  } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
+  } catch { toastBildirim.hata('İşlem başarısız') }
   finally { saving.value = false }
 }
 
@@ -240,8 +240,8 @@ const confirmDelete = (id) => {
     message: 'Bu banka hesabını silmek istediğinizden emin misiniz?',
     header: 'Onay', icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await bankaStore.deleteBanka(id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Banka hesabı silindi', life: 5000 }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
+      try { await bankaStore.deleteBanka(id); toastBildirim.basarili('Banka hesabı silindi') }
+      catch { toastBildirim.hata('Silme başarısız') }
     }
   })
 }

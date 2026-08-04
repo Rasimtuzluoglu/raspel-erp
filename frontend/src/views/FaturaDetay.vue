@@ -247,6 +247,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
 import { useYakinZamanda } from '../composables/useYakinZamanda.js'
@@ -278,6 +279,7 @@ onUnmounted(() => {
 })
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const dosyaInput = ref(null)
 const belgeler = ref([])
 const belgeYukleniyor = ref(false)
@@ -290,7 +292,7 @@ const gonderEmail = async () => {
     await faturaAPI.gonderEmail(fatura.value.id)
     toast.add({ severity: 'success', summary: 'Gönderildi', detail: 'Fatura PDF e-posta ile iletildi', life: 3000 })
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'E-posta gönderilemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'E-posta gönderilemedi')
   }
   emailGonderiliyor.value = false
 }
@@ -311,7 +313,7 @@ const dosyaSecildi = async (e) => {
     toast.add({ severity: 'success', summary: 'Eklendi', detail: 'Belge yüklendi.', life: 3000 })
     await belgeleriYukle()
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Belge yüklenemedi.', life: 5000 })
+    toastBildirim.hata('Belge yüklenemedi.')
   } finally {
     belgeYukleniyor.value = false
     e.target.value = ''
@@ -331,7 +333,7 @@ const belgeIndir = async (b) => {
     link.remove()
     window.URL.revokeObjectURL(blobUrl)
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Belge indirilemedi.', life: 5000 })
+    toastBildirim.hata('Belge indirilemedi.')
   }
 }
 
@@ -341,7 +343,7 @@ const belgeSil = async (id) => {
     belgeler.value = belgeler.value.filter(b => b.id !== id)
     toast.add({ severity: 'success', summary: 'Silindi', detail: 'Belge silindi.', life: 3000 })
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız.', life: 5000 })
+    toastBildirim.hata('Silme başarısız.')
   }
 }
 

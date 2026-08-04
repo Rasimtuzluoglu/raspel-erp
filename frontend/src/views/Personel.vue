@@ -307,10 +307,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const personeller = ref([])
@@ -335,7 +335,7 @@ onMounted(async () => {
     personeller.value = pR.data?.content || pR.data || []
     tumIzinler.value = iR.data?.content || iR.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Personel verileri yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel verileri yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
@@ -369,7 +369,7 @@ const personelKaydet = async () => {
     personelDialog.value = false
     const r2 = await personelAPI.getAll(); personeller.value = r2.data?.content || r2.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Personel kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }
@@ -386,7 +386,7 @@ const personelSil = (data) => {
         await personelAPI.delete(data.id)
         personeller.value = personeller.value.filter(p => p.id !== data.id)
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Personel silinirken hata oluştu', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel silinirken hata oluştu')
       }
     },
     reject: () => {}
@@ -408,7 +408,7 @@ const izinKaydet = async () => {
     izinDialog.value = false
     const r3 = await personelIzinAPI.getAll(); tumIzinler.value = r3.data?.content || r3.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İzin kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İzin kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }

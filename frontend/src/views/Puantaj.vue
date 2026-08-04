@@ -152,10 +152,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { puantajAPI, personelAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const personelList = ref([])
@@ -175,7 +177,7 @@ onMounted(async () => {
     personelList.value = personelRes.data || []
     if (personelList.value.length) seciliPersonelId.value = personelList.value[0].id
     await loadData()
-  } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Personel listesi yüklenemedi', life: 5000 }) }
+  } catch { toastBildirim.hata('Personel listesi yüklenemedi') }
 })
 
 const loadData = async () => {
@@ -186,7 +188,7 @@ const loadData = async () => {
     const bit = filtreBitis.value?.toISOString().split('T')[0]
     const r = await puantajAPI.getByPersonel(seciliPersonelId.value, bas, bit)
     list.value = r.data || []
-  } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Puantaj verileri yüklenemedi', life: 5000 }) }
+  } catch { toastBildirim.hata('Puantaj verileri yüklenemedi') }
   yukleniyor.value = false
 }
 
@@ -201,14 +203,14 @@ const dialogAc = (data) => {
 }
 
 const kaydet = async () => {
-  if (!form.value.personelId) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Personel seçiniz', life: 5000 }); return }
+  if (!form.value.personelId) { toastBildirim.uyari('Personel seçiniz'); return }
   kaydediliyor.value = true
   try {
     const payload = { ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }
-    if (duzenleme.value) { await puantajAPI.update(form.value.id, payload); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Puantaj güncellendi', life: 3000 }) }
-    else { await puantajAPI.create(payload); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Puantaj eklendi', life: 3000 }) }
+    if (duzenleme.value) { await puantajAPI.update(form.value.id, payload); toastBildirim.basarili('Puantaj güncellendi') }
+    else { await puantajAPI.create(payload); toastBildirim.basarili('Puantaj eklendi') }
     dialog.value = false; await loadData()
-  } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
+  } catch { toastBildirim.hata('İşlem başarısız') }
   kaydediliyor.value = false
 }
 
@@ -217,7 +219,7 @@ const sil = (data) => {
     message: 'Bu kaydı silmek istediğinize emin misiniz?', header: 'Onay', icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try { await puantajAPI.delete(data.id); await loadData(); toast.add({ severity: 'success', summary: 'Silindi', life: 3000 }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
+      catch { toastBildirim.hata('Silme başarısız') }
     }
   })
 }

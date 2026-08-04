@@ -13,6 +13,7 @@
           :src="sirketLogo"
           class="brand-logo"
           alt="logo"
+          loading="lazy"
         >
         <div
           v-else
@@ -124,6 +125,7 @@
               v-if="authStore.kullanici?.avatarUrl"
               :src="authStore.kullanici.avatarUrl"
               :alt="authStore.kullanici?.displayName"
+              loading="lazy"
             >
             <span
               v-else

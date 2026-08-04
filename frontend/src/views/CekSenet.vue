@@ -177,10 +177,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { cekSenetAPI, cariHesapAPI } from '../api/index.js'
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const list = ref([])
@@ -193,7 +193,7 @@ const form = ref({ tur: 'CEK', cariHesapId: null, bankaAdi: '', cekNo: '', vadeT
 onMounted(async () => {
   yukleniyor.value = true
   try { const [r, c] = await Promise.all([cekSenetAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data?.content || r.data || []; cariler.value = c.data?.content || c.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Çek/Senet listesi yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet listesi yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
@@ -209,13 +209,13 @@ const kaydet = async () => {
     await cekSenetAPI.create({ ...form.value, vadeTarihi: form.value.vadeTarihi?.toISOString().split('T')[0] })
     dialog.value = false; const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Çek/Senet kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet kaydedilirken hata oluştu')
   } kaydediliyor.value = false
 }
 
 const durumGuncelle = async (data, durum) => {
   try { await cekSenetAPI.durumGuncelle(data.id, durum); const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
 }
 
@@ -228,7 +228,7 @@ const sil = (data) => {
     rejectLabel: 'İptal',
     accept: async () => {
       try { await cekSenetAPI.delete(data.id); list.value = list.value.filter(x => x.id !== data.id) } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Çek/Senet silinirken hata oluştu', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet silinirken hata oluştu')
       }
     },
     reject: () => {}

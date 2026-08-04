@@ -7,7 +7,8 @@ import com.raspel.erp.service.envanter.StokService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,10 +32,9 @@ public class StokController {
     @Operation(summary = "Tüm stokları getir (sayfalı)", description = "Tüm stokları sayfalı olarak listeler")
     public ResponseEntity<Page<StokDTO>> tumu(
             HttpServletRequest request,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(stokService.tumunuGetir(sirketId, PageRequest.of(page, size)));
+        return ResponseEntity.ok(stokService.tumunuGetir(sirketId, pageable));
     }
 
     @GetMapping("/ara")

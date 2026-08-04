@@ -335,12 +335,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 
@@ -369,7 +369,7 @@ const satislariYukle = async () => {
     const r = await faturaAPI.getAll()
     satislar.value = (r.data?.content || r.data || []).filter(f => f.tur === 'SATIS')
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Satışlar yüklenemedi', life: 5000 })
+    toastBildirim.hata('Satışlar yüklenemedi')
   }
 }
 
@@ -398,7 +398,7 @@ const urunEkle = () => {
   const u = stokStore.stoklar.find(s => s.id === seciliUrun.value)
   if (!u) return
   if (u.miktar < yeniUrunAdet.value) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: `Yetersiz stok! Mevcut: ${u.miktar} ${u.birim || 'Adet'}`, life: 5000 })
+    toastBildirim.uyari(`Yetersiz stok! Mevcut: ${u.miktar} ${u.birim || 'Adet'}`)
     return
   }
   const brf = yeniUrunFiyat.value || u.fiyat
@@ -432,11 +432,11 @@ const openSatis = () => {
 
 const satisiTamamla = async () => {
   if (satisModu.value === 'SATIS' && !satisForm.value.cariHesapId) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Müşteri seçiniz', life: 5000 })
+    toastBildirim.uyari('Müşteri seçiniz')
     return
   }
   if (satisForm.value.kalemler.length === 0) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'En az bir ürün ekleyin', life: 5000 })
+    toastBildirim.uyari('En az bir ürün ekleyin')
     return
   }
   saving.value = true
@@ -458,12 +458,12 @@ const satisiTamamla = async () => {
     }
     await faturaAPI.create(payload)
     const msg = durum === 'TEKLIF' ? 'Teklif kaydedildi' : 'Satış tamamlandı ve stok düşüldü'
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: msg, life: 5000 })
+    toastBildirim.basarili(msg)
     showSatisDialog.value = false
     await satislariYukle()
   } catch (err) {
     const msg = err.response?.data?.message || 'Satış başarısız'
-    toast.add({ severity: 'error', summary: 'Hata', detail: msg, life: 5000 })
+    toastBildirim.hata(msg)
   } finally {
     saving.value = false
   }
@@ -476,7 +476,7 @@ const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',mo
 const printTermalFis = (satisData) => {
   const fisWindow = window.open('', '_blank', 'width=400,height=600')
   if (!fisWindow) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Pencere açılamadı. Pop-up engelleyicinizi kontrol edin.', life: 5000 })
+    toastBildirim.hata('Pencere açılamadı. Pop-up engelleyicinizi kontrol edin.')
     return
   }
 

@@ -198,12 +198,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { raporAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import SelectButton from 'primevue/selectbutton'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 
 const donem = ref(new Date().toISOString().slice(0, 7))
 const kdvBeyanname = ref(null)
@@ -218,7 +218,7 @@ onMounted(yukle)
 
 const yukle = async () => {
   if (!/^\d{4}-\d{2}$/.test(donem.value)) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Dönemi YYYY-MM formatında girin', life: 3000 }); return
+    toastBildirim.uyari('Dönemi YYYY-MM formatında girin'); return
   }
   try {
     const [kdv, bs, ba] = await Promise.all([
@@ -230,7 +230,7 @@ const yukle = async () => {
     bsRapor.value = bs.data
     baRapor.value = ba.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Rapor alınamadı', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Rapor alınamadı')
   }
 }
 </script>

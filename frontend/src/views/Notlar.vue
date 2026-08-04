@@ -168,10 +168,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useNotStore } from '../stores/notStore.js'
 import FormField from '../components/FormField.vue'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const store = useNotStore()
 
 const onemSecenek = [
@@ -234,7 +236,7 @@ const kaydet = async () => {
     }
     dialogGoster.value = false
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu.', life: 5000 })
+    toastBildirim.hata('İşlem başarısız oldu.')
   } finally {
     kaydediliyor.value = false
   }
@@ -252,7 +254,7 @@ const sil = async (id) => {
       geriAlZamanlayici = setTimeout(() => { geriAlGoster.value = false; silinenSon.value = null }, 8000)
     }
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız.', life: 5000 })
+    toastBildirim.hata('Silme başarısız.')
   }
 }
 
@@ -262,7 +264,7 @@ const geriAl = async () => {
     await store.addNot({ baslik: silinenSon.value.baslik, icerik: silinenSon.value.icerik, onemDerecesi: silinenSon.value.onemDerecesi, renk: silinenSon.value.renk })
     toast.add({ severity: 'success', summary: 'Geri Alındı', detail: 'Not geri yüklendi.', life: 3000 })
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Geri alma başarısız.', life: 5000 })
+    toastBildirim.hata('Geri alma başarısız.')
   } finally {
     geriAlGoster.value = false
     silinenSon.value = null

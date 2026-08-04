@@ -128,10 +128,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { masrafAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const yukleniyor = ref(false)
@@ -154,7 +156,7 @@ const formatDate = (d) => {
 onMounted(async () => {
   yukleniyor.value = true
   try { const r = await masrafAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Masraflar yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Masraflar yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -171,15 +173,15 @@ const kaydet = async () => {
     const payload = { ...form.value, tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih }
     if (duzenleme.value) {
       await masrafAPI.update(form.value.id, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Masraf güncellendi', life: 3000 })
+      toastBildirim.basarili('Masraf güncellendi')
     } else {
       await masrafAPI.create(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Masraf oluşturuldu', life: 3000 })
+      toastBildirim.basarili('Masraf oluşturuldu')
     }
     dialog.value = false
     const r = await masrafAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -197,7 +199,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Masraf silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

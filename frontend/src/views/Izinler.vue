@@ -117,11 +117,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
 import { personelIzinAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const authStore = useAuthStore()
 
@@ -159,7 +161,7 @@ onMounted(async () => {
     const r = await personelIzinAPI.getAll()
     tumIzinler.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -173,9 +175,9 @@ const onayla = (data) => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
         const r = await personelIzinAPI.getAll(); tumIzinler.value = r.data?.content || r.data || []
-        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin onaylandı', life: 5000 })
+        toastBildirim.basarili('İzin onaylandı')
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
       }
     }
   })
@@ -190,9 +192,9 @@ const reddet = (data) => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
         const r = await personelIzinAPI.getAll(); tumIzinler.value = r.data?.content || r.data || []
-        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin reddedildi', life: 5000 })
+        toastBildirim.basarili('İzin reddedildi')
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
       }
     }
   })
@@ -211,7 +213,7 @@ const sil = (data) => {
         tumIzinler.value = tumIzinler.value.filter(i => i.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'İzin kaydı silindi', life: 5000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

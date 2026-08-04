@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
@@ -26,18 +25,17 @@ public class PersonelIzinService {
 
     @Transactional(readOnly = true)
     public Page<PersonelIzinDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        Map<Long, String> personelHaritasi = personelRepository.findAll().stream()
+        Map<Long, String> personelHaritasi = personelRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).stream()
                 .collect(Collectors.toMap(
                         p -> p.getId(),
                         p -> p.getAd() + " " + p.getSoyad()
                 ));
-        List<Long> personelIds = personelRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).stream()
-                .map(p -> p.getId()).collect(Collectors.toList());
-        List<PersonelIzinDTO> list = izinRepository.findAll().stream()
-                .filter(i -> personelIds.contains(i.getPersonelId()))
-                .map(i -> entityToDTO(i, personelHaritasi))
-                .collect(Collectors.toList());
-        return new PageImpl<>(list, pageable, list.size());
+        List<Long> personelIds = new java.util.ArrayList<>(personelHaritasi.keySet());
+        if (personelIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return izinRepository.findByPersonelIdIn(personelIds, pageable)
+                .map(i -> entityToDTO(i, personelHaritasi));
     }
 
     @Transactional(readOnly = true)

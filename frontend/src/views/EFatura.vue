@@ -166,10 +166,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { eFaturaAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 
 const list = ref([])
 const faturalar = ref([])
@@ -195,7 +197,7 @@ const yukle = async () => {
     const r = await eFaturaAPI.getTumu()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'E-Faturalar yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'E-Faturalar yüklenemedi')
   }
   yukleniyor.value = false
 }
@@ -215,16 +217,16 @@ const olusturDialogAc = () => {
 
 const olustur = async () => {
   if (!olusturForm.value.faturaId) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Fatura seçiniz', life: 3000 }); return
+    toastBildirim.uyari('Fatura seçiniz'); return
   }
   kaydediliyor.value = true
   try {
     await eFaturaAPI.olustur(olusturForm.value.faturaId, olusturForm.value.senaryo, olusturForm.value.tip)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'E-Fatura taslağı oluşturuldu', life: 3000 })
+    toastBildirim.basarili('E-Fatura taslağı oluşturuldu')
     olusturDialog.value = false
     yukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Oluşturma başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Oluşturma başarısız')
   }
   kaydediliyor.value = false
 }
@@ -235,7 +237,7 @@ const gibGonder = async (data) => {
     toast.add({ severity: 'success', summary: 'Gönderildi', detail: 'E-Fatura GİB\'e iletildi', life: 3000 })
     yukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Gönderim başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Gönderim başarısız')
   }
 }
 
@@ -250,7 +252,7 @@ const xmlIndir = async (data) => {
     a.click()
     URL.revokeObjectURL(url)
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'XML indirilemedi', life: 5000 })
+    toastBildirim.hata('XML indirilemedi')
   }
 }
 </script>

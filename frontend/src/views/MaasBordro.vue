@@ -168,10 +168,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { maasBordroAPI, personelAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const personelListesi = ref([])
@@ -199,7 +201,7 @@ onMounted(async () => {
     list.value = mR.data?.content || mR.data || []
     personelListesi.value = pR.data.map(p => ({ ...p, displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id }))
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -223,15 +225,15 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await maasBordroAPI.update(form.value.id, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Bordro güncellendi', life: 3000 })
+      toastBildirim.basarili('Bordro güncellendi')
     } else {
       await maasBordroAPI.create(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Bordro oluşturuldu', life: 3000 })
+      toastBildirim.basarili('Bordro oluşturuldu')
     }
     dialog.value = false
     const r = await maasBordroAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -250,7 +252,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Bordro silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

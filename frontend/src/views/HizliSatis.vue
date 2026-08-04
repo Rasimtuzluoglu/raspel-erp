@@ -542,6 +542,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
@@ -553,6 +554,7 @@ import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const authStore = useAuthStore()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
@@ -783,7 +785,7 @@ const musteriAra = (event) => {
 
 const musteriKaydet = async () => {
   if (!yeniMusteri.value.ad) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Ad / Firma adı zorunludur', life: 3000 })
+    toastBildirim.uyari('Ad / Firma adı zorunludur')
     return
   }
   musteriKaydediliyor.value = true
@@ -792,9 +794,9 @@ const musteriKaydet = async () => {
     seciliMusteri.value = r.data
     yeniMusteriDialog.value = false
     yeniMusteri.value = { ad: '', telefon: '', email: '', adres: '', vergiNo: '' }
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap oluşturuldu', life: 3000 })
+    toastBildirim.basarili('Cari hesap oluşturuldu')
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: e?.response?.data?.message || 'Kayıt başarısız', life: 5000 })
+    toastBildirim.hata(e?.response?.data?.message || 'Kayıt başarısız')
   }
   musteriKaydediliyor.value = false
 }
@@ -920,7 +922,7 @@ const fisiYazdir = () => {
 
   const win = window.open('', '_blank', 'width=400,height=600')
   if (!win) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Pencere engellendi. Pop-up engelleyiciyi kapatın.', life: 5000 })
+    toastBildirim.hata('Pencere engellendi. Pop-up engelleyiciyi kapatın.')
     return
   }
   win.document.open()
@@ -971,7 +973,7 @@ const satisiTamamla = async () => {
         tutar: Math.round(i.miktar * i.fiyat * 100) / 100
       }))
     })
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: `Satış tamamlandı - ${formatCurrency(genelToplam.value)}`, life: 5000 })
+    toastBildirim.basarili(`Satış tamamlandı - ${formatCurrency(genelToplam.value)}`)
     try { fisiYazdir() } catch { /* empty */ }
     sepet.value = []
     seciliMusteri.value = null
@@ -980,7 +982,7 @@ const satisiTamamla = async () => {
     odemeDurumu.value = 'tam'
     odenenTutar.value = 0
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: e?.response?.data?.message || 'Satış başarısız', life: 5000 })
+    toastBildirim.hata(e?.response?.data?.message || 'Satış başarısız')
   }
   kaydediliyor.value = false
 }

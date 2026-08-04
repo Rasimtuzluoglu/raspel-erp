@@ -761,6 +761,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -768,6 +769,7 @@ import { stokAPI, excelAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const stokStore = useStokStore()
 const cariHesapStore = useCariHesapStore()
@@ -850,7 +852,7 @@ const filtreTemizle = () => {
 const stokSec = async (s) => {
   seciliStok.value = s; seciliStokId.value = s.id
   try { const r = await stokAPI.getHareketler(s.id); stokHareketler.value = r.data }
-  catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi', life: 5000 }) }
+  catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi') }
 }
 
 const openDialog = () => {
@@ -864,13 +866,13 @@ const editStok = (s) => {
 }
 
 const saveStok = async () => {
-  if (!form.value.ad.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Ürün adı giriniz', life: 5000 }); return }
+  if (!form.value.ad.trim()) { toastBildirim.uyari('Ürün adı giriniz'); return }
   saving.value = true
   try {
-    if (editingId.value) { await stokStore.updateStok(editingId.value, form.value); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün güncellendi', life: 5000 }) }
-    else { await stokStore.addStok(form.value); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün eklendi', life: 5000 }) }
+    if (editingId.value) { await stokStore.updateStok(editingId.value, form.value); toastBildirim.basarili('Ürün güncellendi') }
+    else { await stokStore.addStok(form.value); toastBildirim.basarili('Ürün eklendi') }
     showDialog.value = false
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
   finally { saving.value = false }
 }
 
@@ -879,8 +881,8 @@ const confirmDel = (id) => {
     message: 'Bu ürünü silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] } toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ürün silindi', life: 5000 }) }
-      catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
+      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] } toastBildirim.basarili('Ürün silindi') }
+      catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
     }
   })
 }
@@ -924,7 +926,7 @@ const batchCsvExport = () => {
 }
 
 const saveHareket = async () => {
-  if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli miktar giriniz', life: 5000 }); return }
+  if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) { toastBildirim.uyari('Geçerli miktar giriniz'); return }
   saving.value = true
   try {
     await stokAPI.addHareket(seciliStokId.value, {
@@ -934,8 +936,8 @@ const saveHareket = async () => {
     })
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
     stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
-    showHareketDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'İşlem başarısız', life: 5000 }) }
+    showHareketDialog.value = false; toastBildirim.basarili('Hareket eklendi')
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
   finally { saving.value = false }
 }
 
@@ -944,8 +946,8 @@ const delHareket = async (id) => {
     await stokAPI.deleteHareket(id)
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
     stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Silme başarısız', life: 5000 }) }
+    toastBildirim.basarili('Hareket silindi')
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
 }
 
 const batchFiyatDialog = ref(false)
@@ -966,7 +968,7 @@ const batchFiyatUygula = async () => {
   }
   await stokStore.getAll({ size: 1000 })
   batchFiyatDialog.value = false
-  toast.add({ severity: 'success', summary: 'Başarılı', detail: `${guncellenen} ürün güncellendi`, life: 5000 })
+  toastBildirim.basarili(`${guncellenen} ürün güncellendi`)
   batchLoading.value = false
 }
 

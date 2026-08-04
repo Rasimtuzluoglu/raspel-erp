@@ -260,10 +260,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { projeAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const yukleniyor = ref(false)
@@ -275,7 +277,7 @@ const form = ref({ ad: '', aciklama: '', baslangic: new Date(), bitis: null, sor
 const gorevForm = ref({ ad: '', aciklama: '', atanan: '', baslangic: new Date(), bitis: null })
 
 const hataGoster = (err) => {
-  toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Bir hata oluştu', life: 5000 })
+  toastBildirim.hata(err?.response?.data?.message || err?.message || 'Bir hata oluştu')
 }
 
 onMounted(async () => {
@@ -291,7 +293,7 @@ const kaydet = async () => {
     await projeAPI.create({ ...form.value, baslangic: form.value.baslangic?.toISOString().split('T')[0], bitis: form.value.bitis?.toISOString().split('T')[0] })
     dialog.value = false
     const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Proje oluşturuldu', life: 3000 })
+    toastBildirim.basarili('Proje oluşturuldu')
   } catch (e) { hataGoster(e) }
   kaydediliyor.value = false
 }
@@ -299,7 +301,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await projeAPI.durumGuncelle(data.id, durum)
     const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Durum güncellendi', life: 3000 })
+    toastBildirim.basarili('Durum güncellendi')
   } catch (e) { hataGoster(e) }
 }
 const sil = (data) => {
@@ -327,14 +329,14 @@ const gorevKaydet = async () => {
     const g = { ...gorevForm.value, baslangic: gorevForm.value.baslangic?.toISOString().split('T')[0], bitis: gorevForm.value.bitis?.toISOString().split('T')[0] }
     await projeAPI.gorevEkle(seciliProje.value.id, g)
     gorevDialog.value = false; const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Görev eklendi', life: 3000 })
+    toastBildirim.basarili('Görev eklendi')
   } catch (e) { hataGoster(e) } kaydediliyor.value = false
 }
 const gorevTamamla = async (g) => {
   try {
     await projeAPI.gorevDurumGuncelle(g.id, 'TAMAMLANDI')
     const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Görev tamamlandı', life: 3000 })
+    toastBildirim.basarili('Görev tamamlandı')
   } catch (e) { hataGoster(e) }
 }
 

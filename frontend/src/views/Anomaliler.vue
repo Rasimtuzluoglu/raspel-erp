@@ -68,9 +68,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { apiClient } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const yukleniyor = ref(false)
 const anomaliler = ref([])
 
@@ -85,7 +87,7 @@ const anomalileriYukle = async () => {
       toast.add({ severity: 'success', summary: 'Temiz', detail: 'Hiçbir mükerrer kayıt veya anomaliye rastlanmadı.', life: 3000 })
     }
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Anomaliler taranırken hata oluştu.', life: 5000 })
+    toastBildirim.hata('Anomaliler taranırken hata oluştu.')
   } finally {
     yukleniyor.value = false
   }

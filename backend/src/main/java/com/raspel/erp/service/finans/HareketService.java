@@ -39,6 +39,7 @@ public class HareketService {
     /**
      * Belirli bir cari hesaba ait hareketleri getir
      */
+    @Transactional(readOnly = true)
     public List<HareketDTO> cariHesapHareketleriGetir(Long cariHesapId) {
         log.debug("Cari hesap hareketleri getiriliyor - ID: {}", cariHesapId);
         
@@ -56,6 +57,7 @@ public class HareketService {
     /**
      * Son n hareketi getir (Dashboard için)
      */
+    @Transactional(readOnly = true)
     public List<HareketDTO> sonHareketleriGetir(int limit) {
         log.debug("Son {} hareket getiriliyor", limit);
         Pageable pageable = PageRequest.of(0, limit);
@@ -132,22 +134,20 @@ public class HareketService {
      * Tarih aralığına göre hareketleri filtrele
      */
     @Transactional(readOnly = true)
-    public List<HareketDTO> hareketleriFiltrele(Long cariHesapId, LocalDate baslangic, LocalDate bitis) {
+    public Page<HareketDTO> hareketleriFiltrele(Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable) {
         log.debug("Hareketler filtreleniyor - Cari: {}, Tarih: {} - {}", cariHesapId, baslangic, bitis);
 
         if (baslangic == null) baslangic = LocalDate.of(2000, 1, 1);
         if (bitis == null) bitis = LocalDate.now().plusDays(1);
 
-        List<Hareket> sonuc;
+        Page<Hareket> sonuc;
         if (cariHesapId != null) {
-            sonuc = hareketRepository.findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(cariHesapId, baslangic, bitis);
+            sonuc = hareketRepository.findByCariHesapIdAndHareketTarihiBetween(cariHesapId, baslangic, bitis, pageable);
         } else {
-            sonuc = hareketRepository.findByHareketTarihiBetweenOrderByHareketTarihiDesc(baslangic, bitis);
+            sonuc = hareketRepository.findByHareketTarihiBetween(baslangic, bitis, pageable);
         }
 
-        return sonuc.stream()
-                .map(this::entityDTOyeCevir)
-                .collect(Collectors.toList());
+        return sonuc.map(this::entityDTOyeCevir);
     }
 
     /**

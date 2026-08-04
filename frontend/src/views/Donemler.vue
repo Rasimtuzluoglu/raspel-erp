@@ -141,10 +141,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { donemAPI, sirketAPI } from '../api/index.js'
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const donemler = ref([])
@@ -166,7 +166,7 @@ onMounted(async () => {
       await donemleriYukle()
     }
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu')
   }
 })
 
@@ -177,7 +177,7 @@ const donemleriYukle = async () => {
     const r = await donemAPI.getBySirket(seciliSirketId.value)
     donemler.value = r.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Dönemler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Dönemler yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 }
@@ -201,7 +201,7 @@ const kaydet = async () => {
     dialog.value = false
     await donemleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Dönem kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Dönem kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }
@@ -218,7 +218,7 @@ const sil = (data) => {
         await donemAPI.delete(data.id)
         await donemleriYukle()
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Dönem silinirken hata oluştu', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Dönem silinirken hata oluştu')
       }
     },
     reject: () => {}

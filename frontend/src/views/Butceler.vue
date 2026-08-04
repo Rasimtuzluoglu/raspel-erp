@@ -158,10 +158,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { butceAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const yukleniyor = ref(false)
@@ -181,7 +183,7 @@ const formatCurrency = (v) => {
 onMounted(async () => {
   yukleniyor.value = true
   try { const r = await butceAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Bütçeler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Bütçeler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -197,15 +199,15 @@ const kaydet = async () => {
   try {
     if (duzenleme.value) {
       await butceAPI.update(form.value.id, form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Bütçe güncellendi', life: 3000 })
+      toastBildirim.basarili('Bütçe güncellendi')
     } else {
       await butceAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Bütçe oluşturuldu', life: 3000 })
+      toastBildirim.basarili('Bütçe oluşturuldu')
     }
     dialog.value = false
     const r = await butceAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -223,7 +225,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Bütçe silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

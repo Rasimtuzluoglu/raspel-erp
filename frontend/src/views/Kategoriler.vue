@@ -97,11 +97,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const kategoriStore = useKategoriStore()
 
@@ -114,10 +114,10 @@ onMounted(() => kategoriStore.getAllKategoriler())
 const openDialog = () => { form.value = { ad: '', tur: '' }; showDialog.value = true }
 
 const save = async () => {
-  if (!form.value.ad.trim() || !form.value.tur) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm alanları doldurun', life: 5000 }); return }
+  if (!form.value.ad.trim() || !form.value.tur) { toastBildirim.uyari('Tüm alanları doldurun'); return }
   saving.value = true
-  try { await kategoriStore.addKategori(form.value); showDialog.value = false; toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kategori eklendi', life: 5000 }) }
-  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
+  try { await kategoriStore.addKategori(form.value); showDialog.value = false; toastBildirim.basarili('Kategori eklendi') }
+  catch { toastBildirim.hata('İşlem başarısız') }
   finally { saving.value = false }
 }
 
@@ -126,8 +126,8 @@ const confirmDel = (id) => {
     message: 'Bu kategoriyi silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kategoriStore.deleteKategori(id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kategori silindi', life: 5000 }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
+      try { await kategoriStore.deleteKategori(id); toastBildirim.basarili('Kategori silindi') }
+      catch { toastBildirim.hata('Silme başarısız') }
     }
   })
 }

@@ -420,6 +420,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -434,6 +435,7 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 
 const router = useRouter()
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const faturaStore = useFaturaStore()
 const cariHesapStore = useCariHesapStore()
@@ -482,7 +484,7 @@ onMounted(async () => {
       stokStore.getAll()
     ])
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata('Veriler yüklenirken hata oluştu')
   } finally {
     loading.value = false
   }
@@ -594,12 +596,12 @@ const closeDialog = () => { showDialog.value = false }
 
 const saveFatura = async () => {
   if (!form.value.tur) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Fatura türü seçiniz', life: 5000 })
+    toastBildirim.uyari('Fatura türü seçiniz')
     return
   }
   const gecersiz = form.value.kalemler.some(k => !k.aciklama.trim() || !k.adet || !k.birimFiyat)
   if (gecersiz) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm kalemleri eksiksiz doldurun', life: 5000 })
+    toastBildirim.uyari('Tüm kalemleri eksiksiz doldurun')
     return
   }
 
@@ -626,17 +628,17 @@ const saveFatura = async () => {
   try {
     if (editingId.value) {
       await faturaStore.updateFatura(editingId.value, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura güncellendi', life: 5000 })
+      toastBildirim.basarili('Fatura güncellendi')
     } else {
       await faturaStore.addFatura(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura oluşturuldu', life: 5000 })
+      toastBildirim.basarili('Fatura oluşturuldu')
     }
     taslakTemizle()
     formTemizle()
     closeDialog()
   } catch (err) {
     const msg = err.response?.data?.message || 'İşlem başarısız'
-    toast.add({ severity: 'error', summary: 'Hata', detail: msg, life: 5000 })
+    toastBildirim.hata(msg)
   } finally {
     saving.value = false
   }
@@ -655,7 +657,7 @@ const pdfIndir = async (fatura) => {
     link.remove()
     window.URL.revokeObjectURL(url)
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'PDF indirilemedi', life: 5000 })
+    toastBildirim.hata('PDF indirilemedi')
   }
 }
 
@@ -667,8 +669,8 @@ const confirmKes = (id) => {
     accept: async () => {
       try {
         await faturaStore.updateDurum(id, 'KESILDI')
-        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura kesildi', life: 5000 })
-      } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
+        toastBildirim.basarili('Fatura kesildi')
+      } catch { toastBildirim.hata('İşlem başarısız') }
     }
   })
 }
@@ -681,8 +683,8 @@ const confirmIptal = (id) => {
     accept: async () => {
       try {
         await faturaStore.updateDurum(id, 'IPTAL')
-        toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fatura iptal edildi', life: 5000 })
-      } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız', life: 5000 }) }
+        toastBildirim.basarili('Fatura iptal edildi')
+      } catch { toastBildirim.hata('İşlem başarısız') }
     }
   })
 }

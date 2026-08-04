@@ -84,9 +84,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { apiClient } from '../api/index.js'
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 
@@ -107,7 +107,7 @@ const verileriYukle = async () => {
       seciliRol.value = roller.value[0]
     }
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Yetki matrisi yüklenemedi.', life: 5000 })
+    toastBildirim.hata('Yetki matrisi yüklenemedi.')
   } finally {
     yukleniyor.value = false
   }
@@ -137,9 +137,9 @@ const kaydet = async () => {
   try {
     const yetkiIds = seciliRol.value.yetkiler.map(y => y.id)
     await apiClient.put(`/yetkiler/roller/${seciliRol.value.id}`, yetkiIds)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: `${seciliRol.value.ad} yetkileri kaydedildi.`, life: 4000 })
+    toastBildirim.basarili(`${seciliRol.value.ad} yetkileri kaydedildi.`)
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Rol yetkileri güncellenemedi.', life: 5000 })
+    toastBildirim.hata('Rol yetkileri güncellenemedi.')
   } finally {
     kaydediliyor.value = false
   }

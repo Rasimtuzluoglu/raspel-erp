@@ -134,9 +134,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { importAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const stokDosya = ref(null)
 const cariDosya = ref(null)
 const stokYukleniyor = ref(false)
@@ -167,7 +169,7 @@ const aktar = async (tur) => {
     sonuc.value = res.data
     toast.add({ severity: res.data.hatalar?.length ? 'warn' : 'success', summary: 'İşlem Tamam', detail: res.data.mesaj, life: 5000 })
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Aktarma başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Aktarma başarısız')
   } finally {
     loading.value = false
   }

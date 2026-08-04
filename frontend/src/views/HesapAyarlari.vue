@@ -241,12 +241,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { kullaniciAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const authStore = useAuthStore()
 const { isDark, accentColor, applyMode, applyColor, initTheme } = useTheme()
 
@@ -286,27 +288,27 @@ const profilKaydet = async () => {
   try {
     await kullaniciAPI.beniGuncelle(profilForm.value)
     await authStore.kullaniciGuncelle()
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Profil güncellendi', life: 3000 })
+    toastBildirim.basarili('Profil güncellendi')
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Profil güncellenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Profil güncellenemedi')
   }
   kaydediliyor.value = false
 }
 
 const sifreKaydet = async () => {
   if (!sifreForm.value.mevcutSifre || !sifreForm.value.yeniSifre) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Tüm alanları doldurun', life: 3000 }); return
+    toastBildirim.uyari('Tüm alanları doldurun'); return
   }
   if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Yeni şifreler eşleşmiyor', life: 5000 }); return
+    toastBildirim.hata('Yeni şifreler eşleşmiyor'); return
   }
   kaydediliyor.value = true
   try {
     await kullaniciAPI.sifreDegistir({ mevcutSifre: sifreForm.value.mevcutSifre, yeniSifre: sifreForm.value.yeniSifre })
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şifre güncellendi', life: 3000 })
+    toastBildirim.basarili('Şifre güncellendi')
     sifreForm.value = { mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' }
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Şifre değiştirilemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Şifre değiştirilemedi')
   }
   kaydediliyor.value = false
 }
@@ -318,14 +320,14 @@ const kurulumBaslat = async () => {
     kurulumData.value = r.data
     twoFactorDurum.value = 'KURULUM'
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || '2FA kurulumu başlatılamadı', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || '2FA kurulumu başlatılamadı')
   }
   kaydediliyor.value = false
 }
 
 const ikiFakAktifEt = async () => {
   if (!dogrulamaKodu.value) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Doğrulama kodunu girin', life: 3000 }); return
+    toastBildirim.uyari('Doğrulama kodunu girin'); return
   }
   kaydediliyor.value = true
   try {
@@ -333,25 +335,25 @@ const ikiFakAktifEt = async () => {
     twoFactorDurum.value = 'ACIK'
     kurulumData.value = null
     dogrulamaKodu.value = ''
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: '2FA aktif edildi', life: 3000 })
+    toastBildirim.basarili('2FA aktif edildi')
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Kod geçersiz', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Kod geçersiz')
   }
   kaydediliyor.value = false
 }
 
 const ikiFakapat = async () => {
   if (!kapatmaKodu.value) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Doğrulama kodunu girin', life: 3000 }); return
+    toastBildirim.uyari('Doğrulama kodunu girin'); return
   }
   kaydediliyor.value = true
   try {
     await kullaniciAPI.disable2fa({ code: kapatmaKodu.value })
     twoFactorDurum.value = 'KAPALI'
     kapatmaKodu.value = ''
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: '2FA kapatıldı', life: 3000 })
+    toastBildirim.basarili('2FA kapatıldı')
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Kod geçersiz', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Kod geçersiz')
   }
   kaydediliyor.value = false
 }

@@ -116,11 +116,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { stokAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const list = ref([])
 const yukleniyor = ref(false)
 
@@ -132,7 +132,7 @@ const yukle = async () => {
     const r = await stokAPI.kritik()
     list.value = r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Kritik stoklar yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Kritik stoklar yüklenemedi')
   }
   yukleniyor.value = false
 }

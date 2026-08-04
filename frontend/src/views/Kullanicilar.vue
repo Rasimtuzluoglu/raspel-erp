@@ -35,6 +35,7 @@
               v-if="u.avatarUrl"
               :src="u.avatarUrl"
               :alt="u.displayName"
+              loading="lazy"
             >
             <span
               v-else
@@ -123,6 +124,7 @@
               v-if="avatarPreview"
               :src="avatarPreview"
               class="avatar-preview-img"
+              loading="lazy"
             >
             <span
               v-else
@@ -217,12 +219,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
 import apiClient, { kullaniciAPI, sirketAPI } from '../api/index.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const authStore = useAuthStore()
 
@@ -265,7 +267,7 @@ onMounted(async () => {
     kullanicilar.value = r.data?.content || r.data || []
     sirketListesi.value = sR.data || []
   }
-  catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Kullanıcılar veya şirketler yüklenemedi', life: 5000 }) }
+  catch { toastBildirim.hata('Kullanıcılar veya şirketler yüklenemedi') }
   finally { loading.value = false }
 })
 
@@ -300,31 +302,31 @@ const avatarYukle = async () => {
     avatarDosya.value = null
     avatarDosyaAdi.value = ''
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Avatar yüklenemedi', life: 3000 })
+    toastBildirim.hata('Avatar yüklenemedi')
     throw e
   } finally { avatarYukleniyor.value = false }
 }
 
 const save = async () => {
-  if (!form.value.displayName.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Görünen ad giriniz', life: 5000 }); return }
-  if (!editingId.value && !form.value.username.trim()) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kullanıcı adı giriniz', life: 5000 }); return }
+  if (!form.value.displayName.trim()) { toastBildirim.uyari('Görünen ad giriniz'); return }
+  if (!editingId.value && !form.value.username.trim()) { toastBildirim.uyari('Kullanıcı adı giriniz'); return }
   saving.value = true
   try {
     if (avatarDosya.value) await avatarYukle()
     if (editingId.value) {
       await kullaniciAPI.update(editingId.value, form.value)
       if (editingId.value === authStore.kullanici?.id) await authStore.kullaniciGuncelle()
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı güncellendi', life: 5000 })
+      toastBildirim.basarili('Kullanıcı güncellendi')
     } else {
-      if (!form.value.password) { toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Şifre giriniz', life: 5000 }); return }
+      if (!form.value.password) { toastBildirim.uyari('Şifre giriniz'); return }
       await kullaniciAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı oluşturuldu', life: 5000 })
+      toastBildirim.basarili('Kullanıcı oluşturuldu')
     }
     closeDialog()
     const r = await kullaniciAPI.getAll()
     kullanicilar.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err.response?.data?.message || 'İşlem başarısız')
   } finally { saving.value = false }
 }
 
@@ -333,8 +335,8 @@ const confirmDel = (id) => {
     message: 'Bu kullanıcıyı silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kullaniciAPI.delete(id); kullanicilar.value = kullanicilar.value.filter(u => u.id !== id); toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Kullanıcı silindi', life: 5000 }) }
-      catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız', life: 5000 }) }
+      try { await kullaniciAPI.delete(id); kullanicilar.value = kullanicilar.value.filter(u => u.id !== id); toastBildirim.basarili('Kullanıcı silindi') }
+      catch { toastBildirim.hata('Silme başarısız') }
     }
   })
 }

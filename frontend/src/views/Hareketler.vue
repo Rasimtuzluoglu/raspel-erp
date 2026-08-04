@@ -259,13 +259,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, excelAPI } from '../api/index.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const hareketStore = useHareketStore()
@@ -327,7 +327,7 @@ const loadData = async () => {
     tümHareketler.value = hareketler
   } catch (err) {
     error.value = 'Veriler yüklenirken hata oluştu'
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata('Veriler yüklenirken hata oluştu')
   } finally {
     loading.value = false
   }
@@ -365,17 +365,17 @@ const closeDialog = () => {
 
 const saveHareket = async () => {
   if (!form.value.cariHesapId) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari hesap seçiniz', life: 5000 })
+    toastBildirim.uyari('Cari hesap seçiniz')
     return
   }
 
   if (!form.value.tur) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Hareket türü seçiniz', life: 5000 })
+    toastBildirim.uyari('Hareket türü seçiniz')
     return
   }
 
   if (!form.value.tutar || form.value.tutar <= 0) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Geçerli bir tutar giriniz', life: 5000 })
+    toastBildirim.uyari('Geçerli bir tutar giriniz')
     return
   }
 
@@ -392,16 +392,16 @@ const saveHareket = async () => {
 
     if (editingId.value) {
       await hareketStore.updateHareket(editingId.value, hareketDTO)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket güncellendi', life: 5000 })
+      toastBildirim.basarili('Hareket güncellendi')
     } else {
       await hareketStore.addHareket(hareketDTO)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket eklendi', life: 5000 })
+      toastBildirim.basarili('Hareket eklendi')
     }
 
     tümHareketler.value = await hareketStore.getAllHareketler()
     closeDialog()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu', life: 5000 })
+    toastBildirim.hata('İşlem başarısız oldu')
   } finally {
     saving.value = false
   }
@@ -421,9 +421,9 @@ const deleteHareket = async (id) => {
   try {
     await hareketStore.deleteHareket(id)
     tümHareketler.value = await hareketStore.getAllHareketler()
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hareket silindi', life: 5000 })
+    toastBildirim.basarili('Hareket silindi')
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareket silinirken hata oluştu', life: 5000 })
+    toastBildirim.hata('Hareket silinirken hata oluştu')
   }
 }
 
@@ -435,7 +435,7 @@ const filtrele = async () => {
     const response = await hareketAPI.filtrele(params)
     tümHareketler.value = response.data?.content || response.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Filtreleme başarısız', life: 5000 })
+    toastBildirim.hata('Filtreleme başarısız')
   }
 }
 
@@ -573,4 +573,3 @@ h1 {
   margin-left: 8px;
 }
 </style>
-

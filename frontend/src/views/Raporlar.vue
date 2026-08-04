@@ -382,6 +382,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 import { raporAPI } from '../api/index.js'
@@ -389,6 +390,7 @@ import { raporAPI } from '../api/index.js'
 const dovizStore = useDovizStore()
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 
 const cariHesapStore = useCariHesapStore()
 
@@ -414,7 +416,7 @@ const ggKart = ref(null)
 const yazdir = (hedef) => {
   const icerik = hedef.value?.outerHTML || ''
   const win = window.open('', '_blank', 'width=900,height=700')
-  if (!win) { toast.add({ severity: 'error', summary: 'Hata', detail: 'Pencere engellendi', life: 4000 }); return }
+  if (!win) { toastBildirim.hata('Pencere engellendi'); return }
   win.document.write(`<html><head><title>Rapor</title><style>
     body { font-family: Arial, sans-serif; padding: 24px; color: #1e293b; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; }
@@ -470,7 +472,7 @@ onMounted(async () => {
 
 const getCariEkstre = async () => {
   if (!ekstreCariId.value) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Lütfen bir Cari Hesap seçiniz.', life: 3000 })
+    toastBildirim.uyari('Lütfen bir Cari Hesap seçiniz.')
     return
   }
   ekstreLoading.value = true
@@ -481,7 +483,7 @@ const getCariEkstre = async () => {
       bitis: formatDateForApi(ekstreBit.value)
     })
     ekstreData.value = r.data
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Cari ekstre yüklenirken hata oluştu', life: 5000 }); ekstreData.value = null }
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari ekstre yüklenirken hata oluştu'); ekstreData.value = null }
   finally { ekstreLoading.value = false }
 }
 
@@ -493,7 +495,7 @@ const getGelirGider = async () => {
       bitis: formatDateForApi(ggBit.value)
     })
     ggData.value = r.data
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Gelir/gider raporu yüklenirken hata oluştu', life: 5000 }); ggData.value = null }
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Gelir/gider raporu yüklenirken hata oluştu'); ggData.value = null }
   finally { ggLoading.value = false }
 }
 
@@ -505,14 +507,14 @@ const getKdv = async () => {
       bitis: formatDateForApi(kdvBit.value)
     })
     kdvData.value = r.data
-  } catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'KDV raporu yüklenirken hata oluştu', life: 5000 }); kdvData.value = null }
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'KDV raporu yüklenirken hata oluştu'); kdvData.value = null }
   finally { kdvLoading.value = false }
 }
 
 const getYaslandirma = async () => {
   yasLoading.value = true
   try { const r = await raporAPI.yaslandirma(); yasData.value = r.data }
-  catch (err) { toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Yaşlandırma raporu yüklenirken hata oluştu', life: 5000 }); yasData.value = null }
+  catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Yaşlandırma raporu yüklenirken hata oluştu'); yasData.value = null }
   finally { yasLoading.value = false }
 }
 

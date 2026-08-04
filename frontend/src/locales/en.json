@@ -117,6 +117,16 @@
     "new": "New record",
     "close": "Close / cancel",
     "guide": "Open this guide",
-    "closeHint": "Press Esc or ? to close."
+    "closeHint": "Press Esc or ? to close.",
+    "gotoCari": "Go to Cari",
+    "gotoFatura": "Go to Invoices",
+    "gotoStok": "Go to Stock",
+    "gotoBanka": "Go to Banks",
+    "gotoKasa": "Go to Cash",
+    "gotoPersonel": "Go to Personnel",
+    "gotoHizliSatis": "Go to Quick Sale",
+    "gotoRapor": "Go to Reports",
+    "gotoNot": "Go to Notes",
+    "gotoDashboard": "Go to Dashboard"
   }
 }

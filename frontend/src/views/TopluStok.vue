@@ -116,10 +116,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { stokAPI } from '../api/index.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const fileInput = ref(null)
 const seciliDosya = ref('')
 const csvVeri = ref([])
@@ -149,7 +149,7 @@ const csvSec = (e) => {
   sonuc.value = null
   const reader = new FileReader()
   reader.onload = (ev) => {
-    try { csvVeri.value = parseCSV(ev.target.result) } catch { toast.add({ severity: 'error', summary: 'Hata', detail: 'Dosya okunamadı', life: 5000 }) }
+    try { csvVeri.value = parseCSV(ev.target.result) } catch { toastBildirim.hata('Dosya okunamadı') }
   }
   reader.readAsText(file, 'UTF-8')
 }

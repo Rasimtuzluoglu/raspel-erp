@@ -194,11 +194,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { auditLogAPI, excelAPI } from '../api/index.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import FormField from '../components/FormField.vue'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const logs = ref([])
 const yukleniyor = ref(false)
 const sayfa = ref(0)
@@ -253,7 +255,7 @@ const yukle = async (page = 0) => {
     logs.value = r.data?.content || r.data || []
     toplamKayit.value = r.data?.totalElements || logs.value.length
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Denetim kayıtları yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Denetim kayıtları yüklenirken hata oluştu')
   } finally {
     yukleniyor.value = false
   }
@@ -281,7 +283,7 @@ const excelIndir = async () => {
     link.remove()
     window.URL.revokeObjectURL(url)
   } catch {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Excel indirilemedi', life: 5000 })
+    toastBildirim.hata('Excel indirilemedi')
   } finally {
     excelYukleniyor.value = false
   }

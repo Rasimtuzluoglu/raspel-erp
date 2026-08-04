@@ -58,9 +58,11 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 
 const router = useRouter()
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const demoVeriIsteniyor = ref(true)
 const demoYukleniyor = ref(false)
 const emit = defineEmits(['demo-loaded'])
@@ -102,7 +104,7 @@ const demoYukle = async () => {
     adimlar.forEach(a => { a.tamam = true })
     emit('demo-loaded')
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Demo veri yüklenirken hata oluştu.', life: 5000 })
+    toastBildirim.hata('Demo veri yüklenirken hata oluştu.')
   } finally {
     demoYukleniyor.value = false
   }

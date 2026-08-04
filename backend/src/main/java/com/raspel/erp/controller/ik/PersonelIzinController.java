@@ -13,8 +13,8 @@ import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 import java.util.Map;
 import com.raspel.erp.entity.ik.Personel;
@@ -30,9 +30,10 @@ public class PersonelIzinController {
 
     @GetMapping
     @Operation(summary = "Tüm izinleri getir", description = "Şirkete ait tüm personel izinlerini listeler")
-    public ResponseEntity<Page<PersonelIzinDTO>> tumu(HttpServletRequest request) {
+    public ResponseEntity<Page<PersonelIzinDTO>> tumu(HttpServletRequest request,
+                                                       @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(personelIzinService.tumunuGetir(sirketId, Pageable.unpaged()));
+        return ResponseEntity.ok(personelIzinService.tumunuGetir(sirketId, pageable));
     }
 
     @GetMapping("/personel/{personelId}")

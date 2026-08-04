@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import java.time.LocalDate;
@@ -89,7 +88,7 @@ public class HareketController {
 
     @GetMapping
     @Operation(summary = "Tüm hareketleri getir/filtrele", description = "Tüm hareketleri getirir veya filtreleme yapar")
-    public ResponseEntity<?> tumHareketleriGetir(
+    public ResponseEntity<Page<HareketDTO>> tumHareketleriGetir(
             @RequestParam(required = false) Long cariHesapId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
@@ -98,7 +97,7 @@ public class HareketController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         if (cariHesapId != null || baslangic != null || bitis != null) {
             log.info("GET /api/hareketler - Filtreleme: cariId={}, tarih={}-{}", cariHesapId, baslangic, bitis);
-            List<HareketDTO> hareketler = hareketService.hareketleriFiltrele(cariHesapId, baslangic, bitis);
+            Page<HareketDTO> hareketler = hareketService.hareketleriFiltrele(cariHesapId, baslangic, bitis, pageable);
             return ResponseEntity.ok(hareketler);
         }
         log.info("GET /api/hareketler - Tüm hareketler getiriliyor, sirketId: {}", sirketId);

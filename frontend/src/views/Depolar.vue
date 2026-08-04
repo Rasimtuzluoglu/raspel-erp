@@ -274,10 +274,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { depoAPI, subeAPI, stokAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const subeListesi = ref([])
@@ -312,7 +314,7 @@ onMounted(async () => {
     subeListesi.value = subeRes.data
     stokListesi.value = stokRes.data.content || stokRes.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -328,15 +330,15 @@ const kaydet = async () => {
   try {
     if (duzenleme.value) {
       await depoAPI.update(form.value.id, form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Depo güncellendi', life: 3000 })
+      toastBildirim.basarili('Depo güncellendi')
     } else {
       await depoAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Depo oluşturuldu', life: 3000 })
+      toastBildirim.basarili('Depo oluşturuldu')
     }
     dialog.value = false
     const r = await depoAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -354,7 +356,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Depo silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })
@@ -366,7 +368,7 @@ const stokGoruntule = async (depo) => {
     const r = await depoAPI.getStoklar(depo.id)
     depoStoklari.value = r.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Stoklar yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Stoklar yüklenemedi')
   }
 }
 
@@ -377,9 +379,9 @@ const stokEkle = async () => {
     await depoAPI.stokEkle(seciliDepo.value.id, { stokId: stokForm.value.stokId, miktar: stokForm.value.miktar })
     const r = await depoAPI.getStoklar(seciliDepo.value.id)
     depoStoklari.value = r.data
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Stok eklendi', life: 3000 })
+    toastBildirim.basarili('Stok eklendi')
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Stok ekleme başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Stok ekleme başarısız')
   }
   stokLoading.value = false
 }
@@ -391,9 +393,9 @@ const stokCikar = async () => {
     await depoAPI.stokCikar(seciliDepo.value.id, { stokId: stokForm.value.stokId, miktar: stokForm.value.miktar })
     const r = await depoAPI.getStoklar(seciliDepo.value.id)
     depoStoklari.value = r.data
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Stok çıkarıldı', life: 3000 })
+    toastBildirim.basarili('Stok çıkarıldı')
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Stok çıkarma başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Stok çıkarma başarısız')
   }
   stokLoading.value = false
 }
@@ -404,9 +406,9 @@ const transferYap = async () => {
   try {
     await depoAPI.transfer(transferForm.value)
     transferDialog.value = false
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Transfer tamamlandı', life: 3000 })
+    toastBildirim.basarili('Transfer tamamlandı')
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Transfer başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Transfer başarısız')
   }
   transferLoading.value = false
 }

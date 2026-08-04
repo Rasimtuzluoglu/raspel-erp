@@ -168,10 +168,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { stokSayimAPI, stokAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const stokListesi = ref([])
@@ -199,7 +201,7 @@ onMounted(async () => {
     list.value = sR.data?.content || sR.data || []
     stokListesi.value = stR.data.content || stR.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -226,15 +228,15 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await stokSayimAPI.update(form.value.id, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Sayım güncellendi', life: 3000 })
+      toastBildirim.basarili('Sayım güncellendi')
     } else {
       await stokSayimAPI.create(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Sayım oluşturuldu', life: 3000 })
+      toastBildirim.basarili('Sayım oluşturuldu')
     }
     dialog.value = false
     const r = await stokSayimAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -243,9 +245,9 @@ const durumGuncelle = async (data, durum) => {
   try {
     await stokSayimAPI.durumGuncelle(data.id, durum)
     const r = await stokSayimAPI.getAll(); list.value = r.data?.content || r.data || []
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: `Sayım durumu "${durum}" olarak güncellendi`, life: 3000 })
+    toastBildirim.basarili(`Sayım durumu "${durum}" olarak güncellendi`)
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Durum güncellenirken hata oluştu')
   }
 }
 
@@ -262,7 +264,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Sayım kaydı silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

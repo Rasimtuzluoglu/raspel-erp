@@ -153,10 +153,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { siparisAPI, cariHesapAPI } from '../api/index.js'
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const siparisler = ref([])
@@ -173,7 +173,7 @@ onMounted(async () => {
     siparisler.value = sR.data?.content || sR.data || []
     cariler.value = cR.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
@@ -190,7 +190,7 @@ const kaydet = async () => {
     dialog.value = false
     const r = await siparisAPI.getAll(); siparisler.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }
@@ -200,7 +200,7 @@ const durumGuncelle = async (data, durum) => {
     await siparisAPI.durumGuncelle(data.id, durum)
     const r = await siparisAPI.getAll(); siparisler.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
 }
 
@@ -216,7 +216,7 @@ const sil = (data) => {
         await siparisAPI.delete(data.id)
         siparisler.value = siparisler.value.filter(s => s.id !== data.id)
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu')
       }
     },
     reject: () => {}

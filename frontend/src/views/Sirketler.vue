@@ -194,11 +194,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { sirketAPI, uploadAPI } from '../api/index.js'
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const sirketler = ref([])
@@ -214,7 +214,7 @@ const logoYukleniyor = ref(false)
 onMounted(async () => {
   yukleniyor.value = true
   try { const r = await sirketAPI.getAll(); sirketler.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
@@ -245,7 +245,7 @@ const logoSec = async (event) => {
     const res = await uploadAPI.uploadSirketLogo(file)
     form.value.logoUrl = res.data.url
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Logo yüklenemedi', life: 5000 })
+    toastBildirim.hata('Logo yüklenemedi')
   }
   logoYukleniyor.value = false
 }
@@ -268,16 +268,16 @@ const kaydetAction = async () => {
   try {
     if (duzenleme.value) {
       await sirketAPI.update(seciliId.value, form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şirket güncellendi', life: 5000 })
+      toastBildirim.basarili('Şirket güncellendi')
     } else {
       await sirketAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şirket oluşturuldu', life: 5000 })
+      toastBildirim.basarili('Şirket oluşturuldu')
     }
     dialog.value = false
     const r = await sirketAPI.getAll()
     sirketler.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -287,7 +287,7 @@ const sil = async (data) => {
     await sirketAPI.delete(data.id)
     sirketler.value = sirketler.value.filter(s => s.id !== data.id)
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Şirket silinirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirket silinirken hata oluştu')
   }
 }
 </script>

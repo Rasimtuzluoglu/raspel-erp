@@ -51,7 +51,17 @@ const kisayollar = [
   { kod: 'yazdir', tuslar: ['Ctrl', 'P'], aciklamaAnahtar: 'shortcuts.print' },
   { kod: 'yeni', tuslar: ['F2'], aciklamaAnahtar: 'shortcuts.new' },
   { kod: 'iptal', tuslar: ['Esc'], aciklamaAnahtar: 'shortcuts.close' },
-  { kod: 'rehber', tuslar: ['?'], aciklamaAnahtar: 'shortcuts.guide' }
+  { kod: 'rehber', tuslar: ['?'], aciklamaAnahtar: 'shortcuts.guide' },
+  { kod: 'gezin-cari', tuslar: ['g', 'c'], aciklamaAnahtar: 'shortcuts.gotoCari' },
+  { kod: 'gezin-fatura', tuslar: ['g', 'f'], aciklamaAnahtar: 'shortcuts.gotoFatura' },
+  { kod: 'gezin-stok', tuslar: ['g', 's'], aciklamaAnahtar: 'shortcuts.gotoStok' },
+  { kod: 'gezin-banka', tuslar: ['g', 'b'], aciklamaAnahtar: 'shortcuts.gotoBanka' },
+  { kod: 'gezin-kasa', tuslar: ['g', 'k'], aciklamaAnahtar: 'shortcuts.gotoKasa' },
+  { kod: 'gezin-personel', tuslar: ['g', 'p'], aciklamaAnahtar: 'shortcuts.gotoPersonel' },
+  { kod: 'gezin-hizli-satis', tuslar: ['g', 'h'], aciklamaAnahtar: 'shortcuts.gotoHizliSatis' },
+  { kod: 'gezin-rapor', tuslar: ['g', 'r'], aciklamaAnahtar: 'shortcuts.gotoRapor' },
+  { kod: 'gezin-not', tuslar: ['g', 'n'], aciklamaAnahtar: 'shortcuts.gotoNot' },
+  { kod: 'gezin-dashboard', tuslar: ['g', 'd'], aciklamaAnahtar: 'shortcuts.gotoDashboard' }
 ]
 
 const tusHandler = (e) => {

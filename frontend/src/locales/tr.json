@@ -117,6 +117,16 @@
     "new": "Yeni kayıt",
     "close": "Kapat / iptal",
     "guide": "Bu rehberi aç",
-    "closeHint": "Kapatmak için Esc veya ? tuşunu kullanın."
+    "closeHint": "Kapatmak için Esc veya ? tuşunu kullanın.",
+    "gotoCari": "Cari hesaplara git",
+    "gotoFatura": "Faturalara git",
+    "gotoStok": "Stoklara git",
+    "gotoBanka": "Bankalara git",
+    "gotoKasa": "Kasaya git",
+    "gotoPersonel": "Personele git",
+    "gotoHizliSatis": "Hızlı satışa git",
+    "gotoRapor": "Raporlara git",
+    "gotoNot": "Notlara git",
+    "gotoDashboard": "Dashboard'a git"
   }
 }

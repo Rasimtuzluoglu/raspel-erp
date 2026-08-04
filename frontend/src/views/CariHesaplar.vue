@@ -515,6 +515,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
@@ -524,6 +525,7 @@ import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const hareketStore = useHareketStore()
@@ -583,7 +585,7 @@ const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu
     if (aramaMetni.value.trim()) params.q = aramaMetni.value.trim()
     await cariHesapStore.getAllCariHesaplar(params)
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesaplar yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata('Cari hesaplar yüklenirken hata oluştu')
   } finally {
     loading.value = false
   }
@@ -645,7 +647,7 @@ const editCariHesap = (cariHesap) => {
 const saveCariHesap = async () => {
   submitted.value = true
   if (!form.value.ad.trim()) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Cari adı boş olamaz', life: 5000 })
+    toastBildirim.uyari('Cari adı boş olamaz')
     return
   }
 
@@ -653,14 +655,14 @@ const saveCariHesap = async () => {
   try {
     if (editingId.value) {
       await cariHesapStore.updateCariHesap(editingId.value, form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap güncellendi', life: 5000 })
+      toastBildirim.basarili('Cari hesap güncellendi')
     } else {
       await cariHesapStore.addCariHesap(form.value)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap oluşturuldu', life: 5000 })
+      toastBildirim.basarili('Cari hesap oluşturuldu')
     }
     closeDialog()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız oldu', life: 5000 })
+    toastBildirim.hata('İşlem başarısız oldu')
   } finally {
     saving.value = false
   }
@@ -679,9 +681,9 @@ const confirmDelete = (id) => {
 const deleteCariHesap = async (id) => {
   try {
     await cariHesapStore.deleteCariHesap(id)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Cari hesap silindi', life: 5000 })
+    toastBildirim.basarili('Cari hesap silindi')
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Cari hesap silinirken hata oluştu', life: 5000 })
+    toastBildirim.hata('Cari hesap silinirken hata oluştu')
   }
 }
 
@@ -699,12 +701,12 @@ const batchSil = () => {
       )
       sonuclar.forEach(r => {
         if (r.status === 'rejected') {
-          toast.add({ severity: 'error', summary: 'Hata', detail: r.reason?.response?.data?.message || r.reason?.message || 'Cari hesap silinirken hata oluştu', life: 5000 })
+          toastBildirim.hata(r.reason?.response?.data?.message || r.reason?.message || 'Cari hesap silinirken hata oluştu')
         }
       })
       selectedCariHesaplar.value = []
       await loadCariHesaplar()
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Seçili cari hesaplar silindi', life: 5000 })
+      toastBildirim.basarili('Seçili cari hesaplar silindi')
     }
   })
 }
@@ -721,7 +723,7 @@ const viewHareketler = async (cariHesap) => {
     hareketler.value = data
     showHareketlerDialog.value = true
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Hareketler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata('Hareketler yüklenirken hata oluştu')
   }
 }
 

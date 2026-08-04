@@ -3,6 +3,7 @@ package com.raspel.erp.repository.finans;
 import com.raspel.erp.entity.finans.Hareket;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,38 +28,40 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
            "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic " +
            "GROUP BY ay ORDER BY ay", nativeQuery = true)
     List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic);
-    
-    /**
-     * Belirli bir cari hesaba ait hareketleri getir
-     */
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdOrderByHareketTarihiDesc(Long cariHesapId);
 
+    @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findBySirketIdOrderByHareketTarihiDesc(Long sirketId, Pageable pageable);
-    
-    /**
-     * Son n hareketi getir
-     */
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findAllByOrderByHareketTarihiDescOlusturmaTarihiDesc(Pageable pageable);
 
-    /**
-     * Tüm hareketleri tarihe göre sıralı getir
-     */
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findAllByOrderByHareketTarihiDesc();
 
-    /**
-     * Belirli bir cari hesaba ait hareket sayısı
-     */
+    @Override
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Hareket> findAll();
+
     long countByCariHesapId(Long cariHesapId);
 
-    /**
-     * Tarih aralığına göre hareketleri getir
-     */
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByHareketTarihiBetweenOrderByHareketTarihiDesc(LocalDate baslangic, LocalDate bitis);
 
-    /**
-     * Cari hesap ve tarih aralığına göre hareketleri getir
-     */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    Page<Hareket> findByHareketTarihiBetween(LocalDate baslangic, LocalDate bitis, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(Long cariHesapId, LocalDate baslangic, LocalDate bitis);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
+    Page<Hareket> findByCariHesapIdAndHareketTarihiBetween(Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(Long cariHesapId, LocalDate baslangic, LocalDate bitis);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByHareketTarihiBetweenOrderByHareketTarihiAsc(LocalDate baslangic, LocalDate bitis);
 }

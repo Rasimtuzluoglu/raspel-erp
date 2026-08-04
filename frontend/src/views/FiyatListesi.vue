@@ -152,10 +152,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { fiyatListesiAPI, stokAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const stokListesi = ref([])
@@ -183,7 +185,7 @@ onMounted(async () => {
     list.value = fR.data?.content || fR.data || []
     stokListesi.value = sR.data.content || sR.data
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -204,15 +206,15 @@ const kaydet = async () => {
     const payload = { ...form.value, gecerlilikBaslangic: formatDateForApi(form.value.gecerlilikBaslangic), gecerlilikBitis: formatDateForApi(form.value.gecerlilikBitis) }
     if (duzenleme.value) {
       await fiyatListesiAPI.update(form.value.id, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fiyat güncellendi', life: 3000 })
+      toastBildirim.basarili('Fiyat güncellendi')
     } else {
       await fiyatListesiAPI.create(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Fiyat oluşturuldu', life: 3000 })
+      toastBildirim.basarili('Fiyat oluşturuldu')
     }
     dialog.value = false
     const r = await fiyatListesiAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -231,7 +233,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Fiyat kaydı silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })

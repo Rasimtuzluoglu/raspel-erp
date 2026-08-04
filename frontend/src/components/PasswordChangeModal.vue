@@ -67,7 +67,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { kullaniciAPI } from '../api/index.js'
 
 defineProps({
@@ -79,7 +79,7 @@ defineProps({
 
 const emit = defineEmits(['update:visible'])
 
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const sifreDegistiriliyor = ref(false)
 const sifreForm = ref({ mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' })
 
@@ -116,21 +116,21 @@ const gucEtiket = computed(() => {
 
 const sifreDegistir = async () => {
   if (!sifreForm.value.yeniSifre || sifreForm.value.yeniSifre.length < 3) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Yeni şifre en az 3 karakter olmalıdır', life: 5000 })
+    toastBildirim.uyari('Yeni şifre en az 3 karakter olmalıdır')
     return
   }
   if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Yeni şifreler eşleşmiyor', life: 5000 })
+    toastBildirim.uyari('Yeni şifreler eşleşmiyor')
     return
   }
   sifreDegistiriliyor.value = true
   try {
     await kullaniciAPI.sifreDegistir(sifreForm.value)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Şifreniz değiştirildi', life: 5000 })
+    toastBildirim.basarili('Şifreniz değiştirildi')
     sifreForm.value = { mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' }
     emit('update:visible', false)
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: e.response?.data?.message || 'Şifre değiştirilemedi', life: 5000 })
+    toastBildirim.hata(e.response?.data?.message || 'Şifre değiştirilemedi')
   } finally {
     sifreDegistiriliyor.value = false
   }

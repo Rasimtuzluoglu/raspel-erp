@@ -277,10 +277,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI } from '../api/index.js'
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const talepler = ref([])
@@ -301,7 +301,7 @@ onMounted(async () => {
 const talepleriYukle = async () => {
   taleplerYukleniyor.value = true
   try { const r = await satinalmaTalepAPI.getAll(); talepler.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Talepler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talepler yüklenirken hata oluştu')
   }
   taleplerYukleniyor.value = false
 }
@@ -309,14 +309,14 @@ const talepleriYukle = async () => {
 const siparisleriYukle = async () => {
   siparislerYukleniyor.value = true
   try { const r = await satinalmaSiparisAPI.getAll(); siparisler.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
   }
   siparislerYukleniyor.value = false
 }
 
 const carieleriYukle = async () => {
   try { const r = await cariHesapAPI.getAll(); cariler.value = r.data?.content || r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Cariler yüklenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cariler yüklenirken hata oluştu')
   }
 }
 
@@ -332,7 +332,7 @@ const talepKaydet = async () => {
     talepDialog.value = false
     await talepleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Talep kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talep kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }
@@ -342,7 +342,7 @@ const talepDurumGuncelle = async (data, durum) => {
     await satinalmaTalepAPI.durumGuncelle(data.id, durum)
     await talepleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
 }
 
@@ -358,7 +358,7 @@ const talepSil = (data) => {
         await satinalmaTalepAPI.delete(data.id)
         await talepleriYukle()
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Talep silinirken hata oluştu', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talep silinirken hata oluştu')
       }
     },
     reject: () => {}
@@ -377,7 +377,7 @@ const siparisKaydet = async () => {
     siparisDialog.value = false
     await siparisleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }
@@ -387,7 +387,7 @@ const siparisDurumGuncelle = async (data, durum) => {
     await satinalmaSiparisAPI.durumGuncelle(data.id, durum)
     await siparisleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
 }
 
@@ -403,7 +403,7 @@ const siparisSil = (data) => {
         await satinalmaSiparisAPI.delete(data.id)
         await siparisleriYukle()
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu')
       }
     },
     reject: () => {}

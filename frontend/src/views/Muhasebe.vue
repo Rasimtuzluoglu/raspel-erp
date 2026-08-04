@@ -526,6 +526,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { muhasebeAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
@@ -533,6 +534,7 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { silVeGeriAl } = useGeriAl()
 
@@ -591,7 +593,7 @@ onMounted(() => {
 const hesaplariYukle = async () => {
   yukleniyor.value = true
   try { const r = await muhasebeAPI.getHesapPlani(); hesaplar.value = r.data || [] } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Hesap planı yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Hesap planı yüklenemedi')
   }
   yukleniyor.value = false
 }
@@ -614,17 +616,17 @@ const hesapKaydet = async () => {
   const hatali = { kod: !hesapForm.value.kod?.trim(), ad: !hesapForm.value.ad?.trim() }
   hesapFormHatali.value = hatali
   if (hatali.kod || hatali.ad) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'Kod ve ad zorunludur', life: 3000 }); return
+    toastBildirim.uyari('Kod ve ad zorunludur'); return
   }
   kaydediliyor.value = true
   try {
     if (hesapDuzenleme.value) await muhasebeAPI.hesapGuncelle(hesapForm.value.id, hesapForm.value)
     else await muhasebeAPI.hesapOlustur(hesapForm.value)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Hesap kaydedildi', life: 3000 })
+    toastBildirim.basarili('Hesap kaydedildi')
     hesapDialog.value = false
     hesaplariYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -648,7 +650,7 @@ const hesapSil = (data) => {
         })
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Hesap silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })
@@ -663,7 +665,7 @@ const fisleriYukle = async () => {
     const r = await muhasebeAPI.getFisler(params)
     fisler.value = r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Fişler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Fişler yüklenemedi')
   }
   fisYukleniyor.value = false
 }
@@ -677,7 +679,7 @@ const fisDialogAc = () => {
 
 const fisKaydet = async () => {
   if (!fisForm.value.kalemler?.length) {
-    toast.add({ severity: 'warn', summary: 'Uyarı', detail: 'En az bir kalem ekleyin', life: 3000 }); return
+    toastBildirim.uyari('En az bir kalem ekleyin'); return
   }
   if (fisToplamBorc.value !== fisToplamAlacak.value) {
     toast.add({ severity: 'error', summary: 'Fiş denk değil', detail: 'Toplam borç ile alacak eşit olmalı', life: 5000 }); return
@@ -695,11 +697,11 @@ const fisKaydet = async () => {
       }))
     }
     await muhasebeAPI.fisOlustur(payload)
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Yevmiye fişi oluşturuldu', life: 3000 })
+    toastBildirim.basarili('Yevmiye fişi oluşturuldu')
     fisDialog.value = false
     fisleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Fiş kaydedilemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Fiş kaydedilemedi')
   }
   kaydediliyor.value = false
 }
@@ -710,7 +712,7 @@ const fisDetayAc = async (data) => {
     fisDetay.value = r.data
     fisDetayDialog.value = true
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Fiş detayı alınamadı', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Fiş detayı alınamadı')
   }
 }
 
@@ -725,7 +727,7 @@ const fisIptal = (data) => {
         toast.add({ severity: 'success', summary: 'İptal Edildi', detail: 'Fiş iptal edildi', life: 3000 })
         fisleriYukle()
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İptal başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'İptal başarısız')
       }
     }
   })
@@ -740,7 +742,7 @@ const mizanYukle = async () => {
     const r = await muhasebeAPI.getMizan(params)
     mizan.value = r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Mizan alınamadı', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Mizan alınamadı')
   }
   mizanYukleniyor.value = false
 }
@@ -754,7 +756,7 @@ const kebirYukle = async () => {
     const r = await muhasebeAPI.getDefteriKebir(params)
     kebir.value = r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Defter-i kebir alınamadı', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Defter-i kebir alınamadı')
   }
   kebirYukleniyor.value = false
 }

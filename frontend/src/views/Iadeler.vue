@@ -208,10 +208,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { iadeAPI, stokAPI, cariHesapAPI } from '../api/index.js'
 
 const toast = useToast()
+const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const stokList = ref([])
@@ -254,7 +256,7 @@ onMounted(async () => {
     stokList.value = stokRes.data?.content || stokRes.data || []
     cariList.value = cariRes.data?.content || cariRes.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Veriler yüklenemedi', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
   yukleniyor.value = false
 })
@@ -287,15 +289,15 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await iadeAPI.update(form.value.id, payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İade güncellendi', life: 3000 })
+      toastBildirim.basarili('İade güncellendi')
     } else {
       await iadeAPI.create(payload)
-      toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İade oluşturuldu', life: 3000 })
+      toastBildirim.basarili('İade oluşturuldu')
     }
     dialog.value = false
     const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'İşlem başarısız', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
   kaydediliyor.value = false
 }
@@ -304,9 +306,9 @@ const durumGuncelle = async (data, durum) => {
   try {
     await iadeAPI.durumGuncelle(data.id, durum)
     const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: `İade durumu "${durum}" olarak güncellendi`, life: 3000 })
+    toastBildirim.basarili(`İade durumu "${durum}" olarak güncellendi`)
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Durum güncellenirken hata oluştu', life: 5000 })
+    toastBildirim.hata(err?.response?.data?.message || 'Durum güncellenirken hata oluştu')
   }
 }
 
@@ -323,7 +325,7 @@ const sil = (data) => {
         list.value = list.value.filter(x => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'İade kaydı silindi', life: 3000 })
       } catch (err) {
-        toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || 'Silme başarısız', life: 5000 })
+        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
       }
     }
   })
