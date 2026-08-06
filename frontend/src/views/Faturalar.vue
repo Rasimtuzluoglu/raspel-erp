@@ -12,6 +12,7 @@
         />
       </template>
       <template #end>
+        <TarihHizliSecim v-model="tarihAraligi" style="margin-right:8px" />
         <Button
           label="Excel"
           icon="pi pi-file-excel"
@@ -33,7 +34,7 @@
       class="table-container"
     >
       <DataTable
-        :value="faturaStore.faturalar"
+        :value="filtrelenmisFaturalar"
         responsive-layout="scroll"
         striped-rows
         :rows="10"
@@ -145,7 +146,7 @@
         </Column>
       </DataTable>
       <EmptyState
-        v-if="faturaStore.faturalar.length === 0"
+        v-if="filtrelenmisFaturalar.length === 0"
         message="Henüz fatura yok"
         sub-message="İlk faturanızı oluşturarak satış sürecinizi başlatın."
         icon="pi pi-file"
@@ -432,6 +433,7 @@ import { excelAPI, pdfAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
+import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 
 const router = useRouter()
 const toast = useToast()
@@ -451,6 +453,7 @@ const showDialog = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
+const tarihAraligi = ref(null)
 
 const turSecenekler = [{label:'Satış',value:'SATIS'},{label:'Alış',value:'ALIS'}]
 
@@ -466,6 +469,21 @@ const urunSecimi = ref(null)
 const urunAdet = ref(1)
 
 const dialogBaslik = computed(() => editingId.value ? 'Fatura Düzenle' : 'Yeni Fatura Oluştur')
+
+const filtrelenmisFaturalar = computed(() => {
+  if (!tarihAraligi.value || tarihAraligi.value.length !== 2 || !tarihAraligi.value[0]) {
+    return faturaStore.faturalar
+  }
+  const bas = new Date(tarihAraligi.value[0])
+  bas.setHours(0, 0, 0, 0)
+  const bit = new Date(tarihAraligi.value[1])
+  bit.setHours(23, 59, 59, 999)
+  return faturaStore.faturalar.filter(f => {
+    if (!f.tarih) return false
+    const t = new Date(f.tarih)
+    return t >= bas && t <= bit
+  })
+})
 
 const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
   onRestore: () => {

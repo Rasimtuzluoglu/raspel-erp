@@ -12,6 +12,7 @@
         />
       </template>
       <template #end>
+        <TarihHizliSecim v-model="tarihAraligi" />
         <Button
           label="Excel"
           icon="pi pi-file-excel"
@@ -262,13 +263,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -283,8 +285,19 @@ const editingId = ref(null)
 const tümHareketler = ref([])
 const filtreBaslangic = ref(null)
 const filtreBitis = ref(null)
+const tarihAraligi = ref(null)
 let aramaZaman = null
 onUnmounted(() => { if (aramaZaman) clearTimeout(aramaZaman) })
+
+watch(tarihAraligi, (v) => {
+  if (v && v.length === 2 && v[0] && v[1]) {
+    filtreBaslangic.value = v[0]
+    filtreBitis.value = v[1]
+    filtrele()
+  } else if (!v || v.length === 0) {
+    filtreTemizle()
+  }
+})
 
 const form = ref({
   cariHesapId: null,

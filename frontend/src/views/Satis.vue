@@ -12,6 +12,7 @@
         />
       </template>
       <template #end>
+        <TarihHizliSecim v-model="tarihAraligi" style="margin-right:8px" />
         <span class="p-input-icon-left">
           <i class="pi pi-search" />
           <InputText
@@ -339,6 +340,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 
 const toastBildirim = useToastBildirim()
 const cariHesapStore = useCariHesapStore()
@@ -360,6 +362,8 @@ const satisForm = ref({
   kalemler: []
 })
 
+const tarihAraligi = ref(null)
+
 onMounted(async () => {
   await Promise.all([satislariYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
 })
@@ -374,9 +378,21 @@ const satislariYukle = async () => {
 }
 
 const filtrelenmisSatislar = computed(() => {
-  if (!filtre.value.trim()) return satislar.value
+  let list = satislar.value
+  if (tarihAraligi.value && tarihAraligi.value.length === 2 && tarihAraligi.value[0]) {
+    const bas = new Date(tarihAraligi.value[0])
+    bas.setHours(0, 0, 0, 0)
+    const bit = new Date(tarihAraligi.value[1])
+    bit.setHours(23, 59, 59, 999)
+    list = list.filter(f => {
+      if (!f.tarih) return false
+      const t = new Date(f.tarih)
+      return t >= bas && t <= bit
+    })
+  }
+  if (!filtre.value.trim()) return list
   const q = filtre.value.toLowerCase()
-  return satislar.value.filter(s =>
+  return list.filter(s =>
     s.faturaNumarasi?.toLowerCase().includes(q) ||
     s.cariHesapAd?.toLowerCase().includes(q)
   )

@@ -230,6 +230,25 @@
         </div>
       </div>
 
+      <!-- HIZLI AKSIYONLAR -->
+      <div
+        v-if="widgets.istatistikler.gorunur"
+        class="quick-actions"
+      >
+        <router-link to="/faturalar" class="action-card fatura">
+          <i class="pi pi-file" /><span>Yeni Fatura</span>
+        </router-link>
+        <router-link to="/hizli-satis" class="action-card satis">
+          <i class="pi pi-bolt" /><span>Hizli Satis</span>
+        </router-link>
+        <router-link to="/cari-hesaplar" class="action-card cari">
+          <i class="pi pi-user-plus" /><span>Yeni Cari</span>
+        </router-link>
+        <router-link to="/hareketler" class="action-card tahsilat">
+          <i class="pi pi-money-bill" /><span>Tahsilat/Odeme</span>
+        </router-link>
+      </div>
+
       <!-- SATIS / SIPARIS -->
       <div
         v-if="widgets.satisSiparis.gorunur"
@@ -1148,5 +1167,34 @@ const formatDate = (d) => {
 
 .chip-refresh-btn:hover {
   color: #3b82f6;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.action-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.action-card i { font-size: 1.3rem; }
+.action-card.fatura { background: linear-gradient(135deg, #4f46e5, #6366f1); }
+.action-card.satis { background: linear-gradient(135deg, #059669, #10b981); }
+.action-card.cari { background: linear-gradient(135deg, #d97706, #f59e0b); }
+.action-card.tahsilat { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
+@media (max-width: 768px) {
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
 }
 </style>

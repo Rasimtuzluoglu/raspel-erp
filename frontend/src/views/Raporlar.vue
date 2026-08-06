@@ -2,6 +2,7 @@
   <div class="raporlar-container">
     <div class="raporlar-header-bar">
       <h1>Raporlar</h1>
+      <TarihHizliSecim v-model="tarihAraligi" style="margin-right:12px" />
       <div class="rapor-doviz-secim">
         <label><i class="pi pi-dollar" /> Rapor Para Birimi:</label>
         <Dropdown
@@ -380,12 +381,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 import { raporAPI } from '../api/index.js'
+import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 
 const dovizStore = useDovizStore()
 import { safeGet, safeSet } from '../utils/safeStorage.js'
@@ -397,6 +399,7 @@ const cariHesapStore = useCariHesapStore()
 const FAVORI_ANAHTAR = 'raspel_favori_raporlar'
 const aktifSekme = ref(0)
 const favoriRaporlar = ref(safeGet(FAVORI_ANAHTAR, []))
+const tarihAraligi = ref(null)
 
 const raporFavori = (key) => favoriRaporlar.value.some(r => r.key === key)
 
@@ -456,6 +459,22 @@ const kdvLoading = ref(false)
 
 const yasData = ref(null)
 const yasLoading = ref(false)
+
+watch(tarihAraligi, (v) => {
+  if (!v || v.length !== 2 || !v[0]) return
+  if (aktifSekme.value === 0) {
+    ekstreBas.value = v[0]
+    ekstreBit.value = v[1]
+  } else if (aktifSekme.value === 1) {
+    ggBas.value = v[0]
+    ggBit.value = v[1]
+    getGelirGider()
+  } else if (aktifSekme.value === 2) {
+    kdvBas.value = v[0]
+    kdvBit.value = v[1]
+    getKdv()
+  }
+})
 
 const formatDateForApi = (d) => {
   if (!d) return ''
