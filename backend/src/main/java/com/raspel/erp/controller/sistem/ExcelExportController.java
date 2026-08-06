@@ -33,6 +33,8 @@ import com.raspel.erp.service.envanter.StokService;
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class ExcelExportController {
 
+    private static final int MAX_EXPORT_ROWS = 10000;
+
     private final ExcelExportService excelService;
     private final CariHesapService cariHesapService;
     private final FaturaService faturaService;
