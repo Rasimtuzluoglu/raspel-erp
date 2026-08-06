@@ -249,6 +249,16 @@
         </router-link>
       </div>
 
+      <!-- YEDEKLEME HATIRLATICISI -->
+      <div
+        v-if="authStore.isAdmin && yedekUyarisiGoster"
+        class="backup-reminder"
+      >
+        <i class="pi pi-save" />
+        <span>Son yedekleme 7 gunden eski. Verilerinizi guvence altina almak icin <router-link to="/yedekler">yedek alin</router-link></span>
+        <button class="reminder-close" @click="yedekUyarisiGoster = false">&times;</button>
+      </div>
+
       <!-- SATIS / SIPARIS -->
       <div
         v-if="widgets.satisSiparis.gorunur"
@@ -904,6 +914,8 @@ const bosSistem = computed(() =>
   faturaStore.faturalar.length === 0
 )
 
+const yedekUyarisiGoster = ref(true)
+
 const sonGoruntulenenler = ref([])
 const sgIkon = (tur) => yakinZamandaTurleri[tur]?.ikon || 'pi pi-history'
 const sgRenk = (tur) => yakinZamandaTurleri[tur]?.renk || '#94a3b8'
@@ -1193,6 +1205,15 @@ const formatDate = (d) => {
 .action-card.satis { background: linear-gradient(135deg, #059669, #10b981); }
 .action-card.cari { background: linear-gradient(135deg, #d97706, #f59e0b); }
 .action-card.tahsilat { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
+.backup-reminder {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; margin-bottom: 20px;
+  background: var(--yellow-50, #fefce8); border: 1px solid var(--yellow-200, #fef08a);
+  border-radius: 10px; font-size: 14px; color: var(--yellow-800, #854d0e);
+}
+.backup-reminder a { color: var(--blue-600, #2563eb); font-weight: 600; }
+.reminder-close { margin-left: auto; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--yellow-600); }
 
 @media (max-width: 768px) {
   .quick-actions { grid-template-columns: repeat(2, 1fr); }

@@ -33,7 +33,33 @@
       v-if="!loading"
       class="table-container"
     >
+      <div
+        v-if="selectedItems.length > 0"
+        class="batch-action-bar"
+      >
+        <div class="batch-info">
+          <i class="pi pi-check-square" />
+          <span><strong>{{ selectedItems.length }}</strong> kayıt seçildi</span>
+        </div>
+        <div class="batch-buttons">
+          <Button
+            label="Seçilenleri Sil"
+            icon="pi pi-trash"
+            class="p-button-danger p-button-sm"
+            :loading="topluSiliniyor"
+            @click="topluSil()"
+          />
+          <Button
+            label="Seçimi Temizle"
+            icon="pi pi-times"
+            class="p-button-text p-button-sm"
+            @click="selectedItems = []"
+          />
+        </div>
+      </div>
       <DataTable
+        v-model:selection="selectedItems"
+        selection-mode="multiple"
         :value="filtrelenmisFaturalar"
         responsive-layout="scroll"
         striped-rows
@@ -429,7 +455,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 
 const dovizStore = useDovizStore()
-import { excelAPI, pdfAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -454,6 +480,8 @@ const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
 const tarihAraligi = ref(null)
+const selectedItems = ref([])
+const topluSiliniyor = ref(false)
 
 const turSecenekler = [{label:'Satış',value:'SATIS'},{label:'Alış',value:'ALIS'}]
 
@@ -726,6 +754,22 @@ const excelIndir = async () => {
   } catch { /* silent */ }
 }
 
+const topluSil = async () => {
+  topluSiliniyor.value = true
+  try {
+    for (const item of selectedItems.value) {
+      await faturaAPI.delete(item.id)
+    }
+    toastBildirim.basarili(`${selectedItems.value.length} kayıt silindi`)
+    selectedItems.value = []
+    await faturaStore.getAllFaturalar()
+  } catch {
+    toastBildirim.hata('Silme işlemi başarısız')
+  } finally {
+    topluSiliniyor.value = false
+  }
+}
+
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '0,00 ₺'
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value)
@@ -759,4 +803,7 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .durum-badge.kesildi { background: rgba(34,197,94,0.15); color: #4ade80; }
 .durum-badge.iptal { background: rgba(148,163,184,0.1); color: #94a3b8; }
 .w-full { width: 100% !important; }
+.batch-action-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--blue-50, #eff6ff); border: 1px solid var(--blue-200, #bfdbfe); border-radius: 8px; margin-bottom: 12px; }
+.batch-info { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--blue-700, #1d4ed8); }
+.batch-buttons { display: flex; gap: 8px; }
 </style>
