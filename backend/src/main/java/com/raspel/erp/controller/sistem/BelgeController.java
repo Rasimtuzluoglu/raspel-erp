@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import com.raspel.erp.entity.ticaret.Fatura;
 
@@ -34,6 +35,20 @@ import com.raspel.erp.entity.ticaret.Fatura;
 @Slf4j
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class BelgeController {
+
+    private static final Set<String> IZIN_VERILEN_UZANTILAR = Set.of(
+        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".csv",
+        ".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp",
+        ".txt", ".rtf", ".zip"
+    );
+    private static final Set<String> IZIN_VERILEN_MIME = Set.of(
+        "application/pdf",
+        "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/csv", "text/plain", "application/rtf",
+        "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp",
+        "application/zip", "application/x-zip-compressed"
+    );
 
     private final BelgeRepository belgeRepository;
     private final Path belgeDir = Paths.get("uploads/belgeler").toAbsolutePath().normalize();
@@ -47,14 +62,19 @@ public class BelgeController {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));
         }
+        String contentType = file.getContentType();
+        String orjinalAd = file.getOriginalFilename() != null ? file.getOriginalFilename() : "dosya";
+        String uzanti = "";
+        if (orjinalAd.contains(".")) {
+            uzanti = orjinalAd.substring(orjinalAd.lastIndexOf(".")).toLowerCase();
+        }
+        if ((contentType != null && !IZIN_VERILEN_MIME.contains(contentType.toLowerCase()))
+                || !IZIN_VERILEN_UZANTILAR.contains(uzanti)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya tipi. İzin verilenler: PDF, Office, resim, metin, ZIP"));
+        }
         Long sirketId = (Long) request.getAttribute("sirketId");
         try {
             Files.createDirectories(belgeDir);
-            String orjinalAd = file.getOriginalFilename() != null ? file.getOriginalFilename() : "dosya";
-            String uzanti = "";
-            if (orjinalAd.contains(".")) {
-                uzanti = orjinalAd.substring(orjinalAd.lastIndexOf(".")).toLowerCase();
-            }
             String filename = UUID.randomUUID().toString() + uzanti;
             Path target = belgeDir.resolve(filename).normalize();
             if (!target.startsWith(belgeDir)) {
