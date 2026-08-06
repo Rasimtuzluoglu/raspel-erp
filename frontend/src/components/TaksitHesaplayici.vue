@@ -1,6 +1,6 @@
 <template>
   <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)"
-    header="Taksit Hesaplayici" :modal="false" :style="{ width: '380px' }" :draggable="false">
+    header="Taksit Hesaplayici" :modal="false" :style="{ width: '380px' }" :draggable="true" :closable="true">
     <div class="taksit-form">
       <div class="form-satir"><label>Tutar</label><InputNumber v-model="tutar" :min="0" class="w-full" /></div>
       <div class="form-satir"><label>Taksit Sayisi</label><Select v-model="taksit" :options="taksitler" class="w-full" /></div>

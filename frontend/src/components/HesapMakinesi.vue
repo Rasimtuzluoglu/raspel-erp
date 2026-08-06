@@ -1,6 +1,6 @@
 <template>
   <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)"
-    header="Hesap Makinesi" :modal="false" :style="{ width: '300px' }" :draggable="false">
+    header="Hesap Makinesi" :modal="false" :style="{ width: '300px' }" :draggable="true" :closable="true">
     <div class="calc-display">{{ display }}</div>
     <div class="calc-keypad">
       <button v-for="btn in buttons" :key="btn" 

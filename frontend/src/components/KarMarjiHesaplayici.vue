@@ -1,6 +1,6 @@
 <template>
   <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)"
-    header="Kar Marji Hesaplayici" :modal="false" :style="{ width: '320px' }" :draggable="false">
+    header="Kar Marji Hesaplayici" :modal="false" :style="{ width: '320px' }" :draggable="true" :closable="true">
     <div class="marj-form">
       <div class="form-satir"><label>Alis Fiyati</label><InputNumber v-model="alis" :min="0" class="w-full" /></div>
       <div class="form-satir"><label>Satis Fiyati</label><InputNumber v-model="satis" :min="0" class="w-full" /></div>

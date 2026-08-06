@@ -5,7 +5,7 @@
   >
     <Button
       icon="pi pi-bell"
-      class="p-button-rounded p-button-text"
+      class="p-button-rounded p-button-text p-button-sm"
       title="Bildirimler"
       @click.stop="panelAcik = !panelAcik"
     >

@@ -1,6 +1,6 @@
 <template>
   <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)"
-    header="KDV Hesaplayici" :modal="false" :style="{ width: '320px' }" :draggable="false">
+    header="KDV Hesaplayici" :modal="false" :style="{ width: '320px' }" :draggable="true" :closable="true">
     <div class="kdv-form">
       <div class="form-satir">
         <label>Tutar</label>

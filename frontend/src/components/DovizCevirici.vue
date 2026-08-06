@@ -1,6 +1,6 @@
 <template>
   <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)"
-    header="Doviz Cevirici" :modal="false" :style="{ width: '340px' }" :draggable="false">
+    header="Doviz Cevirici" :modal="false" :style="{ width: '340px' }" :draggable="true" :closable="true">
     <div class="cevirici">
       <div class="cevirici-satir">
         <InputNumber v-model="tutar" placeholder="Tutar" :min="0" class="tutar-input" />
