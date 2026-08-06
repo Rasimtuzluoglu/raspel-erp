@@ -25,10 +25,11 @@ class JwtUtilTest {
 
     private JwtUtil jwtUtil;
     private Kullanici testUser;
+    private Environment mockEnv;
 
     @BeforeEach
     void setUp() {
-        Environment mockEnv = mock(Environment.class);
+        mockEnv = mock(Environment.class);
         when(mockEnv.getActiveProfiles()).thenReturn(new String[]{"test"});
         jwtUtil = new JwtUtil(SECRET, EXPIRATION_MS, mockEnv);
         testUser = new Kullanici();
@@ -92,7 +93,7 @@ class JwtUtilTest {
 
     @Test
     void validateToken_returnsFalseForExpiredToken() throws Exception {
-        JwtUtil shortLived = new JwtUtil(SECRET, 1L);
+        JwtUtil shortLived = new JwtUtil(SECRET, 1L, mockEnv);
         String token = shortLived.generateToken(testUser, null, "Test Company");
 
         Thread.sleep(10);
