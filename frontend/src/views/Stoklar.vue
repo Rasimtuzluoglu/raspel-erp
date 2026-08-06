@@ -767,6 +767,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { stokAPI, excelAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
+import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -779,6 +780,8 @@ useKisayollar({
   iptal: () => { showDialog.value = false },
   kaydet: () => saveStok()
 })
+
+const { temizle: formTemizle } = useFormKorumasi(form)
 
 const aramaMetni = ref('')
 let aramaZaman = null
@@ -857,11 +860,13 @@ const stokSec = async (s) => {
 
 const openDialog = () => {
   editingId.value = null; form.value = { stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '' }
+  formTemizle()
   showDialog.value = true
 }
 
 const editStok = (s) => {
   editingId.value = s.id; form.value = { stokKodu: s.stokKodu || '', barkod: s.barkod || '', ad: s.ad, birim: s.birim || '', birim2: s.birim2 || '', cevrimKatsayisi: s.cevrimKatsayisi || null, marka: s.marka || '', stokGrubu: s.stokGrubu || '', kategori: s.kategori || '', rafNo: s.rafNo || '', fiyat: s.fiyat, satisFiyati: s.satisFiyati, kdvOrani: s.kdvOrani, agirlik: s.agirlik, miktar: s.miktar, minMiktar: s.minMiktar, tedarikciId: s.tedarikciId || null, tedarikciStokKodu: s.tedarikciStokKodu || '', tedarikciFiyat: s.tedarikciFiyat || null, maliyetYontemi: s.maliyetYontemi || 'ORTALAMA', aciklama: s.aciklama || '' }
+  formTemizle()
   showDialog.value = true
 }
 
@@ -871,6 +876,7 @@ const saveStok = async () => {
   try {
     if (editingId.value) { await stokStore.updateStok(editingId.value, form.value); toastBildirim.basarili('Ürün güncellendi') }
     else { await stokStore.addStok(form.value); toastBildirim.basarili('Ürün eklendi') }
+    formTemizle()
     showDialog.value = false
   } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
   finally { saving.value = false }

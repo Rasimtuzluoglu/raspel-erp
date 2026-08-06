@@ -181,6 +181,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
+import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { excelAPI } from '../api/index.js'
 
 const toastBildirim = useToastBildirim()
@@ -194,6 +195,7 @@ const saving = ref(false)
 const editingId = ref(null)
 
 const form = ref({ ad: '', hesapNo: '', iban: '', bakiye: 0 })
+const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
   loading.value = true
@@ -205,6 +207,7 @@ onMounted(async () => {
 const openDialog = () => {
   editingId.value = null
   form.value = { ad: '', hesapNo: '', iban: '', bakiye: 0 }
+  formTemizle()
   showDialog.value = true
 }
 
@@ -213,6 +216,7 @@ const closeDialog = () => { showDialog.value = false }
 const editBanka = (banka) => {
   editingId.value = banka.id
   form.value = { ad: banka.ad, hesapNo: banka.hesapNo || '', iban: banka.iban || '', bakiye: 0 }
+  formTemizle()
   showDialog.value = true
 }
 
@@ -230,6 +234,7 @@ const saveBanka = async () => {
       await bankaStore.addBanka(form.value)
       toastBildirim.basarili('Banka hesabı oluşturuldu')
     }
+    formTemizle()
     closeDialog()
   } catch { toastBildirim.hata('İşlem başarısız') }
   finally { saving.value = false }

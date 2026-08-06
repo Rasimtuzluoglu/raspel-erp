@@ -522,6 +522,7 @@ import { useHareketStore } from '../stores/hareketStore.js'
 import { excelAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
+import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 
 const toast = useToast()
@@ -548,6 +549,8 @@ useKisayollar({
   iptal: () => { showDialog.value = false },
   kaydet: () => saveCariHesap()
 })
+
+const { temizle: formTemizle } = useFormKorumasi(form)
 
 const showDialog = ref(false)
 const showHareketlerDialog = ref(false)
@@ -613,6 +616,7 @@ const openDialog = () => {
   editingId.value = null
   form.value = { ad: '', tur: '', vergiNumarasi: '', vergiDairesi: '', telefon: '', email: '', iban: '', il: '', ilce: '', adres: '', yetkiliKisi: '', yetkiliTelefon: '', krediLimiti: null, odemeVadesi: 0, notlar: '', aktif: true }
   submitted.value = false
+  formTemizle()
   showDialog.value = true
 }
 
@@ -620,6 +624,7 @@ const kopyalaCari = (cari) => {
   editingId.value = null
   form.value = { ...cari, id: undefined }
   submitted.value = false
+  formTemizle()
   showDialog.value = true
   toast.add({ severity: 'info', summary: 'Kopyalandı', detail: 'Yeni kayıt için şablon oluşturuldu. Kaydetmeden önce bilgileri güncelleyin.', life: 4000 })
 }
@@ -641,6 +646,7 @@ const editCariHesap = (cariHesap) => {
     notlar: cariHesap.notlar || '', aktif: cariHesap.aktif !== false
   }
   submitted.value = false
+  formTemizle()
   showDialog.value = true
 }
 
@@ -660,6 +666,7 @@ const saveCariHesap = async () => {
       await cariHesapStore.addCariHesap(form.value)
       toastBildirim.basarili('Cari hesap oluşturuldu')
     }
+    formTemizle()
     closeDialog()
   } catch (error) {
     toastBildirim.hata('İşlem başarısız oldu')

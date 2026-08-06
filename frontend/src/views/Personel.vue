@@ -309,6 +309,7 @@
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -323,6 +324,7 @@ const duzenleme = ref(false)
 const izinPersonelId = ref(null)
 const izinPersonelAdi = ref('')
 const personelForm = ref(defaultForm())
+const { temizle: formTemizle } = useFormKorumasi(personelForm)
 const izinForm = ref({ izinTuru: '', baslangic: null, bitis: null, aciklama: '' })
 const izinTurleri = ['YILLIK_IZIN', 'HASTA_IZNI', 'MAZERET_IZNI', 'DOGUM_IZNI', 'BABALIK_IZNI', 'EVLILIK_IZNI', 'UCRETSIZ_IZIN']
 
@@ -357,6 +359,7 @@ const excelIndir = async () => {
 const personelDialogAc = (data) => {
   duzenleme.value = !!data
   personelForm.value = data ? { ...data, dogumTarihi: data.dogumTarihi ? new Date(data.dogumTarihi) : null, iseGirisTarihi: data.iseGirisTarihi ? new Date(data.iseGirisTarihi) : new Date() } : defaultForm()
+  formTemizle()
   personelDialog.value = true
 }
 
@@ -366,6 +369,7 @@ const personelKaydet = async () => {
     const p = { ...personelForm.value, dogumTarihi: personelForm.value.dogumTarihi?.toISOString().split('T')[0], iseGirisTarihi: personelForm.value.iseGirisTarihi?.toISOString().split('T')[0] }
     if (duzenleme.value) await personelAPI.update(personelForm.value.id, p)
     else await personelAPI.create(p)
+    formTemizle()
     personelDialog.value = false
     const r2 = await personelAPI.getAll(); personeller.value = r2.data?.content || r2.data || []
   } catch (err) {
