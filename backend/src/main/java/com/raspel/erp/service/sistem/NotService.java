@@ -6,6 +6,8 @@ import com.raspel.erp.entity.sistem.Not;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.NotRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,12 +23,14 @@ public class NotService {
     private final NotRepository notRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'not:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<NotDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return notRepository.findBySirketIdOrderByOlusturmaTarihiDesc(sirketId, pageable)
                 .map(this::entityToDTO);
     }
 
+    @Cacheable(value = "lookup", key = "'not:sirket:' + #sirketId + ':kullanici:' + #kullaniciId")
     @Transactional(readOnly = true)
     public List<NotDTO> kullaniciNotlari(Long sirketId, Long kullaniciId) {
         return notRepository.findBySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(sirketId, kullaniciId)
@@ -41,6 +45,7 @@ public class NotService {
         return entityToDTO(not);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public NotDTO olustur(NotDTO dto, Long sirketId, Long kullaniciId) {
         Not not = Not.builder()
                 .baslik(dto.getBaslik())
@@ -53,6 +58,7 @@ public class NotService {
         return entityToDTO(notRepository.save(not));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public NotDTO guncelle(Long id, NotDTO dto) {
         Not not = notRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not", id));
@@ -64,6 +70,7 @@ public class NotService {
         return entityToDTO(notRepository.save(not));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         Not not = notRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not", id));

@@ -6,6 +6,8 @@ import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class PersonelService {
     private final PersonelRepository personelRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'personel:sirket:' + #sirketId")
     public Page<PersonelDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return personelRepository.findBySirketIdOrderByAdAsc(sirketId, pageable)
                 .map(this::entityToDTO);
@@ -34,6 +37,7 @@ public class PersonelService {
         return entityToDTO(p);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public PersonelDTO olustur(PersonelDTO dto) {
         Personel p = Personel.builder()
                 .ad(dto.getAd()).soyad(dto.getSoyad())
@@ -48,6 +52,7 @@ public class PersonelService {
         return entityToDTO(personelRepository.save(p));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public PersonelDTO guncelle(Long id, PersonelDTO dto) {
         Personel p = personelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
@@ -66,6 +71,7 @@ public class PersonelService {
         return entityToDTO(personelRepository.save(p));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         Personel p = personelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", id));

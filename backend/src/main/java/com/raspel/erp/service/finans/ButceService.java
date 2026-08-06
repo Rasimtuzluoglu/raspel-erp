@@ -6,6 +6,8 @@ import com.raspel.erp.entity.finans.Butce;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.ButceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class ButceService {
     private final ButceRepository butceRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'butce:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<ButceDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return butceRepository.findBySirketIdOrderByYilDescAyDesc(sirketId, pageable).map(this::entityToDTO);
@@ -32,6 +35,7 @@ public class ButceService {
         return entityToDTO(b);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public ButceDTO olustur(ButceDTO dto, Long sirketId) {
         Butce butce = Butce.builder()
                 .ad(dto.getAd())
@@ -46,6 +50,7 @@ public class ButceService {
         return entityToDTO(butceRepository.save(butce));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public ButceDTO guncelle(Long id, ButceDTO dto) {
         Butce butce = butceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Butce", id));
@@ -60,6 +65,7 @@ public class ButceService {
         return entityToDTO(butceRepository.save(butce));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         Butce b = butceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Butce", id));

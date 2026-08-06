@@ -7,6 +7,8 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.BankaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ public class BankaService {
     private final BankaRepository bankaRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'banka:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<BankaDTO> tumBankalariGetir(Long sirketId, Pageable pageable) {
         return bankaRepository.findBySirketId(sirketId, pageable).map(this::entityDTOyeCevir);
@@ -36,6 +39,7 @@ public class BankaService {
         return entityDTOyeCevir(banka);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public BankaDTO bankaOlustur(BankaDTO dto, Long sirketId) {
         log.info("Yeni banka hesabı oluşturuluyor: {}, sirketId: {}", dto.getAd(), sirketId);
         Banka banka = Banka.builder()
@@ -49,6 +53,7 @@ public class BankaService {
         return entityDTOyeCevir(kaydedilen);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public BankaDTO bankaGuncelle(Long id, BankaDTO dto) {
         Banka banka = bankaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
@@ -60,6 +65,7 @@ public class BankaService {
         return entityDTOyeCevir(guncellenen);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void bankaSil(Long id) {
         Banka banka = bankaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", id));

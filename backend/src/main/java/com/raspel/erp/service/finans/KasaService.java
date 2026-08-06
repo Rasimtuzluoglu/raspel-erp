@@ -8,6 +8,8 @@ import com.raspel.erp.exception.BusinessException;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ public class KasaService {
     private final KategoriRepository kategoriRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'kasa:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
         return kasaRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
@@ -49,11 +52,13 @@ public class KasaService {
         return entityToDTO(kasa);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public KasaDTO kasaOlustur(KasaDTO dto, Long sirketId) {
         Kasa kasa = Kasa.builder().ad(dto.getAd()).bakiye(dto.getBakiye() != null ? dto.getBakiye() : BigDecimal.ZERO).sirketId(sirketId).build();
         return entityToDTO(kasaRepository.save(kasa));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public KasaDTO kasaGuncelle(Long id, KasaDTO dto) {
         Kasa kasa = kasaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));
@@ -62,6 +67,7 @@ public class KasaService {
         return entityToDTO(kasaRepository.save(kasa));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void kasaSil(Long id) {
         Kasa kasa = kasaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));

@@ -6,6 +6,8 @@ import com.raspel.erp.entity.sube.Sube;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sube.SubeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +24,13 @@ public class SubeService {
     private final SubeRepository subeRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'sube:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<SubeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return subeRepository.findBySirketIdOrderByAdAsc(sirketId, pageable).map(this::entityToDTO);
     }
 
+    @Cacheable(value = "lookup", key = "'sube:aktif:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public List<SubeDTO> aktifSubeler(Long sirketId) {
         return subeRepository.findBySirketIdAndAktifTrue(sirketId).stream()
@@ -41,6 +45,7 @@ public class SubeService {
         return entityToDTO(s);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public SubeDTO olustur(SubeDTO dto) {
         Sube s = Sube.builder()
                 .ad(dto.getAd()).adres(dto.getAdres())
@@ -49,6 +54,7 @@ public class SubeService {
         return entityToDTO(subeRepository.save(s));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public SubeDTO guncelle(Long id, SubeDTO dto) {
         Sube s = subeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sube", id));
@@ -61,6 +67,7 @@ public class SubeService {
         return entityToDTO(subeRepository.save(s));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         Sube s = subeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sube", id));

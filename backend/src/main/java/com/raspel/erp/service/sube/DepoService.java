@@ -12,6 +12,8 @@ import com.raspel.erp.repository.sube.DepoRepository;
 import com.raspel.erp.repository.sube.DepoStokRepository;
 import com.raspel.erp.repository.sube.SubeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class DepoService {
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'depo:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<DepoDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         Map<Long, String> subeHaritasi = subeRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).stream()
@@ -52,6 +55,7 @@ public class DepoService {
         return entityToDTO(d, subeAd);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public DepoDTO olustur(DepoDTO dto) {
         Depo d = Depo.builder()
                 .ad(dto.getAd()).adres(dto.getAdres())
@@ -60,6 +64,7 @@ public class DepoService {
         return entityToDTO(depoRepository.save(d), null);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public DepoDTO guncelle(Long id, DepoDTO dto) {
         Depo d = depoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", id));
@@ -72,6 +77,7 @@ public class DepoService {
         return entityToDTO(depoRepository.save(d), null);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         Depo d = depoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", id));

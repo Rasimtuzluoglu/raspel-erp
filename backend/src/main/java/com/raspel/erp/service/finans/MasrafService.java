@@ -6,6 +6,8 @@ import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.MasrafRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class MasrafService {
     private final MasrafRepository masrafRepository;
     private final TenantChecker tenantChecker;
 
+    @Cacheable(value = "lookup", key = "'masraf:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return masrafRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
@@ -32,6 +35,7 @@ public class MasrafService {
         return entityToDTO(m);
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public MasrafDTO olustur(MasrafDTO dto, Long sirketId) {
         Masraf masraf = Masraf.builder()
                 .tarih(dto.getTarih())
@@ -45,6 +49,7 @@ public class MasrafService {
         return entityToDTO(masrafRepository.save(masraf));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public MasrafDTO guncelle(Long id, MasrafDTO dto) {
         Masraf masraf = masrafRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
@@ -58,6 +63,7 @@ public class MasrafService {
         return entityToDTO(masrafRepository.save(masraf));
     }
 
+    @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
         Masraf m = masrafRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
