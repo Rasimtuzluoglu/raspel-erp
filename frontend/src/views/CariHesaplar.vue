@@ -295,6 +295,15 @@
                 placeholder="TR..."
                 class="w-full"
               />
+              <small
+                v-if="ibanGecerli === true"
+                class="iban-gecerli"
+              >&#x2713; Gecerli IBAN</small>
+              <small
+                v-if="ibanGecerli === false"
+                class="iban-gecersiz"
+              >&#x2717; Gecersiz IBAN</small>
+              <small class="iban-yardim">TR ile baslayan 26 haneli IBAN giriniz</small>
             </div>
           </div>
         </div>
@@ -600,6 +609,17 @@ const toplamOdeme = computed(() =>
     .reduce((s, h) => s + (h.tutar || 0), 0)
 )
 const guncelBakiye = computed(() => toplamTahsilat.value - toplamOdeme.value)
+
+const ibanGecerli = computed(() => {
+  const val = (form.value.iban || '').replace(/\s/g, '').toUpperCase()
+  if (!val || val.length < 5) return null
+  if (!val.startsWith('TR') || val.length !== 26) return false
+  const rearranged = val.slice(4) + val.slice(0, 4)
+  const numeric = rearranged.replace(/[A-Z]/g, c => String(c.charCodeAt(0) - 55))
+  try {
+    return BigInt(numeric) % 97n === 1n
+  } catch { return false }
+})
 
 const submitted = ref(false)
 const form = ref({
@@ -976,4 +996,7 @@ h3 {
 .kopyalanabilir:hover { color: var(--accent); }
 .kopyala-ikon { font-size: 11px; opacity: 0.5; }
 .kopyalanabilir:hover .kopyala-ikon { opacity: 1; }
+.iban-gecerli { display: block; color: #4caf50; font-size: 11px; margin-top: 2px; }
+.iban-gecersiz { display: block; color: #f44336; font-size: 11px; margin-top: 2px; }
+.iban-yardim { display: block; color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
 </style>

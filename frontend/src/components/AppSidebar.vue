@@ -192,12 +192,6 @@
           <button class="icon-action-btn" title="Kar Marji" @click="$emit('open-marj')">
             <i class="pi pi-chart-line" />
           </button>
-          <button class="icon-action-btn" title="IBAN Dogrula" @click="$emit('open-iban')">
-            <i class="pi pi-credit-card" />
-          </button>
-          <button class="icon-action-btn" title="TC Kimlik Dogrula" @click="$emit('open-tc')">
-            <i class="pi pi-id-card" />
-          </button>
         </div>
       </div>
 

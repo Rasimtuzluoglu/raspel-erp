@@ -168,6 +168,12 @@
               v-model="personelForm.tcKimlik"
               class="w-full"
             />
+            <span
+              v-if="(personelForm.tcKimlik || '').replace(/\D/g, '').length === 11"
+              :style="{ color: tcGecerli ? '#22c55e' : '#ef4444', fontSize: '12px' }"
+            >
+              {{ tcGecerli ? '✓ Geçerli TC' : '✗ Geçersiz TC' }}
+            </span>
           </div>
           <div class="field">
             <label>Doğum Tarihi</label><DatePicker
@@ -315,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -336,6 +342,17 @@ const izinPersonelAdi = ref('')
 const personelForm = ref(defaultForm())
 const { temizle: formTemizle } = useFormKorumasi(personelForm)
 const izinForm = ref({ izinTuru: '', baslangic: null, bitis: null, aciklama: '' })
+const tcGecerli = computed(() => {
+  const val = (personelForm.value.tcKimlik || '').replace(/\D/g, '')
+  if (val.length !== 11 || val[0] === '0') return false
+  const d = val.split('').map(Number)
+  const tek = d[0] + d[2] + d[4] + d[6] + d[8]
+  const cift = d[1] + d[3] + d[5] + d[7]
+  if ((tek * 7 - cift) % 10 !== d[9]) return false
+  if (d.slice(0, 10).reduce((s, x) => s + x, 0) % 10 !== d[10]) return false
+  return true
+})
+
 const izinTurleri = ['YILLIK_IZIN', 'HASTA_IZNI', 'MAZERET_IZNI', 'DOGUM_IZNI', 'BABALIK_IZNI', 'EVLILIK_IZNI', 'UCRETSIZ_IZIN']
 
 function defaultForm() { return { ad: '', soyad: '', tcKimlik: '', dogumTarihi: null, iseGirisTarihi: new Date(), departman: '', pozisyon: '', maas: null, telefon: '', email: '', adres: '', aktif: true } }
