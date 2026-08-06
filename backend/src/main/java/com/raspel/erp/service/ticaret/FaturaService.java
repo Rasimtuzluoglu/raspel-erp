@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.exception.BusinessException;
@@ -56,6 +57,7 @@ public class FaturaService {
     private final EmailService emailService;
     private final PdfRaporService pdfRaporService;
     private final SirketRepository sirketRepository;
+    private final TenantChecker tenantChecker;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -71,6 +73,7 @@ public class FaturaService {
     public FaturaDTO faturaGetir(Long id) {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
         return entityDTOyeCevir(fatura);
     }
 
@@ -204,6 +207,7 @@ public class FaturaService {
     public void gonderEmail(Long id) {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
         if (fatura.getCariHesap() == null || fatura.getCariHesap().getEmail() == null
                 || fatura.getCariHesap().getEmail().isBlank()) {
             throw new BusinessException("Bu faturanın cari hesabında e-posta adresi tanımlı değil");
@@ -230,6 +234,7 @@ public class FaturaService {
     public FaturaDTO faturaDurumGuncelle(Long id, String yeniDurum) {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
 
         Fatura.FaturaDurum durum;
         try {
@@ -260,6 +265,7 @@ public class FaturaService {
         log.info("Fatura düzenleniyor - ID: {}", id);
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
 
         if (fatura.getDurum() != Fatura.FaturaDurum.TASLAK) {
             throw new BusinessException("Yalnızca taslak faturalar düzenlenebilir. Güncel durum: " + fatura.getDurum());
@@ -351,6 +357,7 @@ public class FaturaService {
     public void faturaSil(Long id) {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
         if (fatura.getDurum() == Fatura.FaturaDurum.KESILDI) {
             throw new BusinessException("Kesilmiş fatura silinemez");
         }

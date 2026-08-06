@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.SiparisDTO;
@@ -40,6 +41,7 @@ public class SiparisService {
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
     private final EmailService emailService;
+    private final TenantChecker tenantChecker;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -51,8 +53,10 @@ public class SiparisService {
 
     @Transactional(readOnly = true)
     public SiparisDTO getir(Long id) {
-        return entityToDTO(siparisRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id)));
+        Siparis s = siparisRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
+        return entityToDTO(s);
     }
 
     public SiparisDTO olustur(SiparisDTO dto) {
@@ -91,6 +95,7 @@ public class SiparisService {
     public SiparisDTO guncelle(Long id, SiparisDTO dto) {
         Siparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         s.setSiparisNo(dto.getSiparisNo());
         s.setTarih(dto.getTarih());
         s.setCariHesapId(dto.getCariHesapId());
@@ -117,6 +122,7 @@ public class SiparisService {
     public SiparisDTO durumGuncelle(Long id, String durum) {
         Siparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         String eskiDurum = s.getDurum();
 
         if ("FATURA_KESILDI".equals(durum) && !"FATURA_KESILDI".equals(eskiDurum)) {
@@ -163,9 +169,9 @@ public class SiparisService {
     }
 
     public void sil(Long id) {
-        if (!siparisRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Sipariş", id);
-        }
+        Siparis s = siparisRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
     }

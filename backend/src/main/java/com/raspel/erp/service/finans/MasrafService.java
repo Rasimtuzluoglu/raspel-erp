@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.MasrafDTO;
 import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MasrafService {
 
     private final MasrafRepository masrafRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -24,8 +26,10 @@ public class MasrafService {
 
     @Transactional(readOnly = true)
     public MasrafDTO getir(Long id) {
-        return entityToDTO(masrafRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Masraf", id)));
+        Masraf m = masrafRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
+        tenantChecker.check(m.getSirketId(), "Masraf");
+        return entityToDTO(m);
     }
 
     public MasrafDTO olustur(MasrafDTO dto, Long sirketId) {
@@ -44,6 +48,7 @@ public class MasrafService {
     public MasrafDTO guncelle(Long id, MasrafDTO dto) {
         Masraf masraf = masrafRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
+        tenantChecker.check(masraf.getSirketId(), "Masraf");
         if (dto.getTarih() != null) masraf.setTarih(dto.getTarih());
         if (dto.getTutar() != null) masraf.setTutar(dto.getTutar());
         if (dto.getAciklama() != null) masraf.setAciklama(dto.getAciklama());
@@ -54,8 +59,9 @@ public class MasrafService {
     }
 
     public void sil(Long id) {
-        if (!masrafRepository.existsById(id))
-            throw new ResourceNotFoundException("Masraf", id);
+        Masraf m = masrafRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
+        tenantChecker.check(m.getSirketId(), "Masraf");
         masrafRepository.deleteById(id);
     }
 

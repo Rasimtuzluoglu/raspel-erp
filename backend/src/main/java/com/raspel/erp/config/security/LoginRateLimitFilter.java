@@ -32,7 +32,7 @@ public class LoginRateLimitFilter implements Filter {
         HttpServletResponse res = (HttpServletResponse) response;
 
         if (girisYolu(req.getRequestURI()) && "POST".equalsIgnoreCase(req.getMethod())) {
-            String ip = req.getRemoteAddr();
+            String ip = getClientIp(req);
             LoginAttempt attempt = attempts.computeIfAbsent(ip, k -> new LoginAttempt());
             if (attempt.isBlocked()) {
                 res.setStatus(429);
@@ -46,12 +46,20 @@ public class LoginRateLimitFilter implements Filter {
         try {
             chain.doFilter(request, response);
         } finally {
-            // Başarılı girişte sayaç sıfırlanır (yanlış denemeler için sınırlama korunur)
+            // Basarili giriste sayac sifirlanir
             if (girisYolu(req.getRequestURI()) && res.getStatus() >= 200 && res.getStatus() < 300) {
-                attempts.remove(req.getRemoteAddr());
+                attempts.remove(getClientIp(req));
             }
             temizle();
         }
+    }
+
+    private String getClientIp(HttpServletRequest req) {
+        String xForwardedFor = req.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return req.getRemoteAddr();
     }
 
     /** Süresi dolmuş kayıtları bellekten temizler. */

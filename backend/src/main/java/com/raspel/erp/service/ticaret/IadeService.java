@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.IadeDTO;
 import com.raspel.erp.dto.ticaret.IadeKalemDTO;
 import com.raspel.erp.entity.envanter.Stok;
@@ -39,6 +40,7 @@ public class IadeService {
     private final IadeKalemRepository iadeKalemRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+    private final TenantChecker tenantChecker;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -50,8 +52,10 @@ public class IadeService {
 
     @Transactional(readOnly = true)
     public IadeDTO getir(Long id) {
-        return entityToDTO(iadeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Iade", id)));
+        Iade iade = iadeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
+        tenantChecker.check(iade.getSirketId(), "Iade");
+        return entityToDTO(iade);
     }
 
     public IadeDTO olustur(IadeDTO dto, Long sirketId) {
@@ -103,6 +107,7 @@ public class IadeService {
     public IadeDTO guncelle(Long id, IadeDTO dto) {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
+        tenantChecker.check(iade.getSirketId(), "Iade");
         if (dto.getFaturaId() != null) iade.setFaturaId(dto.getFaturaId());
         if (dto.getTarih() != null) iade.setTarih(dto.getTarih());
         if (dto.getAciklama() != null) iade.setAciklama(dto.getAciklama());
@@ -141,8 +146,9 @@ public class IadeService {
     }
 
     public void sil(Long id) {
-        if (!iadeRepository.existsById(id))
-            throw new ResourceNotFoundException("Iade", id);
+        Iade iade = iadeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
+        tenantChecker.check(iade.getSirketId(), "Iade");
         iadeKalemRepository.deleteByIadeId(id);
         iadeRepository.deleteById(id);
     }
@@ -151,6 +157,7 @@ public class IadeService {
     public IadeDTO durumGuncelle(Long id, String yeniDurum) {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
+        tenantChecker.check(iade.getSirketId(), "Iade");
         if (yeniDurum == null || !List.of("TASLAK", "TAMAMLANDI", "IPTAL").contains(yeniDurum)) {
             throw new BusinessException("Geçersiz durum: " + yeniDurum);
         }

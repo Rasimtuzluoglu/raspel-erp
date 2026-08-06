@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.CariFirsatDTO;
 import com.raspel.erp.entity.ticaret.CariFirsat;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -21,6 +22,7 @@ public class CrmService {
 
     private final CariFirsatRepository cariFirsatRepository;
     private final CariHesapRepository cariHesapRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public List<CariFirsatDTO> firsatlariGetir(Long sirketId, String durum) {
@@ -32,8 +34,10 @@ public class CrmService {
 
     @Transactional(readOnly = true)
     public CariFirsatDTO firsatGetir(Long id) {
-        return entityToDTO(cariFirsatRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Fırsat", id)));
+        CariFirsat f = cariFirsatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fırsat", id));
+        tenantChecker.check(f.getSirketId(), "Fırsat");
+        return entityToDTO(f);
     }
 
     public CariFirsatDTO firsatOlustur(CariFirsatDTO dto, Long sirketId) {
@@ -56,6 +60,7 @@ public class CrmService {
     public CariFirsatDTO firsatGuncelle(Long id, CariFirsatDTO dto) {
         CariFirsat firsat = cariFirsatRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fırsat", id));
+        tenantChecker.check(firsat.getSirketId(), "Fırsat");
         if (dto.getAd() != null) firsat.setAd(dto.getAd());
         if (dto.getCariHesapId() != null) firsat.setCariHesapId(dto.getCariHesapId());
         if (dto.getDurum() != null) firsat.setDurum(dto.getDurum());
@@ -67,7 +72,9 @@ public class CrmService {
     }
 
     public void firsatSil(Long id) {
-        if (!cariFirsatRepository.existsById(id)) throw new ResourceNotFoundException("Fırsat", id);
+        CariFirsat f = cariFirsatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fırsat", id));
+        tenantChecker.check(f.getSirketId(), "Fırsat");
         cariFirsatRepository.deleteById(id);
     }
 

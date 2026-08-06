@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sistem;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sistem.NotDTO;
 import com.raspel.erp.entity.sistem.Not;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class NotService {
 
     private final NotRepository notRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<NotDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -35,6 +37,7 @@ public class NotService {
     public NotDTO idyeGoreGetir(Long id) {
         Not not = notRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not", id));
+        tenantChecker.check(not.getSirketId(), "Not");
         return entityToDTO(not);
     }
 
@@ -53,6 +56,7 @@ public class NotService {
     public NotDTO guncelle(Long id, NotDTO dto) {
         Not not = notRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not", id));
+        tenantChecker.check(not.getSirketId(), "Not");
         not.setBaslik(dto.getBaslik());
         not.setIcerik(dto.getIcerik());
         not.setOnemDerecesi(dto.getOnemDerecesi() != null ? dto.getOnemDerecesi() : "NORMAL");
@@ -61,6 +65,9 @@ public class NotService {
     }
 
     public void sil(Long id) {
+        Not not = notRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not", id));
+        tenantChecker.check(not.getSirketId(), "Not");
         notRepository.deleteById(id);
     }
 

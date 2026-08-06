@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.CekSenetDTO;
 import com.raspel.erp.entity.finans.CekSenet;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -22,6 +23,7 @@ public class CekSenetService {
 
     private final CekSenetRepository cekSenetRepository;
     private final CariHesapRepository cariHesapRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<CekSenetDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -33,8 +35,10 @@ public class CekSenetService {
 
     @Transactional(readOnly = true)
     public CekSenetDTO getir(Long id) {
-        return entityToDTO(cekSenetRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id)));
+        CekSenet cs = cekSenetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
+        tenantChecker.check(cs.getSirketId(), "Cek/Senet");
+        return entityToDTO(cs);
     }
 
     public CekSenetDTO olustur(CekSenetDTO dto) {
@@ -51,6 +55,7 @@ public class CekSenetService {
     public CekSenetDTO guncelle(Long id, CekSenetDTO dto) {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
+        tenantChecker.check(cs.getSirketId(), "Cek/Senet");
         cs.setTur(dto.getTur());
         cs.setCariHesapId(dto.getCariHesapId());
         cs.setBankaAdi(dto.getBankaAdi());
@@ -68,13 +73,15 @@ public class CekSenetService {
     public CekSenetDTO durumGuncelle(Long id, String durum) {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
+        tenantChecker.check(cs.getSirketId(), "Cek/Senet");
         cs.setDurum(durum);
         return entityToDTO(cekSenetRepository.save(cs));
     }
 
     public void sil(Long id) {
-        if (!cekSenetRepository.existsById(id))
-            throw new ResourceNotFoundException("Cek/Senet", id);
+        CekSenet cs = cekSenetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
+        tenantChecker.check(cs.getSirketId(), "Cek/Senet");
         cekSenetRepository.deleteById(id);
     }
 

@@ -1,5 +1,6 @@
 package com.raspel.erp.service.envanter;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.envanter.StokSayimDTO;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokSayim;
@@ -22,6 +23,7 @@ public class StokSayimService {
 
     private final StokSayimRepository stokSayimRepository;
     private final StokRepository stokRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<StokSayimDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -30,8 +32,10 @@ public class StokSayimService {
 
     @Transactional(readOnly = true)
     public StokSayimDTO getir(Long id) {
-        return entityToDTO(stokSayimRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id)));
+        StokSayim s = stokSayimRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
+        tenantChecker.check(s.getSirketId(), "StokSayim");
+        return entityToDTO(s);
     }
 
     public StokSayimDTO olustur(StokSayimDTO dto, Long sirketId) {
@@ -53,6 +57,7 @@ public class StokSayimService {
     public StokSayimDTO guncelle(Long id, StokSayimDTO dto) {
         StokSayim sayim = stokSayimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
+        tenantChecker.check(sayim.getSirketId(), "StokSayim");
         if (dto.getTarih() != null) sayim.setTarih(dto.getTarih());
         if (dto.getBeklenenMiktar() != null) sayim.setBeklenenMiktar(dto.getBeklenenMiktar());
         if (dto.getSayilanMiktar() != null) sayim.setSayilanMiktar(dto.getSayilanMiktar());
@@ -68,14 +73,16 @@ public class StokSayimService {
     }
 
     public void sil(Long id) {
-        if (!stokSayimRepository.existsById(id))
-            throw new ResourceNotFoundException("StokSayim", id);
+        StokSayim s = stokSayimRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
+        tenantChecker.check(s.getSirketId(), "StokSayim");
         stokSayimRepository.deleteById(id);
     }
 
     public StokSayimDTO durumGuncelle(Long id, String yeniDurum) {
         StokSayim sayim = stokSayimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
+        tenantChecker.check(sayim.getSirketId(), "StokSayim");
         if (yeniDurum == null || !java.util.List.of("TASLAK", "TAMAMLANDI", "IPTAL").contains(yeniDurum)) {
             throw new com.raspel.erp.exception.BusinessException("Geçersiz durum: " + yeniDurum);
         }

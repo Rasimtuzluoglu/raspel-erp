@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisKalemDTO;
 import com.raspel.erp.entity.ticaret.SatinalmaSiparis;
@@ -30,6 +31,7 @@ public class SatinalmaSiparisService {
     private final SatinalmaSiparisKalemRepository kalemRepository;
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -40,6 +42,7 @@ public class SatinalmaSiparisService {
     public SatinalmaSiparisDTO getir(Long id) {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         return entityToDTO(s);
     }
 
@@ -74,6 +77,7 @@ public class SatinalmaSiparisService {
     public SatinalmaSiparisDTO guncelle(Long id, SatinalmaSiparisDTO dto) {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         s.setSiparisNo(dto.getSiparisNo());
         s.setTarih(dto.getTarih());
         s.setCariHesapId(dto.getCariHesapId());
@@ -101,14 +105,15 @@ public class SatinalmaSiparisService {
     public SatinalmaSiparisDTO durumGuncelle(Long id, String durum) {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         s.setDurum(durum);
         return entityToDTO(siparisRepository.save(s));
     }
 
     public void sil(Long id) {
-        if (!siparisRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Sipariş", id);
-        }
+        SatinalmaSiparis s = siparisRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
     }

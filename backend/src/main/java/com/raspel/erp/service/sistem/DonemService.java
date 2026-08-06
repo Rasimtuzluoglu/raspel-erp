@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sistem;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sistem.DonemDTO;
 import com.raspel.erp.entity.sistem.Donem;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class DonemService {
 
     private final DonemRepository donemRepository;
+    private final TenantChecker tenantChecker;
 
     @Cacheable(value = "lookup", key = "'donemler:' + #pageable.pageNumber")
     @Transactional(readOnly = true)
@@ -44,8 +46,10 @@ public class DonemService {
     @Cacheable(value = "lookup", key = "'donemId:' + #id")
     @Transactional(readOnly = true)
     public DonemDTO getir(Long id) {
-        return entityToDTO(donemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dönem", id)));
+        Donem d = donemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dönem", id));
+        tenantChecker.check(d.getSirketId(), "Dönem");
+        return entityToDTO(d);
     }
 
     @CacheEvict(value = "lookup", allEntries = true)
@@ -64,6 +68,7 @@ public class DonemService {
     public DonemDTO guncelle(Long id, DonemDTO dto) {
         Donem d = donemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dönem", id));
+        tenantChecker.check(d.getSirketId(), "Dönem");
         if (dto.getAd() != null) d.setAd(dto.getAd());
         if (dto.getBaslangic() != null) d.setBaslangic(dto.getBaslangic());
         if (dto.getBitis() != null) d.setBitis(dto.getBitis());
@@ -73,7 +78,9 @@ public class DonemService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
-        if (!donemRepository.existsById(id)) throw new ResourceNotFoundException("Dönem", id);
+        Donem d = donemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dönem", id));
+        tenantChecker.check(d.getSirketId(), "Dönem");
         donemRepository.deleteById(id);
     }
 

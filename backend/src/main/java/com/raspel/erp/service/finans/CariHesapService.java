@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.CariHesapDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.exception.BusinessException;
@@ -34,6 +35,7 @@ public class CariHesapService {
     
     private final CariHesapRepository cariHesapRepository;
     private final HareketRepository hareketRepository;
+    private final TenantChecker tenantChecker;
 
     /**
      * Tüm cari hesapları getir
@@ -63,6 +65,7 @@ public class CariHesapService {
         log.debug("ID: {} için cari hesap getiriliyor", id);
         CariHesap cariHesap = cariHesapRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
+        tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
         return entityDTOyeCevir(cariHesap);
     }
     
@@ -108,6 +111,7 @@ public class CariHesapService {
         
         CariHesap cariHesap = cariHesapRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
+        tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
         
         if (dto.getAd() != null) cariHesap.setAd(dto.getAd());
         if (dto.getVergiNumarasi() != null) cariHesap.setVergiNumarasi(dto.getVergiNumarasi());
@@ -139,9 +143,9 @@ public class CariHesapService {
     public void cariHesapSil(Long id) {
         log.info("Cari hesap siliniliyor - ID: {}", id);
 
-        if (!cariHesapRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Cari Hesap", id);
-        }
+        CariHesap cariHesap = cariHesapRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
+        tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
 
         long hareketSayisi = hareketRepository.countByCariHesapId(id);
         if (hareketSayisi > 0) {
@@ -160,6 +164,7 @@ public class CariHesapService {
         
         CariHesap cariHesap = cariHesapRepository.findById(cariHesapId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
+        tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
         
         BigDecimal yeniBakiye = cariHesap.getBakiye().add(tutar);
         cariHesap.setBakiye(yeniBakiye);

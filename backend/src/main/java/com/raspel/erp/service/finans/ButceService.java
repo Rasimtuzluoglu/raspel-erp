@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.ButceDTO;
 import com.raspel.erp.entity.finans.Butce;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ButceService {
 
     private final ButceRepository butceRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<ButceDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -24,8 +26,10 @@ public class ButceService {
 
     @Transactional(readOnly = true)
     public ButceDTO getir(Long id) {
-        return entityToDTO(butceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Butce", id)));
+        Butce b = butceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Butce", id));
+        tenantChecker.check(b.getSirketId(), "Butce");
+        return entityToDTO(b);
     }
 
     public ButceDTO olustur(ButceDTO dto, Long sirketId) {
@@ -45,6 +49,7 @@ public class ButceService {
     public ButceDTO guncelle(Long id, ButceDTO dto) {
         Butce butce = butceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Butce", id));
+        tenantChecker.check(butce.getSirketId(), "Butce");
         if (dto.getAd() != null) butce.setAd(dto.getAd());
         if (dto.getYil() != null) butce.setYil(dto.getYil());
         if (dto.getAy() != null) butce.setAy(dto.getAy());
@@ -56,8 +61,9 @@ public class ButceService {
     }
 
     public void sil(Long id) {
-        if (!butceRepository.existsById(id))
-            throw new ResourceNotFoundException("Butce", id);
+        Butce b = butceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Butce", id));
+        tenantChecker.check(b.getSirketId(), "Butce");
         butceRepository.deleteById(id);
     }
 

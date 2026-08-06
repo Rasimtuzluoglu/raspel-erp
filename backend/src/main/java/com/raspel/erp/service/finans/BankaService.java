@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.BankaDTO;
 import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 public class BankaService {
 
     private final BankaRepository bankaRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<BankaDTO> tumBankalariGetir(Long sirketId, Pageable pageable) {
@@ -30,6 +32,7 @@ public class BankaService {
     public BankaDTO bankaGetir(Long id) {
         Banka banka = bankaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
+        tenantChecker.check(banka.getSirketId(), "Banka");
         return entityDTOyeCevir(banka);
     }
 
@@ -49,6 +52,7 @@ public class BankaService {
     public BankaDTO bankaGuncelle(Long id, BankaDTO dto) {
         Banka banka = bankaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
+        tenantChecker.check(banka.getSirketId(), "Banka");
         if (dto.getAd() != null) banka.setAd(dto.getAd());
         if (dto.getHesapNo() != null) banka.setHesapNo(dto.getHesapNo());
         if (dto.getIban() != null) banka.setIban(dto.getIban());
@@ -57,9 +61,9 @@ public class BankaService {
     }
 
     public void bankaSil(Long id) {
-        if (!bankaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Banka", id);
-        }
+        Banka banka = bankaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
+        tenantChecker.check(banka.getSirketId(), "Banka");
         bankaRepository.deleteById(id);
     }
 

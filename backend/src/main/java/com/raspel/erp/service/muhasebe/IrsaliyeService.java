@@ -1,5 +1,6 @@
 package com.raspel.erp.service.muhasebe;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
@@ -39,6 +40,7 @@ public class IrsaliyeService {
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -47,8 +49,10 @@ public class IrsaliyeService {
 
     @Transactional(readOnly = true)
     public IrsaliyeDTO getir(Long id) {
-        return entityToDTO(irsaliyeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id)));
+        Irsaliye i = irsaliyeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
+        return entityToDTO(i);
     }
 
     public IrsaliyeDTO olustur(IrsaliyeDTO dto) {
@@ -72,6 +76,7 @@ public class IrsaliyeService {
     public IrsaliyeDTO guncelle(Long id, IrsaliyeDTO dto) {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
         i.setIrsaliyeNo(dto.getIrsaliyeNo());
         i.setTarih(dto.getTarih());
         i.setCariHesapId(dto.getCariHesapId());
@@ -96,6 +101,7 @@ public class IrsaliyeService {
     public IrsaliyeDTO durumGuncelle(Long id, String durum) {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
 
         if ("KESILDI".equals(durum) && !"KESILDI".equals(i.getDurum())) {
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
@@ -150,9 +156,9 @@ public class IrsaliyeService {
     }
 
     public void sil(Long id) {
-        if (!irsaliyeRepository.existsById(id)) {
-            throw new ResourceNotFoundException("İrsaliye", id);
-        }
+        Irsaliye i = irsaliyeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
         kalemRepository.deleteByIrsaliyeId(id);
         irsaliyeRepository.deleteById(id);
     }

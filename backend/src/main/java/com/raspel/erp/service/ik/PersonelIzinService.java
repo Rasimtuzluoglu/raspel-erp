@@ -1,6 +1,8 @@
 package com.raspel.erp.service.ik;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ik.PersonelIzinDTO;
+import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.ik.PersonelIzin;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.ik.PersonelIzinRepository;
@@ -22,6 +24,7 @@ public class PersonelIzinService {
 
     private final PersonelIzinRepository izinRepository;
     private final PersonelRepository personelRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<PersonelIzinDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -47,8 +50,14 @@ public class PersonelIzinService {
 
     @Transactional(readOnly = true)
     public PersonelIzinDTO getir(Long id) {
-        return entityToDTO(izinRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Izin kaydi", id)));
+        PersonelIzin izin = izinRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Izin kaydi", id));
+        Personel personel = personelRepository.findById(izin.getPersonelId())
+                .orElse(null);
+        if (personel != null) {
+            tenantChecker.check(personel.getSirketId(), "Personel Izin");
+        }
+        return entityToDTO(izin);
     }
 
     public PersonelIzinDTO olustur(PersonelIzinDTO dto) {
@@ -67,6 +76,11 @@ public class PersonelIzinService {
     public PersonelIzinDTO guncelle(Long id, PersonelIzinDTO dto) {
         PersonelIzin izin = izinRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Izin kaydi", id));
+        Personel personel = personelRepository.findById(izin.getPersonelId())
+                .orElse(null);
+        if (personel != null) {
+            tenantChecker.check(personel.getSirketId(), "Personel Izin");
+        }
         izin.setPersonelId(dto.getPersonelId());
         izin.setIzinTuru(dto.getIzinTuru());
         izin.setBaslangic(dto.getBaslangic());
@@ -81,14 +95,24 @@ public class PersonelIzinService {
     public PersonelIzinDTO durumGuncelle(Long id, String durum, String onaylayan) {
         PersonelIzin izin = izinRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Izin kaydi", id));
+        Personel personel = personelRepository.findById(izin.getPersonelId())
+                .orElse(null);
+        if (personel != null) {
+            tenantChecker.check(personel.getSirketId(), "Personel Izin");
+        }
         izin.setDurum(durum);
         if (onaylayan != null) izin.setOnaylayan(onaylayan);
         return entityToDTO(izinRepository.save(izin));
     }
 
     public void sil(Long id) {
-        if (!izinRepository.existsById(id))
-            throw new ResourceNotFoundException("Izin kaydi", id);
+        PersonelIzin izin = izinRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Izin kaydi", id));
+        Personel personel = personelRepository.findById(izin.getPersonelId())
+                .orElse(null);
+        if (personel != null) {
+            tenantChecker.check(personel.getSirketId(), "Personel Izin");
+        }
         izinRepository.deleteById(id);
     }
 

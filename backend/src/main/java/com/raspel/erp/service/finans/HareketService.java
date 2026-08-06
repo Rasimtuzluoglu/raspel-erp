@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.finans.Hareket;
@@ -35,6 +36,7 @@ public class HareketService {
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
     private final BildirimService bildirimService;
+    private final TenantChecker tenantChecker;
     
     /**
      * Belirli bir cari hesaba ait hareketleri getir
@@ -158,6 +160,7 @@ public class HareketService {
 
         Hareket hareket = hareketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
+        tenantChecker.check(hareket.getSirketId(), "Hareket");
 
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
@@ -198,6 +201,7 @@ public class HareketService {
         
         Hareket hareket = hareketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
+        tenantChecker.check(hareket.getSirketId(), "Hareket");
         
         // Bakiye güncellemeyi ters işlemle yap
         BigDecimal bakiyeGuncellemeTutari = hareket.getTur() == Hareket.HareketTuru.TAHSILAT 

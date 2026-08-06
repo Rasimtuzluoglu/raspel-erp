@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.BankaHareketiDTO;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.finans.BankaHareketi;
@@ -35,6 +36,7 @@ public class BankaMutabakatService {
 
     private final BankaHareketiRepository bankaHareketiRepository;
     private final FaturaRepository faturaRepository;
+    private final TenantChecker tenantChecker;
 
     private static final DateTimeFormatter[] TARIH_FORMATLARI = {
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),
@@ -95,6 +97,7 @@ public class BankaMutabakatService {
     public BankaHareketiDTO eslestir(Long hareketId, Long faturaId) {
         BankaHareketi h = bankaHareketiRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka hareketi", hareketId));
+        tenantChecker.check(h.getSirketId(), "Banka hareketi");
         if (!faturaRepository.existsById(faturaId)) throw new ResourceNotFoundException("Fatura", faturaId);
         h.setEslestirildi(true);
         h.setEslesenFaturaId(faturaId);
@@ -104,6 +107,7 @@ public class BankaMutabakatService {
     public BankaHareketiDTO eslestirmeyiKaldir(Long hareketId) {
         BankaHareketi h = bankaHareketiRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka hareketi", hareketId));
+        tenantChecker.check(h.getSirketId(), "Banka hareketi");
         h.setEslestirildi(false);
         h.setEslesenFaturaId(null);
         return entityToDTO(bankaHareketiRepository.save(h));

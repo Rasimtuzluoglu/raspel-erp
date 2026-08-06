@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sube;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sube.SubeDTO;
 import com.raspel.erp.entity.sube.Sube;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class SubeService {
 
     private final SubeRepository subeRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<SubeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -33,8 +35,10 @@ public class SubeService {
 
     @Transactional(readOnly = true)
     public SubeDTO getir(Long id) {
-        return entityToDTO(subeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Sube", id)));
+        Sube s = subeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sube", id));
+        tenantChecker.check(s.getSirketId(), "Sube");
+        return entityToDTO(s);
     }
 
     public SubeDTO olustur(SubeDTO dto) {
@@ -48,6 +52,7 @@ public class SubeService {
     public SubeDTO guncelle(Long id, SubeDTO dto) {
         Sube s = subeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sube", id));
+        tenantChecker.check(s.getSirketId(), "Sube");
         if (dto.getAd() != null) s.setAd(dto.getAd());
         if (dto.getAdres() != null) s.setAdres(dto.getAdres());
         if (dto.getTelefon() != null) s.setTelefon(dto.getTelefon());
@@ -57,8 +62,9 @@ public class SubeService {
     }
 
     public void sil(Long id) {
-        if (!subeRepository.existsById(id))
-            throw new ResourceNotFoundException("Sube", id);
+        Sube s = subeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sube", id));
+        tenantChecker.check(s.getSirketId(), "Sube");
         subeRepository.deleteById(id);
     }
 

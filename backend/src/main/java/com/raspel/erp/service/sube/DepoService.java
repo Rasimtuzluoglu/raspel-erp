@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sube;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sube.DepoDTO;
 import com.raspel.erp.dto.sube.DepoStokDTO;
 import com.raspel.erp.entity.sube.Depo;
@@ -31,6 +32,7 @@ public class DepoService {
     private final DepoStokRepository depoStokRepository;
     private final SubeRepository subeRepository;
     private final StokRepository stokRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<DepoDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -44,6 +46,7 @@ public class DepoService {
     public DepoDTO getir(Long id) {
         Depo d = depoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", id));
+        tenantChecker.check(d.getSirketId(), "Depo");
         String subeAd = subeRepository.findById(d.getSubeId())
                 .map(s -> s.getAd()).orElse(null);
         return entityToDTO(d, subeAd);
@@ -60,6 +63,7 @@ public class DepoService {
     public DepoDTO guncelle(Long id, DepoDTO dto) {
         Depo d = depoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", id));
+        tenantChecker.check(d.getSirketId(), "Depo");
         if (dto.getAd() != null) d.setAd(dto.getAd());
         if (dto.getAdres() != null) d.setAdres(dto.getAdres());
         if (dto.getYetkili() != null) d.setYetkili(dto.getYetkili());
@@ -69,8 +73,9 @@ public class DepoService {
     }
 
     public void sil(Long id) {
-        if (!depoRepository.existsById(id))
-            throw new ResourceNotFoundException("Depo", id);
+        Depo d = depoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Depo", id));
+        tenantChecker.check(d.getSirketId(), "Depo");
         depoRepository.deleteById(id);
     }
 
@@ -99,6 +104,9 @@ public class DepoService {
     }
 
     public DepoStokDTO stokEkle(Long depoId, Long stokId, BigDecimal miktar) {
+        Depo d = depoRepository.findById(depoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Depo", depoId));
+        tenantChecker.check(d.getSirketId(), "Depo");
         DepoStok ds = depoStokRepository.findByDepoIdAndStokId(depoId, stokId)
                 .orElse(DepoStok.builder().depoId(depoId).stokId(stokId).miktar(BigDecimal.ZERO).build());
         ds.setMiktar(ds.getMiktar().add(miktar));
@@ -109,6 +117,9 @@ public class DepoService {
     }
 
     public DepoStokDTO stokCikar(Long depoId, Long stokId, BigDecimal miktar) {
+        Depo d = depoRepository.findById(depoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Depo", depoId));
+        tenantChecker.check(d.getSirketId(), "Depo");
         DepoStok ds = depoStokRepository.findByDepoIdAndStokId(depoId, stokId)
                 .orElseThrow(() -> new BusinessException("Bu depoda stok bulunamadı"));
         if (ds.getMiktar().compareTo(miktar) < 0)

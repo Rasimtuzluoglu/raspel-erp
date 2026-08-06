@@ -1,9 +1,11 @@
 package com.raspel.erp.service.sistem;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sistem.GorevDTO;
 import com.raspel.erp.dto.sistem.ProjeDTO;
 import com.raspel.erp.entity.sistem.Gorev;
 import com.raspel.erp.entity.sistem.Proje;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.GorevRepository;
 import com.raspel.erp.repository.sistem.ProjeRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +24,17 @@ public class ProjeService {
 
     private final ProjeRepository projeRepository;
     private final GorevRepository gorevRepository;
+    private final TenantChecker tenantChecker;
 
     public Page<ProjeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return projeRepository.findBySirketIdOrderByBaslangicDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     public ProjeDTO getir(Long id) {
-        return entityToDTO(projeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + id)));
+        Proje p = projeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Proje", id));
+        tenantChecker.check(p.getSirketId(), "Proje");
+        return entityToDTO(p);
     }
 
     public ProjeDTO olustur(ProjeDTO dto) {
@@ -50,7 +55,8 @@ public class ProjeService {
     }
 
     public ProjeDTO guncelle(Long id, ProjeDTO dto) {
-        Proje p = projeRepository.findById(id).orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + id));
+        Proje p = projeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Proje", id));
+        tenantChecker.check(p.getSirketId(), "Proje");
         p.setAd(dto.getAd());
         p.setAciklama(dto.getAciklama());
         p.setBaslangic(dto.getBaslangic());
@@ -71,13 +77,15 @@ public class ProjeService {
     }
 
     public ProjeDTO durumGuncelle(Long id, String durum) {
-        Proje p = projeRepository.findById(id).orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + id));
+        Proje p = projeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Proje", id));
+        tenantChecker.check(p.getSirketId(), "Proje");
         p.setDurum(durum);
         return entityToDTO(projeRepository.save(p));
     }
 
     public ProjeDTO gorevEkle(Long projeId, GorevDTO dto) {
-        Proje p = projeRepository.findById(projeId).orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + projeId));
+        Proje p = projeRepository.findById(projeId).orElseThrow(() -> new ResourceNotFoundException("Proje", projeId));
+        tenantChecker.check(p.getSirketId(), "Proje");
         gorevRepository.save(Gorev.builder().projeId(projeId).ad(dto.getAd())
                 .aciklama(dto.getAciklama()).durum("YAPILACAK")
                 .atanan(dto.getAtanan()).baslangic(dto.getBaslangic())
@@ -86,12 +94,16 @@ public class ProjeService {
     }
 
     public void sil(Long id) {
+        Proje p = projeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Proje", id));
+        tenantChecker.check(p.getSirketId(), "Proje");
         gorevRepository.findByProjeIdOrderByBaslangicAsc(id).forEach(g -> gorevRepository.deleteById(g.getId()));
         projeRepository.deleteById(id);
     }
 
     public GorevDTO gorevDurumGuncelle(Long gorevId, String durum) {
-        Gorev g = gorevRepository.findById(gorevId).orElseThrow(() -> new RuntimeException("Görev bulunamadı: " + gorevId));
+        Gorev g = gorevRepository.findById(gorevId).orElseThrow(() -> new ResourceNotFoundException("Görev", gorevId));
+        Proje p = projeRepository.findById(g.getProjeId()).orElseThrow(() -> new ResourceNotFoundException("Proje", g.getProjeId()));
+        tenantChecker.check(p.getSirketId(), "Proje");
         g.setDurum(durum);
         return gorevToDTO(gorevRepository.save(g));
     }

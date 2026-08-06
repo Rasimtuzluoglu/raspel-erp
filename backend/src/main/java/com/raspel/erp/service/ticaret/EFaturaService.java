@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.EFaturaDTO;
@@ -38,6 +39,7 @@ public class EFaturaService {
     private final FaturaService faturaService;
     private final CariHesapRepository cariHesapRepository;
     private final SirketRepository sirketRepository;
+    private final TenantChecker tenantChecker;
 
     /** GİB/entegratör uç noktası. Boş ise yerel onay (simülasyon) yapılır. */
     @Value("${app.efatura.gib-endpoint:}")
@@ -53,6 +55,7 @@ public class EFaturaService {
     public EFaturaDTO eFaturaGetir(Long id) {
         EFatura eFatura = eFaturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("E-Fatura", id));
+        tenantChecker.check(eFatura.getSirketId(), "E-Fatura");
         return entityToDTO(eFatura);
     }
 
@@ -102,6 +105,7 @@ public class EFaturaService {
     public EFaturaDTO gibGonder(Long id) {
         EFatura eFatura = eFaturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("E-Fatura", id));
+        tenantChecker.check(eFatura.getSirketId(), "E-Fatura");
 
         if (eFatura.getGibDurumKodu() >= 1200) {
             throw new BusinessException("Bu E-Fatura zaten GİB'e gönderilmiş. Durum Kodu: " + eFatura.getGibDurumKodu());
@@ -133,6 +137,7 @@ public class EFaturaService {
     public String xmlIndir(Long id) {
         EFatura eFatura = eFaturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("E-Fatura", id));
+        tenantChecker.check(eFatura.getSirketId(), "E-Fatura");
         return eFatura.getUblXml();
     }
 

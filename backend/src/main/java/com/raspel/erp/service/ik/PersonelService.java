@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ik;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ik.PersonelDTO;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class PersonelService {
 
     private final PersonelRepository personelRepository;
+    private final TenantChecker tenantChecker;
 
     public Page<PersonelDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return personelRepository.findBySirketIdOrderByAdAsc(sirketId, pageable)
@@ -26,8 +28,10 @@ public class PersonelService {
     }
 
     public PersonelDTO getir(Long id) {
-        return entityToDTO(personelRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Personel", id)));
+        Personel p = personelRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
+        tenantChecker.check(p.getSirketId(), "Personel");
+        return entityToDTO(p);
     }
 
     public PersonelDTO olustur(PersonelDTO dto) {
@@ -47,6 +51,7 @@ public class PersonelService {
     public PersonelDTO guncelle(Long id, PersonelDTO dto) {
         Personel p = personelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
+        tenantChecker.check(p.getSirketId(), "Personel");
         if (dto.getAd() != null) p.setAd(dto.getAd());
         if (dto.getSoyad() != null) p.setSoyad(dto.getSoyad());
         if (dto.getTcKimlik() != null) p.setTcKimlik(dto.getTcKimlik());
@@ -62,7 +67,9 @@ public class PersonelService {
     }
 
     public void sil(Long id) {
-        if (!personelRepository.existsById(id)) throw new ResourceNotFoundException("Personel", id);
+        Personel p = personelRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
+        tenantChecker.check(p.getSirketId(), "Personel");
         personelRepository.deleteById(id);
     }
 

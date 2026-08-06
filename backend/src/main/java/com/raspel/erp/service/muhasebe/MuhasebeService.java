@@ -1,5 +1,6 @@
 package com.raspel.erp.service.muhasebe;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.muhasebe.*;
 import com.raspel.erp.entity.muhasebe.HesapPlani;
 import com.raspel.erp.entity.muhasebe.MuhasebeFisKalem;
@@ -31,6 +32,7 @@ public class MuhasebeService {
     private final HesapPlaniRepository hesapPlaniRepository;
     private final MuhasebeFisiRepository muhasebeFisiRepository;
     private final MuhasebeFisKalemRepository muhasebeFisKalemRepository;
+    private final TenantChecker tenantChecker;
 
     // ---------- HESAP PLANI ----------
 
@@ -63,6 +65,7 @@ public class MuhasebeService {
     public HesapPlaniDTO hesapGuncelle(Long id, HesapPlaniDTO dto) {
         HesapPlani hesap = hesapPlaniRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hesap Planı", id));
+        tenantChecker.check(hesap.getSirketId(), "Hesap Planı");
         if (dto.getAd() != null) hesap.setAd(dto.getAd());
         if (dto.getTip() != null) hesap.setTip(dto.getTip());
         if (dto.getGrup() != null) hesap.setGrup(dto.getGrup());
@@ -72,7 +75,9 @@ public class MuhasebeService {
     }
 
     public void hesapSil(Long id) {
-        if (!hesapPlaniRepository.existsById(id)) throw new ResourceNotFoundException("Hesap Planı", id);
+        HesapPlani hesap = hesapPlaniRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hesap Planı", id));
+        tenantChecker.check(hesap.getSirketId(), "Hesap Planı");
         hesapPlaniRepository.deleteById(id);
     }
 
@@ -90,6 +95,7 @@ public class MuhasebeService {
     public MuhasebeFisiDTO fisGetir(Long id) {
         MuhasebeFisi fis = muhasebeFisiRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Muhasebe Fişi", id));
+        tenantChecker.check(fis.getSirketId(), "Muhasebe Fişi");
         return fisEntityToDTO(fis, true);
     }
 
@@ -144,6 +150,7 @@ public class MuhasebeService {
     public void fisIptalEt(Long id) {
         MuhasebeFisi fis = muhasebeFisiRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Muhasebe Fişi", id));
+        tenantChecker.check(fis.getSirketId(), "Muhasebe Fişi");
         if ("ONAYLANDI".equals(fis.getDurum())) {
             throw new BusinessException("Onaylanmış fiş iptal edilemez, düzeltme fişi açınız");
         }
@@ -152,7 +159,9 @@ public class MuhasebeService {
     }
 
     public void fisSil(Long id) {
-        if (!muhasebeFisiRepository.existsById(id)) throw new ResourceNotFoundException("Muhasebe Fişi", id);
+        MuhasebeFisi fis = muhasebeFisiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Muhasebe Fişi", id));
+        tenantChecker.check(fis.getSirketId(), "Muhasebe Fişi");
         muhasebeFisKalemRepository.deleteByFisId(id);
         muhasebeFisiRepository.deleteById(id);
     }

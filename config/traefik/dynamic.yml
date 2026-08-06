@@ -22,6 +22,10 @@ http:
         accessControlAllowCredentials: true
         accessControlMaxAge: 3600
 
+    # NOT: Asagidaki hash repositor'da gorundugu icin gecersiz sayilmalidir.
+    # Production'da kullanmadan once KENDI sifrenizi olusturup burayi guncelleyin.
+    # Komut: docker run --rm httpd:alpine htpasswd -nb admin YENI_SIFRENIZ
+    # NOT: Bu hash yalnizca ornek/test amaclidir, gercek ortamda kullanilamaz.
     dashboard-auth:
       basicAuth:
         users:

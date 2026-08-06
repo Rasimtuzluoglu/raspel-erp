@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.SatinalmaTalepDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaTalepKalemDTO;
 import com.raspel.erp.entity.ticaret.SatinalmaTalep;
@@ -27,6 +28,7 @@ public class SatinalmaTalepService {
     private final SatinalmaTalepRepository talepRepository;
     private final SatinalmaTalepKalemRepository kalemRepository;
     private final StokRepository stokRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaTalepDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -37,6 +39,7 @@ public class SatinalmaTalepService {
     public SatinalmaTalepDTO getir(Long id) {
         SatinalmaTalep t = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
+        tenantChecker.check(t.getSirketId(), "Talep");
         return entityToDTO(t);
     }
 
@@ -67,6 +70,7 @@ public class SatinalmaTalepService {
     public SatinalmaTalepDTO guncelle(Long id, SatinalmaTalepDTO dto) {
         SatinalmaTalep t = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
+        tenantChecker.check(t.getSirketId(), "Talep");
         t.setTalepNo(dto.getTalepNo());
         t.setTarih(dto.getTarih());
         t.setTalepEden(dto.getTalepEden());
@@ -90,14 +94,15 @@ public class SatinalmaTalepService {
     public SatinalmaTalepDTO durumGuncelle(Long id, String durum) {
         SatinalmaTalep t = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
+        tenantChecker.check(t.getSirketId(), "Talep");
         t.setDurum(durum);
         return entityToDTO(talepRepository.save(t));
     }
 
     public void sil(Long id) {
-        if (!talepRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Talep", id);
-        }
+        SatinalmaTalep t = talepRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
+        tenantChecker.check(t.getSirketId(), "Talep");
         kalemRepository.deleteByTalepId(id);
         talepRepository.deleteById(id);
     }

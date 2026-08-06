@@ -1,5 +1,6 @@
 package com.raspel.erp.service.envanter;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.dto.envanter.KritikStokDTO;
@@ -38,6 +39,7 @@ public class StokService {
     private final StokHareketRepository stokHareketRepository;
     private final CariHesapRepository cariHesapRepository;
     private final BildirimService bildirimService;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<StokDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -60,8 +62,10 @@ public class StokService {
     @Transactional(readOnly = true)
     @Cacheable(value = "stoklar", key = "#id")
     public StokDTO getir(Long id) {
-        return entityToDTO(stokRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Stok", id)));
+        Stok stok = stokRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        return entityToDTO(stok);
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
@@ -101,6 +105,7 @@ public class StokService {
     public StokDTO guncelle(Long id, StokDTO dto) {
         Stok s = stokRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
+        tenantChecker.check(s.getSirketId(), "Stok");
         s.setStokKodu(dto.getStokKodu()); s.setAd(dto.getAd()); s.setBirim(dto.getBirim());
         s.setFiyat(dto.getFiyat()); s.setSatisFiyati(dto.getSatisFiyati());
         s.setMiktar(dto.getMiktar() != null ? dto.getMiktar() : s.getMiktar());
@@ -120,6 +125,9 @@ public class StokService {
 
     @CacheEvict(value = "stoklar", allEntries = true)
     public void sil(Long id) {
+        Stok s = stokRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
+        tenantChecker.check(s.getSirketId(), "Stok");
         if (stokHareketRepository.countByStokId(id) > 0)
             throw new BusinessException("Bu stoğa ait hareketler var, önce hareketleri silin");
         stokRepository.deleteById(id);
@@ -141,6 +149,7 @@ public class StokService {
     public StokHareketDTO hareketEkle(StokHareketDTO dto) {
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
 
         BigDecimal miktar = dto.getMiktar();
         if ("CIKIS".equals(dto.getTur())) {
@@ -195,6 +204,7 @@ public class StokService {
         StokHareket h = stokHareketRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", hareketId));
         Stok stok = h.getStok();
+        tenantChecker.check(stok.getSirketId(), "Stok");
         if ("CIKIS".equals(h.getTur())) {
             stok.setMiktar(stok.getMiktar().add(h.getMiktar()));
         } else {

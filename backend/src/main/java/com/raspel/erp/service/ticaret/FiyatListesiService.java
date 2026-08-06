@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.FiyatListesiDTO;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.ticaret.FiyatListesi;
@@ -22,6 +23,7 @@ public class FiyatListesiService {
 
     private final FiyatListesiRepository fiyatListesiRepository;
     private final StokRepository stokRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<FiyatListesiDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -30,8 +32,10 @@ public class FiyatListesiService {
 
     @Transactional(readOnly = true)
     public FiyatListesiDTO getir(Long id) {
-        return entityToDTO(fiyatListesiRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("FiyatListesi", id)));
+        FiyatListesi fl = fiyatListesiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("FiyatListesi", id));
+        tenantChecker.check(fl.getSirketId(), "FiyatListesi");
+        return entityToDTO(fl);
     }
 
     public FiyatListesiDTO olustur(FiyatListesiDTO dto, Long sirketId) {
@@ -52,6 +56,7 @@ public class FiyatListesiService {
     public FiyatListesiDTO guncelle(Long id, FiyatListesiDTO dto) {
         FiyatListesi fl = fiyatListesiRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FiyatListesi", id));
+        tenantChecker.check(fl.getSirketId(), "FiyatListesi");
         if (dto.getAlisFiyat() != null) fl.setAlisFiyat(dto.getAlisFiyat());
         if (dto.getSatisFiyat() != null) fl.setSatisFiyat(dto.getSatisFiyat());
         if (dto.getGecerliBaslangic() != null) fl.setGecerliBaslangic(dto.getGecerliBaslangic());
@@ -66,8 +71,9 @@ public class FiyatListesiService {
     }
 
     public void sil(Long id) {
-        if (!fiyatListesiRepository.existsById(id))
-            throw new ResourceNotFoundException("FiyatListesi", id);
+        FiyatListesi fl = fiyatListesiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("FiyatListesi", id));
+        tenantChecker.check(fl.getSirketId(), "FiyatListesi");
         fiyatListesiRepository.deleteById(id);
     }
 

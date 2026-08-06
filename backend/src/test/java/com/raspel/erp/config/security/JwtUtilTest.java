@@ -8,12 +8,15 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.env.Environment;
 
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class JwtUtilTest {
 
@@ -25,7 +28,9 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(SECRET, EXPIRATION_MS);
+        Environment mockEnv = mock(Environment.class);
+        when(mockEnv.getActiveProfiles()).thenReturn(new String[]{"test"});
+        jwtUtil = new JwtUtil(SECRET, EXPIRATION_MS, mockEnv);
         testUser = new Kullanici();
         testUser.setId(1L);
         testUser.setUsername("testuser");

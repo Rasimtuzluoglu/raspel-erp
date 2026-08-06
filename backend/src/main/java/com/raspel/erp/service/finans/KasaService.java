@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.KasaDTO;
 import com.raspel.erp.dto.finans.KasaHareketDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -33,6 +34,7 @@ public class KasaService {
     private final KasaRepository kasaRepository;
     private final KasaHareketRepository kasaHareketRepository;
     private final KategoriRepository kategoriRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
@@ -41,8 +43,10 @@ public class KasaService {
 
     @Transactional(readOnly = true)
     public KasaDTO kasaGetir(Long id) {
-        return entityToDTO(kasaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Kasa", id)));
+        Kasa kasa = kasaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
+        return entityToDTO(kasa);
     }
 
     public KasaDTO kasaOlustur(KasaDTO dto, Long sirketId) {
@@ -53,11 +57,15 @@ public class KasaService {
     public KasaDTO kasaGuncelle(Long id, KasaDTO dto) {
         Kasa kasa = kasaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
         kasa.setAd(dto.getAd());
         return entityToDTO(kasaRepository.save(kasa));
     }
 
     public void kasaSil(Long id) {
+        Kasa kasa = kasaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
         if (kasaHareketRepository.countByKasaId(id) > 0)
             throw new BusinessException("Bu kasaya ait hareketler var, önce hareketleri silin");
         kasaRepository.deleteById(id);
@@ -73,6 +81,7 @@ public class KasaService {
     public KasaHareketDTO hareketEkle(KasaHareketDTO dto) {
         Kasa kasa = kasaRepository.findById(dto.getKasaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", dto.getKasaId()));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
 
         BigDecimal tutar = dto.getTutar();
         if ("GIDER".equals(dto.getTur())) tutar = tutar.negate();
@@ -96,6 +105,7 @@ public class KasaService {
         KasaHareket hareket = kasaHareketRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", hareketId));
         Kasa kasa = hareket.getKasa();
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
         BigDecimal tutar = hareket.getTutar();
         if ("GIDER".equals(hareket.getTur())) tutar = tutar.negate();
         kasa.setBakiye(kasa.getBakiye().subtract(tutar));
