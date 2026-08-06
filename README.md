@@ -1,130 +1,88 @@
-# RasPel ERP
+# RasPel ERP — KOBİ'nin Tek Panosu
 
-Küçük ve orta ölçekli işletmeler için geliştirilmiş, Türkçe öncelikli ERP yazılımı. Finans, ticaret, stok, personel ve muhasebe modüllerini tek platformda sunar.
+> Fatura, stok, cari, personel... Hepsi tek ekranda. İnternet kesilse de çalışır, masaüstüne kurulur, her yerden erişilir.
 
-| Katman | Teknoloji |
-|--------|-----------|
-| Backend | Java 21, Spring Boot 3.2, PostgreSQL 16, Redis 7, RabbitMQ |
-| Frontend | Vue 3, Vite, PrimeVue 4, Pinia, Chart.js |
-| Altyapı | Docker Compose, Traefik, Prometheus, Grafana |
-| Güvenlik | JWT, BCrypt, 2FA (TOTP), tenant izolasyonu |
-| Test | 510 backend (JUnit 5), 84 frontend (Vitest), Cypress E2E |
+**Java 21 · Spring Boot 3.2 · Vue 3 · PrimeVue 4 · PostgreSQL 16 · Redis · Docker**
+
+---
+
+## Neden RasPel?
+
+KOBİ'lerin muhasebeciye bağımlı kalmadan günlük işlerini yönetebilmesi için yapıldı. Karmaşık ERP'lerin aksine menüsü sade, öğrenmesi kolay, ihtiyacın kadarını gösteriyor.
+
+| Öne çıkan | Açıklama |
+|-----------|----------|
+| 🏢 Çoklu şirket | Her müşteriniz kendi verisini görür, birbirine karışmaz |
+| 📱 PWA | Tarayıcıdan masaüstüne kurun, internet kesilse de çalışın |
+| 🔐 2FA | Google Authenticator ile iki faktörlü giriş |
+| 🧮 Yerleşik araçlar | Hesap makinesi, döviz çevirici, KDV/taksit/kar marjı hesabı |
+| ⌨️ Klavye kısayolları | `Ctrl+K` arama, `g+f` fatura, `g+c` cari... fareye gerek yok |
+| 🌙 Karanlık mod | Gece geç saatlere kadar çalışanlar için |
 
 ---
 
 ## Modüller
 
-### Finans
-**Cari Hesaplar:** Müşteri ve tedarikçi kayıtları, bakiye takibi, kredi limiti, ödeme vadesi. Her cari hesap için tahsilat ve ödeme geçmişi, IBAN doğrulama, toplu Excel çıktısı.
+### 💰 Finans
 
-**Fatura:** Alış ve satış faturası. Otomatik seri numarası (şirket bazlı `FTR-1-2026-000001`), iskonto, KDV hesaplama, PDF çıktısı, e-posta ile gönderim. Fatura çoğaltma (aynı kalemlerle yeni fatura), toplu silme.
+**Cari Hesaplar** — Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi. IBAN doğrulama, toplu Excel, cari ekstre.
 
-**Banka & Kasa:** Hesap bakiyeleri, para giriş/çıkış takibi. Banka mutabakatı için hesap özeti yükleme ve otomatik fatura eşleştirme. IBAN kopyalama.
+**Fatura** — Alış/satış faturası. Otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi. Faturayı çoğalt, toplu sil.
 
-**Çek/Senet:** Portföy takibi, vade yönetimi, durum güncelleme.
+**Banka & Kasa** — Hesap bakiyeleri, para giriş/çıkışı. Hesap özeti yükleyip otomatik fatura eşleştirme (mutabakat).
 
-**Bütçe & Masraf:** Aylık/yıllık bütçe planlama, gider kaydı ve karşılaştırma.
+**Çek/Senet, Bütçe, Masraf** — Portföy takibi, aylık planlama, gider kaydı.
 
-**Döviz:** TCMB'den otomatik kur çekme, döviz çevirici araç.
+**Döviz** — TCMB'den günlük kur. Yerleşik çevirici ile anında hesapla.
 
-### Ticaret
-**Hızlı Satış:** Barkod okuyucu destekli POS ekranı. Sepet, indirim, termal fiş yazdırma.
+### 🛒 Ticaret
 
-**Sipariş & İrsaliye:** Satış siparişi, irsaliye düzenleme, durum takibi. Siparişten faturaya dönüşüm.
+**Hızlı Satış** — Barkod okuyuculu POS. Sepet, indirim, termal fiş.
 
-**E-Fatura:** UBL-TR 2.1 formatında e-fatura oluşturma ve GİB'e gönderim.
+**Sipariş → İrsaliye → Fatura** — Tek elden iş akışı.
 
-**Satınalma:** Talep ve sipariş yönetimi, tedarikçi bazlı takip.
+**E-Fatura** — UBL-TR 2.1 ile GİB entegrasyonu.
 
-**CRM:** Satış fırsatı takibi, aşama yönetimi.
+**Satınalma, CRM, İade, Fiyat Listesi** — Tedarik, fırsat takibi, müşteri bazlı fiyat.
 
-**İade & Fiyat Listesi:** Ürün iade yönetimi, müşteri bazlı özel fiyat listeleri.
+### 📦 Stok
 
-### Stok
-**Stok Kartı:** Ürün kodu, barkod, alış/satış fiyatı, KDV oranı, birim, kritik stok seviyesi. Stok hareket geçmişi (giriş/çıkış detayı), toplu CSV içe/dışa aktarım.
+Stok kartı, barkod, kritik seviye alarmı, hareket geçmişi, çoklu depo, şubeler arası transfer, seri/lot takibi, sayım.
 
-**Depo & Şube:** Çoklu depo ve şube yönetimi, depolar arası transfer.
+### 👥 Personel
 
-**Seri/Lot & Sayım:** Ürün seri numarası takibi, stok sayım fişi.
+TC kimlik doğrulamalı kayıt, izin takibi, puantaj, maaş bordro, vardiya.
 
-### Personel
-**Personel Kaydı:** TC kimlik doğrulama, iletişim bilgileri, departman ve pozisyon.
+### 📊 Muhasebe
 
-**İzin & Puantaj:** Yıllık izin takibi, günlük puantaj girişi.
+Otomatik hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir.
 
-**Maaş & Vardiya:** Bordro hesaplama, vardiya planlaması.
+### ⚙️ Sistem
 
-### Muhasebe
-**Hesap Planı:** Varsayılan hesap planı otomatik oluşturulur, şirket bazlı özelleştirilebilir.
-
-**Fiş, Mizan, Defter-i Kebir:** Dengeli yevmiye fişleri, dönem sonu mizan ve defter-i kebir raporları.
-
-### Sistem
-**Dashboard:** Özet istatistikler, son 6 aylık gelir-gider grafiği, kritik stok uyarıları, hızlı işlem butonları.
-
-**Raporlar:** KDV beyannamesi, BA/BS formu, cari hesap ekstresi, yaşlandırma raporu. Tüm listelerden Excel çıktısı.
-
-**Çoklu Şirket:** Her şirket kendi verisini görür, tenant izolasyonu ile veri güvenliği.
-
-**Yetki Yönetimi:** Rol tabanlı erişim (RBAC). Admin ve kullanıcı rolleri, modül bazlı yetkilendirme.
-
-**Denetim & Anomali:** Tüm işlemlerin kayıt altına alınması, şüpheli fatura ve mükerrer ödeme tespiti.
-
-**Yedekleme:** Otomatik zamanlanmış veritabanı yedekleme, manuel yedek alma ve geri yükleme.
+Dashboard, raporlar (KDV, BA/BS, yaşlandırma), denetim logu, anomali tespiti, yedekleme, rol ve yetki yönetimi.
 
 ---
 
-## Kullanıcı Deneyimi
-
-- **Klavye kısayolları:** Ctrl+K ile evrensel arama, `g` + harf ile sayfalar arası hızlı geçiş
-- **Gelişmiş/Temel mod:** Menüyü sadeleştirip sadece sık kullanılanları gösterme
-- **Yerleşik araçlar:** Hesap makinesi, döviz çevirici, KDV hesaplayıcı, taksit hesaplayıcı, kar marjı hesaplayıcı
-- **Form koruma:** Kaydedilmemiş değişikliklerde uyarı
-- **Boş durum yönlendirmesi:** Veri yokken "ilk kaydınızı oluşturun" butonu
-- **Tarih filtresi:** Liste sayfalarında hızlı tarih aralığı seçimi
-- **Toplu işlem:** Fatura ve hareket listelerinde çoklu seçim ve toplu silme
-- **PWA:** Tarayıcıdan masaüstüne kurulum, çevrimdışı veri görüntüleme
-- **Karanlık/Aydınlık mod:** Tema değiştirme
-
----
-
-## Hızlı Başlangıç (Geliştirme)
+## Başlat
 
 ```bash
-# 1. Altyapıyı başlat
-docker-compose -f docker-compose.dev.yml up -d
-
-# 2. Backend (port 8081)
-cd backend
-mvn spring-boot:run
-
-# 3. Frontend (port 5173)
-cd frontend
-npm install
-npm run dev
+# Geliştirme (3 ayrı terminal)
+docker-compose -f docker-compose.dev.yml up -d     # PostgreSQL + Redis + RabbitMQ
+cd backend && mvn spring-boot:run                  # API → :8081
+cd frontend && npm install && npm run dev          # UI → :5173
 ```
 
-Tarayıcıda **http://localhost:5173** adresini açın.  
-İlk giriş: `admin` / `admin123`
-
-Adminer (veritabanı yönetimi): http://localhost:8082
+**http://localhost:5173** · `admin` / `admin123`
 
 ---
 
-## Production Kurulumu
-
 ```bash
-# .env dosyasını oluşturun
-cp .env.example .env
-# Tüm değişkenleri doldurun (şifreler, JWT_SECRET, domain vb.)
-
-# Tüm servisleri başlat
-docker-compose up -d
+# Production (tek komut)
+cp .env.example .env   # şifreleri ve domain'i doldur
+docker-compose up -d    # 9 servis, SSL dahil
 ```
 
-Production öncesinde `docs/GO-LIVE.md` kontrol listesini mutlaka gözden geçirin.
-
-Servisler: Traefik (80/443 SSL), Backend, Frontend, PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, Alertmanager
+Production öncesi `docs/GO-LIVE.md` kontrol listesine bakın.
 
 ---
 
@@ -132,47 +90,37 @@ Servisler: Traefik (80/443 SSL), Backend, Frontend, PostgreSQL, Redis, RabbitMQ,
 
 ```
 raspel-erp/
-├── backend/src/main/java/com/raspel/erp/
-│   ├── controller/    # REST API (7 alt paket)
-│   ├── service/       # İş mantığı (Redis cache, tenant kontrol)
-│   ├── repository/    # JPA repository (51 adet)
-│   ├── entity/        # JPA entity
-│   ├── dto/           # Veri transfer objesi
-│   ├── config/        # Security, Redis, WebSocket, Health
-│   └── aspect/        # Audit log AOP
-├── frontend/src/
-│   ├── views/         # 52 sayfa (lazy-loaded)
-│   ├── components/    # 25+ bileşen
-│   ├── composables/   # 12 composable
-│   ├── stores/        # 11 Pinia store
-│   ├── api/           # Axios client + 7 domain modülü
-│   └── locales/       # Türkçe + İngilizce
-├── config/            # Traefik, Prometheus, Grafana
-├── scripts/           # Yedekleme, geri yükleme, test
-└── docs/              # API, kullanım, kurulum rehberi
+├── backend/                 # Spring Boot API
+│   └── src/main/java/com/raspel/erp/
+│       ├── controller/      # 7 alt paket (finans, ticaret, envanter, ik, muhasebe, sistem, sube)
+│       ├── service/         # Redis cache, tenant kontrol
+│       ├── repository/      # 51 JPA repository
+│       ├── entity/          # JPA entity
+│       └── dto/             # Veri transfer objeleri
+├── frontend/                # Vue 3 SPA
+│   └── src/
+│       ├── views/           # 52 sayfa
+│       ├── components/      # 25+ bileşen
+│       ├── composables/     # 12 composable
+│       ├── stores/          # 11 Pinia store
+│       └── api/             # 7 domain modülü
+├── config/                  # Traefik, Prometheus, Grafana
+├── scripts/                 # Yedekleme, test
+└── docs/                    # Dökümantasyon
 ```
 
 ---
 
-## Komutlar
+## Test
 
 ```bash
-# Backend test
-cd backend && mvn test
-
-# Frontend test
-cd frontend && npm run test
-
-# Lint
-cd frontend && npm run lint
-
-# Build
-cd frontend && npm run build
-cd backend && mvn clean package -DskipTests
+cd backend && mvn test       # 510 test
+cd frontend && npm run test  # 84 test
+cd frontend && npm run lint  # ESLint
 ```
 
 ---
 
 ## Lisans
 
-MIT — © 2026 Rasim Tuzluoğlu
+MIT — © 2026 RasPel Co.

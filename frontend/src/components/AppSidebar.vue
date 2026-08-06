@@ -163,7 +163,7 @@
       </div>
 
       <div class="sidebar-credit">
-        Rasim Tuzluoğlu
+        RasPel Co.
       </div>
     </div>
 

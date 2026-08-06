@@ -7,7 +7,7 @@
           <i v-else class="pi pi-calculator" />
         </div>
         <h1>RasPel</h1>
-        <p class="alt-baslik">RasPel ERP <span class="versiyon">v1.0.0</span></p>
+        <p class="alt-baslik">KOBİ'nin Tek Panosu</p>
       </div>
 
       <div class="giris-form">
@@ -89,7 +89,7 @@
 
       <div class="giris-footer">
         <ThemeSwitcher />
-        <span>&copy; 2026 Rasim Tuzluoglu</span>
+        <span>&copy; 2026 RasPel Co.</span>
       </div>
     </div>
   </div>
