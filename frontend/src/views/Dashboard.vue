@@ -635,6 +635,39 @@
         </Card>
       </div>
 
+      <!-- AYLIK GELIR-GIDER KARSILASTIRMA -->
+      <div
+        v-if="widgets.aylikGelirGider.gorunur"
+        class="charts-row"
+      >
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-chart-bar"
+              style="margin-right:8px"
+            />Aylık Gelir-Gider Karşılaştırma
+          </template>
+          <template #content>
+            <div
+              v-if="aylikKarsilastirmaChart.datasets.length"
+              class="chart-wrapper"
+              style="max-width:100%"
+            >
+              <Bar
+                :data="aylikKarsilastirmaChart"
+                :options="aylikKarsilastirmaOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz fatura verisi yok
+            </div>
+          </template>
+        </Card>
+      </div>
+
       <!-- NOTLAR -->
       <div
         v-if="widgets.notlar.gorunur"
@@ -838,6 +871,7 @@ const widgetVarsayilan = () => ({
   nakitAkisi: { gorunur: true, etiket: 'Nakit Akışı' },
   sonGoruntulenenler: { gorunur: true, etiket: 'Son Görüntülenenler' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
+  aylikGelirGider: { gorunur: true, etiket: 'Aylık Gelir-Gider' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
   hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' },
   hizliIslemler: { gorunur: true, etiket: 'Hizli Islemler' },
@@ -902,11 +936,13 @@ const bakiyeChart = ref({ labels: [], datasets: [] })
 const barChart = ref({ labels: [], datasets: [] })
 const hareketChart = ref({ labels: [], datasets: [] })
 const gelirGiderChart = ref({ labels: [], datasets: [] })
+const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const barOptions = { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
 const lineOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
+const aylikKarsilastirmaOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 
 const bosSistem = computed(() =>
   cariHesapStore.cariHesaplar.length === 0 &&
@@ -988,6 +1024,49 @@ const grafikleriHesapla = () => {
         }
       ]
     }
+  }
+
+  aylikKarsilastirmayiHesapla()
+}
+
+const aylikKarsilastirmayiHesapla = () => {
+  const faturalar = faturaStore.faturalar || []
+  if (!faturalar.length) return
+
+  const aylar = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+  const simdi = new Date()
+  const son6Ay = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(simdi.getFullYear(), simdi.getMonth() - i, 1)
+    return { yil: d.getFullYear(), ay: d.getMonth() }
+  }).reverse()
+
+  const aylikVeri = son6Ay.map(m => {
+    const ayFaturalar = faturalar.filter(f => {
+      if (!f.tarih) return false
+      const t = new Date(f.tarih)
+      return t.getFullYear() === m.yil && t.getMonth() === m.ay && f.durum === 'KESILDI'
+    })
+    const gelir = ayFaturalar.filter(f => f.tur === 'SATIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
+    const gider = ayFaturalar.filter(f => f.tur === 'ALIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
+    return { ay: aylar[m.ay], gelir, gider }
+  })
+
+  aylikKarsilastirmaChart.value = {
+    labels: aylikVeri.map(v => v.ay),
+    datasets: [
+      {
+        label: 'Gelir',
+        data: aylikVeri.map(v => v.gelir),
+        backgroundColor: '#4caf50',
+        borderRadius: 4
+      },
+      {
+        label: 'Gider',
+        data: aylikVeri.map(v => v.gider),
+        backgroundColor: '#f44336',
+        borderRadius: 4
+      }
+    ]
   }
 }
 

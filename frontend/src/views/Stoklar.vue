@@ -755,6 +755,119 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="showDetailDialog"
+      :header="detailStok?.ad || 'Ürün Detayı'"
+      :modal="true"
+      style="width:700px"
+    >
+      <div
+        v-if="detailStok"
+        class="detail-grid"
+      >
+        <div class="detail-item">
+          <span class="detail-label">Stok Kodu</span>
+          <span class="detail-value">{{ detailStok.stokKodu || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Barkod</span>
+          <span class="detail-value">{{ detailStok.barkod || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Birim</span>
+          <span class="detail-value">{{ detailStok.birim || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Miktar</span>
+          <span
+            class="detail-value"
+            :class="detailStok.minMiktar && detailStok.miktar <= detailStok.minMiktar ? 'kritik' : 'normal'"
+          >
+            {{ detailStok.miktar }} {{ detailStok.birim || '' }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Alış Fiyatı</span>
+          <span class="detail-value">{{ formatCurrency(detailStok.fiyat) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Satış Fiyatı</span>
+          <span class="detail-value">{{ formatCurrency(detailStok.satisFiyati) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Kategori</span>
+          <span class="detail-value">{{ detailStok.kategori || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Marka</span>
+          <span class="detail-value">{{ detailStok.marka || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Min. Stok</span>
+          <span class="detail-value">{{ detailStok.minMiktar || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Raf No</span>
+          <span class="detail-value">{{ detailStok.rafNo || '-' }}</span>
+        </div>
+      </div>
+      <div class="form-section-title">
+        Stok Hareketleri
+      </div>
+      <div
+        v-if="hareketlerYukleniyor"
+        class="loading"
+      >
+        <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      </div>
+      <EmptyState
+        v-else-if="hareketler.length === 0"
+        message="Hareket bulunamadı"
+        sub-message="Bu ürüne ait stok hareketi bulunmamaktadır."
+        icon="pi pi-list"
+      />
+      <DataTable
+        v-else
+        :value="hareketler"
+        size="small"
+        striped-rows
+        :paginator="hareketler.length > 10"
+        :rows="10"
+      >
+        <Column
+          header="Tarih"
+          style="width:110px"
+        >
+          <template #body="s">
+            {{ formatDate(s.data.hareketTarihi || s.data.tarih) }}
+          </template>
+        </Column>
+        <Column
+          header="Tür"
+          style="width:90px"
+        >
+          <template #body="s">
+            <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
+              {{ s.data.tur === 'GIRIS' ? 'Giriş' : 'Çıkış' }}
+            </span>
+          </template>
+        </Column>
+        <Column
+          header="Miktar"
+          style="width:90px"
+        >
+          <template #body="s">
+            <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
+          </template>
+        </Column>
+        <Column header="Açıklama">
+          <template #body="s">
+            {{ s.data.aciklama || '-' }}
+          </template>
+        </Column>
+      </DataTable>
+    </Dialog>
   </div>
 </template>
 
@@ -766,6 +879,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { stokAPI, excelAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 
@@ -798,6 +912,10 @@ const seciliStok = ref(null)
 const seciliStokId = ref(null)
 const seciliStoklar = ref([])
 const stokHareketler = ref([])
+const showDetailDialog = ref(false)
+const detailStok = ref(null)
+const hareketler = ref([])
+const hareketlerYukleniyor = ref(false)
 const saving = ref(false)
 const gosterim = ref('tablo')
 
@@ -856,6 +974,9 @@ const stokSec = async (s) => {
   seciliStok.value = s; seciliStokId.value = s.id
   try { const r = await stokAPI.getHareketler(s.id); stokHareketler.value = r.data }
   catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi') }
+  detailStok.value = s
+  showDetailDialog.value = true
+  stokHareketleriYukle(s.id)
 }
 
 const openDialog = () => {
@@ -992,6 +1113,19 @@ const excelIndir = async () => {
   } catch { /* silent */ }
 }
 
+const stokHareketleriYukle = async (stokId) => {
+  hareketlerYukleniyor.value = true
+  hareketler.value = []
+  try {
+    const r = await stokAPI.getHareketler(stokId)
+    hareketler.value = r.data
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi')
+  } finally {
+    hareketlerYukleniyor.value = false
+  }
+}
+
 const formatCurrency = (v) => v ?? 0 ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v) : '0,00 ₺'
 const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(d)) : '-'
 </script>
@@ -1056,4 +1190,10 @@ h2 { color: var(--text-primary); font-size: 20px; margin: 0; }
 .batch-count {
   font-size: 12px; color: #60a5fa; font-weight: 600;
 }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.detail-item { padding: 6px 0; }
+.detail-label { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; }
+.detail-value { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.detail-value.normal { color: #4ade80; }
+.detail-value.kritik { color: #f87171; }
 </style>

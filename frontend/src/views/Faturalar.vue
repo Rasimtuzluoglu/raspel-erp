@@ -148,6 +148,12 @@
               @click="whatsappGonder(s.data)"
             />
             <Button
+              icon="pi pi-copy"
+              class="p-button-rounded p-button-sm p-button-secondary"
+              title="Çoğalt"
+              @click="cogalt(s.data)"
+            />
+            <Button
               v-if="s.data.durum === 'TASLAK'"
               icon="pi pi-pencil"
               class="p-button-rounded p-button-sm p-button-warning"
@@ -636,6 +642,28 @@ const editFatura = (fatura) => {
   }
   formTemizle()
   showDialog.value = true
+}
+
+const cogalt = (fatura) => {
+  editingId.value = null
+  form.value = {
+    cariHesapId: fatura.cariHesapId,
+    tur: fatura.tur,
+    tarih: new Date(fatura.tarih),
+    paraBirimi: fatura.paraBirimi || 'TRY',
+    aciklama: fatura.aciklama || '',
+    kalemler: fatura.kalemler.map(k => ({
+      aciklama: k.aciklama,
+      adet: k.adet,
+      birimFiyat: k.birimFiyat,
+      iskontoOrani: k.iskontoOrani || 0,
+      kdvOrani: k.kdvOrani,
+      stokId: k.stokId || null
+    }))
+  }
+  formTemizle()
+  showDialog.value = true
+  toastBildirim.basarili('Fatura çoğaltıldı, değişiklikleri kaydedin')
 }
 
 const closeDialog = () => { showDialog.value = false }

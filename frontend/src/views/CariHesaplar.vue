@@ -440,17 +440,51 @@
     >
       <div class="hareket-info">
         <h3>{{ selectedCariHesap?.ad }}</h3>
-        <p>Bakiye: <strong :class="selectedCariHesap?.bakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(selectedCariHesap?.bakiye) }}</strong></p>
+        <div class="bakiye-ozet">
+          <div class="ozet-satir">
+            <span class="ozet-etiket">Toplam Tahsilat:</span>
+            <span class="positive">{{ formatCurrency(toplamTahsilat) }}</span>
+          </div>
+          <div class="ozet-satir">
+            <span class="ozet-etiket">Toplam Ödeme:</span>
+            <span class="negative">{{ formatCurrency(toplamOdeme) }}</span>
+          </div>
+          <div class="ozet-satir ozet-bakiye">
+            <span class="ozet-etiket">Güncel Bakiye:</span>
+            <strong :class="guncelBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(guncelBakiye) }}</strong>
+          </div>
+        </div>
       </div>
 
-      <div class="table-container">
+      <div
+        v-if="cariHareketlerYukleniyor"
+        class="loading"
+      >
+        <p><i class="pi pi-spin pi-spinner" /> Hareketler yükleniyor...</p>
+      </div>
+
+      <div
+        v-else
+        class="table-container"
+      >
         <DataTable
-          :value="hareketler"
+          v-if="cariHareketler.length > 0"
+          :value="cariHareketler"
           responsive-layout="scroll"
           striped-rows
           :rows="10"
           :paginator="true"
+          size="small"
         >
+          <Column
+            field="hareketTarihi"
+            header="Tarih"
+            style="width: 120px"
+          >
+            <template #body="slotProps">
+              {{ formatDate(slotProps.data.hareketTarihi) }}
+            </template>
+          </Column>
           <Column
             field="tur"
             header="Tür"
@@ -474,24 +508,15 @@
             </template>
           </Column>
           <Column
-            field="hareketTarihi"
-            header="Tarih"
-            style="width: 120px"
-          >
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.hareketTarihi) }}
-            </template>
-          </Column>
-          <Column
             field="aciklama"
             header="Açıklama"
           />
         </DataTable>
 
-        <Message
-          v-if="hareketler.length === 0"
-          severity="info"
-          text="Bu cari hesaba ait hareket bulunmamaktadır."
+        <EmptyState
+          v-if="cariHareketler.length === 0"
+          message="Bu cari hesaba ait hareket bulunmamaktadır."
+          icon="pi pi-list"
         />
       </div>
 
@@ -513,23 +538,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { useHareketStore } from '../stores/hareketStore.js'
-import { excelAPI } from '../api/index.js'
+import { excelAPI, hareketAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
+import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
-const hareketStore = useHareketStore()
 const { kopyala } = usePanoyaKopyala()
 
 const tabloYogunluk = ref('comfortable')
@@ -557,12 +581,25 @@ const showHareketlerDialog = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
-const hareketler = ref([])
+const cariHareketler = ref([])
+const cariHareketlerYukleniyor = ref(false)
 const selectedCariHesaplar = ref([])
 const selectedCariHesap = ref(null)
 const aramaMetni = ref('')
 let aramaZamanlayici = null
 onUnmounted(() => { if (aramaZamanlayici) clearTimeout(aramaZamanlayici) })
+
+const toplamTahsilat = computed(() =>
+  cariHareketler.value
+    .filter(h => h.tur === 'TAHSILAT')
+    .reduce((s, h) => s + (h.tutar || 0), 0)
+)
+const toplamOdeme = computed(() =>
+  cariHareketler.value
+    .filter(h => h.tur === 'ODEME')
+    .reduce((s, h) => s + (h.tutar || 0), 0)
+)
+const guncelBakiye = computed(() => toplamTahsilat.value - toplamOdeme.value)
 
 const submitted = ref(false)
 const form = ref({
@@ -725,12 +762,18 @@ const batchCsvExport = () => {
 
 const viewHareketler = async (cariHesap) => {
   selectedCariHesap.value = cariHesap
+  showHareketlerDialog.value = true
+  cariHareketlerYukleniyor.value = true
   try {
-    const data = await hareketStore.getHareketlerByCariHesap(cariHesap.id)
-    hareketler.value = data
-    showHareketlerDialog.value = true
+    const res = await hareketAPI.getByCariHesap(cariHesap.id)
+    cariHareketler.value = res.data._embedded
+      ? res.data._embedded.hareketler || res.data._embedded.hareketList || []
+      : Array.isArray(res.data) ? res.data : (res.data.content || [])
   } catch (error) {
     toastBildirim.hata('Hareketler yüklenirken hata oluştu')
+    cariHareketler.value = []
+  } finally {
+    cariHareketlerYukleniyor.value = false
   }
 }
 
@@ -891,6 +934,30 @@ h3 {
 
 .hareket-info p {
   margin: 5px 0 0 0;
+}
+
+.bakiye-ozet {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.ozet-satir {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ozet-etiket {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ozet-bakiye {
+  margin-left: auto;
 }
 
 .w-full {
