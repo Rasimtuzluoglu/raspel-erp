@@ -259,7 +259,7 @@ cd backend && mvn spring-boot:run
 cd frontend && npm run dev
 ```
 
-Ilk giris: `admin` / `admin` → http://localhost:5173
+Ilk giris: `admin` / `admin123` → http://localhost:5173
 
 ## 🧹 Son Sadeleştirme (v1.4.0)
 

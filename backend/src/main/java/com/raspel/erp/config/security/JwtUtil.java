@@ -28,7 +28,7 @@ public class JwtUtil {
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.expirationMs = expirationMs;
         if (System.getenv("JWT_SECRET") == null) {
-            log.warn("JWT_SECRET ortam değişkeni tanımlı değil! Üretim ortamında mutlaka güçlü bir JWT_SECRET ayarlayın.");
+            log.warn("JWT_SECRET ortam degiskeni tanimli degil! Uretim ortaminda mutlaka guclu bir JWT_SECRET ayarlayin.");
         }
     }
 

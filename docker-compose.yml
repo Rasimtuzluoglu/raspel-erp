@@ -30,7 +30,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -53,7 +53,7 @@ services:
     container_name: raspel-redis
     command: redis-server --requirepass ${REDIS_PASSWORD:-raspelRedis2026}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-raspelRedis2026}", "ping"]
@@ -73,10 +73,10 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: raspel-rabbitmq
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-raspel}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /
     volumes:
@@ -94,7 +94,7 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/raspelerp
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -196,11 +196,4 @@ volumes:
   backup_data:
   rabbitmq_data:
   letsencrypt_data:
-
-networks:
-  frontend-net:
-    driver: bridge
-  backend-net:
-    driver: bridge
-  db-net:
     driver: bridge

@@ -25,8 +25,6 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import com.raspel.erp.entity.finans.Hareket;
-import com.raspel.erp.entity.sistem.Not;
 
 @ControllerAdvice
 @Slf4j
@@ -93,7 +91,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException e) {
-        log.error("Validation error: {}", e.getMessage());
+        log.warn("Validation error: {}", e.getMessage());
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("message", "Doğrulama hatası");
