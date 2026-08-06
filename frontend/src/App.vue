@@ -6,6 +6,11 @@
         @open-password-modal="sifreDialog = true"
         @open-calculator="hesapMakinesiAcik = true"
         @open-currency="dovizCeviriciAcik = true"
+        @open-kdv="kdvAcik = true"
+        @open-taksit="taksitAcik = true"
+        @open-marj="marjAcik = true"
+        @open-iban="ibanAcik = true"
+        @open-tc="tcAcik = true"
       />
       <div class="sidebar-spacer" />
     </template>
@@ -44,6 +49,11 @@
     <GeriAlToast />
     <HesapMakinesi :visible="hesapMakinesiAcik" @update:visible="hesapMakinesiAcik = $event" />
     <DovizCevirici :visible="dovizCeviriciAcik" @update:visible="dovizCeviriciAcik = $event" />
+    <KdvHesaplayici :visible="kdvAcik" @update:visible="kdvAcik = $event" />
+    <TaksitHesaplayici :visible="taksitAcik" @update:visible="taksitAcik = $event" />
+    <KarMarjiHesaplayici :visible="marjAcik" @update:visible="marjAcik = $event" />
+    <IbanDogrulayici :visible="ibanAcik" @update:visible="ibanAcik = $event" />
+    <TcKimlikDogrulayici :visible="tcAcik" @update:visible="tcAcik = $event" />
     <Toast
       position="top-right"
       :life="5000"
@@ -96,12 +106,22 @@ import GeriAlToast from './components/GeriAlToast.vue'
 import AppBreadcrumb from './components/AppBreadcrumb.vue'
 import HesapMakinesi from './components/HesapMakinesi.vue'
 import DovizCevirici from './components/DovizCevirici.vue'
+import KdvHesaplayici from './components/KdvHesaplayici.vue'
+import TaksitHesaplayici from './components/TaksitHesaplayici.vue'
+import KarMarjiHesaplayici from './components/KarMarjiHesaplayici.vue'
+import IbanDogrulayici from './components/IbanDogrulayici.vue'
+import TcKimlikDogrulayici from './components/TcKimlikDogrulayici.vue'
 
 const authStore = useAuthStore()
 const quickSearchVisible = ref(false)
 const sifreDialog = ref(false)
 const hesapMakinesiAcik = ref(false)
 const dovizCeviriciAcik = ref(false)
+const kdvAcik = ref(false)
+const taksitAcik = ref(false)
+const marjAcik = ref(false)
+const ibanAcik = ref(false)
+const tcAcik = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
 const oturum = useOturumUyarisi()
 </script>

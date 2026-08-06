@@ -183,6 +183,21 @@
           >
             <i class="pi pi-money-bill" />
           </button>
+          <button class="icon-action-btn" title="KDV Hesapla" @click="$emit('open-kdv')">
+            <i class="pi pi-percentage" />
+          </button>
+          <button class="icon-action-btn" title="Taksit Hesapla" @click="$emit('open-taksit')">
+            <i class="pi pi-calendar" />
+          </button>
+          <button class="icon-action-btn" title="Kar Marji" @click="$emit('open-marj')">
+            <i class="pi pi-chart-line" />
+          </button>
+          <button class="icon-action-btn" title="IBAN Dogrula" @click="$emit('open-iban')">
+            <i class="pi pi-credit-card" />
+          </button>
+          <button class="icon-action-btn" title="TC Kimlik Dogrula" @click="$emit('open-tc')">
+            <i class="pi pi-id-card" />
+          </button>
         </div>
       </div>
 
@@ -207,7 +222,7 @@ import KisayolRehberi from './KisayolRehberi.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { useTheme } from '../composables/useTheme.js'
 
-defineEmits(['open-search', 'open-password-modal', 'open-calculator', 'open-currency'])
+defineEmits(['open-search', 'open-password-modal', 'open-calculator', 'open-currency', 'open-kdv', 'open-taksit', 'open-marj', 'open-iban', 'open-tc'])
 
 const router = useRouter()
 const authStore = useAuthStore()
