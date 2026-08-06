@@ -164,10 +164,24 @@
           </button>
           <button
             class="icon-action-btn"
-            title="Şifre Değiştir"
+            title="Sifre Degistir"
             @click="$emit('open-password-modal')"
           >
             <i class="pi pi-lock" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Hesap Makinesi"
+            @click="$emit('open-calculator')"
+          >
+            <i class="pi pi-calculator" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Doviz Cevirici"
+            @click="$emit('open-currency')"
+          >
+            <i class="pi pi-money-bill" />
           </button>
         </div>
       </div>
@@ -193,7 +207,7 @@ import KisayolRehberi from './KisayolRehberi.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { useTheme } from '../composables/useTheme.js'
 
-defineEmits(['open-search', 'open-password-modal'])
+defineEmits(['open-search', 'open-password-modal', 'open-calculator', 'open-currency'])
 
 const router = useRouter()
 const authStore = useAuthStore()

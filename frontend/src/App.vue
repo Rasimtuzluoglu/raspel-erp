@@ -4,6 +4,8 @@
       <AppSidebar
         @open-search="quickSearchVisible = true"
         @open-password-modal="sifreDialog = true"
+        @open-calculator="hesapMakinesiAcik = true"
+        @open-currency="dovizCeviriciAcik = true"
       />
       <div class="sidebar-spacer" />
     </template>
@@ -40,6 +42,8 @@
     />
     <GuncellemeNotlari />
     <GeriAlToast />
+    <HesapMakinesi :visible="hesapMakinesiAcik" @update:visible="hesapMakinesiAcik = $event" />
+    <DovizCevirici :visible="dovizCeviriciAcik" @update:visible="dovizCeviriciAcik = $event" />
     <Toast
       position="top-right"
       :life="5000"
@@ -90,10 +94,14 @@ import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
 import AppBreadcrumb from './components/AppBreadcrumb.vue'
+import HesapMakinesi from './components/HesapMakinesi.vue'
+import DovizCevirici from './components/DovizCevirici.vue'
 
 const authStore = useAuthStore()
 const quickSearchVisible = ref(false)
 const sifreDialog = ref(false)
+const hesapMakinesiAcik = ref(false)
+const dovizCeviriciAcik = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
 const oturum = useOturumUyarisi()
 </script>
