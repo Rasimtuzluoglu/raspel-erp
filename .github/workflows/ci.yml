@@ -67,6 +67,10 @@ jobs:
           severity: 'CRITICAL,HIGH'
           hide-progress: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Gitleaks - Secret scanning
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     runs-on: ubuntu-latest

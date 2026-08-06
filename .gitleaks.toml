@@ -1,0 +1,27 @@
+title = "RasPel ERP Gitleaks Config"
+
+[allowlist]
+  description = "Allowlisted patterns"
+  paths = [
+    '''package-lock\.json''',
+    '''\.min\.js''',
+    '''\.min\.css'''
+  ]
+
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API Key"
+  regex = '''(?i)(api[_-]?key|secret|token|password|passwd|pwd)["'\s]*(?::|=>|=)["'\s]*[a-zA-Z0-9+/=_-]{20,}'''
+  tags = ["key", "api"]
+
+[[rules]]
+  id = "jwt-token"
+  description = "JWT Token"
+  regex = '''eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}'''
+  tags = ["jwt"]
+
+[[rules]]
+  id = "private-key"
+  description = "Private Key"
+  regex = '''-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
+  tags = ["key", "crypto"]
