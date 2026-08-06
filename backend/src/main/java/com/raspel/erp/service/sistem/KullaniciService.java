@@ -56,8 +56,9 @@ public class KullaniciService {
 
     public KullaniciDTO olustur(KullaniciDTO dto) {
         if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new BusinessException("Kullanıcı şifresi zorunludur");
+            throw new BusinessException("Kullanici sifresi zorunludur");
         }
+        sifrePolitikasiKontrol(dto.getPassword());
         if (kullaniciRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new DuplicateResourceException("Bu kullanıcı adı zaten kullanılıyor: " + dto.getUsername());
         }
@@ -81,7 +82,10 @@ public class KullaniciService {
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
         if (dto.getSirketId() != null) k.setSirketId(dto.getSirketId());
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) k.setPassword(passwordEncoder.encode(dto.getPassword()));
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            sifrePolitikasiKontrol(dto.getPassword());
+            k.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
         if (dto.getActive() != null) k.setActive(dto.getActive());
         if (dto.getRole() != null) k.setRole(dto.getRole());
         return entityToDTO(kullaniciRepository.save(k));
@@ -105,6 +109,7 @@ public class KullaniciService {
     }
 
     public void sifreDegistir(Long id, SifreDegistirRequest req) {
+        sifrePolitikasiKontrol(req.getYeniSifre());
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
         if (!passwordEncoder.matches(req.getMevcutSifre(), k.getPassword())) {
@@ -251,5 +256,20 @@ public class KullaniciService {
                 .twoFactorEnabled(k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled())
                 .olusturmaTarihi(k.getOlusturmaTarihi())
                 .build();
+    }
+
+    private void sifrePolitikasiKontrol(String sifre) {
+        if (sifre.length() < 8) {
+            throw new BusinessException("Sifre en az 8 karakter olmalidir");
+        }
+        if (!sifre.matches(".*[A-Z].*")) {
+            throw new BusinessException("Sifre en az bir buyuk harf icermelidir");
+        }
+        if (!sifre.matches(".*[a-z].*")) {
+            throw new BusinessException("Sifre en az bir kucuk harf icermelidir");
+        }
+        if (!sifre.matches(".*[0-9].*")) {
+            throw new BusinessException("Sifre en az bir rakam icermelidir");
+        }
     }
 }
