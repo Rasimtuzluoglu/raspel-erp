@@ -18,12 +18,9 @@
           class="offline-banner"
         >
           <i class="pi pi-wifi" />
-          İnternet bağlantınız kesildi. Bağlantı sağlandığında işlemlere kaldığınız yerden devam edebilirsiniz.
-          <button
-            class="offline-kapat"
-            @click="networkStatus.showBanner = false"
-          >
-            &times;
+          <span>Cevrimdisi Mod — Internet baglantisi kesildi. Verileriniz cache'den gosteriliyor, degisiklikler baglanti gelince kaydedilecek.</span>
+          <button class="offline-tekrar-dene" @click="window.location.reload()">
+            <i class="pi pi-refresh" /> Tekrar Baglan
           </button>
         </div>
       </transition>
@@ -114,11 +111,13 @@ const oturum = useOturumUyarisi()
   border-bottom-color: rgba(245,158,11,0.3);
 }
 .offline-banner i { font-size: 16px; flex-shrink: 0; }
-.offline-kapat {
-  margin-left: auto; background: none; border: none;
-  font-size: 20px; cursor: pointer; color: inherit; opacity: 0.7; padding: 0 4px;
+.offline-tekrar-dene {
+  margin-left: auto; flex-shrink: 0;
+  background: #f59e0b; color: white; border: none;
+  border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
 }
-.offline-kapat:hover { opacity: 1; }
+.offline-tekrar-dene:hover { background: #d97706; }
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
 .slide-down-enter-from, .slide-down-leave-to { transform: translateY(-100%); opacity: 0; }
 .oturum-uyari { text-align: center; }

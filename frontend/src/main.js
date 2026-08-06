@@ -44,7 +44,7 @@ import { useTheme } from './composables/useTheme.js'
 const { initTheme } = useTheme()
 initTheme()
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   })

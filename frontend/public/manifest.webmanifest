@@ -1,12 +1,14 @@
 {
   "name": "RasPel ERP",
   "short_name": "RasPel",
-  "description": "RasPel Yeni Nesil ERP — Finans, Ticaret, Envanter, İK ve Rapor",
+  "description": "RasPel ERP — Cevrimdisi calisabilen KOBİ yonetim sistemi",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b1329",
-  "theme_color": "#0b1329",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "lang": "tr",
+  "orientation": "any",
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/icon-192.png",
