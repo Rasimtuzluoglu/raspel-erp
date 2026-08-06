@@ -155,17 +155,20 @@ services:
     image: adminer:4.8.1
     container_name: raspel-adminer
     ports:
-      - "8082:8080"
+      - "127.0.0.1:8082:8080"
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    profiles:
+      - dev
+      - debug
 
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: raspel-prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -177,7 +180,7 @@ services:
     image: grafana/grafana:11.0.0
     container_name: raspel-grafana
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}

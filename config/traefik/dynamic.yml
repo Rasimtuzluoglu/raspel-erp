@@ -113,6 +113,7 @@ http:
         certResolver: letsencrypt
       priority: 2
 
+    # Adminer: Yalnizca dev/debug profilinde calisir, production'da devre disidir
     adminer:
       rule: "PathPrefix(`/adminer`)"
       service: adminer
@@ -120,6 +121,7 @@ http:
         - websecure
       middlewares:
         - cors-headers
+        - dashboard-auth
       tls:
         certResolver: letsencrypt
       priority: 3

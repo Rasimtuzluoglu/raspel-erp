@@ -63,7 +63,8 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
           hide-progress: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
