@@ -168,6 +168,9 @@ body {
 .icon-action-btn:hover { background: rgba(148, 163, 184, 0.12); color: var(--text-primary); border-color: var(--border); }
 .icon-action-btn.lang-toggle-btn { width: auto; padding: 0 6px; gap: 4px; font-weight: 700; font-size: 11px; }
 .icon-action-btn.logout-icon-btn:hover { color: #ef4444; background: rgba(239, 68, 68, 0.12); }
+.admin-tools { display: flex; align-items: center; justify-content: center; gap: 4px; padding-top: 6px; flex-wrap: wrap; }
+.admin-tools .icon-action-btn { width: 26px; height: 26px; font-size: 12px; border-radius: 6px; opacity: 0.7; }
+.admin-tools .icon-action-btn:hover { opacity: 1; }
 
 .sidebar-spacer { width: var(--sidebar-w); flex-shrink: 0; }
 .main-content { flex: 1; padding: 24px; max-width: calc(100vw - var(--sidebar-w)); width: 100%; }
@@ -181,8 +184,8 @@ body {
 
 .brand-logo { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; flex-shrink: 0; }
 
-.bildirim-zili-kapsayici { position: relative; margin-right: 4px; }
-.bildirim-zili-kapsayici .p-button { color: var(--text-secondary) !important; }
+.bildirim-zili-kapsayici { position: relative; }
+.bildirim-zili-kapsayici .p-button { color: var(--text-secondary) !important; width: 30px !important; height: 30px !important; }
 .bildirim-zili-kapsayici .p-button:hover { color: var(--text-primary) !important; background: rgba(148, 163, 184, 0.1) !important; }
 
 .hamburger-btn {
