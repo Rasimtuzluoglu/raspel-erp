@@ -33,8 +33,6 @@
     "vue-router": "^4.2.0"
   },
   "devDependencies": {
-    "@cypress/vite-dev-server": "^7.3.4",
-    "@cypress/vue": "^6.0.3",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/test-utils": "^2.4.11",
     "cypress": "^15.19.0",
