@@ -47,10 +47,14 @@
           </template>
         </Column>
       </DataTable>
-      <Message
+      <EmptyState
         v-if="kategoriStore.kategoriler.length === 0"
-        severity="info"
-        text="Kategori bulunmamaktadır."
+        message="Henüz kategori bulunamadı"
+        sub-message="İlk kategorinizi eklemek için Yeni Kategori butonuna tıklayın"
+        icon="pi pi-tags"
+        action-label="Yeni Kategori"
+        action-icon="pi pi-plus"
+        @action="openDialog"
       />
     </div>
 
@@ -100,6 +104,7 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKategoriStore } from '../stores/kategoriStore.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()

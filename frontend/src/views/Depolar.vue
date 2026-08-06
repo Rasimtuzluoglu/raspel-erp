@@ -74,6 +74,15 @@
             </template>
           </Column>
         </DataTable>
+        <EmptyState
+          v-if="!yukleniyor && list.length === 0"
+          message="Henüz depo bulunamadı"
+          sub-message="İlk deponuzu eklemek için Yeni Depo butonuna tıklayın"
+          icon="pi pi-warehouse"
+          action-label="Yeni Depo"
+          action-icon="pi pi-plus"
+          @action="dialogAc()"
+        />
       </TabPanel>
 
       <TabPanel
@@ -277,6 +286,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { depoAPI, subeAPI, stokAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

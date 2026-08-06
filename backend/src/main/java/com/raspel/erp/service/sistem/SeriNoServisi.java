@@ -17,10 +17,10 @@ public class SeriNoServisi {
     private final FaturaRepository faturaRepository;
     private final SiparisRepository siparisRepository;
 
-    public String faturaNoUret() {
+    public String faturaNoUret(Long sirketId) {
         String yil = String.valueOf(LocalDate.now().getYear());
-        String prefix = "FTR-" + yil + "-";
-        List<String> mevcutlar = faturaRepository.findFaturaNumarasiByPrefix(prefix);
+        String prefix = "FTR-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
+        List<String> mevcutlar = faturaRepository.findFaturaNumarasiByPrefix(prefix, sirketId);
         int maxSeri = mevcutlar.stream()
                 .mapToInt(no -> {
                     try {
@@ -34,10 +34,10 @@ public class SeriNoServisi {
         return prefix + String.format("%06d", maxSeri + 1);
     }
 
-    public String siparisNoUret() {
+    public String siparisNoUret(Long sirketId) {
         String yil = String.valueOf(LocalDate.now().getYear());
-        String prefix = "SIP-" + yil + "-";
-        List<String> mevcutlar = siparisRepository.findSiparisNoByPrefix(prefix);
+        String prefix = "SIP-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
+        List<String> mevcutlar = siparisRepository.findSiparisNoByPrefix(prefix, sirketId);
         int maxSeri = mevcutlar.stream()
                 .mapToInt(no -> {
                     try {

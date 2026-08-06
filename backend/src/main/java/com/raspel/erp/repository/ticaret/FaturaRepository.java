@@ -25,8 +25,8 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     long count();
 
-    @Query("SELECT f.faturaNumarasi FROM Fatura f WHERE f.faturaNumarasi LIKE :prefix%")
-    List<String> findFaturaNumarasiByPrefix(@Param("prefix") String prefix);
+    @Query("SELECT f.faturaNumarasi FROM Fatura f WHERE f.faturaNumarasi LIKE :prefix% AND f.sirketId = :sirketId")
+    List<String> findFaturaNumarasiByPrefix(@Param("prefix") String prefix, @Param("sirketId") Long sirketId);
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findByTurAndDurumAndOdemeDurumuNotIn(Fatura.FaturaTur tur, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);

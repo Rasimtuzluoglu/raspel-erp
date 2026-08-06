@@ -146,10 +146,14 @@
         </Column>
       </DataTable>
 
-      <Message
+      <EmptyState
         v-if="tümHareketler.length === 0"
-        severity="info"
-        text="Hareket bulunmamaktadır."
+        message="Henüz hareket bulunamadı"
+        sub-message="İlk hareketinizi eklemek için Yeni Hareket butonuna tıklayın"
+        icon="pi pi-exchange"
+        action-label="Yeni Hareket"
+        action-icon="pi pi-plus"
+        @action="openDialog"
       />
     </div>
 
@@ -264,6 +268,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, excelAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()

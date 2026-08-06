@@ -93,6 +93,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && list.length === 0"
+      message="Henüz iade kaydı bulunamadı"
+      sub-message="İlk iade kaydınızı eklemek için Yeni İade butonuna tıklayın"
+      icon="pi pi-undo"
+      action-label="Yeni İade"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       :header="dialogHeader"
@@ -211,6 +221,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { iadeAPI, stokAPI, cariHesapAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

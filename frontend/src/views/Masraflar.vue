@@ -65,6 +65,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && list.length === 0"
+      message="Henüz masraf kaydı bulunamadı"
+      sub-message="İlk masraf kaydınızı eklemek için Yeni Masraf butonuna tıklayın"
+      icon="pi pi-receipt"
+      action-label="Yeni Masraf"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       :header="dialogHeader"
@@ -131,6 +141,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { masrafAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

@@ -12,7 +12,7 @@
           v-model="query"
           type="text"
           class="qs-input"
-          placeholder="Ara (cari, stok, fatura, personel, proje...)"
+          placeholder="Ara (cari, stok, fatura, personel, proje, depo, şube...)"
           autofocus
           @keydown="handleKeydown"
         >
@@ -58,6 +58,8 @@
           <span><kbd>f</kbd> Faturalar</span>
           <span><kbd>p</kbd> Personel</span>
           <span><kbd>r</kbd> Projeler</span>
+          <span><kbd>d</kbd> Depolar</span>
+          <span><kbd>u</kbd> Şubeler</span>
         </div>
       </div>
       <div
@@ -111,7 +113,7 @@
 <script setup>
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI } from '../api/index.js'
+import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI, depoAPI, subeAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 
 const props = defineProps({ visible: Boolean })
@@ -171,7 +173,9 @@ const typeConfig = {
   siparis: { icon: 'pi pi-receipt', severity: 'info', route: '/siparisler' },
   not: { icon: 'pi pi-pen-to-square', severity: 'info', route: '/notlar' },
   banka: { icon: 'pi pi-building', severity: 'warn', route: '/bankalar' },
-  kasa: { icon: 'pi pi-wallet', severity: 'info', route: '/kasa' }
+  kasa: { icon: 'pi pi-wallet', severity: 'info', route: '/kasa' },
+  depo: { icon: 'pi pi-warehouse', severity: 'success', route: '/depolar' },
+  sube: { icon: 'pi pi-sitemap', severity: 'help', route: '/subeler' }
 }
 
 watch(() => props.visible, (v) => {
@@ -226,7 +230,7 @@ watch(query, (val) => {
     loading.value = true; error.value = null; selectedIndex.value = 0
     const q = val.trim().toLowerCase()
     try {
-      const [cariler, stoklar, faturalar, personeller, projeler, siparisler, notlar, bankalar, kasalar] = await Promise.all([
+      const [cariler, stoklar, faturalar, personeller, projeler, siparisler, notlar, bankalar, kasalar, depolar, subeler] = await Promise.all([
         cariHesapAPI.search(q).then(r => r.data.map(d => ({ ...d, type: 'cari', ...typeConfig.cari, title: d.ad, subtitle: `Vergi: ${d.vergiNumarasi || '-'} | Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => []),
         stokAPI.ara(q).then(r => r.data.map(d => ({ ...d, type: 'stok', ...typeConfig.stok, title: d.ad, subtitle: `Kod: ${d.stokKodu || '-'} | Miktar: ${d.miktar || 0} ${d.birim || ''}` }))).catch(() => []),
         faturaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(f => icindeAra(f.faturaNumarasi, q) || icindeAra(f.cariHesapAd, q)).slice(0, 5).map(d => ({ ...d, type: 'fatura', ...typeConfig.fatura, title: `#${d.faturaNumarasi || d.id}`, subtitle: `${d.cariHesapAd || '-'} | ${formatCur(d.genelToplam)}` }))).catch(() => []),
@@ -235,9 +239,11 @@ watch(query, (val) => {
         siparisAPI.getAll().then(r => (r.data?.content || r.data || []).filter(s => icindeAra(s.siparisNo, q) || icindeAra(s.durum, q)).slice(0, 5).map(d => ({ ...d, type: 'siparis', ...typeConfig.siparis, title: `#${d.siparisNo || d.id}`, subtitle: `Durum: ${d.durum || '-'}` }))).catch(() => []),
         notAPI.getAll().then(r => (r.data?.content || r.data || []).filter(n => icindeAra(n.baslik, q)).slice(0, 3).map(d => ({ ...d, type: 'not', ...typeConfig.not, title: d.baslik, subtitle: `Önem: ${d.onemDerecesi || 'NORMAL'}` }))).catch(() => []),
         bankaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(b => icindeAra(b.ad, q) || icindeAra(b.iban, q)).slice(0, 3).map(d => ({ ...d, type: 'banka', ...typeConfig.banka, title: d.ad, subtitle: `IBAN: ${d.iban || '-'}` }))).catch(() => []),
-        kasaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(k => icindeAra(k.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'kasa', ...typeConfig.kasa, title: d.ad, subtitle: `Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => [])
+        kasaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(k => icindeAra(k.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'kasa', ...typeConfig.kasa, title: d.ad, subtitle: `Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => []),
+        depoAPI.getAll().then(r => (r.data?.content || r.data || []).filter(d => icindeAra(d.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'depo', ...typeConfig.depo, title: d.ad, subtitle: `Depo` }))).catch(() => []),
+        subeAPI.getAll().then(r => (r.data?.content || r.data || []).filter(s => icindeAra(s.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: `Şube` }))).catch(() => [])
       ])
-      const birlesik = [...cariler, ...stoklar, ...faturalar, ...personeller, ...projeler, ...siparisler, ...notlar, ...bankalar, ...kasalar]
+      const birlesik = [...cariler, ...stoklar, ...faturalar, ...personeller, ...projeler, ...siparisler, ...notlar, ...bankalar, ...kasalar, ...depolar, ...subeler]
       const sirali = birlesik.filter(i => i.title?.toLowerCase().startsWith(q)).concat(birlesik.filter(i => !i.title?.toLowerCase().startsWith(q)))
       results.value = sirali.slice(0, 15)
     } catch (e) { error.value = 'Arama sırasında hata oluştu' }

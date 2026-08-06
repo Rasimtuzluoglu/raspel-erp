@@ -62,11 +62,15 @@
           />
         </div>
       </div>
-      <Message
+      <EmptyState
         v-if="kasaStore.kasalar.length === 0"
-        severity="info"
-        text="Kasa hesabı bulunmamaktadır."
+        message="Henüz kasa hesabı bulunamadı"
+        sub-message="İlk kasa hesabınızı eklemek için Yeni Kasa butonuna tıklayın"
+        icon="pi pi-wallet"
+        action-label="Yeni Kasa"
+        action-icon="pi pi-plus"
         class="full-width"
+        @action="openKasaDialog"
       />
     </div>
 
@@ -275,6 +279,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import { kasaAPI, excelAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()

@@ -73,6 +73,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && list.length === 0"
+      message="Henüz bütçe bulunamadı"
+      sub-message="İlk bütçenizi eklemek için Yeni Bütçe butonuna tıklayın"
+      icon="pi pi-chart-bar"
+      action-label="Yeni Bütçe"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       :header="dialogHeader"
@@ -161,6 +171,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { butceAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

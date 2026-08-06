@@ -95,7 +95,7 @@ public class FaturaService {
 
         String faturaNo = dto.getFaturaNumarasi() != null && !dto.getFaturaNumarasi().isBlank()
                 ? dto.getFaturaNumarasi()
-                : seriNoServisi.faturaNoUret();
+                : seriNoServisi.faturaNoUret(sirketId);
 
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;

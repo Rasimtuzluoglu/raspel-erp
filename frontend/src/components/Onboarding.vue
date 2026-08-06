@@ -45,10 +45,14 @@
         <Button
           label="Demo Veriyi Yükle"
           icon="pi pi-download"
-          class="p-button-success"
+          class="p-button-success p-button-lg"
           :loading="demoYukleniyor"
           @click="demoYukle"
         />
+        <a
+          class="onboard-atla"
+          @click="atla"
+        >Atla, kendim kuracağım</a>
       </div>
     </div>
   </div>
@@ -76,6 +80,10 @@ const adimlar = reactive([
 
 const adimTikla = (adim) => {
   router.push(adim.path)
+}
+
+const atla = () => {
+  router.push('/')
 }
 
 const demoYukle = async () => {
@@ -140,4 +148,7 @@ const demoYukle = async () => {
   display: flex; flex-direction: column; gap: 1rem; align-items: center;
 }
 .demo-secim { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-secondary); }
+.p-button-lg { font-size: 1.05rem; padding: 0.7rem 1.8rem; }
+.onboard-atla { font-size: 0.8rem; color: var(--text-secondary); text-decoration: underline; cursor: pointer; margin-top: 4px; }
+.onboard-atla:hover { color: var(--text-primary); }
 </style>

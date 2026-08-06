@@ -72,6 +72,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && list.length === 0"
+      message="Henüz irsaliye bulunamadı"
+      sub-message="İlk irsaliyenizi eklemek için Yeni İrsaliye butonuna tıklayın"
+      icon="pi pi-truck"
+      action-label="Yeni İrsaliye"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       header="Yeni İrsaliye"
@@ -142,6 +152,7 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { irsaliyeAPI, cariHesapAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 

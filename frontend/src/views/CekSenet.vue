@@ -90,6 +90,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && list.length === 0"
+      message="Henüz çek/senet bulunamadı"
+      sub-message="İlk çek veya senedinizi eklemek için Yeni Çek/Senet butonuna tıklayın"
+      icon="pi pi-credit-card"
+      action-label="Yeni Çek/Senet"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       header="Yeni Çek/Senet"
@@ -180,6 +190,7 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { cekSenetAPI, cariHesapAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 

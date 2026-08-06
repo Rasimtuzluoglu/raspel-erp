@@ -63,6 +63,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && list.length === 0"
+      message="Henüz şube bulunamadı"
+      sub-message="İlk şubenizi eklemek için Yeni Şube butonuna tıklayın"
+      icon="pi pi-map-marker"
+      action-label="Yeni Şube"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       :header="dialogHeader"
@@ -126,6 +136,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { subeAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

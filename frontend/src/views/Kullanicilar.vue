@@ -76,11 +76,15 @@
           />
         </div>
       </div>
-      <Message
+      <EmptyState
         v-if="kullanicilar.length === 0"
-        severity="info"
-        text="Kullanıcı bulunmamaktadır."
+        message="Henüz kullanıcı bulunamadı"
+        sub-message="İlk kullanıcıyı eklemek için Yeni Kullanıcı butonuna tıklayın"
+        icon="pi pi-user-plus"
+        action-label="Yeni Kullanıcı"
+        action-icon="pi pi-plus"
         class="full-width"
+        @action="openDialog"
       />
     </div>
 
@@ -223,6 +227,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
 import apiClient, { kullaniciAPI, sirketAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()

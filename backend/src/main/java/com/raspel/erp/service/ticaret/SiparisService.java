@@ -62,7 +62,7 @@ public class SiparisService {
     public SiparisDTO olustur(SiparisDTO dto) {
         String siparisNo = dto.getSiparisNo() != null && !dto.getSiparisNo().isBlank()
                 ? dto.getSiparisNo()
-                : seriNoServisi.siparisNoUret();
+                : seriNoServisi.siparisNoUret(dto.getSirketId());
         Siparis s = Siparis.builder()
                 .siparisNo(siparisNo).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).tur("SATIS")

@@ -94,6 +94,16 @@
       </Column>
     </DataTable>
 
+    <EmptyState
+      v-if="!yukleniyor && siparisler.length === 0"
+      message="Henüz sipariş bulunamadı"
+      sub-message="İlk teklif/siparişinizi eklemek için Yeni Teklif butonuna tıklayın"
+      icon="pi pi-shopping-cart"
+      action-label="Yeni Teklif"
+      action-icon="pi pi-plus"
+      @action="dialogAc()"
+    />
+
     <Dialog
       v-model:visible="dialog"
       header="Yeni Teklif / Sipariş"
@@ -156,6 +166,7 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { siparisAPI, cariHesapAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 

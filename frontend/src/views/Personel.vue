@@ -85,14 +85,23 @@
               <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text p-button-danger"
-                @click="personelSil(data)"
-              />
-            </template>
-          </Column>
+              @click="personelSil(data)"
+            />
+          </template>
+        </Column>
         </DataTable>
+        <EmptyState
+          v-if="!yukleniyor && personeller.length === 0"
+          message="Henüz personel bulunamadı"
+          sub-message="İlk personel kaydınızı eklemek için Yeni Personel butonuna tıklayın"
+          icon="pi pi-users"
+          action-label="Yeni Personel"
+          action-icon="pi pi-plus"
+          @action="personelDialogAc()"
+        />
       </TabPanel>
 
-      <TabPanel header="İzin Talepleri">
+    <TabPanel header="İzin Talepleri">
         <DataTable
           :value="tumIzinler"
           striped-rows
@@ -311,6 +320,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 

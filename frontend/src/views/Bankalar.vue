@@ -101,10 +101,14 @@
           </template>
         </Column>
       </DataTable>
-      <Message
+      <EmptyState
         v-if="bankaStore.bankalar.length === 0"
-        severity="info"
-        text="Banka hesabı bulunmamaktadır."
+        message="Henüz banka hesabı bulunamadı"
+        sub-message="İlk banka hesabınızı eklemek için Yeni Banka Hesabı butonuna tıklayın"
+        icon="pi pi-building"
+        action-label="Yeni Banka Hesabı"
+        action-icon="pi pi-plus"
+        @action="openDialog"
       />
     </div>
 
@@ -183,6 +187,7 @@ import { useBankaStore } from '../stores/bankaStore.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { excelAPI } from '../api/index.js'
+import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
