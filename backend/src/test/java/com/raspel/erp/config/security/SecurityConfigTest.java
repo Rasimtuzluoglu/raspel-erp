@@ -44,7 +44,7 @@ class SecurityConfigTest {
     }
 
     @Test
-    void authenticatedEndpoint_returnsUnauthorizedWhenNoToken() throws Exception {
+    void authenticatedEndpoint_returnsForbiddenWhenNoToken() throws Exception {
         mockMvc.perform(get("/api/kullanicilar"))
                 .andExpect(status().isForbidden());
     }

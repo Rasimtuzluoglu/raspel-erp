@@ -33,41 +33,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException e) {
         log.warn("Resource not found: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", e.getMessage());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(buildBody(e.getMessage(), HttpStatus.NOT_FOUND));
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<Map<String, Object>> handleBusinessException(BusinessException e) {
         log.warn("Business exception: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", e.getMessage());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody(e.getMessage(), HttpStatus.BAD_REQUEST));
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateResource(DuplicateResourceException e) {
         log.warn("Duplicate resource: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", e.getMessage());
-        body.put("status", HttpStatus.CONFLICT.value());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(buildBody(e.getMessage(), HttpStatus.CONFLICT));
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e) {
         log.error("RuntimeException: {}", e.getMessage(), e);
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Beklenmeyen bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.");
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(buildBody("Beklenmeyen bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.", HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -82,20 +70,14 @@ public class GlobalExceptionHandler {
         } else {
             userMsg = "Veritabanı hatası. İşlem gerçekleştirilemedi.";
         }
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", userMsg);
-        body.put("status", HttpStatus.CONFLICT.value());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(buildBody(userMsg, HttpStatus.CONFLICT));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException e) {
         log.warn("Validation error: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Doğrulama hatası");
-        body.put("status", HttpStatus.BAD_REQUEST.value());
+        Map<String, Object> body = buildBody("Doğrulama hatası", HttpStatus.BAD_REQUEST);
 
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getFieldErrors().forEach(err ->
@@ -108,95 +90,80 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException e) {
         log.warn("Access denied: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Bu işlem için yetkiniz bulunmamaktadır");
-        body.put("status", HttpStatus.FORBIDDEN.value());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(buildBody("Bu işlem için yetkiniz bulunmamaktadır", HttpStatus.FORBIDDEN));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, Object>> handleMessageNotReadable(HttpMessageNotReadableException e) {
         log.error("Message not readable: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Geçersiz istek formatı");
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody("Geçersiz istek formatı", HttpStatus.BAD_REQUEST));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<Map<String, Object>> handleMissingParam(MissingServletRequestParameterException e) {
         log.warn("Missing parameter: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Gerekli parametre eksik: " + e.getParameterName());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody("Gerekli parametre eksik: " + e.getParameterName(), HttpStatus.BAD_REQUEST));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         log.warn("Type mismatch: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Geçersiz parametre tipi: " + e.getName());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody("Geçersiz parametre tipi: " + e.getName(), HttpStatus.BAD_REQUEST));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNoResource(NoResourceFoundException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "İstenen kaynak bulunamadı");
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(buildBody("İstenen kaynak bulunamadı", HttpStatus.NOT_FOUND));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Map<String, Object>> handleMaxUpload(MaxUploadSizeExceededException e) {
         log.warn("Upload limit aşıldı: {}", e.getMessage());
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Yüklenen dosya çok büyük. En fazla 5MB olabilir.");
-        body.put("status", HttpStatus.PAYLOAD_TOO_LARGE.value());
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(body);
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(buildBody("Yüklenen dosya çok büyük. En fazla 5MB olabilir.", HttpStatus.PAYLOAD_TOO_LARGE));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Bu istek yöntemi desteklenmiyor: " + e.getMethod());
-        body.put("status", HttpStatus.METHOD_NOT_ALLOWED.value());
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(buildBody("Bu istek yöntemi desteklenmiyor: " + e.getMethod(), HttpStatus.METHOD_NOT_ALLOWED));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Desteklenmeyen içerik türü: " + e.getContentType());
-        body.put("status", HttpStatus.UNSUPPORTED_MEDIA_TYPE.value());
-        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(body);
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(buildBody("Desteklenmeyen içerik türü: " + e.getContentType(), HttpStatus.UNSUPPORTED_MEDIA_TYPE));
     }
 
     @ExceptionHandler(MissingPathVariableException.class)
     public ResponseEntity<Map<String, Object>> handleMissingPathVar(MissingPathVariableException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Yol değişkeni eksik: " + e.getVariableName());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody("Yol değişkeni eksik: " + e.getVariableName(), HttpStatus.BAD_REQUEST));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody("Doğrulama hatası: " + e.getMessage(), HttpStatus.BAD_REQUEST));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
+        log.error("Beklenmeyen hata", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(buildBody("Beklenmeyen bir hata olustu", HttpStatus.INTERNAL_SERVER_ERROR));
+    }
+
+    private Map<String, Object> buildBody(String message, HttpStatus status) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
-        body.put("message", "Doğrulama hatası: " + e.getMessage());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        body.put("message", message);
+        body.put("status", status.value());
+        return body;
     }
 }

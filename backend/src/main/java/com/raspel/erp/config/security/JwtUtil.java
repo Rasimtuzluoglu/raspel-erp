@@ -6,9 +6,11 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.Arrays;
 import java.util.Date;
 
 @Component
@@ -20,13 +22,20 @@ public class JwtUtil {
 
     public JwtUtil(
             @Value("${app.jwt.secret}") String jwtSecret,
-            @Value("${app.jwt.expiration-ms}") long expirationMs) {
+            @Value("${app.jwt.expiration-ms}") long expirationMs,
+            Environment env) {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         if (keyBytes.length < 32) {
-            throw new IllegalStateException("app.jwt.secret en az 32 bayt (256-bit) olmalıdır");
+            throw new IllegalStateException("app.jwt.secret en az 32 bayt (256-bit) olmalidir");
         }
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.expirationMs = expirationMs;
+        boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("prod");
+        if (System.getenv("JWT_SECRET") == null && isProd) {
+            throw new IllegalStateException(
+                "JWT_SECRET ortam degiskeni tanimli degil! Uretim ortaminda JWT_SECRET zorunludur. " +
+                "application.properties'teki varsayilan deger sadece gelistirme icindir.");
+        }
         if (System.getenv("JWT_SECRET") == null) {
             log.warn("JWT_SECRET ortam degiskeni tanimli degil! Uretim ortaminda mutlaka guclu bir JWT_SECRET ayarlayin.");
         }
