@@ -105,7 +105,7 @@
 ```
 raspel-erp/
 ├── backend/              # Spring Boot 3.2.12 + Java 21
-│   ├── src/main/java/    # 240+ Java sınıfı
+│   ├── src/main/java/    # 277 Java sinifi
 │   │   ├── controller/   # REST API (60+ endpoint)
 │   │   ├── service/      # İş mantığı (Redis cache, batch, N+1 optimizasyonu)
 │   │   ├── repository/   # Veri erişim (JPA)
@@ -116,7 +116,7 @@ raspel-erp/
 │   └── src/main/resources/
 │       └── db/migration/ # Flyway (V1..V26 + performans index'leri)
 ├── frontend/             # Vue 3 + PrimeVue 4 + Pinia + Chart.js
-│   └── src/views/        # 35+ sayfa (chunk-split + lazy loading)
+│   └── src/views/        # 52 sayfa (chunk-split + lazy loading)
 ├── config/               # Traefik (SSL), Prometheus, Grafana
 ├── docs/                 # Kurulum, kullanım ve API kılavuzları
 ├── scripts/              # Yedekleme, felaket kurtarma, E2E ve yük testleri

@@ -36,7 +36,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Database | PostgreSQL 16 + Flyway migrations |
 | Cache | Redis 7 |
 | Queue | RabbitMQ 3 |
-| Frontend | Vue 3, Vite 6, PrimeVue 4, Pinia |
+| Frontend | Vue 3, Vite 5, PrimeVue 4, Pinia |
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
