@@ -67,17 +67,24 @@
           <Button label="Giris Yap" icon="pi pi-sign-in" :loading="authStore.loading" class="giris-buton" @click="girisYap" />
 
           <div class="giris-alt-linkler">
-            <a v-if="sifremiUnuttumAdimi" @click="sifremiUnuttumAdimi = false">&larr; Girise don</a>
-            <a v-else @click="sifremiUnuttumAdimi = true">Sifremi Unuttum</a>
-          </div>
-
-          <div v-if="sifremiUnuttumAdimi" class="sifre-sifirla">
-            <p>E-posta adresinizi girin, sifre sifirlama baglantisi gonderelim.</p>
-            <InputText v-model="sifirlaEmail" placeholder="E-posta adresi" class="w-full mb-2" />
-            <Button label="Gonder" icon="pi pi-envelope" class="p-button-outlined w-full" :loading="sifirlaYukleniyor" @click="sifreSifirla" />
-            <small v-if="sifirlaMesaj" class="sifirla-mesaj">{{ sifirlaMesaj }}</small>
+            <a @click="sifremiUnuttumAdimi = true">Sifremi Unuttum</a>
           </div>
         </div>
+      </div>
+
+      <!-- Sifremi Unuttum - Formun disinda ayri bolum -->
+      <div v-if="sifremiUnuttumAdimi && !ikiFaktorAdimi" class="sifre-sifirla-panel">
+        <div class="sifirla-ust">
+          <i class="pi pi-envelope" />
+          <h3>Sifremi Unuttum</h3>
+          <a @click="sifremiUnuttumAdimi = false">&larr; Girise don</a>
+        </div>
+        <p>E-posta adresinizi girin, sifre sifirlama baglantisi gonderelim.</p>
+        <div class="sifirla-input-row">
+          <InputText v-model="sifirlaEmail" placeholder="E-posta adresi" />
+          <Button label="Gonder" icon="pi pi-send" :loading="sifirlaYukleniyor" @click="sifreSifirla" />
+        </div>
+        <small v-if="sifirlaMesaj" class="sifirla-mesaj">{{ sifirlaMesaj }}</small>
       </div>
 
       <div class="giris-footer">
@@ -215,5 +222,21 @@ const sifreSifirla = async () => {
 .sifre-sifirla { margin-top: 14px; padding: 14px; background: var(--surface-ground); border-radius: 10px; }
 .sifre-sifirla p { font-size: 13px; color: var(--text-secondary); margin: 0 0 10px; }
 .sifirla-mesaj { display: block; margin-top: 8px; font-size: 12px; color: var(--green-500); }
-@media (max-width: 480px) { .giris-form { padding: 20px; } }
+
+.sifre-sifirla-panel {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; box-shadow: var(--shadow);
+  margin-top: 16px;
+}
+.sifirla-ust { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.sifirla-ust i { font-size: 22px; color: var(--primary-color); }
+.sifirla-ust h3 { margin: 0; font-size: 16px; color: var(--text-primary); flex: 1; }
+.sifirla-ust a { color: var(--text-muted); font-size: 13px; cursor: pointer; }
+.sifirla-ust a:hover { color: var(--text-primary); }
+.sifre-sifirla-panel p { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px; }
+.sifirla-input-row { display: flex; gap: 8px; }
+.sifirla-input-row .p-inputtext { flex: 1; }
+.sifirla-mesaj { display: block; margin-top: 10px; font-size: 12px; color: var(--green-500); }
+
+@media (max-width: 480px) { .giris-form { padding: 20px; } .sifirla-input-row { flex-direction: column; } }
 </style>

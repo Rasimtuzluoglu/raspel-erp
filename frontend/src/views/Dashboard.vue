@@ -945,9 +945,9 @@ const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bo
 const aylikKarsilastirmaOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 
 const bosSistem = computed(() =>
-  cariHesapStore.cariHesaplar.length === 0 &&
-  stokStore.stoklar.length === 0 &&
-  faturaStore.faturalar.length === 0
+  (cariHesapStore?.cariHesaplar?.length || 0) === 0 &&
+  (stokStore?.stoklar?.length || 0) === 0 &&
+  (faturaStore?.faturalar?.length || 0) === 0
 )
 
 const yedekUyarisiGoster = ref(true)
@@ -966,7 +966,7 @@ const toplamKasaBakiye = computed(() => kasaStore.kasalar.reduce((t, k) => t + (
 const toplamLikidite = computed(() => toplamBankaBakiye.value + toplamKasaBakiye.value)
 const toplamStok = computed(() => stokStore.stoklar.length)
 const dusukStokAdet = computed(() => stokStore.dusukStoklar.length)
-const vadesiGecenCari = computed(() => cariHesapStore.cariHesaplar.filter(c => c.bakiye < 0).sort((a, b) => a.bakiye - b.bakiye))
+const vadesiGecenCari = computed(() => (cariHesapStore?.cariHesaplar || []).filter(c => c.bakiye < 0).sort((a, b) => a.bakiye - b.bakiye))
 const sonFaturalar = computed(() => [...faturaStore.faturalar].sort((a, b) => new Date(b.olusturmaTarihi) - new Date(a.olusturmaTarihi)).slice(0, 5))
 
 const grafikleriHesapla = () => {

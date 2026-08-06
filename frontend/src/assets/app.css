@@ -157,13 +157,13 @@ body {
 .admin-name { display: block; font-size: 13px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .admin-role { display: inline-block; font-size: 10px; font-weight: 600; color: #3b82f6; background: rgba(59,130,246,0.12); padding: 1px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.admin-actions { display: flex; align-items: center; justify-content: space-between; gap: 4px; pt: 4px; border-top: 1px solid rgba(148, 163, 184, 0.1); }
+.admin-actions { display: flex; align-items: center; justify-content: center; gap: 6px; padding-top: 8px; border-top: 1px solid rgba(148, 163, 184, 0.1); flex-wrap: wrap; }
 .icon-action-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 30px; height: 30px; border-radius: 8px;
   background: transparent; border: 1px solid transparent;
   color: var(--text-secondary); cursor: pointer; font-size: 14px;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease; flex-shrink: 0;
 }
 .icon-action-btn:hover { background: rgba(148, 163, 184, 0.12); color: var(--text-primary); border-color: var(--border); }
 .icon-action-btn.lang-toggle-btn { width: auto; padding: 0 6px; gap: 4px; font-weight: 700; font-size: 11px; }
