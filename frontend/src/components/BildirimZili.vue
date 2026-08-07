@@ -238,11 +238,12 @@ const temizle = () => { bildirimler.value = [] }
 <style scoped>
 .bildirim-zili { position: relative; }
 .zil-sayac {
-  position: absolute; top: -2px; right: -2px;
+  position: absolute; top: -4px; right: -4px;
   background: #ef4444; color: white; border-radius: 50%;
   min-width: 18px; height: 18px; font-size: 11px;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; padding: 0 4px;
+  font-weight: 700; padding: 0 5px; z-index: 3;
+  border: 2px solid var(--bg-primary, #0f172a);
 }
 .bildirim-panel {
   position: fixed; left: 245px; bottom: 70px; top: auto; z-index: 99999;
