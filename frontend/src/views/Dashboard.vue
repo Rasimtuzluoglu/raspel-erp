@@ -3,6 +3,15 @@
     <div class="dashboard-header">
       <h1>RasPel ERP</h1>
       <div class="header-sag">
+        <div class="doviz-ticker-compact">
+          <div v-for="k in dovizStore.kurlar" :key="k.kod || k.dovizKodu" class="ticker-chip">
+            <span class="chip-kod">{{ k.kod || k.dovizKodu }}:</span>
+            <span class="chip-fiyat">{{ dovizStore.formatPara(k.satisFiyati || k.satisKuru, 'TRY') }}</span>
+          </div>
+          <button class="chip-refresh-btn" :disabled="dovizStore.loading" title="Kurlari Yenile" @click="dovizStore.kurlariGuncelle">
+            <i :class="dovizStore.loading ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" />
+          </button>
+        </div>
         <div class="dashboard-datetime">
           <i class="pi pi-calendar" /> {{ simdikiTarih }}
         </div>
