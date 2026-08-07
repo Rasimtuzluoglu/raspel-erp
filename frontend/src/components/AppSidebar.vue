@@ -148,17 +148,16 @@
         <div class="admin-actions">
           <BildirimZili class="bildirim-zili-kapsayici" />
           <ThemeSwitcher />
-          <button class="icon-action-btn" title="Klavye Kisayollari" @click="rehberGoster = true"><i class="pi pi-question-circle" /></button>
           <button class="icon-action-btn lang-toggle-btn" title="Dil" @click="toggleDil"><i class="pi pi-globe" /><span class="lang-text">{{ dilEtiketi }}</span></button>
           <button class="icon-action-btn" title="Sifre Degistir" @click="$emit('open-password-modal')"><i class="pi pi-lock" /></button>
-          <button class="icon-action-btn logout-icon-btn" :title="$t('auth.logout')" @click="cikis"><i class="pi pi-sign-out" /></button>
-        </div>
-        <div class="admin-tools">
           <button class="icon-action-btn" title="Hesap Makinesi" @click="$emit('open-calculator')"><i class="pi pi-calculator" /></button>
-          <button class="icon-action-btn" title="Doviz Cevirici" @click="$emit('open-currency')"><i class="pi pi-money-bill" /></button>
-          <button class="icon-action-btn" title="KDV Hesapla" @click="$emit('open-kdv')"><i class="pi pi-percentage" /></button>
-          <button class="icon-action-btn" title="Taksit Hesapla" @click="$emit('open-taksit')"><i class="pi pi-calendar" /></button>
-          <button class="icon-action-btn" title="Kar Marji" @click="$emit('open-marj')"><i class="pi pi-chart-line" /></button>
+          <button class="icon-action-btn" title="Doviz" @click="$emit('open-currency')"><i class="pi pi-money-bill" /></button>
+          <button class="icon-action-btn" title="Araclar" @click="aracAcik = !aracAcik"><i class="pi pi-ellipsis-h" /></button>
+        </div>
+        <div v-if="aracAcik" class="admin-tools">
+          <button class="icon-action-btn" title="KDV" @click="$emit('open-kdv')"><i class="pi pi-percentage" /></button>
+          <button class="icon-action-btn" title="Taksit" @click="$emit('open-taksit')"><i class="pi pi-calendar" /></button>
+          <button class="icon-action-btn" title="Kar Marj" @click="$emit('open-marj')"><i class="pi pi-chart-line" /></button>
         </div>
       </div>
 
@@ -191,6 +190,7 @@ const { locale } = useI18n()
 
 const mobilMenuAcik = ref(false)
 const rehberGoster = ref(false)
+const aracAcik = ref(false)
 const gelismisMod = ref(safeGet('raspel_erp_gelismis_mod', false))
 
 const toggleGelismisMod = () => {

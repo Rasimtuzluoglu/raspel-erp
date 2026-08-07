@@ -53,7 +53,7 @@
             <label>Firma Secin</label>
             <div class="input-wrapper">
               <i class="pi pi-building" />
-              <Select ref="sirketSelect" v-model="selectedSirket" :options="filtreliSirketler" option-label="ad"
+              <Select v-if="sirketler.length > 0" ref="sirketSelect" v-model="selectedSirket" :options="sirketler" option-label="ad" option-value="id"
                 placeholder="Firma seciniz" class="sirket-select" scroll-height="250px" filter
                 @keyup.enter="girisYap" />
             </div>
