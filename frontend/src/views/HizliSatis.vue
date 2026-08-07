@@ -429,7 +429,10 @@
                     ---
                   </div>
                   <div class="fis-tesekkur">
-                    {{ fisAltNotu || 'Bizi tercih ettiğiniz için teşekkür ederiz!' }}
+                    {{ fisAltNotu || 'Bizi tercih ettiginiz icin tesekkur ederiz!' }}
+                  </div>
+                  <div class="fis-satici" v-if="authStore.kullanici?.displayName">
+                    Islem Yapan: {{ authStore.kullanici.displayName }}
                   </div>
                 </div>
               </div>
@@ -915,7 +918,8 @@ const fisiYazdir = () => {
     <div class="satir"><span class="ad">Toplam Ürün</span><span class="tutar">${sepet.value.length}</span></div>
     <div class="satir"><span class="ad">Durum</span><span class="tutar">${odemeDurumText.value}</span></div>
     <div class="ayrac">- - - - - - - - - - - - - -</div>
-    <div class="tesekkur">İyi günler dileriz</div>
+    <div class="tesekkur">Islem Yapan: ${escapeHtml(authStore.kullanici?.displayName || '-')}</div>
+    <div class="tesekkur">Iyi gunler dileriz</div>
   </div>
 </body>
 </html>`
@@ -1096,6 +1100,7 @@ const satisiTamamla = async () => {
 .fis-odeme-durum { font-weight: 600; }
 .fis-footer { text-align: center; margin-top: 4px; }
 .fis-tesekkur { font-size: 10px; color: #555; }
+.fis-satici { font-size: 9px; color: #888; margin-top: 2px; text-align: center; }
 
 .satis-buton { margin-top: 4px; }
 
