@@ -80,6 +80,15 @@ public class Fatura {
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
+    @Column(name = "olusturan_kullanici_id")
+    private Long olusturanKullaniciId;
+
+    @Column(name = "olusturan_kullanici_adi", length = 100)
+    private String olusturanKullaniciAdi;
+
+    @Version
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();

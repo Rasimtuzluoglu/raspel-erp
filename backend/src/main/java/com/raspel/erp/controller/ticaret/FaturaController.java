@@ -59,7 +59,9 @@ public class FaturaController {
             return ResponseEntity.ok(idempotencyCache.get(idempotencyKey));
         }
         Long sirketId = (Long) request.getAttribute("sirketId");
-        FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId);
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        String displayName = (String) request.getAttribute("displayName");
+        FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
         if (idempotencyKey != null) {
             idempotencyCache.put(idempotencyKey, olusturulan);
         }

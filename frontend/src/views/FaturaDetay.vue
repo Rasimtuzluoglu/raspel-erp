@@ -63,6 +63,7 @@
           <p><strong>Fatura No:</strong> {{ fatura.faturaNumarasi }}</p>
           <p><strong>Tarih:</strong> {{ formatDate(fatura.tarih) }}</p>
           <p><strong>Durum:</strong> <span :class="['durum-badge', (fatura.durum || '').toLowerCase()]">{{ durumLabel(fatura.durum) }}</span></p>
+          <p v-if="fatura.olusturanKullaniciAdi"><strong>İşlemi Yapan:</strong> {{ fatura.olusturanKullaniciAdi }}</p>
         </div>
       </div>
 

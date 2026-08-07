@@ -150,7 +150,7 @@ public class SiparisService {
                     .kalemler(faturaKalemler)
                     .build();
 
-            faturaService.faturaOlustur(faturaDTO, s.getSirketId());
+            faturaService.faturaOlustur(faturaDTO, s.getSirketId(), null, null);
             log.info("Sipariş #{} için fatura oluşturuldu", s.getSiparisNo());
         }
 

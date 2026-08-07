@@ -45,4 +45,6 @@ public class FaturaDTO {
     private List<FaturaKalemDTO> kalemler;
 
     private LocalDateTime olusturmaTarihi;
+    private Long olusturanKullaniciId;
+    private String olusturanKullaniciAdi;
 }

@@ -119,7 +119,7 @@ class FaturaServiceTest {
         Fatura saved = createFatura(1L);
         saved.setDurum(Fatura.FaturaDurum.KESILDI);
         when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
-        var result = faturaService.faturaOlustur(dto, 1L);
+        var result = faturaService.faturaOlustur(dto, 1L, null, null);
         assertNotNull(result);
     }
 

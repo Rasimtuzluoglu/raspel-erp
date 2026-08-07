@@ -76,7 +76,7 @@ class FaturaControllerTest {
     void shouldCreate() throws Exception {
         var kalem = FaturaKalemDTO.builder().aciklama("Ürün").adet(2).birimFiyat(BigDecimal.valueOf(100)).build();
         var dto = FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tarih(LocalDate.now()).tur("SATIS").kalemler(List.of(kalem)).build();
-        when(faturaService.faturaOlustur(any(FaturaDTO.class), anyLong())).thenReturn(dto);
+        when(faturaService.faturaOlustur(any(FaturaDTO.class), anyLong(), any(), any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/faturalar")
                         .contentType(MediaType.APPLICATION_JSON)

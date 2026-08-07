@@ -55,6 +55,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (sirketId != null) {
                 request.setAttribute("sirketId", sirketId);
             }
+            request.setAttribute("displayName", jwtUtil.getDisplayNameFromToken(token));
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 String username = jwtUtil.getUsernameFromToken(token);

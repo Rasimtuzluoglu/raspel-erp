@@ -77,7 +77,7 @@ public class FaturaService {
         return entityDTOyeCevir(fatura);
     }
 
-    public FaturaDTO faturaOlustur(FaturaDTO dto, Long sirketId) {
+    public FaturaDTO faturaOlustur(FaturaDTO dto, Long sirketId, Long kullaniciId, String displayName) {
         log.info("Fatura oluşturuluyor - Tür: {}, sirketId: {}", dto.getTur(), sirketId);
 
         CariHesap cariHesap = null;
@@ -170,6 +170,8 @@ public class FaturaService {
                 .odenenTutar(odenenTutar)
                 .kalanTutar(kalanTutar)
                 .sirketId(sirketId)
+                .olusturanKullaniciId(kullaniciId)
+                .olusturanKullaniciAdi(displayName)
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -473,6 +475,8 @@ public class FaturaService {
                 .kalanTutar(fatura.getKalanTutar())
                 .kalemler(kalemDTO)
                 .olusturmaTarihi(fatura.getOlusturmaTarihi())
+                .olusturanKullaniciId(fatura.getOlusturanKullaniciId())
+                .olusturanKullaniciAdi(fatura.getOlusturanKullaniciAdi())
                 .build();
     }
 }

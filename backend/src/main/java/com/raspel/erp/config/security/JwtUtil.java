@@ -71,6 +71,11 @@ public class JwtUtil {
         return null;
     }
 
+    public String getDisplayNameFromToken(String token) {
+        Object val = getClaims(token).getPayload().get("displayName");
+        return val != null ? val.toString() : null;
+    }
+
     public boolean validateToken(String token) {
         try {
             getClaims(token);
