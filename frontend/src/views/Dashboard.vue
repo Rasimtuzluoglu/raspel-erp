@@ -792,6 +792,7 @@ import { useBankaStore } from '../stores/bankaStore.js'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 
 const dovizStore = useDovizStore()
 import { Doughnut, Bar, Line } from 'vue-chartjs'
@@ -836,6 +837,7 @@ const faturaStore = useFaturaStore()
 const bankaStore = useBankaStore()
 const kasaStore = useKasaStore()
 const stokStore = useStokStore()
+const authStore = useAuthStore()
 const loading = ref(true)
 
 const simdikiTarih = ref('')
