@@ -185,8 +185,9 @@ body {
 .brand-logo { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; flex-shrink: 0; }
 
 .bildirim-zili-kapsayici { position: relative; }
-.bildirim-zili-kapsayici .p-button { color: var(--text-secondary) !important; width: 30px !important; height: 30px !important; }
-.bildirim-zili-kapsayici .p-button:hover { color: var(--text-primary) !important; background: rgba(148, 163, 184, 0.1) !important; }
+.bildirim-zili-kapsayici .p-button { color: var(--text-primary) !important; width: 30px !important; height: 30px !important; }
+.bildirim-zili-kapsayici .p-button:hover { background: rgba(148, 163, 184, 0.1) !important; }
+.bildirim-zili-kapsayici .p-button .p-badge { background: #ef4444 !important; }
 
 .hamburger-btn {
   display: none;
