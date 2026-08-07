@@ -126,7 +126,7 @@ class FaturaServiceTest {
     @Test
     void faturaOlustur_throwsWhenInvalidTur() {
         FaturaDTO dto = FaturaDTO.builder().tur("INVALID").tarih(LocalDate.now()).kalemler(List.of()).build();
-        assertThrows(RuntimeException.class, () -> faturaService.faturaOlustur(dto, 1L));
+        assertThrows(RuntimeException.class, () -> faturaService.faturaOlustur(dto, 1L, null, null));
     }
 
     @Test
