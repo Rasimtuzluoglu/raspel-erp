@@ -173,9 +173,21 @@
           :options="sirketListesi"
           option-label="ad"
           option-value="ad"
-          placeholder="Şirket Seçiniz"
+          placeholder="Şirket Adı"
           editable
           class="w-full"
+        />
+      </div>
+      <div class="form-grup">
+        <label>Yetkili Firmalar</label>
+        <MultiSelect
+          v-model="form.sirketIds"
+          :options="sirketListesi"
+          option-label="ad"
+          option-value="id"
+          placeholder="Firma seçiniz"
+          class="w-full"
+          display="chip"
         />
       </div>
       <div class="form-row">
@@ -242,7 +254,7 @@ const editingId = ref(null)
 
 const form = ref({
   username: '', displayName: '', password: '',
-  avatarUrl: '', companyName: '', role: 'USER', active: true
+  avatarUrl: '', companyName: '', sirketIds: [], role: 'USER', active: true
 })
 
 const avatarInput = ref(null)
@@ -278,7 +290,7 @@ onMounted(async () => {
 
 const openDialog = () => {
   editingId.value = null
-  form.value = { username: '', displayName: '', password: '', avatarUrl: '', companyName: '', role: 'USER', active: true }
+  form.value = { username: '', displayName: '', password: '', avatarUrl: '', companyName: '', sirketIds: [], role: 'USER', active: true }
   showDialog.value = true
 }
 
@@ -287,6 +299,7 @@ const editKullanici = (u) => {
   form.value = {
     username: u.username, displayName: u.displayName, password: '',
     avatarUrl: u.avatarUrl || '', companyName: u.companyName || '',
+    sirketIds: u.sirketIds || (u.sirketId ? [u.sirketId] : []),
     role: u.role || 'USER', active: u.active !== false
   }
   showDialog.value = true

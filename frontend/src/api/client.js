@@ -43,6 +43,8 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+let redirectKorumasi = false
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -52,22 +54,27 @@ apiClient.interceptors.response.use(
     }
     const { status } = error.response
     if (status === 401 && !window.location.pathname.startsWith('/giris')) {
+      if (redirectKorumasi) return Promise.reject(error)
+      redirectKorumasi = true
       try {
         const authStore = useAuthStore()
         authStore.cikisYap()
       } catch { /* empty */ }
-      window.location.href = '/giris'
+      window.location.replace('/giris')
+      return Promise.reject(error)
     }
     if (status === 403 && !window.location.pathname.startsWith('/giris') && !window.location.pathname.startsWith('/yetki-reddi')) {
       const tokenSuresiDolmus = tokenSuresiDolduMu()
       if (tokenSuresiDolmus) {
+        if (redirectKorumasi) return Promise.reject(error)
+        redirectKorumasi = true
         try {
           const authStore = useAuthStore()
           authStore.cikisYap()
         } catch { /* empty */ }
-        window.location.href = '/giris'
+        window.location.replace('/giris')
       } else {
-        window.location.href = '/yetki-reddi'
+        window.location.replace('/yetki-reddi')
       }
     }
     return Promise.reject(error)

@@ -55,16 +55,10 @@ export const useAuthStore = defineStore('auth', () => {
     } catch { localStorage.removeItem('raspel_erp_auth') }
   }
 
-  const girisYap = async (username, password, sirketAdiParam, sirketIdParam) => {
+  const girisYap = async (username, password) => {
     loading.value = true
     try {
-      const loginData = { username, password, companyName: sirketAdiParam }
-      if (sirketIdParam) loginData.sirketId = sirketIdParam
-      const res = await kullaniciAPI.giris(loginData)
-      if (res.data?.twoFactorGerekli) {
-        return res.data
-      }
-      oturumKur(res.data, sirketAdiParam)
+      const res = await kullaniciAPI.giris({ username, password })
       return res.data
     } catch (err) {
       cikisYap()
@@ -74,13 +68,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const giris2fa = async (girisToken, code, sirketAdiParam, sirketIdParam) => {
+  const girisSirket = async (girisToken, sirketId) => {
     loading.value = true
     try {
-      const loginData = { girisToken, code, companyName: sirketAdiParam }
-      if (sirketIdParam) loginData.sirketId = sirketIdParam
-      const res = await kullaniciAPI.giris2fa(loginData)
-      oturumKur(res.data, sirketAdiParam)
+      const res = await kullaniciAPI.girisSirket({ girisToken, sirketId })
+      oturumKur(res.data)
       return res.data
     } catch (err) {
       cikisYap()
@@ -90,10 +82,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const oturumKur = (data, sirketAdiParam) => {
+  const giris2fa = async (girisToken, code) => {
+    loading.value = true
+    try {
+      const res = await kullaniciAPI.giris2fa({ girisToken, code })
+      return res.data
+    } catch (err) {
+      cikisYap()
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const oturumKur = (data) => {
     kullanici.value = { id: data.id, username: data.username, displayName: data.displayName, avatarUrl: data.avatarUrl, companyName: data.companyName, role: data.role }
     token.value = data.token || ''
-    companyName.value = sirketAdiParam || data.companyName || ''
+    companyName.value = data.companyName || ''
     sirketId.value = data.sirketId || null
     sirketAdi.value = data.sirketAdi || ''
 
@@ -143,5 +148,5 @@ export const useAuthStore = defineStore('auth', () => {
 
   init()
 
-  return { kullanici, token, companyName, sirketId, sirketAdi, yetkiler, loading, isLoggedIn, isAdmin, hasPermission, girisYap, giris2fa, cikisYap, kullanicilariGetir, kullaniciGuncelle, yetkileriYukle, init }
+  return { kullanici, token, companyName, sirketId, sirketAdi, yetkiler, loading, isLoggedIn, isAdmin, hasPermission, girisYap, girisSirket, giris2fa, cikisYap, kullanicilariGetir, kullaniciGuncelle, yetkileriYukle, init }
 })

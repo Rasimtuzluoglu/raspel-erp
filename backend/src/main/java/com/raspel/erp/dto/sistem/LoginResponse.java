@@ -1,6 +1,7 @@
 package com.raspel.erp.dto.sistem;
 
 import lombok.*;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +20,5 @@ public class LoginResponse {
 
     private Boolean twoFactorGerekli;
     private String girisToken;
+    private List<SirketDTO> sirketler;
 }

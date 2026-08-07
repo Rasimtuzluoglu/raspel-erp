@@ -74,9 +74,9 @@ class KullaniciServiceTest {
 
     @Test
     void olustur_createsUser() {
-        KullaniciDTO dto = KullaniciDTO.builder().username("newuser").displayName("New").password("pass").build();
+        KullaniciDTO dto = KullaniciDTO.builder().username("newuser").displayName("New").password("Password123").build();
         when(kullaniciRepository.findByUsername("newuser")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("pass")).thenReturn("encoded");
+        when(passwordEncoder.encode("Password123")).thenReturn("encoded");
         Kullanici saved = createKullanici(1L);
         saved.setUsername("newuser");
         saved.setDisplayName("New");
@@ -126,13 +126,13 @@ class KullaniciServiceTest {
         k.setPassword("encoded");
         when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
         when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
-        when(jwtUtil.generateToken(any(Kullanici.class), any(), any())).thenReturn("token");
         LoginRequest req = new LoginRequest();
         req.setUsername("testuser1");
         req.setPassword("pass");
         LoginResponse resp = kullaniciService.giris(req);
         assertEquals("testuser1", resp.getUsername());
-        assertEquals("token", resp.getToken());
+        assertNotNull(resp.getGirisToken());
+        assertFalse(Boolean.TRUE.equals(resp.getTwoFactorGerekli()));
     }
 
     @Test
@@ -195,13 +195,14 @@ class KullaniciServiceTest {
         String dogruKod = com.raspel.erp.util.TotpUtil.generateCode("JBSWY3DPEHPK3PXP", System.currentTimeMillis());
 
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
-        when(jwtUtil.generateToken(any(Kullanici.class), any(), any())).thenReturn("token");
 
         LoginResponse resp = kullaniciService.giris2faTamamla(
                 com.raspel.erp.dto.sistem.TwoFactorGirisRequest.builder()
                         .girisToken(pending.getGirisToken()).code(dogruKod).build());
 
-        assertEquals("token", resp.getToken());
+        assertNotNull(resp.getGirisToken());
+        assertFalse(Boolean.TRUE.equals(resp.getTwoFactorGerekli()));
+        assertNotNull(resp.getSirketler());
     }
 
     @Test

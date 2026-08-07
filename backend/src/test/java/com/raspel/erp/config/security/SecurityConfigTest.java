@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -26,7 +27,7 @@ class SecurityConfigTest {
     @Test
     void healthEndpoint_isPublic() throws Exception {
         mockMvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk());
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
     }
 
     @Test

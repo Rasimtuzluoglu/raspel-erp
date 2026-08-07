@@ -2,6 +2,7 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.finans.KasaDTO;
 import com.raspel.erp.dto.finans.KasaHareketDTO;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +33,7 @@ class KasaServiceTest {
     @Mock private KasaRepository kasaRepository;
     @Mock private KasaHareketRepository kasaHareketRepository;
     @Mock private KategoriRepository kategoriRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private KasaService kasaService;
 
     private Kasa createKasa(Long id) {
@@ -91,6 +93,7 @@ class KasaServiceTest {
 
     @Test
     void kasaSil_deletes() {
+        when(kasaRepository.findById(1L)).thenReturn(Optional.of(createKasa(1L)));
         when(kasaHareketRepository.countByKasaId(1L)).thenReturn(0L);
         kasaService.kasaSil(1L);
         verify(kasaRepository).deleteById(1L);
@@ -98,6 +101,7 @@ class KasaServiceTest {
 
     @Test
     void kasaSil_throwsWhenHasHareket() {
+        when(kasaRepository.findById(1L)).thenReturn(Optional.of(createKasa(1L)));
         when(kasaHareketRepository.countByKasaId(1L)).thenReturn(2L);
         assertThrows(RuntimeException.class, () -> kasaService.kasaSil(1L));
     }

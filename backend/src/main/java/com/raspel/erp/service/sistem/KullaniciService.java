@@ -24,6 +24,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import com.raspel.erp.entity.sistem.Rol;
@@ -72,6 +75,7 @@ public class KullaniciService {
                 .role(dto.getRole() != null ? dto.getRole() : "USER")
                 .active(true)
                 .build();
+        setSirketler(k, dto.getSirketIds(), dto.getSirketId());
         return entityToDTO(kullaniciRepository.save(k));
     }
 
@@ -82,6 +86,7 @@ public class KullaniciService {
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
         if (dto.getSirketId() != null) k.setSirketId(dto.getSirketId());
+        if (dto.getSirketIds() != null) setSirketler(k, dto.getSirketIds(), dto.getSirketId());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             sifrePolitikasiKontrol(dto.getPassword());
             k.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -184,19 +189,22 @@ public class KullaniciService {
             throw new BusinessException("Kullanıcı adı veya şifre hatalı");
         }
 
-        boolean twoFactorAktif = k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled();
-        if (twoFactorAktif) {
-            String girisToken = UUID.randomUUID().toString();
-            bekleyenGirisler.put(girisToken, new long[]{k.getId(), System.currentTimeMillis()});
-            return LoginResponse.builder()
-                    .id(k.getId())
-                    .username(k.getUsername())
-                    .twoFactorGerekli(true)
-                    .girisToken(girisToken)
-                    .build();
-        }
+        String girisToken = UUID.randomUUID().toString();
+        bekleyenGirisler.put(girisToken, new long[]{k.getId(), System.currentTimeMillis()});
 
-        return tokenOlusturVeDon(k, req.getCompanyName(), req.getSirketId());
+        boolean twoFactorAktif = k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled();
+        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
+
+        return LoginResponse.builder()
+                .id(k.getId())
+                .username(k.getUsername())
+                .displayName(k.getDisplayName())
+                .avatarUrl(k.getAvatarUrl())
+                .role(k.getRole())
+                .twoFactorGerekli(twoFactorAktif)
+                .girisToken(girisToken)
+                .sirketler(twoFactorAktif ? null : sirketler)
+                .build();
     }
 
     public LoginResponse giris2faTamamla(TwoFactorGirisRequest req) {
@@ -222,7 +230,63 @@ public class KullaniciService {
         }
 
         bekleyenGirisler.remove(req.getGirisToken());
-        return tokenOlusturVeDon(k, req.getCompanyName(), req.getSirketId());
+        String yeniToken = UUID.randomUUID().toString();
+        bekleyenGirisler.put(yeniToken, new long[]{k.getId(), System.currentTimeMillis()});
+
+        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
+        return LoginResponse.builder()
+                .id(k.getId())
+                .username(k.getUsername())
+                .displayName(k.getDisplayName())
+                .avatarUrl(k.getAvatarUrl())
+                .role(k.getRole())
+                .twoFactorGerekli(false)
+                .girisToken(yeniToken)
+                .sirketler(sirketler)
+                .build();
+    }
+
+    public LoginResponse girisSirket(String girisToken, Long sirketId) {
+        long[] kayit = bekleyenGirisler.get(girisToken);
+        if (kayit == null) {
+            throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
+        }
+        long kullaniciId = kayit[0];
+        long olusturmaZamani = kayit[1];
+        if (System.currentTimeMillis() - olusturmaZamani > GIRIS_TOKEN_GECERLILIK_MS) {
+            bekleyenGirisler.remove(girisToken);
+            throw new BusinessException("Şirket seçim süresi doldu, tekrar giriş yapınız");
+        }
+        bekleyenGirisler.remove(girisToken);
+
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
+        if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
+
+        return tokenOlusturVeDon(k, null, sirketId);
+    }
+
+    private List<com.raspel.erp.dto.sistem.SirketDTO> getSirketlerForKullanici(Kullanici k) {
+        if ("ADMIN".equals(k.getRole())) {
+            return sirketRepository.findByAktifTrue().stream()
+                    .map(s -> com.raspel.erp.dto.sistem.SirketDTO.builder()
+                            .id(s.getId()).ad(s.getAd()).logoUrl(s.getLogoUrl()).build())
+                    .collect(Collectors.toList());
+        }
+        Set<Sirket> sirketler = k.getSirketler();
+        if (sirketler != null && !sirketler.isEmpty()) {
+            return sirketler.stream()
+                    .map(s -> com.raspel.erp.dto.sistem.SirketDTO.builder()
+                            .id(s.getId()).ad(s.getAd()).logoUrl(s.getLogoUrl()).build())
+                    .collect(Collectors.toList());
+        }
+        if (k.getSirketId() != null) {
+            return sirketRepository.findById(k.getSirketId())
+                    .map(s -> List.of(com.raspel.erp.dto.sistem.SirketDTO.builder()
+                            .id(s.getId()).ad(s.getAd()).logoUrl(s.getLogoUrl()).build()))
+                    .orElse(List.of());
+        }
+        return List.of();
     }
 
     private LoginResponse tokenOlusturVeDon(Kullanici k, String istekFirma, Long istekSirketId) {
@@ -248,14 +312,29 @@ public class KullaniciService {
     }
 
     private KullaniciDTO entityToDTO(Kullanici k) {
+        Set<Sirket> sirketler = k.getSirketler();
         return KullaniciDTO.builder()
                 .id(k.getId()).username(k.getUsername())
                 .displayName(k.getDisplayName()).avatarUrl(k.getAvatarUrl())
                 .companyName(k.getCompanyName()).sirketId(k.getSirketId())
+                .sirketIds(sirketler != null ? sirketler.stream().map(Sirket::getId).collect(Collectors.toList()) : List.of())
                 .role(k.getRole()).active(k.getActive())
                 .twoFactorEnabled(k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled())
                 .olusturmaTarihi(k.getOlusturmaTarihi())
                 .build();
+    }
+
+    private void setSirketler(Kullanici k, List<Long> sirketIds, Long fallbackSirketId) {
+        if (sirketIds != null && !sirketIds.isEmpty()) {
+            Set<Sirket> sirketler = sirketIds.stream()
+                    .map(id -> sirketRepository.findById(id).orElse(null))
+                    .filter(s -> s != null)
+                    .collect(Collectors.toSet());
+            k.setSirketler(sirketler);
+            k.setSirketId(sirketIds.get(0));
+        } else if (fallbackSirketId != null) {
+            k.setSirketId(fallbackSirketId);
+        }
     }
 
     private void sifrePolitikasiKontrol(String sifre) {

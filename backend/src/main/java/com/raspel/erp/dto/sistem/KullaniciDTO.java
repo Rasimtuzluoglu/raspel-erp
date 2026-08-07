@@ -3,6 +3,7 @@ package com.raspel.erp.dto.sistem;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,6 +19,7 @@ public class KullaniciDTO {
     private String avatarUrl;
     private String companyName;
     private Long sirketId;
+    private List<Long> sirketIds;
     private String role;
     private Boolean active;
     private Boolean twoFactorEnabled;

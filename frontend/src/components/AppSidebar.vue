@@ -297,7 +297,7 @@ watch(() => authStore.sirketId, async (id) => {
 
 const cikis = () => {
   authStore.cikisYap()
-  router.push('/giris')
+  window.location.replace('/giris')
 }
 
 onMounted(() => {

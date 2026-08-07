@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.ButceDTO;
 import com.raspel.erp.entity.finans.Butce;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.*;
 class ButceServiceTest {
 
     @Mock private ButceRepository butceRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private ButceService butceService;
 
     private Butce ornekButce(Long id) {
@@ -85,14 +87,14 @@ class ButceServiceTest {
 
     @Test
     void sil_deletes() {
-        when(butceRepository.existsById(1L)).thenReturn(true);
+        when(butceRepository.findById(1L)).thenReturn(Optional.of(ornekButce(1L)));
         butceService.sil(1L);
         verify(butceRepository).deleteById(1L);
     }
 
     @Test
     void sil_notFound_throws() {
-        when(butceRepository.existsById(99L)).thenReturn(false);
+        when(butceRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> butceService.sil(99L));
     }
 }

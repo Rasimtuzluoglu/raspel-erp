@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.IadeDTO;
 import com.raspel.erp.dto.ticaret.IadeKalemDTO;
 import com.raspel.erp.entity.envanter.Stok;
@@ -35,6 +36,7 @@ class IadeServiceTest {
     @Mock private IadeKalemRepository iadeKalemRepository;
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private IadeService iadeService;
 
     private void hazirla() {
@@ -125,7 +127,7 @@ class IadeServiceTest {
 
     @Test
     void sil_deletes() {
-        when(iadeRepository.existsById(1L)).thenReturn(true);
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(ornekIade(1L)));
         iadeService.sil(1L);
         verify(iadeKalemRepository).deleteByIadeId(1L);
         verify(iadeRepository).deleteById(1L);

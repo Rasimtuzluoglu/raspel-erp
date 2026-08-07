@@ -1,5 +1,6 @@
 package com.raspel.erp.service;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sistem.NotDTO;
 import com.raspel.erp.entity.sistem.Not;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -25,6 +26,7 @@ import com.raspel.erp.service.sistem.NotService;
 class NotServiceTest {
 
     @Mock private NotRepository notRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private NotService notService;
 
     private Not createNot(Long id) {
@@ -92,6 +94,7 @@ class NotServiceTest {
 
     @Test
     void sil_deletes() {
+        when(notRepository.findById(1L)).thenReturn(Optional.of(createNot(1L)));
         notService.sil(1L);
         verify(notRepository).deleteById(1L);
     }

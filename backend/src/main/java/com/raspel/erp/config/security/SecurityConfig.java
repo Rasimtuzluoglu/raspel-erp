@@ -44,8 +44,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/kullanicilar/giris",
-                        "/api/kullanicilar/giris-2fa").permitAll()
-                .requestMatchers("/api/sirketler/aktif").permitAll()
+                        "/api/kullanicilar/giris-2fa",
+                        "/api/kullanicilar/giris-sirket").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/prometheus").permitAll()
                 .requestMatchers("/actuator/health/**").authenticated()

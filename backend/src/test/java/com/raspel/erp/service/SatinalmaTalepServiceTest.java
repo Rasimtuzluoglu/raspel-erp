@@ -1,5 +1,6 @@
 package com.raspel.erp.service;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.SatinalmaTalepDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaTalepKalemDTO;
 import com.raspel.erp.entity.ticaret.SatinalmaTalep;
@@ -31,6 +32,7 @@ class SatinalmaTalepServiceTest {
     @Mock private SatinalmaTalepRepository talepRepository;
     @Mock private SatinalmaTalepKalemRepository kalemRepository;
     @Mock private StokRepository stokRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private SatinalmaTalepService satinalmaTalepService;
 
     private SatinalmaTalep createTalep(Long id) {
@@ -95,7 +97,7 @@ class SatinalmaTalepServiceTest {
 
     @Test
     void sil_deletes() {
-        when(talepRepository.existsById(1L)).thenReturn(true);
+        when(talepRepository.findById(1L)).thenReturn(Optional.of(createTalep(1L)));
         satinalmaTalepService.sil(1L);
         verify(kalemRepository).deleteByTalepId(1L);
         verify(talepRepository).deleteById(1L);

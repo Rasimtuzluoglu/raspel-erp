@@ -1,5 +1,6 @@
 package com.raspel.erp.service.finans;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.MasrafDTO;
 import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.*;
 class MasrafServiceTest {
 
     @Mock private MasrafRepository masrafRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private MasrafService masrafService;
 
     private Masraf ornekMasraf(Long id) {
@@ -83,14 +85,14 @@ class MasrafServiceTest {
 
     @Test
     void sil_deletes() {
-        when(masrafRepository.existsById(1L)).thenReturn(true);
+        when(masrafRepository.findById(1L)).thenReturn(Optional.of(ornekMasraf(1L)));
         masrafService.sil(1L);
         verify(masrafRepository).deleteById(1L);
     }
 
     @Test
     void sil_notFound_throws() {
-        when(masrafRepository.existsById(99L)).thenReturn(false);
+        when(masrafRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> masrafService.sil(99L));
     }
 }

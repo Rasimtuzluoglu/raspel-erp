@@ -7,6 +7,7 @@ export const kullaniciAPI = {
   update(id, data) { return apiClient.put(`/kullanicilar/${id}`, data) },
   delete(id) { return apiClient.delete(`/kullanicilar/${id}`) },
   giris(data) { return apiClient.post('/kullanicilar/giris', data) },
+  girisSirket(data) { return apiClient.post('/kullanicilar/giris-sirket', data) },
   giris2fa(data) { return apiClient.post('/kullanicilar/giris-2fa', data) },
   sifreDegistir(data) { return apiClient.put('/kullanicilar/sifre-degistir', data) },
   ben() { return apiClient.get('/kullanicilar/ben') },

@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.CariFirsatDTO;
 import com.raspel.erp.entity.ticaret.CariFirsat;
 import com.raspel.erp.repository.ticaret.CariFirsatRepository;
@@ -24,6 +25,7 @@ class CrmServiceTest {
 
     @Mock private CariFirsatRepository cariFirsatRepository;
     @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    @Mock private TenantChecker tenantChecker;
 
     @InjectMocks private CrmService crmService;
 
@@ -71,7 +73,7 @@ class CrmServiceTest {
 
     @Test
     void firsatSil_bulunamazsaHata() {
-        when(cariFirsatRepository.existsById(99L)).thenReturn(false);
+        when(cariFirsatRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> crmService.firsatSil(99L));
     }
 }

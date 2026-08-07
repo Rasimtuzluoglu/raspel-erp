@@ -1,5 +1,6 @@
 package com.raspel.erp.service;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ik.PersonelIzinDTO;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.ik.PersonelIzin;
@@ -28,6 +29,7 @@ class PersonelIzinServiceTest {
 
     @Mock private PersonelIzinRepository izinRepository;
     @Mock private PersonelRepository personelRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private PersonelIzinService personelIzinService;
 
     private PersonelIzin createIzin(Long id) {
@@ -106,7 +108,7 @@ class PersonelIzinServiceTest {
 
     @Test
     void sil_deletes() {
-        when(izinRepository.existsById(1L)).thenReturn(true);
+        when(izinRepository.findById(1L)).thenReturn(Optional.of(createIzin(1L)));
         personelIzinService.sil(1L);
         verify(izinRepository).deleteById(1L);
     }

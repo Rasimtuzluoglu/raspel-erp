@@ -4,6 +4,7 @@ import com.raspel.erp.dto.finans.CariHesapDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,7 @@ class CariHesapServiceTest {
 
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private HareketRepository hareketRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private CariHesapService cariHesapService;
 
     private CariHesap createCariHesap(Long id) {
@@ -96,7 +98,7 @@ class CariHesapServiceTest {
 
     @Test
     void cariHesapSil_deletes() {
-        when(cariHesapRepository.existsById(1L)).thenReturn(true);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap(1L)));
         when(hareketRepository.countByCariHesapId(1L)).thenReturn(0L);
         cariHesapService.cariHesapSil(1L);
         verify(cariHesapRepository).deleteById(1L);
@@ -104,14 +106,14 @@ class CariHesapServiceTest {
 
     @Test
     void cariHesapSil_throwsWhenHasHareket() {
-        when(cariHesapRepository.existsById(1L)).thenReturn(true);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap(1L)));
         when(hareketRepository.countByCariHesapId(1L)).thenReturn(3L);
         assertThrows(RuntimeException.class, () -> cariHesapService.cariHesapSil(1L));
     }
 
     @Test
     void cariHesapSil_throwsWhenNotFound() {
-        when(cariHesapRepository.existsById(99L)).thenReturn(false);
+        when(cariHesapRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> cariHesapService.cariHesapSil(99L));
     }
 

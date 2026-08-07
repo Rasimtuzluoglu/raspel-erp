@@ -1,5 +1,6 @@
 package com.raspel.erp.service;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.SiparisDTO;
 import com.raspel.erp.dto.ticaret.SiparisKalemDTO;
 import com.raspel.erp.entity.ticaret.Siparis;
@@ -41,6 +42,7 @@ class SiparisServiceTest {
     @Mock private SeriNoServisi seriNoServisi;
     @Mock private BildirimService bildirimService;
     @Mock private EmailService emailService;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {
@@ -109,7 +111,7 @@ class SiparisServiceTest {
 
     @Test
     void sil_deletes() {
-        when(siparisRepository.existsById(1L)).thenReturn(true);
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(createSiparis(1L)));
         siparisService.sil(1L);
         verify(kalemRepository).deleteBySiparisId(1L);
         verify(siparisRepository).deleteById(1L);

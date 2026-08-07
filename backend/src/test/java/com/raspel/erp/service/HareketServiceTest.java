@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.finans.HareketService;
@@ -34,6 +35,7 @@ class HareketServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private BildirimService bildirimService;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private HareketService hareketService;
 
     private CariHesap createCariHesap() {

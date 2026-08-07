@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.service.envanter.StokService;
@@ -37,6 +38,7 @@ class StokServiceTest {
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private BildirimService bildirimService;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -111,6 +113,7 @@ class StokServiceTest {
 
     @Test
     void sil_deletes() {
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(createStok(1L)));
         when(stokHareketRepository.countByStokId(1L)).thenReturn(0L);
         stokService.sil(1L);
         verify(stokRepository).deleteById(1L);
@@ -118,6 +121,7 @@ class StokServiceTest {
 
     @Test
     void sil_throwsWhenHasHareket() {
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(createStok(1L)));
         when(stokHareketRepository.countByStokId(1L)).thenReturn(2L);
         assertThrows(RuntimeException.class, () -> stokService.sil(1L));
     }

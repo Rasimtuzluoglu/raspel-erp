@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
@@ -47,6 +48,7 @@ class FaturaServiceTest {
     @Mock private EmailService emailService;
     @Mock private PdfRaporService pdfRaporService;
     @Mock private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {

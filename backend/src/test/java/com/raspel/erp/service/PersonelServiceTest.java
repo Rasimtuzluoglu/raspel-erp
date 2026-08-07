@@ -3,6 +3,7 @@ package com.raspel.erp.service;
 import com.raspel.erp.dto.ik.PersonelDTO;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.repository.ik.PersonelRepository;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +27,7 @@ import com.raspel.erp.service.ik.PersonelService;
 class PersonelServiceTest {
 
     @Mock private PersonelRepository personelRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private PersonelService personelService;
 
     private Personel createPersonel(Long id) {
@@ -94,14 +96,14 @@ class PersonelServiceTest {
 
     @Test
     void sil_deletes() {
-        when(personelRepository.existsById(1L)).thenReturn(true);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(createPersonel(1L)));
         personelService.sil(1L);
         verify(personelRepository).deleteById(1L);
     }
 
     @Test
     void sil_throwsWhenNotFound() {
-        when(personelRepository.existsById(99L)).thenReturn(false);
+        when(personelRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> personelService.sil(99L));
     }
 }

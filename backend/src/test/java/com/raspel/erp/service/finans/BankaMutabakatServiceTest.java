@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.entity.finans.Hareket;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +27,7 @@ class BankaMutabakatServiceTest {
 
     @Mock private BankaHareketiRepository bankaHareketiRepository;
     @Mock private FaturaRepository faturaRepository;
+    @Mock private TenantChecker tenantChecker;
 
     @InjectMocks private BankaMutabakatService bankaMutabakatService;
 

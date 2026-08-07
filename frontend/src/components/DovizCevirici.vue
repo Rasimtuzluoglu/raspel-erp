@@ -37,7 +37,7 @@ onMounted(async () => {
     kurlar.value = [{ label: 'TRY - Turk Lirasi', kod: 'TRY' }, ...data.map(k => ({
       label: `${k.dovizKodu || k.kod} - ${k.dovizAdi || ''}`, kod: k.dovizKodu || k.kod
     }))]
-  } catch {}
+  } catch { /* ignore */ }
 })
 
 const cevir = async () => {

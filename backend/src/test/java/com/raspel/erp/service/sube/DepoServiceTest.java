@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sube;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sube.DepoDTO;
 import com.raspel.erp.dto.sube.DepoStokDTO;
 import com.raspel.erp.entity.sube.Depo;
@@ -34,6 +35,7 @@ class DepoServiceTest {
     @Mock private DepoStokRepository depoStokRepository;
     @Mock private SubeRepository subeRepository;
     @Mock private StokRepository stokRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private DepoService depoService;
 
     private Depo ornekDepo(Long id) {
@@ -84,6 +86,7 @@ class DepoServiceTest {
     @Test
     void stokEkle_artirirMiktari() {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("10")).build();
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
         when(stokRepository.findAll()).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
@@ -97,6 +100,7 @@ class DepoServiceTest {
     @Test
     void stokCikar_yetersizStok_throws() {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("3")).build();
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
 
         assertThrows(BusinessException.class, () -> depoService.stokCikar(1L, 2L, new BigDecimal("10")));
@@ -105,6 +109,7 @@ class DepoServiceTest {
     @Test
     void stokCikar_azaltirMiktari() {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("20")).build();
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
         when(stokRepository.findAll()).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
@@ -118,6 +123,8 @@ class DepoServiceTest {
     void stokTransfer_ikisiniDeYapar() {
         DepoStok kaynak = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("50")).build();
         DepoStok hedef = DepoStok.builder().depoId(3L).stokId(2L).miktar(new BigDecimal("0")).build();
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
+        when(depoRepository.findById(3L)).thenReturn(Optional.of(ornekDepo(3L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(kaynak));
         when(depoStokRepository.findByDepoIdAndStokId(3L, 2L)).thenReturn(Optional.of(hedef));
         when(stokRepository.findAll()).thenReturn(List.of());
@@ -132,7 +139,7 @@ class DepoServiceTest {
 
     @Test
     void sil_deletes() {
-        when(depoRepository.existsById(1L)).thenReturn(true);
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         depoService.sil(1L);
         verify(depoRepository).deleteById(1L);
     }

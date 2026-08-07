@@ -139,6 +139,24 @@ public class KullaniciController {
         return ResponseEntity.ok(loginResponse);
     }
 
+    @PostMapping("/giris-sirket")
+    @Operation(summary = "Şirket seçerek girişi tamamla", description = "Kullanıcı adı/şifre doğrulama sonrası şirket seçip JWT token alır")
+    public ResponseEntity<LoginResponse> girisSirket(@RequestBody java.util.Map<String, Object> req,
+                                                      HttpServletResponse response) {
+        String girisToken = (String) req.get("girisToken");
+        Long sirketId = req.get("sirketId") != null ? Long.valueOf(req.get("sirketId").toString()) : null;
+        LoginResponse loginResponse = kullaniciService.girisSirket(girisToken, sirketId);
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", loginResponse.getToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(86400)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        return ResponseEntity.ok(loginResponse);
+    }
+
     @PostMapping("/giris")
     @Operation(summary = "Kullanıcı girişi", description = "Kullanıcı adı ve şifre ile giriş yapar, JWT token döndürür")
     public ResponseEntity<LoginResponse> giris(@RequestBody @jakarta.validation.Valid LoginRequest req,

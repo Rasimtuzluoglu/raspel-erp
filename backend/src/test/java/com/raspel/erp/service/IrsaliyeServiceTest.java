@@ -1,5 +1,6 @@
 package com.raspel.erp.service;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
@@ -32,6 +33,7 @@ class IrsaliyeServiceTest {
     @Mock private IrsaliyeKalemRepository kalemRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private StokRepository stokRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {
@@ -95,7 +97,7 @@ class IrsaliyeServiceTest {
 
     @Test
     void sil_deletes() {
-        when(irsaliyeRepository.existsById(1L)).thenReturn(true);
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(createIrsaliye(1L)));
         irsaliyeService.sil(1L);
         verify(kalemRepository).deleteByIrsaliyeId(1L);
         verify(irsaliyeRepository).deleteById(1L);

@@ -6,6 +6,7 @@ import com.raspel.erp.entity.sistem.Gorev;
 import com.raspel.erp.entity.sistem.Proje;
 import com.raspel.erp.repository.sistem.GorevRepository;
 import com.raspel.erp.repository.sistem.ProjeRepository;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +30,7 @@ class ProjeServiceTest {
 
     @Mock private ProjeRepository projeRepository;
     @Mock private GorevRepository gorevRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private ProjeService projeService;
 
     private Proje createProje(Long id) {
@@ -105,6 +107,7 @@ class ProjeServiceTest {
 
     @Test
     void sil_deletes() {
+        when(projeRepository.findById(1L)).thenReturn(Optional.of(createProje(1L)));
         when(gorevRepository.findByProjeIdOrderByBaslangicAsc(1L)).thenReturn(List.of());
         projeService.sil(1L);
         verify(projeRepository).deleteById(1L);
@@ -116,7 +119,9 @@ class ProjeServiceTest {
         gorev.setId(1L);
         gorev.setAd("Test Gorev");
         gorev.setDurum("YAPILACAK");
+        gorev.setProjeId(1L);
         when(gorevRepository.findById(1L)).thenReturn(Optional.of(gorev));
+        when(projeRepository.findById(1L)).thenReturn(Optional.of(createProje(1L)));
         when(gorevRepository.save(any(Gorev.class))).thenReturn(gorev);
         var result = projeService.gorevDurumGuncelle(1L, "TAMAMLANDI");
         assertEquals("TAMAMLANDI", result.getDurum());

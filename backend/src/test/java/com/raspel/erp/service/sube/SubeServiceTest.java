@@ -4,6 +4,7 @@ import com.raspel.erp.dto.sube.SubeDTO;
 import com.raspel.erp.entity.sube.Sube;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sube.SubeRepository;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.*;
 class SubeServiceTest {
 
     @Mock private SubeRepository subeRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private SubeService subeService;
 
     private Sube ornekSube(Long id) {
@@ -88,7 +90,7 @@ class SubeServiceTest {
 
     @Test
     void sil_deletes() {
-        when(subeRepository.existsById(1L)).thenReturn(true);
+        when(subeRepository.findById(1L)).thenReturn(Optional.of(ornekSube(1L)));
         subeService.sil(1L);
         verify(subeRepository).deleteById(1L);
     }

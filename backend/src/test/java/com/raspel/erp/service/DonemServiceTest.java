@@ -3,6 +3,7 @@ package com.raspel.erp.service;
 import com.raspel.erp.dto.sistem.DonemDTO;
 import com.raspel.erp.entity.sistem.Donem;
 import com.raspel.erp.repository.sistem.DonemRepository;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ import com.raspel.erp.service.sistem.DonemService;
 class DonemServiceTest {
 
     @Mock private DonemRepository donemRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private DonemService donemService;
 
     private Donem createDonem(Long id) {
@@ -102,14 +104,14 @@ class DonemServiceTest {
 
     @Test
     void sil_deletes() {
-        when(donemRepository.existsById(1L)).thenReturn(true);
+        when(donemRepository.findById(1L)).thenReturn(Optional.of(createDonem(1L)));
         donemService.sil(1L);
         verify(donemRepository).deleteById(1L);
     }
 
     @Test
     void sil_throwsWhenNotFound() {
-        when(donemRepository.existsById(99L)).thenReturn(false);
+        when(donemRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> donemService.sil(99L));
     }
 }

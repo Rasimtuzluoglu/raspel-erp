@@ -3,6 +3,7 @@ package com.raspel.erp.service;
 import com.raspel.erp.dto.finans.BankaDTO;
 import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.repository.finans.BankaRepository;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ import com.raspel.erp.service.finans.BankaService;
 class BankaServiceTest {
 
     @Mock private BankaRepository bankaRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private BankaService bankaService;
 
     private Banka createBanka(Long id) {
@@ -86,14 +88,14 @@ class BankaServiceTest {
 
     @Test
     void bankaSil_deletes() {
-        when(bankaRepository.existsById(1L)).thenReturn(true);
+        when(bankaRepository.findById(1L)).thenReturn(Optional.of(createBanka(1L)));
         bankaService.bankaSil(1L);
         verify(bankaRepository).deleteById(1L);
     }
 
     @Test
     void bankaSil_throwsWhenNotFound() {
-        when(bankaRepository.existsById(99L)).thenReturn(false);
+        when(bankaRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> bankaService.bankaSil(99L));
     }
 }

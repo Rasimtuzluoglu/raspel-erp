@@ -4,6 +4,8 @@ import com.raspel.erp.dto.finans.CekSenetDTO;
 import com.raspel.erp.entity.finans.CekSenet;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.CekSenetRepository;
+import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +30,7 @@ class CekSenetServiceTest {
 
     @Mock private CekSenetRepository cekSenetRepository;
     @Mock private CariHesapRepository cariHesapRepository;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private CekSenetService cekSenetService;
 
     private CekSenet createCekSenet(Long id) {
@@ -94,7 +97,7 @@ class CekSenetServiceTest {
 
     @Test
     void sil_deletes() {
-        when(cekSenetRepository.existsById(1L)).thenReturn(true);
+        when(cekSenetRepository.findById(1L)).thenReturn(Optional.of(createCekSenet(1L)));
         cekSenetService.sil(1L);
         verify(cekSenetRepository).deleteById(1L);
     }

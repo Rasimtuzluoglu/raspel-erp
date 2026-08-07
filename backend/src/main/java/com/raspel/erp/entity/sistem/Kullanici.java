@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "kullanici", schema = "sistem")
@@ -35,6 +37,17 @@ public class Kullanici {
 
     @Column(name = "sirket_id")
     private Long sirketId;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "kullanici_sirket",
+        schema = "sistem",
+        joinColumns = @JoinColumn(name = "kullanici_id"),
+        inverseJoinColumns = @JoinColumn(name = "sirket_id")
+    )
+    @Builder.Default
+    @JsonIgnore
+    private Set<Sirket> sirketler = new HashSet<>();
 
     @Column(nullable = false, length = 20)
     private String role;

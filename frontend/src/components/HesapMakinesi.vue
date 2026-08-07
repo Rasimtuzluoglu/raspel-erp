@@ -73,7 +73,7 @@ const hesapla = () => {
 }
 
 const temizle = () => { current = ''; previous = ''; op = ''; display.value = '0'; gecmis.value = ''; yeniSayi = true }
-const sil = () => { if (!yeniSayi && current.length > 1) current = current.slice(0, -1); else { current = ''; display.value = '0' }; display.value = current || '0' }
+const sil = () => { if (!yeniSayi && current.length > 1) current = current.slice(0, -1); else { current = ''; display.value = '0' } display.value = current || '0' }
 const yuzde = () => { if (current) { display.value = String(parseFloat(current) / 100); current = display.value } }
 </script>
 

@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.EFaturaDTO;
 import com.raspel.erp.entity.ticaret.EFatura;
@@ -36,6 +37,9 @@ class EFaturaServiceTest {
 
     @Mock
     private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
+
+    @Mock
+    private TenantChecker tenantChecker;
 
     @InjectMocks
     private EFaturaService eFaturaService;

@@ -12,7 +12,8 @@ KOBİ'lerin muhasebeciye bağımlı kalmadan günlük işlerini yönetebilmesi i
 
 | Öne çıkan | Açıklama |
 |-----------|----------|
-| 🏢 Çoklu şirket | Her müşteriniz kendi verisini görür, birbirine karışmaz |
+| 🏢 Çoklu şirket | Kullanıcı birden fazla firmaya atanabilir, girişte seçer. Admin tüm firmaları görür |
+| 🔐 3 adımlı giriş | Kullanıcı/şifre → 2FA (opsiyonel) → Firma seçimi → Dashboard. Firmalar public değil |
 | 📱 PWA | Tarayıcıdan masaüstüne kurun, internet kesilse de çalışın |
 | 🔐 2FA | Google Authenticator ile iki faktörlü giriş |
 | 🧮 Yerleşik araçlar | Hesap makinesi, döviz çevirici, KDV/taksit/kar marjı hesabı |
@@ -63,16 +64,30 @@ Dashboard, raporlar (KDV, BA/BS, yaşlandırma), denetim logu, anomali tespiti, 
 
 ---
 
+## Giriş Akışı
+
+```
+Kullanıcı adı + şifre → 2FA (varsa) → Firma seçimi → Dashboard
+```
+
+- **Admin** kullanıcılar tüm aktif firmaları görür, istediğini seçer
+- **USER** kullanıcılar sadece atandıkları firmaları görür. Tek firma varsa otomatik giriş yapar
+- Firma listesi public değildir, sadece giriş yapmış kullanıcıya gösterilir
+- Kullanıcı yönetim panelinden bir kullanıcı birden fazla firmaya atanabilir (çoka-çok)
+
+---
+
 ## Başlat
 
 ```bash
 # Geliştirme (3 ayrı terminal)
-docker-compose -f docker-compose.dev.yml up -d     # PostgreSQL + Redis + RabbitMQ
-cd backend && mvn spring-boot:run                  # API → :8081
-cd frontend && npm install && npm run dev          # UI → :5173
+docker-compose up -d postgres redis rabbitmq     # Altyapı
+cd backend && mvn spring-boot:run                 # API → :8081
+cd frontend && npm ci && npm run dev              # UI → :5173
 ```
 
-**http://localhost:5173** · `admin` / `admin123`
+İlk başlatmada `IlkKullaniciInitializer` varsayılan admin kullanıcısını oluşturur.  
+Şifreyi `APP_ADMIN_PASSWORD` ortam değişkeni ile değiştirin (varsayılan: `admin / admin123`).
 
 ---
 
@@ -90,20 +105,20 @@ Production öncesi `docs/GO-LIVE.md` kontrol listesine bakın.
 
 ```
 raspel-erp/
-├── backend/                 # Spring Boot API
+├── backend/                 # Spring Boot API (510 test)
 │   └── src/main/java/com/raspel/erp/
-│       ├── controller/      # 7 alt paket (finans, ticaret, envanter, ik, muhasebe, sistem, sube)
+│       ├── controller/      # 7 alt paket
 │       ├── service/         # Redis cache, tenant kontrol
 │       ├── repository/      # 51 JPA repository
 │       ├── entity/          # JPA entity
 │       └── dto/             # Veri transfer objeleri
-├── frontend/                # Vue 3 SPA
+├── frontend/                # Vue 3 SPA (84 test)
 │   └── src/
 │       ├── views/           # 52 sayfa
 │       ├── components/      # 25+ bileşen
 │       ├── composables/     # 12 composable
-│       ├── stores/          # 11 Pinia store
-│       └── api/             # 7 domain modülü
+│       ├── stores/          # Pinia store
+│       └── api/             # Axios client + modüller
 ├── config/                  # Traefik, Prometheus, Grafana
 ├── scripts/                 # Yedekleme, test
 └── docs/                    # Dökümantasyon
@@ -114,7 +129,7 @@ raspel-erp/
 ## Test
 
 ```bash
-cd backend && mvn test       # 510 test
+cd backend && mvn test       # 510 test, 0 hata
 cd frontend && npm run test  # 84 test
 cd frontend && npm run lint  # ESLint
 ```

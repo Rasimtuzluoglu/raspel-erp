@@ -23,34 +23,34 @@ class SeriNoServisiTest {
 
     @Test
     void faturaNoUret_boskenIlkSeri() {
-        when(faturaRepository.findFaturaNumarasiByPrefix("FTR-2026-", 1L)).thenReturn(List.of());
-        assertEquals("FTR-2026-000001", seriNoServisi.faturaNoUret(1L));
+        when(faturaRepository.findFaturaNumarasiByPrefix("FTR-1-2026-", 1L)).thenReturn(List.of());
+        assertEquals("FTR-1-2026-000001", seriNoServisi.faturaNoUret(1L));
     }
 
     @Test
     void faturaNoUret_mevcutSeridenSonraki() {
-        when(faturaRepository.findFaturaNumarasiByPrefix("FTR-2026-", 1L))
-                .thenReturn(List.of("FTR-2026-000001", "FTR-2026-000003", "FTR-2026-000002"));
-        assertEquals("FTR-2026-000004", seriNoServisi.faturaNoUret(1L));
+        when(faturaRepository.findFaturaNumarasiByPrefix("FTR-1-2026-", 1L))
+                .thenReturn(List.of("FTR-1-2026-000001", "FTR-1-2026-000003", "FTR-1-2026-000002"));
+        assertEquals("FTR-1-2026-000004", seriNoServisi.faturaNoUret(1L));
     }
 
     @Test
     void faturaNoUret_bozukFormatliKayitlariGormezdenGelir() {
-        when(faturaRepository.findFaturaNumarasiByPrefix("FTR-2026-", 1L))
-                .thenReturn(List.of("FTR-2026-000001", "eski-format"));
-        assertEquals("FTR-2026-000002", seriNoServisi.faturaNoUret(1L));
+        when(faturaRepository.findFaturaNumarasiByPrefix("FTR-1-2026-", 1L))
+                .thenReturn(List.of("FTR-1-2026-000001", "eski-format"));
+        assertEquals("FTR-1-2026-000002", seriNoServisi.faturaNoUret(1L));
     }
 
     @Test
     void siparisNoUret_boskenIlkSeri() {
-        when(siparisRepository.findSiparisNoByPrefix("SIP-2026-", 1L)).thenReturn(List.of());
-        assertEquals("SIP-2026-000001", seriNoServisi.siparisNoUret(1L));
+        when(siparisRepository.findSiparisNoByPrefix("SIP-1-2026-", 1L)).thenReturn(List.of());
+        assertEquals("SIP-1-2026-000001", seriNoServisi.siparisNoUret(1L));
     }
 
     @Test
     void siparisNoUret_mevcutSeridenSonraki() {
-        when(siparisRepository.findSiparisNoByPrefix("SIP-2026-", 1L))
-                .thenReturn(List.of("SIP-2026-000007"));
-        assertEquals("SIP-2026-000008", seriNoServisi.siparisNoUret(1L));
+        when(siparisRepository.findSiparisNoByPrefix("SIP-1-2026-", 1L))
+                .thenReturn(List.of("SIP-1-2026-000007"));
+        assertEquals("SIP-1-2026-000008", seriNoServisi.siparisNoUret(1L));
     }
 }
