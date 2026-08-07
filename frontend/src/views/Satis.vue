@@ -340,11 +340,13 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 
 const toastBildirim = useToastBildirim()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
+const authStore = useAuthStore()
 
 const satislar = ref([])
 const showSatisDialog = ref(false)

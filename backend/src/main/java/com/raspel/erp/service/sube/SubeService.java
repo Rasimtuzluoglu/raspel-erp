@@ -24,7 +24,6 @@ public class SubeService {
     private final SubeRepository subeRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'sube:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<SubeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return subeRepository.findBySirketIdOrderByAdAsc(sirketId, pageable).map(this::entityToDTO);

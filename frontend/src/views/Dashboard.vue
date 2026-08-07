@@ -108,7 +108,7 @@
 
     <Onboarding
       v-if="!loading && bosSistem"
-      @demo-loaded="refresh"
+      @demo-loaded="demoYuklendi"
     />
 
     <template v-if="!loading && !bosSistem">

@@ -16,7 +16,7 @@ export const useStokStore = defineStore('stok', () => {
       const icerik = r.data.content || r.data
       stoklar.value = Array.isArray(icerik) ? icerik : []
       toplamKayit.value = r.data.totalElements ?? stoklar.value.length
-      return r.data
+      return stoklar.value
     } catch (err) { error.value = err.message; throw err }
     finally { loading.value = false }
   }

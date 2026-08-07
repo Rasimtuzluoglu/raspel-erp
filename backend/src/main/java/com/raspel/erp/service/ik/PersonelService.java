@@ -24,7 +24,6 @@ public class PersonelService {
     private final PersonelRepository personelRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'personel:sirket:' + #sirketId")
     public Page<PersonelDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return personelRepository.findBySirketIdOrderByAdAsc(sirketId, pageable)
                 .map(this::entityToDTO);

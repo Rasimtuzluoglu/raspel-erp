@@ -38,7 +38,6 @@ public class KasaService {
     private final KategoriRepository kategoriRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'kasa:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
         return kasaRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);

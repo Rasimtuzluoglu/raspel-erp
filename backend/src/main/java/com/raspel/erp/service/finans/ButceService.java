@@ -21,7 +21,6 @@ public class ButceService {
     private final ButceRepository butceRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'butce:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<ButceDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return butceRepository.findBySirketIdOrderByYilDescAyDesc(sirketId, pageable).map(this::entityToDTO);

@@ -36,7 +36,6 @@ public class DepoService {
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'depo:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<DepoDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         Map<Long, String> subeHaritasi = subeRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).stream()

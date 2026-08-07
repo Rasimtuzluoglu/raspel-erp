@@ -24,7 +24,6 @@ public class SirketService {
 
     private final SirketRepository sirketRepository;
 
-    @Cacheable(value = "lookup", key = "'sirketler:' + #pageable.pageNumber")
     public Page<SirketDTO> tumunuGetir(Pageable pageable) {
         return sirketRepository.findAll(pageable).map(this::entityToDTO);
     }

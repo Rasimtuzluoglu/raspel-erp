@@ -25,7 +25,6 @@ public class BankaService {
     private final BankaRepository bankaRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'banka:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<BankaDTO> tumBankalariGetir(Long sirketId, Pageable pageable) {
         return bankaRepository.findBySirketId(sirketId, pageable).map(this::entityDTOyeCevir);

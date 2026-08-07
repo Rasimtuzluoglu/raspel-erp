@@ -24,7 +24,6 @@ public class DonemService {
     private final DonemRepository donemRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'donemler:' + #pageable.pageNumber")
     @Transactional(readOnly = true)
     public Page<DonemDTO> tumunuGetir(Pageable pageable) {
         return donemRepository.findAll(pageable).map(this::entityToDTO);

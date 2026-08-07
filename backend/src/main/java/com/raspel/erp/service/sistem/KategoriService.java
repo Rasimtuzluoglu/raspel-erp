@@ -22,7 +22,6 @@ public class KategoriService {
 
     private final KategoriRepository kategoriRepository;
 
-    @Cacheable(value = "lookup", key = "'kategoriler:' + #sirketId + ':' + #pageable.pageNumber")
     @Transactional(readOnly = true)
     public Page<KategoriDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return kategoriRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);

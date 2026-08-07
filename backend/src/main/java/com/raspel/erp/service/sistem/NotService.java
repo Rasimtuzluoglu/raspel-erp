@@ -23,7 +23,6 @@ public class NotService {
     private final NotRepository notRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'not:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<NotDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return notRepository.findBySirketIdOrderByOlusturmaTarihiDesc(sirketId, pageable)

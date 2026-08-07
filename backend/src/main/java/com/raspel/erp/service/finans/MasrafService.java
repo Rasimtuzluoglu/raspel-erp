@@ -21,7 +21,6 @@ public class MasrafService {
     private final MasrafRepository masrafRepository;
     private final TenantChecker tenantChecker;
 
-    @Cacheable(value = "lookup", key = "'masraf:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return masrafRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
