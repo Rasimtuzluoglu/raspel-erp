@@ -1,8 +1,36 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import Components from 'unplugin-vue-components/vite'
+import { PrimeVueResolver } from '@primevue/auto-import-resolver'
+
+const legacyPrimeVueComponents = {
+  Dropdown: 'primevue/dropdown',
+  InputSwitch: 'primevue/inputswitch',
+  TabView: 'primevue/tabview',
+  Calendar: 'primevue/calendar',
+  MultiSelect: 'primevue/multiselect'
+}
+
+const legacyResolver = () => ({
+  type: 'component',
+  resolve: (name) => {
+    if (legacyPrimeVueComponents[name]) {
+      return { from: legacyPrimeVueComponents[name] }
+    }
+  }
+})
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    Components({
+      resolvers: [
+        PrimeVueResolver(),
+        legacyResolver()
+      ],
+      directives: true
+    })
+  ],
   server: {
     port: 5173,
     host: 'localhost',
@@ -21,11 +49,19 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'primevue-core': ['primevue/button', 'primevue/datatable', 'primevue/column', 'primevue/dialog', 'primevue/inputtext', 'primevue/inputnumber', 'primevue/dropdown', 'primevue/select', 'primevue/card', 'primevue/toast', 'primevue/toastservice', 'primevue/confirmdialog', 'primevue/confirmationservice', 'primevue/toolbar', 'primevue/textarea', 'primevue/message', 'primevue/tag', 'primevue/tabview', 'primevue/tabpanel', 'primevue/inputswitch', 'primevue/checkbox', 'primevue/skeleton', 'primevue/selectbutton', 'primevue/autocomplete', 'primevue/datepicker', 'primevue/calendar', 'primevue/multiselect'],
-          'primevue-icons': ['primeicons'],
-          'vue-vendor': ['vue', 'vue-router', 'pinia', 'axios', 'axios-retry', 'vue-i18n'],
-          'chart-vendor': ['chart.js', 'vue-chartjs']
+        manualChunks(id) {
+          if (id.includes('node_modules/primevue') || id.includes('node_modules/@primevue')) {
+            return 'primevue'
+          }
+          if (id.includes('primeicons')) {
+            return 'primevue-icons'
+          }
+          if (id.includes('chart.js') || id.includes('vue-chartjs')) {
+            return 'chart-vendor'
+          }
+          if (id.includes('node_modules/vue') || id.includes('node_modules/pinia') || id.includes('node_modules/axios') || id.includes('node_modules/vue-router') || id.includes('node_modules/vue-i18n')) {
+            return 'vue-vendor'
+          }
         }
       }
     }
