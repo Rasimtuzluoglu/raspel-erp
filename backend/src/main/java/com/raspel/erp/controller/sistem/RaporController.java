@@ -78,4 +78,14 @@ public class RaporController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(raporService.baBsGetir(donem, tur, esik, sirketId));
     }
+
+    @GetMapping("/cari-karlilik")
+    @Operation(summary = "Cari karlılık raporu", description = "Belirtilen tarih aralığında her cari hesabın satış, maliyet ve kârını getirir")
+    public ResponseEntity<RaporDTO.CariKarlilikDTO> cariKarlilik(
+            HttpServletRequest request,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.cariKarlilikRaporu(baslangic, bitis, sirketId));
+    }
 }

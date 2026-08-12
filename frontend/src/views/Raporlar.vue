@@ -376,6 +376,134 @@
           />
         </div>
       </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('cariKarlilik') }"
+              @click.stop="raporFavoriDegistir('cariKarlilik', 4, 'Cari Karlılık')"
+            />
+            Cari Karlılık
+          </div>
+        </template>
+        <div class="rapor-filtre">
+          <div class="form-group">
+            <label>Başlangıç</label>
+            <DatePicker
+              v-model="ckBas"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group">
+            <label>Bitiş</label>
+            <DatePicker
+              v-model="ckBit"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group filtre-btn">
+            <label>&nbsp;</label>
+            <Button
+              label="Rapor Getir"
+              icon="pi pi-search"
+              :loading="ckLoading"
+              @click="getCariKarlilik"
+            />
+          </div>
+        </div>
+
+        <div
+          v-if="ckData"
+          ref="ckKart"
+          class="rapor-sonuc"
+        >
+          <div class="ozet-kartlar">
+            <div class="ozet-kart gelir">
+              <span>Toplam Satış</span><strong>{{ formatCurrency(ckData.toplamSatis) }}</strong>
+            </div>
+            <div class="ozet-kart gider">
+              <span>Toplam Maliyet</span><strong>{{ formatCurrency(ckData.toplamMaliyet) }}</strong>
+            </div>
+            <div
+              class="ozet-kart"
+              :class="ckData.toplamKar >= 0 ? 'kar' : 'zarar'"
+            >
+              <span>Toplam Kâr</span><strong>{{ formatCurrency(ckData.toplamKar) }}</strong>
+            </div>
+            <div class="rapor-aksiyonlar">
+              <Button
+                icon="pi pi-print"
+                label="PDF"
+                class="p-button-sm p-button-outlined"
+                @click="yazdir(ckKart)"
+              />
+            </div>
+          </div>
+
+          <DataTable
+            :value="ckData.satirlar"
+            striped-rows
+            :rows="10"
+            :paginator="true"
+            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+          >
+            <Column
+              field="cariAd"
+              header="Cari Hesap"
+            />
+            <Column
+              field="faturaSayisi"
+              header="Fatura"
+              style="width:90px"
+            />
+            <Column
+              field="toplamSatis"
+              header="Satış"
+              style="width:140px"
+            >
+              <template #body="s">
+                {{ formatCurrency(s.data.toplamSatis) }}
+              </template>
+            </Column>
+            <Column
+              field="toplamMaliyet"
+              header="Maliyet"
+              style="width:140px"
+            >
+              <template #body="s">
+                {{ formatCurrency(s.data.toplamMaliyet) }}
+              </template>
+            </Column>
+            <Column
+              field="kar"
+              header="Kâr"
+              style="width:140px"
+            >
+              <template #body="s">
+                <span :class="s.data.kar >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kar) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="karMarji"
+              header="Kâr Marjı"
+              style="width:110px"
+            >
+              <template #body="s">
+                <span :class="s.data.karMarji >= 0 ? 'positive' : 'negative'">%{{ s.data.karMarji }}</span>
+              </template>
+            </Column>
+          </DataTable>
+          <Message
+            v-if="!ckData.satirlar.length"
+            severity="info"
+            text="Bu dönemde satış bulunmamaktadır."
+          />
+        </div>
+      </TabPanel>
     </TabView>
   </div>
 </template>
@@ -460,6 +588,12 @@ const kdvLoading = ref(false)
 const yasData = ref(null)
 const yasLoading = ref(false)
 
+const ckBas = ref(new Date(new Date().getFullYear(), 0, 1))
+const ckBit = ref(new Date())
+const ckData = ref(null)
+const ckLoading = ref(false)
+const ckKart = ref(null)
+
 watch(tarihAraligi, (v) => {
   if (!v || v.length !== 2 || !v[0]) return
   if (aktifSekme.value === 0) {
@@ -535,6 +669,18 @@ const getYaslandirma = async () => {
   try { const r = await raporAPI.yaslandirma(); yasData.value = r.data }
   catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Yaşlandırma raporu yüklenirken hata oluştu'); yasData.value = null }
   finally { yasLoading.value = false }
+}
+
+const getCariKarlilik = async () => {
+  ckLoading.value = true
+  try {
+    const r = await raporAPI.cariKarlilik({
+      baslangic: formatDateForApi(ckBas.value),
+      bitis: formatDateForApi(ckBit.value)
+    })
+    ckData.value = r.data
+  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari karlılık raporu yüklenirken hata oluştu'); ckData.value = null }
+  finally { ckLoading.value = false }
 }
 
 const vadeClass = (aralik) => {

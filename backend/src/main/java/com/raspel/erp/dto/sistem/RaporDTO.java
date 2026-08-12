@@ -86,4 +86,23 @@ public class RaporDTO {
         private List<BaBsSatiriDTO> kayitlar;
         private BigDecimal toplamTutar;
     }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class CariKarlilikSatiriDTO {
+        private Long cariId;
+        private String cariAd;
+        private BigDecimal toplamSatis;
+        private BigDecimal toplamMaliyet;
+        private BigDecimal kar;
+        private BigDecimal karMarji;
+        private long faturaSayisi;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class CariKarlilikDTO {
+        private BigDecimal toplamSatis;
+        private BigDecimal toplamMaliyet;
+        private BigDecimal toplamKar;
+        private List<CariKarlilikSatiriDTO> satirlar;
+    }
 }

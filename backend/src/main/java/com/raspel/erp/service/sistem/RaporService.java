@@ -34,6 +34,7 @@ public class RaporService {
     private final HareketRepository hareketRepository;
     private final FaturaRepository faturaRepository;
     private final com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
+    private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
 
@@ -201,5 +202,83 @@ public class RaporService {
         if (kdvliTutar == null) return BigDecimal.ZERO;
         return kdvliTutar.multiply(BigDecimal.valueOf(100))
                 .divide(BigDecimal.valueOf(100).add(oran), 2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Cari karlılık raporu: her cari hesabın belirtilen dönemdeki SATIS faturalarından
+     * elde ettiği hasılatı, satılan kalemlerin maliyetini ve kârını hesaplar.
+     * Maliyet, kalemin bağlı olduğu stoğun tedarikçi fiyatı (yoksa alış fiyatı) üzerinden hesaplanır.
+     */
+    public RaporDTO.CariKarlilikDTO cariKarlilikRaporu(LocalDate baslangic, LocalDate bitis, Long sirketId) {
+        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+                .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
+                .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                .filter(f -> !f.getTarih().isBefore(baslangic) && !f.getTarih().isAfter(bitis))
+                .collect(Collectors.toList());
+
+        // Karlılık maliyet hesabı için stok maliyetleri önceden yüklenir.
+        Map<Long, BigDecimal> stokMaliyet = new HashMap<>();
+        for (Fatura f : faturalar) {
+            for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
+                if (k.getStokId() != null && !stokMaliyet.containsKey(k.getStokId())) {
+                    BigDecimal maliyet = stokMaliyetGetir(k.getStokId());
+                    stokMaliyet.put(k.getStokId(), maliyet);
+                }
+            }
+        }
+
+        Map<Long, RaporDTO.CariKarlilikSatiriDTO> satirMap = new LinkedHashMap<>();
+        for (Fatura f : faturalar) {
+            Long cariId = f.getCariHesap() != null ? f.getCariHesap().getId() : null;
+            String cariAd = f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel";
+
+            BigDecimal faturaMaliyet = BigDecimal.ZERO;
+            for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
+                BigDecimal birimMaliyet = k.getStokId() != null ? stokMaliyet.getOrDefault(k.getStokId(), BigDecimal.ZERO) : BigDecimal.ZERO;
+                faturaMaliyet = faturaMaliyet.add(birimMaliyet.multiply(BigDecimal.valueOf(k.getAdet())));
+            }
+
+            RaporDTO.CariKarlilikSatiriDTO satir = satirMap.get(cariId);
+            if (satir == null) {
+                satir = RaporDTO.CariKarlilikSatiriDTO.builder()
+                        .cariId(cariId).cariAd(cariAd)
+                        .toplamSatis(BigDecimal.ZERO).toplamMaliyet(BigDecimal.ZERO)
+                        .kar(BigDecimal.ZERO).karMarji(BigDecimal.ZERO).faturaSayisi(0)
+                        .build();
+                satirMap.put(cariId, satir);
+            }
+            BigDecimal hasila = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
+            satir.setToplamSatis(satir.getToplamSatis().add(hasila));
+            satir.setToplamMaliyet(satir.getToplamMaliyet().add(faturaMaliyet));
+            satir.setFaturaSayisi(satir.getFaturaSayisi() + 1);
+        }
+
+        List<RaporDTO.CariKarlilikSatiriDTO> satirlar = satirMap.values().stream()
+                .peek(s -> {
+                    s.setKar(s.getToplamSatis().subtract(s.getToplamMaliyet()));
+                    if (s.getToplamSatis().compareTo(BigDecimal.ZERO) > 0) {
+                        s.setKarMarji(s.getKar().multiply(BigDecimal.valueOf(100))
+                                .divide(s.getToplamSatis(), 2, RoundingMode.HALF_UP));
+                    }
+                })
+                .sorted(Comparator.comparing(RaporDTO.CariKarlilikSatiriDTO::getKar).reversed())
+                .collect(Collectors.toList());
+
+        BigDecimal toplamSatis = satirlar.stream().map(RaporDTO.CariKarlilikSatiriDTO::getToplamSatis)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal toplamMaliyet = satirlar.stream().map(RaporDTO.CariKarlilikSatiriDTO::getToplamMaliyet)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal toplamKar = toplamSatis.subtract(toplamMaliyet);
+
+        return RaporDTO.CariKarlilikDTO.builder()
+                .toplamSatis(toplamSatis).toplamMaliyet(toplamMaliyet)
+                .toplamKar(toplamKar).satirlar(satirlar)
+                .build();
+    }
+
+    private BigDecimal stokMaliyetGetir(Long stokId) {
+        return stokRepository.findById(stokId)
+                .map(s -> s.getTedarikciFiyat() != null ? s.getTedarikciFiyat() : s.getFiyat())
+                .orElse(BigDecimal.ZERO);
     }
 }

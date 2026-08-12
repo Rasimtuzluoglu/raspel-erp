@@ -10,5 +10,6 @@ export const raporAPI = {
   kdv(params) { return apiClient.get('/raporlar/kdv', { params }) },
   yaslandirma() { return apiClient.get('/raporlar/yaslandirma') },
   kdvBeyanname(donem) { return apiClient.get('/raporlar/kdv-beyanname', { params: { donem } }) },
-  baBs(params) { return apiClient.get('/raporlar/ba-bs', { params }) }
+  baBs(params) { return apiClient.get('/raporlar/ba-bs', { params }) },
+  cariKarlilik(params) { return apiClient.get('/raporlar/cari-karlilik', { params }) }
 }
