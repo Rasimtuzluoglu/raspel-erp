@@ -4,6 +4,11 @@
       <h1 class="page-title">
         İnsan Kaynakları
       </h1>
+      <IlkZiyaretIpuclari
+        anahtar="personel"
+        baslik="Personel Yönetimi"
+        metin="Çalışan kayıtlarını oluşturun, izin taleplerini onaylayın, puantaj ve maaş bordrosunu takip edin. TC kimlik doğrulaması kayıt sırasında otomatik yapılır."
+      />
       <Button
         label="Yeni Personel"
         icon="pi pi-plus"
@@ -327,6 +332,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 

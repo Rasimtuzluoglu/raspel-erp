@@ -1,6 +1,11 @@
 <template>
   <div class="stoklar-container">
     <h1>Stok Yönetimi</h1>
+    <IlkZiyaretIpuclari
+      anahtar="stoklar"
+      baslik="Stok & Ürün Yönetimi"
+      metin="Ürün kartı oluşturup barkod ve kritik stok seviyesi tanımlayın. Giriş/çıkış hareketleri ekleyin, toplu fiyat güncelleme ile tek seferde kategorideki ürünlerin fiyatını değiştirin."
+    />
     <Toolbar class="toolbar">
       <template #start>
         <Button
@@ -880,6 +885,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { stokAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 

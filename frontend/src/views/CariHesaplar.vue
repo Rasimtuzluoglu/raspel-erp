@@ -2,6 +2,12 @@
   <div class="cari-hesaplar-container">
     <h1>Cari Hesaplar Yönetimi</h1>
 
+    <IlkZiyaretIpuclari
+      anahtar="cari-hesaplar"
+      baslik="Cari Hesaplar"
+      metin="Müşteri ve tedarikçilerinizi buradan yönetin. Bakiye, kredi limiti ve vade takibi yapın. Fatura keserken buradaki kayıtlı cari hesapları seçersiniz."
+    />
+
     <Toolbar class="toolbar">
       <template #start>
         <Button 
@@ -558,6 +564,7 @@ import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
+import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

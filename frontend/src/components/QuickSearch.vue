@@ -78,26 +78,38 @@
         v-if="results.length > 0 && !loading"
         class="qs-results"
       >
-        <div
-          v-for="(item, idx) in results"
-          :key="`${item.type}-${item.id}`"
-          :class="['qs-item', { active: idx === selectedIndex }]"
-          @click="navigate(item)"
-          @mouseenter="selectedIndex = idx"
-        >
-          <i
-            :class="item.icon"
-            class="qs-item-icon"
-          />
-          <div class="qs-item-info">
-            <span class="qs-item-title">{{ item.title }}</span>
-            <span class="qs-item-sub">{{ item.subtitle }}</span>
+        <template v-for="grup in grupluSonuclar">
+          <div
+            v-if="grup.items.length"
+            :key="grup.type"
+            class="qs-grup"
+          >
+            <div class="qs-grup-baslik">
+              <i :class="typeConfig[grup.type]?.icon" />
+              <span>{{ grupEtiketi(grup.type) }}</span>
+              <span class="qs-grup-sayi">{{ grup.items.length }}</span>
+            </div>
+            <div
+              v-for="item in grup.items"
+              :key="`${item.type}-${item.id}`"
+              :class="['qs-item', { active: selectedIndex === grup.indexMap[item.id + item.type] }]"
+              @click="navigate(item)"
+              @mouseenter="selectedIndex = grup.indexMap[item.id + item.type]"
+            >              <i
+                :class="item.icon"
+                class="qs-item-icon"
+              />
+              <div class="qs-item-info">
+                <span class="qs-item-title">{{ item.title }}</span>
+                <span class="qs-item-sub">{{ item.subtitle }}</span>
+              </div>
+              <Tag
+                :value="item.type"
+                :severity="item.severity"
+              />
+            </div>
           </div>
-          <Tag
-            :value="item.type"
-            :severity="item.severity"
-          />
-        </div>
+        </template>
       </div>
       <div
         v-if="query && results.length === 0 && !loading"
@@ -111,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI, depoAPI, subeAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
@@ -127,6 +139,40 @@ const error = ref(null)
 const inputRef = ref(null)
 const isListening = ref(false)
 let recognition = null
+
+const grupEtiketi = (type) => {
+  const etiketler = {
+    cari: 'Cari Hesaplar',
+    stok: 'Stoklar',
+    fatura: 'Faturalar',
+    personel: 'Personel',
+    proje: 'Projeler',
+    siparis: 'Siparişler',
+    not: 'Notlar',
+    banka: 'Bankalar',
+    kasa: 'Kasalar',
+    depo: 'Depolar',
+    sube: 'Şubeler'
+  }
+  return etiketler[type] || type
+}
+
+const grupluSonuclar = computed(() => {
+  const gruplar = []
+  let globalIndex = 0
+  const siraliTipler = ['cari', 'fatura', 'stok', 'personel', 'siparis', 'proje', 'banka', 'kasa', 'depo', 'sube', 'not']
+  for (const type of siraliTipler) {
+    const items = results.value.filter(i => i.type === type)
+    if (items.length === 0) continue
+    const indexMap = {}
+    items.forEach(item => {
+      indexMap[item.id + item.type] = globalIndex
+      globalIndex++
+    })
+    gruplar.push({ type, items, indexMap })
+  }
+  return gruplar
+})
 
 const toggleVoiceRecognition = () => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -329,6 +375,10 @@ onUnmounted(() => {
 .qs-loading, .qs-empty, .qs-error { padding: 24px; text-align: center; color: #64748b; font-size: 14px; }
 .qs-empty i { font-size: 32px; display: block; margin-bottom: 8px; color: #475569; }
 .qs-results { max-height: 360px; overflow-y: auto; padding: 8px; }
+.qs-grup { margin-bottom: 6px; }
+.qs-grup-baslik { display: flex; align-items: center; gap: 8px; padding: 6px 12px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.qs-grup-baslik i { font-size: 12px; }
+.qs-grup-sayi { margin-left: auto; background: rgba(148,163,184,0.15); color: var(--text-muted); border-radius: 10px; padding: 0 7px; font-size: 11px; font-weight: 600; }
 .qs-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: all 0.1s; }
 .qs-item.active, .qs-item:hover { background: rgba(59,130,246,0.12); }
 .qs-item-icon { font-size: 16px; color: #64748b; width: 24px; text-align: center; flex-shrink: 0; }

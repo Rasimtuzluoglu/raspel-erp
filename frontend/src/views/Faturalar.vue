@@ -2,6 +2,12 @@
   <div class="faturalar-container">
     <h1>Fatura Yönetimi</h1>
 
+    <IlkZiyaretIpuclari
+      anahtar="faturalar"
+      baslik="Fatura Oluşturma"
+      metin="'Yeni Fatura' ile satış/alış faturası kesin. Cari seçince son aldığı ürünler önerilir, 'Son Faturayı Kopyala' ile benzer faturayı hızlıca oluşturun. Fatura 'KESİLDİ' durumuna geçince stok otomatik düşer."
+    />
+
     <Toolbar class="toolbar">
       <template #start>
         <Button
@@ -516,6 +522,7 @@ import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
 const router = useRouter()
 const toast = useToast()
