@@ -30,8 +30,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-defineProps({ visible: Boolean })
+import { ref, watch, onUnmounted } from 'vue'
+const props = defineProps({ visible: Boolean })
 defineEmits(['update:visible'])
 
 const display = ref('0')
@@ -75,6 +75,33 @@ const hesapla = () => {
 const temizle = () => { current = ''; previous = ''; op = ''; display.value = '0'; gecmis.value = ''; yeniSayi = true }
 const sil = () => { if (!yeniSayi && current.length > 1) current = current.slice(0, -1); else { current = ''; display.value = '0' } display.value = current || '0' }
 const yuzde = () => { if (current) { display.value = String(parseFloat(current) / 100); current = display.value } }
+
+const klavyeTusu = (e) => {
+  if (!props.visible) return
+  const k = e.key
+  if (k >= '0' && k <= '9') { e.preventDefault(); rakam(k) }
+  else if (k === '.') { e.preventDefault(); rakam('.') }
+  else if (k === '+') { e.preventDefault(); islem('+') }
+  else if (k === '-') { e.preventDefault(); islem('-') }
+  else if (k === '*') { e.preventDefault(); islem('*') }
+  else if (k === '/') { e.preventDefault(); islem('/') }
+  else if (k === 'Enter' || k === '=') { e.preventDefault(); hesapla() }
+  else if (k === 'Backspace') { e.preventDefault(); sil() }
+  else if (k === 'Escape' || k === 'c' || k === 'C') { temizle() }
+  else if (k === '%') { e.preventDefault(); yuzde() }
+}
+
+watch(() => props.visible, (v) => {
+  if (v) {
+    document.addEventListener('keydown', klavyeTusu)
+  } else {
+    document.removeEventListener('keydown', klavyeTusu)
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', klavyeTusu)
+})
 </script>
 
 <style scoped>

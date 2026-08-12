@@ -177,7 +177,7 @@ const grupluSonuclar = computed(() => {
 const toggleVoiceRecognition = () => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SpeechRecognition) {
-    alert('Tarayıcınız sesli aramayı desteklemiyor.')
+    error.value = 'Tarayıcınız sesli aramayı desteklemiyor.'
     return
   }
 

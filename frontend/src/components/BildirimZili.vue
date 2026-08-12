@@ -235,7 +235,9 @@ const temizle = () => { bildirimler.value = [] }
 </script>
 
 <style scoped>
-.bildirim-zili { position: relative; }
+.bildirim-zili { position: relative; display: inline-flex; align-items: center; }
+.bildirim-zili :deep(.p-button) { color: var(--text-primary); }
+.bildirim-zili :deep(.p-button .p-button-icon) { color: var(--text-primary); font-size: 16px; }
 .zil-sayac {
   position: absolute; top: -4px; right: -4px;
   background: #ef4444; color: white; border-radius: 50%;
@@ -245,6 +247,7 @@ const temizle = () => { bildirimler.value = [] }
   border: 2px solid var(--bg-primary, #0f172a);
   animation: zil-sallanma 2.4s ease-in-out infinite;
   transform-origin: top center;
+  pointer-events: none;
 }
 @keyframes zil-sallanma {
   0%, 88%, 100% { transform: rotate(0); }
