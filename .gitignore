@@ -55,3 +55,6 @@ dependency-reduced-pom.xml
 
 # Misc
 *.pem
+
+# Runtime uploads (user data)
+backend/uploads/

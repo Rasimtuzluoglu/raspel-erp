@@ -394,8 +394,7 @@
           <template #content>
             <div
               v-if="aylikKarsilastirmaChart.datasets.length"
-              class="chart-wrapper"
-              style="max-width:100%"
+              class="chart-wrapper aylik-chart"
             >
               <Bar
                 :data="aylikKarsilastirmaChart"
@@ -588,30 +587,6 @@
             @click="$router.push('/faturalar')"
           />
         </div>
-      </div>
-
-      <div
-        v-if="widgets.notlar.gorunur"
-        class="notlar-widget"
-      >
-        <div class="notlar-header">
-          <h2><i class="pi pi-pencil" /> Notlar</h2>
-          <Button
-            icon="pi pi-save"
-            class="p-button-sm p-button-text"
-            :disabled="notKaydediliyor"
-            :label="notKaydedildi ? 'Kaydedildi' : ''"
-            @click="notlariKaydet"
-          />
-        </div>
-        <Textarea
-          v-model="notMetni"
-          :auto-resize="true"
-          rows="4"
-          placeholder="Hizli notlarinizi buraya yazin..."
-          class="not-textarea"
-          @keydown.ctrl.enter="notlariKaydet"
-        />
       </div>
 
       <div class="bottom-grid">
@@ -829,8 +804,7 @@ const widgetVarsayilan = () => ({
   aylikGelirGider: { gorunur: true, etiket: 'Aylık Gelir-Gider' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
   hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' },
-  hizliIslemler: { gorunur: true, etiket: 'Hizli Islemler' },
-  notlar: { gorunur: true, etiket: 'Notlar' }
+  hizliIslemler: { gorunur: true, etiket: 'Hizli Islemler' }
 })
 
 const widgetListesi = ref(Object.entries(widgetVarsayilan()).map(([k, v]) => ({ key: k, ...v })))
@@ -856,14 +830,6 @@ const stokStore = useStokStore()
 const authStore = useAuthStore()
 const loading = ref(true)
 
-const notMetni = ref(localStorage.getItem('raspel_erp_notlar') || '')
-const notKaydediliyor = ref(false)
-const notKaydedildi = ref(false)
-const notlariKaydet = () => {
-  localStorage.setItem('raspel_erp_notlar', notMetni.value)
-  notKaydedildi.value = true
-  setTimeout(() => { notKaydedildi.value = false }, 2000)
-}
 const refresh = async () => {
   loading.value = true
   try {
@@ -892,7 +858,7 @@ const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' }
 const barOptions = { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
 const lineOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
-const aylikKarsilastirmaOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
+const aylikKarsilastirmaOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
 
 const bosSistem = computed(() =>
   (cariHesapStore?.cariHesaplar?.length || 0) === 0 &&
@@ -1114,6 +1080,7 @@ const formatDate = (d) => {
 
 .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 24px; }
 .chart-wrapper { max-width: 350px; margin: 0 auto; }
+.aylik-chart { max-width: 100%; height: 260px; }
 .chart-wrapper.line-chart { max-width: 100%; }
 .chart-summary { text-align: center; margin-top: 12px; font-size: 13px; color: #94a3b8; display: flex; justify-content: center; gap: 20px; }
 .chart-empty { text-align: center; padding: 30px; color: #64748b; }
@@ -1140,12 +1107,6 @@ const formatDate = (d) => {
 .badge.odeme { background: rgba(244,67,54,0.15); color: #f87171; }
 .positive { color: #4caf50; font-weight: bold; }
 .negative { color: #f44336; font-weight: bold; }
-
-.notlar-widget { background: var(--bg-card); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 24px; }
-.notlar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.notlar-header h2 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-.not-textarea { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; padding: 12px; resize: vertical; }
-.not-textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); outline: none; }
 
 .section-title { font-size: 16px; margin: 24px 0 12px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
 .nakit-akisi { margin-bottom: 24px; }

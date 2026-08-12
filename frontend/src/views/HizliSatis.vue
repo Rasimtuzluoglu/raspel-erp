@@ -126,13 +126,13 @@
               />
               <template v-if="musteriModu === 'musteri'">
                 <AutoComplete
-                  v-model="seciliMusteri"
+                  v-model="musteriGiris"
                   :suggestions="musteriOnerileri"
                   option-label="ad"
-                  placeholder="Müşteri ara ve yaz... (isim, vergi no, telefon)"
+                  placeholder="Müşteri ara (isim, vergi no, telefon)..."
                   class="w-full"
-                  :force-selection="false"
                   @complete="musteriAra($event)"
+                  @option-select="musteriSec"
                 >
                   <template #option="slotProps">
                     <div class="musteri-option">
@@ -140,6 +140,21 @@
                     </div>
                   </template>
                 </AutoComplete>
+                <div
+                  v-if="seciliMusteri"
+                  class="secili-musteri-chip"
+                >
+                  <i class="pi pi-user" />
+                  <span class="secili-musteri-ad">{{ seciliMusteri.ad }}</span>
+                  <button
+                    type="button"
+                    class="secili-musteri-sil"
+                    title="Müşteriyi Kaldır"
+                    @click="musteriTemizle"
+                  >
+                    <i class="pi pi-times" />
+                  </button>
+                </div>
                 <Button
                   label="+ Yeni"
                   severity="secondary"
@@ -667,6 +682,7 @@ const filtreKategori = ref(null)
 const filtreArac = ref(null)
 
 const seciliMusteri = ref(null)
+const musteriGiris = ref('')
 const teslimEden = ref('')
 const teslimDurumu = ref('BEKLIYOR')
 const teslimNotu = ref('')
@@ -679,11 +695,14 @@ const musteriModlari = ref([
 const anlikMusteri = computed(() => musteriModu.value === 'perakende')
 
 watch(musteriModu, (mod) => {
-  if (mod === 'perakende') seciliMusteri.value = null
+  if (mod === 'perakende') {
+    seciliMusteri.value = null
+    musteriGiris.value = ''
+  }
 })
 const musteriOnerileri = ref([])
 const yeniMusteriDialog = ref(false)
-const yeniMusteri = ref({ ad: '', telefon: '', email: '', adres: '', vergiNo: '' })
+const yeniMusteri = ref({ ad: '', telefon: '', email: '', adres: '', vergiNo: '', tur: 'Musteri' })
 const musteriKaydediliyor = ref(false)
 
 const sepet = ref([])
@@ -862,6 +881,16 @@ const musteriAra = (event) => {
   ).slice(0, 20)
 }
 
+const musteriSec = (event) => {
+  seciliMusteri.value = event.value
+  musteriGiris.value = ''
+}
+
+const musteriTemizle = () => {
+  seciliMusteri.value = null
+  musteriGiris.value = ''
+}
+
 const musteriKaydet = async () => {
   if (!yeniMusteri.value.ad) {
     toastBildirim.uyari('Ad / Firma adı zorunludur')
@@ -871,8 +900,9 @@ const musteriKaydet = async () => {
   try {
     const r = await cariHesapAPI.create(yeniMusteri.value)
     seciliMusteri.value = r.data
+    musteriGiris.value = ''
     yeniMusteriDialog.value = false
-    yeniMusteri.value = { ad: '', telefon: '', email: '', adres: '', vergiNo: '' }
+    yeniMusteri.value = { ad: '', telefon: '', email: '', adres: '', vergiNo: '', tur: 'Musteri' }
     toastBildirim.basarili('Cari hesap oluşturuldu')
   } catch (e) {
     toastBildirim.hata(e?.response?.data?.message || 'Kayıt başarısız')
@@ -1065,6 +1095,7 @@ const satisiTamamla = async () => {
     try { fisiYazdir() } catch { /* empty */ }
     sepet.value = []
     seciliMusteri.value = null
+    musteriGiris.value = ''
     teslimEden.value = ''
     teslimDurumu.value = 'BEKLIYOR'
     teslimNotu.value = ''
@@ -1131,6 +1162,11 @@ const satisiTamamla = async () => {
 .musteri-modu .p-selectbutton .p-button { flex: 1; justify-content: center; }
 .musteri-option { display: flex; justify-content: space-between; align-items: center; }
 .musteri-option-detay { font-size: 11px; color: var(--text-muted); }
+.secili-musteri-chip { display: flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+.secili-musteri-chip i { color: #60a5fa; font-size: 14px; }
+.secili-musteri-ad { flex: 1; color: var(--text-primary); font-weight: 500; }
+.secili-musteri-sil { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 2px; }
+.secili-musteri-sil:hover { color: #f87171; }
 
 .sepet-card { max-height: 350px; overflow-y: auto; }
 .sepet-card :deep(.p-card-content) { padding-top: 0; }
@@ -1202,6 +1238,7 @@ const satisiTamamla = async () => {
 .dialog-footer-btns { display: flex; gap: 8px; justify-content: flex-end; width: 100%; }
 
 .field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
 .required { color: #f87171; }
 
 .fiyat-tip-select {

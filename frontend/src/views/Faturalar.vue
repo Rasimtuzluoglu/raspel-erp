@@ -140,6 +140,16 @@
           </template>
         </Column>
         <Column
+          field="teslimEden"
+          header="Teslim Eden"
+          style="width:140px"
+        >
+          <template #body="s">
+            <span v-if="s.data.teslimEden" class="teslim-eden-list"><i class="pi pi-truck" /> {{ s.data.teslimEden }}</span>
+            <span v-else class="islem-yapan-bos">-</span>
+          </template>
+        </Column>
+        <Column
           header="İşlemler"
           style="width:310px"
         >
@@ -281,7 +291,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Teslim Eden</label>
+          <label>Teslim Eden Personel</label>
           <div class="teslim-eden-grup">
             <Dropdown
               v-model="form.teslimEden"
@@ -290,13 +300,13 @@
               option-value="value"
               filter
               editable
-              placeholder="Personel seçin veya yazın"
+              placeholder="Götüren personeli seçin veya yazın"
               class="w-full"
               :show-clear="true"
             >
               <template #option="s">
                 <div class="personel-opsiyon">
-                  <i class="pi pi-user" />
+                  <i class="pi pi-truck" />
                   <span>{{ s.option.label }}</span>
                 </div>
               </template>
@@ -1149,6 +1159,8 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .durum-badge.iptal { background: rgba(148,163,184,0.1); color: #94a3b8; }
 .islem-yapan { font-size: 12px; color: var(--text-secondary); }
 .islem-yapan-bos { font-size: 12px; color: var(--text-muted); }
+.teslim-eden-list { font-size: 12px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px; }
+.teslim-eden-list i { color: var(--text-muted); font-size: 12px; }
 .w-full { width: 100% !important; }
 .batch-action-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--blue-50, #eff6ff); border: 1px solid var(--blue-200, #bfdbfe); border-radius: 8px; margin-bottom: 12px; }
 .batch-info { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--blue-700, #1d4ed8); }
