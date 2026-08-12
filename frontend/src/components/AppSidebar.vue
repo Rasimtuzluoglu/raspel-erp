@@ -148,7 +148,6 @@
         <div class="admin-actions">
           <BildirimZili class="bildirim-zili-kapsayici" />
           <ThemeSwitcher />
-          <button class="icon-action-btn lang-toggle-btn" title="Dil" @click="toggleDil"><i class="pi pi-globe" /><span class="lang-text">{{ dilEtiketi }}</span></button>
           <button class="icon-action-btn" title="Sifre Degistir" @click="$emit('open-password-modal')"><i class="pi pi-lock" /></button>
           <button class="icon-action-btn" title="Hesap Makinesi" @click="$emit('open-calculator')"><i class="pi pi-calculator" /></button>
           <button class="icon-action-btn" title="Doviz" @click="$emit('open-currency')"><i class="pi pi-money-bill" /></button>
@@ -175,7 +174,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
-import { useI18n } from 'vue-i18n'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import KisayolRehberi from './KisayolRehberi.vue'
@@ -186,7 +184,6 @@ defineEmits(['open-search', 'open-password-modal', 'open-calculator', 'open-curr
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { locale } = useI18n()
 
 const mobilMenuAcik = ref(false)
 const rehberGoster = ref(false)
@@ -202,12 +199,6 @@ const toggleGelismisMod = () => {
 watch(() => router.currentRoute.value.path, () => {
   mobilMenuAcik.value = false
 })
-
-const dilEtiketi = computed(() => locale.value === 'tr' ? 'TR' : 'EN')
-const toggleDil = () => {
-  locale.value = locale.value === 'tr' ? 'en' : 'tr'
-  localStorage.setItem('lang', locale.value)
-}
 
 const { initTheme } = useTheme()
 
