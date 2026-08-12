@@ -92,12 +92,7 @@
           <h3>Sifremi Unuttum</h3>
           <a @click="sifremiUnuttumAdimi = false">&larr; Girise don</a>
         </div>
-        <p>E-posta adresinizi girin, sifre sifirlama baglantisi gonderelim.</p>
-        <div class="sifirla-input-row">
-          <InputText v-model="sifirlaEmail" placeholder="E-posta adresi" />
-          <Button label="Gonder" icon="pi pi-send" :loading="sifirlaYukleniyor" @click="sifreSifirla" />
-        </div>
-        <small v-if="sifirlaMesaj" class="sifirla-mesaj">{{ sifirlaMesaj }}</small>
+        <p>Şifrenizi unuttuysanız lütfen sistem yöneticinizle iletişime geçin. Yöneticiniz şifrenizi sıfırlayabilir.</p>
       </div>
 
       <div class="giris-footer">
@@ -112,7 +107,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
-import { kullaniciAPI } from '../api/index.js'
 import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 
 const router = useRouter()
@@ -135,9 +129,6 @@ const ikiFaktorKod = ref('')
 const girisToken = ref('')
 
 const sifremiUnuttumAdimi = ref(false)
-const sifirlaEmail = ref('')
-const sifirlaYukleniyor = ref(false)
-const sifirlaMesaj = ref('')
 
 onMounted(() => {
   if (authStore.isLoggedIn) { router.push('/') }
@@ -199,16 +190,6 @@ const tumAdimlariSifirla = () => {
   ikiFaktorKod.value = ''
   girisToken.value = ''
   sirketler.value = []
-}
-
-const sifreSifirla = async () => {
-  if (!sifirlaEmail.value.trim()) { sifirlaMesaj.value = 'E-posta adresi giriniz'; return }
-  sifirlaYukleniyor.value = true; sifirlaMesaj.value = ''
-  try {
-    await kullaniciAPI.sifreSifirla?.({ email: sifirlaEmail.value.trim() }) || Promise.resolve()
-    sifirlaMesaj.value = 'Sifre sifirlama baglantisi e-posta adresinize gonderildi.'
-  } catch { sifirlaMesaj.value = 'Sifre sifirlama islemi basarisiz. Lutfen yoneticinize basin.' }
-  finally { sifirlaYukleniyor.value = false }
 }
 </script>
 
