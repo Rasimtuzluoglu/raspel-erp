@@ -425,6 +425,48 @@ body {
   .charts-grid { grid-template-columns: 1fr 1fr !important; }
 }
 
+/* ===== Mobil tablolar -> kart görünümü ===== */
+@media (max-width: 600px) {
+  .p-datatable .p-datatable-thead {
+    display: none !important;
+  }
+  .p-datatable .p-datatable-tbody > tr {
+    display: block !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    margin-bottom: 12px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12) !important;
+  }
+  .p-datatable .p-datatable-tbody > tr > td {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: none !important;
+    padding: 6px 0 !important;
+    font-size: 13px !important;
+  }
+  .p-datatable .p-datatable-tbody > tr > td:first-child {
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 4px !important;
+  }
+  .p-datatable .p-datatable-tbody > tr > td:last-child {
+    padding-bottom: 2px !important;
+  }
+  .p-datatable .p-datatable-tfoot,
+  .p-datatable .p-datatable-tfoot > tr {
+    display: block !important;
+  }
+  .p-datatable-wrapper {
+    overflow: visible !important;
+  }
+}
+
 /* GLOBAL BUTTON SPACING & ACCESSIBILITY */
 .p-toolbar .p-button,
 .p-toolbar-group-start .p-button,
