@@ -182,13 +182,22 @@ public class KullaniciService {
     public LoginResponse giris(LoginRequest req) {
         log.info("Giriş denemesi: {}", req.getUsername());
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
-                .orElseThrow(() -> new BusinessException("Kullanıcı adı veya şifre hatalı"));
+                .orElseThrow(() -> {
+                    log.warn("BAŞARISIZ GİRİŞ - kullanıcı bulunamadı: {}", req.getUsername());
+                    return new BusinessException("Kullanıcı adı veya şifre hatalı");
+                });
 
-        if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
+        if (!k.getActive()) {
+            log.warn("BAŞARISIZ GİRİŞ - pasif kullanıcı: {}", req.getUsername());
+            throw new BusinessException("Bu kullanıcı aktif değil");
+        }
 
         if (!passwordEncoder.matches(req.getPassword(), k.getPassword())) {
+            log.warn("BAŞARISIZ GİRİŞ - hatalı şifre: {}", req.getUsername());
             throw new BusinessException("Kullanıcı adı veya şifre hatalı");
         }
+
+        log.info("Başarılı giriş: {}", req.getUsername());
 
         String girisToken = UUID.randomUUID().toString();
         bekleyenGirisler.put(girisToken, new long[]{k.getId(), System.currentTimeMillis()});
