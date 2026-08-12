@@ -127,6 +127,34 @@ public class StokService {
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
+    public int topluFiyatGuncelle(com.raspel.erp.dto.envanter.TopluFiyatDTO dto, Long sirketId) {
+        if (sirketId == null) throw new BusinessException("Şirket bilgisi eksik");
+        List<Stok> hedef = stokRepository.findBySirketIdOrderByAd(sirketId, Pageable.unpaged()).getContent();
+        hedef = hedef.stream()
+                .filter(s -> dto.getKategori() == null || dto.getKategori().isBlank() || dto.getKategori().equals(s.getKategori()))
+                .filter(s -> dto.getStokGrubu() == null || dto.getStokGrubu().isBlank() || dto.getStokGrubu().equals(s.getStokGrubu()))
+                .filter(s -> dto.getMarka() == null || dto.getMarka().isBlank() || dto.getMarka().equals(s.getMarka()))
+                .collect(Collectors.toList());
+
+        double oran = dto.getOran() != null ? dto.getOran() : 0;
+        double carpan = "AZALT".equalsIgnoreCase(dto.getYon()) ? (1 - oran / 100) : (1 + oran / 100);
+
+        for (Stok s : hedef) {
+            if (s.getFiyat() != null) {
+                s.setFiyat(s.getFiyat().multiply(BigDecimal.valueOf(carpan))
+                        .setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+            if (s.getSatisFiyati() != null) {
+                s.setSatisFiyati(s.getSatisFiyati().multiply(BigDecimal.valueOf(carpan))
+                        .setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+        }
+        stokRepository.saveAll(hedef);
+        cacheYardimci.temizle("stoklar", "dashboard");
+        return hedef.size();
+    }
+
+    @CacheEvict(value = "stoklar", allEntries = true)
     public void sil(Long id) {
         Stok s = stokRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));

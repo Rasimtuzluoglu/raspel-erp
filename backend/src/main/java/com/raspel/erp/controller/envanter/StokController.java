@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Map;
 import com.raspel.erp.entity.envanter.Stok;
 
 @Tag(name = "Stoklar", description = "Stok yönetimi API")
@@ -42,6 +43,17 @@ public class StokController {
     public ResponseEntity<List<StokDTO>> ara(@RequestParam String q, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(stokService.ara(q, sirketId));
+    }
+
+    @PutMapping("/batch-fiyat")
+    @Operation(summary = "Toplu fiyat güncelle", description = "Kategori/stok grubu/markaya göre tüm stokların fiyatını yüzde oranla günceller")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> topluFiyatGuncelle(
+            @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.envanter.TopluFiyatDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        int adet = stokService.topluFiyatGuncelle(dto, sirketId);
+        return ResponseEntity.ok(Map.of("guncellenen", adet));
     }
 
     @GetMapping("/kritik")

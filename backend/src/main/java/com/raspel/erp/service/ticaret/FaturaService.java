@@ -4,6 +4,7 @@ import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
+import com.raspel.erp.dto.ticaret.CariSonUrunDTO;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import jakarta.persistence.LockModeType;
@@ -34,6 +35,8 @@ import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.ticaret.FaturaKalem;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
+import com.raspel.erp.repository.ticaret.CariSonUrunProjeksiyon;
 import com.raspel.erp.service.sistem.PdfRaporService;
 import com.raspel.erp.service.sistem.SeriNoServisi;
 import com.raspel.erp.entity.sistem.Sirket;
@@ -50,6 +53,7 @@ import com.raspel.erp.repository.envanter.StokRepository;
 public class FaturaService {
 
     private final FaturaRepository faturaRepository;
+    private final FaturaKalemRepository faturaKalemRepository;
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
@@ -77,6 +81,53 @@ public class FaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
         return entityDTOyeCevir(fatura);
+    }
+
+    /**
+     * Bir cari hesabin son faturasini dondurur (kopyalama icin). Fatura yoksa null.
+     */
+    @Transactional(readOnly = true)
+    public FaturaDTO cariSonFatura(Long cariId, Long sirketId) {
+        return faturaRepository.findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, sirketId)
+                .map(this::entityDTOyeCevir)
+                .orElse(null);
+    }
+
+    /**
+     * Cari hesabin son aldigi urunleri dondurur (SATIS + KESILDI faturalar).
+     * En son alim tarihine gore siralanir.
+     */
+    @Transactional(readOnly = true)
+    public List<CariSonUrunDTO> cariSonUrunler(Long cariId, Long sirketId, int limit) {
+        List<CariSonUrunProjeksiyon> projeksiyonlar = faturaKalemRepository.cariSonUrunler(
+                cariId, sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI);
+        if (projeksiyonlar.isEmpty()) return List.of();
+
+        int gercekLimit = Math.min(Math.max(limit, 1), 50);
+        List<CariSonUrunProjeksiyon> sinirli = projeksiyonlar.stream()
+                .limit(gercekLimit)
+                .collect(Collectors.toList());
+
+        List<Long> stokIdler = sinirli.stream()
+                .map(CariSonUrunProjeksiyon::getStokId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Stok> stokMap = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(Stok::getId, s -> s));
+
+        return sinirli.stream().map(p -> {
+            Stok stok = stokMap.get(p.getStokId());
+            return CariSonUrunDTO.builder()
+                    .stokId(p.getStokId())
+                    .stokKodu(stok != null ? stok.getStokKodu() : null)
+                    .stokAd(stok != null ? stok.getAd() : null)
+                    .sonAlisTarihi(p.getSonAlisTarihi())
+                    .sonBirimFiyat(p.getSonBirimFiyat())
+                    .adet(p.getAdet())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public FaturaDTO faturaOlustur(FaturaDTO dto, Long sirketId, Long kullaniciId, String displayName) {

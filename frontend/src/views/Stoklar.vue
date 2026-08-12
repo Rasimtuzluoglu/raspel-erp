@@ -1083,20 +1083,23 @@ const batchFiyatForm = ref({ oran: 0, yon: 'ARTIR', kategori: '', stokGrubu: '' 
 
 const batchFiyatUygula = async () => {
   batchLoading.value = true
-  let guncellenen = 0
-  for (const s of stokStore.stoklar) {
-    if (batchFiyatForm.value.kategori && s.kategori !== batchFiyatForm.value.kategori) continue
-    if (batchFiyatForm.value.stokGrubu && s.stokGrubu !== batchFiyatForm.value.stokGrubu) continue
-    const oran = batchFiyatForm.value.yon === 'ARTIR' ? (1 + batchFiyatForm.value.oran / 100) : (1 - batchFiyatForm.value.oran / 100)
-    try {
-      await stokAPI.update(s.id, { ...s, fiyat: Math.round(s.fiyat * oran * 100) / 100 })
-      guncellenen++
-    } catch (e) { /* skip */ }
+  try {
+    const r = await stokAPI.topluFiyat({
+      kategori: batchFiyatForm.value.kategori || null,
+      stokGrubu: batchFiyatForm.value.stokGrubu || null,
+      marka: null,
+      yon: batchFiyatForm.value.yon,
+      oran: batchFiyatForm.value.oran
+    })
+    const guncellenen = r.data?.guncellenen || 0
+    await stokStore.getAll({ size: 1000 })
+    batchFiyatDialog.value = false
+    toastBildirim.basarili(`${guncellenen} ürün güncellendi`)
+  } catch (e) {
+    toastBildirim.hata(e.response?.data?.message || 'Toplu fiyat güncelleme başarısız')
+  } finally {
+    batchLoading.value = false
   }
-  await stokStore.getAll({ size: 1000 })
-  batchFiyatDialog.value = false
-  toastBildirim.basarili(`${guncellenen} ürün güncellendi`)
-  batchLoading.value = false
 }
 
 const excelIndir = async () => {

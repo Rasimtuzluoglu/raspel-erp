@@ -50,6 +50,29 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.faturaGetir(id));
     }
 
+    @GetMapping("/cari/{cariId}/son-urunler")
+    @Operation(summary = "Carinin son aldigi urunler", description = "Cari hesabin son aldigi urunleri listeler (fatura olustururken onerilen urunler)")
+    public ResponseEntity<List<com.raspel.erp.dto.ticaret.CariSonUrunDTO>> cariSonUrunler(
+            @PathVariable Long cariId,
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "10") int limit) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.cariSonUrunler(cariId, sirketId, limit));
+    }
+
+    @GetMapping("/cari/{cariId}/son-fatura")
+    @Operation(summary = "Carinin son faturasi", description = "Cari hesabin son faturasini dondurur (kopyalama icin)")
+    public ResponseEntity<FaturaDTO> cariSonFatura(
+            @PathVariable Long cariId,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        FaturaDTO son = faturaService.cariSonFatura(cariId, sirketId);
+        if (son == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(son);
+    }
+
     @PostMapping
     @Operation(summary = "Yeni fatura oluştur", description = "Yeni bir fatura oluşturur. X-Idempotency-Key header ile çift kayıt engellenir.")
     public ResponseEntity<FaturaDTO> faturaOlustur(

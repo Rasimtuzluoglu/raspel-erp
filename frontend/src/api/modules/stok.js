@@ -11,7 +11,8 @@ export const stokAPI = {
   getHareketler(id) { return apiClient.get(`/stoklar/${id}/hareketler`) },
   tumHareketler() { return apiClient.get('/stoklar/hareketler/tum') },
   addHareket(id, data) { return apiClient.post(`/stoklar/${id}/hareketler`, data) },
-  deleteHareket(hareketId) { return apiClient.delete(`/stoklar/hareketler/${hareketId}`) }
+  deleteHareket(hareketId) { return apiClient.delete(`/stoklar/hareketler/${hareketId}`) },
+  topluFiyat(data) { return apiClient.put('/stoklar/batch-fiyat', data) }
 }
 
 export const depoAPI = {

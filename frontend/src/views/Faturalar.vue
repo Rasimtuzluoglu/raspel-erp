@@ -124,6 +124,16 @@
           </template>
         </Column>
         <Column
+          field="olusturanKullaniciAdi"
+          header="İşlemi Yapan"
+          style="width:140px"
+        >
+          <template #body="s">
+            <span v-if="s.data.olusturanKullaniciAdi" class="islem-yapan">{{ s.data.olusturanKullaniciAdi }}</span>
+            <span v-else class="islem-yapan-bos">-</span>
+          </template>
+        </Column>
+        <Column
           header="İşlemler"
           style="width:310px"
         >
@@ -205,6 +215,14 @@
             option-value="id"
             placeholder="Seçiniz (isteğe bağlı)"
             class="w-full"
+          />
+          <Button
+            v-if="form.cariHesapId"
+            label="Son Faturayı Kopyala"
+            icon="pi pi-copy"
+            class="p-button-text p-button-sm son-fatura-kopyala"
+            :loading="sonFaturaYukleniyor"
+            @click="sonFaturayiKopyala"
           />
         </div>
         <div class="form-group">
@@ -304,6 +322,38 @@
             :disabled="!urunSecimi || !urunAdet"
             @click="urunEkleKalem"
           />
+        </div>
+      </div>
+
+      <div
+        v-if="form.cariHesapId && cariSonUrunler.length > 0"
+        class="son-urunler-panel"
+      >
+        <div class="son-urunler-ust">
+          <i class="pi pi-history" />
+          <span>Bu cari son olarak şunları aldı</span>
+          <button
+            type="button"
+            class="son-urunler-kapat"
+            title="Gizle"
+            @click="cariSonUrunlerGizle = true"
+          >
+            <i class="pi pi-times" />
+          </button>
+        </div>
+        <div class="son-urunler-liste">
+          <button
+            v-for="u in cariSonUrunler"
+            :key="u.stokId"
+            type="button"
+            class="son-urun-item"
+            @click="sonUrunuEkle(u)"
+          >
+            <span class="son-urun-ad">{{ u.stokAd || ('Ürün #' + u.stokId) }}</span>
+            <span class="son-urun-bilgi">{{ u.sonAlisTarihi || '' }} · {{ u.adet }} adet</span>
+            <span class="son-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
+            <i class="pi pi-plus son-urun-ekle" />
+          </button>
         </div>
       </div>
 
@@ -450,7 +500,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -566,6 +616,72 @@ const urunEkleKalem = () => {
   })
   urunSecimi.value = null
   urunAdet.value = 1
+}
+
+const cariSonUrunler = ref([])
+const cariSonUrunlerGizle = ref(false)
+let cariSonUrunlerZamanlayici = null
+
+watch(() => form.value.cariHesapId, (yeniCariId) => {
+  cariSonUrunlerGizle.value = false
+  if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
+  if (!yeniCariId) {
+    cariSonUrunler.value = []
+    return
+  }
+  // Debounce - kullanici cari secerken istek yagmasi
+  cariSonUrunlerZamanlayici = setTimeout(async () => {
+    try {
+      const r = await faturaAPI.cariSonUrunler(yeniCariId, 10)
+      cariSonUrunler.value = r.data || []
+    } catch { cariSonUrunler.value = [] }
+  }, 400)
+})
+
+const sonUrunuEkle = (urun) => {
+  const u = stokStore.stoklar.find(s => s.id === urun.stokId)
+  form.value.kalemler.push({
+    aciklama: urun.stokAd || (u ? u.ad : 'Ürün'),
+    adet: 1,
+    birimFiyat: urun.sonBirimFiyat || (u ? u.fiyat : 0),
+    iskontoOrani: 0,
+    kdvOrani: 20,
+    stokId: urun.stokId
+  })
+  toastBildirim.basarili('Kalem eklendi')
+}
+
+const sonFaturaYukleniyor = ref(false)
+
+const sonFaturayiKopyala = async () => {
+  if (!form.value.cariHesapId) return
+  sonFaturaYukleniyor.value = true
+  try {
+    const r = await faturaAPI.cariSonFatura(form.value.cariHesapId)
+    if (!r.data) {
+      toastBildirim.bilgi('Bu cariye ait daha önce fatura yok')
+      return
+    }
+    const kaynak = r.data
+    form.value.aciklama = kaynak.aciklama || ''
+    form.value.tur = kaynak.tur || 'SATIS'
+    form.value.kalemler = (kaynak.kalemler || []).map(k => ({
+      aciklama: k.aciklama || '',
+      adet: k.adet || 1,
+      birimFiyat: k.birimFiyat || 0,
+      iskontoOrani: k.iskontoOrani || 0,
+      kdvOrani: k.kdvOrani || 20,
+      stokId: k.stokId || null
+    }))
+    if (form.value.kalemler.length === 0) {
+      form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 })
+    }
+    toastBildirim.basarili('Son fatura kopyalandı')
+  } catch {
+    toastBildirim.hata('Son fatura yüklenemedi')
+  } finally {
+    sonFaturaYukleniyor.value = false
+  }
 }
 
 const removeKalem = (index) => {
@@ -818,7 +934,19 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .form-group { margin-bottom: 15px; }
 .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.son-fatura-kopyala { margin-top: 6px; padding: 4px 8px; font-size: 12px; }
 .urun-ekleme { background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 14px; margin: 15px 0; }
+.son-urunler-panel { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 15px; }
+.son-urunler-ust { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #34d399; margin-bottom: 10px; }
+.son-urunler-kapat { margin-left: auto; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 13px; padding: 2px 4px; }
+.son-urunler-kapat:hover { color: #f87171; }
+.son-urunler-liste { display: flex; flex-wrap: wrap; gap: 8px; }
+.son-urun-item { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all .2s; color: var(--text-primary); }
+.son-urun-item:hover { border-color: #10b981; background: rgba(16,185,129,0.1); transform: translateY(-1px); }
+.son-urun-ad { font-size: 13px; font-weight: 600; }
+.son-urun-bilgi { font-size: 11px; color: var(--text-muted); }
+.son-urun-fiyat { font-size: 12px; color: #34d399; font-weight: 600; }
+.son-urun-ekle { font-size: 12px; color: #10b981; }
 .summary-box { background: var(--border); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-top: 15px; }
 .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; color: var(--text-secondary); }
 .summary-row.total { font-weight: 700; font-size: 18px; border-top: 2px solid #3b82f6; margin-top: 5px; padding-top: 10px; color: var(--text-primary); }
@@ -830,6 +958,8 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .durum-badge.teklif { background: rgba(96,165,250,0.15); color: #60a5fa; }
 .durum-badge.kesildi { background: rgba(34,197,94,0.15); color: #4ade80; }
 .durum-badge.iptal { background: rgba(148,163,184,0.1); color: #94a3b8; }
+.islem-yapan { font-size: 12px; color: var(--text-secondary); }
+.islem-yapan-bos { font-size: 12px; color: var(--text-muted); }
 .w-full { width: 100% !important; }
 .batch-action-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--blue-50, #eff6ff); border: 1px solid var(--blue-200, #bfdbfe); border-radius: 8px; margin-bottom: 12px; }
 .batch-info { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--blue-700, #1d4ed8); }

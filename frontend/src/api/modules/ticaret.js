@@ -26,7 +26,9 @@ export const faturaAPI = {
   update(id, data) { return apiClient.put(`/faturalar/${id}`, data) },
   updateDurum(id, durum) { return apiClient.put(`/faturalar/${id}/durum`, { durum }) },
   delete(id) { return apiClient.delete(`/faturalar/${id}`) },
-  gonderEmail(id) { return apiClient.post(`/faturalar/${id}/gonder-email`) }
+  gonderEmail(id) { return apiClient.post(`/faturalar/${id}/gonder-email`) },
+  cariSonUrunler(cariId, limit = 10) { return apiClient.get(`/faturalar/cari/${cariId}/son-urunler`, { params: { limit } }) },
+  cariSonFatura(cariId) { return apiClient.get(`/faturalar/cari/${cariId}/son-fatura`) }
 }
 
 export const eFaturaAPI = {

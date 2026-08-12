@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 import com.raspel.erp.entity.finans.CariHesap;
 
 @Repository
@@ -18,6 +19,9 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    Optional<Fatura> findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);
 
     @Override
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
