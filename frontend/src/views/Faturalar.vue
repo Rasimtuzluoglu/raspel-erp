@@ -273,11 +273,24 @@
         <div class="form-group">
           <label>Teslim Eden</label>
           <div class="teslim-eden-grup">
-            <InputText
+            <Dropdown
               v-model="form.teslimEden"
-              placeholder="Malı teslim eden kişi (ör. kurye, şoför, personel)"
+              :options="personelSecenekleri"
+              option-label="label"
+              option-value="value"
+              filter
+              editable
+              placeholder="Personel seçin veya yazın"
               class="w-full"
-            />
+              :show-clear="true"
+            >
+              <template #option="s">
+                <div class="personel-opsiyon">
+                  <i class="pi pi-user" />
+                  <span>{{ s.option.label }}</span>
+                </div>
+              </template>
+            </Dropdown>
           </div>
         </div>
         <div class="form-group">
@@ -527,7 +540,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 
 const dovizStore = useDovizStore()
-import { faturaAPI, excelAPI, pdfAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI, personelAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -601,7 +614,8 @@ onMounted(async () => {
     await Promise.all([
       faturaStore.getAllFaturalar(),
       cariHesapStore.getAllCariHesaplar(),
-      stokStore.getAll()
+      stokStore.getAll(),
+      personelListesiniYukle()
     ])
   } catch (err) {
     toastBildirim.hata('Veriler yüklenirken hata oluştu')
@@ -609,6 +623,21 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+const personelListesi = ref([])
+
+const personelSecenekleri = computed(() =>
+  personelListesi.value
+    .filter(p => p.aktif !== false)
+    .map(p => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
+)
+
+const personelListesiniYukle = async () => {
+  try {
+    const r = await personelAPI.getAll({ size: 500 })
+    personelListesi.value = r.data?.content || r.data || []
+  } catch { personelListesi.value = [] }
+}
 
 const addKalem = () => {
   form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })
@@ -957,6 +986,8 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .form-group { margin-bottom: 15px; }
 .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
 .son-fatura-kopyala { margin-top: 6px; padding: 4px 8px; font-size: 12px; }
+.personel-opsiyon { display: flex; align-items: center; gap: 8px; }
+.personel-opsiyon i { font-size: 12px; color: var(--text-muted); }
 .urun-ekleme { background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 14px; margin: 15px 0; }
 .son-urunler-panel { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 15px; }
 .son-urunler-ust { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #34d399; margin-bottom: 10px; }

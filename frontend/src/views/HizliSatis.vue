@@ -153,12 +153,25 @@
 
         <div class="teslim-eden-alan">
           <label for="hizli-teslim-eden">Teslim Eden</label>
-          <InputText
+          <Dropdown
             id="hizli-teslim-eden"
             v-model="teslimEden"
-            placeholder="Malı teslim eden (kurye / şoför / personel)"
+            :options="personelSecenekleri"
+            option-label="label"
+            option-value="value"
+            filter
+            editable
+            placeholder="Personel seçin veya yazın"
             class="w-full"
-          />
+            :show-clear="true"
+          >
+            <template #option="s">
+              <div class="personel-opsiyon">
+                <i class="pi pi-user" />
+                <span>{{ s.option.label }}</span>
+              </div>
+            </template>
+          </Dropdown>
         </div>
 
         <Card class="sepet-card">
@@ -561,7 +574,7 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { faturaAPI, cariHesapAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, personelAPI } from '../api/index.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
@@ -632,6 +645,7 @@ const filtreArac = ref(null)
 
 const seciliMusteri = ref(null)
 const teslimEden = ref('')
+const personelListesi = ref([])
 const musteriModu = ref('musteri')
 const musteriModlari = ref([
   { label: 'Perakende', value: 'perakende', icon: 'pi pi-shopping-cart' },
@@ -769,12 +783,26 @@ onMounted(async () => {
     await Promise.all([
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
-      kategoriStore.getAllKategoriler()
+      kategoriStore.getAllKategoriler(),
+      personelListesiniYukle()
     ])
   } catch (e) {
     console.error('Yukleme hatasi', e)
   }
 })
+
+const personelSecenekleri = computed(() =>
+  personelListesi.value
+    .filter(p => p.aktif !== false)
+    .map(p => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
+)
+
+const personelListesiniYukle = async () => {
+  try {
+    const r = await personelAPI.getAll({ size: 500 })
+    personelListesi.value = r.data?.content || r.data || []
+  } catch { personelListesi.value = [] }
+}
 
 const filtreleriTemizle = () => {
   filtreKategori.value = null
@@ -1051,6 +1079,8 @@ const satisiTamamla = async () => {
 .customer-field { display: flex; flex-direction: column; gap: 8px; }
 .teslim-eden-alan { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
 .teslim-eden-alan label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.personel-opsiyon { display: flex; align-items: center; gap: 8px; }
+.personel-opsiyon i { font-size: 12px; color: var(--text-muted); }
 .anlik-musteri { margin-bottom: 4px; }
 .musteri-modu { display: flex; }
 .musteri-modu .p-selectbutton .p-button { flex: 1; justify-content: center; }
