@@ -151,6 +151,16 @@
           </template>
         </Card>
 
+        <div class="teslim-eden-alan">
+          <label for="hizli-teslim-eden">Teslim Eden</label>
+          <InputText
+            id="hizli-teslim-eden"
+            v-model="teslimEden"
+            placeholder="Malı teslim eden (kurye / şoför / personel)"
+            class="w-full"
+          />
+        </div>
+
         <Card class="sepet-card">
           <template #title>
             <div class="sepet-header">
@@ -621,6 +631,7 @@ const filtreKategori = ref(null)
 const filtreArac = ref(null)
 
 const seciliMusteri = ref(null)
+const teslimEden = ref('')
 const musteriModu = ref('musteri')
 const musteriModlari = ref([
   { label: 'Perakende', value: 'perakende', icon: 'pi pi-shopping-cart' },
@@ -912,6 +923,7 @@ const fisiYazdir = () => {
     <div class="tarih">${simdikiTarih.value}</div>
     <div class="fisno">Fiş No: ${fisNo.value}</div>
     ${musteriHtml}
+    ${teslimEden.value ? `<div class="musteri">Teslim Eden: ${escapeHtml(teslimEden.value)}</div>` : ''}
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     ${kalemHtml}
     ${ozetHtml}
@@ -962,6 +974,7 @@ const satisiTamamla = async () => {
       tur: 'SATIS',
       durum: 'KESILDI',
       tarih: new Date().toISOString().split('T')[0],
+      teslimEden: teslimEden.value || null,
       aciklama: 'Hizli Satis',
       araToplam: toplam.value,
       indirim: indirimTutari.value,
@@ -981,6 +994,7 @@ const satisiTamamla = async () => {
     try { fisiYazdir() } catch { /* empty */ }
     sepet.value = []
     seciliMusteri.value = null
+    teslimEden.value = ''
     musteriModu.value = 'musteri'
     indirimDegeri.value = 0
     odemeDurumu.value = 'tam'
@@ -1035,6 +1049,8 @@ const satisiTamamla = async () => {
 
 .customer-card :deep(.p-card-content) { padding-top: 0; }
 .customer-field { display: flex; flex-direction: column; gap: 8px; }
+.teslim-eden-alan { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+.teslim-eden-alan label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 .anlik-musteri { margin-bottom: 4px; }
 .musteri-modu { display: flex; }
 .musteri-modu .p-selectbutton .p-button { flex: 1; justify-content: center; }

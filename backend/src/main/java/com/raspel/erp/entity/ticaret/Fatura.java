@@ -86,6 +86,9 @@ public class Fatura {
     @Column(name = "olusturan_kullanici_adi", length = 100)
     private String olusturanKullaniciAdi;
 
+    @Column(name = "teslim_eden", length = 100)
+    private String teslimEden;
+
     @Version
     private Long version;
 

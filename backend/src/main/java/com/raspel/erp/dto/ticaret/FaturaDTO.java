@@ -47,4 +47,5 @@ public class FaturaDTO {
     private LocalDateTime olusturmaTarihi;
     private Long olusturanKullaniciId;
     private String olusturanKullaniciAdi;
+    private String teslimEden;
 }

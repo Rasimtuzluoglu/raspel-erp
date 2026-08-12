@@ -271,6 +271,16 @@
           </div>
         </div>
         <div class="form-group">
+          <label>Teslim Eden</label>
+          <div class="teslim-eden-grup">
+            <InputText
+              v-model="form.teslimEden"
+              placeholder="Malı teslim eden kişi (ör. kurye, şoför, personel)"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="form-group">
           <label>Açıklama</label>
           <Textarea
             v-model="form.aciklama"
@@ -552,6 +562,7 @@ const form = ref({
   cariHesapId: null,
   tur: '',
   tarih: new Date(),
+  teslimEden: '',
   aciklama: '',
   kalemler: []
 })
@@ -739,6 +750,7 @@ const openCreateDialog = () => {
     cariHesapId: null,
     tur: '',
     tarih: new Date(),
+    teslimEden: '',
     aciklama: '',
     kalemler: [{ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 }]
   }
@@ -752,6 +764,7 @@ const editFatura = (fatura) => {
     cariHesapId: fatura.cariHesapId,
     tur: fatura.tur,
     tarih: new Date(fatura.tarih),
+    teslimEden: fatura.teslimEden || '',
     aciklama: fatura.aciklama || '',
     kalemler: fatura.kalemler.map(k => ({
       id: k.id,
@@ -773,6 +786,7 @@ const cogalt = (fatura) => {
     cariHesapId: fatura.cariHesapId,
     tur: fatura.tur,
     tarih: new Date(fatura.tarih),
+    teslimEden: fatura.teslimEden || '',
     paraBirimi: fatura.paraBirimi || 'TRY',
     aciklama: fatura.aciklama || '',
     kalemler: fatura.kalemler.map(k => ({
@@ -806,6 +820,7 @@ const saveFatura = async () => {
     cariHesapId: form.value.cariHesapId,
     tur: form.value.tur,
     tarih: form.value.tarih ? form.value.tarih.toISOString().split('T')[0] : null,
+    teslimEden: form.value.teslimEden || null,
     aciklama: form.value.aciklama,
     genelIskontoTutari: 0,
     odenenTutar: 0,

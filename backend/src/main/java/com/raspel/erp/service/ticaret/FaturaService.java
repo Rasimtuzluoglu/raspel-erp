@@ -225,6 +225,7 @@ public class FaturaService {
                 .sirketId(sirketId)
                 .olusturanKullaniciId(kullaniciId)
                 .olusturanKullaniciAdi(displayName)
+                .teslimEden(dto.getTeslimEden())
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -391,6 +392,7 @@ public class FaturaService {
         fatura.setTur(tur);
         fatura.setTarih(dto.getTarih() != null ? dto.getTarih() : fatura.getTarih());
         fatura.setAciklama(dto.getAciklama());
+        if (dto.getTeslimEden() != null) fatura.setTeslimEden(dto.getTeslimEden());
         fatura.setAraToplam(araToplam);
         fatura.setKdv(kdv);
         fatura.setGenelToplam(genelToplam);
@@ -530,6 +532,7 @@ public class FaturaService {
                 .olusturmaTarihi(fatura.getOlusturmaTarihi())
                 .olusturanKullaniciId(fatura.getOlusturanKullaniciId())
                 .olusturanKullaniciAdi(fatura.getOlusturanKullaniciAdi())
+                .teslimEden(fatura.getTeslimEden())
                 .build();
     }
 }

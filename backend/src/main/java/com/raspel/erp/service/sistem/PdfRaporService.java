@@ -78,7 +78,9 @@ public class PdfRaporService {
                 y = infoSatiri(cs, y, "Tarih:", f.getOlusturmaTarihi() != null ? f.getOlusturmaTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
                 y = infoSatiri(cs, y, "Durum:", f.getDurum() != null ? f.getDurum().name() : "-");
                 y = infoSatiri(cs, y, "Müşteri:", cariAd);
-                infoSatiri(cs, y, "Cari Hesap ID:", cariId);
+                y = infoSatiri(cs, y, "Cari Hesap ID:", cariId);
+                y = infoSatiri(cs, y, "İşlemi Yapan:", f.getOlusturanKullaniciAdi() != null ? f.getOlusturanKullaniciAdi() : "-");
+                y = infoSatiri(cs, y, "Teslim Eden:", f.getTeslimEden() != null && !f.getTeslimEden().isBlank() ? f.getTeslimEden() : "-");
                 y -= 20;
 
                 y = cizgi(cs, y);
