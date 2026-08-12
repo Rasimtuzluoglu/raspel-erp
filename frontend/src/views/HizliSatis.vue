@@ -776,6 +776,12 @@ const odemeDurumText = computed(() => {
   return 'Kısmi Ödendi'
 })
 
+const odemeDurumEnum = computed(() => {
+  if (odemeDurumu.value === 'yok' || odenenTutar.value === 0) return 'ODENMEDI'
+  if (odenenTutar.value >= genelToplam.value) return 'ODENDI'
+  return 'KISMI_ODENDI'
+})
+
 const odemeDurumSeverity = computed(() => {
   if (odemeDurumu.value === 'yok' || odenenTutar.value === 0) return 'danger'
   if (odenenTutar.value >= genelToplam.value) return 'success'
@@ -1081,7 +1087,7 @@ const satisiTamamla = async () => {
       indirim: indirimTutari.value,
       genelToplam: genelToplam.value,
       odenenTutar: odenenTutar.value,
-      odemeDurumu: odemeDurumText.value,
+      odemeDurumu: odemeDurumEnum.value,
       kalemler: sepet.value.map(i => ({
         stokId: i.id,
         aciklama: i.ad,
