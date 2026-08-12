@@ -12,8 +12,7 @@
       <span
         v-if="filtrelenmisBildirimler.length"
         class="zil-sayac"
-      >{{ filtrelenmisBildirimler.length }}</span>
-    </Button>
+      >{{ filtrelenmisBildirimler.length }}</span>    </Button>
 
     <transition name="panel">
       <div
@@ -244,6 +243,15 @@ const temizle = () => { bildirimler.value = [] }
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; padding: 0 5px; z-index: 3;
   border: 2px solid var(--bg-primary, #0f172a);
+  animation: zil-sallanma 2.4s ease-in-out infinite;
+  transform-origin: top center;
+}
+@keyframes zil-sallanma {
+  0%, 88%, 100% { transform: rotate(0); }
+  90% { transform: rotate(8deg); }
+  93% { transform: rotate(-8deg); }
+  96% { transform: rotate(4deg); }
+  98% { transform: rotate(-4deg); }
 }
 .bildirim-panel {
   position: fixed; left: 245px; bottom: 70px; top: auto; z-index: 99999;

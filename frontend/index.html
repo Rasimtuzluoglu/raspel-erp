@@ -2,16 +2,46 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0b1329">
     <meta name="description" content="RasPel Yeni Nesil ERP — Finans, Ticaret, Envanter, İK ve Rapor">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="apple-touch-icon" href="/icon.svg">
     <title>Raspel ERP</title>
+    <style>
+      #app-loading {
+        position: fixed; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 16px;
+        background: #0b1329; color: #f8fafc; z-index: 9999;
+        font-family: 'Inter', -apple-system, sans-serif;
+      }
+      #app-loading .ld-logo {
+        width: 64px; height: 64px; border-radius: 18px;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 28px; color: white; box-shadow: 0 8px 32px rgba(59,130,246,0.4);
+        animation: ld-pulse 1.4s ease-in-out infinite;
+      }
+      #app-loading .ld-text { font-size: 14px; color: #94a3b8; letter-spacing: 0.5px; }
+      #app-loading .ld-bar { width: 160px; height: 4px; border-radius: 4px; background: rgba(148,163,184,0.15); overflow: hidden; }
+      #app-loading .ld-bar-inner { height: 100%; width: 40%; border-radius: 4px; background: linear-gradient(90deg, #3b82f6, #60a5fa); animation: ld-slide 1.2s ease-in-out infinite; }
+      @keyframes ld-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+      @keyframes ld-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+      @media (prefers-color-scheme: light) {
+        #app-loading { background: #f8fafc; color: #0f172a; }
+        #app-loading .ld-text { color: #64748b; }
+      }
+    </style>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <div id="app-loading">
+            <div class="ld-logo"><i class="pi pi-calculator"></i></div>
+            <div class="ld-bar"><div class="ld-bar-inner"></div></div>
+            <div class="ld-text">RasPel ERP yükleniyor...</div>
+        </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
 </body>
 </html>

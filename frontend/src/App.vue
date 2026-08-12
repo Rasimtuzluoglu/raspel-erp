@@ -33,7 +33,14 @@
       </transition>
       <AppBreadcrumb v-if="authStore.isLoggedIn" />
       <ErrorBoundary>
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition
+            name="sayfa-gecis"
+            mode="out-in"
+          >
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </ErrorBoundary>
     </main>
 
@@ -93,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
@@ -124,6 +131,27 @@ const ibanAcik = ref(false)
 const tcAcik = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
 const oturum = useOturumUyarisi()
+
+const sirketRenkPaletleri = [
+  { accent: '#3b82f6', accentHover: '#2563eb' },
+  { accent: '#10b981', accentHover: '#059669' },
+  { accent: '#8b5cf6', accentHover: '#7c3aed' },
+  { accent: '#f59e0b', accentHover: '#d97706' },
+  { accent: '#ec4899', accentHover: '#db2777' },
+  { accent: '#06b6d4', accentHover: '#0891b2' }
+]
+
+const sirketTemasiniUygula = (sirketId) => {
+  if (sirketId == null) return
+  const palet = sirketRenkPaletleri[Number(sirketId) % sirketRenkPaletleri.length]
+  const root = document.documentElement
+  root.style.setProperty('--accent', palet.accent)
+  root.style.setProperty('--accent-hover', palet.accentHover)
+}
+
+watch(() => authStore.sirketId, (yeni) => {
+  sirketTemasiniUygula(yeni)
+}, { immediate: true })
 </script>
 
 <style>
@@ -148,6 +176,9 @@ const oturum = useOturumUyarisi()
 .offline-tekrar-dene:hover { background: #d97706; }
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
 .slide-down-enter-from, .slide-down-leave-to { transform: translateY(-100%); opacity: 0; }
+.sayfa-gecis-enter-active, .sayfa-gecis-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.sayfa-gecis-enter-from { opacity: 0; transform: translateY(8px); }
+.sayfa-gecis-leave-to { opacity: 0; transform: translateY(-4px); }
 .oturum-uyari { text-align: center; }
 .oturum-ikon { font-size: 2.5rem; color: #f59e0b; margin-bottom: 0.75rem; }
 .oturum-uyari p { margin: 0 0 0.5rem; color: var(--text-secondary); }

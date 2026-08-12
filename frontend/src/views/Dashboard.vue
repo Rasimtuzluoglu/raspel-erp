@@ -1,7 +1,15 @@
 <template>
   <div class="dashboard-container">
     <div class="dashboard-header">
-      <h1>RasPel ERP</h1>
+      <div class="dashboard-baslik-blok">
+        <h1>RasPel ERP</h1>
+        <p class="karsilama-mesaji">
+          {{ karsilamaMetni }}, <strong>{{ authStore.kullanici?.displayName || authStore.kullanici?.username || '' }}</strong>
+          <span v-if="authStore.sirketAdi" class="karsilama-sirket">
+            <i class="pi pi-building" /> {{ authStore.sirketAdi }}
+          </span>
+        </p>
+      </div>
       <div class="header-sag">
         <div class="doviz-ticker-compact">
           <div v-for="k in dovizStore.kurlar" :key="k.kod || k.dovizKodu" class="ticker-chip">
@@ -116,7 +124,7 @@
         v-if="widgets.istatistikler.gorunur"
         class="stats-grid"
       >
-        <div class="stat-card">
+        <div class="stat-card cari">
           <div class="stat-icon cari">
             <i class="pi pi-users" />
           </div>
@@ -129,7 +137,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card finans">
           <div class="stat-icon finans">
             <i class="pi pi-wallet" />
           </div>
@@ -145,7 +153,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card fatura">
           <div class="stat-icon fatura">
             <i class="pi pi-file" />
           </div>
@@ -158,7 +166,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stok">
           <div class="stat-icon stok">
             <i class="pi pi-box" />
           </div>
@@ -210,7 +218,7 @@
         v-if="widgets.satisSiparis.gorunur"
         class="stats-grid"
       >
-        <div class="stat-card">
+        <div class="stat-card ticaret">
           <div class="stat-icon ticaret">
             <i class="pi pi-shopping-cart" />
           </div>
@@ -223,7 +231,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card beklemede">
           <div class="stat-icon beklemede">
             <i class="pi pi-clock" />
           </div>
@@ -236,7 +244,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card iade">
           <div class="stat-icon iade">
             <i class="pi pi-replay" />
           </div>
@@ -249,7 +257,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card devir">
           <div class="stat-icon devir">
             <i class="pi pi-chart-line" />
           </div>
@@ -262,7 +270,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tahsilat">
           <div class="stat-icon tahsilat">
             <i class="pi pi-arrow-down" />
           </div>
@@ -275,7 +283,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card odeme">
           <div class="stat-icon odeme">
             <i class="pi pi-arrow-up" />
           </div>
@@ -490,7 +498,7 @@
         v-if="widgets.insanKaynaklari.gorunur"
         class="stats-grid"
       >
-        <div class="stat-card">
+        <div class="stat-card calisan">
           <div class="stat-icon calisan">
             <i class="pi pi-id-card" />
           </div>
@@ -503,7 +511,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card izinli">
           <div class="stat-icon izinli">
             <i class="pi pi-calendar-times" />
           </div>
@@ -516,7 +524,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card ise-baslayacak">
           <div class="stat-icon ise-baslayacak">
             <i class="pi pi-user-plus" />
           </div>
@@ -529,7 +537,7 @@
             </p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card bekleyen-izin">
           <div class="stat-icon bekleyen-izin">
             <i class="pi pi-clock" />
           </div>
@@ -804,6 +812,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
 const router = useRouter()
+const karsilamaMetni = computed(() => {
+  const saat = new Date().getHours()
+  if (saat < 6) return 'İyi geceler'
+  if (saat < 12) return 'Günaydın'
+  if (saat < 18) return 'İyi günler'
+  return 'İyi akşamlar'
+})
 const widgetVarsayilan = () => ({
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
   satisSiparis: { gorunur: true, etiket: 'Satış & Sipariş' },
@@ -1046,6 +1061,10 @@ const formatDate = (d) => {
 .dashboard-container { padding: 0; }
 .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
 .dashboard-header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+.dashboard-baslik-blok { display: flex; flex-direction: column; gap: 2px; }
+.karsilama-mesaji { margin: 0; font-size: 14px; color: var(--text-secondary); }
+.karsilama-mesaji strong { color: var(--text-primary); }
+.karsilama-sirket { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 10px; border-radius: 20px; background: rgba(59,130,246,0.12); color: #60a5fa; font-size: 12px; font-weight: 600; }
 .header-sag { display: flex; align-items: center; gap: 12px; }
 .dashboard-datetime { font-size: 13px; color: #94a3b8; white-space: nowrap; }
 .dashboard-datetime i { margin-right: 6px; }
@@ -1057,9 +1076,17 @@ const formatDate = (d) => {
 .widget-toggle { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: var(--bg-card); padding: 18px; border-radius: 14px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; transition: all 0.3s; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+.stat-card { background: var(--bg-card); padding: 18px; border-radius: 14px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; transition: all 0.3s; box-shadow: 0 2px 12px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #3b82f6, #2563eb); }
+.stat-card.cari::before { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+.stat-card.finans::before { background: linear-gradient(180deg, #6366f1, #4f46e5); }
+.stat-card.fatura::before { background: linear-gradient(180deg, #10b981, #059669); }
+.stat-card.banka::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
+.stat-card.kasa::before { background: linear-gradient(180deg, #14b8a6, #0d9488); }
+.stat-card.stok::before { background: linear-gradient(180deg, #f97316, #ea580c); }
+.stat-card.beklemede::before { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: rgba(59,130,246,0.25); }
-.stat-icon { width: 52px; height: 52px; background: linear-gradient(135deg, #1976d2, #1565c0); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; flex-shrink: 0; }
+.stat-icon { width: 52px; height: 52px; background: linear-gradient(135deg, #1976d2, #1565c0); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
 .stat-icon.cari { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .stat-icon.finans { background: linear-gradient(135deg, #6366f1, #4f46e5); }
 .stat-icon.fatura { background: linear-gradient(135deg, #10b981, #059669); }

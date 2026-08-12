@@ -442,3 +442,36 @@ body {
 .p-dialog-footer .p-button:last-child {
   margin-right: 0 !important;
 }
+
+/* ===== Global görsel iyileştirmeler ===== */
+
+/* Tema geçiş animasyonu */
+body, .sidebar, .p-card, .p-dialog, .p-toolbar, .p-inputtext, .p-textarea,
+.p-dropdown, .p-dropdown-panel, .p-datatable, .stat-card, .card {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* Özel scrollbar (koyu mod) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.45); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Kart hover gölge derinliği */
+.p-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.p-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.22); }
+
+/* Tablo satır hover vurgusu */
+.p-datatable .p-datatable-tbody > tr { transition: background-color 0.15s ease; }
+.p-datatable .p-datatable-tbody > tr:hover { background: rgba(59, 130, 246, 0.06) !important; }
+
+/* Başlık tipografisi */
+h1, h2, h3 { letter-spacing: -0.3px; }
+h1 { font-weight: 700; }
+h2, h3 { font-weight: 650; }
+
+/* Seçili DataTable satırına sol çubuk */
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+  box-shadow: inset 3px 0 0 var(--accent, #3b82f6);
+}
