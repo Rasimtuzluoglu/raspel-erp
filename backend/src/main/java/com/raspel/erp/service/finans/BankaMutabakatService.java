@@ -73,10 +73,7 @@ public class BankaMutabakatService {
         List<BankaHareketi> eslesmesiz = bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(bankaId);
         List<Fatura> faturalar = sirketId != null
                 ? faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(sirketId, Fatura.FaturaDurum.IPTAL, List.of("ODENDI"))
-                : faturaRepository.findAll().stream()
-                        .filter(f -> !"ODENDI".equals(f.getOdemeDurumu()))
-                        .filter(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL)
-                        .collect(Collectors.toList());
+                : List.of();
 
         for (BankaHareketi h : eslesmesiz) {
             BigDecimal tutar = h.getBorc().signum() > 0 ? h.getBorc() : h.getAlacak();
