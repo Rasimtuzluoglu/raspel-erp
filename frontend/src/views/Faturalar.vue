@@ -214,14 +214,24 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Cari Hesap</label>
-          <Dropdown
-            v-model="form.cariHesapId"
-            :options="cariHesapStore.cariHesaplar"
+          <AutoComplete
+            v-model="seciliCariNesnesi"
+            :suggestions="cariOnerileri"
             option-label="ad"
             option-value="id"
-            placeholder="Seçiniz (isteğe bağlı)"
+            placeholder="Cari ara ve seç (isim, vergi no, telefon)..."
             class="w-full"
-          />
+            :force-selection="false"
+            @complete="cariAra($event)"
+            @option-select="cariSecildi"
+          >
+            <template #option="slotProps">
+              <div class="cari-opsiyon">
+                <span>{{ slotProps.option.ad }}</span>
+                <span class="cari-opsiyon-detay">{{ slotProps.option.vergiNumarasi || slotProps.option.telefon || '' }}</span>
+              </div>
+            </template>
+          </AutoComplete>
           <Button
             v-if="form.cariHesapId"
             label="Son Faturayı Kopyala"
@@ -294,6 +304,25 @@
           </div>
         </div>
         <div class="form-group">
+          <label>Teslim Durumu</label>
+          <Dropdown
+            v-model="form.teslimDurumu"
+            :options="teslimDurumSecenekleri"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+          />
+        </div>
+        <div class="form-group">
+          <label>Teslim Notu</label>
+          <Textarea
+            v-model="form.teslimNotu"
+            rows="2"
+            placeholder="Teslimat notu (isteğe bağlı)"
+            class="w-full"
+          />
+        </div>
+        <div class="form-group">
           <label>Açıklama</label>
           <Textarea
             v-model="form.aciklama"
@@ -327,6 +356,11 @@
               <template #option="s">
                 <div style="display:flex;align-items:center;gap:10px">
                   <span style="flex:1;color:#f1f5f9">{{ s.option.ad }}</span>
+                  <span
+                    v-if="kritikStokMu(s.option)"
+                    class="kitlik-rozeti"
+                    :title="'Kritik stok seviyesi: minimum ' + (s.option.minMiktar || 0)"
+                  >Son {{ Math.floor(s.option.miktar) }} adet</span>
                   <span style="color:#4ade80;font-size:12px;font-weight:600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
                   <span style="color:#94a3b8;font-size:12px">{{ formatCurrency(s.option.fiyat) }}</span>
                 </div>
@@ -352,6 +386,32 @@
             @click="urunEkleKalem"
           />
         </div>
+      </div>
+
+      <div
+        v-if="fiyatGecmisi && fiyatGecmisi.gecmis && fiyatGecmisi.gecmis.length"
+        class="fiyat-gecmisi-panel"
+      >
+        <div class="fiyat-gecmisi-ust">
+          <i class="pi pi-chart-line" />
+          <span>Alış Fiyat Geçmişi</span>
+          <span :class="['trend-rozet', (fiyatGecmisi.trend || '').toLowerCase()]">{{ trendLabel(fiyatGecmisi.trend) }}</span>
+        </div>
+        <div class="fiyat-gecmisi-liste">
+          <div
+            v-for="(kayit, i) in fiyatGecmisi.gecmis"
+            :key="i"
+            class="fiyat-gecmisi-item"
+          >
+            <span class="fg-tarih">{{ formatDate(kayit.tarih) }}</span>
+            <span class="fg-fatura">{{ kayit.faturaNumarasi }}</span>
+            <span class="fg-fiyat">{{ formatCurrency(kayit.birimFiyat) }}</span>
+          </div>
+        </div>
+        <div
+          v-if="fiyatGecmisi.guncelFiyat"
+          class="fiyat-gecmisi-guncel"
+        >Güncel Satış Fiyatı: <strong>{{ formatCurrency(fiyatGecmisi.guncelFiyat) }}</strong></div>
       </div>
 
       <div
@@ -576,9 +636,17 @@ const form = ref({
   tur: '',
   tarih: new Date(),
   teslimEden: '',
+  teslimDurumu: 'BEKLIYOR',
+  teslimNotu: '',
   aciklama: '',
   kalemler: []
 })
+
+const teslimDurumSecenekleri = [
+  { label: 'Bekliyor', value: 'BEKLIYOR' },
+  { label: 'Yolda', value: 'YOLDA' },
+  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' }
+]
 
 const urunSecimi = ref(null)
 const urunAdet = ref(1)
@@ -647,6 +715,28 @@ const urunSecildi = () => {
   if (!urunSecimi.value) return
   const u = stokStore.stoklar.find(s => s.id === urunSecimi.value)
   if (u) urunAdet.value = 1
+  fiyatGecmisiYukle(urunSecimi.value)
+}
+
+const fiyatGecmisi = ref(null)
+const fiyatGecmisiYukleniyor = ref(false)
+
+const fiyatGecmisiYukle = async (stokId) => {
+  if (!stokId) { fiyatGecmisi.value = null; return }
+  fiyatGecmisiYukleniyor.value = true
+  try {
+    const r = await faturaAPI.stokFiyatGecmisi(stokId)
+    fiyatGecmisi.value = r.data
+  } catch { fiyatGecmisi.value = null }
+  finally { fiyatGecmisiYukleniyor.value = false }
+}
+
+const trendLabel = (trend) => ({ ARTIS: 'Yükseliyor', AZALIS: 'Düşüyor', STABIL: 'Sabit' })[trend] || '-'
+
+const kritikStokMu = (stok) => {
+  if (!stok?.miktar) return false
+  if (stok.minMiktar != null && stok.miktar <= stok.minMiktar) return true
+  return stok.miktar <= 10
 }
 
 const urunEkleKalem = () => {
@@ -663,6 +753,27 @@ const urunEkleKalem = () => {
   })
   urunSecimi.value = null
   urunAdet.value = 1
+}
+
+const seciliCariNesnesi = ref(null)
+const cariOnerileri = ref([])
+
+const cariAra = (event) => {
+  const q = (event.query || '').toLowerCase().trim()
+  const kaynak = cariHesapStore.cariHesaplar || []
+  if (!q) {
+    cariOnerileri.value = kaynak.slice(0, 20)
+    return
+  }
+  cariOnerileri.value = kaynak.filter(c =>
+    c.ad?.toLowerCase().includes(q) ||
+    c.vergiNumarasi?.toLowerCase().includes(q) ||
+    c.telefon?.toLowerCase().includes(q)
+  ).slice(0, 20)
+}
+
+const cariSecildi = (event) => {
+  form.value.cariHesapId = event.value?.id || null
 }
 
 const cariSonUrunler = ref([])
@@ -775,11 +886,14 @@ const whatsappGonder = (fatura) => {
 
 const openCreateDialog = () => {
   editingId.value = null
+  seciliCariNesnesi.value = null
   form.value = {
     cariHesapId: null,
     tur: '',
     tarih: new Date(),
     teslimEden: '',
+    teslimDurumu: 'BEKLIYOR',
+    teslimNotu: '',
     aciklama: '',
     kalemler: [{ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 }]
   }
@@ -789,11 +903,14 @@ const openCreateDialog = () => {
 
 const editFatura = (fatura) => {
   editingId.value = fatura.id
+  seciliCariNesnesi.value = cariHesapStore.cariHesaplar.find(c => c.id === fatura.cariHesapId) || null
   form.value = {
     cariHesapId: fatura.cariHesapId,
     tur: fatura.tur,
     tarih: new Date(fatura.tarih),
     teslimEden: fatura.teslimEden || '',
+    teslimDurumu: fatura.teslimDurumu || 'BEKLIYOR',
+    teslimNotu: fatura.teslimNotu || '',
     aciklama: fatura.aciklama || '',
     kalemler: fatura.kalemler.map(k => ({
       id: k.id,
@@ -816,6 +933,8 @@ const cogalt = (fatura) => {
     tur: fatura.tur,
     tarih: new Date(fatura.tarih),
     teslimEden: fatura.teslimEden || '',
+    teslimDurumu: fatura.teslimDurumu || 'BEKLIYOR',
+    teslimNotu: fatura.teslimNotu || '',
     paraBirimi: fatura.paraBirimi || 'TRY',
     aciklama: fatura.aciklama || '',
     kalemler: fatura.kalemler.map(k => ({
@@ -850,6 +969,8 @@ const saveFatura = async () => {
     tur: form.value.tur,
     tarih: form.value.tarih ? form.value.tarih.toISOString().split('T')[0] : null,
     teslimEden: form.value.teslimEden || null,
+    teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
+    teslimNotu: form.value.teslimNotu || null,
     aciklama: form.value.aciklama,
     genelIskontoTutari: 0,
     odenenTutar: 0,
@@ -988,6 +1109,21 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .son-fatura-kopyala { margin-top: 6px; padding: 4px 8px; font-size: 12px; }
 .personel-opsiyon { display: flex; align-items: center; gap: 8px; }
 .personel-opsiyon i { font-size: 12px; color: var(--text-muted); }
+.cari-opsiyon { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cari-opsiyon-detay { font-size: 11px; color: var(--text-muted); }
+.kitlik-rozeti { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; padding: 1px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.fiyat-gecmisi-panel { background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 15px; }
+.fiyat-gecmisi-ust { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #a78bfa; margin-bottom: 8px; }
+.fiyat-gecmisi-liste { display: flex; flex-direction: column; gap: 4px; }
+.fiyat-gecmisi-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-secondary); }
+.fg-tarih { width: 80px; flex-shrink: 0; }
+.fg-fatura { flex: 1; }
+.fg-fiyat { font-weight: 600; color: var(--text-primary); }
+.fiyat-gecmisi-guncel { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(139,92,246,0.2); font-size: 12px; color: var(--text-secondary); }
+.trend-rozet { margin-left: auto; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.trend-rozet.artis { background: rgba(34,197,94,0.15); color: #4ade80; }
+.trend-rozet.azalis { background: rgba(239,68,68,0.15); color: #f87171; }
+.trend-rozet.stabil { background: rgba(148,163,184,0.15); color: #94a3b8; }
 .urun-ekleme { background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 14px; margin: 15px 0; }
 .son-urunler-panel { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 15px; }
 .son-urunler-ust { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #34d399; margin-bottom: 10px; }

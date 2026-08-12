@@ -50,6 +50,15 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.faturaGetir(id));
     }
 
+    @GetMapping("/stok/{stokId}/fiyat-gecmisi")
+    @Operation(summary = "Stok fiyat gecmisi", description = "Bir stogun son 5 alis fiyatini ve trend yonunu dondurur")
+    public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatGecmisiDTO> stokFiyatGecmisi(
+            @PathVariable Long stokId,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.stokFiyatGecmisi(stokId, sirketId));
+    }
+
     @GetMapping("/cari/{cariId}/son-urunler")
     @Operation(summary = "Carinin son aldigi urunler", description = "Cari hesabin son aldigi urunleri listeler (fatura olustururken onerilen urunler)")
     public ResponseEntity<List<com.raspel.erp.dto.ticaret.CariSonUrunDTO>> cariSonUrunler(

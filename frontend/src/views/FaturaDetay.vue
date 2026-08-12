@@ -65,6 +65,16 @@
           <p><strong>Durum:</strong> <span :class="['durum-badge', (fatura.durum || '').toLowerCase()]">{{ durumLabel(fatura.durum) }}</span></p>
           <p><strong>İşlemi Yapan:</strong> {{ fatura.olusturanKullaniciAdi }}</p>
           <p v-if="fatura.teslimEden"><strong>Teslim Eden:</strong> {{ fatura.teslimEden }}</p>
+          <p v-if="fatura.teslimDurumu"><strong>Teslim Durumu:</strong>
+            <span :class="['teslim-badge', (fatura.teslimDurumu || '').toLowerCase()]">{{ teslimDurumLabel(fatura.teslimDurumu) }}</span>
+          </p>
+          <p v-if="fatura.teslimNotu"><strong>Teslim Notu:</strong> {{ fatura.teslimNotu }}</p>
+          <img
+            v-if="fatura.teslimFotograf"
+            :src="fatura.teslimFotograf"
+            class="teslim-fotograf"
+            alt="Teslimat Fotoğrafı"
+          >
         </div>
       </div>
 
@@ -376,6 +386,7 @@ onMounted(async () => {
 
 const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
 const odemeDurumLabel = (d) => ({ ODENMEDI: 'Ödenmedi', KISMI_ODENDI: 'Kısmi Ödendi', ODENDI: 'Ödendi' })[d] || d
+const teslimDurumLabel = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLIM_EDILDI: 'Teslim Edildi' })[d] || d
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
@@ -430,6 +441,11 @@ const formatDateTime = (d) => {
 @media print { .belgeler { display: none !important; } }
 .fatura-alt { margin-top: 30px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px; }
 .durum-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.teslim-badge { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.teslim-badge.bekliyor { background: rgba(255,152,0,0.15); color: #fb923c; }
+.teslim-badge.yolda { background: rgba(96,165,250,0.15); color: #60a5fa; }
+.teslim-badge.teslim_edildi { background: rgba(34,197,94,0.15); color: #4ade80; }
+.teslim-fotograf { margin-top: 10px; max-width: 260px; max-height: 180px; border-radius: 10px; border: 1px solid var(--border); }
 .durum-badge.taslak { background: #fff3e0; color: #e65100; }
 .durum-badge.teklif { background: #e3f2fd; color: #1565c0; }
 .durum-badge.kesildi { background: #e8f5e9; color: #2e7d32; }

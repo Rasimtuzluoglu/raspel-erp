@@ -88,8 +88,8 @@
                 <i class="pi pi-box" />
               </div>
               <Tag
-                :value="(u.miktar || 0) + ' ' + (u.birim || 'adet')"
-                severity="info"
+                :value="kritikStokMu(u) ? 'Son ' + Math.floor(u.miktar) + ' adet' : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
+                :severity="kritikStokMu(u) ? 'danger' : 'info'"
                 class="stock-badge"
               />
               <div class="product-details">
@@ -172,6 +172,29 @@
               </div>
             </template>
           </Dropdown>
+        </div>
+
+        <div class="teslim-eden-alan">
+          <label for="hizli-teslim-durum">Teslim Durumu</label>
+          <Dropdown
+            id="hizli-teslim-durum"
+            v-model="teslimDurumu"
+            :options="teslimDurumSecenekleri"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+          />
+        </div>
+
+        <div class="teslim-eden-alan">
+          <label for="hizli-teslim-not">Teslim Notu</label>
+          <Textarea
+            id="hizli-teslim-not"
+            v-model="teslimNotu"
+            rows="1"
+            placeholder="Teslimat notu (isteğe bağlı)"
+            class="w-full"
+          />
         </div>
 
         <Card class="sepet-card">
@@ -645,6 +668,8 @@ const filtreArac = ref(null)
 
 const seciliMusteri = ref(null)
 const teslimEden = ref('')
+const teslimDurumu = ref('BEKLIYOR')
+const teslimNotu = ref('')
 const personelListesi = ref([])
 const musteriModu = ref('musteri')
 const musteriModlari = ref([
@@ -771,6 +796,12 @@ const filtrelenmisUrunler = computed(() => {
   return list.slice(0, 100)
 })
 
+const kritikStokMu = (u) => {
+  if (!u?.miktar) return false
+  if (u.minMiktar != null && u.miktar <= u.minMiktar) return true
+  return u.miktar <= 10
+}
+
 const simdikiTarih = computed(() => {
   const d = new Date()
   return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
@@ -796,6 +827,12 @@ const personelSecenekleri = computed(() =>
     .filter(p => p.aktif !== false)
     .map(p => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
 )
+
+const teslimDurumSecenekleri = [
+  { label: 'Bekliyor', value: 'BEKLIYOR' },
+  { label: 'Yolda', value: 'YOLDA' },
+  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' }
+]
 
 const personelListesiniYukle = async () => {
   try {
@@ -952,6 +989,8 @@ const fisiYazdir = () => {
     <div class="fisno">Fiş No: ${fisNo.value}</div>
     ${musteriHtml}
     ${teslimEden.value ? `<div class="musteri">Teslim Eden: ${escapeHtml(teslimEden.value)}</div>` : ''}
+    ${teslimDurumu.value && teslimDurumu.value !== 'BEKLIYOR' ? `<div class="musteri">Teslim: ${teslimDurumEtiketi(teslimDurumu.value)}</div>` : ''}
+    ${teslimNotu.value ? `<div class="musteri">Not: ${escapeHtml(teslimNotu.value)}</div>` : ''}
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     ${kalemHtml}
     ${ozetHtml}
@@ -991,6 +1030,8 @@ const escapeHtml = (metin) => {
     .replace(/'/g, '&#39;')
 }
 
+const teslimDurumEtiketi = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLIM_EDILDI: 'Teslim Edildi' })[d] || d
+
 const satisiTamamla = async () => {
   if (!anlikMusteri.value && !seciliMusteri.value) return
   if (sepet.value.length === 0) return
@@ -1003,6 +1044,8 @@ const satisiTamamla = async () => {
       durum: 'KESILDI',
       tarih: new Date().toISOString().split('T')[0],
       teslimEden: teslimEden.value || null,
+      teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
+      teslimNotu: teslimNotu.value || null,
       aciklama: 'Hizli Satis',
       araToplam: toplam.value,
       indirim: indirimTutari.value,
@@ -1023,6 +1066,8 @@ const satisiTamamla = async () => {
     sepet.value = []
     seciliMusteri.value = null
     teslimEden.value = ''
+    teslimDurumu.value = 'BEKLIYOR'
+    teslimNotu.value = ''
     musteriModu.value = 'musteri'
     indirimDegeri.value = 0
     odemeDurumu.value = 'tam'

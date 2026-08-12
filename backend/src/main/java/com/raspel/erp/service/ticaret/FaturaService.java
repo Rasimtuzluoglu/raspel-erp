@@ -5,6 +5,8 @@ import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.CariSonUrunDTO;
+import com.raspel.erp.dto.envanter.StokFiyatGecmisiDTO;
+import com.raspel.erp.repository.ticaret.StokFiyatGecmisiProjeksiyon;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import jakarta.persistence.LockModeType;
@@ -130,6 +132,45 @@ public class FaturaService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Bir stogun son 5 alis fiyatini ve trend yonunu dondurur.
+     */
+    @Transactional(readOnly = true)
+    public StokFiyatGecmisiDTO stokFiyatGecmisi(Long stokId, Long sirketId) {
+        List<StokFiyatGecmisiProjeksiyon> gecmis = faturaKalemRepository.stokFiyatGecmisi(
+                stokId, sirketId, Fatura.FaturaTur.ALIS, Fatura.FaturaDurum.KESILDI);
+
+        BigDecimal guncelFiyat = stokRepository.findById(stokId)
+                .map(Stok::getFiyat)
+                .orElse(null);
+
+        List<StokFiyatGecmisiDTO.Kayit> kayitlar = gecmis.stream()
+                .limit(5)
+                .map(p -> StokFiyatGecmisiDTO.Kayit.builder()
+                        .birimFiyat(p.getBirimFiyat())
+                        .tarih(p.getTarih())
+                        .faturaNumarasi(p.getFaturaNumarasi())
+                        .build())
+                .collect(Collectors.toList());
+
+        String trend = "STABIL";
+        if (kayitlar.size() >= 2) {
+            BigDecimal ilk = kayitlar.get(kayitlar.size() - 1).getBirimFiyat();
+            BigDecimal son = kayitlar.get(0).getBirimFiyat();
+            if (ilk != null && son != null && ilk.compareTo(BigDecimal.ZERO) != 0) {
+                int karsilastirma = son.compareTo(ilk);
+                if (karsilastirma > 0) trend = "ARTIS";
+                else if (karsilastirma < 0) trend = "AZALIS";
+            }
+        }
+
+        return StokFiyatGecmisiDTO.builder()
+                .gecmis(kayitlar)
+                .guncelFiyat(guncelFiyat)
+                .trend(trend)
+                .build();
+    }
+
     public FaturaDTO faturaOlustur(FaturaDTO dto, Long sirketId, Long kullaniciId, String displayName) {
         log.info("Fatura oluşturuluyor - Tür: {}, sirketId: {}", dto.getTur(), sirketId);
 
@@ -226,6 +267,9 @@ public class FaturaService {
                 .olusturanKullaniciId(kullaniciId)
                 .olusturanKullaniciAdi(displayName)
                 .teslimEden(dto.getTeslimEden())
+                .teslimDurumu(dto.getTeslimDurumu() != null ? dto.getTeslimDurumu() : "BEKLIYOR")
+                .teslimNotu(dto.getTeslimNotu())
+                .teslimFotograf(dto.getTeslimFotograf())
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -393,6 +437,9 @@ public class FaturaService {
         fatura.setTarih(dto.getTarih() != null ? dto.getTarih() : fatura.getTarih());
         fatura.setAciklama(dto.getAciklama());
         if (dto.getTeslimEden() != null) fatura.setTeslimEden(dto.getTeslimEden());
+        if (dto.getTeslimDurumu() != null) fatura.setTeslimDurumu(dto.getTeslimDurumu());
+        if (dto.getTeslimNotu() != null) fatura.setTeslimNotu(dto.getTeslimNotu());
+        if (dto.getTeslimFotograf() != null) fatura.setTeslimFotograf(dto.getTeslimFotograf());
         fatura.setAraToplam(araToplam);
         fatura.setKdv(kdv);
         fatura.setGenelToplam(genelToplam);
@@ -533,6 +580,9 @@ public class FaturaService {
                 .olusturanKullaniciId(fatura.getOlusturanKullaniciId())
                 .olusturanKullaniciAdi(fatura.getOlusturanKullaniciAdi())
                 .teslimEden(fatura.getTeslimEden())
+                .teslimDurumu(fatura.getTeslimDurumu())
+                .teslimNotu(fatura.getTeslimNotu())
+                .teslimFotograf(fatura.getTeslimFotograf())
                 .build();
     }
 }

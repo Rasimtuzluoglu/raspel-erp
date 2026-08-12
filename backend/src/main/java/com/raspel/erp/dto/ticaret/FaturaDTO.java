@@ -48,4 +48,7 @@ public class FaturaDTO {
     private Long olusturanKullaniciId;
     private String olusturanKullaniciAdi;
     private String teslimEden;
+    private String teslimDurumu;
+    private String teslimNotu;
+    private String teslimFotograf;
 }

@@ -89,6 +89,15 @@ public class Fatura {
     @Column(name = "teslim_eden", length = 100)
     private String teslimEden;
 
+    @Column(name = "teslim_durumu", length = 20)
+    private String teslimDurumu;
+
+    @Column(name = "teslim_notu", columnDefinition = "TEXT")
+    private String teslimNotu;
+
+    @Column(name = "teslim_fotograf", columnDefinition = "TEXT")
+    private String teslimFotograf;
+
     @Version
     private Long version;
 

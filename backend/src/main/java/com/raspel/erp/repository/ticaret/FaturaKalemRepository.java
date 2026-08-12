@@ -26,4 +26,17 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
                                                 @Param("sirketId") Long sirketId,
                                                 @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
                                                 @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
+
+    /**
+     * Bir stogun son alis fiyatlarini (ALIS + KESILDI faturalardan) tarihe gore dondurur.
+     */
+    @Query("SELECT k.birimFiyat AS birimFiyat, f.tarih AS tarih, f.faturaNumarasi AS faturaNumarasi " +
+           "FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE k.stokId = :stokId AND f.sirketId = :sirketId " +
+           "AND f.tur = :tur AND f.durum = :durum " +
+           "ORDER BY f.tarih DESC")
+    List<StokFiyatGecmisiProjeksiyon> stokFiyatGecmisi(@Param("stokId") Long stokId,
+                                                       @Param("sirketId") Long sirketId,
+                                                       @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                                       @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
 }

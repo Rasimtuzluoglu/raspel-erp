@@ -81,6 +81,10 @@ public class PdfRaporService {
                 y = infoSatiri(cs, y, "Cari Hesap ID:", cariId);
                 y = infoSatiri(cs, y, "İşlemi Yapan:", f.getOlusturanKullaniciAdi() != null ? f.getOlusturanKullaniciAdi() : "-");
                 y = infoSatiri(cs, y, "Teslim Eden:", f.getTeslimEden() != null && !f.getTeslimEden().isBlank() ? f.getTeslimEden() : "-");
+                y = infoSatiri(cs, y, "Teslim Durumu:", f.getTeslimDurumu() != null ? f.getTeslimDurumu() : "-");
+                if (f.getTeslimNotu() != null && !f.getTeslimNotu().isBlank()) {
+                    y = infoSatiri(cs, y, "Teslim Notu:", f.getTeslimNotu());
+                }
                 y -= 20;
 
                 y = cizgi(cs, y);

@@ -28,7 +28,8 @@ export const faturaAPI = {
   delete(id) { return apiClient.delete(`/faturalar/${id}`) },
   gonderEmail(id) { return apiClient.post(`/faturalar/${id}/gonder-email`) },
   cariSonUrunler(cariId, limit = 10) { return apiClient.get(`/faturalar/cari/${cariId}/son-urunler`, { params: { limit } }) },
-  cariSonFatura(cariId) { return apiClient.get(`/faturalar/cari/${cariId}/son-fatura`) }
+  cariSonFatura(cariId) { return apiClient.get(`/faturalar/cari/${cariId}/son-fatura`) },
+  stokFiyatGecmisi(stokId) { return apiClient.get(`/faturalar/stok/${stokId}/fiyat-gecmisi`) }
 }
 
 export const eFaturaAPI = {
