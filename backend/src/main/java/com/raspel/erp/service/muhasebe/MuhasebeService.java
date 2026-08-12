@@ -213,7 +213,7 @@ public class MuhasebeService {
         LocalDate bit = bitis != null ? bitis : LocalDate.now();
         List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findBySirketId(sirketId);
         Map<Long, MuhasebeFisi> fisMap = new HashMap<>();
-        muhasebeFisiRepository.findAll().forEach(f -> fisMap.put(f.getId(), f));
+        muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(sirketId).forEach(f -> fisMap.put(f.getId(), f));
 
         List<DefteriKebirSatiriDTO> sonuc = new ArrayList<>();
         BigDecimal bakiye = BigDecimal.ZERO;

@@ -27,7 +27,7 @@ public class CekSenetService {
 
     @Transactional(readOnly = true)
     public Page<CekSenetDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        Map<Long, String> cariHaritasi = cariHesapRepository.findAll().stream()
+        Map<Long, String> cariHaritasi = cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
                 .collect(Collectors.toMap(c -> c.getId(), c -> c.getAd(), (a, b) -> a));
         return cekSenetRepository.findBySirketIdOrderByVadeTarihiAsc(sirketId, pageable)
                 .map(cs -> entityToDTO(cs, cariHaritasi));

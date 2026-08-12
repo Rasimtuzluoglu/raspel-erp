@@ -1,6 +1,7 @@
 package com.raspel.erp.repository.ik;
 
 import com.raspel.erp.entity.ik.PersonelIzin;
+import com.raspel.erp.entity.ik.Personel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,10 @@ public interface PersonelIzinRepository extends JpaRepository<PersonelIzin, Long
     Page<PersonelIzin> findByPersonelIdIn(List<Long> personelIds, Pageable pageable);
     @Query("SELECT COUNT(i) FROM PersonelIzin i WHERE i.durum = 'ONAYLANDI' AND i.baslangic <= :bugun AND i.bitis >= :bugun")
     long countBugunIzinli(LocalDate bugun);
+
+    @Query("SELECT COUNT(i) FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id WHERE i.durum = :durum AND p.sirketId = :sirketId")
+    long countByDurumAndSirketId(String durum, Long sirketId);
+
+    @Query("SELECT COUNT(i) FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id WHERE i.durum = 'ONAYLANDI' AND i.baslangic <= :bugun AND i.bitis >= :bugun AND p.sirketId = :sirketId")
+    long countBugunIzinliAndSirketId(LocalDate bugun, Long sirketId);
 }

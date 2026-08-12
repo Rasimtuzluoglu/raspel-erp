@@ -23,12 +23,15 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
 
     List<Stok> findAllByOrderByAd();
     Page<Stok> findBySirketIdOrderByAd(Long sirketId, Pageable pageable);
+    List<Stok> findBySirketIdOrderByAd(Long sirketId);
     List<Stok> findByAdContainingIgnoreCase(String q);
     List<Stok> findByBarkod(String barkod);
     List<Stok> findByBarkodContainingIgnoreCase(String barkod);
     List<Stok> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String q);
     List<Stok> findBySirketIdAndBarkod(Long sirketId, String barkod);
     List<Stok> findBySirketIdAndBarkodContainingIgnoreCase(Long sirketId, String barkod);
+
+    long countBySirketId(Long sirketId);
 
     @Query("SELECT SUM(s.miktar) FROM Stok s")
     BigDecimal toplamMiktar();

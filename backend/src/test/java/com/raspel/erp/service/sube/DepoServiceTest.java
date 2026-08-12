@@ -88,7 +88,7 @@ class DepoServiceTest {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("10")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
-        when(stokRepository.findAll()).thenReturn(List.of());
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
 
         depoService.stokEkle(1L, 2L, new BigDecimal("5"));
@@ -111,7 +111,7 @@ class DepoServiceTest {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("20")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
-        when(stokRepository.findAll()).thenReturn(List.of());
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
 
         depoService.stokCikar(1L, 2L, new BigDecimal("8"));
@@ -127,7 +127,7 @@ class DepoServiceTest {
         when(depoRepository.findById(3L)).thenReturn(Optional.of(ornekDepo(3L)));
         when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(kaynak));
         when(depoStokRepository.findByDepoIdAndStokId(3L, 2L)).thenReturn(Optional.of(hedef));
-        when(stokRepository.findAll()).thenReturn(List.of());
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(kaynak));
         when(depoStokRepository.findByDepoId(3L)).thenReturn(List.of(hedef));
 

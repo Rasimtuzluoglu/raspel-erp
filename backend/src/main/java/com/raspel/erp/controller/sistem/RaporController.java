@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.dto.sistem.RaporDTO;
 import com.raspel.erp.service.sistem.RaporService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -36,37 +37,45 @@ public class RaporController {
     @GetMapping("/gelir-gider")
     @Operation(summary = "Gelir gider raporu", description = "Belirtilen tarih aralığındaki gelir/gider özetini getirir")
     public ResponseEntity<RaporDTO.GelirGiderOzetDTO> gelirGider(
+            HttpServletRequest request,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
-        return ResponseEntity.ok(raporService.gelirGiderOzeti(baslangic, bitis));
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.gelirGiderOzeti(baslangic, bitis, sirketId));
     }
 
     @GetMapping("/kdv")
     @Operation(summary = "KDV raporu", description = "Belirtilen tarih aralığındaki KDV raporunu getirir")
     public ResponseEntity<RaporDTO.KdvRaporDTO> kdvRaporu(
+            HttpServletRequest request,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
-        return ResponseEntity.ok(raporService.kdvRaporu(baslangic, bitis));
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.kdvRaporu(baslangic, bitis, sirketId));
     }
 
     @GetMapping("/yaslandirma")
     @Operation(summary = "Yaşlandırma raporu", description = "Cari hesap yaşlandırma raporunu getirir")
-    public ResponseEntity<List<RaporDTO.YaslandirmaDTO>> yaslandirma() {
-        return ResponseEntity.ok(raporService.yaslandirmaRaporu());
+    public ResponseEntity<List<RaporDTO.YaslandirmaDTO>> yaslandirma(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.yaslandirmaRaporu(sirketId));
     }
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyanname hazırlığı", description = "YYYY-MM dönemi için KDV beyannameye hazırlık listesi üretir (matrah + KDV oran bazlı)")
-    public ResponseEntity<RaporDTO.KdvBeyannameDTO> kdvBeyanname(@RequestParam String donem) {
-        return ResponseEntity.ok(raporService.kdvBeyannameGetir(donem));
+    public ResponseEntity<RaporDTO.KdvBeyannameDTO> kdvBeyanname(HttpServletRequest request, @RequestParam String donem) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.kdvBeyannameGetir(donem, sirketId));
     }
 
     @GetMapping("/ba-bs")
     @Operation(summary = "BA/BS bildirimi", description = "YYYY-MM dönemi için BA (alış) veya BS (satış) bildirim formu listesi üretir")
     public ResponseEntity<RaporDTO.BaBsDTO> baBs(
+            HttpServletRequest request,
             @RequestParam String donem,
             @RequestParam(defaultValue = "BS") String tur,
             @RequestParam(required = false) BigDecimal esik) {
-        return ResponseEntity.ok(raporService.baBsGetir(donem, tur, esik));
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.baBsGetir(donem, tur, esik, sirketId));
     }
 }

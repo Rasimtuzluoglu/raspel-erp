@@ -57,7 +57,7 @@ public class HareketService {
     }
     
     /**
-     * Son n hareketi getir (Dashboard için)
+     * Son n hareketi getir (Dashboard için, tenant filtreli)
      */
     @Transactional(readOnly = true)
     public List<HareketDTO> sonHareketleriGetir(int limit) {
@@ -65,6 +65,15 @@ public class HareketService {
         Pageable pageable = PageRequest.of(0, limit);
         
         return hareketRepository.findAllByOrderByHareketTarihiDescOlusturmaTarihiDesc(pageable)
+                .stream()
+                .map(this::entityDTOyeCevir)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<HareketDTO> sonHareketleriGetir(int limit, Long sirketId) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return hareketRepository.findBySirketIdOrderByHareketTarihiDescOlusturmaTarihiDesc(sirketId, pageable)
                 .stream()
                 .map(this::entityDTOyeCevir)
                 .collect(Collectors.toList());

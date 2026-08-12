@@ -85,9 +85,9 @@ class RaporServiceTest {
         Hareket tahsilat = createHareket();
         Hareket odeme = createHareket();
         odeme.setTur(Hareket.HareketTuru.ODEME);
-        when(hareketRepository.findByHareketTarihiBetweenOrderByHareketTarihiAsc(any(), any()))
+        when(hareketRepository.findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(any(), any(), any()))
                 .thenReturn(List.of(tahsilat, odeme));
-        var result = raporService.gelirGiderOzeti(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+        var result = raporService.gelirGiderOzeti(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), 1L);
         assertEquals(BigDecimal.valueOf(1000), result.getToplamGelir());
     }
 
@@ -103,8 +103,8 @@ class RaporServiceTest {
         faturaAlis.setDurum(Fatura.FaturaDurum.KESILDI);
         faturaAlis.setKdv(BigDecimal.valueOf(100));
         faturaAlis.setTarih(LocalDate.now());
-        when(faturaRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(fatura, faturaAlis));
-        var result = raporService.kdvRaporu(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+        when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(fatura, faturaAlis));
+        var result = raporService.kdvRaporu(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), 1L);
         assertEquals(BigDecimal.valueOf(200), result.getToplamKdvCikis());
         assertEquals(BigDecimal.valueOf(100), result.getToplamKdvGiris());
         assertEquals(BigDecimal.valueOf(100), result.getKdvFarki());
@@ -120,8 +120,8 @@ class RaporServiceTest {
         cari2.setAd("Cari 2");
         cari2.setBakiye(BigDecimal.valueOf(-1000));
         cari2.setGuncellemeTarihi(LocalDateTime.now().minusDays(15));
-        when(cariHesapRepository.findAll()).thenReturn(List.of(cari1, cari2));
-        var result = raporService.yaslandirmaRaporu();
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari1, cari2));
+        var result = raporService.yaslandirmaRaporu(1L);
         assertEquals(2, result.size());
         assertEquals("31-60 Gün", result.get(0).getAralik());
         assertEquals("0-30 Gün", result.get(1).getAralik());
@@ -141,14 +141,14 @@ class RaporServiceTest {
         alis.setDurum(Fatura.FaturaDurum.KESILDI);
         alis.setTarih(ayIci);
 
-        when(faturaRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(satis, alis));
+        when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(satis, alis));
         // 1.180 TL KDV dahil, %18 → matrah 1.000, KDV 180
         when(faturaKalemRepository.findByFaturaId(1L))
                 .thenReturn(List.of(FaturaKalem.builder().kdvOrani(new BigDecimal("18")).tutar(BigDecimal.valueOf(1180)).build()));
         when(faturaKalemRepository.findByFaturaId(2L))
                 .thenReturn(List.of(FaturaKalem.builder().kdvOrani(new BigDecimal("20")).tutar(BigDecimal.valueOf(1200)).build()));
 
-        var result = raporService.kdvBeyannameGetir("2026-07");
+        var result = raporService.kdvBeyannameGetir("2026-07", 1L);
 
         assertEquals(0, BigDecimal.valueOf(180).compareTo(result.getToplamHesaplananKdv()));
         assertEquals(0, BigDecimal.valueOf(200).compareTo(result.getToplamIndirilecekKdv()));
@@ -175,9 +175,9 @@ class RaporServiceTest {
         kucuk.setTarih(ayIci);
         kucuk.setGenelToplam(BigDecimal.valueOf(1000));
 
-        when(faturaRepository.findAllByOrderByTarihDesc()).thenReturn(List.of(buyuk, kucuk));
+        when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(buyuk, kucuk));
 
-        var result = raporService.baBsGetir("2026-07", "BS", new BigDecimal("5000"));
+        var result = raporService.baBsGetir("2026-07", "BS", new BigDecimal("5000"), 1L);
 
         assertEquals("BS", result.getTur());
         assertEquals(1, result.getKayitlar().size());

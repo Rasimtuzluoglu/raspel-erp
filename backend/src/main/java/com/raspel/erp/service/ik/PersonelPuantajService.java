@@ -24,7 +24,8 @@ public class PersonelPuantajService {
 
     @Transactional(readOnly = true)
     public List<PersonelPuantajDTO> personelPuantajlari(Long personelId, LocalDate baslangic, LocalDate bitis) {
-        Map<Long, String> personelHaritasi = personelRepository.findAll().stream()
+        Map<Long, String> personelHaritasi = personelRepository.findById(personelId)
+                .stream()
                 .collect(Collectors.toMap(
                         p -> p.getId(),
                         p -> p.getAd() + " " + p.getSoyad()

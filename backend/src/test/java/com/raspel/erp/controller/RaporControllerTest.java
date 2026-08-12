@@ -50,11 +50,12 @@ class RaporControllerTest {
     @Test
     void shouldGetGelirGider() throws Exception {
         var dto = RaporDTO.GelirGiderOzetDTO.builder().toplamGelir(BigDecimal.valueOf(50000)).toplamGider(BigDecimal.valueOf(30000)).netKarZarar(BigDecimal.valueOf(20000)).build();
-        when(raporService.gelirGiderOzeti(any(LocalDate.class), any(LocalDate.class))).thenReturn(dto);
+        when(raporService.gelirGiderOzeti(any(LocalDate.class), any(LocalDate.class), any())).thenReturn(dto);
 
         mockMvc.perform(get("/api/raporlar/gelir-gider")
                         .param("baslangic", "2024-01-01")
-                        .param("bitis", "2024-12-31"))
+                        .param("bitis", "2024-12-31")
+                        .requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.toplamGelir").value(50000));
     }
@@ -62,11 +63,12 @@ class RaporControllerTest {
     @Test
     void shouldGetKdvRaporu() throws Exception {
         var dto = RaporDTO.KdvRaporDTO.builder().toplamKdvCikis(BigDecimal.valueOf(1000)).toplamKdvGiris(BigDecimal.valueOf(500)).kdvFarki(BigDecimal.valueOf(500)).build();
-        when(raporService.kdvRaporu(any(LocalDate.class), any(LocalDate.class))).thenReturn(dto);
+        when(raporService.kdvRaporu(any(LocalDate.class), any(LocalDate.class), any())).thenReturn(dto);
 
         mockMvc.perform(get("/api/raporlar/kdv")
                         .param("baslangic", "2024-01-01")
-                        .param("bitis", "2024-12-31"))
+                        .param("bitis", "2024-12-31")
+                        .requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.kdvFarki").value(500));
     }
@@ -74,9 +76,9 @@ class RaporControllerTest {
     @Test
     void shouldGetYaslandirma() throws Exception {
         var list = List.of(RaporDTO.YaslandirmaDTO.builder().cariAd("Müşteri").bakiye(BigDecimal.valueOf(10000)).gun(45).aralik("31-60 Gün").build());
-        when(raporService.yaslandirmaRaporu()).thenReturn(list);
+        when(raporService.yaslandirmaRaporu(any())).thenReturn(list);
 
-        mockMvc.perform(get("/api/raporlar/yaslandirma"))
+        mockMvc.perform(get("/api/raporlar/yaslandirma").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].cariAd").value("Müşteri"));
     }

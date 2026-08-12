@@ -21,6 +21,9 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
+
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     Optional<Fatura> findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);
 
     @Override

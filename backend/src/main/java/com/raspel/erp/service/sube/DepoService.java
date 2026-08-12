@@ -87,7 +87,10 @@ public class DepoService {
 
     @Transactional(readOnly = true)
     public List<DepoStokDTO> depoStoklari(Long depoId) {
-        List<com.raspel.erp.entity.envanter.Stok> tumStoklar = stokRepository.findAll();
+        Long sirketId = depoRepository.findById(depoId).map(Depo::getSirketId).orElse(null);
+        List<com.raspel.erp.entity.envanter.Stok> tumStoklar = sirketId != null
+                ? stokRepository.findBySirketIdOrderByAd(sirketId)
+                : List.of();
         Map<Long, String> stokHaritasi = tumStoklar.stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd()));
         Map<Long, String> stokKodHaritasi = tumStoklar.stream()

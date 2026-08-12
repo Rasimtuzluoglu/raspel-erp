@@ -19,15 +19,18 @@ import java.math.BigDecimal;
 @Repository
 public interface HareketRepository extends JpaRepository<Hareket, Long> {
 
-    @Query("SELECT COALESCE(SUM(h.tutar), 0) FROM Hareket h WHERE h.tur = :tur AND h.hareketTarihi = :tarih")
-    BigDecimal sumTutarByTurAndHareketTarihi(@Param("tur") Hareket.HareketTuru tur, @Param("tarih") LocalDate tarih);
+    @Query("SELECT COALESCE(SUM(h.tutar), 0) FROM Hareket h WHERE h.tur = :tur AND h.hareketTarihi = :tarih AND h.sirketId = :sirketId")
+    BigDecimal sumTutarByTurAndHareketTarihi(@Param("tur") Hareket.HareketTuru tur, @Param("tarih") LocalDate tarih, @Param("sirketId") Long sirketId);
 
     @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM') AS ay, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +
-           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic " +
+           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic AND h.sirket_id = :sirketId " +
            "GROUP BY ay ORDER BY ay", nativeQuery = true)
-    List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic);
+    List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic, @Param("sirketId") Long sirketId);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Hareket> findBySirketIdOrderByHareketTarihiDescOlusturmaTarihiDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdOrderByHareketTarihiDesc(Long cariHesapId);
@@ -64,4 +67,10 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByHareketTarihiBetweenOrderByHareketTarihiAsc(LocalDate baslangic, LocalDate bitis);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Hareket> findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(Long sirketId, LocalDate baslangic, LocalDate bitis);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Hareket> findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(Long sirketId, LocalDate baslangic, LocalDate bitis);
 }

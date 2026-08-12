@@ -57,8 +57,8 @@ public class RaporService {
                 .donemSonBakiye(donemSonu).hareketler(hareketler).build();
     }
 
-    public RaporDTO.GelirGiderOzetDTO gelirGiderOzeti(LocalDate baslangic, LocalDate bitis) {
-        var hareketler = hareketRepository.findByHareketTarihiBetweenOrderByHareketTarihiAsc(baslangic, bitis);
+    public RaporDTO.GelirGiderOzetDTO gelirGiderOzeti(LocalDate baslangic, LocalDate bitis, Long sirketId) {
+        var hareketler = hareketRepository.findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(sirketId, baslangic, bitis);
 
         BigDecimal toplamGelir = hareketler.stream()
                 .filter(h -> h.getTur() == Hareket.HareketTuru.TAHSILAT)
@@ -89,8 +89,8 @@ public class RaporService {
                 .aylikDagilim(aylikDagilim).build();
     }
 
-    public RaporDTO.KdvRaporDTO kdvRaporu(LocalDate baslangic, LocalDate bitis) {
-        List<Fatura> faturalar = faturaRepository.findAllByOrderByTarihDesc().stream()
+    public RaporDTO.KdvRaporDTO kdvRaporu(LocalDate baslangic, LocalDate bitis, Long sirketId) {
+        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .filter(f -> !f.getTarih().isBefore(baslangic) && !f.getTarih().isAfter(bitis))
                 .collect(Collectors.toList());
@@ -108,9 +108,9 @@ public class RaporService {
                 .kdvFarki(cikisKdv.subtract(girisKdv)).build();
     }
 
-    public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu() {
+    public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu(Long sirketId) {
         LocalDate bugun = LocalDate.now();
-        return cariHesapRepository.findAll().stream()
+        return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
                 .filter(c -> c.getBakiye().compareTo(BigDecimal.ZERO) < 0)
                 .map(c -> {
                     int gun = (int) ChronoUnit.DAYS.between(c.getGuncellemeTarihi().toLocalDate(), bugun);
@@ -128,12 +128,12 @@ public class RaporService {
     }
 
     /** Belirtilen ay (YYYY-MM) için KDV beyannameye hazırlık listesi üretir. */
-    public RaporDTO.KdvBeyannameDTO kdvBeyannameGetir(String donem) {
+    public RaporDTO.KdvBeyannameDTO kdvBeyannameGetir(String donem, Long sirketId) {
         YearMonth ay = YearMonth.parse(donem);
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
 
-        List<Fatura> kesilmis = faturaRepository.findAllByOrderByTarihDesc().stream()
+        List<Fatura> kesilmis = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .filter(f -> !f.getTarih().isBefore(bas) && !f.getTarih().isAfter(bit))
                 .collect(Collectors.toList());
@@ -171,14 +171,14 @@ public class RaporService {
     }
 
     /** Belirtilen ay (YYYY-MM) için BA (alış) veya BS (satış) bildirimi listesi üretir. */
-    public RaporDTO.BaBsDTO baBsGetir(String donem, String tur, BigDecimal esik) {
+    public RaporDTO.BaBsDTO baBsGetir(String donem, String tur, BigDecimal esik, Long sirketId) {
         YearMonth ay = YearMonth.parse(donem);
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
         BigDecimal limit = esik != null ? esik : new BigDecimal("5000");
 
         Fatura.FaturaTur faturaTur = "BA".equalsIgnoreCase(tur) ? Fatura.FaturaTur.ALIS : Fatura.FaturaTur.SATIS;
-        List<RaporDTO.BaBsSatiriDTO> kayitlar = faturaRepository.findAllByOrderByTarihDesc().stream()
+        List<RaporDTO.BaBsSatiriDTO> kayitlar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
                 .filter(f -> f.getTur() == faturaTur && f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .filter(f -> !f.getTarih().isBefore(bas) && !f.getTarih().isAfter(bit))
                 .filter(f -> f.getGenelToplam() != null && f.getGenelToplam().compareTo(limit) > 0)

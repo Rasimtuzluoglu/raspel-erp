@@ -23,7 +23,11 @@ public interface StokHareketRepository extends JpaRepository<StokHareket, Long> 
 
     long countByStokId(Long stokId);
     long countByTur(String tur);
+    long countByStokSirketIdAndTur(Long sirketId, String tur);
 
-    @Query("SELECT new map(h.stok.ad as stokAd, h.stok.stokKodu as stokKodu, SUM(h.miktar) as satisMiktari) FROM StokHareket h WHERE h.tur = 'CIKIS' GROUP BY h.stok.ad, h.stok.stokKodu ORDER BY SUM(h.miktar) DESC")
+    @Query("SELECT new map(h.stok.ad as stokAd, h.stok.stokKodu as stokKodu, SUM(h.miktar) as satisMiktari) FROM StokHareket h WHERE h.tur = 'CIKIS' AND h.stok.sirketId = :sirketId GROUP BY h.stok.ad, h.stok.stokKodu ORDER BY SUM(h.miktar) DESC")
     List<Map<String, Object>> enCokSatanlar();
+
+    @Query("SELECT new map(h.stok.ad as stokAd, h.stok.stokKodu as stokKodu, SUM(h.miktar) as satisMiktari) FROM StokHareket h WHERE h.tur = 'CIKIS' AND h.stok.sirketId = :sirketId GROUP BY h.stok.ad, h.stok.stokKodu ORDER BY SUM(h.miktar) DESC")
+    List<Map<String, Object>> enCokSatanlarBySirket(Long sirketId);
 }

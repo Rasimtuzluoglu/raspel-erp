@@ -44,25 +44,25 @@ public class DashboardService {
 
         Long toplamCariSayisi = safeGet(() -> cariHesapService.toplamCariSayisiGetir(sirketId), 0L);
         BigDecimal toplamBakiye = safeGet(() -> cariHesapService.toplamBakiyeGetir(sirketId), BigDecimal.ZERO);
-        List<HareketDTO> sonHareketler = safeGetList(() -> hareketService.sonHareketleriGetir(5), Collections.emptyList());
+        List<HareketDTO> sonHareketler = safeGetList(() -> hareketService.sonHareketleriGetir(5, sirketId), Collections.emptyList());
 
-        Long aktifCalisan = safeGet(() -> personelRepository.countByAktifTrue(), 0L);
-        Long bugunIzinli = safeGet(() -> personelIzinRepository.countBugunIzinli(LocalDate.now()), 0L);
+        Long aktifCalisan = safeGet(() -> personelRepository.countByAktifTrueAndSirketId(sirketId), 0L);
+        Long bugunIzinli = safeGet(() -> personelIzinRepository.countBugunIzinliAndSirketId(LocalDate.now(), sirketId), 0L);
         var ayBaslangic = LocalDate.now().withDayOfMonth(1);
         var ayBitis = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
-        Long buAyIseBaslayacak = safeGet(() -> personelRepository.countByIseGirisTarihiBetween(ayBaslangic, ayBitis), 0L);
+        Long buAyIseBaslayacak = safeGet(() -> personelRepository.countBySirketIdAndIseGirisTarihiBetween(sirketId, ayBaslangic, ayBitis), 0L);
 
-        Long bugunkuSiparis = safeGet(() -> siparisRepository.countByTarih(LocalDate.now()), 0L);
-        Long bekleyenTeslimat = safeGet(() -> siparisRepository.countByDurumNot("TAMAMLANDI"), 0L);
+        Long bugunkuSiparis = safeGet(() -> siparisRepository.countBySirketIdAndTarih(sirketId, LocalDate.now()), 0L);
+        Long bekleyenTeslimat = safeGet(() -> siparisRepository.countBySirketIdAndDurumNot(sirketId, "TAMAMLANDI"), 0L);
         BigDecimal iadeOrani = BigDecimal.ZERO;
 
-        long toplamStok = safeGet(() -> stokRepository.count(), 0L);
-        long toplamCikis = safeGet(() -> stokHareketRepository.countByTur("CIKIS"), 0L);
+        long toplamStok = safeGet(() -> stokRepository.countBySirketId(sirketId), 0L);
+        long toplamCikis = safeGet(() -> stokHareketRepository.countByStokSirketIdAndTur(sirketId, "CIKIS"), 0L);
         BigDecimal stokDevirHizi = toplamStok > 0
                 ? BigDecimal.valueOf(toplamCikis).divide(BigDecimal.valueOf(toplamStok), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        List<DashboardDTO.EnCokSatanDTO> enCokSatanlar = safeGetList(() -> stokHareketRepository.enCokSatanlar(), Collections.emptyList())
+        List<DashboardDTO.EnCokSatanDTO> enCokSatanlar = safeGetList(() -> stokHareketRepository.enCokSatanlarBySirket(sirketId), Collections.emptyList())
                 .stream().limit(5)
                 .map(m -> DashboardDTO.EnCokSatanDTO.builder()
                         .stokAd((String) m.get("stokAd"))
@@ -74,12 +74,12 @@ public class DashboardService {
         BigDecimal pozitifBakiye = safeGet(() -> cariHesapService.toplamPozitifBakiyeGetir(sirketId), BigDecimal.ZERO);
         BigDecimal negatifBakiye = safeGet(() -> cariHesapService.toplamNegatifBakiyeGetir(sirketId), BigDecimal.ZERO);
 
-        BigDecimal bugunkuTahsilat = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.TAHSILAT, LocalDate.now()), BigDecimal.ZERO);
-        BigDecimal bugunkuOdeme = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.ODEME, LocalDate.now()), BigDecimal.ZERO);
-        Long bekleyenIzinSayisi = safeGet(() -> personelIzinRepository.countByDurum("BEKLEMEDE"), 0L);
+        BigDecimal bugunkuTahsilat = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.TAHSILAT, LocalDate.now(), sirketId), BigDecimal.ZERO);
+        BigDecimal bugunkuOdeme = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.ODEME, LocalDate.now(), sirketId), BigDecimal.ZERO);
+        Long bekleyenIzinSayisi = safeGet(() -> personelIzinRepository.countByDurumAndSirketId("BEKLEMEDE", sirketId), 0L);
 
         var altiAyOnce = LocalDate.now().minusMonths(6).withDayOfMonth(1);
-        var aylikGelirGider = safeGetList(() -> hareketRepository.aylikGelirGider(altiAyOnce), Collections.emptyList())
+        var aylikGelirGider = safeGetList(() -> hareketRepository.aylikGelirGider(altiAyOnce, sirketId), Collections.emptyList())
                 .stream().map(row -> DashboardDTO.AylikGelirGiderDTO.builder()
                         .ay((String) row[0])
                         .gelir((BigDecimal) row[1])
