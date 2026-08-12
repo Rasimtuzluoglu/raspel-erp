@@ -555,6 +555,65 @@
       </div>
 
       <div
+        v-if="widgets.odemeVadeleri.gorunur"
+        class="vade-uyarilari"
+      >
+        <h2 class="section-title">
+          <i class="pi pi-calendar-clock" /> Ödeme Vadeleri
+        </h2>
+        <div class="vade-grid">
+          <Card class="vade-card vadesi-gecen">
+            <template #title>
+              <i
+                class="pi pi-exclamation-triangle"
+                style="color:#f87171;margin-right:8px"
+              />Vadesi Geçen Faturalar
+            </template>
+            <template #content>
+              <div
+                v-if="!dashboardStore.vadesiGecenFaturalar.length"
+                class="reminder-empty"
+              >
+                <i class="pi pi-check-circle" /> Vadesi geçen fatura yok
+              </div>
+              <div
+                v-for="f in dashboardStore.vadesiGecenFaturalar.slice(0, 6)"
+                :key="f.faturaId"
+                class="reminder-item"
+              >
+                <span class="reminder-ad">#{{ f.faturaNumarasi }} <small>{{ f.cariHesapAd }}</small></span>
+                <span class="reminder-tutar negative">{{ formatCurrency(f.kalanTutar) }}</span>
+              </div>
+            </template>
+          </Card>
+          <Card class="vade-card vadesi-yaklasan">
+            <template #title>
+              <i
+                class="pi pi-clock"
+                style="color:#fbbf24;margin-right:8px"
+              />Vadesi Yaklaşan (7 gün)
+            </template>
+            <template #content>
+              <div
+                v-if="!dashboardStore.vadesiYaklasanFaturalar.length"
+                class="reminder-empty"
+              >
+                <i class="pi pi-check-circle" /> Yaklaşan vade yok
+              </div>
+              <div
+                v-for="f in dashboardStore.vadesiYaklasanFaturalar.slice(0, 6)"
+                :key="f.faturaId"
+                class="reminder-item"
+              >
+                <span class="reminder-ad">#{{ f.faturaNumarasi }} <small>{{ f.cariHesapAd }}</small></span>
+                <span class="reminder-tutar">{{ formatCurrency(f.kalanTutar) }}</span>
+              </div>
+            </template>
+          </Card>
+        </div>
+      </div>
+
+      <div
         v-if="widgets.hizliIslemler.gorunur"
         class="hizli-islemler"
       >
@@ -804,6 +863,7 @@ const widgetVarsayilan = () => ({
   aylikGelirGider: { gorunur: true, etiket: 'Aylık Gelir-Gider' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
   hatirlaticilar: { gorunur: true, etiket: 'Hatırlatıcılar' },
+  odemeVadeleri: { gorunur: true, etiket: 'Ödeme Vadeleri' },
   hizliIslemler: { gorunur: true, etiket: 'Hizli Islemler' }
 })
 
@@ -1093,6 +1153,10 @@ const formatDate = (d) => {
 .recent-transactions h2 { margin: 0 0 12px; font-size: 18px; }
 
 .reminder-grid { display: flex; flex-direction: column; gap: 16px; }
+.vade-uyarilari { margin-bottom: 24px; }
+.vade-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.vade-card .p-card-title { font-size: 14px !important; }
+.reminder-item small { color: var(--text-muted); margin-left: 6px; }
 .reminder-card .p-card-title { font-size: 14px !important; }
 .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .reminder-item:last-child { border-bottom: none; }

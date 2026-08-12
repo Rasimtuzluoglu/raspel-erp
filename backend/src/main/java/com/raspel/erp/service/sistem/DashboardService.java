@@ -20,6 +20,8 @@ import com.raspel.erp.service.finans.HareketService;
 import com.raspel.erp.repository.ik.PersonelIzinRepository;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 
@@ -36,6 +38,7 @@ public class DashboardService {
     private final PersonelIzinRepository personelIzinRepository;
     private final StokHareketRepository stokHareketRepository;
     private final StokRepository stokRepository;
+    private final FaturaRepository faturaRepository;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "dashboard", key = "'dashboard:' + #sirketId")
@@ -87,6 +90,18 @@ public class DashboardService {
                         .build())
                 .collect(Collectors.toList());
 
+        var odemeDurumlari = List.of("ODENDI", "IPTAL");
+        var bugun = LocalDate.now();
+        List<DashboardDTO.VadeBildirimiDTO> vadesiGecenFaturalar = safeGetList(
+                () -> faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bugun)
+                        .stream().map(this::vadeDTOyaCevir).collect(Collectors.toList()),
+                Collections.emptyList());
+        List<DashboardDTO.VadeBildirimiDTO> vadesiYaklasanFaturalar = safeGetList(
+                () -> faturaRepository.findVadesiYaklasan(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari,
+                                bugun, bugun.plusDays(7))
+                        .stream().map(this::vadeDTOyaCevir).collect(Collectors.toList()),
+                Collections.emptyList());
+
         return DashboardDTO.builder()
                 .toplamCariSayisi(toplamCariSayisi)
                 .toplamBakiye(toplamBakiye)
@@ -105,6 +120,18 @@ public class DashboardService {
                 .bugunkuOdeme(bugunkuOdeme)
                 .bekleyenIzinSayisi(bekleyenIzinSayisi)
                 .aylikGelirGider(aylikGelirGider)
+                .vadesiGecenFaturalar(vadesiGecenFaturalar)
+                .vadesiYaklasanFaturalar(vadesiYaklasanFaturalar)
+                .build();
+    }
+
+    private DashboardDTO.VadeBildirimiDTO vadeDTOyaCevir(Fatura f) {
+        return DashboardDTO.VadeBildirimiDTO.builder()
+                .faturaId(f.getId())
+                .faturaNumarasi(f.getFaturaNumarasi())
+                .cariHesapAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
+                .vadeTarihi(f.getVadeTarihi())
+                .kalanTutar(f.getKalanTutar())
                 .build();
     }
 

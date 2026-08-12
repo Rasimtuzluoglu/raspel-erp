@@ -43,4 +43,31 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findBySirketIdAndDurumNotAndOdemeDurumuNotIn(Long sirketId, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);
+
+    /**
+     * Vadesi yaklaşan (bugün + ileriye dönük) ve kalan tutarı olan faturalar.
+     */
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 " +
+            "AND f.vadeTarihi BETWEEN :baslangic AND :bitis " +
+            "ORDER BY f.vadeTarihi ASC")
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findVadesiYaklasan(@Param("sirketId") Long sirketId,
+                                     @Param("durum") Fatura.FaturaDurum durum,
+                                     @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                                     @Param("baslangic") java.time.LocalDate baslangic,
+                                     @Param("bitis") java.time.LocalDate bitis);
+
+    /**
+     * Vadesi geçmiş ve kalan tutarı olan faturalar.
+     */
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 " +
+            "AND f.vadeTarihi < :bugun " +
+            "ORDER BY f.vadeTarihi ASC")
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findVadesiGecen(@Param("sirketId") Long sirketId,
+                                  @Param("durum") Fatura.FaturaDurum durum,
+                                  @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                                  @Param("bugun") java.time.LocalDate bugun);
 }

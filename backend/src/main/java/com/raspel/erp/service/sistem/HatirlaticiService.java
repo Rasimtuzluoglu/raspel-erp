@@ -25,6 +25,7 @@ public class HatirlaticiService {
 
     private final FaturaRepository faturaRepository;
     private final EmailService emailService;
+    private final BildirimService bildirimService;
 
     @Scheduled(cron = "0 0 8 * * *")
     public void vadesiGecenHatirlaticiGonder() {
@@ -52,6 +53,12 @@ public class HatirlaticiService {
                     fatura.getKalanTutar().toString(),
                     vade.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                     cari.getAd());
+
+            if (fatura.getSirketId() != null) {
+                bildirimService.bildirimGonder(fatura.getSirketId(), "VADE",
+                        "Vadesi geçen fatura: " + fatura.getFaturaNumarasi(),
+                        cari.getAd() + " - Kalan: " + fatura.getKalanTutar() + " ₺");
+            }
             gonderilen++;
         }
         log.info("Vadesi geçen hatırlatıcı tamamlandı - Gönderilen: {}", gonderilen);

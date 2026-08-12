@@ -2,6 +2,7 @@ package com.raspel.erp.dto.sistem;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import com.raspel.erp.dto.finans.HareketDTO;
 
@@ -33,6 +34,21 @@ public class DashboardDTO {
     private BigDecimal bugunkuOdeme;
     private Long bekleyenIzinSayisi;
     private List<AylikGelirGiderDTO> aylikGelirGider;
+
+    private List<VadeBildirimiDTO> vadesiGecenFaturalar;
+    private List<VadeBildirimiDTO> vadesiYaklasanFaturalar;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class VadeBildirimiDTO {
+        private Long faturaId;
+        private String faturaNumarasi;
+        private String cariHesapAd;
+        private LocalDate vadeTarihi;
+        private BigDecimal kalanTutar;
+    }
 
     @Data
     @NoArgsConstructor

@@ -20,6 +20,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const bugunkuOdeme = ref(0)
   const bekleyenIzinSayisi = ref(0)
   const aylikGelirGider = ref([])
+  const vadesiGecenFaturalar = ref([])
+  const vadesiYaklasanFaturalar = ref([])
   const loading = ref(false)
   const error = ref(null)
 
@@ -46,6 +48,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
       bugunkuOdeme.value = d.bugunkuOdeme || 0
       bekleyenIzinSayisi.value = d.bekleyenIzinSayisi || 0
       aylikGelirGider.value = d.aylikGelirGider || []
+      vadesiGecenFaturalar.value = d.vadesiGecenFaturalar || []
+      vadesiYaklasanFaturalar.value = d.vadesiYaklasanFaturalar || []
       return d
     } catch (err) {
       error.value = err.message
@@ -63,6 +67,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     stokDevirHizi, enCokSatanlar,
     pozitifBakiye, negatifBakiye,
     bugunkuTahsilat, bugunkuOdeme, bekleyenIzinSayisi, aylikGelirGider,
+    vadesiGecenFaturalar, vadesiYaklasanFaturalar,
     loading, error, getDashboardData
   }
 })

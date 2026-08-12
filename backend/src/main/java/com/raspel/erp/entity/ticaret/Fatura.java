@@ -30,6 +30,9 @@ public class Fatura {
     @Column(nullable = false)
     private LocalDate tarih;
 
+    @Column(name = "vade_tarihi")
+    private LocalDate vadeTarihi;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FaturaTur tur;

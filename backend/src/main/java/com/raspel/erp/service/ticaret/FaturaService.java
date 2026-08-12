@@ -252,6 +252,7 @@ public class FaturaService {
         Fatura fatura = Fatura.builder()
                 .faturaNumarasi(faturaNo)
                 .tarih(dto.getTarih() != null ? dto.getTarih() : LocalDate.now())
+                .vadeTarihi(vadeTarihiHesapla(dto, cariHesap))
                 .tur(tur)
                 .durum(faturaDurum)
                 .cariHesap(cariHesap)
@@ -435,6 +436,7 @@ public class FaturaService {
         fatura.setCariHesap(cariHesap);
         fatura.setTur(tur);
         fatura.setTarih(dto.getTarih() != null ? dto.getTarih() : fatura.getTarih());
+        fatura.setVadeTarihi(vadeTarihiHesapla(dto, cariHesap));
         fatura.setAciklama(dto.getAciklama());
         if (dto.getTeslimEden() != null) fatura.setTeslimEden(dto.getTeslimEden());
         if (dto.getTeslimDurumu() != null) fatura.setTeslimDurumu(dto.getTeslimDurumu());
@@ -529,6 +531,19 @@ public class FaturaService {
         }
     }
 
+    /**
+     * Faturanın vade tarihini hesaplar.
+     * Öncelik: DTO'da açıkça verilen vade tarihi -> Cari hesabın ödeme vadesi -> Fatura tarihi.
+     */
+    private LocalDate vadeTarihiHesapla(FaturaDTO dto, CariHesap cariHesap) {
+        if (dto.getVadeTarihi() != null) return dto.getVadeTarihi();
+        LocalDate tarih = dto.getTarih() != null ? dto.getTarih() : LocalDate.now();
+        if (cariHesap != null && cariHesap.getOdemeVadesi() != null) {
+            return tarih.plusDays(cariHesap.getOdemeVadesi());
+        }
+        return tarih;
+    }
+
     private FaturaDTO entityDTOyeCevir(Fatura fatura) {
         Map<Long, Stok> stokHaritasi = stokRepository.findAllById(
                 fatura.getKalemler().stream()
@@ -563,6 +578,7 @@ public class FaturaService {
                 .id(fatura.getId())
                 .faturaNumarasi(fatura.getFaturaNumarasi())
                 .tarih(fatura.getTarih())
+                .vadeTarihi(fatura.getVadeTarihi())
                 .tur(fatura.getTur().name())
                 .durum(fatura.getDurum().name())
                 .cariHesapId(fatura.getCariHesap() != null ? fatura.getCariHesap().getId() : null)

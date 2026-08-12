@@ -22,6 +22,8 @@ public class FaturaDTO {
     @NotNull(message = "Fatura tarihi girilmelidir")
     private LocalDate tarih;
 
+    private LocalDate vadeTarihi;
+
     @NotBlank(message = "Fatura türü seçilmelidir")
     private String tur;
 
