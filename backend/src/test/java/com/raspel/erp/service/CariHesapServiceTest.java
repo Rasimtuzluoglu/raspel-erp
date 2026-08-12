@@ -131,13 +131,13 @@ class CariHesapServiceTest {
 
     @Test
     void toplamCariSayisiGetir_returnsCount() {
-        when(cariHesapRepository.count()).thenReturn(5L);
-        assertEquals(5L, cariHesapService.toplamCariSayisiGetir());
+        when(cariHesapRepository.countBySirketId(1L)).thenReturn(5L);
+        assertEquals(5L, cariHesapService.toplamCariSayisiGetir(1L));
     }
 
     @Test
     void toplamBakiyeGetir_returnsTotal() {
-        when(cariHesapRepository.toplamBakiyeHesapla()).thenReturn(BigDecimal.valueOf(50000));
-        assertEquals(BigDecimal.valueOf(50000), cariHesapService.toplamBakiyeGetir());
+        when(cariHesapRepository.toplamBakiyeHesaplaBySirketId(1L)).thenReturn(BigDecimal.valueOf(50000));
+        assertEquals(BigDecimal.valueOf(50000), cariHesapService.toplamBakiyeGetir(1L));
     }
 }

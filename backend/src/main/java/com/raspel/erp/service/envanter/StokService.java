@@ -254,7 +254,7 @@ public class StokService {
     }
 
     @Transactional(readOnly = true)
-    public long toplamStokAdet() { return stokRepository.count(); }
+    public long toplamStokAdet(Long sirketId) { return stokRepository.countBySirketId(sirketId); }
 
     @Transactional(readOnly = true)
     public BigDecimal toplamStokMiktari() {

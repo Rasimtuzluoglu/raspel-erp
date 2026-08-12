@@ -200,8 +200,8 @@ class StokServiceTest {
 
     @Test
     void toplamStokAdet_returnsCount() {
-        when(stokRepository.count()).thenReturn(3L);
-        assertEquals(3L, stokService.toplamStokAdet());
+        when(stokRepository.countBySirketId(1L)).thenReturn(3L);
+        assertEquals(3L, stokService.toplamStokAdet(1L));
     }
 
     @Test
