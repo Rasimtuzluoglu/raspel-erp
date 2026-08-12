@@ -54,10 +54,30 @@ public class LoginRateLimitFilter implements Filter {
 
     private String getClientIp(HttpServletRequest req) {
         String xForwardedFor = req.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+        String remoteAddr = req.getRemoteAddr();
+        // X-Forwarded-For yalnızca güvenilir proxy'den (özel/loopback ağ) geldiğinde kullanılır.
+        // Doğrudan internetten gelen isteklerde spoofing engellenir.
+        if (xForwardedFor != null && !xForwardedFor.isBlank() && guvenilirProxyMu(remoteAddr)) {
             return xForwardedFor.split(",")[0].trim();
         }
-        return req.getRemoteAddr();
+        return remoteAddr;
+    }
+
+    private boolean guvenilirProxyMu(String addr) {
+        if (addr == null) return false;
+        if (addr.equals("127.0.0.1") || addr.equals("::1") || addr.equals("0:0:0:0:0:0:0:1")) return true;
+        if (addr.startsWith("10.")) return true;
+        if (addr.startsWith("192.168.")) return true;
+        // 172.16.0.0 - 172.31.255.255 (RFC 1918)
+        if (addr.startsWith("172.")) {
+            try {
+                int ikinci = Integer.parseInt(addr.substring(4, addr.indexOf('.', 4)));
+                return ikinci >= 16 && ikinci <= 31;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /** Süresi dolmuş kayıtları bellekten temizler. */

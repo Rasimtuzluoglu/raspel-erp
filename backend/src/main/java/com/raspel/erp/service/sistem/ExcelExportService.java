@@ -13,6 +13,21 @@ import java.util.function.Function;
 @Service
 public class ExcelExportService {
 
+    /**
+     * Excel formula injection koruması: hücre =, +, -, @, \t, \r ile başlıyorsa
+     * başına tek tırnak ekleyerek formül olarak yorumlanmasını engeller.
+     */
+    private String formulKorumasi(String value) {
+        if (value == null) return "";
+        String s = value;
+        if (s.isEmpty()) return s;
+        char ilk = s.charAt(0);
+        if (ilk == '=' || ilk == '+' || ilk == '-' || ilk == '@' || ilk == '\t' || ilk == '\r') {
+            return "'" + s;
+        }
+        return s;
+    }
+
     public byte[] export(String sheetName, String[] columns, List<Map<String, Object>> rows) {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet(sheetName);
@@ -49,7 +64,7 @@ public class ExcelExportService {
                         cell.setCellValue(d);
                         cell.setCellStyle(dateStyle);
                     } else {
-                        cell.setCellValue(val.toString());
+                        cell.setCellValue(formulKorumasi(val.toString()));
                     }
                 }
             }
