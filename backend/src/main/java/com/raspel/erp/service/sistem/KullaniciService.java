@@ -96,15 +96,13 @@ public class KullaniciService {
         return entityToDTO(kullaniciRepository.save(k));
     }
 
-    /** Oturum açmış kullanıcının kendi profil güncellemesi: rol ve aktiflik değiştirilemez. */
+    /** Oturum açmış kullanıcının kendi profil güncellemesi: rol, aktiflik ve şifre değiştirilemez (şifre için ayrı endpoint). */
     public KullaniciDTO profilGuncelle(Long id, KullaniciDTO dto) {
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
         if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
-        if (dto.getSirketId() != null) k.setSirketId(dto.getSirketId());
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) k.setPassword(passwordEncoder.encode(dto.getPassword()));
         return entityToDTO(kullaniciRepository.save(k));
     }
 
@@ -121,6 +119,7 @@ public class KullaniciService {
             throw new BusinessException("Mevcut şifre hatalı");
         }
         k.setPassword(passwordEncoder.encode(req.getYeniSifre()));
+        k.setTokenVersion((k.getTokenVersion() != null ? k.getTokenVersion() : 0L) + 1);
         kullaniciRepository.save(k);
     }
 
@@ -129,6 +128,7 @@ public class KullaniciService {
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı adı bulunamadı: " + req.getUsername()));
         k.setPassword(passwordEncoder.encode(req.getYeniSifre()));
+        k.setTokenVersion((k.getTokenVersion() != null ? k.getTokenVersion() : 0L) + 1);
         kullaniciRepository.save(k);
         log.info("Kullanıcı şifresi sıfırlandı: {}", req.getUsername());
     }

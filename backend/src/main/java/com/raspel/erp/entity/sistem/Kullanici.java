@@ -63,6 +63,10 @@ public class Kullanici {
     @JsonIgnore
     private String twoFactorSecret;
 
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private Long tokenVersion = 0L;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
@@ -71,5 +75,6 @@ public class Kullanici {
         olusturmaTarihi = LocalDateTime.now();
         if (active == null) active = true;
         if (role == null) role = "USER";
+        if (tokenVersion == null) tokenVersion = 0L;
     }
 }

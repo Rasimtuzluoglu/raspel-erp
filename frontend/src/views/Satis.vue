@@ -341,6 +341,7 @@ import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 
 const toastBildirim = useToastBildirim()
@@ -500,7 +501,7 @@ const printTermalFis = (satisData) => {
 
   const kalemlerHtml = (satisData.kalemler || []).map(k => `
     <tr>
-      <td style="text-align:left;">${k.stokAd || k.ad || 'Ürün'} x${k.miktar || k.adet || 1}</td>
+      <td style="text-align:left;">${escapeHtml(k.stokAd || k.ad || 'Ürün')} x${k.miktar || k.adet || 1}</td>
       <td style="text-align:right;">${formatCurrency(k.toplamTutar || (k.miktar * k.birimFiyat) || (k.adet * k.birimFiyat))}</td>
     </tr>
   `).join('')
@@ -510,7 +511,7 @@ const printTermalFis = (satisData) => {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Termal Fiş - ${satisData.faturaNumarasi || 'SATIŞ'}</title>
+      <title>Termal Fiş - ${escapeHtml(satisData.faturaNumarasi || 'SATIŞ')}</title>
       <style>
         @page { size: 80mm auto; margin: 0; }
         body { font-family: 'Courier New', Courier, monospace; width: 72mm; margin: 0 auto; padding: 10px 0; font-size: 12px; color: #000; }
@@ -537,9 +538,9 @@ const printTermalFis = (satisData) => {
       <div class="header text-center">
         <h2>RASPEL ERP</h2>
         <p>SATIŞ FİŞİ</p>
-        <p>Fiş No: ${satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now())}</p>
+        <p>Fiş No: ${escapeHtml(satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now()))}</p>
         <p>Tarih: ${formatDate(satisData.tarih || new Date())}</p>
-        <p>Müşteri: ${satisData.cariHesapAd || 'Perakende Müşteri'}</p>
+        <p>Müşteri: ${escapeHtml(satisData.cariHesapAd || 'Perakende Müşteri')}</p>
       </div>
       <div class="line"></div>
       <table>
@@ -572,7 +573,7 @@ const printTermalFis = (satisData) => {
       <div class="footer">
         <p>Bizi tercih ettiğiniz için teşekkür ederiz!</p>
         <p>Yazilim: RasPel ERP</p>
-        <p>Islem Yapan: ${authStore.kullanici?.displayName || '-'}</p>
+        <p>Islem Yapan: ${escapeHtml(authStore.kullanici?.displayName || '-')}</p>
       </div>
     </body>
     </html>

@@ -49,6 +49,7 @@ public class JwtUtil {
                 .claim("displayName", kullanici.getDisplayName())
                 .claim("sirketId", sirketId != null ? sirketId : kullanici.getSirketId())
                 .claim("sirketAdi", sirketAdi)
+                .claim("tokenVersion", kullanici.getTokenVersion() != null ? kullanici.getTokenVersion() : 0L)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(signingKey)
@@ -74,6 +75,12 @@ public class JwtUtil {
     public String getDisplayNameFromToken(String token) {
         Object val = getClaims(token).getPayload().get("displayName");
         return val != null ? val.toString() : null;
+    }
+
+    public Long getTokenVersionFromToken(String token) {
+        Object val = getClaims(token).getPayload().get("tokenVersion");
+        if (val instanceof Number) return ((Number) val).longValue();
+        return null;
     }
 
     public boolean validateToken(String token) {

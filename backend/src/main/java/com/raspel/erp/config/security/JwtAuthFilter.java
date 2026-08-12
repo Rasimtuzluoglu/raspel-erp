@@ -16,12 +16,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import com.raspel.erp.repository.sistem.KullaniciRepository;
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final KullaniciRepository kullaniciRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -59,6 +62,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 String username = jwtUtil.getUsernameFromToken(token);
+                Long tokenVersion = jwtUtil.getTokenVersionFromToken(token);
+
+                // Sifre degistirildiyse eski token'lar gecersizdir (tokenVersion kontrolu)
+                boolean tokenGecerli = true;
+                try {
+                    Long dbVersion = kullaniciRepository.findByUsername(username)
+                            .map(u -> u.getTokenVersion() != null ? u.getTokenVersion() : 0L)
+                            .orElse(null);
+                    if (dbVersion != null && tokenVersion != null && !dbVersion.equals(tokenVersion)) {
+                        tokenGecerli = false;
+                    }
+                } catch (Exception ignored) {
+                    // Kullanici bulunamazsa tokenGecerli kalir, loadUserByUsername asagida hata verir
+                }
+
+                if (!tokenGecerli) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 if (userDetails != null && userDetails.isEnabled()) {
