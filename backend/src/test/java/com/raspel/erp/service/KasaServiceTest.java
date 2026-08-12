@@ -120,7 +120,7 @@ class KasaServiceTest {
     void hareketEkle_gelir_artirirBakiye() {
         Kasa kasa = createKasa(1L);
         kasa.setBakiye(BigDecimal.valueOf(5000));
-        when(kasaRepository.findById(1L)).thenReturn(Optional.of(kasa));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
         KasaHareketDTO dto = KasaHareketDTO.builder().kasaId(1L).tur("GELIR")
                 .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now()).build();
         KasaHareket h = KasaHareket.builder().id(1L).kasa(kasa).tur("GELIR")
@@ -135,7 +135,7 @@ class KasaServiceTest {
     void hareketEkle_gider_azaltirBakiye() {
         Kasa kasa = createKasa(1L);
         kasa.setBakiye(BigDecimal.valueOf(5000));
-        when(kasaRepository.findById(1L)).thenReturn(Optional.of(kasa));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
         KasaHareketDTO dto = KasaHareketDTO.builder().kasaId(1L).tur("GIDER")
                 .tutar(BigDecimal.valueOf(2000)).hareketTarihi(LocalDate.now()).build();
         KasaHareket h = KasaHareket.builder().id(1L).kasa(kasa).tur("GIDER")

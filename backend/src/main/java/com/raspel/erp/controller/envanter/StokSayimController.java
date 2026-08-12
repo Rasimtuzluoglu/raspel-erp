@@ -54,8 +54,8 @@ public class StokSayimController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Stok sayım durum güncelle", description = "Durumu günceller; TAMAMLANDI olursa stok miktarı sayıma göre düzeltilir")
-    public ResponseEntity<StokSayimDTO> durumGuncelle(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
-        return ResponseEntity.ok(stokSayimService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<StokSayimDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(stokSayimService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")

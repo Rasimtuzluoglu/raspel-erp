@@ -54,14 +54,14 @@ public class ProjeController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Proje durum güncelle", description = "Proje durumunu günceller")
-    public ResponseEntity<ProjeDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(projeService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<ProjeDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(projeService.durumGuncelle(id, body.getDurum()));
     }
 
     @PutMapping("/gorev/{gorevId}/durum")
     @Operation(summary = "Görev durum güncelle", description = "Proje görevinin durumunu günceller")
-    public ResponseEntity<GorevDTO> gorevDurumGuncelle(@PathVariable Long gorevId, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(projeService.gorevDurumGuncelle(gorevId, body.get("durum")));
+    public ResponseEntity<GorevDTO> gorevDurumGuncelle(@PathVariable Long gorevId, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(projeService.gorevDurumGuncelle(gorevId, body.getDurum()));
     }
 
     @PostMapping("/{projeId}/gorevler")

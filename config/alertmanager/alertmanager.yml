@@ -10,11 +10,9 @@ route:
 
 receivers:
   - name: 'default'
-    # Slack/Email/Telegram entegrasyonu icin buraya webhook ekleyin:
-    # slack_configs:
-    #   - api_url: '${SLACK_WEBHOOK_URL}'
-    #     channel: '#alerts'
-    # email_configs:
-    #   - to: 'admin@raspel.com'
-    #     from: 'alerts@raspel.com'
-    #     smarthost: 'smtp.gmail.com:587'
+    # Slack entegrasyonu: SLACK_WEBHOOK_URL ortam degiskeni tanimliysa alertler Slack'e gider.
+    # Tanimli degilse alertler yalnizca web arayuzunde gorunur.
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#raspel-alerts'
+        send_resolved: true

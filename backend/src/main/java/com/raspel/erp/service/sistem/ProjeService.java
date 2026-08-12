@@ -38,6 +38,7 @@ public class ProjeService {
     }
 
     public ProjeDTO olustur(ProjeDTO dto) {
+        tenantChecker.checkSirketId(dto.getSirketId(), "Proje");
         Proje p = Proje.builder().ad(dto.getAd()).aciklama(dto.getAciklama())
                 .baslangic(dto.getBaslangic()).bitis(dto.getBitis())
                 .durum("DEVAM_EDIYOR").sorumlu(dto.getSorumlu())

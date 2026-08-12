@@ -53,8 +53,8 @@ public class IadeController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "İade durum güncelle", description = "İade durumunu günceller (TASLAK/TAMAMLANDI/IPTAL)")
-    public ResponseEntity<IadeDTO> durumGuncelle(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
-        return ResponseEntity.ok(iadeService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<IadeDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(iadeService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")

@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.service.envanter.StokService;
@@ -39,6 +40,7 @@ class StokServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private BildirimService bildirimService;
     @Mock private TenantChecker tenantChecker;
+    @Mock private CacheYardimci cacheYardimci;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -64,8 +66,9 @@ class StokServiceTest {
 
     @Test
     void ara_returnsFiltered() {
-        when(stokRepository.findByAdContainingIgnoreCase("urun")).thenReturn(List.of(createStok(1L)));
-        var result = stokService.ara("urun");
+        when(stokRepository.findBySirketIdAndBarkod(1L, "urun")).thenReturn(List.of());
+        when(stokRepository.findBySirketIdAndAdContainingIgnoreCase(1L, "urun")).thenReturn(List.of(createStok(1L)));
+        var result = stokService.ara("urun", 1L);
         assertEquals(1, result.size());
     }
 
@@ -148,7 +151,7 @@ class StokServiceTest {
     @Test
     void hareketEkle_giris_artirirMiktari() {
         Stok stok = createStok(1L);
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         StokHareketDTO dto = StokHareketDTO.builder().stokId(1L).tur("GIRIS").miktar(BigDecimal.valueOf(10))
                 .hareketTarihi(LocalDate.now()).build();
         StokHareket hareket = StokHareket.builder().id(1L).stok(stok).tur("GIRIS").miktar(BigDecimal.valueOf(10))
@@ -163,7 +166,7 @@ class StokServiceTest {
     void hareketEkle_cikis_throwsWhenYetersiz() {
         Stok stok = createStok(1L);
         stok.setMiktar(BigDecimal.valueOf(5));
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         StokHareketDTO dto = StokHareketDTO.builder().stokId(1L).tur("CIKIS").miktar(BigDecimal.valueOf(10))
                 .hareketTarihi(LocalDate.now()).build();
         assertThrows(RuntimeException.class, () -> stokService.hareketEkle(dto));
@@ -173,7 +176,7 @@ class StokServiceTest {
     void hareketEkle_cikis_azaltirMiktari() {
         Stok stok = createStok(1L);
         stok.setMiktar(BigDecimal.valueOf(50));
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         StokHareketDTO dto = StokHareketDTO.builder().stokId(1L).tur("CIKIS").miktar(BigDecimal.valueOf(10))
                 .hareketTarihi(LocalDate.now()).build();
         StokHareket hareket = StokHareket.builder().id(1L).stok(stok).tur("CIKIS").miktar(BigDecimal.valueOf(10))
@@ -214,7 +217,7 @@ class StokServiceTest {
         stok.setSirketId(1L);
         stok.setMiktar(BigDecimal.valueOf(4));
         stok.setMinMiktar(BigDecimal.valueOf(5));
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         StokHareketDTO dto = StokHareketDTO.builder().stokId(1L).tur("CIKIS").miktar(BigDecimal.valueOf(2))
                 .hareketTarihi(LocalDate.now()).build();
         when(stokHareketRepository.save(any(StokHareket.class)))

@@ -19,6 +19,9 @@ public class AuditLog {
     @Column(name = "kullanici_id")
     private Long kullaniciId;
 
+    @Column(name = "sirket_id")
+    private Long sirketId;
+
     @Column(nullable = false, length = 50)
     private String islem;
 

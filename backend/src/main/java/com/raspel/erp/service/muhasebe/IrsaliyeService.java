@@ -1,6 +1,7 @@
 package com.raspel.erp.service.muhasebe;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
@@ -9,10 +10,8 @@ import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +21,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.muhasebe.IrsaliyeKalemRepository;
@@ -41,6 +42,7 @@ public class IrsaliyeService {
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
     private final TenantChecker tenantChecker;
+    private final CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -55,12 +57,12 @@ public class IrsaliyeService {
         return entityToDTO(i);
     }
 
-    public IrsaliyeDTO olustur(IrsaliyeDTO dto) {
+    public IrsaliyeDTO olustur(IrsaliyeDTO dto, Long sirketId) {
         Irsaliye i = Irsaliye.builder()
                 .irsaliyeNo(dto.getIrsaliyeNo()).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).faturaId(dto.getFaturaId())
                 .durum("TASLAK").tur(dto.getTur() != null ? dto.getTur() : "SATIS")
-                .aciklama(dto.getAciklama()).sirketId(dto.getSirketId()).build();
+                .aciklama(dto.getAciklama()).sirketId(sirketId).build();
         i = irsaliyeRepository.save(i);
         if (dto.getKalemler() != null) {
             for (IrsaliyeKalemDTO k : dto.getKalemler()) {
@@ -97,7 +99,6 @@ public class IrsaliyeService {
         return entityToDTO(i);
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public IrsaliyeDTO durumGuncelle(Long id, String durum) {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
@@ -107,7 +108,7 @@ public class IrsaliyeService {
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
-                Stok stok = stokRepository.findById(k.getStokId())
+                Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
                 BigDecimal adet = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur()) && stok.getMiktar().compareTo(adet) < 0) {
@@ -132,7 +133,7 @@ public class IrsaliyeService {
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
-                Stok stok = stokRepository.findById(k.getStokId())
+                Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
                 BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur())) {
@@ -151,6 +152,10 @@ public class IrsaliyeService {
             }
         }
 
+        if ("KESILDI".equals(durum) || "IPTAL".equals(durum)) {
+            cacheYardimci.temizle("stoklar", "dashboard");
+        }
+
         i.setDurum(durum);
         return entityToDTO(irsaliyeRepository.save(i));
     }
@@ -164,14 +169,30 @@ public class IrsaliyeService {
     }
 
     private IrsaliyeDTO entityToDTO(Irsaliye i) {
-        List<IrsaliyeKalemDTO> kalemler = kalemRepository.findByIrsaliyeId(i.getId()).stream()
+        List<IrsaliyeKalem> kalemEntities = kalemRepository.findByIrsaliyeId(i.getId());
+
+        List<Long> stokIdler = kalemEntities.stream()
+                .map(IrsaliyeKalem::getStokId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> stokAdlari = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(Stok::getId, Stok::getAd));
+
+        String cariAdi = i.getCariHesapId() != null
+                ? cariHesapRepository.findById(i.getCariHesapId()).map(c -> c.getAd()).orElse(null)
+                : null;
+
+        List<IrsaliyeKalemDTO> kalemler = kalemEntities.stream()
                 .map(k -> IrsaliyeKalemDTO.builder().id(k.getId())
-                        .stokId(k.getStokId()).stokAdi(k.getStokId() != null ? stokRepository.findById(k.getStokId()).map(s -> s.getAd()).orElse(null) : null)
+                        .stokId(k.getStokId())
+                        .stokAdi(k.getStokId() != null ? stokAdlari.get(k.getStokId()) : null)
                         .aciklama(k.getAciklama()).miktar(k.getMiktar()).birim(k.getBirim()).build())
                 .collect(Collectors.toList());
         return IrsaliyeDTO.builder().id(i.getId()).irsaliyeNo(i.getIrsaliyeNo()).tarih(i.getTarih())
                 .cariHesapId(i.getCariHesapId())
-                .cariHesapAdi(i.getCariHesapId() != null ? cariHesapRepository.findById(i.getCariHesapId()).map(c -> c.getAd()).orElse(null) : null)
+                .cariHesapAdi(cariAdi)
                 .faturaId(i.getFaturaId()).durum(i.getDurum()).tur(i.getTur())
                 .aciklama(i.getAciklama()).sirketId(i.getSirketId())
                 .olusturmaTarihi(i.getOlusturmaTarihi()).kalemler(kalemler).build();

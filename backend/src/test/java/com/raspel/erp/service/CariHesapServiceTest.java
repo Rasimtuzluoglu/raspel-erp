@@ -5,6 +5,7 @@ import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +30,7 @@ class CariHesapServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private HareketRepository hareketRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private CacheYardimci cacheYardimci;
     @InjectMocks private CariHesapService cariHesapService;
 
     private CariHesap createCariHesap(Long id) {

@@ -8,6 +8,12 @@ export default defineConfig({
     globals: true,
     root: '.',
     setupFiles: ['./src/test-setup.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      include: ['src/**/*.{js,vue}'],
+      exclude: ['src/main.js', 'src/**/__tests__/**', 'src/api/modules/**', 'src/locales/**']
+    },
     server: {
       deps: {
         inline: ['primevue', 'primeicons']

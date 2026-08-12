@@ -57,7 +57,7 @@ class SiparisControllerTest {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").build());
         when(siparisService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
-        mockMvc.perform(get("/api/siparisler").param("sirketId", "1"))
+        mockMvc.perform(get("/api/siparisler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].siparisNo").value("SPR-001"));
     }
@@ -83,7 +83,7 @@ class SiparisControllerTest {
     @Test
     void shouldCreate() throws Exception {
         var dto = SiparisDTO.builder().id(1L).siparisNo("SPR-001").tarih(LocalDate.now()).build();
-        when(siparisService.olustur(any(SiparisDTO.class))).thenReturn(dto);
+        when(siparisService.olustur(any(SiparisDTO.class), any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/siparisler")
                         .contentType(MediaType.APPLICATION_JSON)

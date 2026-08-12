@@ -41,7 +41,7 @@ class AuditLogControllerTest {
         var list = List.of(
                 AuditLog.builder().id(1L).islem("GIRIS").entityAdi("Kullanici").entityId(1L).tarih(LocalDateTime.now()).build()
         );
-        when(auditLogService.filtreliGetir(isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(auditLogService.filtreliGetir(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/audit-log"))
@@ -55,7 +55,7 @@ class AuditLogControllerTest {
         var list = List.of(
                 AuditLog.builder().id(1L).islem("SIL").entityAdi("Cari").tarih(LocalDateTime.now()).build()
         );
-        when(auditLogService.filtreliGetir(isNull(), eq("SIL"), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(auditLogService.filtreliGetir(isNull(), isNull(), eq("SIL"), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/audit-log").param("islem", "SIL"))

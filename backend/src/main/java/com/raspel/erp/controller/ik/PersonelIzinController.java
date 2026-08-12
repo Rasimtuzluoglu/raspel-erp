@@ -62,8 +62,8 @@ public class PersonelIzinController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "İzin durum güncelle", description = "İzin durumunu günceller (onayla/reddet)")
-    public ResponseEntity<PersonelIzinDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(personelIzinService.durumGuncelle(id, body.get("durum"), body.get("onaylayan")));
+    public ResponseEntity<PersonelIzinDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(personelIzinService.durumGuncelle(id, body.getDurum(), body.getOnaylayan()));
     }
 
     @DeleteMapping("/{id}")

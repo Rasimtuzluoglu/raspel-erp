@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.config.TenantChecker;
@@ -50,7 +51,7 @@ class BankaMutabakatServiceTest {
         Fatura eslesenFatura = fatura(5L, BigDecimal.valueOf(1000), bugun.minusDays(1), "ODENMEDI");
 
         when(bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(10L)).thenReturn(List.of(hareket));
-        when(faturaRepository.findAll()).thenReturn(List.of(eslesenFatura));
+        when(faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(eq(1L), eq(Fatura.FaturaDurum.IPTAL), anyList())).thenReturn(List.of(eslesenFatura));
         when(bankaHareketiRepository.save(any(BankaHareketi.class))).thenAnswer(inv -> inv.getArgument(0));
         when(bankaHareketiRepository.findByBankaIdOrderByTarihDesc(10L)).thenReturn(List.of(hareket));
 
@@ -70,7 +71,7 @@ class BankaMutabakatServiceTest {
         Fatura farkliFatura = fatura(5L, BigDecimal.valueOf(1000), bugun, "ODENMEDI");
 
         when(bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(10L)).thenReturn(List.of(hareket));
-        when(faturaRepository.findAll()).thenReturn(List.of(farkliFatura));
+        when(faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(eq(1L), eq(Fatura.FaturaDurum.IPTAL), anyList())).thenReturn(List.of(farkliFatura));
         when(bankaHareketiRepository.findByBankaIdOrderByTarihDesc(10L)).thenReturn(List.of(hareket));
 
         bankaMutabakatService.otomatikEslestir(10L, 1L);

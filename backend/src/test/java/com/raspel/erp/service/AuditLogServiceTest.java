@@ -26,7 +26,7 @@ class AuditLogServiceTest {
 
     @Test
     void log_savesAuditLog() {
-        auditLogService.log(1L, "CREATE", "Kullanici", 1L, "Yeni kullanici olusturuldu", "192.168.1.1");
+        auditLogService.log(1L, 1L, "CREATE", "Kullanici", 1L, "Yeni kullanici olusturuldu", "192.168.1.1");
         verify(auditLogRepository).save(any(AuditLog.class));
     }
 

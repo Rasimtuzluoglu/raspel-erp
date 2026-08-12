@@ -47,6 +47,7 @@ public class MuhasebeService {
     }
 
     public HesapPlaniDTO hesapOlustur(HesapPlaniDTO dto) {
+        tenantChecker.checkSirketId(dto.getSirketId(), "Hesap Planı");
         hesapPlaniRepository.findBySirketIdAndKod(dto.getSirketId(), dto.getKod()).ifPresent(h -> {
             throw new DuplicateResourceException("Bu hesap kodu zaten tanımlı: " + dto.getKod());
         });
@@ -100,6 +101,7 @@ public class MuhasebeService {
     }
 
     public MuhasebeFisiDTO fisOlustur(MuhasebeFisiDTO dto) {
+        tenantChecker.checkSirketId(dto.getSirketId(), "Muhasebe Fişi");
         if (dto.getKalemler() == null || dto.getKalemler().isEmpty()) {
             throw new BusinessException("Fişe en az bir kalem eklenmelidir");
         }

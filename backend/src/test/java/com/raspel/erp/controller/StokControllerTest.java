@@ -55,9 +55,9 @@ class StokControllerTest {
     @Test
     void shouldSearch() throws Exception {
         var list = List.of(StokDTO.builder().id(1L).ad("Kalem").build());
-        when(stokService.ara("Kalem")).thenReturn(list);
+        when(stokService.ara("Kalem", 1L)).thenReturn(list);
 
-        mockMvc.perform(get("/api/stoklar/ara").param("q", "Kalem"))
+        mockMvc.perform(get("/api/stoklar/ara").param("q", "Kalem").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ad").value("Kalem"));
     }

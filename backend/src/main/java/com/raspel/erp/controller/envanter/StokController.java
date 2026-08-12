@@ -39,7 +39,10 @@ public class StokController {
 
     @GetMapping("/ara")
     @Operation(summary = "Stok ara", description = "Stokları ada/barkoda göre arar")
-    public ResponseEntity<List<StokDTO>> ara(@RequestParam String q) { return ResponseEntity.ok(stokService.ara(q)); }
+    public ResponseEntity<List<StokDTO>> ara(@RequestParam String q, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.ara(q, sirketId));
+    }
 
     @GetMapping("/kritik")
     @Operation(summary = "Kritik stoklar", description = "Kritik seviyeye düşen stokları ve önerilen sipariş miktarlarını listeler")

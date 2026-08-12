@@ -25,6 +25,7 @@ import org.springframework.data.web.PageableDefault;
 import com.raspel.erp.dto.sistem.SifreSifirlaRequest;
 import com.raspel.erp.dto.sistem.TwoFactorDTO;
 import com.raspel.erp.dto.sistem.TwoFactorGirisRequest;
+import org.springframework.beans.factory.annotation.Value;
 
 @Tag(name = "Kullanıcılar", description = "Kullanıcı yönetimi ve kimlik doğrulama API")
 @RestController
@@ -34,6 +35,9 @@ import com.raspel.erp.dto.sistem.TwoFactorGirisRequest;
 public class KullaniciController {
 
     private final KullaniciService kullaniciService;
+
+    @Value("${app.cookie.secure:false}")
+    private boolean cookieSecure;
 
     @GetMapping
     @Operation(summary = "Tüm kullanıcıları getir", description = "Tüm kullanıcıları listeler (yalnızca ADMIN)")
@@ -128,14 +132,7 @@ public class KullaniciController {
     public ResponseEntity<LoginResponse> giris2fa(@RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.TwoFactorGirisRequest req,
                                                   HttpServletResponse response) {
         LoginResponse loginResponse = kullaniciService.giris2faTamamla(req);
-        ResponseCookie jwtCookie = ResponseCookie.from("jwt", loginResponse.getToken())
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Strict")
-                .path("/")
-                .maxAge(86400)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        jwtCookieEkle(response, loginResponse.getToken());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -146,14 +143,7 @@ public class KullaniciController {
         String girisToken = (String) req.get("girisToken");
         Long sirketId = req.get("sirketId") != null ? Long.valueOf(req.get("sirketId").toString()) : null;
         LoginResponse loginResponse = kullaniciService.girisSirket(girisToken, sirketId);
-        ResponseCookie jwtCookie = ResponseCookie.from("jwt", loginResponse.getToken())
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Strict")
-                .path("/")
-                .maxAge(86400)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        jwtCookieEkle(response, loginResponse.getToken());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -162,14 +152,19 @@ public class KullaniciController {
     public ResponseEntity<LoginResponse> giris(@RequestBody @jakarta.validation.Valid LoginRequest req,
                                                 HttpServletResponse response) {
         LoginResponse loginResponse = kullaniciService.giris(req);
-        ResponseCookie jwtCookie = ResponseCookie.from("jwt", loginResponse.getToken())
+        jwtCookieEkle(response, loginResponse.getToken());
+        return ResponseEntity.ok(loginResponse);
+    }
+
+    private void jwtCookieEkle(HttpServletResponse response, String token) {
+        if (token == null || token.isBlank()) return;
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
-                .secure(false)
+                .secure(cookieSecure)
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(86400)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
-        return ResponseEntity.ok(loginResponse);
     }
 }

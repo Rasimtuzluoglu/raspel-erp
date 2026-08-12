@@ -13,7 +13,7 @@
           </button>
         </div>
         <div class="dashboard-datetime">
-          <i class="pi pi-calendar" /> {{ simdikiTarih }}
+          <SaatGostergesi />
         </div>
         <Button
           icon="pi pi-refresh"
@@ -782,7 +782,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
@@ -797,6 +797,7 @@ import { useAuthStore } from '../stores/authStore.js'
 const dovizStore = useDovizStore()
 import { Doughnut, Bar, Line } from 'vue-chartjs'
 import Onboarding from '../components/Onboarding.vue'
+import SaatGostergesi from '../components/SaatGostergesi.vue'
 import { useYakinZamanda, yakinZamandaTurleri } from '../composables/useYakinZamanda.js'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler } from 'chart.js'
 
@@ -840,7 +841,6 @@ const stokStore = useStokStore()
 const authStore = useAuthStore()
 const loading = ref(true)
 
-const simdikiTarih = ref('')
 const notMetni = ref(localStorage.getItem('raspel_erp_notlar') || '')
 const notKaydediliyor = ref(false)
 const notKaydedildi = ref(false)
@@ -866,11 +866,6 @@ const refresh = async () => {
   }
   loading.value = false
 }
-const tarihSaat = () => {
-  const now = new Date()
-  simdikiTarih.value = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' ' + now.toLocaleTimeString('tr-TR')
-}
-let tarihInterval = null
 
 const bakiyeChart = ref({ labels: [], datasets: [] })
 const barChart = ref({ labels: [], datasets: [] })
@@ -1011,7 +1006,6 @@ const aylikKarsilastirmayiHesapla = () => {
 }
 
 onMounted(async () => {
-  tarihSaat(); tarihInterval = setInterval(tarihSaat, 1000)
   sonGoruntulenenler.value = useYakinZamanda().liste()
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_widgets'))
@@ -1037,8 +1031,6 @@ onMounted(async () => {
   }
   loading.value = false
 })
-
-onUnmounted(() => { if (tarihInterval) clearInterval(tarihInterval) })
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'

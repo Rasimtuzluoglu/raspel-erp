@@ -32,7 +32,8 @@ import com.raspel.erp.entity.ticaret.Fatura;
 public class FaturaController {
 
     private final FaturaService faturaService;
-    private final java.util.concurrent.ConcurrentHashMap<String, FaturaDTO> idempotencyCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<String, IdempotencyKaydi> idempotencyCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
 
     @GetMapping
     @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler")
@@ -55,16 +56,26 @@ public class FaturaController {
             @RequestBody @jakarta.validation.Valid FaturaDTO dto,
             HttpServletRequest request,
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
-        if (idempotencyKey != null && idempotencyCache.containsKey(idempotencyKey)) {
-            return ResponseEntity.ok(idempotencyCache.get(idempotencyKey));
+        if (idempotencyKey != null) {
+            IdempotencyKaydi mevcut = idempotencyCache.get(idempotencyKey);
+            if (mevcut != null && !mevcut.suresiDoldu()) {
+                return ResponseEntity.ok(mevcut.fatura);
+            }
+            Long sirketId = (Long) request.getAttribute("sirketId");
+            Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+            String displayName = (String) request.getAttribute("displayName");
+            FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
+            IdempotencyKaydi yeni = new IdempotencyKaydi(olusturulan);
+            IdempotencyKaydi onceki = idempotencyCache.putIfAbsent(idempotencyKey, yeni);
+            if (onceki != null && !onceki.suresiDoldu()) {
+                return ResponseEntity.ok(onceki.fatura);
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
         }
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         String displayName = (String) request.getAttribute("displayName");
         FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
-        if (idempotencyKey != null) {
-            idempotencyCache.put(idempotencyKey, olusturulan);
-        }
         return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
     }
 
@@ -99,14 +110,14 @@ public class FaturaController {
     @GetMapping("/export/csv")
     @Operation(summary = "Faturaları CSV dışa aktar", description = "Faturaları CSV dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> exportCsv(HttpServletRequest request) {
-        List<FaturaDTO> liste = faturaService.tumFaturalariGetir((Long) request.getAttribute("sirketId"), Pageable.unpaged()).getContent();
+        List<FaturaDTO> liste = faturaService.tumFaturalariGetir((Long) request.getAttribute("sirketId"), PageRequest.of(0, 10000)).getContent();
         StringBuilder csv = new StringBuilder("Fatura No,Tarih,Müşteri,Tutar,Durum\n");
         for (FaturaDTO f : liste) {
-            csv.append(f.getFaturaNumarasi()).append(",")
+            csv.append(csvSafe(f.getFaturaNumarasi())).append(",")
                .append(f.getTarih()).append(",")
-               .append(f.getCariHesapAd() != null ? "\"" + f.getCariHesapAd().replace("\"", "\"\"") + "\"" : "")
+               .append(csvSafe(f.getCariHesapAd()))
                .append(",").append(f.getGenelToplam())
-               .append(",").append(f.getDurum()).append("\n");
+               .append(",").append(csvSafe(f.getDurum())).append("\n");
         }
         byte[] bytes = csv.toString().getBytes(StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
@@ -115,5 +126,28 @@ public class FaturaController {
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
+    private String csvSafe(String deger) {
+        if (deger == null || deger.isBlank()) return "\"\"";
+        String s = deger.trim();
+        if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")) {
+            s = "'" + s;
+        }
+        return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
+
     record DurumRequest(String durum) {}
+
+    private static final class IdempotencyKaydi {
+        final FaturaDTO fatura;
+        final long olusturmaZamani;
+
+        IdempotencyKaydi(FaturaDTO fatura) {
+            this.fatura = fatura;
+            this.olusturmaZamani = System.currentTimeMillis();
+        }
+
+        boolean suresiDoldu() {
+            return System.currentTimeMillis() - olusturmaZamani > IDEMPOTENCY_TTL_MS;
+        }
+    }
 }

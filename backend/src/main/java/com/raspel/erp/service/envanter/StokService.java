@@ -1,17 +1,16 @@
 package com.raspel.erp.service.envanter;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.dto.envanter.KritikStokDTO;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.CariHesap;
@@ -40,6 +40,7 @@ public class StokService {
     private final CariHesapRepository cariHesapRepository;
     private final BildirimService bildirimService;
     private final TenantChecker tenantChecker;
+    private final CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public Page<StokDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -47,10 +48,12 @@ public class StokService {
     }
 
     @Transactional(readOnly = true)
-    public List<StokDTO> ara(String q) {
-        List<Stok> sonuc = stokRepository.findByBarkod(q);
+    public List<StokDTO> ara(String q, Long sirketId) {
+        if (sirketId == null) return List.of();
+        List<Stok> sonuc = stokRepository.findBySirketIdAndBarkod(sirketId, q);
         if (!sonuc.isEmpty()) return sonuc.stream().map(this::entityToDTO).collect(Collectors.toList());
-        return stokRepository.findByAdContainingIgnoreCase(q).stream().map(this::entityToDTO).collect(Collectors.toList());
+        return stokRepository.findBySirketIdAndAdContainingIgnoreCase(sirketId, q)
+                .stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -145,9 +148,8 @@ public class StokService {
                 .stream().map(this::hareketToDTO).collect(Collectors.toList());
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public StokHareketDTO hareketEkle(StokHareketDTO dto) {
-        Stok stok = stokRepository.findById(dto.getStokId())
+        Stok stok = stokRepository.findByIdForUpdate(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
         tenantChecker.check(stok.getSirketId(), "Stok");
 
@@ -171,6 +173,7 @@ public class StokService {
         stokRepository.save(stok);
         StokHareketDTO sonuc = hareketToDTO(stokHareketRepository.save(h));
         kritikStokBildirimiGonder(stok);
+        cacheYardimci.temizle("stoklar", "dashboard");
         return sonuc;
     }
 
@@ -188,15 +191,22 @@ public class StokService {
 
     @Transactional(readOnly = true)
     public List<KritikStokDTO> kritikStoklar(Long sirketId) {
-        return stokRepository.kritikStoklar(sirketId).stream().map(s -> KritikStokDTO.builder()
+        List<Stok> stoklar = stokRepository.kritikStoklar(sirketId);
+        List<Long> tedarikciIdler = stoklar.stream()
+                .map(Stok::getTedarikciId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> tedarikciAdlari = tedarikciIdler.isEmpty() ? Map.of()
+                : cariHesapRepository.findAllById(tedarikciIdler).stream()
+                        .collect(Collectors.toMap(CariHesap::getId, CariHesap::getAd));
+        return stoklar.stream().map(s -> KritikStokDTO.builder()
                 .id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd()).birim(s.getBirim())
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar())
                 .kategori(s.getKategori()).marka(s.getMarka())
                 .onerilenSiparisMiktari(s.getMinMiktar().multiply(new BigDecimal("2")).subtract(s.getMiktar())
                         .max(BigDecimal.ZERO))
-                .tedarikciAd(s.getTedarikciId() != null
-                        ? cariHesapRepository.findById(s.getTedarikciId()).map(CariHesap::getAd).orElse(null)
-                        : null)
+                .tedarikciAd(s.getTedarikciId() != null ? tedarikciAdlari.get(s.getTedarikciId()) : null)
                 .build()).collect(Collectors.toList());
     }
 
@@ -212,6 +222,7 @@ public class StokService {
         }
         stokRepository.save(stok);
         stokHareketRepository.deleteById(hareketId);
+        cacheYardimci.temizle("stoklar", "dashboard");
     }
 
     @Transactional(readOnly = true)

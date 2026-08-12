@@ -1,6 +1,7 @@
 package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.exception.BusinessException;
@@ -58,6 +59,7 @@ public class FaturaService {
     private final PdfRaporService pdfRaporService;
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
+    private final CacheYardimci cacheYardimci;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -366,12 +368,11 @@ public class FaturaService {
         faturaRepository.deleteById(id);
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     private List<Long> stokHareketleriIsle(Fatura fatura, String tur, String aciklama) {
         List<Long> kritikStokIds = new ArrayList<>();
         for (FaturaKalem k : fatura.getKalemler()) {
             if (k.getStokId() == null) continue;
-            Stok stok = stokRepository.findById(k.getStokId())
+            Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
             if ("CIKIS".equals(tur)) {
                 BigDecimal adet = BigDecimal.valueOf(k.getAdet());
@@ -398,6 +399,7 @@ public class FaturaService {
                     .build();
             stokHareketRepository.save(h);
         }
+        cacheYardimci.temizle("stoklar", "dashboard");
         return kritikStokIds;
     }
 

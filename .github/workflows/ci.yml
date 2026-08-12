@@ -25,6 +25,11 @@ jobs:
       - name: Build and Test Backend
         run: mvn -B clean verify
         working-directory: ./backend
+      - name: Upload Backend Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/target/site/jacoco/
 
   frontend:
     runs-on: ubuntu-latest
@@ -43,11 +48,19 @@ jobs:
       - name: Lint
         run: npx eslint src --ext .js,.vue
         working-directory: ./frontend
-      - name: Test
-        run: npm run test
+      - name: Test with Coverage
+        run: npm run test -- --coverage
         working-directory: ./frontend
       - name: Build
         run: npm run build
+        working-directory: ./frontend
+      - name: Upload Frontend Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+      - name: npm audit
+        run: npm audit --omit=dev --audit-level=high
         working-directory: ./frontend
 
   security:

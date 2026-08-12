@@ -25,7 +25,7 @@
           class="offline-banner"
         >
           <i class="pi pi-wifi" />
-          <span>Cevrimdisi Mod — Internet baglantisi kesildi. Verileriniz cache'den gosteriliyor, degisiklikler baglanti gelince kaydedilecek.</span>
+          <span>Cevrimdisi Mod — Internet baglantisi kesildi. Kayitli veriler gosteriliyor, yeni degisiklikler kaydedilmeyecek.</span>
           <button class="offline-tekrar-dene" @click="window.location.reload()">
             <i class="pi pi-refresh" /> Tekrar Baglan
           </button>

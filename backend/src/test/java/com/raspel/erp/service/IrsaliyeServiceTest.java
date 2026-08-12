@@ -1,6 +1,7 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
@@ -34,6 +35,7 @@ class IrsaliyeServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private CacheYardimci cacheYardimci;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {
@@ -76,7 +78,7 @@ class IrsaliyeServiceTest {
                 .cariHesapId(1L).aciklama("Test").tur("SATIS").sirketId(1L).kalemler(List.of(kalem)).build();
         Irsaliye saved = createIrsaliye(1L);
         when(irsaliyeRepository.save(any(Irsaliye.class))).thenReturn(saved);
-        var result = irsaliyeService.olustur(dto);
+        var result = irsaliyeService.olustur(dto, 1L);
         assertNotNull(result);
     }
 

@@ -18,9 +18,9 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
 
-    public void log(Long kullaniciId, String islem, String entityAdi, Long entityId, String aciklama, String ipAdresi) {
+    public void log(Long kullaniciId, Long sirketId, String islem, String entityAdi, Long entityId, String aciklama, String ipAdresi) {
         auditLogRepository.save(AuditLog.builder()
-                .kullaniciId(kullaniciId).islem(islem).entityAdi(entityAdi)
+                .kullaniciId(kullaniciId).sirketId(sirketId).islem(islem).entityAdi(entityAdi)
                 .entityId(entityId).aciklama(aciklama).ipAdresi(ipAdresi).build());
     }
 
@@ -28,11 +28,11 @@ public class AuditLogService {
         return auditLogRepository.findAllByOrderByTarihDesc(pageable);
     }
 
-    public Page<AuditLog> filtreliGetir(Long kullaniciId, String islem, String entityAdi,
+    public Page<AuditLog> filtreliGetir(Long sirketId, Long kullaniciId, String islem, String entityAdi,
                                          LocalDate baslangicTarih, LocalDate bitisTarih, Pageable pageable) {
         LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;
         LocalDateTime bitis = bitisTarih != null ? bitisTarih.atTime(LocalTime.MAX) : null;
-        return auditLogRepository.filtreliGetir(kullaniciId, islem, entityAdi, baslangic, bitis, pageable);
+        return auditLogRepository.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangic, bitis, pageable);
     }
 
     public List<String> islemTipleri() {

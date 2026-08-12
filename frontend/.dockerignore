@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.idea/
+*.iml
+.vscode/
+.git/
+.gitignore
+cypress/
+*.md

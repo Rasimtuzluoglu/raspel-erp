@@ -147,12 +147,14 @@ public class ExcelExportController {
     @GetMapping("/denetim-log")
     @Operation(summary = "Denetim loglarını Excel dışa aktar", description = "Denetim log kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> denetimLog(
+            jakarta.servlet.http.HttpServletRequest request,
             @RequestParam(required = false) Long kullaniciId,
             @RequestParam(required = false) String islem,
             @RequestParam(required = false) String entityAdi,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangicTarih,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitisTarih) {
-        var list = auditLogService.filtreliGetir(kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, Pageable.unpaged()).getContent();
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, Pageable.unpaged()).getContent();
         var rows = list.stream().map(l -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", l.getId()); m.put("Tarih", l.getTarih()); m.put("Kullanıcı ID", l.getKullaniciId());

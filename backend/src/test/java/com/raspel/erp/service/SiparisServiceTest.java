@@ -90,7 +90,7 @@ class SiparisServiceTest {
                 .genelToplam(BigDecimal.valueOf(1200)).sirketId(1L).kalemler(List.of(kalem)).build();
         Siparis saved = createSiparis(1L);
         when(siparisRepository.save(any(Siparis.class))).thenReturn(saved);
-        var result = siparisService.olustur(dto);
+        var result = siparisService.olustur(dto, 1L);
         assertNotNull(result);
     }
 

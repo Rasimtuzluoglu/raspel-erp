@@ -1,6 +1,7 @@
 package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.IadeDTO;
 import com.raspel.erp.dto.ticaret.IadeKalemDTO;
 import com.raspel.erp.entity.envanter.Stok;
@@ -37,6 +38,7 @@ class IadeServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private CacheYardimci cacheYardimci;
     @InjectMocks private IadeService iadeService;
 
     private void hazirla() {
@@ -116,7 +118,7 @@ class IadeServiceTest {
                 IadeKalem.builder().iadeId(1L).stokId(1L)
                         .miktar(new BigDecimal("5")).build()
         ));
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
 
         iadeService.olustur(dto, 1L);

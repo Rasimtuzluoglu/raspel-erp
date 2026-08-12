@@ -60,6 +60,7 @@ public class DonemService {
                 .bitis(dto.getBitis())
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Dönem");
         return entityToDTO(donemRepository.save(d));
     }
 

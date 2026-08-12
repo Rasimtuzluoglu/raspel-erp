@@ -1,6 +1,7 @@
 package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.IadeDTO;
 import com.raspel.erp.dto.ticaret.IadeKalemDTO;
 import com.raspel.erp.entity.envanter.Stok;
@@ -13,10 +14,8 @@ import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +40,7 @@ public class IadeService {
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
     private final TenantChecker tenantChecker;
+    private final CacheYardimci cacheYardimci;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -103,7 +103,6 @@ public class IadeService {
         return entityToDTO(iade);
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public IadeDTO guncelle(Long id, IadeDTO dto) {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
@@ -153,7 +152,6 @@ public class IadeService {
         iadeRepository.deleteById(id);
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public IadeDTO durumGuncelle(Long id, String yeniDurum) {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
@@ -163,19 +161,20 @@ public class IadeService {
         }
         if ("TAMAMLANDI".equals(yeniDurum) && !"TAMAMLANDI".equals(iade.getDurum())) {
             stokHareketleriIsle(iade);
+            cacheYardimci.temizle("stoklar", "dashboard");
         } else if ("IPTAL".equals(yeniDurum) && "TAMAMLANDI".equals(iade.getDurum())) {
             stokHareketleriniTersineCevir(iade);
+            cacheYardimci.temizle("stoklar", "dashboard");
         }
         iade.setDurum(yeniDurum);
         return entityToDTO(iadeRepository.save(iade));
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     private void stokHareketleriIsle(Iade iade) {
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
         for (IadeKalem k : kalemler) {
             if (k.getStokId() == null) continue;
-            Stok stok = stokRepository.findById(k.getStokId())
+            Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
             stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
             stokRepository.save(stok);
@@ -192,7 +191,7 @@ public class IadeService {
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
         for (IadeKalem k : kalemler) {
             if (k.getStokId() == null) continue;
-            Stok stok = stokRepository.findById(k.getStokId())
+            Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
             stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
             stokRepository.save(stok);

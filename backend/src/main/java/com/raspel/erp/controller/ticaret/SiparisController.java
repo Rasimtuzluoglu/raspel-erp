@@ -2,6 +2,7 @@ package com.raspel.erp.controller.ticaret;
 
 import com.raspel.erp.dto.ticaret.SiparisDTO;
 import com.raspel.erp.service.ticaret.SiparisService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,8 @@ public class SiparisController {
 
     @GetMapping
     @Operation(summary = "Tüm siparişleri getir", description = "Tüm siparişleri listeler")
-    public ResponseEntity<Page<SiparisDTO>> tumu(@RequestParam(required = false) Long sirketId, @PageableDefault(size = 50) Pageable pageable) {
+    public ResponseEntity<Page<SiparisDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(siparisService.tumunuGetir(sirketId, pageable));
     }
 
@@ -39,8 +41,9 @@ public class SiparisController {
 
     @PostMapping
     @Operation(summary = "Yeni sipariş oluştur", description = "Yeni bir sipariş oluşturur")
-    public ResponseEntity<SiparisDTO> olustur(@Valid @RequestBody SiparisDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(siparisService.olustur(dto));
+    public ResponseEntity<SiparisDTO> olustur(HttpServletRequest request, @Valid @RequestBody SiparisDTO dto) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.status(HttpStatus.CREATED).body(siparisService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")
@@ -51,8 +54,8 @@ public class SiparisController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Sipariş durum güncelle", description = "Sipariş durumunu günceller")
-    public ResponseEntity<SiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(siparisService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<SiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(siparisService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")

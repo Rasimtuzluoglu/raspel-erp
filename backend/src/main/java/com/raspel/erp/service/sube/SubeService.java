@@ -50,6 +50,7 @@ public class SubeService {
                 .ad(dto.getAd()).adres(dto.getAdres())
                 .telefon(dto.getTelefon()).yetkili(dto.getYetkili())
                 .sirketId(dto.getSirketId()).build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Şube");
         return entityToDTO(subeRepository.save(s));
     }
 

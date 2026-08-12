@@ -57,7 +57,7 @@ class IrsaliyeControllerTest {
         var list = List.of(IrsaliyeDTO.builder().id(1L).irsaliyeNo("IRS-001").build());
         when(irsaliyeService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
-        mockMvc.perform(get("/api/irsaliyeler").param("sirketId", "1"))
+        mockMvc.perform(get("/api/irsaliyeler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].irsaliyeNo").value("IRS-001"));
     }
@@ -83,7 +83,7 @@ class IrsaliyeControllerTest {
     @Test
     void shouldCreate() throws Exception {
         var dto = IrsaliyeDTO.builder().id(1L).irsaliyeNo("IRS-001").tarih(LocalDate.now()).build();
-        when(irsaliyeService.olustur(any(IrsaliyeDTO.class))).thenReturn(dto);
+        when(irsaliyeService.olustur(any(IrsaliyeDTO.class), any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/irsaliyeler")
                         .contentType(MediaType.APPLICATION_JSON)

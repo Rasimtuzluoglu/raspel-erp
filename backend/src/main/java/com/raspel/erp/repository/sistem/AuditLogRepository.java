@@ -23,13 +23,15 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<String> findDistinctEntityAdi();
 
     @Query("SELECT a FROM AuditLog a WHERE " +
+           "(:sirketId IS NULL OR a.sirketId = :sirketId) AND " +
            "(:kullaniciId IS NULL OR a.kullaniciId = :kullaniciId) AND " +
            "(:islem IS NULL OR a.islem = :islem) AND " +
            "(:entityAdi IS NULL OR a.entityAdi = :entityAdi) AND " +
            "(:baslangic IS NULL OR a.tarih >= :baslangic) AND " +
            "(:bitis IS NULL OR a.tarih <= :bitis) " +
            "ORDER BY a.tarih DESC")
-    Page<AuditLog> filtreliGetir(@Param("kullaniciId") Long kullaniciId,
+    Page<AuditLog> filtreliGetir(@Param("sirketId") Long sirketId,
+                                  @Param("kullaniciId") Long kullaniciId,
                                   @Param("islem") String islem,
                                   @Param("entityAdi") String entityAdi,
                                   @Param("baslangic") LocalDateTime baslangic,

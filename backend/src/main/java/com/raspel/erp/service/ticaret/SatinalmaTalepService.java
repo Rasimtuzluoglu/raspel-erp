@@ -53,6 +53,7 @@ public class SatinalmaTalepService {
                 .aciklama(dto.getAciklama())
                 .sirketId(dto.getSirketId())
                 .build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Satınalma Talebi");
         t = talepRepository.save(t);
 
         if (dto.getKalemler() != null) {

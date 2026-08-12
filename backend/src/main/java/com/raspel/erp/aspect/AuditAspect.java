@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -19,25 +21,43 @@ public class AuditAspect {
 
     private final AuditLogService auditLogService;
 
-    @AfterReturning("execution(* com.raspel.erp.controller.*.olustur(..))")
+    @Pointcut("execution(* com.raspel.erp.controller..*.olustur(..))")
+    public void createPointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.guncelle(..))")
+    public void updatePointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.sil(..))")
+    public void deletePointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.durumGuncelle(..))")
+    public void durumGuncellePointcut() {}
+
+    @AfterReturning("createPointcut()")
     public void logCreate(JoinPoint jp) {
         log(jp, "OLUSTUR");
     }
 
-    @AfterReturning("execution(* com.raspel.erp.controller.*.sil(..))")
+    @AfterReturning("updatePointcut() || durumGuncellePointcut()")
+    public void logUpdate(JoinPoint jp) {
+        log(jp, "GUNCELLE");
+    }
+
+    @AfterReturning("deletePointcut()")
     public void logDelete(JoinPoint jp) {
         log(jp, "SIL");
     }
 
-    @AfterReturning("execution(* com.raspel.erp.controller.*.durumGuncelle(..))")
-    public void logUpdate(JoinPoint jp) {
-        log(jp, "DURUM_GUNCELLE");
+    @AfterThrowing(pointcut = "createPointcut() || updatePointcut() || deletePointcut() || durumGuncellePointcut()", throwing = "ex")
+    public void logError(JoinPoint jp, Throwable ex) {
+        log(jp, "HATA");
     }
 
     private void log(JoinPoint jp, String islem) {
         try {
             HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-            Long kullaniciId = req.getAttribute("kullaniciId") != null ? (Long) req.getAttribute("kullaniciId") : null;
+            Long kullaniciId = (Long) req.getAttribute("kullaniciId");
+            Long sirketId = (Long) req.getAttribute("sirketId");
             String ip = req.getRemoteAddr();
             String entityAdi = jp.getTarget().getClass().getSimpleName().replace("Controller", "");
             Long entityId = null;
@@ -47,7 +67,7 @@ public class AuditAspect {
                     if (a instanceof Long) { entityId = (Long) a; break; }
                 }
             }
-            auditLogService.log(kullaniciId, islem, entityAdi, entityId, "AOP: " + islem, ip);
+            auditLogService.log(kullaniciId, sirketId, islem, entityAdi, entityId, "AOP: " + islem, ip);
         } catch (Exception e) {
             log.warn("Audit log kaydedilemedi: {}", e.getMessage());
         }

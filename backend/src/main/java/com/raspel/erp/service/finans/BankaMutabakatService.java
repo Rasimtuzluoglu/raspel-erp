@@ -71,11 +71,12 @@ public class BankaMutabakatService {
 
     public List<BankaHareketiDTO> otomatikEslestir(Long bankaId, Long sirketId) {
         List<BankaHareketi> eslesmesiz = bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(bankaId);
-        List<Fatura> faturalar = faturaRepository.findAll().stream()
-                .filter(f -> sirketId == null || sirketId.equals(f.getSirketId()))
-                .filter(f -> !"ODENDI".equals(f.getOdemeDurumu()))
-                .filter(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL)
-                .collect(Collectors.toList());
+        List<Fatura> faturalar = sirketId != null
+                ? faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(sirketId, Fatura.FaturaDurum.IPTAL, List.of("ODENDI"))
+                : faturaRepository.findAll().stream()
+                        .filter(f -> !"ODENDI".equals(f.getOdemeDurumu()))
+                        .filter(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL)
+                        .collect(Collectors.toList());
 
         for (BankaHareketi h : eslesmesiz) {
             BigDecimal tutar = h.getBorc().signum() > 0 ? h.getBorc() : h.getAlacak();

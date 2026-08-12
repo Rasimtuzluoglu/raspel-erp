@@ -1,6 +1,7 @@
 package com.raspel.erp.service.finans;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.finans.CariHesapDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.exception.BusinessException;
@@ -36,6 +37,7 @@ public class CariHesapService {
     private final CariHesapRepository cariHesapRepository;
     private final HareketRepository hareketRepository;
     private final TenantChecker tenantChecker;
+    private final CacheYardimci cacheYardimci;
 
     /**
      * Tüm cari hesapları getir
@@ -169,6 +171,7 @@ public class CariHesapService {
         BigDecimal yeniBakiye = cariHesap.getBakiye().add(tutar);
         cariHesap.setBakiye(yeniBakiye);
         cariHesapRepository.save(cariHesap);
+        cacheYardimci.temizle("cariHesaplar", "dashboard");
     }
     
 

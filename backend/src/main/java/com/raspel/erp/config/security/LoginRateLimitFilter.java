@@ -3,7 +3,6 @@ package com.raspel.erp.config.security;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -13,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
-@Order(1)
 public class LoginRateLimitFilter implements Filter {
 
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();

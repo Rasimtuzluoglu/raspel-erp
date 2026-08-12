@@ -60,6 +60,7 @@ public class DepoService {
                 .ad(dto.getAd()).adres(dto.getAdres())
                 .yetkili(dto.getYetkili()).subeId(dto.getSubeId())
                 .sirketId(dto.getSirketId()).build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Depo");
         return entityToDTO(depoRepository.save(d), null);
     }
 

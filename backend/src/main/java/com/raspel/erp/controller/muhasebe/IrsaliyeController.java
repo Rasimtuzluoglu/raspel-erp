@@ -2,6 +2,7 @@ package com.raspel.erp.controller.muhasebe;
 
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.service.muhasebe.IrsaliyeService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,8 @@ public class IrsaliyeController {
 
     @GetMapping
     @Operation(summary = "Tüm irsaliyeleri getir", description = "Tüm irsaliyeleri listeler")
-    public ResponseEntity<Page<IrsaliyeDTO>> tumu(@RequestParam(required = false) Long sirketId, @PageableDefault(size = 50) Pageable pageable) {
+    public ResponseEntity<Page<IrsaliyeDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(irsaliyeService.tumunuGetir(sirketId, pageable));
     }
 
@@ -39,8 +41,9 @@ public class IrsaliyeController {
 
     @PostMapping
     @Operation(summary = "Yeni irsaliye oluştur", description = "Yeni bir irsaliye oluşturur")
-    public ResponseEntity<IrsaliyeDTO> olustur(@Valid @RequestBody IrsaliyeDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(irsaliyeService.olustur(dto));
+    public ResponseEntity<IrsaliyeDTO> olustur(HttpServletRequest request, @Valid @RequestBody IrsaliyeDTO dto) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.status(HttpStatus.CREATED).body(irsaliyeService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")
@@ -51,8 +54,8 @@ public class IrsaliyeController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "İrsaliye durum güncelle", description = "İrsaliye durumunu günceller")
-    public ResponseEntity<IrsaliyeDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(irsaliyeService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<IrsaliyeDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(irsaliyeService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")

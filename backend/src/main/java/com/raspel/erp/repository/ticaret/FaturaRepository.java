@@ -33,4 +33,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findByTurAndOdemeDurumuNotIn(Fatura.FaturaTur tur, java.util.List<String> odemeDurumlari);
+
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    List<Fatura> findBySirketIdAndDurumNotAndOdemeDurumuNotIn(Long sirketId, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);
 }

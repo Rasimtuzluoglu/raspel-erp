@@ -7,6 +7,7 @@ import com.raspel.erp.dto.ticaret.SiparisDTO;
 import com.raspel.erp.dto.ticaret.SiparisKalemDTO;
 import com.raspel.erp.entity.ticaret.Siparis;
 import com.raspel.erp.entity.ticaret.SiparisKalem;
+import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
@@ -21,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.sistem.EmailService;
@@ -59,16 +62,16 @@ public class SiparisService {
         return entityToDTO(s);
     }
 
-    public SiparisDTO olustur(SiparisDTO dto) {
+    public SiparisDTO olustur(SiparisDTO dto, Long sirketId) {
         String siparisNo = dto.getSiparisNo() != null && !dto.getSiparisNo().isBlank()
                 ? dto.getSiparisNo()
-                : seriNoServisi.siparisNoUret(dto.getSirketId());
+                : seriNoServisi.siparisNoUret(sirketId);
         Siparis s = Siparis.builder()
                 .siparisNo(siparisNo).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).tur("SATIS")
                 .durum("TEKLIF").aciklama(dto.getAciklama())
                 .araToplam(dto.getAraToplam()).kdv(dto.getKdv())
-                .genelToplam(dto.getGenelToplam()).sirketId(dto.getSirketId())
+                .genelToplam(dto.getGenelToplam()).sirketId(sirketId)
                 .build();
         s = siparisRepository.save(s);
         if (dto.getKalemler() != null) {
@@ -81,8 +84,8 @@ public class SiparisService {
             }
         }
         try {
-            if (dto.getSirketId() != null) {
-                bildirimService.bildirimGonder(dto.getSirketId(), "SIPARIS",
+            if (sirketId != null) {
+                bildirimService.bildirimGonder(sirketId, "SIPARIS",
                         "Yeni Sipariş: " + siparisNo,
                         "Tutar: " + dto.getGenelToplam() + " ₺");
             }
@@ -177,14 +180,29 @@ public class SiparisService {
     }
 
     private SiparisDTO entityToDTO(Siparis s) {
-        List<SiparisKalemDTO> kalemler = kalemRepository.findBySiparisId(s.getId()).stream()
+        List<SiparisKalem> kalemEntities = kalemRepository.findBySiparisId(s.getId());
+
+        List<Long> stokIdler = kalemEntities.stream()
+                .map(SiparisKalem::getStokId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> stokAdlari = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(Stok::getId, Stok::getAd));
+
+        String cariAdi = s.getCariHesapId() != null
+                ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null)
+                : null;
+
+        List<SiparisKalemDTO> kalemler = kalemEntities.stream()
                 .map(k -> SiparisKalemDTO.builder().id(k.getId()).siparisId(k.getSiparisId())
-                        .stokId(k.getStokId()).stokAdi(k.getStokId() != null ? stokRepository.findById(k.getStokId()).map(st -> st.getAd()).orElse(null) : null)
+                        .stokId(k.getStokId()).stokAdi(k.getStokId() != null ? stokAdlari.get(k.getStokId()) : null)
                         .aciklama(k.getAciklama()).miktar(k.getMiktar()).birim(k.getBirim())
                         .birimFiyat(k.getBirimFiyat()).kdvOrani(k.getKdvOrani()).tutar(k.getTutar()).build())
                 .collect(Collectors.toList());
         return SiparisDTO.builder().id(s.getId()).siparisNo(s.getSiparisNo()).tarih(s.getTarih())
-                .cariHesapId(s.getCariHesapId()).cariHesapAdi(s.getCariHesapId() != null ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null) : null)
+                .cariHesapId(s.getCariHesapId()).cariHesapAdi(cariAdi)
                 .tur(s.getTur()).durum(s.getDurum()).aciklama(s.getAciklama())
                 .araToplam(s.getAraToplam()).kdv(s.getKdv()).genelToplam(s.getGenelToplam())
                 .sirketId(s.getSirketId()).olusturmaTarihi(s.getOlusturmaTarihi()).kalemler(kalemler).build();

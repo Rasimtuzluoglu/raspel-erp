@@ -59,6 +59,7 @@ public class SatinalmaSiparisService {
                 .genelToplam(dto.getGenelToplam())
                 .sirketId(dto.getSirketId())
                 .build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Satınalma Siparişi");
         s = siparisRepository.save(s);
 
         if (dto.getKalemler() != null) {

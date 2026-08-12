@@ -51,8 +51,8 @@ public class SatinalmaSiparisController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Satın alma siparişi durum güncelle", description = "Satın alma siparişi durumunu günceller")
-    public ResponseEntity<SatinalmaSiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(satinalmaSiparisService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<SatinalmaSiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(satinalmaSiparisService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")

@@ -51,8 +51,8 @@ public class CekSenetController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Çek/senet durum güncelle", description = "Çek/senet durumunu günceller (tahsil/tahsil edildi/karşılıksız vb.)")
-    public ResponseEntity<CekSenetDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(cekSenetService.durumGuncelle(id, body.get("durum")));
+    public ResponseEntity<CekSenetDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
+        return ResponseEntity.ok(cekSenetService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")

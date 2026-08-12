@@ -49,6 +49,7 @@ public class CekSenetService {
                 .vadeTarihi(dto.getVadeTarihi()).tutar(dto.getTutar())
                 .durum("PORTFOY").aciklama(dto.getAciklama())
                 .sirketId(dto.getSirketId()).build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Çek/Senet");
         return entityToDTO(cekSenetRepository.save(cs));
     }
 

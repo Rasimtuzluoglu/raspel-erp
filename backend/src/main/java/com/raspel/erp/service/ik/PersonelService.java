@@ -48,6 +48,7 @@ public class PersonelService {
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .sirketId(dto.getSirketId())
                 .build();
+        tenantChecker.checkSirketId(dto.getSirketId(), "Personel");
         return entityToDTO(personelRepository.save(p));
     }
 

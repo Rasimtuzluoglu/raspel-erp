@@ -152,6 +152,23 @@ public class GlobalExceptionHandler {
                 .body(buildBody("Doğrulama hatası: " + e.getMessage(), HttpStatus.BAD_REQUEST));
     }
 
+    @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleOptimisticLock(org.springframework.dao.OptimisticLockingFailureException e) {
+        log.warn("Optimistic lock conflict: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(buildBody("Kayıt başka bir kullanıcı tarafından değiştirilmiş. Lütfen sayfayı yenileyip tekrar deneyin.", HttpStatus.CONFLICT));
+    }
+
+    @ExceptionHandler(org.springframework.validation.BindException.class)
+    public ResponseEntity<Map<String, Object>> handleBind(org.springframework.validation.BindException e) {
+        String ilkHata = e.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .orElse("Geçersiz istek");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildBody(ilkHata, HttpStatus.BAD_REQUEST));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
         log.error("Beklenmeyen hata", e);

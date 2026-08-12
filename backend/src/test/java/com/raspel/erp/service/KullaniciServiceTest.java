@@ -74,9 +74,9 @@ class KullaniciServiceTest {
 
     @Test
     void olustur_createsUser() {
-        KullaniciDTO dto = KullaniciDTO.builder().username("newuser").displayName("New").password("Password123").build();
+        KullaniciDTO dto = KullaniciDTO.builder().username("newuser").displayName("New").password("Password123!").build();
         when(kullaniciRepository.findByUsername("newuser")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("Password123")).thenReturn("encoded");
+        when(passwordEncoder.encode("Password123!")).thenReturn("encoded");
         Kullanici saved = createKullanici(1L);
         saved.setUsername("newuser");
         saved.setDisplayName("New");

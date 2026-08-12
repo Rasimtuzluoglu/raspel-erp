@@ -5,12 +5,10 @@ import com.raspel.erp.dto.finans.KasaDTO;
 import com.raspel.erp.dto.finans.KasaHareketDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.exception.BusinessException;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -82,9 +80,8 @@ public class KasaService {
                 .stream().map(this::hareketToDTO).collect(Collectors.toList());
     }
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public KasaHareketDTO hareketEkle(KasaHareketDTO dto) {
-        Kasa kasa = kasaRepository.findById(dto.getKasaId())
+        Kasa kasa = kasaRepository.findByIdForUpdate(dto.getKasaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", dto.getKasaId()));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
 

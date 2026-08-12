@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.entity.sistem.AuditLog;
 import com.raspel.erp.service.sistem.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +30,15 @@ public class AuditLogController {
     @GetMapping
     @Operation(summary = "Denetim loglarını getir", description = "Denetim log kayıtlarını filtreleyerek listeler")
     public ResponseEntity<Page<AuditLog>> tumu(
+            HttpServletRequest request,
             @RequestParam(required = false) Long kullaniciId,
             @RequestParam(required = false) String islem,
             @RequestParam(required = false) String entityAdi,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangicTarih,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitisTarih,
             @PageableDefault(size = 50) Pageable pageable) {
-        return ResponseEntity.ok(auditLogService.filtreliGetir(kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable));
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable));
     }
 
     @GetMapping("/islem-tipleri")

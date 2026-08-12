@@ -24,4 +24,16 @@ public class TenantChecker {
             throw new ResourceNotFoundException(entityName + " bu sirkete ait degil");
         }
     }
+
+    /**
+     * Yazma islemlerinde DTO'dan gelen sirketId'nin JWT'deki sirketId ile
+     * eslesmesini zorunlu kilar. Request context yoksa (test ortami / dahili
+     * cagrilar) dogrulama yapilmaz.
+     */
+    public void checkSirketId(Long dtoSirketId, String entityName) {
+        Long currentSirketId = getCurrentSirketId();
+        if (currentSirketId != null && dtoSirketId != null && !currentSirketId.equals(dtoSirketId)) {
+            throw new ResourceNotFoundException(entityName + " bu sirkete ait degil");
+        }
+    }
 }

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
@@ -49,6 +50,7 @@ class FaturaServiceTest {
     @Mock private PdfRaporService pdfRaporService;
     @Mock private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private CacheYardimci cacheYardimci;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {
@@ -140,7 +142,7 @@ class FaturaServiceTest {
                 .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
         fatura.getKalemler().add(kalem);
         when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
         var result = faturaService.faturaDurumGuncelle(1L, "KESILDI");
         assertEquals("KESILDI", result.getDurum());

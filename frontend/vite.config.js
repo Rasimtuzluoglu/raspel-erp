@@ -22,7 +22,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'primevue-core': ['primevue/button', 'primevue/datatable', 'primevue/column', 'primevue/dialog', 'primevue/inputtext', 'primevue/inputnumber', 'primevue/dropdown', 'primevue/card', 'primevue/toast', 'primevue/toastservice', 'primevue/confirmdialog', 'primevue/confirmationservice', 'primevue/toolbar', 'primevue/textarea', 'primevue/message', 'primevue/tag', 'primevue/tabview', 'primevue/tabpanel', 'primevue/inputswitch', 'primevue/checkbox', 'primevue/skeleton', 'primevue/selectbutton', 'primevue/autocomplete', 'primevue/datepicker'],
+          'primevue-core': ['primevue/button', 'primevue/datatable', 'primevue/column', 'primevue/dialog', 'primevue/inputtext', 'primevue/inputnumber', 'primevue/dropdown', 'primevue/select', 'primevue/card', 'primevue/toast', 'primevue/toastservice', 'primevue/confirmdialog', 'primevue/confirmationservice', 'primevue/toolbar', 'primevue/textarea', 'primevue/message', 'primevue/tag', 'primevue/tabview', 'primevue/tabpanel', 'primevue/inputswitch', 'primevue/checkbox', 'primevue/skeleton', 'primevue/selectbutton', 'primevue/autocomplete', 'primevue/datepicker', 'primevue/calendar', 'primevue/multiselect'],
           'primevue-icons': ['primeicons'],
           'vue-vendor': ['vue', 'vue-router', 'pinia', 'axios', 'axios-retry', 'vue-i18n'],
           'chart-vendor': ['chart.js', 'vue-chartjs']

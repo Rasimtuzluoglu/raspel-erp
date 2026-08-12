@@ -125,6 +125,7 @@ public class KullaniciService {
     }
 
     public void sifreSifirla(com.raspel.erp.dto.sistem.SifreSifirlaRequest req) {
+        sifrePolitikasiKontrol(req.getYeniSifre());
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı adı bulunamadı: " + req.getUsername()));
         k.setPassword(passwordEncoder.encode(req.getYeniSifre()));
@@ -263,6 +264,20 @@ public class KullaniciService {
                 .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
         if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
 
+        if (sirketId == null) {
+            sirketId = k.getSirketId();
+        }
+        final Long secilenSirketId = sirketId;
+
+        // Admin herhangi bir aktif firmayı seçebilir; USER yalnızca atandığı firmada oturum açabilir
+        if (!"ADMIN".equals(k.getRole())) {
+            boolean uye = k.getSirketler() != null && k.getSirketler().stream()
+                    .anyMatch(s -> s.getId().equals(secilenSirketId));
+            if (!uye && (k.getSirketId() == null || !k.getSirketId().equals(secilenSirketId))) {
+                throw new BusinessException("Bu şirkette çalışma yetkiniz yok");
+            }
+        }
+
         return tokenOlusturVeDon(k, null, sirketId);
     }
 
@@ -341,6 +356,9 @@ public class KullaniciService {
         if (sifre.length() < 8) {
             throw new BusinessException("Sifre en az 8 karakter olmalidir");
         }
+        if (sifre.length() > 72) {
+            throw new BusinessException("Sifre en fazla 72 karakter olmalidir");
+        }
         if (!sifre.matches(".*[A-Z].*")) {
             throw new BusinessException("Sifre en az bir buyuk harf icermelidir");
         }
@@ -349,6 +367,9 @@ public class KullaniciService {
         }
         if (!sifre.matches(".*[0-9].*")) {
             throw new BusinessException("Sifre en az bir rakam icermelidir");
+        }
+        if (!sifre.matches(".*[^a-zA-Z0-9].*")) {
+            throw new BusinessException("Sifre en az bir ozel karakter icermelidir");
         }
     }
 }

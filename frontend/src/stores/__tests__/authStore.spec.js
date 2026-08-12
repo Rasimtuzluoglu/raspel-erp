@@ -6,6 +6,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 vi.mock('../../api/index.js', () => ({
   kullaniciAPI: {
     giris: vi.fn(),
+    girisSirket: vi.fn(),
     giris2fa: vi.fn(),
     getAll: vi.fn(),
     getById: vi.fn()
@@ -47,36 +48,45 @@ describe('authStore', () => {
     expect(store.isLoggedIn).toBe(true)
   })
 
-  it('girisYap sets state on success', async () => {
+  it('girisYap returns user without setting session (sirket secimi beklenir)', async () => {
     kullaniciAPI.giris.mockResolvedValue({ data: mockUser })
-    const result = await store.girisYap('test', 'pass', 'Co')
-    expect(store.kullanici.username).toBe('test')
-    expect(store.token).toBe('abc123')
-    expect(store.isLoggedIn).toBe(true)
+    const result = await store.girisYap('test', 'pass')
+    expect(store.kullanici).toBeNull()
+    expect(store.token).toBe('')
+    expect(store.isLoggedIn).toBe(false)
     expect(store.loading).toBe(false)
     expect(result).toEqual(mockUser)
   })
 
   it('girisYap handles error', async () => {
     kullaniciAPI.giris.mockRejectedValue(new Error('API Error'))
-    await expect(store.girisYap('test', 'wrong', 'Co')).rejects.toThrow('API Error')
+    await expect(store.girisYap('test', 'wrong')).rejects.toThrow('API Error')
     expect(store.loading).toBe(false)
     expect(store.isLoggedIn).toBe(false)
   })
 
   it('girisYap returns 2FA flow without setting session', async () => {
     kullaniciAPI.giris.mockResolvedValue({ data: { twoFactorGerekli: true, girisToken: 'pending-token' } })
-    const result = await store.girisYap('test', 'pass', 'Co')
+    const result = await store.girisYap('test', 'pass')
     expect(result.twoFactorGerekli).toBe(true)
     expect(store.isLoggedIn).toBe(false)
     expect(store.token).toBe('')
   })
 
-  it('giris2fa completes login with valid code', async () => {
-    kullaniciAPI.giris2fa.mockResolvedValue({ data: mockUser })
-    await store.giris2fa('pending-token', '123456', 'Co')
+  it('girisSirket completes login and sets session', async () => {
+    kullaniciAPI.girisSirket.mockResolvedValue({ data: mockUser })
+    await store.girisSirket('pending-token', 1)
     expect(store.isLoggedIn).toBe(true)
     expect(store.token).toBe('abc123')
+    expect(store.kullanici.username).toBe('test')
+  })
+
+  it('giris2fa returns company list without setting session', async () => {
+    kullaniciAPI.giris2fa.mockResolvedValue({ data: mockUser })
+    const result = await store.giris2fa('pending-token', '123456')
+    expect(store.isLoggedIn).toBe(false)
+    expect(store.token).toBe('')
+    expect(result).toEqual(mockUser)
   })
 
   it('cikisYap clears state', () => {
