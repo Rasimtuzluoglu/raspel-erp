@@ -2,6 +2,9 @@ package com.raspel.erp.controller;
 
 import com.raspel.erp.service.envanter.StokService;
 import com.raspel.erp.service.finans.CariHesapService;
+import com.raspel.erp.service.ticaret.FaturaService;
+import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -35,6 +38,15 @@ class VeriImportControllerTest {
 
     @MockBean
     private CariHesapService cariHesapService;
+
+    @MockBean
+    private FaturaService faturaService;
+
+    @MockBean
+    private StokRepository stokRepository;
+
+    @MockBean
+    private CariHesapRepository cariHesapRepository;
 
     @Test
     void shouldImportStokFromCsv() throws Exception {

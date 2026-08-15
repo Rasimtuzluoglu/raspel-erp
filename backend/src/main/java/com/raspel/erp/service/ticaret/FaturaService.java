@@ -31,8 +31,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.TcmbKurService;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.ticaret.FaturaKalem;
@@ -45,8 +47,11 @@ import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
+import com.raspel.erp.entity.sube.DepoStok;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.sube.DepoStokRepository;
+import com.raspel.erp.repository.sube.DepoRepository;
 
 @Service
 @Transactional
@@ -57,8 +62,11 @@ public class FaturaService {
     private final FaturaRepository faturaRepository;
     private final FaturaKalemRepository faturaKalemRepository;
     private final CariHesapRepository cariHesapRepository;
+    private final CariHesapService cariHesapService;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+    private final DepoStokRepository depoStokRepository;
+    private final DepoRepository depoRepository;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
     private final EmailService emailService;
@@ -66,6 +74,7 @@ public class FaturaService {
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
+    private final TcmbKurService tcmbKurService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -271,6 +280,8 @@ public class FaturaService {
                 .teslimDurumu(dto.getTeslimDurumu() != null ? dto.getTeslimDurumu() : "BEKLIYOR")
                 .teslimNotu(dto.getTeslimNotu())
                 .teslimFotograf(dto.getTeslimFotograf())
+                .depoId(dto.getDepoId())
+                .paraBirimi(dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY")
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -279,8 +290,11 @@ public class FaturaService {
         Fatura kaydedilen = faturaRepository.save(fatura);
 
         if (faturaDurum == Fatura.FaturaDurum.KESILDI) {
-            List<Long> kritik = stokHareketleriIsle(fatura, "CIKIS", "Fatura #" + fatura.getFaturaNumarasi());
-            kritikStokUyarisiGonder(kritik, sirketId);
+            List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(tur), "Fatura #" + fatura.getFaturaNumarasi());
+            cariBakiyeGuncelle(fatura, false);
+            if (tur == Fatura.FaturaTur.SATIS) {
+                kritikStokUyarisiGonder(kritik, sirketId);
+            }
         }
 
         try {
@@ -349,10 +363,14 @@ public class FaturaService {
         }
 
         if (durum == Fatura.FaturaDurum.KESILDI && fatura.getDurum() != Fatura.FaturaDurum.KESILDI) {
-            List<Long> kritik = stokHareketleriIsle(fatura, "CIKIS", "Fatura #" + fatura.getFaturaNumarasi());
-            kritikStokUyarisiGonder(kritik, fatura.getSirketId());
+            List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(fatura.getTur()), "Fatura #" + fatura.getFaturaNumarasi());
+            cariBakiyeGuncelle(fatura, false);
+            if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
+                kritikStokUyarisiGonder(kritik, fatura.getSirketId());
+            }
         } else if (durum == Fatura.FaturaDurum.IPTAL && fatura.getDurum() == Fatura.FaturaDurum.KESILDI) {
-            stokHareketleriIsle(fatura, "GIRIS", "Fatura iptal #" + fatura.getFaturaNumarasi());
+            stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura iptal #" + fatura.getFaturaNumarasi());
+            cariBakiyeGuncelle(fatura, true);
         }
 
         fatura.setDurum(durum);
@@ -442,6 +460,8 @@ public class FaturaService {
         if (dto.getTeslimDurumu() != null) fatura.setTeslimDurumu(dto.getTeslimDurumu());
         if (dto.getTeslimNotu() != null) fatura.setTeslimNotu(dto.getTeslimNotu());
         if (dto.getTeslimFotograf() != null) fatura.setTeslimFotograf(dto.getTeslimFotograf());
+        if (dto.getDepoId() != null) fatura.setDepoId(dto.getDepoId());
+        if (dto.getParaBirimi() != null) fatura.setParaBirimi(dto.getParaBirimi());
         fatura.setAraToplam(araToplam);
         fatura.setKdv(kdv);
         fatura.setGenelToplam(genelToplam);
@@ -470,6 +490,56 @@ public class FaturaService {
         faturaRepository.deleteById(id);
     }
 
+    private String stokYonu(Fatura.FaturaTur tur) {
+        return tur == Fatura.FaturaTur.ALIS ? "GIRIS" : "CIKIS";
+    }
+
+    private String tersStokYonu(Fatura.FaturaTur tur) {
+        return tur == Fatura.FaturaTur.ALIS ? "CIKIS" : "GIRIS";
+    }
+
+    /**
+     * Faturanın cari hesap bakiyesine etkisini uygular.
+     * Satış faturası alacak (+) , alış faturası borç (-) yönünde işler; ters=true iptal/geri alma için işareti çevirir.
+     */
+    private void cariBakiyeGuncelle(Fatura fatura, boolean ters) {
+        if (fatura.getCariHesap() == null) return;
+        BigDecimal tutar = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
+        if (fatura.getTur() == Fatura.FaturaTur.ALIS) {
+            tutar = tutar.negate();
+        }
+        if (ters) {
+            tutar = tutar.negate();
+        }
+        cariHesapService.bakiyeGuncelle(fatura.getCariHesap().getId(), tutar);
+    }
+
+    /**
+     * Fatura depo seçilmişse (alış faturası), ürünü ilgili deponun stoğuna ekler.
+     */
+    private void depoStokGuncelle(Long depoId, Long stokId, BigDecimal miktar) {
+        if (depoId == null || stokId == null) return;
+        DepoStok ds = depoStokRepository.findByDepoIdAndStokId(depoId, stokId)
+                .orElse(DepoStok.builder().depoId(depoId).stokId(stokId).miktar(BigDecimal.ZERO).build());
+        ds.setMiktar(ds.getMiktar().add(miktar));
+        depoStokRepository.save(ds);
+    }
+
+    /**
+     * Fatura para birimi TRY değilse birim fiyatı TL karşılığına çevirir (stok maliyeti TL tutulur).
+     * Kur servisi başarısız olursa ham fiyat korunur.
+     */
+    private BigDecimal tlKarsiliginaCevir(Fatura fatura, BigDecimal tutar) {
+        String paraBirimi = fatura.getParaBirimi();
+        if (paraBirimi == null || "TRY".equalsIgnoreCase(paraBirimi)) return tutar;
+        try {
+            return tcmbKurService.cevir(tutar, paraBirimi, "TRY");
+        } catch (Exception e) {
+            log.warn("Döviz kuru çevirilemedi ({}), ham fiyat kullanılıyor: {}", paraBirimi, e.getMessage());
+            return tutar;
+        }
+    }
+
     private List<Long> stokHareketleriIsle(Fatura fatura, String tur, String aciklama) {
         List<Long> kritikStokIds = new ArrayList<>();
         for (FaturaKalem k : fatura.getKalemler()) {
@@ -483,7 +553,29 @@ public class FaturaService {
                             + ", Mevcut: " + stok.getMiktar() + ", İstenen: " + adet);
                 stok.setMiktar(stok.getMiktar().subtract(adet));
             } else {
-                stok.setMiktar(stok.getMiktar().add(BigDecimal.valueOf(k.getAdet())));
+                BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
+                BigDecimal yeniMiktar = BigDecimal.valueOf(k.getAdet());
+                BigDecimal yeniBirimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
+                yeniBirimFiyat = tlKarsiliginaCevir(fatura, yeniBirimFiyat);
+                BigDecimal eskiFiyat = stok.getFiyat() != null ? stok.getFiyat() : BigDecimal.ZERO;
+
+                stok.setMiktar(eskiMiktar.add(yeniMiktar));
+
+                BigDecimal toplamMiktar = eskiMiktar.add(yeniMiktar);
+                BigDecimal agirlikliOrtalama;
+                if (toplamMiktar.compareTo(BigDecimal.ZERO) > 0) {
+                    agirlikliOrtalama = eskiMiktar.multiply(eskiFiyat)
+                            .add(yeniMiktar.multiply(yeniBirimFiyat))
+                            .divide(toplamMiktar, 2, RoundingMode.HALF_UP);
+                } else {
+                    agirlikliOrtalama = yeniBirimFiyat;
+                }
+                stok.setFiyat(agirlikliOrtalama);
+                stok.setTedarikciFiyat(yeniBirimFiyat);
+                if (fatura.getCariHesap() != null) {
+                    stok.setTedarikciId(fatura.getCariHesap().getId());
+                }
+                depoStokGuncelle(fatura.getDepoId(), k.getStokId(), yeniMiktar);
             }
             stokRepository.save(stok);
 
@@ -599,6 +691,11 @@ public class FaturaService {
                 .teslimDurumu(fatura.getTeslimDurumu())
                 .teslimNotu(fatura.getTeslimNotu())
                 .teslimFotograf(fatura.getTeslimFotograf())
+                .depoId(fatura.getDepoId())
+                .depoAd(fatura.getDepoId() != null
+                        ? depoRepository.findById(fatura.getDepoId()).map(com.raspel.erp.entity.sube.Depo::getAd).orElse(null)
+                        : null)
+                .paraBirimi(fatura.getParaBirimi())
                 .build();
     }
 }

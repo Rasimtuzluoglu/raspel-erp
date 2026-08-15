@@ -615,7 +615,7 @@ const toplamOdeme = computed(() =>
     .filter(h => h.tur === 'ODEME')
     .reduce((s, h) => s + (h.tutar || 0), 0)
 )
-const guncelBakiye = computed(() => toplamTahsilat.value - toplamOdeme.value)
+const guncelBakiye = computed(() => toplamOdeme.value - toplamTahsilat.value)
 
 const ibanGecerli = computed(() => {
   const val = (form.value.iban || '').replace(/\s/g, '').toUpperCase()

@@ -7,17 +7,97 @@
           <i v-else class="pi pi-calculator" />
         </div>
         <h1>RasPel</h1>
-        <p class="alt-baslik">KOBİ'nin Tek Panosu</p>
+        <p class="alt-baslik">{{ $t('giris.subtitle') }}</p>
       </div>
 
       <div class="giris-form">
         <div v-if="hata" class="hata-kutu"><i class="pi pi-exclamation-circle" /> {{ hata }}</div>
 
+        <!-- Adim 0: Ilk Kurulum -->
+        <div v-if="kurulumAdimi">
+          <div class="kurulum-ikon"><i class="pi pi-rocket" /></div>
+          <h2 class="iki-fa-baslik">{{ $t('kurulum.welcome') }}</h2>
+          <p class="iki-fa-alt">{{ $t('kurulum.hint') }}</p>
+
+          <div class="form-grup">
+            <label>{{ $t('kurulum.companyName') }}</label>
+            <div class="input-wrapper">
+              <i class="pi pi-building" />
+              <InputText v-model="kurulumForm.ad" :placeholder="$t('kurulum.companyName')" @keyup.enter="kurulumBaslat" />
+            </div>
+          </div>
+
+          <div class="kurulum-iki-kolon">
+            <div class="form-grup">
+              <label>{{ $t('kurulum.taxNumber') }}</label>
+              <div class="input-wrapper">
+                <i class="pi pi-hashtag" />
+                <InputText v-model="kurulumForm.vergiNo" :placeholder="$t('kurulum.taxNumber')" />
+              </div>
+            </div>
+            <div class="form-grup">
+              <label>{{ $t('kurulum.taxOffice') }}</label>
+              <div class="input-wrapper">
+                <i class="pi pi-map-marker" />
+                <InputText v-model="kurulumForm.vergiDairesi" :placeholder="$t('kurulum.taxOffice')" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grup">
+            <label>{{ $t('kurulum.phone') }}</label>
+            <div class="input-wrapper">
+              <i class="pi pi-phone" />
+              <InputText v-model="kurulumForm.telefon" :placeholder="$t('kurulum.phone')" />
+            </div>
+          </div>
+
+          <div class="form-grup">
+            <label>{{ $t('kurulum.email') }}</label>
+            <div class="input-wrapper">
+              <i class="pi pi-envelope" />
+              <InputText v-model="kurulumForm.email" :placeholder="$t('kurulum.email')" />
+            </div>
+          </div>
+
+          <div class="kurulum-ayrac" />
+
+          <div class="form-grup">
+            <label>{{ $t('kurulum.adminUsername') }}</label>
+            <div class="input-wrapper">
+              <i class="pi pi-user" />
+              <InputText v-model="kurulumForm.adminUsername" :placeholder="$t('kurulum.adminUsername')" />
+            </div>
+          </div>
+
+          <div class="form-grup">
+            <label>{{ $t('kurulum.fullName') }}</label>
+            <div class="input-wrapper">
+              <i class="pi pi-id-card" />
+              <InputText v-model="kurulumForm.adminDisplayName" :placeholder="$t('kurulum.fullName')" />
+            </div>
+          </div>
+
+          <div class="form-grup">
+            <label>{{ $t('kurulum.password') }}</label>
+            <div class="input-wrapper">
+              <i class="pi pi-lock" />
+              <InputText v-model="kurulumForm.adminPassword" :type="sifreGorunur ? 'text' : 'password'" placeholder="••••••" @keyup.enter="kurulumBaslat" />
+              <button type="button" class="sifre-toggle" @click="sifreGorunur = !sifreGorunur" tabindex="-1">
+                <i :class="sifreGorunur ? 'pi pi-eye-slash' : 'pi pi-eye'" />
+              </button>
+            </div>
+            <small class="sifre-ipucu">{{ $t('kurulum.passwordHint') }}</small>
+          </div>
+
+          <Button :label="$t('kurulum.submit')" icon="pi pi-check" :loading="kurulumYukleniyor" class="giris-buton" @click="kurulumBaslat" />
+        </div>
+
         <!-- Adim 2: 2FA -->
-        <div v-if="ikiFaktorAdimi">
+        <div v-else-if="ikiFaktorAdimi">
           <div class="iki-fa-ikon"><i class="pi pi-shield" /></div>
-          <h2 class="iki-fa-baslik">Iki Faktorlu Dogrulama</h2>
-          <p class="iki-fa-alt">Kimlik dogrulayici uygulamanizdaki 6 haneli kodu girin.</p>
+          <h2 class="iki-fa-baslik">{{ $t('giris.twoFactorTitle') }}</h2>
+          <p class="iki-fa-alt">{{ $t('giris.twoFactorHint') }}</p>
           <div class="form-grup">
             <div class="input-wrapper">
               <i class="pi pi-key" />
@@ -25,15 +105,15 @@
                 style="text-align:center;letter-spacing:6px;font-size:20px" @keyup.enter="ikiFaktorDogrula" />
             </div>
           </div>
-          <Button label="Dogrula" icon="pi pi-shield" :loading="authStore.loading" class="giris-buton" @click="ikiFaktorDogrula" />
-          <div class="geri-satir"><a @click="geriDon">&larr; Geri don</a></div>
+          <Button :label="$t('giris.verify')" icon="pi pi-shield" :loading="authStore.loading" class="giris-buton" @click="ikiFaktorDogrula" />
+          <div class="geri-satir"><a @click="geriDon">&larr; {{ $t('giris.back') }}</a></div>
         </div>
 
         <!-- Adim 3: Sirket Secimi -->
         <div v-else-if="sirketSecimAdimi">
           <div class="sirket-secim-ikon"><i class="pi pi-building" /></div>
-          <h2 class="iki-fa-baslik">Firma Secin</h2>
-          <p class="iki-fa-alt">Hangi firma ile calisacaksiniz?</p>
+          <h2 class="iki-fa-baslik">{{ $t('giris.selectCompany') }}</h2>
+          <p class="iki-fa-alt">{{ $t('giris.selectCompanyHint') }}</p>
           <div v-if="sirketler.length > 0" class="sirket-listesi">
             <button
               v-for="sirket in sirketler"
@@ -47,22 +127,22 @@
               <i class="pi pi-chevron-right sirket-ok" />
             </button>
           </div>
-          <p v-else class="sirket-yok">Bagli oldugunuz aktif firma bulunamadi.</p>
-          <div class="geri-satir"><a @click="tumAdimlariSifirla">&larr; Tekrar giris yap</a></div>
+          <p v-else class="sirket-yok">{{ $t('giris.noCompany') }}</p>
+          <div class="geri-satir"><a @click="tumAdimlariSifirla">&larr; {{ $t('giris.loginAgain') }}</a></div>
         </div>
 
         <!-- Adim 1: Kullanici adi ve sifre -->
         <div v-else>
           <div class="form-grup">
-            <label>Kullanici Adi</label>
+            <label>{{ $t('auth.username') }}</label>
             <div class="input-wrapper">
               <i class="pi pi-user" />
-              <InputText ref="kullaniciInput" v-model="username" placeholder="Kullanici adi" @keyup.enter="odaklanSifre" />
+              <InputText ref="kullaniciInput" v-model="username" :placeholder="$t('auth.username')" @keyup.enter="odaklanSifre" />
             </div>
           </div>
 
           <div class="form-grup">
-            <label>Sifre</label>
+            <label>{{ $t('auth.password') }}</label>
             <div class="input-wrapper">
               <i class="pi pi-lock" />
               <InputText ref="sifreInput" v-model="password" :type="sifreGorunur ? 'text' : 'password'" placeholder="••••••" @keyup.enter="girisYap" />
@@ -74,25 +154,25 @@
 
           <div class="beni-hatirla">
             <Checkbox v-model="beniHatirla" :binary="true" input-id="beniHatirla" />
-            <label for="beniHatirla">Beni Hatirla</label>
+            <label for="beniHatirla">{{ $t('giris.rememberMe') }}</label>
           </div>
 
-          <Button label="Giris Yap" icon="pi pi-sign-in" :loading="authStore.loading" class="giris-buton" @click="girisYap" />
+          <Button :label="$t('auth.login')" icon="pi pi-sign-in" :loading="authStore.loading" class="giris-buton" @click="girisYap" />
 
           <div class="giris-alt-linkler">
-            <a @click="sifremiUnuttumAdimi = true">Sifremi Unuttum</a>
+            <a @click="sifremiUnuttumAdimi = true">{{ $t('giris.forgotPassword') }}</a>
           </div>
         </div>
       </div>
 
       <!-- Sifremi Unuttum -->
-      <div v-if="sifremiUnuttumAdimi && !ikiFaktorAdimi && !sirketSecimAdimi" class="sifre-sifirla-panel">
+      <div v-if="sifremiUnuttumAdimi && !ikiFaktorAdimi && !sirketSecimAdimi && !kurulumAdimi" class="sifre-sifirla-panel">
         <div class="sifirla-ust">
           <i class="pi pi-envelope" />
-          <h3>Sifremi Unuttum</h3>
-          <a @click="sifremiUnuttumAdimi = false">&larr; Girise don</a>
+          <h3>{{ $t('giris.forgotTitle') }}</h3>
+          <a @click="sifremiUnuttumAdimi = false">&larr; {{ $t('giris.backToLogin') }}</a>
         </div>
-        <p>Şifrenizi unuttuysanız lütfen sistem yöneticinizle iletişime geçin. Yöneticiniz şifrenizi sıfırlayabilir.</p>
+        <p>{{ $t('giris.forgotHint') }}</p>
       </div>
 
       <div class="giris-footer">
@@ -106,11 +186,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore.js'
+import { kurulumAPI } from '../api/index.js'
 import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const kullaniciInput = ref(null)
 const sifreInput = ref(null)
@@ -128,18 +211,53 @@ const sirketSecimAdimi = ref(false)
 const ikiFaktorKod = ref('')
 const girisToken = ref('')
 
+const kurulumAdimi = ref(false)
+const kurulumYukleniyor = ref(false)
+const kurulumForm = ref({ ad: '', vergiNo: '', vergiDairesi: '', telefon: '', email: '', adminUsername: '', adminDisplayName: '', adminPassword: '' })
+
 const sifremiUnuttumAdimi = ref(false)
 
-onMounted(() => {
-  if (authStore.isLoggedIn) { router.push('/') }
+onMounted(async () => {
+  if (authStore.isLoggedIn) { router.push('/'); return }
   beniHatirla.value = localStorage.getItem('raspel_erp_beni_hatirla') === 'true'
+  await kurulumDurumKontrol()
 })
+
+const kurulumDurumKontrol = async () => {
+  try {
+    const res = await kurulumAPI.durum()
+    kurulumAdimi.value = !!res.data?.kurulumGerekli
+  } catch { /* backend erisilemiyorsa giris formu gosterilir */ }
+}
+
+const kurulumBaslat = async () => {
+  hata.value = ''
+  const f = kurulumForm.value
+  if (!f.ad.trim() || !f.vergiNo.trim()) { hata.value = t('kurulum.companyRequired'); return }
+  if (!f.adminUsername.trim() || !f.adminPassword) { hata.value = t('kurulum.credentialsRequired'); return }
+  kurulumYukleniyor.value = true
+  try {
+    const sonuc = await kurulumAPI.baslat({ ...f })
+    girisToken.value = sonuc.data?.girisToken
+    sirketler.value = sonuc.data?.sirketler || []
+    if (sirketler.value.length === 1) {
+      await sirketSecVeGirisYap(sirketler.value[0])
+      return
+    }
+    kurulumAdimi.value = false
+    sirketSecimAdimi.value = true
+  } catch (err) {
+    hata.value = err.response?.data?.message || t('kurulum.failed')
+  } finally {
+    kurulumYukleniyor.value = false
+  }
+}
 
 const odaklanSifre = () => sifreInput.value?.$el?.querySelector('input')?.focus()
 
 const girisYap = async () => {
   hata.value = ''
-  if (!username.value.trim() || !password.value.trim()) { hata.value = 'Kullanici adi ve sifre giriniz'; return }
+  if (!username.value.trim() || !password.value.trim()) { hata.value = t('giris.emptyCredentials'); return }
   try {
     localStorage.setItem('raspel_erp_beni_hatirla', beniHatirla.value ? 'true' : 'false')
     const sonuc = await authStore.girisYap(username.value, password.value)
@@ -155,7 +273,7 @@ const girisYap = async () => {
       return
     }
     sirketSecimAdimi.value = true
-  } catch (err) { hata.value = err.response?.data?.message || 'Giris basarisiz' }
+  } catch (err) { hata.value = err.response?.data?.message || t('giris.loginFailed') }
 }
 
 const sirketSecVeGirisYap = async (sirket) => {
@@ -164,12 +282,12 @@ const sirketSecVeGirisYap = async (sirket) => {
   try {
     await authStore.girisSirket(girisToken.value, sirket.id)
     router.push('/')
-  } catch (err) { hata.value = err.response?.data?.message || 'Firma secimi basarisiz' }
+  } catch (err) { hata.value = err.response?.data?.message || t('giris.companySelectFailed') }
 }
 
 const ikiFaktorDogrula = async () => {
   hata.value = ''
-  if (!ikiFaktorKod.value.trim()) { hata.value = 'Dogrulama kodunu girin'; return }
+  if (!ikiFaktorKod.value.trim()) { hata.value = t('giris.invalidCode'); return }
   try {
     const sonuc = await authStore.giris2fa(girisToken.value, ikiFaktorKod.value.trim())
     girisToken.value = sonuc.girisToken
@@ -180,7 +298,7 @@ const ikiFaktorDogrula = async () => {
       return
     }
     sirketSecimAdimi.value = true
-  } catch (err) { hata.value = err.response?.data?.message || 'Dogrulama basarisiz' }
+  } catch (err) { hata.value = err.response?.data?.message || t('giris.verifyFailed') }
 }
 
 const geriDon = () => { ikiFaktorAdimi.value = false; ikiFaktorKod.value = ''; girisToken.value = '' }
@@ -221,10 +339,15 @@ const tumAdimlariSifirla = () => {
 .hata-kutu i { font-size: 16px; flex-shrink: 0; }
 .giris-footer { text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(148,163,184,.1); display: flex; align-items: center; justify-content: center; gap: 16px; }
 .giris-footer span { font-size: 11px; color: #475569; }
-.iki-fa-ikon, .sirket-secim-ikon { width: 60px; height: 60px; margin: 0 auto 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(16,185,129,.3); }
+.iki-fa-ikon, .sirket-secim-ikon, .kurulum-ikon { width: 60px; height: 60px; margin: 0 auto 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(16,185,129,.3); }
 .iki-fa-ikon { background: linear-gradient(135deg, #10b981, #059669); }
 .sirket-secim-ikon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-.iki-fa-ikon i, .sirket-secim-ikon i { font-size: 26px; color: white; }
+.kurulum-ikon { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 8px 24px rgba(139,92,246,.3); }
+.iki-fa-ikon i, .sirket-secim-ikon i, .kurulum-ikon i { font-size: 26px; color: white; }
+.kurulum-iki-kolon { display: flex; gap: 10px; }
+.kurulum-iki-kolon .form-grup { flex: 1; }
+.kurulum-ayrac { border-top: 1px dashed var(--border); margin: 16px 0; }
+.sifre-ipucu { display: block; margin-top: 6px; color: var(--text-muted); font-size: 11px; }
 .iki-fa-baslik { text-align: center; color: var(--text-primary); font-size: 17px; margin: 0 0 4px; }
 .iki-fa-alt { text-align: center; color: var(--text-secondary); font-size: 13px; margin: 0 0 18px; }
 .geri-satir { text-align: center; margin-top: 14px; }
@@ -248,5 +371,5 @@ const tumAdimlariSifirla = () => {
 .sifirla-input-row { display: flex; gap: 8px; }
 .sifirla-input-row .p-inputtext { flex: 1; }
 .sifirla-mesaj { display: block; margin-top: 10px; font-size: 12px; color: var(--green-500); }
-@media (max-width: 480px) { .giris-form { padding: 20px; } .sifirla-input-row { flex-direction: column; } }
+@media (max-width: 480px) { .giris-form { padding: 20px; } .sifirla-input-row { flex-direction: column; } .kurulum-iki-kolon { flex-direction: column; gap: 0; } }
 </style>

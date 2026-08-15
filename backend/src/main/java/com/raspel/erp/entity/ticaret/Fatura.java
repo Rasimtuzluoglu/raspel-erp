@@ -101,6 +101,12 @@ public class Fatura {
     @Column(name = "teslim_fotograf", columnDefinition = "TEXT")
     private String teslimFotograf;
 
+    @Column(name = "depo_id")
+    private Long depoId;
+
+    @Column(name = "para_birimi", length = 10)
+    private String paraBirimi;
+
     @Version
     private Long version;
 
@@ -108,6 +114,7 @@ public class Fatura {
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();
         if (durum == null) durum = FaturaDurum.TASLAK;
+        if (paraBirimi == null) paraBirimi = "TRY";
     }
 
     public enum FaturaTur {

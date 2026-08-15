@@ -66,20 +66,27 @@ public class PdfRaporService {
             }
         } catch (Exception ignored) {}
 
+        boolean alis = f.getTur() == Fatura.FaturaTur.ALIS;
+        String baslik = alis ? "ALIŞ FATURASI" : "SATIŞ FATURASI";
+        String cariLabel = alis ? "Tedarikçi:" : "Müşteri:";
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
 
-                y = header(cs, y, "FATURA");
+                y = header(cs, y, baslik);
                 y -= 10;
                 y = infoSatiri(cs, y, "Fatura No:", "#" + (f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())));
                 y = infoSatiri(cs, y, "Tarih:", f.getOlusturmaTarihi() != null ? f.getOlusturmaTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
                 y = infoSatiri(cs, y, "Durum:", f.getDurum() != null ? f.getDurum().name() : "-");
-                y = infoSatiri(cs, y, "Müşteri:", cariAd);
+                y = infoSatiri(cs, y, cariLabel, cariAd);
                 y = infoSatiri(cs, y, "Cari Hesap ID:", cariId);
                 y = infoSatiri(cs, y, "İşlemi Yapan:", f.getOlusturanKullaniciAdi() != null ? f.getOlusturanKullaniciAdi() : "-");
+                if (alis && f.getDepoId() != null) {
+                    y = infoSatiri(cs, y, "Depo ID:", String.valueOf(f.getDepoId()));
+                }
                 y = infoSatiri(cs, y, "Teslim Eden:", f.getTeslimEden() != null && !f.getTeslimEden().isBlank() ? f.getTeslimEden() : "-");
                 y = infoSatiri(cs, y, "Teslim Durumu:", f.getTeslimDurumu() != null ? f.getTeslimDurumu() : "-");
                 if (f.getTeslimNotu() != null && !f.getTeslimNotu().isBlank()) {

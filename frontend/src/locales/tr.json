@@ -65,6 +65,44 @@
     "sirket": "Şirket Seçiniz",
     "welcome": "RasPel ERP'ye Hoş Geldiniz"
   },
+  "giris": {
+    "subtitle": "KOBİ'nin Tek Panosu",
+    "rememberMe": "Beni Hatırla",
+    "forgotPassword": "Şifremi Unuttum",
+    "twoFactorTitle": "İki Faktörlü Doğrulama",
+    "twoFactorHint": "Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.",
+    "verify": "Doğrula",
+    "back": "Geri dön",
+    "selectCompany": "Firma Seçin",
+    "selectCompanyHint": "Hangi firma ile çalışacaksınız?",
+    "noCompany": "Bağlı olduğunuz aktif firma bulunamadı.",
+    "loginAgain": "Tekrar giriş yap",
+    "forgotTitle": "Şifremi Unuttum",
+    "backToLogin": "Girişe dön",
+    "forgotHint": "Şifrenizi unuttuysanız lütfen sistem yöneticinizle iletişime geçin. Yöneticiniz şifrenizi sıfırlayabilir.",
+    "emptyCredentials": "Kullanıcı adı ve şifre giriniz",
+    "invalidCode": "Doğrulama kodunu girin",
+    "loginFailed": "Giriş başarısız",
+    "verifyFailed": "Doğrulama başarısız",
+    "companySelectFailed": "Firma seçimi başarısız"
+  },
+  "kurulum": {
+    "welcome": "Hoş Geldiniz!",
+    "hint": "Başlamak için firma bilgilerinizi girin.",
+    "companyName": "Firma Adı",
+    "taxNumber": "Vergi No",
+    "taxOffice": "Vergi Dairesi",
+    "phone": "Telefon",
+    "email": "E-posta",
+    "adminUsername": "Yönetici Kullanıcı Adı",
+    "fullName": "Ad Soyad",
+    "password": "Şifre",
+    "passwordHint": "En az 8 karakter; büyük/küçük harf, rakam ve özel karakter içermeli.",
+    "submit": "Kurulumu Tamamla ve Başla",
+    "companyRequired": "Firma adı ve vergi numarası zorunludur",
+    "credentialsRequired": "Kullanıcı adı ve şifre zorunludur",
+    "failed": "Kurulum başlatılamadı"
+  },
   "common": {
     "save": "Kaydet",
     "cancel": "İptal",
@@ -107,7 +145,8 @@
     "mode": "Tema Modu",
     "accent": "Vurgu Rengi",
     "lightShort": "Açık",
-    "darkShort": "Koyu"
+    "darkShort": "Koyu",
+    "language": "Dil"
   },
   "shortcuts": {
     "title": "Klavye Kısayolları",

@@ -88,4 +88,18 @@ public class RaporController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(raporService.cariKarlilikRaporu(baslangic, bitis, sirketId));
     }
+
+    @GetMapping("/tedarikci-urunler")
+    @Operation(summary = "Tedarikçi bazlı ürün raporu", description = "Hangi tedarikçiden hangi ürünlerin geldiğini (toplam miktar, son fiyat, son tarih) getirir")
+    public ResponseEntity<List<com.raspel.erp.dto.sistem.TedarikciUrunDTO>> tedarikciUrunler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.tedarikciUrunRaporu(sirketId));
+    }
+
+    @GetMapping("/urun-karlilik")
+    @Operation(summary = "Ürün kârlılık raporu", description = "Her ürünün alış maliyeti, satış fiyatı ve kâr marjını getirir")
+    public ResponseEntity<List<com.raspel.erp.dto.sistem.UrunKarlilikDTO>> urunKarlilik(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.urunKarlilikRaporu(sirketId));
+    }
 }

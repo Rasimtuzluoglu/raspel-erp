@@ -35,6 +35,7 @@ class RaporServiceTest {
     @Mock private HareketRepository hareketRepository;
     @Mock private FaturaRepository faturaRepository;
     @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
+    @Mock private com.raspel.erp.repository.envanter.StokRepository stokRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private HareketService hareketService;
     @InjectMocks private RaporService raporService;
@@ -113,12 +114,12 @@ class RaporServiceTest {
     @Test
     void yaslandirmaRaporu_returnsYaslandirma() {
         CariHesap cari1 = createCariHesap();
-        cari1.setBakiye(BigDecimal.valueOf(-3000));
+        cari1.setBakiye(BigDecimal.valueOf(3000));
         cari1.setGuncellemeTarihi(LocalDateTime.now().minusDays(45));
         CariHesap cari2 = createCariHesap();
         cari2.setId(2L);
         cari2.setAd("Cari 2");
-        cari2.setBakiye(BigDecimal.valueOf(-1000));
+        cari2.setBakiye(BigDecimal.valueOf(1000));
         cari2.setGuncellemeTarihi(LocalDateTime.now().minusDays(15));
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari1, cari2));
         var result = raporService.yaslandirmaRaporu(1L);
@@ -183,5 +184,48 @@ class RaporServiceTest {
         assertEquals(1, result.getKayitlar().size());
         assertEquals("FTR-1", result.getKayitlar().get(0).getFaturaNo());
         assertEquals(BigDecimal.valueOf(9440), result.getToplamTutar());
+    }
+
+    @Test
+    void tedarikciUrunRaporu_returnsGrouped() {
+        when(faturaKalemRepository.tedarikciUrunler(eq(1L), eq(Fatura.FaturaTur.ALIS), eq(Fatura.FaturaDurum.KESILDI)))
+                .thenReturn(List.of(new com.raspel.erp.repository.ticaret.TedarikciUrunProjeksiyon() {
+                    public Long getCariHesapId() { return 1L; }
+                    public String getCariHesapAd() { return "ABC Fabrika"; }
+                    public Long getStokId() { return 10L; }
+                    public Long getToplamMiktar() { return 50L; }
+                    public BigDecimal getSonBirimFiyat() { return BigDecimal.valueOf(120); }
+                    public LocalDate getSonTarih() { return LocalDate.of(2026, 7, 1); }
+                }));
+
+        com.raspel.erp.entity.envanter.Stok stok = new com.raspel.erp.entity.envanter.Stok();
+        stok.setId(10L);
+        stok.setAd("MDF 18mm");
+        stok.setStokKodu("MDF-18");
+        when(stokRepository.findAllById(java.util.List.of(10L))).thenReturn(java.util.List.of(stok));
+
+        var result = raporService.tedarikciUrunRaporu(1L);
+
+        assertEquals(1, result.size());
+        assertEquals("ABC Fabrika", result.get(0).getCariHesapAd());
+        assertEquals("MDF 18mm", result.get(0).getStokAd());
+        assertEquals(50L, result.get(0).getToplamMiktar());
+    }
+
+    @Test
+    void urunKarlilikRaporu_returnsMargin() {
+        com.raspel.erp.entity.envanter.Stok stok = new com.raspel.erp.entity.envanter.Stok();
+        stok.setId(1L);
+        stok.setAd("MDF 18mm");
+        stok.setStokKodu("MDF-18");
+        stok.setFiyat(BigDecimal.valueOf(100));
+        stok.setSatisFiyati(BigDecimal.valueOf(150));
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(java.util.List.of(stok));
+
+        var result = raporService.urunKarlilikRaporu(1L);
+
+        assertEquals(1, result.size());
+        assertEquals(0, result.get(0).getKar().compareTo(BigDecimal.valueOf(50)));
+        assertEquals(0, result.get(0).getKarMarji().compareTo(new BigDecimal("33.33")));
     }
 }

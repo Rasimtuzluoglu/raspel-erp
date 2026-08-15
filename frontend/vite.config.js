@@ -3,30 +3,12 @@ import vue from '@vitejs/plugin-vue'
 import Components from 'unplugin-vue-components/vite'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 
-const legacyPrimeVueComponents = {
-  Dropdown: 'primevue/dropdown',
-  InputSwitch: 'primevue/inputswitch',
-  TabView: 'primevue/tabview',
-  Calendar: 'primevue/calendar',
-  MultiSelect: 'primevue/multiselect'
-}
-
-const legacyResolver = () => ({
-  type: 'component',
-  resolve: (name) => {
-    if (legacyPrimeVueComponents[name]) {
-      return { from: legacyPrimeVueComponents[name] }
-    }
-  }
-})
-
 export default defineConfig({
   plugins: [
     vue(),
     Components({
       resolvers: [
-        PrimeVueResolver(),
-        legacyResolver()
+        PrimeVueResolver()
       ],
       directives: true
     })

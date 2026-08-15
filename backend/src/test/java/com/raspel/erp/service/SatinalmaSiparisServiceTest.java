@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.ticaret.SatinalmaSiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SatinalmaSiparisRepository;
+import com.raspel.erp.service.ticaret.FaturaService;
 import com.raspel.erp.service.ticaret.SatinalmaSiparisService;
 import com.raspel.erp.entity.ticaret.Siparis;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
@@ -37,6 +38,7 @@ class SatinalmaSiparisServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private FaturaService faturaService;
     @InjectMocks private SatinalmaSiparisService satinalmaSiparisService;
 
     private SatinalmaSiparis createSiparis(Long id) {
@@ -108,5 +110,34 @@ class SatinalmaSiparisServiceTest {
         satinalmaSiparisService.sil(1L);
         verify(kalemRepository).deleteBySiparisId(1L);
         verify(siparisRepository).deleteById(1L);
+    }
+
+    @Test
+    void faturayaCevir_createsAlisFatura() {
+        SatinalmaSiparis siparis = createSiparis(1L);
+        siparis.setDurum("TESLIM_ALINDI");
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(siparis));
+        when(kalemRepository.findBySiparisId(1L)).thenReturn(List.of(
+                com.raspel.erp.entity.ticaret.SatinalmaSiparisKalem.builder()
+                        .id(1L).siparisId(1L).stokId(1L).aciklama("Ürün").miktar(BigDecimal.valueOf(5))
+                        .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build()));
+        when(faturaService.faturaOlustur(any(), anyLong(), any(), any()))
+                .thenReturn(com.raspel.erp.dto.ticaret.FaturaDTO.builder().id(1L).tur("ALIS").build());
+        when(siparisRepository.save(any(SatinalmaSiparis.class))).thenReturn(siparis);
+
+        var result = satinalmaSiparisService.faturayaCevir(1L, 1L, "Yönetici");
+
+        assertNotNull(result);
+        assertEquals("ALIS", result.getTur());
+        verify(faturaService).faturaOlustur(any(), eq(1L), eq(1L), eq("Yönetici"));
+        assertEquals("FATURALANDI", siparis.getDurum());
+    }
+
+    @Test
+    void faturayaCevir_throwsWhenAlreadyConverted() {
+        SatinalmaSiparis siparis = createSiparis(1L);
+        siparis.setDurum("FATURALANDI");
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(siparis));
+        assertThrows(RuntimeException.class, () -> satinalmaSiparisService.faturayaCevir(1L, 1L, "Yönetici"));
     }
 }

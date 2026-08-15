@@ -143,6 +143,13 @@
                 @click="siparisDurumGuncelle(data, 'TESLIM_ALINDI')"
               />
               <Button
+                v-if="data.durum === 'TESLIM_ALINDI'"
+                icon="pi pi-file"
+                class="p-button-rounded p-button-text p-button-warning"
+                title="Alış Faturasına Çevir"
+                @click="siparisFaturayaCevir(data)"
+              />
+              <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text"
                 title="Sil"
@@ -389,6 +396,26 @@ const siparisDurumGuncelle = async (data, durum) => {
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
+}
+
+const siparisFaturayaCevir = (data) => {
+  confirm.require({
+    message: `"${data.siparisNo}" siparişi alış faturasına dönüştürülecek ve stoklar güncellenecek. Devam edilsin mi?`,
+    header: 'Alış Faturasına Dönüştür',
+    icon: 'pi pi-file',
+    acceptLabel: 'Evet, Dönüştür',
+    rejectLabel: 'İptal',
+    accept: async () => {
+      try {
+        await satinalmaSiparisAPI.faturayaCevir(data.id)
+        toastBildirim.basarili('Sipariş alış faturasına dönüştürüldü, stoklar güncellendi.')
+        await siparisleriYukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Faturaya dönüştürülürken hata oluştu')
+      }
+    },
+    reject: () => {}
+  })
 }
 
 const siparisSil = (data) => {

@@ -55,6 +55,14 @@ public class SatinalmaSiparisController {
         return ResponseEntity.ok(satinalmaSiparisService.durumGuncelle(id, body.getDurum()));
     }
 
+    @PostMapping("/{id}/faturaya-cevir")
+    @Operation(summary = "Alış faturasına dönüştür", description = "Satın alma siparişini alış faturasına dönüştürür (stok artar)")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaDTO> faturayaCevir(@PathVariable Long id, jakarta.servlet.http.HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        String displayName = (String) request.getAttribute("displayName");
+        return ResponseEntity.ok(satinalmaSiparisService.faturayaCevir(id, kullaniciId, displayName));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Satın alma siparişi sil", description = "Satın alma siparişini siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")

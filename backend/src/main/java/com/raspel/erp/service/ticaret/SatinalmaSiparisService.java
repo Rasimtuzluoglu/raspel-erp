@@ -1,8 +1,11 @@
 package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.dto.ticaret.FaturaDTO;
+import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisKalemDTO;
+import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.ticaret.SatinalmaSiparis;
 import com.raspel.erp.entity.ticaret.SatinalmaSiparisKalem;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
@@ -32,6 +36,7 @@ public class SatinalmaSiparisService {
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
+    private final FaturaService faturaService;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -109,6 +114,59 @@ public class SatinalmaSiparisService {
         tenantChecker.check(s.getSirketId(), "Sipariş");
         s.setDurum(durum);
         return entityToDTO(siparisRepository.save(s));
+    }
+
+    /**
+     * Satın alma siparişini alış faturasına dönüştürür.
+     * Sipariş kalemleri fatura kalemlerine kopyalanır, fatura KESİLDİ olarak oluşturulur
+     * (stok artar + tedarikçi bakiyesi güncellenir) ve sipariş FATURALANDI durumuna geçer.
+     */
+    public FaturaDTO faturayaCevir(Long id, Long kullaniciId, String displayName) {
+        SatinalmaSiparis s = siparisRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("FATURALANDI".equals(s.getDurum())) {
+            throw new BusinessException("Bu sipariş zaten faturaya dönüştürülmüş");
+        }
+
+        List<SatinalmaSiparisKalem> kalemler = kalemRepository.findBySiparisId(id);
+        if (kalemler.isEmpty()) {
+            throw new BusinessException("Faturaya dönüştürülecek sipariş kalemi yok");
+        }
+
+        List<FaturaKalemDTO> faturaKalemleri = kalemler.stream().map(k -> {
+            int adet = k.getMiktar() != null ? Math.max(1, k.getMiktar().intValue()) : 1;
+            String aciklama = k.getAciklama() != null && !k.getAciklama().isBlank()
+                    ? k.getAciklama() : stokAdi(k.getStokId());
+            return FaturaKalemDTO.builder()
+                    .aciklama(aciklama)
+                    .adet(adet)
+                    .birimFiyat(k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO)
+                    .kdvOrani(k.getKdvOrani())
+                    .stokId(k.getStokId())
+                    .build();
+        }).collect(Collectors.toList());
+
+        FaturaDTO faturaDTO = FaturaDTO.builder()
+                .tur("ALIS")
+                .durum("KESILDI")
+                .tarih(LocalDate.now())
+                .cariHesapId(s.getCariHesapId())
+                .aciklama(s.getAciklama() != null ? s.getAciklama() : "Sipariş: " + s.getSiparisNo())
+                .kalemler(faturaKalemleri)
+                .build();
+
+        FaturaDTO olusturulan = faturaService.faturaOlustur(faturaDTO, s.getSirketId(), kullaniciId, displayName);
+
+        s.setDurum("FATURALANDI");
+        siparisRepository.save(s);
+
+        return olusturulan;
+    }
+
+    private String stokAdi(Long stokId) {
+        if (stokId == null) return "Ürün";
+        return stokRepository.findById(stokId).map(Stok::getAd).orElse("Ürün");
     }
 
     public void sil(Long id) {

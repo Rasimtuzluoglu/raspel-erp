@@ -39,6 +39,12 @@ public class VardiyaController {
         return ResponseEntity.ok(vardiyaService.getir(id));
     }
 
+    @GetMapping("/personel/{personelId}")
+    @Operation(summary = "Personel vardiyalarını getir", description = "Belirli bir personelin tüm vardiya kayıtlarını listeler")
+    public ResponseEntity<java.util.List<VardiyaDTO>> personelVardiyalari(@PathVariable Long personelId) {
+        return ResponseEntity.ok(vardiyaService.personelVardiyalari(personelId));
+    }
+
     @PostMapping
     @Operation(summary = "Yeni vardiya oluştur", description = "Yeni bir vardiya kaydı oluşturur")
     public ResponseEntity<VardiyaDTO> olustur(@Valid @RequestBody VardiyaDTO dto, HttpServletRequest request) {

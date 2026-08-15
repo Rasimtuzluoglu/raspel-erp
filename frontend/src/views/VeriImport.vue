@@ -127,6 +127,67 @@
           </div>
         </template>
       </Card>
+
+      <Card>
+        <template #title>
+          <i
+            class="pi pi-file-import"
+            style="margin-right:8px"
+          />Alış Faturası Aktar
+        </template>
+        <template #content>
+          <p class="import-desc">
+            CSV dosyası ile toplu alış faturası girişi. Kolonlar: <code>faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani</code> (aynı faturaNo'ya sahip satırlar tek faturada birleştirilir, stoklar otomatik eklenir)
+          </p>
+          <div
+            class="import-dropzone"
+            @dragover.prevent
+            @drop.prevent="dosyaSec($event, 'alisFatura')"
+            @click="$refs.alisFaturaInput.click()"
+          >
+            <input
+              ref="alisFaturaInput"
+              type="file"
+              accept=".csv"
+              hidden
+              @change="dosyaDegisti($event, 'alisFatura')"
+            >
+            <i class="pi pi-upload" />
+            <span>{{ alisFaturaDosya ? alisFaturaDosya.name : 'CSV dosyasını seçin veya sürükleyin' }}</span>
+          </div>
+          <Button
+            v-if="alisFaturaDosya"
+            label="Aktar"
+            icon="pi pi-upload"
+            class="p-button-success w-full"
+            :loading="alisFaturaYukleniyor"
+            @click="aktar('alisFatura')"
+          />
+          <div
+            v-if="alisFaturaSonuc"
+            class="import-sonuc"
+          >
+            <Message
+              :severity="alisFaturaSonuc.hatalar?.length ? 'warn' : 'success'"
+              :closable="true"
+            >
+              <strong>{{ alisFaturaSonuc.basarili }} alış faturası aktarıldı.</strong>
+              <span v-if="alisFaturaSonuc.hatalar?.length"> {{ alisFaturaSonuc.hatalar.length }} hata.</span>
+            </Message>
+            <ul
+              v-if="alisFaturaSonuc.hatalar?.length"
+              class="hata-listesi"
+            >
+              <li
+                v-for="h in alisFaturaSonuc.hatalar"
+                :key="h"
+              >
+                {{ h }}
+              </li>
+            </ul>
+          </div>
+        </template>
+      </Card>
     </div>
   </div>
 </template>
@@ -141,30 +202,33 @@ const toast = useToast()
 const toastBildirim = useToastBildirim()
 const stokDosya = ref(null)
 const cariDosya = ref(null)
+const alisFaturaDosya = ref(null)
 const stokYukleniyor = ref(false)
 const cariYukleniyor = ref(false)
+const alisFaturaYukleniyor = ref(false)
 const stokSonuc = ref(null)
 const cariSonuc = ref(null)
+const alisFaturaSonuc = ref(null)
 
 const dosyaDegisti = (e, tur) => {
   const file = e.target.files[0]
-  if (file) { if (tur === 'stok') stokDosya.value = file; else cariDosya.value = file }
+  if (file) { if (tur === 'stok') stokDosya.value = file; else if (tur === 'cari') cariDosya.value = file; else alisFaturaDosya.value = file }
 }
 
 const dosyaSec = (e, tur) => {
   const file = e.dataTransfer.files[0]
-  if (file) { if (tur === 'stok') stokDosya.value = file; else cariDosya.value = file }
+  if (file) { if (tur === 'stok') stokDosya.value = file; else if (tur === 'cari') cariDosya.value = file; else alisFaturaDosya.value = file }
 }
 
 const aktar = async (tur) => {
-  const file = tur === 'stok' ? stokDosya.value : cariDosya.value
+  const file = tur === 'stok' ? stokDosya.value : tur === 'cari' ? cariDosya.value : alisFaturaDosya.value
   if (!file) return
-  const loading = tur === 'stok' ? stokYukleniyor : cariYukleniyor
-  const sonuc = tur === 'stok' ? stokSonuc : cariSonuc
+  const loading = tur === 'stok' ? stokYukleniyor : tur === 'cari' ? cariYukleniyor : alisFaturaYukleniyor
+  const sonuc = tur === 'stok' ? stokSonuc : tur === 'cari' ? cariSonuc : alisFaturaSonuc
   loading.value = true
   sonuc.value = null
   try {
-    const api = tur === 'stok' ? importAPI.stok : importAPI.cari
+    const api = tur === 'stok' ? importAPI.stok : tur === 'cari' ? importAPI.cari : importAPI.alisFatura
     const res = await api(file)
     sonuc.value = res.data
     toast.add({ severity: res.data.hatalar?.length ? 'warn' : 'success', summary: 'İşlem Tamam', detail: res.data.mesaj, life: 5000 })

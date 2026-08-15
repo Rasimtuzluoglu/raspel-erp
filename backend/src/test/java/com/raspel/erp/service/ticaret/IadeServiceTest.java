@@ -128,6 +128,35 @@ class IadeServiceTest {
     }
 
     @Test
+    void olustur_alisIadesi_stokDuser() {
+        hazirla();
+        IadeDTO dto = IadeDTO.builder()
+                .tur("ALIS").tarih(LocalDate.now()).durum("TAMAMLANDI")
+                .kalemler(List.of(IadeKalemDTO.builder()
+                        .stokId(1L).aciklama("Ürün").miktar(new BigDecimal("5"))
+                        .birimFiyat(new BigDecimal("10")).kdvOrani(new BigDecimal("20"))
+                        .build()))
+                .build();
+        Stok stok = Stok.builder().id(1L).ad("Test Ürün").miktar(new BigDecimal("10")).build();
+        when(iadeRepository.save(any(Iade.class))).thenAnswer(inv -> {
+            Iade i = inv.getArgument(0);
+            i.setId(1L);
+            return i;
+        });
+        when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of(
+                IadeKalem.builder().iadeId(1L).stokId(1L)
+                        .miktar(new BigDecimal("5")).build()
+        ));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        iadeService.olustur(dto, 1L);
+
+        assertEquals(0, stok.getMiktar().compareTo(new BigDecimal("5")));
+        verify(stokHareketRepository, times(1)).save(any());
+    }
+
+    @Test
     void sil_deletes() {
         when(iadeRepository.findById(1L)).thenReturn(Optional.of(ornekIade(1L)));
         iadeService.sil(1L);

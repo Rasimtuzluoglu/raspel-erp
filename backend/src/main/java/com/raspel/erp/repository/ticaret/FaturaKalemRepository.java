@@ -39,4 +39,20 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
                                                        @Param("sirketId") Long sirketId,
                                                        @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
                                                        @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
+
+    /**
+     * Tedarikçi bazlı ürün raporu: hangi tedarikçiden hangi ürün, toplam miktar, son fiyat ve son tarih.
+     * Yalnızca ALIS + KESILDI faturalar dikkate alınır.
+     */
+    @Query("SELECT f.cariHesap.id AS cariHesapId, f.cariHesap.ad AS cariHesapAd, " +
+           "k.stokId AS stokId, SUM(k.adet) AS toplamMiktar, " +
+           "MAX(k.birimFiyat) AS sonBirimFiyat, MAX(f.tarih) AS sonTarih " +
+           "FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+           "AND k.stokId IS NOT NULL AND f.cariHesap IS NOT NULL " +
+           "GROUP BY f.cariHesap.id, f.cariHesap.ad, k.stokId " +
+           "ORDER BY f.cariHesap.ad ASC, MAX(f.tarih) DESC")
+    List<TedarikciUrunProjeksiyon> tedarikciUrunler(@Param("sirketId") Long sirketId,
+                                                    @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                                    @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
 }

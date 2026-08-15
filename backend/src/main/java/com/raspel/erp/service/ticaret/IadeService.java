@@ -74,6 +74,7 @@ public class IadeService {
 
         Iade iade = Iade.builder()
                 .faturaId(dto.getFaturaId())
+                .tur(dto.getTur() != null ? dto.getTur() : "SATIS")
                 .tarih(dto.getTarih())
                 .tutar(toplamTutar)
                 .aciklama(dto.getAciklama())
@@ -171,15 +172,22 @@ public class IadeService {
     }
 
     private void stokHareketleriIsle(Iade iade) {
+        boolean alisIadesi = "ALIS".equals(iade.getTur());
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
         for (IadeKalem k : kalemler) {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
-            stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
+            if (alisIadesi) {
+                if (stok.getMiktar().compareTo(k.getMiktar()) < 0)
+                    throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd() + ", Mevcut: " + stok.getMiktar());
+                stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
+            } else {
+                stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
+            }
             stokRepository.save(stok);
             stokHareketRepository.save(StokHareket.builder()
-                    .stok(stok).tur("GIRIS")
+                    .stok(stok).tur(alisIadesi ? "CIKIS" : "GIRIS")
                     .miktar(k.getMiktar())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("İade #" + iade.getId())
@@ -188,15 +196,20 @@ public class IadeService {
     }
 
     private void stokHareketleriniTersineCevir(Iade iade) {
+        boolean alisIadesi = "ALIS".equals(iade.getTur());
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
         for (IadeKalem k : kalemler) {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
-            stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
+            if (alisIadesi) {
+                stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
+            } else {
+                stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
+            }
             stokRepository.save(stok);
             stokHareketRepository.save(StokHareket.builder()
-                    .stok(stok).tur("CIKIS")
+                    .stok(stok).tur(alisIadesi ? "GIRIS" : "CIKIS")
                     .miktar(k.getMiktar())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("İade iptal #" + iade.getId())
@@ -239,7 +252,7 @@ public class IadeService {
                 }).collect(Collectors.toList());
 
         return IadeDTO.builder()
-                .id(i.getId()).faturaId(i.getFaturaId()).tarih(i.getTarih())
+                .id(i.getId()).faturaId(i.getFaturaId()).tur(i.getTur()).tarih(i.getTarih())
                 .tutar(i.getTutar()).aciklama(i.getAciklama()).durum(i.getDurum())
                 .sirketId(i.getSirketId()).olusturmaTarihi(i.getOlusturmaTarihi())
                 .kalemler(kalemler)

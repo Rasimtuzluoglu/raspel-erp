@@ -214,8 +214,6 @@
                 <configuration>
                     <excludes>
                         <exclude>com/raspel/erp/RaspelErpApplication.class</exclude>
-                        <exclude>com/raspel/erp/config/IlkKullaniciInitializer.class</exclude>
-                        <exclude>com/raspel/erp/config/DataSeeder.class</exclude>
                         <exclude>com/raspel/erp/dto/**</exclude>
                         <exclude>com/raspel/erp/entity/**</exclude>
                     </excludes>

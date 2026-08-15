@@ -111,6 +111,16 @@
     >
       <div class="form-grid">
         <div class="field">
+          <label>İade Türü *</label>
+          <Dropdown
+            v-model="form.tur"
+            :options="[{label:'Satış İadesi (Müşteriden)',value:'SATIS'},{label:'Alış İadesi (Tedarikçiye)',value:'ALIS'}]"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
           <label>Cari Hesap (Müşteri/Tedarikçi) *</label>
           <Dropdown
             v-model="form.cariHesapId"
@@ -233,7 +243,7 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ cariHesapId: null, cariHesapAd: '', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] })
+const form = ref({ cariHesapId: null, cariHesapAd: '', tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] })
 
 const dialogHeader = computed(() => duzenleme.value ? 'İade Düzenle' : 'Yeni İade')
 
@@ -279,8 +289,8 @@ const kalemEkle = () => {
 const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
-    ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date(), kalemler: data.kalemler?.map(k => ({ ...k })) || [] }
-    : { cariHesapId: null, cariHesapAd: '', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
+    ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date(), tur: data.tur || 'SATIS', kalemler: data.kalemler?.map(k => ({ ...k })) || [] }
+    : { cariHesapId: null, cariHesapAd: '', tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
   dialog.value = true
 }
 

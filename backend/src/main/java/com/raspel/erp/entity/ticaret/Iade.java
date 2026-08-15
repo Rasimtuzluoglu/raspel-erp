@@ -23,6 +23,9 @@ public class Iade {
     @Column(name = "fatura_id")
     private Long faturaId;
 
+    @Column(nullable = false, length = 20)
+    private String tur;
+
     @Column(nullable = false)
     private LocalDate tarih;
 
@@ -48,5 +51,6 @@ public class Iade {
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();
         if (durum == null) durum = "TASLAK";
+        if (tur == null) tur = "SATIS";
     }
 }

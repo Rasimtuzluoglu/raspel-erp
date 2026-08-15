@@ -30,6 +30,7 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
     List<Stok> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String q);
     List<Stok> findBySirketIdAndBarkod(Long sirketId, String barkod);
     List<Stok> findBySirketIdAndBarkodContainingIgnoreCase(Long sirketId, String barkod);
+    Optional<Stok> findBySirketIdAndStokKodu(Long sirketId, String stokKodu);
 
     long countBySirketId(Long sirketId);
 

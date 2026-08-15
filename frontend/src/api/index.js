@@ -44,6 +44,7 @@ export {
 
 export {
   kullaniciAPI,
+  kurulumAPI,
   sirketAPI,
   subeAPI,
   donemAPI,

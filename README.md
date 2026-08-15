@@ -86,8 +86,7 @@ cd backend && mvn spring-boot:run                 # API → :8081
 cd frontend && npm ci && npm run dev              # UI → :5173
 ```
 
-İlk başlatmada `IlkKullaniciInitializer` varsayılan admin kullanıcısını oluşturur.  
-Şifreyi `APP_ADMIN_PASSWORD` ortam değişkeni ile değiştirin (varsayılan: `admin / admin123`).
+İlk başlatmada sistem boşsa giriş sayfası **ilk kurulum** formunu gösterir: firma adı, vergi no ve yönetici hesabı bilgilerini girerek başlarsınız. Önceden tanımlı demo kullanıcı yoktur.
 
 ---
 
@@ -105,18 +104,18 @@ Production öncesi `docs/GO-LIVE.md` kontrol listesine bakın.
 
 ```
 raspel-erp/
-├── backend/                 # Spring Boot API (510 test)
+├── backend/                 # Spring Boot API (591 test)
 │   └── src/main/java/com/raspel/erp/
 │       ├── controller/      # 7 alt paket
 │       ├── service/         # Redis cache, tenant kontrol
-│       ├── repository/      # 51 JPA repository
+│       ├── repository/      # 53 JPA repository
 │       ├── entity/          # JPA entity
 │       └── dto/             # Veri transfer objeleri
-├── frontend/                # Vue 3 SPA (84 test)
+├── frontend/                # Vue 3 SPA (134 test)
 │   └── src/
 │       ├── views/           # 52 sayfa
-│       ├── components/      # 25+ bileşen
-│       ├── composables/     # 12 composable
+│       ├── components/      # 30 bileşen
+│       ├── composables/     # 11 composable
 │       ├── stores/          # Pinia store
 │       └── api/             # Axios client + modüller
 ├── config/                  # Traefik, Prometheus, Grafana
@@ -129,8 +128,8 @@ raspel-erp/
 ## Test
 
 ```bash
-cd backend && mvn test       # 510 test, 0 hata
-cd frontend && npm run test  # 84 test
+cd backend && mvn test       # 591 test, 0 hata
+cd frontend && npm run test  # 134 test
 cd frontend && npm run lint  # ESLint
 ```
 

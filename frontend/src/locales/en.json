@@ -65,6 +65,44 @@
     "sirket": "Select Company",
     "welcome": "Welcome to RasPel ERP"
   },
+  "giris": {
+    "subtitle": "The SME's Single Dashboard",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot Password",
+    "twoFactorTitle": "Two-Factor Authentication",
+    "twoFactorHint": "Enter the 6-digit code from your authenticator app.",
+    "verify": "Verify",
+    "back": "Go back",
+    "selectCompany": "Select Company",
+    "selectCompanyHint": "Which company will you work with?",
+    "noCompany": "No active company found for your account.",
+    "loginAgain": "Sign in again",
+    "forgotTitle": "Forgot Password",
+    "backToLogin": "Back to login",
+    "forgotHint": "If you forgot your password, please contact your system administrator. Your administrator can reset it.",
+    "emptyCredentials": "Please enter username and password",
+    "invalidCode": "Please enter the verification code",
+    "loginFailed": "Login failed",
+    "verifyFailed": "Verification failed",
+    "companySelectFailed": "Company selection failed"
+  },
+  "kurulum": {
+    "welcome": "Welcome!",
+    "hint": "Enter your company details to get started.",
+    "companyName": "Company Name",
+    "taxNumber": "Tax Number",
+    "taxOffice": "Tax Office",
+    "phone": "Phone",
+    "email": "Email",
+    "adminUsername": "Admin Username",
+    "fullName": "Full Name",
+    "password": "Password",
+    "passwordHint": "At least 8 characters; must include uppercase, lowercase, number and special character.",
+    "submit": "Complete Setup and Start",
+    "companyRequired": "Company name and tax number are required",
+    "credentialsRequired": "Username and password are required",
+    "failed": "Setup could not be started"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -107,7 +145,8 @@
     "mode": "Theme Mode",
     "accent": "Accent Color",
     "lightShort": "Light",
-    "darkShort": "Dark"
+    "darkShort": "Dark",
+    "language": "Language"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",

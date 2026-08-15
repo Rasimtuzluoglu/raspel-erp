@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -29,6 +31,13 @@ public class VardiyaService {
     public VardiyaDTO getir(Long id) {
         return entityToDTO(vardiyaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vardiya", id)));
+    }
+
+    @Transactional(readOnly = true)
+    public List<VardiyaDTO> personelVardiyalari(Long personelId) {
+        return vardiyaRepository.findByPersonelIdOrderByTarihDesc(personelId).stream()
+                .map(this::entityToDTO)
+                .toList();
     }
 
     public VardiyaDTO olustur(VardiyaDTO dto, Long sirketId) {

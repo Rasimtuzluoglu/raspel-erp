@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.raspel.erp.entity.envanter.Stok;
 class BildirimServiceTest {
 
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private RabbitTemplate rabbitTemplate;
     @InjectMocks private BildirimService bildirimService;
 
     @Test

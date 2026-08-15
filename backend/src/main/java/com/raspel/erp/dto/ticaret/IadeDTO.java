@@ -13,6 +13,7 @@ import java.util.List;
 public class IadeDTO {
     private Long id;
     private Long faturaId;
+    private String tur;
     private LocalDate tarih;
     private BigDecimal tutar;
     private String aciklama;

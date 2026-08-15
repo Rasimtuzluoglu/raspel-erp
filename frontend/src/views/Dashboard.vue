@@ -320,8 +320,8 @@
               />
             </div>
             <div class="chart-summary">
-              <span class="dot pos" /> Pozitif: {{ formatCurrency(dashboardStore.pozitifBakiye) }}
-              <span class="dot neg" /> Negatif: {{ formatCurrency(Math.abs(dashboardStore.negatifBakiye)) }}
+              <span class="dot pos" /> Alacak: {{ formatCurrency(dashboardStore.pozitifBakiye) }}
+              <span class="dot neg" /> Borç: {{ formatCurrency(Math.abs(dashboardStore.negatifBakiye)) }}
             </div>
           </template>
         </Card>
@@ -942,12 +942,12 @@ const toplamKasaBakiye = computed(() => kasaStore.kasalar.reduce((t, k) => t + (
 const toplamLikidite = computed(() => toplamBankaBakiye.value + toplamKasaBakiye.value)
 const toplamStok = computed(() => stokStore.stoklar.length)
 const dusukStokAdet = computed(() => stokStore.dusukStoklar.length)
-const vadesiGecenCari = computed(() => (cariHesapStore?.cariHesaplar || []).filter(c => c.bakiye < 0).sort((a, b) => a.bakiye - b.bakiye))
+const vadesiGecenCari = computed(() => (cariHesapStore?.cariHesaplar || []).filter(c => c.bakiye > 0).sort((a, b) => b.bakiye - a.bakiye))
 const sonFaturalar = computed(() => [...faturaStore.faturalar].sort((a, b) => new Date(b.olusturmaTarihi) - new Date(a.olusturmaTarihi)).slice(0, 5))
 
 const grafikleriHesapla = () => {
   bakiyeChart.value = {
-    labels: ['Pozitif Bakiye', 'Negatif Bakiye'],
+    labels: ['Alacak', 'Borç'],
     datasets: [{
       data: [dashboardStore.pozitifBakiye || 0, Math.abs(dashboardStore.negatifBakiye) || 0],
       backgroundColor: ['#4caf50', '#f44336'],

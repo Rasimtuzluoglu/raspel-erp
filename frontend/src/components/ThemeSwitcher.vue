@@ -63,6 +63,26 @@
           />
         </div>
       </div>
+
+      <div class="menu-section">
+        <label class="section-label">{{ $t('theme.language') }}</label>
+        <div class="mode-toggle-group">
+          <button
+            class="mode-btn"
+            :class="{ active: aktifDil === 'tr' }"
+            @click="dilDegistir('tr')"
+          >
+            TR
+          </button>
+          <button
+            class="mode-btn"
+            :class="{ active: aktifDil === 'en' }"
+            @click="dilDegistir('en')"
+          >
+            EN
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -70,12 +90,14 @@
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useTheme } from '../composables/useTheme.js'
+import { useLocale } from '../composables/useLocale.js'
 
 const menuAcik = ref(false)
 const wrapperRef = ref(null)
 const menuRef = ref(null)
 const menuStil = ref({})
 const { isDark, accentColor, applyMode, applyColor, initTheme } = useTheme()
+const { aktifDil, dilDegistir } = useLocale()
 
 const colors = [
   { name: 'Okyanus Mavisi', value: '#3b82f6' },

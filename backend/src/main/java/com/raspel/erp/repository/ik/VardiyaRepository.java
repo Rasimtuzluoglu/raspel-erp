@@ -12,5 +12,6 @@ import java.util.List;
 @Repository
 public interface VardiyaRepository extends JpaRepository<Vardiya, Long> {
     Page<Vardiya> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
+    List<Vardiya> findByPersonelIdOrderByTarihDesc(Long personelId);
     List<Vardiya> findByPersonelIdAndTarihBetweenOrderByTarihAsc(Long personelId, LocalDate baslangic, LocalDate bitis);
 }

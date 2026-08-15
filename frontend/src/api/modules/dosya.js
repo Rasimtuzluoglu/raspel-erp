@@ -39,6 +39,11 @@ export const importAPI = {
     const formData = new FormData()
     formData.append('file', file)
     return apiClient.post('/import/cari', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  alisFatura(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.post('/import/alis-fatura', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
   }
 }
 

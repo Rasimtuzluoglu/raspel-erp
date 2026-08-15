@@ -49,8 +49,8 @@ public class RaporService {
         BigDecimal donemBasi = cari.getBakiye();
         BigDecimal donemSonu = donemBasi;
         for (HareketDTO h : hareketler) {
-            if ("TAHSILAT".equals(h.getTur())) donemSonu = donemSonu.add(h.getTutar());
-            else donemSonu = donemSonu.subtract(h.getTutar());
+            if ("TAHSILAT".equals(h.getTur())) donemSonu = donemSonu.subtract(h.getTutar());
+            else donemSonu = donemSonu.add(h.getTutar());
         }
 
         return RaporDTO.CariEkstreDTO.builder()
@@ -112,7 +112,7 @@ public class RaporService {
     public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu(Long sirketId) {
         LocalDate bugun = LocalDate.now();
         return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                .filter(c -> c.getBakiye().compareTo(BigDecimal.ZERO) < 0)
+                .filter(c -> c.getBakiye().compareTo(BigDecimal.ZERO) > 0)
                 .map(c -> {
                     int gun = (int) ChronoUnit.DAYS.between(c.getGuncellemeTarihi().toLocalDate(), bugun);
                     String aralik;
@@ -280,5 +280,64 @@ public class RaporService {
         return stokRepository.findById(stokId)
                 .map(s -> s.getTedarikciFiyat() != null ? s.getTedarikciFiyat() : s.getFiyat())
                 .orElse(BigDecimal.ZERO);
+    }
+
+    /**
+     * Ürün bazlı kârlılık raporu: her ürünün alış maliyeti (fiyat), satış fiyatı ve kâr marjını getirir.
+     */
+    public List<com.raspel.erp.dto.sistem.UrunKarlilikDTO> urunKarlilikRaporu(Long sirketId) {
+        List<com.raspel.erp.entity.envanter.Stok> stoklar =
+                sirketId != null ? stokRepository.findBySirketIdOrderByAd(sirketId) : stokRepository.findAllByOrderByAd();
+
+        return stoklar.stream().map(s -> {
+            BigDecimal alis = s.getFiyat() != null ? s.getFiyat() : BigDecimal.ZERO;
+            BigDecimal satis = s.getSatisFiyati() != null ? s.getSatisFiyati() : BigDecimal.ZERO;
+            BigDecimal kar = satis.subtract(alis);
+            BigDecimal marj = BigDecimal.ZERO;
+            if (satis.compareTo(BigDecimal.ZERO) > 0) {
+                marj = kar.multiply(BigDecimal.valueOf(100)).divide(satis, 2, RoundingMode.HALF_UP);
+            }
+            return com.raspel.erp.dto.sistem.UrunKarlilikDTO.builder()
+                    .stokId(s.getId())
+                    .stokKodu(s.getStokKodu())
+                    .stokAd(s.getAd())
+                    .alisFiyat(alis)
+                    .satisFiyati(satis)
+                    .kar(kar)
+                    .karMarji(marj)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Tedarikçi bazlı ürün raporu: hangi tedarikçiden hangi ürünler geldi (toplam miktar, son fiyat, son tarih).
+     */
+    public List<com.raspel.erp.dto.sistem.TedarikciUrunDTO> tedarikciUrunRaporu(Long sirketId) {
+        List<com.raspel.erp.repository.ticaret.TedarikciUrunProjeksiyon> projeksiyonlar =
+                faturaKalemRepository.tedarikciUrunler(sirketId, Fatura.FaturaTur.ALIS, Fatura.FaturaDurum.KESILDI);
+
+        List<Long> stokIdler = projeksiyonlar.stream()
+                .map(com.raspel.erp.repository.ticaret.TedarikciUrunProjeksiyon::getStokId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, com.raspel.erp.entity.envanter.Stok> stokMap = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(com.raspel.erp.entity.envanter.Stok::getId, s -> s));
+
+        return projeksiyonlar.stream().map(p -> {
+            com.raspel.erp.entity.envanter.Stok stok = stokMap.get(p.getStokId());
+            return com.raspel.erp.dto.sistem.TedarikciUrunDTO.builder()
+                    .cariHesapId(p.getCariHesapId())
+                    .cariHesapAd(p.getCariHesapAd())
+                    .stokId(p.getStokId())
+                    .stokAd(stok != null ? stok.getAd() : null)
+                    .stokKodu(stok != null ? stok.getStokKodu() : null)
+                    .toplamMiktar(p.getToplamMiktar())
+                    .sonBirimFiyat(p.getSonBirimFiyat())
+                    .sonTarih(p.getSonTarih())
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

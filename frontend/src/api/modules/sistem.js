@@ -17,6 +17,11 @@ export const kullaniciAPI = {
   disable2fa(data) { return apiClient.post('/kullanicilar/disable-2fa', data) }
 }
 
+export const kurulumAPI = {
+  durum() { return apiClient.get('/kurulum/durum') },
+  baslat(data) { return apiClient.post('/kurulum/baslat', data) }
+}
+
 export const sirketAPI = {
   getAll() { return apiClient.get('/sirketler') },
   getAktif() { return apiClient.get('/sirketler/aktif') },

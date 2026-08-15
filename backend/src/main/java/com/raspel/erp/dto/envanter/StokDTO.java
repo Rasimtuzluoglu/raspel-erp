@@ -30,6 +30,7 @@ public class StokDTO {
     private String birim2;
     private BigDecimal cevrimKatsayisi;
     private Long tedarikciId;
+    private String tedarikciAd;
     private String tedarikciStokKodu;
     private BigDecimal tedarikciFiyat;
     private String maliyetYontemi;

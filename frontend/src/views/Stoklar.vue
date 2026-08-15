@@ -204,6 +204,17 @@
           </template>
         </Column>
         <Column
+          field="tedarikciAd"
+          header="Tedarikçi"
+          sortable
+          style="width:150px"
+        >
+          <template #body="s">
+            <span v-if="s.data.tedarikciAd"><i class="pi pi-building" style="margin-right:6px;color:#3b82f6" />{{ s.data.tedarikciAd }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </Column>
+        <Column
           header="Stok Değeri"
           sortable
           style="width:130px"

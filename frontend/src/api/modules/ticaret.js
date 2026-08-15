@@ -96,5 +96,6 @@ export const satinalmaSiparisAPI = {
   create(data) { return apiClient.post('/satinalma-siparisler', data) },
   update(id, data) { return apiClient.put(`/satinalma-siparisler/${id}`, data) },
   durumGuncelle(id, durum) { return apiClient.put(`/satinalma-siparisler/${id}/durum`, { durum }) },
+  faturayaCevir(id) { return apiClient.post(`/satinalma-siparisler/${id}/faturaya-cevir`) },
   delete(id) { return apiClient.delete(`/satinalma-siparisler/${id}`) }
 }

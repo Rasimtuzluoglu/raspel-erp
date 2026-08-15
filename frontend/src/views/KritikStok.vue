@@ -93,9 +93,15 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:90px"
+        style="width:150px"
       >
-        <template #body>
+        <template #body="{ data }">
+          <Button
+            icon="pi pi-cart-plus"
+            class="p-button-rounded p-button-text p-button-warning"
+            title="Tedarik Talebi Oluştur"
+            @click="talepOlustur(data)"
+          />
           <router-link
             v-slot="{ navigate }"
             :to="`/stoklar`"
@@ -117,7 +123,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { stokAPI } from '../api/index.js'
+import { stokAPI, satinalmaTalepAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 
 const toastBildirim = useToastBildirim()
@@ -135,6 +141,21 @@ const yukle = async () => {
     toastBildirim.hata(err?.response?.data?.message || 'Kritik stoklar yüklenemedi')
   }
   yukleniyor.value = false
+}
+
+const talepOlustur = async (data) => {
+  try {
+    await satinalmaTalepAPI.create({
+      talepNo: 'TAL-' + Date.now(),
+      tarih: new Date().toISOString().split('T')[0],
+      talepEden: 'Sistem',
+      departman: 'Stok Yönetimi',
+      aciklama: `Kritik stok - ${data.ad} (${data.stokKodu || '-'}): mevcut ${data.miktar}, kritik seviye ${data.minMiktar}, önerilen sipariş ${data.onerilenSiparisMiktari} ${data.birim}. Tedarikçi: ${data.tedarikciAd || 'Belirtilmemiş'}.`
+    })
+    toastBildirim.basarili(`${data.ad} için tedarik talebi oluşturuldu.`)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Tedarik talebi oluşturulamadı')
+  }
 }
 </script>
 

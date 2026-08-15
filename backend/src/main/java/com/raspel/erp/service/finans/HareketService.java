@@ -98,10 +98,10 @@ public class HareketService {
             throw new BusinessException("Geçersiz hareket türü: " + dto.getTur());
         }
         
-        // Bakiye güncelleme tutarını hesapla (Tahsilat +, Ödeme -)
+        // Bakiye güncelleme tutarını hesapla (Alacak +, Borç -: Tahsilat alacağı azaltır, Ödeme borcu azaltır)
         BigDecimal bakiyeGuncellemeTutari = hareketTuru == Hareket.HareketTuru.TAHSILAT 
-                ? dto.getTutar() 
-                : dto.getTutar().negate();
+                ? dto.getTutar().negate() 
+                : dto.getTutar();
         
         // Hareket oluştur
         Hareket hareket = Hareket.builder()
@@ -182,10 +182,10 @@ public class HareketService {
         }
 
         BigDecimal eskiBakiyeEtkisi = hareket.getTur() == Hareket.HareketTuru.TAHSILAT
-                ? hareket.getTutar() : hareket.getTutar().negate();
+                ? hareket.getTutar().negate() : hareket.getTutar();
 
         BigDecimal yeniBakiyeEtkisi = yeniTur == Hareket.HareketTuru.TAHSILAT
-                ? dto.getTutar() : dto.getTutar().negate();
+                ? dto.getTutar().negate() : dto.getTutar();
 
         hareket.setCariHesap(cariHesap);
         hareket.setTur(yeniTur);
@@ -214,8 +214,8 @@ public class HareketService {
         
         // Bakiye güncellemeyi ters işlemle yap
         BigDecimal bakiyeGuncellemeTutari = hareket.getTur() == Hareket.HareketTuru.TAHSILAT 
-                ? hareket.getTutar().negate() 
-                : hareket.getTutar();
+                ? hareket.getTutar() 
+                : hareket.getTutar().negate();
         
         cariHesapService.bakiyeGuncelle(hareket.getCariHesap().getId(), bakiyeGuncellemeTutari);
         

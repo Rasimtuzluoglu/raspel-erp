@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/kullanicilar/giris",
                         "/api/kullanicilar/giris-2fa",
                         "/api/kullanicilar/giris-sirket").permitAll()
+                .requestMatchers("/api/kurulum/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/prometheus").permitAll()
                 .requestMatchers("/actuator/health/**").authenticated()

@@ -4,6 +4,7 @@ import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,6 +26,7 @@ import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.ticaret.FaturaKalem;
@@ -42,6 +44,10 @@ class FaturaServiceTest {
 
     @Mock private FaturaRepository faturaRepository;
     @Mock private CariHesapRepository cariHesapRepository;
+    @Mock private CariHesapService cariHesapService;
+    @Mock private com.raspel.erp.repository.sube.DepoStokRepository depoStokRepository;
+    @Mock private com.raspel.erp.repository.sube.DepoRepository depoRepository;
+    @Mock private com.raspel.erp.service.sistem.TcmbKurService tcmbKurService;
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private SeriNoServisi seriNoServisi;
@@ -146,6 +152,70 @@ class FaturaServiceTest {
         when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
         var result = faturaService.faturaDurumGuncelle(1L, "KESILDI");
         assertEquals("KESILDI", result.getDurum());
+    }
+
+    @Test
+    void faturaDurumGuncelle_alis_increasesStock() {
+        Fatura fatura = createFatura(1L);
+        fatura.setTur(Fatura.FaturaTur.ALIS);
+        Stok stok = createStok();
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
+                .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(kalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+        var result = faturaService.faturaDurumGuncelle(1L, "KESILDI");
+        assertEquals("KESILDI", result.getDurum());
+        assertEquals(0, stok.getMiktar().compareTo(BigDecimal.valueOf(102)));
+        assertEquals(1L, stok.getTedarikciId());
+        assertEquals(0, stok.getFiyat().compareTo(new BigDecimal("50.98")));
+        assertEquals(0, stok.getTedarikciFiyat().compareTo(BigDecimal.valueOf(100)));
+        ArgumentCaptor<com.raspel.erp.entity.envanter.StokHareket> captor = ArgumentCaptor.forClass(com.raspel.erp.entity.envanter.StokHareket.class);
+        verify(stokHareketRepository).save(captor.capture());
+        assertEquals("GIRIS", captor.getValue().getTur());
+        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("-120"));
+    }
+
+    @Test
+    void faturaDurumGuncelle_satis_updatesCariBakiyePositive() {
+        Fatura fatura = createFatura(1L);
+        Stok stok = createStok();
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
+                .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(kalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+        faturaService.faturaDurumGuncelle(1L, "KESILDI");
+        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("120"));
+    }
+
+    @Test
+    void faturaOlustur_alis_withDepo_updatesDepoStok() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        Stok stok = createStok();
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(depoStokRepository.findByDepoIdAndStokId(5L, 1L)).thenReturn(Optional.empty());
+        when(depoStokRepository.save(any(com.raspel.erp.entity.sube.DepoStok.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("ALIS").durum("KESILDI").tarih(LocalDate.now())
+                .cariHesapId(1L).depoId(5L).kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        saved.setTur(Fatura.FaturaTur.ALIS);
+        saved.setDurum(Fatura.FaturaDurum.KESILDI);
+        saved.setDepoId(5L);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+
+        faturaService.faturaOlustur(dto, 1L, null, null);
+
+        verify(depoStokRepository).save(any(com.raspel.erp.entity.sube.DepoStok.class));
     }
 
     @Test

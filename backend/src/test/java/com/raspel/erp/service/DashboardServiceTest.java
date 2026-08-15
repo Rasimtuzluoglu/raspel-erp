@@ -21,6 +21,7 @@ import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
@@ -33,13 +34,16 @@ class DashboardServiceTest {
     @Mock private PersonelIzinRepository personelIzinRepository;
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private StokRepository stokRepository;
+    @Mock private FaturaRepository faturaRepository;
     @InjectMocks private DashboardService dashboardService;
 
     @Test
     void dashboardVerileriGetir_returnsData() {
         when(cariHesapService.toplamCariSayisiGetir(1L)).thenReturn(10L);
         when(cariHesapService.toplamBakiyeGetir(1L)).thenReturn(BigDecimal.valueOf(100000));
-        when(hareketService.sonHareketleriGetir(5)).thenReturn(List.of());
+        when(hareketService.sonHareketleriGetir(5, 1L)).thenReturn(List.of());
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
         var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(10L, result.getToplamCariSayisi());
         assertEquals(BigDecimal.valueOf(100000), result.getToplamBakiye());

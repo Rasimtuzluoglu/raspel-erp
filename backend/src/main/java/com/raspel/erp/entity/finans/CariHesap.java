@@ -79,7 +79,7 @@ public class CariHesap {
     @Column(name = "odeme_vadesi")
     private Integer odemeVadesi;
 
-    /** Cari hesabın bakiyesi (Tahsilat pozitif, Ödeme negatif) */
+    /** Cari hesabın bakiyesi (Alacak pozitif, Borç negatif) */
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal bakiye;
     

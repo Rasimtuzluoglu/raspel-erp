@@ -270,6 +270,9 @@ public class StokService {
                 .marka(s.getMarka()).agirlik(s.getAgirlik()).kategori(s.getKategori())
                 .aciklama(s.getAciklama()).birim2(s.getBirim2())
                 .cevrimKatsayisi(s.getCevrimKatsayisi()).tedarikciId(s.getTedarikciId())
+                .tedarikciAd(s.getTedarikciId() != null
+                        ? cariHesapRepository.findById(s.getTedarikciId()).map(CariHesap::getAd).orElse(null)
+                        : null)
                 .tedarikciStokKodu(s.getTedarikciStokKodu()).tedarikciFiyat(s.getTedarikciFiyat())
                 .maliyetYontemi(s.getMaliyetYontemi())
                 .olusturmaTarihi(s.getOlusturmaTarihi()).build();

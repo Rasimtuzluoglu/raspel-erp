@@ -347,11 +347,11 @@
             />
             <Column
               field="bakiye"
-              header="Borç Bakiyesi"
+              header="Alacak Bakiyesi"
               style="width:140px"
             >
               <template #body="s">
-                <span class="negative">{{ formatCurrency(s.data.bakiye) }}</span>
+                <span class="positive">{{ formatCurrency(s.data.bakiye) }}</span>
               </template>
             </Column>
             <Column
@@ -372,7 +372,7 @@
           <Message
             v-if="yasData.length === 0"
             severity="info"
-            text="Borçlu cari hesap bulunmamaktadır."
+            text="Alacaklı cari hesap bulunmamaktadır."
           />
         </div>
       </TabPanel>
@@ -504,12 +504,128 @@
           />
         </div>
       </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('tedarikciUrunler') }"
+              @click.stop="raporFavoriDegistir('tedarikciUrunler', 5, 'Tedarikçi Ürünleri')"
+            />
+            Tedarikçi Ürünleri
+          </div>
+        </template>
+        <div class="rapor-filtre">
+          <div class="form-group">
+            <label>Tedarikçi Filtresi</label>
+            <Dropdown
+              v-model="tuFiltre"
+              :options="tuTedarikciler"
+              placeholder="Tüm Tedarikçiler"
+              class="w-full"
+              :show-clear="true"
+            />
+          </div>
+          <Button
+            label="Yenile"
+            icon="pi pi-refresh"
+            size="small"
+            class="p-button-outlined"
+            :loading="tuLoading"
+            @click="getTedarikciUrunler"
+          />
+        </div>
+        <DataTable
+          :value="tuFiltrelenmisData"
+          size="small"
+          striped-rows
+          :loading="tuLoading"
+          row-group-mode="subheader"
+          group-rows-by="cariHesapAd"
+        >
+          <template #groupheader="{ group }">
+            <span class="tedarikci-grup"><i class="pi pi-building" /> {{ group.value }} (Tedarikçi)</span>
+          </template>
+          <Column field="stokKodu" header="Stok Kodu" />
+          <Column field="stokAd" header="Ürün" />
+          <Column field="toplamMiktar" header="Toplam Miktar" />
+          <Column header="Son Birim Fiyat">
+            <template #body="s">
+              {{ formatCurrency(s.data.sonBirimFiyat) }}
+            </template>
+          </Column>
+          <Column header="Son Alış Tarihi">
+            <template #body="s">
+              {{ s.data.sonTarih }}
+            </template>
+          </Column>
+        </DataTable>
+        <Message
+          v-if="!tuData.length"
+          severity="info"
+          text="Henüz alış faturası girilmemiş."
+        />
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('urunKarlilik') }"
+              @click.stop="raporFavoriDegistir('urunKarlilik', 6, 'Ürün Kârlılığı')"
+            />
+            Ürün Kârlılığı
+          </div>
+        </template>
+        <div class="rapor-filtre">
+          <Button
+            label="Yenile"
+            icon="pi pi-refresh"
+            size="small"
+            class="p-button-outlined"
+            :loading="ukLoading"
+            @click="getUrunKarlilik"
+          />
+        </div>
+        <DataTable
+          :value="ukData"
+          size="small"
+          striped-rows
+          :loading="ukLoading"
+        >
+          <Column field="stokKodu" header="Stok Kodu" />
+          <Column field="stokAd" header="Ürün" />
+          <Column header="Alış Maliyeti">
+            <template #body="s">{{ formatCurrency(s.data.alisFiyat) }}</template>
+          </Column>
+          <Column header="Satış Fiyatı">
+            <template #body="s">{{ formatCurrency(s.data.satisFiyati) }}</template>
+          </Column>
+          <Column header="Kâr">
+            <template #body="s">
+              <span :class="s.data.kar >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kar) }}</span>
+            </template>
+          </Column>
+          <Column header="Kâr Marjı">
+            <template #body="s">
+              <span :class="s.data.karMarji >= 0 ? 'positive' : 'negative'">%{{ s.data.karMarji }}</span>
+            </template>
+          </Column>
+        </DataTable>
+        <Message
+          v-if="!ukData.length"
+          severity="info"
+          text="Henüz ürün bulunmamaktadır."
+        />
+      </TabPanel>
     </TabView>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -594,6 +710,45 @@ const ckData = ref(null)
 const ckLoading = ref(false)
 const ckKart = ref(null)
 
+const tuData = ref([])
+const tuLoading = ref(false)
+const tuFiltre = ref(null)
+
+const tuTedarikciler = computed(() => {
+  const set = new Set(tuData.value.map(d => d.cariHesapAd).filter(Boolean))
+  return [...set].sort()
+})
+
+const tuFiltrelenmisData = computed(() => {
+  if (!tuFiltre.value) return tuData.value
+  return tuData.value.filter(d => d.cariHesapAd === tuFiltre.value)
+})
+
+const getTedarikciUrunler = async () => {
+  tuLoading.value = true
+  try {
+    const r = await raporAPI.tedarikciUrunler()
+    tuData.value = r.data || []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Tedarikçi raporu yüklenirken hata oluştu')
+  }
+  tuLoading.value = false
+}
+
+const ukData = ref([])
+const ukLoading = ref(false)
+
+const getUrunKarlilik = async () => {
+  ukLoading.value = true
+  try {
+    const r = await raporAPI.urunKarlilik()
+    ukData.value = r.data || []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Ürün kârlılık raporu yüklenirken hata oluştu')
+  }
+  ukLoading.value = false
+}
+
 watch(tarihAraligi, (v) => {
   if (!v || v.length !== 2 || !v[0]) return
   if (aktifSekme.value === 0) {
@@ -621,6 +776,8 @@ onMounted(async () => {
   await cariHesapStore.getAllCariHesaplar()
   getGelirGider()
   getKdv()
+  getTedarikciUrunler()
+  getUrunKarlilik()
 })
 
 const getCariEkstre = async () => {
@@ -770,4 +927,6 @@ h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weig
 .risk-orta { background: #ffebee; color: #c62828; }
 .risk-yuksek { background: #fce4ec; color: #880e4f; }
 .w-full { width: 100% !important; }
+.tedarikci-grup { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-primary); }
+.tedarikci-grup .pi { color: #3b82f6; }
 </style>

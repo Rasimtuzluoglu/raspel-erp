@@ -5,7 +5,7 @@
     <IlkZiyaretIpuclari
       anahtar="faturalar"
       baslik="Fatura Oluşturma"
-      metin="'Yeni Fatura' ile satış/alış faturası kesin. Cari seçince son aldığı ürünler önerilir, 'Son Faturayı Kopyala' ile benzer faturayı hızlıca oluşturun. Fatura 'KESİLDİ' durumuna geçince stok otomatik düşer."
+      metin="'Yeni Fatura' ile satış/alış faturası kesin. Satış faturası stok düşer, alış faturası fabrikadan/tedarikçiden gelen ürünleri stoğa ekler ve tedarikçiyi ürüne işler. Cari seçince son aldığı ürünler önerilir."
     />
 
     <Toolbar class="toolbar">
@@ -223,13 +223,13 @@
     >
       <div class="form-grid">
         <div class="form-group">
-          <label>Cari Hesap</label>
+          <label>{{ form.tur === 'ALIS' ? 'Tedarikçi (Fabrika)' : 'Müşteri' }}</label>
           <AutoComplete
             v-model="seciliCariNesnesi"
             :suggestions="cariOnerileri"
             option-label="ad"
             option-value="id"
-            placeholder="Cari ara ve seç (isim, vergi no, telefon)..."
+            :placeholder="form.tur === 'ALIS' ? 'Tedarikçi ara ve seç (isim, vergi no, telefon)...' : 'Cari ara ve seç (isim, vergi no, telefon)...'"
             class="w-full"
             :force-selection="false"
             @complete="cariAra($event)"
@@ -260,6 +260,21 @@
             option-value="value"
             placeholder="Seçiniz"
             class="w-full"
+          />
+        </div>
+        <div
+          v-if="form.tur === 'ALIS'"
+          class="form-group"
+        >
+          <label>Giriş Deposu</label>
+          <Dropdown
+            v-model="form.depoId"
+            :options="depolar"
+            option-label="ad"
+            option-value="id"
+            placeholder="Depo Seçin"
+            class="w-full"
+            :show-clear="true"
           />
         </div>
         <div class="form-group">
@@ -610,7 +625,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 
 const dovizStore = useDovizStore()
-import { faturaAPI, excelAPI, pdfAPI, personelAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -648,9 +663,13 @@ const form = ref({
   teslimEden: '',
   teslimDurumu: 'BEKLIYOR',
   teslimNotu: '',
+  depoId: null,
+  paraBirimi: 'TRY',
   aciklama: '',
   kalemler: []
 })
+
+const depolar = ref([])
 
 const teslimDurumSecenekleri = [
   { label: 'Bekliyor', value: 'BEKLIYOR' },
@@ -693,7 +712,8 @@ onMounted(async () => {
       faturaStore.getAllFaturalar(),
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
-      personelListesiniYukle()
+      personelListesiniYukle(),
+      depolarıYukle()
     ])
   } catch (err) {
     toastBildirim.hata('Veriler yüklenirken hata oluştu')
@@ -703,6 +723,13 @@ onMounted(async () => {
 })
 
 const personelListesi = ref([])
+
+const depolarıYukle = async () => {
+  try {
+    const r = await depoAPI.getAll({ size: 500 })
+    depolar.value = r.data?.content || r.data || []
+  } catch { depolar.value = [] }
+}
 
 const personelSecenekleri = computed(() =>
   personelListesi.value
@@ -904,6 +931,8 @@ const openCreateDialog = () => {
     teslimEden: '',
     teslimDurumu: 'BEKLIYOR',
     teslimNotu: '',
+    depoId: null,
+    paraBirimi: 'TRY',
     aciklama: '',
     kalemler: [{ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 }]
   }
@@ -921,6 +950,8 @@ const editFatura = (fatura) => {
     teslimEden: fatura.teslimEden || '',
     teslimDurumu: fatura.teslimDurumu || 'BEKLIYOR',
     teslimNotu: fatura.teslimNotu || '',
+    depoId: fatura.depoId || null,
+    paraBirimi: fatura.paraBirimi || 'TRY',
     aciklama: fatura.aciklama || '',
     kalemler: fatura.kalemler.map(k => ({
       id: k.id,
@@ -946,6 +977,7 @@ const cogalt = (fatura) => {
     teslimDurumu: fatura.teslimDurumu || 'BEKLIYOR',
     teslimNotu: fatura.teslimNotu || '',
     paraBirimi: fatura.paraBirimi || 'TRY',
+    depoId: fatura.depoId || null,
     aciklama: fatura.aciklama || '',
     kalemler: fatura.kalemler.map(k => ({
       aciklama: k.aciklama,
@@ -981,6 +1013,8 @@ const saveFatura = async () => {
     teslimEden: form.value.teslimEden || null,
     teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
     teslimNotu: form.value.teslimNotu || null,
+    depoId: form.value.depoId || null,
+    paraBirimi: form.value.paraBirimi || 'TRY',
     aciklama: form.value.aciklama,
     genelIskontoTutari: 0,
     odenenTutar: 0,
