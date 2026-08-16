@@ -126,9 +126,9 @@ class StokControllerTest {
     @Test
     void shouldGetAllHareketler() throws Exception {
         var list = List.of(StokHareketDTO.builder().id(1L).tur("CIKIS").miktar(BigDecimal.valueOf(5)).build());
-        when(stokService.tumHareketler()).thenReturn(list);
+        when(stokService.tumHareketler(anyLong())).thenReturn(list);
 
-        mockMvc.perform(get("/api/stoklar/hareketler/tum"))
+        mockMvc.perform(get("/api/stoklar/hareketler/tum").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tur").value("CIKIS"));
     }

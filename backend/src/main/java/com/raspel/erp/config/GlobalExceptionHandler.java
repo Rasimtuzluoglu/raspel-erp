@@ -1,6 +1,12 @@
 package com.raspel.erp.config;
 
+import com.raspel.erp.entity.sistem.HataLog;
+import com.raspel.erp.repository.sistem.HataLogRepository;
+import com.raspel.erp.service.sistem.HataBildirimService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +34,11 @@ import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final ObjectProvider<HataLogRepository> hataLogRepositoryProvider;
+    private final ObjectProvider<HataBildirimService> hataBildirimServiceProvider;
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException e) {
@@ -52,8 +62,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e) {
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
         log.error("RuntimeException: {}", e.getMessage(), e);
+        hataKaydet(request, "RuntimeException", e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(buildBody("Beklenmeyen bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.", HttpStatus.INTERNAL_SERVER_ERROR));
     }
@@ -170,10 +181,40 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneric(Exception e) {
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception e, HttpServletRequest request) {
         log.error("Beklenmeyen hata", e);
+        hataKaydet(request, e.getClass().getSimpleName(), e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(buildBody("Beklenmeyen bir hata olustu", HttpStatus.INTERNAL_SERVER_ERROR));
+    }
+
+    private void hataKaydet(HttpServletRequest request, String tur, String mesaj) {
+        Long sirketId = null;
+        try {
+            Object s = request.getAttribute("sirketId");
+            if (s != null) sirketId = Long.valueOf(s.toString());
+        } catch (Exception ignored) {}
+
+        String endpoint = request.getMethod() + " " + request.getRequestURI();
+
+        try {
+            HataLogRepository repo = hataLogRepositoryProvider.getIfAvailable();
+            if (repo != null) {
+                repo.save(HataLog.builder()
+                        .sirketId(sirketId).tur(tur).mesaj(mesaj).endpoint(endpoint).build());
+            }
+        } catch (Exception e) {
+            log.warn("Hata kaydı yazılamadı: {}", e.getMessage());
+        }
+
+        try {
+            HataBildirimService bildirim = hataBildirimServiceProvider.getIfAvailable();
+            if (bildirim != null) {
+                bildirim.hataBildir(sirketId, tur, mesaj, endpoint);
+            }
+        } catch (Exception e) {
+            log.warn("Hata uyarısı gönderilemedi: {}", e.getMessage());
+        }
     }
 
     private Map<String, Object> buildBody(String message, HttpStatus status) {

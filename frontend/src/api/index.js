@@ -48,6 +48,7 @@ export {
   sohbetAPI,
   ajandaAPI,
   bildirimAPI,
+  sistemDurumAPI,
   sirketAPI,
   subeAPI,
   donemAPI,

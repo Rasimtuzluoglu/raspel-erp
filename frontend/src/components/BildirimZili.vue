@@ -192,6 +192,7 @@ const tercihDegistir = (tur, val) => {
 watch(sonBildirim, (yeni) => {
   if (yeni) {
     bildirimler.value.unshift(yeni)
+    okunmamis.value++
     if (tercihler.value[yeni.tur] !== false) {
       masaustu.goster(yeni.baslik || 'Bildirim', yeni.mesaj || '')
     }

@@ -336,6 +336,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/sistem-durum',
+    name: 'SistemDurum',
+    component: () => import('../views/SistemDurum.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')

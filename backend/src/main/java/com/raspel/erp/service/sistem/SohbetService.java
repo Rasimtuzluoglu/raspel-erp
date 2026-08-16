@@ -29,6 +29,9 @@ public class SohbetService {
 
     @Transactional
     public SohbetMesajDTO mesajGonder(SohbetMesajDTO dto, Long sirketId, Long kullaniciId, String kullaniciAd) {
+        if (dto.getMesaj() == null || dto.getMesaj().isBlank()) {
+            throw new com.raspel.erp.exception.BusinessException("Mesaj boş olamaz");
+        }
         SohbetMesaj mesaj = SohbetMesaj.builder()
                 .sirketId(sirketId)
                 .kullaniciId(kullaniciId)

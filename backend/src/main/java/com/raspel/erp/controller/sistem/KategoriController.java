@@ -34,8 +34,9 @@ public class KategoriController {
 
     @GetMapping("/tur/{tur}")
     @Operation(summary = "Türe göre kategorileri getir", description = "Belirli bir türe ait kategorileri listeler")
-    public ResponseEntity<List<KategoriDTO>> turuGetir(@PathVariable String tur) {
-        return ResponseEntity.ok(kategoriService.turuGetir(tur));
+    public ResponseEntity<List<KategoriDTO>> turuGetir(@PathVariable String tur, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(kategoriService.turuGetir(tur, sirketId));
     }
 
     @PostMapping

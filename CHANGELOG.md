@@ -2,6 +2,35 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.8.0] - 2026-08-16 (Güvenlik & Ölçeklenebilirlik İyileştirmeleri)
+### Düzeltmeler (güvenlik)
+- **Tenant izolasyonu**: `GET /api/hareketler/son/{limit}`, `GET /api/hareketler/cari/{id}`, hareket filtreleme, `GET /api/stoklar/hareketler/tum`, stok hareketleri ve `GET /api/kategoriler/tur/{tur}` uç noktalarına firma filtresi/doğrulaması eklendi (önceden başka firmaların verilerini görebiliyordu).
+- **Prod secret zorlaması**: `application-prod.properties`'te DB/SMTP/yedekleme secret'ları artık ortam değişkeni zorunlu (fail-fast); `ProdGuvenlikKontrolu` prod profilinde zayıf JWT_SECRET ile başlamayı engeller.
+
+### İyileştirmeler
+- **N+1 giderildi**: `StokService` tedarikçi adını artık batch (`findAllById`) çözer (liste başına N sorgu → 1 sorgu).
+- **WebSocket broker seçeneği**: `app.websocket.relay-enabled=true` ile RabbitMQ STOMP relay (çok instance'ta senkron yayın); varsayılan bellek içi simple broker korunur.
+
+## [1.7.1] - 2026-08-16 (Yedek Geri Yükleme & Hata Uyarısı)
+### Eklenenler
+- **Yedekten geri yükleme**: `POST /api/backups/restore/{filename}` + Yedekler ekranına "Geri Yükle" butonu (onaylı). `pg_dump` artık `--clean --if-exists` ile alındığı için geri yükleme mevcut veriyi temizleyip yazar.
+- **Hata e-posta uyarısı**: `HataBildirimService` — sunucuda 500 hatası oluştuğunda firma e-postasına (veya `app.alert.email`) otomatik uyarı gönderir; spam'i önlemek için en az 5 dk arayla.
+
+## [1.7.0] - 2026-08-16 (Bakım & Hata İzleme)
+### Eklenenler
+- **Sistem Durumu ekranı**: `/sistem-durum` sayfası — genel durum (UP/DOWN), uptime, sürüm, bellek/disk kullanımı, bileşen sağlığı (DB/Redis/RabbitMQ), yedekleme özeti ve tek tıkla yedek alma.
+- **Hata kayıtları**: `HataLog` entity (V47); sunucudaki 500 hataları otomatik kaydedilir (tür, mesaj, uç nokta, firma) ve "Son Hatalar" bölümünde listelenir.
+- `SistemDurumService` + `GET /api/sistem/durum` ve `GET /api/sistem/hata-log`.
+- `GlobalExceptionHandler` 500 hatalarını artık kalıcı olarak kaydeder (isteğe bağlı enjeksiyon, test uyumlu).
+
+## [1.6.1] - 2026-08-16 (Hata Düzeltmeleri)
+### Düzeltmeler
+- **İade güncelleme akışı**: `IadeService.guncelle` içindeki bozuk durum-geçiş mantığı düzeltildi (ters ternary `? null :` hatası). Artık TASLAK→TAMAMLANDI stoğu işler, TAMAMLANDI→IPTAL stoğu tersine çevirir.
+- **Bildirim kuyruğu gerilemesi**: `BildirimService` yeniden yazılırken kaybolan RabbitMQ entegrasyonu (`kuyrugaGonder` + `RabbitTemplate`) geri eklendi; bildirimler artık hem DB'ye kaydedilir hem WebSocket'e hem de kuyruğa taşınır.
+- **Bildirim testi**: `BildirimRepository` mock'u ve kalıcılık doğrulaması eklendi.
+- **Sohbet**: Boş mesaj gönderimi engellendi (BusinessException).
+- **Bildirim rozeti**: Yeni WebSocket bildirimi geldiğinde okunmamış sayacı artık artar.
+
 ## [1.6.0] - 2026-08-16 (Kullanıcı Dostu & Her Şey Tek Uygulamada)
 ### Eklenenler
 - **Ekip içi sohbet**: `SohbetMesaj` + REST/WebSocket (gerçek zamanlı), `/sohbet` sayfası (V43).

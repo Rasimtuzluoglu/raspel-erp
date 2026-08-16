@@ -223,6 +223,7 @@ const tumMenuler = [
   { path: '/ajanda', label: 'Ajanda', icon: 'pi pi-calendar', grup: '' },
   { path: '/onaylar', label: 'Onaylar', icon: 'pi pi-check-circle', grup: '' },
   { path: '/belgeler', label: 'Belgeler', icon: 'pi pi-folder-open', grup: '' },
+  { path: '/sistem-durum', label: 'Sistem Durumu', icon: 'pi pi-server', grup: '', admin: true },
   { path: '/muhasebe', label: 'Muhasebe', icon: 'pi pi-book', grup: 'Finans', gelismis: true },
   { path: '/cari-hesaplar', label: 'Cari', icon: 'pi pi-users', grup: 'Finans' },
   { path: '/faturalar', label: 'Faturalar', icon: 'pi pi-file', grup: 'Finans' },

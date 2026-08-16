@@ -104,18 +104,18 @@ Production öncesi `docs/GO-LIVE.md` kontrol listesine bakın.
 
 ```
 raspel-erp/
-├── backend/                 # Spring Boot API (591 test)
+├── backend/                 # Spring Boot API (594 test)
 │   └── src/main/java/com/raspel/erp/
 │       ├── controller/      # 7 alt paket
 │       ├── service/         # Redis cache, tenant kontrol
-│       ├── repository/      # 53 JPA repository
+│       ├── repository/      # 54 JPA repository
 │       ├── entity/          # JPA entity
 │       └── dto/             # Veri transfer objeleri
 ├── frontend/                # Vue 3 SPA (134 test)
 │   └── src/
-│       ├── views/           # 52 sayfa
-│       ├── components/      # 30 bileşen
-│       ├── composables/     # 11 composable
+│       ├── views/           # 57 sayfa
+│       ├── components/      # 29 bileşen
+│       ├── composables/     # 12 composable
 │       ├── stores/          # Pinia store
 │       └── api/             # Axios client + modüller
 ├── config/                  # Traefik, Prometheus, Grafana
@@ -128,7 +128,7 @@ raspel-erp/
 ## Test
 
 ```bash
-cd backend && mvn test       # 591 test, 0 hata
+cd backend && mvn test       # 594 test, 0 hata
 cd frontend && npm run test  # 134 test
 cd frontend && npm run lint  # ESLint
 ```

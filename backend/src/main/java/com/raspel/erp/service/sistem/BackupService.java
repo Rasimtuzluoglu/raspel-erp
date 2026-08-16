@@ -79,7 +79,9 @@ public class BackupService {
                     "-U", dbUser,
                     "-d", dbName,
                     "--no-owner",
-                    "--no-acl"
+                    "--no-acl",
+                    "--clean",
+                    "--if-exists"
             );
             pb.environment().put("PGPASSWORD", dbPass);
 
@@ -160,6 +162,61 @@ public class BackupService {
             log.info("Backup deleted: {}", filename);
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete backup: " + filename, e);
+        }
+    }
+
+    /**
+     * Bir yedek dosyasını geri yükler (gunzip | psql). Dosya .sql.gz formatında olmalıdır.
+     */
+    public String restoreBackup(String filename) {
+        Path file = backupPath.resolve(filename).normalize();
+        if (!file.startsWith(backupPath) || !Files.exists(file)) {
+            throw new RuntimeException("Backup file not found: " + filename);
+        }
+
+        String dbUser = System.getenv("DB_USERNAME");
+        if (dbUser == null) dbUser = "postgres";
+        String dbPass = dbPasswordProperty;
+        if (dbPass == null || dbPass.isBlank()) {
+            dbPass = System.getenv("DB_PASSWORD");
+        }
+        if (dbPass == null) dbPass = "";
+
+        try {
+            ProcessBuilder psql = new ProcessBuilder(
+                    "psql",
+                    "-h", dbHost,
+                    "-p", dbPort,
+                    "-U", dbUser,
+                    "-d", dbName,
+                    "--set", "ON_ERROR_STOP=1"
+            );
+            psql.environment().put("PGPASSWORD", dbPass);
+            Process psqlProc = psql.start();
+
+            ProcessBuilder gunzip = new ProcessBuilder("gunzip", "-c", file.toString());
+            Process gunzipProc = gunzip.start();
+
+            try (InputStream gunzipOut = gunzipProc.getInputStream();
+                 OutputStream psqlIn = psqlProc.getOutputStream()) {
+                gunzipOut.transferTo(psqlIn);
+            }
+            psqlProc.getOutputStream().close();
+
+            int gunzipExit = gunzipProc.waitFor();
+            int psqlExit = psqlProc.waitFor();
+            if (gunzipExit != 0 || psqlExit != 0) {
+                try (InputStream err = psqlProc.getErrorStream()) {
+                    String error = new String(err.readAllBytes());
+                    log.error("Restore failed: {}", error);
+                    throw new RuntimeException("Restore failed: " + error);
+                }
+            }
+            log.info("Backup restored: {}", filename);
+            return filename;
+        } catch (Exception e) {
+            log.error("Restore failed", e);
+            throw new RuntimeException("Restore failed: " + e.getMessage());
         }
     }
 

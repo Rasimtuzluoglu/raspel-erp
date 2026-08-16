@@ -62,7 +62,7 @@ class HareketServiceTest {
 
     @Test
     void cariHesapHareketleriGetir_returnsHareketler() {
-        when(cariHesapRepository.existsById(1L)).thenReturn(true);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
         when(hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(createHareket(1L)));
         var result = hareketService.cariHesapHareketleriGetir(1L);
         assertEquals(1, result.size());
@@ -70,15 +70,15 @@ class HareketServiceTest {
 
     @Test
     void cariHesapHareketleriGetir_throwsWhenCariNotFound() {
-        when(cariHesapRepository.existsById(99L)).thenReturn(false);
+        when(cariHesapRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> hareketService.cariHesapHareketleriGetir(99L));
     }
 
     @Test
     void sonHareketleriGetir_returnsRecent() {
-        when(hareketRepository.findAllByOrderByHareketTarihiDescOlusturmaTarihiDesc(PageRequest.of(0, 5)))
+        when(hareketRepository.findBySirketIdOrderByHareketTarihiDescOlusturmaTarihiDesc(eq(1L), eq(PageRequest.of(0, 5))))
                 .thenReturn(List.of(createHareket(1L)));
-        var result = hareketService.sonHareketleriGetir(5);
+        var result = hareketService.sonHareketleriGetir(5, 1L);
         assertEquals(1, result.size());
     }
 
@@ -121,18 +121,19 @@ class HareketServiceTest {
     void hareketleriFiltrele_withCari() {
         LocalDate bas = LocalDate.of(2026, 1, 1);
         LocalDate bit = LocalDate.of(2026, 12, 31);
-        when(hareketRepository.findByCariHesapIdAndHareketTarihiBetween(eq(1L), eq(bas), eq(bit), any(Pageable.class)))
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
+        when(hareketRepository.findBySirketIdAndCariHesapIdAndHareketTarihiBetween(eq(1L), eq(1L), eq(bas), eq(bit), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createHareket(1L))));
-        var result = hareketService.hareketleriFiltrele(1L, bas, bit, Pageable.unpaged());
+        var result = hareketService.hareketleriFiltrele(1L, bas, bit, Pageable.unpaged(), 1L);
         assertEquals(1, result.getContent().size());
     }
 
     @Test
     void hareketleriFiltrele_withoutCari() {
         LocalDate bas = LocalDate.of(2026, 1, 1);
-        when(hareketRepository.findByHareketTarihiBetween(eq(bas), any(LocalDate.class), any(Pageable.class)))
+        when(hareketRepository.findBySirketIdAndHareketTarihiBetween(eq(1L), eq(bas), any(LocalDate.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createHareket(1L))));
-        var result = hareketService.hareketleriFiltrele(null, bas, null, Pageable.unpaged());
+        var result = hareketService.hareketleriFiltrele(null, bas, null, Pageable.unpaged(), 1L);
         assertEquals(1, result.getContent().size());
     }
 

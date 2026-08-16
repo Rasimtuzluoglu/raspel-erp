@@ -46,9 +46,10 @@ public class HareketController {
     
     @GetMapping("/son/{limit}")
     @Operation(summary = "Son hareketleri getir", description = "Son n hareketi getirir (Dashboard için)")
-    public ResponseEntity<List<HareketDTO>> sonHareketleriGetir(@PathVariable int limit) {
-        log.info("GET /api/hareketler/son/{} - Son {} hareket getiriliyor", limit, limit);
-        List<HareketDTO> hareketler = hareketService.sonHareketleriGetir(limit);
+    public ResponseEntity<List<HareketDTO>> sonHareketleriGetir(@PathVariable int limit, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        log.info("GET /api/hareketler/son/{} - Son {} hareket getiriliyor, sirketId: {}", limit, limit, sirketId);
+        List<HareketDTO> hareketler = hareketService.sonHareketleriGetir(limit, sirketId);
         return ResponseEntity.ok(hareketler);
     }
 
@@ -97,7 +98,7 @@ public class HareketController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         if (cariHesapId != null || baslangic != null || bitis != null) {
             log.info("GET /api/hareketler - Filtreleme: cariId={}, tarih={}-{}", cariHesapId, baslangic, bitis);
-            Page<HareketDTO> hareketler = hareketService.hareketleriFiltrele(cariHesapId, baslangic, bitis, pageable);
+            Page<HareketDTO> hareketler = hareketService.hareketleriFiltrele(cariHesapId, baslangic, bitis, pageable, sirketId);
             return ResponseEntity.ok(hareketler);
         }
         log.info("GET /api/hareketler - Tüm hareketler getiriliyor, sirketId: {}", sirketId);

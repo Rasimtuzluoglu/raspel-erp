@@ -56,6 +56,16 @@ public class BackupController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/restore/{filename:.+}")
+    @Operation(summary = "Yedekten geri yükle", description = "Belirtilen yedek dosyasını geri yükler (dikkat: mevcut verilerin üzerine yazar)")
+    public ResponseEntity<Map<String, Object>> restoreBackup(@PathVariable String filename) {
+        backupService.restoreBackup(filename);
+        return ResponseEntity.ok(Map.of(
+                "message", "Geri yükleme tamamlandı",
+                "filename", filename
+        ));
+    }
+
     @GetMapping("/schedule")
     @Operation(summary = "Yedekleme zamanlamasını getir", description = "Otomatik yedekleme zamanlamasını döndürür")
     public ResponseEntity<Map<String, Object>> getSchedule() {

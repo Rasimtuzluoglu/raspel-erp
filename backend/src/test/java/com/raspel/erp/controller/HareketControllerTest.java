@@ -55,12 +55,13 @@ class HareketControllerTest {
     @Test
     void shouldGetWithFilters() throws Exception {
         var list = List.of(HareketDTO.builder().id(1L).tur("TAHSILAT").build());
-        when(hareketService.hareketleriFiltrele(any(), any(), any(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
+        when(hareketService.hareketleriFiltrele(any(), any(), any(), any(Pageable.class), eq(1L))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/hareketler")
                         .param("cariHesapId", "1")
                         .param("baslangic", "2024-01-01")
-                        .param("bitis", "2024-12-31"))
+                        .param("bitis", "2024-12-31")
+                        .requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].tur").value("TAHSILAT"));
     }
@@ -78,9 +79,9 @@ class HareketControllerTest {
     @Test
     void shouldGetSon() throws Exception {
         var list = List.of(HareketDTO.builder().id(1L).build());
-        when(hareketService.sonHareketleriGetir(5)).thenReturn(list);
+        when(hareketService.sonHareketleriGetir(5, 1L)).thenReturn(list);
 
-        mockMvc.perform(get("/api/hareketler/son/5"))
+        mockMvc.perform(get("/api/hareketler/son/5").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L));
     }

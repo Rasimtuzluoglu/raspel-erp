@@ -64,4 +64,12 @@ class BackupControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.daily").value(true));
     }
+
+    @Test
+    void shouldRestoreBackup() throws Exception {
+        when(backupService.restoreBackup("a.sql.gz")).thenReturn("a.sql.gz");
+        mockMvc.perform(post("/api/backups/restore/a.sql.gz"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.filename").value("a.sql.gz"));
+    }
 }

@@ -193,6 +193,12 @@
                 @click="indir(s.data.filename)"
               />
               <Button
+                icon="pi pi-upload"
+                class="p-button-sm p-button-text p-button-warning"
+                title="Geri Yükle"
+                @click="geriYukle(s.data.filename)"
+              />
+              <Button
                 icon="pi pi-trash"
                 class="p-button-sm p-button-text p-button-danger"
                 title="Sil"
@@ -303,6 +309,24 @@ const sil = (filename) => {
         await yukle()
       } catch (err) {
         hata.value = err.response?.data?.message || 'Silme başarısız'
+      }
+    }
+  })
+}
+
+const geriYukle = (filename) => {
+  confirm.require({
+    message: `"${filename}" yedeğinden geri yükleme yapılacak. Mevcut veriler bu yedekteki verilerle DEĞİŞTİRİLECEK. Emin misiniz?`,
+    header: 'Geri Yükleme Onayı',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Evet, Geri Yükle',
+    rejectLabel: 'İptal',
+    accept: async () => {
+      try {
+        const res = await backupAPI.restore(filename)
+        basari.value = res.data?.message || 'Geri yükleme tamamlandı'
+      } catch (err) {
+        hata.value = err.response?.data?.message || 'Geri yükleme başarısız'
       }
     }
   })

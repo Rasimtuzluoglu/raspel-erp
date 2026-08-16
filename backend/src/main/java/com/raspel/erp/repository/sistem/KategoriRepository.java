@@ -10,6 +10,7 @@ import java.util.List;
 @Repository
 public interface KategoriRepository extends JpaRepository<GelirGiderKategori, Long> {
     List<GelirGiderKategori> findByTurOrderByAd(String tur);
+    List<GelirGiderKategori> findBySirketIdAndTurOrderByAd(Long sirketId, String tur);
     List<GelirGiderKategori> findAllByOrderByAd();
     Page<GelirGiderKategori> findBySirketId(Long sirketId, Pageable pageable);
 }

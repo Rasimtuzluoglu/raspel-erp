@@ -45,10 +45,10 @@ public class HareketService {
     public List<HareketDTO> cariHesapHareketleriGetir(Long cariHesapId) {
         log.debug("Cari hesap hareketleri getiriliyor - ID: {}", cariHesapId);
         
-        // Cari hesabın var olduğunu kontrol et
-        if (!cariHesapRepository.existsById(cariHesapId)) {
-            throw new ResourceNotFoundException("Cari Hesap", cariHesapId);
-        }
+        // Cari hesabın var olduğunu ve geçerli firmaya ait olduğunu kontrol et
+        CariHesap cari = cariHesapRepository.findById(cariHesapId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
+        tenantChecker.check(cari.getSirketId(), "Cari Hesap");
         
         return hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(cariHesapId)
                 .stream()
@@ -57,19 +57,8 @@ public class HareketService {
     }
     
     /**
-     * Son n hareketi getir (Dashboard için, tenant filtreli)
+     * Son n hareketi getir (tenant filtreli).
      */
-    @Transactional(readOnly = true)
-    public List<HareketDTO> sonHareketleriGetir(int limit) {
-        log.debug("Son {} hareket getiriliyor", limit);
-        Pageable pageable = PageRequest.of(0, limit);
-        
-        return hareketRepository.findAllByOrderByHareketTarihiDescOlusturmaTarihiDesc(pageable)
-                .stream()
-                .map(this::entityDTOyeCevir)
-                .collect(Collectors.toList());
-    }
-
     @Transactional(readOnly = true)
     public List<HareketDTO> sonHareketleriGetir(int limit, Long sirketId) {
         Pageable pageable = PageRequest.of(0, limit);
@@ -142,20 +131,23 @@ public class HareketService {
     }
 
     /**
-     * Tarih aralığına göre hareketleri filtrele
+     * Tarih aralığına göre hareketleri filtrele (tenant filtreli)
      */
     @Transactional(readOnly = true)
-    public Page<HareketDTO> hareketleriFiltrele(Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable) {
-        log.debug("Hareketler filtreleniyor - Cari: {}, Tarih: {} - {}", cariHesapId, baslangic, bitis);
+    public Page<HareketDTO> hareketleriFiltrele(Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable, Long sirketId) {
+        log.debug("Hareketler filtreleniyor - Cari: {}, Tarih: {} - {}, sirketId: {}", cariHesapId, baslangic, bitis, sirketId);
 
         if (baslangic == null) baslangic = LocalDate.of(2000, 1, 1);
         if (bitis == null) bitis = LocalDate.now().plusDays(1);
 
         Page<Hareket> sonuc;
         if (cariHesapId != null) {
-            sonuc = hareketRepository.findByCariHesapIdAndHareketTarihiBetween(cariHesapId, baslangic, bitis, pageable);
+            CariHesap cari = cariHesapRepository.findById(cariHesapId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
+            tenantChecker.check(cari.getSirketId(), "Cari Hesap");
+            sonuc = hareketRepository.findBySirketIdAndCariHesapIdAndHareketTarihiBetween(sirketId, cariHesapId, baslangic, bitis, pageable);
         } else {
-            sonuc = hareketRepository.findByHareketTarihiBetween(baslangic, bitis, pageable);
+            sonuc = hareketRepository.findBySirketIdAndHareketTarihiBetween(sirketId, baslangic, bitis, pageable);
         }
 
         return sonuc.map(this::entityDTOyeCevir);

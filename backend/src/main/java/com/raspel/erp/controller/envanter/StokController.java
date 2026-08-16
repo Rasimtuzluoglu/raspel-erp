@@ -93,8 +93,9 @@ public class StokController {
 
     @GetMapping("/hareketler/tum")
     @Operation(summary = "Tüm stok hareketlerini getir", description = "Tüm stok hareketlerini listeler")
-    public ResponseEntity<List<StokHareketDTO>> tumHareketler() {
-        return ResponseEntity.ok(stokService.tumHareketler());
+    public ResponseEntity<List<StokHareketDTO>> tumHareketler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.tumHareketler(sirketId));
     }
 
     @PostMapping("/{id}/hareketler")

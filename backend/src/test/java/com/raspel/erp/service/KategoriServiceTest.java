@@ -43,8 +43,8 @@ class KategoriServiceTest {
 
     @Test
     void turuGetir_returnsByTur() {
-        when(kategoriRepository.findByTurOrderByAd("GIDER")).thenReturn(List.of(createKategori(1L)));
-        var result = kategoriService.turuGetir("GIDER");
+        when(kategoriRepository.findBySirketIdAndTurOrderByAd(1L, "GIDER")).thenReturn(List.of(createKategori(1L)));
+        var result = kategoriService.turuGetir("GIDER", 1L);
         assertEquals(1, result.size());
     }
 

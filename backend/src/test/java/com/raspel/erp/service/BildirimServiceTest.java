@@ -1,6 +1,7 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.repository.sistem.BildirimRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +23,7 @@ class BildirimServiceTest {
 
     @Mock private SimpMessagingTemplate messagingTemplate;
     @Mock private RabbitTemplate rabbitTemplate;
+    @Mock private BildirimRepository bildirimRepository;
     @InjectMocks private BildirimService bildirimService;
 
     @Test
@@ -49,5 +51,13 @@ class BildirimServiceTest {
         assertEquals("Test Başlığı", gonderilen.get("baslik"));
         assertEquals("UYARI", gonderilen.get("tur"));
         assertEquals("Test Mesajı", gonderilen.get("mesaj"));
+    }
+
+    @Test
+    void bildirimGonder_persistsToRepository() {
+        bildirimService.bildirimGonder(1L, "STOK", "Kritik Stok", "Ürün stokta azaldı");
+        verify(bildirimRepository).save(any(com.raspel.erp.entity.sistem.Bildirim.class));
+        verify(rabbitTemplate).convertAndSend(eq(com.raspel.erp.config.RabbitMQConfig.BILDIRIM_EXCHANGE),
+                eq(com.raspel.erp.config.RabbitMQConfig.BILDIRIM_ROUTING_KEY), any(com.raspel.erp.dto.sistem.NotificationMessage.class));
     }
 }

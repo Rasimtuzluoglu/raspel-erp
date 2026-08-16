@@ -15,6 +15,9 @@ public interface StokHareketRepository extends JpaRepository<StokHareket, Long> 
     List<StokHareket> findByStokIdOrderByHareketTarihiDesc(Long stokId);
 
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
+    List<StokHareket> findByStokSirketIdOrderByHareketTarihiDesc(Long sirketId);
+
+    @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findAllByOrderByHareketTarihiDesc();
 
     @Override

@@ -52,9 +52,9 @@ class KategoriControllerTest {
     @Test
     void shouldGetByTur() throws Exception {
         var list = List.of(KategoriDTO.builder().id(1L).ad("Maaş").tur("GIDER").build());
-        when(kategoriService.turuGetir("GIDER")).thenReturn(list);
+        when(kategoriService.turuGetir("GIDER", 1L)).thenReturn(list);
 
-        mockMvc.perform(get("/api/kategoriler/tur/GIDER"))
+        mockMvc.perform(get("/api/kategoriler/tur/GIDER").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ad").value("Maaş"));
     }

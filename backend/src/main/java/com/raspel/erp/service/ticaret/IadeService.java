@@ -108,6 +108,7 @@ public class IadeService {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
         tenantChecker.check(iade.getSirketId(), "Iade");
+        String eskiDurum = iade.getDurum();
         if (dto.getFaturaId() != null) iade.setFaturaId(dto.getFaturaId());
         if (dto.getTarih() != null) iade.setTarih(dto.getTarih());
         if (dto.getAciklama() != null) iade.setAciklama(dto.getAciklama());
@@ -134,12 +135,14 @@ public class IadeService {
             iade.setTutar(dto.getTutar());
         }
 
-        boolean yeniTamamlandi = "TAMAMLANDI".equals(iade.getDurum())
-                && !"TAMAMLANDI".equals(dto.getDurum() != null ? null : iade.getDurum());
+        boolean yeniTamamlandi = "TAMAMLANDI".equals(iade.getDurum()) && !"TAMAMLANDI".equals(eskiDurum);
+        boolean iptalEdildi = "IPTAL".equals(iade.getDurum()) && "TAMAMLANDI".equals(eskiDurum);
         if (yeniTamamlandi) {
             stokHareketleriIsle(iade);
-        } else if ("IPTAL".equals(iade.getDurum()) && "TAMAMLANDI".equals(dto.getDurum() != null ? dto.getDurum() : null)) {
+            cacheYardimci.temizle("stoklar", "dashboard");
+        } else if (iptalEdildi) {
             stokHareketleriniTersineCevir(iade);
+            cacheYardimci.temizle("stoklar", "dashboard");
         }
 
         return entityToDTO(iadeRepository.save(iade));

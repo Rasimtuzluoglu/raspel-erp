@@ -57,6 +57,12 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     Page<Hareket> findByHareketTarihiBetween(LocalDate baslangic, LocalDate bitis, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})
+    Page<Hareket> findBySirketIdAndHareketTarihiBetween(Long sirketId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
+    Page<Hareket> findBySirketIdAndCariHesapIdAndHareketTarihiBetween(Long sirketId, Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(Long cariHesapId, LocalDate baslangic, LocalDate bitis);
 
     @EntityGraph(attributePaths = {"cariHesap"})

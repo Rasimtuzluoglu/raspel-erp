@@ -44,22 +44,27 @@ public class StokService {
 
     @Transactional(readOnly = true)
     public Page<StokDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        return stokRepository.findBySirketIdOrderByAd(sirketId, pageable).map(this::entityToDTO);
+        Page<Stok> page = stokRepository.findBySirketIdOrderByAd(sirketId, pageable);
+        Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
+        return page.map(s -> entityToDTO(s, tedarikciAdlari));
     }
 
     @Transactional(readOnly = true)
     public List<StokDTO> ara(String q, Long sirketId) {
         if (sirketId == null) return List.of();
         List<Stok> sonuc = stokRepository.findBySirketIdAndBarkod(sirketId, q);
-        if (!sonuc.isEmpty()) return sonuc.stream().map(this::entityToDTO).collect(Collectors.toList());
-        return stokRepository.findBySirketIdAndAdContainingIgnoreCase(sirketId, q)
-                .stream().map(this::entityToDTO).collect(Collectors.toList());
+        if (sonuc.isEmpty()) {
+            sonuc = stokRepository.findBySirketIdAndAdContainingIgnoreCase(sirketId, q);
+        }
+        Map<Long, String> tedarikciAdlari = tedarikciAdlari(sonuc);
+        return sonuc.stream().map(s -> entityToDTO(s, tedarikciAdlari)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public StokDTO barkodIleBul(String barkod) {
-        return stokRepository.findByBarkod(barkod).stream().findFirst()
-                .map(this::entityToDTO).orElse(null);
+    public StokDTO barkodIleBul(String barkod, Long sirketId) {
+        if (sirketId == null) return null;
+        return stokRepository.findBySirketIdAndBarkod(sirketId, barkod).stream().findFirst()
+                .map(s -> entityToDTO(s, tekTedarikciAdi(s))).orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +73,7 @@ public class StokService {
         Stok stok = stokRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
         tenantChecker.check(stok.getSirketId(), "Stok");
-        return entityToDTO(stok);
+        return entityToDTO(stok, tekTedarikciAdi(stok));
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
@@ -83,7 +88,8 @@ public class StokService {
                 .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
                 .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
                 .maliyetYontemi(dto.getMaliyetYontemi()).sirketId(sirketId).build();
-        return entityToDTO(stokRepository.save(s));
+        Stok kaydedilen = stokRepository.save(s);
+        return entityToDTO(kaydedilen, tekTedarikciAdi(kaydedilen));
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
@@ -124,7 +130,8 @@ public class StokService {
         if (dto.getTedarikciStokKodu() != null) s.setTedarikciStokKodu(dto.getTedarikciStokKodu());
         if (dto.getTedarikciFiyat() != null) s.setTedarikciFiyat(dto.getTedarikciFiyat());
         if (dto.getMaliyetYontemi() != null) s.setMaliyetYontemi(dto.getMaliyetYontemi());
-        return entityToDTO(stokRepository.save(s));
+        Stok kaydedilen = stokRepository.save(s);
+        return entityToDTO(kaydedilen, tekTedarikciAdi(kaydedilen));
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
@@ -167,13 +174,16 @@ public class StokService {
 
     @Transactional(readOnly = true)
     public List<StokHareketDTO> hareketler(Long stokId) {
+        Stok stok = stokRepository.findById(stokId)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+        tenantChecker.check(stok.getSirketId(), "Stok");
         return stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(stokId)
                 .stream().map(this::hareketToDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<StokHareketDTO> tumHareketler() {
-        return stokHareketRepository.findAllByOrderByHareketTarihiDesc()
+    public List<StokHareketDTO> tumHareketler(Long sirketId) {
+        return stokHareketRepository.findByStokSirketIdOrderByHareketTarihiDesc(sirketId)
                 .stream().map(this::hareketToDTO).collect(Collectors.toList());
     }
 
@@ -263,7 +273,7 @@ public class StokService {
         return toplam != null ? toplam : BigDecimal.ZERO;
     }
 
-    private StokDTO entityToDTO(Stok s) {
+    private StokDTO entityToDTO(Stok s, Map<Long, String> tedarikciAdlari) {
         return StokDTO.builder().id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
                 .birim(s.getBirim()).fiyat(s.getFiyat()).satisFiyati(s.getSatisFiyati())
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar()).kdvOrani(s.getKdvOrani())
@@ -271,12 +281,28 @@ public class StokService {
                 .marka(s.getMarka()).agirlik(s.getAgirlik()).kategori(s.getKategori())
                 .aciklama(s.getAciklama()).fotoUrl(s.getFotoUrl()).birim2(s.getBirim2())
                 .cevrimKatsayisi(s.getCevrimKatsayisi()).tedarikciId(s.getTedarikciId())
-                .tedarikciAd(s.getTedarikciId() != null
-                        ? cariHesapRepository.findById(s.getTedarikciId()).map(CariHesap::getAd).orElse(null)
-                        : null)
+                .tedarikciAd(s.getTedarikciId() != null ? tedarikciAdlari.get(s.getTedarikciId()) : null)
                 .tedarikciStokKodu(s.getTedarikciStokKodu()).tedarikciFiyat(s.getTedarikciFiyat())
                 .maliyetYontemi(s.getMaliyetYontemi())
                 .olusturmaTarihi(s.getOlusturmaTarihi()).build();
+    }
+
+    private Map<Long, String> tedarikciAdlari(List<Stok> stoklar) {
+        List<Long> idler = stoklar.stream()
+                .map(Stok::getTedarikciId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (idler.isEmpty()) return Map.of();
+        return cariHesapRepository.findAllById(idler).stream()
+                .collect(Collectors.toMap(CariHesap::getId, CariHesap::getAd));
+    }
+
+    private Map<Long, String> tekTedarikciAdi(Stok s) {
+        if (s.getTedarikciId() == null) return Map.of();
+        return cariHesapRepository.findById(s.getTedarikciId())
+                .map(c -> Map.<Long, String>of(c.getId(), c.getAd()))
+                .orElse(Map.of());
     }
 
     private StokHareketDTO hareketToDTO(StokHareket h) {

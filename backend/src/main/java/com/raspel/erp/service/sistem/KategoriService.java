@@ -27,10 +27,10 @@ public class KategoriService {
         return kategoriRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
-    @Cacheable(value = "lookup", key = "'kategoriTur:' + #tur")
+    @Cacheable(value = "lookup", key = "'kategoriTur:' + #sirketId + ':' + #tur")
     @Transactional(readOnly = true)
-    public List<KategoriDTO> turuGetir(String tur) {
-        return kategoriRepository.findByTurOrderByAd(tur).stream().map(this::entityToDTO).collect(Collectors.toList());
+    public List<KategoriDTO> turuGetir(String tur, Long sirketId) {
+        return kategoriRepository.findBySirketIdAndTurOrderByAd(sirketId, tur).stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
     @CacheEvict(value = "lookup", allEntries = true)

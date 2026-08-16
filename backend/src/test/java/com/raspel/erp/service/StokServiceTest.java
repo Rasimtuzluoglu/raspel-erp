@@ -134,6 +134,7 @@ class StokServiceTest {
         Stok stok = createStok(1L);
         StokHareket h = StokHareket.builder().id(1L).stok(stok).tur("GIRIS").miktar(BigDecimal.valueOf(10))
                 .hareketTarihi(LocalDate.now()).build();
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
         when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(h));
         var result = stokService.hareketler(1L);
         assertEquals(1, result.size());
@@ -142,9 +143,9 @@ class StokServiceTest {
     @Test
     void tumHareketler_returnsAll() {
         Stok stok = createStok(1L);
-        when(stokHareketRepository.findAllByOrderByHareketTarihiDesc())
+        when(stokHareketRepository.findByStokSirketIdOrderByHareketTarihiDesc(1L))
                 .thenReturn(List.of(StokHareket.builder().id(1L).stok(stok).tur("GIRIS").miktar(BigDecimal.valueOf(5)).hareketTarihi(LocalDate.now()).build()));
-        var result = stokService.tumHareketler();
+        var result = stokService.tumHareketler(1L);
         assertEquals(1, result.size());
     }
 

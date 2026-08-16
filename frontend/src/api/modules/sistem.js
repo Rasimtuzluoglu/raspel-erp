@@ -38,6 +38,11 @@ export const bildirimAPI = {
   tumuOkundu() { return apiClient.put('/bildirimler/tumu-okundu') }
 }
 
+export const sistemDurumAPI = {
+  durum() { return apiClient.get('/sistem/durum') },
+  hataLog() { return apiClient.get('/sistem/hata-log') }
+}
+
 export const sirketAPI = {
   getAll() { return apiClient.get('/sirketler') },
   getAktif() { return apiClient.get('/sirketler/aktif') },

@@ -10,7 +10,7 @@
 # Backend (Java 21 + Spring Boot 3.2 + Maven)
 cd backend
 mvn -B compile -q          # Compile
-mvn -B test -q             # Run 591 tests (H2 in-memory)
+mvn -B test -q             # Run 594 tests (H2 in-memory)
 mvn -B clean verify        # Full build with tests
 mvn spring-boot:run        # Run dev server on :8081
 
@@ -40,7 +40,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (591) + Vitest (134) + Cypress |
+| Tests | JUnit 5 (594) + Vitest (134) + Cypress |
 
 ## Project Structure
 
@@ -71,7 +71,7 @@ raspel-erp/
 │   │   └── modules/          # Domain-based API modules
 │   │       ├── finans.js, ticaret.js, stok.js, ik.js, sistem.js, rapor.js, dosya.js
 │   ├── stores/               # Pinia stores (auth, banka, cari, fatura, stok, etc.)
-│   ├── views/                # 52 views (lazy-loaded)
+│   ├── views/                # 57 views (lazy-loaded)
 │   ├── components/            # 25+ shared components
 │   ├── composables/           # 12 composables
 │   ├── router/               # Vue Router with auth guards
@@ -110,7 +110,7 @@ raspel-erp/
 
 ## Code Quality
 
-- Backend: 591 tests (JUnit 5, H2, Mockito), must pass before commit
+- Backend: 594 tests (JUnit 5, H2, Mockito), must pass before commit
 - Frontend: 134 tests (Vitest), zero ESLint warnings required
 - CI runs on push/PR to main: backend (compile+test), frontend (lint+test+build), security (Trivy)
 

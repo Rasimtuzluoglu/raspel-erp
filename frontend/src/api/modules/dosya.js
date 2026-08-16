@@ -22,6 +22,7 @@ export const backupAPI = {
   list() { return apiClient.get('/backups') },
   download(filename) { return apiClient.get(`/backups/download/${filename}`, { responseType: 'blob' }) },
   delete(filename) { return apiClient.delete(`/backups/${filename}`) },
+  restore(filename) { return apiClient.post(`/backups/restore/${filename}`) },
   getSchedule() { return apiClient.get('/backups/schedule') }
 }
 
