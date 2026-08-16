@@ -98,6 +98,10 @@
           :title="m.label"
         >
           <i :class="m.icon" /><span>{{ m.label }}</span>
+          <span
+            v-if="m.path === '/onaylar' && onaySayisi"
+            class="menu-sayac"
+          >{{ onaySayisi }}</span>
           <i
             class="pi pi-star"
             :class="{ favori: isFav(m.path) }"
@@ -174,6 +178,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
+import { personelIzinAPI, satinalmaTalepAPI } from '../api/index.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import KisayolRehberi from './KisayolRehberi.vue'
@@ -214,6 +219,10 @@ const isFav = (path) => favoriler.value.includes(path)
 
 const tumMenuler = [
   { path: '/', label: 'Ana Sayfa', icon: 'pi pi-home', grup: '' },
+  { path: '/sohbet', label: 'Sohbet', icon: 'pi pi-comments', grup: '' },
+  { path: '/ajanda', label: 'Ajanda', icon: 'pi pi-calendar', grup: '' },
+  { path: '/onaylar', label: 'Onaylar', icon: 'pi pi-check-circle', grup: '' },
+  { path: '/belgeler', label: 'Belgeler', icon: 'pi pi-folder-open', grup: '' },
   { path: '/muhasebe', label: 'Muhasebe', icon: 'pi pi-book', grup: 'Finans', gelismis: true },
   { path: '/cari-hesaplar', label: 'Cari', icon: 'pi pi-users', grup: 'Finans' },
   { path: '/faturalar', label: 'Faturalar', icon: 'pi pi-file', grup: 'Finans' },
@@ -293,5 +302,34 @@ const cikis = () => {
 
 onMounted(() => {
   initTheme()
+  onaySayisiniYukle()
 })
+
+const onaySayisi = ref(0)
+
+const onaySayisiniYukle = async () => {
+  try {
+    const [iRes, tRes] = await Promise.all([personelIzinAPI.getAll(), satinalmaTalepAPI.getAll()])
+    const izinler = iRes.data?.content || iRes.data || []
+    const talepler = tRes.data?.content || tRes.data || []
+    onaySayisi.value = izinler.filter(i => i.durum === 'BEKLEMEDE').length + talepler.filter(t => t.durum === 'TASLAK').length
+  } catch { onaySayisi.value = 0 }
+}
 </script>
+
+<style scoped>
+.menu-sayac {
+  margin-left: auto;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 10px;
+  min-width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+</style>

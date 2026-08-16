@@ -28,6 +28,9 @@ public class Not {
     @Column(length = 20)
     private String renk;
 
+    @Column(name = "cari_hesap_id")
+    private Long cariHesapId;
+
     @Column(name = "kullanici_id")
     private Long kullaniciId;
 

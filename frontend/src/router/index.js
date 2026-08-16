@@ -312,6 +312,30 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/sohbet',
+    name: 'Sohbet',
+    component: () => import('../views/Sohbet.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/ajanda',
+    name: 'Ajanda',
+    component: () => import('../views/Ajanda.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/onaylar',
+    name: 'Onaylar',
+    component: () => import('../views/Onaylar.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/belgeler',
+    name: 'Belgeler',
+    component: () => import('../views/Belgeler.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')

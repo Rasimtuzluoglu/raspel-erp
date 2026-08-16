@@ -41,6 +41,12 @@ public class NotController {
         return ResponseEntity.ok(notService.idyeGoreGetir(id));
     }
 
+    @GetMapping("/cari/{cariHesapId}")
+    @Operation(summary = "Cari notları", description = "Belirli bir cari hesaba ait notları listeler")
+    public ResponseEntity<java.util.List<NotDTO>> cariNotlari(@PathVariable Long cariHesapId) {
+        return ResponseEntity.ok(notService.cariNotlari(cariHesapId));
+    }
+
     @PostMapping
     @Operation(summary = "Yeni not oluştur", description = "Yeni bir not oluşturur")
     public ResponseEntity<NotDTO> olustur(@Valid @RequestBody NotDTO dto,

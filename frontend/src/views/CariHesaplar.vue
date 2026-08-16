@@ -533,6 +533,29 @@
           message="Bu cari hesaba ait hareket bulunmamaktadır."
           icon="pi pi-list"
         />
+
+        <div class="cari-notlar">
+          <div class="cari-not-baslik">
+            <h4><i class="pi pi-pen-to-square" style="margin-right:6px" />Görüşme Notları</h4>
+          </div>
+          <div class="cari-not-ekle">
+            <InputText
+              v-model="yeniCariNot"
+              placeholder="Yeni görüşme notu..."
+              @keyup.enter="cariNotEkle"
+            />
+            <Button icon="pi pi-plus" class="p-button-sm" @click="cariNotEkle" />
+          </div>
+          <div v-if="!cariNotlar.length" class="cari-not-bos">Henüz not yok.</div>
+          <div v-for="n in cariNotlar" :key="n.id" class="cari-not-satir">
+            <div class="cari-not-icerik">
+              <strong>{{ n.baslik }}</strong>
+              <p>{{ n.icerik }}</p>
+              <small>{{ n.olusturmaTarihi ? new Date(n.olusturmaTarihi).toLocaleString('tr-TR') : '' }}</small>
+            </div>
+            <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" @click="cariNotSil(n)" />
+          </div>
+        </div>
       </div>
 
       <template #footer>
@@ -558,7 +581,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { excelAPI, hareketAPI } from '../api/index.js'
+import { excelAPI, hareketAPI, notAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -802,6 +825,38 @@ const viewHareketler = async (cariHesap) => {
   } finally {
     cariHareketlerYukleniyor.value = false
   }
+  cariNotlariYukle(cariHesap.id)
+}
+
+const cariNotlar = ref([])
+const yeniCariNot = ref('')
+
+const cariNotlariYukle = async (cariId) => {
+  try {
+    const r = await notAPI.cariNotlari(cariId)
+    cariNotlar.value = r.data || []
+  } catch { cariNotlar.value = [] }
+}
+
+const cariNotEkle = async () => {
+  const metin = yeniCariNot.value.trim()
+  if (!metin || !selectedCariHesap.value) return
+  try {
+    await notAPI.create({ baslik: 'Görüşme', icerik: metin, cariHesapId: selectedCariHesap.value.id })
+    yeniCariNot.value = ''
+    await cariNotlariYukle(selectedCariHesap.value.id)
+  } catch (err) {
+    toastBildirim.hata('Not eklenemedi')
+  }
+}
+
+const cariNotSil = async (n) => {
+  try {
+    await notAPI.delete(n.id)
+    await cariNotlariYukle(selectedCariHesap.value.id)
+  } catch (err) {
+    toastBildirim.hata('Not silinemedi')
+  }
 }
 
 const csvExport = () => {
@@ -842,6 +897,16 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+.cari-notlar { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px; }
+.cari-not-baslik h4 { margin: 0 0 10px; font-size: 14px; }
+.cari-not-ekle { display: flex; gap: 8px; margin-bottom: 10px; }
+.cari-not-ekle .p-inputtext { flex: 1; }
+.cari-not-bos { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
+.cari-not-satir { display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cari-not-icerik strong { font-size: 13px; }
+.cari-not-icerik p { margin: 2px 0; font-size: 13px; }
+.cari-not-icerik small { color: var(--text-muted); font-size: 11px; }
+
 .cari-hesaplar-container {
   padding: 20px;
 }

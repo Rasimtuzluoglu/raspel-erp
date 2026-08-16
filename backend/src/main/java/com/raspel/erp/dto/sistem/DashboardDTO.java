@@ -46,6 +46,7 @@ public class DashboardDTO {
         private Long faturaId;
         private String faturaNumarasi;
         private String cariHesapAd;
+        private String cariTelefon;
         private LocalDate vadeTarihi;
         private BigDecimal kalanTutar;
     }

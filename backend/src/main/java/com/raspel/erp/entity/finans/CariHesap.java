@@ -68,6 +68,9 @@ public class CariHesap {
     @Column(length = 1000)
     private String notlar;
 
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
     @Column(nullable = false)
     private Boolean aktif;
 

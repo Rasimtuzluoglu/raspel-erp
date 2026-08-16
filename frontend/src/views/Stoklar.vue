@@ -634,6 +634,15 @@
           Ek Bilgiler
         </div>
         <div class="form-grup">
+          <label>Ürün Fotoğrafı</label>
+          <div class="foto-satir">
+            <img v-if="form.fotoUrl" :src="form.fotoUrl" class="foto-onizle" alt="foto">
+            <input ref="fotoInput" type="file" accept="image/*" hidden @change="fotoSec">
+            <Button label="Fotoğraf Yükle" icon="pi pi-image" class="p-button-outlined" @click="$refs.fotoInput.click()" />
+            <Button v-if="form.fotoUrl" label="Kaldır" icon="pi pi-times" class="p-button-text p-button-danger" @click="form.fotoUrl = ''" />
+          </div>
+        </div>
+        <div class="form-grup">
           <label>Açıklama</label>
           <Textarea
             v-model="form.aciklama"
@@ -894,11 +903,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { stokAPI, excelAPI } from '../api/index.js'
+import { stokAPI, excelAPI, uploadAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
+import { useGeriAl } from '../composables/useGeriAl.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -913,6 +923,7 @@ useKisayollar({
 })
 
 const { temizle: formTemizle } = useFormKorumasi(form)
+const { silVeGeriAl } = useGeriAl()
 
 const aramaMetni = ref('')
 let aramaZaman = null
@@ -943,7 +954,7 @@ const maliyetYontemiSecenekleri = [
   { label: 'FIFO', value: 'FIFO' },
   { label: 'LIFO', value: 'LIFO' }
 ]
-const form = ref({ stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '' })
+const form = ref({ stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '', fotoUrl: '' })
 
 const showHareketDialog = ref(false)
 const hareketTur = ref('GIRIS')
@@ -1003,7 +1014,7 @@ const openDialog = () => {
 }
 
 const editStok = (s) => {
-  editingId.value = s.id; form.value = { stokKodu: s.stokKodu || '', barkod: s.barkod || '', ad: s.ad, birim: s.birim || '', birim2: s.birim2 || '', cevrimKatsayisi: s.cevrimKatsayisi || null, marka: s.marka || '', stokGrubu: s.stokGrubu || '', kategori: s.kategori || '', rafNo: s.rafNo || '', fiyat: s.fiyat, satisFiyati: s.satisFiyati, kdvOrani: s.kdvOrani, agirlik: s.agirlik, miktar: s.miktar, minMiktar: s.minMiktar, tedarikciId: s.tedarikciId || null, tedarikciStokKodu: s.tedarikciStokKodu || '', tedarikciFiyat: s.tedarikciFiyat || null, maliyetYontemi: s.maliyetYontemi || 'ORTALAMA', aciklama: s.aciklama || '' }
+  editingId.value = s.id; form.value = { stokKodu: s.stokKodu || '', barkod: s.barkod || '', ad: s.ad, birim: s.birim || '', birim2: s.birim2 || '', cevrimKatsayisi: s.cevrimKatsayisi || null, marka: s.marka || '', stokGrubu: s.stokGrubu || '', kategori: s.kategori || '', rafNo: s.rafNo || '', fiyat: s.fiyat, satisFiyati: s.satisFiyati, kdvOrani: s.kdvOrani, agirlik: s.agirlik, miktar: s.miktar, minMiktar: s.minMiktar, tedarikciId: s.tedarikciId || null, tedarikciStokKodu: s.tedarikciStokKodu || '', tedarikciFiyat: s.tedarikciFiyat || null, maliyetYontemi: s.maliyetYontemi || 'ORTALAMA', aciklama: s.aciklama || '', fotoUrl: s.fotoUrl || '' }
   formTemizle()
   showDialog.value = true
 }
@@ -1020,12 +1031,30 @@ const saveStok = async () => {
   finally { saving.value = false }
 }
 
+const fotoSec = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  try {
+    const r = await uploadAPI.foto(file)
+    form.value.fotoUrl = r.data?.url || ''
+    toastBildirim.basarili('Fotoğraf yüklendi')
+  } catch (err) {
+    toastBildirim.hata('Fotoğraf yüklenemedi')
+  }
+}
+
 const confirmDel = (id) => {
+  const silinecek = stokStore.stoklar.find(s => s.id === id)
   confirm.require({
     message: 'Bu ürünü silmek istediğinizden emin misiniz?', header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await stokStore.deleteStok(id); if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] } toastBildirim.basarili('Ürün silindi') }
+      try {
+        await stokStore.deleteStok(id)
+        if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] }
+        toastBildirim.basarili('Ürün silindi')
+        if (silinecek) silVeGeriAl({ veri: silinecek, metin: `${silinecek.ad} silindi`, geriYukle: (v) => stokStore.addStok(v) })
+      }
       catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
     }
   })
@@ -1151,6 +1180,9 @@ const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',mo
 </script>
 
 <style scoped>
+.foto-satir { display: flex; align-items: center; gap: 10px; }
+.foto-onizle { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
 .stoklar-container { padding: 20px; }
 h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
 h2 { color: var(--text-primary); font-size: 20px; margin: 0; }

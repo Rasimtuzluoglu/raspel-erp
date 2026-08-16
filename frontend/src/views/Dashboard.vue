@@ -606,7 +606,19 @@
                 class="reminder-item"
               >
                 <span class="reminder-ad">#{{ f.faturaNumarasi }} <small>{{ f.cariHesapAd }}</small></span>
-                <span class="reminder-tutar">{{ formatCurrency(f.kalanTutar) }}</span>
+                <div class="reminder-aksiyon">
+                  <span class="reminder-tutar">{{ formatCurrency(f.kalanTutar) }}</span>
+                  <a
+                    v-if="f.cariTelefon"
+                    class="whatsapp-buton"
+                    :href="whatsappLink(f)"
+                    target="_blank"
+                    rel="noopener"
+                    title="WhatsApp ile hatırlat"
+                  >
+                    <i class="pi pi-whatsapp" />
+                  </a>
+                </div>
               </div>
             </template>
           </Card>
@@ -1081,6 +1093,12 @@ const formatDate = (d) => {
   if (!d) return '-'
   return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
 }
+
+const whatsappLink = (f) => {
+  const tel = (f.cariTelefon || '').replace(/\D/g, '')
+  const mesaj = `Sayın ${f.cariHesapAd || ''}, ${f.faturaNumarasi || ''} numaralı faturanızın ${formatCurrency(f.kalanTutar)} tutarında kalan ödemesi bulunmaktadır. Bilginize sunarız.`
+  return `https://wa.me/${tel}?text=${encodeURIComponent(mesaj)}`
+}
 </script>
 
 <style scoped>
@@ -1159,6 +1177,9 @@ const formatDate = (d) => {
 .reminder-item small { color: var(--text-muted); margin-left: 6px; }
 .reminder-card .p-card-title { font-size: 14px !important; }
 .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.reminder-aksiyon { display: flex; align-items: center; gap: 10px; }
+.whatsapp-buton { color: #25d366; font-size: 18px; display: inline-flex; }
+.whatsapp-buton:hover { transform: scale(1.15); }
 .reminder-item:last-child { border-bottom: none; }
 .reminder-ad { font-size: 13px; }
 .reminder-tutar { font-size: 13px; font-weight: 600; color: #4ade80; }

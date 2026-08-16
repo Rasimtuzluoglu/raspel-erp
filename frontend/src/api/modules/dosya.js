@@ -7,6 +7,13 @@ export const uploadAPI = {
     return apiClient.post('/upload/sirket-logo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
+  },
+  foto(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.post('/upload/foto', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
   }
 }
 
@@ -61,6 +68,7 @@ export const belgeAPI = {
     formData.append('entityId', entityId)
     return apiClient.post('/belgeler/yukle', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
+  tumBelgeler() { return apiClient.get('/belgeler') },
   kayitBelgeleri(entityAdi, entityId) { return apiClient.get(`/belgeler/kayit/${entityAdi}/${entityId}`) },
   indir(filename) { return apiClient.get(`/belgeler/indir/${filename}`, { responseType: 'blob' }) },
   sil(id) { return apiClient.delete(`/belgeler/${id}`) }

@@ -22,6 +22,22 @@ export const kurulumAPI = {
   baslat(data) { return apiClient.post('/kurulum/baslat', data) }
 }
 
+export const sohbetAPI = {
+  sonMesajlar() { return apiClient.get('/sohbet') },
+  gonder(data) { return apiClient.post('/sohbet', data) }
+}
+
+export const ajandaAPI = {
+  olaylar(params) { return apiClient.get('/ajanda', { params }) }
+}
+
+export const bildirimAPI = {
+  liste() { return apiClient.get('/bildirimler') },
+  okunmamis() { return apiClient.get('/bildirimler/okunmamis') },
+  okundu(id) { return apiClient.put(`/bildirimler/${id}/okundu`) },
+  tumuOkundu() { return apiClient.put('/bildirimler/tumu-okundu') }
+}
+
 export const sirketAPI = {
   getAll() { return apiClient.get('/sirketler') },
   getAktif() { return apiClient.get('/sirketler/aktif') },
@@ -59,6 +75,7 @@ export const auditLogAPI = {
 export const notAPI = {
   getAll(params) { return apiClient.get('/notlar', { params }) },
   getById(id) { return apiClient.get(`/notlar/${id}`) },
+  cariNotlari(cariHesapId) { return apiClient.get(`/notlar/cari/${cariHesapId}`) },
   create(data) { return apiClient.post('/notlar', data) },
   update(id, data) { return apiClient.put(`/notlar/${id}`, data) },
   delete(id) { return apiClient.delete(`/notlar/${id}`) }

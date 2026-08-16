@@ -92,6 +92,7 @@ public class CariHesapService {
                 .yetkiliTelefon(dto.getYetkiliTelefon())
                 .iban(dto.getIban())
                 .notlar(dto.getNotlar())
+                .fotoUrl(dto.getFotoUrl())
                 .krediLimiti(dto.getKrediLimiti())
                 .odemeVadesi(dto.getOdemeVadesi())
                 .bakiye(BigDecimal.ZERO)
@@ -128,6 +129,7 @@ public class CariHesapService {
         if (dto.getYetkiliTelefon() != null) cariHesap.setYetkiliTelefon(dto.getYetkiliTelefon());
         if (dto.getIban() != null) cariHesap.setIban(dto.getIban());
         if (dto.getNotlar() != null) cariHesap.setNotlar(dto.getNotlar());
+        if (dto.getFotoUrl() != null) cariHesap.setFotoUrl(dto.getFotoUrl());
         if (dto.getAktif() != null) cariHesap.setAktif(dto.getAktif());
         if (dto.getKrediLimiti() != null) cariHesap.setKrediLimiti(dto.getKrediLimiti());
         if (dto.getOdemeVadesi() != null) cariHesap.setOdemeVadesi(dto.getOdemeVadesi());
@@ -233,6 +235,7 @@ public class CariHesapService {
                 .yetkiliTelefon(cariHesap.getYetkiliTelefon())
                 .iban(cariHesap.getIban())
                 .notlar(cariHesap.getNotlar())
+                .fotoUrl(cariHesap.getFotoUrl())
                 .aktif(cariHesap.getAktif())
                 .krediLimiti(cariHesap.getKrediLimiti())
                 .odemeVadesi(cariHesap.getOdemeVadesi())

@@ -130,6 +130,7 @@ public class DashboardService {
                 .faturaId(f.getId())
                 .faturaNumarasi(f.getFaturaNumarasi())
                 .cariHesapAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
+                .cariTelefon(f.getCariHesap() != null ? f.getCariHesap().getTelefon() : null)
                 .vadeTarihi(f.getVadeTarihi())
                 .kalanTutar(f.getKalanTutar())
                 .build();

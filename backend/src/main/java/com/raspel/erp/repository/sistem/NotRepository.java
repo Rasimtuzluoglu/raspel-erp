@@ -11,4 +11,5 @@ import java.util.List;
 public interface NotRepository extends JpaRepository<Not, Long> {
     Page<Not> findBySirketIdOrderByOlusturmaTarihiDesc(Long sirketId, Pageable pageable);
     List<Not> findBySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(Long sirketId, Long kullaniciId);
+    List<Not> findByCariHesapIdOrderByOlusturmaTarihiDesc(Long cariHesapId);
 }

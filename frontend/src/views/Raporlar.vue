@@ -27,7 +27,7 @@
         :label="r.ad"
         size="small"
         class="p-button-sm p-button-outlined"
-        @click="aktifSekme = r.index"
+        @click="favoriAc(r)"
       />
     </div>
 
@@ -652,9 +652,14 @@ const raporFavoriDegistir = (key, index, ad) => {
   if (mevcut > -1) {
     favoriRaporlar.value.splice(mevcut, 1)
   } else {
-    favoriRaporlar.value.push({ key, index, ad })
+    favoriRaporlar.value.push({ key, index, ad, tarih: tarihAraligi.value ? [...tarihAraligi.value] : null })
   }
   safeSet(FAVORI_ANAHTAR, favoriRaporlar.value)
+}
+
+const favoriAc = (r) => {
+  aktifSekme.value = r.index
+  if (r.tarih) tarihAraligi.value = [...r.tarih]
 }
 
 const ekstreKart = ref(null)

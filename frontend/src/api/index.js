@@ -45,6 +45,9 @@ export {
 export {
   kullaniciAPI,
   kurulumAPI,
+  sohbetAPI,
+  ajandaAPI,
+  bildirimAPI,
   sirketAPI,
   subeAPI,
   donemAPI,

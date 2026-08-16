@@ -61,6 +61,19 @@
           <span><kbd>d</kbd> Depolar</span>
           <span><kbd>u</kbd> Şubeler</span>
         </div>
+        <div class="qs-komutlar">
+          <div class="qs-komut-baslik">Hızlı Komutlar</div>
+          <div class="qs-komut-grid">
+            <button
+              v-for="k in komutlar"
+              :key="k.etiket"
+              class="qs-komut"
+              @click="komutCalistir(k)"
+            >
+              <i :class="k.icon" />{{ k.etiket }}
+            </button>
+          </div>
+        </div>
       </div>
       <div
         v-if="loading"
@@ -125,7 +138,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI, depoAPI, subeAPI } from '../api/index.js'
+import { cariHesapAPI, stokAPI, faturaAPI, personelAPI, projeAPI, siparisAPI, notAPI, bankaAPI, kasaAPI, depoAPI, subeAPI, belgeAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 
 const props = defineProps({ visible: Boolean })
@@ -221,7 +234,24 @@ const typeConfig = {
   banka: { icon: 'pi pi-building', severity: 'warn', route: '/bankalar' },
   kasa: { icon: 'pi pi-wallet', severity: 'info', route: '/kasa' },
   depo: { icon: 'pi pi-warehouse', severity: 'success', route: '/depolar' },
-  sube: { icon: 'pi pi-sitemap', severity: 'help', route: '/subeler' }
+  sube: { icon: 'pi pi-sitemap', severity: 'help', route: '/subeler' },
+  belge: { icon: 'pi pi-folder-open', severity: 'info', route: '/belgeler' }
+}
+
+const komutlar = [
+  { etiket: 'Yeni Fatura', icon: 'pi pi-file', route: '/faturalar' },
+  { etiket: 'Yeni Cari', icon: 'pi pi-user-plus', route: '/cari-hesaplar' },
+  { etiket: 'Yeni Stok', icon: 'pi pi-box', route: '/stoklar' },
+  { etiket: 'Hızlı Satış', icon: 'pi pi-bolt', route: '/hizli-satis' },
+  { etiket: 'Sohbet', icon: 'pi pi-comments', route: '/sohbet' },
+  { etiket: 'Ajanda', icon: 'pi pi-calendar', route: '/ajanda' },
+  { etiket: 'Onaylar', icon: 'pi pi-check-circle', route: '/onaylar' },
+  { etiket: 'Belgeler', icon: 'pi pi-folder-open', route: '/belgeler' }
+]
+
+const komutCalistir = (k) => {
+  kapat()
+  router.push(k.route)
 }
 
 watch(() => props.visible, (v) => {
@@ -276,7 +306,7 @@ watch(query, (val) => {
     loading.value = true; error.value = null; selectedIndex.value = 0
     const q = val.trim().toLowerCase()
     try {
-      const [cariler, stoklar, faturalar, personeller, projeler, siparisler, notlar, bankalar, kasalar, depolar, subeler] = await Promise.all([
+      const [cariler, stoklar, faturalar, personeller, projeler, siparisler, notlar, bankalar, kasalar, depolar, subeler, belgeler] = await Promise.all([
         cariHesapAPI.search(q).then(r => r.data.map(d => ({ ...d, type: 'cari', ...typeConfig.cari, title: d.ad, subtitle: `Vergi: ${d.vergiNumarasi || '-'} | Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => []),
         stokAPI.ara(q).then(r => r.data.map(d => ({ ...d, type: 'stok', ...typeConfig.stok, title: d.ad, subtitle: `Kod: ${d.stokKodu || '-'} | Miktar: ${d.miktar || 0} ${d.birim || ''}` }))).catch(() => []),
         faturaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(f => icindeAra(f.faturaNumarasi, q) || icindeAra(f.cariHesapAd, q)).slice(0, 5).map(d => ({ ...d, type: 'fatura', ...typeConfig.fatura, title: `#${d.faturaNumarasi || d.id}`, subtitle: `${d.cariHesapAd || '-'} | ${formatCur(d.genelToplam)}` }))).catch(() => []),
@@ -287,9 +317,10 @@ watch(query, (val) => {
         bankaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(b => icindeAra(b.ad, q) || icindeAra(b.iban, q)).slice(0, 3).map(d => ({ ...d, type: 'banka', ...typeConfig.banka, title: d.ad, subtitle: `IBAN: ${d.iban || '-'}` }))).catch(() => []),
         kasaAPI.getAll().then(r => (r.data?.content || r.data || []).filter(k => icindeAra(k.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'kasa', ...typeConfig.kasa, title: d.ad, subtitle: `Bakiye: ${formatCur(d.bakiye)}` }))).catch(() => []),
         depoAPI.getAll().then(r => (r.data?.content || r.data || []).filter(d => icindeAra(d.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'depo', ...typeConfig.depo, title: d.ad, subtitle: `Depo` }))).catch(() => []),
-        subeAPI.getAll().then(r => (r.data?.content || r.data || []).filter(s => icindeAra(s.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: `Şube` }))).catch(() => [])
+        subeAPI.getAll().then(r => (r.data?.content || r.data || []).filter(s => icindeAra(s.ad, q)).slice(0, 3).map(d => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: `Şube` }))).catch(() => []),
+        belgeAPI.tumBelgeler().then(r => (r.data || []).filter(b => icindeAra(b.dosyaAdi, q) || icindeAra(b.entityAdi, q)).slice(0, 3).map(d => ({ ...d, type: 'belge', ...typeConfig.belge, title: d.dosyaAdi, subtitle: `Bağlı: ${d.entityAdi || '-'}` }))).catch(() => [])
       ])
-      const birlesik = [...cariler, ...stoklar, ...faturalar, ...personeller, ...projeler, ...siparisler, ...notlar, ...bankalar, ...kasalar, ...depolar, ...subeler]
+      const birlesik = [...cariler, ...stoklar, ...faturalar, ...personeller, ...projeler, ...siparisler, ...notlar, ...bankalar, ...kasalar, ...depolar, ...subeler, ...belgeler]
       const sirali = birlesik.filter(i => i.title?.toLowerCase().startsWith(q)).concat(birlesik.filter(i => !i.title?.toLowerCase().startsWith(q)))
       results.value = sirali.slice(0, 15)
     } catch (e) { error.value = 'Arama sırasında hata oluştu' }
@@ -372,6 +403,12 @@ onUnmounted(() => {
 .qs-hint-items { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .qs-hint-items span { font-size: 12px; color: #94a3b8; }
 .qs-hint-items kbd { background: rgba(148,163,184,0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #cbd5e1; font-family: inherit; border: 1px solid rgba(148,163,184,0.15); }
+.qs-komutlar { margin-top: 16px; border-top: 1px solid rgba(148,163,184,0.1); padding-top: 12px; }
+.qs-komut-baslik { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+.qs-komut-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.qs-komut { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(148,163,184,0.06); border: 1px solid rgba(148,163,184,0.12); border-radius: 8px; color: var(--text-primary); font-size: 13px; cursor: pointer; text-align: left; }
+.qs-komut:hover { background: rgba(59,130,246,0.12); border-color: #3b82f6; }
+.qs-komut i { color: #60a5fa; }
 .qs-loading, .qs-empty, .qs-error { padding: 24px; text-align: center; color: #64748b; font-size: 14px; }
 .qs-empty i { font-size: 32px; display: block; margin-bottom: 8px; color: #475569; }
 .qs-results { max-height: 360px; overflow-y: auto; padding: 8px; }

@@ -29,6 +29,7 @@ public class FileUploadController {
 
     private final Path avatarDir = Paths.get("uploads/avatars").toAbsolutePath().normalize();
     private final Path sirketLogoDir = Paths.get("uploads/sirket-logos").toAbsolutePath().normalize();
+    private final Path fotoDir = Paths.get("uploads/fotolar").toAbsolutePath().normalize();
 
     private static final List<String> IZIN_VERILEN_UZANTILAR = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif");
     private static final List<String> IZIN_VERILEN_MIME = List.of("image/jpeg", "image/png", "image/webp", "image/gif");
@@ -52,6 +53,20 @@ public class FileUploadController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadSirketLogo(@RequestParam("file") MultipartFile file) {
         return dosyaYukle(file, sirketLogoDir, "/api/uploads/sirket-logos/");
+    }
+
+    @PostMapping("/upload/foto")
+    @Operation(summary = "Cari/ürün fotoğrafı yükle", description = "Cari hesap veya ürün fotoğrafı yükler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Map<String, String>> uploadFoto(@RequestParam("file") MultipartFile file) {
+        return dosyaYukle(file, fotoDir, "/api/uploads/fotolar/");
+    }
+
+    @GetMapping("/uploads/fotolar/{filename}")
+    @Operation(summary = "Fotoğraf getir", description = "Cari/ürün fotoğrafını döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Resource> getFoto(@PathVariable String filename) {
+        return dosyaGetir(filename, fotoDir);
     }
 
     @GetMapping("/uploads/sirket-logos/{filename}")

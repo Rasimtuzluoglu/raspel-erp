@@ -101,6 +101,13 @@ public class BelgeController {
         return ResponseEntity.ok(belgeRepository.findByEntityAdiAndEntityIdOrderByOlusturmaTarihiDesc(entityAdi, entityId));
     }
 
+    @GetMapping
+    @Operation(summary = "Tüm belgeleri getir", description = "Şirketin tüm belgelerini listeler")
+    public ResponseEntity<List<Belge>> tumBelgeler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(belgeRepository.findBySirketIdOrderByOlusturmaTarihiDesc(sirketId));
+    }
+
     @GetMapping("/indir/{filename}")
     @Operation(summary = "Belge indir", description = "Belgeyi indirir")
     public ResponseEntity<Resource> indir(@PathVariable String filename) {

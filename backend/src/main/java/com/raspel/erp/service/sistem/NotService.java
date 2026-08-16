@@ -44,6 +44,12 @@ public class NotService {
         return entityToDTO(not);
     }
 
+    @Transactional(readOnly = true)
+    public List<NotDTO> cariNotlari(Long cariHesapId) {
+        return notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(cariHesapId)
+                .stream().map(this::entityToDTO).collect(Collectors.toList());
+    }
+
     @CacheEvict(value = "lookup", allEntries = true)
     public NotDTO olustur(NotDTO dto, Long sirketId, Long kullaniciId) {
         Not not = Not.builder()
@@ -51,6 +57,7 @@ public class NotService {
                 .icerik(dto.getIcerik())
                 .onemDerecesi(dto.getOnemDerecesi() != null ? dto.getOnemDerecesi() : "NORMAL")
                 .renk(dto.getRenk() != null ? dto.getRenk() : "MAVI")
+                .cariHesapId(dto.getCariHesapId())
                 .kullaniciId(kullaniciId)
                 .sirketId(sirketId)
                 .build();
@@ -84,6 +91,7 @@ public class NotService {
                 .icerik(not.getIcerik())
                 .onemDerecesi(not.getOnemDerecesi())
                 .renk(not.getRenk())
+                .cariHesapId(not.getCariHesapId())
                 .kullaniciId(not.getKullaniciId())
                 .olusturmaTarihi(not.getOlusturmaTarihi())
                 .guncellemeTarihi(not.getGuncellemeTarihi())

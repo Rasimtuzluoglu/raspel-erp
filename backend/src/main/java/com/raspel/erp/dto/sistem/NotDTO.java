@@ -21,6 +21,8 @@ public class NotDTO {
 
     private String renk;
 
+    private Long cariHesapId;
+
     private Long kullaniciId;
 
     private LocalDateTime olusturmaTarihi;

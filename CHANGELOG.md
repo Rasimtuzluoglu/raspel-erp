@@ -2,6 +2,26 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.6.0] - 2026-08-16 (Kullanıcı Dostu & Her Şey Tek Uygulamada)
+### Eklenenler
+- **Ekip içi sohbet**: `SohbetMesaj` + REST/WebSocket (gerçek zamanlı), `/sohbet` sayfası (V43).
+- **Ajanda/takvim**: `GET /api/ajanda` (görev + fatura vade olayları), aylık takvim görünümü.
+- **Onay akışı**: `/onaylar` sayfası (bekleyen izin + satın alma talepleri, tek tıkla onay/red).
+- **Dosya yöneticisi**: `GET /api/belgeler` + `/belgeler` sayfası (yükleme, indirme, önizleme).
+- **Cari/ürün görseli**: `foto_url` alanları (V44) + `POST /api/upload/foto`.
+- **Bildirim merkezi**: `Bildirim` entity (V45) + geçmiş + okunmamış sayacı.
+- **WhatsApp hatırlatma**: vade bildirimine `cariTelefon`, dashboard'da WhatsApp butonu.
+- **Cari görüşme notları**: Not'a `cariHesapId` (V46) + cari detayında not bölümü.
+- **Global arama**: belge (dosya) araması eklendi (12 varlık).
+- **Komut paleti**: QuickSearch boşken hızlı komutlar (Yeni Fatura, Hızlı Satış, Sohbet...).
+- **Geri al (undo)**: Stok silmeye "Geri Al" desteği.
+- **Günlük özet e-postası**: `GunlukOzetService` (sabah 07:00, kritik stok + vadesi geçen fatura).
+- **Rapor favori + parametre**: favorilere tarih aralığı parametresi kaydedilir.
+- **Mobil onay**: Sidebar'da bekleyen onay sayacı rozeti.
+
+### Zaten mevcut (ek kod gerekmedi)
+- Özelleştirilebilir dashboard (widget göster/gizle), PWA offline (offline-first cache).
+
 ## [1.5.1] - 2026-08-15 (Cari Bakiye Yönü Tutarlılığı)
 ### Düzeltmeler
 - **Cari bakiye kuralı birleştirildi**: Bakiye artık tek bir kural izler — **Alacak pozitif (+), Borç negatif (−)**.

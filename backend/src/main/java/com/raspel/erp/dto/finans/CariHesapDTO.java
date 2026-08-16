@@ -38,6 +38,7 @@ public class CariHesapDTO {
     private String yetkiliTelefon;
     private String iban;
     private String notlar;
+    private String fotoUrl;
     private Boolean aktif;
 
     private BigDecimal krediLimiti;

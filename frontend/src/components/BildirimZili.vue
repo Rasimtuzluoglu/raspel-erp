@@ -10,9 +10,9 @@
       @click.stop="panelAcik = !panelAcik"
     >
       <span
-        v-if="filtrelenmisBildirimler.length"
+        v-if="okunmamis"
         class="zil-sayac"
-      >{{ filtrelenmisBildirimler.length }}</span>    </Button>
+      >{{ okunmamis }}</span>    </Button>
 
     <transition name="panel">
       <div
@@ -113,7 +113,7 @@
             <div class="item-icerik">
               <strong>{{ b.baslik }}</strong>
               <p>{{ b.mesaj }}</p>
-              <small>{{ formatTarih(b.tarih) }}</small>
+              <small>{{ formatTarih(b.tarih || b.olusturmaTarihi) }}</small>
             </div>
           </div>
         </div>
@@ -127,16 +127,27 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
+import { bildirimAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 
 const router = useRouter()
 const panelAcik = ref(false)
 const tercihPaneli = ref(false)
 const bildirimler = ref([])
+const okunmamis = ref(0)
 const ziliRef = ref(null)
 
 const { sonBildirim } = useWebSocket()
 const masaustu = useMasaustuBildirim()
+
+const yukle = async () => {
+  try {
+    const r = await bildirimAPI.liste()
+    bildirimler.value = r.data || []
+    const c = await bildirimAPI.okunmamis()
+    okunmamis.value = c.data?.adet || 0
+  } catch { /* empty */ }
+}
 
 const disariTiklamaHandler = (e) => {
   if (panelAcik.value && ziliRef.value && !ziliRef.value.contains(e.target)) {
@@ -146,28 +157,7 @@ const disariTiklamaHandler = (e) => {
 
 onMounted(() => {
   document.addEventListener('click', disariTiklamaHandler)
-
-  // Populate proactive system alerts
-  setTimeout(() => {
-    if (bildirimler.value.length === 0) {
-      bildirimler.value = [
-        {
-          tur: 'STOK',
-          baslik: 'Stok Kontrolü',
-          mesaj: 'Asgari stok seviyesi altındaki ürünlerinizi kontrol edin.',
-          tarih: new Date(),
-          yonlendirme: '/stoklar'
-        },
-        {
-          tur: 'INFO',
-          baslik: 'TCMB Döviz Kurları',
-          mesaj: 'TCMB USD, EUR, GBP, SAR ve Altın kurları güncellendi.',
-          tarih: new Date(),
-          yonlendirme: '/'
-        }
-      ]
-    }
-  }, 1000)
+  yukle()
 })
 
 onUnmounted(() => {
@@ -226,12 +216,19 @@ const formatTarih = (t) => {
   return new Date(t).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-const bildirimTikla = (b) => {
+const bildirimTikla = async (b) => {
+  if (b.id) {
+    try { await bildirimAPI.okundu(b.id); if (okunmamis.value > 0) okunmamis.value-- } catch { /* empty */ }
+  }
   if (b.yonlendirme) router.push(b.yonlendirme)
   panelAcik.value = false
 }
 
-const temizle = () => { bildirimler.value = [] }
+const temizle = async () => {
+  try { await bildirimAPI.tumuOkundu() } catch { /* empty */ }
+  bildirimler.value = []
+  okunmamis.value = 0
+}
 </script>
 
 <style scoped>

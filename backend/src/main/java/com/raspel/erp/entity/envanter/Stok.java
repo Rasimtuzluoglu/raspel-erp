@@ -62,6 +62,9 @@ public class Stok {
     @Column(length = 500)
     private String aciklama;
 
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
     @Column(length = 50)
     private String birim2;
 
