@@ -137,7 +137,9 @@
             >{{ authStore.kullanici?.displayName?.charAt(0) || 'U' }}</span>
           </div>
           <div class="admin-info">
-            <span class="admin-name">{{ authStore.kullanici?.displayName || authStore.kullanici?.username || 'Kullanıcı' }}</span>
+            <span class="admin-name">{{
+              authStore.kullanici?.displayName || authStore.kullanici?.username || 'Kullanıcı'
+            }}</span>
             <span class="admin-role">{{ authStore.kullanici?.role || 'USER' }}</span>
           </div>
           <button
@@ -152,15 +154,60 @@
         <div class="admin-actions">
           <BildirimZili class="bildirim-zili-kapsayici" />
           <ThemeSwitcher />
-          <button class="icon-action-btn" title="Sifre Degistir" @click="$emit('open-password-modal')"><i class="pi pi-lock" /></button>
-          <button class="icon-action-btn" title="Hesap Makinesi" @click="$emit('open-calculator')"><i class="pi pi-calculator" /></button>
-          <button class="icon-action-btn" title="Doviz" @click="$emit('open-currency')"><i class="pi pi-money-bill" /></button>
-          <button class="icon-action-btn" title="Araclar" @click="aracAcik = !aracAcik"><i class="pi pi-ellipsis-h" /></button>
+          <button
+            class="icon-action-btn"
+            title="Sifre Degistir"
+            @click="$emit('open-password-modal')"
+          >
+            <i class="pi pi-lock" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Hesap Makinesi"
+            @click="$emit('open-calculator')"
+          >
+            <i class="pi pi-calculator" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Doviz"
+            @click="$emit('open-currency')"
+          >
+            <i class="pi pi-money-bill" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Araclar"
+            @click="aracAcik = !aracAcik"
+          >
+            <i class="pi pi-ellipsis-h" />
+          </button>
         </div>
-        <div v-if="aracAcik" class="admin-tools">
-          <button class="icon-action-btn" title="KDV" @click="$emit('open-kdv')"><i class="pi pi-percentage" /></button>
-          <button class="icon-action-btn" title="Taksit" @click="$emit('open-taksit')"><i class="pi pi-calendar" /></button>
-          <button class="icon-action-btn" title="Kar Marj" @click="$emit('open-marj')"><i class="pi pi-chart-line" /></button>
+        <div
+          v-if="aracAcik"
+          class="admin-tools"
+        >
+          <button
+            class="icon-action-btn"
+            title="KDV"
+            @click="$emit('open-kdv')"
+          >
+            <i class="pi pi-percentage" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Taksit"
+            @click="$emit('open-taksit')"
+          >
+            <i class="pi pi-calendar" />
+          </button>
+          <button
+            class="icon-action-btn"
+            title="Kar Marj"
+            @click="$emit('open-marj')"
+          >
+            <i class="pi pi-chart-line" />
+          </button>
         </div>
       </div>
 
@@ -185,7 +232,17 @@ import KisayolRehberi from './KisayolRehberi.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { useTheme } from '../composables/useTheme.js'
 
-defineEmits(['open-search', 'open-password-modal', 'open-calculator', 'open-currency', 'open-kdv', 'open-taksit', 'open-marj', 'open-iban', 'open-tc'])
+defineEmits([
+  'open-search',
+  'open-password-modal',
+  'open-calculator',
+  'open-currency',
+  'open-kdv',
+  'open-taksit',
+  'open-marj',
+  'open-iban',
+  'open-tc'
+])
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -201,9 +258,12 @@ const toggleGelismisMod = () => {
 }
 
 // Rota değiştiğinde mobil menüyü kapat
-watch(() => router.currentRoute.value.path, () => {
-  mobilMenuAcik.value = false
-})
+watch(
+  () => router.currentRoute.value.path,
+  () => {
+    mobilMenuAcik.value = false
+  }
+)
 
 const { initTheme } = useTheme()
 
@@ -252,7 +312,14 @@ const tumMenuler = [
   { path: '/personel', label: 'Personel', icon: 'pi pi-id-card', grup: 'Yönetim' },
   { path: '/izinler', label: 'İzin', icon: 'pi pi-calendar', grup: 'Yönetim', gelismis: true },
   { path: '/projeler', label: 'Proje', icon: 'pi pi-folder', grup: 'Yönetim', gelismis: true },
-  { path: '/maas-bordro', label: 'Maaş Bordro', icon: 'pi pi-credit-card', grup: 'Yönetim', admin: true, gelismis: true },
+  {
+    path: '/maas-bordro',
+    label: 'Maaş Bordro',
+    icon: 'pi pi-credit-card',
+    grup: 'Yönetim',
+    admin: true,
+    gelismis: true
+  },
   { path: '/vardiyalar', label: 'Vardiya', icon: 'pi pi-clock', grup: 'Yönetim', gelismis: true },
   { path: '/sirketler', label: 'Şirket', icon: 'pi pi-building', grup: 'Sistem', admin: true, gelismis: true },
   { path: '/donemler', label: 'Dönem', icon: 'pi pi-calendar', grup: 'Sistem', gelismis: true },
@@ -273,7 +340,7 @@ const tumMenuler = [
 ]
 
 const gorunenMenuler = computed(() => {
-  return tumMenuler.filter(m => {
+  return tumMenuler.filter((m) => {
     if (m.path === '/') return false
     if (!gelismisMod.value && m.gelismis) return false
     if (m.admin && !authStore.isAdmin) return false
@@ -281,20 +348,28 @@ const gorunenMenuler = computed(() => {
   })
 })
 
-const favoriMenuler = computed(() => tumMenuler.filter(m => favoriler.value.includes(m.path) && (!m.admin || authStore.kullanici?.role === 'ADMIN')))
+const favoriMenuler = computed(() =>
+  tumMenuler.filter((m) => favoriler.value.includes(m.path) && (!m.admin || authStore.kullanici?.role === 'ADMIN'))
+)
 
 const sirketLogo = ref(null)
 
-watch(() => authStore.sirketId, async (id) => {
-  if (id) {
-    try {
-      const r = await sirketAPI.getById(id)
-      sirketLogo.value = r.data?.logoUrl || null
-    } catch { sirketLogo.value = null }
-  } else {
-    sirketLogo.value = null
-  }
-}, { immediate: true })
+watch(
+  () => authStore.sirketId,
+  async (id) => {
+    if (id) {
+      try {
+        const r = await sirketAPI.getById(id)
+        sirketLogo.value = r.data?.logoUrl || null
+      } catch {
+        sirketLogo.value = null
+      }
+    } else {
+      sirketLogo.value = null
+    }
+  },
+  { immediate: true }
+)
 
 const cikis = () => {
   authStore.cikisYap()
@@ -313,8 +388,11 @@ const onaySayisiniYukle = async () => {
     const [iRes, tRes] = await Promise.all([personelIzinAPI.getAll(), satinalmaTalepAPI.getAll()])
     const izinler = iRes.data?.content || iRes.data || []
     const talepler = tRes.data?.content || tRes.data || []
-    onaySayisi.value = izinler.filter(i => i.durum === 'BEKLEMEDE').length + talepler.filter(t => t.durum === 'TASLAK').length
-  } catch { onaySayisi.value = 0 }
+    onaySayisi.value =
+      izinler.filter((i) => i.durum === 'BEKLEMEDE').length + talepler.filter((t) => t.durum === 'TASLAK').length
+  } catch {
+    onaySayisi.value = 0
+  }
 }
 </script>
 

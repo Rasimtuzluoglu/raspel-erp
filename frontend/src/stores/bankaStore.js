@@ -36,7 +36,7 @@ export const useBankaStore = defineStore('banka', () => {
   const updateBanka = async (id, banka) => {
     try {
       const response = await bankaAPI.update(id, banka)
-      const index = bankalar.value.findIndex(b => b.id === id)
+      const index = bankalar.value.findIndex((b) => b.id === id)
       if (index !== -1) bankalar.value[index] = response.data
       return response.data
     } catch (err) {
@@ -48,7 +48,7 @@ export const useBankaStore = defineStore('banka', () => {
   const deleteBanka = async (id) => {
     try {
       await bankaAPI.delete(id)
-      bankalar.value = bankalar.value.filter(b => b.id !== id)
+      bankalar.value = bankalar.value.filter((b) => b.id !== id)
     } catch (err) {
       error.value = err.message
       throw err
@@ -56,7 +56,12 @@ export const useBankaStore = defineStore('banka', () => {
   }
 
   return {
-    bankalar, loading, error,
-    getAllBankalar, addBanka, updateBanka, deleteBanka
+    bankalar,
+    loading,
+    error,
+    getAllBankalar,
+    addBanka,
+    updateBanka,
+    deleteBanka
   }
 })

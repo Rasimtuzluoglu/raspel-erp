@@ -10,7 +10,7 @@
         <template #title>
           <i
             class="pi pi-box"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />Stok Aktar
         </template>
         <template #content>
@@ -71,7 +71,7 @@
         <template #title>
           <i
             class="pi pi-users"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />Cari Hesap Aktar
         </template>
         <template #content>
@@ -132,12 +132,14 @@
         <template #title>
           <i
             class="pi pi-file-import"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />Alış Faturası Aktar
         </template>
         <template #content>
           <p class="import-desc">
-            CSV dosyası ile toplu alış faturası girişi. Kolonlar: <code>faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani</code> (aynı faturaNo'ya sahip satırlar tek faturada birleştirilir, stoklar otomatik eklenir)
+            CSV dosyası ile toplu alış faturası girişi. Kolonlar:
+            <code>faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani</code> (aynı faturaNo'ya sahip
+            satırlar tek faturada birleştirilir, stoklar otomatik eklenir)
           </p>
           <div
             class="import-dropzone"
@@ -212,12 +214,20 @@ const alisFaturaSonuc = ref(null)
 
 const dosyaDegisti = (e, tur) => {
   const file = e.target.files[0]
-  if (file) { if (tur === 'stok') stokDosya.value = file; else if (tur === 'cari') cariDosya.value = file; else alisFaturaDosya.value = file }
+  if (file) {
+    if (tur === 'stok') stokDosya.value = file
+    else if (tur === 'cari') cariDosya.value = file
+    else alisFaturaDosya.value = file
+  }
 }
 
 const dosyaSec = (e, tur) => {
   const file = e.dataTransfer.files[0]
-  if (file) { if (tur === 'stok') stokDosya.value = file; else if (tur === 'cari') cariDosya.value = file; else alisFaturaDosya.value = file }
+  if (file) {
+    if (tur === 'stok') stokDosya.value = file
+    else if (tur === 'cari') cariDosya.value = file
+    else alisFaturaDosya.value = file
+  }
 }
 
 const aktar = async (tur) => {
@@ -231,7 +241,12 @@ const aktar = async (tur) => {
     const api = tur === 'stok' ? importAPI.stok : tur === 'cari' ? importAPI.cari : importAPI.alisFatura
     const res = await api(file)
     sonuc.value = res.data
-    toast.add({ severity: res.data.hatalar?.length ? 'warn' : 'success', summary: 'İşlem Tamam', detail: res.data.mesaj, life: 5000 })
+    toast.add({
+      severity: res.data.hatalar?.length ? 'warn' : 'success',
+      summary: 'İşlem Tamam',
+      detail: res.data.mesaj,
+      life: 5000
+    })
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Aktarma başarısız')
   } finally {
@@ -241,22 +256,68 @@ const aktar = async (tur) => {
 </script>
 
 <style scoped>
-.import-page { padding: 1.5rem; }
-.import-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
-.import-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; }
-.import-desc code { background: rgba(148,163,184,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
-.import-dropzone {
-  border: 2px dashed var(--border); border-radius: 10px;
-  padding: 2rem; text-align: center; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: var(--text-muted); font-size: 0.85rem; transition: all 0.2s;
+.import-page {
+  padding: 1.5rem;
+}
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.import-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
-.import-dropzone:hover { border-color: var(--accent); color: var(--text-secondary); }
-.import-dropzone i { font-size: 2rem; }
-.w-full { width: 100% !important; }
-.import-sonuc { margin-top: 1rem; }
-.hata-listesi { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.8rem; color: #f87171; max-height: 150px; overflow-y: auto; }
-.hata-listesi li { margin-bottom: 2px; }
-@media (max-width: 900px) { .import-grid { grid-template-columns: 1fr; } }
+.import-desc code {
+  background: rgba(148, 163, 184, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.import-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+}
+.import-dropzone:hover {
+  border-color: var(--accent);
+  color: var(--text-secondary);
+}
+.import-dropzone i {
+  font-size: 2rem;
+}
+.w-full {
+  width: 100% !important;
+}
+.import-sonuc {
+  margin-top: 1rem;
+}
+.hata-listesi {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.8rem;
+  color: #f87171;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.hata-listesi li {
+  margin-bottom: 2px;
+}
+@media (max-width: 900px) {
+  .import-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

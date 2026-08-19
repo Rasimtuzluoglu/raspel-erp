@@ -4,8 +4,8 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button 
-          label="Yeni Hareket" 
+        <Button
+          label="Yeni Hareket"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -17,31 +17,31 @@
           label="Excel"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
-          style="margin-right:4px"
+          style="margin-right: 4px"
           @click="excelIndir"
         />
-        <Button 
-          label="CSV" 
+        <Button
+          label="CSV"
           icon="pi pi-download"
           class="p-button-sm p-button-outlined"
           style="margin-right: 8px"
           @click="csvExport"
         />
-        <DatePicker 
-          v-model="filtreBaslangic" 
-          placeholder="Başlangıç" 
+        <DatePicker
+          v-model="filtreBaslangic"
+          placeholder="Başlangıç"
           date-format="dd.mm.yy"
           class="filter-date"
           @update:model-value="filtrele"
         />
-        <DatePicker 
-          v-model="filtreBitis" 
-          placeholder="Bitiş" 
+        <DatePicker
+          v-model="filtreBitis"
+          placeholder="Bitiş"
           date-format="dd.mm.yy"
           class="filter-date"
           @update:model-value="filtrele"
         />
-        <Button 
+        <Button
           v-if="filtreBaslangic || filtreBitis"
           icon="pi pi-times"
           class="p-button-rounded p-button-text p-button-sm"
@@ -88,6 +88,8 @@
       </div>
       <DataTable
         v-model:selection="selectedItems"
+        state-storage="session"
+        state-key="hareketler-table-state"
         selection-mode="multiple"
         :value="tümHareketler"
         responsive-layout="scroll"
@@ -109,8 +111,23 @@
           style="width: 100px"
         >
           <template #body="slotProps">
-            <span :class="['badge', String(typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur).toUpperCase() === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
-              {{ String(typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur).toUpperCase() === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
+            <span
+              :class="[
+                'badge',
+                String(
+                  typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur
+                ).toUpperCase() === 'TAHSILAT'
+                  ? 'tahsilat'
+                  : 'odeme'
+              ]"
+            >
+              {{
+                String(
+                  typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur
+                ).toUpperCase() === 'TAHSILAT'
+                  ? 'Tahsilat'
+                  : 'Ödeme'
+              }}
             </span>
           </template>
         </Column>
@@ -156,14 +173,14 @@
           style="width: 140px"
         >
           <template #body="slotProps">
-            <Button 
+            <Button
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
               title="Düzenle"
               style="margin-right: 6px"
               @click="openEditDialog(slotProps.data)"
             />
-            <Button 
+            <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
               title="Sil"
@@ -185,7 +202,7 @@
     </div>
 
     <!-- Hareket Ekleme/Düzenleme Dialog -->
-    <Dialog 
+    <Dialog
       v-model:visible="showDialog"
       :header="editingId ? 'Hareket Düzenle' : 'Yeni Hareket Ekle'"
       :modal="true"
@@ -193,7 +210,7 @@
     >
       <div class="form-group">
         <label for="cariHesapId">Cari Hesap *</label>
-        <Dropdown 
+        <Dropdown
           id="cariHesapId"
           v-model="form.cariHesapId"
           :options="cariHesapSeçenekleri"
@@ -206,7 +223,7 @@
 
       <div class="form-group">
         <label for="tur">Hareket Türü *</label>
-        <Dropdown 
+        <Dropdown
           id="tur"
           v-model="form.tur"
           :options="hareketTurleri"
@@ -219,7 +236,7 @@
 
       <div class="form-group">
         <label for="odemeSekli">Ödeme Şekli</label>
-        <Dropdown 
+        <Dropdown
           id="odemeSekli"
           v-model="form.odemeSekli"
           :options="odemeSekliSecenekleri"
@@ -232,7 +249,7 @@
 
       <div class="form-group">
         <label for="tutar">Tutar *</label>
-        <InputNumber 
+        <InputNumber
           id="tutar"
           v-model="form.tutar"
           :use-grouping="false"
@@ -245,7 +262,7 @@
 
       <div class="form-group">
         <label for="hareketTarihi">Hareket Tarihi *</label>
-        <DatePicker 
+        <DatePicker
           id="hareketTarihi"
           v-model="form.hareketTarihi"
           date-format="dd.mm.yy"
@@ -255,7 +272,7 @@
 
       <div class="form-group">
         <label for="aciklama">Açıklama</label>
-        <Textarea 
+        <Textarea
           id="aciklama"
           v-model="form.aciklama"
           placeholder="Hareket açıklamasını giriniz"
@@ -265,14 +282,14 @@
       </div>
 
       <template #footer>
-        <Button 
-          label="İptal" 
+        <Button
+          label="İptal"
           icon="pi pi-times"
           class="p-button-text"
           @click="closeDialog"
         />
-        <Button 
-          label="Kaydet" 
+        <Button
+          label="Kaydet"
           icon="pi pi-check"
           :loading="saving"
           @click="saveHareket"
@@ -315,7 +332,9 @@ const tarihAraligi = ref(null)
 const selectedItems = ref([])
 const topluSiliniyor = ref(false)
 let aramaZaman = null
-onUnmounted(() => { if (aramaZaman) clearTimeout(aramaZaman) })
+onUnmounted(() => {
+  if (aramaZaman) clearTimeout(aramaZaman)
+})
 
 watch(tarihAraligi, (v) => {
   if (v && v.length === 2 && v[0] && v[1]) {
@@ -352,8 +371,8 @@ const odemeSekliSecenekleri = [
 
 const odemeSekliLabel = (val) => {
   if (!val) return '-'
-  const code = typeof val === 'object' ? (val.value || val.label) : val
-  const item = odemeSekliSecenekleri.find(s => s.value === code || s.label === code)
+  const code = typeof val === 'object' ? val.value || val.label : val
+  const item = odemeSekliSecenekleri.find((s) => s.value === code || s.label === code)
   return item ? item.label : String(code)
 }
 
@@ -506,7 +525,9 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const topluSil = async () => {
@@ -634,7 +655,25 @@ h1 {
   width: 140px !important;
   margin-left: 8px;
 }
-.batch-action-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--blue-50, #eff6ff); border: 1px solid var(--blue-200, #bfdbfe); border-radius: 8px; margin-bottom: 12px; }
-.batch-info { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--blue-700, #1d4ed8); }
-.batch-buttons { display: flex; gap: 8px; }
+.batch-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--blue-50, #eff6ff);
+  border: 1px solid var(--blue-200, #bfdbfe);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.batch-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--blue-700, #1d4ed8);
+}
+.batch-buttons {
+  display: flex;
+  gap: 8px;
+}
 </style>

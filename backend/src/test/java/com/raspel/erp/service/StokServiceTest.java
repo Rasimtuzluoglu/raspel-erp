@@ -238,4 +238,26 @@ class StokServiceTest {
         assertEquals(1, result.size());
         assertEquals(BigDecimal.valueOf(15), result.get(0).getOnerilenSiparisMiktari());
     }
+
+    @Test
+    void talepTahmini_calculatesForecastAndSuggestions() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        stok.setMiktar(BigDecimal.valueOf(10));
+        stok.setMinMiktar(BigDecimal.valueOf(5));
+
+        when(stokRepository.findBySirketIdOrderByAd(1L, Pageable.unpaged()))
+                .thenReturn(new PageImpl<>(List.of(stok)));
+        when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L))
+                .thenReturn(List.of(
+                        StokHareket.builder().tur("CIKIS").miktar(BigDecimal.valueOf(90)).hareketTarihi(LocalDate.now().minusDays(10)).build()
+                ));
+
+        var result = stokService.talepTahmini(1L);
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getStokId());
+        assertTrue(result.get(0).getTahminiTukenmeGunu() > 0);
+        assertNotNull(result.get(0).getProaktifOneri());
+    }
 }

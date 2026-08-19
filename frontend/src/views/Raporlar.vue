@@ -2,12 +2,15 @@
   <div class="raporlar-container">
     <div class="raporlar-header-bar">
       <h1>Raporlar</h1>
-      <TarihHizliSecim v-model="tarihAraligi" style="margin-right:12px" />
+      <TarihHizliSecim
+        v-model="tarihAraligi"
+        style="margin-right: 12px"
+      />
       <div class="rapor-doviz-secim">
         <label><i class="pi pi-dollar" /> Rapor Para Birimi:</label>
         <Dropdown
           v-model="dovizStore.aktifParaBirimi"
-          :options="['TRY','USD','EUR','GBP','SAR','GAU']"
+          :options="['TRY', 'USD', 'EUR', 'GBP', 'SAR', 'GAU']"
           class="rapor-doviz-dropdown"
         />
       </div>
@@ -19,7 +22,7 @@
     >
       <span class="favori-baslik"><i
         class="pi pi-star-fill"
-        style="color:#fbbf24"
+        style="color: #fbbf24"
       /> Sık Kullanılanlar:</span>
       <Button
         v-for="r in favoriRaporlar"
@@ -89,8 +92,18 @@
         >
           <div class="rapor-bilgi">
             <h3>{{ ekstreData.cariAd }}</h3>
-            <p>Dönem Başı Bakiye: <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemBasBakiye) }}</strong></p>
-            <p>Dönem Sonu Bakiye: <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemSonBakiye) }}</strong></p>
+            <p>
+              Dönem Başı Bakiye:
+              <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{
+                formatCurrency(ekstreData.donemBasBakiye)
+              }}</strong>
+            </p>
+            <p>
+              Dönem Sonu Bakiye:
+              <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{
+                formatCurrency(ekstreData.donemSonBakiye)
+              }}</strong>
+            </p>
             <div class="rapor-aksiyonlar">
               <Button
                 icon="pi pi-print"
@@ -107,6 +120,8 @@
             </div>
           </div>
           <DataTable
+            state-storage="session"
+            state-key="raporlar-table-state"
             :value="ekstreData.hareketler"
             striped-rows
             :rows="10"
@@ -116,7 +131,7 @@
             <Column
               field="hareketTarihi"
               header="Tarih"
-              style="width:100px"
+              style="width: 100px"
             >
               <template #body="s">
                 {{ formatDate(s.data.hareketTarihi) }}
@@ -125,7 +140,7 @@
             <Column
               field="tur"
               header="Tür"
-              style="width:90px"
+              style="width: 90px"
             >
               <template #body="s">
                 <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
@@ -136,10 +151,12 @@
             <Column
               field="tutar"
               header="Tutar"
-              style="width:120px"
+              style="width: 120px"
             >
               <template #body="s">
-                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{ formatCurrency(s.data.tutar) }}</span>
+                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{
+                  formatCurrency(s.data.tutar)
+                }}</span>
               </template>
             </Column>
             <Column
@@ -228,10 +245,12 @@
             </div>
           </div>
 
-          <h3 style="margin-top:25px">
+          <h3 style="margin-top: 25px">
             Aylık Dağılım
           </h3>
           <DataTable
+            state-storage="session"
+            state-key="raporlar-table-state"
             :value="ggData.aylikDagilim"
             striped-rows
           >
@@ -335,6 +354,8 @@
           class="rapor-sonuc"
         >
           <DataTable
+            state-storage="session"
+            state-key="raporlar-table-state"
             :value="yasData"
             striped-rows
             :rows="10"
@@ -348,7 +369,7 @@
             <Column
               field="bakiye"
               header="Alacak Bakiyesi"
-              style="width:140px"
+              style="width: 140px"
             >
               <template #body="s">
                 <span class="positive">{{ formatCurrency(s.data.bakiye) }}</span>
@@ -357,12 +378,12 @@
             <Column
               field="gun"
               header="Gün"
-              style="width:80px"
+              style="width: 80px"
             />
             <Column
               field="aralik"
               header="Vade Aralığı"
-              style="width:130px"
+              style="width: 130px"
             >
               <template #body="s">
                 <span :class="['vade-badge', vadeClass(s.data.aralik)]">{{ s.data.aralik }}</span>
@@ -445,6 +466,8 @@
           </div>
 
           <DataTable
+            state-storage="session"
+            state-key="raporlar-table-state"
             :value="ckData.satirlar"
             striped-rows
             :rows="10"
@@ -458,12 +481,12 @@
             <Column
               field="faturaSayisi"
               header="Fatura"
-              style="width:90px"
+              style="width: 90px"
             />
             <Column
               field="toplamSatis"
               header="Satış"
-              style="width:140px"
+              style="width: 140px"
             >
               <template #body="s">
                 {{ formatCurrency(s.data.toplamSatis) }}
@@ -472,7 +495,7 @@
             <Column
               field="toplamMaliyet"
               header="Maliyet"
-              style="width:140px"
+              style="width: 140px"
             >
               <template #body="s">
                 {{ formatCurrency(s.data.toplamMaliyet) }}
@@ -481,7 +504,7 @@
             <Column
               field="kar"
               header="Kâr"
-              style="width:140px"
+              style="width: 140px"
             >
               <template #body="s">
                 <span :class="s.data.kar >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kar) }}</span>
@@ -490,7 +513,7 @@
             <Column
               field="karMarji"
               header="Kâr Marjı"
-              style="width:110px"
+              style="width: 110px"
             >
               <template #body="s">
                 <span :class="s.data.karMarji >= 0 ? 'positive' : 'negative'">%{{ s.data.karMarji }}</span>
@@ -537,6 +560,8 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="raporlar-table-state"
           :value="tuFiltrelenmisData"
           size="small"
           striped-rows
@@ -547,9 +572,18 @@
           <template #groupheader="{ group }">
             <span class="tedarikci-grup"><i class="pi pi-building" /> {{ group.value }} (Tedarikçi)</span>
           </template>
-          <Column field="stokKodu" header="Stok Kodu" />
-          <Column field="stokAd" header="Ürün" />
-          <Column field="toplamMiktar" header="Toplam Miktar" />
+          <Column
+            field="stokKodu"
+            header="Stok Kodu"
+          />
+          <Column
+            field="stokAd"
+            header="Ürün"
+          />
+          <Column
+            field="toplamMiktar"
+            header="Toplam Miktar"
+          />
           <Column header="Son Birim Fiyat">
             <template #body="s">
               {{ formatCurrency(s.data.sonBirimFiyat) }}
@@ -590,18 +624,30 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="raporlar-table-state"
           :value="ukData"
           size="small"
           striped-rows
           :loading="ukLoading"
         >
-          <Column field="stokKodu" header="Stok Kodu" />
-          <Column field="stokAd" header="Ürün" />
+          <Column
+            field="stokKodu"
+            header="Stok Kodu"
+          />
+          <Column
+            field="stokAd"
+            header="Ürün"
+          />
           <Column header="Alış Maliyeti">
-            <template #body="s">{{ formatCurrency(s.data.alisFiyat) }}</template>
+            <template #body="s">
+              {{ formatCurrency(s.data.alisFiyat) }}
+            </template>
           </Column>
           <Column header="Satış Fiyatı">
-            <template #body="s">{{ formatCurrency(s.data.satisFiyati) }}</template>
+            <template #body="s">
+              {{ formatCurrency(s.data.satisFiyati) }}
+            </template>
           </Column>
           <Column header="Kâr">
             <template #body="s">
@@ -619,6 +665,137 @@
           severity="info"
           text="Henüz ürün bulunmamaktadır."
         />
+      </TabPanel>
+
+      <!-- 8. Nakit Akışı Projeksiyonu -->
+      <TabPanel>
+        <template #header>
+          <div class="rapor-sekme-baslik">
+            <i
+              class="pi pi-star"
+              :class="{ favori: raporFavori('nakitAkisi') }"
+              @click.stop="raporFavoriDegistir('nakitAkisi', 7, 'Nakit Akışı')"
+            />
+            Nakit Akışı Projeksiyonu
+          </div>
+        </template>
+        <div class="rapor-filtre">
+          <div class="form-group">
+            <label>Projeksiyon Süresi</label>
+            <Dropdown
+              v-model="nakitGun"
+              :options="[
+                { label: '30 Günlük Projeksiyon', value: 30 },
+                { label: '60 Günlük Projeksiyon', value: 60 },
+                { label: '90 Günlük Projeksiyon', value: 90 }
+              ]"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+              @change="getNakitAkisi"
+            />
+          </div>
+          <div class="form-group filtre-btn">
+            <label>&nbsp;</label>
+            <Button
+              label="Yenile"
+              icon="pi pi-refresh"
+              :loading="nakitLoading"
+              @click="getNakitAkisi"
+            />
+          </div>
+        </div>
+
+        <div
+          v-if="nakitData"
+          class="rapor-sonuc"
+        >
+          <div class="ozet-kartlar">
+            <div class="ozet-kart">
+              <span>Mevcut Likidite (Kasa+Banka)</span>
+              <strong>{{ formatCurrency(nakitData.baslangicBakiyesi) }}</strong>
+            </div>
+            <div class="ozet-kart gelir">
+              <span>Beklenen Tahsilatlar (Giriş)</span>
+              <strong class="positive">+{{ formatCurrency(nakitData.toplamBeklenenGiris) }}</strong>
+            </div>
+            <div class="ozet-kart gider">
+              <span>Beklenen Ödemeler (Çıkış)</span>
+              <strong class="negative">-{{ formatCurrency(nakitData.toplamBeklenenCikis) }}</strong>
+            </div>
+            <div
+              class="ozet-kart"
+              :class="nakitData.tahminiBitisBakiyesi >= 0 ? 'kar' : 'zarar'"
+            >
+              <span>{{ nakitGun }} Gün Sonraki Tahmini Kasa</span>
+              <strong>{{ formatCurrency(nakitData.tahminiBitisBakiyesi) }}</strong>
+            </div>
+          </div>
+
+          <h3 style="margin-top: 25px">
+            Günlük Nakit Akışı Detayı
+          </h3>
+          <DataTable
+            state-storage="session"
+            state-key="nakit-akis-table-state"
+            :value="nakitData.gunlukAkis"
+            striped-rows
+            size="small"
+            :rows="15"
+            :paginator="true"
+            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+          >
+            <Column
+              field="tarih"
+              header="Tarih"
+              style="width: 120px"
+            >
+              <template #body="s">
+                {{ formatDate(s.data.tarih) }}
+              </template>
+            </Column>
+            <Column
+              field="beklenenGiris"
+              header="Giriş (Tahsilat)"
+              style="width: 140px"
+            >
+              <template #body="s">
+                <span :class="s.data.beklenenGiris > 0 ? 'positive' : ''">{{ formatCurrency(s.data.beklenenGiris) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="beklenenCikis"
+              header="Çıkış (Ödeme)"
+              style="width: 140px"
+            >
+              <template #body="s">
+                <span :class="s.data.beklenenCikis > 0 ? 'negative' : ''">{{ formatCurrency(s.data.beklenenCikis) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="netAkis"
+              header="Net Günlük Akış"
+              style="width: 140px"
+            >
+              <template #body="s">
+                <span :class="s.data.netAkis >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.netAkis) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="kumulatifBakiye"
+              header="Tahmini Kasa Bakiyesi"
+              style="width: 170px"
+            >
+              <template #body="s">
+                <strong :class="s.data.kumulatifBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kumulatifBakiye) }}</strong>
+              </template>
+            </Column>
+            <Column
+              field="aciklama"
+              header="Açıklama"
+            />
+          </DataTable>
+        </div>
       </TabPanel>
     </TabView>
   </div>
@@ -645,10 +822,10 @@ const aktifSekme = ref(0)
 const favoriRaporlar = ref(safeGet(FAVORI_ANAHTAR, []))
 const tarihAraligi = ref(null)
 
-const raporFavori = (key) => favoriRaporlar.value.some(r => r.key === key)
+const raporFavori = (key) => favoriRaporlar.value.some((r) => r.key === key)
 
 const raporFavoriDegistir = (key, index, ad) => {
-  const mevcut = favoriRaporlar.value.findIndex(r => r.key === key)
+  const mevcut = favoriRaporlar.value.findIndex((r) => r.key === key)
   if (mevcut > -1) {
     favoriRaporlar.value.splice(mevcut, 1)
   } else {
@@ -668,7 +845,10 @@ const ggKart = ref(null)
 const yazdir = (hedef) => {
   const icerik = hedef.value?.outerHTML || ''
   const win = window.open('', '_blank', 'width=900,height=700')
-  if (!win) { toastBildirim.hata('Pencere engellendi'); return }
+  if (!win) {
+    toastBildirim.hata('Pencere engellendi')
+    return
+  }
   win.document.write(`<html><head><title>Rapor</title><style>
     body { font-family: Arial, sans-serif; padding: 24px; color: #1e293b; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; }
@@ -683,7 +863,10 @@ const yazdir = (hedef) => {
     .ozet-kart strong { font-size: 16px; }
   </style></head><body>${icerik}</body></html>`)
   win.document.close()
-  setTimeout(() => { win.focus(); win.print() }, 200)
+  setTimeout(() => {
+    win.focus()
+    win.print()
+  }, 200)
 }
 
 const epostaGonder = (baslik, raporAdi) => {
@@ -720,13 +903,13 @@ const tuLoading = ref(false)
 const tuFiltre = ref(null)
 
 const tuTedarikciler = computed(() => {
-  const set = new Set(tuData.value.map(d => d.cariHesapAd).filter(Boolean))
+  const set = new Set(tuData.value.map((d) => d.cariHesapAd).filter(Boolean))
   return [...set].sort()
 })
 
 const tuFiltrelenmisData = computed(() => {
   if (!tuFiltre.value) return tuData.value
-  return tuData.value.filter(d => d.cariHesapAd === tuFiltre.value)
+  return tuData.value.filter((d) => d.cariHesapAd === tuFiltre.value)
 })
 
 const getTedarikciUrunler = async () => {
@@ -752,6 +935,21 @@ const getUrunKarlilik = async () => {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Ürün kârlılık raporu yüklenirken hata oluştu')
   }
   ukLoading.value = false
+}
+
+const nakitGun = ref(30)
+const nakitData = ref(null)
+const nakitLoading = ref(false)
+
+const getNakitAkisi = async () => {
+  nakitLoading.value = true
+  try {
+    const r = await raporAPI.nakitAkisiProjeksiyonu(nakitGun.value)
+    nakitData.value = r.data
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Nakit akışı projeksiyonu yüklenirken hata oluştu')
+  }
+  nakitLoading.value = false
 }
 
 watch(tarihAraligi, (v) => {
@@ -783,6 +981,7 @@ onMounted(async () => {
   getKdv()
   getTedarikciUrunler()
   getUrunKarlilik()
+  getNakitAkisi()
 })
 
 const getCariEkstre = async () => {
@@ -798,8 +997,12 @@ const getCariEkstre = async () => {
       bitis: formatDateForApi(ekstreBit.value)
     })
     ekstreData.value = r.data
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari ekstre yüklenirken hata oluştu'); ekstreData.value = null }
-  finally { ekstreLoading.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari ekstre yüklenirken hata oluştu')
+    ekstreData.value = null
+  } finally {
+    ekstreLoading.value = false
+  }
 }
 
 const getGelirGider = async () => {
@@ -810,8 +1013,12 @@ const getGelirGider = async () => {
       bitis: formatDateForApi(ggBit.value)
     })
     ggData.value = r.data
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Gelir/gider raporu yüklenirken hata oluştu'); ggData.value = null }
-  finally { ggLoading.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Gelir/gider raporu yüklenirken hata oluştu')
+    ggData.value = null
+  } finally {
+    ggLoading.value = false
+  }
 }
 
 const getKdv = async () => {
@@ -822,15 +1029,25 @@ const getKdv = async () => {
       bitis: formatDateForApi(kdvBit.value)
     })
     kdvData.value = r.data
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'KDV raporu yüklenirken hata oluştu'); kdvData.value = null }
-  finally { kdvLoading.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'KDV raporu yüklenirken hata oluştu')
+    kdvData.value = null
+  } finally {
+    kdvLoading.value = false
+  }
 }
 
 const getYaslandirma = async () => {
   yasLoading.value = true
-  try { const r = await raporAPI.yaslandirma(); yasData.value = r.data }
-  catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Yaşlandırma raporu yüklenirken hata oluştu'); yasData.value = null }
-  finally { yasLoading.value = false }
+  try {
+    const r = await raporAPI.yaslandirma()
+    yasData.value = r.data
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Yaşlandırma raporu yüklenirken hata oluştu')
+    yasData.value = null
+  } finally {
+    yasLoading.value = false
+  }
 }
 
 const getCariKarlilik = async () => {
@@ -841,8 +1058,12 @@ const getCariKarlilik = async () => {
       bitis: formatDateForApi(ckBit.value)
     })
     ckData.value = r.data
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari karlılık raporu yüklenirken hata oluştu'); ckData.value = null }
-  finally { ckLoading.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari karlılık raporu yüklenirken hata oluştu')
+    ckData.value = null
+  } finally {
+    ckLoading.value = false
+  }
 }
 
 const vadeClass = (aralik) => {
@@ -862,13 +1083,14 @@ const formatCurrency = (v) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(deger)
 }
 
-const formatDate = (d) => d
-  ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-  : '-'
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 </script>
 
 <style scoped>
-.raporlar-container { padding: 20px; }
+.raporlar-container {
+  padding: 20px;
+}
 .raporlar-header-bar {
   display: flex;
   justify-content: space-between;
@@ -877,7 +1099,12 @@ const formatDate = (d) => d
   flex-wrap: wrap;
   gap: 12px;
 }
-.raporlar-header-bar h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.raporlar-header-bar h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
 .rapor-doviz-secim {
   display: flex;
   align-items: center;
@@ -892,46 +1119,186 @@ const formatDate = (d) => d
 .rapor-doviz-dropdown {
   width: 110px;
 }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.rapor-filtre { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; }
-.form-group { min-width: 200px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: bold; color: #333; font-size: 13px; }
-.filtre-btn { min-width: auto; }
-.rapor-sonuc { margin-top: 20px; }
-.rapor-aksiyonlar { display: flex; gap: 8px; margin-top: 12px; }
-.rapor-sekme-baslik { display: flex; align-items: center; gap: 6px; }
-.rapor-sekme-baslik .pi-star { font-size: 13px; opacity: 0.35; cursor: pointer; }
-.rapor-sekme-baslik .pi-star:hover { opacity: 0.8; color: #fbbf24; }
-.rapor-sekme-baslik .pi-star.favori { opacity: 1; color: #fbbf24; }
-.rapor-sekme-baslik .pi-star.favori:before { content: "\e936"; }
-.favori-raporlar {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
-.favori-baslik { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
-.rapor-bilgi { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-.rapor-bilgi h3 { margin: 0 0 10px 0; color: #1976d2; }
-.rapor-bilgi p { margin: 5px 0; }
-.ozet-kartlar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-.ozet-kart { background: var(--bg-card); padding: 20px; border-radius: 14px; border: 1px solid var(--border); text-align: center; }
-.ozet-kart span { display: block; font-size: 13px; color: #666; margin-bottom: 8px; }
-.ozet-kart strong { font-size: 22px; }
-.ozet-kart.gelir strong { color: #4caf50; }
-.ozet-kart.gider strong { color: #f44336; }
-.ozet-kart.kar strong { color: #4caf50; }
-.ozet-kart.zarar strong { color: #f44336; }
-.badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-.badge.tahsilat { background: #e8f5e9; color: #2e7d32; }
-.badge.odeme { background: #ffebee; color: #c62828; }
-.positive { color: #4caf50; font-weight: bold; }
-.negative { color: #f44336; font-weight: bold; }
-.vade-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-.risk-yok { background: #e8f5e9; color: #2e7d32; }
-.risk-az { background: #fff3e0; color: #e65100; }
-.risk-orta { background: #ffebee; color: #c62828; }
-.risk-yuksek { background: #fce4ec; color: #880e4f; }
-.w-full { width: 100% !important; }
-.tedarikci-grup { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-primary); }
-.tedarikci-grup .pi { color: #3b82f6; }
+.rapor-filtre {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 12px;
+}
+.form-group {
+  min-width: 200px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #333;
+  font-size: 13px;
+}
+.filtre-btn {
+  min-width: auto;
+}
+.rapor-sonuc {
+  margin-top: 20px;
+}
+.rapor-aksiyonlar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.rapor-sekme-baslik {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rapor-sekme-baslik .pi-star {
+  font-size: 13px;
+  opacity: 0.35;
+  cursor: pointer;
+}
+.rapor-sekme-baslik .pi-star:hover {
+  opacity: 0.8;
+  color: #fbbf24;
+}
+.rapor-sekme-baslik .pi-star.favori {
+  opacity: 1;
+  color: #fbbf24;
+}
+.rapor-sekme-baslik .pi-star.favori:before {
+  content: '\e936';
+}
+.favori-raporlar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.favori-baslik {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rapor-bilgi {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+.rapor-bilgi h3 {
+  margin: 0 0 10px 0;
+  color: #1976d2;
+}
+.rapor-bilgi p {
+  margin: 5px 0;
+}
+.ozet-kartlar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+.ozet-kart {
+  background: var(--bg-card);
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.ozet-kart span {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+.ozet-kart strong {
+  font-size: 22px;
+}
+.ozet-kart.gelir strong {
+  color: #4caf50;
+}
+.ozet-kart.gider strong {
+  color: #f44336;
+}
+.ozet-kart.kar strong {
+  color: #4caf50;
+}
+.ozet-kart.zarar strong {
+  color: #f44336;
+}
+.badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge.tahsilat {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.badge.odeme {
+  background: #ffebee;
+  color: #c62828;
+}
+.positive {
+  color: #4caf50;
+  font-weight: bold;
+}
+.negative {
+  color: #f44336;
+  font-weight: bold;
+}
+.vade-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.risk-yok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.risk-az {
+  background: #fff3e0;
+  color: #e65100;
+}
+.risk-orta {
+  background: #ffebee;
+  color: #c62828;
+}
+.risk-yuksek {
+  background: #fce4ec;
+  color: #880e4f;
+}
+.w-full {
+  width: 100% !important;
+}
+.tedarikci-grup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.tedarikci-grup .pi {
+  color: #3b82f6;
+}
 </style>

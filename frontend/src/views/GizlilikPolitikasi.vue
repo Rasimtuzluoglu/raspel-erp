@@ -118,7 +118,8 @@ const maddeler = [
     icon: 'pi pi-folder-open',
     iconBg: 'rgba(59, 130, 246, 0.15)',
     iconColor: '#3b82f6',
-    icerik: 'Platform; şirket bilgileri, kullanıcı hesap detayları, müşteri/tedarikçi kayıtları, stok ve depo hareketleri, fatura verileri ve finansal işlem günlüklerini işler. Bu veriler yalnızca ERP sisteminin işlevlerini tam getirmesi amacıyla toplanır.',
+    icerik:
+      'Platform; şirket bilgileri, kullanıcı hesap detayları, müşteri/tedarikçi kayıtları, stok ve depo hareketleri, fatura verileri ve finansal işlem günlüklerini işler. Bu veriler yalnızca ERP sisteminin işlevlerini tam getirmesi amacıyla toplanır.',
     ipucu: 'Hiçbir finansal veya ticari veriniz üçüncü taraflarla reklam veya pazarlama amacıyla paylaşılmaz.'
   },
   {
@@ -128,7 +129,8 @@ const maddeler = [
     icon: 'pi pi-cog',
     iconBg: 'rgba(16, 185, 129, 0.15)',
     iconColor: '#10b981',
-    icerik: 'Toplanan veriler; e-fatura kesme, stok ve envanter takibi, finansal raporlama, denetim izi (audit log) kayıtları ve yasal vergilendirme yükümlülüklerinin eksiksiz yerine getirilmesi amacıyla kullanılır.',
+    icerik:
+      'Toplanan veriler; e-fatura kesme, stok ve envanter takibi, finansal raporlama, denetim izi (audit log) kayıtları ve yasal vergilendirme yükümlülüklerinin eksiksiz yerine getirilmesi amacıyla kullanılır.',
     ipucu: 'Tüm veri işleme faaliyetleri yetki matrisine (RBAC) göre sınırlandırılmıştır.'
   },
   {
@@ -138,7 +140,8 @@ const maddeler = [
     icon: 'pi pi-lock',
     iconBg: 'rgba(139, 92, 246, 0.15)',
     iconColor: '#8b5cf6',
-    icerik: 'Verileriniz 256-bit SSL şifreli şebeke bağlantısı, JWT tabanlı kimlik doğrulama, Rol Bazlı Erişim Kontrolü (RBAC) ve otomatik günlük veritabanı yedekleme mekanizmalarıyla korunur.',
+    icerik:
+      'Verileriniz 256-bit SSL şifreli şebeke bağlantısı, JWT tabanlı kimlik doğrulama, Rol Bazlı Erişim Kontrolü (RBAC) ve otomatik günlük veritabanı yedekleme mekanizmalarıyla korunur.',
     ipucu: 'Sistem altyapısı düzenli penetrasyon ve güvenlik taramalarından geçirilmektedir.'
   },
   {
@@ -148,7 +151,8 @@ const maddeler = [
     icon: 'pi pi-verified',
     iconBg: 'rgba(245, 158, 11, 0.15)',
     iconColor: '#f59e0b',
-    icerik: '6698 sayılı Kişisel Verilerin Korunması Kanunu uyarınca, verileriniz hukuka ve dürüstlük kurallarına uygun, belirli ve meşru amaçlar için sınırlı şekilde işlenmektedir.',
+    icerik:
+      '6698 sayılı Kişisel Verilerin Korunması Kanunu uyarınca, verileriniz hukuka ve dürüstlük kurallarına uygun, belirli ve meşru amaçlar için sınırlı şekilde işlenmektedir.',
     ipucu: 'KVKK kapsamındaki bilgi alma ve düzeltme haklarınızı dilediğiniz zaman kullanabilirsiniz.'
   },
   {
@@ -158,7 +162,8 @@ const maddeler = [
     icon: 'pi pi-history',
     iconBg: 'rgba(6, 182, 212, 0.15)',
     iconColor: '#06b6d4',
-    icerik: 'Ticari ve finansal verileriniz ilgili vergi mevzuatı ve Türk Ticaret Kanunu gereği yasal saklama süreleri boyunca (10 yıl) emniyetli ortamda saklanır. Süre sonunda güvenli şekilde imha edilir.',
+    icerik:
+      'Ticari ve finansal verileriniz ilgili vergi mevzuatı ve Türk Ticaret Kanunu gereği yasal saklama süreleri boyunca (10 yıl) emniyetli ortamda saklanır. Süre sonunda güvenli şekilde imha edilir.',
     ipucu: 'Hesabınızın kapatılması durumunda yasal zorunluluk haricindeki kişisel veriler silinir.'
   },
   {
@@ -168,7 +173,8 @@ const maddeler = [
     icon: 'pi pi-user-check',
     iconBg: 'rgba(236, 72, 153, 0.15)',
     iconColor: '#ec4899',
-    icerik: 'İşlenen verilerinizi görüntüleme, hatalı bilgileri düzeltme, silinmesini veya anonim hale getirilmesini talep etme hakkına sahipsiniz. Talepleriniz veri sorumlumuz tarafından incelenir.',
+    icerik:
+      'İşlenen verilerinizi görüntüleme, hatalı bilgileri düzeltme, silinmesini veya anonim hale getirilmesini talep etme hakkına sahipsiniz. Talepleriniz veri sorumlumuz tarafından incelenir.',
     ipucu: 'Kendi şirket verilerinizi Veri İçe/Dışa Aktar modüllerinden dilediğiniz an indirebilirsiniz.'
   },
   {
@@ -178,7 +184,8 @@ const maddeler = [
     icon: 'pi pi-bell',
     iconBg: 'rgba(239, 68, 68, 0.15)',
     iconColor: '#ef4444',
-    icerik: 'Bu gizlilik politikası mevzuat değişiklikleri veya yeni platform modülleri eklendikçe güncellenebilir. Güncellemeler platform içi duyuru kanallarıyla tarafınıza bildirilir.',
+    icerik:
+      'Bu gizlilik politikası mevzuat değişiklikleri veya yeni platform modülleri eklendikçe güncellenebilir. Güncellemeler platform içi duyuru kanallarıyla tarafınıza bildirilir.',
     ipucu: 'Politikadaki önemli değişiklikler kullanıcılara e-posta veya sistem içi bildirimle iletilir.'
   }
 ]
@@ -186,10 +193,11 @@ const maddeler = [
 const filtrelenmisMadde = computed(() => {
   if (!aramaMetni.value.trim()) return maddeler
   const query = aramaMetni.value.toLowerCase()
-  return maddeler.filter(m =>
-    m.baslik.toLowerCase().includes(query) ||
-    m.icerik.toLowerCase().includes(query) ||
-    m.kategori.toLowerCase().includes(query)
+  return maddeler.filter(
+    (m) =>
+      m.baslik.toLowerCase().includes(query) ||
+      m.icerik.toLowerCase().includes(query) ||
+      m.kategori.toLowerCase().includes(query)
   )
 })
 
@@ -435,7 +443,9 @@ const yazdir = () => {
 }
 
 @media print {
-  .hero-card, .toc-card, .search-box {
+  .hero-card,
+  .toc-card,
+  .search-box {
     display: none !important;
   }
   .layout-grid {

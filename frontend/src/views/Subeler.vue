@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="subeler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -46,7 +48,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -148,11 +150,14 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ ad: '', yetkili: '', telefon: '', adres: '', aktif: true })
 
-const dialogHeader = computed(() => duzenleme.value ? 'Şube Düzenle' : 'Yeni Şube')
+const dialogHeader = computed(() => (duzenleme.value ? 'Şube Düzenle' : 'Yeni Şube'))
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const r = await subeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    const r = await subeAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Şubeler yüklenemedi')
   }
   yukleniyor.value = false
@@ -175,7 +180,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Şube oluşturuldu')
     }
     dialog.value = false
-    const r = await subeAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await subeAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -192,7 +198,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await subeAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Şube silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -203,10 +209,31 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.subeler-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.subeler-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

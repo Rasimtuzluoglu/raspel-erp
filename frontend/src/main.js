@@ -13,6 +13,10 @@ import AppDataTable from './components/AppDataTable.vue'
 import PageHeader from './components/PageHeader.vue'
 import EmptyState from './components/EmptyState.vue'
 import SkeletonLoader from './components/SkeletonLoader.vue'
+import ExportMenu from './components/ExportMenu.vue'
+import GecmisZamanCizelgesi from './components/GecmisZamanCizelgesi.vue'
+
+import permissionDirective from './directives/permission.js'
 
 import 'primeicons/primeicons.css'
 import './assets/app.css'
@@ -20,12 +24,6 @@ import { useTheme } from './composables/useTheme.js'
 
 const { initTheme } = useTheme()
 initTheme()
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {})
-  })
-}
 
 const app = createApp(App)
 
@@ -52,7 +50,20 @@ app.use(PrimeVue, {
     dayNames: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
     dayNamesShort: ['Pzr', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
     dayNamesMin: ['Pz', 'Pt', 'Sa', 'Çş', 'Pş', 'Cu', 'Ct'],
-    monthNames: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+    monthNames: [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık'
+    ],
     monthNamesShort: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
     today: 'Bugün',
     clear: 'Temizle',
@@ -69,5 +80,9 @@ app.component('AppDataTable', AppDataTable)
 app.component('PageHeader', PageHeader)
 app.component('EmptyState', EmptyState)
 app.component('SkeletonLoader', SkeletonLoader)
+app.component('ExportMenu', ExportMenu)
+app.component('GecmisZamanCizelgesi', GecmisZamanCizelgesi)
+
+app.directive('permission', permissionDirective)
 
 app.mount('#app')

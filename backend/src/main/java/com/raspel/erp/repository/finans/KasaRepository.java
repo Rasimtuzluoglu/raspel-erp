@@ -15,6 +15,8 @@ import java.util.Optional;
 public interface KasaRepository extends JpaRepository<Kasa, Long> {
     Page<Kasa> findBySirketId(Long sirketId, Pageable pageable);
 
+    java.util.List<Kasa> findBySirketIdOrderByAd(Long sirketId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT k FROM Kasa k WHERE k.id = :id")
     Optional<Kasa> findByIdForUpdate(@Param("id") Long id);

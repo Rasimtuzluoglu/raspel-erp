@@ -4,8 +4,22 @@ import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
 
 const notlarMock = [
-  { id: 1, baslik: 'Test Notu', icerik: 'Icerik', onemDerecesi: 'YUKSEK', renk: 'MAVI', olusturmaTarihi: '2026-08-02T10:00:00' },
-  { id: 2, baslik: 'Ikinci Not', icerik: 'Deneme', onemDerecesi: 'NORMAL', renk: 'YESIL', olusturmaTarihi: '2026-08-01T10:00:00' }
+  {
+    id: 1,
+    baslik: 'Test Notu',
+    icerik: 'Icerik',
+    onemDerecesi: 'YUKSEK',
+    renk: 'MAVI',
+    olusturmaTarihi: '2026-08-02T10:00:00'
+  },
+  {
+    id: 2,
+    baslik: 'Ikinci Not',
+    icerik: 'Deneme',
+    onemDerecesi: 'NORMAL',
+    renk: 'YESIL',
+    olusturmaTarihi: '2026-08-01T10:00:00'
+  }
 ]
 
 vi.mock('../../stores/notStore.js', () => ({

@@ -30,14 +30,14 @@ export const useNotStore = defineStore('not', () => {
 
   const updateNot = async (id, data) => {
     const r = await notAPI.update(id, data)
-    const idx = notlar.value.findIndex(n => n.id === id)
+    const idx = notlar.value.findIndex((n) => n.id === id)
     if (idx !== -1) notlar.value[idx] = r.data
     return r.data
   }
 
   const deleteNot = async (id) => {
     await notAPI.delete(id)
-    notlar.value = notlar.value.filter(n => n.id !== id)
+    notlar.value = notlar.value.filter((n) => n.id !== id)
   }
 
   return { notlar, loading, error, getAllNotlar, addNot, updateNot, deleteNot }

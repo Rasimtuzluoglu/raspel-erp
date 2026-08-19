@@ -6,8 +6,18 @@ const mockAxiosInstance = {
   put: vi.fn(),
   delete: vi.fn(),
   interceptors: {
-    request: { handlers: [], use: vi.fn((f, r) => { mockAxiosInstance.interceptors.request.handlers.push({ fulfilled: f, rejected: r }) }) },
-    response: { handlers: [], use: vi.fn((f, r) => { mockAxiosInstance.interceptors.response.handlers.push({ fulfilled: f, rejected: r }) }) }
+    request: {
+      handlers: [],
+      use: vi.fn((f, r) => {
+        mockAxiosInstance.interceptors.request.handlers.push({ fulfilled: f, rejected: r })
+      })
+    },
+    response: {
+      handlers: [],
+      use: vi.fn((f, r) => {
+        mockAxiosInstance.interceptors.response.handlers.push({ fulfilled: f, rejected: r })
+      })
+    }
   }
 }
 
@@ -29,10 +39,12 @@ describe('API client', () => {
 
   it('creates axios instance with correct base URL', async () => {
     const axios = await import('axios')
-    expect(axios.default.create).toHaveBeenCalledWith(expect.objectContaining({
-      baseURL: '/api',
-      headers: { 'Content-Type': 'application/json' }
-    }))
+    expect(axios.default.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseURL: '/api',
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
   })
 
   it('response interceptor passes through successful response', () => {

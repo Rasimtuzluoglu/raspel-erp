@@ -3,7 +3,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 
 export function usePanoyaKopyala() {
   const toast = useToast()
-const toastBildirim = useToastBildirim()
+  const toastBildirim = useToastBildirim()
 
   const kopyala = async (metin, etiket = 'Kopyalandı') => {
     if (!metin) {
@@ -12,7 +12,12 @@ const toastBildirim = useToastBildirim()
     }
     try {
       await navigator.clipboard.writeText(metin)
-      toast.add({ severity: 'success', summary: etiket, detail: metin.length > 30 ? metin.slice(0, 30) + '...' : metin, life: 2000 })
+      toast.add({
+        severity: 'success',
+        summary: etiket,
+        detail: metin.length > 30 ? metin.slice(0, 30) + '...' : metin,
+        life: 2000
+      })
       return true
     } catch {
       toastBildirim.hata('Panoya kopyalanamadı')

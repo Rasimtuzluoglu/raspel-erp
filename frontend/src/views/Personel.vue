@@ -30,6 +30,8 @@
     <TabView>
       <TabPanel header="Personel Listesi">
         <DataTable
+          state-storage="session"
+          state-key="personel-table-state"
           :value="personeller"
           striped-rows
           :loading="yukleniyor"
@@ -73,7 +75,7 @@
           </Column>
           <Column
             header="İşlem"
-            style="width:140px"
+            style="width: 140px"
           >
             <template #body="{ data }">
               <Button
@@ -90,10 +92,10 @@
               <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text p-button-danger"
-              @click="personelSil(data)"
-            />
-          </template>
-        </Column>
+                @click="personelSil(data)"
+              />
+            </template>
+          </Column>
         </DataTable>
         <EmptyState
           v-if="!yukleniyor && personeller.length === 0"
@@ -106,8 +108,10 @@
         />
       </TabPanel>
 
-    <TabPanel header="İzin Talepleri">
+      <TabPanel header="İzin Talepleri">
         <DataTable
+          state-storage="session"
+          state-key="personel-table-state"
           :value="tumIzinler"
           striped-rows
         >
@@ -359,9 +363,32 @@ const tcGecerli = computed(() => {
   return true
 })
 
-const izinTurleri = ['YILLIK_IZIN', 'HASTA_IZNI', 'MAZERET_IZNI', 'DOGUM_IZNI', 'BABALIK_IZNI', 'EVLILIK_IZNI', 'UCRETSIZ_IZIN']
+const izinTurleri = [
+  'YILLIK_IZIN',
+  'HASTA_IZNI',
+  'MAZERET_IZNI',
+  'DOGUM_IZNI',
+  'BABALIK_IZNI',
+  'EVLILIK_IZNI',
+  'UCRETSIZ_IZIN'
+]
 
-function defaultForm() { return { ad: '', soyad: '', tcKimlik: '', dogumTarihi: null, iseGirisTarihi: new Date(), departman: '', pozisyon: '', maas: null, telefon: '', email: '', adres: '', aktif: true } }
+function defaultForm() {
+  return {
+    ad: '',
+    soyad: '',
+    tcKimlik: '',
+    dogumTarihi: null,
+    iseGirisTarihi: new Date(),
+    departman: '',
+    pozisyon: '',
+    maas: null,
+    telefon: '',
+    email: '',
+    adres: '',
+    aktif: true
+  }
+}
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -386,12 +413,20 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const personelDialogAc = (data) => {
   duzenleme.value = !!data
-  personelForm.value = data ? { ...data, dogumTarihi: data.dogumTarihi ? new Date(data.dogumTarihi) : null, iseGirisTarihi: data.iseGirisTarihi ? new Date(data.iseGirisTarihi) : new Date() } : defaultForm()
+  personelForm.value = data
+    ? {
+        ...data,
+        dogumTarihi: data.dogumTarihi ? new Date(data.dogumTarihi) : null,
+        iseGirisTarihi: data.iseGirisTarihi ? new Date(data.iseGirisTarihi) : new Date()
+      }
+    : defaultForm()
   formTemizle()
   personelDialog.value = true
 }
@@ -399,12 +434,17 @@ const personelDialogAc = (data) => {
 const personelKaydet = async () => {
   kaydediliyor.value = true
   try {
-    const p = { ...personelForm.value, dogumTarihi: personelForm.value.dogumTarihi?.toISOString().split('T')[0], iseGirisTarihi: personelForm.value.iseGirisTarihi?.toISOString().split('T')[0] }
+    const p = {
+      ...personelForm.value,
+      dogumTarihi: personelForm.value.dogumTarihi?.toISOString().split('T')[0],
+      iseGirisTarihi: personelForm.value.iseGirisTarihi?.toISOString().split('T')[0]
+    }
     if (duzenleme.value) await personelAPI.update(personelForm.value.id, p)
     else await personelAPI.create(p)
     formTemizle()
     personelDialog.value = false
-    const r2 = await personelAPI.getAll(); personeller.value = r2.data?.content || r2.data || []
+    const r2 = await personelAPI.getAll()
+    personeller.value = r2.data?.content || r2.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel kaydedilirken hata oluştu')
   }
@@ -421,7 +461,7 @@ const personelSil = (data) => {
     accept: async () => {
       try {
         await personelAPI.delete(data.id)
-        personeller.value = personeller.value.filter(p => p.id !== data.id)
+        personeller.value = personeller.value.filter((p) => p.id !== data.id)
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel silinirken hata oluştu')
       }
@@ -441,9 +481,17 @@ const izinKaydet = async () => {
   kaydediliyor.value = true
   try {
     const gunSayisi = Math.ceil((izinForm.value.bitis - izinForm.value.baslangic) / (1000 * 60 * 60 * 24)) + 1
-    await personelIzinAPI.create({ personelId: izinPersonelId.value, izinTuru: izinForm.value.izinTuru, baslangic: izinForm.value.baslangic?.toISOString().split('T')[0], bitis: izinForm.value.bitis?.toISOString().split('T')[0], gunSayisi, aciklama: izinForm.value.aciklama })
+    await personelIzinAPI.create({
+      personelId: izinPersonelId.value,
+      izinTuru: izinForm.value.izinTuru,
+      baslangic: izinForm.value.baslangic?.toISOString().split('T')[0],
+      bitis: izinForm.value.bitis?.toISOString().split('T')[0],
+      gunSayisi,
+      aciklama: izinForm.value.aciklama
+    })
     izinDialog.value = false
-    const r3 = await personelIzinAPI.getAll(); tumIzinler.value = r3.data?.content || r3.data || []
+    const r3 = await personelIzinAPI.getAll()
+    tumIzinler.value = r3.data?.content || r3.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'İzin kaydedilirken hata oluştu')
   }
@@ -452,13 +500,41 @@ const izinKaydet = async () => {
 </script>
 
 <style scoped>
-.personel-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 16px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.personel-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 16px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

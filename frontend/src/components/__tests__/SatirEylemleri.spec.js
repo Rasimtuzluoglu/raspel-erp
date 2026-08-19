@@ -23,7 +23,7 @@ describe('SatirEylemleri', () => {
   it('sil tıklandığında sil eventi yayar ve menüyü kapatır', async () => {
     const wrapper = mount(SatirEylemleri)
     await wrapper.find('button').trigger('click')
-    const silBtn = wrapper.findAll('button').find(b => b.text().includes('Sil'))
+    const silBtn = wrapper.findAll('button').find((b) => b.text().includes('Sil'))
     await silBtn.trigger('click')
     expect(wrapper.emitted('sil')).toBeTruthy()
     expect(wrapper.find('.eylem-menu').exists()).toBe(false)

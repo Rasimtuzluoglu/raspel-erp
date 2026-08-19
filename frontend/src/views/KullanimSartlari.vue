@@ -118,7 +118,8 @@ const maddeler = [
     icon: 'pi pi-server',
     iconBg: 'rgba(59, 130, 246, 0.15)',
     iconColor: '#3b82f6',
-    icerik: 'RasPel ERP, kurumsal kaynak planlama (ERP) ve müşteri ilişkileri yönetimi (CRM) hizmetleri sunan bir yazılım platformudur. Bu platform; stok, cari hesap, fatura, sipariş, personel, puantaj, masraf ve detaylı raporlama modüllerini içerir.',
+    icerik:
+      'RasPel ERP, kurumsal kaynak planlama (ERP) ve müşteri ilişkileri yönetimi (CRM) hizmetleri sunan bir yazılım platformudur. Bu platform; stok, cari hesap, fatura, sipariş, personel, puantaj, masraf ve detaylı raporlama modüllerini içerir.',
     ipucu: 'Sistem bulut ortamında 7/24 kesintisiz hizmet vermek üzere tasarlanmıştır.'
   },
   {
@@ -128,7 +129,8 @@ const maddeler = [
     icon: 'pi pi-user-edit',
     iconBg: 'rgba(16, 185, 129, 0.15)',
     iconColor: '#10b981',
-    icerik: 'Hesabınızın güvenliğinden ve şifrenizin gizliliğinden siz sorumlusunuz. Hesabınız üzerinden yapılan tüm işlemler doğrudan şirket yetkilisi olarak sizi bağlar. Başkalarıyla yetki paylaşımı yapılmamalıdır.',
+    icerik:
+      'Hesabınızın güvenliğinden ve şifrenizin gizliliğinden siz sorumlusunuz. Hesabınız üzerinden yapılan tüm işlemler doğrudan şirket yetkilisi olarak sizi bağlar. Başkalarıyla yetki paylaşımı yapılmamalıdır.',
     ipucu: 'Güçlü bir şifre kullanmanız ve düzenli olarak değiştirmeniz tavsiye edilir.'
   },
   {
@@ -138,7 +140,8 @@ const maddeler = [
     icon: 'pi pi-database',
     iconBg: 'rgba(245, 158, 11, 0.15)',
     iconColor: '#f59e0b',
-    icerik: 'Platforma yüklediğiniz tüm verilerin (müşteri, stok, finansal bilgiler, belgeler) mülkiyeti tamamen şirketinize aittir. Verilerinizin yasalara uygun şekilde işlenmesinden ve saklanmasından şirketiniz sorumludur.',
+    icerik:
+      'Platforma yüklediğiniz tüm verilerin (müşteri, stok, finansal bilgiler, belgeler) mülkiyeti tamamen şirketinize aittir. Verilerinizin yasalara uygun şekilde işlenmesinden ve saklanmasından şirketiniz sorumludur.',
     ipucu: 'Kişisel Verilerin Korunması Kanunu (KVKK) yükümlülüklerinizi yerine getirmeniz gerekmektedir.'
   },
   {
@@ -148,7 +151,8 @@ const maddeler = [
     icon: 'pi pi-exclamation-triangle',
     iconBg: 'rgba(239, 68, 68, 0.15)',
     iconColor: '#ef4444',
-    icerik: 'Platform bakım, güncelleme veya mücbir sebep durumlarında geçici olarak erişilemez olabilir. Planlı bakımlar önceden bildirilir. Bu durumlardan kaynaklanan olası doğrudan veya dolaylı zararlardan sağlayıcı sorumlu tutulamaz.',
+    icerik:
+      'Platform bakım, güncelleme veya mücbir sebep durumlarında geçici olarak erişilemez olabilir. Planlı bakımlar önceden bildirilir. Bu durumlardan kaynaklanan olası doğrudan veya dolaylı zararlardan sağlayıcı sorumlu tutulamaz.',
     ipucu: 'Kritik işlemler öncesinde sistem duyurularını takip etmeniz önerilir.'
   },
   {
@@ -158,7 +162,8 @@ const maddeler = [
     icon: 'pi pi-cloud-download',
     iconBg: 'rgba(139, 92, 246, 0.15)',
     iconColor: '#8b5cf6',
-    icerik: 'Sistem, düzenli aralıklarla otomatik veritabanı yedeklemesi yapmaktadır. Ancak verilerinizin anlık kopyalarını ve rapor çıktılarınızı düzenli aralıklarla dışa aktarıp arşivlemek kullanıcının sorumluluğundadır.',
+    icerik:
+      'Sistem, düzenli aralıklarla otomatik veritabanı yedeklemesi yapmaktadır. Ancak verilerinizin anlık kopyalarını ve rapor çıktılarınızı düzenli aralıklarla dışa aktarıp arşivlemek kullanıcının sorumluluğundadır.',
     ipucu: 'Yedekler modülünden dilediğiniz an manuel yedek oluşturup indirebilirsiniz.'
   },
   {
@@ -168,7 +173,8 @@ const maddeler = [
     icon: 'pi pi-lock',
     iconBg: 'rgba(236, 72, 153, 0.15)',
     iconColor: '#ec4899',
-    icerik: 'Platformun kaynak kodları, veritabanı mimarisi, arayüz tasarımları ve ticari markası sağlayıcıya aittir. Yazılımın kopyalanması, tersine mühendislik yapılması veya izinsiz dağıtılması kesinlikle yasaktır.',
+    icerik:
+      'Platformun kaynak kodları, veritabanı mimarisi, arayüz tasarımları ve ticari markası sağlayıcıya aittir. Yazılımın kopyalanması, tersine mühendislik yapılması veya izinsiz dağıtılması kesinlikle yasaktır.',
     ipucu: 'Tüm fikri mülkiyet hakları uluslararası telif kanunları ile korunmaktadır.'
   },
   {
@@ -178,7 +184,8 @@ const maddeler = [
     icon: 'pi pi-headphones',
     iconBg: 'rgba(6, 182, 212, 0.15)',
     iconColor: '#06b6d4',
-    icerik: 'Sorularınız, teknik destek talepleriniz veya yetki değişiklikleriniz için sistem yöneticinizle veya platform içi e-posta destek hatlarıyla anında iletişime geçebilirsiniz.',
+    icerik:
+      'Sorularınız, teknik destek talepleriniz veya yetki değişiklikleriniz için sistem yöneticinizle veya platform içi e-posta destek hatlarıyla anında iletişime geçebilirsiniz.',
     ipucu: 'Destek talepleriniz mesai saatleri içerisinde en kısa sürede yanıtlanır.'
   }
 ]
@@ -186,10 +193,11 @@ const maddeler = [
 const filtrelenmisMadde = computed(() => {
   if (!aramaMetni.value.trim()) return maddeler
   const query = aramaMetni.value.toLowerCase()
-  return maddeler.filter(m =>
-    m.baslik.toLowerCase().includes(query) ||
-    m.icerik.toLowerCase().includes(query) ||
-    m.kategori.toLowerCase().includes(query)
+  return maddeler.filter(
+    (m) =>
+      m.baslik.toLowerCase().includes(query) ||
+      m.icerik.toLowerCase().includes(query) ||
+      m.kategori.toLowerCase().includes(query)
   )
 })
 
@@ -435,7 +443,9 @@ const yazdir = () => {
 }
 
 @media print {
-  .hero-card, .toc-card, .search-box {
+  .hero-card,
+  .toc-card,
+  .search-box {
     display: none !important;
   }
   .layout-grid {

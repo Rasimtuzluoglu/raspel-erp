@@ -2,6 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import Giris from '../views/Giris.vue'
 import Dashboard from '../views/Dashboard.vue'
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
+
+NProgress.configure({ showSpinner: false })
 
 const routes = [
   {
@@ -354,9 +358,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  NProgress.start()
   const authStore = useAuthStore()
   if (to.meta.requiresAuth !== false && !authStore.isLoggedIn) {
-    next('/giris')
+    next({ name: 'Giris', query: { redirect: to.fullPath } })
   } else if (to.path === '/giris' && authStore.isLoggedIn && to.name === 'Giris') {
     next('/')
   } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
@@ -366,6 +371,10 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
+})
+
+router.afterEach(() => {
+  NProgress.done()
 })
 
 export default router

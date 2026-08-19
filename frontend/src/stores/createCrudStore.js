@@ -58,7 +58,7 @@ export function createCrudStore(name, api, opts = {}) {
     const update = async (id, data) => {
       try {
         const r = await api.update(id, data)
-        const idx = liste.value.findIndex(x => x.id === id)
+        const idx = liste.value.findIndex((x) => x.id === id)
         if (idx !== -1) liste.value[idx] = r.data
         return r.data
       } catch (err) {
@@ -70,7 +70,7 @@ export function createCrudStore(name, api, opts = {}) {
     const remove = async (id) => {
       try {
         await api.delete(id)
-        liste.value = liste.value.filter(x => x.id !== id)
+        liste.value = liste.value.filter((x) => x.id !== id)
       } catch (err) {
         error.value = err.response?.data?.message || err.message
         throw err

@@ -33,24 +33,26 @@
       class="table-container"
     >
       <DataTable
+        state-storage="session"
+        state-key="bankalar-table-state"
         :value="bankaStore.bankalar"
         responsive-layout="scroll"
         striped-rows
         :rows="10"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        :rows-per-page-options="[10,20,50]"
+        :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
       >
         <Column
           field="ad"
           header="Banka Adı"
-          style="width:200px"
+          style="width: 200px"
         />
         <Column
           field="hesapNo"
           header="Hesap No"
-          style="width:150px"
+          style="width: 150px"
         >
           <template #body="s">
             {{ s.data.hesapNo || '-' }}
@@ -59,7 +61,7 @@
         <Column
           field="iban"
           header="IBAN"
-          style="width:230px"
+          style="width: 230px"
         >
           <template #body="s">
             <span
@@ -75,7 +77,7 @@
         <Column
           field="bakiye"
           header="Bakiye"
-          style="width:130px"
+          style="width: 130px"
         >
           <template #body="s">
             <span :class="s.data.bakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.bakiye) }}</span>
@@ -83,7 +85,7 @@
         </Column>
         <Column
           header="İşlemler"
-          style="width:140px"
+          style="width: 140px"
         >
           <template #body="s">
             <Button
@@ -116,7 +118,7 @@
       v-model:visible="showDialog"
       :header="editingId ? 'Banka Hesabı Düzenle' : 'Yeni Banka Hesabı'"
       :modal="true"
-      style="width:500px"
+      style="width: 500px"
     >
       <div class="form-group">
         <label>Banka Adı *</label>
@@ -204,9 +206,13 @@ const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
   loading.value = true
-  try { await bankaStore.getAllBankalar() }
-  catch {     toastBildirim.hata('Bankalar yüklenirken hata oluştu') }
-  finally { loading.value = false }
+  try {
+    await bankaStore.getAllBankalar()
+  } catch {
+    toastBildirim.hata('Bankalar yüklenirken hata oluştu')
+  } finally {
+    loading.value = false
+  }
 })
 
 const openDialog = () => {
@@ -216,7 +222,9 @@ const openDialog = () => {
   showDialog.value = true
 }
 
-const closeDialog = () => { showDialog.value = false }
+const closeDialog = () => {
+  showDialog.value = false
+}
 
 const editBanka = (banka) => {
   editingId.value = banka.id
@@ -233,7 +241,11 @@ const saveBanka = async () => {
   saving.value = true
   try {
     if (editingId.value) {
-      await bankaStore.updateBanka(editingId.value, { ad: form.value.ad, hesapNo: form.value.hesapNo, iban: form.value.iban })
+      await bankaStore.updateBanka(editingId.value, {
+        ad: form.value.ad,
+        hesapNo: form.value.hesapNo,
+        iban: form.value.iban
+      })
       toastBildirim.basarili('Banka hesabı güncellendi')
     } else {
       await bankaStore.addBanka(form.value)
@@ -241,17 +253,25 @@ const saveBanka = async () => {
     }
     formTemizle()
     closeDialog()
-  } catch { toastBildirim.hata('İşlem başarısız') }
-  finally { saving.value = false }
+  } catch {
+    toastBildirim.hata('İşlem başarısız')
+  } finally {
+    saving.value = false
+  }
 }
 
 const confirmDelete = (id) => {
   confirm.require({
     message: 'Bu banka hesabını silmek istediğinizden emin misiniz?',
-    header: 'Onay', icon: 'pi pi-exclamation-triangle',
+    header: 'Onay',
+    icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await bankaStore.deleteBanka(id); toastBildirim.basarili('Banka hesabı silindi') }
-      catch { toastBildirim.hata('Silme başarısız') }
+      try {
+        await bankaStore.deleteBanka(id)
+        toastBildirim.basarili('Banka hesabı silindi')
+      } catch {
+        toastBildirim.hata('Silme başarısız')
+      }
     }
   })
 }
@@ -267,7 +287,9 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const formatCurrency = (v) => {
@@ -277,18 +299,69 @@ const formatCurrency = (v) => {
 </script>
 
 <style scoped>
-.bankalar-container { padding: 20px; }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.toolbar { margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-.table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; overflow-x: auto; }
-.loading { text-align: center; padding: 40px; color: #666; }
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-.positive { color: #4caf50; font-weight: bold; }
-.negative { color: #f44336; font-weight: bold; }
-.kopyalanabilir { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.kopyalanabilir:hover { color: var(--accent); }
-.kopyala-ikon { font-size: 11px; opacity: 0.5; }
-.kopyalanabilir:hover .kopyala-ikon { opacity: 1; }
-.w-full { width: 100% !important; }
+.bankalar-container {
+  padding: 20px;
+}
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  overflow-x: auto;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+.positive {
+  color: #4caf50;
+  font-weight: bold;
+}
+.negative {
+  color: #f44336;
+  font-weight: bold;
+}
+.kopyalanabilir {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kopyalanabilir:hover {
+  color: var(--accent);
+}
+.kopyala-ikon {
+  font-size: 11px;
+  opacity: 0.5;
+}
+.kopyalanabilir:hover .kopyala-ikon {
+  opacity: 1;
+}
+.w-full {
+  width: 100% !important;
+}
 </style>

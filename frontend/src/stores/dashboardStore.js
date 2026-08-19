@@ -61,13 +61,27 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   return {
-    toplamCariSayisi, toplamBakiye, sonHareketler,
-    aktifCalisan, bugunIzinli, buAyIseBaslayacak,
-    bugunkuSiparis, bekleyenTeslimat, iadeOrani,
-    stokDevirHizi, enCokSatanlar,
-    pozitifBakiye, negatifBakiye,
-    bugunkuTahsilat, bugunkuOdeme, bekleyenIzinSayisi, aylikGelirGider,
-    vadesiGecenFaturalar, vadesiYaklasanFaturalar,
-    loading, error, getDashboardData
+    toplamCariSayisi,
+    toplamBakiye,
+    sonHareketler,
+    aktifCalisan,
+    bugunIzinli,
+    buAyIseBaslayacak,
+    bugunkuSiparis,
+    bekleyenTeslimat,
+    iadeOrani,
+    stokDevirHizi,
+    enCokSatanlar,
+    pozitifBakiye,
+    negatifBakiye,
+    bugunkuTahsilat,
+    bugunkuOdeme,
+    bekleyenIzinSayisi,
+    aylikGelirGider,
+    vadesiGecenFaturalar,
+    vadesiYaklasanFaturalar,
+    loading,
+    error,
+    getDashboardData
   }
 })

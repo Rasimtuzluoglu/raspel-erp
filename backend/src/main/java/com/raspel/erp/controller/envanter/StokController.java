@@ -63,6 +63,13 @@ public class StokController {
         return ResponseEntity.ok(stokService.kritikStoklar(sirketId));
     }
 
+    @GetMapping("/talep-tahmini")
+    @Operation(summary = "Akıllı talep tahmini", description = "Tüketim trendlerine göre tahmini tükenme günü ve proaktif sipariş önerilerini getirir")
+    public ResponseEntity<List<com.raspel.erp.dto.envanter.TalepTahminiDTO>> talepTahmini(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.talepTahmini(sirketId));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre stok getir", description = "Stok ID'sine göre detayları getirir")
     public ResponseEntity<StokDTO> getir(@PathVariable Long id) { return ResponseEntity.ok(stokService.getir(id)); }

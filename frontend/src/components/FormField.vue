@@ -36,7 +36,9 @@ defineProps({
 </script>
 
 <style scoped>
-.form-field { margin-bottom: 1.25rem; }
+.form-field {
+  margin-bottom: 1.25rem;
+}
 .form-label {
   display: block;
   margin-bottom: 0.35rem;
@@ -44,7 +46,10 @@ defineProps({
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
-.required-star { color: #ef4444; margin-left: 2px; }
+.required-star {
+  color: #ef4444;
+  margin-left: 2px;
+}
 .form-error {
   display: block;
   margin-top: 0.3rem;
@@ -67,6 +72,6 @@ defineProps({
 .has-error :deep(.p-inputtext:focus),
 .has-error :deep(.p-dropdown:focus),
 .has-error :deep(.p-textarea:focus) {
-  box-shadow: 0 0 0 2px rgba(239,68,68,0.2) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
 }
 </style>

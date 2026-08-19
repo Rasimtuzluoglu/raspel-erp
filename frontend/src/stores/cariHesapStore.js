@@ -53,7 +53,7 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
   const updateCariHesap = async (id, cariHesap) => {
     try {
       const response = await cariHesapAPI.update(id, cariHesap)
-      const index = cariHesaplar.value.findIndex(c => c.id === id)
+      const index = cariHesaplar.value.findIndex((c) => c.id === id)
       if (index !== -1) {
         cariHesaplar.value[index] = response.data
       }
@@ -70,7 +70,7 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
   const deleteCariHesap = async (id) => {
     try {
       await cariHesapAPI.delete(id)
-      cariHesaplar.value = cariHesaplar.value.filter(c => c.id !== id)
+      cariHesaplar.value = cariHesaplar.value.filter((c) => c.id !== id)
     } catch (err) {
       error.value = err.message
       throw err

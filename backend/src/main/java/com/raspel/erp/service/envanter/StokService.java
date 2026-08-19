@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -271,6 +273,73 @@ public class StokService {
     public BigDecimal toplamStokMiktari() {
         BigDecimal toplam = stokRepository.toplamMiktar();
         return toplam != null ? toplam : BigDecimal.ZERO;
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.envanter.TalepTahminiDTO> talepTahmini(Long sirketId) {
+        List<Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+        Map<Long, String> tedarikciler = tedarikciAdlari(stoklar);
+        
+        List<com.raspel.erp.dto.envanter.TalepTahminiDTO> tahminler = new ArrayList<>();
+        
+        for (Stok s : stoklar) {
+            List<StokHareket> hareketler = stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(s.getId());
+            
+            // Son 90 gün içindeki çıkış (tüketim) miktarı
+            java.time.LocalDate ucAyOnce = java.time.LocalDate.now().minusDays(90);
+            BigDecimal sonUcAylikCikis = hareketler.stream()
+                    .filter(h -> "CIKIS".equals(h.getTur()) && h.getHareketTarihi() != null && !h.getHareketTarihi().isBefore(ucAyOnce))
+                    .map(StokHareket::getMiktar)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal gunlukTuketim = sonUcAylikCikis.divide(BigDecimal.valueOf(90), 2, java.math.RoundingMode.HALF_UP);
+            if (gunlukTuketim.compareTo(BigDecimal.ZERO) <= 0) {
+                // Eğer son 90 günde çıkış yoksa varsayılan minimum tüketim tahmini (örnek 0.5 veya 0)
+                gunlukTuketim = s.getMinMiktar() != null && s.getMinMiktar().compareTo(BigDecimal.ZERO) > 0 
+                        ? s.getMinMiktar().divide(BigDecimal.valueOf(30), 2, java.math.RoundingMode.HALF_UP) 
+                        : BigDecimal.valueOf(0.1);
+            }
+            
+            int tahminiTukenmeGunu = 999;
+            if (gunlukTuketim.compareTo(BigDecimal.ZERO) > 0 && s.getMiktar() != null) {
+                tahminiTukenmeGunu = s.getMiktar().divide(gunlukTuketim, 0, java.math.RoundingMode.HALF_UP).intValue();
+            }
+            
+            int tedarikSuresi = 5; // Standart ortalama tedarik süresi (gün)
+            BigDecimal guvenlikStogu = s.getMinMiktar() != null ? s.getMinMiktar() : gunlukTuketim.multiply(BigDecimal.valueOf(7));
+            BigDecimal onerilenSiparis = gunlukTuketim.multiply(BigDecimal.valueOf(30)).add(guvenlikStogu).subtract(s.getMiktar()).max(BigDecimal.ZERO);
+            
+            String durum = "GUVENLI";
+            String oneri = "Stok seviyesi yeterli.";
+            
+            if (tahminiTukenmeGunu <= tedarikSuresi) {
+                durum = "KRITIK";
+                oneri = String.format("%s ürünü %d gün içinde tükenecek! Tedarik süresi %d gün olduğu için acil %s %s sipariş verilmelidir.",
+                        s.getAd(), tahminiTukenmeGunu, tedarikSuresi, onerilenSiparis.setScale(0, java.math.RoundingMode.HALF_UP), s.getBirim() != null ? s.getBirim() : "Adet");
+            } else if (tahminiTukenmeGunu <= 15) {
+                durum = "DIKKAT";
+                oneri = String.format("%s ürünü %d gün içinde kritik seviyeye düşecek. %s %s sipariş planlanmalı.",
+                        s.getAd(), tahminiTukenmeGunu, onerilenSiparis.setScale(0, java.math.RoundingMode.HALF_UP), s.getBirim() != null ? s.getBirim() : "Adet");
+            }
+            
+            tahminler.add(com.raspel.erp.dto.envanter.TalepTahminiDTO.builder()
+                    .stokId(s.getId())
+                    .stokKodu(s.getStokKodu())
+                    .ad(s.getAd())
+                    .birim(s.getBirim())
+                    .mevcutMiktar(s.getMiktar())
+                    .gunlukOrtalamaTuketim(gunlukTuketim)
+                    .tahminiTukenmeGunu(tahminiTukenmeGunu)
+                    .tedarikSuresiGun(tedarikSuresi)
+                    .onerilenSiparisMiktari(onerilenSiparis.setScale(0, java.math.RoundingMode.HALF_UP))
+                    .tedarikciAd(s.getTedarikciId() != null ? tedarikciler.get(s.getTedarikciId()) : null)
+                    .durum(durum)
+                    .proaktifOneri(oneri)
+                    .build());
+        }
+        
+        tahminler.sort(Comparator.comparing(com.raspel.erp.dto.envanter.TalepTahminiDTO::getTahminiTukenmeGunu));
+        return tahminler;
     }
 
     private StokDTO entityToDTO(Stok s, Map<Long, String> tedarikciAdlari) {

@@ -12,7 +12,10 @@
         />
       </template>
       <template #end>
-        <TarihHizliSecim v-model="tarihAraligi" style="margin-right:8px" />
+        <TarihHizliSecim
+          v-model="tarihAraligi"
+          style="margin-right: 8px"
+        />
         <span class="p-input-icon-left">
           <i class="pi pi-search" />
           <InputText
@@ -25,6 +28,8 @@
 
     <div class="table-container">
       <DataTable
+        state-storage="session"
+        state-key="satis-table-state"
         :value="filtrelenmisSatislar"
         :paginator="true"
         :rows="15"
@@ -37,12 +42,12 @@
         <Column
           field="faturaNumarasi"
           header="Fatura No"
-          style="width:160px"
+          style="width: 160px"
         />
         <Column
           field="tarih"
           header="Tarih"
-          style="width:110px"
+          style="width: 110px"
         >
           <template #body="s">
             {{ formatDate(s.data.tarih) }}
@@ -51,7 +56,7 @@
         <Column
           field="cariHesapAd"
           header="Müşteri"
-          style="width:200px"
+          style="width: 200px"
         >
           <template #body="s">
             {{ s.data.cariHesapAd || '-' }}
@@ -60,7 +65,7 @@
         <Column
           field="genelToplam"
           header="Tutar"
-          style="width:130px"
+          style="width: 130px"
         >
           <template #body="s">
             {{ formatCurrency(s.data.genelToplam) }}
@@ -69,7 +74,7 @@
         <Column
           field="durum"
           header="Durum"
-          style="width:100px"
+          style="width: 100px"
         >
           <template #body="s">
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">{{ durumLabel(s.data.durum) }}</span>
@@ -77,7 +82,7 @@
         </Column>
         <Column
           header="İşlemler"
-          style="width:180px"
+          style="width: 180px"
         >
           <template #body="s">
             <Button
@@ -112,11 +117,11 @@
       v-model:visible="showSatisDialog"
       :header="dialogBaslik"
       :modal="true"
-      style="width:800px"
+      style="width: 800px"
       :closable="false"
     >
       <div class="satis-modu">
-        <label style="color:#94a3b8;font-weight:600;font-size:12px;text-transform:uppercase;margin-right:12px">İşlem Modu</label>
+        <label style="color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-right: 12px">İşlem Modu</label>
         <div class="modu-radio-group">
           <div
             :class="['modu-option', { active: satisModu === 'SATIS' }]"
@@ -135,7 +140,7 @@
       <div class="form-row">
         <div
           class="form-group"
-          style="flex:2"
+          style="flex: 2"
         >
           <label>Müşteri <span v-if="satisModu === 'SATIS'">*</span></label>
           <Dropdown
@@ -149,7 +154,7 @@
         </div>
         <div
           class="form-group"
-          style="flex:1"
+          style="flex: 1"
         >
           <label>Tarih *</label>
           <DatePicker
@@ -164,7 +169,7 @@
         <div class="form-row">
           <div
             class="form-group"
-            style="flex:3"
+            style="flex: 3"
           >
             <label>Ürün Seç</label>
             <Dropdown
@@ -192,7 +197,7 @@
           </div>
           <div
             class="form-group"
-            style="flex:1"
+            style="flex: 1"
           >
             <label>Miktar *</label>
             <InputNumber
@@ -203,7 +208,7 @@
           </div>
           <div
             class="form-group"
-            style="flex:1"
+            style="flex: 1"
           >
             <label>Birim Fiyat</label>
             <InputNumber
@@ -215,7 +220,7 @@
           </div>
           <div
             class="form-group"
-            style="flex:0 0 auto;display:flex;align-items:flex-end"
+            style="flex: 0 0 auto; display: flex; align-items: flex-end"
           >
             <Button
               icon="pi pi-plus"
@@ -225,19 +230,21 @@
             />
           </div>
         </div>
-        <small style="color:#64748b">Ürün seçince fiyat otomatik gelir, değiştirebilirsiniz</small>
+        <small style="color: #64748b">Ürün seçince fiyat otomatik gelir, değiştirebilirsiniz</small>
       </div>
 
-      <h3 style="margin:18px 0 10px;color:#f1f5f9;font-size:15px">
+      <h3 style="margin: 18px 0 10px; color: #f1f5f9; font-size: 15px">
         Satış Kalemleri
       </h3>
       <DataTable
+        state-storage="session"
+        state-key="satis-table-state"
         :value="satisForm.kalemler"
         striped-rows
       >
         <Column
           header="#"
-          style="width:40px"
+          style="width: 40px"
         >
           <template #body="s">
             {{ s.index + 1 }}
@@ -250,7 +257,7 @@
         </Column>
         <Column
           header="Adet"
-          style="width:80px"
+          style="width: 80px"
         >
           <template #body="s">
             {{ s.data.adet }}
@@ -258,7 +265,7 @@
         </Column>
         <Column
           header="Birim Fiyat"
-          style="width:120px"
+          style="width: 120px"
         >
           <template #body="s">
             {{ formatCurrency(s.data.birimFiyat) }}
@@ -266,7 +273,7 @@
         </Column>
         <Column
           header="KDV"
-          style="width:60px"
+          style="width: 60px"
         >
           <template #body="s">
             %{{ s.data.kdvOrani }}
@@ -274,21 +281,21 @@
         </Column>
         <Column
           header="Tutar"
-          style="width:120px"
+          style="width: 120px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.tutar || (s.data.birimFiyat * s.data.adet)) }}
+            {{ formatCurrency(s.data.tutar || s.data.birimFiyat * s.data.adet) }}
           </template>
         </Column>
         <Column
           header=""
-          style="width:50px"
+          style="width: 50px"
         >
           <template #body="s">
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
-              @click="satisForm.kalemler.splice(s.index,1)"
+              @click="satisForm.kalemler.splice(s.index, 1)"
             />
           </template>
         </Column>
@@ -374,7 +381,7 @@ onMounted(async () => {
 const satislariYukle = async () => {
   try {
     const r = await faturaAPI.getAll()
-    satislar.value = (r.data?.content || r.data || []).filter(f => f.tur === 'SATIS')
+    satislar.value = (r.data?.content || r.data || []).filter((f) => f.tur === 'SATIS')
   } catch {
     toastBildirim.hata('Satışlar yüklenemedi')
   }
@@ -387,7 +394,7 @@ const filtrelenmisSatislar = computed(() => {
     bas.setHours(0, 0, 0, 0)
     const bit = new Date(tarihAraligi.value[1])
     bit.setHours(23, 59, 59, 999)
-    list = list.filter(f => {
+    list = list.filter((f) => {
       if (!f.tarih) return false
       const t = new Date(f.tarih)
       return t >= bas && t <= bit
@@ -395,26 +402,23 @@ const filtrelenmisSatislar = computed(() => {
   }
   if (!filtre.value.trim()) return list
   const q = filtre.value.toLowerCase()
-  return list.filter(s =>
-    s.faturaNumarasi?.toLowerCase().includes(q) ||
-    s.cariHesapAd?.toLowerCase().includes(q)
-  )
+  return list.filter((s) => s.faturaNumarasi?.toLowerCase().includes(q) || s.cariHesapAd?.toLowerCase().includes(q))
 })
 
 const stokAdi = (id) => {
-  const u = stokStore.stoklar.find(s => s.id === id)
+  const u = stokStore.stoklar.find((s) => s.id === id)
   return u ? `${u.ad} (${u.miktar} ${u.birim || 'Adet'}) - ${formatCurrency(u.fiyat)}` : ''
 }
 
 const urunSecildi = () => {
   if (!seciliUrun.value) return
-  const u = stokStore.stoklar.find(s => s.id === seciliUrun.value)
+  const u = stokStore.stoklar.find((s) => s.id === seciliUrun.value)
   if (u) yeniUrunFiyat.value = u.fiyat
 }
 
 const urunEkle = () => {
   if (!seciliUrun.value || !yeniUrunAdet.value) return
-  const u = stokStore.stoklar.find(s => s.id === seciliUrun.value)
+  const u = stokStore.stoklar.find((s) => s.id === seciliUrun.value)
   if (!u) return
   if (u.miktar < yeniUrunAdet.value) {
     toastBildirim.uyari(`Yetersiz stok! Mevcut: ${u.miktar} ${u.birim || 'Adet'}`)
@@ -434,11 +438,18 @@ const urunEkle = () => {
   yeniUrunFiyat.value = 0
 }
 
-const araToplam = computed(() => satisForm.value.kalemler.reduce((t, k) => t + (Number(k.birimFiyat) * Number(k.adet)), 0))
-const kdvToplam = computed(() => satisForm.value.kalemler.reduce((t, k) => t + (Number(k.birimFiyat) * Number(k.adet) * (Number(k.kdvOrani) || 20) / 100), 0))
+const araToplam = computed(() =>
+  satisForm.value.kalemler.reduce((t, k) => t + Number(k.birimFiyat) * Number(k.adet), 0)
+)
+const kdvToplam = computed(() =>
+  satisForm.value.kalemler.reduce(
+    (t, k) => t + (Number(k.birimFiyat) * Number(k.adet) * (Number(k.kdvOrani) || 20)) / 100,
+    0
+  )
+)
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
-const dialogBaslik = computed(() => satisModu.value === 'TEKLIF' ? 'Yeni Teklif' : 'Yeni Satış')
+const dialogBaslik = computed(() => (satisModu.value === 'TEKLIF' ? 'Yeni Teklif' : 'Yeni Satış'))
 
 const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
@@ -467,7 +478,7 @@ const satisiTamamla = async () => {
       durum,
       tarih: satisForm.value.tarih?.toISOString().split('T')[0],
       aciklama: satisForm.value.aciklama,
-      kalemler: satisForm.value.kalemler.map(k => ({
+      kalemler: satisForm.value.kalemler.map((k) => ({
         aciklama: k.aciklama,
         adet: k.adet,
         birimFiyat: k.birimFiyat,
@@ -490,8 +501,10 @@ const satisiTamamla = async () => {
 
 const printFatura = (id) => window.open(`/faturalar/${id}?print=true`, '_blank')
 const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
-const formatCurrency = (v) => v ?? 0 ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v) : '0,00 ₺'
-const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(d)) : '-'
+const formatCurrency = (v) =>
+  (v ?? 0) ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 const printTermalFis = (satisData) => {
   const fisWindow = window.open('', '_blank', 'width=400,height=600')
   if (!fisWindow) {
@@ -499,12 +512,16 @@ const printTermalFis = (satisData) => {
     return
   }
 
-  const kalemlerHtml = (satisData.kalemler || []).map(k => `
+  const kalemlerHtml = (satisData.kalemler || [])
+    .map(
+      (k) => `
     <tr>
       <td style="text-align:left;">${escapeHtml(k.stokAd || k.ad || 'Ürün')} x${k.miktar || k.adet || 1}</td>
-      <td style="text-align:right;">${formatCurrency(k.toplamTutar || (k.miktar * k.birimFiyat) || (k.adet * k.birimFiyat))}</td>
+      <td style="text-align:right;">${formatCurrency(k.toplamTutar || k.miktar * k.birimFiyat || k.adet * k.birimFiyat)}</td>
     </tr>
-  `).join('')
+  `
+    )
+    .join('')
 
   const content = `
     <!DOCTYPE html>
@@ -593,31 +610,149 @@ const printTermalFis = (satisData) => {
 </script>
 
 <style scoped>
-.satis-container { padding: 20px; }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.toolbar { margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-.table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; overflow-x: auto; }
-.form-row { display: flex; gap: 12px; margin-bottom: 12px; }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.urun-ekleme { background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 16px; margin: 15px 0; }
-.urun-opsiyon { display: flex; align-items: center; gap: 10px; width: 100%; }
-.urun-ad { flex: 1; color: var(--text-primary); }
-.urun-stok { color: #4ade80; font-size: 12px; font-weight: 600; }
-.urun-fiyat { color: var(--text-secondary); font-size: 12px; }
-.summary-box { background: var(--border); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-top: 15px; }
-.summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; color: var(--text-secondary); }
-.summary-row.total { font-weight: 700; font-size: 18px; border-top: 2px solid #3b82f6; margin-top: 5px; padding-top: 10px; color: var(--text-primary); }
-.durum-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.durum-badge.taslak { background: rgba(255,152,0,0.15); color: #fb923c; }
-.durum-badge.teklif { background: rgba(59,130,246,0.15); color: #60a5fa; }
-.durum-badge.kesildi { background: rgba(34,197,94,0.15); color: #4ade80; }
-.durum-badge.iptal { background: rgba(148,163,184,0.1); color: #94a3b8; }
-.satis-modu { display: flex; align-items: center; margin-bottom: 16px; }
-.modu-radio-group { display: flex; gap: 2px; background: var(--border); border-radius: 8px; padding: 3px; }
-.modu-option { padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text-secondary); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
-.modu-option:hover { color: #e2e8f0; }
-.modu-option.active { background: #3b82f6; color: #fff; }
-.w-full { width: 100% !important; }
+.satis-container {
+  padding: 20px;
+}
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  overflow-x: auto;
+}
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.urun-ekleme {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 15px 0;
+}
+.urun-opsiyon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.urun-ad {
+  flex: 1;
+  color: var(--text-primary);
+}
+.urun-stok {
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 600;
+}
+.urun-fiyat {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.summary-box {
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.summary-row.total {
+  font-weight: 700;
+  font-size: 18px;
+  border-top: 2px solid #3b82f6;
+  margin-top: 5px;
+  padding-top: 10px;
+  color: var(--text-primary);
+}
+.durum-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.durum-badge.taslak {
+  background: rgba(255, 152, 0, 0.15);
+  color: #fb923c;
+}
+.durum-badge.teklif {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.durum-badge.kesildi {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.durum-badge.iptal {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+}
+.satis-modu {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modu-radio-group {
+  display: flex;
+  gap: 2px;
+  background: var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+.modu-option {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.modu-option:hover {
+  color: #e2e8f0;
+}
+.modu-option.active {
+  background: #3b82f6;
+  color: #fff;
+}
+.w-full {
+  width: 100% !important;
+}
 </style>
-

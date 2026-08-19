@@ -12,7 +12,8 @@
       <span
         v-if="okunmamis"
         class="zil-sayac"
-      >{{ okunmamis }}</span>    </Button>
+      >{{ okunmamis }}</span>
+    </Button>
 
     <transition name="panel">
       <div
@@ -66,7 +67,7 @@
           >
             <i
               class="pi pi-check-circle"
-              style="color:#4ade80"
+              style="color: #4ade80"
             />
             <span>Masaüstü bildirimleri açık</span>
           </div>
@@ -76,7 +77,7 @@
           >
             <i
               class="pi pi-exclamation-triangle"
-              style="color:#fbbf24"
+              style="color: #fbbf24"
             />
             <span>Tarayıcı izni gerekli</span>
             <Button
@@ -146,7 +147,9 @@ const yukle = async () => {
     bildirimler.value = r.data || []
     const c = await bildirimAPI.okunmamis()
     okunmamis.value = c.data?.adet || 0
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 }
 
 const disariTiklamaHandler = (e) => {
@@ -180,9 +183,7 @@ const tercihListesi = [
 ]
 const tercihler = ref(safeGet(TERCIH_ANAHTAR, {}))
 
-const filtrelenmisBildirimler = computed(() =>
-  bildirimler.value.filter(b => tercihler.value[b.tur] !== false)
-)
+const filtrelenmisBildirimler = computed(() => bildirimler.value.filter((b) => tercihler.value[b.tur] !== false))
 
 const tercihDegistir = (tur, val) => {
   tercihler.value[tur] = val
@@ -219,79 +220,206 @@ const formatTarih = (t) => {
 
 const bildirimTikla = async (b) => {
   if (b.id) {
-    try { await bildirimAPI.okundu(b.id); if (okunmamis.value > 0) okunmamis.value-- } catch { /* empty */ }
+    try {
+      await bildirimAPI.okundu(b.id)
+      if (okunmamis.value > 0) okunmamis.value--
+    } catch {
+      /* empty */
+    }
   }
   if (b.yonlendirme) router.push(b.yonlendirme)
   panelAcik.value = false
 }
 
 const temizle = async () => {
-  try { await bildirimAPI.tumuOkundu() } catch { /* empty */ }
+  try {
+    await bildirimAPI.tumuOkundu()
+  } catch {
+    /* empty */
+  }
   bildirimler.value = []
   okunmamis.value = 0
 }
 </script>
 
 <style scoped>
-.bildirim-zili { position: relative; display: inline-flex; align-items: center; }
-.bildirim-zili :deep(.p-button) { color: var(--text-primary); }
-.bildirim-zili :deep(.p-button .p-button-icon) { color: var(--text-primary); font-size: 16px; }
+.bildirim-zili {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.bildirim-zili :deep(.p-button) {
+  color: var(--text-primary);
+}
+.bildirim-zili :deep(.p-button .p-button-icon) {
+  color: var(--text-primary);
+  font-size: 16px;
+}
 .zil-sayac {
-  position: absolute; top: -4px; right: -4px;
-  background: #ef4444; color: white; border-radius: 50%;
-  min-width: 18px; height: 18px; font-size: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; padding: 0 5px; z-index: 3;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  padding: 0 5px;
+  z-index: 3;
   border: 2px solid var(--bg-primary, #0f172a);
   animation: zil-sallanma 2.4s ease-in-out infinite;
   transform-origin: top center;
   pointer-events: none;
 }
 @keyframes zil-sallanma {
-  0%, 88%, 100% { transform: rotate(0); }
-  90% { transform: rotate(8deg); }
-  93% { transform: rotate(-8deg); }
-  96% { transform: rotate(4deg); }
-  98% { transform: rotate(-4deg); }
+  0%,
+  88%,
+  100% {
+    transform: rotate(0);
+  }
+  90% {
+    transform: rotate(8deg);
+  }
+  93% {
+    transform: rotate(-8deg);
+  }
+  96% {
+    transform: rotate(4deg);
+  }
+  98% {
+    transform: rotate(-4deg);
+  }
 }
 .bildirim-panel {
-  position: fixed; left: 245px; bottom: 70px; top: auto; z-index: 99999;
-  width: 340px; max-height: 420px; overflow-y: auto;
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  position: fixed;
+  left: 245px;
+  bottom: 70px;
+  top: auto;
+  z-index: 99999;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
 }
 .panel-baslik {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; background: var(--bg-card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
 }
-.panel-ayarlar { display: flex; align-items: center; }
-.tercih-paneli { padding: 12px 16px; }
-.tercih-baslik { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
-.tercih-satir { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; cursor: pointer; }
-.tercih-ayrac { border-top: 1px solid var(--border); margin: 10px 0; }
-.panel-baslik strong { font-size: 14px; }
-.panel-bos { text-align: center; padding: 32px; color: var(--text-muted); }
-.panel-bos i { font-size: 32px; display: block; margin-bottom: 8px; }
-.panel-bos p { margin: 0; font-size: 13px; }
-.panel-liste { padding: 4px 0; }
+.panel-ayarlar {
+  display: flex;
+  align-items: center;
+}
+.tercih-paneli {
+  padding: 12px 16px;
+}
+.tercih-baslik {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.tercih-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tercih-ayrac {
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+.panel-baslik strong {
+  font-size: 14px;
+}
+.panel-bos {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+}
+.panel-bos i {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+.panel-bos p {
+  margin: 0;
+  font-size: 13px;
+}
+.panel-liste {
+  padding: 4px 0;
+}
 .panel-item {
-  display: flex; gap: 12px; padding: 10px 16px; cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
 }
-.panel-item:last-child { border-bottom: none; }
-.panel-item:hover { background: rgba(148,163,184,0.06); }
-.item-ikon {
-  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; color: #60a5fa; background: rgba(59,130,246,0.15);
+.panel-item:last-child {
+  border-bottom: none;
 }
-.item-ikon.pi-exclamation-triangle { color: #fbbf24; background: rgba(245,158,11,0.15); }
-.item-icerik { flex: 1; min-width: 0; }
-.item-icerik strong { display: block; font-size: 13px; }
-.item-icerik p { margin: 2px 0; font-size: 12px; color: var(--text-secondary); }
-.item-icerik small { font-size: 11px; color: var(--text-muted); }
-.panel-enter-active, .panel-leave-active { transition: all 0.2s ease; }
-.panel-enter-from, .panel-leave-to { opacity: 0; transform: translateY(-8px); }
+.panel-item:hover {
+  background: rgba(148, 163, 184, 0.06);
+}
+.item-ikon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+}
+.item-ikon.pi-exclamation-triangle {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+}
+.item-icerik {
+  flex: 1;
+  min-width: 0;
+}
+.item-icerik strong {
+  display: block;
+  font-size: 13px;
+}
+.item-icerik p {
+  margin: 2px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.item-icerik small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.panel-enter-active,
+.panel-leave-active {
+  transition: all 0.2s ease;
+}
+.panel-enter-from,
+.panel-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 </style>

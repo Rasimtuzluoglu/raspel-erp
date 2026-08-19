@@ -61,12 +61,36 @@ const kapat = () => {
 </script>
 
 <style scoped>
-.changelog { display: flex; flex-direction: column; gap: 16px; }
-.surum ul { list-style: none; margin: 8px 0 0; padding: 0; }
-.surum li { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 13px; color: var(--text-secondary); }
-.surum li i { color: #4ade80; font-size: 14px; margin-top: 2px; }
+.changelog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.surum ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.surum li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.surum li i {
+  color: #4ade80;
+  font-size: 14px;
+  margin-top: 2px;
+}
 .surum-etiketi {
-  display: inline-block; background: rgba(59,130,246,0.15); color: #60a5fa;
-  padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
 }
 </style>

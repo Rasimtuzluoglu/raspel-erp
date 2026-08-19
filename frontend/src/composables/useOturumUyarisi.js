@@ -12,7 +12,9 @@ export function useOturumUyarisi() {
       const payload = token.split('.')[1]
       const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
       return decoded.exp ? decoded.exp * 1000 : null
-    } catch { return null }
+    } catch {
+      return null
+    }
   }
 
   const baslat = () => {
@@ -32,7 +34,9 @@ export function useOturumUyarisi() {
     goster.value = false
     try {
       await authStore.kullaniciGuncelle()
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   }
 
   const cikis = () => {
@@ -42,7 +46,9 @@ export function useOturumUyarisi() {
   }
 
   onMounted(baslat)
-  onUnmounted(() => { if (interval) clearInterval(interval) })
+  onUnmounted(() => {
+    if (interval) clearInterval(interval)
+  })
 
   return { goster, kalanSaniye, devamEt, cikis }
 }

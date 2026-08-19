@@ -152,6 +152,22 @@ class StokControllerTest {
         mockMvc.perform(delete("/api/stoklar/hareketler/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldGetTalepTahmini() throws Exception {
+        var list = List.of(com.raspel.erp.dto.envanter.TalepTahminiDTO.builder()
+                .stokId(1L)
+                .ad("MDF Panel")
+                .tahminiTukenmeGunu(12)
+                .durum("DIKKAT")
+                .build());
+        when(stokService.talepTahmini(eq(1L))).thenReturn(list);
+
+        mockMvc.perform(get("/api/stoklar/talep-tahmini").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].ad").value("MDF Panel"))
+                .andExpect(jsonPath("$[0].durum").value("DIKKAT"));
+    }
 }
 
 

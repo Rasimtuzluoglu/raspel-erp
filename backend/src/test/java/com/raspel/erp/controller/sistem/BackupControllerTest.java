@@ -69,7 +69,23 @@ class BackupControllerTest {
     void shouldRestoreBackup() throws Exception {
         when(backupService.restoreBackup("a.sql.gz")).thenReturn("a.sql.gz");
         mockMvc.perform(post("/api/backups/restore/a.sql.gz"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.filename").value("a.sql.gz"));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.filename").value("a.sql.gz"));
+    }
+
+    @Test
+    void shouldGetCloudConfig() throws Exception {
+        when(backupService.getCloudConfig()).thenReturn(Map.of("provider", "AWS_S3", "status", "AKTIF"));
+        mockMvc.perform(get("/api/backups/cloud-config"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.provider").value("AWS_S3"));
+    }
+
+    @Test
+    void shouldSyncToCloud() throws Exception {
+        when(backupService.syncToCloud(any())).thenReturn(Map.of("provider", "AWS_S3", "message", "OK"));
+        mockMvc.perform(post("/api/backups/cloud-sync"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.provider").value("AWS_S3"));
     }
 }

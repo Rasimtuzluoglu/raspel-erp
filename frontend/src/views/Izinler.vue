@@ -15,6 +15,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="izinler-table-state"
       :value="filtrelenmisIzinler"
       striped-rows
       :loading="yukleniyor"
@@ -84,7 +86,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:180px"
+        style="width: 180px"
       >
         <template #body="{ data }">
           <Button
@@ -139,14 +141,19 @@ const filtreSecenekleri = [
 
 const filtrelenmisIzinler = computed(() => {
   if (durumFiltre.value === 'TUMU') return tumIzinler.value
-  return tumIzinler.value.filter(i => i.durum === durumFiltre.value)
+  return tumIzinler.value.filter((i) => i.durum === durumFiltre.value)
 })
 
-const izinTuruLabel = (t) => ({
-  YILLIK_IZIN: 'Yıllık İzin', HASTA_IZNI: 'Hasta İzni', MAZERET_IZNI: 'Mazeret İzni',
-  DOGUM_IZNI: 'Doğum İzni', BABALIK_IZNI: 'Babalık İzni', EVLILIK_IZNI: 'Evlilik İzni',
-  UCRETSIZ_IZIN: 'Ücretsiz İzin'
-})[t] || t
+const izinTuruLabel = (t) =>
+  ({
+    YILLIK_IZIN: 'Yıllık İzin',
+    HASTA_IZNI: 'Hasta İzni',
+    MAZERET_IZNI: 'Mazeret İzni',
+    DOGUM_IZNI: 'Doğum İzni',
+    BABALIK_IZNI: 'Babalık İzni',
+    EVLILIK_IZNI: 'Evlilik İzni',
+    UCRETSIZ_IZIN: 'Ücretsiz İzin'
+  })[t] || t
 
 const durumLabel = (d) => ({ BEKLEMEDE: 'Beklemede', ONAYLANDI: 'Onaylandı', REDDEDILDI: 'Reddedildi' })[d] || d
 
@@ -169,12 +176,15 @@ onMounted(async () => {
 const onayla = (data) => {
   confirm.require({
     message: `${data.personelAdi} - ${izinTuruLabel(data.izinTuru)} iznini onaylamak istiyor musunuz?`,
-    header: 'İzin Onayı', icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Onayla', rejectLabel: 'İptal',
+    header: 'İzin Onayı',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Onayla',
+    rejectLabel: 'İptal',
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
-        const r = await personelIzinAPI.getAll(); tumIzinler.value = r.data?.content || r.data || []
+        const r = await personelIzinAPI.getAll()
+        tumIzinler.value = r.data?.content || r.data || []
         toastBildirim.basarili('İzin onaylandı')
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
@@ -186,12 +196,15 @@ const onayla = (data) => {
 const reddet = (data) => {
   confirm.require({
     message: `${data.personelAdi} - ${izinTuruLabel(data.izinTuru)} iznini reddetmek istiyor musunuz?`,
-    header: 'İzin Reddi', icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Reddet', rejectLabel: 'İptal',
+    header: 'İzin Reddi',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Reddet',
+    rejectLabel: 'İptal',
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
-        const r = await personelIzinAPI.getAll(); tumIzinler.value = r.data?.content || r.data || []
+        const r = await personelIzinAPI.getAll()
+        tumIzinler.value = r.data?.content || r.data || []
         toastBildirim.basarili('İzin reddedildi')
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
@@ -205,12 +218,14 @@ const kullaniciAdi = computed(() => authStore.kullanici?.displayName || authStor
 const sil = (data) => {
   confirm.require({
     message: 'Bu izin kaydını silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı', icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil', rejectLabel: 'İptal',
+    header: 'Silme Onayı',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Evet, Sil',
+    rejectLabel: 'İptal',
     accept: async () => {
       try {
         await personelIzinAPI.delete(data.id)
-        tumIzinler.value = tumIzinler.value.filter(i => i.id !== data.id)
+        tumIzinler.value = tumIzinler.value.filter((i) => i.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'İzin kaydı silindi', life: 5000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -221,8 +236,22 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.izinler-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.sayfa-baslik h1 { margin: 0; }
-.filtre-grup { display: flex; gap: 8px; }
+.izinler-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.filtre-grup {
+  display: flex;
+  gap: 8px;
+}
 </style>

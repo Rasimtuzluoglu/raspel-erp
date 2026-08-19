@@ -29,7 +29,10 @@ export function useMasaustuBildirim() {
         icon: ikon,
         tag: 'raspel-' + Date.now()
       })
-      not.onclick = () => { window.focus(); not.close() }
+      not.onclick = () => {
+        window.focus()
+        not.close()
+      }
       return true
     } catch {
       return false

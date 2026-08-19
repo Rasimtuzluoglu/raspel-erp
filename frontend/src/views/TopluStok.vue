@@ -7,7 +7,7 @@
         <template #title>
           <i
             class="pi pi-file-import"
-            style="margin-right:8px;color:#60a5fa"
+            style="margin-right: 8px; color: #60a5fa"
           />CSV ile Stok Aktar
         </template>
         <template #content>
@@ -16,7 +16,7 @@
             <pre>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar;stokGrubu;rafNo</pre>
             <a
               href="#"
-              style="color:#60a5fa;font-size:13px"
+              style="color: #60a5fa; font-size: 13px"
               @click.prevent="ornekCsv"
             >Örnek CSV indir</a>
           </div>
@@ -25,7 +25,7 @@
               ref="fileInput"
               type="file"
               accept=".csv"
-              style="display:none"
+              style="display: none"
               @change="csvSec"
             >
             <Button
@@ -45,6 +45,8 @@
           >
             <h3>Önizleme ({{ csvVeri.length }} kayıt)</h3>
             <DataTable
+              state-storage="session"
+              state-key="toplustok-table-state"
               :value="csvVeri.slice(0, 5)"
               size="small"
               striped-rows
@@ -92,7 +94,7 @@
                 label="İptal"
                 icon="pi pi-times"
                 class="p-button-text"
-                @click="csvVeri = []; seciliDosya = ''"
+                @click="csvIptal"
               />
             </div>
           </div>
@@ -127,13 +129,22 @@ const aktariyor = ref(false)
 const sonuc = ref(null)
 
 const parseCSV = (text) => {
-  const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l)
-  const header = lines[0].toLowerCase().split(';').map(h => h.trim())
+  const lines = text
+    .trim()
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l)
+  const header = lines[0]
+    .toLowerCase()
+    .split(';')
+    .map((h) => h.trim())
   const satirlar = []
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(';').map(c => c.trim())
+    const cols = lines[i].split(';').map((c) => c.trim())
     const obj = {}
-    header.forEach((h, idx) => { obj[h] = cols[idx] || '' })
+    header.forEach((h, idx) => {
+      obj[h] = cols[idx] || ''
+    })
     obj.fiyat = parseFloat(obj.fiyat) || 0
     obj.miktar = parseFloat(obj.miktar) || 0
     obj.minMiktar = obj.minMiktar ? parseFloat(obj.minMiktar) : null
@@ -149,14 +160,19 @@ const csvSec = (e) => {
   sonuc.value = null
   const reader = new FileReader()
   reader.onload = (ev) => {
-    try { csvVeri.value = parseCSV(ev.target.result) } catch { toastBildirim.hata('Dosya okunamadı') }
+    try {
+      csvVeri.value = parseCSV(ev.target.result)
+    } catch {
+      toastBildirim.hata('Dosya okunamadı')
+    }
   }
   reader.readAsText(file, 'UTF-8')
 }
 
 const csvAktar = async () => {
   aktariyor.value = true
-  let basari = 0, hata = 0
+  let basari = 0,
+    hata = 0
   for (const veri of csvVeri.value) {
     try {
       await stokAPI.create({
@@ -172,7 +188,9 @@ const csvAktar = async () => {
         aciklama: ''
       })
       basari++
-    } catch { hata++ }
+    } catch {
+      hata++
+    }
   }
   sonuc.value = { basari, hata }
   csvVeri.value = []
@@ -180,27 +198,74 @@ const csvAktar = async () => {
   aktariyor.value = false
 }
 
+const csvIptal = () => {
+  csvVeri.value = []
+  seciliDosya.value = ''
+}
+
 const ornekCsv = () => {
-  const icerik = 'ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar\nTest Urun;URN-001;8691234567890;Adet;100;50;10\nTest Urun 2;URN-002;;Kg;200;30;5'
+  const icerik =
+    'ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar\nTest Urun;URN-001;8691234567890;Adet;100;50;10\nTest Urun 2;URN-002;;Kg;200;30;5'
   const blob = new Blob(['\uFEFF' + icerik], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url; a.download = 'ornek_stok.csv'; a.click()
+  a.href = url
+  a.download = 'ornek_stok.csv'
+  a.click()
   URL.revokeObjectURL(url)
 }
 </script>
 
 <style scoped>
-.toplu-stok-container { padding: 0; }
-h1 { font-size: 24px; margin-bottom: 24px; }
-.islem-grid { max-width: 800px; }
-.csv-aciklama { margin-bottom: 16px; }
-.csv-aciklama pre { background: var(--bg-secondary); padding: 12px; border-radius: 8px; font-size: 12px; overflow-x: auto; }
-.csv-upload { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
-.dosya-adi { font-size: 13px; color: var(--text-secondary); }
-.csv-preview { margin-top: 16px; }
-.csv-preview h3 { font-size: 15px; margin: 0 0 12px; }
-.csv-preview small { display: block; margin-top: 8px; color: var(--text-muted); font-size: 12px; }
-.csv-actions { margin-top: 16px; display: flex; gap: 8px; }
-.csv-sonuc { margin-top: 16px; }
+.toplu-stok-container {
+  padding: 0;
+}
+h1 {
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+.islem-grid {
+  max-width: 800px;
+}
+.csv-aciklama {
+  margin-bottom: 16px;
+}
+.csv-aciklama pre {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  overflow-x: auto;
+}
+.csv-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+.dosya-adi {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.csv-preview {
+  margin-top: 16px;
+}
+.csv-preview h3 {
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+.csv-preview small {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.csv-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+.csv-sonuc {
+  margin-top: 16px;
+}
 </style>

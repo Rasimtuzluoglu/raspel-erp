@@ -4,19 +4,32 @@
       <div class="dashboard-baslik-blok">
         <h1>RasPel ERP</h1>
         <p class="karsilama-mesaji">
-          {{ karsilamaMetni }}, <strong>{{ authStore.kullanici?.displayName || authStore.kullanici?.username || '' }}</strong>
-          <span v-if="authStore.sirketAdi" class="karsilama-sirket">
+          {{ karsilamaMetni }},
+          <strong>{{ authStore.kullanici?.displayName || authStore.kullanici?.username || '' }}</strong>
+          <span
+            v-if="authStore.sirketAdi"
+            class="karsilama-sirket"
+          >
             <i class="pi pi-building" /> {{ authStore.sirketAdi }}
           </span>
         </p>
       </div>
       <div class="header-sag">
         <div class="doviz-ticker-compact">
-          <div v-for="k in dovizStore.kurlar" :key="k.kod || k.dovizKodu" class="ticker-chip">
+          <div
+            v-for="k in dovizStore.kurlar"
+            :key="k.kod || k.dovizKodu"
+            class="ticker-chip"
+          >
             <span class="chip-kod">{{ k.kod || k.dovizKodu }}:</span>
             <span class="chip-fiyat">{{ dovizStore.formatPara(k.satisFiyati || k.satisKuru, 'TRY') }}</span>
           </div>
-          <button class="chip-refresh-btn" :disabled="dovizStore.loading" title="Kurlari Yenile" @click="dovizStore.kurlariGuncelle">
+          <button
+            class="chip-refresh-btn"
+            :disabled="dovizStore.loading"
+            title="Kurlari Yenile"
+            @click="dovizStore.kurlariGuncelle"
+          >
             <i :class="dovizStore.loading ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" />
           </button>
         </div>
@@ -46,7 +59,7 @@
       <template #title>
         <i
           class="pi pi-sliders-h"
-          style="margin-right:8px"
+          style="margin-right: 8px"
         />Gösterilecek Widget'lar
       </template>
       <template #content>
@@ -60,7 +73,7 @@
             <span>{{ w.etiket }}</span>
           </label>
         </div>
-        <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+        <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end">
           <Button
             label="Uygula"
             icon="pi pi-check"
@@ -91,19 +104,19 @@
           height="90px"
         />
       </div>
-      <div style="grid-column:1/-1">
+      <div style="grid-column: 1/-1">
         <Skeleton
           width="100%"
           height="200px"
         />
       </div>
-      <div style="grid-column:1/-1">
+      <div style="grid-column: 1/-1">
         <Skeleton
           width="100%"
           height="120px"
         />
       </div>
-      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div style="grid-column: 1/-1; display: grid; grid-template-columns: 1fr 1fr; gap: 18px">
         <Skeleton
           width="100%"
           height="220px"
@@ -191,16 +204,28 @@
         v-if="widgets.istatistikler.gorunur"
         class="quick-actions"
       >
-        <router-link to="/faturalar" class="action-card fatura">
+        <router-link
+          to="/faturalar"
+          class="action-card fatura"
+        >
           <i class="pi pi-file" /><span>Yeni Fatura</span>
         </router-link>
-        <router-link to="/hizli-satis" class="action-card satis">
+        <router-link
+          to="/hizli-satis"
+          class="action-card satis"
+        >
           <i class="pi pi-bolt" /><span>Hizli Satis</span>
         </router-link>
-        <router-link to="/cari-hesaplar" class="action-card cari">
+        <router-link
+          to="/cari-hesaplar"
+          class="action-card cari"
+        >
           <i class="pi pi-user-plus" /><span>Yeni Cari</span>
         </router-link>
-        <router-link to="/hareketler" class="action-card tahsilat">
+        <router-link
+          to="/hareketler"
+          class="action-card tahsilat"
+        >
           <i class="pi pi-money-bill" /><span>Tahsilat/Odeme</span>
         </router-link>
       </div>
@@ -210,8 +235,14 @@
         class="backup-reminder"
       >
         <i class="pi pi-save" />
-        <span>Son yedekleme 7 gunden eski. Verilerinizi guvence altina almak icin <router-link to="/yedekler">yedek alin</router-link></span>
-        <button class="reminder-close" @click="yedekUyarisiGoster = false">&times;</button>
+        <span>Son yedekleme 7 gunden eski. Verilerinizi guvence altina almak icin
+          <router-link to="/yedekler">yedek alin</router-link></span>
+        <button
+          class="reminder-close"
+          @click="yedekUyarisiGoster = false"
+        >
+          &times;
+        </button>
       </div>
 
       <div
@@ -306,7 +337,7 @@
           <template #title>
             <i
               class="pi pi-chart-pie"
-              style="margin-right:8px"
+              style="margin-right: 8px"
             />Cari Bakiye Dağılımı
           </template>
           <template #content>
@@ -330,7 +361,7 @@
           <template #title>
             <i
               class="pi pi-chart-bar"
-              style="margin-right:8px"
+              style="margin-right: 8px"
             />Stok Dağılımı (En Çok Satan 5)
           </template>
           <template #content>
@@ -356,14 +387,14 @@
           <template #title>
             <i
               class="pi pi-chart-bar"
-              style="margin-right:8px"
+              style="margin-right: 8px"
             />Aylık Gelir / Gider (Son 6 Ay)
           </template>
           <template #content>
             <div
               v-if="gelirGiderChart.datasets.length"
               class="chart-wrapper"
-              style="max-width:100%"
+              style="max-width: 100%"
             >
               <Bar
                 :data="gelirGiderChart"
@@ -388,7 +419,7 @@
           <template #title>
             <i
               class="pi pi-chart-bar"
-              style="margin-right:8px"
+              style="margin-right: 8px"
             />Aylık Gelir-Gider Karşılaştırma
           </template>
           <template #content>
@@ -423,7 +454,7 @@
             <template #title>
               <i
                 class="pi pi-building"
-                style="margin-right:8px;color:#60a5fa"
+                style="margin-right: 8px; color: #60a5fa"
               />Banka
             </template>
             <template #content>
@@ -436,7 +467,7 @@
             <template #title>
               <i
                 class="pi pi-money-bill"
-                style="margin-right:8px;color:#34d399"
+                style="margin-right: 8px; color: #34d399"
               />Kasa
             </template>
             <template #content>
@@ -449,7 +480,7 @@
             <template #title>
               <i
                 class="pi pi-arrow-down"
-                style="margin-right:8px;color:#4ade80"
+                style="margin-right: 8px; color: #4ade80"
               />Bugünkü Tahsilat
             </template>
             <template #content>
@@ -462,7 +493,7 @@
             <template #title>
               <i
                 class="pi pi-arrow-up"
-                style="margin-right:8px;color:#f87171"
+                style="margin-right: 8px; color: #f87171"
               />Bugünkü Ödeme
             </template>
             <template #content>
@@ -475,7 +506,7 @@
             <template #title>
               <i
                 class="pi pi-wallet"
-                style="margin-right:8px;color:#fbbf24"
+                style="margin-right: 8px; color: #fbbf24"
               />Toplam Likidite
             </template>
             <template #content>
@@ -566,7 +597,7 @@
             <template #title>
               <i
                 class="pi pi-exclamation-triangle"
-                style="color:#f87171;margin-right:8px"
+                style="color: #f87171; margin-right: 8px"
               />Vadesi Geçen Faturalar
             </template>
             <template #content>
@@ -590,7 +621,7 @@
             <template #title>
               <i
                 class="pi pi-clock"
-                style="color:#fbbf24;margin-right:8px"
+                style="color: #fbbf24; margin-right: 8px"
               />Vadesi Yaklaşan (7 gün)
             </template>
             <template #content>
@@ -676,6 +707,8 @@
             />
           </div>
           <DataTable
+            state-storage="session"
+            state-key="dashboard-table-state"
             :value="dashboardStore.sonHareketler"
             :rows="5"
             striped-rows
@@ -692,25 +725,29 @@
             <Column
               field="tur"
               header="Tür"
-              style="width:100px"
+              style="width: 100px"
             >
               <template #body="s">
-                <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">{{ s.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}</span>
+                <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">{{
+                  s.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme'
+                }}</span>
               </template>
             </Column>
             <Column
               field="tutar"
               header="Tutar"
-              style="width:120px"
+              style="width: 120px"
             >
               <template #body="s">
-                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{ formatCurrency(s.data.tutar) }}</span>
+                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{
+                  formatCurrency(s.data.tutar)
+                }}</span>
               </template>
             </Column>
             <Column
               field="hareketTarihi"
               header="Tarih"
-              style="width:120px"
+              style="width: 120px"
             >
               <template #body="s">
                 {{ formatDate(s.data.hareketTarihi) }}
@@ -732,7 +769,7 @@
             <template #title>
               <i
                 class="pi pi-exclamation-triangle"
-                style="color:#f87171;margin-right:8px"
+                style="color: #f87171; margin-right: 8px"
               />Vadesi Geçen Cari
             </template>
             <template #content>
@@ -756,7 +793,7 @@
             <template #title>
               <i
                 class="pi pi-box"
-                style="color:#fbbf24;margin-right:8px"
+                style="color: #fbbf24; margin-right: 8px"
               />Kritik Stok
             </template>
             <template #content>
@@ -774,7 +811,7 @@
                 <span class="reminder-ad">{{ s.ad }}</span>
                 <span
                   class="reminder-tutar"
-                  style="color:#fbbf24"
+                  style="color: #fbbf24"
                 >{{ s.miktar }} {{ s.birim }}</span>
               </div>
             </template>
@@ -783,7 +820,7 @@
             <template #title>
               <i
                 class="pi pi-file"
-                style="color:#60a5fa;margin-right:8px"
+                style="color: #60a5fa; margin-right: 8px"
               />Son Faturalar
             </template>
             <template #content>
@@ -853,7 +890,18 @@ import { Doughnut, Bar, Line } from 'vue-chartjs'
 import Onboarding from '../components/Onboarding.vue'
 import SaatGostergesi from '../components/SaatGostergesi.vue'
 import { useYakinZamanda, yakinZamandaTurleri } from '../composables/useYakinZamanda.js'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler } from 'chart.js'
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Filler
+} from 'chart.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
@@ -884,9 +932,14 @@ const widgetAyarlariGoster = ref(false)
 const widgets = reactive(widgetVarsayilan())
 
 const kaydetWidget = () => {
-  widgetListesi.value.forEach(w => { widgets[w.key].gorunur = w.gorunur })
+  widgetListesi.value.forEach((w) => {
+    widgets[w.key].gorunur = w.gorunur
+  })
   widgetAyarlariGoster.value = false
-  localStorage.setItem('raspel_erp_widgets', JSON.stringify(Object.fromEntries(Object.entries(widgets).map(([k, v]) => [k, v.gorunur]))))
+  localStorage.setItem(
+    'raspel_erp_widgets',
+    JSON.stringify(Object.fromEntries(Object.entries(widgets).map(([k, v]) => [k, v.gorunur])))
+  )
 }
 const iptalWidget = () => {
   widgetAyarlariGoster.value = false
@@ -927,15 +980,34 @@ const gelirGiderChart = ref({ labels: [], datasets: [] })
 const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
-const barOptions = { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
-const lineOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
-const gelirGiderOptions = { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
-const aylikKarsilastirmaOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: v => formatCurrency(v) } } } }
+const barOptions = {
+  responsive: true,
+  indexAxis: 'y',
+  plugins: { legend: { display: false } },
+  scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } }
+}
+const lineOptions = {
+  responsive: true,
+  plugins: { legend: { display: false } },
+  scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } } }
+}
+const gelirGiderOptions = {
+  responsive: true,
+  plugins: { legend: { position: 'bottom' } },
+  scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } } }
+}
+const aylikKarsilastirmaOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } },
+  scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } } }
+}
 
-const bosSistem = computed(() =>
-  (cariHesapStore?.cariHesaplar?.length || 0) === 0 &&
-  (stokStore?.stoklar?.length || 0) === 0 &&
-  (faturaStore?.faturalar?.length || 0) === 0
+const bosSistem = computed(
+  () =>
+    (cariHesapStore?.cariHesaplar?.length || 0) === 0 &&
+    (stokStore?.stoklar?.length || 0) === 0 &&
+    (faturaStore?.faturalar?.length || 0) === 0
 )
 
 const yedekUyarisiGoster = ref(true)
@@ -948,65 +1020,75 @@ const sgGit = (kayit) => {
   if (yol) router.push(`${yol}${kayit.id}`)
 }
 const toplamFatura = computed(() => faturaStore.faturalar.length)
-const kesilenFatura = computed(() => faturaStore.faturalar.filter(f => f.durum === 'KESILDI').length)
+const kesilenFatura = computed(() => faturaStore.faturalar.filter((f) => f.durum === 'KESILDI').length)
 const toplamBankaBakiye = computed(() => bankaStore.bankalar.reduce((t, b) => t + (b.bakiye || 0), 0))
 const toplamKasaBakiye = computed(() => kasaStore.kasalar.reduce((t, k) => t + (k.bakiye || 0), 0))
 const toplamLikidite = computed(() => toplamBankaBakiye.value + toplamKasaBakiye.value)
 const toplamStok = computed(() => stokStore.stoklar.length)
 const dusukStokAdet = computed(() => stokStore.dusukStoklar.length)
-const vadesiGecenCari = computed(() => (cariHesapStore?.cariHesaplar || []).filter(c => c.bakiye > 0).sort((a, b) => b.bakiye - a.bakiye))
-const sonFaturalar = computed(() => [...faturaStore.faturalar].sort((a, b) => new Date(b.olusturmaTarihi) - new Date(a.olusturmaTarihi)).slice(0, 5))
+const vadesiGecenCari = computed(() =>
+  (cariHesapStore?.cariHesaplar || []).filter((c) => c.bakiye > 0).sort((a, b) => b.bakiye - a.bakiye)
+)
+const sonFaturalar = computed(() =>
+  [...faturaStore.faturalar].sort((a, b) => new Date(b.olusturmaTarihi) - new Date(a.olusturmaTarihi)).slice(0, 5)
+)
 
 const grafikleriHesapla = () => {
   bakiyeChart.value = {
     labels: ['Alacak', 'Borç'],
-    datasets: [{
-      data: [dashboardStore.pozitifBakiye || 0, Math.abs(dashboardStore.negatifBakiye) || 0],
-      backgroundColor: ['#4caf50', '#f44336'],
-      hoverBackgroundColor: ['#66bb6a', '#ef5350']
-    }]
+    datasets: [
+      {
+        data: [dashboardStore.pozitifBakiye || 0, Math.abs(dashboardStore.negatifBakiye) || 0],
+        backgroundColor: ['#4caf50', '#f44336'],
+        hoverBackgroundColor: ['#66bb6a', '#ef5350']
+      }
+    ]
   }
 
   if (dashboardStore.enCokSatanlar?.length) {
     barChart.value = {
-      labels: dashboardStore.enCokSatanlar.map(e => e.stokAd),
-      datasets: [{
-        data: dashboardStore.enCokSatanlar.map(e => e.satisMiktari),
-        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6']
-      }]
+      labels: dashboardStore.enCokSatanlar.map((e) => e.stokAd),
+      datasets: [
+        {
+          data: dashboardStore.enCokSatanlar.map((e) => e.satisMiktari),
+          backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6']
+        }
+      ]
     }
   }
 
   if (dashboardStore.sonHareketler?.length) {
     const ters = [...dashboardStore.sonHareketler].reverse()
     hareketChart.value = {
-      labels: ters.map(h => formatDate(h.hareketTarihi)),
-      datasets: [{
-        label: 'Tutar',
-        data: ters.map(h => h.tutar),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.1)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4,
-        pointBackgroundColor: '#3b82f6'
-      }]
+      labels: ters.map((h) => formatDate(h.hareketTarihi)),
+      datasets: [
+        {
+          label: 'Tutar',
+          data: ters.map((h) => h.tutar),
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#3b82f6'
+        }
+      ]
     }
   }
 
   if (dashboardStore.aylikGelirGider?.length) {
     gelirGiderChart.value = {
-      labels: dashboardStore.aylikGelirGider.map(a => a.ay),
+      labels: dashboardStore.aylikGelirGider.map((a) => a.ay),
       datasets: [
         {
           label: 'Gelir',
-          data: dashboardStore.aylikGelirGider.map(a => a.gelir),
+          data: dashboardStore.aylikGelirGider.map((a) => a.gelir),
           backgroundColor: '#4caf50',
           borderRadius: 4
         },
         {
           label: 'Gider',
-          data: dashboardStore.aylikGelirGider.map(a => a.gider),
+          data: dashboardStore.aylikGelirGider.map((a) => a.gider),
           backgroundColor: '#f44336',
           borderRadius: 4
         }
@@ -1028,29 +1110,29 @@ const aylikKarsilastirmayiHesapla = () => {
     return { yil: d.getFullYear(), ay: d.getMonth() }
   }).reverse()
 
-  const aylikVeri = son6Ay.map(m => {
-    const ayFaturalar = faturalar.filter(f => {
+  const aylikVeri = son6Ay.map((m) => {
+    const ayFaturalar = faturalar.filter((f) => {
       if (!f.tarih) return false
       const t = new Date(f.tarih)
       return t.getFullYear() === m.yil && t.getMonth() === m.ay && f.durum === 'KESILDI'
     })
-    const gelir = ayFaturalar.filter(f => f.tur === 'SATIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
-    const gider = ayFaturalar.filter(f => f.tur === 'ALIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
+    const gelir = ayFaturalar.filter((f) => f.tur === 'SATIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
+    const gider = ayFaturalar.filter((f) => f.tur === 'ALIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
     return { ay: aylar[m.ay], gelir, gider }
   })
 
   aylikKarsilastirmaChart.value = {
-    labels: aylikVeri.map(v => v.ay),
+    labels: aylikVeri.map((v) => v.ay),
     datasets: [
       {
         label: 'Gelir',
-        data: aylikVeri.map(v => v.gelir),
+        data: aylikVeri.map((v) => v.gelir),
         backgroundColor: '#4caf50',
         borderRadius: 4
       },
       {
         label: 'Gider',
-        data: aylikVeri.map(v => v.gider),
+        data: aylikVeri.map((v) => v.gider),
         backgroundColor: '#f44336',
         borderRadius: 4
       }
@@ -1063,10 +1145,14 @@ onMounted(async () => {
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_widgets'))
     if (kayitli) {
-      Object.keys(widgets).forEach(k => { if (kayitli[k] !== undefined) widgets[k].gorunur = kayitli[k] })
+      Object.keys(widgets).forEach((k) => {
+        if (kayitli[k] !== undefined) widgets[k].gorunur = kayitli[k]
+      })
       widgetListesi.value = Object.entries(widgets).map(([k, v]) => ({ key: k, ...v }))
     }
-  } catch (e) { /* yok */ }
+  } catch (e) {
+    /* yok */
+  }
 
   try {
     await Promise.all([
@@ -1102,124 +1188,489 @@ const whatsappLink = (f) => {
 </script>
 
 <style scoped>
-.dashboard-container { padding: 0; }
-.dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
-.dashboard-header h1 { margin: 0; font-size: 28px; font-weight: 700; }
-.dashboard-baslik-blok { display: flex; flex-direction: column; gap: 2px; }
-.karsilama-mesaji { margin: 0; font-size: 14px; color: var(--text-secondary); }
-.karsilama-mesaji strong { color: var(--text-primary); }
-.karsilama-sirket { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 10px; border-radius: 20px; background: rgba(59,130,246,0.12); color: #60a5fa; font-size: 12px; font-weight: 600; }
-.header-sag { display: flex; align-items: center; gap: 12px; }
-.dashboard-datetime { font-size: 13px; color: #94a3b8; white-space: nowrap; }
-.dashboard-datetime i { margin-right: 6px; }
-.skeleton-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-bottom:24px; }
-.skeleton-card { border-radius:14px; overflow:hidden; }
+.dashboard-container {
+  padding: 0;
+}
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+.dashboard-baslik-blok {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.karsilama-mesaji {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.karsilama-mesaji strong {
+  color: var(--text-primary);
+}
+.karsilama-sirket {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 600;
+}
+.header-sag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dashboard-datetime {
+  font-size: 13px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.dashboard-datetime i {
+  margin-right: 6px;
+}
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.skeleton-card {
+  border-radius: 14px;
+  overflow: hidden;
+}
 
-.widget-ayarlari { margin-bottom: 24px; }
-.widget-togglar { display: flex; flex-wrap: wrap; gap: 16px; }
-.widget-toggle { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+.widget-ayarlari {
+  margin-bottom: 24px;
+}
+.widget-togglar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.widget-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
 
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: var(--bg-card); padding: 18px; border-radius: 14px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; transition: all 0.3s; box-shadow: 0 2px 12px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
-.stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #3b82f6, #2563eb); }
-.stat-card.cari::before { background: linear-gradient(180deg, #3b82f6, #2563eb); }
-.stat-card.finans::before { background: linear-gradient(180deg, #6366f1, #4f46e5); }
-.stat-card.fatura::before { background: linear-gradient(180deg, #10b981, #059669); }
-.stat-card.banka::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
-.stat-card.kasa::before { background: linear-gradient(180deg, #14b8a6, #0d9488); }
-.stat-card.stok::before { background: linear-gradient(180deg, #f97316, #ea580c); }
-.stat-card.beklemede::before { background: linear-gradient(180deg, #ef4444, #dc2626); }
-.stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: rgba(59,130,246,0.25); }
-.stat-icon { width: 52px; height: 52px; background: linear-gradient(135deg, #1976d2, #1565c0); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
-.stat-icon.cari { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.stat-icon.finans { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-.stat-icon.fatura { background: linear-gradient(135deg, #10b981, #059669); }
-.stat-icon.banka { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.stat-icon.banka-bakiye { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.stat-icon.kasa { background: linear-gradient(135deg, #14b8a6, #0d9488); }
-.stat-icon.stok { background: linear-gradient(135deg, #f97316, #ea580c); }
-.stat-icon.ticaret { background: linear-gradient(135deg, #22c55e, #16a34a); }
-.stat-icon.beklemede { background: linear-gradient(135deg, #ef4444, #dc2626); }
-.stat-icon.iade { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.stat-icon.devir { background: linear-gradient(135deg, #06b6d4, #0891b2); }
-.stat-icon.tahsilat { background: linear-gradient(135deg, #22c55e, #16a34a); }
-.stat-icon.odeme { background: linear-gradient(135deg, #ef4444, #dc2626); }
-.stat-icon.bekleyen-izin { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.stat-icon.calisan { background: linear-gradient(135deg, #22c55e, #16a34a); }
-.stat-icon.izinli { background: linear-gradient(135deg, #eab308, #ca8a04); }
-.stat-icon.ise-baslayacak { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.stat-content { flex: 1; min-width: 0; }
-.stat-label { font-size: 12px; color: #94a3b8; margin: 0 0 6px; }
-.stat-value { font-size: 22px; font-weight: 700; margin: 0; }
-.stat-value small { font-size: 12px; color: #94a3b8; font-weight: 400; }
-.stat-value.positive { color: #4ade80; }
-.stat-value.negative { color: #f87171; }
-.critical-hint { margin: 4px 0 0; font-size: 11px; color: #f87171; }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-card);
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+.stat-card.cari::before {
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+.stat-card.finans::before {
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+}
+.stat-card.fatura::before {
+  background: linear-gradient(180deg, #10b981, #059669);
+}
+.stat-card.banka::before {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+.stat-card.kasa::before {
+  background: linear-gradient(180deg, #14b8a6, #0d9488);
+}
+.stat-card.stok::before {
+  background: linear-gradient(180deg, #f97316, #ea580c);
+}
+.stat-card.beklemede::before {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.stat-icon.cari {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+.stat-icon.finans {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+.stat-icon.fatura {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+.stat-icon.banka {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.stat-icon.banka-bakiye {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+.stat-icon.kasa {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+}
+.stat-icon.stok {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+.stat-icon.ticaret {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+.stat-icon.beklemede {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+.stat-icon.iade {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.stat-icon.devir {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+.stat-icon.tahsilat {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+.stat-icon.odeme {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+.stat-icon.bekleyen-izin {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.stat-icon.calisan {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+.stat-icon.izinli {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+.stat-icon.ise-baslayacak {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+.stat-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 6px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+.stat-value small {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+.stat-value.positive {
+  color: #4ade80;
+}
+.stat-value.negative {
+  color: #f87171;
+}
+.critical-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #f87171;
+}
 
-.charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 24px; }
-.chart-wrapper { max-width: 350px; margin: 0 auto; }
-.aylik-chart { max-width: 100%; height: 260px; }
-.chart-wrapper.line-chart { max-width: 100%; }
-.chart-summary { text-align: center; margin-top: 12px; font-size: 13px; color: #94a3b8; display: flex; justify-content: center; gap: 20px; }
-.chart-empty { text-align: center; padding: 30px; color: #64748b; }
-.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-.dot.pos { background: #4caf50; }
-.dot.neg { background: #f44336; }
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.chart-wrapper {
+  max-width: 350px;
+  margin: 0 auto;
+}
+.aylik-chart {
+  max-width: 100%;
+  height: 260px;
+}
+.chart-wrapper.line-chart {
+  max-width: 100%;
+}
+.chart-summary {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #94a3b8;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+.chart-empty {
+  text-align: center;
+  padding: 30px;
+  color: #64748b;
+}
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.dot.pos {
+  background: #4caf50;
+}
+.dot.neg {
+  background: #f44336;
+}
 
-.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.recent-transactions { background: var(--bg-card); padding: 20px; border-radius: 14px; border: 1px solid var(--border); }
-.recent-transactions h2 { margin: 0 0 12px; font-size: 18px; }
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.recent-transactions {
+  background: var(--bg-card);
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+.recent-transactions h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
 
-.reminder-grid { display: flex; flex-direction: column; gap: 16px; }
-.vade-uyarilari { margin-bottom: 24px; }
-.vade-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
-.vade-card .p-card-title { font-size: 14px !important; }
-.reminder-item small { color: var(--text-muted); margin-left: 6px; }
-.reminder-card .p-card-title { font-size: 14px !important; }
-.reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.reminder-aksiyon { display: flex; align-items: center; gap: 10px; }
-.whatsapp-buton { color: #25d366; font-size: 18px; display: inline-flex; }
-.whatsapp-buton:hover { transform: scale(1.15); }
-.reminder-item:last-child { border-bottom: none; }
-.reminder-ad { font-size: 13px; }
-.reminder-tutar { font-size: 13px; font-weight: 600; color: #4ade80; }
-.reminder-tutar.negative { color: #f87171; }
-.reminder-empty { text-align: center; padding: 12px; color: #4ade80; font-size: 13px; }
-.reminder-empty i { display: block; font-size: 22px; margin-bottom: 4px; }
+.reminder-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.vade-uyarilari {
+  margin-bottom: 24px;
+}
+.vade-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+.vade-card .p-card-title {
+  font-size: 14px !important;
+}
+.reminder-item small {
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+.reminder-card .p-card-title {
+  font-size: 14px !important;
+}
+.reminder-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.reminder-aksiyon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.whatsapp-buton {
+  color: #25d366;
+  font-size: 18px;
+  display: inline-flex;
+}
+.whatsapp-buton:hover {
+  transform: scale(1.15);
+}
+.reminder-item:last-child {
+  border-bottom: none;
+}
+.reminder-ad {
+  font-size: 13px;
+}
+.reminder-tutar {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4ade80;
+}
+.reminder-tutar.negative {
+  color: #f87171;
+}
+.reminder-empty {
+  text-align: center;
+  padding: 12px;
+  color: #4ade80;
+  font-size: 13px;
+}
+.reminder-empty i {
+  display: block;
+  font-size: 22px;
+  margin-bottom: 4px;
+}
 
-.badge { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.badge.tahsilat { background: rgba(76,175,80,0.15); color: #4ade80; }
-.badge.odeme { background: rgba(244,67,54,0.15); color: #f87171; }
-.positive { color: #4caf50; font-weight: bold; }
-.negative { color: #f44336; font-weight: bold; }
+.badge {
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge.tahsilat {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4ade80;
+}
+.badge.odeme {
+  background: rgba(244, 67, 54, 0.15);
+  color: #f87171;
+}
+.positive {
+  color: #4caf50;
+  font-weight: bold;
+}
+.negative {
+  color: #f44336;
+  font-weight: bold;
+}
 
-.section-title { font-size: 16px; margin: 24px 0 12px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-.nakit-akisi { margin-bottom: 24px; }
-.nakit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-.nakit-kart .p-card-title { font-size: 13px !important; }
-.nakit-kart .p-card-content { padding-top: 0 !important; }
-.nakit-deger { font-size: 20px; font-weight: 700; margin: 0; }
-.nakit-alt { font-size: 11px; color: var(--text-muted); margin: 4px 0 0; }
-.nakit-toplam { border-color: rgba(245,158,11,0.3) !important; }
-.son-goruntulenenler { margin-bottom: 24px; }
-.sg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.section-title {
+  font-size: 16px;
+  margin: 24px 0 12px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nakit-akisi {
+  margin-bottom: 24px;
+}
+.nakit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.nakit-kart .p-card-title {
+  font-size: 13px !important;
+}
+.nakit-kart .p-card-content {
+  padding-top: 0 !important;
+}
+.nakit-deger {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+.nakit-alt {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+.nakit-toplam {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.son-goruntulenenler {
+  margin-bottom: 24px;
+}
+.sg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
 .sg-item {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 10px 14px; cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
   transition: all 0.15s;
 }
-.sg-item:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
-.sg-item i { font-size: 18px; }
-.sg-bilgi { flex: 1; min-width: 0; }
-.sg-bilgi strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sg-bilgi small { display: block; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hizli-islemler { margin-bottom: 24px; }
-.islem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-.islem-grid .p-button { height: 56px; font-size: 13px; justify-content: center; }
+.sg-item:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+}
+.sg-item i {
+  font-size: 18px;
+}
+.sg-bilgi {
+  flex: 1;
+  min-width: 0;
+}
+.sg-bilgi strong {
+  display: block;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sg-bilgi small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hizli-islemler {
+  margin-bottom: 24px;
+}
+.islem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.islem-grid .p-button {
+  height: 56px;
+  font-size: 13px;
+  justify-content: center;
+}
 
 @media (max-width: 900px) {
-  .charts-row, .bottom-grid { grid-template-columns: 1fr; }
+  .charts-row,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .doviz-ticker-compact {
@@ -1281,25 +1732,58 @@ const whatsappLink = (f) => {
   color: white;
   font-weight: 600;
   font-size: 14px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
-.action-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.action-card i { font-size: 1.3rem; }
-.action-card.fatura { background: linear-gradient(135deg, #4f46e5, #6366f1); }
-.action-card.satis { background: linear-gradient(135deg, #059669, #10b981); }
-.action-card.cari { background: linear-gradient(135deg, #d97706, #f59e0b); }
-.action-card.tahsilat { background: linear-gradient(135deg, #dc2626, #ef4444); }
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.action-card i {
+  font-size: 1.3rem;
+}
+.action-card.fatura {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+.action-card.satis {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+.action-card.cari {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+}
+.action-card.tahsilat {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
 
 .backup-reminder {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 20px; margin-bottom: 20px;
-  background: var(--yellow-50, #fefce8); border: 1px solid var(--yellow-200, #fef08a);
-  border-radius: 10px; font-size: 14px; color: var(--yellow-800, #854d0e);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  background: var(--yellow-50, #fefce8);
+  border: 1px solid var(--yellow-200, #fef08a);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--yellow-800, #854d0e);
 }
-.backup-reminder a { color: var(--blue-600, #2563eb); font-weight: 600; }
-.reminder-close { margin-left: auto; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--yellow-600); }
+.backup-reminder a {
+  color: var(--blue-600, #2563eb);
+  font-weight: 600;
+}
+.reminder-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--yellow-600);
+}
 
 @media (max-width: 768px) {
-  .quick-actions { grid-template-columns: repeat(2, 1fr); }
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

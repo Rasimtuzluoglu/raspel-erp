@@ -16,6 +16,8 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="satinalma-table-state"
           :value="talepler"
           striped-rows
           :loading="taleplerYukleniyor"
@@ -50,7 +52,7 @@
           </Column>
           <Column
             header="İşlem"
-            style="width:150px"
+            style="width: 150px"
           >
             <template #body="{ data }">
               <Button
@@ -87,6 +89,8 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="satinalma-table-state"
           :value="siparisler"
           striped-rows
           :loading="siparislerYukleniyor"
@@ -119,13 +123,21 @@
             <template #body="{ data }">
               <Tag
                 :value="data.durum"
-                :severity="data.durum === 'SIPARIS_VERILDI' ? 'info' : data.durum === 'TESLIM_ALINDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+                :severity="
+                  data.durum === 'SIPARIS_VERILDI'
+                    ? 'info'
+                    : data.durum === 'TESLIM_ALINDI'
+                      ? 'success'
+                      : data.durum === 'IPTAL'
+                        ? 'danger'
+                        : 'warn'
+                "
               />
             </template>
           </Column>
           <Column
             header="İşlem"
-            style="width:150px"
+            style="width: 150px"
           >
             <template #body="{ data }">
               <Button
@@ -307,7 +319,10 @@ onMounted(async () => {
 
 const talepleriYukle = async () => {
   taleplerYukleniyor.value = true
-  try { const r = await satinalmaTalepAPI.getAll(); talepler.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    const r = await satinalmaTalepAPI.getAll()
+    talepler.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talepler yüklenirken hata oluştu')
   }
   taleplerYukleniyor.value = false
@@ -315,14 +330,20 @@ const talepleriYukle = async () => {
 
 const siparisleriYukle = async () => {
   siparislerYukleniyor.value = true
-  try { const r = await satinalmaSiparisAPI.getAll(); siparisler.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    const r = await satinalmaSiparisAPI.getAll()
+    siparisler.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
   }
   siparislerYukleniyor.value = false
 }
 
 const carieleriYukle = async () => {
-  try { const r = await cariHesapAPI.getAll(); cariler.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    const r = await cariHesapAPI.getAll()
+    cariler.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cariler yüklenirken hata oluştu')
   }
 }
@@ -380,7 +401,10 @@ const siparisDialogAc = () => {
 const siparisKaydet = async () => {
   kaydediliyor.value = true
   try {
-    await satinalmaSiparisAPI.create({ ...siparisForm.value, tarih: siparisForm.value.tarih?.toISOString().split('T')[0] })
+    await satinalmaSiparisAPI.create({
+      ...siparisForm.value,
+      tarih: siparisForm.value.tarih?.toISOString().split('T')[0]
+    })
     siparisDialog.value = false
     await siparisleriYukle()
   } catch (err) {
@@ -439,12 +463,39 @@ const siparisSil = (data) => {
 </script>
 
 <style scoped>
-.satinalma-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.panel-baslik { display: flex; justify-content: flex-end; margin-bottom: 16px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.satinalma-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.panel-baslik {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

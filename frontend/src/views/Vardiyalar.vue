@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="vardiyalar-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -59,7 +61,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -160,7 +162,7 @@ const duzenleme = ref(false)
 const form = ref({ personelId: null, tarih: new Date(), baslangic: '08:00', bitis: '16:00', tur: 'SABAH' })
 const turSecenekleri = ['SABAH', 'AKSAM', 'GECE']
 
-const dialogHeader = computed(() => duzenleme.value ? 'Vardiya Düzenle' : 'Yeni Vardiya')
+const dialogHeader = computed(() => (duzenleme.value ? 'Vardiya Düzenle' : 'Yeni Vardiya'))
 
 const formatDate = (d) => {
   if (!d) return '-'
@@ -172,7 +174,10 @@ onMounted(async () => {
   try {
     const [vR, pR] = await Promise.all([vardiyaAPI.getAll(), personelAPI.getAll()])
     list.value = vR.data?.content || vR.data || []
-    personelListesi.value = pR.data.map(p => ({ ...p, displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id }))
+    personelListesi.value = pR.data.map((p) => ({
+      ...p,
+      displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
+    }))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
@@ -202,7 +207,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Vardiya oluşturuldu')
     }
     dialog.value = false
-    const r = await vardiyaAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await vardiyaAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -220,7 +226,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await vardiyaAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Vardiya silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -231,12 +237,38 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.vardiya-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 12px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.vardiya-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

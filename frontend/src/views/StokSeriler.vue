@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="stokseriler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -40,7 +42,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -127,7 +129,7 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ stokId: null, seriNo: '', lotNo: '', skt: null })
 
-const dialogHeader = computed(() => duzenleme.value ? 'Seri/Lot Düzenle' : 'Yeni Seri/Lot')
+const dialogHeader = computed(() => (duzenleme.value ? 'Seri/Lot Düzenle' : 'Yeni Seri/Lot'))
 
 const formatDate = (d) => {
   if (!d) return '-'
@@ -148,7 +150,9 @@ onMounted(async () => {
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
-  form.value = data ? { ...data, skt: data.skt ? new Date(data.skt) : null } : { stokId: null, seriNo: '', lotNo: '', skt: null }
+  form.value = data
+    ? { ...data, skt: data.skt ? new Date(data.skt) : null }
+    : { stokId: null, seriNo: '', lotNo: '', skt: null }
   dialog.value = true
 }
 
@@ -164,7 +168,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Seri/Lot oluşturuldu')
     }
     dialog.value = false
-    const r = await stokSeriAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await stokSeriAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -181,7 +186,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await stokSeriAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Seri/Lot silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -192,10 +197,31 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.stokseri-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.stokseri-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

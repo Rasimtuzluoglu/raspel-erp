@@ -71,42 +71,54 @@ const emit = defineEmits(['update:kolonlar', 'update:yogunluk'])
 const panelAcik = ref(false)
 const yogunluk = ref('comfortable')
 
-const localKolonlar = ref(props.kolonlar.map(k => ({ ...k })))
+const localKolonlar = ref(props.kolonlar.map((k) => ({ ...k })))
 
-watch(() => props.kolonlar, (yeni) => {
-  localKolonlar.value = yeni.map(k => ({ ...k }))
-})
+watch(
+  () => props.kolonlar,
+  (yeni) => {
+    localKolonlar.value = yeni.map((k) => ({ ...k }))
+  }
+)
 
-const gizliKolonSayisi = computed(() => localKolonlar.value.filter(k => k.visible === false).length)
+const gizliKolonSayisi = computed(() => localKolonlar.value.filter((k) => k.visible === false).length)
 
 const localStorageAnahtari = () => `raspel_tablo_${props.tabloKey}`
 
-watch(localKolonlar, () => {
-  localStorage.setItem(localStorageAnahtari(), JSON.stringify({
-    kolonlar: localKolonlar.value.map(k => ({ field: k.field, visible: k.visible !== false })),
-    yogunluk: yogunluk.value
-  }))
-}, { deep: true })
+watch(
+  localKolonlar,
+  () => {
+    localStorage.setItem(
+      localStorageAnahtari(),
+      JSON.stringify({
+        kolonlar: localKolonlar.value.map((k) => ({ field: k.field, visible: k.visible !== false })),
+        yogunluk: yogunluk.value
+      })
+    )
+  },
+  { deep: true }
+)
 
 const init = () => {
   try {
     const kayitli = JSON.parse(localStorage.getItem(localStorageAnahtari()))
     if (kayitli?.kolonlar) {
-      const yeniKolonlar = localKolonlar.value.map(k => ({ ...k }))
-      kayitli.kolonlar.forEach(k => {
-        const kolon = yeniKolonlar.find(c => c.field === k.field)
+      const yeniKolonlar = localKolonlar.value.map((k) => ({ ...k }))
+      kayitli.kolonlar.forEach((k) => {
+        const kolon = yeniKolonlar.find((c) => c.field === k.field)
         if (kolon) kolon.visible = k.visible
       })
       localKolonlar.value = yeniKolonlar
       emit('update:kolonlar', yeniKolonlar)
     }
     if (kayitli?.yogunluk) yogunluk.value = kayitli.yogunluk
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   emit('update:yogunluk', yogunluk.value)
 }
 
 const degistir = (idx, val) => {
-  const yeniKolonlar = localKolonlar.value.map(k => ({ ...k }))
+  const yeniKolonlar = localKolonlar.value.map((k) => ({ ...k }))
   yeniKolonlar[idx].visible = val
   localKolonlar.value = yeniKolonlar
   emit('update:kolonlar', yeniKolonlar)
@@ -118,7 +130,7 @@ const yogunlukSec = (y) => {
 }
 
 const hepsiniGoster = () => {
-  const yeniKolonlar = localKolonlar.value.map(k => ({ ...k, visible: true }))
+  const yeniKolonlar = localKolonlar.value.map((k) => ({ ...k, visible: true }))
   localKolonlar.value = yeniKolonlar
   emit('update:kolonlar', yeniKolonlar)
 }
@@ -127,18 +139,55 @@ init()
 </script>
 
 <style scoped>
-.tablo-ayarlari { position: relative; }
-.ayar-panel {
-  position: absolute; top: 36px; right: 0; z-index: 100;
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 10px; box-shadow: var(--shadow);
-  padding: 12px; min-width: 210px;
+.tablo-ayarlari {
+  position: relative;
 }
-.ayar-baslik { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 6px 0; }
-.ayar-satir { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; cursor: pointer; }
-.ayar-ayrac { border-top: 1px solid var(--border); margin: 8px 0; }
-.ayar-yogunluk { display: flex; gap: 6px; }
-.w-full { width: 100% !important; }
-.panel-enter-active, .panel-leave-active { transition: all 0.15s ease; }
-.panel-enter-from, .panel-leave-to { opacity: 0; transform: translateY(-6px); }
+.ayar-panel {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 100;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  min-width: 210px;
+}
+.ayar-baslik {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 6px 0;
+}
+.ayar-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ayar-ayrac {
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+.ayar-yogunluk {
+  display: flex;
+  gap: 6px;
+}
+.w-full {
+  width: 100% !important;
+}
+.panel-enter-active,
+.panel-leave-active {
+  transition: all 0.15s ease;
+}
+.panel-enter-from,
+.panel-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 </style>

@@ -29,35 +29,59 @@ function handler(e) {
   const key = e.key.toLowerCase()
 
   if (ctrl && key === 's') {
-    if (tuslar.has('kaydet')) { e.preventDefault(); tuslar.get('kaydet')() }
+    if (tuslar.has('kaydet')) {
+      e.preventDefault()
+      tuslar.get('kaydet')()
+    }
     return
   }
   if (e.key === 'Escape') {
-    if (gAktif) { gAktif = false; clearTimeout(gTimer); return }
-    if (tuslar.has('iptal')) { tuslar.get('iptal')() }
+    if (gAktif) {
+      gAktif = false
+      clearTimeout(gTimer)
+      return
+    }
+    if (tuslar.has('iptal')) {
+      tuslar.get('iptal')()
+    }
     return
   }
   if (e.key === 'F2') {
-    if (tuslar.has('yeni')) { e.preventDefault(); tuslar.get('yeni')() }
+    if (tuslar.has('yeni')) {
+      e.preventDefault()
+      tuslar.get('yeni')()
+    }
     return
   }
   if (ctrl && key === 'p') {
-    if (tuslar.has('yazdir')) { e.preventDefault(); tuslar.get('yazdir')() }
+    if (tuslar.has('yazdir')) {
+      e.preventDefault()
+      tuslar.get('yazdir')()
+    }
     return
   }
   if (ctrl && key === 'k') {
-    if (tuslar.has('ara')) { e.preventDefault(); tuslar.get('ara')() }
+    if (tuslar.has('ara')) {
+      e.preventDefault()
+      tuslar.get('ara')()
+    }
     return
   }
 
-  if (girdiMi()) { gAktif = false; clearTimeout(gTimer); return }
+  if (girdiMi()) {
+    gAktif = false
+    clearTimeout(gTimer)
+    return
+  }
 
   if (!ctrl && !e.metaKey && !e.altKey) {
     if (key === 'g') {
       e.preventDefault()
       gAktif = true
       clearTimeout(gTimer)
-      gTimer = setTimeout(() => { gAktif = false }, 1000)
+      gTimer = setTimeout(() => {
+        gAktif = false
+      }, 1000)
       return
     }
     if (gAktif && gezinme[key]) {

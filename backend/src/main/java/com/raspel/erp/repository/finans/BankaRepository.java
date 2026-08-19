@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BankaRepository extends JpaRepository<Banka, Long> {
     Page<Banka> findBySirketId(Long sirketId, Pageable pageable);
+
+    java.util.List<Banka> findBySirketIdOrderByAd(Long sirketId);
 }

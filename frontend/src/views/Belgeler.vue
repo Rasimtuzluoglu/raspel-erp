@@ -1,12 +1,30 @@
 <template>
   <div class="belgeler-sayfasi">
     <div class="sayfa-baslik">
-      <h1><i class="pi pi-folder-open" style="margin-right:8px" />Belgeler</h1>
-      <Button label="Belge Yükle" icon="pi pi-upload" @click="yukleDialog = true" />
+      <h1>
+        <i
+          class="pi pi-folder-open"
+          style="margin-right: 8px"
+        />Belgeler
+      </h1>
+      <Button
+        label="Belge Yükle"
+        icon="pi pi-upload"
+        @click="yukleDialog = true"
+      />
     </div>
 
-    <DataTable :value="liste" striped-rows :loading="yukleniyor">
-      <Column field="dosyaAdi" header="Dosya">
+    <DataTable
+      state-storage="session"
+      state-key="belgeler-table-state"
+      :value="liste"
+      striped-rows
+      :loading="yukleniyor"
+    >
+      <Column
+        field="dosyaAdi"
+        header="Dosya"
+      >
         <template #body="{ data }">
           <div class="dosya-ad">
             <i :class="dosyaIkon(data.dosyaAdi)" />
@@ -14,49 +32,126 @@
           </div>
         </template>
       </Column>
-      <Column field="entityAdi" header="Bağlı Kayıt" />
-      <Column field="olusturmaTarihi" header="Tarih">
+      <Column
+        field="entityAdi"
+        header="Bağlı Kayıt"
+      />
+      <Column
+        field="olusturmaTarihi"
+        header="Tarih"
+      >
         <template #body="{ data }">
           {{ data.olusturmaTarihi ? new Date(data.olusturmaTarihi).toLocaleString('tr-TR') : '-' }}
         </template>
       </Column>
-      <Column header="İşlem" style="width:180px">
+      <Column
+        header="İşlem"
+        style="width: 180px"
+      >
         <template #body="{ data }">
-          <Button icon="pi pi-eye" class="p-button-rounded p-button-text" title="Önizle" @click="onizle(data)" />
-          <Button icon="pi pi-download" class="p-button-rounded p-button-text" title="İndir" @click="indir(data)" />
-          <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" title="Sil" @click="sil(data)" />
+          <Button
+            icon="pi pi-eye"
+            class="p-button-rounded p-button-text"
+            title="Önizle"
+            @click="onizle(data)"
+          />
+          <Button
+            icon="pi pi-download"
+            class="p-button-rounded p-button-text"
+            title="İndir"
+            @click="indir(data)"
+          />
+          <Button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-text p-button-danger"
+            title="Sil"
+            @click="sil(data)"
+          />
         </template>
       </Column>
     </DataTable>
-    <div v-if="!yukleniyor && !liste.length" class="bos">Henüz belge yok.</div>
+    <div
+      v-if="!yukleniyor && !liste.length"
+      class="bos"
+    >
+      Henüz belge yok.
+    </div>
 
-    <Dialog v-model:visible="yukleDialog" header="Belge Yükle" modal :style="{ width: '480px' }">
+    <Dialog
+      v-model:visible="yukleDialog"
+      header="Belge Yükle"
+      modal
+      :style="{ width: '480px' }"
+    >
       <div class="form-grup">
         <label>Bağlı Kayıt Türü</label>
-        <InputText v-model="yukleForm.entityAdi" placeholder="örn. Fatura, Sipariş, Cari..." class="w-full" />
+        <InputText
+          v-model="yukleForm.entityAdi"
+          placeholder="örn. Fatura, Sipariş, Cari..."
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Kayıt ID</label>
-        <InputNumber v-model="yukleForm.entityId" placeholder="örn. 123" class="w-full" />
+        <InputNumber
+          v-model="yukleForm.entityId"
+          placeholder="örn. 123"
+          class="w-full"
+        />
       </div>
       <div class="form-grup">
         <label>Dosya</label>
-        <input type="file" @change="dosyaSec" class="w-full" />
+        <input
+          type="file"
+          class="w-full"
+          @change="dosyaSec"
+        >
       </div>
       <template #footer>
-        <Button label="İptal" icon="pi pi-times" class="p-button-text" @click="yukleDialog = false" />
-        <Button label="Yükle" icon="pi pi-upload" :loading="yukleniyor" @click="yukle" />
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="yukleDialog = false"
+        />
+        <Button
+          label="Yükle"
+          icon="pi pi-upload"
+          :loading="yukleniyor"
+          @click="yukle"
+        />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="onizleDialog" :header="onizleBelge?.dosyaAdi" modal :style="{ width: '700px' }">
-      <div v-if="resimMi(onizleBelge?.dosyaAdi)" class="onizle-resim">
-        <img :src="onizleUrl" alt="önizle" />
+    <Dialog
+      v-model:visible="onizleDialog"
+      :header="onizleBelge?.dosyaAdi"
+      modal
+      :style="{ width: '700px' }"
+    >
+      <div
+        v-if="resimMi(onizleBelge?.dosyaAdi)"
+        class="onizle-resim"
+      >
+        <img
+          :src="onizleUrl"
+          alt="önizle"
+        >
       </div>
-      <div v-else class="onizle-yok">
-        <i class="pi pi-file" style="font-size:40px" />
+      <div
+        v-else
+        class="onizle-yok"
+      >
+        <i
+          class="pi pi-file"
+          style="font-size: 40px"
+        />
         <p>Bu dosya türü için önizleme yok. İndirerek görüntüleyebilirsiniz.</p>
-        <Button label="İndir" icon="pi pi-download" @click="onizleBelge && indir(onizleBelge)" />
+        <Button
+          label="İndir"
+          icon="pi pi-download"
+          @click="onizleBelge && indir(onizleBelge)"
+        />
       </div>
     </Dialog>
   </div>
@@ -80,7 +175,7 @@ const yukleForm = ref({ entityAdi: '', entityId: null, file: null })
 
 const resimUzantilar = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']
 
-const resimMi = (ad) => !!ad && resimUzantilar.some(u => ad.toLowerCase().endsWith(u))
+const resimMi = (ad) => !!ad && resimUzantilar.some((u) => ad.toLowerCase().endsWith(u))
 
 const dosyaIkon = (ad) => {
   if (resimMi(ad)) return 'pi pi-image'
@@ -89,7 +184,10 @@ const dosyaIkon = (ad) => {
 }
 
 const yukle = async () => {
-  if (!yukleForm.value.file) { toastBildirim.uyari('Lütfen dosya seçin'); return }
+  if (!yukleForm.value.file) {
+    toastBildirim.uyari('Lütfen dosya seçin')
+    return
+  }
   yukleniyor.value = true
   try {
     await belgeAPI.yukle(yukleForm.value.entityAdi || 'Genel', yukleForm.value.entityId || 0, yukleForm.value.file)
@@ -103,7 +201,9 @@ const yukle = async () => {
   yukleniyor.value = false
 }
 
-const dosyaSec = (e) => { yukleForm.value.file = e.target.files[0] }
+const dosyaSec = (e) => {
+  yukleForm.value.file = e.target.files[0]
+}
 
 const yukleListe = async () => {
   yukleniyor.value = true
@@ -166,15 +266,52 @@ onMounted(yukleListe)
 </script>
 
 <style scoped>
-.belgeler-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.sayfa-baslik h1 { margin: 0; }
-.dosya-ad { display: flex; align-items: center; gap: 8px; }
-.bos { text-align: center; color: var(--text-muted); padding: 40px 0; }
-.form-grup { margin-bottom: 14px; }
-.form-grup label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-.w-full { width: 100%; }
-.onizle-resim { text-align: center; }
-.onizle-resim img { max-width: 100%; max-height: 500px; border-radius: 8px; }
-.onizle-yok { text-align: center; padding: 40px; color: var(--text-secondary); }
+.belgeler-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.dosya-ad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bos {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+}
+.form-grup {
+  margin-bottom: 14px;
+}
+.form-grup label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.w-full {
+  width: 100%;
+}
+.onizle-resim {
+  text-align: center;
+}
+.onizle-resim img {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+}
+.onizle-yok {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
 </style>

@@ -18,23 +18,60 @@ export const uploadAPI = {
 }
 
 export const backupAPI = {
-  manual(type) { return apiClient.post(`/backups/manual?type=${type || 'DAILY'}`) },
-  list() { return apiClient.get('/backups') },
-  download(filename) { return apiClient.get(`/backups/download/${filename}`, { responseType: 'blob' }) },
-  delete(filename) { return apiClient.delete(`/backups/${filename}`) },
-  restore(filename) { return apiClient.post(`/backups/restore/${filename}`) },
-  getSchedule() { return apiClient.get('/backups/schedule') }
+  manual(type) {
+    return apiClient.post(`/backups/manual?type=${type || 'DAILY'}`)
+  },
+  list() {
+    return apiClient.get('/backups')
+  },
+  download(filename) {
+    return apiClient.get(`/backups/download/${filename}`, { responseType: 'blob' })
+  },
+  delete(filename) {
+    return apiClient.delete(`/backups/${filename}`)
+  },
+  restore(filename) {
+    return apiClient.post(`/backups/restore/${filename}`)
+  },
+  getSchedule() {
+    return apiClient.get('/backups/schedule')
+  },
+  getCloudConfig() {
+    return apiClient.get('/backups/cloud-config')
+  },
+  saveCloudConfig(data) {
+    return apiClient.post('/backups/cloud-config', data)
+  },
+  syncToCloud(filename) {
+    return apiClient.post('/backups/cloud-sync', null, { params: { filename } })
+  }
 }
 
 export const excelAPI = {
-  cariHesaplar() { return apiClient.get('/exports/cari-hesaplar', { responseType: 'blob' }) },
-  faturalar() { return apiClient.get('/exports/faturalar', { responseType: 'blob' }) },
-  hareketler() { return apiClient.get('/exports/hareketler', { responseType: 'blob' }) },
-  stoklar() { return apiClient.get('/exports/stoklar', { responseType: 'blob' }) },
-  personel() { return apiClient.get('/exports/personel', { responseType: 'blob' }) },
-  bankalar() { return apiClient.get('/exports/bankalar', { responseType: 'blob' }) },
-  kasalar() { return apiClient.get('/exports/kasalar', { responseType: 'blob' }) },
-  denetimLog(params) { return apiClient.get('/exports/denetim-log', { params, responseType: 'blob' }) }
+  cariHesaplar() {
+    return apiClient.get('/exports/cari-hesaplar', { responseType: 'blob' })
+  },
+  faturalar() {
+    return apiClient.get('/exports/faturalar', { responseType: 'blob' })
+  },
+  hareketler() {
+    return apiClient.get('/exports/hareketler', { responseType: 'blob' })
+  },
+  stoklar() {
+    return apiClient.get('/exports/stoklar', { responseType: 'blob' })
+  },
+  personel() {
+    return apiClient.get('/exports/personel', { responseType: 'blob' })
+  },
+  bankalar() {
+    return apiClient.get('/exports/bankalar', { responseType: 'blob' })
+  },
+  kasalar() {
+    return apiClient.get('/exports/kasalar', { responseType: 'blob' })
+  },
+  denetimLog(params) {
+    return apiClient.get('/exports/denetim-log', { params, responseType: 'blob' })
+  }
 }
 
 export const importAPI = {
@@ -56,9 +93,15 @@ export const importAPI = {
 }
 
 export const pdfAPI = {
-  fatura(id) { return apiClient.get(`/rapor/fatura/${id}`, { responseType: 'blob' }) },
-  siparis(id) { return apiClient.get(`/rapor/siparis/${id}`, { responseType: 'blob' }) },
-  irsaliye(id) { return apiClient.get(`/rapor/irsaliye/${id}`, { responseType: 'blob' }) }
+  fatura(id) {
+    return apiClient.get(`/rapor/fatura/${id}`, { responseType: 'blob' })
+  },
+  siparis(id) {
+    return apiClient.get(`/rapor/siparis/${id}`, { responseType: 'blob' })
+  },
+  irsaliye(id) {
+    return apiClient.get(`/rapor/irsaliye/${id}`, { responseType: 'blob' })
+  }
 }
 
 export const belgeAPI = {
@@ -69,8 +112,16 @@ export const belgeAPI = {
     formData.append('entityId', entityId)
     return apiClient.post('/belgeler/yukle', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
-  tumBelgeler() { return apiClient.get('/belgeler') },
-  kayitBelgeleri(entityAdi, entityId) { return apiClient.get(`/belgeler/kayit/${entityAdi}/${entityId}`) },
-  indir(filename) { return apiClient.get(`/belgeler/indir/${filename}`, { responseType: 'blob' }) },
-  sil(id) { return apiClient.delete(`/belgeler/${id}`) }
+  tumBelgeler() {
+    return apiClient.get('/belgeler')
+  },
+  kayitBelgeleri(entityAdi, entityId) {
+    return apiClient.get(`/belgeler/kayit/${entityAdi}/${entityId}`)
+  },
+  indir(filename) {
+    return apiClient.get(`/belgeler/indir/${filename}`, { responseType: 'blob' })
+  },
+  sil(id) {
+    return apiClient.delete(`/belgeler/${id}`)
+  }
 }

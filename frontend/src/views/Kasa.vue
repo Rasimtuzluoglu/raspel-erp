@@ -78,7 +78,7 @@
       v-model:visible="showKasaDialog"
       :header="editingKasaId ? 'Kasa Düzenle' : 'Yeni Kasa'"
       :modal="true"
-      style="width:400px"
+      style="width: 400px"
     >
       <div class="form-group">
         <label>Kasa Adı *</label>
@@ -139,6 +139,8 @@
 
       <div class="table-container">
         <DataTable
+          state-storage="session"
+          state-key="kasa-table-state"
           :value="kasaHareketler"
           striped-rows
           :rows="10"
@@ -149,7 +151,7 @@
           <Column
             field="tarih"
             header="Tarih"
-            style="width:100px"
+            style="width: 100px"
           >
             <template #body="s">
               {{ formatDate(s.data.hareketTarihi) }}
@@ -158,7 +160,7 @@
           <Column
             field="tur"
             header="Tür"
-            style="width:80px"
+            style="width: 80px"
           >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GELIR' ? 'gelir' : 'gider']">
@@ -169,7 +171,7 @@
           <Column
             field="tutar"
             header="Tutar"
-            style="width:120px"
+            style="width: 120px"
           >
             <template #body="s">
               <span :class="s.data.tur === 'GELIR' ? 'positive' : 'negative'">
@@ -180,7 +182,7 @@
           <Column
             field="kategoriAd"
             header="Kategori"
-            style="width:140px"
+            style="width: 140px"
           >
             <template #body="s">
               {{ s.data.kategoriAd || '-' }}
@@ -192,7 +194,7 @@
           />
           <Column
             header=""
-            style="width:60px"
+            style="width: 60px"
           >
             <template #body="s">
               <Button
@@ -215,7 +217,7 @@
       v-model:visible="showHareketDialog"
       :header="hareketBaslik"
       :modal="true"
-      style="width:500px"
+      style="width: 500px"
     >
       <div class="form-group">
         <label>Tutar *</label>
@@ -299,9 +301,9 @@ const showHareketDialog = ref(false)
 const hareketTur = ref('GELIR')
 const hareketForm = ref({ tutar: null, hareketTarihi: new Date(), kategoriId: null, aciklama: '' })
 
-const hareketBaslik = computed(() => hareketTur.value === 'GELIR' ? 'Gelir Ekle' : 'Gider Ekle')
+const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? 'Gelir Ekle' : 'Gider Ekle'))
 
-const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter(k => k.tur === hareketTur.value))
+const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter((k) => k.tur === hareketTur.value))
 
 onMounted(async () => {
   await Promise.all([kasaStore.getAllKasalar(), kategoriStore.getAllKategoriler()])
@@ -313,7 +315,9 @@ const kasaSec = async (kasa) => {
   try {
     const r = await kasaAPI.getHareketler(kasa.id)
     kasaHareketler.value = r.data
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi') }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi')
+  }
 }
 
 const openKasaDialog = () => {
@@ -329,7 +333,10 @@ const editKasa = (kasa) => {
 }
 
 const saveKasa = async () => {
-  if (!kasaForm.value.ad.trim()) { toastBildirim.uyari('Kasa adı giriniz'); return }
+  if (!kasaForm.value.ad.trim()) {
+    toastBildirim.uyari('Kasa adı giriniz')
+    return
+  }
   saving.value = true
   try {
     if (editingKasaId.value) {
@@ -340,17 +347,30 @@ const saveKasa = async () => {
       toastBildirim.basarili('Kasa oluşturuldu')
     }
     showKasaDialog.value = false
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
-  finally { saving.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+  } finally {
+    saving.value = false
+  }
 }
 
 const confirmDel = (id) => {
   confirm.require({
     message: 'Bu kasayı silmek istediğinizden emin misiniz?',
-    header: 'Onay', icon: 'pi pi-exclamation-triangle',
+    header: 'Onay',
+    icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await kasaStore.deleteKasa(id); if (seciliKasaId.value === id) { seciliKasaId.value = null; seciliKasa.value = null; kasaHareketler.value = [] } toastBildirim.basarili('Kasa silindi') }
-      catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
+      try {
+        await kasaStore.deleteKasa(id)
+        if (seciliKasaId.value === id) {
+          seciliKasaId.value = null
+          seciliKasa.value = null
+          kasaHareketler.value = []
+        }
+        toastBildirim.basarili('Kasa silindi')
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+      }
     }
   })
 }
@@ -363,7 +383,8 @@ const openHareketDialog = (tur) => {
 
 const saveHareket = async () => {
   if (!hareketForm.value.tutar || hareketForm.value.tutar <= 0) {
-    toastBildirim.uyari('Geçerli tutar giriniz'); return
+    toastBildirim.uyari('Geçerli tutar giriniz')
+    return
   }
   saving.value = true
   try {
@@ -377,23 +398,28 @@ const saveHareket = async () => {
     const r = await kasaAPI.getHareketler(seciliKasaId.value)
     kasaHareketler.value = r.data
     await kasaStore.getAllKasalar()
-    const guncel = kasaStore.kasalar.find(k => k.id === seciliKasaId.value)
+    const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
     showHareketDialog.value = false
     toastBildirim.basarili('Hareket eklendi')
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
-  finally { saving.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+  } finally {
+    saving.value = false
+  }
 }
 
 const delHareket = async (id) => {
   try {
     await kasaAPI.deleteHareket(id)
-    kasaHareketler.value = kasaHareketler.value.filter(h => h.id !== id)
+    kasaHareketler.value = kasaHareketler.value.filter((h) => h.id !== id)
     await kasaStore.getAllKasalar()
-    const guncel = kasaStore.kasalar.find(k => k.id === seciliKasaId.value)
+    const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
     toastBildirim.basarili('Hareket silindi')
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+  }
 }
 
 const excelIndir = async () => {
@@ -407,7 +433,9 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const formatCurrency = (v) => {
@@ -415,36 +443,135 @@ const formatCurrency = (v) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 }
 
-const formatDate = (d) => d
-  ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-  : '-'
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 </script>
 
 <style scoped>
-.kasa-container { padding: 20px; }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-h2 { color: var(--text-primary); font-size: 20px; margin: 0; }
-.toolbar { margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-.loading { text-align: center; padding: 40px; color: #666; }
-.kasa-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 30px; }
-.kasa-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
-.kasa-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: rgba(59,130,246,0.25); }
-.kasa-card.active { border-color: #3b82f6; background: rgba(59,130,246,0.08); }
-.kasa-ust { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
-.kasa-ust i { font-size: 28px; color: #1976d2; }
-.kasa-ust h3 { margin: 0; font-size: 18px; }
-.kasa-bakiye { font-size: 24px; font-weight: bold; margin: 0 0 15px 0; }
-.kasa-islem { display: flex; gap: 8px; }
-.positive { color: #4caf50; }
-.negative { color: #f44336; }
-.hareket-bolumu { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-.hareket-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-.table-container { overflow-x: auto; }
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: bold; color: #333; font-size: 13px; }
-.badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-.badge.gelir { background: #e8f5e9; color: #2e7d32; }
-.badge.gider { background: #ffebee; color: #c62828; }
-.w-full { width: 100% !important; }
-.full-width { grid-column: 1 / -1; }
+.kasa-container {
+  padding: 20px;
+}
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+h2 {
+  color: var(--text-primary);
+  font-size: 20px;
+  margin: 0;
+}
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+.kasa-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+.kasa-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+.kasa-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+.kasa-card.active {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+}
+.kasa-ust {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+.kasa-ust i {
+  font-size: 28px;
+  color: #1976d2;
+}
+.kasa-ust h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.kasa-bakiye {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+}
+.kasa-islem {
+  display: flex;
+  gap: 8px;
+}
+.positive {
+  color: #4caf50;
+}
+.negative {
+  color: #f44336;
+}
+.hareket-bolumu {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+.hareket-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.table-container {
+  overflow-x: auto;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #333;
+  font-size: 13px;
+}
+.badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge.gelir {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.badge.gider {
+  background: #ffebee;
+  color: #c62828;
+}
+.w-full {
+  width: 100% !important;
+}
+.full-width {
+  grid-column: 1 / -1;
+}
 </style>

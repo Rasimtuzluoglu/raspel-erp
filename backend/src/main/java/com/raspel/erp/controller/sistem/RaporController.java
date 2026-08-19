@@ -102,4 +102,13 @@ public class RaporController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(raporService.urunKarlilikRaporu(sirketId));
     }
+
+    @GetMapping("/nakit-akisi-projeksiyonu")
+    @Operation(summary = "Nakit akışı projeksiyonu", description = "30/60/90 günlük tahmini nakit akışı ve kasa projeksiyonunu getirir")
+    public ResponseEntity<com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO> nakitAkisiProjeksiyonu(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "30") int gun) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.nakitAkisiProjeksiyonu(gun, sirketId));
+    }
 }

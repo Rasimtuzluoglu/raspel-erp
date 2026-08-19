@@ -20,9 +20,11 @@
   "dependencies": {
     "@primevue/themes": "^4.5.4",
     "@stomp/stompjs": "^7.3.0",
+    "@vueuse/core": "^14.4.0",
     "axios": "^1.6.0",
     "axios-retry": "^4.5.0",
     "chart.js": "^4.5.1",
+    "nprogress": "^0.2.0",
     "pinia": "^2.1.0",
     "primeicons": "^8.0.0",
     "primevue": "^4.5.0",
@@ -44,6 +46,7 @@
     "prettier": "^3.6.0",
     "unplugin-vue-components": "^32.1.0",
     "vite": "^6.0.0",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.10"
   }
 }

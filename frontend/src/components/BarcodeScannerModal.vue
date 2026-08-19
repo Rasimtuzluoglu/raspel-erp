@@ -93,7 +93,7 @@ const startCamera = async () => {
 const stopCamera = () => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId)
   if (streamInstance) {
-    streamInstance.getTracks().forEach(track => track.stop())
+    streamInstance.getTracks().forEach((track) => track.stop())
     streamInstance = null
   }
 }
@@ -115,12 +115,16 @@ const detectBarcode = async () => {
             closeModal()
             return
           }
-        } catch { /* empty */ }
+        } catch {
+          /* empty */
+        }
       }
       animationFrameId = requestAnimationFrame(scanFrame)
     }
     scanFrame()
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 }
 
 const submitManual = () => {
@@ -136,13 +140,16 @@ const closeModal = () => {
   emit('update:visible', false)
 }
 
-watch(() => props.visible, (val) => {
-  if (val) {
-    startCamera()
-  } else {
-    stopCamera()
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) {
+      startCamera()
+    } else {
+      stopCamera()
+    }
   }
-})
+)
 
 onUnmounted(() => {
   stopCamera()
@@ -170,7 +177,10 @@ onUnmounted(() => {
 }
 .scan-overlay {
   position: absolute;
-  top: 15%; left: 10%; right: 10%; bottom: 15%;
+  top: 15%;
+  left: 10%;
+  right: 10%;
+  bottom: 15%;
   border: 2px dashed rgba(59, 130, 246, 0.8);
   border-radius: 10px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
@@ -183,9 +193,15 @@ onUnmounted(() => {
   animation: scanAnim 2s infinite ease-in-out;
 }
 @keyframes scanAnim {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(180px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(180px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 .error-msg {
   background: rgba(239, 68, 68, 0.15);
@@ -202,5 +218,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   margin-top: 0.35rem;
 }
-.w-full { width: 100%; }
+.w-full {
+  width: 100%;
+}
 </style>

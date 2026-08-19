@@ -10,7 +10,10 @@ let interval = null
 
 const guncelle = () => {
   const now = new Date()
-  saat.value = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' ' + now.toLocaleTimeString('tr-TR')
+  saat.value =
+    now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) +
+    ' ' +
+    now.toLocaleTimeString('tr-TR')
 }
 
 onMounted(() => {

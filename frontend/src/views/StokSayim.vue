@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="stoksayim-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -69,7 +71,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:200px"
+        style="width: 200px"
       >
         <template #body="{ data }">
           <Button
@@ -140,8 +142,11 @@
         <div class="field">
           <label>Fark</label>
           <span
-            :class="{ positive: (form.sayilanMiktar - form.beklenenMiktar) >= 0, negative: (form.sayilanMiktar - form.beklenenMiktar) < 0 }"
-            style="font-weight:700;font-size:18px;"
+            :class="{
+              positive: form.sayilanMiktar - form.beklenenMiktar >= 0,
+              negative: form.sayilanMiktar - form.beklenenMiktar < 0
+            }"
+            style="font-weight: 700; font-size: 18px"
           >
             {{ formatNumber(form.sayilanMiktar - form.beklenenMiktar) }}
           </span>
@@ -183,7 +188,7 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ tarih: new Date(), stokId: null, beklenenMiktar: 0, sayilanMiktar: 0 })
 
-const dialogHeader = computed(() => duzenleme.value ? 'Sayım Düzenle' : 'Yeni Sayım')
+const dialogHeader = computed(() => (duzenleme.value ? 'Sayım Düzenle' : 'Yeni Sayım'))
 
 const formatDate = (d) => {
   if (!d) return '-'
@@ -208,12 +213,14 @@ onMounted(async () => {
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
-  form.value = data ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date() } : { tarih: new Date(), stokId: null, beklenenMiktar: 0, sayilanMiktar: 0 }
+  form.value = data
+    ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date() }
+    : { tarih: new Date(), stokId: null, beklenenMiktar: 0, sayilanMiktar: 0 }
   dialog.value = true
 }
 
 const onStokSec = () => {
-  const stok = stokListesi.value.find(s => s.id === form.value.stokId)
+  const stok = stokListesi.value.find((s) => s.id === form.value.stokId)
   form.value.beklenenMiktar = stok?.miktar ?? 0
 }
 
@@ -234,7 +241,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Sayım oluşturuldu')
     }
     dialog.value = false
-    const r = await stokSayimAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await stokSayimAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -244,7 +252,8 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await stokSayimAPI.durumGuncelle(data.id, durum)
-    const r = await stokSayimAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await stokSayimAPI.getAll()
+    list.value = r.data?.content || r.data || []
     toastBildirim.basarili(`Sayım durumu "${durum}" olarak güncellendi`)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Durum güncellenirken hata oluştu')
@@ -261,7 +270,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await stokSayimAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Sayım kaydı silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -272,12 +281,37 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.stoksayim-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.positive { color: #4ade80; }
-.negative { color: #f87171; }
+.stoksayim-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.positive {
+  color: #4ade80;
+}
+.negative {
+  color: #f87171;
+}
 </style>

@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="butceler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -56,7 +58,7 @@
       />
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -181,10 +183,18 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ ad: '', yil: new Date().getFullYear(), ay: new Date().getMonth() + 1, tur: 'GELIR', tutar: 0, kategori: '', aciklama: '' })
+const form = ref({
+  ad: '',
+  yil: new Date().getFullYear(),
+  ay: new Date().getMonth() + 1,
+  tur: 'GELIR',
+  tutar: 0,
+  kategori: '',
+  aciklama: ''
+})
 const turSecenekleri = ['GELIR', 'GIDER']
 
-const dialogHeader = computed(() => duzenleme.value ? 'Bütçe Düzenle' : 'Yeni Bütçe')
+const dialogHeader = computed(() => (duzenleme.value ? 'Bütçe Düzenle' : 'Yeni Bütçe'))
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
@@ -193,7 +203,10 @@ const formatCurrency = (v) => {
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const r = await butceAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    const r = await butceAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Bütçeler yüklenemedi')
   }
   yukleniyor.value = false
@@ -201,7 +214,17 @@ onMounted(async () => {
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
-  form.value = data ? { ...data } : { ad: '', yil: new Date().getFullYear(), ay: new Date().getMonth() + 1, tur: 'GELIR', tutar: 0, kategori: '', aciklama: '' }
+  form.value = data
+    ? { ...data }
+    : {
+        ad: '',
+        yil: new Date().getFullYear(),
+        ay: new Date().getMonth() + 1,
+        tur: 'GELIR',
+        tutar: 0,
+        kategori: '',
+        aciklama: ''
+      }
   dialog.value = true
 }
 
@@ -216,7 +239,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Bütçe oluşturuldu')
     }
     dialog.value = false
-    const r = await butceAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await butceAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -233,7 +257,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await butceAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Bütçe silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -244,12 +268,38 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.butce-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 12px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.butce-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="ceksenet-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -58,13 +60,21 @@
         <template #body="{ data }">
           <Tag
             :value="data.durum"
-            :severity="data.durum === 'PORTFOY' ? 'info' : data.durum === 'TAHSIL_EDILDI' ? 'success' : data.durum === 'PROTESTO' ? 'danger' : 'warn'"
+            :severity="
+              data.durum === 'PORTFOY'
+                ? 'info'
+                : data.durum === 'TAHSIL_EDILDI'
+                  ? 'success'
+                  : data.durum === 'PROTESTO'
+                    ? 'danger'
+                    : 'warn'
+            "
           />
         </template>
       </Column>
       <Column
         header="İşlem"
-        style="width:160px"
+        style="width: 160px"
       >
         <template #body="{ data }">
           <Button
@@ -112,7 +122,7 @@
             <label>Tür *</label>
             <Dropdown
               v-model="form.tur"
-              :options="['CEK','SENET']"
+              :options="['CEK', 'SENET']"
               class="w-full"
             />
           </div>
@@ -199,18 +209,38 @@ const cariler = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
-const form = ref({ tur: 'CEK', cariHesapId: null, bankaAdi: '', cekNo: '', vadeTarihi: new Date(), tutar: null, aciklama: '' })
+const form = ref({
+  tur: 'CEK',
+  cariHesapId: null,
+  bankaAdi: '',
+  cekNo: '',
+  vadeTarihi: new Date(),
+  tutar: null,
+  aciklama: ''
+})
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const [r, c] = await Promise.all([cekSenetAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data?.content || r.data || []; cariler.value = c.data?.content || c.data || [] } catch (err) {
+  try {
+    const [r, c] = await Promise.all([cekSenetAPI.getAll(), cariHesapAPI.getAll()])
+    list.value = r.data?.content || r.data || []
+    cariler.value = c.data?.content || c.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet listesi yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
 
 const dialogAc = () => {
-  form.value = { tur: 'CEK', cariHesapId: null, bankaAdi: '', cekNo: '', vadeTarihi: new Date(), tutar: null, aciklama: '' }
+  form.value = {
+    tur: 'CEK',
+    cariHesapId: null,
+    bankaAdi: '',
+    cekNo: '',
+    vadeTarihi: new Date(),
+    tutar: null,
+    aciklama: ''
+  }
   dialog.value = true
 }
 
@@ -218,14 +248,21 @@ const kaydet = async () => {
   kaydediliyor.value = true
   try {
     await cekSenetAPI.create({ ...form.value, vadeTarihi: form.value.vadeTarihi?.toISOString().split('T')[0] })
-    dialog.value = false; const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || []
+    dialog.value = false
+    const r = await cekSenetAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet kaydedilirken hata oluştu')
-  } kaydediliyor.value = false
+  }
+  kaydediliyor.value = false
 }
 
 const durumGuncelle = async (data, durum) => {
-  try { await cekSenetAPI.durumGuncelle(data.id, durum); const r = await cekSenetAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    await cekSenetAPI.durumGuncelle(data.id, durum)
+    const r = await cekSenetAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
 }
@@ -238,7 +275,10 @@ const sil = (data) => {
     acceptLabel: 'Evet, Sil',
     rejectLabel: 'İptal',
     accept: async () => {
-      try { await cekSenetAPI.delete(data.id); list.value = list.value.filter(x => x.id !== data.id) } catch (err) {
+      try {
+        await cekSenetAPI.delete(data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
+      } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet silinirken hata oluştu')
       }
     },
@@ -248,13 +288,41 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.ceksenet-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 16px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.ceksenet-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 16px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

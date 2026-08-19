@@ -68,7 +68,7 @@ export const useHareketStore = defineStore('hareket', () => {
   const updateHareket = async (id, hareket) => {
     try {
       const response = await hareketAPI.update(id, hareket)
-      const index = hareketler.value.findIndex(h => h.id === id)
+      const index = hareketler.value.findIndex((h) => h.id === id)
       if (index !== -1) hareketler.value[index] = response.data
       await getSonHareketler(5)
       return response.data
@@ -81,8 +81,8 @@ export const useHareketStore = defineStore('hareket', () => {
   const deleteHareket = async (id) => {
     try {
       await hareketAPI.delete(id)
-      hareketler.value = hareketler.value.filter(h => h.id !== id)
-      sonHareketler.value = sonHareketler.value.filter(h => h.id !== id)
+      hareketler.value = hareketler.value.filter((h) => h.id !== id)
+      sonHareketler.value = sonHareketler.value.filter((h) => h.id !== id)
     } catch (err) {
       error.value = err.message
       throw err

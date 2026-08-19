@@ -24,6 +24,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="donemler-table-state"
       :value="donemler"
       striped-rows
       responsive-layout="scroll"
@@ -32,7 +34,7 @@
       <Column
         field="id"
         header="#"
-        style="width:60px"
+        style="width: 60px"
       />
       <Column
         field="ad"
@@ -68,7 +70,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -171,7 +173,10 @@ onMounted(async () => {
 })
 
 const donemleriYukle = async () => {
-  if (!seciliSirketId.value) { donemler.value = []; return }
+  if (!seciliSirketId.value) {
+    donemler.value = []
+    return
+  }
   yukleniyor.value = true
   try {
     const r = await donemAPI.getBySirket(seciliSirketId.value)
@@ -185,14 +190,25 @@ const donemleriYukle = async () => {
 const dialogAc = (data) => {
   duzenleme.value = !!data
   seciliId.value = data?.id || null
-  form.value = data ? { ...data, baslangic: data.baslangic ? new Date(data.baslangic) : null, bitis: data.bitis ? new Date(data.bitis) : null } : { ad: '', baslangic: null, bitis: null, sirketId: seciliSirketId.value, aktif: true }
+  form.value = data
+    ? {
+        ...data,
+        baslangic: data.baslangic ? new Date(data.baslangic) : null,
+        bitis: data.bitis ? new Date(data.bitis) : null
+      }
+    : { ad: '', baslangic: null, bitis: null, sirketId: seciliSirketId.value, aktif: true }
   dialog.value = true
 }
 
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, sirketId: seciliSirketId.value, baslangic: form.value.baslangic?.toISOString().split('T')[0], bitis: form.value.bitis?.toISOString().split('T')[0] }
+    const payload = {
+      ...form.value,
+      sirketId: seciliSirketId.value,
+      baslangic: form.value.baslangic?.toISOString().split('T')[0],
+      bitis: form.value.bitis?.toISOString().split('T')[0]
+    }
     if (duzenleme.value) {
       await donemAPI.update(seciliId.value, payload)
     } else {
@@ -227,13 +243,43 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.donemler-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; }
-.sayfa-baslik h1 { margin: 0; }
-.baslik-aksiyon { display: flex; gap: 12px; align-items: center; }
-.sirket-dropdown { min-width: 200px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.donemler-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.baslik-aksiyon {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.sirket-dropdown {
+  min-width: 200px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

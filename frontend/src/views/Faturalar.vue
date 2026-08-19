@@ -18,7 +18,10 @@
         />
       </template>
       <template #end>
-        <TarihHizliSecim v-model="tarihAraligi" style="margin-right:8px" />
+        <TarihHizliSecim
+          v-model="tarihAraligi"
+          style="margin-right: 8px"
+        />
         <Button
           label="Excel"
           icon="pi pi-file-excel"
@@ -65,6 +68,8 @@
       </div>
       <DataTable
         v-model:selection="selectedItems"
+        state-storage="session"
+        state-key="faturalar-table-state"
         selection-mode="multiple"
         :value="filtrelenmisFaturalar"
         responsive-layout="scroll"
@@ -72,18 +77,18 @@
         :rows="10"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        :rows-per-page-options="[10,20,50]"
+        :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
       >
         <Column
           field="faturaNumarasi"
           header="Fatura No"
-          style="width:160px"
+          style="width: 160px"
         />
         <Column
           field="tarih"
           header="Tarih"
-          style="width:110px"
+          style="width: 110px"
         >
           <template #body="s">
             {{ formatDate(s.data.tarih) }}
@@ -92,7 +97,7 @@
         <Column
           field="tur"
           header="Tür"
-          style="width:90px"
+          style="width: 90px"
         >
           <template #body="s">
             <span :class="['badge', s.data.tur === 'SATIS' ? 'satis' : 'alis']">
@@ -103,7 +108,7 @@
         <Column
           field="cariHesapAd"
           header="Cari Hesap"
-          style="width:180px"
+          style="width: 180px"
         >
           <template #body="s">
             {{ s.data.cariHesapAd || '-' }}
@@ -112,7 +117,7 @@
         <Column
           field="genelToplam"
           header="Toplam"
-          style="width:130px"
+          style="width: 130px"
         >
           <template #body="s">
             {{ formatCurrency(s.data.genelToplam) }}
@@ -121,7 +126,7 @@
         <Column
           field="durum"
           header="Durum"
-          style="width:110px"
+          style="width: 110px"
         >
           <template #body="s">
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">
@@ -132,26 +137,38 @@
         <Column
           field="olusturanKullaniciAdi"
           header="İşlemi Yapan"
-          style="width:140px"
+          style="width: 140px"
         >
           <template #body="s">
-            <span v-if="s.data.olusturanKullaniciAdi" class="islem-yapan">{{ s.data.olusturanKullaniciAdi }}</span>
-            <span v-else class="islem-yapan-bos">-</span>
+            <span
+              v-if="s.data.olusturanKullaniciAdi"
+              class="islem-yapan"
+            >{{ s.data.olusturanKullaniciAdi }}</span>
+            <span
+              v-else
+              class="islem-yapan-bos"
+            >-</span>
           </template>
         </Column>
         <Column
           field="teslimEden"
           header="Teslim Eden"
-          style="width:140px"
+          style="width: 140px"
         >
           <template #body="s">
-            <span v-if="s.data.teslimEden" class="teslim-eden-list"><i class="pi pi-truck" /> {{ s.data.teslimEden }}</span>
-            <span v-else class="islem-yapan-bos">-</span>
+            <span
+              v-if="s.data.teslimEden"
+              class="teslim-eden-list"
+            ><i class="pi pi-truck" /> {{ s.data.teslimEden }}</span>
+            <span
+              v-else
+              class="islem-yapan-bos"
+            >-</span>
           </template>
         </Column>
         <Column
           header="İşlemler"
-          style="width:310px"
+          style="width: 310px"
         >
           <template #body="s">
             <Button
@@ -170,7 +187,7 @@
               icon="pi pi-whatsapp"
               class="p-button-rounded p-button-sm p-button-success"
               title="WhatsApp İle Gönder"
-              style="background:#25D366;border-color:#25D366"
+              style="background: #25d366; border-color: #25d366"
               @click="whatsappGonder(s.data)"
             />
             <Button
@@ -218,7 +235,7 @@
       v-model:visible="showDialog"
       :header="dialogBaslik"
       :modal="true"
-      style="width:750px"
+      style="width: 750px"
       :closable="false"
     >
       <div class="form-grid">
@@ -229,7 +246,11 @@
             :suggestions="cariOnerileri"
             option-label="ad"
             option-value="id"
-            :placeholder="form.tur === 'ALIS' ? 'Tedarikçi ara ve seç (isim, vergi no, telefon)...' : 'Cari ara ve seç (isim, vergi no, telefon)...'"
+            :placeholder="
+              form.tur === 'ALIS'
+                ? 'Tedarikçi ara ve seç (isim, vergi no, telefon)...'
+                : 'Cari ara ve seç (isim, vergi no, telefon)...'
+            "
             class="w-full"
             :force-selection="false"
             @complete="cariAra($event)"
@@ -238,7 +259,9 @@
             <template #option="slotProps">
               <div class="cari-opsiyon">
                 <span>{{ slotProps.option.ad }}</span>
-                <span class="cari-opsiyon-detay">{{ slotProps.option.vergiNumarasi || slotProps.option.telefon || '' }}</span>
+                <span class="cari-opsiyon-detay">{{
+                  slotProps.option.vergiNumarasi || slotProps.option.telefon || ''
+                }}</span>
               </div>
             </template>
           </AutoComplete>
@@ -290,7 +313,7 @@
             <label>Para Birimi</label>
             <Dropdown
               v-model="form.paraBirimi"
-              :options="['TRY','USD','EUR','GBP','SAR','GAU']"
+              :options="['TRY', 'USD', 'EUR', 'GBP', 'SAR', 'GAU']"
               class="w-full"
               placeholder="TRY (₺)"
             />
@@ -301,7 +324,13 @@
           >
             <label>Kur Bilgisi (TL Karşılığı)</label>
             <div class="kur-bilgi-box">
-              1 {{ form.paraBirimi }} = {{ dovizStore.formatPara(dovizStore.getKur(form.paraBirimi).satisFiyati || dovizStore.getKur(form.paraBirimi).satisKuru, 'TRY') }}
+              1 {{ form.paraBirimi }} =
+              {{
+                dovizStore.formatPara(
+                  dovizStore.getKur(form.paraBirimi).satisFiyati || dovizStore.getKur(form.paraBirimi).satisKuru,
+                  'TRY'
+                )
+              }}
             </div>
           </div>
         </div>
@@ -361,11 +390,11 @@
       <div class="urun-ekleme">
         <div
           class="form-row"
-          style="display:flex;gap:10px;align-items:flex-end"
+          style="display: flex; gap: 10px; align-items: flex-end"
         >
           <div
             class="form-group"
-            style="flex:3;margin:0"
+            style="flex: 3; margin: 0"
           >
             <label>Ürün Seç (Stoktan Otomatik Ekle)</label>
             <Dropdown
@@ -379,22 +408,22 @@
               @change="urunSecildi"
             >
               <template #option="s">
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="flex:1;color:#f1f5f9">{{ s.option.ad }}</span>
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <span style="flex: 1; color: #f1f5f9">{{ s.option.ad }}</span>
                   <span
                     v-if="kritikStokMu(s.option)"
                     class="kitlik-rozeti"
                     :title="'Kritik stok seviyesi: minimum ' + (s.option.minMiktar || 0)"
                   >Son {{ Math.floor(s.option.miktar) }} adet</span>
-                  <span style="color:#4ade80;font-size:12px;font-weight:600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
-                  <span style="color:#94a3b8;font-size:12px">{{ formatCurrency(s.option.fiyat) }}</span>
+                  <span style="color: #4ade80; font-size: 12px; font-weight: 600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
+                  <span style="color: #94a3b8; font-size: 12px">{{ formatCurrency(s.option.fiyat) }}</span>
                 </div>
               </template>
             </Dropdown>
           </div>
           <div
             class="form-group"
-            style="flex:1;margin:0"
+            style="flex: 1; margin: 0"
           >
             <label>Miktar</label>
             <InputNumber
@@ -406,7 +435,7 @@
           <Button
             icon="pi pi-plus"
             class="p-button-success"
-            style="margin-bottom:2px"
+            style="margin-bottom: 2px"
             :disabled="!urunSecimi || !urunAdet"
             @click="urunEkleKalem"
           />
@@ -420,7 +449,9 @@
         <div class="fiyat-gecmisi-ust">
           <i class="pi pi-chart-line" />
           <span>Alış Fiyat Geçmişi</span>
-          <span :class="['trend-rozet', (fiyatGecmisi.trend || '').toLowerCase()]">{{ trendLabel(fiyatGecmisi.trend) }}</span>
+          <span :class="['trend-rozet', (fiyatGecmisi.trend || '').toLowerCase()]">{{
+            trendLabel(fiyatGecmisi.trend)
+          }}</span>
         </div>
         <div class="fiyat-gecmisi-liste">
           <div
@@ -436,7 +467,9 @@
         <div
           v-if="fiyatGecmisi.guncelFiyat"
           class="fiyat-gecmisi-guncel"
-        >Güncel Satış Fiyatı: <strong>{{ formatCurrency(fiyatGecmisi.guncelFiyat) }}</strong></div>
+        >
+          Güncel Satış Fiyatı: <strong>{{ formatCurrency(fiyatGecmisi.guncelFiyat) }}</strong>
+        </div>
       </div>
 
       <div
@@ -463,7 +496,7 @@
             class="son-urun-item"
             @click="sonUrunuEkle(u)"
           >
-            <span class="son-urun-ad">{{ u.stokAd || ('Ürün #' + u.stokId) }}</span>
+            <span class="son-urun-ad">{{ u.stokAd || 'Ürün #' + u.stokId }}</span>
             <span class="son-urun-bilgi">{{ u.sonAlisTarihi || '' }} · {{ u.adet }} adet</span>
             <span class="son-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
             <i class="pi pi-plus son-urun-ekle" />
@@ -471,16 +504,18 @@
         </div>
       </div>
 
-      <h3 style="margin:20px 0 10px">
+      <h3 style="margin: 20px 0 10px">
         Fatura Kalemleri
       </h3>
       <DataTable
+        state-storage="session"
+        state-key="faturalar-table-state"
         :value="form.kalemler"
         striped-rows
       >
         <Column
           header="#"
-          style="width:40px"
+          style="width: 40px"
         >
           <template #body="s">
             {{ s.index + 1 }}
@@ -497,7 +532,7 @@
         </Column>
         <Column
           header="Adet *"
-          style="width:90px"
+          style="width: 90px"
         >
           <template #body="s">
             <InputNumber
@@ -509,7 +544,7 @@
         </Column>
         <Column
           header="Birim Fiyat *"
-          style="width:130px"
+          style="width: 130px"
         >
           <template #body="s">
             <InputNumber
@@ -523,7 +558,7 @@
         </Column>
         <Column
           header="İskonto %"
-          style="width:100px"
+          style="width: 100px"
         >
           <template #body="s">
             <InputNumber
@@ -537,19 +572,19 @@
         </Column>
         <Column
           header="KDV %"
-          style="width:80px"
+          style="width: 80px"
         >
           <template #body="s">
             <Dropdown
               v-model="s.data.kdvOrani"
-              :options="[0,10,20]"
+              :options="[0, 10, 20]"
               class="w-full"
             />
           </template>
         </Column>
         <Column
           header="Tutar"
-          style="width:120px"
+          style="width: 120px"
         >
           <template #body="s">
             {{ formatCurrency(kalemTutar(s.data)) }}
@@ -557,7 +592,7 @@
         </Column>
         <Column
           header=""
-          style="width:50px"
+          style="width: 50px"
         >
           <template #body="s">
             <Button
@@ -568,7 +603,7 @@
           </template>
         </Column>
       </DataTable>
-      <div style="margin-top:10px">
+      <div style="margin-top: 10px">
         <Button
           label="+ Kalem Ekle"
           icon="pi pi-plus"
@@ -642,7 +677,9 @@ const stokStore = useStokStore()
 
 useKisayollar({
   yeni: () => openCreateDialog(),
-  iptal: () => { showDialog.value = false },
+  iptal: () => {
+    showDialog.value = false
+  },
   kaydet: () => saveFatura()
 })
 
@@ -654,7 +691,10 @@ const tarihAraligi = ref(null)
 const selectedItems = ref([])
 const topluSiliniyor = ref(false)
 
-const turSecenekler = [{label:'Satış',value:'SATIS'},{label:'Alış',value:'ALIS'}]
+const turSecenekler = [
+  { label: 'Satış', value: 'SATIS' },
+  { label: 'Alış', value: 'ALIS' }
+]
 
 const form = ref({
   cariHesapId: null,
@@ -680,7 +720,7 @@ const teslimDurumSecenekleri = [
 const urunSecimi = ref(null)
 const urunAdet = ref(1)
 
-const dialogBaslik = computed(() => editingId.value ? 'Fatura Düzenle' : 'Yeni Fatura Oluştur')
+const dialogBaslik = computed(() => (editingId.value ? 'Fatura Düzenle' : 'Yeni Fatura Oluştur'))
 
 const filtrelenmisFaturalar = computed(() => {
   if (!tarihAraligi.value || tarihAraligi.value.length !== 2 || !tarihAraligi.value[0]) {
@@ -690,7 +730,7 @@ const filtrelenmisFaturalar = computed(() => {
   bas.setHours(0, 0, 0, 0)
   const bit = new Date(tarihAraligi.value[1])
   bit.setHours(23, 59, 59, 999)
-  return faturaStore.faturalar.filter(f => {
+  return faturaStore.faturalar.filter((f) => {
     if (!f.tarih) return false
     const t = new Date(f.tarih)
     return t >= bas && t <= bit
@@ -699,7 +739,12 @@ const filtrelenmisFaturalar = computed(() => {
 
 const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
   onRestore: () => {
-    toast.add({ severity: 'info', summary: 'Taslak Geri Yüklendi', detail: 'Kesilmemiş faturanız geri yüklendi.', life: 5000 })
+    toast.add({
+      severity: 'info',
+      summary: 'Taslak Geri Yüklendi',
+      detail: 'Kesilmemiş faturanız geri yüklendi.',
+      life: 5000
+    })
   }
 })
 
@@ -728,20 +773,24 @@ const depolarıYukle = async () => {
   try {
     const r = await depoAPI.getAll({ size: 500 })
     depolar.value = r.data?.content || r.data || []
-  } catch { depolar.value = [] }
+  } catch {
+    depolar.value = []
+  }
 }
 
 const personelSecenekleri = computed(() =>
   personelListesi.value
-    .filter(p => p.aktif !== false)
-    .map(p => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
+    .filter((p) => p.aktif !== false)
+    .map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
 )
 
 const personelListesiniYukle = async () => {
   try {
     const r = await personelAPI.getAll({ size: 500 })
     personelListesi.value = r.data?.content || r.data || []
-  } catch { personelListesi.value = [] }
+  } catch {
+    personelListesi.value = []
+  }
 }
 
 const addKalem = () => {
@@ -750,7 +799,7 @@ const addKalem = () => {
 
 const urunSecildi = () => {
   if (!urunSecimi.value) return
-  const u = stokStore.stoklar.find(s => s.id === urunSecimi.value)
+  const u = stokStore.stoklar.find((s) => s.id === urunSecimi.value)
   if (u) urunAdet.value = 1
   fiyatGecmisiYukle(urunSecimi.value)
 }
@@ -759,13 +808,19 @@ const fiyatGecmisi = ref(null)
 const fiyatGecmisiYukleniyor = ref(false)
 
 const fiyatGecmisiYukle = async (stokId) => {
-  if (!stokId) { fiyatGecmisi.value = null; return }
+  if (!stokId) {
+    fiyatGecmisi.value = null
+    return
+  }
   fiyatGecmisiYukleniyor.value = true
   try {
     const r = await faturaAPI.stokFiyatGecmisi(stokId)
     fiyatGecmisi.value = r.data
-  } catch { fiyatGecmisi.value = null }
-  finally { fiyatGecmisiYukleniyor.value = false }
+  } catch {
+    fiyatGecmisi.value = null
+  } finally {
+    fiyatGecmisiYukleniyor.value = false
+  }
 }
 
 const trendLabel = (trend) => ({ ARTIS: 'Yükseliyor', AZALIS: 'Düşüyor', STABIL: 'Sabit' })[trend] || '-'
@@ -778,7 +833,7 @@ const kritikStokMu = (stok) => {
 
 const urunEkleKalem = () => {
   if (!urunSecimi.value || !urunAdet.value) return
-  const u = stokStore.stoklar.find(s => s.id === urunSecimi.value)
+  const u = stokStore.stoklar.find((s) => s.id === urunSecimi.value)
   if (!u) return
   form.value.kalemler.push({
     aciklama: u.ad,
@@ -802,11 +857,14 @@ const cariAra = (event) => {
     cariOnerileri.value = kaynak.slice(0, 20)
     return
   }
-  cariOnerileri.value = kaynak.filter(c =>
-    c.ad?.toLowerCase().includes(q) ||
-    c.vergiNumarasi?.toLowerCase().includes(q) ||
-    c.telefon?.toLowerCase().includes(q)
-  ).slice(0, 20)
+  cariOnerileri.value = kaynak
+    .filter(
+      (c) =>
+        c.ad?.toLowerCase().includes(q) ||
+        c.vergiNumarasi?.toLowerCase().includes(q) ||
+        c.telefon?.toLowerCase().includes(q)
+    )
+    .slice(0, 20)
 }
 
 const cariSecildi = (event) => {
@@ -817,24 +875,29 @@ const cariSonUrunler = ref([])
 const cariSonUrunlerGizle = ref(false)
 let cariSonUrunlerZamanlayici = null
 
-watch(() => form.value.cariHesapId, (yeniCariId) => {
-  cariSonUrunlerGizle.value = false
-  if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
-  if (!yeniCariId) {
-    cariSonUrunler.value = []
-    return
+watch(
+  () => form.value.cariHesapId,
+  (yeniCariId) => {
+    cariSonUrunlerGizle.value = false
+    if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
+    if (!yeniCariId) {
+      cariSonUrunler.value = []
+      return
+    }
+    // Debounce - kullanici cari secerken istek yagmasi
+    cariSonUrunlerZamanlayici = setTimeout(async () => {
+      try {
+        const r = await faturaAPI.cariSonUrunler(yeniCariId, 10)
+        cariSonUrunler.value = r.data || []
+      } catch {
+        cariSonUrunler.value = []
+      }
+    }, 400)
   }
-  // Debounce - kullanici cari secerken istek yagmasi
-  cariSonUrunlerZamanlayici = setTimeout(async () => {
-    try {
-      const r = await faturaAPI.cariSonUrunler(yeniCariId, 10)
-      cariSonUrunler.value = r.data || []
-    } catch { cariSonUrunler.value = [] }
-  }, 400)
-})
+)
 
 const sonUrunuEkle = (urun) => {
-  const u = stokStore.stoklar.find(s => s.id === urun.stokId)
+  const u = stokStore.stoklar.find((s) => s.id === urun.stokId)
   form.value.kalemler.push({
     aciklama: urun.stokAd || (u ? u.ad : 'Ürün'),
     adet: 1,
@@ -860,7 +923,7 @@ const sonFaturayiKopyala = async () => {
     const kaynak = r.data
     form.value.aciklama = kaynak.aciklama || ''
     form.value.tur = kaynak.tur || 'SATIS'
-    form.value.kalemler = (kaynak.kalemler || []).map(k => ({
+    form.value.kalemler = (kaynak.kalemler || []).map((k) => ({
       aciklama: k.aciklama || '',
       adet: k.adet || 1,
       birimFiyat: k.birimFiyat || 0,
@@ -887,9 +950,9 @@ const kalemTutar = (kalem) => {
   const brf = kalem.birimFiyat || 0
   const adt = kalem.adet || 0
   const iskontoOran = (kalem.iskontoOrani || 0) / 100
-  const net = (brf * adt) * (1 - iskontoOran)
+  const net = brf * adt * (1 - iskontoOran)
   const kdvOran = (kalem.kdvOrani || 0) / 100
-  return net + (net * kdvOran)
+  return net + net * kdvOran
 }
 
 const araToplam = computed(() => {
@@ -897,7 +960,7 @@ const araToplam = computed(() => {
     const brf = k.birimFiyat || 0
     const adt = k.adet || 0
     const iskontoOran = (k.iskontoOrani || 0) / 100
-    return t + (brf * adt * (1 - iskontoOran))
+    return t + brf * adt * (1 - iskontoOran)
   }, 0)
 })
 
@@ -907,7 +970,7 @@ const kdvToplam = computed(() => {
     const adt = k.adet || 0
     const iskontoOran = (k.iskontoOrani || 0) / 100
     const net = brf * adt * (1 - iskontoOran)
-    return t + (net * ((k.kdvOrani || 0) / 100))
+    return t + net * ((k.kdvOrani || 0) / 100)
   }, 0)
 })
 
@@ -915,7 +978,9 @@ const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
 const whatsappGonder = (fatura) => {
   const cariAd = fatura.cariHesapAd || 'Müşterimiz'
-  const tutar = fatura.genelToplam ? fatura.genelToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL' : ''
+  const tutar = fatura.genelToplam
+    ? fatura.genelToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL'
+    : ''
   const mesaj = `Sayın ${cariAd},\n${fatura.faturaNumarasi || 'Fatura'} numaralı, ${tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP`
   const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
   window.open(url, '_blank')
@@ -942,7 +1007,7 @@ const openCreateDialog = () => {
 
 const editFatura = (fatura) => {
   editingId.value = fatura.id
-  seciliCariNesnesi.value = cariHesapStore.cariHesaplar.find(c => c.id === fatura.cariHesapId) || null
+  seciliCariNesnesi.value = cariHesapStore.cariHesaplar.find((c) => c.id === fatura.cariHesapId) || null
   form.value = {
     cariHesapId: fatura.cariHesapId,
     tur: fatura.tur,
@@ -953,7 +1018,7 @@ const editFatura = (fatura) => {
     depoId: fatura.depoId || null,
     paraBirimi: fatura.paraBirimi || 'TRY',
     aciklama: fatura.aciklama || '',
-    kalemler: fatura.kalemler.map(k => ({
+    kalemler: fatura.kalemler.map((k) => ({
       id: k.id,
       aciklama: k.aciklama,
       adet: k.adet,
@@ -979,7 +1044,7 @@ const cogalt = (fatura) => {
     paraBirimi: fatura.paraBirimi || 'TRY',
     depoId: fatura.depoId || null,
     aciklama: fatura.aciklama || '',
-    kalemler: fatura.kalemler.map(k => ({
+    kalemler: fatura.kalemler.map((k) => ({
       aciklama: k.aciklama,
       adet: k.adet,
       birimFiyat: k.birimFiyat,
@@ -993,14 +1058,16 @@ const cogalt = (fatura) => {
   toastBildirim.basarili('Fatura çoğaltıldı, değişiklikleri kaydedin')
 }
 
-const closeDialog = () => { showDialog.value = false }
+const closeDialog = () => {
+  showDialog.value = false
+}
 
 const saveFatura = async () => {
   if (!form.value.tur) {
     toastBildirim.uyari('Fatura türü seçiniz')
     return
   }
-  const gecersiz = form.value.kalemler.some(k => !k.aciklama.trim() || !k.adet || !k.birimFiyat)
+  const gecersiz = form.value.kalemler.some((k) => !k.aciklama.trim() || !k.adet || !k.birimFiyat)
   if (gecersiz) {
     toastBildirim.uyari('Tüm kalemleri eksiksiz doldurun')
     return
@@ -1019,7 +1086,7 @@ const saveFatura = async () => {
     genelIskontoTutari: 0,
     odenenTutar: 0,
     odemeDurumu: 'ODENMEDI',
-    kalemler: form.value.kalemler.map(k => ({
+    kalemler: form.value.kalemler.map((k) => ({
       id: k.id || null,
       aciklama: k.aciklama,
       adet: k.adet,
@@ -1050,7 +1117,9 @@ const saveFatura = async () => {
   }
 }
 
-const viewFatura = (id) => { router.push(`/faturalar/${id}`) }
+const viewFatura = (id) => {
+  router.push(`/faturalar/${id}`)
+}
 const pdfIndir = async (fatura) => {
   try {
     const res = await pdfAPI.fatura(fatura.id)
@@ -1076,7 +1145,9 @@ const confirmKes = (id) => {
       try {
         await faturaStore.updateDurum(id, 'KESILDI')
         toastBildirim.basarili('Fatura kesildi')
-      } catch { toastBildirim.hata('İşlem başarısız') }
+      } catch {
+        toastBildirim.hata('İşlem başarısız')
+      }
     }
   })
 }
@@ -1090,7 +1161,9 @@ const confirmIptal = (id) => {
       try {
         await faturaStore.updateDurum(id, 'IPTAL')
         toastBildirim.basarili('Fatura iptal edildi')
-      } catch { toastBildirim.hata('İşlem başarısız') }
+      } catch {
+        toastBildirim.hata('İşlem başarısız')
+      }
     }
   })
 }
@@ -1111,7 +1184,9 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const topluSil = async () => {
@@ -1137,66 +1212,331 @@ const formatCurrency = (value) => {
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(dateString))
+  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
+    new Date(dateString)
+  )
 }
 </script>
 
 <style scoped>
-.faturalar-container { padding: 20px; }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.toolbar { margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-.table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; overflow-x: auto; }
-.loading { text-align: center; padding: 40px; color: #666; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.son-fatura-kopyala { margin-top: 6px; padding: 4px 8px; font-size: 12px; }
-.personel-opsiyon { display: flex; align-items: center; gap: 8px; }
-.personel-opsiyon i { font-size: 12px; color: var(--text-muted); }
-.cari-opsiyon { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.cari-opsiyon-detay { font-size: 11px; color: var(--text-muted); }
-.kitlik-rozeti { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; padding: 1px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.fiyat-gecmisi-panel { background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 15px; }
-.fiyat-gecmisi-ust { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #a78bfa; margin-bottom: 8px; }
-.fiyat-gecmisi-liste { display: flex; flex-direction: column; gap: 4px; }
-.fiyat-gecmisi-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-secondary); }
-.fg-tarih { width: 80px; flex-shrink: 0; }
-.fg-fatura { flex: 1; }
-.fg-fiyat { font-weight: 600; color: var(--text-primary); }
-.fiyat-gecmisi-guncel { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(139,92,246,0.2); font-size: 12px; color: var(--text-secondary); }
-.trend-rozet { margin-left: auto; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.trend-rozet.artis { background: rgba(34,197,94,0.15); color: #4ade80; }
-.trend-rozet.azalis { background: rgba(239,68,68,0.15); color: #f87171; }
-.trend-rozet.stabil { background: rgba(148,163,184,0.15); color: #94a3b8; }
-.urun-ekleme { background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 14px; margin: 15px 0; }
-.son-urunler-panel { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 15px; }
-.son-urunler-ust { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #34d399; margin-bottom: 10px; }
-.son-urunler-kapat { margin-left: auto; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 13px; padding: 2px 4px; }
-.son-urunler-kapat:hover { color: #f87171; }
-.son-urunler-liste { display: flex; flex-wrap: wrap; gap: 8px; }
-.son-urun-item { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all .2s; color: var(--text-primary); }
-.son-urun-item:hover { border-color: #10b981; background: rgba(16,185,129,0.1); transform: translateY(-1px); }
-.son-urun-ad { font-size: 13px; font-weight: 600; }
-.son-urun-bilgi { font-size: 11px; color: var(--text-muted); }
-.son-urun-fiyat { font-size: 12px; color: #34d399; font-weight: 600; }
-.son-urun-ekle { font-size: 12px; color: #10b981; }
-.summary-box { background: var(--border); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-top: 15px; }
-.summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; color: var(--text-secondary); }
-.summary-row.total { font-weight: 700; font-size: 18px; border-top: 2px solid #3b82f6; margin-top: 5px; padding-top: 10px; color: var(--text-primary); }
-.badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.badge.satis { background: rgba(59,130,246,0.15); color: #60a5fa; }
-.badge.alis { background: rgba(239,68,68,0.15); color: #f87171; }
-.durum-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.durum-badge.taslak { background: rgba(255,152,0,0.15); color: #fb923c; }
-.durum-badge.teklif { background: rgba(96,165,250,0.15); color: #60a5fa; }
-.durum-badge.kesildi { background: rgba(34,197,94,0.15); color: #4ade80; }
-.durum-badge.iptal { background: rgba(148,163,184,0.1); color: #94a3b8; }
-.islem-yapan { font-size: 12px; color: var(--text-secondary); }
-.islem-yapan-bos { font-size: 12px; color: var(--text-muted); }
-.teslim-eden-list { font-size: 12px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px; }
-.teslim-eden-list i { color: var(--text-muted); font-size: 12px; }
-.w-full { width: 100% !important; }
-.batch-action-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--blue-50, #eff6ff); border: 1px solid var(--blue-200, #bfdbfe); border-radius: 8px; margin-bottom: 12px; }
-.batch-info { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--blue-700, #1d4ed8); }
-.batch-buttons { display: flex; gap: 8px; }
+.faturalar-container {
+  padding: 20px;
+}
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  overflow-x: auto;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.son-fatura-kopyala {
+  margin-top: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.personel-opsiyon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.personel-opsiyon i {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.cari-opsiyon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.cari-opsiyon-detay {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.kitlik-rozeti {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fiyat-gecmisi-panel {
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 15px;
+}
+.fiyat-gecmisi-ust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a78bfa;
+  margin-bottom: 8px;
+}
+.fiyat-gecmisi-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fiyat-gecmisi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.fg-tarih {
+  width: 80px;
+  flex-shrink: 0;
+}
+.fg-fatura {
+  flex: 1;
+}
+.fg-fiyat {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.fiyat-gecmisi-guncel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.trend-rozet {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.trend-rozet.artis {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.trend-rozet.azalis {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+.trend-rozet.stabil {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+.urun-ekleme {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 15px 0;
+}
+.son-urunler-panel {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 15px;
+}
+.son-urunler-ust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #34d399;
+  margin-bottom: 10px;
+}
+.son-urunler-kapat {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+}
+.son-urunler-kapat:hover {
+  color: #f87171;
+}
+.son-urunler-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.son-urun-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-primary);
+}
+.son-urun-item:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-1px);
+}
+.son-urun-ad {
+  font-size: 13px;
+  font-weight: 600;
+}
+.son-urun-bilgi {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.son-urun-fiyat {
+  font-size: 12px;
+  color: #34d399;
+  font-weight: 600;
+}
+.son-urun-ekle {
+  font-size: 12px;
+  color: #10b981;
+}
+.summary-box {
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.summary-row.total {
+  font-weight: 700;
+  font-size: 18px;
+  border-top: 2px solid #3b82f6;
+  margin-top: 5px;
+  padding-top: 10px;
+  color: var(--text-primary);
+}
+.badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge.satis {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.badge.alis {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+.durum-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.durum-badge.taslak {
+  background: rgba(255, 152, 0, 0.15);
+  color: #fb923c;
+}
+.durum-badge.teklif {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+.durum-badge.kesildi {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.durum-badge.iptal {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+}
+.islem-yapan {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.islem-yapan-bos {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.teslim-eden-list {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.teslim-eden-list i {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.w-full {
+  width: 100% !important;
+}
+.batch-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--blue-50, #eff6ff);
+  border: 1px solid var(--blue-200, #bfdbfe);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.batch-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--blue-700, #1d4ed8);
+}
+.batch-buttons {
+  display: flex;
+  gap: 8px;
+}
 </style>

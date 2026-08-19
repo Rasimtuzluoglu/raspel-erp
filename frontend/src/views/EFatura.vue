@@ -21,7 +21,8 @@
 
     <div class="bilgi-kutu">
       <i class="pi pi-info-circle" />
-      GİB entegratör uç noktası (<code>app.efatura.gib-endpoint</code>) tanımlı değilse gönderimler yerel onay (simülasyon) olarak işaretlenir.
+      GİB entegratör uç noktası (<code>app.efatura.gib-endpoint</code>) tanımlı değilse gönderimler yerel onay
+      (simülasyon) olarak işaretlenir.
     </div>
 
     <AppDataTable
@@ -87,7 +88,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:90px"
+        style="width: 90px"
       >
         <template #body="{ data }">
           <div class="eylem-btns">
@@ -132,7 +133,7 @@
           <label>Senaryo</label>
           <Select
             v-model="olusturForm.senaryo"
-            :options="['TEMELFATURA','TICARIFATURA','EARSIVEFATURA']"
+            :options="['TEMELFATURA', 'TICARIFATURA', 'EARSIVEFATURA']"
             class="w-full"
           />
         </div>
@@ -140,7 +141,7 @@
           <label>Tip</label>
           <Select
             v-model="olusturForm.tip"
-            :options="['SATIS','IADE','TEVKIFAT','ISTISNA']"
+            :options="['SATIS', 'IADE', 'TEVKIFAT', 'ISTISNA']"
             class="w-full"
           />
         </div>
@@ -180,11 +181,14 @@ const kaydediliyor = ref(false)
 const olusturDialog = ref(false)
 const olusturForm = ref({ faturaId: null, senaryo: 'TEMELFATURA', tip: 'SATIS' })
 
-const formatCurrency = (v) => v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-const formatDateTime = (d) => d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : '-'
-const kisaEttn = (e) => e ? e.slice(0, 8) + '…' : '-'
-const durumEtiketi = (k) => ({ 1000: 'Hazırlandı', 1200: 'GİB\'e Gönderildi', 1300: 'Onaylandı', 1350: 'Reddedildi' }[k] || k)
-const durumSeverity = (k) => k >= 1300 ? 'success' : k === 1200 ? 'warning' : k === 1350 ? 'danger' : 'info'
+const formatCurrency = (v) =>
+  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
+const formatDateTime = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : '-'
+const kisaEttn = (e) => (e ? e.slice(0, 8) + '…' : '-')
+const durumEtiketi = (k) =>
+  ({ 1000: 'Hazırlandı', 1200: "GİB'e Gönderildi", 1300: 'Onaylandı', 1350: 'Reddedildi' })[k] || k
+const durumSeverity = (k) => (k >= 1300 ? 'success' : k === 1200 ? 'warning' : k === 1350 ? 'danger' : 'info')
 
 onMounted(() => {
   yukle()
@@ -206,8 +210,13 @@ const faturalariYukle = async () => {
   try {
     const r = await faturaAPI.getAll()
     const data = r.data?.content || r.data || []
-    faturalar.value = data.map(f => ({ ...f, etiket: `${f.faturaNumarasi} - ${f.cariHesapAd || ''} (${formatCurrency(f.genelToplam)})` }))
-  } catch { /* empty */ }
+    faturalar.value = data.map((f) => ({
+      ...f,
+      etiket: `${f.faturaNumarasi} - ${f.cariHesapAd || ''} (${formatCurrency(f.genelToplam)})`
+    }))
+  } catch {
+    /* empty */
+  }
 }
 
 const olusturDialogAc = () => {
@@ -217,7 +226,8 @@ const olusturDialogAc = () => {
 
 const olustur = async () => {
   if (!olusturForm.value.faturaId) {
-    toastBildirim.uyari('Fatura seçiniz'); return
+    toastBildirim.uyari('Fatura seçiniz')
+    return
   }
   kaydediliyor.value = true
   try {
@@ -234,7 +244,7 @@ const olustur = async () => {
 const gibGonder = async (data) => {
   try {
     await eFaturaAPI.gibGonder(data.id)
-    toast.add({ severity: 'success', summary: 'Gönderildi', detail: 'E-Fatura GİB\'e iletildi', life: 3000 })
+    toast.add({ severity: 'success', summary: 'Gönderildi', detail: "E-Fatura GİB'e iletildi", life: 3000 })
     yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Gönderim başarısız')
@@ -258,19 +268,66 @@ const xmlIndir = async (data) => {
 </script>
 
 <style scoped>
-.efatura-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.bilgi-kutu {
-  display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 18px;
-  background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px;
-  font-size: 13px; color: var(--text-secondary);
+.efatura-container {
+  padding: 0;
 }
-.bilgi-kutu code { background: rgba(0,0,0,0.2); padding: 1px 5px; border-radius: 4px; }
-.mono { font-family: monospace; font-size: 12px; }
-.eylem-btns { display: flex; align-items: center; gap: 2px; }
-.durum-aciklama { font-size: 11px; color: var(--text-muted); margin-top: 4px; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.form-grid { display: flex; flex-direction: column; gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.bilgi-kutu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.bilgi-kutu code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.mono {
+  font-family: monospace;
+  font-size: 12px;
+}
+.eylem-btns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.durum-aciklama {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

@@ -30,11 +30,13 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await apiClient.get('/yetkiler/roller')
       const roller = res.data || []
-      const userRol = roller.find(r => r.ad === kullanici.value.role)
+      const userRol = roller.find((r) => r.ad === kullanici.value.role)
       if (userRol && userRol.yetkiler) {
-        yetkiler.value = userRol.yetkiler.map(y => y.kod)
+        yetkiler.value = userRol.yetkiler.map((y) => y.kod)
       }
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   }
 
   const init = () => {
@@ -52,7 +54,9 @@ export const useAuthStore = defineStore('auth', () => {
           yetkileriYukle()
         }
       }
-    } catch { localStorage.removeItem('raspel_erp_auth') }
+    } catch {
+      localStorage.removeItem('raspel_erp_auth')
+    }
   }
 
   const girisYap = async (username, password) => {
@@ -96,20 +100,30 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const oturumKur = (data) => {
-    kullanici.value = { id: data.id, username: data.username, displayName: data.displayName, avatarUrl: data.avatarUrl, companyName: data.companyName, role: data.role }
+    kullanici.value = {
+      id: data.id,
+      username: data.username,
+      displayName: data.displayName,
+      avatarUrl: data.avatarUrl,
+      companyName: data.companyName,
+      role: data.role
+    }
     token.value = data.token || ''
     companyName.value = data.companyName || ''
     sirketId.value = data.sirketId || null
     sirketAdi.value = data.sirketAdi || ''
 
-    localStorage.setItem('raspel_erp_auth', JSON.stringify({
-      kullanici: kullanici.value,
-      token: token.value,
-      companyName: companyName.value,
-      sirketId: sirketId.value,
-      sirketAdi: sirketAdi.value,
-      yetkiler: yetkiler.value
-    }))
+    localStorage.setItem(
+      'raspel_erp_auth',
+      JSON.stringify({
+        kullanici: kullanici.value,
+        token: token.value,
+        companyName: companyName.value,
+        sirketId: sirketId.value,
+        sirketAdi: sirketAdi.value,
+        yetkiler: yetkiler.value
+      })
+    )
     yetkileriYukle()
   }
 
@@ -135,18 +149,42 @@ export const useAuthStore = defineStore('auth', () => {
       kullanici.value = r.data
       companyName.value = r.data.companyName || companyName.value
       await yetkileriYukle()
-      localStorage.setItem('raspel_erp_auth', JSON.stringify({
-        kullanici: kullanici.value,
-        token: token.value,
-        companyName: companyName.value,
-        sirketId: sirketId.value,
-        sirketAdi: sirketAdi.value,
-        yetkiler: yetkiler.value
-      }))
-    } catch { /* empty */ }
+      localStorage.setItem(
+        'raspel_erp_auth',
+        JSON.stringify({
+          kullanici: kullanici.value,
+          token: token.value,
+          companyName: companyName.value,
+          sirketId: sirketId.value,
+          sirketAdi: sirketAdi.value,
+          yetkiler: yetkiler.value
+        })
+      )
+    } catch {
+      /* empty */
+    }
   }
 
   init()
 
-  return { kullanici, token, companyName, sirketId, sirketAdi, yetkiler, loading, isLoggedIn, isAdmin, hasPermission, girisYap, girisSirket, giris2fa, cikisYap, kullanicilariGetir, kullaniciGuncelle, yetkileriYukle, init }
+  return {
+    kullanici,
+    token,
+    companyName,
+    sirketId,
+    sirketAdi,
+    yetkiler,
+    loading,
+    isLoggedIn,
+    isAdmin,
+    hasPermission,
+    girisYap,
+    girisSirket,
+    giris2fa,
+    cikisYap,
+    kullanicilariGetir,
+    kullaniciGuncelle,
+    yetkileriYukle,
+    init
+  }
 })

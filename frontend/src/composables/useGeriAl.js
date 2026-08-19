@@ -26,7 +26,9 @@ export function useGeriAl() {
     if (durum.geriYukle) {
       try {
         await durum.geriYukle(durum.veri)
-      } catch { /* geri alma başarısızsa sessiz geç */ }
+      } catch {
+        /* geri alma başarısızsa sessiz geç */
+      }
     }
     gizle()
   }

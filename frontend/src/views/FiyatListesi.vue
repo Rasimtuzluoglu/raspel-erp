@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="fiyatlistesi-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -55,7 +57,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -165,9 +167,16 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ stokId: null, alisFiyati: 0, satisFiyati: 0, gecerlilikBaslangic: new Date(), gecerlilikBitis: null, aciklama: '' })
+const form = ref({
+  stokId: null,
+  alisFiyati: 0,
+  satisFiyati: 0,
+  gecerlilikBaslangic: new Date(),
+  gecerlilikBitis: null,
+  aciklama: ''
+})
 
-const dialogHeader = computed(() => duzenleme.value ? 'Fiyat Düzenle' : 'Yeni Fiyat')
+const dialogHeader = computed(() => (duzenleme.value ? 'Fiyat Düzenle' : 'Yeni Fiyat'))
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
@@ -193,8 +202,19 @@ onMounted(async () => {
 const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
-    ? { ...data, gecerlilikBaslangic: data.gecerlilikBaslangic ? new Date(data.gecerlilikBaslangic) : new Date(), gecerlilikBitis: data.gecerlilikBitis ? new Date(data.gecerlilikBitis) : null }
-    : { stokId: null, alisFiyati: 0, satisFiyati: 0, gecerlilikBaslangic: new Date(), gecerlilikBitis: null, aciklama: '' }
+    ? {
+        ...data,
+        gecerlilikBaslangic: data.gecerlilikBaslangic ? new Date(data.gecerlilikBaslangic) : new Date(),
+        gecerlilikBitis: data.gecerlilikBitis ? new Date(data.gecerlilikBitis) : null
+      }
+    : {
+        stokId: null,
+        alisFiyati: 0,
+        satisFiyati: 0,
+        gecerlilikBaslangic: new Date(),
+        gecerlilikBitis: null,
+        aciklama: ''
+      }
   dialog.value = true
 }
 
@@ -203,7 +223,11 @@ const formatDateForApi = (d) => d?.toISOString?.().split('T')[0] ?? d
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, gecerlilikBaslangic: formatDateForApi(form.value.gecerlilikBaslangic), gecerlilikBitis: formatDateForApi(form.value.gecerlilikBitis) }
+    const payload = {
+      ...form.value,
+      gecerlilikBaslangic: formatDateForApi(form.value.gecerlilikBaslangic),
+      gecerlilikBitis: formatDateForApi(form.value.gecerlilikBitis)
+    }
     if (duzenleme.value) {
       await fiyatListesiAPI.update(form.value.id, payload)
       toastBildirim.basarili('Fiyat güncellendi')
@@ -212,7 +236,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Fiyat oluşturuldu')
     }
     dialog.value = false
-    const r = await fiyatListesiAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await fiyatListesiAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -230,7 +255,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await fiyatListesiAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Fiyat kaydı silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -241,12 +266,38 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.fiyat-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 12px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.fiyat-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

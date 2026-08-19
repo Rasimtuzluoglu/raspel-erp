@@ -23,7 +23,7 @@ export const validateTCKN = (tc) => {
   let oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8]
   let evenSum = digits[1] + digits[3] + digits[5] + digits[7]
   let digit10 = (oddSum * 7 - evenSum) % 10
-  let digit11 = (digits.slice(0, 10).reduce((a, b) => a + b, 0)) % 10
+  let digit11 = digits.slice(0, 10).reduce((a, b) => a + b, 0) % 10
 
   return digits[9] === digit10 && digits[10] === digit11
 }

@@ -14,9 +14,15 @@ vi.mock('../../api/index.js', () => ({
 }))
 
 const mockUser = {
-  id: 1, username: 'test', displayName: 'Test User',
-  avatarUrl: null, companyName: 'Test Co', role: 'ADMIN',
-  token: 'abc123', sirketId: 1, sirketAdi: 'Test Sirket'
+  id: 1,
+  username: 'test',
+  displayName: 'Test User',
+  avatarUrl: null,
+  companyName: 'Test Co',
+  role: 'ADMIN',
+  token: 'abc123',
+  sirketId: 1,
+  sirketAdi: 'Test Sirket'
 }
 
 describe('authStore', () => {
@@ -38,8 +44,10 @@ describe('authStore', () => {
   it('restores auth from localStorage', () => {
     const authData = {
       kullanici: { id: 1, username: 'test' },
-      token: 'xyz', companyName: 'Co',
-      sirketId: 1, sirketAdi: 'Sirket'
+      token: 'xyz',
+      companyName: 'Co',
+      sirketId: 1,
+      sirketAdi: 'Sirket'
     }
     localStorage.setItem('raspel_erp_auth', JSON.stringify(authData))
     store.init()

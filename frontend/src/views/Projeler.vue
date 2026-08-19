@@ -13,6 +13,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="projeler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -23,7 +25,7 @@
     >
       <Column
         :expander="true"
-        style="width:40px"
+        style="width: 40px"
       />
       <Column
         field="ad"
@@ -55,7 +57,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -84,6 +86,8 @@
             />
           </div>
           <DataTable
+            state-storage="session"
+            state-key="projeler-table-state"
             :value="data.gorevler || []"
             striped-rows
             size="small"
@@ -117,7 +121,7 @@
             </Column>
             <Column
               header="İşlem"
-              style="width:80px"
+              style="width: 80px"
             >
               <template #body="{ data: g }">
                 <Button
@@ -293,27 +297,45 @@ const hataGoster = (err) => {
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (e) { hataGoster(e) }
+  try {
+    const r = await projeAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (e) {
+    hataGoster(e)
+  }
   yukleniyor.value = false
 })
 
-const dialogAc = () => { form.value = { ad: '', aciklama: '', baslangic: new Date(), bitis: null, sorumlu: '' }; dialog.value = true }
+const dialogAc = () => {
+  form.value = { ad: '', aciklama: '', baslangic: new Date(), bitis: null, sorumlu: '' }
+  dialog.value = true
+}
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    await projeAPI.create({ ...form.value, baslangic: form.value.baslangic?.toISOString().split('T')[0], bitis: form.value.bitis?.toISOString().split('T')[0] })
+    await projeAPI.create({
+      ...form.value,
+      baslangic: form.value.baslangic?.toISOString().split('T')[0],
+      bitis: form.value.bitis?.toISOString().split('T')[0]
+    })
     dialog.value = false
-    const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await projeAPI.getAll()
+    list.value = r.data?.content || r.data || []
     toastBildirim.basarili('Proje oluşturuldu')
-  } catch (e) { hataGoster(e) }
+  } catch (e) {
+    hataGoster(e)
+  }
   kaydediliyor.value = false
 }
 const durumGuncelle = async (data, durum) => {
   try {
     await projeAPI.durumGuncelle(data.id, durum)
-    const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await projeAPI.getAll()
+    list.value = r.data?.content || r.data || []
     toastBildirim.basarili('Durum güncellendi')
-  } catch (e) { hataGoster(e) }
+  } catch (e) {
+    hataGoster(e)
+  }
 }
 const sil = (data) => {
   confirm.require({
@@ -325,48 +347,111 @@ const sil = (data) => {
     accept: async () => {
       try {
         await projeAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Proje silindi', life: 3000 })
-      } catch (e) { hataGoster(e) }
+      } catch (e) {
+        hataGoster(e)
+      }
     },
     reject: () => {}
   })
 }
 
-const gorevDialogAc = (data) => { seciliProje.value = data; gorevForm.value = { ad: '', aciklama: '', atanan: '', baslangic: new Date(), bitis: null }; gorevDialog.value = true }
+const gorevDialogAc = (data) => {
+  seciliProje.value = data
+  gorevForm.value = { ad: '', aciklama: '', atanan: '', baslangic: new Date(), bitis: null }
+  gorevDialog.value = true
+}
 const gorevKaydet = async () => {
   kaydediliyor.value = true
   try {
-    const g = { ...gorevForm.value, baslangic: gorevForm.value.baslangic?.toISOString().split('T')[0], bitis: gorevForm.value.bitis?.toISOString().split('T')[0] }
+    const g = {
+      ...gorevForm.value,
+      baslangic: gorevForm.value.baslangic?.toISOString().split('T')[0],
+      bitis: gorevForm.value.bitis?.toISOString().split('T')[0]
+    }
     await projeAPI.gorevEkle(seciliProje.value.id, g)
-    gorevDialog.value = false; const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
+    gorevDialog.value = false
+    const r = await projeAPI.getAll()
+    list.value = r.data?.content || r.data || []
     toastBildirim.basarili('Görev eklendi')
-  } catch (e) { hataGoster(e) } kaydediliyor.value = false
+  } catch (e) {
+    hataGoster(e)
+  }
+  kaydediliyor.value = false
 }
 const gorevTamamla = async (g) => {
   try {
     await projeAPI.gorevDurumGuncelle(g.id, 'TAMAMLANDI')
-    const r = await projeAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await projeAPI.getAll()
+    list.value = r.data?.content || r.data || []
     toastBildirim.basarili('Görev tamamlandı')
-  } catch (e) { hataGoster(e) }
+  } catch (e) {
+    hataGoster(e)
+  }
 }
 
 const expanded = ref({})
-const rowExpand = (e) => { expanded.value[e.id] = true }
-const rowCollapse = (e) => { delete expanded.value[e.id] }
+const rowExpand = (e) => {
+  expanded.value[e.id] = true
+}
+const rowCollapse = (e) => {
+  delete expanded.value[e.id]
+}
 </script>
 
 <style scoped>
-.proje-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.gorevler { padding: 16px; background: rgba(0,0,0,0.1); border-radius: 8px; }
-.gorev-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.gorev-baslik h3 { margin: 0; font-size: 15px; color: var(--text-secondary); }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 16px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.proje-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.gorevler {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+.gorev-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.gorev-baslik h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 16px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

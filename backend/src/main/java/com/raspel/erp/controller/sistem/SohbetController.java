@@ -37,4 +37,12 @@ public class SohbetController {
         String displayName = (String) request.getAttribute("displayName");
         return ResponseEntity.ok(sohbetService.mesajGonder(dto, sirketId, kullaniciId, displayName));
     }
+
+    @PostMapping("/ai-sorgu")
+    @Operation(summary = "Doğal dilde veri sorgulama (AI Asistan)", description = "Yapay zeka ile doğal dil analitiği ve görsel grafik yanıtı üretir")
+    public ResponseEntity<com.raspel.erp.dto.sistem.AISorguSonucDTO> aiSorgu(@RequestBody java.util.Map<String, String> body, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        String soru = body != null ? body.get("soru") : "";
+        return ResponseEntity.ok(sohbetService.aiSorgula(soru, sirketId));
+    }
 }

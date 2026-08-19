@@ -22,6 +22,8 @@
     <TabView>
       <TabPanel header="Depolar">
         <DataTable
+          state-storage="session"
+          state-key="depolar-table-state"
           :value="list"
           striped-rows
           :loading="yukleniyor"
@@ -52,7 +54,7 @@
           </Column>
           <Column
             header="İşlem"
-            style="width:160px"
+            style="width: 160px"
           >
             <template #body="{ data }">
               <Button
@@ -127,6 +129,8 @@
             </div>
           </div>
           <DataTable
+            state-storage="session"
+            state-key="depolar-table-state"
             :value="depoStoklari"
             striped-rows
             size="small"
@@ -307,7 +311,7 @@ const form = ref({ ad: '', subeId: null, yetkili: '', adres: '', aktif: true })
 const stokForm = ref({ stokId: null, miktar: 0 })
 const transferForm = ref({ kaynakDepoId: null, hedefDepoId: null, stokId: null, miktar: 0 })
 
-const dialogHeader = computed(() => duzenleme.value ? 'Depo Düzenle' : 'Yeni Depo')
+const dialogHeader = computed(() => (duzenleme.value ? 'Depo Düzenle' : 'Yeni Depo'))
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00'
@@ -317,9 +321,7 @@ const formatCurrency = (v) => {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [depoRes, subeRes, stokRes] = await Promise.all([
-      depoAPI.getAll(), subeAPI.getAll(), stokAPI.getAll()
-    ])
+    const [depoRes, subeRes, stokRes] = await Promise.all([depoAPI.getAll(), subeAPI.getAll(), stokAPI.getAll()])
     list.value = depoRes.data?.content || depoRes.data || []
     subeListesi.value = subeRes.data
     stokListesi.value = stokRes.data.content || stokRes.data
@@ -346,7 +348,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Depo oluşturuldu')
     }
     dialog.value = false
-    const r = await depoAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await depoAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -363,7 +366,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await depoAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Depo silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -411,7 +414,13 @@ const stokCikar = async () => {
 }
 
 const transferYap = async () => {
-  if (!transferForm.value.kaynakDepoId || !transferForm.value.hedefDepoId || !transferForm.value.stokId || !transferForm.value.miktar) return
+  if (
+    !transferForm.value.kaynakDepoId ||
+    !transferForm.value.hedefDepoId ||
+    !transferForm.value.stokId ||
+    !transferForm.value.miktar
+  )
+    return
   transferLoading.value = true
   try {
     await depoAPI.transfer(transferForm.value)
@@ -425,16 +434,60 @@ const transferYap = async () => {
 </script>
 
 <style scoped>
-.depolar-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.toolbar-end { display: flex; gap: 8px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.stok-islemleri { display: flex; flex-direction: column; gap: 16px; }
-.stok-ekle-form { background: var(--bg-secondary); padding: 16px; border-radius: 8px; }
-.stok-ekle-form h3 { margin: 0 0 12px; font-size: 15px; }
-.text-danger { color: #f87171; }
+.depolar-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.toolbar-end {
+  display: flex;
+  gap: 8px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.stok-islemleri {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.stok-ekle-form {
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+}
+.stok-ekle-form h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.text-danger {
+  color: #f87171;
+}
 </style>

@@ -65,22 +65,57 @@ onUnmounted(() => document.removeEventListener('click', disariTikla))
 </script>
 
 <style scoped>
-.satir-eylemler { position: relative; }
+.satir-eylemler {
+  position: relative;
+}
 .eylem-menu {
-  position: absolute; right: 0; top: 36px; z-index: 50;
-  min-width: 140px; background: var(--bg-card);
-  border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3); padding: 4px;
+  position: absolute;
+  right: 0;
+  top: 36px;
+  z-index: 50;
+  min-width: 140px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  padding: 4px;
 }
 .eylem-item {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  padding: 8px 12px; border: none; background: transparent; color: var(--text-primary);
-  font-size: 13px; border-radius: 7px; cursor: pointer; text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
 }
-.eylem-item:hover { background: rgba(148,163,184,0.1); }
-.eylem-item i { font-size: 13px; color: var(--text-muted); }
-.eylem-item.eylem-sil { color: #ef4444; }
-.eylem-item.eylem-sil i { color: #ef4444; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+.eylem-item:hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+.eylem-item i {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.eylem-item.eylem-sil {
+  color: #ef4444;
+}
+.eylem-item.eylem-sil i {
+  color: #ef4444;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 </style>

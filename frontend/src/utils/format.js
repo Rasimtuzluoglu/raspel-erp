@@ -19,17 +19,17 @@ export const formatDateTime = (date) => {
 
 export const durumLabel = (durum) => {
   const labels = {
-    'TASLAK': 'Taslak',
-    'TEKLIF': 'Teklif',
-    'KESILDI': 'Kesildi',
-    'IPTAL': 'İptal',
-    'BEKLEMEDE': 'Beklemede',
-    'ONAYLANDI': 'Onaylandı',
-    'TAMAMLANDI': 'Tamamlandı',
-    'DEVAM_EDIYOR': 'Devam Ediyor',
-    'PORTFOY': 'Portföy',
-    'TAHSILAT': 'Tahsilat',
-    'ODEME': 'Ödeme'
+    TASLAK: 'Taslak',
+    TEKLIF: 'Teklif',
+    KESILDI: 'Kesildi',
+    IPTAL: 'İptal',
+    BEKLEMEDE: 'Beklemede',
+    ONAYLANDI: 'Onaylandı',
+    TAMAMLANDI: 'Tamamlandı',
+    DEVAM_EDIYOR: 'Devam Ediyor',
+    PORTFOY: 'Portföy',
+    TAHSILAT: 'Tahsilat',
+    ODEME: 'Ödeme'
   }
   return labels[durum] || durum
 }

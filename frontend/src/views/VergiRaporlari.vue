@@ -46,7 +46,9 @@
           :class="kdvBeyanname.odenecekKdv > 0 ? 'odenecek' : 'devreden'"
         >
           <span>{{ kdvBeyanname.odenecekKdv > 0 ? 'Ödenecek KDV' : 'Devreden KDV' }}</span>
-          <strong>{{ formatCurrency(kdvBeyanname.odenecekKdv > 0 ? kdvBeyanname.odenecekKdv : kdvBeyanname.devredenKdv) }}</strong>
+          <strong>{{
+            formatCurrency(kdvBeyanname.odenecekKdv > 0 ? kdvBeyanname.odenecekKdv : kdvBeyanname.devredenKdv)
+          }}</strong>
         </div>
       </div>
 
@@ -54,6 +56,8 @@
         <div class="kdv-tablo">
           <h3>1-2 no.lu Tablo (Hesaplanan KDV)</h3>
           <DataTable
+            state-storage="session"
+            state-key="vergiraporlari-table-state"
             :value="kdvBeyanname.satislar"
             striped-rows
           >
@@ -86,6 +90,8 @@
         <div class="kdv-tablo">
           <h3>19-20 no.lu Tablo (İndirilecek KDV)</h3>
           <DataTable
+            state-storage="session"
+            state-key="vergiraporlari-table-state"
             :value="kdvBeyanname.alislar"
             striped-rows
           >
@@ -128,13 +134,18 @@
       <div class="ba-bs-secim">
         <SelectButton
           v-model="aktifBs"
-          :options="[{label:'BS (Satış)', value:true},{label:'BA (Alış)', value:false}]"
+          :options="[
+            { label: 'BS (Satış)', value: true },
+            { label: 'BA (Alış)', value: false }
+          ]"
           option-label="label"
           option-value="value"
         />
       </div>
       <DataTable
-        :value="aktifBs ? (bsRapor?.kayitlar || []) : (baRapor?.kayitlar || [])"
+        state-storage="session"
+        state-key="vergiraporlari-table-state"
+        :value="aktifBs ? bsRapor?.kayitlar || [] : baRapor?.kayitlar || []"
         striped-rows
       >
         <Column
@@ -183,7 +194,7 @@
         </Column>
       </DataTable>
       <div
-        v-if="(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)"
+        v-if="aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length"
         class="ba-bs-toplam"
       >
         Toplam Tutar: <strong>{{ formatCurrency(aktifBs ? bsRapor?.toplamTutar : baRapor?.toplamTutar) }}</strong>
@@ -211,14 +222,17 @@ const bsRapor = ref(null)
 const baRapor = ref(null)
 const aktifBs = ref(true)
 
-const formatCurrency = (v) => v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+const formatCurrency = (v) =>
+  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 
 onMounted(yukle)
 
 const yukle = async () => {
   if (!/^\d{4}-\d{2}$/.test(donem.value)) {
-    toastBildirim.uyari('Dönemi YYYY-MM formatında girin'); return
+    toastBildirim.uyari('Dönemi YYYY-MM formatında girin')
+    return
   }
   try {
     const [kdv, bs, ba] = await Promise.all([
@@ -236,26 +250,97 @@ const yukle = async () => {
 </script>
 
 <style scoped>
-.vergi-container { padding: 0; }
-.sayfa-baslik { margin-bottom: 20px; }
-.donem-secim { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 24px; }
-.donem-secim label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block; }
-.donem-input { width: 140px; }
-.vergi-seksiyon { margin-bottom: 28px; }
-.seksiyon-baslik { display: flex; align-items: center; gap: 8px; font-size: 18px; margin-bottom: 16px; color: var(--text-primary); }
-.seksiyon-baslik i { color: #3b82f6; }
-.kdv-ozet { display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
-.ozet-kutu {
-  flex: 1; min-width: 180px; background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px;
+.vergi-container {
+  padding: 0;
 }
-.ozet-kutu span { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-.ozet-kutu strong { font-size: 20px; }
-.ozet-kutu.odenecek strong { color: #ef4444; }
-.ozet-kutu.devreden strong { color: #10b981; }
-.kdv-tablolar { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.kdv-tablo h3 { font-size: 14px; color: var(--text-secondary); margin: 0 0 10px; }
-.ba-bs-secim { margin-bottom: 12px; }
-.ba-bs-toplam { margin-top: 12px; padding: 10px 14px; background: rgba(59,130,246,0.08); border-radius: 8px; font-size: 13px; }
-@media (max-width: 900px) { .kdv-tablolar { grid-template-columns: 1fr; } }
+.sayfa-baslik {
+  margin-bottom: 20px;
+}
+.donem-secim {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.donem-secim label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: block;
+}
+.donem-input {
+  width: 140px;
+}
+.vergi-seksiyon {
+  margin-bottom: 28px;
+}
+.seksiyon-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+.seksiyon-baslik i {
+  color: #3b82f6;
+}
+.kdv-ozet {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.ozet-kutu {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ozet-kutu span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.ozet-kutu strong {
+  font-size: 20px;
+}
+.ozet-kutu.odenecek strong {
+  color: #ef4444;
+}
+.ozet-kutu.devreden strong {
+  color: #10b981;
+}
+.kdv-tablolar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.kdv-tablo h3 {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+.ba-bs-secim {
+  margin-bottom: 12px;
+}
+.ba-bs-toplam {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .kdv-tablolar {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

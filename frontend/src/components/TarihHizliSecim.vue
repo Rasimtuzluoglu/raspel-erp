@@ -21,11 +21,53 @@ const emit = defineEmits(['update:modelValue'])
 const secili = ref(null)
 
 const presetler = [
-  { id: 'bugun', label: 'Bugün', hesapla: () => { const b = new Date(); return [b, b] } },
-  { id: 'hafta', label: 'Bu Hafta', hesapla: () => { const b = new Date(); const gun = b.getDay() || 7; const bas = new Date(b); bas.setDate(b.getDate() - gun + 1); return [bas, b] } },
-  { id: 'ay', label: 'Bu Ay', hesapla: () => { const b = new Date(); const bas = new Date(b.getFullYear(), b.getMonth(), 1); return [bas, b] } },
-  { id: '3ay', label: 'Son 3 Ay', hesapla: () => { const b = new Date(); const bas = new Date(b); bas.setMonth(b.getMonth() - 3); return [bas, b] } },
-  { id: 'yil', label: 'Bu Yıl', hesapla: () => { const b = new Date(); const bas = new Date(b.getFullYear(), 0, 1); return [bas, b] } }
+  {
+    id: 'bugun',
+    label: 'Bugün',
+    hesapla: () => {
+      const b = new Date()
+      return [b, b]
+    }
+  },
+  {
+    id: 'hafta',
+    label: 'Bu Hafta',
+    hesapla: () => {
+      const b = new Date()
+      const gun = b.getDay() || 7
+      const bas = new Date(b)
+      bas.setDate(b.getDate() - gun + 1)
+      return [bas, b]
+    }
+  },
+  {
+    id: 'ay',
+    label: 'Bu Ay',
+    hesapla: () => {
+      const b = new Date()
+      const bas = new Date(b.getFullYear(), b.getMonth(), 1)
+      return [bas, b]
+    }
+  },
+  {
+    id: '3ay',
+    label: 'Son 3 Ay',
+    hesapla: () => {
+      const b = new Date()
+      const bas = new Date(b)
+      bas.setMonth(b.getMonth() - 3)
+      return [bas, b]
+    }
+  },
+  {
+    id: 'yil',
+    label: 'Bu Yıl',
+    hesapla: () => {
+      const b = new Date()
+      const bas = new Date(b.getFullYear(), 0, 1)
+      return [bas, b]
+    }
+  }
 ]
 
 const sec = (p) => {
@@ -37,11 +79,18 @@ const sec = (p) => {
   }
 }
 
-watch(() => props.modelValue, (v) => {
-  if (!v || v.length !== 2 || !v[0]) secili.value = null
-})
+watch(
+  () => props.modelValue,
+  (v) => {
+    if (!v || v.length !== 2 || !v[0]) secili.value = null
+  }
+)
 </script>
 
 <style scoped>
-.tarih-hizli { display: flex; flex-wrap: wrap; gap: 4px; }
+.tarih-hizli {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 </style>

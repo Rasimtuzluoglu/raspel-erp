@@ -82,6 +82,26 @@ class RaporControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].cariAd").value("Müşteri"));
     }
+
+    @Test
+    void shouldGetNakitAkisiProjeksiyonu() throws Exception {
+        var dto = com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO.builder()
+                .baslangicBakiyesi(BigDecimal.valueOf(50000))
+                .toplamBeklenenGiris(BigDecimal.valueOf(10000))
+                .toplamBeklenenCikis(BigDecimal.valueOf(5000))
+                .tahminiBitisBakiyesi(BigDecimal.valueOf(55000))
+                .projeksiyonGunu(30)
+                .gunlukAkis(List.of())
+                .build();
+        when(raporService.nakitAkisiProjeksiyonu(eq(30), any())).thenReturn(dto);
+
+        mockMvc.perform(get("/api/raporlar/nakit-akisi-projeksiyonu")
+                        .param("gun", "30")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.baslangicBakiyesi").value(50000))
+                .andExpect(jsonPath("$.tahminiBitisBakiyesi").value(55000));
+    }
 }
 
 

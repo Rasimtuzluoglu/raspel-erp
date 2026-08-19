@@ -86,11 +86,17 @@ const labelMap = {
   '/veri-aktar': 'Veri Aktar',
   '/kullanim-sartlari': 'Kullanım Şartları',
   '/gizlilik-politikasi': 'Gizlilik Politikası',
-  '/yetki-yonetimi': 'Yetki Yönetimi',
+  '/yetki-yonetimi': 'Yetki Yönetimi'
 }
 
 function pathLabel(path) {
-  return labelMap[path] || path.replace(/^\//, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toLocaleUpperCase('tr-TR'))
+  return (
+    labelMap[path] ||
+    path
+      .replace(/^\//, '')
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR'))
+  )
 }
 
 const items = computed(() => {
@@ -136,7 +142,9 @@ const items = computed(() => {
   text-decoration: none;
   border-radius: 4px;
   padding: 2px 6px;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 .breadcrumb-link:hover {
   color: var(--primary-color, #3b82f6);

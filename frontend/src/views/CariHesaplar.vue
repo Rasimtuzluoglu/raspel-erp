@@ -10,8 +10,8 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <Button 
-          label="Yeni Cari Hesap" 
+        <Button
+          label="Yeni Cari Hesap"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -21,14 +21,14 @@
           class="batch-actions"
         >
           <span class="batch-count">{{ selectedCariHesaplar.length }} seçili</span>
-          <Button 
-            label="Toplu Sil" 
+          <Button
+            label="Toplu Sil"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"
             @click="batchSil"
           />
-          <Button 
-            label="CSV Aktar" 
+          <Button
+            label="CSV Aktar"
             icon="pi pi-download"
             class="p-button-sm p-button-outlined"
             @click="batchCsvExport"
@@ -45,11 +45,11 @@
           label="Excel"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
-          style="margin-right:4px"
+          style="margin-right: 4px"
           @click="excelIndir"
         />
-        <Button 
-          label="CSV" 
+        <Button
+          label="CSV"
           icon="pi pi-download"
           class="p-button-sm p-button-outlined"
           style="margin-right: 8px"
@@ -57,9 +57,9 @@
         />
         <span class="p-input-icon-left">
           <i class="pi pi-search" />
-          <InputText 
-            v-model="aramaMetni" 
-            placeholder="Cari ara (Ctrl+F)..." 
+          <InputText
+            v-model="aramaMetni"
+            placeholder="Cari ara (Ctrl+F)..."
             @input="ara"
           />
         </span>
@@ -79,6 +79,8 @@
     >
       <DataTable
         v-model:selection="selectedCariHesaplar"
+        state-storage="session"
+        state-key="carihesaplar-table-state"
         :value="cariHesapStore.cariHesaplar"
         selection-mode="multiple"
         data-key="id"
@@ -93,7 +95,11 @@
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
         :virtual-scroll="cariHesapStore.toplamKayit > 100 && !aramaMetni"
-        :virtual-scroll-options="{ itemSize: tabloYogunluk === 'compact' ? 38 : 46, scrollHeight: '600px', showLoader: true }"
+        :virtual-scroll-options="{
+          itemSize: tabloYogunluk === 'compact' ? 38 : 46,
+          scrollHeight: '600px',
+          showLoader: true
+        }"
         @page="cariSayfaDegisti"
       >
         <Column
@@ -182,25 +188,25 @@
           style="width: 190px"
         >
           <template #body="slotProps">
-            <Button 
+            <Button
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
               title="Düzenle"
               @click="editCariHesap(slotProps.data)"
             />
-            <Button 
+            <Button
               icon="pi pi-copy"
               class="p-button-rounded p-button-secondary p-button-sm"
               title="Kopyala (yeni kayıt için şablon)"
               @click="kopyalaCari(slotProps.data)"
             />
-            <Button 
+            <Button
               icon="pi pi-list"
               class="p-button-rounded p-button-warning p-button-sm"
               title="Hareketleri Göster"
               @click="viewHareketler(slotProps.data)"
             />
-            <Button 
+            <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
               title="Sil"
@@ -222,7 +228,7 @@
     </div>
 
     <!-- Cari Hesap Dialog -->
-    <Dialog 
+    <Dialog
       v-model:visible="showDialog"
       :header="editingId ? 'Cari Hesap Düzenle' : 'Yeni Cari Hesap'"
       :modal="true"
@@ -248,7 +254,7 @@
               <label for="tur">Cari Türü</label>
               <Dropdown
                 v-model="form.tur"
-                :options="['Musteri','Tedarikci','Her Ikisi']"
+                :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
                 placeholder="Seçiniz"
                 class="w-full"
               />
@@ -430,14 +436,14 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <Button 
-            label="İptal" 
+          <Button
+            label="İptal"
             icon="pi pi-times"
             class="p-button-text"
             @click="closeDialog"
           />
-          <Button 
-            :label="editingId ? 'Güncelle' : 'Kaydet'" 
+          <Button
+            :label="editingId ? 'Güncelle' : 'Kaydet'"
             icon="pi pi-check"
             :loading="saving"
             @click="saveCariHesap"
@@ -447,7 +453,7 @@
     </Dialog>
 
     <!-- Hareketler Dialog -->
-    <Dialog 
+    <Dialog
       v-model:visible="showHareketlerDialog"
       header="Cari Hesap Hareketleri"
       :modal="true"
@@ -484,6 +490,8 @@
       >
         <DataTable
           v-if="cariHareketler.length > 0"
+          state-storage="session"
+          state-key="carihesaplar-table-state"
           :value="cariHareketler"
           responsive-layout="scroll"
           striped-rows
@@ -536,7 +544,12 @@
 
         <div class="cari-notlar">
           <div class="cari-not-baslik">
-            <h4><i class="pi pi-pen-to-square" style="margin-right:6px" />Görüşme Notları</h4>
+            <h4>
+              <i
+                class="pi pi-pen-to-square"
+                style="margin-right: 6px"
+              />Görüşme Notları
+            </h4>
           </div>
           <div class="cari-not-ekle">
             <InputText
@@ -544,23 +557,40 @@
               placeholder="Yeni görüşme notu..."
               @keyup.enter="cariNotEkle"
             />
-            <Button icon="pi pi-plus" class="p-button-sm" @click="cariNotEkle" />
+            <Button
+              icon="pi pi-plus"
+              class="p-button-sm"
+              @click="cariNotEkle"
+            />
           </div>
-          <div v-if="!cariNotlar.length" class="cari-not-bos">Henüz not yok.</div>
-          <div v-for="n in cariNotlar" :key="n.id" class="cari-not-satir">
+          <div
+            v-if="!cariNotlar.length"
+            class="cari-not-bos"
+          >
+            Henüz not yok.
+          </div>
+          <div
+            v-for="n in cariNotlar"
+            :key="n.id"
+            class="cari-not-satir"
+          >
             <div class="cari-not-icerik">
               <strong>{{ n.baslik }}</strong>
               <p>{{ n.icerik }}</p>
               <small>{{ n.olusturmaTarihi ? new Date(n.olusturmaTarihi).toLocaleString('tr-TR') : '' }}</small>
             </div>
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" @click="cariNotSil(n)" />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              @click="cariNotSil(n)"
+            />
           </div>
         </div>
       </div>
 
       <template #footer>
-        <Button 
-          label="Kapat" 
+        <Button
+          label="Kapat"
           icon="pi pi-times"
           @click="showHareketlerDialog = false"
         />
@@ -609,7 +639,9 @@ const kolonlar = ref([
 
 useKisayollar({
   yeni: () => openDialog(),
-  iptal: () => { showDialog.value = false },
+  iptal: () => {
+    showDialog.value = false
+  },
   kaydet: () => saveCariHesap()
 })
 
@@ -626,17 +658,15 @@ const selectedCariHesaplar = ref([])
 const selectedCariHesap = ref(null)
 const aramaMetni = ref('')
 let aramaZamanlayici = null
-onUnmounted(() => { if (aramaZamanlayici) clearTimeout(aramaZamanlayici) })
+onUnmounted(() => {
+  if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
+})
 
 const toplamTahsilat = computed(() =>
-  cariHareketler.value
-    .filter(h => h.tur === 'TAHSILAT')
-    .reduce((s, h) => s + (h.tutar || 0), 0)
+  cariHareketler.value.filter((h) => h.tur === 'TAHSILAT').reduce((s, h) => s + (h.tutar || 0), 0)
 )
 const toplamOdeme = computed(() =>
-  cariHareketler.value
-    .filter(h => h.tur === 'ODEME')
-    .reduce((s, h) => s + (h.tutar || 0), 0)
+  cariHareketler.value.filter((h) => h.tur === 'ODEME').reduce((s, h) => s + (h.tutar || 0), 0)
 )
 const guncelBakiye = computed(() => toplamOdeme.value - toplamTahsilat.value)
 
@@ -645,20 +675,32 @@ const ibanGecerli = computed(() => {
   if (!val || val.length < 5) return null
   if (!val.startsWith('TR') || val.length !== 26) return false
   const rearranged = val.slice(4) + val.slice(0, 4)
-  const numeric = rearranged.replace(/[A-Z]/g, c => String(c.charCodeAt(0) - 55))
+  const numeric = rearranged.replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55))
   try {
     return BigInt(numeric) % 97n === 1n
-  } catch { return false }
+  } catch {
+    return false
+  }
 })
 
 const submitted = ref(false)
 const form = ref({
-  ad: '', tur: '', vergiNumarasi: '', vergiDairesi: '',
-  telefon: '', email: '', iban: '',
-  il: '', ilce: '', adres: '',
-  yetkiliKisi: '', yetkiliTelefon: '',
-  krediLimiti: null, odemeVadesi: 0,
-  notlar: '', aktif: true
+  ad: '',
+  tur: '',
+  vergiNumarasi: '',
+  vergiDairesi: '',
+  telefon: '',
+  email: '',
+  iban: '',
+  il: '',
+  ilce: '',
+  adres: '',
+  yetkiliKisi: '',
+  yetkiliTelefon: '',
+  krediLimiti: null,
+  odemeVadesi: 0,
+  notlar: '',
+  aktif: true
 })
 
 onMounted(async () => {
@@ -701,7 +743,24 @@ const ara = () => {
 
 const openDialog = () => {
   editingId.value = null
-  form.value = { ad: '', tur: '', vergiNumarasi: '', vergiDairesi: '', telefon: '', email: '', iban: '', il: '', ilce: '', adres: '', yetkiliKisi: '', yetkiliTelefon: '', krediLimiti: null, odemeVadesi: 0, notlar: '', aktif: true }
+  form.value = {
+    ad: '',
+    tur: '',
+    vergiNumarasi: '',
+    vergiDairesi: '',
+    telefon: '',
+    email: '',
+    iban: '',
+    il: '',
+    ilce: '',
+    adres: '',
+    yetkiliKisi: '',
+    yetkiliTelefon: '',
+    krediLimiti: null,
+    odemeVadesi: 0,
+    notlar: '',
+    aktif: true
+  }
   submitted.value = false
   formTemizle()
   showDialog.value = true
@@ -713,7 +772,12 @@ const kopyalaCari = (cari) => {
   submitted.value = false
   formTemizle()
   showDialog.value = true
-  toast.add({ severity: 'info', summary: 'Kopyalandı', detail: 'Yeni kayıt için şablon oluşturuldu. Kaydetmeden önce bilgileri güncelleyin.', life: 4000 })
+  toast.add({
+    severity: 'info',
+    summary: 'Kopyalandı',
+    detail: 'Yeni kayıt için şablon oluşturuldu. Kaydetmeden önce bilgileri güncelleyin.',
+    life: 4000
+  })
 }
 
 const closeDialog = () => {
@@ -724,13 +788,22 @@ const closeDialog = () => {
 const editCariHesap = (cariHesap) => {
   editingId.value = cariHesap.id
   form.value = {
-    ad: cariHesap.ad, tur: cariHesap.tur || '',
-    vergiNumarasi: cariHesap.vergiNumarasi || '', vergiDairesi: cariHesap.vergiDairesi || '',
-    telefon: cariHesap.telefon || '', email: cariHesap.email || '', iban: cariHesap.iban || '',
-    il: cariHesap.il || '', ilce: cariHesap.ilce || '', adres: cariHesap.adres || '',
-    yetkiliKisi: cariHesap.yetkiliKisi || '', yetkiliTelefon: cariHesap.yetkiliTelefon || '',
-    krediLimiti: cariHesap.krediLimiti || null, odemeVadesi: cariHesap.odemeVadesi ?? 0,
-    notlar: cariHesap.notlar || '', aktif: cariHesap.aktif !== false
+    ad: cariHesap.ad,
+    tur: cariHesap.tur || '',
+    vergiNumarasi: cariHesap.vergiNumarasi || '',
+    vergiDairesi: cariHesap.vergiDairesi || '',
+    telefon: cariHesap.telefon || '',
+    email: cariHesap.email || '',
+    iban: cariHesap.iban || '',
+    il: cariHesap.il || '',
+    ilce: cariHesap.ilce || '',
+    adres: cariHesap.adres || '',
+    yetkiliKisi: cariHesap.yetkiliKisi || '',
+    yetkiliTelefon: cariHesap.yetkiliTelefon || '',
+    krediLimiti: cariHesap.krediLimiti || null,
+    odemeVadesi: cariHesap.odemeVadesi ?? 0,
+    notlar: cariHesap.notlar || '',
+    aktif: cariHesap.aktif !== false
   }
   submitted.value = false
   formTemizle()
@@ -789,13 +862,13 @@ const batchSil = () => {
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       const sonuclar = await Promise.allSettled(
-        [...selectedCariHesaplar.value].map(c =>
-          cariHesapStore.deleteCariHesap(c.id)
-        )
+        [...selectedCariHesaplar.value].map((c) => cariHesapStore.deleteCariHesap(c.id))
       )
-      sonuclar.forEach(r => {
+      sonuclar.forEach((r) => {
         if (r.status === 'rejected') {
-          toastBildirim.hata(r.reason?.response?.data?.message || r.reason?.message || 'Cari hesap silinirken hata oluştu')
+          toastBildirim.hata(
+            r.reason?.response?.data?.message || r.reason?.message || 'Cari hesap silinirken hata oluştu'
+          )
         }
       })
       selectedCariHesaplar.value = []
@@ -806,7 +879,7 @@ const batchSil = () => {
 }
 
 const batchCsvExport = () => {
-  const ids = selectedCariHesaplar.value.map(c => c.id).join(',')
+  const ids = selectedCariHesaplar.value.map((c) => c.id).join(',')
   window.open(`/api/cari-hesaplar/export/csv?ids=${ids}`, '_blank')
 }
 
@@ -818,7 +891,9 @@ const viewHareketler = async (cariHesap) => {
     const res = await hareketAPI.getByCariHesap(cariHesap.id)
     cariHareketler.value = res.data._embedded
       ? res.data._embedded.hareketler || res.data._embedded.hareketList || []
-      : Array.isArray(res.data) ? res.data : (res.data.content || [])
+      : Array.isArray(res.data)
+        ? res.data
+        : res.data.content || []
   } catch (error) {
     toastBildirim.hata('Hareketler yüklenirken hata oluştu')
     cariHareketler.value = []
@@ -835,7 +910,9 @@ const cariNotlariYukle = async (cariId) => {
   try {
     const r = await notAPI.cariNotlari(cariId)
     cariNotlar.value = r.data || []
-  } catch { cariNotlar.value = [] }
+  } catch {
+    cariNotlar.value = []
+  }
 }
 
 const cariNotEkle = async () => {
@@ -874,7 +951,9 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const formatCurrency = (value) => {
@@ -897,15 +976,46 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
-.cari-notlar { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px; }
-.cari-not-baslik h4 { margin: 0 0 10px; font-size: 14px; }
-.cari-not-ekle { display: flex; gap: 8px; margin-bottom: 10px; }
-.cari-not-ekle .p-inputtext { flex: 1; }
-.cari-not-bos { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
-.cari-not-satir { display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.cari-not-icerik strong { font-size: 13px; }
-.cari-not-icerik p { margin: 2px 0; font-size: 13px; }
-.cari-not-icerik small { color: var(--text-muted); font-size: 11px; }
+.cari-notlar {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.cari-not-baslik h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.cari-not-ekle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cari-not-ekle .p-inputtext {
+  flex: 1;
+}
+.cari-not-bos {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 8px 0;
+}
+.cari-not-satir {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cari-not-icerik strong {
+  font-size: 13px;
+}
+.cari-not-icerik p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+.cari-not-icerik small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
 
 .cari-hesaplar-container {
   padding: 20px;
@@ -947,13 +1057,23 @@ h3 {
   font-size: 16px;
 }
 
-.dialog-form { padding: 0; }
-.form-section { margin-bottom: 20px; }
-.form-section:last-child { margin-bottom: 0; }
+.dialog-form {
+  padding: 0;
+}
+.form-section {
+  margin-bottom: 20px;
+}
+.form-section:last-child {
+  margin-bottom: 0;
+}
 .form-section-title {
-  font-size: 14px; font-weight: 700; color: #60a5fa;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 16px; padding-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 .form-group {
@@ -967,7 +1087,9 @@ h3 {
   color: var(--text-primary) !important;
   font-size: 13px;
 }
-.form-group .required { color: #f87171; }
+.form-group .required {
+  color: #f87171;
+}
 
 .form-group :deep(.p-inputtext),
 .form-group :deep(.p-textarea) {
@@ -985,10 +1107,21 @@ h3 {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
 }
 .form-group :deep(.p-inputtext.p-invalid),
-.form-group :deep(.p-textarea.p-invalid) { border-color: #f87171 !important; }
+.form-group :deep(.p-textarea.p-invalid) {
+  border-color: #f87171 !important;
+}
 
-.error { display: block; color: #f87171; font-size: 11px; margin-top: 4px; }
-.dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
+.error {
+  display: block;
+  color: #f87171;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 
 .positive {
   color: #4caf50;
@@ -1057,18 +1190,50 @@ h3 {
 }
 
 .batch-actions {
-  display: inline-flex; align-items: center; gap: 8px;
-  margin-left: 12px; padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  padding-left: 12px;
   border-left: 1px solid var(--border);
 }
 .batch-count {
-  font-size: 12px; color: #60a5fa; font-weight: 600;
+  font-size: 12px;
+  color: #60a5fa;
+  font-weight: 600;
 }
-.kopyalanabilir { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.kopyalanabilir:hover { color: var(--accent); }
-.kopyala-ikon { font-size: 11px; opacity: 0.5; }
-.kopyalanabilir:hover .kopyala-ikon { opacity: 1; }
-.iban-gecerli { display: block; color: #4caf50; font-size: 11px; margin-top: 2px; }
-.iban-gecersiz { display: block; color: #f44336; font-size: 11px; margin-top: 2px; }
-.iban-yardim { display: block; color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
+.kopyalanabilir {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kopyalanabilir:hover {
+  color: var(--accent);
+}
+.kopyala-ikon {
+  font-size: 11px;
+  opacity: 0.5;
+}
+.kopyalanabilir:hover .kopyala-ikon {
+  opacity: 1;
+}
+.iban-gecerli {
+  display: block;
+  color: #4caf50;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.iban-gecersiz {
+  display: block;
+  color: #f44336;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.iban-yardim {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-top: 2px;
+}
 </style>

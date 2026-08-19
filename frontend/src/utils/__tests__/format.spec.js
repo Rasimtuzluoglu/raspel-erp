@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  formatCurrency,
-  formatDate,
-  formatDateTime,
-  durumLabel
-} from '../format.js'
+import { formatCurrency, formatDate, formatDateTime, durumLabel } from '../format.js'
 
 describe('format.js', () => {
   it('formatCurrency handles null/undefined/NaN', () => {

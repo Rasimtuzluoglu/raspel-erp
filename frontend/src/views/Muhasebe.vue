@@ -41,7 +41,7 @@
             field="kod"
             header="Kod"
             sortable
-            style="width:110px"
+            style="width: 110px"
           />
           <Column
             field="ad"
@@ -65,7 +65,7 @@
           />
           <Column
             header="İşlem"
-            style="width:60px"
+            style="width: 60px"
           >
             <template #body="{ data }">
               <SatirEylemleri
@@ -100,6 +100,8 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="muhasebe-table-state"
           :value="fisler"
           striped-rows
           :loading="fisYukleniyor"
@@ -108,7 +110,7 @@
             field="fisNo"
             header="Fiş No"
             sortable
-            style="width:150px"
+            style="width: 150px"
           />
           <Column
             field="tarih"
@@ -152,7 +154,7 @@
           </Column>
           <Column
             header="İşlem"
-            style="width:140px"
+            style="width: 140px"
           >
             <template #body="{ data }">
               <Button
@@ -194,6 +196,8 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="muhasebe-table-state"
           :value="mizan"
           striped-rows
           :loading="mizanYukleniyor"
@@ -202,7 +206,7 @@
             field="hesapKodu"
             header="Hesap Kodu"
             sortable
-            style="width:110px"
+            style="width: 110px"
           />
           <Column
             field="hesapAdi"
@@ -273,6 +277,8 @@
           />
         </div>
         <DataTable
+          state-storage="session"
+          state-key="muhasebe-table-state"
           :value="kebir"
           striped-rows
           :loading="kebirYukleniyor"
@@ -358,7 +364,7 @@
           <label>Tip *</label>
           <Select
             v-model="hesapForm.tip"
-            :options="['AKTIF','PASIF','GELIR','GIDER']"
+            :options="['AKTIF', 'PASIF', 'GELIR', 'GIDER']"
             class="w-full"
           />
         </div>
@@ -450,8 +456,8 @@
         />
       </div>
       <div class="fis-toplam">
-        Toplam Borç: <strong>{{ formatCurrency(fisToplamBorc) }}</strong>
-        &nbsp;|&nbsp; Toplam Alacak: <strong>{{ formatCurrency(fisToplamAlacak) }}</strong>
+        Toplam Borç: <strong>{{ formatCurrency(fisToplamBorc) }}</strong> &nbsp;|&nbsp; Toplam Alacak:
+        <strong>{{ formatCurrency(fisToplamAlacak) }}</strong>
       </div>
       <template #footer>
         <Button
@@ -490,13 +496,15 @@
         {{ fisDetay.aciklama }}
       </p>
       <DataTable
+        state-storage="session"
+        state-key="muhasebe-table-state"
         :value="fisDetay?.kalemler || []"
         striped-rows
       >
         <Column
           field="hesapKodu"
           header="Hesap"
-          style="width:90px"
+          style="width: 90px"
         />
         <Column
           field="hesapAdi"
@@ -548,7 +556,7 @@ const hesapDialog = ref(false)
 const hesapDuzenleme = ref(false)
 const hesapForm = ref({ kod: '', ad: '', tip: 'AKTIF', grup: '' })
 const hesapFormHatali = ref({ kod: false, ad: false })
-const hesapDialogBaslik = computed(() => hesapDuzenleme.value ? 'Hesap Düzenle' : 'Yeni Hesap')
+const hesapDialogBaslik = computed(() => (hesapDuzenleme.value ? 'Hesap Düzenle' : 'Yeni Hesap'))
 
 // Fişler
 const fisler = ref([])
@@ -573,17 +581,19 @@ const kebirHesap = ref(null)
 const kebirBaslangic = ref(null)
 const kebirBitis = ref(null)
 
-const hesapSecenekleri = computed(() => hesaplar.value.map(h => ({ ad: `${h.kod} - ${h.ad}`, kod: h.kod })))
+const hesapSecenekleri = computed(() => hesaplar.value.map((h) => ({ ad: `${h.kod} - ${h.ad}`, kod: h.kod })))
 const fisToplamBorc = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.borc) || 0), 0))
 const fisToplamAlacak = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.alacak) || 0), 0))
 
-const formatCurrency = (v) => v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+const formatCurrency = (v) =>
+  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 
-const tipEtiketi = (t) => ({ AKTIF: 'Aktif', PASIF: 'Pasif', GELIR: 'Gelir', GIDER: 'Gider' }[t] || t)
-const tipSeverity = (t) => ({ AKTIF: 'info', PASIF: 'warning', GELIR: 'success', GIDER: 'danger' }[t] || 'secondary')
+const tipEtiketi = (t) => ({ AKTIF: 'Aktif', PASIF: 'Pasif', GELIR: 'Gelir', GIDER: 'Gider' })[t] || t
+const tipSeverity = (t) => ({ AKTIF: 'info', PASIF: 'warning', GELIR: 'success', GIDER: 'danger' })[t] || 'secondary'
 
-const tarihParam = (d) => d ? d.toISOString?.().split('T')[0] ?? d : null
+const tarihParam = (d) => (d ? (d.toISOString?.().split('T')[0] ?? d) : null)
 
 onMounted(() => {
   hesaplariYukle()
@@ -592,7 +602,10 @@ onMounted(() => {
 
 const hesaplariYukle = async () => {
   yukleniyor.value = true
-  try { const r = await muhasebeAPI.getHesapPlani(); hesaplar.value = r.data || [] } catch (err) {
+  try {
+    const r = await muhasebeAPI.getHesapPlani()
+    hesaplar.value = r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Hesap planı yüklenemedi')
   }
   yukleniyor.value = false
@@ -616,7 +629,8 @@ const hesapKaydet = async () => {
   const hatali = { kod: !hesapForm.value.kod?.trim(), ad: !hesapForm.value.ad?.trim() }
   hesapFormHatali.value = hatali
   if (hatali.kod || hatali.ad) {
-    toastBildirim.uyari('Kod ve ad zorunludur'); return
+    toastBildirim.uyari('Kod ve ad zorunludur')
+    return
   }
   kaydediliyor.value = true
   try {
@@ -634,12 +648,14 @@ const hesapKaydet = async () => {
 const hesapSil = (data) => {
   confirm.require({
     message: `"${data.kod} - ${data.ad}" hesabını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı', icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil', rejectLabel: 'İptal',
+    header: 'Silme Onayı',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Evet, Sil',
+    rejectLabel: 'İptal',
     accept: async () => {
       try {
         await muhasebeAPI.hesapSil(data.id)
-        hesaplar.value = hesaplar.value.filter(h => h.id !== data.id)
+        hesaplar.value = hesaplar.value.filter((h) => h.id !== data.id)
         silVeGeriAl({
           veri: data,
           metin: `"${data.kod}" hesabı silindi`,
@@ -679,19 +695,26 @@ const fisDialogAc = () => {
 
 const fisKaydet = async () => {
   if (!fisForm.value.kalemler?.length) {
-    toastBildirim.uyari('En az bir kalem ekleyin'); return
+    toastBildirim.uyari('En az bir kalem ekleyin')
+    return
   }
   if (fisToplamBorc.value !== fisToplamAlacak.value) {
-    toast.add({ severity: 'error', summary: 'Fiş denk değil', detail: 'Toplam borç ile alacak eşit olmalı', life: 5000 }); return
+    toast.add({
+      severity: 'error',
+      summary: 'Fiş denk değil',
+      detail: 'Toplam borç ile alacak eşit olmalı',
+      life: 5000
+    })
+    return
   }
   kaydediliyor.value = true
   try {
     const payload = {
       tarih: tarihParam(fisForm.value.tarih),
       aciklama: fisForm.value.aciklama,
-      kalemler: fisForm.value.kalemler.map(k => ({
+      kalemler: fisForm.value.kalemler.map((k) => ({
         hesapKodu: k.hesapKodu,
-        hesapAdi: hesaplar.value.find(h => h.kod === k.hesapKodu)?.ad,
+        hesapAdi: hesaplar.value.find((h) => h.kod === k.hesapKodu)?.ad,
         borc: Number(k.borc) || 0,
         alacak: Number(k.alacak) || 0
       }))
@@ -719,8 +742,10 @@ const fisDetayAc = async (data) => {
 const fisIptal = (data) => {
   confirm.require({
     message: `"${data.fisNo}" fişini iptal etmek istediğinize emin misiniz?`,
-    header: 'İptal Onayı', icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, İptal Et', rejectLabel: 'Vazgeç',
+    header: 'İptal Onayı',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Evet, İptal Et',
+    rejectLabel: 'Vazgeç',
     accept: async () => {
       try {
         await muhasebeAPI.fisIptal(data.id)
@@ -763,23 +788,96 @@ const kebirYukle = async () => {
 </script>
 
 <style scoped>
-.muhasebe-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.filtre-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-.form-grid { display: flex; flex-direction: column; gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.zorunlu::after { content: ' *'; color: #ef4444; }
-.hata-mesaj { color: #ef4444; font-size: 12px; }
-:deep(.p-invalid) { border-color: #ef4444 !important; }
-.fis-kalemler { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
-.fis-kalem-baslik, .fis-kalem { display: grid; grid-template-columns: 1fr 140px 140px 40px; gap: 8px; align-items: center; }
-.fis-kalem-baslik span { font-size: 12px; font-weight: 600; color: var(--text-muted); }
-.fis-toplam { margin-top: 14px; padding: 10px 14px; background: rgba(59,130,246,0.08); border-radius: 8px; font-size: 13px; }
-.fis-detay-baslik { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
-.fis-detay-aciklama { color: var(--text-secondary); margin-bottom: 12px; }
-.kebir-select { min-width: 240px; }
-.pozitif { color: #10b981; font-weight: 600; }
-.negatif { color: #ef4444; font-weight: 600; }
+.muhasebe-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.filtre-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.zorunlu::after {
+  content: ' *';
+  color: #ef4444;
+}
+.hata-mesaj {
+  color: #ef4444;
+  font-size: 12px;
+}
+:deep(.p-invalid) {
+  border-color: #ef4444 !important;
+}
+.fis-kalemler {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fis-kalem-baslik,
+.fis-kalem {
+  display: grid;
+  grid-template-columns: 1fr 140px 140px 40px;
+  gap: 8px;
+  align-items: center;
+}
+.fis-kalem-baslik span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.fis-toplam {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.fis-detay-baslik {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.fis-detay-aciklama {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.kebir-select {
+  min-width: 240px;
+}
+.pozitif {
+  color: #10b981;
+  font-weight: 600;
+}
+.negatif {
+  color: #ef4444;
+  font-weight: 600;
+}
 </style>

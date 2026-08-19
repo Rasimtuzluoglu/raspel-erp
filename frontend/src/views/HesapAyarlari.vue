@@ -18,7 +18,7 @@
         <template #title>
           <i
             class="pi pi-user"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />Profil
         </template>
         <template #content>
@@ -63,7 +63,7 @@
         <template #title>
           <i
             class="pi pi-lock"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />Şifre Değiştir
         </template>
         <template #content>
@@ -104,7 +104,7 @@
         <template #title>
           <i
             class="pi pi-shield"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />İki Faktörlü Doğrulama (2FA)
         </template>
         <template #content>
@@ -115,13 +115,13 @@
             <div class="iki-fa-baslik">
               <i
                 class="pi pi-check-circle"
-                style="color:#10b981"
+                style="color: #10b981"
               />
               <span>2FA <strong>aktif</strong>. Hesabınız güvende.</span>
             </div>
             <div
               class="field"
-              style="margin-top:14px"
+              style="margin-top: 14px"
             >
               <label>Kapatmak için doğrulama kodu</label>
               <div class="kod-satir">
@@ -156,7 +156,10 @@
             </template>
             <template v-else>
               <div class="iki-fa-kurulum">
-                <p><strong>1.</strong> Aşağıdaki gizli anahtarı (veya otpauth URI'sini) kimlik doğrulayıcı uygulamanıza ekleyin:</p>
+                <p>
+                  <strong>1.</strong> Aşağıdaki gizli anahtarı (veya otpauth URI'sini) kimlik doğrulayıcı uygulamanıza
+                  ekleyin:
+                </p>
                 <div class="secret-kutu">
                   <code>{{ kurulumData.secret }}</code>
                   <Button
@@ -193,7 +196,7 @@
         <template #title>
           <i
             class="pi pi-palette"
-            style="margin-right:8px"
+            style="margin-right: 8px"
           />Görünüm
         </template>
         <template #content>
@@ -224,7 +227,7 @@
                   v-for="c in renkler"
                   :key="c.value"
                   class="renk-dot"
-                  :class="{ 'aktif': accentColor === c.value }"
+                  :class="{ aktif: accentColor === c.value }"
                   :style="{ background: c.value }"
                   :title="c.name"
                   @click="applyColor(c.value)"
@@ -274,13 +277,19 @@ onMounted(async () => {
   initTheme()
   const k = authStore.kullanici
   if (k) {
-    profilForm.value = { displayName: k.displayName || '', companyName: k.companyName || '', avatarUrl: k.avatarUrl || '' }
+    profilForm.value = {
+      displayName: k.displayName || '',
+      companyName: k.companyName || '',
+      avatarUrl: k.avatarUrl || ''
+    }
   }
   try {
     const r = await kullaniciAPI.ben()
     const ben = r.data
     twoFactorDurum.value = ben.twoFactorEnabled ? 'ACIK' : 'KAPALI'
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 })
 
 const profilKaydet = async () => {
@@ -297,10 +306,12 @@ const profilKaydet = async () => {
 
 const sifreKaydet = async () => {
   if (!sifreForm.value.mevcutSifre || !sifreForm.value.yeniSifre) {
-    toastBildirim.uyari('Tüm alanları doldurun'); return
+    toastBildirim.uyari('Tüm alanları doldurun')
+    return
   }
   if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
-    toastBildirim.hata('Yeni şifreler eşleşmiyor'); return
+    toastBildirim.hata('Yeni şifreler eşleşmiyor')
+    return
   }
   kaydediliyor.value = true
   try {
@@ -327,7 +338,8 @@ const kurulumBaslat = async () => {
 
 const ikiFakAktifEt = async () => {
   if (!dogrulamaKodu.value) {
-    toastBildirim.uyari('Doğrulama kodunu girin'); return
+    toastBildirim.uyari('Doğrulama kodunu girin')
+    return
   }
   kaydediliyor.value = true
   try {
@@ -344,7 +356,8 @@ const ikiFakAktifEt = async () => {
 
 const ikiFakapat = async () => {
   if (!kapatmaKodu.value) {
-    toastBildirim.uyari('Doğrulama kodunu girin'); return
+    toastBildirim.uyari('Doğrulama kodunu girin')
+    return
   }
   kaydediliyor.value = true
   try {
@@ -362,34 +375,102 @@ const kopyala = async (text) => {
   try {
     await navigator.clipboard.writeText(text)
     toast.add({ severity: 'success', summary: 'Kopyalandı', detail: 'Gizli anahtar panoya kopyalandı', life: 2000 })
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 }
 </script>
 
 <style scoped>
-.hesap-ayarlari { padding: 0; }
-.sayfa-baslik { margin-bottom: 24px; }
-.ayarlar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
-.ayar-kart :deep(.p-card-content) { padding-top: 8px; }
-.form-grid { display: flex; flex-direction: column; gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.kod-satir { display: flex; gap: 8px; align-items: center; }
-.iki-fa-acik .iki-fa-baslik { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.iki-fa-aciklama { color: var(--text-secondary); margin-bottom: 14px; }
+.hesap-ayarlari {
+  padding: 0;
+}
+.sayfa-baslik {
+  margin-bottom: 24px;
+}
+.ayarlar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+.ayar-kart :deep(.p-card-content) {
+  padding-top: 8px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.kod-satir {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.iki-fa-acik .iki-fa-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.iki-fa-aciklama {
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
 .secret-kutu {
-  display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.2);
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
 }
-.secret-kutu code { font-family: monospace; font-size: 15px; letter-spacing: 2px; flex: 1; }
-.otpauth-satir { color: var(--text-muted); word-break: break-all; }
-.tema-butonlari { display: flex; gap: 8px; }
-.renk-secenekleri { display: flex; gap: 12px; padding-top: 4px; }
+.secret-kutu code {
+  font-family: monospace;
+  font-size: 15px;
+  letter-spacing: 2px;
+  flex: 1;
+}
+.otpauth-satir {
+  color: var(--text-muted);
+  word-break: break-all;
+}
+.tema-butonlari {
+  display: flex;
+  gap: 8px;
+}
+.renk-secenekleri {
+  display: flex;
+  gap: 12px;
+  padding-top: 4px;
+}
 .renk-dot {
-  width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent;
-  cursor: pointer; transition: all 0.15s;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
 }
-.renk-dot:hover { transform: scale(1.12); }
-.renk-dot.aktif { border-color: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.4); }
+.renk-dot:hover {
+  transform: scale(1.12);
+}
+.renk-dot.aktif {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
 </style>

@@ -26,21 +26,9 @@ export {
   satinalmaSiparisAPI
 } from './modules/ticaret.js'
 
-export {
-  stokAPI,
-  depoAPI,
-  kategoriAPI,
-  stokSeriAPI,
-  stokSayimAPI
-} from './modules/stok.js'
+export { stokAPI, depoAPI, kategoriAPI, stokSeriAPI, stokSayimAPI } from './modules/stok.js'
 
-export {
-  personelAPI,
-  personelIzinAPI,
-  puantajAPI,
-  maasBordroAPI,
-  vardiyaAPI
-} from './modules/ik.js'
+export { personelAPI, personelIzinAPI, puantajAPI, maasBordroAPI, vardiyaAPI } from './modules/ik.js'
 
 export {
   kullaniciAPI,
@@ -54,19 +42,10 @@ export {
   donemAPI,
   auditLogAPI,
   notAPI,
-  projeAPI
+  projeAPI,
+  anomaliAPI
 } from './modules/sistem.js'
 
-export {
-  dashboardAPI,
-  raporAPI
-} from './modules/rapor.js'
+export { dashboardAPI, raporAPI } from './modules/rapor.js'
 
-export {
-  uploadAPI,
-  backupAPI,
-  excelAPI,
-  importAPI,
-  pdfAPI,
-  belgeAPI
-} from './modules/dosya.js'
+export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './modules/dosya.js'

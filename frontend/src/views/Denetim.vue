@@ -121,6 +121,8 @@
     <Card>
       <template #content>
         <DataTable
+          state-storage="session"
+          state-key="denetim-table-state"
           :value="logs"
           :loading="yukleniyor"
           striped-rows
@@ -222,7 +224,11 @@ const kayitliFiltreDialog = ref(false)
 const yeniFiltreAdi = ref('')
 
 const kayitliFiltreleriYukle = () => {
-  try { kayitliFiltreler.value = JSON.parse(localStorage.getItem(KAYITLI_ANAHTAR) || '[]') } catch { kayitliFiltreler.value = [] }
+  try {
+    kayitliFiltreler.value = JSON.parse(localStorage.getItem(KAYITLI_ANAHTAR) || '[]')
+  } catch {
+    kayitliFiltreler.value = []
+  }
 }
 
 const filtreKaydet = () => {
@@ -261,7 +267,10 @@ const yukle = async (page = 0) => {
   }
 }
 
-const filtrele = () => { sayfa.value = 0; yukle(0) }
+const filtrele = () => {
+  sayfa.value = 0
+  yukle(0)
+}
 
 const excelIndir = async () => {
   excelYukleniyor.value = true
@@ -274,7 +283,9 @@ const excelIndir = async () => {
       params.bitisTarih = formatISODate(filtre.value.tarihAraligi[1])
     }
     const res = await excelAPI.denetimLog(params)
-    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    )
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', `denetim-log-${new Date().toISOString().split('T')[0]}.xlsx`)
@@ -292,7 +303,10 @@ const filtreTemizle = () => {
   filtre.value = { islem: null, entityAdi: null, tarihAraligi: [] }
   filtrele()
 }
-const sayfaDegisti = (e) => { sayfa.value = e.page; yukle(e.page) }
+const sayfaDegisti = (e) => {
+  sayfa.value = e.page
+  yukle(e.page)
+}
 
 const formatDate = (d) => {
   if (!d) return '-'
@@ -312,13 +326,12 @@ const islemSeverity = (islem) => {
 
 const filtreSecenekleriniYukle = async () => {
   try {
-    const [islemRes, entityRes] = await Promise.all([
-      auditLogAPI.getIslemTipleri(),
-      auditLogAPI.getEntityListesi()
-    ])
+    const [islemRes, entityRes] = await Promise.all([auditLogAPI.getIslemTipleri(), auditLogAPI.getEntityListesi()])
     islemTipleri.value = islemRes.data || []
     entityListesi.value = entityRes.data || []
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 }
 
 onMounted(() => {
@@ -329,12 +342,38 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.denetim-page { padding: 1.5rem; }
-.filtre-karti { margin-bottom: 1rem; }
-.filtre-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
-.filtre-alan label { display: block; margin-bottom: 4px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
-.filtre-aksiyon { display: flex; align-items: flex-end; }
-.w-full { width: 100% !important; }
-.kayitli-filtre { min-width: 170px !important; }
-.empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+.denetim-page {
+  padding: 1.5rem;
+}
+.filtre-karti {
+  margin-bottom: 1rem;
+}
+.filtre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.filtre-alan label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.filtre-aksiyon {
+  display: flex;
+  align-items: flex-end;
+}
+.w-full {
+  width: 100% !important;
+}
+.kayitli-filtre {
+  min-width: 170px !important;
+}
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
 </style>

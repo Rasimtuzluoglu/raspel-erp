@@ -46,7 +46,7 @@
     >
       <i class="pi pi-pen-to-square empty-icon" />
       <h3>Henüz Not Yok</h3>
-      <p style="margin-bottom: 1rem;">
+      <p style="margin-bottom: 1rem">
         İlk notunu eklemek için aşağıdaki butona tıkla.
       </p>
       <Button
@@ -101,7 +101,7 @@
       v-model:visible="dialogGoster"
       :header="dialogBaslik"
       :modal="true"
-      style="width:500px"
+      style="width: 500px"
     >
       <FormField
         label="Başlık"
@@ -204,7 +204,7 @@ const geriAlGoster = ref(false)
 const silinenSon = ref(null)
 let geriAlZamanlayici = null
 
-const dialogBaslik = computed(() => duzenlemeModu.value ? 'Notu Düzenle' : 'Yeni Not')
+const dialogBaslik = computed(() => (duzenlemeModu.value ? 'Notu Düzenle' : 'Yeni Not'))
 
 onMounted(() => store.getAllNotlar())
 
@@ -243,7 +243,7 @@ const kaydet = async () => {
 }
 
 const sil = async (id) => {
-  const silinen = store.notlar.find(n => n.id === id)
+  const silinen = store.notlar.find((n) => n.id === id)
   try {
     await store.deleteNot(id)
     toast.add({ severity: 'success', summary: 'Silindi', detail: 'Not silindi.', life: 3000 })
@@ -251,7 +251,10 @@ const sil = async (id) => {
       silinenSon.value = silinen
       geriAlGoster.value = true
       if (geriAlZamanlayici) clearTimeout(geriAlZamanlayici)
-      geriAlZamanlayici = setTimeout(() => { geriAlGoster.value = false; silinenSon.value = null }, 8000)
+      geriAlZamanlayici = setTimeout(() => {
+        geriAlGoster.value = false
+        silinenSon.value = null
+      }, 8000)
     }
   } catch {
     toastBildirim.hata('Silme başarısız.')
@@ -261,7 +264,12 @@ const sil = async (id) => {
 const geriAl = async () => {
   if (!silinenSon.value) return
   try {
-    await store.addNot({ baslik: silinenSon.value.baslik, icerik: silinenSon.value.icerik, onemDerecesi: silinenSon.value.onemDerecesi, renk: silinenSon.value.renk })
+    await store.addNot({
+      baslik: silinenSon.value.baslik,
+      icerik: silinenSon.value.icerik,
+      onemDerecesi: silinenSon.value.onemDerecesi,
+      renk: silinenSon.value.renk
+    })
     toast.add({ severity: 'success', summary: 'Geri Alındı', detail: 'Not geri yüklendi.', life: 3000 })
   } catch {
     toastBildirim.hata('Geri alma başarısız.')
@@ -273,19 +281,35 @@ const geriAl = async () => {
 
 const formatTarih = (t) => {
   if (!t) return ''
-  return new Date(t).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(t).toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>
 
 <style scoped>
-.notlar-page { padding: 1.5rem; }
-.geri-al-banner {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
-  border-radius: 10px; padding: 10px 16px; margin-bottom: 1rem;
-  font-size: 0.9rem; color: #fbbf24;
+.notlar-page {
+  padding: 1.5rem;
 }
-.geri-al-banner i { font-size: 16px; }
+.geri-al-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #fbbf24;
+}
+.geri-al-banner i {
+  font-size: 16px;
+}
 .empty-box {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -294,7 +318,11 @@ const formatTarih = (t) => {
   text-align: center;
   margin-top: 1.5rem;
 }
-.empty-icon { font-size: 3.5rem; color: #94a3b8; margin-bottom: 1rem; }
+.empty-icon {
+  font-size: 3.5rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
 .not-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -310,12 +338,24 @@ const formatTarih = (t) => {
   display: flex;
   flex-direction: column;
 }
-.not-card:hover { border-color: rgba(59,130,246,0.3); }
-.not-card.yuksek { border-left: 4px solid #f59e0b; }
-.not-card.kritik { border-left: 4px solid #ef4444; }
-.not-card.dusuk { border-left: 4px solid #3b82f6; }
-.not-card.normal { border-left: 4px solid #64748b; }
-[data-theme="light"] .not-card { background: #ffffff; }
+.not-card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.not-card.yuksek {
+  border-left: 4px solid #f59e0b;
+}
+.not-card.kritik {
+  border-left: 4px solid #ef4444;
+}
+.not-card.dusuk {
+  border-left: 4px solid #3b82f6;
+}
+.not-card.normal {
+  border-left: 4px solid #64748b;
+}
+[data-theme='light'] .not-card {
+  background: #ffffff;
+}
 .not-card-header {
   display: flex;
   justify-content: space-between;
@@ -329,25 +369,67 @@ const formatTarih = (t) => {
   font-weight: 700;
   text-transform: uppercase;
 }
-.onem-badge.dusuk { background: rgba(59,130,246,0.2); color: #60a5fa; }
-.onem-badge.normal { background: rgba(100,116,139,0.2); color: #94a3b8; }
-.onem-badge.yuksek { background: rgba(245,158,11,0.2); color: #fbbf24; }
-.onem-badge.kritik { background: rgba(239,68,68,0.2); color: #f87171; }
-.not-card.renk-mavi { border-left: 4px solid #3b82f6; }
-.not-card.renk-yesil { border-left: 4px solid #22c55e; }
-.not-card.renk-sari { border-left: 4px solid #f59e0b; }
-.not-card.renk-kirmizi { border-left: 4px solid #ef4444; }
-.not-card.renk-mor { border-left: 4px solid #8b5cf6; }
-.not-card.renk-pembe { border-left: 4px solid #ec4899; }
-.not-card.renk-gri { border-left: 4px solid #64748b; }
-.renk-secici { display: flex; gap: 8px; flex-wrap: wrap; }
-.renk-nokta {
-  width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
-  cursor: pointer; transition: all 0.15s;
+.onem-badge.dusuk {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
 }
-.renk-nokta:hover { transform: scale(1.15); }
-.renk-nokta.secili { border-color: var(--text-primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
-.not-tarih { font-size: 0.75rem; color: var(--text-muted); }
+.onem-badge.normal {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}
+.onem-badge.yuksek {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+.onem-badge.kritik {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+.not-card.renk-mavi {
+  border-left: 4px solid #3b82f6;
+}
+.not-card.renk-yesil {
+  border-left: 4px solid #22c55e;
+}
+.not-card.renk-sari {
+  border-left: 4px solid #f59e0b;
+}
+.not-card.renk-kirmizi {
+  border-left: 4px solid #ef4444;
+}
+.not-card.renk-mor {
+  border-left: 4px solid #8b5cf6;
+}
+.not-card.renk-pembe {
+  border-left: 4px solid #ec4899;
+}
+.not-card.renk-gri {
+  border-left: 4px solid #64748b;
+}
+.renk-secici {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.renk-nokta {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.renk-nokta:hover {
+  transform: scale(1.15);
+}
+.renk-nokta.secili {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+.not-tarih {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
 .not-baslik {
   margin: 0 0 0.5rem;
   font-size: 1rem;
@@ -369,6 +451,11 @@ const formatTarih = (t) => {
   border-top: 1px solid var(--border);
   padding-top: 0.5rem;
 }
-.w-full { width: 100% !important; }
-[data-theme="light"] .onem-badge.normal { background: rgba(100,116,139,0.1); color: #475569; }
+.w-full {
+  width: 100% !important;
+}
+[data-theme='light'] .onem-badge.normal {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+}
 </style>

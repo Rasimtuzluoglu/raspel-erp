@@ -96,9 +96,9 @@ const aramaTerimi = ref('')
 const filtrelenmisDeger = computed(() => {
   const t = (aramaTerimi.value || '').trim().toLowerCase()
   if (!t) return props.value
-  return props.value.filter(satir => {
+  return props.value.filter((satir) => {
     if (!satir) return false
-    return Object.values(satir).some(val => {
+    return Object.values(satir).some((val) => {
       if (val == null) return false
       return String(val).toLowerCase().includes(t)
     })
@@ -112,7 +112,9 @@ const rowsDegisti = (yeniSatirSayisi) => {
       const kayitli = JSON.parse(localStorage.getItem(ROWS_KEY) || '{}')
       kayitli[props.gorunumAnahtari] = yeniSatirSayisi
       localStorage.setItem(ROWS_KEY, JSON.stringify(kayitli))
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   }
 }
 
@@ -121,11 +123,18 @@ onMounted(() => {
     try {
       const kayitli = JSON.parse(localStorage.getItem(ROWS_KEY) || '{}')
       if (kayitli[props.gorunumAnahtari]) aktifRows.value = kayitli[props.gorunumAnahtari]
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   }
 })
 
-watch(() => props.rows, (yeni) => { aktifRows.value = yeni })
+watch(
+  () => props.rows,
+  (yeni) => {
+    aktifRows.value = yeni
+  }
+)
 </script>
 
 <style scoped>
@@ -136,21 +145,36 @@ watch(() => props.rows, (yeni) => { aktifRows.value = yeni })
 }
 
 .tablo-arama {
-  display: flex; align-items: center; gap: 4px;
-  max-width: 320px; margin-bottom: 12px;
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 8px; padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 320px;
+  margin-bottom: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px 8px;
 }
-.tablo-arama > i { color: var(--text-muted); font-size: 14px; margin-left: 4px; }
-.arama-input { border: none; background: transparent; box-shadow: none !important; }
-.arama-input:focus { box-shadow: none !important; }
+.tablo-arama > i {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-left: 4px;
+}
+.arama-input {
+  border: none;
+  background: transparent;
+  box-shadow: none !important;
+}
+.arama-input:focus {
+  box-shadow: none !important;
+}
 
 .batch-action-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(90deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
-  border: 1px solid rgba(59,130,246,0.3);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 10px;
   padding: 8px 16px;
   margin-bottom: 12px;
@@ -175,10 +199,12 @@ watch(() => props.rows, (yeni) => { aktifRows.value = yeni })
   gap: 8px;
 }
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: all 0.2s ease;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
   transform: translateY(-6px);
 }

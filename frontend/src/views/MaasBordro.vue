@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="maasbordro-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -65,7 +67,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -137,7 +139,9 @@
         </div>
         <div class="field">
           <label>Net Maaş (Hesaplanan)</label>
-          <span style="font-weight:700;font-size:18px;color:#4ade80;">{{ formatCurrency((form.brutMaas || 0) - (form.kesintiler || 0)) }}</span>
+          <span style="font-weight: 700; font-size: 18px; color: #4ade80">{{
+            formatCurrency((form.brutMaas || 0) - (form.kesintiler || 0))
+          }}</span>
         </div>
         <div class="field">
           <label>Ödeme Tarihi</label><DatePicker
@@ -181,9 +185,16 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ personelId: null, yil: new Date().getFullYear(), ay: new Date().getMonth() + 1, brutMaas: 0, kesintiler: 0, odemeTarihi: new Date() })
+const form = ref({
+  personelId: null,
+  yil: new Date().getFullYear(),
+  ay: new Date().getMonth() + 1,
+  brutMaas: 0,
+  kesintiler: 0,
+  odemeTarihi: new Date()
+})
 
-const dialogHeader = computed(() => duzenleme.value ? 'Bordro Düzenle' : 'Yeni Bordro')
+const dialogHeader = computed(() => (duzenleme.value ? 'Bordro Düzenle' : 'Yeni Bordro'))
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00 ₺'
@@ -199,7 +210,10 @@ onMounted(async () => {
   try {
     const [mR, pR] = await Promise.all([maasBordroAPI.getAll(), personelAPI.getAll()])
     list.value = mR.data?.content || mR.data || []
-    personelListesi.value = pR.data.map(p => ({ ...p, displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id }))
+    personelListesi.value = pR.data.map((p) => ({
+      ...p,
+      displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
+    }))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
@@ -210,7 +224,14 @@ const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
     ? { ...data, odemeTarihi: data.odemeTarihi ? new Date(data.odemeTarihi) : new Date() }
-    : { personelId: null, yil: new Date().getFullYear(), ay: new Date().getMonth() + 1, brutMaas: 0, kesintiler: 0, odemeTarihi: new Date() }
+    : {
+        personelId: null,
+        yil: new Date().getFullYear(),
+        ay: new Date().getMonth() + 1,
+        brutMaas: 0,
+        kesintiler: 0,
+        odemeTarihi: new Date()
+      }
   dialog.value = true
 }
 
@@ -231,7 +252,8 @@ const kaydet = async () => {
       toastBildirim.basarili('Bordro oluşturuldu')
     }
     dialog.value = false
-    const r = await maasBordroAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await maasBordroAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -249,7 +271,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await maasBordroAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'Bordro silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -260,12 +282,38 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.maas-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field-row { display: flex; gap: 12px; }
-.field-row .field { flex: 1; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.maas-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row .field {
+  flex: 1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

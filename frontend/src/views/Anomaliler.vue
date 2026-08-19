@@ -1,67 +1,190 @@
 <template>
   <div class="anomaliler-page">
     <PageHeader
-      title="Akıllı Anomali & Mükerrer Tespiti"
-      subtitle="Sistemdeki mükerrer faturalar, çift ödemeler ve finansal risklerin yapay zeka tespiti"
+      title="Güvenlik Anomalileri & IP Kısıtlaması"
+      subtitle="Yapay zeka anomali tespiti, şüpheli giriş uyarıları ve güvenli IP beyaz listesi yönetimi"
     >
       <template #actions>
+        <SelectButton
+          v-model="aktifSekme"
+          :options="sekmeSecenekleri"
+          option-label="label"
+          option-value="value"
+          class="mr-2"
+        />
         <Button
+          v-if="aktifSekme === 'anomali'"
           label="Yeniden Tara"
           icon="pi pi-refresh"
           class="p-button-primary"
           :loading="yukleniyor"
           @click="anomalileriYukle"
         />
+        <Button
+          v-else
+          label="Yeni IP Ekle"
+          icon="pi pi-plus"
+          class="p-button-success"
+          @click="ipModalAcik = true"
+        />
       </template>
     </PageHeader>
 
-    <div
-      v-if="yukleniyor"
-      class="p-4"
-    >
-      <SkeletonLoader :count="3" />
-    </div>
-
-    <div
-      v-else-if="anomaliler.length === 0"
-      class="empty-box"
-    >
-      <i class="pi pi-check-circle success-icon" />
-      <h3>Harika! Hiçbir Şüpheli Durum Veya Mükerrer Kayıt Bulunamadı.</h3>
-      <p>Sistemdeki tüm faturalar, hareketler ve bakiyeler tutarlı görünmektedir.</p>
-    </div>
-
-    <div
-      v-else
-      class="anomali-grid"
-    >
+    <!-- 1. Sekme: Anomali & Risk Tespiti -->
+    <template v-if="aktifSekme === 'anomali'">
       <div
-        v-for="item in anomaliler"
-        :key="item.id"
-        class="anomali-card"
-        :class="(item.seviye || '').toLowerCase()"
+        v-if="yukleniyor"
+        class="p-4"
       >
-        <div class="card-header">
-          <div class="header-left">
-            <span
-              class="badge"
-              :class="(item.seviye || '').toLowerCase()"
-            >{{ item.seviye }} ÖNCELİK</span>
-            <span class="tur-label">{{ item.tur }}</span>
+        <SkeletonLoader :count="3" />
+      </div>
+
+      <div
+        v-else-if="anomaliler.length === 0"
+        class="empty-box"
+      >
+        <i class="pi pi-check-circle success-icon" />
+        <h3>Harika! Hiçbir Şüpheli Durum Veya Mükerrer Kayıt Bulunamadı.</h3>
+        <p>Sistemdeki tüm faturalar, hareketler, bakiyeler ve oturumlar tutarlı görünmektedir.</p>
+      </div>
+
+      <div
+        v-else
+        class="anomali-grid"
+      >
+        <div
+          v-for="item in anomaliler"
+          :key="item.id"
+          class="anomali-card"
+          :class="(item.seviye || '').toLowerCase()"
+        >
+          <div class="card-header">
+            <div class="header-left">
+              <span
+                class="badge"
+                :class="(item.seviye || '').toLowerCase()"
+              >{{ item.seviye }} ÖNCELİK</span>
+              <span class="tur-label">{{ item.tur }}</span>
+            </div>
+            <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
           </div>
-          <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
-        </div>
-        <h4 class="card-title">
-          <i class="pi pi-exclamation-triangle" /> {{ item.baslik }}
-        </h4>
-        <p class="card-desc">
-          {{ item.aciklama }}
-        </p>
-        <div class="oneri-box">
-          <strong><i class="pi pi-lightbulb" /> Öneri:</strong> {{ item.oneri }}
+          <h4 class="card-title">
+            <i class="pi pi-exclamation-triangle" /> {{ item.baslik }}
+          </h4>
+          <p class="card-desc">
+            {{ item.aciklama }}
+          </p>
+          <div class="oneri-box">
+            <strong><i class="pi pi-lightbulb" /> Öneri:</strong> {{ item.oneri }}
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+
+    <!-- 2. Sekme: IP Kısıtlaması & Güvenlik Beyaz Listesi -->
+    <template v-else>
+      <div class="ip-info-box">
+        <i class="pi pi-shield" />
+        <div>
+          <strong>IP Kısıtlaması & Beyaz Liste Politikası</strong>
+          <p>Tanımlı IP adresleri veya alt ağlar dışından sisteme giriş denemeleri yapay zeka tarafından güvenlik anomalisi olarak algılanır ve anında bildirim üretilir.</p>
+        </div>
+      </div>
+
+      <DataTable
+        state-storage="session"
+        state-key="ip-whitelist-table-state"
+        :value="ipListesi"
+        striped-rows
+        :loading="ipYukleniyor"
+      >
+        <Column
+          field="ipAdresi"
+          header="İzin Verilen IP / CIDR"
+          style="width: 220px"
+        >
+          <template #body="{ data }">
+            <code>{{ data.ipAdresi }}</code>
+          </template>
+        </Column>
+        <Column
+          field="aciklama"
+          header="Açıklama / Lokasyon"
+        />
+        <Column
+          field="eklemeTarihi"
+          header="Tanımlama Tarihi"
+          style="width: 160px"
+        />
+        <Column
+          field="durum"
+          header="Durum"
+          style="width: 120px"
+        >
+          <template #body="{ data }">
+            <Tag
+              :value="data.durum || 'AKTIF'"
+              severity="success"
+            />
+          </template>
+        </Column>
+        <Column
+          header="İşlem"
+          style="width: 100px"
+        >
+          <template #body="{ data }">
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              title="IP'yi Sil"
+              @click="ipSil(data.id)"
+            />
+          </template>
+        </Column>
+      </DataTable>
+
+      <!-- IP Ekleme Modalı -->
+      <Dialog
+        v-model:visible="ipModalAcik"
+        header="Yeni Güvenli IP / Alt Ağ Ekle"
+        :modal="true"
+        :style="{ width: '450px' }"
+      >
+        <div class="p-fluid">
+          <div class="field mb-3">
+            <label for="ipAdresi">IP Adresi veya CIDR Blok</label>
+            <InputText
+              id="ipAdresi"
+              v-model="yeniIp.ipAdresi"
+              placeholder="Örn: 88.255.120.45 veya 192.168.1.0/24"
+            />
+          </div>
+          <div class="field mb-3">
+            <label for="ipAciklama">Açıklama / Ofis Tanımı</label>
+            <InputText
+              id="ipAciklama"
+              v-model="yeniIp.aciklama"
+              placeholder="Örn: Ankara Merkez Ofis Statik IP"
+            />
+          </div>
+        </div>
+        <template #footer>
+          <Button
+            label="İptal"
+            icon="pi pi-times"
+            class="p-button-text"
+            @click="ipModalAcik = false"
+          />
+          <Button
+            label="Kaydet"
+            icon="pi pi-check"
+            class="p-button-primary"
+            :loading="ipKaydediliyor"
+            @click="ipKaydet"
+          />
+        </template>
+      </Dialog>
+    </template>
   </div>
 </template>
 
@@ -69,27 +192,86 @@
 import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { apiClient } from '../api/index.js'
+import { anomaliAPI } from '../api/index.js'
+import PageHeader from '../components/PageHeader.vue'
+import SkeletonLoader from '../components/SkeletonLoader.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+
+const aktifSekme = ref('anomali')
+const sekmeSecenekleri = [
+  { label: 'Anomali & Risk Tespiti', value: 'anomali' },
+  { label: 'IP Beyaz Listesi (Whitelist)', value: 'ip' }
+]
+
 const yukleniyor = ref(false)
 const anomaliler = ref([])
+
+const ipListesi = ref([])
+const ipYukleniyor = ref(false)
+const ipModalAcik = ref(false)
+const ipKaydediliyor = ref(false)
+const yeniIp = ref({ ipAdresi: '', aciklama: '' })
 
 const anomalileriYukle = async () => {
   yukleniyor.value = true
   try {
-    const res = await apiClient.get('/anomaliler')
+    const res = await anomaliAPI.tara()
     anomaliler.value = res.data || []
     if (anomaliler.value.length > 0) {
-      toast.add({ severity: 'warn', summary: 'Anomali Tespiti', detail: `${anomaliler.value.length} adet şüpheli durum tespit edildi.`, life: 5000 })
-    } else {
-      toast.add({ severity: 'success', summary: 'Temiz', detail: 'Hiçbir mükerrer kayıt veya anomaliye rastlanmadı.', life: 3000 })
+      toast.add({
+        severity: 'warn',
+        summary: 'Anomali Tespiti',
+        detail: `${anomaliler.value.length} adet şüpheli durum tespit edildi.`,
+        life: 5000
+      })
     }
-  } catch (e) {
+  } catch {
     toastBildirim.hata('Anomaliler taranırken hata oluştu.')
   } finally {
     yukleniyor.value = false
+  }
+}
+
+const ipListesiYukle = async () => {
+  ipYukleniyor.value = true
+  try {
+    const res = await anomaliAPI.getIpWhitelist()
+    ipListesi.value = res.data || []
+  } catch {
+    /* empty */
+  } finally {
+    ipYukleniyor.value = false
+  }
+}
+
+const ipKaydet = async () => {
+  if (!yeniIp.value.ipAdresi) {
+    toastBildirim.uyari('Lütfen IP adresini giriniz.')
+    return
+  }
+  ipKaydediliyor.value = true
+  try {
+    const res = await anomaliAPI.addIpWhitelist(yeniIp.value)
+    ipListesi.value = res.data || []
+    ipModalAcik.value = false
+    yeniIp.value = { ipAdresi: '', aciklama: '' }
+    toastBildirim.basarili('Güvenli IP adresi başarıyla tanımlandı.')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'IP eklenemedi.')
+  } finally {
+    ipKaydediliyor.value = false
+  }
+}
+
+const ipSil = async (id) => {
+  try {
+    const res = await anomaliAPI.deleteIpWhitelist(id)
+    ipListesi.value = res.data || []
+    toastBildirim.basarili('IP adresi listeden kaldırıldı.')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'IP silinemedi.')
   }
 }
 
@@ -100,12 +282,38 @@ const formatTarih = (t) => {
 
 onMounted(() => {
   anomalileriYukle()
+  ipListesiYukle()
 })
 </script>
 
 <style scoped>
 .anomaliler-page {
-  padding: 1.5rem;
+  padding: 0;
+}
+.ip-info-box {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.ip-info-box i {
+  font-size: 28px;
+  color: #3b82f6;
+}
+.ip-info-box strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.ip-info-box p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 .empty-box {
   background: var(--bg-card, #1e293b);
@@ -133,9 +341,15 @@ onMounted(() => {
   border-radius: 10px;
   padding: 1.25rem;
 }
-.anomali-card.yuksek { border-left-color: #ef4444; }
-.anomali-card.orta { border-left-color: #f59e0b; }
-.anomali-card.dusuk { border-left-color: #3b82f6; }
+.anomali-card.kritik, .anomali-card.yuksek {
+  border-left-color: #ef4444;
+}
+.anomali-card.orta {
+  border-left-color: #f59e0b;
+}
+.anomali-card.dusuk {
+  border-left-color: #3b82f6;
+}
 
 .card-header {
   display: flex;
@@ -150,9 +364,18 @@ onMounted(() => {
   font-weight: 700;
   text-transform: uppercase;
 }
-.badge.yuksek { background: rgba(239,68,68,0.25); color: #f87171; }
-.badge.orta { background: rgba(245,158,11,0.25); color: #fbbf24; }
-.badge.dusuk { background: rgba(59,130,246,0.25); color: #60a5fa; }
+.badge.kritik, .badge.yuksek {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+.badge.orta {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+.badge.dusuk {
+  background: rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+}
 
 .tur-label {
   margin-left: 0.5rem;
@@ -183,22 +406,5 @@ onMounted(() => {
   padding: 0.6rem 0.8rem;
   font-size: 0.875rem;
   color: #38bdf8;
-}
-
-[data-theme="light"] .anomali-card {
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-[data-theme="light"] .empty-box {
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-[data-theme="light"] .badge.yuksek { background: rgba(239,68,68,0.1); color: #dc2626; }
-[data-theme="light"] .badge.orta { background: rgba(245,158,11,0.12); color: #d97706; }
-[data-theme="light"] .badge.dusuk { background: rgba(59,130,246,0.1); color: #2563eb; }
-[data-theme="light"] .oneri-box {
-  background: rgba(56, 189, 248, 0.06);
-  border-color: rgba(56, 189, 248, 0.2);
-  color: #0284c7;
 }
 </style>

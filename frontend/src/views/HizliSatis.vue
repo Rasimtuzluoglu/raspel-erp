@@ -88,7 +88,11 @@
                 <i class="pi pi-box" />
               </div>
               <Tag
-                :value="kritikStokMu(u) ? 'Son ' + Math.floor(u.miktar) + ' adet' : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
+                :value="
+                  kritikStokMu(u)
+                    ? 'Son ' + Math.floor(u.miktar) + ' adet'
+                    : (u.miktar || 0) + ' ' + (u.birim || 'adet')
+                "
                 :severity="kritikStokMu(u) ? 'danger' : 'info'"
                 class="stock-badge"
               />
@@ -136,7 +140,10 @@
                 >
                   <template #option="slotProps">
                     <div class="musteri-option">
-                      {{ slotProps.option.ad }} <span class="musteri-option-detay">{{ slotProps.option.vergiNo || slotProps.option.telefon }}</span>
+                      {{ slotProps.option.ad }}
+                      <span class="musteri-option-detay">{{
+                        slotProps.option.vergiNo || slotProps.option.telefon
+                      }}</span>
                     </div>
                   </template>
                 </AutoComplete>
@@ -375,7 +382,7 @@
                   v-model="fisAltNotu"
                   placeholder="Fiş alt notu..."
                   size="small"
-                  style="width:160px"
+                  style="width: 160px"
                   title="Fiş altı özel mesajı"
                 />
                 <SelectButton
@@ -492,7 +499,10 @@
                   <div class="fis-tesekkur">
                     {{ fisAltNotu || 'Bizi tercih ettiginiz icin tesekkur ederiz!' }}
                   </div>
-                  <div class="fis-satici" v-if="authStore.kullanici?.displayName">
+                  <div
+                    v-if="authStore.kullanici?.displayName"
+                    class="fis-satici"
+                  >
                     Islem Yapan: {{ authStore.kullanici.displayName }}
                   </div>
                 </div>
@@ -561,7 +571,7 @@
           <Dropdown
             id="ym-tur"
             v-model="yeniMusteri.tur"
-            :options="['Musteri','Tedarikci','Her Ikisi']"
+            :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
             placeholder="MÜŞTERİ"
             class="w-full"
           />
@@ -626,8 +636,13 @@ const kategoriStore = useKategoriStore()
 
 useKisayollar({
   kaydet: () => satisiTamamla(),
-  iptal: () => { if (yeniMusteriDialog.value) yeniMusteriDialog.value = false },
-  yeni: () => { aramaMetni.value = ''; sepet.value = [] },
+  iptal: () => {
+    if (yeniMusteriDialog.value) yeniMusteriDialog.value = false
+  },
+  yeni: () => {
+    aramaMetni.value = ''
+    sepet.value = []
+  },
   yazdir: () => fisiYazdir()
 })
 
@@ -668,7 +683,7 @@ const scannerAcik = ref(false)
 const barkodTarandi = (barkod) => {
   scannerAcik.value = false
   if (!barkod) return
-  const urun = stokStore.stoklar.find(s => s.barkod === barkod)
+  const urun = stokStore.stoklar.find((s) => s.barkod === barkod)
   if (urun) {
     sepeteEkle(urun)
     toast.add({ severity: 'success', summary: 'Ürün Eklendi', detail: urun.ad, life: 2000 })
@@ -736,18 +751,20 @@ const kategoriler = computed(() => kategoriStore.kategoriler || [])
 
 const aracListesi = computed(() => {
   const araclar = new Set()
-  stokStore.stoklar.forEach(s => {
+  stokStore.stoklar.forEach((s) => {
     if (s.marka) araclar.add(s.marka)
   })
   return [...araclar].sort()
 })
 
-const toplam = computed(() => sepet.value.reduce((t, i) => t + (i.miktar * i.fiyat), 0))
+const toplam = computed(() => sepet.value.reduce((t, i) => t + i.miktar * i.fiyat, 0))
 
-const toplamFt3 = computed(() => sepet.value.reduce((t, i) => {
-  const hacim = i.birimHacim || 1
-  return t + (i.miktar * hacim)
-}, 0))
+const toplamFt3 = computed(() =>
+  sepet.value.reduce((t, i) => {
+    const hacim = i.birimHacim || 1
+    return t + i.miktar * hacim
+  }, 0)
+)
 
 const indirimTutari = computed(() => {
   if (indirimDegeri.value <= 0) return 0
@@ -797,24 +814,23 @@ const filtrelenmisUrunler = computed(() => {
   let list = stokStore.stoklar || []
 
   if (filtreKategori.value) {
-    list = list.filter(u => u.kategori === filtreKategori.value.ad)
+    list = list.filter((u) => u.kategori === filtreKategori.value.ad)
   }
 
   if (filtreArac.value) {
-    list = list.filter(u => u.marka === filtreArac.value)
+    list = list.filter((u) => u.marka === filtreArac.value)
   }
 
   if (seriNoArama.value) {
     const q = seriNoArama.value.toLowerCase()
-    list = list.filter(u => u.barkod?.toLowerCase().includes(q) || u.seriNo?.toLowerCase().includes(q))
+    list = list.filter((u) => u.barkod?.toLowerCase().includes(q) || u.seriNo?.toLowerCase().includes(q))
   }
 
   if (aramaMetni.value) {
     const q = aramaMetni.value.toLowerCase()
-    list = list.filter(u =>
-      u.ad?.toLowerCase().includes(q) ||
-      u.stokKodu?.toLowerCase().includes(q) ||
-      u.barkod?.toLowerCase().includes(q)
+    list = list.filter(
+      (u) =>
+        u.ad?.toLowerCase().includes(q) || u.stokKodu?.toLowerCase().includes(q) || u.barkod?.toLowerCase().includes(q)
     )
   }
 
@@ -832,7 +848,8 @@ const simdikiTarih = computed(() => {
   return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 })
 
-const formatCurrency = (v) => v != null ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
+const formatCurrency = (v) =>
+  v != null ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
 
 onMounted(async () => {
   try {
@@ -849,8 +866,8 @@ onMounted(async () => {
 
 const personelSecenekleri = computed(() =>
   personelListesi.value
-    .filter(p => p.aktif !== false)
-    .map(p => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
+    .filter((p) => p.aktif !== false)
+    .map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
 )
 
 const teslimDurumSecenekleri = [
@@ -863,7 +880,9 @@ const personelListesiniYukle = async () => {
   try {
     const r = await personelAPI.getAll({ size: 500 })
     personelListesi.value = r.data?.content || r.data || []
-  } catch { personelListesi.value = [] }
+  } catch {
+    personelListesi.value = []
+  }
 }
 
 const filtreleriTemizle = () => {
@@ -880,11 +899,11 @@ const musteriAra = (event) => {
     return
   }
   const q = query.toLowerCase()
-  musteriOnerileri.value = cariHesapStore.cariHesaplar.filter(c =>
-    c.ad?.toLowerCase().includes(q) ||
-    c.vergiNo?.toLowerCase().includes(q) ||
-    c.telefon?.includes(query)
-  ).slice(0, 20)
+  musteriOnerileri.value = cariHesapStore.cariHesaplar
+    .filter(
+      (c) => c.ad?.toLowerCase().includes(q) || c.vergiNo?.toLowerCase().includes(q) || c.telefon?.includes(query)
+    )
+    .slice(0, 20)
 }
 
 const musteriSec = (event) => {
@@ -917,7 +936,7 @@ const musteriKaydet = async () => {
 }
 
 const sepeteEkle = (u) => {
-  const varOlan = sepet.value.find(i => i.id === u.id)
+  const varOlan = sepet.value.find((i) => i.id === u.id)
   if (varOlan) {
     varOlan.miktar++
   } else {
@@ -961,13 +980,16 @@ const fisiYazdir = () => {
   fisNo.value = 'F-' + Date.now().toString(36).toUpperCase()
 
   const fiyatli = fisFiyatli.value
-  const kalemHtml = sepet.value.map(i => {
-    const ad = escapeHtml(i.ad || '')
-    const satir = `<div class="satir"><span class="ad">${ad} x${i.miktar}</span>${fiyatli ? `<span class="tutar">${formatCurrency(i.miktar * i.fiyat)}</span>` : ''}</div>`
-    return satir
-  }).join('')
+  const kalemHtml = sepet.value
+    .map((i) => {
+      const ad = escapeHtml(i.ad || '')
+      const satir = `<div class="satir"><span class="ad">${ad} x${i.miktar}</span>${fiyatli ? `<span class="tutar">${formatCurrency(i.miktar * i.fiyat)}</span>` : ''}</div>`
+      return satir
+    })
+    .join('')
 
-  const ozetHtml = fiyatli ? `
+  const ozetHtml = fiyatli
+    ? `
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     <div class="satir"><span class="ad">Ara Toplam</span><span class="tutar">${formatCurrency(toplam.value)}</span></div>
     ${indirimDegeri.value > 0 ? `<div class="satir"><span class="ad">İndirim${indirimTipi.value === 'yuzde' ? ' (' + indirimDegeri.value + '%)' : ''}</span><span class="tutar">-${formatCurrency(indirimTutari.value)}</span></div>` : ''}
@@ -975,7 +997,8 @@ const fisiYazdir = () => {
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     <div class="satir"><span class="ad">Ödenen</span><span class="tutar">${formatCurrency(odenenTutar.value)}</span></div>
     ${kalanTutar.value > 0 ? `<div class="satir"><span class="ad">Kalan</span><span class="tutar">${formatCurrency(kalanTutar.value)}</span></div>` : ''}
-  ` : ''
+  `
+    : ''
 
   const musteriHtml = musteriAdi.value ? `<div class="musteri">Müşteri: ${escapeHtml(musteriAdi.value)}</div>` : ''
 
@@ -1088,7 +1111,7 @@ const satisiTamamla = async () => {
       genelToplam: genelToplam.value,
       odenenTutar: odenenTutar.value,
       odemeDurumu: odemeDurumEnum.value,
-      kalemler: sepet.value.map(i => ({
+      kalemler: sepet.value.map((i) => ({
         stokId: i.id,
         aciklama: i.ad,
         adet: i.miktar,
@@ -1098,7 +1121,11 @@ const satisiTamamla = async () => {
       }))
     })
     toastBildirim.basarili(`Satış tamamlandı - ${formatCurrency(genelToplam.value)}`)
-    try { fisiYazdir() } catch { /* empty */ }
+    try {
+      fisiYazdir()
+    } catch {
+      /* empty */
+    }
     sepet.value = []
     seciliMusteri.value = null
     musteriGiris.value = ''
@@ -1117,163 +1144,590 @@ const satisiTamamla = async () => {
 </script>
 
 <style scoped>
-.pos-container { padding: 20px; height: calc(100vh - 80px); overflow-y: auto; }
-.pos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.breadcrumb { font-size: 13px; color: var(--text-muted); }
-.breadcrumb i { margin-right: 4px; }
-.user-info { font-size: 13px; color: var(--text-secondary); }
-.user-info i { margin-right: 4px; }
+.pos-container {
+  padding: 20px;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.pos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.breadcrumb {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.breadcrumb i {
+  margin-right: 4px;
+}
+.user-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.user-info i {
+  margin-right: 4px;
+}
 
-.pos-body { display: flex; gap: 16px; align-items: flex-start; }
-.pos-left { flex: 0 0 66.666%; max-width: 66.666%; }
-.pos-right { flex: 0 0 33.333%; max-width: 33.333%; display: flex; flex-direction: column; gap: 12px; }
+.pos-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.pos-left {
+  flex: 0 0 66.666%;
+  max-width: 66.666%;
+}
+.pos-right {
+  flex: 0 0 33.333%;
+  max-width: 33.333%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-.filter-card :deep(.p-card-content) { padding-top: 0; }
-.filter-title { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-.filter-row { display: flex; gap: 8px; }
-.filter-select { flex: 1; }
+.filter-card :deep(.p-card-content) {
+  padding-top: 0;
+}
+.filter-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.filter-row {
+  display: flex;
+  gap: 8px;
+}
+.filter-select {
+  flex: 1;
+}
 
-.serial-search { margin: 8px 0; }
-.serial-search :deep(.p-inputtext) { width: 100%; padding-left: 42px; }
+.serial-search {
+  margin: 8px 0;
+}
+.serial-search :deep(.p-inputtext) {
+  width: 100%;
+  padding-left: 42px;
+}
 
-.product-section { margin-top: 4px; }
-.product-header h3 { font-size: 14px; font-weight: 600; margin: 0 0 8px 0; color: var(--text-primary); }
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; max-height: calc(100vh - 280px); overflow-y: auto; padding-bottom: 8px; }
+.product-section {
+  margin-top: 4px;
+}
+.product-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
 
 .product-card {
-  position: relative; background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.15s;
-  display: flex; flex-direction: column; align-items: center; text-align: center;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
-.product-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); transform: translateY(-1px); }
-.product-img { width: 64px; height: 64px; background: var(--surface-ground); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
-.product-img i { font-size: 28px; color: var(--text-muted); }
-.stock-badge { position: absolute; top: 8px; right: 8px; }
-.product-details { width: 100%; }
-.product-name { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-.product-serial { display: block; font-size: 11px; color: var(--text-muted); }
-.product-meta { display: block; font-size: 10px; color: var(--text-muted); margin: 2px 0; }
-.product-price { display: inline-block; font-size: 15px; font-weight: 700; color: var(--accent); margin-top: 4px; padding: 2px 10px; background: rgba(59,130,246,0.1); border-radius: 12px; }
-.empty-products { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); }
-.empty-products i { font-size: 36px; display: block; margin-bottom: 8px; }
+.product-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.product-img {
+  width: 64px;
+  height: 64px;
+  background: var(--surface-ground);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.product-img i {
+  font-size: 28px;
+  color: var(--text-muted);
+}
+.stock-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.product-details {
+  width: 100%;
+}
+.product-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.product-serial {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.product-meta {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin: 2px 0;
+}
+.product-price {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 4px;
+  padding: 2px 10px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 12px;
+}
+.empty-products {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+.empty-products i {
+  font-size: 36px;
+  display: block;
+  margin-bottom: 8px;
+}
 
-.customer-card :deep(.p-card-content) { padding-top: 0; }
-.customer-field { display: flex; flex-direction: column; gap: 8px; }
-.teslim-eden-alan { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
-.teslim-eden-alan label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-.personel-opsiyon { display: flex; align-items: center; gap: 8px; }
-.personel-opsiyon i { font-size: 12px; color: var(--text-muted); }
-.anlik-musteri { margin-bottom: 4px; }
-.musteri-modu { display: flex; }
-.musteri-modu .p-selectbutton .p-button { flex: 1; justify-content: center; }
-.musteri-option { display: flex; justify-content: space-between; align-items: center; }
-.musteri-option-detay { font-size: 11px; color: var(--text-muted); }
-.secili-musteri-chip { display: flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
-.secili-musteri-chip i { color: #60a5fa; font-size: 14px; }
-.secili-musteri-ad { flex: 1; color: var(--text-primary); font-weight: 500; }
-.secili-musteri-sil { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 2px; }
-.secili-musteri-sil:hover { color: #f87171; }
+.customer-card :deep(.p-card-content) {
+  padding-top: 0;
+}
+.customer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.teslim-eden-alan {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.teslim-eden-alan label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.personel-opsiyon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.personel-opsiyon i {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.anlik-musteri {
+  margin-bottom: 4px;
+}
+.musteri-modu {
+  display: flex;
+}
+.musteri-modu .p-selectbutton .p-button {
+  flex: 1;
+  justify-content: center;
+}
+.musteri-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.musteri-option-detay {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.secili-musteri-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.secili-musteri-chip i {
+  color: #60a5fa;
+  font-size: 14px;
+}
+.secili-musteri-ad {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.secili-musteri-sil {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px;
+}
+.secili-musteri-sil:hover {
+  color: #f87171;
+}
 
-.sepet-card { max-height: 350px; overflow-y: auto; }
-.sepet-card :deep(.p-card-content) { padding-top: 0; }
-.sepet-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-.sepet-bos { text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px; }
-.sepet-item { padding: 6px 0; border-bottom: 1px solid var(--border); }
-.sepet-item:last-child { border-bottom: none; }
-.sepet-ad { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
-.sepet-satir { display: flex; align-items: center; gap: 4px; }
-.sepet-adet { width: 22px; text-align: center; font-weight: 700; font-size: 13px; }
-.sepet-birimfiyat { font-size: 11px; color: var(--text-muted); margin-left: auto; }
-.sepet-tutar { font-size: 13px; font-weight: 700; min-width: 60px; text-align: right; }
+.sepet-card {
+  max-height: 350px;
+  overflow-y: auto;
+}
+.sepet-card :deep(.p-card-content) {
+  padding-top: 0;
+}
+.sepet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.sepet-bos {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.sepet-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sepet-item:last-child {
+  border-bottom: none;
+}
+.sepet-ad {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.sepet-satir {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sepet-adet {
+  width: 22px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+.sepet-birimfiyat {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.sepet-tutar {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: right;
+}
 
-.ozet-satir { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
-.ozet-indirim { display: flex; align-items: center; gap: 6px; }
-.indirim-input { width: 100px; }
-.ozet-ayrac { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
-.ozet-genel { border-top: 2px solid var(--border); margin-top: 4px; padding-top: 8px; }
-.genel-toplam-deger { font-size: 18px; font-weight: 800; color: var(--accent); }
+.ozet-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.ozet-indirim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.indirim-input {
+  width: 100px;
+}
+.ozet-ayrac {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 6px 0;
+}
+.ozet-genel {
+  border-top: 2px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+.genel-toplam-deger {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+}
 
-.odeme-card :deep(.p-card-content) { padding-top: 0; }
-.odeme-card :deep(.p-selectbutton) { display: flex; }
-.odeme-card :deep(.p-selectbutton .p-button) { flex: 1; font-size: 12px; }
-.odenen-satir { margin-top: 8px; }
-.odenen-satir label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
-.odeme-durum { margin-top: 8px; }
-.odeme-durum :deep(.p-tag) { justify-content: center; }
-.odeme-kalan { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
-.kalan-deger { font-weight: 700; color: var(--accent); }
+.odeme-card :deep(.p-card-content) {
+  padding-top: 0;
+}
+.odeme-card :deep(.p-selectbutton) {
+  display: flex;
+}
+.odeme-card :deep(.p-selectbutton .p-button) {
+  flex: 1;
+  font-size: 12px;
+}
+.odenen-satir {
+  margin-top: 8px;
+}
+.odenen-satir label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.odeme-durum {
+  margin-top: 8px;
+}
+.odeme-durum :deep(.p-tag) {
+  justify-content: center;
+}
+.odeme-kalan {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.kalan-deger {
+  font-weight: 700;
+  color: var(--accent);
+}
 
-.fis-card :deep(.p-card-content) { padding: 0; }
-.fis-card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 8px; flex-wrap: wrap; }
-.fis-ayarlar { display: flex; align-items: center; gap: 8px; }
-.fis-ayarlar .p-selectbutton .p-button { padding: 4px 10px; font-size: 11px; }
-.fis-onizleme-kapsam { overflow-x: auto; padding: 12px; background: var(--bg-secondary); border-radius: 0 0 8px 8px; }
+.fis-card :deep(.p-card-content) {
+  padding: 0;
+}
+.fis-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fis-ayarlar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fis-ayarlar .p-selectbutton .p-button {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.fis-onizleme-kapsam {
+  overflow-x: auto;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 0 0 8px 8px;
+}
 .fis-onizleme {
-  width: 80mm; margin: 0 auto; padding: 12px 8px;
-  background: white; color: black;
-  font-size: 11px; font-family: 'Courier New', monospace;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  width: 80mm;
+  margin: 0 auto;
+  padding: 12px 8px;
+  background: white;
+  color: black;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
-.fis-header { text-align: center; margin-bottom: 6px; }
-.fis-baslik { font-size: 13px; font-weight: 700; }
-.fis-tarih { font-size: 10px; margin-top: 2px; }
-.fis-fisno { font-size: 10px; margin-top: 1px; color: #555; }
-.fis-musteri { margin-bottom: 4px; font-size: 10px; }
-.fis-ayrac { text-align: center; color: #999; margin: 3px 0; letter-spacing: 2px; }
-.fis-kalemler { }
-.fis-kalem { display: flex; justify-content: space-between; padding: 2px 0; }
-.fis-kalem-ad { }
-.fis-kalem-tutar { white-space: nowrap; }
-.fis-toplam { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
-.fis-indirim { display: flex; justify-content: space-between; padding: 2px 0; color: #c00; font-size: 11px; }
-.fis-genel-toplam { display: flex; justify-content: space-between; padding: 4px 0; border-top: 2px solid #000; font-weight: 700; font-size: 13px; }
-.fis-toplam-deger { }
-.fis-odeme { margin-top: 4px; }
-.fis-odeme-satir { display: flex; justify-content: space-between; padding: 2px 0; font-size: 10px; }
-.fis-odeme-durum { font-weight: 600; }
-.fis-footer { text-align: center; margin-top: 4px; }
-.fis-tesekkur { font-size: 10px; color: #555; }
-.fis-satici { font-size: 9px; color: #888; margin-top: 2px; text-align: center; }
+.fis-header {
+  text-align: center;
+  margin-bottom: 6px;
+}
+.fis-baslik {
+  font-size: 13px;
+  font-weight: 700;
+}
+.fis-tarih {
+  font-size: 10px;
+  margin-top: 2px;
+}
+.fis-fisno {
+  font-size: 10px;
+  margin-top: 1px;
+  color: #555;
+}
+.fis-musteri {
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+.fis-ayrac {
+  text-align: center;
+  color: #999;
+  margin: 3px 0;
+  letter-spacing: 2px;
+}
+.fis-kalemler {
+}
+.fis-kalem {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.fis-kalem-ad {
+}
+.fis-kalem-tutar {
+  white-space: nowrap;
+}
+.fis-toplam {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.fis-indirim {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  color: #c00;
+  font-size: 11px;
+}
+.fis-genel-toplam {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-top: 2px solid #000;
+  font-weight: 700;
+  font-size: 13px;
+}
+.fis-toplam-deger {
+}
+.fis-odeme {
+  margin-top: 4px;
+}
+.fis-odeme-satir {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-size: 10px;
+}
+.fis-odeme-durum {
+  font-weight: 600;
+}
+.fis-footer {
+  text-align: center;
+  margin-top: 4px;
+}
+.fis-tesekkur {
+  font-size: 10px;
+  color: #555;
+}
+.fis-satici {
+  font-size: 9px;
+  color: #888;
+  margin-top: 2px;
+  text-align: center;
+}
 
-.satis-buton { margin-top: 4px; }
+.satis-buton {
+  margin-top: 4px;
+}
 
 .ym-form-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
-.ym-form-grid .full-width { grid-column: span 2; }
-.dialog-footer-btns { display: flex; gap: 8px; justify-content: flex-end; width: 100%; }
+.ym-form-grid .full-width {
+  grid-column: span 2;
+}
+.dialog-footer-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+}
 
-.field { margin-bottom: 12px; }
-.field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-.required { color: #f87171; }
+.field {
+  margin-bottom: 12px;
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.required {
+  color: #f87171;
+}
 
 .fiyat-tip-select {
-  background: var(--bg-primary); color: var(--text-primary);
-  border: 1px solid var(--border); border-radius: 6px;
-  font-size: 11px; padding: 2px 4px; outline: none;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 2px 4px;
+  outline: none;
 }
 .fiyat-giris-input {
-  width: 70px; background: var(--bg-primary); color: var(--text-primary);
-  border: 1px solid var(--border); border-radius: 6px;
-  font-size: 12px; padding: 2px 4px; text-align: right; outline: none;
+  width: 70px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 2px 4px;
+  text-align: right;
+  outline: none;
 }
 
 @media (max-width: 1100px) {
-  .pos-body { flex-direction: column; }
-  .pos-left, .pos-right { flex: 0 0 100%; max-width: 100%; }
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .pos-body {
+    flex-direction: column;
+  }
+  .pos-left,
+  .pos-right {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
 }
 </style>
 
 <style>
 @media print {
-  body * { visibility: hidden; }
-  #fisOnizleme, #fisOnizleme * { visibility: visible; }
+  body * {
+    visibility: hidden;
+  }
+  #fisOnizleme,
+  #fisOnizleme * {
+    visibility: visible;
+  }
   #fisOnizleme {
-    position: fixed; top: 0; left: 0;
-    width: 80mm; padding: 10mm;
-    background: white; color: black;
-    font-size: 12px; font-family: 'Courier New', monospace;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80mm;
+    padding: 10mm;
+    background: white;
+    color: black;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
   }
 }
 </style>

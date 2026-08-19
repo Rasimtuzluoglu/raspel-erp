@@ -2,8 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useGeriAl } from '../useGeriAl.js'
 
 describe('useGeriAl', () => {
-  beforeEach(() => { vi.useFakeTimers() })
-  afterEach(() => { vi.useRealTimers() })
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
   it('silVeGeriAl çubuğu gösterir', () => {
     const { durum, silVeGeriAl } = useGeriAl()

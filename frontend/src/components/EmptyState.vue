@@ -2,7 +2,10 @@
   <div class="empty-state">
     <div class="empty-state-icon-wrapper">
       <div class="empty-state-glow" />
-      <i :class="icon" class="empty-state-icon" />
+      <i
+        :class="icon"
+        class="empty-state-icon"
+      />
     </div>
     <p class="empty-state-text">
       {{ message }}
@@ -56,7 +59,7 @@ defineEmits(['action'])
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.06) 55%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.06) 55%, transparent 70%);
   animation: empty-pulse 2.5s ease-in-out infinite;
 }
 .empty-state-icon {
@@ -64,11 +67,18 @@ defineEmits(['action'])
   color: var(--text-secondary, #64748b);
   position: relative;
   z-index: 1;
-  text-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 @keyframes empty-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.08); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 .empty-state-text {
   font-size: 15px;

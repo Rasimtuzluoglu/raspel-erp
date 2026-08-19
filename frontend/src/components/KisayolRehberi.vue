@@ -84,31 +84,73 @@ onUnmounted(() => window.removeEventListener('keydown', tusHandler))
 
 <style scoped>
 .rehber-overlay {
-  position: fixed; inset: 0; z-index: 100000;
-  background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .rehber-kutu {
-  width: 440px; max-width: 92vw; background: var(--bg-card);
-  border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  width: 440px;
+  max-width: 92vw;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 .rehber-baslik {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
 }
-.rehber-icerik { padding: 12px 18px; }
+.rehber-icerik {
+  padding: 12px 18px;
+}
 .rehber-satir {
-  display: flex; align-items: center; gap: 14px; padding: 9px 0;
-  border-bottom: 1px solid rgba(148,163,184,0.08);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
 }
-.rehber-satir:last-child { border-bottom: none; }
-.kisa-tuslar { display: flex; gap: 4px; min-width: 90px; }
+.rehber-satir:last-child {
+  border-bottom: none;
+}
+.kisa-tuslar {
+  display: flex;
+  gap: 4px;
+  min-width: 90px;
+}
 kbd {
-  background: rgba(148,163,184,0.15); border: 1px solid rgba(148,163,184,0.25);
-  border-bottom-width: 2px; border-radius: 5px; padding: 2px 7px;
-  font-size: 12px; font-family: inherit; color: var(--text-primary);
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-primary);
 }
-.kisa-aciklama { font-size: 13px; color: var(--text-secondary); }
-.rehber-alt { padding: 10px 18px; border-top: 1px solid var(--border); color: var(--text-muted); }
-.dialog-fade-enter-active, .dialog-fade-leave-active { transition: opacity 0.2s; }
-.dialog-fade-enter-from, .dialog-fade-leave-to { opacity: 0; }
+.kisa-aciklama {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.rehber-alt {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: opacity 0.2s;
+}
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  opacity: 0;
+}
 </style>

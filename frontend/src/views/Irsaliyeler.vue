@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="irsaliyeler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -46,7 +48,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:140px"
+        style="width: 140px"
       >
         <template #body="{ data }">
           <Button
@@ -117,7 +119,7 @@
           <label>Tür</label>
           <Dropdown
             v-model="form.tur"
-            :options="['SATIS','ALIS']"
+            :options="['SATIS', 'ALIS']"
             class="w-full"
           />
         </div>
@@ -165,23 +167,41 @@ const form = ref({ irsaliyeNo: '', tarih: new Date(), cariHesapId: null, tur: 'S
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const [r, c] = await Promise.all([irsaliyeAPI.getAll(), cariHesapAPI.getAll()]); list.value = r.data?.content || r.data || []; cariler.value = c.data?.content || c.data || [] } catch (err) {
+  try {
+    const [r, c] = await Promise.all([irsaliyeAPI.getAll(), cariHesapAPI.getAll()])
+    list.value = r.data?.content || r.data || []
+    cariler.value = c.data?.content || c.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliyeler yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
 
-const dialogAc = () => { form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '' }; dialog.value = true }
+const dialogAc = () => {
+  form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '' }
+  dialog.value = true
+}
 const kaydet = async () => {
   kaydediliyor.value = true
-  try { await irsaliyeAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }); dialog.value = false; const r = await irsaliyeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    await irsaliyeAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] })
+    dialog.value = false
+    const r = await irsaliyeAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliye kaydedilirken hata oluştu')
   }
   kaydediliyor.value = false
 }
-const durumGuncelle = async (data, durum) => { try { await irsaliyeAPI.durumGuncelle(data.id, durum); const r = await irsaliyeAPI.getAll(); list.value = r.data?.content || r.data || [] } catch (err) {
+const durumGuncelle = async (data, durum) => {
+  try {
+    await irsaliyeAPI.durumGuncelle(data.id, durum)
+    const r = await irsaliyeAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
-  } }
+  }
+}
 const sil = (data) => {
   confirm.require({
     message: 'Bu kaydı silmek istediğinize emin misiniz?',
@@ -189,20 +209,48 @@ const sil = (data) => {
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: 'Evet, Sil',
     rejectLabel: 'İptal',
-    accept: async () => { try { await irsaliyeAPI.delete(data.id); list.value = list.value.filter(x => x.id !== data.id) } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliye silinirken hata oluştu')
-  } },
+    accept: async () => {
+      try {
+        await irsaliyeAPI.delete(data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliye silinirken hata oluştu')
+      }
+    },
     reject: () => {}
   })
 }
 </script>
 
 <style scoped>
-.irsaliye-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.irsaliye-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

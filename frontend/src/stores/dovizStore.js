@@ -5,18 +5,28 @@ import { dovizAPI } from '../api/index.js'
 export const useDovizStore = defineStore('doviz', () => {
   const kurlar = ref([
     { kod: 'USD', ad: 'ABD Doları', sembol: '$', alisFiyati: 47.35, satisFiyati: 47.43 },
-    { kod: 'EUR', ad: 'Euro', sembol: '€', alisFiyati: 51.20, satisFiyati: 51.30 },
-    { kod: 'GBP', ad: 'İngiliz Sterlini', sembol: '£', alisFiyati: 60.40, satisFiyati: 60.55 },
-    { kod: 'SAR', ad: 'Suudi Arabistan Riyali', sembol: '﷼', alisFiyati: 12.60, satisFiyati: 12.65 },
-    { kod: 'GAU', ad: 'Gram Altın', sembol: 'GAU', alisFiyati: 4200.00, satisFiyati: 4230.00 }
+    { kod: 'EUR', ad: 'Euro', sembol: '€', alisFiyati: 51.2, satisFiyati: 51.3 },
+    { kod: 'GBP', ad: 'İngiliz Sterlini', sembol: '£', alisFiyati: 60.4, satisFiyati: 60.55 },
+    { kod: 'SAR', ad: 'Suudi Arabistan Riyali', sembol: '﷼', alisFiyati: 12.6, satisFiyati: 12.65 },
+    { kod: 'GAU', ad: 'Gram Altın', sembol: 'GAU', alisFiyati: 4200.0, satisFiyati: 4230.0 }
   ])
   const aktifParaBirimi = ref('TRY')
   const loading = ref(false)
   const sonGuncelleme = ref(new Date())
 
   const getKur = (kod) => {
-    if (kod === 'TRY') return { kod: 'TRY', dovizKodu: 'TRY', ad: 'Türk Lirası', sembol: '₺', alisFiyati: 1, satisFiyati: 1, alisKuru: 1, satisKuru: 1 }
-    const bul = kurlar.value.find(k => (k.kod || k.dovizKodu) === kod)
+    if (kod === 'TRY')
+      return {
+        kod: 'TRY',
+        dovizKodu: 'TRY',
+        ad: 'Türk Lirası',
+        sembol: '₺',
+        alisFiyati: 1,
+        satisFiyati: 1,
+        alisKuru: 1,
+        satisKuru: 1
+      }
+    const bul = kurlar.value.find((k) => (k.kod || k.dovizKodu) === kod)
     if (bul) {
       return {
         ...bul,
@@ -36,8 +46,8 @@ export const useDovizStore = defineStore('doviz', () => {
     const kKurObj = getKur(kaynak)
     const hKurObj = getKur(hedef)
 
-    const kKur = kaynak === 'TRY' ? 1 : (kKurObj.satisFiyati || kKurObj.satisKuru || 1)
-    const hKur = hedef === 'TRY' ? 1 : (hKurObj.satisFiyati || hKurObj.satisKuru || 1)
+    const kKur = kaynak === 'TRY' ? 1 : kKurObj.satisFiyati || kKurObj.satisKuru || 1
+    const hKur = hedef === 'TRY' ? 1 : hKurObj.satisFiyati || hKurObj.satisKuru || 1
 
     const tryVal = tutar * kKur
     return tryVal / hKur
@@ -47,7 +57,7 @@ export const useDovizStore = defineStore('doviz', () => {
     const v = tutar ?? 0
     const sembolMap = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', SAR: '﷼', GAU: ' GAU' }
     const sembol = sembolMap[birim] || ` ${birim}`
-    
+
     const formatted = new Intl.NumberFormat('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2

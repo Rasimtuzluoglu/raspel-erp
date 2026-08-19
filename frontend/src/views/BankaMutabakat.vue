@@ -136,7 +136,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:70px"
+        style="width: 70px"
       >
         <template #body="{ data }">
           <div
@@ -186,26 +186,34 @@ const hareketler = ref([])
 const yukleniyor = ref(false)
 const dosyaInput = ref(null)
 
-const eslesenSayisi = computed(() => hareketler.value.filter(h => h.eslestirildi).length)
+const eslesenSayisi = computed(() => hareketler.value.filter((h) => h.eslestirildi).length)
 const eslesmeyenSayisi = computed(() => hareketler.value.length - eslesenSayisi.value)
 const eslesmeOrani = computed(() => {
   if (!hareketler.value.length) return '—'
   return Math.round((eslesenSayisi.value / hareketler.value.length) * 100) + '%'
 })
 
-const formatCurrency = (v) => v == null || Number(v) === 0 ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+const formatCurrency = (v) =>
+  v == null || Number(v) === 0
+    ? '0,00 ₺'
+    : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 
 onMounted(async () => {
   try {
     const r = await bankaAPI.getAll()
     bankalar.value = r.data || []
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   try {
     const rf = await faturaAPI.getAll()
     const data = rf.data?.content || rf.data || []
-    faturalar.value = data.map(f => ({ ...f, etiket: `${f.faturaNumarasi} (${formatCurrency(f.genelToplam)})` }))
-  } catch { /* empty */ }
+    faturalar.value = data.map((f) => ({ ...f, etiket: `${f.faturaNumarasi} (${formatCurrency(f.genelToplam)})` }))
+  } catch {
+    /* empty */
+  }
 })
 
 const bankaDegisti = () => {
@@ -265,8 +273,10 @@ const manuelEslestir = async (hareket) => {
 const eslestirmeyiKaldir = (hareket) => {
   confirm.require({
     message: 'Bu eşleştirmeyi kaldırmak istediğinize emin misiniz?',
-    header: 'Onay', icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet', rejectLabel: 'İptal',
+    header: 'Onay',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Evet',
+    rejectLabel: 'İptal',
     accept: async () => {
       try {
         await bankaMutabakatAPI.eslestirmeyiKaldir(seciliBanka.value, hareket.id)
@@ -281,23 +291,84 @@ const eslestirmeyiKaldir = (hareket) => {
 </script>
 
 <style scoped>
-.mutabakat-container { padding: 0; }
-.sayfa-baslik { margin-bottom: 20px; }
-.mutabakat-ust { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.banka-secim { min-width: 280px; display: flex; flex-direction: column; gap: 6px; }
-.banka-secim label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
-.ust-butonlar { display: flex; gap: 8px; }
-.mutabakat-ozet { display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
-.ozet-kutu {
-  flex: 1; min-width: 140px; background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+.mutabakat-container {
+  padding: 0;
 }
-.ozet-kutu span { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-.ozet-kutu strong { font-size: 18px; }
-.pozitif { color: #10b981; font-weight: 600; }
-.negatif { color: #ef4444; font-weight: 600; }
-.eslesen-fatura { font-size: 11px; color: #10b981; margin-top: 4px; font-weight: 600; }
-.fatura-bagla { min-width: 160px; }
-.eylem-btns { display: flex; align-items: center; }
-.w-full { width: 100%; }
+.sayfa-baslik {
+  margin-bottom: 20px;
+}
+.mutabakat-ust {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.banka-secim {
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.banka-secim label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.ust-butonlar {
+  display: flex;
+  gap: 8px;
+}
+.mutabakat-ozet {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.ozet-kutu {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ozet-kutu span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.ozet-kutu strong {
+  font-size: 18px;
+}
+.pozitif {
+  color: #10b981;
+  font-weight: 600;
+}
+.negatif {
+  color: #ef4444;
+  font-weight: 600;
+}
+.eslesen-fatura {
+  font-size: 11px;
+  color: #10b981;
+  margin-top: 4px;
+  font-weight: 600;
+}
+.fatura-bagla {
+  min-width: 160px;
+}
+.eylem-btns {
+  display: flex;
+  align-items: center;
+}
+.w-full {
+  width: 100%;
+}
 </style>

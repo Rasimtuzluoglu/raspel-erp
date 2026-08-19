@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="siparisler-table-state"
       :value="siparisler"
       striped-rows
       :loading="yukleniyor"
@@ -48,13 +50,21 @@
         <template #body="{ data }">
           <Tag
             :value="data.durum"
-            :severity="data.durum === 'SIPARIS' ? 'info' : data.durum === 'FATURA_KESILDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+            :severity="
+              data.durum === 'SIPARIS'
+                ? 'info'
+                : data.durum === 'FATURA_KESILDI'
+                  ? 'success'
+                  : data.durum === 'IPTAL'
+                    ? 'danger'
+                    : 'warn'
+            "
           />
         </template>
       </Column>
       <Column
         header="İşlemler"
-        style="width:220px"
+        style="width: 220px"
       >
         <template #body="{ data }">
           <Button
@@ -199,7 +209,8 @@ const kaydet = async () => {
   try {
     await siparisAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] })
     dialog.value = false
-    const r = await siparisAPI.getAll(); siparisler.value = r.data?.content || r.data || []
+    const r = await siparisAPI.getAll()
+    siparisler.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu')
   }
@@ -209,7 +220,8 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await siparisAPI.durumGuncelle(data.id, durum)
-    const r = await siparisAPI.getAll(); siparisler.value = r.data?.content || r.data || []
+    const r = await siparisAPI.getAll()
+    siparisler.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
   }
@@ -225,7 +237,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await siparisAPI.delete(data.id)
-        siparisler.value = siparisler.value.filter(s => s.id !== data.id)
+        siparisler.value = siparisler.value.filter((s) => s.id !== data.id)
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu')
       }
@@ -236,11 +248,34 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.siparisler-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
+.siparisler-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
 </style>

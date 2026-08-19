@@ -71,4 +71,22 @@ public class BackupController {
     public ResponseEntity<Map<String, Object>> getSchedule() {
         return ResponseEntity.ok(backupService.getSchedule());
     }
+
+    @GetMapping("/cloud-config")
+    @Operation(summary = "Bulut yedekleme yapılandırması", description = "Bulut sağlayıcı (AWS S3, Google Drive, Dropbox) yapılandırma ve durumunu getirir")
+    public ResponseEntity<Map<String, Object>> getCloudConfig() {
+        return ResponseEntity.ok(backupService.getCloudConfig());
+    }
+
+    @PostMapping("/cloud-config")
+    @Operation(summary = "Bulut yedekleme yapılandırmasını kaydet", description = "Bulut sağlayıcı ayarlarını günceller")
+    public ResponseEntity<Map<String, Object>> saveCloudConfig(@RequestBody Map<String, Object> config) {
+        return ResponseEntity.ok(backupService.saveCloudConfig(config));
+    }
+
+    @PostMapping("/cloud-sync")
+    @Operation(summary = "Bulut senkronizasyonunu başlat", description = "Yedekleri şifrelenmiş olarak bulut deposuna aktarır")
+    public ResponseEntity<Map<String, Object>> syncToCloud(@RequestParam(required = false) String filename) {
+        return ResponseEntity.ok(backupService.syncToCloud(filename));
+    }
 }

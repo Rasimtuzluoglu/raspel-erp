@@ -35,6 +35,8 @@ public class RaporService {
     private final FaturaRepository faturaRepository;
     private final com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
+    private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
 
@@ -339,5 +341,80 @@ public class RaporService {
                     .sonTarih(p.getSonTarih())
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 30/60/90 Günlük Nakit Akışı Projeksiyonu
+     */
+    public com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO nakitAkisiProjeksiyonu(int gunSayisi, Long sirketId) {
+        if (gunSayisi <= 0) gunSayisi = 30;
+
+        // Mevcut Kasa + Banka başlangıç likiditesi
+        BigDecimal kasaBakiye = kasaRepository.findBySirketIdOrderByAd(sirketId).stream()
+                .map(k -> k.getBakiye() != null ? k.getBakiye() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal bankaBakiye = bankaRepository.findBySirketIdOrderByAd(sirketId).stream()
+                .map(b -> b.getBakiye() != null ? b.getBakiye() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal baslangicBakiyesi = kasaBakiye.add(bankaBakiye);
+
+        LocalDate bugun = LocalDate.now();
+        LocalDate bitis = bugun.plusDays(gunSayisi);
+
+        // Gelecek vadeli Satış ve Alış faturaları
+        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+                .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                .collect(Collectors.toList());
+
+        Map<LocalDate, BigDecimal> gunlukGiris = new HashMap<>();
+        Map<LocalDate, BigDecimal> gunlukCikis = new HashMap<>();
+
+        for (Fatura f : faturalar) {
+            LocalDate vade = f.getVadeTarihi() != null ? f.getVadeTarihi() : f.getTarih();
+            if (vade != null && !vade.isBefore(bugun) && !vade.isAfter(bitis)) {
+                BigDecimal tutar = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
+                if (f.getTur() == Fatura.FaturaTur.SATIS) {
+                    gunlukGiris.merge(vade, tutar, BigDecimal::add);
+                } else if (f.getTur() == Fatura.FaturaTur.ALIS) {
+                    gunlukCikis.merge(vade, tutar, BigDecimal::add);
+                }
+            }
+        }
+
+        List<com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO.GunlukProjeksiyonDTO> gunlukList = new ArrayList<>();
+        BigDecimal kumulatif = baslangicBakiyesi;
+        BigDecimal toplamGiris = BigDecimal.ZERO;
+        BigDecimal toplamCikis = BigDecimal.ZERO;
+
+        for (int i = 0; i <= gunSayisi; i++) {
+            LocalDate tarih = bugun.plusDays(i);
+            BigDecimal giris = gunlukGiris.getOrDefault(tarih, BigDecimal.ZERO);
+            BigDecimal cikis = gunlukCikis.getOrDefault(tarih, BigDecimal.ZERO);
+            BigDecimal net = giris.subtract(cikis);
+            kumulatif = kumulatif.add(net);
+
+            toplamGiris = toplamGiris.add(giris);
+            toplamCikis = toplamCikis.add(cikis);
+
+            gunlukList.add(com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO.GunlukProjeksiyonDTO.builder()
+                    .tarih(tarih)
+                    .beklenenGiris(giris)
+                    .beklenenCikis(cikis)
+                    .netAkis(net)
+                    .kumulatifBakiye(kumulatif)
+                    .aciklama(giris.compareTo(BigDecimal.ZERO) > 0 || cikis.compareTo(BigDecimal.ZERO) > 0 ? "Vadesi gelen fatura akışı" : "Rutin dönem")
+                    .build());
+        }
+
+        return com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO.builder()
+                .baslangicBakiyesi(baslangicBakiyesi)
+                .toplamBeklenenGiris(toplamGiris)
+                .toplamBeklenenCikis(toplamCikis)
+                .tahminiBitisBakiyesi(kumulatif)
+                .projeksiyonGunu(gunSayisi)
+                .gunlukAkis(gunlukList)
+                .build();
     }
 }

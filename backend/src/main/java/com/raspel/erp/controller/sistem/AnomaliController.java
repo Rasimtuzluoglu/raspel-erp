@@ -28,4 +28,22 @@ public class AnomaliController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(anomaliTespitEngine.anomalileriTara(sirketId));
     }
+
+    @GetMapping("/ip-whitelist")
+    @Operation(summary = "IP Beyaz Listesini getir", description = "Güvenli erişim tanımlı IP adreslerini listeler")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getIpWhitelist() {
+        return ResponseEntity.ok(anomaliTespitEngine.getIpWhitelist());
+    }
+
+    @PostMapping("/ip-whitelist")
+    @Operation(summary = "IP Beyaz Listesine IP ekle", description = "Yeni bir güvenli IP adresi tanımlar")
+    public ResponseEntity<List<java.util.Map<String, Object>>> addIpWhitelist(@RequestBody java.util.Map<String, Object> entry) {
+        return ResponseEntity.ok(anomaliTespitEngine.addIpWhitelist(entry));
+    }
+
+    @DeleteMapping("/ip-whitelist/{id}")
+    @Operation(summary = "IP Beyaz Listesinden IP sil", description = "Tanımlı IP adresini listeden kaldırır")
+    public ResponseEntity<List<java.util.Map<String, Object>>> deleteIpWhitelist(@PathVariable String id) {
+        return ResponseEntity.ok(anomaliTespitEngine.deleteIpWhitelist(id));
+    }
 }

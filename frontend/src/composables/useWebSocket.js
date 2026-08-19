@@ -12,29 +12,36 @@ export function useWebSocket() {
     if (!authStore.isLoggedIn || !authStore.sirketId) return
 
     const token = authStore.token || ''
-    const SOCKET_URL = import.meta.env.VITE_WS_URL ||
-      (window.location.origin + '/ws' + (token ? '?token=' + encodeURIComponent(token) : ''))
+    const SOCKET_URL =
+      import.meta.env.VITE_WS_URL ||
+      window.location.origin + '/ws' + (token ? '?token=' + encodeURIComponent(token) : '')
 
-    import('sockjs-client').then(SockJS => {
-      import('@stomp/stompjs').then(({ Client }) => {
-        const socket = new SockJS.default(SOCKET_URL)
-        stompClient = new Client({
-          webSocketFactory: () => socket,
-          reconnectDelay: 5000,
-          onConnect: () => {
-            bagli.value = true
-            const sirketId = authStore.sirketId
-            subscription = stompClient.subscribe(`/topic/bildirimler/${sirketId}`, (msg) => {
-              try {
-                sonBildirim.value = JSON.parse(msg.body)
-              } catch { /* empty */ }
-            })
-          },
-          onDisconnect: () => { bagli.value = false }
+    import('sockjs-client')
+      .then((SockJS) => {
+        import('@stomp/stompjs').then(({ Client }) => {
+          const socket = new SockJS.default(SOCKET_URL)
+          stompClient = new Client({
+            webSocketFactory: () => socket,
+            reconnectDelay: 5000,
+            onConnect: () => {
+              bagli.value = true
+              const sirketId = authStore.sirketId
+              subscription = stompClient.subscribe(`/topic/bildirimler/${sirketId}`, (msg) => {
+                try {
+                  sonBildirim.value = JSON.parse(msg.body)
+                } catch {
+                  /* empty */
+                }
+              })
+            },
+            onDisconnect: () => {
+              bagli.value = false
+            }
+          })
+          stompClient.activate()
         })
-        stompClient.activate()
       })
-    }).catch(() => {})
+      .catch(() => {})
   }
 
   const baglantiKes = () => {

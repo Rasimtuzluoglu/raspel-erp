@@ -25,8 +25,12 @@
           class="offline-banner"
         >
           <i class="pi pi-wifi" />
-          <span>Cevrimdisi Mod — Internet baglantisi kesildi. Kayitli veriler gosteriliyor, yeni degisiklikler kaydedilmeyecek.</span>
-          <button class="offline-tekrar-dene" @click="window.location.reload()">
+          <span>Cevrimdisi Mod — Internet baglantisi kesildi. Kayitli veriler gosteriliyor, yeni degisiklikler
+            kaydedilmeyecek.</span>
+          <button
+            class="offline-tekrar-dene"
+            @click="window.location.reload()"
+          >
             <i class="pi pi-refresh" /> Tekrar Baglan
           </button>
         </div>
@@ -54,13 +58,34 @@
     />
     <GuncellemeNotlari />
     <GeriAlToast />
-    <HesapMakinesi :visible="hesapMakinesiAcik" @update:visible="hesapMakinesiAcik = $event" />
-    <DovizCevirici :visible="dovizCeviriciAcik" @update:visible="dovizCeviriciAcik = $event" />
-    <KdvHesaplayici :visible="kdvAcik" @update:visible="kdvAcik = $event" />
-    <TaksitHesaplayici :visible="taksitAcik" @update:visible="taksitAcik = $event" />
-    <KarMarjiHesaplayici :visible="marjAcik" @update:visible="marjAcik = $event" />
-    <IbanDogrulayici :visible="ibanAcik" @update:visible="ibanAcik = $event" />
-    <TcKimlikDogrulayici :visible="tcAcik" @update:visible="tcAcik = $event" />
+    <HesapMakinesi
+      :visible="hesapMakinesiAcik"
+      @update:visible="hesapMakinesiAcik = $event"
+    />
+    <DovizCevirici
+      :visible="dovizCeviriciAcik"
+      @update:visible="dovizCeviriciAcik = $event"
+    />
+    <KdvHesaplayici
+      :visible="kdvAcik"
+      @update:visible="kdvAcik = $event"
+    />
+    <TaksitHesaplayici
+      :visible="taksitAcik"
+      @update:visible="taksitAcik = $event"
+    />
+    <KarMarjiHesaplayici
+      :visible="marjAcik"
+      @update:visible="marjAcik = $event"
+    />
+    <IbanDogrulayici
+      :visible="ibanAcik"
+      @update:visible="ibanAcik = $event"
+    />
+    <TcKimlikDogrulayici
+      :visible="tcAcik"
+      @update:visible="tcAcik = $event"
+    />
     <Toast
       position="top-right"
       :life="5000"
@@ -76,7 +101,9 @@
     >
       <div class="oturum-uyari">
         <i class="pi pi-exclamation-triangle oturum-ikon" />
-        <p>Oturumunuz <strong>{{ oturum.kalanSaniye }} saniye</strong> içinde sona erecek.</p>
+        <p>
+          Oturumunuz <strong>{{ oturum.kalanSaniye }} saniye</strong> içinde sona erecek.
+        </p>
         <p class="oturum-ipucu">
           Devam etmek için "Oturumu Uzat" butonuna tıklayın.
         </p>
@@ -100,17 +127,20 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
+import { useToast } from 'primevue/usetoast'
+import { useMagicKeys } from '@vueuse/core'
+
 import AppSidebar from './components/AppSidebar.vue'
-import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
 import AppBreadcrumb from './components/AppBreadcrumb.vue'
+
 import HesapMakinesi from './components/HesapMakinesi.vue'
 import DovizCevirici from './components/DovizCevirici.vue'
 import KdvHesaplayici from './components/KdvHesaplayici.vue'
@@ -118,8 +148,12 @@ import TaksitHesaplayici from './components/TaksitHesaplayici.vue'
 import KarMarjiHesaplayici from './components/KarMarjiHesaplayici.vue'
 import IbanDogrulayici from './components/IbanDogrulayici.vue'
 import TcKimlikDogrulayici from './components/TcKimlikDogrulayici.vue'
+import PasswordChangeModal from './components/PasswordChangeModal.vue'
 
 const authStore = useAuthStore()
+const toast = useToast()
+const { ctrl_k, cmd_k, escape } = useMagicKeys()
+
 const quickSearchVisible = ref(false)
 const sifreDialog = ref(false)
 const hesapMakinesiAcik = ref(false)
@@ -131,6 +165,45 @@ const ibanAcik = ref(false)
 const tcAcik = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
 const oturum = useOturumUyarisi()
+
+// Klavye Kisayollari (Ctrl+K / Cmd+K aramayi acar)
+watch([ctrl_k, cmd_k], ([ctrl, cmd]) => {
+  if ((ctrl || cmd) && authStore.isLoggedIn) {
+    quickSearchVisible.value = true
+  }
+})
+
+// Esc tusu ile acik olan tum araclari kapatir
+watch(escape, (v) => {
+  if (v) {
+    quickSearchVisible.value = false
+    hesapMakinesiAcik.value = false
+    dovizCeviriciAcik.value = false
+    kdvAcik.value = false
+    taksitAcik.value = false
+    marjAcik.value = false
+    ibanAcik.value = false
+    tcAcik.value = false
+  }
+})
+
+// Global API Hata Bildirimleri
+const handleApiError = (e) => {
+  toast.add({
+    severity: 'error',
+    summary: 'Islem Basarisiz',
+    detail: e.detail?.message || 'Bilinmeyen bir hata olustu',
+    life: 5000
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('api-error', handleApiError)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('api-error', handleApiError)
+})
 
 const sirketRenkPaletleri = [
   { accent: '#3b82f6', accentHover: '#2563eb' },
@@ -149,38 +222,94 @@ const sirketTemasiniUygula = (sirketId) => {
   root.style.setProperty('--accent-hover', palet.accentHover)
 }
 
-watch(() => authStore.sirketId, (yeni) => {
-  sirketTemasiniUygula(yeni)
-}, { immediate: true })
+watch(
+  () => authStore.sirketId,
+  (yeni) => {
+    sirketTemasiniUygula(yeni)
+  },
+  { immediate: true }
+)
 </script>
 
 <style>
 .offline-banner {
-  position: sticky; top: 0; z-index: 999;
-  display: flex; align-items: center; gap: 10px;
-  background: #fef3c7; color: #92400e;
-  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
   border-bottom: 1px solid #f59e0b;
 }
-[data-theme="dark"] .offline-banner {
-  background: rgba(245,158,11,0.15); color: #fbbf24;
-  border-bottom-color: rgba(245,158,11,0.3);
+[data-theme='dark'] .offline-banner {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-bottom-color: rgba(245, 158, 11, 0.3);
 }
-.offline-banner i { font-size: 16px; flex-shrink: 0; }
+.offline-banner i {
+  font-size: 16px;
+  flex-shrink: 0;
+}
 .offline-tekrar-dene {
-  margin-left: auto; flex-shrink: 0;
-  background: #f59e0b; color: white; border: none;
-  border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600;
-  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.offline-tekrar-dene:hover { background: #d97706; }
-.slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
-.slide-down-enter-from, .slide-down-leave-to { transform: translateY(-100%); opacity: 0; }
-.sayfa-gecis-enter-active, .sayfa-gecis-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.sayfa-gecis-enter-from { opacity: 0; transform: translateY(8px); }
-.sayfa-gecis-leave-to { opacity: 0; transform: translateY(-4px); }
-.oturum-uyari { text-align: center; }
-.oturum-ikon { font-size: 2.5rem; color: #f59e0b; margin-bottom: 0.75rem; }
-.oturum-uyari p { margin: 0 0 0.5rem; color: var(--text-secondary); }
-.oturum-ipucu { font-size: 0.85rem; color: var(--text-muted); }
+.offline-tekrar-dene:hover {
+  background: #d97706;
+}
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+.sayfa-gecis-enter-active,
+.sayfa-gecis-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.sayfa-gecis-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.sayfa-gecis-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.oturum-uyari {
+  text-align: center;
+}
+.oturum-ikon {
+  font-size: 2.5rem;
+  color: #f59e0b;
+  margin-bottom: 0.75rem;
+}
+.oturum-uyari p {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+}
+.oturum-ipucu {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
 </style>

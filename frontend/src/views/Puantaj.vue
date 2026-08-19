@@ -37,6 +37,8 @@
       </template>
     </Toolbar>
     <DataTable
+      state-storage="session"
+      state-key="puantaj-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -70,7 +72,7 @@
       />
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -177,7 +179,9 @@ onMounted(async () => {
     personelList.value = personelRes.data || []
     if (personelList.value.length) seciliPersonelId.value = personelList.value[0].id
     await loadData()
-  } catch { toastBildirim.hata('Personel listesi yüklenemedi') }
+  } catch {
+    toastBildirim.hata('Personel listesi yüklenemedi')
+  }
 })
 
 const loadData = async () => {
@@ -188,51 +192,109 @@ const loadData = async () => {
     const bit = filtreBitis.value?.toISOString().split('T')[0]
     const r = await puantajAPI.getByPersonel(seciliPersonelId.value, bas, bit)
     list.value = r.data || []
-  } catch { toastBildirim.hata('Puantaj verileri yüklenemedi') }
+  } catch {
+    toastBildirim.hata('Puantaj verileri yüklenemedi')
+  }
   yukleniyor.value = false
 }
 
-const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
-    ? { personelId: data.personelId, tarih: new Date(data.tarih), durum: data.durum || 'GELDI', aciklama: data.aciklama || '' }
+    ? {
+        personelId: data.personelId,
+        tarih: new Date(data.tarih),
+        durum: data.durum || 'GELDI',
+        aciklama: data.aciklama || ''
+      }
     : { personelId: seciliPersonelId.value, tarih: new Date(), durum: 'GELDI', aciklama: '' }
   dialog.value = true
 }
 
 const kaydet = async () => {
-  if (!form.value.personelId) { toastBildirim.uyari('Personel seçiniz'); return }
+  if (!form.value.personelId) {
+    toastBildirim.uyari('Personel seçiniz')
+    return
+  }
   kaydediliyor.value = true
   try {
     const payload = { ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }
-    if (duzenleme.value) { await puantajAPI.update(form.value.id, payload); toastBildirim.basarili('Puantaj güncellendi') }
-    else { await puantajAPI.create(payload); toastBildirim.basarili('Puantaj eklendi') }
-    dialog.value = false; await loadData()
-  } catch { toastBildirim.hata('İşlem başarısız') }
+    if (duzenleme.value) {
+      await puantajAPI.update(form.value.id, payload)
+      toastBildirim.basarili('Puantaj güncellendi')
+    } else {
+      await puantajAPI.create(payload)
+      toastBildirim.basarili('Puantaj eklendi')
+    }
+    dialog.value = false
+    await loadData()
+  } catch {
+    toastBildirim.hata('İşlem başarısız')
+  }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?', header: 'Onay', icon: 'pi pi-exclamation-triangle',
+    message: 'Bu kaydı silmek istediğinize emin misiniz?',
+    header: 'Onay',
+    icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      try { await puantajAPI.delete(data.id); await loadData(); toast.add({ severity: 'success', summary: 'Silindi', life: 3000 }) }
-      catch { toastBildirim.hata('Silme başarısız') }
+      try {
+        await puantajAPI.delete(data.id)
+        await loadData()
+        toast.add({ severity: 'success', summary: 'Silindi', life: 3000 })
+      } catch {
+        toastBildirim.hata('Silme başarısız')
+      }
     }
   })
 }
 </script>
 
 <style scoped>
-.puantaj-container { padding: 20px; }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; }
-.toolbar { margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.personel-dropdown { width: 250px !important; }
-.filter-date { width: 140px !important; margin-left: 8px; }
+.puantaj-container {
+  padding: 20px;
+}
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+}
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.personel-dropdown {
+  width: 250px !important;
+}
+.filter-date {
+  width: 140px !important;
+  margin-left: 8px;
+}
 </style>

@@ -53,7 +53,7 @@
               <th>Modül</th>
               <th>Yetki Kodu</th>
               <th>Açıklama</th>
-              <th style="width: 100px; text-align: center;">
+              <th style="width: 100px; text-align: center">
                 Erişim İzni
               </th>
             </tr>
@@ -63,10 +63,14 @@
               v-for="y in yetkiler"
               :key="y.id"
             >
-              <td><span class="modul-tag">{{ y.modul }}</span></td>
-              <td><code>{{ y.kod }}</code></td>
+              <td>
+                <span class="modul-tag">{{ y.modul }}</span>
+              </td>
+              <td>
+                <code>{{ y.kod }}</code>
+              </td>
               <td>{{ y.aciklama }}</td>
-              <td style="text-align: center;">
+              <td style="text-align: center">
                 <input
                   type="checkbox"
                   class="yetki-checkbox"
@@ -97,10 +101,7 @@ const seciliRol = ref(null)
 const verileriYukle = async () => {
   yukleniyor.value = true
   try {
-    const [rRes, yRes] = await Promise.all([
-      apiClient.get('/yetkiler/roller'),
-      apiClient.get('/yetkiler')
-    ])
+    const [rRes, yRes] = await Promise.all([apiClient.get('/yetkiler/roller'), apiClient.get('/yetkiler')])
     roller.value = rRes.data || []
     yetkiler.value = yRes.data || []
     if (roller.value.length > 0) {
@@ -115,18 +116,18 @@ const verileriYukle = async () => {
 
 const yetkiVarmis = (yetkiId) => {
   if (!seciliRol.value || !seciliRol.value.yetkiler) return false
-  return seciliRol.value.yetkiler.some(y => y.id === yetkiId)
+  return seciliRol.value.yetkiler.some((y) => y.id === yetkiId)
 }
 
 const yetkiToggle = (yetkiId) => {
   if (!seciliRol.value) return
   if (!seciliRol.value.yetkiler) seciliRol.value.yetkiler = []
 
-  const idx = seciliRol.value.yetkiler.findIndex(y => y.id === yetkiId)
+  const idx = seciliRol.value.yetkiler.findIndex((y) => y.id === yetkiId)
   if (idx > -1) {
     seciliRol.value.yetkiler.splice(idx, 1)
   } else {
-    const yObj = yetkiler.value.find(y => y.id === yetkiId)
+    const yObj = yetkiler.value.find((y) => y.id === yetkiId)
     if (yObj) seciliRol.value.yetkiler.push(yObj)
   }
 }
@@ -135,7 +136,7 @@ const kaydet = async () => {
   if (!seciliRol.value) return
   kaydediliyor.value = true
   try {
-    const yetkiIds = seciliRol.value.yetkiler.map(y => y.id)
+    const yetkiIds = seciliRol.value.yetkiler.map((y) => y.id)
     await apiClient.put(`/yetkiler/roller/${seciliRol.value.id}`, yetkiIds)
     toastBildirim.basarili(`${seciliRol.value.ad} yetkileri kaydedildi.`)
   } catch (e) {
@@ -151,33 +152,88 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.yetki-page { padding: 1.5rem; }
-.matrix-container { display: flex; gap: 1.5rem; margin-top: 1.5rem; }
-.roles-tabs { display: flex; flex-direction: column; gap: 0.5rem; width: 220px; flex-shrink: 0; }
+.yetki-page {
+  padding: 1.5rem;
+}
+.matrix-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.roles-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 220px;
+  flex-shrink: 0;
+}
 .role-tab {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.8rem 1rem; border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
   background: var(--surface-card, #1e293b);
-  border: 1px solid var(--surface-border, rgba(255,255,255,0.1));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.1));
   color: var(--text-primary, #f1f5f9);
-  font-weight: 600; cursor: pointer; text-align: left;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
   transition: all 0.2s;
 }
-.role-tab:hover { background: rgba(59,130,246,0.1); }
-.role-tab.active { background: #3b82f6; color: #ffffff; border-color: #3b82f6; }
+.role-tab:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+.role-tab.active {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
 
 .role-details-card {
   flex: 1;
   background: var(--surface-card, #1e293b);
-  border: 1px solid var(--surface-border, rgba(255,255,255,0.1));
-  border-radius: 12px; padding: 1.5rem;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 1.5rem;
 }
-.role-info h3 { margin: 0 0 0.25rem 0; font-size: 1.3rem; }
-.role-info p { color: var(--text-secondary, #94a3b8); margin-bottom: 1.5rem; }
+.role-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.3rem;
+}
+.role-info p {
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 1.5rem;
+}
 
-.yetki-table { width: 100%; border-collapse: collapse; }
-.yetki-table th, .yetki-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; }
-.yetki-table th { background: rgba(255,255,255,0.03); color: var(--text-secondary, #94a3b8); font-size: 0.85rem; text-transform: uppercase; }
-.modul-tag { background: rgba(59,130,246,0.2); color: #38bdf8; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem; }
-.yetki-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #3b82f6; }
+.yetki-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.yetki-table th,
+.yetki-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+.yetki-table th {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+.modul-tag {
+  background: rgba(59, 130, 246, 0.2);
+  color: #38bdf8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.yetki-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
 </style>

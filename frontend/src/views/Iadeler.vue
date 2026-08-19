@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="iadeler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -67,7 +69,7 @@
       />
       <Column
         header="İşlem"
-        style="width:200px"
+        style="width: 200px"
       >
         <template #body="{ data }">
           <Button
@@ -114,7 +116,10 @@
           <label>İade Türü *</label>
           <Dropdown
             v-model="form.tur"
-            :options="[{label:'Satış İadesi (Müşteriden)',value:'SATIS'},{label:'Alış İadesi (Tedarikçiye)',value:'ALIS'}]"
+            :options="[
+              { label: 'Satış İadesi (Müşteriden)', value: 'SATIS' },
+              { label: 'Alış İadesi (Tedarikçiye)', value: 'ALIS' }
+            ]"
             option-label="label"
             option-value="value"
             class="w-full"
@@ -189,7 +194,7 @@
             />
             <Dropdown
               v-model="k.kdvOrani"
-              :options="[0,10,20]"
+              :options="[0, 10, 20]"
               class="kalem-kdv"
             />
             <Button
@@ -243,12 +248,20 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ cariHesapId: null, cariHesapAd: '', tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] })
+const form = ref({
+  cariHesapId: null,
+  cariHesapAd: '',
+  tur: 'SATIS',
+  tarih: new Date(),
+  tutar: 0,
+  aciklama: '',
+  kalemler: []
+})
 
-const dialogHeader = computed(() => duzenleme.value ? 'İade Düzenle' : 'Yeni İade')
+const dialogHeader = computed(() => (duzenleme.value ? 'İade Düzenle' : 'Yeni İade'))
 
 const kalemToplam = computed(() => {
-  return form.value.kalemler.reduce((t, k) => t + ((k.miktar || 0) * (k.birimFiyat || 0)), 0)
+  return form.value.kalemler.reduce((t, k) => t + (k.miktar || 0) * (k.birimFiyat || 0), 0)
 })
 
 const formatCurrency = (v) => {
@@ -261,18 +274,14 @@ const formatDate = (d) => {
 }
 
 const cariSecildi = () => {
-  const secilen = cariList.value.find(c => c.id === form.value.cariHesapId)
+  const secilen = cariList.value.find((c) => c.id === form.value.cariHesapId)
   if (secilen) form.value.cariHesapAd = secilen.ad
 }
 
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [r, stokRes, cariRes] = await Promise.all([
-      iadeAPI.getAll(),
-      stokAPI.getAll(),
-      cariHesapAPI.getAll()
-    ])
+    const [r, stokRes, cariRes] = await Promise.all([iadeAPI.getAll(), stokAPI.getAll(), cariHesapAPI.getAll()])
     list.value = r.data?.content || r.data || []
     stokList.value = stokRes.data?.content || stokRes.data || []
     cariList.value = cariRes.data?.content || cariRes.data || []
@@ -289,7 +298,12 @@ const kalemEkle = () => {
 const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
-    ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date(), tur: data.tur || 'SATIS', kalemler: data.kalemler?.map(k => ({ ...k })) || [] }
+    ? {
+        ...data,
+        tarih: data.tarih ? new Date(data.tarih) : new Date(),
+        tur: data.tur || 'SATIS',
+        kalemler: data.kalemler?.map((k) => ({ ...k })) || []
+      }
     : { cariHesapId: null, cariHesapAd: '', tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
   dialog.value = true
 }
@@ -301,7 +315,7 @@ const kaydet = async () => {
       ...form.value,
       tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih,
       tutar: kalemToplam.value,
-      kalemler: form.value.kalemler.map(k => ({
+      kalemler: form.value.kalemler.map((k) => ({
         stokId: k.stokId,
         miktar: k.miktar,
         birimFiyat: k.birimFiyat,
@@ -316,7 +330,8 @@ const kaydet = async () => {
       toastBildirim.basarili('İade oluşturuldu')
     }
     dialog.value = false
-    const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await iadeAPI.getAll()
+    list.value = r.data?.content || r.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }
@@ -326,7 +341,8 @@ const kaydet = async () => {
 const durumGuncelle = async (data, durum) => {
   try {
     await iadeAPI.durumGuncelle(data.id, durum)
-    const r = await iadeAPI.getAll(); list.value = r.data?.content || r.data || []
+    const r = await iadeAPI.getAll()
+    list.value = r.data?.content || r.data || []
     toastBildirim.basarili(`İade durumu "${durum}" olarak güncellendi`)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Durum güncellenirken hata oluştu')
@@ -343,7 +359,7 @@ const sil = (data) => {
     accept: async () => {
       try {
         await iadeAPI.delete(data.id)
-        list.value = list.value.filter(x => x.id !== data.id)
+        list.value = list.value.filter((x) => x.id !== data.id)
         toast.add({ severity: 'success', summary: 'Silindi', detail: 'İade kaydı silindi', life: 3000 })
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
@@ -354,19 +370,74 @@ const sil = (data) => {
 </script>
 
 <style scoped>
-.iade-container { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.kalem-section { border-top: 1px solid var(--border); padding-top: 12px; }
-.kalem-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.kalem-header h3 { margin: 0; font-size: 15px; }
-.kalem-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.kalem-stok { flex: 2; min-width: 160px; }
-.kalem-miktar { flex: 1; min-width: 80px; }
-.kalem-fiyat { flex: 1; min-width: 100px; }
-.kalem-kdv { width: 70px; }
-.kalem-tutar { text-align: right; font-weight: bold; font-size: 15px; padding: 8px 0; border-top: 1px solid var(--border); margin-top: 4px; }
+.iade-container {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.kalem-section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.kalem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kalem-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.kalem-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kalem-stok {
+  flex: 2;
+  min-width: 160px;
+}
+.kalem-miktar {
+  flex: 1;
+  min-width: 80px;
+}
+.kalem-fiyat {
+  flex: 1;
+  min-width: 100px;
+}
+.kalem-kdv {
+  width: 70px;
+}
+.kalem-tutar {
+  text-align: right;
+  font-weight: bold;
+  font-size: 15px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
 </style>

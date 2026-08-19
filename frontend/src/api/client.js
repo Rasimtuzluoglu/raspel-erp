@@ -9,9 +9,17 @@ export const networkStatus = reactive({
   showBanner: false
 })
 
-window.addEventListener('online', () => { networkStatus.online = true; networkStatus.showBanner = false })
-window.addEventListener('offline', () => { networkStatus.online = false; networkStatus.showBanner = true })
-window.addEventListener('focus', () => { if (navigator.onLine) networkStatus.showBanner = false })
+window.addEventListener('online', () => {
+  networkStatus.online = true
+  networkStatus.showBanner = false
+})
+window.addEventListener('offline', () => {
+  networkStatus.online = false
+  networkStatus.showBanner = true
+})
+window.addEventListener('focus', () => {
+  if (navigator.onLine) networkStatus.showBanner = false
+})
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -22,48 +30,93 @@ const apiClient = axios.create({
   }
 })
 
+import NProgress from 'nprogress'
 import { useAuthStore } from '../stores/authStore.js'
 
-apiClient.interceptors.request.use((config) => {
-  let token = ''
-  try {
-    const authStore = useAuthStore()
-    token = authStore.token || ''
-  } catch { /* empty */ }
-  if (!token) {
+let pendingRequests = 0
+const handleNProgress = (isStart) => {
+  if (isStart) {
+    pendingRequests++
+    NProgress.start()
+  } else {
+    pendingRequests = Math.max(0, pendingRequests - 1)
+    if (pendingRequests === 0) {
+      NProgress.done()
+    }
+  }
+}
+
+apiClient.interceptors.request.use(
+  (config) => {
+    handleNProgress(true)
+    let token = ''
     try {
-      const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
-      token = kayitli.token || ''
-    } catch { /* empty */ }
+      const authStore = useAuthStore()
+      token = authStore.token || ''
+    } catch {
+      /* empty */
+    }
+    if (!token) {
+      try {
+        const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
+        token = kayitli.token || ''
+      } catch {
+        /* empty */
+      }
+    }
+    if (token) {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    handleNProgress(false)
+    return Promise.reject(error)
   }
-  if (token) {
-    config.headers = config.headers || {}
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+)
 
 let redirectKorumasi = false
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    handleNProgress(false)
+    return response
+  },
   (error) => {
+    handleNProgress(false)
     if (!error.response) {
       networkStatus.showBanner = true
       return Promise.reject(error)
     }
-    const { status } = error.response
+    const { status, data } = error.response
+
+    // Global Toast Trigger
+    if (status >= 400 && status !== 401) {
+      const errorMsg = data?.message || data?.error || 'Bir hata oluştu.'
+      window.dispatchEvent(new CustomEvent('api-error', { detail: { status, message: errorMsg } }))
+    }
+
     if (status === 401 && !window.location.pathname.startsWith('/giris')) {
       if (redirectKorumasi) return Promise.reject(error)
       redirectKorumasi = true
       try {
         const authStore = useAuthStore()
         authStore.cikisYap()
-      } catch { /* empty */ }
-      window.location.replace('/giris')
+      } catch {
+        /* empty */
+      }
+
+      import('../router/index.js').then(({ default: router }) => {
+        router.push({ name: 'Giris', query: { redirect: router.currentRoute.value.fullPath } })
+      })
       return Promise.reject(error)
     }
-    if (status === 403 && !window.location.pathname.startsWith('/giris') && !window.location.pathname.startsWith('/yetki-reddi')) {
+    if (
+      status === 403 &&
+      !window.location.pathname.startsWith('/giris') &&
+      !window.location.pathname.startsWith('/yetki-reddi')
+    ) {
       const tokenSuresiDolmus = tokenSuresiDolduMu()
       if (tokenSuresiDolmus) {
         if (redirectKorumasi) return Promise.reject(error)
@@ -71,10 +124,16 @@ apiClient.interceptors.response.use(
         try {
           const authStore = useAuthStore()
           authStore.cikisYap()
-        } catch { /* empty */ }
-        window.location.replace('/giris')
+        } catch {
+          /* empty */
+        }
+        import('../router/index.js').then(({ default: router }) => {
+          router.push({ name: 'Giris', query: { redirect: router.currentRoute.value.fullPath } })
+        })
       } else {
-        window.location.replace('/yetki-reddi')
+        import('../router/index.js').then(({ default: router }) => {
+          router.push('/yetki-reddi')
+        })
       }
     }
     return Promise.reject(error)

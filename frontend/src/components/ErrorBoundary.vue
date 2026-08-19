@@ -96,7 +96,8 @@ const goHome = () => {
   justify-content: center;
 }
 
-.retry-btn, .home-btn {
+.retry-btn,
+.home-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;

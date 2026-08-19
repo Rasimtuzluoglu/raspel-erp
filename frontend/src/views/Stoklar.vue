@@ -45,7 +45,7 @@
           label="Excel"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
-          style="margin-right:8px"
+          style="margin-right: 8px"
           @click="excelIndir"
         />
         <div class="toolbar-end">
@@ -90,7 +90,7 @@
       />
       <Dropdown
         v-model="filtreStokGrubu"
-        :options="['','Hammadde','Mamul','Yari Mamul','Sarf','Aksesuar']"
+        :options="['', 'Hammadde', 'Mamul', 'Yari Mamul', 'Sarf', 'Aksesuar']"
         placeholder="Stok Grubu"
         class="filter-dropdown"
         @change="filtrele"
@@ -125,10 +125,12 @@
     <template v-if="!stokStore.loading && gosterim === 'tablo'">
       <DataTable
         v-model:selection="seciliStoklar"
+        state-storage="session"
+        state-key="stoklar-table-state"
         :value="filtrelenmisStoklar"
         :paginator="true"
         :rows="25"
-        :rows-per-page-options="[15,25,50,100]"
+        :rows-per-page-options="[15, 25, 50, 100]"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
         current-page-report-template="{totalRecords} kayıttan {first}-{last}"
         selection-mode="multiple"
@@ -137,7 +139,7 @@
         sort-field="miktar"
         :sort-order="1"
         class="p-datatable-sm"
-        :global-filter-fields="['ad','stokKodu','birim']"
+        :global-filter-fields="['ad', 'stokKodu', 'birim']"
         @row-click="stokSec($event.data)"
       >
         <template #header>
@@ -167,25 +169,25 @@
           field="stokKodu"
           header="Stok Kodu"
           sortable
-          style="width:120px"
+          style="width: 120px"
         />
         <Column
           field="ad"
           header="Ürün Adı"
           sortable
-          style="min-width:180px"
+          style="min-width: 180px"
         />
         <Column
           field="birim"
           header="Birim"
           sortable
-          style="width:90px"
+          style="width: 90px"
         />
         <Column
           field="miktar"
           header="Miktar"
           sortable
-          style="width:110px"
+          style="width: 110px"
         >
           <template #body="s">
             <span :class="s.data.minMiktar && s.data.miktar <= s.data.minMiktar ? 'kritik' : 'normal'">
@@ -197,7 +199,7 @@
           field="fiyat"
           header="Birim Fiyat"
           sortable
-          style="width:130px"
+          style="width: 130px"
         >
           <template #body="s">
             {{ formatCurrency(s.data.fiyat) }}
@@ -207,17 +209,23 @@
           field="tedarikciAd"
           header="Tedarikçi"
           sortable
-          style="width:150px"
+          style="width: 150px"
         >
           <template #body="s">
-            <span v-if="s.data.tedarikciAd"><i class="pi pi-building" style="margin-right:6px;color:#3b82f6" />{{ s.data.tedarikciAd }}</span>
-            <span v-else class="text-muted">-</span>
+            <span v-if="s.data.tedarikciAd"><i
+              class="pi pi-building"
+              style="margin-right: 6px; color: #3b82f6"
+            />{{ s.data.tedarikciAd }}</span>
+            <span
+              v-else
+              class="text-muted"
+            >-</span>
           </template>
         </Column>
         <Column
           header="Stok Değeri"
           sortable
-          style="width:130px"
+          style="width: 130px"
         >
           <template #body="s">
             {{ formatCurrency((s.data.miktar || 0) * (s.data.fiyat || 0)) }}
@@ -225,19 +233,19 @@
         </Column>
         <Column
           header="Kritik"
-          style="width:80px"
+          style="width: 80px"
         >
           <template #body="s">
             <i
               v-if="s.data.minMiktar && s.data.miktar <= s.data.minMiktar"
               class="pi pi-exclamation-triangle"
-              style="color:#f87171;font-size:16px"
+              style="color: #f87171; font-size: 16px"
             />
           </template>
         </Column>
         <Column
           header=""
-          style="width:100px"
+          style="width: 100px"
         >
           <template #body="s">
             <Button
@@ -321,7 +329,10 @@
       class="hareket-bolumu"
     >
       <div class="hareket-header">
-        <h2>{{ seciliStok.ad }} <small style="color:#64748b;font-weight:400">({{ seciliStok.miktar }} {{ seciliStok.birim || 'Adet' }})</small></h2>
+        <h2>
+          {{ seciliStok.ad }}
+          <small style="color: #64748b; font-weight: 400">({{ seciliStok.miktar }} {{ seciliStok.birim || 'Adet' }})</small>
+        </h2>
         <Button
           label="+ Stok Giriş"
           icon="pi pi-plus-circle"
@@ -343,6 +354,8 @@
       </div>
       <div class="table-container">
         <DataTable
+          state-storage="session"
+          state-key="stoklar-table-state"
           :value="stokHareketler"
           striped-rows
           :rows="8"
@@ -352,7 +365,7 @@
         >
           <Column
             header="Tarih"
-            style="width:100px"
+            style="width: 100px"
           >
             <template #body="s">
               {{ formatDate(s.data.hareketTarihi) }}
@@ -360,7 +373,7 @@
           </Column>
           <Column
             header="Tür"
-            style="width:90px"
+            style="width: 90px"
           >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
@@ -370,7 +383,7 @@
           </Column>
           <Column
             header="Miktar"
-            style="width:90px"
+            style="width: 90px"
           >
             <template #body="s">
               <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
@@ -378,7 +391,7 @@
           </Column>
           <Column
             header="Cari Hesap"
-            style="width:160px"
+            style="width: 160px"
           >
             <template #body="s">
               {{ s.data.cariHesapAd || '-' }}
@@ -387,7 +400,7 @@
           <Column header="Açıklama" />
           <Column
             header=""
-            style="width:60px"
+            style="width: 60px"
           >
             <template #body="s">
               <Button
@@ -410,7 +423,7 @@
       v-model:visible="showDialog"
       :header="editingId ? 'Ürün Düzenle' : 'Yeni Ürün'"
       :modal="true"
-      style="width:650px"
+      style="width: 650px"
     >
       <div class="form-section">
         <div class="form-section-title">
@@ -429,7 +442,7 @@
             <label>Birim</label>
             <Dropdown
               v-model="form.birim"
-              :options="['Adet','Koli','Kg','Metre','Litre','Paket']"
+              :options="['Adet', 'Koli', 'Kg', 'Metre', 'Litre', 'Paket']"
               placeholder="Seçiniz"
               class="w-full"
             />
@@ -636,10 +649,32 @@
         <div class="form-grup">
           <label>Ürün Fotoğrafı</label>
           <div class="foto-satir">
-            <img v-if="form.fotoUrl" :src="form.fotoUrl" class="foto-onizle" alt="foto">
-            <input ref="fotoInput" type="file" accept="image/*" hidden @change="fotoSec">
-            <Button label="Fotoğraf Yükle" icon="pi pi-image" class="p-button-outlined" @click="$refs.fotoInput.click()" />
-            <Button v-if="form.fotoUrl" label="Kaldır" icon="pi pi-times" class="p-button-text p-button-danger" @click="form.fotoUrl = ''" />
+            <img
+              v-if="form.fotoUrl"
+              :src="form.fotoUrl"
+              class="foto-onizle"
+              alt="foto"
+            >
+            <input
+              ref="fotoInput"
+              type="file"
+              accept="image/*"
+              hidden
+              @change="fotoSec"
+            >
+            <Button
+              label="Fotoğraf Yükle"
+              icon="pi pi-image"
+              class="p-button-outlined"
+              @click="$refs.fotoInput.click()"
+            />
+            <Button
+              v-if="form.fotoUrl"
+              label="Kaldır"
+              icon="pi pi-times"
+              class="p-button-text p-button-danger"
+              @click="form.fotoUrl = ''"
+            />
           </div>
         </div>
         <div class="form-grup">
@@ -671,7 +706,7 @@
       v-model:visible="showHareketDialog"
       :header="hareketBaslik"
       :modal="true"
-      style="width:500px"
+      style="width: 500px"
     >
       <div class="form-grup">
         <label>Miktar *</label>
@@ -729,13 +764,13 @@
       v-model:visible="batchFiyatDialog"
       header="Toplu Fiyat Güncelleme"
       :modal="true"
-      style="width:480px"
+      style="width: 480px"
     >
       <div class="form-grup">
         <label>İşlem Yönü</label>
         <Dropdown
           v-model="batchFiyatForm.yon"
-          :options="['ARTIR','AZALT']"
+          :options="['ARTIR', 'AZALT']"
           class="w-full"
         />
       </div>
@@ -785,7 +820,7 @@
       v-model:visible="showDetailDialog"
       :header="detailStok?.ad || 'Ürün Detayı'"
       :modal="true"
-      style="width:700px"
+      style="width: 700px"
     >
       <div
         v-if="detailStok"
@@ -854,6 +889,8 @@
       />
       <DataTable
         v-else
+        state-storage="session"
+        state-key="stoklar-table-state"
         :value="hareketler"
         size="small"
         striped-rows
@@ -862,7 +899,7 @@
       >
         <Column
           header="Tarih"
-          style="width:110px"
+          style="width: 110px"
         >
           <template #body="s">
             {{ formatDate(s.data.hareketTarihi || s.data.tarih) }}
@@ -870,7 +907,7 @@
         </Column>
         <Column
           header="Tür"
-          style="width:90px"
+          style="width: 90px"
         >
           <template #body="s">
             <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
@@ -880,7 +917,7 @@
         </Column>
         <Column
           header="Miktar"
-          style="width:90px"
+          style="width: 90px"
         >
           <template #body="s">
             <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
@@ -918,7 +955,9 @@ const cariHesapStore = useCariHesapStore()
 
 useKisayollar({
   yeni: () => openDialog(),
-  iptal: () => { showDialog.value = false },
+  iptal: () => {
+    showDialog.value = false
+  },
   kaydet: () => saveStok()
 })
 
@@ -927,7 +966,9 @@ const { silVeGeriAl } = useGeriAl()
 
 const aramaMetni = ref('')
 let aramaZaman = null
-onUnmounted(() => { if (aramaZaman) clearTimeout(aramaZaman) })
+onUnmounted(() => {
+  if (aramaZaman) clearTimeout(aramaZaman)
+})
 
 const filtreArama = ref('')
 const filtreKategori = ref('')
@@ -954,18 +995,47 @@ const maliyetYontemiSecenekleri = [
   { label: 'FIFO', value: 'FIFO' },
   { label: 'LIFO', value: 'LIFO' }
 ]
-const form = ref({ stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '', fotoUrl: '' })
+const form = ref({
+  stokKodu: '',
+  barkod: '',
+  ad: '',
+  birim: '',
+  birim2: '',
+  cevrimKatsayisi: null,
+  marka: '',
+  stokGrubu: '',
+  kategori: '',
+  rafNo: '',
+  fiyat: 0,
+  satisFiyati: null,
+  kdvOrani: null,
+  agirlik: null,
+  miktar: 0,
+  minMiktar: null,
+  tedarikciId: null,
+  tedarikciStokKodu: '',
+  tedarikciFiyat: null,
+  maliyetYontemi: 'ORTALAMA',
+  aciklama: '',
+  fotoUrl: ''
+})
 
 const showHareketDialog = ref(false)
 const hareketTur = ref('GIRIS')
 const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' })
 
-const hareketBaslik = computed(() => hareketTur.value === 'GIRIS' ? 'Stok Girişi' : 'Stok Çıkışı')
+const hareketBaslik = computed(() => (hareketTur.value === 'GIRIS' ? 'Stok Girişi' : 'Stok Çıkışı'))
 
 const filtrelenmisStoklar = computed(() => {
-  return stokStore.stoklar.filter(s => {
+  return stokStore.stoklar.filter((s) => {
     const q = filtreArama.value.toLowerCase()
-    if (filtreArama.value && !s.ad?.toLowerCase().includes(q) && !s.stokKodu?.toLowerCase().includes(q) && !s.barkod?.toLowerCase().includes(q)) return false
+    if (
+      filtreArama.value &&
+      !s.ad?.toLowerCase().includes(q) &&
+      !s.stokKodu?.toLowerCase().includes(q) &&
+      !s.barkod?.toLowerCase().includes(q)
+    )
+      return false
     if (filtreKategori.value && s.kategori !== filtreKategori.value) return false
     if (filtreMarka.value && !s.marka?.toLowerCase().includes(filtreMarka.value.toLowerCase())) return false
     if (filtreStokGrubu.value && s.stokGrubu !== filtreStokGrubu.value) return false
@@ -975,7 +1045,7 @@ const filtrelenmisStoklar = computed(() => {
   })
 })
 
-const kritikAdet = computed(() => stokStore.stoklar.filter(s => s.minMiktar && s.miktar <= s.minMiktar).length)
+const kritikAdet = computed(() => stokStore.stoklar.filter((s) => s.minMiktar && s.miktar <= s.minMiktar).length)
 
 onMounted(async () => {
   await Promise.all([stokStore.getAll({ size: 1000 }), cariHesapStore.getAllCariHesaplar()])
@@ -999,36 +1069,99 @@ const filtreTemizle = () => {
 }
 
 const stokSec = async (s) => {
-  seciliStok.value = s; seciliStokId.value = s.id
-  try { const r = await stokAPI.getHareketler(s.id); stokHareketler.value = r.data }
-  catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi') }
+  seciliStok.value = s
+  seciliStokId.value = s.id
+  try {
+    const r = await stokAPI.getHareketler(s.id)
+    stokHareketler.value = r.data
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi')
+  }
   detailStok.value = s
   showDetailDialog.value = true
   stokHareketleriYukle(s.id)
 }
 
 const openDialog = () => {
-  editingId.value = null; form.value = { stokKodu: '', barkod: '', ad: '', birim: '', birim2: '', cevrimKatsayisi: null, marka: '', stokGrubu: '', kategori: '', rafNo: '', fiyat: 0, satisFiyati: null, kdvOrani: null, agirlik: null, miktar: 0, minMiktar: null, tedarikciId: null, tedarikciStokKodu: '', tedarikciFiyat: null, maliyetYontemi: 'ORTALAMA', aciklama: '' }
+  editingId.value = null
+  form.value = {
+    stokKodu: '',
+    barkod: '',
+    ad: '',
+    birim: '',
+    birim2: '',
+    cevrimKatsayisi: null,
+    marka: '',
+    stokGrubu: '',
+    kategori: '',
+    rafNo: '',
+    fiyat: 0,
+    satisFiyati: null,
+    kdvOrani: null,
+    agirlik: null,
+    miktar: 0,
+    minMiktar: null,
+    tedarikciId: null,
+    tedarikciStokKodu: '',
+    tedarikciFiyat: null,
+    maliyetYontemi: 'ORTALAMA',
+    aciklama: ''
+  }
   formTemizle()
   showDialog.value = true
 }
 
 const editStok = (s) => {
-  editingId.value = s.id; form.value = { stokKodu: s.stokKodu || '', barkod: s.barkod || '', ad: s.ad, birim: s.birim || '', birim2: s.birim2 || '', cevrimKatsayisi: s.cevrimKatsayisi || null, marka: s.marka || '', stokGrubu: s.stokGrubu || '', kategori: s.kategori || '', rafNo: s.rafNo || '', fiyat: s.fiyat, satisFiyati: s.satisFiyati, kdvOrani: s.kdvOrani, agirlik: s.agirlik, miktar: s.miktar, minMiktar: s.minMiktar, tedarikciId: s.tedarikciId || null, tedarikciStokKodu: s.tedarikciStokKodu || '', tedarikciFiyat: s.tedarikciFiyat || null, maliyetYontemi: s.maliyetYontemi || 'ORTALAMA', aciklama: s.aciklama || '', fotoUrl: s.fotoUrl || '' }
+  editingId.value = s.id
+  form.value = {
+    stokKodu: s.stokKodu || '',
+    barkod: s.barkod || '',
+    ad: s.ad,
+    birim: s.birim || '',
+    birim2: s.birim2 || '',
+    cevrimKatsayisi: s.cevrimKatsayisi || null,
+    marka: s.marka || '',
+    stokGrubu: s.stokGrubu || '',
+    kategori: s.kategori || '',
+    rafNo: s.rafNo || '',
+    fiyat: s.fiyat,
+    satisFiyati: s.satisFiyati,
+    kdvOrani: s.kdvOrani,
+    agirlik: s.agirlik,
+    miktar: s.miktar,
+    minMiktar: s.minMiktar,
+    tedarikciId: s.tedarikciId || null,
+    tedarikciStokKodu: s.tedarikciStokKodu || '',
+    tedarikciFiyat: s.tedarikciFiyat || null,
+    maliyetYontemi: s.maliyetYontemi || 'ORTALAMA',
+    aciklama: s.aciklama || '',
+    fotoUrl: s.fotoUrl || ''
+  }
   formTemizle()
   showDialog.value = true
 }
 
 const saveStok = async () => {
-  if (!form.value.ad.trim()) { toastBildirim.uyari('Ürün adı giriniz'); return }
+  if (!form.value.ad.trim()) {
+    toastBildirim.uyari('Ürün adı giriniz')
+    return
+  }
   saving.value = true
   try {
-    if (editingId.value) { await stokStore.updateStok(editingId.value, form.value); toastBildirim.basarili('Ürün güncellendi') }
-    else { await stokStore.addStok(form.value); toastBildirim.basarili('Ürün eklendi') }
+    if (editingId.value) {
+      await stokStore.updateStok(editingId.value, form.value)
+      toastBildirim.basarili('Ürün güncellendi')
+    } else {
+      await stokStore.addStok(form.value)
+      toastBildirim.basarili('Ürün eklendi')
+    }
     formTemizle()
     showDialog.value = false
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
-  finally { saving.value = false }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+  } finally {
+    saving.value = false
+  }
 }
 
 const fotoSec = async (e) => {
@@ -1044,39 +1177,59 @@ const fotoSec = async (e) => {
 }
 
 const confirmDel = (id) => {
-  const silinecek = stokStore.stoklar.find(s => s.id === id)
+  const silinecek = stokStore.stoklar.find((s) => s.id === id)
   confirm.require({
-    message: 'Bu ürünü silmek istediğinizden emin misiniz?', header: 'Onay',
+    message: 'Bu ürünü silmek istediğinizden emin misiniz?',
+    header: 'Onay',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await stokStore.deleteStok(id)
-        if (seciliStokId.value === id) { seciliStok.value = null; seciliStokId.value = null; stokHareketler.value = [] }
+        if (seciliStokId.value === id) {
+          seciliStok.value = null
+          seciliStokId.value = null
+          stokHareketler.value = []
+        }
         toastBildirim.basarili('Ürün silindi')
-        if (silinecek) silVeGeriAl({ veri: silinecek, metin: `${silinecek.ad} silindi`, geriYukle: (v) => stokStore.addStok(v) })
+        if (silinecek)
+          silVeGeriAl({ veri: silinecek, metin: `${silinecek.ad} silindi`, geriYukle: (v) => stokStore.addStok(v) })
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
       }
-      catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
     }
   })
 }
 
 const openHareketDialog = (tur) => {
-  hareketTur.value = tur; hareketForm.value = { miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' }
+  hareketTur.value = tur
+  hareketForm.value = { miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' }
   showHareketDialog.value = true
 }
 
 const batchSil = () => {
   if (!seciliStoklar.value.length) return
   confirm.require({
-    message: `${seciliStoklar.value.length} ürün silinecek. Emin misiniz?`, header: 'Toplu Silme Onayı',
+    message: `${seciliStoklar.value.length} ürün silinecek. Emin misiniz?`,
+    header: 'Toplu Silme Onayı',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      let basarili = 0, hatali = 0
+      let basarili = 0,
+        hatali = 0
       for (const s of [...seciliStoklar.value]) {
-        try { await stokStore.deleteStok(s.id); basarili++ } catch { hatali++ }
+        try {
+          await stokStore.deleteStok(s.id)
+          basarili++
+        } catch {
+          hatali++
+        }
       }
       seciliStoklar.value = []
-      toast.add({ severity: hatali ? 'warn' : 'success', summary: 'Tamamlandı', detail: `${basarili} silindi${hatali ? ', ' + hatali + ' hata' : ''}`, life: 5000 })
+      toast.add({
+        severity: hatali ? 'warn' : 'success',
+        summary: 'Tamamlandı',
+        detail: `${basarili} silindi${hatali ? ', ' + hatali + ' hata' : ''}`,
+        life: 5000
+      })
     }
   })
 }
@@ -1085,7 +1238,7 @@ const batchCsvExport = () => {
   if (!seciliStoklar.value.length) return
   const kolonlar = ['ad', 'stokKodu', 'barkod', 'birim', 'fiyat', 'miktar', 'minMiktar']
   const baslik = kolonlar.join(';')
-  const satirlar = seciliStoklar.value.map(s => kolonlar.map(k => s[k] ?? '').join(';'))
+  const satirlar = seciliStoklar.value.map((s) => kolonlar.map((k) => s[k] ?? '').join(';'))
   const csv = '\uFEFF' + [baslik, ...satirlar].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -1099,28 +1252,41 @@ const batchCsvExport = () => {
 }
 
 const saveHareket = async () => {
-  if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) { toastBildirim.uyari('Geçerli miktar giriniz'); return }
+  if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) {
+    toastBildirim.uyari('Geçerli miktar giriniz')
+    return
+  }
   saving.value = true
   try {
     await stokAPI.addHareket(seciliStokId.value, {
-      tur: hareketTur.value, miktar: hareketForm.value.miktar,
+      tur: hareketTur.value,
+      miktar: hareketForm.value.miktar,
       hareketTarihi: hareketForm.value.hareketTarihi.toISOString().split('T')[0],
-      cariHesapId: hareketForm.value.cariHesapId, aciklama: hareketForm.value.aciklama
+      cariHesapId: hareketForm.value.cariHesapId,
+      aciklama: hareketForm.value.aciklama
     })
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
-    stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
-    showHareketDialog.value = false; toastBildirim.basarili('Hareket eklendi')
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız') }
-  finally { saving.value = false }
+    stokHareketler.value = hr.data
+    seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
+    showHareketDialog.value = false
+    toastBildirim.basarili('Hareket eklendi')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+  } finally {
+    saving.value = false
+  }
 }
 
 const delHareket = async (id) => {
   try {
     await stokAPI.deleteHareket(id)
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
-    stokHareketler.value = hr.data; seciliStok.value = sr.find(s => s.id === seciliStokId.value)
+    stokHareketler.value = hr.data
+    seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
     toastBildirim.basarili('Hareket silindi')
-  } catch (err) { toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız') }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+  }
 }
 
 const batchFiyatDialog = ref(false)
@@ -1159,7 +1325,9 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 const stokHareketleriYukle = async (stokId) => {
@@ -1175,77 +1343,294 @@ const stokHareketleriYukle = async (stokId) => {
   }
 }
 
-const formatCurrency = (v) => v ?? 0 ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v) : '0,00 ₺'
-const formatDate = (d) => d ? new Intl.DateTimeFormat('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(d)) : '-'
+const formatCurrency = (v) =>
+  (v ?? 0) ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
+const formatDate = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 </script>
 
 <style scoped>
-.foto-satir { display: flex; align-items: center; gap: 10px; }
-.foto-onizle { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+.foto-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.foto-onizle {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
 
-.stoklar-container { padding: 20px; }
-h1 { color: var(--text-primary); margin-bottom: 20px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-h2 { color: var(--text-primary); font-size: 20px; margin: 0; }
-.toolbar { margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-.toolbar-end { display: flex; align-items: center; gap: 8px; }
-.table-header { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
-.toplam-bilgi { color: var(--text-secondary); font-size: 13px; }
-.kritik-bilgi { color: #f87171; font-size: 13px; display: flex; align-items: center; gap: 4px; }
-.loading { text-align: center; padding: 40px; color: var(--text-secondary); }
-.stok-kartlar { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 30px; }
-.stok-kart { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; cursor: pointer; transition: all 0.3s ease; }
-.stok-kart:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: rgba(59,130,246,0.25); }
-.stok-kart.dusuk-stok { border-color: rgba(239,68,68,0.3); }
-.stok-kart.dusuk-stok:hover { border-color: rgba(239,68,68,0.5); }
-.kart-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.stok-kod { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.uyari-eti { font-size: 11px; color: #f87171; background: rgba(239,68,68,0.15); padding: 2px 8px; border-radius: 6px; display: flex; align-items: center; gap: 3px; }
-.stok-kart h3 { margin: 0 0 12px; font-size: 15px; color: var(--text-primary); }
-.kart-bilgi { display: flex; gap: 15px; margin-bottom: 14px; }
-.bilgi-item { flex: 1; }
-.bilgi-label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; }
-.bilgi-deger { font-size: 16px; font-weight: 700; }
-.bilgi-deger.normal { color: #4ade80; }
-.bilgi-deger.kritik { color: #f87171; }
-.kart-islem { display: flex; gap: 8px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); }
-.hareket-bolumu { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-.hareket-header { display: flex; align-items: center; gap: 15px; margin-bottom: 18px; flex-wrap: wrap; }
-.table-container { overflow-x: auto; }
-.form-grup { margin-bottom: 18px; }
-.form-grup label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.form-row .flex-2 { grid-column: span 2; }
-.form-section { margin-bottom: 24px; }
-.form-section:last-child { margin-bottom: 0; }
+.stoklar-container {
+  padding: 20px;
+}
+h1 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+h2 {
+  color: var(--text-primary);
+  font-size: 20px;
+  margin: 0;
+}
+.toolbar {
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.table-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+.toplam-bilgi {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.kritik-bilgi {
+  color: #f87171;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+.stok-kartlar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+.stok-kart {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.stok-kart:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+.stok-kart.dusuk-stok {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.stok-kart.dusuk-stok:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+.kart-ust {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.stok-kod {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.uyari-eti {
+  font-size: 11px;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.stok-kart h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.kart-bilgi {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 14px;
+}
+.bilgi-item {
+  flex: 1;
+}
+.bilgi-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+.bilgi-deger {
+  font-size: 16px;
+  font-weight: 700;
+}
+.bilgi-deger.normal {
+  color: #4ade80;
+}
+.bilgi-deger.kritik {
+  color: #f87171;
+}
+.kart-islem {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.hareket-bolumu {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+.hareket-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.table-container {
+  overflow-x: auto;
+}
+.form-grup {
+  margin-bottom: 18px;
+}
+.form-grup label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.form-row .flex-2 {
+  grid-column: span 2;
+}
+.form-section {
+  margin-bottom: 24px;
+}
+.form-section:last-child {
+  margin-bottom: 0;
+}
 .form-section-title {
-  font-size: 13px; font-weight: 600; color: var(--text-secondary);
-  text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 16px; padding-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
-.badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-.badge.giris { background: rgba(34,197,94,0.15); color: #4ade80; }
-.badge.cikis { background: rgba(239,68,68,0.15); color: #f87171; }
-.positive { color: #4ade80; font-weight: 700; }
-.negative { color: #f87171; font-weight: 700; }
-.w-full { width: 100% !important; }
-.full-width { grid-column: 1/-1; }
-.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-.filter-input { width: 150px !important; }
-.filter-input-sm { width: 120px !important; }
-.filter-dropdown { width: 160px !important; }
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge.giris {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.badge.cikis {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+.positive {
+  color: #4ade80;
+  font-weight: 700;
+}
+.negative {
+  color: #f87171;
+  font-weight: 700;
+}
+.w-full {
+  width: 100% !important;
+}
+.full-width {
+  grid-column: 1/-1;
+}
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-input {
+  width: 150px !important;
+}
+.filter-input-sm {
+  width: 120px !important;
+}
+.filter-dropdown {
+  width: 160px !important;
+}
 .batch-actions {
-  display: inline-flex; align-items: center; gap: 8px;
-  margin-left: 12px; padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  padding-left: 12px;
   border-left: 1px solid var(--border);
 }
 .batch-count {
-  font-size: 12px; color: #60a5fa; font-weight: 600;
+  font-size: 12px;
+  color: #60a5fa;
+  font-weight: 600;
 }
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
-.detail-item { padding: 6px 0; }
-.detail-label { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; }
-.detail-value { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.detail-value.normal { color: #4ade80; }
-.detail-value.kritik { color: #f87171; }
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.detail-item {
+  padding: 6px 0;
+}
+.detail-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.detail-value.normal {
+  color: #4ade80;
+}
+.detail-value.kritik {
+  color: #f87171;
+}
 </style>

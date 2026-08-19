@@ -150,16 +150,53 @@ const sifreDegistir = async () => {
 .w-full {
   width: 100%;
 }
-.sifre-guc { margin-top: 6px; display: flex; align-items: center; gap: 8px; }
-.guc-cubuk { flex: 1; height: 6px; background: rgba(148,163,184,0.15); border-radius: 3px; overflow: hidden; }
-.guc-dolgu { height: 100%; border-radius: 3px; transition: width 0.3s ease, background 0.3s ease; }
-.guc-dolgu.zayif { background: #ef4444; }
-.guc-dolgu.orta { background: #f59e0b; }
-.guc-dolgu.iyi { background: #3b82f6; }
-.guc-dolgu.guclu { background: #22c55e; }
-.guc-etiket { font-size: 11px; font-weight: 600; white-space: nowrap; }
-.guc-etiket.zayif { color: #ef4444; }
-.guc-etiket.orta { color: #f59e0b; }
-.guc-etiket.iyi { color: #60a5fa; }
-.guc-etiket.guclu { color: #4ade80; }
+.sifre-guc {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.guc-cubuk {
+  flex: 1;
+  height: 6px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.guc-dolgu {
+  height: 100%;
+  border-radius: 3px;
+  transition:
+    width 0.3s ease,
+    background 0.3s ease;
+}
+.guc-dolgu.zayif {
+  background: #ef4444;
+}
+.guc-dolgu.orta {
+  background: #f59e0b;
+}
+.guc-dolgu.iyi {
+  background: #3b82f6;
+}
+.guc-dolgu.guclu {
+  background: #22c55e;
+}
+.guc-etiket {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.guc-etiket.zayif {
+  color: #ef4444;
+}
+.guc-etiket.orta {
+  color: #f59e0b;
+}
+.guc-etiket.iyi {
+  color: #60a5fa;
+}
+.guc-etiket.guclu {
+  color: #4ade80;
+}
 </style>

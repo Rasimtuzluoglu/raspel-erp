@@ -12,6 +12,8 @@
     </div>
 
     <DataTable
+      state-storage="session"
+      state-key="sirketler-table-state"
       :value="sirketler"
       striped-rows
       responsive-layout="scroll"
@@ -20,7 +22,7 @@
       <Column
         field="id"
         header="#"
-        style="width:60px"
+        style="width: 60px"
       />
       <Column
         field="ad"
@@ -56,7 +58,7 @@
       </Column>
       <Column
         header="İşlem"
-        style="width:120px"
+        style="width: 120px"
       >
         <template #body="{ data }">
           <Button
@@ -86,7 +88,7 @@
       >
         <i
           class="pi pi-exclamation-triangle"
-          style="margin-right:8px"
+          style="margin-right: 8px"
         />{{ uyariMesaji }}
       </Message>
       <div class="form-grid">
@@ -150,7 +152,7 @@
               ref="logoInput"
               type="file"
               accept="image/*"
-              style="display:none"
+              style="display: none"
               @change="logoSec"
             >
           </div>
@@ -207,13 +209,26 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const kaydediliyor = ref(false)
 const seciliId = ref(null)
-const form = ref({ ad: '', vergiNo: '', vergiDairesi: '', adres: '', telefon: '', email: '', webSite: '', logoUrl: '', aktif: true })
+const form = ref({
+  ad: '',
+  vergiNo: '',
+  vergiDairesi: '',
+  adres: '',
+  telefon: '',
+  email: '',
+  webSite: '',
+  logoUrl: '',
+  aktif: true
+})
 const uyariMesaji = ref('')
 const logoYukleniyor = ref(false)
 
 onMounted(async () => {
   yukleniyor.value = true
-  try { const r = await sirketAPI.getAll(); sirketler.value = r.data?.content || r.data || [] } catch (err) {
+  try {
+    const r = await sirketAPI.getAll()
+    sirketler.value = r.data?.content || r.data || []
+  } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu')
   }
   yukleniyor.value = false
@@ -223,7 +238,19 @@ const eskiAd = ref('')
 const dialogAc = (data) => {
   duzenleme.value = !!data
   seciliId.value = data?.id || null
-  form.value = data ? { ...data } : { ad: '', vergiNo: '', vergiDairesi: '', adres: '', telefon: '', email: '', webSite: '', logoUrl: '', aktif: true }
+  form.value = data
+    ? { ...data }
+    : {
+        ad: '',
+        vergiNo: '',
+        vergiDairesi: '',
+        adres: '',
+        telefon: '',
+        email: '',
+        webSite: '',
+        logoUrl: '',
+        aktif: true
+      }
   eskiAd.value = data?.ad || ''
   uyariMesaji.value = ''
   if (data?.sonAdGuncellemeTarihi) {
@@ -285,7 +312,7 @@ const kaydetAction = async () => {
 const sil = async (data) => {
   try {
     await sirketAPI.delete(data.id)
-    sirketler.value = sirketler.value.filter(s => s.id !== data.id)
+    sirketler.value = sirketler.value.filter((s) => s.id !== data.id)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirket silinirken hata oluştu')
   }
@@ -293,13 +320,46 @@ const sil = async (data) => {
 </script>
 
 <style scoped>
-.sirketler-sayfasi { padding: 0; }
-.sayfa-baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.sayfa-baslik h1 { margin: 0; }
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.w-full { width: 100%; }
-.logo-upload-row { display: flex; gap: 8px; align-items: center; }
-.logo-preview { max-width: 120px; max-height: 60px; margin-top: 8px; border-radius: 6px; object-fit: contain; }
+.sirketler-sayfasi {
+  padding: 0;
+}
+.sayfa-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.w-full {
+  width: 100%;
+}
+.logo-upload-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.logo-preview {
+  max-width: 120px;
+  max-height: 60px;
+  margin-top: 8px;
+  border-radius: 6px;
+  object-fit: contain;
+}
 </style>

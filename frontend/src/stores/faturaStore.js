@@ -46,7 +46,7 @@ export const useFaturaStore = defineStore('fatura', () => {
   const updateDurum = async (id, durum) => {
     try {
       const response = await faturaAPI.updateDurum(id, durum)
-      const index = faturalar.value.findIndex(f => f.id === id)
+      const index = faturalar.value.findIndex((f) => f.id === id)
       if (index !== -1) faturalar.value[index] = response.data
       return response.data
     } catch (err) {
@@ -58,7 +58,7 @@ export const useFaturaStore = defineStore('fatura', () => {
   const updateFatura = async (id, data) => {
     try {
       const response = await faturaAPI.update(id, data)
-      const index = faturalar.value.findIndex(f => f.id === id)
+      const index = faturalar.value.findIndex((f) => f.id === id)
       if (index !== -1) faturalar.value[index] = response.data
       return response.data
     } catch (err) {
@@ -70,7 +70,7 @@ export const useFaturaStore = defineStore('fatura', () => {
   const deleteFatura = async (id) => {
     try {
       await faturaAPI.delete(id)
-      faturalar.value = faturalar.value.filter(f => f.id !== id)
+      faturalar.value = faturalar.value.filter((f) => f.id !== id)
     } catch (err) {
       error.value = err.message
       throw err
@@ -78,7 +78,14 @@ export const useFaturaStore = defineStore('fatura', () => {
   }
 
   return {
-    faturalar, loading, error,
-    getAllFaturalar, getFaturaById, addFatura, updateFatura, updateDurum, deleteFatura
+    faturalar,
+    loading,
+    error,
+    getAllFaturalar,
+    getFaturaById,
+    addFatura,
+    updateFatura,
+    updateDurum,
+    deleteFatura
   }
 })

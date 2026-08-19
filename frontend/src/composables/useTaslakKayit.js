@@ -7,12 +7,20 @@ export function useTaslakKayit(anahtar, form, opts = {}) {
   const storageAnahtari = ANAHTAR_ON + anahtar
   let timer = null
 
-  watch(form, () => {
-    if (timer) clearTimeout(timer)
-    timer = setTimeout(() => {
-      try { localStorage.setItem(storageAnahtari, JSON.stringify(form.value)) } catch { /* empty */ }
-    }, timeout)
-  }, { deep: true })
+  watch(
+    form,
+    () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        try {
+          localStorage.setItem(storageAnahtari, JSON.stringify(form.value))
+        } catch {
+          /* empty */
+        }
+      }, timeout)
+    },
+    { deep: true }
+  )
 
   const geriYukle = () => {
     try {
@@ -23,17 +31,25 @@ export function useTaslakKayit(anahtar, form, opts = {}) {
         if (onRestore) onRestore(veri)
         return true
       }
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     return false
   }
 
   const temizle = () => {
-    try { localStorage.removeItem(storageAnahtari) } catch { /* empty */ }
+    try {
+      localStorage.removeItem(storageAnahtari)
+    } catch {
+      /* empty */
+    }
   }
 
   if (restore) geriYukle()
 
-  onUnmounted(() => { if (timer) clearTimeout(timer) })
+  onUnmounted(() => {
+    if (timer) clearTimeout(timer)
+  })
 
   return { geriYukle, temizle }
 }

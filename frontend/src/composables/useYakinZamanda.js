@@ -5,16 +5,20 @@ export function useYakinZamanda() {
     try {
       const liste = JSON.parse(localStorage.getItem(ANAHTAR) || '[]')
       const yeni = { tur, id, baslik, alt, tarih: new Date().toISOString() }
-      const filtrelenmis = liste.filter(i => !(i.tur === tur && i.id === id))
+      const filtrelenmis = liste.filter((i) => !(i.tur === tur && i.id === id))
       filtrelenmis.unshift(yeni)
       localStorage.setItem(ANAHTAR, JSON.stringify(filtrelenmis.slice(0, 10)))
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   }
 
   const liste = () => {
     try {
       return JSON.parse(localStorage.getItem(ANAHTAR) || '[]')
-    } catch { return [] }
+    } catch {
+      return []
+    }
   }
 
   return { kaydet, liste }

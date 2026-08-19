@@ -36,6 +36,8 @@ class RaporServiceTest {
     @Mock private FaturaRepository faturaRepository;
     @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     @Mock private com.raspel.erp.repository.envanter.StokRepository stokRepository;
+    @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private HareketService hareketService;
     @InjectMocks private RaporService raporService;
@@ -227,5 +229,39 @@ class RaporServiceTest {
         assertEquals(1, result.size());
         assertEquals(0, result.get(0).getKar().compareTo(BigDecimal.valueOf(50)));
         assertEquals(0, result.get(0).getKarMarji().compareTo(new BigDecimal("33.33")));
+    }
+
+    @Test
+    void nakitAkisiProjeksiyonu_calculatesDailyAndCumulative() {
+        com.raspel.erp.entity.finans.Kasa k = new com.raspel.erp.entity.finans.Kasa();
+        k.setBakiye(BigDecimal.valueOf(10000));
+        when(kasaRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(k));
+
+        com.raspel.erp.entity.finans.Banka b = new com.raspel.erp.entity.finans.Banka();
+        b.setBakiye(BigDecimal.valueOf(40000));
+        when(bankaRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(b));
+
+        Fatura fSatis = new Fatura();
+        fSatis.setTur(Fatura.FaturaTur.SATIS);
+        fSatis.setDurum(Fatura.FaturaDurum.KESILDI);
+        fSatis.setGenelToplam(BigDecimal.valueOf(15000));
+        fSatis.setVadeTarihi(LocalDate.now().plusDays(5));
+
+        Fatura fAlis = new Fatura();
+        fAlis.setTur(Fatura.FaturaTur.ALIS);
+        fAlis.setDurum(Fatura.FaturaDurum.KESILDI);
+        fAlis.setGenelToplam(BigDecimal.valueOf(5000));
+        fAlis.setVadeTarihi(LocalDate.now().plusDays(10));
+
+        when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(fSatis, fAlis));
+
+        var result = raporService.nakitAkisiProjeksiyonu(30, 1L);
+
+        assertNotNull(result);
+        assertEquals(BigDecimal.valueOf(50000), result.getBaslangicBakiyesi());
+        assertEquals(BigDecimal.valueOf(15000), result.getToplamBeklenenGiris());
+        assertEquals(BigDecimal.valueOf(5000), result.getToplamBeklenenCikis());
+        assertEquals(BigDecimal.valueOf(60000), result.getTahminiBitisBakiyesi());
+        assertEquals(31, result.getGunlukAkis().size());
     }
 }
