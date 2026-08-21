@@ -84,7 +84,16 @@
     "invalidCode": "Doğrulama kodunu girin",
     "loginFailed": "Giriş başarısız",
     "verifyFailed": "Doğrulama başarısız",
-    "companySelectFailed": "Firma seçimi başarısız"
+    "companySelectFailed": "Firma seçimi başarısız",
+    "capsLockOn": "Büyük Harf Kilidi (Caps Lock) Açık",
+    "heroTitle": "Yeni Nesil Kurumsal Kaynak Planlama",
+    "heroSubtitle": "Finans, muhasebe, e-fatura, gerçek zamanlı stok ve yapay zeka analitiği tek platformda.",
+    "securityTotp": "TOTP 2FA Korumalı",
+    "securityAes": "AES-256 GCM Şifreleme",
+    "securityCloud": "Bulut Yedekleme",
+    "securityIso": "ISO 27001 Uyumlu",
+    "quickRoleAdmin": "Yönetici",
+    "quickRoleAccountant": "Muhasebe"
   },
   "kurulum": {
     "welcome": "Hoş Geldiniz!",

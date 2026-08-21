@@ -84,7 +84,16 @@
     "invalidCode": "Please enter the verification code",
     "loginFailed": "Login failed",
     "verifyFailed": "Verification failed",
-    "companySelectFailed": "Company selection failed"
+    "companySelectFailed": "Company selection failed",
+    "capsLockOn": "Caps Lock is ON",
+    "heroTitle": "Next-Gen Enterprise Resource Planning",
+    "heroSubtitle": "Finance, accounting, e-invoice, real-time stock and AI analytics on a unified platform.",
+    "securityTotp": "TOTP 2FA Protected",
+    "securityAes": "AES-256 GCM Encrypted",
+    "securityCloud": "Cloud Backup",
+    "securityIso": "ISO 27001 Compliant",
+    "quickRoleAdmin": "Admin",
+    "quickRoleAccountant": "Accountant"
   },
   "kurulum": {
     "welcome": "Welcome!",
