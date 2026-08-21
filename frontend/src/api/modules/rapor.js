@@ -38,3 +38,13 @@ export const raporAPI = {
     return apiClient.get('/raporlar/nakit-akisi-projeksiyonu', { params: { gun } })
   }
 }
+
+export const yoneticiKokpitAPI = {
+  getVeriler(params) {
+    return apiClient.get('/yonetici-kokpit', { params })
+  },
+  hedefKaydet(data) {
+    return apiClient.post('/yonetici-kokpit/hedef', data)
+  }
+}
+

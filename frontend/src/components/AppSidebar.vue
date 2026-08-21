@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <aside
     class="sidebar"
     :class="{ 'mobil-acik': mobilMenuAcik }"
@@ -295,6 +295,7 @@ const tumMenuler = [
   { path: '/masraflar', label: 'Masraf', icon: 'pi pi-money-bill', grup: 'Finans', gelismis: true },
   { path: '/satislar', label: 'Satış', icon: 'pi pi-shopping-cart', grup: 'Ticaret', gelismis: true },
   { path: '/hizli-satis', label: 'Hızlı Satış', icon: 'pi pi-bolt', grup: 'Ticaret' },
+  { path: '/teklifler', label: 'Teklifler', icon: 'pi pi-file-edit', grup: 'Ticaret' },
   { path: '/crm', label: 'CRM', icon: 'pi pi-bullseye', grup: 'Ticaret', gelismis: true },
   { path: '/e-fatura', label: 'E-Fatura', icon: 'pi pi-file-pdf', grup: 'Ticaret', gelismis: true },
   { path: '/satinalma', label: 'Satın Alma', icon: 'pi pi-shopping-bag', grup: 'Ticaret', gelismis: true },
@@ -332,6 +333,7 @@ const tumMenuler = [
   { path: '/gizlilik-politikasi', label: 'Gizlilik', icon: 'pi pi-shield', grup: 'Sistem', gelismis: true },
   { path: '/hesap-ayarlari', label: 'Hesap Ayarları', icon: 'pi pi-cog', grup: 'Sistem', gelismis: true },
   { path: '/yedekler', label: 'Yedek', icon: 'pi pi-save', grup: 'Sistem', admin: true, gelismis: true },
+  { path: '/yonetici-kokpiti', label: 'Yönetici Kokpiti', icon: 'pi pi-bolt', grup: 'Rapor', admin: true },
   { path: '/raporlar', label: 'Rapor', icon: 'pi pi-chart-bar', grup: 'Rapor' },
   { path: '/vergi-raporlari', label: 'KDV & BA/BS', icon: 'pi pi-file-edit', grup: 'Rapor', gelismis: true },
   { path: '/anomaliler', label: 'Anomali', icon: 'pi pi-exclamation-triangle', grup: 'Rapor', gelismis: true },

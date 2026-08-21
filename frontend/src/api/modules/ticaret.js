@@ -233,3 +233,34 @@ export const satinalmaSiparisAPI = {
     return apiClient.delete(`/satinalma-siparisler/${id}`)
   }
 }
+
+export const teklifAPI = {
+  getAll(params) {
+    return apiClient.get('/teklifler', { params })
+  },
+  getById(id) {
+    return apiClient.get(`/teklifler/${id}`)
+  },
+  create(data) {
+    return apiClient.post('/teklifler', data)
+  },
+  update(id, data) {
+    return apiClient.put(`/teklifler/${id}`, data)
+  },
+  delete(id) {
+    return apiClient.delete(`/teklifler/${id}`)
+  },
+  durumGuncelle(id, durum) {
+    return apiClient.patch(`/teklifler/${id}/durum`, { durum })
+  },
+  revizyonOlustur(id) {
+    return apiClient.post(`/teklifler/${id}/revizyon`)
+  },
+  sipariseDonustur(id) {
+    return apiClient.post(`/teklifler/${id}/siparise-donustur`)
+  },
+  faturayaDonustur(id) {
+    return apiClient.post(`/teklifler/${id}/faturaya-donustur`)
+  }
+}
+

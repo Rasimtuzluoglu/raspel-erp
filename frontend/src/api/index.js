@@ -18,6 +18,7 @@ export {
   faturaAPI,
   eFaturaAPI,
   siparisAPI,
+  teklifAPI,
   irsaliyeAPI,
   iadeAPI,
   fiyatListesiAPI,
@@ -47,6 +48,7 @@ export {
   aiConfigAPI
 } from './modules/sistem.js'
 
-export { dashboardAPI, raporAPI } from './modules/rapor.js'
+export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 
 export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './modules/dosya.js'
+

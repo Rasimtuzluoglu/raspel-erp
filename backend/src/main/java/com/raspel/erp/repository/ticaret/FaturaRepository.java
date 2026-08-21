@@ -24,6 +24,9 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    List<Fatura> findBySirketIdAndTarihBetween(Long sirketId, java.time.LocalDate baslangic, java.time.LocalDate bitis);
+
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     Optional<Fatura> findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);
 
     @Override

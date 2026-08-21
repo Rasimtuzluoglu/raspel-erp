@@ -142,6 +142,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/teklifler',
+    name: 'Teklifler',
+    component: () => import('../views/Teklifler.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/yonetici-kokpiti',
+    name: 'YoneticiKokpiti',
+    component: () => import('../views/YoneticiKokpiti.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/cek-senet',
     name: 'CekSenet',
     component: () => import('../views/CekSenet.vue'),
