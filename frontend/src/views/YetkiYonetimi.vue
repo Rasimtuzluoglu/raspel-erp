@@ -5,13 +5,27 @@
       subtitle="Sistemdeki rollerin modül bazlı okuma, yazma, silme ve dışa aktarım izinleri"
     >
       <template #actions>
-        <Button
-          label="Değişiklikleri Kaydet"
-          icon="pi pi-check"
-          class="p-button-success"
-          :loading="kaydediliyor"
-          @click="kaydet"
-        />
+        <div class="flex items-center gap-2">
+          <Button
+            label="Tümünü Seç"
+            icon="pi pi-check-square"
+            class="p-button-outlined p-button-sm"
+            @click="tumunuSec"
+          />
+          <Button
+            label="Tümünü Temizle"
+            icon="pi pi-times-circle"
+            class="p-button-outlined p-button-secondary p-button-sm"
+            @click="tumunuTemizle"
+          />
+          <Button
+            label="Değişiklikleri Kaydet"
+            icon="pi pi-check"
+            class="p-button-primary p-button-sm"
+            :loading="kaydediliyor"
+            @click="kaydet"
+          />
+        </div>
       </template>
     </PageHeader>
 
@@ -19,77 +33,177 @@
       v-if="yukleniyor"
       class="p-4"
     >
-      <SkeletonLoader :count="4" />
+      <SkeletonLoader :count="5" />
     </div>
 
     <div
       v-else
       class="matrix-container"
     >
-      <div class="roles-tabs">
+      <!-- Sol Rol Seçim Menüsü -->
+      <div class="roles-sidebar">
+        <h4 class="text-xs font-bold uppercase text-muted mb-2 px-2">
+          Sistem Rolleri
+        </h4>
         <button
           v-for="r in roller"
           :key="r.id"
-          class="role-tab"
-          :class="{ active: seciliRol?.id === r.id }"
-          @click="seciliRol = r"
+          type="button"
+          class="role-tab-btn"
+          :class="{ aktif: seciliRol?.id === r.id }"
+          @click="rolSec(r)"
         >
-          <i class="pi pi-shield" /> {{ r.ad }}
+          <div class="flex items-center gap-2">
+            <i class="pi pi-shield text-base" />
+            <div class="text-left">
+              <div class="font-bold text-sm leading-tight">
+                {{ r.ad }}
+              </div>
+              <div class="text-xs text-muted leading-tight mt-0.5">
+                {{ r.yetkiler?.length || 0 }} İzin Aktif
+              </div>
+            </div>
+          </div>
+          <i
+            v-if="seciliRol?.id === r.id"
+            class="pi pi-chevron-right text-xs"
+          />
         </button>
       </div>
 
+      <!-- Sağ Matris Kartı -->
       <div
         v-if="seciliRol"
-        class="role-details-card"
+        class="matrix-card"
       >
-        <div class="role-info">
-          <h3>{{ seciliRol.ad }} Yetkileri</h3>
-          <p>{{ seciliRol.aciklama }}</p>
+        <div class="matrix-card-header flex justify-between items-center pb-4 border-b mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <i class="pi pi-shield text-primary" /> {{ seciliRol.ad }}
+            </h3>
+            <p class="text-xs text-muted mt-0.5">
+              {{ seciliRol.aciklama || 'Bu role atanmış yetkileri aşağıdan yönetebilirsiniz.' }}
+            </p>
+          </div>
+          <Tag
+            :value="`${seciliRol.yetkiler?.length || 0} / ${yetkiler.length} Yetki Tanımlı`"
+            severity="info"
+          />
         </div>
 
-        <table class="yetki-table">
-          <thead>
-            <tr>
-              <th>Modül</th>
-              <th>Yetki Kodu</th>
-              <th>Açıklama</th>
-              <th style="width: 100px; text-align: center">
-                Erişim İzni
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="y in yetkiler"
-              :key="y.id"
-            >
-              <td>
-                <span class="modul-tag">{{ y.modul }}</span>
-              </td>
-              <td>
-                <code>{{ y.kod }}</code>
-              </td>
-              <td>{{ y.aciklama }}</td>
-              <td style="text-align: center">
-                <input
-                  type="checkbox"
-                  class="yetki-checkbox"
-                  :checked="yetkiVarmis(y.id)"
-                  @change="yetkiToggle(y.id)"
-                >
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="rbac-table w-full">
+            <thead>
+              <tr>
+                <th class="text-left">
+                  Modül Adı
+                </th>
+                <th class="text-center">
+                  <i class="pi pi-eye mr-1" /> Okuma
+                </th>
+                <th class="text-center">
+                  <i class="pi pi-pencil mr-1" /> Yazma / Ekleme
+                </th>
+                <th class="text-center">
+                  <i class="pi pi-trash mr-1" /> Silme
+                </th>
+                <th class="text-center">
+                  <i class="pi pi-download mr-1" /> Dışa Aktar
+                </th>
+                <th class="text-right">
+                  Hızlı İşlem
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="m in moduller"
+                :key="m.kod"
+                class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50"
+              >
+                <td class="font-semibold text-sm">
+                  <div class="flex items-center gap-2">
+                    <span class="modul-badge">{{ m.ad }}</span>
+                  </div>
+                </td>
+                <!-- Okuma -->
+                <td class="text-center">
+                  <input
+                    v-if="m.yetkiler.read"
+                    type="checkbox"
+                    class="yetki-cb"
+                    :checked="yetkiVarmis(m.yetkiler.read.id)"
+                    @change="yetkiToggle(m.yetkiler.read.id)"
+                  >
+                  <span
+                    v-else
+                    class="text-muted text-xs"
+                  >-</span>
+                </td>
+                <!-- Yazma -->
+                <td class="text-center">
+                  <input
+                    v-if="m.yetkiler.write"
+                    type="checkbox"
+                    class="yetki-cb"
+                    :checked="yetkiVarmis(m.yetkiler.write.id)"
+                    @change="yetkiToggle(m.yetkiler.write.id)"
+                  >
+                  <span
+                    v-else
+                    class="text-muted text-xs"
+                  >-</span>
+                </td>
+                <!-- Silme -->
+                <td class="text-center">
+                  <input
+                    v-if="m.yetkiler.delete"
+                    type="checkbox"
+                    class="yetki-cb danger"
+                    :checked="yetkiVarmis(m.yetkiler.delete.id)"
+                    @change="yetkiToggle(m.yetkiler.delete.id)"
+                  >
+                  <span
+                    v-else
+                    class="text-muted text-xs"
+                  >-</span>
+                </td>
+                <!-- Dışa Aktarma -->
+                <td class="text-center">
+                  <input
+                    v-if="m.yetkiler.export"
+                    type="checkbox"
+                    class="yetki-cb success"
+                    :checked="yetkiVarmis(m.yetkiler.export.id)"
+                    @change="yetkiToggle(m.yetkiler.export.id)"
+                  >
+                  <span
+                    v-else
+                    class="text-muted text-xs"
+                  >-</span>
+                </td>
+                <!-- Satır Bazlı Hızlı Toggle -->
+                <td class="text-right">
+                  <Button
+                    :label="modulTumYetkilerVarMi(m) ? 'Kaldır' : 'Tümü'"
+                    :class="modulTumYetkilerVarMi(m) ? 'p-button-text p-button-danger p-button-xs' : 'p-button-text p-button-primary p-button-xs'"
+                    @click="modulToggle(m)"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { apiClient } from '../api/index.js'
+
 const toastBildirim = useToastBildirim()
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -101,45 +215,113 @@ const seciliRol = ref(null)
 const verileriYukle = async () => {
   yukleniyor.value = true
   try {
-    const [rRes, yRes] = await Promise.all([apiClient.get('/yetkiler/roller'), apiClient.get('/yetkiler')])
+    const [rRes, yRes] = await Promise.all([
+      apiClient.get('/yetkiler/roller'),
+      apiClient.get('/yetkiler')
+    ])
     roller.value = rRes.data || []
     yetkiler.value = yRes.data || []
-    if (roller.value.length > 0) {
-      seciliRol.value = roller.value[0]
+    if (roller.value.length > 0 && !seciliRol.value) {
+      seciliRol.value = { ...roller.value[0], yetkiler: [...(roller.value[0].yetkiler || [])] }
     }
-  } catch (e) {
+  } catch {
     toastBildirim.hata('Yetki matrisi yüklenemedi.')
   } finally {
     yukleniyor.value = false
   }
 }
 
+const rolSec = (r) => {
+  seciliRol.value = { ...r, yetkiler: [...(r.yetkiler || [])] }
+}
+
+// Modül bazlı gruplandırma
+const moduller = computed(() => {
+  const modulMap = {
+    Cari: { ad: 'Cari Hesaplar', kod: 'CARI' },
+    Fatura: { ad: 'Faturalar & E-Fatura', kod: 'FATURA' },
+    Stok: { ad: 'Stok & Depo Yönetimi', kod: 'STOK' },
+    Finans: { ad: 'Finans (Banka, Kasa, Çek)', kod: 'FINANS' },
+    Siparis: { ad: 'Siparişler & Teklifler', kod: 'SIPARIS' },
+    Satinalma: { ad: 'Satın Alma Yönetimi', kod: 'SATINALMA' },
+    Irsaliye: { ad: 'İrsaliye İşlemleri', kod: 'IRSALIYE' },
+    IK: { ad: 'İnsan Kaynakları & Personel', kod: 'IK' },
+    Rapor: { ad: 'Raporlar & Analizler', kod: 'RAPOR' },
+    Sistem: { ad: 'Sistem & Kullanıcı Ayarları', kod: 'SISTEM' }
+  }
+
+  return Object.entries(modulMap).map(([mKey, mVal]) => {
+    const mYetkiler = yetkiler.value.filter(y => y.modul === mKey || y.kod.startsWith(mVal.kod))
+    return {
+      kod: mVal.kod,
+      ad: mVal.ad,
+      yetkiler: {
+        read: mYetkiler.find(y => y.kod.endsWith('_READ')),
+        write: mYetkiler.find(y => y.kod.endsWith('_WRITE')),
+        delete: mYetkiler.find(y => y.kod.endsWith('_DELETE')),
+        export: mYetkiler.find(y => y.kod.endsWith('_EXPORT') || y.kod === 'EXPORT_DATA')
+      }
+    }
+  })
+})
+
 const yetkiVarmis = (yetkiId) => {
   if (!seciliRol.value || !seciliRol.value.yetkiler) return false
-  return seciliRol.value.yetkiler.some((y) => y.id === yetkiId)
+  return seciliRol.value.yetkiler.some(y => (y.id || y) === yetkiId)
 }
 
 const yetkiToggle = (yetkiId) => {
   if (!seciliRol.value) return
   if (!seciliRol.value.yetkiler) seciliRol.value.yetkiler = []
 
-  const idx = seciliRol.value.yetkiler.findIndex((y) => y.id === yetkiId)
+  const idx = seciliRol.value.yetkiler.findIndex(y => (y.id || y) === yetkiId)
   if (idx > -1) {
     seciliRol.value.yetkiler.splice(idx, 1)
   } else {
-    const yObj = yetkiler.value.find((y) => y.id === yetkiId)
+    const yObj = yetkiler.value.find(y => y.id === yetkiId)
     if (yObj) seciliRol.value.yetkiler.push(yObj)
   }
+}
+
+const modulTumYetkilerVarMi = (modul) => {
+  const mList = Object.values(modul.yetkiler).filter(Boolean)
+  if (!mList.length) return false
+  return mList.every(y => yetkiVarmis(y.id))
+}
+
+const modulToggle = (modul) => {
+  const mList = Object.values(modul.yetkiler).filter(Boolean)
+  const hepsiVar = modulTumYetkilerVarMi(modul)
+
+  mList.forEach(y => {
+    const varMi = yetkiVarmis(y.id)
+    if (hepsiVar && varMi) {
+      yetkiToggle(y.id)
+    } else if (!hepsiVar && !varMi) {
+      yetkiToggle(y.id)
+    }
+  })
+}
+
+const tumunuSec = () => {
+  if (!seciliRol.value) return
+  seciliRol.value.yetkiler = [...yetkiler.value]
+}
+
+const tumunuTemizle = () => {
+  if (!seciliRol.value) return
+  seciliRol.value.yetkiler = []
 }
 
 const kaydet = async () => {
   if (!seciliRol.value) return
   kaydediliyor.value = true
   try {
-    const yetkiIds = seciliRol.value.yetkiler.map((y) => y.id)
+    const yetkiIds = seciliRol.value.yetkiler.map(y => y.id || y)
     await apiClient.put(`/yetkiler/roller/${seciliRol.value.id}`, yetkiIds)
-    toastBildirim.basarili(`${seciliRol.value.ad} yetkileri kaydedildi.`)
-  } catch (e) {
+    toastBildirim.basarili(`"${seciliRol.value.ad}" rolü izinleri başarıyla güncellendi.`)
+    await verileriYukle()
+  } catch {
     toastBildirim.hata('Rol yetkileri güncellenemedi.')
   } finally {
     kaydediliyor.value = false
@@ -153,87 +335,89 @@ onMounted(() => {
 
 <style scoped>
 .yetki-page {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 .matrix-container {
   display: flex;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  align-items: flex-start;
 }
-.roles-tabs {
+.roles-sidebar {
+  width: 240px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  width: 220px;
-  flex-shrink: 0;
+  gap: 6px;
 }
-.role-tab {
+.role-tab-btn {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.8rem 1rem;
-  border-radius: 8px;
-  background: var(--surface-card, #1e293b);
-  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.1));
-  color: var(--text-primary, #f1f5f9);
-  font-weight: 600;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
   cursor: pointer;
-  text-align: left;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
-.role-tab:hover {
-  background: rgba(59, 130, 246, 0.1);
+.role-tab-btn:hover {
+  border-color: var(--primary-color, #3b82f6);
 }
-.role-tab.active {
-  background: #3b82f6;
+.role-tab-btn.aktif {
+  background: var(--primary-color, #3b82f6);
+  border-color: var(--primary-color, #3b82f6);
   color: #ffffff;
-  border-color: #3b82f6;
+}
+.role-tab-btn.aktif .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.role-details-card {
+.matrix-card {
   flex: 1;
-  background: var(--surface-card, #1e293b);
-  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.1));
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1.5rem;
-}
-.role-info h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.3rem;
-}
-.role-info p {
-  color: var(--text-secondary, #94a3b8);
-  margin-bottom: 1.5rem;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
 }
 
-.yetki-table {
-  width: 100%;
+.rbac-table {
   border-collapse: collapse;
 }
-.yetki-table th,
-.yetki-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: left;
-}
-.yetki-table th {
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-secondary, #94a3b8);
-  font-size: 0.85rem;
+.rbac-table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  background: rgba(0,0,0,0.02);
 }
-.modul-tag {
-  background: rgba(59, 130, 246, 0.2);
-  color: #38bdf8;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+.rbac-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.modul-badge {
   font-weight: 600;
-  font-size: 0.8rem;
+  color: var(--text-primary);
 }
-.yetki-checkbox {
+.yetki-cb {
   width: 18px;
   height: 18px;
   cursor: pointer;
   accent-color: #3b82f6;
+}
+.yetki-cb.danger {
+  accent-color: #ef4444;
+}
+.yetki-cb.success {
+  accent-color: #10b981;
+}
+
+.p-button-xs {
+  padding: 2px 8px !important;
+  font-size: 11px !important;
 }
 </style>

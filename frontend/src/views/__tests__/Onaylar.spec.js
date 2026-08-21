@@ -74,6 +74,6 @@ describe('Onaylar.vue', () => {
     await flushPromises()
     expect(wrapper.find('.onaylar-sayfasi').exists()).toBe(true)
     expect(wrapper.text()).toContain('Yönetici & Muhasebe Onay Merkezi')
-    expect(wrapper.text()).toContain('Saha Masraf & Avans Talepleri')
+    expect(wrapper.text()).toContain('Saha Masraf & Avans')
   })
 })

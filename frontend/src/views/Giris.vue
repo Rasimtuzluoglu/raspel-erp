@@ -223,7 +223,7 @@
                     v-model="kurulumForm.adminPassword"
                     :type="sifreGorunur ? 'text' : 'password'"
                     placeholder="••••••"
-                    @keyup.enter="kurulumBaslat"
+                    @keyup="e => e.key === 'Enter' && kurulumBaslat()"
                   />
                   <button
                     type="button"
@@ -266,14 +266,14 @@
                     inputmode="numeric"
                     maxlength="6"
                     style="text-align: center; letter-spacing: 6px; font-size: 20px"
-                    @keyup.enter="ikiFaktorDogrula"
+                    @keyup="e => e.key === 'Enter' && ikiFaktorDogrula()"
                   />
                 </div>
               </div>
               <Button
                 :label="$t('giris.verify')"
                 icon="pi pi-shield"
-                :loading="authStore.loading"
+                :loading="authStore?.loading || false"
                 class="giris-buton"
                 @click="ikiFaktorDogrula"
               />
@@ -298,22 +298,17 @@
                 class="sirket-listesi"
               >
                 <button
-                  v-for="sirket in sirketler"
-                  :key="sirket.id"
-                  class="sirket-secim-buton"
-                  @click="sirketSecVeGirisYap(sirket)"
+                  v-for="s in sirketler"
+                  :key="s.id"
+                  class="sirket-secim-kart"
+                  @click="sirketSec(s)"
                 >
-                  <img
-                    v-if="sirket.logoUrl"
-                    :src="sirket.logoUrl"
-                    class="sirket-mini-logo"
-                  >
-                  <i
-                    v-else
-                    class="pi pi-building sirket-mini-icon"
-                  />
-                  <span class="sirket-ad">{{ sirket.ad }}</span>
-                  <i class="pi pi-chevron-right sirket-ok" />
+                  <i class="pi pi-building" />
+                  <div class="sirket-kart-bilgi">
+                    <span class="sirket-kart-ad">{{ s.ad }}</span>
+                    <span class="sirket-kart-vkn">VKN: {{ s.vergiNo || '-' }}</span>
+                  </div>
+                  <i class="pi pi-arrow-right" />
                 </button>
               </div>
               <p
@@ -337,8 +332,7 @@
                     ref="kullaniciInput"
                     v-model="username"
                     :placeholder="$t('auth.username')"
-                    @keyup.enter="odaklanSifre"
-                    @keyup="klavyeKontrol"
+                    @keyup="onUsernameKeyup"
                     @keydown="klavyeKontrol"
                   />
                 </div>
@@ -361,8 +355,7 @@
                     v-model="password"
                     :type="sifreGorunur ? 'text' : 'password'"
                     placeholder="••••••"
-                    @keyup.enter="girisYap"
-                    @keyup="klavyeKontrol"
+                    @keyup="onPasswordKeyup"
                     @keydown="klavyeKontrol"
                   />
                   <button
@@ -389,7 +382,7 @@
               <Button
                 :label="$t('auth.login')"
                 icon="pi pi-sign-in"
-                :loading="authStore.loading"
+                :loading="authStore?.loading || false"
                 class="giris-buton"
                 @click="girisYap"
               />
@@ -505,6 +498,20 @@ onMounted(async () => {
 const klavyeKontrol = (event) => {
   if (event && typeof event.getModifierState === 'function') {
     capsLockAcik.value = event.getModifierState('CapsLock')
+  }
+}
+
+const onUsernameKeyup = (event) => {
+  klavyeKontrol(event)
+  if (event.key === 'Enter') {
+    odaklanSifre()
+  }
+}
+
+const onPasswordKeyup = (event) => {
+  klavyeKontrol(event)
+  if (event.key === 'Enter') {
+    girisYap()
   }
 }
 

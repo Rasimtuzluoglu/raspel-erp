@@ -69,7 +69,8 @@ const stubs = {
   ProgressBar: true,
   Dialog: true,
   Textarea: true,
-  Chart: true
+  Chart: true,
+  Bar: true
 }
 
 describe('YoneticiKokpiti.vue', () => {
@@ -84,7 +85,7 @@ describe('YoneticiKokpiti.vue', () => {
     })
     await flushPromises()
     expect(wrapper.find('.yonetici-kokpiti-sayfasi').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Yönetici & Patron Canlı Kokpiti')
-    expect(wrapper.text()).toContain('Aylık Ciro Hedefi')
+    expect(wrapper.text()).toContain('Yönetici & Finansal Nabız Kokpiti')
+    expect(wrapper.text()).toContain('Aylık Ciro Gerçekleşme')
   })
 })

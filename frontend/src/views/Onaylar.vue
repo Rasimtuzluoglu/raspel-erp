@@ -1,190 +1,258 @@
 <template>
   <div class="onaylar-sayfasi">
-    <div class="sayfa-baslik">
-      <h1>
-        <i
-          class="pi pi-check-circle"
-          style="margin-right: 8px"
-        />Yönetici & Muhasebe Onay Merkezi
-      </h1>
+    <div class="sayfa-baslik flex justify-between items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h1 class="page-title text-xl font-bold">
+          <i
+            class="pi pi-check-circle text-primary mr-2"
+          />Yönetici & Muhasebe Onay Merkezi
+        </h1>
+        <p class="text-xs text-muted">
+          Personel izinleri, saha masrafları ve satınalma taleplerini tek merkezden inceleyip onaylayın.
+        </p>
+      </div>
       <Button
         icon="pi pi-refresh"
         label="Yenile"
-        class="p-button-text"
+        class="p-button-outlined p-button-sm"
         :loading="yukleniyor"
         @click="yukle"
       />
     </div>
 
-    <!-- Özet Sayaç Kartları -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-      <div class="ozet-kart">
-        <span>Bekleyen İzin Talebi</span>
-        <strong class="text-blue-600">{{ bekleyenIzinler.length }}</strong>
-      </div>
-      <div class="ozet-kart">
-        <span>Bekleyen Masraf / Avans</span>
-        <strong class="text-emerald-600">{{ bekleyenMasraflar.length }}</strong>
-      </div>
-      <div class="ozet-kart">
-        <span>Bekleyen Satınalma</span>
-        <strong class="text-purple-600">{{ bekleyenTalepler.length }}</strong>
-      </div>
+    <!-- Segmented Sekmeler -->
+    <div class="onay-sekmeler flex gap-2 mb-4 overflow-x-auto pb-1">
+      <button
+        type="button"
+        :class="['onay-sekme-btn', { aktif: aktifSekme === 'izin' }]"
+        @click="aktifSekme = 'izin'"
+      >
+        <i class="pi pi-calendar mr-1.5" />
+        İzin Talepleri
+        <span
+          v-if="bekleyenIzinler.length > 0"
+          class="badge-sayi bg-blue-600"
+        >{{ bekleyenIzinler.length }}</span>
+      </button>
+      <button
+        type="button"
+        :class="['onay-sekme-btn', { aktif: aktifSekme === 'masraf' }]"
+        @click="aktifSekme = 'masraf'"
+      >
+        <i class="pi pi-wallet mr-1.5" />
+        Saha Masraf & Avans
+        <span
+          v-if="bekleyenMasraflar.length > 0"
+          class="badge-sayi bg-emerald-600"
+        >{{ bekleyenMasraflar.length }}</span>
+      </button>
+      <button
+        type="button"
+        :class="['onay-sekme-btn', { aktif: aktifSekme === 'satinalma' }]"
+        @click="aktifSekme = 'satinalma'"
+      >
+        <i class="pi pi-shopping-bag mr-1.5" />
+        Satın Alma Talepleri
+        <span
+          v-if="bekleyenTalepler.length > 0"
+          class="badge-sayi bg-purple-600"
+        >{{ bekleyenTalepler.length }}</span>
+      </button>
     </div>
 
     <!-- 1. İZİN TALEPLERİ -->
-    <Card class="mb-4">
-      <template #title>
-        <div class="flex justify-between items-center">
-          <span><i
-            class="pi pi-calendar"
-            style="margin-right: 8px"
-          />Personel İzin Talepleri</span>
-          <Badge
-            :value="bekleyenIzinler.length"
-            severity="info"
-          />
-        </div>
-      </template>
-      <template #content>
-        <div
-          v-if="!bekleyenIzinler.length"
-          class="bos"
-        >
-          Bekleyen izin talebi bulunmuyor.
-        </div>
+    <div
+      v-if="aktifSekme === 'izin'"
+      class="onay-icerik"
+    >
+      <div
+        v-if="bekleyenIzinler.length > 0"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
         <div
           v-for="i in bekleyenIzinler"
           :key="i.id"
-          class="onay-satir"
+          class="onay-kart p-4 rounded-xl border bg-white dark:bg-gray-800 shadow-sm flex flex-col justify-between"
         >
-          <div class="onay-bilgi">
-            <strong>{{ i.personelAdi || '#' + i.personelId }}</strong>
-            <p>{{ i.izinTuru }} · {{ formatDate(i.baslangic) }} → {{ formatDate(i.bitis) }} ({{ i.gunSayisi }} gün)</p>
-            <small
-              v-if="i.aciklama"
-              class="text-muted block mt-0.5"
-            >Açıklama: {{ i.aciklama }}</small>
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex items-center gap-2">
+                <div class="user-avatar bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                  <i class="pi pi-user" />
+                </div>
+                <div>
+                  <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100">
+                    {{ i.personelAdi || 'Personel #' + i.personelId }}
+                  </h4>
+                  <span class="text-xs text-muted">{{ i.izinTuru }}</span>
+                </div>
+              </div>
+              <Tag
+                value="Bekliyor"
+                severity="warn"
+              />
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
+              <div class="flex justify-between">
+                <span>Tarih Aralığı:</span>
+                <strong>{{ formatDate(i.baslangic) }} → {{ formatDate(i.bitis) }}</strong>
+              </div>
+              <div class="flex justify-between text-primary font-semibold">
+                <span>İzin Süresi:</span>
+                <span>{{ i.gunSayisi }} Gün</span>
+              </div>
+              <div
+                v-if="i.aciklama"
+                class="pt-1 text-muted border-t mt-1"
+              >
+                {{ i.aciklama }}
+              </div>
+            </div>
           </div>
-          <div class="onay-aksiyon">
+          <div class="flex gap-2 pt-2 border-t">
             <Button
               label="Onayla"
               icon="pi pi-check"
-              class="p-button-sm p-button-success"
+              class="p-button-success p-button-sm flex-1"
               @click="izinOnay(i, 'ONAYLANDI')"
             />
             <Button
               label="Reddet"
               icon="pi pi-times"
-              class="p-button-sm p-button-danger p-button-outlined"
+              class="p-button-danger p-button-outlined p-button-sm flex-1"
               @click="izinOnay(i, 'REDDEDILDI')"
             />
           </div>
         </div>
-      </template>
-    </Card>
+      </div>
+      <div
+        v-else
+        class="text-center py-12 text-muted"
+      >
+        <i class="pi pi-calendar text-4xl text-gray-400 block mb-2" />
+        Şu anda bekleyen izin talebi bulunmuyor.
+      </div>
+    </div>
 
     <!-- 2. SAHA MASRAF & AVANS TALEPLERİ -->
-    <Card class="mb-4">
-      <template #title>
-        <div class="flex justify-between items-center">
-          <span><i
-            class="pi pi-wallet"
-            style="margin-right: 8px"
-          />Saha Masraf & Avans Talepleri</span>
-          <Badge
-            :value="bekleyenMasraflar.length"
-            severity="success"
-          />
-        </div>
-      </template>
-      <template #content>
-        <div
-          v-if="!bekleyenMasraflar.length"
-          class="bos"
-        >
-          Onay bekleyen saha masrafı veya avans talebi yok.
-        </div>
+    <div
+      v-if="aktifSekme === 'masraf'"
+      class="onay-icerik"
+    >
+      <div
+        v-if="bekleyenMasraflar.length > 0"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
         <div
           v-for="m in bekleyenMasraflar"
           :key="m.id"
-          class="onay-satir"
+          class="onay-kart p-4 rounded-xl border bg-white dark:bg-gray-800 shadow-sm flex flex-col justify-between"
         >
-          <div class="onay-bilgi">
-            <div class="flex items-center gap-2">
-              <strong>{{ m.personelAdi || m.kullaniciAdi || 'Personel' }}</strong>
-              <span class="text-xs px-2 py-0.5 rounded bg-gray-100 font-semibold">{{ m.tur === 'AVANS' ? 'Avans' : m.kategori }}</span>
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex items-center gap-2">
+                <div class="user-avatar bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                  <i class="pi pi-receipt" />
+                </div>
+                <div>
+                  <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100">
+                    {{ m.personelAdi || m.kullaniciAdi || 'Saha Personeli' }}
+                  </h4>
+                  <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-semibold">{{ m.tur === 'AVANS' ? 'Avans' : m.kategori }}</span>
+                </div>
+              </div>
+              <div class="text-right font-extrabold text-base text-emerald-600">
+                {{ formatCurrency(m.tutar) }} {{ m.paraBirimi || 'TRY' }}
+              </div>
             </div>
-            <p class="text-sm font-bold text-emerald-600">
-              {{ formatCurrency(m.tutar) }} {{ m.paraBirimi || 'TRY' }}
-            </p>
-            <p>{{ formatDate(m.tarih) }} · {{ m.aciklama }}</p>
+            <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
+              <div class="flex justify-between text-muted">
+                <span>Fiş / Talep Tarihi:</span>
+                <strong>{{ formatDate(m.tarih) }}</strong>
+              </div>
+              <div class="text-gray-800 dark:text-gray-200">
+                {{ m.aciklama }}
+              </div>
+            </div>
           </div>
-          <div class="onay-aksiyon">
+          <div class="flex gap-2 pt-2 border-t">
             <Button
               label="Onayla (Gidere İşle)"
               icon="pi pi-check"
-              class="p-button-sm p-button-success"
+              class="p-button-success p-button-sm flex-1"
               @click="masrafOnayla(m)"
             />
             <Button
               label="Reddet"
               icon="pi pi-times"
-              class="p-button-sm p-button-danger p-button-outlined"
+              class="p-button-danger p-button-outlined p-button-sm flex-1"
               @click="masrafReddet(m)"
             />
           </div>
         </div>
-      </template>
-    </Card>
+      </div>
+      <div
+        v-else
+        class="text-center py-12 text-muted"
+      >
+        <i class="pi pi-wallet text-4xl text-gray-400 block mb-2" />
+        Şu anda onay bekleyen saha masrafı veya avans talebi bulunmuyor.
+      </div>
+    </div>
 
-    <!-- 3. SATINALMA TALEPLERİ -->
-    <Card>
-      <template #title>
-        <div class="flex justify-between items-center">
-          <span><i
-            class="pi pi-shopping-bag"
-            style="margin-right: 8px"
-          />Satın Alma Talepleri</span>
-          <Badge
-            :value="bekleyenTalepler.length"
-            severity="warning"
-          />
-        </div>
-      </template>
-      <template #content>
-        <div
-          v-if="!bekleyenTalepler.length"
-          class="bos"
-        >
-          Bekleyen satın alma talebi yok.
-        </div>
+    <!-- 3. SATIN ALMA TALEPLERİ -->
+    <div
+      v-if="aktifSekme === 'satinalma'"
+      class="onay-icerik"
+    >
+      <div
+        v-if="bekleyenTalepler.length > 0"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
         <div
           v-for="t in bekleyenTalepler"
           :key="t.id"
-          class="onay-satir"
+          class="onay-kart p-4 rounded-xl border bg-white dark:bg-gray-800 shadow-sm flex flex-col justify-between"
         >
-          <div class="onay-bilgi">
-            <strong>{{ t.talepNo }}</strong>
-            <p>{{ t.talepEden || '-' }} · {{ t.departman || '-' }} · {{ t.aciklama }}</p>
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-bold text-sm text-primary">#{{ t.talepNo }}</span>
+              <Tag
+                value="Onay Bekliyor"
+                severity="warning"
+              />
+            </div>
+            <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
+              {{ t.talepEden || '-' }} · {{ t.departman || 'Genel' }}
+            </h4>
+            <p class="text-xs text-muted mb-3">
+              {{ t.aciklama }}
+            </p>
           </div>
-          <div class="onay-aksiyon">
+          <div class="flex gap-2 pt-2 border-t">
             <Button
               label="Onayla"
               icon="pi pi-check"
-              class="p-button-sm p-button-success"
+              class="p-button-success p-button-sm flex-1"
               @click="talepOnay(t, 'ONAYLANDI')"
             />
             <Button
               label="Reddet"
               icon="pi pi-times"
-              class="p-button-sm p-button-danger p-button-outlined"
+              class="p-button-danger p-button-outlined p-button-sm flex-1"
               @click="talepOnay(t, 'REDDEDILDI')"
             />
           </div>
         </div>
-      </template>
-    </Card>
+      </div>
+      <div
+        v-else
+        class="text-center py-12 text-muted"
+      >
+        <i class="pi pi-shopping-bag text-4xl text-gray-400 block mb-2" />
+        Şu anda bekleyen satın alma talebi bulunmuyor.
+      </div>
+    </div>
   </div>
 </template>
 
@@ -198,6 +266,7 @@ import { formatCurrency, formatDate } from '../utils/format.js'
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
 
+const aktifSekme = ref('izin')
 const yukleniyor = ref(false)
 const bekleyenIzinler = ref([])
 const bekleyenMasraflar = ref([])
@@ -220,7 +289,7 @@ const yukle = async () => {
     }
     if (tRes.status === 'fulfilled') {
       const allTalep = tRes.value.data?.content || tRes.value.data || []
-      bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'TASLAK' || t.durum === 'BEKLEMEDE')
+      bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'BEKLIYOR')
     }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Onaylar yüklenemedi')
@@ -242,7 +311,7 @@ const izinOnay = async (i, durum) => {
 const masrafOnayla = async (m) => {
   try {
     await personelMasrafTalepAPI.onayla(m.id, 'Muhasebe tarafından onaylandı')
-    toastBildirim.basarili(`Masraf talebi onaylandı ve şirket giderlerine işlendi`)
+    toastBildirim.basarili('Masraf talebi onaylandı ve şirket giderlerine işlendi')
     await yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
@@ -254,7 +323,7 @@ const masrafReddet = async (m) => {
   if (not === null) return
   try {
     await personelMasrafTalepAPI.reddet(m.id, not)
-    toastBildirim.basarili(`Masraf talebi reddedildi`)
+    toastBildirim.basarili('Masraf talebi reddedildi')
     await yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
@@ -276,58 +345,48 @@ onMounted(yukle)
 
 <style scoped>
 .onaylar-sayfasi {
-  padding: 0;
+  padding: 1rem;
 }
-.sayfa-baslik {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.sayfa-baslik h1 {
-  margin: 0;
-}
-.ozet-kart {
+
+.onay-sekme-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-}
-.ozet-kart span {
-  display: block;
-  font-size: 13px;
   color: var(--text-secondary);
-}
-.ozet-kart strong {
-  font-size: 24px;
-}
-.bos {
-  color: var(--text-muted);
-  padding: 12px 0;
-}
-.onay-satir {
+  cursor: pointer;
+  white-space: nowrap;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  gap: 16px;
+  transition: all 0.2s;
 }
-.onay-satir:last-child {
-  border-bottom: none;
+.onay-sekme-btn.aktif {
+  background: var(--primary-color, #3b82f6);
+  color: #ffffff;
+  border-color: var(--primary-color, #3b82f6);
 }
-.onay-bilgi strong {
-  font-size: 14px;
+
+.badge-sayi {
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
 }
-.onay-bilgi p {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.onay-aksiyon {
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
-  gap: 8px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.onay-kart {
+  min-height: 190px;
 }
 </style>
