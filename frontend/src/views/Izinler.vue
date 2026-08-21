@@ -104,7 +104,7 @@
             @click="reddet(data)"
           />
           <Button
-            v-if="authStore.kullanici?.role === 'ADMIN'"
+            v-if="authStore?.kullanici?.role === 'ADMIN'"
             icon="pi pi-trash"
             class="p-button-rounded p-button-sm p-button-text"
             title="Sil"
@@ -213,7 +213,7 @@ const reddet = (data) => {
   })
 }
 
-const kullaniciAdi = computed(() => authStore.kullanici?.displayName || authStore.kullanici?.username || 'Admin')
+const kullaniciAdi = computed(() => authStore?.kullanici?.displayName || authStore?.kullanici?.username || 'Admin')
 
 const sil = (data) => {
   confirm.require({

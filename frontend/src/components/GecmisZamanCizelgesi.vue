@@ -35,9 +35,9 @@
           <template #subtitle>
             <div class="timeline-meta">
               <span><i class="pi pi-user" />
-                {{ slotProps.item.kullaniciAdi || slotProps.item.kullanici || 'Sistem' }}</span>
+                {{ slotProps.item?.kullaniciAdi || slotProps.item?.kullanici || 'Sistem' }}</span>
               <span><i class="pi pi-clock" />
-                {{ formatTarih(slotProps.item.tarih || slotProps.item.olusturmaTarihi) }}</span>
+                {{ formatTarih(slotProps.item?.tarih || slotProps.item?.olusturmaTarihi) }}</span>
             </div>
           </template>
           <template #content>

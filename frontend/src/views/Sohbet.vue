@@ -190,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useAuthStore } from '../stores/authStore.js'
 import { sohbetAPI, aiConfigAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -220,7 +220,7 @@ const yukleniyor = ref(false)
 const bagli = ref(false)
 const mesajKutusu = ref(null)
 
-const kendiId = authStore.kullanici?.id
+const kendiId = computed(() => authStore?.kullanici?.id)
 
 let stompClient = null
 let subscription = null

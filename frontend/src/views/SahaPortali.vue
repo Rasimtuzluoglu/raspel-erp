@@ -9,7 +9,7 @@
           </div>
           <div>
             <h2 class="text-lg font-bold text-white mb-0.5">
-              {{ authStore.kullanici?.displayName || authStore.kullanici?.username || 'Saha Personeli' }}
+              {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username || 'Saha Personeli' }}
             </h2>
             <span class="text-xs text-blue-100 font-medium">
               <i class="pi pi-compass mr-1" /> Saha & Personel Mobil Portalı
@@ -841,7 +841,7 @@ const izinTalepGonder = async () => {
     const gunSayisi = Math.max(1, Math.round((bit - bas) / (1000 * 60 * 60 * 24)) + 1)
 
     await personelIzinAPI.create({
-      personelId: authStore.kullanici?.personelId || 1,
+      personelId: authStore?.kullanici?.personelId || 1,
       izinTuru: izinForm.value.izinTuru,
       baslangic: izinForm.value.baslangic,
       bitis: izinForm.value.bitis,

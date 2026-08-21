@@ -5,10 +5,10 @@
         <i class="pi pi-home" /> Anasayfa / POS / Yeni Satış
       </div>
       <div
-        v-if="authStore.kullanici"
+        v-if="authStore?.kullanici"
         class="user-info"
       >
-        <i class="pi pi-user" /> {{ authStore.kullanici.displayName || authStore.kullanici.username }}
+        <i class="pi pi-user" /> {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username }}
       </div>
     </div>
 
@@ -500,10 +500,10 @@
                     {{ fisAltNotu || 'Bizi tercih ettiginiz icin tesekkur ederiz!' }}
                   </div>
                   <div
-                    v-if="authStore.kullanici?.displayName"
+                    v-if="authStore?.kullanici?.displayName"
                     class="fis-satici"
                   >
-                    Islem Yapan: {{ authStore.kullanici.displayName }}
+                    Islem Yapan: {{ authStore?.kullanici?.displayName }}
                   </div>
                 </div>
               </div>
@@ -1056,7 +1056,7 @@ const fisiYazdir = () => {
     <div class="satir"><span class="ad">Toplam Ürün</span><span class="tutar">${sepet.value.length}</span></div>
     <div class="satir"><span class="ad">Durum</span><span class="tutar">${odemeDurumText.value}</span></div>
     <div class="ayrac">- - - - - - - - - - - - - -</div>
-    <div class="tesekkur">Islem Yapan: ${escapeHtml(authStore.kullanici?.displayName || '-')}</div>
+    <div class="tesekkur">Islem Yapan: ${escapeHtml(authStore?.kullanici?.displayName || '-')}</div>
     <div class="tesekkur">Iyi gunler dileriz</div>
   </div>
 </body>

@@ -5,12 +5,12 @@
         <h1>RasPel ERP</h1>
         <p class="karsilama-mesaji">
           {{ karsilamaMetni }},
-          <strong>{{ authStore.kullanici?.displayName || authStore.kullanici?.username || '' }}</strong>
+          <strong>{{ authStore?.kullanici?.displayName || authStore?.kullanici?.username || '' }}</strong>
           <span
-            v-if="authStore.sirketAdi"
+            v-if="authStore?.sirketAdi"
             class="karsilama-sirket"
           >
-            <i class="pi pi-building" /> {{ authStore.sirketAdi }}
+            <i class="pi pi-building" /> {{ authStore?.sirketAdi }}
           </span>
         </p>
       </div>

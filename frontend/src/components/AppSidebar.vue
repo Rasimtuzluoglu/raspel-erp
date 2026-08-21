@@ -126,21 +126,21 @@
         <div class="admin-profile">
           <div class="admin-avatar">
             <img
-              v-if="authStore.kullanici?.avatarUrl"
-              :src="authStore.kullanici.avatarUrl"
-              :alt="authStore.kullanici?.displayName"
+              v-if="authStore?.kullanici?.avatarUrl"
+              :src="authStore?.kullanici?.avatarUrl"
+              :alt="authStore?.kullanici?.displayName"
               loading="lazy"
             >
             <span
               v-else
               class="avatar-fallback"
-            >{{ authStore.kullanici?.displayName?.charAt(0) || 'U' }}</span>
+            >{{ authStore?.kullanici?.displayName?.charAt(0) || 'U' }}</span>
           </div>
           <div class="admin-info">
             <span class="admin-name">{{
-              authStore.kullanici?.displayName || authStore.kullanici?.username || 'Kullanıcı'
+              authStore?.kullanici?.displayName || authStore?.kullanici?.username || 'Kullanıcı'
             }}</span>
-            <span class="admin-role">{{ authStore.kullanici?.role || 'USER' }}</span>
+            <span class="admin-role">{{ authStore?.kullanici?.role || 'USER' }}</span>
           </div>
           <button
             class="icon-action-btn logout-icon-btn"
@@ -352,7 +352,7 @@ const gorunenMenuler = computed(() => {
 })
 
 const favoriMenuler = computed(() =>
-  tumMenuler.filter((m) => favoriler.value.includes(m.path) && (!m.admin || authStore.kullanici?.role === 'ADMIN'))
+  tumMenuler.filter((m) => favoriler.value.includes(m.path) && (!m.admin || authStore?.kullanici?.role === 'ADMIN'))
 )
 
 const sirketLogo = ref(null)

@@ -399,7 +399,7 @@ const renkler = [
   { name: 'Sıcak Amber', value: '#f59e0b' }
 ]
 
-const kullanici = computed(() => authStore.kullanici)
+const kullanici = computed(() => authStore?.kullanici)
 const kaydediliyor = ref(false)
 
 const profilForm = ref({ displayName: '', companyName: '', avatarUrl: '' })
@@ -537,7 +537,7 @@ const aiConfigSil = async () => {
 
 onMounted(async () => {
   initTheme()
-  const k = authStore.kullanici
+  const k = authStore?.kullanici
   if (k) {
     profilForm.value = {
       displayName: k.displayName || '',

@@ -300,7 +300,7 @@ const yukle = async () => {
 
 const izinOnay = async (i, durum) => {
   try {
-    await personelIzinAPI.durumGuncelle(i.id, durum, authStore.kullanici?.displayName || authStore.kullanici?.username)
+    await personelIzinAPI.durumGuncelle(i.id, durum, authStore?.kullanici?.displayName || authStore?.kullanici?.username)
     toastBildirim.basarili(`İzin ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}`)
     await yukle()
   } catch (err) {

@@ -71,7 +71,7 @@
             v-tooltip.top="'Sil'"
             icon="pi pi-trash"
             class="p-button-rounded p-button-sm islem-btn sil"
-            :disabled="u.id === authStore.kullanici?.id"
+            :disabled="u.id === authStore?.kullanici?.id"
             @click="confirmDel(u.id)"
           />
         </div>
@@ -367,7 +367,7 @@ const save = async () => {
     if (avatarDosya.value) await avatarYukle()
     if (editingId.value) {
       await kullaniciAPI.update(editingId.value, form.value)
-      if (editingId.value === authStore.kullanici?.id) await authStore.kullaniciGuncelle()
+      if (editingId.value === authStore?.kullanici?.id) await authStore?.kullaniciGuncelle()
       toastBildirim.basarili('Kullanıcı güncellendi')
     } else {
       if (!form.value.password) {
