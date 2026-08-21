@@ -205,6 +205,25 @@
         class="quick-actions"
       >
         <router-link
+          v-if="authStore.isAdmin"
+          to="/yonetici-kokpiti"
+          class="action-card kokpit"
+        >
+          <i class="pi pi-bolt" /><span>Yönetici Kokpiti</span>
+        </router-link>
+        <router-link
+          to="/teklifler"
+          class="action-card teklif"
+        >
+          <i class="pi pi-file-edit" /><span>Satış Teklifleri</span>
+        </router-link>
+        <router-link
+          to="/saha-portali"
+          class="action-card saha"
+        >
+          <i class="pi pi-compass" /><span>Saha Portalı</span>
+        </router-link>
+        <router-link
           to="/faturalar"
           class="action-card fatura"
         >
@@ -214,7 +233,7 @@
           to="/hizli-satis"
           class="action-card satis"
         >
-          <i class="pi pi-bolt" /><span>Hizli Satis</span>
+          <i class="pi pi-bolt" /><span>Hızlı Satış</span>
         </router-link>
         <router-link
           to="/cari-hesaplar"
@@ -226,7 +245,7 @@
           to="/hareketler"
           class="action-card tahsilat"
         >
-          <i class="pi pi-money-bill" /><span>Tahsilat/Odeme</span>
+          <i class="pi pi-money-bill" /><span>Tahsilat/Ödeme</span>
         </router-link>
       </div>
 
@@ -1718,7 +1737,7 @@ const whatsappLink = (f) => {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -1726,12 +1745,12 @@ const whatsappLink = (f) => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-radius: 12px;
   text-decoration: none;
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13.5px;
   transition:
     transform 0.15s,
     box-shadow 0.15s;
@@ -1742,6 +1761,15 @@ const whatsappLink = (f) => {
 }
 .action-card i {
   font-size: 1.3rem;
+}
+.action-card.kokpit {
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+.action-card.teklif {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+.action-card.saha {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
 }
 .action-card.fatura {
   background: linear-gradient(135deg, #4f46e5, #6366f1);
