@@ -40,6 +40,8 @@ class SohbetServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private KasaRepository kasaRepository;
     @Mock private BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.service.sistem.AiConfigService aiConfigService;
+    @Mock private com.raspel.erp.service.sistem.LlmClientService llmClientService;
 
     @InjectMocks private SohbetService sohbetService;
 
@@ -124,5 +126,26 @@ class SohbetServiceTest {
         AISorguSonucDTO res = sohbetService.aiSorgula("Kasa ve banka toplam bakiyemiz nedir?", 1L);
         assertEquals("LIKIDITE", res.getIntent());
         assertTrue(res.getCevapMetni().contains("175000"));
+    }
+
+    @Test
+    void aiSorgula_llmIntent() {
+        com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = com.raspel.erp.dto.sistem.AiConfigDTO.builder()
+                .provider("OPENAI")
+                .model("gpt-4o")
+                .durum("AKTIF")
+                .aktif(true)
+                .build();
+
+        when(aiConfigService.getConfig(1L)).thenReturn(aiConfig);
+        when(aiConfigService.getDecryptedKey(1L)).thenReturn("sk-test-key");
+        when(llmClientService.sendQuery(eq("OPENAI"), eq("gpt-4o"), eq("sk-test-key"), anyString(), eq("Özel soru")))
+                .thenReturn("LLM tarafından üretilen yanıt");
+
+        AISorguSonucDTO res = sohbetService.aiSorgula("Özel soru", 1L);
+
+        assertNotNull(res);
+        assertEquals("LLM_YANIT", res.getIntent());
+        assertEquals("LLM tarafından üretilen yanıt", res.getCevapMetni());
     }
 }

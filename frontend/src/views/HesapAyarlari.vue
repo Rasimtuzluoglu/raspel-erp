@@ -237,6 +237,107 @@
           </div>
         </template>
       </Card>
+
+      <!-- YAPAY ZEKA (AI) AYARLARI -->
+      <Card class="ayar-kart ai-ayar-kart">
+        <template #title>
+          <div class="ai-baslik-satir">
+            <div>
+              <i
+                class="pi pi-sparkles"
+                style="margin-right: 8px; color: #8b5cf6"
+              />Yapay Zeka (AI) Entegrasyonu
+            </div>
+            <Tag
+              :value="aiDurum === 'AKTIF' ? 'AI Aktif' : 'Yapılandırılmadı'"
+              :severity="aiDurum === 'AKTIF' ? 'success' : 'warn'"
+            />
+          </div>
+        </template>
+        <template #content>
+          <div class="form-grid">
+            <p class="ai-aciklama">
+              Kendi AI API anahtarınızı girerek ERP içi akıllı sohbet asistanını ve veri sorgulama motorunu etkinleştirin.
+            </p>
+
+            <div class="field">
+              <label>AI Sağlayıcı</label>
+              <Dropdown
+                v-model="aiForm.provider"
+                :options="aiSaglayicilar"
+                option-label="name"
+                option-value="value"
+                placeholder="Sağlayıcı seçin"
+                class="w-full"
+                @change="onProviderChange"
+              />
+            </div>
+
+            <div class="field">
+              <label>API Key</label>
+              <div class="p-inputgroup w-full">
+                <InputText
+                  v-model="aiForm.apiKey"
+                  :type="aiKeyGoster ? 'text' : 'password'"
+                  placeholder="sk-... veya API Anahtarınız"
+                  class="w-full"
+                />
+                <Button
+                  :icon="aiKeyGoster ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                  severity="secondary"
+                  outlined
+                  @click="aiKeyGoster = !aiKeyGoster"
+                />
+              </div>
+              <small
+                v-if="aiMevcutMaskeliKey && !aiForm.apiKey"
+                class="text-muted"
+              >
+                Mevcut Anahtar: <code>{{ aiMevcutMaskeliKey }}</code>
+              </small>
+            </div>
+
+            <div class="field">
+              <label>Model</label>
+              <Dropdown
+                v-model="aiForm.model"
+                :options="aktifModelListesi"
+                option-label="name"
+                option-value="value"
+                placeholder="Model seçin"
+                class="w-full"
+              />
+            </div>
+
+            <div class="ai-aksiyonlar">
+              <Button
+                label="Bağlantıyı Test Et"
+                icon="pi pi-bolt"
+                severity="info"
+                outlined
+                :loading="aiTestEdiliyor"
+                :disabled="aiDurum !== 'AKTIF' && !aiForm.apiKey"
+                @click="aiBaglantiTestEt"
+              />
+              <Button
+                label="AI Ayarlarını Kaydet"
+                icon="pi pi-check"
+                :loading="aiKaydediliyor"
+                @click="aiConfigKaydet"
+              />
+              <Button
+                v-if="aiDurum === 'AKTIF'"
+                label="Kaldır"
+                icon="pi pi-trash"
+                severity="danger"
+                outlined
+                :loading="aiKaydediliyor"
+                @click="aiConfigSil"
+              />
+            </div>
+          </div>
+        </template>
+      </Card>
     </div>
   </div>
 </template>
@@ -245,7 +346,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { kullaniciAPI } from '../api/index.js'
+import { kullaniciAPI, aiConfigAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
@@ -273,6 +374,131 @@ const kurulumData = ref(null)
 const dogrulamaKodu = ref('')
 const kapatmaKodu = ref('')
 
+// AI Yapılandırma State
+const aiSaglayicilar = [
+  { name: 'OpenAI (ChatGPT)', value: 'OPENAI' },
+  { name: 'Google Gemini', value: 'GOOGLE' },
+  { name: 'Anthropic Claude', value: 'ANTHROPIC' }
+]
+
+const aiModeller = {
+  OPENAI: [
+    { name: 'GPT-4o (En Yetenekli)', value: 'gpt-4o' },
+    { name: 'GPT-4o Mini (Hızlı & Ekonomik)', value: 'gpt-4o-mini' },
+    { name: 'GPT-4 Turbo', value: 'gpt-4-turbo' }
+  ],
+  GOOGLE: [
+    { name: 'Gemini 2.5 Flash (Önerilen)', value: 'gemini-2.5-flash' },
+    { name: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro' },
+    { name: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' }
+  ],
+  ANTHROPIC: [
+    { name: 'Claude 3.5 Sonnet (Gelişmiş Analiz)', value: 'claude-3-5-sonnet-20241022' },
+    { name: 'Claude 3.5 Haiku (Süper Hızlı)', value: 'claude-3-5-haiku-20241022' },
+    { name: 'Claude 3 Opus', value: 'claude-3-opus-20240229' }
+  ]
+}
+
+const aiForm = ref({ provider: 'OPENAI', apiKey: '', model: 'gpt-4o' })
+const aiDurum = ref('YAPILANDIRILMADI') // AKTIF / YAPILANDIRILMADI
+const aiMevcutMaskeliKey = ref('')
+const aiKeyGoster = ref(false)
+const aiKaydediliyor = ref(false)
+const aiTestEdiliyor = ref(false)
+
+const aktifModelListesi = computed(() => {
+  return aiModeller[aiForm.value.provider] || aiModeller.OPENAI
+})
+
+const onProviderChange = () => {
+  const modeller = aktifModelListesi.value
+  if (modeller && modeller.length > 0) {
+    aiForm.value.model = modeller[0].value
+  }
+}
+
+const aiConfigGetir = async () => {
+  try {
+    const res = await aiConfigAPI.getConfig()
+    if (res.data) {
+      aiDurum.value = res.data.durum || 'YAPILANDIRILMADI'
+      if (res.data.provider) aiForm.value.provider = res.data.provider
+      if (res.data.model) aiForm.value.model = res.data.model
+      aiMevcutMaskeliKey.value = res.data.apiKey || ''
+    }
+  } catch {
+    /* empty */
+  }
+}
+
+const aiConfigKaydet = async () => {
+  if (!aiForm.value.apiKey && !aiMevcutMaskeliKey.value) {
+    toastBildirim.uyari('Lütfen geçerli bir API anahtarı girin')
+    return
+  }
+  aiKaydediliyor.value = true
+  try {
+    const payload = {
+      provider: aiForm.value.provider,
+      apiKey: aiForm.value.apiKey || undefined,
+      model: aiForm.value.model,
+      aktif: true
+    }
+    const res = await aiConfigAPI.saveConfig(payload)
+    if (res.data) {
+      aiDurum.value = res.data.durum || 'AKTIF'
+      aiMevcutMaskeliKey.value = res.data.apiKey || ''
+      aiForm.value.apiKey = ''
+    }
+    toastBildirim.basarili('Yapay Zeka API ayarları kaydedildi')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Ayarlar kaydedilemedi')
+  } finally {
+    aiKaydediliyor.value = false
+  }
+}
+
+const aiBaglantiTestEt = async () => {
+  aiTestEdiliyor.value = true
+  try {
+    const res = await aiConfigAPI.testConnection()
+    if (res.data && res.data.status === 'SUCCESS') {
+      toast.add({
+        severity: 'success',
+        summary: 'Bağlantı Başarılı',
+        detail: res.data.message || 'AI API bağlantısı başarıyla doğrulandı.',
+        life: 3000
+      })
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: 'Bağlantı Uyarısı',
+        detail: res.data?.message || 'Bağlantı kurulamadı',
+        life: 4000
+      })
+    }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'API anahtarı doğrulanamadı')
+  } finally {
+    aiTestEdiliyor.value = false
+  }
+}
+
+const aiConfigSil = async () => {
+  aiKaydediliyor.value = true
+  try {
+    await aiConfigAPI.deleteConfig()
+    aiDurum.value = 'YAPILANDIRILMADI'
+    aiMevcutMaskeliKey.value = ''
+    aiForm.value = { provider: 'OPENAI', apiKey: '', model: 'gpt-4o' }
+    toastBildirim.basarili('AI yapılandırması kaldırıldı')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Yapılandırma silinemedi')
+  } finally {
+    aiKaydediliyor.value = false
+  }
+}
+
 onMounted(async () => {
   initTheme()
   const k = authStore.kullanici
@@ -290,6 +516,7 @@ onMounted(async () => {
   } catch {
     /* empty */
   }
+  await aiConfigGetir()
 })
 
 const profilKaydet = async () => {
@@ -425,9 +652,23 @@ const kopyala = async (text) => {
   gap: 8px;
   font-size: 14px;
 }
-.iki-fa-aciklama {
+.iki-fa-aciklama, .ai-aciklama {
   color: var(--text-secondary);
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ai-baslik-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.ai-aksiyonlar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
 }
 .secret-kutu {
   display: flex;
@@ -474,3 +715,4 @@ const kopyala = async (text) => {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }
 </style>
+

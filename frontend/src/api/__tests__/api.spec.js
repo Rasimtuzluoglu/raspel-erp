@@ -79,5 +79,6 @@ describe('API client', () => {
     expect(api.raporAPI).toBeDefined()
     expect(api.sirketAPI).toBeDefined()
     expect(api.donemAPI).toBeDefined()
+    expect(api.aiConfigAPI).toBeDefined()
   })
 })

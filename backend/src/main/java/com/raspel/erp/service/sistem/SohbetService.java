@@ -35,6 +35,8 @@ public class SohbetService {
     private final StokRepository stokRepository;
     private final KasaRepository kasaRepository;
     private final BankaRepository bankaRepository;
+    private final AiConfigService aiConfigService;
+    private final LlmClientService llmClientService;
 
     @Transactional(readOnly = true)
     public List<SohbetMesajDTO> sonMesajlar(Long sirketId) {
@@ -75,6 +77,24 @@ public class SohbetService {
                     .cevapMetni("Lütfen sormak istediğiniz soruyu yazın.")
                     .grafikTipi("none")
                     .build();
+        }
+
+        try {
+            com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
+            if (aiConfig != null && Boolean.TRUE.equals(aiConfig.getAktif()) && !"YAPILANDIRILMADI".equals(aiConfig.getDurum())) {
+                String apiKey = aiConfigService.getDecryptedKey(sirketId);
+                String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Kullanıcının sorularına ERP bağlamında, profesyonel, kısa ve net cevaplar ver.";
+                String response = llmClientService.sendQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru);
+                
+                return AISorguSonucDTO.builder()
+                        .soru(soru)
+                        .cevapMetni(response)
+                        .grafikTipi("none")
+                        .intent("LLM_YANIT")
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("LLM sorgusu basarisiz oldu, kural tabanli sisteme geciliyor: {}", e.getMessage());
         }
 
         String temizSoru = soru.toLowerCase(Locale.forLanguageTag("tr"));

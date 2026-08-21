@@ -43,7 +43,8 @@ export {
   auditLogAPI,
   notAPI,
   projeAPI,
-  anomaliAPI
+  anomaliAPI,
+  aiConfigAPI
 } from './modules/sistem.js'
 
 export { dashboardAPI, raporAPI } from './modules/rapor.js'

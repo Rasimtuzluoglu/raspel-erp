@@ -16,6 +16,16 @@
           option-value="value"
           size="small"
         />
+        <Tag
+          v-if="aktifMod === 'ai' && aiYapilandirildi"
+          value="Gerçek AI (LLM)"
+          severity="success"
+        />
+        <Tag
+          v-else-if="aktifMod === 'ai'"
+          value="Kural Tabanlı AI"
+          severity="info"
+        />
         <span
           v-if="aktifMod === 'ekip' && bagli"
           class="bagli-durum"
@@ -182,13 +192,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useAuthStore } from '../stores/authStore.js'
-import { sohbetAPI } from '../api/index.js'
+import { sohbetAPI, aiConfigAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
 
 const aktifMod = ref('ai')
+const aiYapilandirildi = ref(false)
 const modSecenekleri = [
   { label: 'AI Asistan', value: 'ai' },
   { label: 'Ekip Sohbeti', value: 'ekip' }
@@ -338,9 +349,17 @@ const baglan = () => {
     .catch(() => {})
 }
 
-onMounted(() => {
+onMounted(async () => {
   yukle()
   baglan()
+  try {
+    const res = await aiConfigAPI.getConfig()
+    if (res.data && res.data.durum === 'AKTIF') {
+      aiYapilandirildi.value = true
+    }
+  } catch {
+    /* empty */
+  }
 })
 
 onUnmounted(() => {

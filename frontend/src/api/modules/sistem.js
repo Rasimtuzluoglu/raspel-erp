@@ -233,3 +233,19 @@ export const anomaliAPI = {
     return apiClient.delete(`/anomaliler/ip-whitelist/${id}`)
   }
 }
+
+export const aiConfigAPI = {
+  getConfig() {
+    return apiClient.get('/ai-config')
+  },
+  saveConfig(data) {
+    return apiClient.post('/ai-config', data)
+  },
+  testConnection() {
+    return apiClient.post('/ai-config/test')
+  },
+  deleteConfig() {
+    return apiClient.delete('/ai-config')
+  }
+}
+
