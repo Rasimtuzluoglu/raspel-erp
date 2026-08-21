@@ -26,12 +26,18 @@
           @click="gonderEmail"
         />
         <Button
-          label="Yazdır"
-          icon="pi pi-print"
-          @click="win.print()"
+          label="Şablonu Tasarla & Yazdır"
+          icon="pi pi-palette"
+          class="p-button-primary"
+          @click="tasarimModalAcik = true"
         />
       </div>
     </div>
+
+    <FaturaTasarimModal
+      v-model:visible="tasarimModalAcik"
+      :fatura-data="fatura"
+    />
 
     <div
       v-if="loading"
@@ -279,6 +285,7 @@ import SelectButton from 'primevue/selectbutton'
 import { useYakinZamanda } from '../composables/useYakinZamanda.js'
 import { belgeAPI, faturaAPI, sirketAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
+import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -291,6 +298,7 @@ const sirket = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const printMode = ref(route.query.print === 'true')
+const tasarimModalAcik = ref(false)
 
 const escListener = (e) => {
   if (e.key === 'Escape') router.push('/faturalar')

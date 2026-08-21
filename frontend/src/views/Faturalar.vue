@@ -178,6 +178,12 @@
               @click="viewFatura(s.data.id)"
             />
             <Button
+              icon="pi pi-print"
+              class="p-button-rounded p-button-sm p-button-secondary"
+              title="Yazdır & Şablon Tasarla"
+              @click="tasarlaVeYazdir(s.data.id)"
+            />
+            <Button
               icon="pi pi-download"
               class="p-button-rounded p-button-sm p-button-help"
               title="PDF İndir"
@@ -645,6 +651,11 @@
       severity="error"
       :text="faturaStore.error"
     />
+
+    <FaturaTasarimModal
+      v-model:visible="tasarimModalAcik"
+      :fatura-id="seciliFaturaId"
+    />
   </div>
 </template>
 
@@ -666,12 +677,21 @@ import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 
 const router = useRouter()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const faturaStore = useFaturaStore()
+
+const tasarimModalAcik = ref(false)
+const seciliFaturaId = ref(null)
+
+const tasarlaVeYazdir = (id) => {
+  seciliFaturaId.value = id
+  tasarimModalAcik.value = true
+}
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 

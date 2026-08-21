@@ -338,7 +338,40 @@
           </div>
         </template>
       </Card>
+
+      <!-- FATURA YAZDIRMA ŞABLON TASARIMI -->
+      <Card class="ayar-kart">
+        <template #title>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+            <div>
+              <i
+                class="pi pi-print"
+                style="margin-right: 8px"
+              />Fatura Yazdırma Şablonu
+            </div>
+            <Tag
+              value="Özelleştirilebilir"
+              severity="info"
+            />
+          </div>
+        </template>
+        <template #content>
+          <div class="form-grid">
+            <p class="ai-aciklama">
+              Müşterilerinize keseceğiniz ve yazdıracağınız faturaların kurumsal şablonunu, renklerini, kolonlarını ve dipnotlarını tasarlayın.
+            </p>
+            <Button
+              label="Fatura Şablon Tasarımcısını Aç"
+              icon="pi pi-palette"
+              class="p-button-primary"
+              @click="faturaTasarimModalAcik = true"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
+
+    <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
   </div>
 </template>
 
@@ -350,6 +383,9 @@ import { kullaniciAPI, aiConfigAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+
+const faturaTasarimModalAcik = ref(false)
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
