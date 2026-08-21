@@ -7,12 +7,21 @@ export function useOturumUyarisi() {
   const kalanSaniye = ref(0)
   let interval = null
 
-  const decodeExp = (token) => {
+  let cachedExp = null
+  let lastToken = ''
+
+  const getExp = (token) => {
+    if (!token) return null
+    if (token === lastToken && cachedExp !== null) return cachedExp
     try {
+      lastToken = token
       const payload = token.split('.')[1]
+      if (!payload) return null
       const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-      return decoded.exp ? decoded.exp * 1000 : null
+      cachedExp = decoded.exp ? decoded.exp * 1000 : null
+      return cachedExp
     } catch {
+      cachedExp = null
       return null
     }
   }
@@ -20,14 +29,20 @@ export function useOturumUyarisi() {
   const baslat = () => {
     if (interval) return
     interval = setInterval(() => {
-      const exp = decodeExp(authStore.token)
-      if (!exp || !authStore.isLoggedIn) return
+      if (!authStore?.isLoggedIn || !authStore?.token) {
+        if (goster.value) goster.value = false
+        return
+      }
+      const exp = getExp(authStore.token)
+      if (!exp) return
       const kalan = exp - Date.now()
       if (kalan > 0 && kalan < 2 * 60 * 1000) {
         kalanSaniye.value = Math.floor(kalan / 1000)
         goster.value = true
+      } else if (kalan <= 0) {
+        goster.value = false
       }
-    }, 5000)
+    }, 10000)
   }
 
   const devamEt = async () => {

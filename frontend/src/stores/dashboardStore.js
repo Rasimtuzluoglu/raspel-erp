@@ -22,6 +22,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const aylikGelirGider = ref([])
   const vadesiGecenFaturalar = ref([])
   const vadesiYaklasanFaturalar = ref([])
+  const toplamStok = ref(0)
+  const kritikStokSayisi = ref(0)
+  const toplamFatura = ref(0)
+  const kesilenFatura = ref(0)
+  const toplamBankaBakiye = ref(0)
+  const toplamKasaBakiye = ref(0)
   const loading = ref(false)
   const error = ref(null)
 
@@ -50,6 +56,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
       aylikGelirGider.value = d.aylikGelirGider || []
       vadesiGecenFaturalar.value = d.vadesiGecenFaturalar || []
       vadesiYaklasanFaturalar.value = d.vadesiYaklasanFaturalar || []
+      toplamStok.value = d.toplamStok || 0
+      kritikStokSayisi.value = d.kritikStokSayisi || 0
+      toplamFatura.value = d.toplamFatura || 0
+      kesilenFatura.value = d.kesilenFatura || 0
+      toplamBankaBakiye.value = d.toplamBankaBakiye || 0
+      toplamKasaBakiye.value = d.toplamKasaBakiye || 0
       return d
     } catch (err) {
       error.value = err.message
@@ -80,6 +92,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
     aylikGelirGider,
     vadesiGecenFaturalar,
     vadesiYaklasanFaturalar,
+    toplamStok,
+    kritikStokSayisi,
+    toplamFatura,
+    kesilenFatura,
+    toplamBankaBakiye,
+    toplamKasaBakiye,
     loading,
     error,
     getDashboardData

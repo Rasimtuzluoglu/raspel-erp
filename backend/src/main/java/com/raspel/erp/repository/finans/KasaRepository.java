@@ -20,4 +20,7 @@ public interface KasaRepository extends JpaRepository<Kasa, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT k FROM Kasa k WHERE k.id = :id")
     Optional<Kasa> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("SELECT COALESCE(SUM(k.bakiye), 0) FROM Kasa k WHERE k.sirketId = :sirketId")
+    java.math.BigDecimal sumBakiyeBySirketId(@Param("sirketId") Long sirketId);
 }

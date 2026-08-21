@@ -469,11 +469,6 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
-import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { useFaturaStore } from '../stores/faturaStore.js'
-import { useBankaStore } from '../stores/bankaStore.js'
-import { useKasaStore } from '../stores/kasaStore.js'
-import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { Doughnut, Bar } from 'vue-chartjs'
@@ -529,11 +524,6 @@ const iptalWidget = () => {
 }
 
 const dashboardStore = useDashboardStore()
-const cariHesapStore = useCariHesapStore()
-const faturaStore = useFaturaStore()
-const bankaStore = useBankaStore()
-const kasaStore = useKasaStore()
-const stokStore = useStokStore()
 const authStore = useAuthStore()
 const loading = ref(true)
 
@@ -542,11 +532,7 @@ const refresh = async () => {
   try {
     await Promise.all([
       dashboardStore.getDashboardData(),
-      cariHesapStore.getAllCariHesaplar(),
-      faturaStore.getAllFaturalar(),
-      bankaStore.getAllBankalar(),
-      kasaStore.getAllKasalar(),
-      stokStore.getAll()
+      dovizStore?.kurlariYukle ? dovizStore.kurlariYukle() : Promise.resolve()
     ])
     grafikleriHesapla()
   } catch (error) {
@@ -568,20 +554,20 @@ const aylikKarsilastirmaOptions = {
 
 const bosSistem = computed(
   () =>
-    (cariHesapStore?.cariHesaplar?.length || 0) === 0 &&
-    (stokStore?.stoklar?.length || 0) === 0 &&
-    (faturaStore?.faturalar?.length || 0) === 0
+    (dashboardStore.toplamCariSayisi || 0) === 0 &&
+    (dashboardStore.toplamStok || 0) === 0 &&
+    (dashboardStore.toplamFatura || 0) === 0
 )
 
 const yedekUyarisiGoster = ref(true)
 
-const toplamFatura = computed(() => faturaStore.faturalar.length)
-const kesilenFatura = computed(() => faturaStore.faturalar.filter((f) => f.durum === 'KESILDI').length)
-const toplamBankaBakiye = computed(() => bankaStore.bankalar.reduce((t, b) => t + (b.bakiye || 0), 0))
-const toplamKasaBakiye = computed(() => kasaStore.kasalar.reduce((t, k) => t + (k.bakiye || 0), 0))
-const toplamLikidite = computed(() => toplamBankaBakiye.value + toplamKasaBakiye.value)
-const toplamStok = computed(() => stokStore.stoklar.length)
-const dusukStokAdet = computed(() => stokStore.dusukStoklar.length)
+const toplamFatura = computed(() => dashboardStore.toplamFatura || 0)
+const kesilenFatura = computed(() => dashboardStore.kesilenFatura || 0)
+const toplamBankaBakiye = computed(() => dashboardStore.toplamBankaBakiye || 0)
+const toplamKasaBakiye = computed(() => dashboardStore.toplamKasaBakiye || 0)
+const toplamLikidite = computed(() => (dashboardStore.toplamBankaBakiye || 0) + (dashboardStore.toplamKasaBakiye || 0))
+const toplamStok = computed(() => dashboardStore.toplamStok || 0)
+const dusukStokAdet = computed(() => dashboardStore.kritikStokSayisi || 0)
 
 const grafikleriHesapla = () => {
   bakiyeChart.value = {
@@ -599,26 +585,11 @@ const grafikleriHesapla = () => {
 }
 
 const aylikKarsilastirmayiHesapla = () => {
-  const faturalar = faturaStore.faturalar || []
-  if (!faturalar.length) return
-
-  const aylar = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
-  const simdi = new Date()
-  const son6Ay = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(simdi.getFullYear(), simdi.getMonth() - i, 1)
-    return { yil: d.getFullYear(), ay: d.getMonth() }
-  }).reverse()
-
-  const aylikVeri = son6Ay.map((m) => {
-    const ayFaturalar = faturalar.filter((f) => {
-      if (!f.tarih) return false
-      const t = new Date(f.tarih)
-      return t.getFullYear() === m.yil && t.getMonth() === m.ay && f.durum === 'KESILDI'
-    })
-    const gelir = ayFaturalar.filter((f) => f.tur === 'SATIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
-    const gider = ayFaturalar.filter((f) => f.tur === 'ALIS').reduce((t, f) => t + (f.genelToplam || 0), 0)
-    return { ay: aylar[m.ay], gelir, gider }
-  })
+  const aylikVeri = dashboardStore.aylikGelirGider || []
+  if (!aylikVeri.length) {
+    aylikKarsilastirmaChart.value = { labels: [], datasets: [] }
+    return
+  }
 
   aylikKarsilastirmaChart.value = {
     labels: aylikVeri.map((v) => v.ay),
@@ -655,12 +626,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       dashboardStore.getDashboardData(),
-      cariHesapStore.getAllCariHesaplar(),
-      faturaStore.getAllFaturalar(),
-      bankaStore.getAllBankalar(),
-      kasaStore.getAllKasalar(),
-      stokStore.getAll(),
-      dovizStore.kurlariYukle()
+      dovizStore?.kurlariYukle ? dovizStore.kurlariYukle() : Promise.resolve()
     ])
     grafikleriHesapla()
   } catch (error) {

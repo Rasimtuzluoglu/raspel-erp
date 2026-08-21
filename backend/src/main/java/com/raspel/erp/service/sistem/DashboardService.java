@@ -24,6 +24,8 @@ import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.finans.BankaRepository;
+import com.raspel.erp.repository.finans.KasaRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,8 @@ public class DashboardService {
     private final StokHareketRepository stokHareketRepository;
     private final StokRepository stokRepository;
     private final FaturaRepository faturaRepository;
+    private final BankaRepository bankaRepository;
+    private final KasaRepository kasaRepository;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "dashboard", key = "'dashboard:' + #sirketId")
@@ -102,6 +106,12 @@ public class DashboardService {
                         .stream().map(this::vadeDTOyaCevir).collect(Collectors.toList()),
                 Collections.emptyList());
 
+        Long toplamFatura = safeGet(() -> faturaRepository.countBySirketId(sirketId), 0L);
+        Long kesilenFatura = safeGet(() -> faturaRepository.countBySirketIdAndDurum(sirketId, Fatura.FaturaDurum.KESILDI), 0L);
+        BigDecimal toplamBankaBakiye = safeGet(() -> bankaRepository.sumBakiyeBySirketId(sirketId), BigDecimal.ZERO);
+        BigDecimal toplamKasaBakiye = safeGet(() -> kasaRepository.sumBakiyeBySirketId(sirketId), BigDecimal.ZERO);
+        Long kritikStokSayisi = safeGet(() -> stokRepository.countKritikStokBySirketId(sirketId), 0L);
+
         return DashboardDTO.builder()
                 .toplamCariSayisi(toplamCariSayisi)
                 .toplamBakiye(toplamBakiye)
@@ -112,6 +122,12 @@ public class DashboardService {
                 .bugunkuSiparis(bugunkuSiparis)
                 .bekleyenTeslimat(bekleyenTeslimat)
                 .iadeOrani(iadeOrani)
+                .toplamStok(toplamStok)
+                .kritikStokSayisi(kritikStokSayisi)
+                .toplamFatura(toplamFatura)
+                .kesilenFatura(kesilenFatura)
+                .toplamBankaBakiye(toplamBankaBakiye)
+                .toplamKasaBakiye(toplamKasaBakiye)
                 .stokDevirHizi(stokDevirHizi)
                 .enCokSatanlar(enCokSatanlar)
                 .pozitifBakiye(pozitifBakiye)

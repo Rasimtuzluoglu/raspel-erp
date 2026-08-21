@@ -39,4 +39,7 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
 
     @Query("SELECT s FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar ORDER BY s.miktar ASC")
     List<Stok> kritikStoklar(Long sirketId);
+
+    @Query("SELECT COUNT(s) FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar")
+    long countKritikStokBySirketId(@Param("sirketId") Long sirketId);
 }

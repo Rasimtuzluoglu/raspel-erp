@@ -34,6 +34,8 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     List<Fatura> findAll();
 
     long count();
+    long countBySirketId(Long sirketId);
+    long countBySirketIdAndDurum(Long sirketId, Fatura.FaturaDurum durum);
 
     long countByCariHesapId(Long cariHesapId);
 

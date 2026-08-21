@@ -34,9 +34,15 @@ public class DashboardDTO {
     private BigDecimal bugunkuOdeme;
     private Long bekleyenIzinSayisi;
     private List<AylikGelirGiderDTO> aylikGelirGider;
-
     private List<VadeBildirimiDTO> vadesiGecenFaturalar;
     private List<VadeBildirimiDTO> vadesiYaklasanFaturalar;
+
+    private Long toplamStok;
+    private Long kritikStokSayisi;
+    private Long toplamFatura;
+    private Long kesilenFatura;
+    private BigDecimal toplamBankaBakiye;
+    private BigDecimal toplamKasaBakiye;
 
     @Data
     @NoArgsConstructor
