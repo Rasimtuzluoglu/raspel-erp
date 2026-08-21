@@ -19,7 +19,7 @@ public class SeriNoServisi {
     private final SiparisRepository siparisRepository;
     private final TeklifRepository teklifRepository;
 
-    public String faturaNoUret(Long sirketId) {
+    public synchronized String faturaNoUret(Long sirketId) {
         String yil = String.valueOf(LocalDate.now().getYear());
         String prefix = "FTR-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
         List<String> mevcutlar = faturaRepository.findFaturaNumarasiByPrefix(prefix, sirketId);
@@ -36,7 +36,7 @@ public class SeriNoServisi {
         return prefix + String.format("%06d", maxSeri + 1);
     }
 
-    public String siparisNoUret(Long sirketId) {
+    public synchronized String siparisNoUret(Long sirketId) {
         String yil = String.valueOf(LocalDate.now().getYear());
         String prefix = "SIP-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
         List<String> mevcutlar = siparisRepository.findSiparisNoByPrefix(prefix, sirketId);
@@ -53,7 +53,7 @@ public class SeriNoServisi {
         return prefix + String.format("%06d", maxSeri + 1);
     }
 
-    public String teklifNoUret(Long sirketId) {
+    public synchronized String teklifNoUret(Long sirketId) {
         String yil = String.valueOf(LocalDate.now().getYear());
         String prefix = "TKL-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
         List<String> mevcutlar = teklifRepository.findTeklifNoByPrefix(prefix, sirketId);
