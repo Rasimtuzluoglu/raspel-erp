@@ -152,6 +152,9 @@ public class IadeService {
         Iade iade = iadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
         tenantChecker.check(iade.getSirketId(), "Iade");
+        if ("TAMAMLANDI".equals(iade.getDurum())) {
+            throw new BusinessException("Tamamlanmış iade doğrudan silinemez, önce iptal edilmelidir");
+        }
         iadeKalemRepository.deleteByIadeId(id);
         iadeRepository.deleteById(id);
     }

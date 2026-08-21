@@ -13,6 +13,7 @@ import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -99,6 +100,9 @@ public class SiparisService {
         Siparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("FATURA_KESILDI".equals(s.getDurum())) {
+            throw new BusinessException("Faturası kesilmiş sipariş doğrudan düzenlenemez");
+        }
         s.setSiparisNo(dto.getSiparisNo());
         s.setTarih(dto.getTarih());
         s.setCariHesapId(dto.getCariHesapId());
@@ -175,6 +179,9 @@ public class SiparisService {
         Siparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("FATURA_KESILDI".equals(s.getDurum())) {
+            throw new BusinessException("Faturası kesilmiş sipariş doğrudan silinemez");
+        }
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
     }

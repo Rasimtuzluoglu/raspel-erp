@@ -163,4 +163,12 @@ class IadeServiceTest {
         verify(iadeKalemRepository).deleteByIadeId(1L);
         verify(iadeRepository).deleteById(1L);
     }
+
+    @Test
+    void sil_tamamlandi_throws() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        assertThrows(RuntimeException.class, () -> iadeService.sil(1L));
+    }
 }

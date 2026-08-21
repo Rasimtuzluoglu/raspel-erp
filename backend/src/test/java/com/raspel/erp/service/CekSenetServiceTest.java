@@ -101,4 +101,12 @@ class CekSenetServiceTest {
         cekSenetService.sil(1L);
         verify(cekSenetRepository).deleteById(1L);
     }
+
+    @Test
+    void sil_throwsWhenTahsilEdildi() {
+        CekSenet cs = createCekSenet(1L);
+        cs.setDurum("TAHSIL_EDILDI");
+        when(cekSenetRepository.findById(1L)).thenReturn(Optional.of(cs));
+        assertThrows(RuntimeException.class, () -> cekSenetService.sil(1L));
+    }
 }

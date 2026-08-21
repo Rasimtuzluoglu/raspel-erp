@@ -32,6 +32,8 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     long count();
 
+    long countByCariHesapId(Long cariHesapId);
+
     @Query("SELECT f.faturaNumarasi FROM Fatura f WHERE f.faturaNumarasi LIKE :prefix% AND f.sirketId = :sirketId")
     List<String> findFaturaNumarasiByPrefix(@Param("prefix") String prefix, @Param("sirketId") Long sirketId);
 

@@ -4,6 +4,7 @@ import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.CekSenetDTO;
 import com.raspel.erp.entity.finans.CekSenet;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.CekSenetRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,9 @@ public class CekSenetService {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
         tenantChecker.check(cs.getSirketId(), "Cek/Senet");
+        if ("TAHSIL_EDILDI".equals(cs.getDurum()) || "ODENDI".equals(cs.getDurum())) {
+            throw new BusinessException("Tahsil edilmiş veya ödenmiş çek/senet kaydı doğrudan düzenlenemez");
+        }
         cs.setTur(dto.getTur());
         cs.setCariHesapId(dto.getCariHesapId());
         cs.setBankaAdi(dto.getBankaAdi());
@@ -83,6 +87,9 @@ public class CekSenetService {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
         tenantChecker.check(cs.getSirketId(), "Cek/Senet");
+        if ("TAHSIL_EDILDI".equals(cs.getDurum()) || "ODENDI".equals(cs.getDurum())) {
+            throw new BusinessException("Tahsil edilmiş veya ödenmiş çek/senet kaydı silinemez");
+        }
         cekSenetRepository.deleteById(id);
     }
 

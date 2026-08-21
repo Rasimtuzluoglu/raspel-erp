@@ -164,6 +164,9 @@ public class IrsaliyeService {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
         tenantChecker.check(i.getSirketId(), "İrsaliye");
+        if ("KESILDI".equals(i.getDurum())) {
+            throw new BusinessException("Kesilmiş irsaliye doğrudan silinemez, önce iptal edilmelidir");
+        }
         kalemRepository.deleteByIrsaliyeId(id);
         irsaliyeRepository.deleteById(id);
     }

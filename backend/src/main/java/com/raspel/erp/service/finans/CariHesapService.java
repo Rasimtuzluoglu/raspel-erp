@@ -8,6 +8,7 @@ import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,6 +37,7 @@ public class CariHesapService {
     
     private final CariHesapRepository cariHesapRepository;
     private final HareketRepository hareketRepository;
+    private final FaturaRepository faturaRepository;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
 
@@ -154,6 +156,11 @@ public class CariHesapService {
         long hareketSayisi = hareketRepository.countByCariHesapId(id);
         if (hareketSayisi > 0) {
             throw new BusinessException("Bu cari hesaba ait " + hareketSayisi + " adet hareket bulunmaktadır. Önce hareketleri siliniz.");
+        }
+
+        long faturaSayisi = faturaRepository.countByCariHesapId(id);
+        if (faturaSayisi > 0) {
+            throw new BusinessException("Bu cari hesaba ait " + faturaSayisi + " adet fatura bulunmaktadır. Önce faturaları iptal/siliniz.");
         }
 
         cariHesapRepository.deleteById(id);

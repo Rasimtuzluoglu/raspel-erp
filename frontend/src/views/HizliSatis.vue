@@ -75,7 +75,7 @@
 
         <div class="product-section">
           <div class="product-header">
-            <h3>Mevcut Ahşap ({{ filtrelenmisUrunler.length }})</h3>
+            <h3>Mevcut Ürünler ({{ filtrelenmisUrunler.length }})</h3>
           </div>
           <div class="product-grid">
             <div

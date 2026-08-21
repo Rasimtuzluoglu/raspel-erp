@@ -4,6 +4,7 @@ import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.finans.BankaDTO;
 import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.finans.BankaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,9 @@ public class BankaService {
         Banka banka = bankaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
         tenantChecker.check(banka.getSirketId(), "Banka");
+        if (banka.getBakiye() != null && banka.getBakiye().compareTo(BigDecimal.ZERO) != 0) {
+            throw new BusinessException("Bakiyesi sıfır olmayan banka hesabı silinemez. Mevcut bakiye: " + banka.getBakiye() + " ₺");
+        }
         bankaRepository.deleteById(id);
     }
 

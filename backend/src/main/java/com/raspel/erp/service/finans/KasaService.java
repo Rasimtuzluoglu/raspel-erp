@@ -69,6 +69,9 @@ public class KasaService {
         Kasa kasa = kasaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
+        if (kasa.getBakiye() != null && kasa.getBakiye().compareTo(BigDecimal.ZERO) != 0) {
+            throw new BusinessException("Bakiyesi sıfır olmayan kasa silinemez. Mevcut bakiye: " + kasa.getBakiye() + " ₺");
+        }
         if (kasaHareketRepository.countByKasaId(id) > 0)
             throw new BusinessException("Bu kasaya ait hareketler var, önce hareketleri silin");
         kasaRepository.deleteById(id);

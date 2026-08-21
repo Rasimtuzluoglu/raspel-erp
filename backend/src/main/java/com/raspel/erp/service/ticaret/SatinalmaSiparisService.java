@@ -84,6 +84,9 @@ public class SatinalmaSiparisService {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("FATURALANDI".equals(s.getDurum())) {
+            throw new BusinessException("Faturası oluşturulmuş satınalma siparişi doğrudan düzenlenemez");
+        }
         s.setSiparisNo(dto.getSiparisNo());
         s.setTarih(dto.getTarih());
         s.setCariHesapId(dto.getCariHesapId());
@@ -173,6 +176,9 @@ public class SatinalmaSiparisService {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("FATURALANDI".equals(s.getDurum())) {
+            throw new BusinessException("Faturası oluşturulmuş satınalma siparişi silinemez");
+        }
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
     }

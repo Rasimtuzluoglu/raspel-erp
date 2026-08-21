@@ -113,6 +113,14 @@ class SatinalmaSiparisServiceTest {
     }
 
     @Test
+    void sil_throwsWhenFaturalandi() {
+        SatinalmaSiparis s = createSiparis(1L);
+        s.setDurum("FATURALANDI");
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(s));
+        assertThrows(RuntimeException.class, () -> satinalmaSiparisService.sil(1L));
+    }
+
+    @Test
     void faturayaCevir_createsAlisFatura() {
         SatinalmaSiparis siparis = createSiparis(1L);
         siparis.setDurum("TESLIM_ALINDI");

@@ -88,9 +88,19 @@ class BankaServiceTest {
 
     @Test
     void bankaSil_deletes() {
-        when(bankaRepository.findById(1L)).thenReturn(Optional.of(createBanka(1L)));
+        Banka b = createBanka(1L);
+        b.setBakiye(BigDecimal.ZERO);
+        when(bankaRepository.findById(1L)).thenReturn(Optional.of(b));
         bankaService.bankaSil(1L);
         verify(bankaRepository).deleteById(1L);
+    }
+
+    @Test
+    void bankaSil_throwsWhenHasBakiye() {
+        Banka b = createBanka(1L);
+        b.setBakiye(BigDecimal.valueOf(10000));
+        when(bankaRepository.findById(1L)).thenReturn(Optional.of(b));
+        assertThrows(RuntimeException.class, () -> bankaService.bankaSil(1L));
     }
 
     @Test

@@ -104,4 +104,12 @@ class IrsaliyeServiceTest {
         verify(kalemRepository).deleteByIrsaliyeId(1L);
         verify(irsaliyeRepository).deleteById(1L);
     }
+
+    @Test
+    void sil_throwsWhenKesildi() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("KESILDI");
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+        assertThrows(RuntimeException.class, () -> irsaliyeService.sil(1L));
+    }
 }

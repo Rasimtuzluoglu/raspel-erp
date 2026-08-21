@@ -29,6 +29,7 @@ class CariHesapServiceTest {
 
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private HareketRepository hareketRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private CacheYardimci cacheYardimci;
     @InjectMocks private CariHesapService cariHesapService;
@@ -102,6 +103,7 @@ class CariHesapServiceTest {
     void cariHesapSil_deletes() {
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap(1L)));
         when(hareketRepository.countByCariHesapId(1L)).thenReturn(0L);
+        when(faturaRepository.countByCariHesapId(1L)).thenReturn(0L);
         cariHesapService.cariHesapSil(1L);
         verify(cariHesapRepository).deleteById(1L);
     }
@@ -110,6 +112,14 @@ class CariHesapServiceTest {
     void cariHesapSil_throwsWhenHasHareket() {
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap(1L)));
         when(hareketRepository.countByCariHesapId(1L)).thenReturn(3L);
+        assertThrows(RuntimeException.class, () -> cariHesapService.cariHesapSil(1L));
+    }
+
+    @Test
+    void cariHesapSil_throwsWhenHasFatura() {
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap(1L)));
+        when(hareketRepository.countByCariHesapId(1L)).thenReturn(0L);
+        when(faturaRepository.countByCariHesapId(1L)).thenReturn(2L);
         assertThrows(RuntimeException.class, () -> cariHesapService.cariHesapSil(1L));
     }
 

@@ -169,6 +169,9 @@ public class StokService {
         Stok s = stokRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
         tenantChecker.check(s.getSirketId(), "Stok");
+        if (s.getMiktar() != null && s.getMiktar().compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException("Miktarı sıfırdan büyük olan stok kartı silinemez. Mevcut stok: " + s.getMiktar());
+        }
         if (stokHareketRepository.countByStokId(id) > 0)
             throw new BusinessException("Bu stoğa ait hareketler var, önce hareketleri silin");
         stokRepository.deleteById(id);

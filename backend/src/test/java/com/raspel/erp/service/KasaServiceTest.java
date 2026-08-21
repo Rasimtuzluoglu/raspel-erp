@@ -93,15 +93,27 @@ class KasaServiceTest {
 
     @Test
     void kasaSil_deletes() {
-        when(kasaRepository.findById(1L)).thenReturn(Optional.of(createKasa(1L)));
+        Kasa k = createKasa(1L);
+        k.setBakiye(BigDecimal.ZERO);
+        when(kasaRepository.findById(1L)).thenReturn(Optional.of(k));
         when(kasaHareketRepository.countByKasaId(1L)).thenReturn(0L);
         kasaService.kasaSil(1L);
         verify(kasaRepository).deleteById(1L);
     }
 
     @Test
+    void kasaSil_throwsWhenHasBakiye() {
+        Kasa k = createKasa(1L);
+        k.setBakiye(BigDecimal.valueOf(5000));
+        when(kasaRepository.findById(1L)).thenReturn(Optional.of(k));
+        assertThrows(RuntimeException.class, () -> kasaService.kasaSil(1L));
+    }
+
+    @Test
     void kasaSil_throwsWhenHasHareket() {
-        when(kasaRepository.findById(1L)).thenReturn(Optional.of(createKasa(1L)));
+        Kasa k = createKasa(1L);
+        k.setBakiye(BigDecimal.ZERO);
+        when(kasaRepository.findById(1L)).thenReturn(Optional.of(k));
         when(kasaHareketRepository.countByKasaId(1L)).thenReturn(2L);
         assertThrows(RuntimeException.class, () -> kasaService.kasaSil(1L));
     }

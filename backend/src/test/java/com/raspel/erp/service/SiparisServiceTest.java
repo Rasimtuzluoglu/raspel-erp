@@ -116,4 +116,12 @@ class SiparisServiceTest {
         verify(kalemRepository).deleteBySiparisId(1L);
         verify(siparisRepository).deleteById(1L);
     }
+
+    @Test
+    void sil_throwsWhenFaturaKesildi() {
+        Siparis s = createSiparis(1L);
+        s.setDurum("FATURA_KESILDI");
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(s));
+        assertThrows(RuntimeException.class, () -> siparisService.sil(1L));
+    }
 }

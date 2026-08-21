@@ -116,15 +116,27 @@ class StokServiceTest {
 
     @Test
     void sil_deletes() {
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(createStok(1L)));
+        Stok s = createStok(1L);
+        s.setMiktar(BigDecimal.ZERO);
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(s));
         when(stokHareketRepository.countByStokId(1L)).thenReturn(0L);
         stokService.sil(1L);
         verify(stokRepository).deleteById(1L);
     }
 
     @Test
+    void sil_throwsWhenHasMiktar() {
+        Stok s = createStok(1L);
+        s.setMiktar(BigDecimal.valueOf(10));
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(s));
+        assertThrows(RuntimeException.class, () -> stokService.sil(1L));
+    }
+
+    @Test
     void sil_throwsWhenHasHareket() {
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(createStok(1L)));
+        Stok s = createStok(1L);
+        s.setMiktar(BigDecimal.ZERO);
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(s));
         when(stokHareketRepository.countByStokId(1L)).thenReturn(2L);
         assertThrows(RuntimeException.class, () -> stokService.sil(1L));
     }
