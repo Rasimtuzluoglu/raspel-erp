@@ -151,7 +151,7 @@ const routes = [
     path: '/yonetici-kokpiti',
     name: 'YoneticiKokpiti',
     component: () => import('../views/YoneticiKokpiti.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/saha-portali',

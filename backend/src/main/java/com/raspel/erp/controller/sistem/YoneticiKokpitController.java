@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/yonetici-kokpit")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasRole('ADMIN')")
 public class YoneticiKokpitController {
 
     private final YoneticiKokpitService kokpitService;
