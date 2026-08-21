@@ -1,154 +1,154 @@
-# RasPel ERP — KOBİ'nin Tek Panosu
+# RasPel ERP — Modern & Akıllı Kurumsal Kaynak Planlama Sistemi
 
-> Fatura, stok, cari, personel... Hepsi tek ekranda. İnternet kesilse de çalışır, masaüstüne kurulur, yapay zeka ile geleceği tahmin eder, her yerden erişilir.
+> Fatura, stok, cari, saha operasyonları, finans ve personel yönetimi... Hepsi tek ekranda. İnternet kesilse de çalışan PWA desteği, yapay zeka ile talep tahmini, eşzamanlı çoklu kullanıcı güvenliği ve gelişmiş yetkilendirme.
 
-**Java 21 · Spring Boot 3.2 · Vue 3 · PrimeVue 4 · PostgreSQL 16 · Redis · Docker · Yapay Zeka (AI)**
+**Java 21 · Spring Boot 3.2 · Vue 3 · PrimeVue 4 · PostgreSQL 16 · Redis · RabbitMQ · Docker · Yapay Zeka (AI)**
 
 ---
 
-## 🤖 Akıllı ERP & Yapay Zeka Özellikleri
+## 🌟 Öne Çıkan Yenilikler & Akıllı Özellikler
 
 | Modül | Açıklama |
 |---|---|
-| 🧠 **Akıllı Stok & Talep Tahmini (Predictive AI)** | Son 90 günlük tüketim hızına göre ürünlerin kaç gün sonra tükeneceğini hesaplar. Emniyet stoku ve tedarik süresini hesaba katarak proaktif sipariş önerir, 1 tıkla satınalma talebine dönüştürür. |
-| 💬 **Doğal Dilde Veri Sorgulama (AI Chat Assistant)** | *"Bu ay en çok ciro yapan 3 müşteri kim?"*, *"Gelecek hafta vadesi gelen ödemelerim neler?"*, *"Kasa ve banka toplam bakiyemiz nedir?"* gibi doğal dilde soruları anında analiz eder, özet grafik ve tablolar üretir. |
-| 📈 **Nakit Akışı Projeksiyonu (Cash Flow Forecast)** | Kasa/banka bakiyesi üzerine gelecek 30/60/90 gündeki beklenen tahsilat ve ödemeleri kümülatif ekleyerek gelecek kasa durumunu grafik ve tablolarla tahmin eder. |
-| ☁️ **Otomatik Cloud Yedekleme** | Veritabanı yedeklerini uçtan uca **AES-256** ile şifreleyerek otomatik veya manuel olarak **AWS S3, Google Drive veya Dropbox** bulut depolarına senkronize eder. |
-| 🛡️ **IP Kısıtlaması & Güvenlik Anomalileri** | Tanımlı IP Beyaz Listesi (Whitelist) dışındaki giriş denemelerini, mesai dışı toplu veri değişikliklerini ve şüpheli hareketleri yapay zeka ile otomatik tespit eder. |
+| 🚚 **Saha Personeli Portalı** | Saha çalışanları için özel tasarlanmış mobil uyumlu arayüz. Sipariş teslimatı, **dijital müşteri imzası (Canvas)**, masraf fişi yükleme ve anlık izin talebi oluşturma. |
+| 🛡️ **Onay Merkezi (İzin, Masraf, Satınalma)** | Saha ve ofis personellerinden gelen izin, masraf ve satınalma taleplerinin yöneticiler tarafından tek tıkla incelenip onaylanmasını sağlayan merkezi iş akışı. |
+| 📊 **Yönetici Kokpiti (Admin Cockpit)** | Sadece yöneticilere özel ciro, net kâr, bütçe hedefleri ve şirket likidite analizlerini gösteren sadeleştirilmiş üst yönetim panosu. |
+| 🤖 **Yapay Zeka Destekli ERP Asistanı** | OpenAI, Google Gemini ve Anthropic Claude API anahtarlarını AES-256 ile şifreleyerek entegre eden, doğal dilde şirket verilerini sorgulayan akıllı sohbet asistanı. |
+| 🧠 **Akıllı Stok & Talep Tahmini (Predictive AI)** | Son 90 günlük tüketim hızına göre ürünlerin tükenme süresini hesaplar, emniyet stoku ve tedarik süresini hesaba katarak proaktif satınalma önerileri üretir. |
+| 🔒 **Eşzamanlı Çoklu Kullanıcı Koruması (Concurrency)** | Aynı anda yüzlerce çalışan işlem yaparken **Pessimistic Locking (SELECT FOR UPDATE)** ile stok ve kasa çakışmalarını, eksiye düşmeyi ve mükerrer fatura numaralandırmayı engeller. |
+| 📈 **Nakit Akışı Projeksiyonu** | Kasa/banka bakiyesi üzerine gelecek 30/60/90 gündeki tahsilat ve ödemeleri kümülatif ekleyerek finansal geleceği grafiklerle simüle eder. |
+| ☁️ **Otomatik Bulut Yedekleme** | Veritabanı yedeklerini uçtan uca **AES-256** ile şifreleyerek otomatik veya manuel olarak **AWS S3, Google Drive veya Dropbox** bulut depolarına senkronize eder. |
 
 ---
 
-## Neden RasPel?
+## 🏢 Temel ERP Yetenekleri
 
-KOBİ'lerin muhasebeciye bağımlı kalmadan günlük işlerini yönetebilmesi için yapıldı. Karmaşık ERP'lerin aksine menüsü sade, öğrenmesi kolay, ihtiyacın kadarını gösteriyor.
-
-| Öne çıkan | Açıklama |
+| Özellik | Açıklama |
 |-----------|----------|
-| 🏢 Çoklu şirket | Kullanıcı birden fazla firmaya atanabilir, girişte seçer. Admin tüm firmaları görür |
-| 🔐 3 adımlı giriş | Kullanıcı/şifre → 2FA (opsiyonel) → Firma seçimi → Dashboard. Firmalar public değil |
-| 📱 PWA (Progressive Web App) | Tarayıcıdan masaüstüne/mobile yerel uygulama olarak kurun, önbellek desteğiyle çalışın |
-| 📊 CRM Kanban & Zaman Çizelgesi | Fırsatları sürükle-bırak yöntemiyle yönetin, kayıt tarihçelerini Timeline ile inceleyin |
-| 📤 Esnek Export & Yetkilendirme | Excel/CSV/Print entegre menüsü, `v-permission` yetki direktifi |
-| 🧮 Yerleşik araçlar | Hesap makinesi, döviz çevirici, KDV/taksit/kar marjı hesabı |
-| ⌨️ Klavye kısayolları | `Ctrl+K` Omnibar arama, `Esc` kapatma... fareye gerek yok |
-| 🌙 Karanlık mod | Gece geç saatlere kadar çalışanlar için modern tema |
+| 🏢 **Çoklu Şirket & Şube** | Kullanıcı birden fazla firmaya atanabilir, girişte seçim yapar. Şirketler arası tam veri izolasyonu. |
+| 🔐 **3 Adımlı Güvenli Giriş** | Kullanıcı/Şifre → TOTP 2FA (opsiyonel) → Firma Seçimi → Dashboard. Brute-force koruması ve IP kısıtlaması. |
+| 🎭 **Dinamik RBAC & Yetki Matrisi** | Roller ve modül bazlı (Cari, Fatura, Stok vb.) okuma, yazma, silme ve dışa aktarım izinleri (`v-permission`). |
+| 📱 **PWA (Progressive Web App)** | Masaüstü ve mobile yerel uygulama gibi kurulabilir, çevrimdışı önbellek desteğiyle çalışır. |
+| 📊 **CRM Kanban & Zaman Çizelgesi** | Müşteri fırsatlarını sürükle-bırak yöntemiyle yönetin, kayıt tarihçelerini Timeline ile inceleyin. |
+| ⚡ **Yüksek Performans & Redis Cache** | Tekil önbellek sorgusu ile anında açılan Dashboard ve optimize edilmiş veri transferi. |
+| ⌨️ **Klavye Kısayolları** | `Ctrl+K` Omnibar hızlı arama, `Esc` kapatma ile fareye ihtiyaç duymadan hızlı operasyon. |
+| 🌙 **Karanlık / Aydınlık Tema** | Gece ve gündüz kullanımına uygun modern tema ve renk paleti desteği. |
 
 ---
 
-## Modüller
+## 📦 Modül Mimarisi
 
-### 💰 Finans
+### 💰 Finans & Muhasebe
+- **Cari Hesaplar**: Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi, IBAN doğrulama, toplu Excel aktarımı ve ekstre.
+- **Fatura Yönetimi**: Alış/Satış faturası, otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi ve çoğaltma.
+- **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, MT940 hesap özeti yükleme ve otomatik mutabakat.
+- **Çek/Senet, Bütçe & Masraflar**: Portföy takibi, departman bütçeleri, masraf fişleri ve nakit akışı projeksiyonu.
+- **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan ve defter-i kebir.
 
-**Cari Hesaplar** — Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi. IBAN doğrulama, toplu Excel, cari ekstre.
+### 🛒 Ticaret & Satış
+- **Hızlı Satış (POS)**: Barkod okuyucu destekli hızlı satış, sepet, indirim ve termal fiş yazdırma.
+- **Sipariş & İrsaliye**: Siparişten irsaliyeye, irsaliyeden faturaya tek tıkla kontrollü iş akışı.
+- **E-Fatura**: UBL-TR 2.1 standardında GİB uyumlu e-fatura ve e-arşiv entegrasyonu.
+- **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri.
 
-**Fatura** — Alış/satış faturası. Otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi. Faturayı çoğalt, toplu sil.
+### 📦 Stok & Envanter
+- **Stok Kartları & Barkod**: Kritik seviye alarmı, akıllı AI talep tahmini, hareket geçmişi.
+- **Çoklu Depo & Şube**: Şubeler arası transfer, seri/lot/SKT takibi ve periyodik stok sayım modülü.
 
-**Banka & Kasa** — Hesap bakiyeleri, para giriş/çıkışı. Hesap özeti yükleyip otomatik fatura eşleştirme (mutabakat).
-
-**Çek/Senet, Bütçe, Masraf, Nakit Akışı** — Portföy takibi, 30/60/90 günlük nakit akışı projeksiyonu, gider kaydı.
-
-**Döviz** — TCMB'den günlük kur. Yerleşik çevirici ile anında hesapla.
-
-### 🛒 Ticaret
-
-**Hızlı Satış** — Barkod okuyuculu POS. Sepet, indirim, termal fiş.
-
-**Sipariş → İrsaliye → Fatura** — Tek elden iş akışı.
-
-**E-Fatura** — UBL-TR 2.1 ile GİB entegrasyonu.
-
-**Satınalma, CRM Kanban, İade, Fiyat Listesi** — Tedarik, sürükle-bırak fırsat takibi, müşteri bazlı fiyat.
-
-### 📦 Stok
-
-Stok kartı, barkod, kritik seviye alarmı, **Akıllı AI Talep Tahmini**, hareket geçmişi, çoklu depo, şubeler arası transfer, seri/lot takibi, sayım.
-
-### 👥 Personel
-
-TC kimlik doğrulamalı kayıt, izin takibi, puantaj, maaş bordro, vardiya.
-
-### 📊 Muhasebe
-
-Otomatik hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir.
-
-### ⚙️ Sistem & Yapay Zeka
-
-Dashboard, **AI Sohbet Asistanı**, **IP Whitelist & Güvenlik Anomalileri**, **Bulut Yedekleme (AES-256)**, raporlar (KDV, BA/BS, yaşlandırma), denetim logu, rol ve yetki yönetimi.
+### 👥 İnsan Kaynakları (İK)
+- **Personel Kartları**: TC Kimlik doğrulama, departman/pozisyon atamaları, acil durum bilgileri.
+- **İzin & Vardiya**: İzin talepleri, hakediş hesaplama, haftalık vardiya planlama ve puantaj cetveli.
+- **Maaş Bordro**: SGK, gelir vergisi ve damga vergisi kesintileriyle otomatik bordro hesaplama.
 
 ---
 
-## Giriş Akışı
+## 🚀 Hızlı Başlangıç
 
-```
-Kullanıcı adı + şifre → 2FA (varsa) → Firma seçimi → Dashboard
-```
-
-- **Admin** kullanıcılar tüm aktif firmaları görür, istediğini seçer
-- **USER** kullanıcılar sadece atandıkları firmaları görür. Tek firma varsa otomatik giriş yapar
-- Firma listesi public değildir, sadece giriş yapmış kullanıcıya gösterilir
-- Kullanıcı yönetim panelinden bir kullanıcı birden fazla firmaya atanabilir (çoka-çok)
-
----
-
-## Başlat
+### Geliştirme Ortamı (Minimal Setup)
 
 ```bash
-# Geliştirme (3 ayrı terminal)
-docker-compose up -d postgres redis rabbitmq     # Altyapı
-cd backend && mvn spring-boot:run                 # API → :8081
-cd frontend && npm ci && npm run dev              # UI → :5173
+# 1. Altyapı Servislerini Başlatın
+docker-compose up -d postgres redis rabbitmq
+
+# 2. Backend Sunucusunu Başlatın (Java 21 + Maven)
+cd backend
+mvn spring-boot:run     # API -> http://localhost:8081
+
+# 3. Frontend Geliştirme Sunucusunu Başlatın (Node.js)
+cd frontend
+npm ci
+npm run dev            # UI -> http://localhost:5173
 ```
 
-İlk başlatmada sistem boşsa giriş sayfası **ilk kurulum** formunu gösterir: firma adı, vergi no ve yönetici hesabı bilgilerini girerek başlarsınız. Önceden tanımlı demo kullanıcı yoktur.
+> **Not:** İlk açılışta veritabanı boşsa sistem otomatik olarak **İlk Kurulum Sihirbazı** ekranına yönlendirir; şirket bilgilerinizi ve ilk yönetici hesabınızı tanımlayarak hemen başlayabilirsiniz.
 
 ---
+
+## 🐳 Üretim (Production / Docker)
 
 ```bash
-# Production (tek komut)
-cp .env.example .env   # şifreleri ve domain'i doldur
-docker-compose up -d    # 9 servis, SSL dahil
+# .env dosyasını yapılandırın
+cp .env.example .env
+
+# Tüm servisleri tek komutla başlatın (Traefik, SSL, Prometheus, Grafana dahil)
+docker-compose up -d
 ```
 
-Production öncesi `docs/GO-LIVE.md` kontrol listesine bakın.
+Detaylı canlıya geçiş kontrol listesi için `docs/GO-LIVE.md` dosyasını inceleyebilirsiniz.
 
 ---
 
-## Dizin Yapısı
+## 🧪 Test ve Kalite Güvencesi
+
+Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
+
+```bash
+# Backend Testleri (JUnit 5 + H2 + Mockito)
+cd backend
+mvn -B test -q          # 600+ Test (0 Hata)
+
+# Frontend Testleri (Vitest)
+cd frontend
+npm run test           # 153 Test (0 Hata)
+
+# Kod Standartları & Linting
+cd frontend
+npm run lint           # Sıfır ESLint Uyarısı
+
+# Üretim Derlemesi (PWA Build)
+npm run build          # Optimize edilmiş üretim paketleri
+```
+
+---
+
+## 📂 Proje Dizin Mimarisi
 
 ```
 raspel-erp/
-├── backend/                 # Spring Boot 3.2 API (600+ test)
+├── backend/                 # Spring Boot 3.2 REST API
 │   └── src/main/java/com/raspel/erp/
-│       ├── controller/      # REST API denetleyicileri
-│       ├── service/         # AI motorları, Redis cache, tenant kontrol
-│       ├── repository/      # 54 JPA repository
-│       ├── entity/          # JPA entity sınıfları
-│       └── dto/             # Veri transfer objeleri
-├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4 (143 test)
+│       ├── controller/      # REST Denetleyicileri (envanter, finans, ik, muhasebe, sistem, ticaret)
+│       ├── service/         # İş mantığı, AI motorları, Redis cache, SeriNo servisi
+│       ├── repository/      # JPA Repository katmanı (Pessimistic Lock destekli)
+│       ├── entity/          # JPA Veritabanı Varlıkları
+│       ├── dto/             # Data Transfer Objects
+│       └── config/          # Spring Security, JWT, WebSocket, Cache konfigürasyonu
+│
+├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4
 │   └── src/
-│       ├── views/           # 57 sayfa
-│       ├── components/      # Shared bileşenler (ExportMenu, Timeline, Omnibar)
-│       ├── composables/     # Composable hook'lar
-│       ├── stores/          # Pinia store'lar
-│       └── api/             # Axios client + modüller
-├── config/                  # Traefik, Prometheus, Grafana
-├── scripts/                 # Yedekleme, test
-└── docs/                    # Dökümantasyon
+│       ├── views/           # 57 Görünüm (SahaPortali, Onaylar, YoneticiKokpiti, Dashboard vb.)
+│       ├── components/      # Paylaşılan Bileşenler (Timeline, ExportMenu, Omnibar, İmza)
+│       ├── stores/          # Pinia Durum Yönetimi (auth, dashboard, fatura, stok vb.)
+│       ├── composables/     # 12+ Composable Hook (Tema, Yetki, Oturum, Kısayol)
+│       └── api/             # Modüler Axios İstemcisi
+│
+├── config/                  # Traefik Reverse Proxy, Prometheus, Grafana
+├── scripts/                 # Otomatik yedekleme ve bakım betikleri
+└── docs/                    # Mimari ve kullanım dökümanları
 ```
 
 ---
 
-## Test & Kalite Güvencesi
+## 📄 Lisans
 
-```bash
-cd backend && mvn test       # 600+ Unit ve Entegrasyon Testi (0 Hata)
-cd frontend && npm run test  # 143 Vitest Unit Testi (0 Hata)
-cd frontend && npm run lint  # Sıfır ESLint uyarısı
-cd frontend && npm run build # PWA Üretim Derlemesi
-```
-
----
-
-## Lisans
-
-MIT — © 2026 RasPel Co.
+Bu proje [MIT](LICENSE) lisansı ile lisanslanmıştır. © 2026 RasPel ERP.
