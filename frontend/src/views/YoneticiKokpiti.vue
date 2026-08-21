@@ -209,11 +209,10 @@
           <span class="text-xs text-muted">Aylık Dağılım</span>
         </div>
         <div
-          v-if="trendVerisi.labels.length > 0"
+          v-if="trendVerisi.labels && trendVerisi.labels.length > 0"
           style="height: 280px;"
         >
-          <Chart
-            type="bar"
+          <Bar
             :data="trendVerisi"
             :options="chartOptions"
           />
@@ -448,7 +447,18 @@ import { ref, computed, onMounted } from 'vue'
 import { yoneticiKokpitAPI } from '../api/index.js'
 import { formatCurrency } from '../utils/format.js'
 import { useToast } from 'primevue/usetoast'
-import Chart from 'primevue/chart'
+import { Bar } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+} from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const toast = useToast()
 

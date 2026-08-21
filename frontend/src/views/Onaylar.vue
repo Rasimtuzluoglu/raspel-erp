@@ -194,7 +194,6 @@ import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI } from '../a
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
-import Badge from 'primevue/badge'
 
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
