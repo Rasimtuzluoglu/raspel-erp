@@ -606,6 +606,9 @@ const hatirlatWhatsApp = (cari) => {
 .progress-ring {
   transform: rotate(-90deg);
 }
+.progress-ring-circle-bg {
+  stroke: var(--border, #e2e8f0);
+}
 .progress-ring-circle {
   transition: stroke-dashoffset 0.8s ease-in-out;
 }

@@ -55,6 +55,9 @@
     "hesapAyarlari": "Hesap Ayarları",
     "bankaMutabakat": "Banka Mutabakatı",
     "vergiRaporlari": "KDV & BA/BS",
+    "teklifler": "Teklifler & Proforma",
+    "yoneticiKokpiti": "Yönetici Kokpiti",
+    "sahaPortali": "Saha Portalı",
     "cikis": "Çıkış Yap"
   },
   "auth": {

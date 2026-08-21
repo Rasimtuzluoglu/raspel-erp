@@ -55,6 +55,9 @@
     "hesapAyarlari": "Account Settings",
     "bankaMutabakat": "Bank Reconciliation",
     "vergiRaporlari": "VAT & BA/BS",
+    "teklifler": "Quotes & Proforma",
+    "yoneticiKokpiti": "Executive Cockpit",
+    "sahaPortali": "Field Staff Portal",
     "cikis": "Logout"
   },
   "auth": {
