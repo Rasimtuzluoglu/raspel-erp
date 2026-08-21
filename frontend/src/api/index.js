@@ -29,7 +29,8 @@ export {
 
 export { stokAPI, depoAPI, kategoriAPI, stokSeriAPI, stokSayimAPI } from './modules/stok.js'
 
-export { personelAPI, personelIzinAPI, puantajAPI, maasBordroAPI, vardiyaAPI } from './modules/ik.js'
+export { personelAPI, personelIzinAPI, puantajAPI, maasBordroAPI, vardiyaAPI, personelMasrafTalepAPI } from './modules/ik.js'
+
 
 export {
   kullaniciAPI,

@@ -295,6 +295,7 @@ const tumMenuler = [
   { path: '/masraflar', label: 'Masraf', icon: 'pi pi-money-bill', grup: 'Finans', gelismis: true },
   { path: '/satislar', label: 'Satış', icon: 'pi pi-shopping-cart', grup: 'Ticaret', gelismis: true },
   { path: '/hizli-satis', label: 'Hızlı Satış', icon: 'pi pi-bolt', grup: 'Ticaret' },
+  { path: '/saha-portali', label: 'Saha Portalı', icon: 'pi pi-compass', grup: 'Ticaret' },
   { path: '/teklifler', label: 'Teklifler', icon: 'pi pi-file-edit', grup: 'Ticaret' },
   { path: '/crm', label: 'CRM', icon: 'pi pi-bullseye', grup: 'Ticaret', gelismis: true },
   { path: '/e-fatura', label: 'E-Fatura', icon: 'pi pi-file-pdf', grup: 'Ticaret', gelismis: true },

@@ -154,6 +154,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/saha-portali',
+    name: 'SahaPortali',
+    component: () => import('../views/SahaPortali.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/cek-senet',
     name: 'CekSenet',
     component: () => import('../views/CekSenet.vue'),

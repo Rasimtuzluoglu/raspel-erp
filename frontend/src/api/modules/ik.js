@@ -86,3 +86,28 @@ export const vardiyaAPI = {
     return apiClient.delete(`/vardiyalar/${id}`)
   }
 }
+
+export const personelMasrafTalepAPI = {
+  getAll(params) {
+    return apiClient.get('/personel-masraf-talepler', { params })
+  },
+  getBekleyenler() {
+    return apiClient.get('/personel-masraf-talepler/bekleyenler')
+  },
+  getKullaniciTalepleri() {
+    return apiClient.get('/personel-masraf-talepler/kullanici-talepleri')
+  },
+  create(data) {
+    return apiClient.post('/personel-masraf-talepler', data)
+  },
+  onayla(id, onayNotu = '') {
+    return apiClient.patch(`/personel-masraf-talepler/${id}/onayla`, { onayNotu })
+  },
+  reddet(id, onayNotu = '') {
+    return apiClient.patch(`/personel-masraf-talepler/${id}/reddet`, { onayNotu })
+  },
+  delete(id) {
+    return apiClient.delete(`/personel-masraf-talepler/${id}`)
+  }
+}
+

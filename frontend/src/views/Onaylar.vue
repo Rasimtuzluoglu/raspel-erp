@@ -5,7 +5,7 @@
         <i
           class="pi pi-check-circle"
           style="margin-right: 8px"
-        />Bekleyen Onaylar
+        />Yönetici & Muhasebe Onay Merkezi
       </h1>
       <Button
         icon="pi pi-refresh"
@@ -16,28 +16,42 @@
       />
     </div>
 
-    <div class="ozet">
+    <!-- Özet Sayaç Kartları -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
       <div class="ozet-kart">
-        <span>Bekleyen İzin</span><strong>{{ bekleyenIzinler.length }}</strong>
+        <span>Bekleyen İzin Talebi</span>
+        <strong class="text-blue-600">{{ bekleyenIzinler.length }}</strong>
       </div>
       <div class="ozet-kart">
-        <span>Bekleyen Talep</span><strong>{{ bekleyenTalepler.length }}</strong>
+        <span>Bekleyen Masraf / Avans</span>
+        <strong class="text-emerald-600">{{ bekleyenMasraflar.length }}</strong>
+      </div>
+      <div class="ozet-kart">
+        <span>Bekleyen Satınalma</span>
+        <strong class="text-purple-600">{{ bekleyenTalepler.length }}</strong>
       </div>
     </div>
 
-    <Card>
+    <!-- 1. İZİN TALEPLERİ -->
+    <Card class="mb-4">
       <template #title>
-        <i
-          class="pi pi-calendar"
-          style="margin-right: 8px"
-        />İzin Talepleri
+        <div class="flex justify-between items-center">
+          <span><i
+            class="pi pi-calendar"
+            style="margin-right: 8px"
+          />Personel İzin Talepleri</span>
+          <Badge
+            :value="bekleyenIzinler.length"
+            severity="info"
+          />
+        </div>
       </template>
       <template #content>
         <div
           v-if="!bekleyenIzinler.length"
           class="bos"
         >
-          Bekleyen izin talebi yok.
+          Bekleyen izin talebi bulunmuyor.
         </div>
         <div
           v-for="i in bekleyenIzinler"
@@ -46,7 +60,11 @@
         >
           <div class="onay-bilgi">
             <strong>{{ i.personelAdi || '#' + i.personelId }}</strong>
-            <p>{{ i.izinTuru }} · {{ i.baslangic }} → {{ i.bitis }} ({{ i.gunSayisi }} gün)</p>
+            <p>{{ i.izinTuru }} · {{ formatDate(i.baslangic) }} → {{ formatDate(i.bitis) }} ({{ i.gunSayisi }} gün)</p>
+            <small
+              v-if="i.aciklama"
+              class="text-muted block mt-0.5"
+            >Açıklama: {{ i.aciklama }}</small>
           </div>
           <div class="onay-aksiyon">
             <Button
@@ -66,12 +84,73 @@
       </template>
     </Card>
 
+    <!-- 2. SAHA MASRAF & AVANS TALEPLERİ -->
+    <Card class="mb-4">
+      <template #title>
+        <div class="flex justify-between items-center">
+          <span><i
+            class="pi pi-wallet"
+            style="margin-right: 8px"
+          />Saha Masraf & Avans Talepleri</span>
+          <Badge
+            :value="bekleyenMasraflar.length"
+            severity="success"
+          />
+        </div>
+      </template>
+      <template #content>
+        <div
+          v-if="!bekleyenMasraflar.length"
+          class="bos"
+        >
+          Onay bekleyen saha masrafı veya avans talebi yok.
+        </div>
+        <div
+          v-for="m in bekleyenMasraflar"
+          :key="m.id"
+          class="onay-satir"
+        >
+          <div class="onay-bilgi">
+            <div class="flex items-center gap-2">
+              <strong>{{ m.personelAdi || m.kullaniciAdi || 'Personel' }}</strong>
+              <span class="text-xs px-2 py-0.5 rounded bg-gray-100 font-semibold">{{ m.tur === 'AVANS' ? 'Avans' : m.kategori }}</span>
+            </div>
+            <p class="text-sm font-bold text-emerald-600">
+              {{ formatCurrency(m.tutar) }} {{ m.paraBirimi || 'TRY' }}
+            </p>
+            <p>{{ formatDate(m.tarih) }} · {{ m.aciklama }}</p>
+          </div>
+          <div class="onay-aksiyon">
+            <Button
+              label="Onayla (Gidere İşle)"
+              icon="pi pi-check"
+              class="p-button-sm p-button-success"
+              @click="masrafOnayla(m)"
+            />
+            <Button
+              label="Reddet"
+              icon="pi pi-times"
+              class="p-button-sm p-button-danger p-button-outlined"
+              @click="masrafReddet(m)"
+            />
+          </div>
+        </div>
+      </template>
+    </Card>
+
+    <!-- 3. SATINALMA TALEPLERİ -->
     <Card>
       <template #title>
-        <i
-          class="pi pi-shopping-bag"
-          style="margin-right: 8px"
-        />Satın Alma Talepleri
+        <div class="flex justify-between items-center">
+          <span><i
+            class="pi pi-shopping-bag"
+            style="margin-right: 8px"
+          />Satın Alma Talepleri</span>
+          <Badge
+            :value="bekleyenTalepler.length"
+            severity="warning"
+          />
+        </div>
       </template>
       <template #content>
         <div
@@ -111,31 +190,44 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { personelIzinAPI, satinalmaTalepAPI } from '../api/index.js'
+import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { formatCurrency, formatDate } from '../utils/format.js'
+import Badge from 'primevue/badge'
 
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
-const izinler = ref([])
-const talepler = ref([])
-const yukleniyor = ref(false)
 
+const yukleniyor = ref(false)
 const bekleyenIzinler = ref([])
+const bekleyenMasraflar = ref([])
 const bekleyenTalepler = ref([])
 
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const [iRes, tRes] = await Promise.all([personelIzinAPI.getAll(), satinalmaTalepAPI.getAll()])
-    izinler.value = iRes.data?.content || iRes.data || []
-    talepler.value = tRes.data?.content || tRes.data || []
-    bekleyenIzinler.value = izinler.value.filter((i) => i.durum === 'BEKLEMEDE')
-    bekleyenTalepler.value = talepler.value.filter((t) => t.durum === 'TASLAK')
+    const [iRes, mRes, tRes] = await Promise.allSettled([
+      personelIzinAPI.getAll(),
+      personelMasrafTalepAPI.getBekleyenler(),
+      satinalmaTalepAPI.getAll()
+    ])
+    if (iRes.status === 'fulfilled') {
+      const allIzin = iRes.value.data?.content || iRes.value.data || []
+      bekleyenIzinler.value = allIzin.filter((i) => i.durum === 'BEKLEMEDE')
+    }
+    if (mRes.status === 'fulfilled') {
+      bekleyenMasraflar.value = mRes.value.data || []
+    }
+    if (tRes.status === 'fulfilled') {
+      const allTalep = tRes.value.data?.content || tRes.value.data || []
+      bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'TASLAK' || t.durum === 'BEKLEMEDE')
+    }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Onaylar yüklenemedi')
+  } finally {
+    yukleniyor.value = false
   }
-  yukleniyor.value = false
 }
 
 const izinOnay = async (i, durum) => {
@@ -148,10 +240,32 @@ const izinOnay = async (i, durum) => {
   }
 }
 
+const masrafOnayla = async (m) => {
+  try {
+    await personelMasrafTalepAPI.onayla(m.id, 'Muhasebe tarafından onaylandı')
+    toastBildirim.basarili(`Masraf talebi onaylandı ve şirket giderlerine işlendi`)
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+  }
+}
+
+const masrafReddet = async (m) => {
+  const not = prompt('Ret gerekçesi:', 'Belge veya fiş yetersiz')
+  if (not === null) return
+  try {
+    await personelMasrafTalepAPI.reddet(m.id, not)
+    toastBildirim.basarili(`Masraf talebi reddedildi`)
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+  }
+}
+
 const talepOnay = async (t, durum) => {
   try {
     await satinalmaTalepAPI.durumGuncelle(t.id, durum)
-    toastBildirim.basarili(`Talep ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}`)
+    toastBildirim.basarili(`Satınalma talebi ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}`)
     await yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
@@ -174,13 +288,7 @@ onMounted(yukle)
 .sayfa-baslik h1 {
   margin: 0;
 }
-.ozet {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
 .ozet-kart {
-  flex: 1;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -205,6 +313,7 @@ onMounted(yukle)
   justify-content: space-between;
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
+  gap: 16px;
 }
 .onay-satir:last-child {
   border-bottom: none;
@@ -220,5 +329,6 @@ onMounted(yukle)
 .onay-aksiyon {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 </style>
