@@ -108,4 +108,21 @@ describe('FaturaTasarimModal.vue', () => {
 
     printSpy.mockRestore()
   })
+
+  it('applies paper format and orientation classes correctly', async () => {
+    const wrapper = mount(FaturaTasarimModal, {
+      props: {
+        visible: true
+      },
+      global: {
+        plugins: [PrimeVue, ToastService],
+        stubs: commonStubs
+      }
+    })
+
+    const paper = wrapper.find('.fatura-a4-kagit')
+    expect(paper.classes()).toContain('kagit-a4')
+    expect(paper.classes()).toContain('yon-portrait')
+  })
 })
+

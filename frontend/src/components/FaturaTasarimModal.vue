@@ -37,7 +37,49 @@
             </div>
           </div>
 
-          <!-- 2. Vurgu Rengi & Yazı Tipi -->
+          <!-- 2. Kağıt Boyutu & Sayfa Düzeni -->
+          <div class="ayar-kutu">
+            <label class="ayar-baslik"><i class="pi pi-file" /> Kağıt Boyutu & Düzen</label>
+            <div class="form-satir">
+              <label class="alt-etiket">Sayfa Formatı</label>
+              <Dropdown
+                v-model="ayarlar.kagitBoyutu"
+                :options="kagitBoyutSecenekleri"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
+
+            <div
+              v-if="!ayarlar.kagitBoyutu.startsWith('termal')"
+              class="form-satir mt-2"
+            >
+              <label class="alt-etiket">Sayfa Yönü</label>
+              <SelectButton
+                v-model="ayarlar.sayfaYonu"
+                :options="sayfaYonuSecenekleri"
+                option-label="label"
+                option-value="value"
+                size="small"
+                class="w-full"
+              />
+            </div>
+
+            <div class="form-satir mt-2">
+              <label class="alt-etiket">Kenar Boşluğu</label>
+              <SelectButton
+                v-model="ayarlar.kenarBoslugu"
+                :options="kenarBoslukSecenekleri"
+                option-label="label"
+                option-value="value"
+                size="small"
+                class="w-full"
+              />
+            </div>
+          </div>
+
+          <!-- 3. Vurgu Rengi & Yazı Tipi -->
           <div class="ayar-kutu">
             <label class="ayar-baslik"><i class="pi pi-sparkles" /> Vurgu Rengi</label>
             <div class="renk-paleti">
@@ -297,12 +339,25 @@
           </div>
         </div>
 
-        <!-- A4 Sayfası Konteyneri -->
+        <!-- Kağıt / Belge Önizleme Konteyneri -->
         <div class="a4-scroll-wrapper">
+          <component :is="'style'">
+            @media print {
+            @page {
+            size: {{ printPageSize }} !important;
+            margin: {{ ayarlar.kenarBoslugu }} !important;
+            }
+            }
+          </component>
           <div
             id="fatura-yazdirma-alani"
             class="fatura-a4-kagit"
-            :class="['tema-' + ayarlar.sablon, 'font-' + ayarlar.fontFamily]"
+            :class="[
+              'tema-' + ayarlar.sablon,
+              'font-' + ayarlar.fontFamily,
+              'kagit-' + ayarlar.kagitBoyutu,
+              'yon-' + ayarlar.sayfaYonu
+            ]"
             :style="{
               '--vurgu-renk': ayarlar.renk,
               transform: `scale(${zoomOrani})`,
@@ -672,6 +727,9 @@ const aktifFatura = ref(props.faturaData || null)
 // Varsayılan Şablon Ayarları
 const varsayilanAyarlar = {
   sablon: 'modern', // modern, klasik, minimal, kompakt
+  kagitBoyutu: 'a4', // a4, a5, termal80, termal58, letter
+  sayfaYonu: 'portrait', // portrait, landscape
+  kenarBoslugu: '8mm', // 5mm, 8mm, 12mm
   renk: '#1e40af', // lacivert
   fontFamily: 'sans', // sans, roboto, serif, mono
   faturaBasligi: 'SATIŞ FATURASI',
@@ -700,6 +758,45 @@ const varsayilanAyarlar = {
 }
 
 const ayarlar = ref({ ...varsayilanAyarlar })
+
+// Kağıt Boyutu ve Düzen Seçenekleri
+const kagitBoyutSecenekleri = [
+  { label: 'A4 Standart (210×297 mm)', value: 'a4' },
+  { label: 'A5 Yarım Sayfa (148×210 mm)', value: 'a5' },
+  { label: 'Termal 80mm (POS / Kasa Rulosu)', value: 'termal80' },
+  { label: 'Termal 58mm (Mobil / El Terminali)', value: 'termal58' },
+  { label: 'Letter Standart (216×279 mm)', value: 'letter' }
+]
+
+const sayfaYonuSecenekleri = [
+  { label: 'Dikey (Portrait)', value: 'portrait' },
+  { label: 'Yatay (Landscape)', value: 'landscape' }
+]
+
+const kenarBoslukSecenekleri = [
+  { label: 'Dar (5mm)', value: '5mm' },
+  { label: 'Normal (8mm)', value: '8mm' },
+  { label: 'Geniş (12mm)', value: '12mm' }
+]
+
+const printPageSize = computed(() => {
+  if (ayarlar.value.kagitBoyutu === 'a4') {
+    return `A4 ${ayarlar.value.sayfaYonu}`
+  }
+  if (ayarlar.value.kagitBoyutu === 'a5') {
+    return `A5 ${ayarlar.value.sayfaYonu}`
+  }
+  if (ayarlar.value.kagitBoyutu === 'termal80') {
+    return '80mm auto'
+  }
+  if (ayarlar.value.kagitBoyutu === 'termal58') {
+    return '58mm auto'
+  }
+  if (ayarlar.value.kagitBoyutu === 'letter') {
+    return `letter ${ayarlar.value.sayfaYonu}`
+  }
+  return 'A4 portrait'
+})
 
 // Şablon Seçenekleri
 const sablonSecenekleri = [
@@ -1087,13 +1184,10 @@ const yazdir = () => {
   justify-content: center;
 }
 
-/* A4 Kağıdı (Fatura Belgesi) */
+/* Kağıt / Fatura Belgesi Temel Stilleri */
 .fatura-a4-kagit {
-  width: 210mm;
-  min-height: 297mm;
   background: #ffffff !important;
   color: #1e293b !important;
-  padding: 16mm 18mm;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
   border-radius: 4px;
   display: flex;
@@ -1102,6 +1196,103 @@ const yazdir = () => {
   box-sizing: border-box;
   font-size: 12px;
   line-height: 1.4;
+  transition: width 0.2s, min-height 0.2s, padding 0.2s;
+}
+
+/* Kağıt Formatları ve Yönleri */
+.kagit-a4.yon-portrait {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 16mm 18mm;
+}
+.kagit-a4.yon-landscape {
+  width: 297mm;
+  min-height: 210mm;
+  padding: 14mm 16mm;
+}
+
+.kagit-a5.yon-portrait {
+  width: 148mm;
+  min-height: 210mm;
+  padding: 10mm 12mm;
+  font-size: 10.5px;
+}
+.kagit-a5.yon-portrait .fatura-ust-header h1 { font-size: 16px; }
+.kagit-a5.yon-portrait .firma-unvani { font-size: 15px; }
+.kagit-a5.yon-portrait .fatura-kalem-tablosu th,
+.kagit-a5.yon-portrait .fatura-kalem-tablosu td { padding: 4px 6px; font-size: 9.5px; }
+
+.kagit-a5.yon-landscape {
+  width: 210mm;
+  min-height: 148mm;
+  padding: 8mm 12mm;
+  font-size: 10px;
+}
+.kagit-a5.yon-landscape .fatura-ust-header h1 { font-size: 16px; }
+.kagit-a5.yon-landscape .firma-unvani { font-size: 14px; }
+.kagit-a5.yon-landscape .fatura-kalem-tablosu th,
+.kagit-a5.yon-landscape .fatura-kalem-tablosu td { padding: 3px 5px; font-size: 9px; }
+
+.kagit-letter.yon-portrait {
+  width: 216mm;
+  min-height: 279mm;
+  padding: 16mm 18mm;
+}
+.kagit-letter.yon-landscape {
+  width: 279mm;
+  min-height: 216mm;
+  padding: 14mm 16mm;
+}
+
+/* Termal Fiş / POS Formatları */
+.kagit-termal80 {
+  width: 80mm;
+  min-height: auto;
+  padding: 6mm 6mm;
+  font-size: 9.5px;
+}
+.kagit-termal80 .fatura-ust-header {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.kagit-termal80 .header-sol,
+.kagit-termal80 .header-sag {
+  text-align: center;
+  align-items: center;
+  width: 100%;
+}
+.kagit-termal80 .fatura-alt-bolum {
+  flex-direction: column;
+}
+.kagit-termal80 .imza-alani-grid {
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.kagit-termal58 {
+  width: 58mm;
+  min-height: auto;
+  padding: 4mm 4mm;
+  font-size: 8.5px;
+}
+.kagit-termal58 .fatura-ust-header {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.kagit-termal58 .header-sol,
+.kagit-termal58 .header-sag {
+  text-align: center;
+  align-items: center;
+  width: 100%;
+}
+.kagit-termal58 .fatura-alt-bolum {
+  flex-direction: column;
+}
+.kagit-termal58 .imza-alani-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 /* Font Ailesi Sınıfları */
