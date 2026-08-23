@@ -15,9 +15,6 @@ import com.raspel.erp.entity.finans.CariHesap;
 @Repository
 public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
-    List<Fatura> findAllByOrderByTarihDesc();
-
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})

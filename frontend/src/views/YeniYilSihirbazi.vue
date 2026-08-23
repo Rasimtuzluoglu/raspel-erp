@@ -15,16 +15,29 @@
 
       <div class="mt-5 p-4 border-1 surface-border border-round">
         <!-- Adım 1: Temel Bilgiler -->
-        <div v-if="aktifAdim === 0" class="step-content">
-          <h3 class="mb-4">1. Yeni Şirket Bilgileri</h3>
+        <div
+          v-if="aktifAdim === 0"
+          class="step-content"
+        >
+          <h3 class="mb-4">
+            1. Yeni Şirket Bilgileri
+          </h3>
           <div class="grid formgrid p-fluid">
             <div class="field col-12 md:col-6">
               <label for="form-ad">Şirket Adı *</label>
-              <InputText id="form-ad" v-model="form.ad" placeholder="Örn: RasPel 2026 Resmi" />
+              <InputText
+                id="form-ad"
+                v-model="form.ad"
+                placeholder="Örn: RasPel 2026 Resmi"
+              />
             </div>
             <div class="field col-12 md:col-3">
               <label for="form-yil">Mali Yıl *</label>
-              <InputNumber id="form-yil" v-model="form.yil" :useGrouping="false" />
+              <InputNumber
+                id="form-yil"
+                v-model="form.yil"
+                :use-grouping="false"
+              />
             </div>
             <div class="field col-12 md:col-3">
               <label for="form-tur">Şirket Türü</label>
@@ -32,8 +45,8 @@
                 id="form-tur"
                 v-model="form.tur"
                 :options="[{label:'Resmi', value:'RESMI'}, {label:'Gayriresmi', value:'GAYRIRESMI'}, {label:'Diğer', value:'DIGER'}]"
-                optionLabel="label"
-                optionValue="value"
+                option-label="label"
+                option-value="value"
               />
             </div>
             <div class="field col-12 md:col-6">
@@ -42,97 +55,199 @@
                 id="form-parent"
                 v-model="form.parentId"
                 :options="sirketler"
-                optionLabel="ad"
-                optionValue="id"
-                showClear
+                option-label="ad"
+                option-value="id"
+                show-clear
                 placeholder="Bu şirket hangi ana şirkete/müşteriye bağlı?"
               />
             </div>
             <div class="field col-12 md:col-6">
               <label for="form-vkn">Vergi Numarası</label>
-              <InputText id="form-vkn" v-model="form.vergiNo" />
+              <InputText
+                id="form-vkn"
+                v-model="form.vergiNo"
+              />
             </div>
           </div>
         </div>
 
         <!-- Adım 2: Veri Aktarım Seçenekleri -->
-        <div v-else-if="aktifAdim === 1" class="step-content">
-          <h3 class="mb-4">2. Veri Aktarımı</h3>
+        <div
+          v-else-if="aktifAdim === 1"
+          class="step-content"
+        >
+          <h3 class="mb-4">
+            2. Veri Aktarımı
+          </h3>
           <div class="mb-4">
-            <label for="kaynak-sirket" class="font-bold block mb-2">Verilerin Çekileceği Kaynak Şirket</label>
+            <label
+              for="kaynak-sirket"
+              class="font-bold block mb-2"
+            >Verilerin Çekileceği Kaynak Şirket</label>
             <Dropdown
               id="kaynak-sirket"
               v-model="aktarim.kaynakSirketId"
               :options="sirketler"
-              optionLabel="ad"
-              optionValue="id"
-              showClear
+              option-label="ad"
+              option-value="id"
+              show-clear
               placeholder="Kaynak şirketi seçin (Veri aktarılmayacaksa boş bırakın)"
               class="w-full md:w-6"
             />
           </div>
 
-          <div v-if="aktarim.kaynakSirketId" class="aktarim-secenekleri mt-4">
+          <div
+            v-if="aktarim.kaynakSirketId"
+            class="aktarim-secenekleri mt-4"
+          >
             <div class="flex align-items-center mb-3">
-              <Checkbox v-model="aktarim.stoklariAktar" :binary="true" inputId="stokAktar" />
-              <label for="stokAktar" class="ml-2 font-semibold">Stok Kartlarını Aktar</label>
+              <Checkbox
+                v-model="aktarim.stoklariAktar"
+                :binary="true"
+                input-id="stokAktar"
+              />
+              <label
+                for="stokAktar"
+                class="ml-2 font-semibold"
+              >Stok Kartlarını Aktar</label>
             </div>
             <div class="ml-4 mb-4 text-color-secondary text-sm">
               <div class="flex align-items-center mb-2">
-                <Checkbox v-model="aktarim.fiyatlariKoru" :binary="true" inputId="fiyatKoru" :disabled="!aktarim.stoklariAktar" />
-                <label for="fiyatKoru" class="ml-2">Stok satış ve alış fiyatlarını koru (Seçilmezse fiyatlar 0 olur)</label>
+                <Checkbox
+                  v-model="aktarim.fiyatlariKoru"
+                  :binary="true"
+                  input-id="fiyatKoru"
+                  :disabled="!aktarim.stoklariAktar"
+                />
+                <label
+                  for="fiyatKoru"
+                  class="ml-2"
+                >Stok satış ve alış fiyatlarını koru (Seçilmezse fiyatlar 0 olur)</label>
               </div>
               <i class="pi pi-info-circle mr-1" /> Stok miktarları yeni şirkette 0 olarak başlatılacaktır.
             </div>
 
             <div class="flex align-items-center mb-3">
-              <Checkbox v-model="aktarim.carileriAktar" :binary="true" inputId="cariAktar" />
-              <label for="cariAktar" class="ml-2 font-semibold">Cari Hesapları Aktar</label>
+              <Checkbox
+                v-model="aktarim.carileriAktar"
+                :binary="true"
+                input-id="cariAktar"
+              />
+              <label
+                for="cariAktar"
+                class="ml-2 font-semibold"
+              >Cari Hesapları Aktar</label>
             </div>
             <div class="ml-4 mb-4 text-color-secondary text-sm">
               <div class="flex align-items-center mb-2">
-                <Checkbox v-model="aktarim.bakiyeleriSifirla" :binary="true" inputId="bakiyeSifirla" :disabled="!aktarim.carileriAktar" />
-                <label for="bakiyeSifirla" class="ml-2">Cari bakiyeleri sıfırla (Seçilmezse mevcut bakiyeler devir olarak aktarılır)</label>
+                <Checkbox
+                  v-model="aktarim.bakiyeleriSifirla"
+                  :binary="true"
+                  input-id="bakiyeSifirla"
+                  :disabled="!aktarim.carileriAktar"
+                />
+                <label
+                  for="bakiyeSifirla"
+                  class="ml-2"
+                >Cari bakiyeleri sıfırla (Seçilmezse mevcut bakiyeler devir olarak aktarılır)</label>
               </div>
             </div>
           </div>
-          <div v-else class="p-message p-message-info">
+          <div
+            v-else
+            class="p-message p-message-info"
+          >
             <div class="p-message-wrapper">
-              <span class="p-message-icon pi pi-info-circle"></span>
-              <div class="p-message-text">Kaynak şirket seçilmediği için yeni şirket tamamen boş oluşturulacaktır.</div>
+              <span class="p-message-icon pi pi-info-circle" />
+              <div class="p-message-text">
+                Kaynak şirket seçilmediği için yeni şirket tamamen boş oluşturulacaktır.
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Adım 3: Onay ve Özet -->
-        <div v-else-if="aktifAdim === 2" class="step-content">
-          <h3 class="mb-4">3. Özet ve Onay</h3>
+        <div
+          v-else-if="aktifAdim === 2"
+          class="step-content"
+        >
+          <h3 class="mb-4">
+            3. Özet ve Onay
+          </h3>
           <div class="surface-100 p-4 border-round mb-4">
-            <h4 class="mt-0 mb-3 border-bottom-1 border-300 pb-2">Oluşturulacak Şirket</h4>
+            <h4 class="mt-0 mb-3 border-bottom-1 border-300 pb-2">
+              Oluşturulacak Şirket
+            </h4>
             <div class="grid">
-              <div class="col-4 font-semibold">Şirket Adı:</div><div class="col-8">{{ form.ad }}</div>
-              <div class="col-4 font-semibold">Tür / Yıl:</div><div class="col-8">{{ form.tur }} / {{ form.yil }}</div>
-              <div class="col-4 font-semibold">Ana Şirket:</div><div class="col-8">{{ seciliAnaSirketAdi || '-' }}</div>
+              <div class="col-4 font-semibold">
+                Şirket Adı:
+              </div><div class="col-8">
+                {{ form.ad }}
+              </div>
+              <div class="col-4 font-semibold">
+                Tür / Yıl:
+              </div><div class="col-8">
+                {{ form.tur }} / {{ form.yil }}
+              </div>
+              <div class="col-4 font-semibold">
+                Ana Şirket:
+              </div><div class="col-8">
+                {{ seciliAnaSirketAdi || '-' }}
+              </div>
             </div>
 
-            <h4 class="mt-4 mb-3 border-bottom-1 border-300 pb-2">Veri Aktarımı</h4>
-            <div class="grid" v-if="aktarim.kaynakSirketId">
-              <div class="col-4 font-semibold">Kaynak Şirket:</div><div class="col-8">{{ seciliKaynakSirketAdi }}</div>
-              <div class="col-4 font-semibold">Stok Kartları:</div>
-              <div class="col-8">
-                <span v-if="aktarim.stoklariAktar" class="text-green-600 font-bold">Evet (Fiyatlar: {{ aktarim.fiyatlariKoru ? 'Korunacak' : 'Sıfırlanacak' }})</span>
-                <span v-else class="text-red-500">Hayır</span>
+            <h4 class="mt-4 mb-3 border-bottom-1 border-300 pb-2">
+              Veri Aktarımı
+            </h4>
+            <div
+              v-if="aktarim.kaynakSirketId"
+              class="grid"
+            >
+              <div class="col-4 font-semibold">
+                Kaynak Şirket:
+              </div><div class="col-8">
+                {{ seciliKaynakSirketAdi }}
               </div>
-              <div class="col-4 font-semibold">Cari Hesaplar:</div>
+              <div class="col-4 font-semibold">
+                Stok Kartları:
+              </div>
               <div class="col-8">
-                <span v-if="aktarim.carileriAktar" class="text-green-600 font-bold">Evet (Bakiye: {{ aktarim.bakiyeleriSifirla ? 'Sıfırlanacak' : 'Devredecek' }})</span>
-                <span v-else class="text-red-500">Hayır</span>
+                <span
+                  v-if="aktarim.stoklariAktar"
+                  class="text-green-600 font-bold"
+                >Evet (Fiyatlar: {{ aktarim.fiyatlariKoru ? 'Korunacak' : 'Sıfırlanacak' }})</span>
+                <span
+                  v-else
+                  class="text-red-500"
+                >Hayır</span>
+              </div>
+              <div class="col-4 font-semibold">
+                Cari Hesaplar:
+              </div>
+              <div class="col-8">
+                <span
+                  v-if="aktarim.carileriAktar"
+                  class="text-green-600 font-bold"
+                >Evet (Bakiye: {{ aktarim.bakiyeleriSifirla ? 'Sıfırlanacak' : 'Devredecek' }})</span>
+                <span
+                  v-else
+                  class="text-red-500"
+                >Hayır</span>
               </div>
             </div>
-            <div v-else class="text-color-secondary font-italic">Veri aktarımı yapılmayacak.</div>
+            <div
+              v-else
+              class="text-color-secondary font-italic"
+            >
+              Veri aktarımı yapılmayacak.
+            </div>
           </div>
 
-          <Message v-if="aktarim.kaynakSirketId && (aktarim.stoklariAktar || aktarim.carileriAktar)" severity="warn" :closable="false">
+          <Message
+            v-if="aktarim.kaynakSirketId && (aktarim.stoklariAktar || aktarim.carileriAktar)"
+            severity="warn"
+            :closable="false"
+          >
             <i class="pi pi-exclamation-triangle mr-2" />
             Aktarım işlemi veritabanı boyutuna göre birkaç saniye sürebilir. Lütfen işlem bitene kadar sayfadan ayrılmayın.
           </Message>
@@ -140,9 +255,30 @@
       </div>
 
       <div class="flex justify-content-between mt-4">
-        <Button label="Geri" icon="pi pi-angle-left" @click="geri" :disabled="aktifAdim === 0" class="p-button-outlined" />
-        <Button v-if="aktifAdim < 2" label="İleri" icon="pi pi-angle-right" iconPos="right" @click="ileri" :disabled="!ileriGidebilir" />
-        <Button v-else label="Şirketi Oluştur ve Aktarımı Başlat" icon="pi pi-check" iconPos="right" severity="success" @click="tamamla" :loading="islemYapiliyor" />
+        <Button
+          label="Geri"
+          icon="pi pi-angle-left"
+          :disabled="aktifAdim === 0"
+          class="p-button-outlined"
+          @click="geri"
+        />
+        <Button
+          v-if="aktifAdim < 2"
+          label="İleri"
+          icon="pi pi-angle-right"
+          icon-pos="right"
+          :disabled="!ileriGidebilir"
+          @click="ileri"
+        />
+        <Button
+          v-else
+          label="Şirketi Oluştur ve Aktarımı Başlat"
+          icon="pi pi-check"
+          icon-pos="right"
+          severity="success"
+          :loading="islemYapiliyor"
+          @click="tamamla"
+        />
       </div>
     </div>
   </div>

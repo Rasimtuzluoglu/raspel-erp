@@ -38,24 +38,6 @@ class CariHesapRepositoryTest {
     }
 
     @Test
-    void toplamBakiyeHesapla_returnsSumOfAllBalances() {
-        cariHesapRepository.save(createCariHesap("Cari A", BigDecimal.valueOf(1000)));
-        cariHesapRepository.save(createCariHesap("Cari B", BigDecimal.valueOf(2000)));
-        cariHesapRepository.save(createCariHesap("Cari C", BigDecimal.valueOf(3000)));
-
-        BigDecimal result = cariHesapRepository.toplamBakiyeHesapla();
-
-        assertEquals(0, BigDecimal.valueOf(6000).compareTo(result));
-    }
-
-    @Test
-    void toplamBakiyeHesapla_returnsZeroWhenNoRecords() {
-        BigDecimal result = cariHesapRepository.toplamBakiyeHesapla();
-
-        assertEquals(BigDecimal.ZERO, result);
-    }
-
-    @Test
     void findByAdContainingIgnoreCase_returnsMatchingResults() {
         cariHesapRepository.save(createCariHesap("ABC Müşteri", BigDecimal.ZERO));
         cariHesapRepository.save(createCariHesap("XYZ Tedarikçi", BigDecimal.ZERO));

@@ -123,8 +123,14 @@
           />
         </div>
         
-        <div class="field-row" style="display: flex; gap: 16px;">
-          <div class="field" style="flex: 1;">
+        <div
+          class="field-row"
+          style="display: flex; gap: 16px;"
+        >
+          <div
+            class="field"
+            style="flex: 1;"
+          >
             <label>Şirket Türü</label>
             <Dropdown
               v-model="form.tur"
@@ -133,16 +139,19 @@
                 { label: 'Resmi', value: 'RESMI' },
                 { label: 'Gayriresmi', value: 'GAYRIRESMI' }
               ]"
-              optionLabel="label"
-              optionValue="value"
+              option-label="label"
+              option-value="value"
               class="w-full"
             />
           </div>
-          <div class="field" style="flex: 1;">
+          <div
+            class="field"
+            style="flex: 1;"
+          >
             <label>Mali Yıl</label>
             <InputNumber
               v-model="form.yil"
-              :useGrouping="false"
+              :use-grouping="false"
               class="w-full"
             />
           </div>
@@ -153,9 +162,9 @@
           <Dropdown
             v-model="form.parentId"
             :options="sirketler.filter(s => s.id !== form.id)"
-            optionLabel="ad"
-            optionValue="id"
-            showClear
+            option-label="ad"
+            option-value="id"
+            show-clear
             placeholder="Ana şirket seçin"
             class="w-full"
           />
@@ -261,10 +270,16 @@
       modal
       :style="{ width: '700px' }"
     >
-      <div v-if="konsolideYukleniyor" class="text-center py-6">
+      <div
+        v-if="konsolideYukleniyor"
+        class="text-center py-6"
+      >
         <i class="pi pi-spin pi-spinner text-3xl text-primary" />
       </div>
-      <div v-else-if="konsolideVeri" class="space-y-4">
+      <div
+        v-else-if="konsolideVeri"
+        class="space-y-4"
+      >
         <div class="grid grid-cols-3 gap-3">
           <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-100">
             <span class="text-xs text-blue-600 font-bold block">Toplam Stok Değeri</span>
@@ -280,12 +295,33 @@
           </div>
         </div>
 
-        <h4 class="font-bold text-sm text-gray-700 dark:text-gray-200 mt-3">Grup ve Yıllık Alt Şirketler ({{ konsolideVeri.sirketler?.length || 0 }})</h4>
-        <DataTable :value="konsolideVeri.sirketler" size="small" striped-rows>
-          <Column field="sirketAdi" header="Şirket" />
-          <Column field="tur" header="Tür" style="width: 100px" />
-          <Column field="yil" header="Yıl" style="width: 80px" />
-          <Column field="stokSayisi" header="Stok Çeşidi" style="width: 100px" />
+        <h4 class="font-bold text-sm text-gray-700 dark:text-gray-200 mt-3">
+          Grup ve Yıllık Alt Şirketler ({{ konsolideVeri.sirketler?.length || 0 }})
+        </h4>
+        <DataTable
+          :value="konsolideVeri.sirketler"
+          size="small"
+          striped-rows
+        >
+          <Column
+            field="sirketAdi"
+            header="Şirket"
+          />
+          <Column
+            field="tur"
+            header="Tür"
+            style="width: 100px"
+          />
+          <Column
+            field="yil"
+            header="Yıl"
+            style="width: 80px"
+          />
+          <Column
+            field="stokSayisi"
+            header="Stok Çeşidi"
+            style="width: 100px"
+          />
           <Column header="Stok Değeri">
             <template #body="{ data }">
               {{ formatPara(data.stokDegeri) }}
@@ -301,7 +337,11 @@
         </DataTable>
       </div>
       <template #footer>
-        <Button label="Kapat" class="p-button-text" @click="konsolideModal = false" />
+        <Button
+          label="Kapat"
+          class="p-button-text"
+          @click="konsolideModal = false"
+        />
       </template>
     </Dialog>
   </div>

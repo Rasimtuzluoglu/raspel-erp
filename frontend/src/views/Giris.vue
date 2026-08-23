@@ -297,8 +297,14 @@
                 v-if="sirketler.length > 0"
                 class="sirket-listesi"
               >
-                <template v-for="(grup, grupAdi) in gruplanmisSirketler" :key="grupAdi">
-                  <div v-if="Object.keys(gruplanmisSirketler).length > 1" class="sirket-grup-baslik">
+                <template
+                  v-for="(grup, grupAdi) in gruplanmisSirketler"
+                  :key="grupAdi"
+                >
+                  <div
+                    v-if="Object.keys(gruplanmisSirketler).length > 1"
+                    class="sirket-grup-baslik"
+                  >
                     <i class="pi pi-folder" />
                     <span>{{ grupAdi }}</span>
                   </div>
@@ -317,11 +323,21 @@
                       </div>
                     </div>
                     <div class="sirket-kart-sag">
-                      <span v-if="s.tur && s.tur !== 'DIGER'" class="sirket-tur-badge" :class="'tur-' + (s.tur || '').toLowerCase()">
+                      <span
+                        v-if="s.tur && s.tur !== 'DIGER'"
+                        class="sirket-tur-badge"
+                        :class="'tur-' + (s.tur || '').toLowerCase()"
+                      >
                         {{ s.tur === 'RESMI' ? 'Resmi' : s.tur === 'GAYRIRESMI' ? 'Gayriresmi' : s.tur }}
                       </span>
-                      <span v-if="s.yil" class="sirket-yil-badge">{{ s.yil }}</span>
-                      <i v-if="s.id === sonSecilenSirketId" class="pi pi-star-fill son-secilen-yildiz" />
+                      <span
+                        v-if="s.yil"
+                        class="sirket-yil-badge"
+                      >{{ s.yil }}</span>
+                      <i
+                        v-if="s.id === sonSecilenSirketId"
+                        class="pi pi-star-fill son-secilen-yildiz"
+                      />
                       <i class="pi pi-arrow-right" />
                     </div>
                   </button>

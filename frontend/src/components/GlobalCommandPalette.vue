@@ -36,8 +36,12 @@
           <div class="flex items-center gap-3">
             <i :class="[item.icon, 'text-base', idx === selectedIndex ? 'text-white' : 'text-primary']" />
             <div>
-              <div class="font-semibold text-sm">{{ item.title }}</div>
-              <div :class="['text-xs', idx === selectedIndex ? 'text-blue-100' : 'text-gray-400']">{{ item.group }}</div>
+              <div class="font-semibold text-sm">
+                {{ item.title }}
+              </div>
+              <div :class="['text-xs', idx === selectedIndex ? 'text-blue-100' : 'text-gray-400']">
+                {{ item.group }}
+              </div>
             </div>
           </div>
           <span :class="['text-xs font-mono px-1.5 py-0.5 rounded', idx === selectedIndex ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500']">
@@ -45,7 +49,10 @@
           </span>
         </div>
 
-        <div v-if="filteredItems.length === 0" class="text-center py-8 text-gray-400 text-sm">
+        <div
+          v-if="filteredItems.length === 0"
+          class="text-center py-8 text-gray-400 text-sm"
+        >
           <i class="pi pi-search text-2xl mb-2 block opacity-50" />
           "{{ query }}" için sonuç bulunamadı.
         </div>

@@ -24,10 +24,6 @@ public class AuditLogService {
                 .entityId(entityId).aciklama(aciklama).ipAdresi(ipAdresi).build());
     }
 
-    public Page<AuditLog> tumunuGetir(Pageable pageable) {
-        return auditLogRepository.findAllByOrderByTarihDesc(pageable);
-    }
-
     public Page<AuditLog> filtreliGetir(Long sirketId, Long kullaniciId, String islem, String entityAdi,
                                          LocalDate baslangicTarih, LocalDate bitisTarih, Pageable pageable) {
         LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;

@@ -13,7 +13,6 @@ import java.util.List;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
-    Page<AuditLog> findAllByOrderByTarihDesc(Pageable pageable);
     List<AuditLog> findByKullaniciIdOrderByTarihDesc(Long kullaniciId);
 
     @Query(value = "SELECT DISTINCT a.islem FROM sistem.audit_log a ORDER BY a.islem", nativeQuery = true)

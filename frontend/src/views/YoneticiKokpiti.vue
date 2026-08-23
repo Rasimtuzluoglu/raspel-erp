@@ -58,7 +58,9 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h4 class="font-bold text-sm text-blue-100">Yapay Zeka Finansal Değerlendirmesi</h4>
+            <h4 class="font-bold text-sm text-blue-100">
+              Yapay Zeka Finansal Değerlendirmesi
+            </h4>
             <span class="text-[10px] bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full font-mono">Otomatik Analiz</span>
           </div>
           <p class="text-xs text-blue-100/90 mt-1 leading-relaxed">
@@ -80,7 +82,10 @@
       <div class="kpi-card">
         <div class="kpi-card-header">
           <span class="kpi-card-title">Aylık Ciro Gerçekleşme</span>
-          <span class="badge-pill" :style="{ backgroundColor: progressRenk + '20', color: progressRenk }">
+          <span
+            class="badge-pill"
+            :style="{ backgroundColor: progressRenk + '20', color: progressRenk }"
+          >
             %{{ (kokpit?.ciroIlerlemeYuzdesi || 0).toFixed(1) }}
           </span>
         </div>
@@ -161,19 +166,27 @@
               <i class="pi pi-chart-bar text-primary mr-2" />
               Günlük Ciro Gerçekleşme Trendi
             </h3>
-            <p class="text-xs text-muted">Seçilen ay içerisindeki günlük satış dağılımı</p>
+            <p class="text-xs text-muted">
+              Seçilen ay içerisindeki günlük satış dağılımı
+            </p>
           </div>
           <span class="badge-pill bg-primary/10 text-primary font-bold">
             Toplam: {{ formatPara(kokpit?.gerceklesenCiro || 0) }}
           </span>
         </div>
-        <div class="chart-container" style="height: 260px;">
+        <div
+          class="chart-container"
+          style="height: 260px;"
+        >
           <Bar
             v-if="trendVerisi?.labels?.length"
             :data="trendVerisi"
             :options="barChartOptions"
           />
-          <div v-else class="empty-chart">
+          <div
+            v-else
+            class="empty-chart"
+          >
             <i class="pi pi-chart-bar text-3xl text-gray-300 mb-2 block" />
             <span>Bu ay için henüz satış hareketi bulunamadı.</span>
           </div>
@@ -188,16 +201,24 @@
               <i class="pi pi-chart-pie text-emerald-500 mr-2" />
               Finansal Dağılım
             </h3>
-            <p class="text-xs text-muted">Ciro, Maliyet ve Gider Oranları</p>
+            <p class="text-xs text-muted">
+              Ciro, Maliyet ve Gider Oranları
+            </p>
           </div>
         </div>
-        <div class="chart-container flex items-center justify-center" style="height: 260px;">
+        <div
+          class="chart-container flex items-center justify-center"
+          style="height: 260px;"
+        >
           <Doughnut
             v-if="dagilimVerisi?.datasets?.[0]?.data?.some(v => v > 0)"
             :data="dagilimVerisi"
             :options="doughnutOptions"
           />
-          <div v-else class="empty-chart">
+          <div
+            v-else
+            class="empty-chart"
+          >
             <i class="pi pi-chart-pie text-3xl text-gray-300 mb-2 block" />
             <span>Finansal dağılım verisi henüz oluşmadı.</span>
           </div>
@@ -213,7 +234,9 @@
             <i class="pi pi-chart-line text-emerald-500 mr-2" />
             30 - 60 - 90 Günlük Nakit Akışı Projeksiyonu
           </h3>
-          <p class="text-xs text-muted">Vadesi gelen alacaklar, tedarikçi ödemeleri ve mevcut likiditeye göre tahmini kasa pozisyonu</p>
+          <p class="text-xs text-muted">
+            Vadesi gelen alacaklar, tedarikçi ödemeleri ve mevcut likiditeye göre tahmini kasa pozisyonu
+          </p>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
@@ -221,7 +244,10 @@
           </span>
         </div>
       </div>
-      <div class="chart-container" style="height: 220px;">
+      <div
+        class="chart-container"
+        style="height: 220px;"
+      >
         <Line
           :data="nakitAkisVerisi"
           :options="lineChartOptions"
@@ -239,10 +265,15 @@
               <i class="pi pi-trophy text-amber-500 mr-2" />
               En Çok Ciro Sağlayan 5 Müşteri
             </h3>
-            <p class="text-xs text-muted">Bu ay en yüksek hacimli satış yapılan cari hesaplar</p>
+            <p class="text-xs text-muted">
+              Bu ay en yüksek hacimli satış yapılan cari hesaplar
+            </p>
           </div>
         </div>
-        <div v-if="kokpit?.topMusteriler?.length" class="space-y-2.5">
+        <div
+          v-if="kokpit?.topMusteriler?.length"
+          class="space-y-2.5"
+        >
           <div
             v-for="(m, idx) in kokpit.topMusteriler"
             :key="idx"
@@ -260,7 +291,10 @@
             </div>
           </div>
         </div>
-        <div v-else class="empty-list">
+        <div
+          v-else
+          class="empty-list"
+        >
           <i class="pi pi-users text-3xl text-gray-300 mb-2 block" />
           <span>Henüz müşteri satış verisi bulunmuyor.</span>
         </div>
@@ -274,13 +308,18 @@
               <i class="pi pi-exclamation-circle mr-2" />
               Vadesi Geçen Kritik Alacaklar
             </h3>
-            <p class="text-xs text-muted">Ödemesi geciken ve tahsilat takibi gereken müşteriler</p>
+            <p class="text-xs text-muted">
+              Ödemesi geciken ve tahsilat takibi gereken müşteriler
+            </p>
           </div>
           <span class="badge-pill bg-red-50 text-red-600 font-bold">
             {{ kokpit?.kritikAlacaklar?.length || 0 }} Fatura
           </span>
         </div>
-        <div v-if="kokpit?.kritikAlacaklar?.length" class="space-y-2.5">
+        <div
+          v-if="kokpit?.kritikAlacaklar?.length"
+          class="space-y-2.5"
+        >
           <div
             v-for="(a, idx) in kokpit.kritikAlacaklar"
             :key="idx"
@@ -305,7 +344,10 @@
             </div>
           </div>
         </div>
-        <div v-else class="empty-list text-emerald-600">
+        <div
+          v-else
+          class="empty-list text-emerald-600"
+        >
           <i class="pi pi-check-circle text-3xl text-emerald-400 mb-2 block" />
           <span>Vadesi geçmiş riskli alacak kaydı bulunmuyor.</span>
         </div>

@@ -18,21 +18,9 @@ import java.util.List;
 public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     
     /**
-     * Tüm cari hesapların toplam bakiyesini hesapla
-     */
-    @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c")
-    BigDecimal toplamBakiyeHesapla();
-
-    /**
      * İsme göre cari hesapları ara (büyük/küçük harf duyarsız)
      */
     List<CariHesap> findByAdContainingIgnoreCase(String query);
-
-    @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.bakiye > 0")
-    BigDecimal toplamPozitifBakiye();
-
-    @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.bakiye < 0")
-    BigDecimal toplamNegatifBakiye();
 
     @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.sirketId = :sirketId")
     BigDecimal toplamBakiyeHesaplaBySirketId(@Param("sirketId") Long sirketId);

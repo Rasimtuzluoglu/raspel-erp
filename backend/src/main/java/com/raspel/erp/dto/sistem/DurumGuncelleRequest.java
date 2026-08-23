@@ -12,9 +12,4 @@ public class DurumGuncelleRequest {
     private String durum;
 
     private String onaylayan;
-
-    public String getDurum() { return durum; }
-    public void setDurum(String durum) { this.durum = durum; }
-    public String getOnaylayan() { return onaylayan; }
-    public void setOnaylayan(String onaylayan) { this.onaylayan = onaylayan; }
 }
