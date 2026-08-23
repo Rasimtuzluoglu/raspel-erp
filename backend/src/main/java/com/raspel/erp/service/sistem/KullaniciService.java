@@ -218,6 +218,9 @@ public class KullaniciService {
     }
 
     public LoginResponse giris2faTamamla(TwoFactorGirisRequest req) {
+        if (req == null || req.getGirisToken() == null || req.getGirisToken().isBlank()) {
+            throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
+        }
         long[] kayit = bekleyenGirisler.get(req.getGirisToken());
         if (kayit == null) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
@@ -257,6 +260,9 @@ public class KullaniciService {
     }
 
     public LoginResponse girisSirket(String girisToken, Long sirketId) {
+        if (girisToken == null || girisToken.isBlank()) {
+            throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
+        }
         long[] kayit = bekleyenGirisler.get(girisToken);
         if (kayit == null) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
