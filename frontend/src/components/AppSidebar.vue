@@ -346,6 +346,20 @@ const tumMenuler = [
 const gorunenMenuler = computed(() => {
   return tumMenuler.filter((m) => {
     if (m.path === '/') return false
+    
+    if (authStore.kullanici?.role === 'SAHA') {
+      const sahaErisilebilir = [
+        '/saha-portali',
+        '/stoklar',
+        '/sohbet',
+        '/ajanda',
+        '/belgeler',
+        '/notlar',
+        '/hesap-ayarlari'
+      ]
+      if (!sahaErisilebilir.includes(m.path)) return false
+    }
+
     if (!gelismisMod.value && m.gelismis) return false
     if (m.admin && !authStore.isAdmin) return false
     return true

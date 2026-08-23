@@ -392,6 +392,22 @@ router.beforeEach((to, from, next) => {
     next('/yetki-reddi')
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
     next('/yetki-reddi')
+  } else if (authStore.kullanici?.role === 'SAHA' && to.path !== '/yetki-reddi') {
+    const sahaIzinli = [
+      '/', // Yönlendirme dashboard'a gidecek oradan da portale düşecek
+      '/saha-portali',
+      '/stoklar',
+      '/sohbet',
+      '/ajanda',
+      '/belgeler',
+      '/notlar',
+      '/hesap-ayarlari'
+    ]
+    if (!sahaIzinli.includes(to.path) && !to.path.startsWith('/profil')) {
+      next('/yetki-reddi')
+    } else {
+      next()
+    }
   } else {
     next()
   }

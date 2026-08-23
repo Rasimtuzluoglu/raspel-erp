@@ -467,6 +467,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
@@ -489,6 +490,7 @@ import {
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
+const router = useRouter()
 const dovizStore = useDovizStore()
 const karsilamaMetni = computed(() => {
   const saat = new Date().getHours()
@@ -611,6 +613,11 @@ const aylikKarsilastirmayiHesapla = () => {
 }
 
 onMounted(async () => {
+  if (authStore.kullanici?.role === 'SAHA') {
+    router.replace('/saha-portali')
+    return
+  }
+
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_widgets'))
     if (kayitli) {
