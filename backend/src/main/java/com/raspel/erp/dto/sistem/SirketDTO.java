@@ -17,6 +17,9 @@ public class SirketDTO {
     private String email;
     private String webSite;
     private String logoUrl;
+    private Long parentId;
+    private String tur;
+    private Integer yil;
     private Boolean aktif;
     private LocalDateTime olusturmaTarihi;
     private LocalDateTime sonAdGuncellemeTarihi;

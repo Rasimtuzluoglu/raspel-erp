@@ -324,6 +324,7 @@ const tumMenuler = [
   },
   { path: '/vardiyalar', label: 'Vardiya', icon: 'pi pi-clock', grup: 'Yönetim', gelismis: true },
   { path: '/sirketler', label: 'Şirket', icon: 'pi pi-building', grup: 'Sistem', admin: true, gelismis: true },
+  { path: '/yeni-yil-sihirbazi', label: 'Yeni Yıl Aç', icon: 'pi pi-magic', grup: 'Sistem', admin: true, gelismis: true },
   { path: '/donemler', label: 'Dönem', icon: 'pi pi-calendar', grup: 'Sistem', gelismis: true },
   { path: '/kullanicilar', label: 'Kullanıcı', icon: 'pi pi-user', grup: 'Sistem', admin: true, gelismis: true },
   { path: '/yetki-yonetimi', label: 'Yetkiler', icon: 'pi pi-key', grup: 'Sistem', admin: true, gelismis: true },

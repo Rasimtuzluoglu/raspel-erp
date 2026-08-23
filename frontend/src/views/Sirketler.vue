@@ -46,6 +46,21 @@
         header="E-posta"
       />
       <Column
+        field="tur"
+        header="Tür"
+      >
+        <template #body="{ data }">
+          <Tag
+            :value="data.tur"
+            :severity="data.tur === 'RESMI' ? 'success' : data.tur === 'GAYRIRESMI' ? 'warning' : 'info'"
+          />
+        </template>
+      </Column>
+      <Column
+        field="yil"
+        header="Yıl"
+      />
+      <Column
         field="aktif"
         header="Durum"
       >
@@ -99,6 +114,45 @@
             class="w-full"
           />
         </div>
+        
+        <div class="field-row" style="display: flex; gap: 16px;">
+          <div class="field" style="flex: 1;">
+            <label>Şirket Türü</label>
+            <Dropdown
+              v-model="form.tur"
+              :options="[
+                { label: 'Diğer', value: 'DIGER' },
+                { label: 'Resmi', value: 'RESMI' },
+                { label: 'Gayriresmi', value: 'GAYRIRESMI' }
+              ]"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+          </div>
+          <div class="field" style="flex: 1;">
+            <label>Mali Yıl</label>
+            <InputNumber
+              v-model="form.yil"
+              :useGrouping="false"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Ana Şirket (Gruplama için)</label>
+          <Dropdown
+            v-model="form.parentId"
+            :options="sirketler.filter(s => s.id !== form.id)"
+            optionLabel="ad"
+            optionValue="id"
+            showClear
+            placeholder="Ana şirket seçin"
+            class="w-full"
+          />
+        </div>
+
         <div class="field">
           <label>Vergi No</label>
           <InputText
@@ -242,6 +296,9 @@ const dialogAc = (data) => {
     ? { ...data }
     : {
         ad: '',
+        tur: 'DIGER',
+        yil: new Date().getFullYear(),
+        parentId: null,
         vergiNo: '',
         vergiDairesi: '',
         adres: '',

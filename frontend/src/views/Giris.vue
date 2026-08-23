@@ -297,19 +297,35 @@
                 v-if="sirketler.length > 0"
                 class="sirket-listesi"
               >
-                <button
-                  v-for="s in sirketler"
-                  :key="s.id"
-                  class="sirket-secim-kart"
-                  @click="sirketSec(s)"
-                >
-                  <i class="pi pi-building" />
-                  <div class="sirket-kart-bilgi">
-                    <span class="sirket-kart-ad">{{ s.ad }}</span>
-                    <span class="sirket-kart-vkn">VKN: {{ s.vergiNo || '-' }}</span>
+                <template v-for="(grup, grupAdi) in gruplanmisSirketler" :key="grupAdi">
+                  <div v-if="Object.keys(gruplanmisSirketler).length > 1" class="sirket-grup-baslik">
+                    <i class="pi pi-folder" />
+                    <span>{{ grupAdi }}</span>
                   </div>
-                  <i class="pi pi-arrow-right" />
-                </button>
+                  <button
+                    v-for="s in grup"
+                    :key="s.id"
+                    class="sirket-secim-kart"
+                    :class="{ 'son-secilen': s.id === sonSecilenSirketId }"
+                    @click="sirketSecVeGirisYap(s)"
+                  >
+                    <div class="sirket-kart-sol">
+                      <i class="pi pi-building" />
+                      <div class="sirket-kart-bilgi">
+                        <span class="sirket-kart-ad">{{ s.ad }}</span>
+                        <span class="sirket-kart-vkn">VKN: {{ s.vergiNo || '-' }}</span>
+                      </div>
+                    </div>
+                    <div class="sirket-kart-sag">
+                      <span v-if="s.tur && s.tur !== 'DIGER'" class="sirket-tur-badge" :class="'tur-' + (s.tur || '').toLowerCase()">
+                        {{ s.tur === 'RESMI' ? 'Resmi' : s.tur === 'GAYRIRESMI' ? 'Gayriresmi' : s.tur }}
+                      </span>
+                      <span v-if="s.yil" class="sirket-yil-badge">{{ s.yil }}</span>
+                      <i v-if="s.id === sonSecilenSirketId" class="pi pi-star-fill son-secilen-yildiz" />
+                      <i class="pi pi-arrow-right" />
+                    </div>
+                  </button>
+                </template>
               </div>
               <p
                 v-else
@@ -443,7 +459,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore.js'
@@ -470,6 +486,32 @@ const ikiFaktorAdimi = ref(false)
 const sirketSecimAdimi = ref(false)
 const ikiFaktorKod = ref('')
 const girisToken = ref('')
+
+const sonSecilenSirketId = ref(Number(localStorage.getItem('raspel_erp_son_sirket')) || null)
+
+const gruplanmisSirketler = computed(() => {
+  const gruplar = {}
+  sirketler.value.forEach(s => {
+    let grupAdi = 'Bağımsız Firmalar'
+    if (s.parentId) {
+      const parent = sirketler.value.find(p => p.id === s.parentId)
+      grupAdi = parent ? parent.ad : `Grup ${s.parentId}`
+    } else {
+      const hasChildren = sirketler.value.some(c => c.parentId === s.id)
+      grupAdi = hasChildren ? s.ad : 'Bağımsız Firmalar'
+    }
+    if (!gruplar[grupAdi]) {
+      gruplar[grupAdi] = []
+    }
+    gruplar[grupAdi].push(s)
+  })
+  
+  if (Object.keys(gruplar).length === 1 && gruplar['Bağımsız Firmalar']) {
+    gruplar['Firmalar'] = gruplar['Bağımsız Firmalar']
+    delete gruplar['Bağımsız Firmalar']
+  }
+  return gruplar
+})
 
 const kurulumAdimi = ref(false)
 const kurulumYukleniyor = ref(false)
@@ -591,6 +633,7 @@ const sirketSecVeGirisYap = async (sirket) => {
   sirketLogo.value = sirket.logoUrl || ''
   try {
     await authStore.girisSirket(girisToken.value, sirket.id)
+    localStorage.setItem('raspel_erp_son_sirket', sirket.id)
     router.push('/')
   } catch (err) {
     hata.value = err.response?.data?.message || t('giris.companySelectFailed')
@@ -642,6 +685,62 @@ const tumAdimlariSifirla = () => {
   background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
   overflow-x: hidden;
   padding: 30px 20px;
+}
+
+/* Company Selection Enhance */
+.sirket-grup-baslik {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 16px 0 8px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sirket-kart-sol {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sirket-kart-sag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sirket-tur-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+}
+.tur-resmi {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.tur-gayriresmi {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.sirket-yil-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.son-secilen-yildiz {
+  color: #f59e0b;
+  font-size: 14px;
+}
+.sirket-secim-kart.son-secilen {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.05);
 }
 
 [data-theme='light'] .giris-sayfasi {

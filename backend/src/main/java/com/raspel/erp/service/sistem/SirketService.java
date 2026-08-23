@@ -50,6 +50,9 @@ public class SirketService {
                 .email(dto.getEmail())
                 .webSite(dto.getWebSite())
                 .logoUrl(dto.getLogoUrl())
+                .parentId(dto.getParentId())
+                .tur(dto.getTur() != null ? dto.getTur() : "DIGER")
+                .yil(dto.getYil())
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .build();
         return entityToDTO(sirketRepository.save(s));
@@ -77,6 +80,9 @@ public class SirketService {
         if (dto.getEmail() != null) s.setEmail(dto.getEmail());
         if (dto.getWebSite() != null) s.setWebSite(dto.getWebSite());
         if (dto.getLogoUrl() != null) s.setLogoUrl(dto.getLogoUrl());
+        if (dto.getParentId() != null) s.setParentId(dto.getParentId());
+        if (dto.getTur() != null) s.setTur(dto.getTur());
+        if (dto.getYil() != null) s.setYil(dto.getYil());
         if (dto.getAktif() != null) s.setAktif(dto.getAktif());
         return entityToDTO(sirketRepository.save(s));
     }
@@ -94,6 +100,9 @@ public class SirketService {
                 .adres(s.getAdres()).telefon(s.getTelefon())
                 .email(s.getEmail()).webSite(s.getWebSite())
                 .logoUrl(s.getLogoUrl())
+                .parentId(s.getParentId())
+                .tur(s.getTur())
+                .yil(s.getYil())
                 .aktif(s.getAktif()).olusturmaTarihi(s.getOlusturmaTarihi())
                 .sonAdGuncellemeTarihi(s.getSonAdGuncellemeTarihi())
                 .build();

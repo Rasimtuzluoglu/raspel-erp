@@ -16,20 +16,21 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findAllByOrderByTarihDesc(Pageable pageable);
     List<AuditLog> findByKullaniciIdOrderByTarihDesc(Long kullaniciId);
 
-    @Query(value = "SELECT DISTINCT a.islem FROM AuditLog a ORDER BY a.islem")
+    @Query(value = "SELECT DISTINCT a.islem FROM sistem.audit_log a ORDER BY a.islem", nativeQuery = true)
     List<String> findDistinctIslem();
 
-    @Query(value = "SELECT DISTINCT a.entityAdi FROM AuditLog a ORDER BY a.entityAdi")
+    @Query(value = "SELECT DISTINCT a.entity_adi FROM sistem.audit_log a ORDER BY a.entity_adi", nativeQuery = true)
     List<String> findDistinctEntityAdi();
 
-    @Query("SELECT a FROM AuditLog a WHERE " +
-           "(:sirketId IS NULL OR a.sirketId = :sirketId) AND " +
-           "(:kullaniciId IS NULL OR a.kullaniciId = :kullaniciId) AND " +
-           "(:islem IS NULL OR a.islem = :islem) AND " +
-           "(:entityAdi IS NULL OR a.entityAdi = :entityAdi) AND " +
-           "(:baslangic IS NULL OR a.tarih >= :baslangic) AND " +
-           "(:bitis IS NULL OR a.tarih <= :bitis) " +
-           "ORDER BY a.tarih DESC")
+    @Query(value = "SELECT al.* FROM sistem.audit_log al WHERE " +
+           "(CAST(:sirketId AS BIGINT) IS NULL OR al.sirket_id = CAST(:sirketId AS BIGINT)) AND " +
+           "(CAST(:kullaniciId AS BIGINT) IS NULL OR al.kullanici_id = CAST(:kullaniciId AS BIGINT)) AND " +
+           "(CAST(:islem AS VARCHAR) IS NULL OR al.islem = CAST(:islem AS VARCHAR)) AND " +
+           "(CAST(:entityAdi AS VARCHAR) IS NULL OR al.entity_adi = CAST(:entityAdi AS VARCHAR)) AND " +
+           "(CAST(:baslangic AS TIMESTAMP) IS NULL OR al.tarih >= CAST(:baslangic AS TIMESTAMP)) AND " +
+           "(CAST(:bitis AS TIMESTAMP) IS NULL OR al.tarih <= CAST(:bitis AS TIMESTAMP)) " +
+           "ORDER BY al.tarih DESC",
+           nativeQuery = true)
     Page<AuditLog> filtreliGetir(@Param("sirketId") Long sirketId,
                                   @Param("kullaniciId") Long kullaniciId,
                                   @Param("islem") String islem,

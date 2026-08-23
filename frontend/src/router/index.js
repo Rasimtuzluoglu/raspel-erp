@@ -112,6 +112,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/yeni-yil-sihirbazi',
+    name: 'YeniYilSihirbazi',
+    component: () => import('../views/YeniYilSihirbazi.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
     path: '/satinalma',
     name: 'Satinalma',
     component: () => import('../views/Satinalma.vue'),

@@ -40,6 +40,15 @@ public class Sirket {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    @Column(name = "parent_id")
+    private Long parentId;
+
+    @Column(length = 20)
+    @Builder.Default
+    private String tur = "DIGER";
+
+    private Integer yil;
+
     @Column(nullable = false)
     private Boolean aktif;
 
