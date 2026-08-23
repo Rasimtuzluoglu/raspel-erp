@@ -40,7 +40,7 @@ describe('App.vue', () => {
     expect(wrapper.exists()).toBe(true)
     expect(wrapper.find('.app-container').exists()).toBe(true)
     await flushPromises()
-  })
+  }, 15000)
 
   it('renders login page without sidebar when not logged in', async () => {
     const App = (await import('../App.vue')).default

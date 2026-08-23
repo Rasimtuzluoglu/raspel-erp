@@ -6,6 +6,7 @@ import com.raspel.erp.dto.ik.PersonelMasrafTalepDTO;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.ik.PersonelMasrafTalep;
 import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.ik.PersonelMasrafTalepRepository;
 import com.raspel.erp.repository.ik.PersonelRepository;
@@ -118,7 +119,7 @@ public class PersonelMasrafTalepService {
                         .build();
                 masrafService.olustur(masrafDTO, talep.getSirketId());
             } catch (Exception e) {
-                log.warn("Onaylanan masraf finans modülüne otomatik işlenemedi: {}", e.getMessage());
+                throw new BusinessException("Onaylanan masraf finans modülüne işlenemedi: " + e.getMessage());
             }
         }
 

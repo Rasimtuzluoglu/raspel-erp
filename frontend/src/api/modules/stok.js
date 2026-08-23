@@ -37,9 +37,6 @@ export const stokAPI = {
   deleteHareket(hareketId) {
     return apiClient.delete(`/stoklar/hareketler/${hareketId}`)
   },
-  topluFiyat(data) {
-    return apiClient.put('/stoklar/batch-fiyat', data)
-  },
   topluFiyatGuncelle(data) {
     return apiClient.post('/stoklar/toplu-fiyat-guncelle', data)
   }

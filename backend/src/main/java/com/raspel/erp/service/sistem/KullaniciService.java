@@ -283,6 +283,9 @@ public class KullaniciService {
             sirketId = k.getSirketId();
         }
         final Long secilenSirketId = sirketId;
+        if (secilenSirketId == null) {
+            throw new BusinessException("Şirket seçimi zorunludur, lütfen tekrar giriş yapınız");
+        }
 
         // Admin herhangi bir aktif firmayı seçebilir; USER yalnızca atandığı firmada oturum açabilir
         if (!"ADMIN".equals(k.getRole())) {

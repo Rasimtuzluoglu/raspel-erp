@@ -26,8 +26,7 @@ public class DovizKuruService {
     private final DovizKuruRepository dovizKuruRepository;
     private final TcmbKurService tcmbKurService;
 
-    @Transactional(readOnly = true)
-    @Cacheable(value = "dovizKurlari", key = "#tarih.toString()")
+    @Cacheable(value = "dovizKurlari", key = "#tarih != null ? #tarih.toString() : 'bugun'")
     public List<DovizKuruDTO> gunlukKurlariGetir(LocalDate tarih) {
         LocalDate hedefTarih = tarih != null ? tarih : LocalDate.now();
         List<DovizKuru> kurlar = dovizKuruRepository.findByTarihOrderByDovizKoduAsc(hedefTarih);

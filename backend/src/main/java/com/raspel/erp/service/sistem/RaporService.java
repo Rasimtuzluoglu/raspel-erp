@@ -288,8 +288,11 @@ public class RaporService {
      * Ürün bazlı kârlılık raporu: her ürünün alış maliyeti (fiyat), satış fiyatı ve kâr marjını getirir.
      */
     public List<com.raspel.erp.dto.sistem.UrunKarlilikDTO> urunKarlilikRaporu(Long sirketId) {
+        if (sirketId == null) {
+            return List.of();
+        }
         List<com.raspel.erp.entity.envanter.Stok> stoklar =
-                sirketId != null ? stokRepository.findBySirketIdOrderByAd(sirketId) : stokRepository.findAllByOrderByAd();
+                stokRepository.findBySirketIdOrderByAd(sirketId);
 
         return stoklar.stream().map(s -> {
             BigDecimal alis = s.getFiyat() != null ? s.getFiyat() : BigDecimal.ZERO;

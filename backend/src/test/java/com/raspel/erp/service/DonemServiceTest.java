@@ -43,8 +43,8 @@ class DonemServiceTest {
 
     @Test
     void tumunuGetir_returnsAll() {
-        when(donemRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createDonem(1L), createDonem(2L))));
-        var result = donemService.tumunuGetir(Pageable.unpaged());
+        when(donemRepository.findBySirketIdOrderByBaslangicDesc(1L, Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createDonem(1L), createDonem(2L))));
+        var result = donemService.tumunuGetir(1L, Pageable.unpaged());
         assertEquals(2, result.getContent().size());
     }
 

@@ -25,8 +25,11 @@ public class DonemService {
     private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
-    public Page<DonemDTO> tumunuGetir(Pageable pageable) {
-        return donemRepository.findAll(pageable).map(this::entityToDTO);
+    public Page<DonemDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        if (sirketId == null) {
+            return Page.empty(pageable);
+        }
+        return donemRepository.findBySirketIdOrderByBaslangicDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Cacheable(value = "lookup", key = "'donemSirket:' + #sirketId")

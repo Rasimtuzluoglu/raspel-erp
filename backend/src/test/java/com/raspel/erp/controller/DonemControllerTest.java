@@ -45,7 +45,7 @@ class DonemControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(DonemDTO.builder().id(1L).ad("2024-1 Dönemi").aktif(true).build());
-        when(donemService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
+        when(donemService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/donemler"))
                 .andExpect(status().isOk())

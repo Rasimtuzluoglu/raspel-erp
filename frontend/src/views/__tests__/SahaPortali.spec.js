@@ -49,7 +49,13 @@ const stubs = {
   Dropdown: true,
   Tag: true,
   Dialog: true,
-  Textarea: true
+  Textarea: true,
+  TabView: {
+    template: '<div class="tabview-stub"><slot /></div>'
+  },
+  TabPanel: {
+    template: '<div class="tabpanel-stub"><slot /><slot name="header" /></div>'
+  }
 }
 
 describe('SahaPortali.vue', () => {

@@ -31,7 +31,10 @@ public class StokSeriService {
 
     @Transactional(readOnly = true)
     public Page<StokSeriDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        return stokSeriRepository.findAll(pageable).map(this::entityToDTO);
+        if (sirketId == null) {
+            return Page.empty(pageable);
+        }
+        return stokSeriRepository.findByStokSirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
     @Transactional(readOnly = true)

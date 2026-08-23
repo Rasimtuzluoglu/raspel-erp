@@ -242,7 +242,7 @@ const tamamla = async () => {
         fiyatlariKoru: aktarim.value.fiyatlariKoru
       }
       
-      const aktarimRes = await apiClient.post('/api/veri-aktarim/sirketler-arasi', payload)
+      const aktarimRes = await apiClient.post('/veri-aktarim/sirketler-arasi', payload)
       const sonuc = aktarimRes.data
       
       toast.basarili(`Şirket oluşturuldu ve veriler aktarıldı! ${sonuc.aktarilanStokSayisi} Stok, ${sonuc.aktarilanCariSayisi} Cari kopyalandı.`)

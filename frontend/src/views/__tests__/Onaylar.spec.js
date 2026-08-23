@@ -58,7 +58,14 @@ const stubs = {
     template: '<div class="p-card"><div class="p-card-title"><slot name="title" /></div><div class="p-card-content"><slot name="content" /></div></div>'
   },
   Button: true,
-  Badge: true
+  Badge: true,
+  Tag: true,
+  TabView: {
+    template: '<div class="tabview-stub"><slot /></div>'
+  },
+  TabPanel: {
+    template: '<div class="tabpanel-stub"><slot /><slot name="header" /></div>'
+  }
 }
 
 describe('Onaylar.vue', () => {

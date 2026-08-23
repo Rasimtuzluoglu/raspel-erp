@@ -28,8 +28,9 @@ public class DonemController {
 
     @GetMapping
     @Operation(summary = "Tüm dönemleri getir", description = "Tüm dönemleri listeler")
-    public ResponseEntity<Page<DonemDTO>> tumu(@PageableDefault(size = 50) Pageable pageable) {
-        return ResponseEntity.ok(donemService.tumunuGetir(pageable));
+    public ResponseEntity<Page<DonemDTO>> tumu(jakarta.servlet.http.HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(donemService.tumunuGetir(sirketId, pageable));
     }
 
     @GetMapping("/sirket/{sirketId}")
