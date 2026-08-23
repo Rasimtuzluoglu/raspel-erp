@@ -36,7 +36,6 @@ public class MuhasebeService {
 
     // ---------- HESAP PLANI ----------
 
-    @Transactional(readOnly = true)
     public List<HesapPlaniDTO> hesapPlaniniGetir(Long sirketId) {
         List<HesapPlani> list = hesapPlaniRepository.findBySirketIdOrderByKodAsc(sirketId);
         if (list.isEmpty()) {

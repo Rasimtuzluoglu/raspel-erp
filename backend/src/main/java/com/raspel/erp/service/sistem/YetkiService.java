@@ -24,7 +24,6 @@ public class YetkiService {
     private final RolRepository rolRepository;
     private final YetkiRepository yetkiRepository;
 
-    @Transactional(readOnly = true)
     public List<Yetki> tumYetkileriGetir() {
         List<Yetki> yetkiler = yetkiRepository.findAll();
         if (yetkiler.isEmpty()) {
@@ -33,7 +32,6 @@ public class YetkiService {
         return yetkiler;
     }
 
-    @Transactional(readOnly = true)
     public List<Rol> tumRolleriGetir() {
         List<Rol> roller = rolRepository.findAll();
         if (roller.isEmpty()) {
