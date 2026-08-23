@@ -1294,19 +1294,23 @@ const batchLoading = ref(false)
 const batchFiyatForm = ref({ oran: 0, yon: 'ARTIR', kategori: '', stokGrubu: '' })
 
 const batchFiyatUygula = async () => {
+  if (!batchFiyatForm.value.oran || batchFiyatForm.value.oran <= 0) {
+    toastBildirim.uyari('Lütfen 0\'dan büyük geçerli bir oran girin.')
+    return
+  }
   batchLoading.value = true
   try {
-    const r = await stokAPI.topluFiyat({
+    const r = await stokAPI.topluFiyatGuncelle({
       kategori: batchFiyatForm.value.kategori || null,
       stokGrubu: batchFiyatForm.value.stokGrubu || null,
       marka: null,
       yon: batchFiyatForm.value.yon,
       oran: batchFiyatForm.value.oran
     })
-    const guncellenen = r.data?.guncellenen || 0
+    const guncellenen = r.data?.etkilenenStokSayisi || r.data?.guncellenen || 0
     await stokStore.getAll({ size: 1000 })
     batchFiyatDialog.value = false
-    toastBildirim.basarili(`${guncellenen} ürün güncellendi`)
+    toastBildirim.basarili(`${guncellenen} ürünün fiyatı başarıyla güncellendi.`)
   } catch (e) {
     toastBildirim.hata(e.response?.data?.message || 'Toplu fiyat güncelleme başarısız')
   } finally {

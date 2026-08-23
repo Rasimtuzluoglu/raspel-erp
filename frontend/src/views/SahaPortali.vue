@@ -112,6 +112,14 @@
               >
                 <i class="pi pi-phone" /> Ara
               </a>
+              <button
+                v-if="s.telefon || s.cariHesapAdi"
+                type="button"
+                class="whatsapp-btn"
+                @click="whatsappSiparisPaylas(s)"
+              >
+                <i class="pi pi-whatsapp" /> WhatsApp
+              </button>
               <a
                 v-if="s.teslimatAdresi"
                 :href="'https://maps.google.com/?q=' + encodeURIComponent(s.teslimatAdresi)"
@@ -183,10 +191,25 @@
                 class="w-full"
               />
             </div>
+            <div class="gps-location-row flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg mb-3">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-map-marker text-red-500 text-lg" />
+                <span class="text-sm text-gray-700 dark:text-gray-200">
+                  {{ ziyaretKonum || 'Konum alınmadı' }}
+                </span>
+              </div>
+              <Button
+                label="Konum Al"
+                icon="pi pi-compass"
+                class="p-button-outlined p-button-sm p-button-secondary"
+                :loading="konumAliniyor"
+                @click="gpsKonumAl"
+              />
+            </div>
             <Button
               label="Ziyaret Notunu Merkeze İlet"
               icon="pi pi-send"
-              class="p-button-primary w-full mt-3 font-bold"
+              class="p-button-primary w-full mt-2 font-bold"
               :loading="ziyaretKaydediliyor"
               @click="ziyaretKaydet"
             />
@@ -283,6 +306,22 @@
             filter
             class="w-full"
           />
+        </div>
+        <div class="form-field">
+          <label>Barkod ile Hızlı Bul</label>
+          <div class="p-inputgroup">
+            <span class="p-inputgroup-addon"><i class="pi pi-qrcode" /></span>
+            <InputText
+              v-model="barkodArama"
+              placeholder="Barkod okutun veya girin..."
+              @keyup.enter="barkodlaUrunBul"
+            />
+            <Button
+              icon="pi pi-search"
+              class="p-button-outlined"
+              @click="barkodlaUrunBul"
+            />
+          </div>
         </div>
         <div class="form-field">
           <label>Ürün / Stok *</label>
@@ -556,6 +595,10 @@ const ziyaretForm = ref({
   amac: 'Satış & Tanıtım',
   notlar: ''
 })
+const barkodArama = ref('')
+const ziyaretKonum = ref('')
+const konumAliniyor = ref(false)
+
 const yeniSiparisForm = ref({
   cariHesapId: null,
   stokId: null,
@@ -710,6 +753,58 @@ const masrafTalepGonder = async () => {
   } finally {
     masrafGonderiliyor.value = false
   }
+}
+
+const gpsKonumAl = () => {
+  if (!navigator.geolocation) {
+    toast.add({ severity: 'warn', summary: 'Desteklenmiyor', detail: 'Tarayıcınız konum servisini desteklemiyor.', life: 3000 })
+    return
+  }
+  konumAliniyor.value = true
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      konumAliniyor.value = false
+      const lat = pos.coords.latitude.toFixed(5)
+      const lng = pos.coords.longitude.toFixed(5)
+      ziyaretKonum.value = `Enlem: ${lat}, Boylam: ${lng}`
+      if (ziyaretForm.value.notlar) {
+        ziyaretForm.value.notlar += `\n[📍 Konum: ${lat}, ${lng}]`
+      } else {
+        ziyaretForm.value.notlar = `[📍 Konum: ${lat}, ${lng}] `
+      }
+      toast.add({ severity: 'success', summary: 'Konum Alındı', detail: 'Coğrafi konum başarıyla eklendi.', life: 2500 })
+    },
+    (err) => {
+      konumAliniyor.value = false
+      toast.add({ severity: 'error', summary: 'Konum Hatası', detail: 'Konum bilgisi alınamadı: ' + err.message, life: 3000 })
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  )
+}
+
+const barkodlaUrunBul = () => {
+  if (!barkodArama.value) return
+  const kod = barkodArama.value.trim().toLowerCase()
+  const bulunan = stoklar.value.find(s =>
+    (s.barkod && s.barkod.toLowerCase() === kod) ||
+    (s.stokKodu && s.stokKodu.toLowerCase() === kod)
+  )
+  if (bulunan) {
+    yeniSiparisForm.value.stokId = bulunan.id
+    hizliSiparisStokSecildi()
+    toast.add({ severity: 'success', summary: 'Ürün Bulundu', detail: bulunan.ad, life: 2000 })
+  } else {
+    toast.add({ severity: 'warn', summary: 'Bulunamadı', detail: 'Bu barkoda ait ürün bulunamadı.', life: 2500 })
+  }
+}
+
+const whatsappSiparisPaylas = (s) => {
+  const musteri = s.cariHesapAdi || s.musteriAdi || 'Müşterimiz'
+  const kod = s.siparisNo || s.id
+  const tutar = formatPara(s.toplamTutar || s.genelToplam || 0)
+  const mesaj = `Sayın ${musteri}, #${kod} numaralı ${tutar} tutarındaki siparişiniz hazırlanmaktadır. RasPel ERP Saha Ekibi.`
+  const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
+  window.open(url, '_blank')
 }
 
 const ziyaretKaydet = async () => {
@@ -989,7 +1084,7 @@ const hizliSiparisKaydet = async () => {
   margin-bottom: 0.65rem;
 }
 
-.call-btn, .map-btn {
+.call-btn, .map-btn, .whatsapp-btn {
   flex: 1;
   text-align: center;
   padding: 0.5rem 0.75rem;
@@ -1001,12 +1096,19 @@ const hizliSiparisKaydet = async () => {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  cursor: pointer;
 }
 
 .call-btn {
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.whatsapp-btn {
+  background: rgba(37, 211, 102, 0.1);
+  color: #25d366;
+  border: 1px solid rgba(37, 211, 102, 0.3);
 }
 
 .map-btn {

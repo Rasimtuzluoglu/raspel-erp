@@ -61,6 +61,12 @@ vi.mock('axios', () => ({
   }
 }))
 
+vi.mock('vue-chartjs', () => ({
+  Bar: { template: '<div class="stub-bar-chart"><slot /></div>' },
+  Doughnut: { template: '<div class="stub-doughnut-chart"><slot /></div>' },
+  Line: { template: '<div class="stub-line-chart"><slot /></div>' }
+}))
+
 const stubs = {
   DataTable: true,
   Column: true,
@@ -71,7 +77,8 @@ const stubs = {
   Textarea: true,
   Chart: true,
   Bar: true,
-  Doughnut: true
+  Doughnut: true,
+  Line: true
 }
 
 describe('YoneticiKokpiti.vue', () => {

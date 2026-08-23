@@ -77,13 +77,21 @@
       >
         <template #body="{ data }">
           <Button
+            icon="pi pi-sitemap"
+            class="p-button-rounded p-button-text p-button-info"
+            title="Grup Konsolide Özeti"
+            @click="konsolideGoster(data)"
+          />
+          <Button
             icon="pi pi-pencil"
             class="p-button-rounded p-button-text"
+            title="Düzenle"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-text p-button-danger"
+            title="Sil"
             @click="sil(data)"
           />
         </template>
@@ -245,6 +253,57 @@
         />
       </template>
     </Dialog>
+
+    <!-- Grup Konsolidasyon Modal -->
+    <Dialog
+      v-model:visible="konsolideModal"
+      :header="konsolideVeri?.anaSirketAdi + ' - Grup Konsolide Özeti'"
+      modal
+      :style="{ width: '700px' }"
+    >
+      <div v-if="konsolideYukleniyor" class="text-center py-6">
+        <i class="pi pi-spin pi-spinner text-3xl text-primary" />
+      </div>
+      <div v-else-if="konsolideVeri" class="space-y-4">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-100">
+            <span class="text-xs text-blue-600 font-bold block">Toplam Stok Değeri</span>
+            <span class="text-lg font-extrabold text-blue-800 dark:text-blue-200">{{ formatPara(konsolideVeri.toplamStokDegeri) }}</span>
+          </div>
+          <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-100">
+            <span class="text-xs text-emerald-600 font-bold block">Toplam Alacak</span>
+            <span class="text-lg font-extrabold text-emerald-800 dark:text-emerald-200">{{ formatPara(konsolideVeri.toplamAlacakBakiye) }}</span>
+          </div>
+          <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-100">
+            <span class="text-xs text-amber-600 font-bold block">Toplam Borç</span>
+            <span class="text-lg font-extrabold text-amber-800 dark:text-amber-200">{{ formatPara(konsolideVeri.toplamBorcBakiye) }}</span>
+          </div>
+        </div>
+
+        <h4 class="font-bold text-sm text-gray-700 dark:text-gray-200 mt-3">Grup ve Yıllık Alt Şirketler ({{ konsolideVeri.sirketler?.length || 0 }})</h4>
+        <DataTable :value="konsolideVeri.sirketler" size="small" striped-rows>
+          <Column field="sirketAdi" header="Şirket" />
+          <Column field="tur" header="Tür" style="width: 100px" />
+          <Column field="yil" header="Yıl" style="width: 80px" />
+          <Column field="stokSayisi" header="Stok Çeşidi" style="width: 100px" />
+          <Column header="Stok Değeri">
+            <template #body="{ data }">
+              {{ formatPara(data.stokDegeri) }}
+            </template>
+          </Column>
+          <Column header="Cari Bakiye">
+            <template #body="{ data }">
+              <span :class="data.bakiye >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                {{ formatPara(data.bakiye) }}
+              </span>
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+      <template #footer>
+        <Button label="Kapat" class="p-button-text" @click="konsolideModal = false" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -276,6 +335,28 @@ const form = ref({
 })
 const uyariMesaji = ref('')
 const logoYukleniyor = ref(false)
+
+const konsolideModal = ref(false)
+const konsolideYukleniyor = ref(false)
+const konsolideVeri = ref(null)
+
+const formatPara = (v) => {
+  if (v == null || isNaN(v)) return '0,00 ₺'
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
+}
+
+const konsolideGoster = async (sirket) => {
+  konsolideYukleniyor.value = true
+  konsolideModal.value = true
+  try {
+    const res = await sirketAPI.getKonsolideOzet(sirket.id)
+    konsolideVeri.value = res.data
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Konsolide veriler alınamadı')
+  } finally {
+    konsolideYukleniyor.value = false
+  }
+}
 
 onMounted(async () => {
   yukleniyor.value = true

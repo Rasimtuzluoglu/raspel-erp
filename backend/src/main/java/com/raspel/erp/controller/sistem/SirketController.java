@@ -58,6 +58,13 @@ public class SirketController {
         return ResponseEntity.ok(sirketService.guncelle(id, dto));
     }
 
+    @GetMapping("/{id}/konsolide-ozet")
+    @Operation(summary = "Konsolide grup şirket özeti", description = "Ana şirket ve bağlı alt şirketlerin toplam stok, bakiye ve ciro özetini getirir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<com.raspel.erp.dto.sistem.KonsolideOzetDTO> konsolideOzet(@PathVariable Long id) {
+        return ResponseEntity.ok(sirketService.konsolideOzet(id));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Şirket sil", description = "Şirket kaydını siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")

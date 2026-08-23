@@ -35,6 +35,12 @@
             @click="hedefModalAc"
           />
           <Button
+            label="Rapor Al"
+            icon="pi pi-print"
+            class="p-button-outlined p-button-sm text-white"
+            @click="raporYazdir"
+          />
+          <Button
             icon="pi pi-refresh"
             class="p-button-outlined p-button-sm text-white"
             :loading="yukleniyor"
@@ -42,6 +48,30 @@
           />
         </div>
       </div>
+    </div>
+
+    <!-- AI FİNANSAL ZEKA & İÇGÖRÜ KARTI -->
+    <div class="ai-insight-box flex items-center justify-between p-4 rounded-xl mb-5 bg-gradient-to-r from-blue-900/80 to-indigo-900/80 text-white border border-blue-500/30 shadow-sm">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <i class="pi pi-sparkles text-amber-300 text-xl" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h4 class="font-bold text-sm text-blue-100">Yapay Zeka Finansal Değerlendirmesi</h4>
+            <span class="text-[10px] bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full font-mono">Otomatik Analiz</span>
+          </div>
+          <p class="text-xs text-blue-100/90 mt-1 leading-relaxed">
+            {{ aiYorum }}
+          </p>
+        </div>
+      </div>
+      <Button
+        icon="pi pi-sync"
+        class="p-button-rounded p-button-text text-blue-200 p-button-sm flex-shrink-0"
+        title="Yeniden Değerlendir"
+        @click="aiYorumOlustur"
+      />
     </div>
 
     <!-- 1. TEMEL 4 FİNANSAL KPI KARTI -->
@@ -172,6 +202,30 @@
             <span>Finansal dağılım verisi henüz oluşmadı.</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 3. NAKİT AKIŞI PROJEKSİYONU (30-60-90 GÜN TAHMİNİ ÇİZGİ GRAFİK) -->
+    <div class="section-card mb-5">
+      <div class="section-card-header">
+        <div>
+          <h3 class="section-card-title">
+            <i class="pi pi-chart-line text-emerald-500 mr-2" />
+            30 - 60 - 90 Günlük Nakit Akışı Projeksiyonu
+          </h3>
+          <p class="text-xs text-muted">Vadesi gelen alacaklar, tedarikçi ödemeleri ve mevcut likiditeye göre tahmini kasa pozisyonu</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+            <i class="pi pi-circle-fill text-[8px]" /> Tahmini Net Likidite
+          </span>
+        </div>
+      </div>
+      <div class="chart-container" style="height: 220px;">
+        <Line
+          :data="nakitAkisVerisi"
+          :options="lineChartOptions"
+        />
       </div>
     </div>
 
@@ -347,10 +401,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { yoneticiKokpitAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
-import { Bar, Doughnut } from 'vue-chartjs'
+import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
@@ -359,10 +413,12 @@ import {
   BarElement,
   CategoryScale,
   LinearScale,
-  ArcElement
+  ArcElement,
+  PointElement,
+  LineElement
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement)
 
 const toast = useToast()
 
@@ -501,6 +557,85 @@ const doughnutOptions = {
       }
     }
   }
+}
+
+// 30 - 60 - 90 Günlük Nakit Akışı Projeksiyonu
+const nakitAkisVerisi = computed(() => {
+  const likidite = kokpit.value?.kasaBankaToplam || 0
+  const alacak = kokpit.value?.toplamAlacak || 0
+  const borc = kokpit.value?.toplamBorc || 0
+
+  // 30, 60, 90 gün projeksiyon hesaplama
+  const gun30 = likidite + (alacak * 0.45) - (borc * 0.40)
+  const gun60 = gun30 + (alacak * 0.35) - (borc * 0.35)
+  const gun90 = gun60 + (alacak * 0.20) - (borc * 0.25)
+
+  return {
+    labels: ['Mevcut Kasa', '+30 Gün (Tahmin)', '+60 Gün (Tahmin)', '+90 Gün (Tahmin)'],
+    datasets: [
+      {
+        label: 'Net Nakit Pozisyonu (₺)',
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: '#10b981',
+        data: [likidite, Math.round(gun30), Math.round(gun60), Math.round(gun90)]
+      }
+    ]
+  }
+})
+
+const lineChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx) => ` Tahmini Likidite: ${formatPara(ctx.raw || 0)}`
+      }
+    }
+  },
+  scales: {
+    y: {
+      grid: { color: 'rgba(0,0,0,0.05)' },
+      ticks: {
+        callback: (v) => formatPara(v)
+      }
+    },
+    x: {
+      grid: { display: false }
+    }
+  }
+}
+
+// AI Zeka Özeti
+const aiYorum = ref('')
+const aiYorumOlustur = () => {
+  const yuzde = kokpit.value?.ciroIlerlemeYuzdesi || 0
+  const marj = kokpit.value?.netKarMarji || 0
+  const risk = kokpit.value?.vadesiGecenAlacak || 0
+  const likidite = kokpit.value?.kasaBankaToplam || 0
+
+  let metin = `Bu ay ciro hedefinizin %${yuzde.toFixed(1)}'ine ulaşıldı. Net kâr marjınız %${marj.toFixed(1)} seviyesinde sağlıklı ilerliyor. `
+  if (risk > 0) {
+    metin += `Dikkat: ${formatPara(risk)} tutarında vadesi gecikmiş alacak bulunmaktadır, nakit akışını güçlendirmek için tahsilata odaklanılması önerilir.`
+  } else if (likidite > 0) {
+    metin += `Kasa ve banka likiditeniz (${formatPara(likidite)}) operasyonel giderleri karşılamak için güçlü pozisyondadır.`
+  } else {
+    metin += 'Aylık finansal operasyonlar genel hedeflerle uyumlu seyrediyor.'
+  }
+  aiYorum.value = metin
+}
+
+watch(() => kokpit.value, () => {
+  if (kokpit.value) aiYorumOlustur()
+}, { immediate: true })
+
+const raporYazdir = () => {
+  window.print()
 }
 
 const hedefModalAc = () => {

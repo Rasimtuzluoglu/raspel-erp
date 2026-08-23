@@ -197,12 +197,25 @@ const handleApiError = (e) => {
   })
 }
 
+const handleGlobalShortcuts = (e) => {
+  if (!authStore.isLoggedIn) return
+  if (e.key === 'F2') {
+    e.preventDefault()
+    window.location.hash = '#/hizli-satis'
+  } else if (e.key === 'F4') {
+    e.preventDefault()
+    window.location.hash = '#/stoklar'
+  }
+}
+
 onMounted(() => {
   window.addEventListener('api-error', handleApiError)
+  window.addEventListener('keydown', handleGlobalShortcuts)
 })
 
 onUnmounted(() => {
   window.removeEventListener('api-error', handleApiError)
+  window.removeEventListener('keydown', handleGlobalShortcuts)
 })
 
 const sirketRenkPaletleri = [

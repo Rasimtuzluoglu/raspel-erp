@@ -112,6 +112,21 @@ public class StokController {
         return ResponseEntity.status(HttpStatus.CREATED).body(stokService.hareketEkle(dto));
     }
 
+    @PostMapping("/toplu-fiyat-guncelle")
+    @Operation(summary = "Toplu stok fiyatı güncelle", description = "Seçilen kategori/gruba göre stok fiyatlarını yüzde ile artırır/azaltır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Map<String, Object>> topluFiyatGuncelle(
+            @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.envanter.TopluFiyatDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        int etkilenen = stokService.topluFiyatGuncelle(dto, sirketId);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "etkilenenStokSayisi", etkilenen,
+                "mesaj", etkilenen + " adet stok fiyatı başarıyla güncellendi."
+        ));
+    }
+
     @DeleteMapping("/hareketler/{hareketId}")
     @Operation(summary = "Stok hareketi sil", description = "Stok hareketini siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")

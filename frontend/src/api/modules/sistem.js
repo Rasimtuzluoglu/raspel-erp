@@ -114,6 +114,9 @@ export const sirketAPI = {
   },
   delete(id) {
     return apiClient.delete(`/sirketler/${id}`)
+  },
+  getKonsolideOzet(id) {
+    return apiClient.get(`/sirketler/${id}/konsolide-ozet`)
   }
 }
 

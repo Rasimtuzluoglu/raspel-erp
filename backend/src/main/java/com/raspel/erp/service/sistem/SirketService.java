@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 public class SirketService {
 
     private final SirketRepository sirketRepository;
+    private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
+    private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
 
     public Page<SirketDTO> tumunuGetir(Pageable pageable) {
         return sirketRepository.findAll(pageable).map(this::entityToDTO);
@@ -91,6 +93,67 @@ public class SirketService {
     public void sil(Long id) {
         if (!sirketRepository.existsById(id)) throw new ResourceNotFoundException("Şirket", id);
         sirketRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.sistem.KonsolideOzetDTO konsolideOzet(Long anaSirketId) {
+        Sirket ana = sirketRepository.findById(anaSirketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", anaSirketId));
+
+        List<Sirket> tumGrup = sirketRepository.findAll().stream()
+                .filter(s -> s.getId().equals(anaSirketId) || (s.getParentId() != null && s.getParentId().equals(anaSirketId)))
+                .collect(Collectors.toList());
+
+        java.math.BigDecimal toplamStokDegeri = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal toplamAlacak = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal toplamBorc = java.math.BigDecimal.ZERO;
+
+        List<com.raspel.erp.dto.sistem.KonsolideOzetDTO.SirketOzetDTO> sirketOzetleri = new java.util.ArrayList<>();
+
+        for (Sirket s : tumGrup) {
+            List<com.raspel.erp.entity.envanter.Stok> stoklar = stokRepository.findBySirketIdOrderByAd(s.getId(), Pageable.unpaged()).getContent();
+            java.math.BigDecimal sirketStokDeger = stoklar.stream()
+                    .map(stok -> {
+                        java.math.BigDecimal miktar = stok.getMiktar() != null ? stok.getMiktar() : java.math.BigDecimal.ZERO;
+                        java.math.BigDecimal fiyat = stok.getFiyat() != null ? stok.getFiyat() : java.math.BigDecimal.ZERO;
+                        return miktar.multiply(fiyat);
+                    })
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            List<com.raspel.erp.entity.finans.CariHesap> cariler = cariHesapRepository.findBySirketId(s.getId(), Pageable.unpaged()).getContent();
+            java.math.BigDecimal sirketBakiye = cariler.stream()
+                    .map(c -> c.getBakiye() != null ? c.getBakiye() : java.math.BigDecimal.ZERO)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            toplamStokDegeri = toplamStokDegeri.add(sirketStokDeger);
+            if (sirketBakiye.compareTo(java.math.BigDecimal.ZERO) >= 0) {
+                toplamAlacak = toplamAlacak.add(sirketBakiye);
+            } else {
+                toplamBorc = toplamBorc.add(sirketBakiye.abs());
+            }
+
+            sirketOzetleri.add(com.raspel.erp.dto.sistem.KonsolideOzetDTO.SirketOzetDTO.builder()
+                    .sirketId(s.getId())
+                    .sirketAdi(s.getAd())
+                    .tur(s.getTur())
+                    .yil(s.getYil())
+                    .stokDegeri(sirketStokDeger)
+                    .bakiye(sirketBakiye)
+                    .stokSayisi(stoklar.size())
+                    .cariSayisi(cariler.size())
+                    .build());
+        }
+
+        return com.raspel.erp.dto.sistem.KonsolideOzetDTO.builder()
+                .anaSirketId(ana.getId())
+                .anaSirketAdi(ana.getAd())
+                .altSirketSayisi(tumGrup.size() - 1)
+                .toplamStokDegeri(toplamStokDegeri)
+                .toplamAlacakBakiye(toplamAlacak)
+                .toplamBorcBakiye(toplamBorc)
+                .toplamCiro(java.math.BigDecimal.ZERO)
+                .sirketler(sirketOzetleri)
+                .build();
     }
 
     private SirketDTO entityToDTO(Sirket s) {
