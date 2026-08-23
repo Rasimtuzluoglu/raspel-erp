@@ -12,19 +12,3 @@ CREATE SCHEMA IF NOT EXISTS proje;
 CREATE SCHEMA IF NOT EXISTS stok;
 CREATE SCHEMA IF NOT EXISTS sube;
 CREATE SCHEMA IF NOT EXISTS ticaret;
-
-CREATE TABLE IF NOT EXISTS sistem.sirket (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    ad VARCHAR(200) NOT NULL,
-    vergi_no VARCHAR(50),
-    vergi_dairesi VARCHAR(100),
-    adres VARCHAR(500),
-    telefon VARCHAR(20),
-    email VARCHAR(100),
-    web_site VARCHAR(200),
-    aktif BOOLEAN NOT NULL DEFAULT true,
-    olusturma_tarihi TIMESTAMP NOT NULL,
-    parent_id BIGINT,
-    tur VARCHAR(20) DEFAULT 'DIGER',
-    yil INTEGER
-);

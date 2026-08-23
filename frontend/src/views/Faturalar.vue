@@ -496,15 +496,15 @@
         </div>
         <div class="son-urunler-liste">
           <button
-            v-for="u in cariSonUrunler"
-            :key="u.stokId"
+            v-for="(u, idx) in (cariSonUrunler || [])"
+            :key="u?.stokId || idx"
             type="button"
             class="son-urun-item"
             @click="sonUrunuEkle(u)"
           >
-            <span class="son-urun-ad">{{ u.stokAd || 'Ürün #' + u.stokId }}</span>
-            <span class="son-urun-bilgi">{{ u.sonAlisTarihi || '' }} · {{ u.adet }} adet</span>
-            <span class="son-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
+            <span class="son-urun-ad">{{ u?.stokAd || (u?.stokId ? 'Ürün #' + u.stokId : 'Ürün') }}</span>
+            <span class="son-urun-bilgi">{{ u?.sonAlisTarihi || '' }} · {{ u?.adet || 1 }} adet</span>
+            <span class="son-urun-fiyat">{{ formatCurrency(u?.sonBirimFiyat || 0) }}</span>
             <i class="pi pi-plus son-urun-ekle" />
           </button>
         </div>
@@ -917,14 +917,15 @@ watch(
 )
 
 const sonUrunuEkle = (urun) => {
-  const u = stokStore.stoklar.find((s) => s.id === urun.stokId)
+  if (!urun) return
+  const u = urun.stokId ? stokStore.stoklar.find((s) => s.id === urun.stokId) : null
   form.value.kalemler.push({
     aciklama: urun.stokAd || (u ? u.ad : 'Ürün'),
     adet: 1,
     birimFiyat: urun.sonBirimFiyat || (u ? u.fiyat : 0),
     iskontoOrani: 0,
     kdvOrani: 20,
-    stokId: urun.stokId
+    stokId: urun.stokId || null
   })
   toastBildirim.basarili('Kalem eklendi')
 }

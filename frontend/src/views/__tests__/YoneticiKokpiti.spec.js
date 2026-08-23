@@ -70,7 +70,8 @@ const stubs = {
   Dialog: true,
   Textarea: true,
   Chart: true,
-  Bar: true
+  Bar: true,
+  Doughnut: true
 }
 
 describe('YoneticiKokpiti.vue', () => {

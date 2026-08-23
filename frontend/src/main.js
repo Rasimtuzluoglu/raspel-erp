@@ -21,11 +21,16 @@ import permissionDirective from './directives/permission.js'
 import 'primeicons/primeicons.css'
 import './assets/app.css'
 import { useTheme } from './composables/useTheme.js'
+import { formatCurrency, formatDate, formatDateTime } from './utils/format.js'
 
 const { initTheme } = useTheme()
 initTheme()
 
 const app = createApp(App)
+
+app.config.globalProperties.formatCurrency = formatCurrency
+app.config.globalProperties.formatDate = formatDate
+app.config.globalProperties.formatDateTime = formatDateTime
 
 app.use(createPinia())
 app.use(router)
