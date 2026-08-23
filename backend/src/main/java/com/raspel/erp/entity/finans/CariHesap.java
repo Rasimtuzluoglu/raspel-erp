@@ -113,4 +113,49 @@ public class CariHesap {
     protected void onUpdate() {
         this.guncellemeTarihi = LocalDateTime.now();
     }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getAd() { return ad; }
+    public void setAd(String ad) { this.ad = ad; }
+    public String getVergiNumarasi() { return vergiNumarasi; }
+    public void setVergiNumarasi(String vergiNumarasi) { this.vergiNumarasi = vergiNumarasi; }
+    public String getTelefon() { return telefon; }
+    public void setTelefon(String telefon) { this.telefon = telefon; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getAdres() { return adres; }
+    public void setAdres(String adres) { this.adres = adres; }
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+    public String getIl() { return il; }
+    public void setIl(String il) { this.il = il; }
+    public String getIlce() { return ilce; }
+    public void setIlce(String ilce) { this.ilce = ilce; }
+    public String getVergiDairesi() { return vergiDairesi; }
+    public void setVergiDairesi(String vergiDairesi) { this.vergiDairesi = vergiDairesi; }
+    public String getYetkiliKisi() { return yetkiliKisi; }
+    public void setYetkiliKisi(String yetkiliKisi) { this.yetkiliKisi = yetkiliKisi; }
+    public String getYetkiliTelefon() { return yetkiliTelefon; }
+    public void setYetkiliTelefon(String yetkiliTelefon) { this.yetkiliTelefon = yetkiliTelefon; }
+    public String getIban() { return iban; }
+    public void setIban(String iban) { this.iban = iban; }
+    public String getNotlar() { return notlar; }
+    public void setNotlar(String notlar) { this.notlar = notlar; }
+    public String getFotoUrl() { return fotoUrl; }
+    public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
+    public Boolean getAktif() { return aktif; }
+    public void setAktif(Boolean aktif) { this.aktif = aktif; }
+    public BigDecimal getKrediLimiti() { return krediLimiti; }
+    public void setKrediLimiti(BigDecimal krediLimiti) { this.krediLimiti = krediLimiti; }
+    public Integer getOdemeVadesi() { return odemeVadesi; }
+    public void setOdemeVadesi(Integer odemeVadesi) { this.odemeVadesi = odemeVadesi; }
+    public BigDecimal getBakiye() { return bakiye; }
+    public void setBakiye(BigDecimal bakiye) { this.bakiye = bakiye; }
+    public Long getSirketId() { return sirketId; }
+    public void setSirketId(Long sirketId) { this.sirketId = sirketId; }
+    public LocalDateTime getOlusturmaTarihi() { return olusturmaTarihi; }
+    public void setOlusturmaTarihi(LocalDateTime olusturmaTarihi) { this.olusturmaTarihi = olusturmaTarihi; }
+    public LocalDateTime getGuncellemeTarihi() { return guncellemeTarihi; }
+    public void setGuncellemeTarihi(LocalDateTime guncellemeTarihi) { this.guncellemeTarihi = guncellemeTarihi; }
 }

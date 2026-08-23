@@ -44,4 +44,21 @@ public class StokHareket {
 
     @PrePersist
     protected void onCreate() { olusturmaTarihi = LocalDateTime.now(); }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stok getStok() { return stok; }
+    public void setStok(Stok stok) { this.stok = stok; }
+    public String getTur() { return tur; }
+    public void setTur(String tur) { this.tur = tur; }
+    public BigDecimal getMiktar() { return miktar; }
+    public void setMiktar(BigDecimal miktar) { this.miktar = miktar; }
+    public LocalDate getHareketTarihi() { return hareketTarihi; }
+    public void setHareketTarihi(LocalDate hareketTarihi) { this.hareketTarihi = hareketTarihi; }
+    public String getAciklama() { return aciklama; }
+    public void setAciklama(String aciklama) { this.aciklama = aciklama; }
+    public CariHesap getCariHesap() { return cariHesap; }
+    public void setCariHesap(CariHesap cariHesap) { this.cariHesap = cariHesap; }
+    public LocalDateTime getOlusturmaTarihi() { return olusturmaTarihi; }
+    public void setOlusturmaTarihi(LocalDateTime olusturmaTarihi) { this.olusturmaTarihi = olusturmaTarihi; }
 }
