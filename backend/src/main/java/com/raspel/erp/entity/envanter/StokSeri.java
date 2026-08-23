@@ -43,4 +43,19 @@ public class StokSeri {
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();
     }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stok getStok() { return stok; }
+    public void setStok(Stok stok) { this.stok = stok; }
+    public String getSeriNo() { return seriNo; }
+    public void setSeriNo(String seriNo) { this.seriNo = seriNo; }
+    public String getLotNo() { return lotNo; }
+    public void setLotNo(String lotNo) { this.lotNo = lotNo; }
+    public LocalDate getSonKullanmaTarihi() { return sonKullanmaTarihi; }
+    public void setSonKullanmaTarihi(LocalDate sonKullanmaTarihi) { this.sonKullanmaTarihi = sonKullanmaTarihi; }
+    public StokHareket getStokHareket() { return stokHareket; }
+    public void setStokHareket(StokHareket stokHareket) { this.stokHareket = stokHareket; }
+    public LocalDateTime getOlusturmaTarihi() { return olusturmaTarihi; }
+    public void setOlusturmaTarihi(LocalDateTime olusturmaTarihi) { this.olusturmaTarihi = olusturmaTarihi; }
 }
