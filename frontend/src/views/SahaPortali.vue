@@ -33,259 +33,313 @@
       </div>
     </div>
 
-    <!-- Quick Tabs -->
-    <div class="saha-nav-tabs">
-      <button
-        type="button"
-        :class="['tab-button', { active: aktifSekme === 'siparisler' }]"
-        @click="aktifSekme = 'siparisler'"
-      >
-        <i class="pi pi-shopping-bag" />
-        <span>Sipariş & Teslimat</span>
-        <span v-if="bekleyenSiparisSayisi > 0" class="tab-badge">{{ bekleyenSiparisSayisi }}</span>
-      </button>
-      <button
-        type="button"
-        :class="['tab-button', { active: aktifSekme === 'ziyaret' }]"
-        @click="aktifSekme = 'ziyaret'"
-      >
-        <i class="pi pi-map-marker" />
-        <span>Ziyaret Kaydı</span>
-      </button>
-      <button
-        type="button"
-        :class="['tab-button', { active: aktifSekme === 'masraflar' }]"
-        @click="aktifSekme = 'masraflar'"
-      >
-        <i class="pi pi-wallet" />
-        <span>Masraf & Avans</span>
-      </button>
-      <button
-        type="button"
-        :class="['tab-button', { active: aktifSekme === 'izinler' }]"
-        @click="aktifSekme = 'izinler'"
-      >
-        <i class="pi pi-calendar" />
-        <span>İzin Talebi</span>
-      </button>
-    </div>
+    <!-- PrimeVue TabView Sekmeleri -->
+    <TabView>
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-shopping-bag" />
+            Sipariş & Teslimat
+            <span
+              v-if="bekleyenSiparisSayisi > 0"
+              class="tab-badge"
+            >{{ bekleyenSiparisSayisi }}</span>
+          </span>
+        </template>
 
-    <!-- MAIN CONTENT -->
-    <div class="saha-container">
-      <!-- 1. SİPARİŞLER -->
-      <div v-if="aktifSekme === 'siparisler'" class="fade-in-section">
-        <div class="section-title-row">
-          <h3><i class="pi pi-truck text-primary mr-2" />Aktif Saha Siparişleri</h3>
-          <span class="count-pill">{{ siparisler.length }} Sipariş</span>
-        </div>
+        <div class="fade-in-section">
+          <div class="section-title-row">
+            <h3><i class="pi pi-truck text-primary mr-2" />Aktif Saha Siparişleri</h3>
+            <span class="count-pill">{{ siparisler.length }} Sipariş</span>
+          </div>
 
-        <div v-if="siparisler.length > 0" class="cards-grid">
-          <div v-for="s in siparisler" :key="s.id" class="saha-card">
-            <div class="card-top">
-              <span class="order-code">#{{ s.siparisNo || s.id }}</span>
-              <Tag :value="s.durum || 'BEKLIYOR'" :severity="siparisDurumSeverity(s.durum)" rounded />
-            </div>
-
-            <h4 class="customer-title">{{ s.cariHesapAdi || s.musteriAdi || 'Müşteri' }}</h4>
-
-            <div v-if="s.teslimatAdresi" class="address-box">
-              <i class="pi pi-map-marker" />
-              <span>{{ s.teslimatAdresi }}</span>
-            </div>
-
-            <div class="amount-box">
-              <div class="date-col">
-                <small>Tarih</small>
-                <strong>{{ formatTarih(s.tarih) }}</strong>
+          <div
+            v-if="siparisler.length > 0"
+            class="cards-grid"
+          >
+            <div
+              v-for="s in siparisler"
+              :key="s.id"
+              class="saha-card"
+            >
+              <div class="card-top">
+                <span class="order-code">#{{ s.siparisNo || s.id }}</span>
+                <Tag
+                  :value="s.durum || 'BEKLIYOR'"
+                  :severity="siparisDurumSeverity(s.durum)"
+                  rounded
+                />
               </div>
-              <div class="price-col">
-                <small>Tutar</small>
-                <span class="price-val">{{ formatPara(s.toplamTutar || s.genelToplam || 0) }}</span>
-              </div>
-            </div>
 
-            <div class="card-bottom-actions">
-              <a
-                v-if="s.telefon"
-                :href="'tel:' + s.telefon"
-                class="call-btn"
-              >
-                <i class="pi pi-phone" /> Ara
-              </a>
-              <button
-                v-if="s.telefon || s.cariHesapAdi"
-                type="button"
-                class="whatsapp-btn"
-                @click="whatsappSiparisPaylas(s)"
-              >
-                <i class="pi pi-whatsapp" /> WhatsApp
-              </button>
-              <a
+              <h4 class="customer-title">
+                {{ s.cariHesapAdi || s.musteriAdi || 'Müşteri' }}
+              </h4>
+
+              <div
                 v-if="s.teslimatAdresi"
-                :href="'https://maps.google.com/?q=' + encodeURIComponent(s.teslimatAdresi)"
-                target="_blank"
-                class="map-btn"
+                class="address-box"
               >
-                <i class="pi pi-map" /> Yol Tarifi
-              </a>
-            </div>
+                <i class="pi pi-map-marker" />
+                <span>{{ s.teslimatAdresi }}</span>
+              </div>
 
-            <div v-if="s.durum !== 'TESLIM_EDILDI'" class="delivery-actions">
-              <Button
-                label="Durum"
-                icon="pi pi-sync"
-                class="p-button-outlined p-button-sm flex-1"
-                @click="durumSecModalAc(s)"
-              />
-              <Button
-                label="İmza & Teslim Et"
-                icon="pi pi-check"
-                class="p-button-success p-button-sm flex-1 font-bold"
-                @click="imzaModalAc(s)"
-              />
+              <div class="amount-box">
+                <div class="date-col">
+                  <small>Tarih</small>
+                  <strong>{{ formatTarih(s.tarih) }}</strong>
+                </div>
+                <div class="price-col">
+                  <small>Tutar</small>
+                  <span class="price-val">{{ formatPara(s.toplamTutar || s.genelToplam || 0) }}</span>
+                </div>
+              </div>
+
+              <div class="card-bottom-actions">
+                <a
+                  v-if="s.telefon"
+                  :href="'tel:' + s.telefon"
+                  class="call-btn"
+                >
+                  <i class="pi pi-phone" /> Ara
+                </a>
+                <button
+                  v-if="s.telefon || s.cariHesapAdi"
+                  type="button"
+                  class="whatsapp-btn"
+                  @click="whatsappSiparisPaylas(s)"
+                >
+                  <i class="pi pi-whatsapp" /> WhatsApp
+                </button>
+                <a
+                  v-if="s.teslimatAdresi"
+                  :href="'https://maps.google.com/?q=' + encodeURIComponent(s.teslimatAdresi)"
+                  target="_blank"
+                  class="map-btn"
+                >
+                  <i class="pi pi-map" /> Yol Tarifi
+                </a>
+              </div>
+
+              <div
+                v-if="s.durum !== 'TESLIM_EDILDI'"
+                class="delivery-actions"
+              >
+                <Button
+                  label="Durum"
+                  icon="pi pi-sync"
+                  class="p-button-outlined p-button-sm flex-1"
+                  @click="durumSecModalAc(s)"
+                />
+                <Button
+                  label="İmza & Teslim Et"
+                  icon="pi pi-check"
+                  class="p-button-success p-button-sm flex-1 font-bold"
+                  @click="imzaModalAc(s)"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-else class="empty-box">
-          <i class="pi pi-inbox empty-icon" />
-          <p>Henüz atanmış aktif bir saha siparişi bulunmuyor.</p>
-        </div>
-      </div>
-
-      <!-- 2. ZİYARET KAYDI -->
-      <div v-else-if="aktifSekme === 'ziyaret'" class="fade-in-section">
-        <div class="form-container-card">
-          <div class="form-header">
-            <h3><i class="pi pi-map-marker text-red-500 mr-2" />Müşteri Ziyaret & Görüşme Kaydı</h3>
-            <p>Ziyaret ettiğiniz müşteriyi seçip görüşme özetini merkeze bildirin.</p>
+          <div
+            v-else
+            class="empty-box"
+          >
+            <i class="pi pi-inbox empty-icon" />
+            <p>Henüz atanmış aktif bir saha siparişi bulunmuyor.</p>
           </div>
+        </div>
+      </TabPanel>
 
-          <div class="form-body">
-            <div class="form-field">
-              <label>Ziyaret Edilen Müşteri *</label>
-              <Dropdown
-                v-model="ziyaretForm.cariHesapId"
-                :options="cariHesaplar"
-                option-label="ad"
-                option-value="id"
-                placeholder="Müşteri Seçin..."
-                filter
-                class="w-full"
-              />
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-map-marker" />
+            Ziyaret Kaydı
+          </span>
+        </template>
+
+        <div class="fade-in-section">
+          <div class="form-container-card">
+            <div class="form-header">
+              <h3><i class="pi pi-map-marker text-red-500 mr-2" />Müşteri Ziyaret & Görüşme Kaydı</h3>
+              <p>Ziyaret ettiğiniz müşteriyi seçip görüşme özetini merkeze bildirin.</p>
             </div>
-            <div class="form-field">
-              <label>Ziyaret Amacı</label>
-              <Dropdown
-                v-model="ziyaretForm.amac"
-                :options="['Satış & Tanıtım', 'Sipariş & Teklif Takibi', 'Tahsilat', 'Rutin Ziyaret', 'Destek / İade']"
-                class="w-full"
-              />
-            </div>
-            <div class="form-field">
-              <label>Görüşme Notları & Sonuç *</label>
-              <Textarea
-                v-model="ziyaretForm.notlar"
-                rows="4"
-                placeholder="Görüşülen yetkili, talep edilenler, sonraki adımlar..."
-                class="w-full"
-              />
-            </div>
-            <div class="gps-location-row flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg mb-3">
-              <div class="flex items-center gap-2">
-                <i class="pi pi-map-marker text-red-500 text-lg" />
-                <span class="text-sm text-gray-700 dark:text-gray-200">
-                  {{ ziyaretKonum || 'Konum alınmadı' }}
-                </span>
+
+            <div class="form-body">
+              <div class="form-field">
+                <label>Ziyaret Edilen Müşteri *</label>
+                <Dropdown
+                  v-model="ziyaretForm.cariHesapId"
+                  :options="cariHesaplar"
+                  option-label="ad"
+                  option-value="id"
+                  placeholder="Müşteri Seçin..."
+                  filter
+                  class="w-full"
+                />
+              </div>
+              <div class="form-field">
+                <label>Ziyaret Amacı</label>
+                <Dropdown
+                  v-model="ziyaretForm.amac"
+                  :options="['Satış & Tanıtım', 'Sipariş & Teklif Takibi', 'Tahsilat', 'Rutin Ziyaret', 'Destek / İade']"
+                  class="w-full"
+                />
+              </div>
+              <div class="form-field">
+                <label>Görüşme Notları & Sonuç *</label>
+                <Textarea
+                  v-model="ziyaretForm.notlar"
+                  rows="4"
+                  placeholder="Görüşülen yetkili, talep edilenler, sonraki adımlar..."
+                  class="w-full"
+                />
+              </div>
+              <div class="gps-location-row flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg mb-3">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-map-marker text-red-500 text-lg" />
+                  <span class="text-sm text-gray-700 dark:text-gray-200">
+                    {{ ziyaretKonum || 'Konum alınmadı' }}
+                  </span>
+                </div>
+                <Button
+                  label="Konum Al"
+                  icon="pi pi-compass"
+                  class="p-button-outlined p-button-sm p-button-secondary"
+                  :loading="konumAliniyor"
+                  @click="gpsKonumAl"
+                />
               </div>
               <Button
-                label="Konum Al"
-                icon="pi pi-compass"
-                class="p-button-outlined p-button-sm p-button-secondary"
-                :loading="konumAliniyor"
-                @click="gpsKonumAl"
+                label="Ziyaret Notunu Merkeze İlet"
+                icon="pi pi-send"
+                class="p-button-primary w-full mt-2 font-bold"
+                :loading="ziyaretKaydediliyor"
+                @click="ziyaretKaydet"
               />
             </div>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-wallet" />
+            Masraf & Avans
+          </span>
+        </template>
+
+        <div class="fade-in-section">
+          <div class="section-title-row">
+            <h3><i class="pi pi-receipt text-primary mr-2" />Masraf & Avans Taleplerim</h3>
             <Button
-              label="Ziyaret Notunu Merkeze İlet"
-              icon="pi pi-send"
-              class="p-button-primary w-full mt-2 font-bold"
-              :loading="ziyaretKaydediliyor"
-              @click="ziyaretKaydet"
+              label="Yeni Masraf / Avans"
+              icon="pi pi-plus"
+              class="p-button-primary p-button-sm"
+              @click="yeniMasrafModal = true"
             />
           </div>
-        </div>
-      </div>
 
-      <!-- 3. MASRAFLAR -->
-      <div v-else-if="aktifSekme === 'masraflar'" class="fade-in-section">
-        <div class="section-title-row">
-          <h3><i class="pi pi-receipt text-primary mr-2" />Masraf & Avans Taleplerim</h3>
-          <Button
-            label="Yeni Masraf / Avans"
-            icon="pi pi-plus"
-            class="p-button-primary p-button-sm"
-            @click="yeniMasrafModal = true"
-          />
-        </div>
-
-        <div v-if="masraflar.length > 0" class="expense-list">
-          <div v-for="m in masraflar" :key="m.id" class="expense-card">
-            <div class="expense-left">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="expense-type-badge">{{ m.tur === 'AVANS' ? 'Avans Talebi' : m.kategori }}</span>
-                <Tag :value="m.durum" :severity="talepDurumSeverity(m.durum)" rounded />
+          <div
+            v-if="masraflar.length > 0"
+            class="expense-list"
+          >
+            <div
+              v-for="m in masraflar"
+              :key="m.id"
+              class="expense-card"
+            >
+              <div class="expense-left">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="expense-type-badge">{{ m.tur === 'AVANS' ? 'Avans Talebi' : m.kategori }}</span>
+                  <Tag
+                    :value="m.durum"
+                    :severity="talepDurumSeverity(m.durum)"
+                    rounded
+                  />
+                </div>
+                <p class="expense-desc">
+                  {{ m.aciklama || '-' }}
+                </p>
+                <small class="expense-date">{{ formatTarih(m.tarih) }}</small>
               </div>
-              <p class="expense-desc">{{ m.aciklama || '-' }}</p>
-              <small class="expense-date">{{ formatTarih(m.tarih) }}</small>
-            </div>
-            <div class="expense-right">
-              <span class="expense-amount">{{ formatPara(m.tutar) }}</span>
+              <div class="expense-right">
+                <span class="expense-amount">{{ formatPara(m.tutar) }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-else class="empty-box">
-          <i class="pi pi-wallet empty-icon" />
-          <p>Henüz masraf veya avans talebiniz yok.</p>
-        </div>
-      </div>
-
-      <!-- 4. İZİNLER -->
-      <div v-else-if="aktifSekme === 'izinler'" class="fade-in-section">
-        <div class="section-title-row">
-          <h3><i class="pi pi-calendar-plus text-primary mr-2" />İzin Taleplerim</h3>
-          <Button
-            label="Yeni İzin Talebi"
-            icon="pi pi-plus"
-            class="p-button-primary p-button-sm"
-            @click="yeniIzinModal = true"
-          />
-        </div>
-
-        <div v-if="izinler.length > 0" class="expense-list">
-          <div v-for="i in izinler" :key="i.id" class="expense-card">
-            <div class="expense-left">
-              <div class="flex items-center gap-2 mb-1">
-                <strong class="text-base text-gray-800 dark:text-gray-100">{{ i.izinTuru }}</strong>
-                <Tag :value="i.durum" :severity="talepDurumSeverity(i.durum)" rounded />
-              </div>
-              <p class="expense-desc">
-                <i class="pi pi-calendar mr-1" />
-                {{ formatTarih(i.baslangic) }} → {{ formatTarih(i.bitis) }}
-                <span class="font-bold text-primary ml-1">({{ i.gunSayisi }} Gün)</span>
-              </p>
-              <small v-if="i.aciklama" class="expense-date">{{ i.aciklama }}</small>
-            </div>
+          <div
+            v-else
+            class="empty-box"
+          >
+            <i class="pi pi-wallet empty-icon" />
+            <p>Henüz masraf veya avans talebiniz yok.</p>
           </div>
         </div>
+      </TabPanel>
 
-        <div v-else class="empty-box">
-          <i class="pi pi-calendar empty-icon" />
-          <p>Henüz kayıtlı izin talebiniz bulunmuyor.</p>
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-calendar" />
+            İzin Talebi
+          </span>
+        </template>
+
+        <div class="fade-in-section">
+          <div class="section-title-row">
+            <h3><i class="pi pi-calendar-plus text-primary mr-2" />İzin Taleplerim</h3>
+            <Button
+              label="Yeni İzin Talebi"
+              icon="pi pi-plus"
+              class="p-button-primary p-button-sm"
+              @click="yeniIzinModal = true"
+            />
+          </div>
+
+          <div
+            v-if="izinler.length > 0"
+            class="expense-list"
+          >
+            <div
+              v-for="i in izinler"
+              :key="i.id"
+              class="expense-card"
+            >
+              <div class="expense-left">
+                <div class="flex items-center gap-2 mb-1">
+                  <strong class="text-base text-gray-800 dark:text-gray-100">{{ i.izinTuru }}</strong>
+                  <Tag
+                    :value="i.durum"
+                    :severity="talepDurumSeverity(i.durum)"
+                    rounded
+                  />
+                </div>
+                <p class="expense-desc">
+                  <i class="pi pi-calendar mr-1" />
+                  {{ formatTarih(i.baslangic) }} → {{ formatTarih(i.bitis) }}
+                  <span class="font-bold text-primary ml-1">({{ i.gunSayisi }} Gün)</span>
+                </p>
+                <small
+                  v-if="i.aciklama"
+                  class="expense-date"
+                >{{ i.aciklama }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else
+            class="empty-box"
+          >
+            <i class="pi pi-calendar empty-icon" />
+            <p>Henüz kayıtlı izin talebiniz bulunmuyor.</p>
+          </div>
         </div>
-      </div>
-    </div>
+      </TabPanel>
+    </TabView>
 
     <!-- MODAL: HIZLI SİPARİŞ AL -->
     <Dialog
@@ -367,7 +421,11 @@
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" class="p-button-text" @click="yeniSiparisModal = false" />
+        <Button
+          label="İptal"
+          class="p-button-text"
+          @click="yeniSiparisModal = false"
+        />
         <Button
           label="Siparişi Merkeze Gönder"
           icon="pi pi-check"
@@ -405,7 +463,11 @@
         <div class="form-field">
           <div class="flex justify-between items-center mb-1">
             <label>Dijital İmza</label>
-            <button type="button" class="text-xs text-red-500 hover:underline" @click="imzayiTemizle">
+            <button
+              type="button"
+              class="text-xs text-red-500 hover:underline"
+              @click="imzayiTemizle"
+            >
               İmzayı Temizle
             </button>
           </div>
@@ -422,7 +484,11 @@
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" class="p-button-text" @click="imzaModal = false" />
+        <Button
+          label="İptal"
+          class="p-button-text"
+          @click="imzaModal = false"
+        />
         <Button
           label="Teslimatı Onayla"
           icon="pi pi-check"
@@ -452,20 +518,37 @@
         <div class="form-row-2">
           <div class="form-field">
             <label>Başlangıç</label>
-            <InputText v-model="izinForm.baslangic" type="date" class="w-full" />
+            <InputText
+              v-model="izinForm.baslangic"
+              type="date"
+              class="w-full"
+            />
           </div>
           <div class="form-field">
             <label>Bitiş</label>
-            <InputText v-model="izinForm.bitis" type="date" class="w-full" />
+            <InputText
+              v-model="izinForm.bitis"
+              type="date"
+              class="w-full"
+            />
           </div>
         </div>
         <div class="form-field">
           <label>Açıklama</label>
-          <Textarea v-model="izinForm.aciklama" rows="2" placeholder="İzin gerekçesi..." class="w-full" />
+          <Textarea
+            v-model="izinForm.aciklama"
+            rows="2"
+            placeholder="İzin gerekçesi..."
+            class="w-full"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" class="p-button-text" @click="yeniIzinModal = false" />
+        <Button
+          label="İptal"
+          class="p-button-text"
+          @click="yeniIzinModal = false"
+        />
         <Button
           label="Talebi Gönder"
           icon="pi pi-send"
@@ -501,7 +584,10 @@
           </button>
         </div>
 
-        <div v-if="masrafForm.tur === 'MASRAF'" class="form-field">
+        <div
+          v-if="masrafForm.tur === 'MASRAF'"
+          class="form-field"
+        >
           <label>Harcama Kategorisi</label>
           <Dropdown
             v-model="masrafForm.kategori"
@@ -532,7 +618,11 @@
         </div>
       </div>
       <template #footer>
-        <Button label="İptal" class="p-button-text" @click="yeniMasrafModal = false" />
+        <Button
+          label="İptal"
+          class="p-button-text"
+          @click="yeniMasrafModal = false"
+        />
         <Button
           label="Talebi Gönder"
           icon="pi pi-send"
@@ -554,7 +644,6 @@ import { useToast } from 'primevue/usetoast'
 const authStore = useAuthStore()
 const toast = useToast()
 
-const aktifSekme = ref('siparisler')
 const yukleniyor = ref(false)
 
 const siparisler = ref([])
@@ -932,42 +1021,6 @@ const hizliSiparisKaydet = async () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.saha-nav-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
-
-@media (max-width: 640px) {
-  .saha-nav-tabs {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.tab-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0.875rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab-button.active {
-  background: var(--primary-color, #3b82f6);
-  color: white;
-  border-color: var(--primary-color, #3b82f6);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 .tab-badge {
