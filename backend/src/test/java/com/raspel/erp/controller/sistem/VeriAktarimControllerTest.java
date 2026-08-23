@@ -1,6 +1,7 @@
 package com.raspel.erp.controller.sistem;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.raspel.erp.controller.TestSecurityMocks;
 import com.raspel.erp.dto.sistem.VeriAktarimDTO;
 import com.raspel.erp.dto.sistem.VeriAktarimSonucDTO;
 import com.raspel.erp.service.sistem.VeriAktarimService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(VeriAktarimController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(TestSecurityMocks.class)
 class VeriAktarimControllerTest {
 
     @Autowired

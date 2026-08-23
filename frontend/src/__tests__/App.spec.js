@@ -6,6 +6,7 @@ import ToastService from 'primevue/toastservice'
 describe('App.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.removeItem('raspel_erp_auth')
   })
 
   const commonStubs = {
