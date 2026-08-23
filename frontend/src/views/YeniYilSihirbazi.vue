@@ -151,7 +151,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { sirketAPI, client } from '../api/index.js'
+import { sirketAPI, apiClient } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
 
@@ -242,7 +242,7 @@ const tamamla = async () => {
         fiyatlariKoru: aktarim.value.fiyatlariKoru
       }
       
-      const aktarimRes = await client.post('/api/veri-aktarim/sirketler-arasi', payload)
+      const aktarimRes = await apiClient.post('/api/veri-aktarim/sirketler-arasi', payload)
       const sonuc = aktarimRes.data
       
       toast.basarili(`Şirket oluşturuldu ve veriler aktarıldı! ${sonuc.aktarilanStokSayisi} Stok, ${sonuc.aktarilanCariSayisi} Cari kopyalandı.`)
