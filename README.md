@@ -6,29 +6,6 @@
 
 ---
 
-## 📸 Ekran Görüntüleri
-
-<table>
-  <tr>
-    <td align="center"><b>🏠 Ana Sayfa & Dashboard</b><br/><img src="docs/screenshots/01-dashboard.png" width="400"/></td>
-    <td align="center"><b>🔐 Giriş Ekranı</b><br/><img src="docs/screenshots/08-giris-ekrani.png" width="400"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>🚚 Saha Personeli Portalı</b><br/><img src="docs/screenshots/02-saha-portali.png" width="400"/></td>
-    <td align="center"><b>📊 Yönetici Kokpiti</b><br/><img src="docs/screenshots/03-yonetici-kokpiti.png" width="400"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>✅ Onay Merkezi</b><br/><img src="docs/screenshots/04-onay-merkezi.png" width="400"/></td>
-    <td align="center"><b>🛒 Hızlı Satış (POS)</b><br/><img src="docs/screenshots/05-hizli-satis-pos.png" width="400"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>🛡️ Rol & Yetki Matrisi (RBAC)</b><br/><img src="docs/screenshots/06-rbac-yetki-matrisi.png" width="400"/></td>
-    <td align="center"><b>🤖 AI Sohbet Asistanı</b><br/><img src="docs/screenshots/07-ai-sohbet-asistani.png" width="400"/></td>
-  </tr>
-</table>
-
----
-
 ## 🌟 Öne Çıkan Yenilikler & Akıllı Özellikler
 
 | Modül | Açıklama |
