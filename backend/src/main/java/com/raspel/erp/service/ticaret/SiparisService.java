@@ -134,16 +134,17 @@ public class SiparisService {
 
         if ("FATURA_KESILDI".equals(durum) && !"FATURA_KESILDI".equals(eskiDurum)) {
             List<SiparisKalem> kalemler = kalemRepository.findBySiparisId(s.getId());
-            List<FaturaKalemDTO> faturaKalemler = kalemler.stream()
-                    .map(k -> FaturaKalemDTO.builder()
-                            .aciklama(k.getAciklama() != null ? k.getAciklama() : "")
-                            .adet(k.getMiktar() != null ? k.getMiktar().intValue() : 1)
-                            .birimFiyat(k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO)
-                            .kdvOrani(k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani)
-                            .tutar(k.getTutar() != null ? k.getTutar() : BigDecimal.ZERO)
-                            .stokId(k.getStokId())
-                            .build())
-                    .collect(Collectors.toList());
+            List<FaturaKalemDTO> faturaKalemler = new java.util.ArrayList<>();
+            for (SiparisKalem k : kalemler) {
+                faturaKalemler.add(FaturaKalemDTO.builder()
+                        .aciklama(k.getAciklama() != null ? k.getAciklama() : "")
+                        .adet(k.getMiktar() != null ? k.getMiktar().intValue() : 1)
+                        .birimFiyat(k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO)
+                        .kdvOrani(k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani)
+                        .tutar(k.getTutar() != null ? k.getTutar() : BigDecimal.ZERO)
+                        .stokId(k.getStokId())
+                        .build());
+            }
 
             FaturaDTO faturaDTO = FaturaDTO.builder()
                     .tarih(java.time.LocalDate.now())
