@@ -448,187 +448,29 @@
         </div>
       </div>
 
-      <div
+      <FaturaFiyatGecmisi
         v-if="fiyatGecmisi && fiyatGecmisi.gecmis && fiyatGecmisi.gecmis.length"
-        class="fiyat-gecmisi-panel"
-      >
-        <div class="fiyat-gecmisi-ust">
-          <i class="pi pi-chart-line" />
-          <span>Alış Fiyat Geçmişi</span>
-          <span :class="['trend-rozet', (fiyatGecmisi.trend || '').toLowerCase()]">{{
-            trendLabel(fiyatGecmisi.trend)
-          }}</span>
-        </div>
-        <div class="fiyat-gecmisi-liste">
-          <div
-            v-for="(kayit, i) in fiyatGecmisi.gecmis"
-            :key="i"
-            class="fiyat-gecmisi-item"
-          >
-            <span class="fg-tarih">{{ formatDate(kayit.tarih) }}</span>
-            <span class="fg-fatura">{{ kayit.faturaNumarasi }}</span>
-            <span class="fg-fiyat">{{ formatCurrency(kayit.birimFiyat) }}</span>
-          </div>
-        </div>
-        <div
-          v-if="fiyatGecmisi.guncelFiyat"
-          class="fiyat-gecmisi-guncel"
-        >
-          Güncel Satış Fiyatı: <strong>{{ formatCurrency(fiyatGecmisi.guncelFiyat) }}</strong>
-        </div>
-      </div>
+        :fiyat-gecmisi="fiyatGecmisi"
+      />
 
-      <div
-        v-if="form.cariHesapId && cariSonUrunler.length > 0"
-        class="son-urunler-panel"
-      >
-        <div class="son-urunler-ust">
-          <i class="pi pi-history" />
-          <span>Bu cari son olarak şunları aldı</span>
-          <button
-            type="button"
-            class="son-urunler-kapat"
-            title="Gizle"
-            @click="cariSonUrunlerGizle = true"
-          >
-            <i class="pi pi-times" />
-          </button>
-        </div>
-        <div class="son-urunler-liste">
-          <button
-            v-for="(u, idx) in (cariSonUrunler || [])"
-            :key="u?.stokId || idx"
-            type="button"
-            class="son-urun-item"
-            @click="sonUrunuEkle(u)"
-          >
-            <span class="son-urun-ad">{{ u?.stokAd || (u?.stokId ? 'Ürün #' + u.stokId : 'Ürün') }}</span>
-            <span class="son-urun-bilgi">{{ u?.sonAlisTarihi || '' }} · {{ u?.adet || 1 }} adet</span>
-            <span class="son-urun-fiyat">{{ formatCurrency(u?.sonBirimFiyat || 0) }}</span>
-            <i class="pi pi-plus son-urun-ekle" />
-          </button>
-        </div>
-      </div>
+      <FaturaSonUrunler
+        v-if="form.cariHesapId && !cariSonUrunlerGizle && cariSonUrunler.length > 0"
+        :urunler="cariSonUrunler"
+        @ekle="sonUrunuEkle"
+        @gizle="cariSonUrunlerGizle = true"
+      />
 
       <h3 style="margin: 20px 0 10px">
         Fatura Kalemleri
       </h3>
-      <DataTable
-        state-storage="session"
-        state-key="faturalar-table-state"
-        :value="form.kalemler"
-        striped-rows
-      >
-        <Column
-          header="#"
-          style="width: 40px"
-        >
-          <template #body="s">
-            {{ s.index + 1 }}
-          </template>
-        </Column>
-        <Column header="Açıklama *">
-          <template #body="s">
-            <InputText
-              v-model="s.data.aciklama"
-              placeholder="Kalem açıklaması"
-              class="w-full"
-            />
-          </template>
-        </Column>
-        <Column
-          header="Adet *"
-          style="width: 90px"
-        >
-          <template #body="s">
-            <InputNumber
-              v-model="s.data.adet"
-              :min="1"
-              class="w-full"
-            />
-          </template>
-        </Column>
-        <Column
-          header="Birim Fiyat *"
-          style="width: 130px"
-        >
-          <template #body="s">
-            <InputNumber
-              v-model="s.data.birimFiyat"
-              :min="0"
-              :min-fraction-digits="2"
-              :max-fraction-digits="2"
-              class="w-full"
-            />
-          </template>
-        </Column>
-        <Column
-          header="İskonto %"
-          style="width: 100px"
-        >
-          <template #body="s">
-            <InputNumber
-              v-model="s.data.iskontoOrani"
-              :min="0"
-              :max="100"
-              :min-fraction-digits="0"
-              class="w-full"
-            />
-          </template>
-        </Column>
-        <Column
-          header="KDV %"
-          style="width: 80px"
-        >
-          <template #body="s">
-            <Dropdown
-              v-model="s.data.kdvOrani"
-              :options="[0, 10, 20]"
-              class="w-full"
-            />
-          </template>
-        </Column>
-        <Column
-          header="Tutar"
-          style="width: 120px"
-        >
-          <template #body="s">
-            {{ formatCurrency(kalemTutar(s.data)) }}
-          </template>
-        </Column>
-        <Column
-          header=""
-          style="width: 50px"
-        >
-          <template #body="s">
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger p-button-sm"
-              @click="removeKalem(s.index)"
-            />
-          </template>
-        </Column>
-      </DataTable>
-      <div style="margin-top: 10px">
-        <Button
-          label="+ Kalem Ekle"
-          icon="pi pi-plus"
-          class="p-button-sm p-button-outlined"
-          @click="addKalem"
-        />
-      </div>
-
-      <div class="summary-box">
-        <div class="summary-row">
-          <span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span>
-        </div>
-        <div class="summary-row total">
-          <span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span>
-        </div>
-      </div>
+      <FaturaKalemleri
+        :kalemler="form.kalemler"
+        :ara-toplam="araToplam"
+        :kdv-toplam="kdvToplam"
+        :genel-toplam="genelToplam"
+        @add="addKalem"
+        @remove="removeKalem"
+      />
 
       <template #footer>
         <Button
@@ -678,7 +520,11 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import FaturaKalemleri from '../components/FaturaKalemleri.vue'
+import FaturaFiyatGecmisi from '../components/FaturaFiyatGecmisi.vue'
+import FaturaSonUrunler from '../components/FaturaSonUrunler.vue'
 import { formatCurrency } from '../utils/format.js'
+import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -844,8 +690,6 @@ const fiyatGecmisiYukle = async (stokId) => {
   }
 }
 
-const trendLabel = (trend) => ({ ARTIS: 'Yükseliyor', AZALIS: 'Düşüyor', STABIL: 'Sabit' })[trend] || '-'
-
 const kritikStokMu = (stok) => {
   if (!stok?.miktar) return false
   if (stok.minMiktar != null && stok.miktar <= stok.minMiktar) return true
@@ -968,32 +812,12 @@ const removeKalem = (index) => {
   form.value.kalemler.splice(index, 1)
 }
 
-const kalemTutar = (kalem) => {
-  const brf = kalem.birimFiyat || 0
-  const adt = kalem.adet || 0
-  const iskontoOran = (kalem.iskontoOrani || 0) / 100
-  const net = brf * adt * (1 - iskontoOran)
-  const kdvOran = (kalem.kdvOrani || 0) / 100
-  return net + net * kdvOran
-}
-
 const araToplam = computed(() => {
-  return form.value.kalemler.reduce((t, k) => {
-    const brf = k.birimFiyat || 0
-    const adt = k.adet || 0
-    const iskontoOran = (k.iskontoOrani || 0) / 100
-    return t + brf * adt * (1 - iskontoOran)
-  }, 0)
+  return form.value.kalemler.reduce((t, k) => t + kalemNetTutar(k), 0)
 })
 
 const kdvToplam = computed(() => {
-  return form.value.kalemler.reduce((t, k) => {
-    const brf = k.birimFiyat || 0
-    const adt = k.adet || 0
-    const iskontoOran = (k.iskontoOrani || 0) / 100
-    const net = brf * adt * (1 - iskontoOran)
-    return t + net * ((k.kdvOrani || 0) / 100)
-  }, 0)
+  return form.value.kalemler.reduce((t, k) => t + kalemKdv(k), 0)
 })
 
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
@@ -1317,166 +1141,12 @@ h1 {
   font-weight: 600;
   white-space: nowrap;
 }
-.fiyat-gecmisi-panel {
-  background: rgba(139, 92, 246, 0.06);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 15px;
-}
-.fiyat-gecmisi-ust {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #a78bfa;
-  margin-bottom: 8px;
-}
-.fiyat-gecmisi-liste {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.fiyat-gecmisi-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.fg-tarih {
-  width: 80px;
-  flex-shrink: 0;
-}
-.fg-fatura {
-  flex: 1;
-}
-.fg-fiyat {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.fiyat-gecmisi-guncel {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.trend-rozet {
-  margin-left: auto;
-  padding: 1px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-}
-.trend-rozet.artis {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-}
-.trend-rozet.azalis {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-.trend-rozet.stabil {
-  background: rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
-}
 .urun-ekleme {
   background: rgba(59, 130, 246, 0.05);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 10px;
   padding: 14px;
   margin: 15px 0;
-}
-.son-urunler-panel {
-  background: rgba(16, 185, 129, 0.06);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 15px;
-}
-.son-urunler-ust {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #34d399;
-  margin-bottom: 10px;
-}
-.son-urunler-kapat {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 2px 4px;
-}
-.son-urunler-kapat:hover {
-  color: #f87171;
-}
-.son-urunler-liste {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.son-urun-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg-card);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: var(--text-primary);
-}
-.son-urun-item:hover {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  transform: translateY(-1px);
-}
-.son-urun-ad {
-  font-size: 13px;
-  font-weight: 600;
-}
-.son-urun-bilgi {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.son-urun-fiyat {
-  font-size: 12px;
-  color: #34d399;
-  font-weight: 600;
-}
-.son-urun-ekle {
-  font-size: 12px;
-  color: #10b981;
-}
-.summary-box {
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 15px;
-}
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-.summary-row.total {
-  font-weight: 700;
-  font-size: 18px;
-  border-top: 2px solid #3b82f6;
-  margin-top: 5px;
-  padding-top: 10px;
-  color: var(--text-primary);
 }
 .badge {
   padding: 4px 12px;
