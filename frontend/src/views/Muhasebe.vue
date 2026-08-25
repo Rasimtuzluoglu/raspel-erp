@@ -540,6 +540,7 @@ import { muhasebeAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -585,8 +586,6 @@ const hesapSecenekleri = computed(() => hesaplar.value.map((h) => ({ ad: `${h.ko
 const fisToplamBorc = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.borc) || 0), 0))
 const fisToplamAlacak = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.alacak) || 0), 0))
 
-const formatCurrency = (v) =>
-  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 

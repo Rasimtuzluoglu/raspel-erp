@@ -170,6 +170,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { eFaturaAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -181,8 +182,6 @@ const kaydediliyor = ref(false)
 const olusturDialog = ref(false)
 const olusturForm = ref({ faturaId: null, senaryo: 'TEMELFATURA', tip: 'SATIS' })
 
-const formatCurrency = (v) =>
-  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 const formatDateTime = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : '-'
 const kisaEttn = (e) => (e ? e.slice(0, 8) + '…' : '-')

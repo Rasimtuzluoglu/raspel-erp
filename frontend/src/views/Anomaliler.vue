@@ -5,13 +5,6 @@
       subtitle="Yapay zeka anomali tespiti, şüpheli giriş uyarıları ve güvenli IP beyaz listesi yönetimi"
     >
       <template #actions>
-        <SelectButton
-          v-model="aktifSekme"
-          :options="sekmeSecenekleri"
-          option-label="label"
-          option-value="value"
-          class="mr-2"
-        />
         <Button
           v-if="aktifSekme === 'anomali'"
           label="Yeniden Tara"
@@ -30,161 +23,175 @@
       </template>
     </PageHeader>
 
-    <!-- 1. Sekme: Anomali & Risk Tespiti -->
-    <template v-if="aktifSekme === 'anomali'">
-      <div
-        v-if="yukleniyor"
-        class="p-4"
-      >
-        <SkeletonLoader :count="3" />
-      </div>
-
-      <div
-        v-else-if="anomaliler.length === 0"
-        class="empty-box"
-      >
-        <i class="pi pi-check-circle success-icon" />
-        <h3>Harika! Hiçbir Şüpheli Durum Veya Mükerrer Kayıt Bulunamadı.</h3>
-        <p>Sistemdeki tüm faturalar, hareketler, bakiyeler ve oturumlar tutarlı görünmektedir.</p>
-      </div>
-
-      <div
-        v-else
-        class="anomali-grid"
-      >
-        <div
-          v-for="item in anomaliler"
-          :key="item.id"
-          class="anomali-card"
-          :class="(item.seviye || '').toLowerCase()"
-        >
-          <div class="card-header">
-            <div class="header-left">
-              <span
-                class="badge"
-                :class="(item.seviye || '').toLowerCase()"
-              >{{ item.seviye }} ÖNCELİK</span>
-              <span class="tur-label">{{ item.tur }}</span>
-            </div>
-            <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
-          </div>
-          <h4 class="card-title">
-            <i class="pi pi-exclamation-triangle" /> {{ item.baslik }}
-          </h4>
-          <p class="card-desc">
-            {{ item.aciklama }}
-          </p>
-          <div class="oneri-box">
-            <strong><i class="pi pi-lightbulb" /> Öneri:</strong> {{ item.oneri }}
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- 2. Sekme: IP Kısıtlaması & Güvenlik Beyaz Listesi -->
-    <template v-else>
-      <div class="ip-info-box">
-        <i class="pi pi-shield" />
-        <div>
-          <strong>IP Kısıtlaması & Beyaz Liste Politikası</strong>
-          <p>Tanımlı IP adresleri veya alt ağlar dışından sisteme giriş denemeleri yapay zeka tarafından güvenlik anomalisi olarak algılanır ve anında bildirim üretilir.</p>
-        </div>
-      </div>
-
-      <DataTable
-        state-storage="session"
-        state-key="ip-whitelist-table-state"
-        :value="ipListesi"
-        striped-rows
-        :loading="ipYukleniyor"
-      >
-        <Column
-          field="ipAdresi"
-          header="İzin Verilen IP / CIDR"
-          style="width: 220px"
-        >
-          <template #body="{ data }">
-            <code>{{ data.ipAdresi }}</code>
-          </template>
-        </Column>
-        <Column
-          field="aciklama"
-          header="Açıklama / Lokasyon"
-        />
-        <Column
-          field="eklemeTarihi"
-          header="Tanımlama Tarihi"
-          style="width: 160px"
-        />
-        <Column
-          field="durum"
-          header="Durum"
-          style="width: 120px"
-        >
-          <template #body="{ data }">
-            <Tag
-              :value="data.durum || 'AKTIF'"
-              severity="success"
-            />
-          </template>
-        </Column>
-        <Column
-          header="İşlem"
-          style="width: 100px"
-        >
-          <template #body="{ data }">
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text p-button-danger"
-              title="IP'yi Sil"
-              @click="ipSil(data.id)"
-            />
-          </template>
-        </Column>
-      </DataTable>
-
-      <!-- IP Ekleme Modalı -->
-      <Dialog
-        v-model:visible="ipModalAcik"
-        header="Yeni Güvenli IP / Alt Ağ Ekle"
-        :modal="true"
-        :style="{ width: '450px' }"
-      >
-        <div class="p-fluid">
-          <div class="field mb-3">
-            <label for="ipAdresi">IP Adresi veya CIDR Blok</label>
-            <InputText
-              id="ipAdresi"
-              v-model="yeniIp.ipAdresi"
-              placeholder="Örn: 88.255.120.45 veya 192.168.1.0/24"
-            />
-          </div>
-          <div class="field mb-3">
-            <label for="ipAciklama">Açıklama / Ofis Tanımı</label>
-            <InputText
-              id="ipAciklama"
-              v-model="yeniIp.aciklama"
-              placeholder="Örn: Ankara Merkez Ofis Statik IP"
-            />
-          </div>
-        </div>
-        <template #footer>
-          <Button
-            label="İptal"
-            icon="pi pi-times"
-            class="p-button-text"
-            @click="ipModalAcik = false"
-          />
-          <Button
-            label="Kaydet"
-            icon="pi pi-check"
-            class="p-button-primary"
-            :loading="ipKaydediliyor"
-            @click="ipKaydet"
-          />
+    <TabView @tab-change="sekmeDegisti">
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-shield" />
+            Anomali & Risk Tespiti
+          </span>
         </template>
-      </Dialog>
-    </template>
+
+        <div
+          v-if="yukleniyor"
+          class="p-4"
+        >
+          <SkeletonLoader :count="3" />
+        </div>
+
+        <div
+          v-else-if="anomaliler.length === 0"
+          class="empty-box"
+        >
+          <i class="pi pi-check-circle success-icon" />
+          <h3>Harika! Hiçbir Şüpheli Durum Veya Mükerrer Kayıt Bulunamadı.</h3>
+          <p>Sistemdeki tüm faturalar, hareketler, bakiyeler ve oturumlar tutarlı görünmektedir.</p>
+        </div>
+
+        <div
+          v-else
+          class="anomali-grid"
+        >
+          <div
+            v-for="item in anomaliler"
+            :key="item.id"
+            class="anomali-card"
+            :class="(item.seviye || '').toLowerCase()"
+          >
+            <div class="card-header">
+              <div class="header-left">
+                <span
+                  class="badge"
+                  :class="(item.seviye || '').toLowerCase()"
+                >{{ item.seviye }} ÖNCELİK</span>
+                <span class="tur-label">{{ item.tur }}</span>
+              </div>
+              <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
+            </div>
+            <h4 class="card-title">
+              <i class="pi pi-exclamation-triangle" /> {{ item.baslik }}
+            </h4>
+            <p class="card-desc">
+              {{ item.aciklama }}
+            </p>
+            <div class="oneri-box">
+              <strong><i class="pi pi-lightbulb" /> Öneri:</strong> {{ item.oneri }}
+            </div>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-lock" />
+            IP Beyaz Listesi
+          </span>
+        </template>
+
+        <div class="ip-info-box">
+          <i class="pi pi-shield" />
+          <div>
+            <strong>IP Kısıtlaması & Beyaz Liste Politikası</strong>
+            <p>Tanımlı IP adresleri veya alt ağlar dışından sisteme giriş denemeleri yapay zeka tarafından güvenlik anomalisi olarak algılanır ve anında bildirim üretilir.</p>
+          </div>
+        </div>
+
+        <DataTable
+          state-storage="session"
+          state-key="ip-whitelist-table-state"
+          :value="ipListesi"
+          striped-rows
+          :loading="ipYukleniyor"
+        >
+          <Column
+            field="ipAdresi"
+            header="İzin Verilen IP / CIDR"
+            style="width: 220px"
+          >
+            <template #body="{ data }">
+              <code>{{ data.ipAdresi }}</code>
+            </template>
+          </Column>
+          <Column
+            field="aciklama"
+            header="Açıklama / Lokasyon"
+          />
+          <Column
+            field="eklemeTarihi"
+            header="Tanımlama Tarihi"
+            style="width: 160px"
+          />
+          <Column
+            field="durum"
+            header="Durum"
+            style="width: 120px"
+          >
+            <template #body="{ data }">
+              <Tag
+                :value="data.durum || 'AKTIF'"
+                severity="success"
+              />
+            </template>
+          </Column>
+          <Column
+            header="İşlem"
+            style="width: 100px"
+          >
+            <template #body="{ data }">
+              <Button
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text p-button-danger"
+                title="IP'yi Sil"
+                @click="ipSil(data.id)"
+              />
+            </template>
+          </Column>
+        </DataTable>
+
+        <!-- IP Ekleme Modalı -->
+        <Dialog
+          v-model:visible="ipModalAcik"
+          header="Yeni Güvenli IP / Alt Ağ Ekle"
+          :modal="true"
+          :style="{ width: '450px' }"
+        >
+          <div class="p-fluid">
+            <div class="field mb-3">
+              <label for="ipAdresi">IP Adresi veya CIDR Blok</label>
+              <InputText
+                id="ipAdresi"
+                v-model="yeniIp.ipAdresi"
+                placeholder="Örn: 88.255.120.45 veya 192.168.1.0/24"
+              />
+            </div>
+            <div class="field mb-3">
+              <label for="ipAciklama">Açıklama / Ofis Tanımı</label>
+              <InputText
+                id="ipAciklama"
+                v-model="yeniIp.aciklama"
+                placeholder="Örn: Ankara Merkez Ofis Statik IP"
+              />
+            </div>
+          </div>
+          <template #footer>
+            <Button
+              label="İptal"
+              icon="pi pi-times"
+              class="p-button-text"
+              @click="ipModalAcik = false"
+            />
+            <Button
+              label="Kaydet"
+              icon="pi pi-check"
+              class="p-button-primary"
+              :loading="ipKaydediliyor"
+              @click="ipKaydet"
+            />
+          </template>
+        </Dialog>
+      </TabPanel>
+    </TabView>
   </div>
 </template>
 
@@ -200,10 +207,9 @@ const toast = useToast()
 const toastBildirim = useToastBildirim()
 
 const aktifSekme = ref('anomali')
-const sekmeSecenekleri = [
-  { label: 'Anomali & Risk Tespiti', value: 'anomali' },
-  { label: 'IP Beyaz Listesi (Whitelist)', value: 'ip' }
-]
+const sekmeDegisti = (e) => {
+  aktifSekme.value = e.index === 0 ? 'anomali' : 'ip'
+}
 
 const yukleniyor = ref(false)
 const anomaliler = ref([])

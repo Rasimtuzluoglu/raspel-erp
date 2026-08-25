@@ -213,6 +213,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { raporAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import SelectButton from 'primevue/selectbutton'
+import { formatCurrency } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 
@@ -222,8 +223,6 @@ const bsRapor = ref(null)
 const baRapor = ref(null)
 const aktifBs = ref(true)
 
-const formatCurrency = (v) =>
-  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 

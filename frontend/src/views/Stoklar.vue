@@ -946,6 +946,7 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -1347,8 +1348,6 @@ const stokHareketleriYukle = async (stokId) => {
   }
 }
 
-const formatCurrency = (v) =>
-  (v ?? 0) ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 </script>

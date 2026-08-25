@@ -487,6 +487,7 @@ import {
   BarElement,
   Filler
 } from 'chart.js'
+import { formatCurrency } from '../utils/format.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
@@ -642,10 +643,6 @@ onMounted(async () => {
   loading.value = false
 })
 
-const formatCurrency = (v) => {
-  if (v === null || v === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 const formatDate = (d) => {
   if (!d) return '-'
   return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))

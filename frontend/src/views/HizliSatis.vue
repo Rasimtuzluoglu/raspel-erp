@@ -626,6 +626,7 @@ import { faturaAPI, cariHesapAPI, personelAPI } from '../api/index.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -848,8 +849,6 @@ const simdikiTarih = computed(() => {
   return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 })
 
-const formatCurrency = (v) =>
-  v != null ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
 
 onMounted(async () => {
   try {

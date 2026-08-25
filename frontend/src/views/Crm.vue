@@ -279,6 +279,7 @@ import { crmAPI, cariHesapAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -315,8 +316,6 @@ const dialogHeader = computed(() => (duzenleme.value ? 'Fırsat Düzenle' : 'Yen
 const toplamDeger = computed(() => firsatlar.value.reduce((t, f) => t + (Number(f.deger) || 0), 0))
 const kazananSayisi = computed(() => firsatlar.value.filter((f) => f.durum === 'KAZANILDI').length)
 
-const formatCurrency = (v) =>
-  v == null ? '0,00 ₺' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 const durumEtiketi = (d) => durumlar.find((x) => x.value === d)?.label || d

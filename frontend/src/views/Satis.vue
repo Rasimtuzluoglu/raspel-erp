@@ -350,6 +350,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const cariHesapStore = useCariHesapStore()
@@ -501,8 +502,6 @@ const satisiTamamla = async () => {
 
 const printFatura = (id) => window.open(`/faturalar/${id}?print=true`, '_blank')
 const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
-const formatCurrency = (v) =>
-  (v ?? 0) ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v) : '0,00 ₺'
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
 const printTermalFis = (satisData) => {

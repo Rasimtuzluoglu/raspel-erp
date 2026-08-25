@@ -190,6 +190,7 @@ import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -292,10 +293,6 @@ const excelIndir = async () => {
   }
 }
 
-const formatCurrency = (v) => {
-  if (v === null || v === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 </script>
 
 <style scoped>

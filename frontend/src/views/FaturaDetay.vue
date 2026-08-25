@@ -286,6 +286,7 @@ import { useYakinZamanda } from '../composables/useYakinZamanda.js'
 import { belgeAPI, faturaAPI, sirketAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -427,10 +428,6 @@ const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesil
 const odemeDurumLabel = (d) => ({ ODENMEDI: 'Ödenmedi', KISMI_ODENDI: 'Kısmi Ödendi', ODENDI: 'Ödendi' })[d] || d
 const teslimDurumLabel = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLIM_EDILDI: 'Teslim Edildi' })[d] || d
 
-const formatCurrency = (v) => {
-  if (v === null || v === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 
 const formatDate = (d) => {
   if (!d) return '-'

@@ -282,6 +282,7 @@ import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import { kasaAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -438,10 +439,6 @@ const excelIndir = async () => {
   }
 }
 
-const formatCurrency = (v) => {
-  if (v === null || v === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'

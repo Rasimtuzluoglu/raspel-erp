@@ -678,6 +678,7 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -1226,10 +1227,6 @@ const topluSil = async () => {
   }
 }
 
-const formatCurrency = (value) => {
-  if (value === null || value === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value)
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'

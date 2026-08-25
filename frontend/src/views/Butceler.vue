@@ -174,6 +174,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { butceAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -196,10 +197,6 @@ const turSecenekleri = ['GELIR', 'GIDER']
 
 const dialogHeader = computed(() => (duzenleme.value ? 'Bütçe Düzenle' : 'Yeni Bütçe'))
 
-const formatCurrency = (v) => {
-  if (v === null || v === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 
 onMounted(async () => {
   yukleniyor.value = true

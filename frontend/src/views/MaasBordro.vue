@@ -175,6 +175,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { maasBordroAPI, personelAPI } from '../api/index.js'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -196,10 +197,6 @@ const form = ref({
 
 const dialogHeader = computed(() => (duzenleme.value ? 'Bordro Düzenle' : 'Yeni Bordro'))
 
-const formatCurrency = (v) => {
-  if (v === null || v === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 const formatDate = (d) => {
   if (!d) return '-'
   return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))

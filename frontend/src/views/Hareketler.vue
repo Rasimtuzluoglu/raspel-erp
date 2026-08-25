@@ -314,6 +314,7 @@ import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -546,13 +547,6 @@ const topluSil = async () => {
   }
 }
 
-const formatCurrency = (value) => {
-  if (value === null || value === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: 'TRY'
-  }).format(value)
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'

@@ -618,6 +618,7 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import { formatCurrency } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -956,13 +957,6 @@ const excelIndir = async () => {
   }
 }
 
-const formatCurrency = (value) => {
-  if (value === null || value === undefined) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: 'TRY'
-  }).format(value)
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
