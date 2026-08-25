@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.UUID;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.time.Duration;
 import com.raspel.erp.entity.sistem.Rol;
 import com.raspel.erp.dto.sistem.SifreSifirlaRequest;
 import com.raspel.erp.dto.sistem.TwoFactorDTO;
@@ -43,10 +45,52 @@ public class KullaniciService {
     private final SirketRepository sirketRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
 
-    /** Bekleyen 2FA girişleri: girisToken -> (kullaniciId, oluşturmaZamani). 5 dakika geçerli. */
-    private final ConcurrentMap<String, long[]> bekleyenGirisler = new ConcurrentHashMap<>();
+    /** Bekleyen girişler: girisToken -> (kullaniciId, oluşturmaZamani). 5 dakika geçerli.
+     *  Redis'te saklanır (sunucu restart'ında kaybolmaz); Redis'e erişilemezse bellek fallback'i kullanılır. */
+    private final ConcurrentMap<String, long[]> bekleyenGirislerBellek = new ConcurrentHashMap<>();
     private static final long GIRIS_TOKEN_GECERLILIK_MS = 5 * 60 * 1000;
+    private static final String GIRIS_REDIS_PREFIX = "giris:bekleyen:";
+
+    private void bekleyenKaydet(String token, long kullaniciId, long zaman) {
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(GIRIS_REDIS_PREFIX + token,
+                        kullaniciId + ":" + zaman, Duration.ofMillis(GIRIS_TOKEN_GECERLILIK_MS));
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Redis erişilemedi, giriş oturumu bellekte tutulacak: {}", e.getMessage());
+        }
+        bekleyenGirislerBellek.put(token, new long[]{kullaniciId, zaman});
+    }
+
+    private long[] bekleyenGetir(String token) {
+        try {
+            if (redisTemplate != null) {
+                String val = redisTemplate.opsForValue().get(GIRIS_REDIS_PREFIX + token);
+                if (val != null) {
+                    String[] parcalar = val.split(":");
+                    return new long[]{Long.parseLong(parcalar[0]), Long.parseLong(parcalar[1])};
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Redis erişilemedi, bellek fallback kullanılıyor: {}", e.getMessage());
+        }
+        return bekleyenGirislerBellek.get(token);
+    }
+
+    private void bekleyenSil(String token) {
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.delete(GIRIS_REDIS_PREFIX + token);
+            }
+        } catch (Exception e) {
+            // Redis'e erişilemezse bellek kaydı aşağıda siliniyor
+        }
+        bekleyenGirislerBellek.remove(token);
+    }
 
     public Page<KullaniciDTO> tumunuGetir(Pageable pageable) {
         return kullaniciRepository.findAll(pageable).map(this::entityToDTO);
@@ -200,7 +244,7 @@ public class KullaniciService {
         log.info("Başarılı giriş: {}", req.getUsername());
 
         String girisToken = UUID.randomUUID().toString();
-        bekleyenGirisler.put(girisToken, new long[]{k.getId(), System.currentTimeMillis()});
+        bekleyenKaydet(girisToken, k.getId(), System.currentTimeMillis());
 
         boolean twoFactorAktif = k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled();
         List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
@@ -221,14 +265,14 @@ public class KullaniciService {
         if (req == null || req.getGirisToken() == null || req.getGirisToken().isBlank()) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
         }
-        long[] kayit = bekleyenGirisler.get(req.getGirisToken());
+        long[] kayit = bekleyenGetir(req.getGirisToken());
         if (kayit == null) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
         }
         long kullaniciId = kayit[0];
         long olusturmaZamani = kayit[1];
         if (System.currentTimeMillis() - olusturmaZamani > GIRIS_TOKEN_GECERLILIK_MS) {
-            bekleyenGirisler.remove(req.getGirisToken());
+            bekleyenSil(req.getGirisToken());
             throw new BusinessException("Giriş kodunun süresi doldu, tekrar giriş yapınız");
         }
 
@@ -242,9 +286,9 @@ public class KullaniciService {
             throw new BusinessException("Doğrulama kodu geçersiz veya süresi dolmuş");
         }
 
-        bekleyenGirisler.remove(req.getGirisToken());
+        bekleyenSil(req.getGirisToken());
         String yeniToken = UUID.randomUUID().toString();
-        bekleyenGirisler.put(yeniToken, new long[]{k.getId(), System.currentTimeMillis()});
+        bekleyenKaydet(yeniToken, k.getId(), System.currentTimeMillis());
 
         List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
         return LoginResponse.builder()
@@ -263,17 +307,17 @@ public class KullaniciService {
         if (girisToken == null || girisToken.isBlank()) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
         }
-        long[] kayit = bekleyenGirisler.get(girisToken);
+        long[] kayit = bekleyenGetir(girisToken);
         if (kayit == null) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
         }
         long kullaniciId = kayit[0];
         long olusturmaZamani = kayit[1];
         if (System.currentTimeMillis() - olusturmaZamani > GIRIS_TOKEN_GECERLILIK_MS) {
-            bekleyenGirisler.remove(girisToken);
+            bekleyenSil(girisToken);
             throw new BusinessException("Şirket seçim süresi doldu, tekrar giriş yapınız");
         }
-        bekleyenGirisler.remove(girisToken);
+        bekleyenSil(girisToken);
 
         Kullanici k = kullaniciRepository.findById(kullaniciId)
                 .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
