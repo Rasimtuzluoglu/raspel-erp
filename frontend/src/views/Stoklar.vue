@@ -702,234 +702,34 @@
       </template>
     </Dialog>
 
-    <Dialog
+    <StokHareketDialog
       v-model:visible="showHareketDialog"
-      :header="hareketBaslik"
-      :modal="true"
-      style="width: 500px"
-    >
-      <div class="form-grup">
-        <label>Miktar *</label>
-        <InputNumber
-          v-model="hareketForm.miktar"
-          :min="0.01"
-          :min-fraction-digits="1"
-          class="w-full"
-        />
-      </div>
-      <div class="form-grup">
-        <label>Tarih *</label>
-        <DatePicker
-          v-model="hareketForm.hareketTarihi"
-          date-format="dd.mm.yy"
-          class="w-full"
-        />
-      </div>
-      <div class="form-grup">
-        <label>Cari Hesap</label>
-        <Dropdown
-          v-model="hareketForm.cariHesapId"
-          :options="cariHesapStore.cariHesaplar"
-          option-label="ad"
-          option-value="id"
-          placeholder="İsteğe bağlı"
-          class="w-full"
-        />
-      </div>
-      <div class="form-grup">
-        <label>Açıklama</label>
-        <Textarea
-          v-model="hareketForm.aciklama"
-          rows="2"
-          class="w-full"
-        />
-      </div>
-      <template #footer>
-        <Button
-          label="İptal"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="showHareketDialog = false"
-        />
-        <Button
-          label="Kaydet"
-          icon="pi pi-check"
-          :loading="saving"
-          @click="saveHareket"
-        />
-      </template>
-    </Dialog>
+      v-model:miktar="hareketForm.miktar"
+      v-model:hareket-tarihi="hareketForm.hareketTarihi"
+      v-model:cari-hesap-id="hareketForm.cariHesapId"
+      v-model:aciklama="hareketForm.aciklama"
+      :baslik="hareketBaslik"
+      :cari-hesaplar="cariHesapStore.cariHesaplar"
+      :loading="saving"
+      @kaydet="saveHareket"
+    />
 
-    <Dialog
+    <StokTopluFiyatDialog
       v-model:visible="batchFiyatDialog"
-      header="Toplu Fiyat Güncelleme"
-      :modal="true"
-      style="width: 480px"
-    >
-      <div class="form-grup">
-        <label>İşlem Yönü</label>
-        <Dropdown
-          v-model="batchFiyatForm.yon"
-          :options="['ARTIR', 'AZALT']"
-          class="w-full"
-        />
-      </div>
-      <div class="form-grup">
-        <label>Oran (%)</label>
-        <InputNumber
-          v-model="batchFiyatForm.oran"
-          :min="0"
-          :max="100"
-          :min-fraction-digits="1"
-          class="w-full"
-        />
-      </div>
-      <div class="form-grup">
-        <label>Kategori Filtre (opsiyonel)</label>
-        <InputText
-          v-model="batchFiyatForm.kategori"
-          placeholder="Tüm kategoriler"
-          class="w-full"
-        />
-      </div>
-      <div class="form-grup">
-        <label>Stok Grubu Filtre (opsiyonel)</label>
-        <InputText
-          v-model="batchFiyatForm.stokGrubu"
-          placeholder="Tüm gruplar"
-          class="w-full"
-        />
-      </div>
-      <template #footer>
-        <Button
-          label="İptal"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="batchFiyatDialog = false"
-        />
-        <Button
-          label="Uygula"
-          icon="pi pi-check"
-          :loading="batchLoading"
-          @click="batchFiyatUygula"
-        />
-      </template>
-    </Dialog>
+      v-model:yon="batchFiyatForm.yon"
+      v-model:oran="batchFiyatForm.oran"
+      v-model:kategori="batchFiyatForm.kategori"
+      v-model:stok-grubu="batchFiyatForm.stokGrubu"
+      :loading="batchLoading"
+      @uygula="batchFiyatUygula"
+    />
 
-    <Dialog
+    <StokDetayDialog
       v-model:visible="showDetailDialog"
-      :header="detailStok?.ad || 'Ürün Detayı'"
-      :modal="true"
-      style="width: 700px"
-    >
-      <div
-        v-if="detailStok"
-        class="detail-grid"
-      >
-        <div class="detail-item">
-          <span class="detail-label">Stok Kodu</span>
-          <span class="detail-value">{{ detailStok.stokKodu || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Barkod</span>
-          <span class="detail-value">{{ detailStok.barkod || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Birim</span>
-          <span class="detail-value">{{ detailStok.birim || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Miktar</span>
-          <span
-            class="detail-value"
-            :class="detailStok.minMiktar && detailStok.miktar <= detailStok.minMiktar ? 'kritik' : 'normal'"
-          >
-            {{ detailStok.miktar }} {{ detailStok.birim || '' }}
-          </span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Alış Fiyatı</span>
-          <span class="detail-value">{{ formatCurrency(detailStok.fiyat) }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Satış Fiyatı</span>
-          <span class="detail-value">{{ formatCurrency(detailStok.satisFiyati) }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Kategori</span>
-          <span class="detail-value">{{ detailStok.kategori || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Marka</span>
-          <span class="detail-value">{{ detailStok.marka || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Min. Stok</span>
-          <span class="detail-value">{{ detailStok.minMiktar || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Raf No</span>
-          <span class="detail-value">{{ detailStok.rafNo || '-' }}</span>
-        </div>
-      </div>
-      <div class="form-section-title">
-        Stok Hareketleri
-      </div>
-      <div
-        v-if="hareketlerYukleniyor"
-        class="loading"
-      >
-        <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
-      </div>
-      <EmptyState
-        v-else-if="hareketler.length === 0"
-        message="Hareket bulunamadı"
-        sub-message="Bu ürüne ait stok hareketi bulunmamaktadır."
-        icon="pi pi-list"
-      />
-      <DataTable
-        v-else
-        state-storage="session"
-        state-key="stoklar-table-state"
-        :value="hareketler"
-        size="small"
-        striped-rows
-        :paginator="hareketler.length > 10"
-        :rows="10"
-      >
-        <Column
-          header="Tarih"
-          style="width: 110px"
-        >
-          <template #body="s">
-            {{ formatDate(s.data.hareketTarihi || s.data.tarih) }}
-          </template>
-        </Column>
-        <Column
-          header="Tür"
-          style="width: 90px"
-        >
-          <template #body="s">
-            <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
-              {{ s.data.tur === 'GIRIS' ? 'Giriş' : 'Çıkış' }}
-            </span>
-          </template>
-        </Column>
-        <Column
-          header="Miktar"
-          style="width: 90px"
-        >
-          <template #body="s">
-            <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
-          </template>
-        </Column>
-        <Column header="Açıklama">
-          <template #body="s">
-            {{ s.data.aciklama || '-' }}
-          </template>
-        </Column>
-      </DataTable>
-    </Dialog>
+      :stok="detailStok"
+      :hareketler="hareketler"
+      :hareketler-yukleniyor="hareketlerYukleniyor"
+    />
   </div>
 </template>
 
@@ -943,6 +743,9 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { stokAPI, excelAPI, uploadAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import StokHareketDialog from '../components/StokHareketDialog.vue'
+import StokTopluFiyatDialog from '../components/StokTopluFiyatDialog.vue'
+import StokDetayDialog from '../components/StokDetayDialog.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
