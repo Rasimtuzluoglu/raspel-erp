@@ -122,129 +122,19 @@
             </transition>
 
             <!-- Adim 0: Ilk Kurulum -->
-            <div v-if="kurulumAdimi">
-              <div class="kurulum-ikon">
-                <i class="pi pi-rocket" />
-              </div>
-              <h2 class="iki-fa-baslik">
-                {{ $t('kurulum.welcome') }}
-              </h2>
-              <p class="iki-fa-alt">
-                {{ $t('kurulum.hint') }}
-              </p>
-
-              <div class="form-grup">
-                <label>{{ $t('kurulum.companyName') }}</label>
-                <div class="input-wrapper">
-                  <i class="pi pi-building" />
-                  <InputText
-                    v-model="kurulumForm.ad"
-                    :placeholder="$t('kurulum.companyName')"
-                    @keyup.enter="kurulumBaslat"
-                  />
-                </div>
-              </div>
-
-              <div class="kurulum-iki-kolon">
-                <div class="form-grup">
-                  <label>{{ $t('kurulum.taxNumber') }}</label>
-                  <div class="input-wrapper">
-                    <i class="pi pi-hashtag" />
-                    <InputText
-                      v-model="kurulumForm.vergiNo"
-                      :placeholder="$t('kurulum.taxNumber')"
-                    />
-                  </div>
-                </div>
-                <div class="form-grup">
-                  <label>{{ $t('kurulum.taxOffice') }}</label>
-                  <div class="input-wrapper">
-                    <i class="pi pi-map-marker" />
-                    <InputText
-                      v-model="kurulumForm.vergiDairesi"
-                      :placeholder="$t('kurulum.taxOffice')"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div class="kurulum-iki-kolon">
-                <div class="form-grup">
-                  <label>{{ $t('kurulum.phone') }}</label>
-                  <div class="input-wrapper">
-                    <i class="pi pi-phone" />
-                    <InputText
-                      v-model="kurulumForm.telefon"
-                      :placeholder="$t('kurulum.phone')"
-                    />
-                  </div>
-                </div>
-                <div class="form-grup">
-                  <label>{{ $t('kurulum.email') }}</label>
-                  <div class="input-wrapper">
-                    <i class="pi pi-envelope" />
-                    <InputText
-                      v-model="kurulumForm.email"
-                      :placeholder="$t('kurulum.email')"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div class="kurulum-ayrac" />
-
-              <div class="form-grup">
-                <label>{{ $t('kurulum.adminUsername') }}</label>
-                <div class="input-wrapper">
-                  <i class="pi pi-user" />
-                  <InputText
-                    v-model="kurulumForm.adminUsername"
-                    :placeholder="$t('kurulum.adminUsername')"
-                  />
-                </div>
-              </div>
-
-              <div class="form-grup">
-                <label>{{ $t('kurulum.fullName') }}</label>
-                <div class="input-wrapper">
-                  <i class="pi pi-id-card" />
-                  <InputText
-                    v-model="kurulumForm.adminDisplayName"
-                    :placeholder="$t('kurulum.fullName')"
-                  />
-                </div>
-              </div>
-
-              <div class="form-grup">
-                <label>{{ $t('kurulum.password') }}</label>
-                <div class="input-wrapper">
-                  <i class="pi pi-lock" />
-                  <InputText
-                    v-model="kurulumForm.adminPassword"
-                    :type="sifreGorunur ? 'text' : 'password'"
-                    placeholder="••••••"
-                    @keyup="e => e.key === 'Enter' && kurulumBaslat()"
-                  />
-                  <button
-                    type="button"
-                    class="sifre-toggle"
-                    tabindex="-1"
-                    @click="sifreGorunur = !sifreGorunur"
-                  >
-                    <i :class="sifreGorunur ? 'pi pi-eye-slash' : 'pi pi-eye'" />
-                  </button>
-                </div>
-                <small class="sifre-ipucu">{{ $t('kurulum.passwordHint') }}</small>
-              </div>
-
-              <Button
-                :label="$t('kurulum.submit')"
-                icon="pi pi-check"
-                :loading="kurulumYukleniyor"
-                class="giris-buton"
-                @click="kurulumBaslat"
-              />
-            </div>
+            <KurulumAdimi
+              v-if="kurulumAdimi"
+              v-model:ad="kurulumForm.ad"
+              v-model:vergi-no="kurulumForm.vergiNo"
+              v-model:vergi-dairesi="kurulumForm.vergiDairesi"
+              v-model:telefon="kurulumForm.telefon"
+              v-model:email="kurulumForm.email"
+              v-model:admin-username="kurulumForm.adminUsername"
+              v-model:admin-display-name="kurulumForm.adminDisplayName"
+              v-model:admin-password="kurulumForm.adminPassword"
+              :yukleniyor="kurulumYukleniyor"
+              @baslat="kurulumBaslat"
+            />
 
             <!-- Adim 2: 2FA -->
             <div v-else-if="ikiFaktorAdimi">
@@ -481,6 +371,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore.js'
 import { kurulumAPI } from '../api/index.js'
 import ThemeSwitcher from '../components/ThemeSwitcher.vue'
+import KurulumAdimi from '../components/KurulumAdimi.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -1275,8 +1166,7 @@ const tumAdimlariSifirla = () => {
 
 /* 2FA & Kurulum */
 .iki-fa-ikon,
-.sirket-secim-ikon,
-.kurulum-ikon {
+.sirket-secim-ikon {
   width: 54px;
   height: 54px;
   margin: 0 auto 12px;
@@ -1293,32 +1183,10 @@ const tumAdimlariSifirla = () => {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
-.kurulum-ikon {
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
-}
 .iki-fa-ikon i,
-.sirket-secim-ikon i,
-.kurulum-ikon i {
+.sirket-secim-ikon i {
   font-size: 24px;
   color: white;
-}
-.kurulum-iki-kolon {
-  display: flex;
-  gap: 10px;
-}
-.kurulum-iki-kolon .form-grup {
-  flex: 1;
-}
-.kurulum-ayrac {
-  border-top: 1px dashed var(--border);
-  margin: 14px 0;
-}
-.sifre-ipucu {
-  display: block;
-  margin-top: 4px;
-  color: var(--text-muted);
-  font-size: 11px;
 }
 .iki-fa-baslik {
   text-align: center;
