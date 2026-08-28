@@ -22,10 +22,10 @@
           @click="batchFiyatDialog = true"
         />
         <div
-          v-if="seciliStoklar.length > 0"
+          v-if="seciliStoklar && seciliStoklar.length > 0"
           class="batch-actions"
         >
-          <span class="batch-count">{{ seciliStoklar.length }} seçili</span>
+          <span class="batch-count">{{ seciliStoklar ? seciliStoklar.length : 0 }} seçili</span>
           <Button
             label="Toplu Sil"
             icon="pi pi-trash"
@@ -317,7 +317,7 @@
         </div>
       </div>
       <Message
-        v-if="filtrelenmisStoklar.length === 0"
+        v-if="filtrelenmisStoklar && filtrelenmisStoklar.length === 0"
         severity="info"
         text="Eşleşen ürün bulunamadı."
         class="full-width"
@@ -412,7 +412,7 @@
           </Column>
         </DataTable>
         <Message
-          v-if="stokHareketler.length === 0"
+          v-if="stokHareketler && stokHareketler.length === 0"
           severity="info"
           text="Hareket bulunmamaktadır."
         />
@@ -611,7 +611,7 @@
             <label>Tedarikçi</label>
             <Dropdown
               v-model="form.tedarikciId"
-              :options="cariHesapStore.cariHesaplar"
+              :options="cariHesapStore?.cariHesaplar || []"
               option-label="ad"
               option-value="id"
               placeholder="Tedarikçi seçin"
@@ -709,7 +709,7 @@
       v-model:cari-hesap-id="hareketForm.cariHesapId"
       v-model:aciklama="hareketForm.aciklama"
       :baslik="hareketBaslik"
-      :cari-hesaplar="cariHesapStore.cariHesaplar"
+      :cari-hesaplar="cariHesapStore?.cariHesaplar || []"
       :loading="saving"
       @kaydet="saveHareket"
     />
@@ -764,9 +764,6 @@ useKisayollar({
   },
   kaydet: () => saveStok()
 })
-
-const { temizle: formTemizle } = useFormKorumasi(form)
-const { silVeGeriAl } = useGeriAl()
 
 const aramaMetni = ref('')
 let aramaZaman = null
@@ -823,6 +820,9 @@ const form = ref({
   aciklama: '',
   fotoUrl: ''
 })
+
+const { temizle: formTemizle } = useFormKorumasi(form)
+const { silVeGeriAl } = useGeriAl()
 
 const showHareketDialog = ref(false)
 const hareketTur = ref('GIRIS')

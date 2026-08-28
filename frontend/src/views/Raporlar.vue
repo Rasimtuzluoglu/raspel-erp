@@ -17,7 +17,7 @@
     </div>
 
     <div
-      v-if="favoriRaporlar.length"
+      v-if="favoriRaporlar && favoriRaporlar.length"
       class="favori-raporlar"
     >
       <span class="favori-baslik"><i
@@ -51,7 +51,7 @@
             <label>Cari Hesap</label>
             <Dropdown
               v-model="ekstreCariId"
-              :options="cariHesapStore.cariHesaplar"
+              :options="cariHesapStore?.cariHesaplar || []"
               option-label="ad"
               option-value="id"
               placeholder="Seçiniz"
@@ -391,7 +391,7 @@
             </Column>
           </DataTable>
           <Message
-            v-if="yasData.length === 0"
+            v-if="yasData && yasData.length === 0"
             severity="info"
             text="Alacaklı cari hesap bulunmamaktadır."
           />
@@ -596,7 +596,7 @@
           </Column>
         </DataTable>
         <Message
-          v-if="!tuData.length"
+          v-if="(!tuData || !tuData.length)"
           severity="info"
           text="Henüz alış faturası girilmemiş."
         />
@@ -661,7 +661,7 @@
           </Column>
         </DataTable>
         <Message
-          v-if="!ukData.length"
+          v-if="(!ukData || !ukData.length)"
           severity="info"
           text="Henüz ürün bulunmamaktadır."
         />

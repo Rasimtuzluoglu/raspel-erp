@@ -57,9 +57,16 @@ class DonemControllerTest {
         var list = List.of(DonemDTO.builder().id(1L).ad("2024-1 Dönemi").build());
         when(donemService.sirketeGoreGetir(1L)).thenReturn(list);
 
-        mockMvc.perform(get("/api/donemler/sirket/1"))
+        mockMvc.perform(get("/api/donemler/sirket/1").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ad").value("2024-1 Dönemi"));
+    }
+
+    @Test
+    void shouldGetBySirket_throwsWhenForeignCompany() throws Exception {
+        mockMvc.perform(get("/api/donemler/sirket/1").requestAttr("sirketId", 2L))
+                .andExpect(status().isNotFound());
+        verify(donemService, never()).sirketeGoreGetir(anyLong());
     }
 
     @Test
@@ -67,9 +74,16 @@ class DonemControllerTest {
         var list = List.of(DonemDTO.builder().id(1L).ad("Aktif Dönem").aktif(true).build());
         when(donemService.aktifDonemler(1L)).thenReturn(list);
 
-        mockMvc.perform(get("/api/donemler/sirket/1/aktif"))
+        mockMvc.perform(get("/api/donemler/sirket/1/aktif").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].aktif").value(true));
+    }
+
+    @Test
+    void shouldGetAktifBySirket_throwsWhenForeignCompany() throws Exception {
+        mockMvc.perform(get("/api/donemler/sirket/1/aktif").requestAttr("sirketId", 3L))
+                .andExpect(status().isNotFound());
+        verify(donemService, never()).aktifDonemler(anyLong());
     }
 
     @Test

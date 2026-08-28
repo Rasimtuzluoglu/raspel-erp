@@ -27,7 +27,8 @@ public class SatinalmaTalepController {
 
     @GetMapping
     @Operation(summary = "Tüm satın alma taleplerini getir", description = "Tüm satın alma taleplerini listeler")
-    public ResponseEntity<Page<SatinalmaTalepDTO>> tumu(@RequestParam(required = false) Long sirketId, @PageableDefault(size = 50) Pageable pageable) {
+    public ResponseEntity<Page<SatinalmaTalepDTO>> tumu(jakarta.servlet.http.HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(satinalmaTalepService.tumunuGetir(sirketId, pageable));
     }
 

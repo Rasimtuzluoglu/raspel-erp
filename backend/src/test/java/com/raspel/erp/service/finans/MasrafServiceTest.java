@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 class MasrafServiceTest {
 
     @Mock private MasrafRepository masrafRepository;
+    @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private MasrafService masrafService;
 

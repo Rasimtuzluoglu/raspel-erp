@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 class ButceServiceTest {
 
     @Mock private ButceRepository butceRepository;
+    @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private ButceService butceService;
 

@@ -206,7 +206,7 @@
           </Column>
         </DataTable>
         <Message
-          v-if="kasaHareketler.length === 0"
+          v-if="kasaHareketler && kasaHareketler.length === 0"
           severity="info"
           text="Hareket bulunmamaktadır."
         />

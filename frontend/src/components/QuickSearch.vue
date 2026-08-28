@@ -33,7 +33,7 @@
       >
         <p>Bir şey yazmaya başlayın...</p>
         <div
-          v-if="sonAramalar.length"
+          v-if="sonAramalar && sonAramalar.length"
           class="qs-son-aramalar"
         >
           <div class="qs-son-baslik">
@@ -90,7 +90,7 @@
         {{ error }}
       </div>
       <div
-        v-if="results.length > 0 && !loading"
+        v-if="results && results.length > 0 && !loading"
         class="qs-results"
       >
         <template v-for="grup in grupluSonuclar">

@@ -70,7 +70,7 @@ public class StokService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "stoklar", key = "#id")
+    @Cacheable(value = "stoklar", key = "T(com.raspel.erp.config.TenantChecker).tenantKey(#id)")
     public StokDTO getir(Long id) {
         Stok stok = stokRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
@@ -114,12 +114,11 @@ public class StokService {
 
     @CacheEvict(value = "stoklar", allEntries = true)
     public StokDTO guncelle(Long id, StokDTO dto) {
-        Stok s = stokRepository.findById(id)
+        Stok s = stokRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
         tenantChecker.check(s.getSirketId(), "Stok");
         s.setStokKodu(dto.getStokKodu()); s.setAd(dto.getAd()); s.setBirim(dto.getBirim());
         s.setFiyat(dto.getFiyat()); s.setSatisFiyati(dto.getSatisFiyati());
-        s.setMiktar(dto.getMiktar() != null ? dto.getMiktar() : s.getMiktar());
         s.setMinMiktar(dto.getMinMiktar()); s.setKdvOrani(dto.getKdvOrani());
         s.setStokGrubu(dto.getStokGrubu()); s.setBarkod(dto.getBarkod());
         s.setRafNo(dto.getRafNo()); s.setMarka(dto.getMarka());
@@ -132,6 +131,25 @@ public class StokService {
         if (dto.getTedarikciStokKodu() != null) s.setTedarikciStokKodu(dto.getTedarikciStokKodu());
         if (dto.getTedarikciFiyat() != null) s.setTedarikciFiyat(dto.getTedarikciFiyat());
         if (dto.getMaliyetYontemi() != null) s.setMaliyetYontemi(dto.getMaliyetYontemi());
+
+        // Miktar doğrudan ezilmez: stok hareket defterine "DUZELTME" kaydı düşülür
+        BigDecimal yeniMiktar = dto.getMiktar() != null ? dto.getMiktar() : s.getMiktar();
+        if (dto.getMiktar() != null && dto.getMiktar().compareTo(s.getMiktar()) != 0) {
+            BigDecimal fark = dto.getMiktar().subtract(s.getMiktar());
+            if (fark.compareTo(BigDecimal.ZERO) < 0 && s.getMiktar().add(fark).compareTo(BigDecimal.ZERO) < 0) {
+                throw new BusinessException("Stok miktarı negatif olamaz. Mevcut: " + s.getMiktar());
+            }
+            stokHareketRepository.save(StokHareket.builder()
+                    .stok(s)
+                    .tur("DUZELTME")
+                    .miktar(fark.abs())
+                    .hareketTarihi(java.time.LocalDate.now())
+                    .aciklama("Manuel stok düzeltmesi (stok kartı): " + s.getMiktar() + " -> " + dto.getMiktar())
+                    .build());
+            s.setMiktar(yeniMiktar);
+            cacheYardimci.temizle("stoklar", "dashboard");
+        }
+
         Stok kaydedilen = stokRepository.save(s);
         return entityToDTO(kaydedilen, tekTedarikciAdi(kaydedilen));
     }

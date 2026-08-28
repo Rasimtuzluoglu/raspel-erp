@@ -7,7 +7,7 @@
       >
         <div class="batch-info">
           <i class="pi pi-check-square" />
-          <span><strong>{{ selection.length }}</strong> {{ $t('common.selectedRecords', { n: selection.length }) }}</span>
+          <span><strong>{{ selection ? selection.length : 0 }}</strong> {{ $t('common.selectedRecords', { n: selection.length }) }}</span>
         </div>
         <div class="batch-buttons">
           <slot name="batch-actions" />

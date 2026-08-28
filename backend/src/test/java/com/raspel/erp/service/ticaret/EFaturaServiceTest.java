@@ -19,6 +19,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
@@ -40,6 +42,9 @@ class EFaturaServiceTest {
 
     @Mock
     private TenantChecker tenantChecker;
+
+    @Mock
+    private org.springframework.web.client.RestTemplate restTemplate;
 
     @InjectMocks
     private EFaturaService eFaturaService;
@@ -92,8 +97,23 @@ class EFaturaServiceTest {
     }
 
     @Test
-    void testGibGonder_Basarili() {
+    void testGibGonder_EndpointYoksaIletilemez() {
         when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+
+        assertThrows(BusinessException.class, () -> eFaturaService.gibGonder(10L));
+        assertEquals(1000, mockEFatura.getGibDurumKodu());
+        verify(eFaturaRepository, never()).save(any());
+    }
+
+    @Test
+    void testGibGonder_EndpointBasariliIseIletilir() throws Exception {
+        String endpoint = "https://gib-test.example/gib";
+        var field = EFaturaService.class.getDeclaredField("gibEndpoint");
+        field.setAccessible(true);
+        field.set(eFaturaService, endpoint);
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(restTemplate.postForEntity(anyString(), any(), eq(String.class)))
+                .thenReturn(org.springframework.http.ResponseEntity.ok().build());
         when(eFaturaRepository.save(any(EFatura.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EFaturaDTO result = eFaturaService.gibGonder(10L);
@@ -101,5 +121,20 @@ class EFaturaServiceTest {
         assertNotNull(result);
         assertEquals(1200, result.getGibDurumKodu());
         verify(eFaturaRepository, times(1)).save(mockEFatura);
+    }
+
+    @Test
+    void testGibGonder_EndpointHataVerirseIletildiIsaretlenmez() throws Exception {
+        String endpoint = "https://gib-test.example/gib";
+        var field = EFaturaService.class.getDeclaredField("gibEndpoint");
+        field.setAccessible(true);
+        field.set(eFaturaService, endpoint);
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(restTemplate.postForEntity(anyString(), any(), eq(String.class)))
+                .thenThrow(new org.springframework.web.client.ResourceAccessException("baglanti yok"));
+
+        assertThrows(BusinessException.class, () -> eFaturaService.gibGonder(10L));
+        assertEquals(1000, mockEFatura.getGibDurumKodu());
+        verify(eFaturaRepository, never()).save(any());
     }
 }

@@ -33,6 +33,7 @@ class KasaServiceTest {
     @Mock private KasaRepository kasaRepository;
     @Mock private KasaHareketRepository kasaHareketRepository;
     @Mock private KategoriRepository kategoriRepository;
+    @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private KasaService kasaService;
 

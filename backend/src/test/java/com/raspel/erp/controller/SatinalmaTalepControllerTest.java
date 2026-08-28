@@ -57,7 +57,7 @@ class SatinalmaTalepControllerTest {
         var list = List.of(SatinalmaTalepDTO.builder().id(1L).talepNo("TALEP-001").build());
         when(satinalmaTalepService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
-        mockMvc.perform(get("/api/satinalma-talepler").param("sirketId", "1"))
+        mockMvc.perform(get("/api/satinalma-talepler").param("sirketId", "1").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].talepNo").value("TALEP-001"));
     }

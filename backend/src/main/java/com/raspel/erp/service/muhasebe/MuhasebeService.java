@@ -33,6 +33,7 @@ public class MuhasebeService {
     private final MuhasebeFisiRepository muhasebeFisiRepository;
     private final MuhasebeFisKalemRepository muhasebeFisKalemRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
 
     // ---------- HESAP PLANI ----------
 
@@ -163,6 +164,11 @@ public class MuhasebeService {
         MuhasebeFisi fis = muhasebeFisiRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Muhasebe Fişi", id));
         tenantChecker.check(fis.getSirketId(), "Muhasebe Fişi");
+        if ("ONAYLANDI".equals(fis.getDurum())) {
+            throw new BusinessException("Onaylanmış fiş silinemez, iptal etmek için düzeltme fişi açınız");
+        }
+        auditLogService.finansalSilmeLog("MuhasebeFisi", id,
+                "Muhasebe fişi silindi: " + fis.getFisNo() + " - " + (fis.getAciklama() != null ? fis.getAciklama() : ""));
         muhasebeFisKalemRepository.deleteByFisId(id);
         muhasebeFisiRepository.deleteById(id);
     }
@@ -174,9 +180,14 @@ public class MuhasebeService {
         LocalDate bas = baslangic != null ? baslangic : LocalDate.now().minusYears(1);
         LocalDate bit = bitis != null ? bitis : LocalDate.now();
         List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findBySirketId(sirketId);
+        Map<Long, MuhasebeFisi> fisMap = new HashMap<>();
+        muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(sirketId).forEach(f -> fisMap.put(f.getId(), f));
         Map<String, MizanSatiriDTO> harita = new TreeMap<>();
 
         for (MuhasebeFisKalem k : kalemler) {
+            MuhasebeFisi fis = fisMap.get(k.getFisId());
+            if (fis == null || "IPTAL".equals(fis.getDurum())) continue;
+            if (fis.getTarih().isBefore(bas) || fis.getTarih().isAfter(bit)) continue;
             MizanSatiriDTO satir = harita.computeIfAbsent(k.getHesapKodu(), kod -> MizanSatiriDTO.builder()
                     .hesapKodu(kod)
                     .hesapAdi(k.getHesapAdi())
@@ -202,6 +213,87 @@ public class MuhasebeService {
             sonuc.add(s);
         }
         return sonuc;
+    }
+
+    // ---------- BİLANÇO ----------
+
+    @Transactional(readOnly = true)
+    public BilancoDTO bilancoGetir(Long sirketId) {
+        Map<String, MizanSatiriDTO> mizanMap = mizanHaritasi(sirketId, null, null);
+        List<HesapPlani> hesaplar = hesapPlaniRepository.findBySirketIdOrderByKodAsc(sirketId);
+
+        List<BilancoDTO.KalemDTO> aktifler = new ArrayList<>();
+        List<BilancoDTO.KalemDTO> pasifler = new ArrayList<>();
+        BigDecimal aktifToplam = BigDecimal.ZERO;
+        BigDecimal pasifToplam = BigDecimal.ZERO;
+
+        for (HesapPlani h : hesaplar) {
+            String tip = h.getTip() != null ? h.getTip().toUpperCase() : "";
+            MizanSatiriDTO satir = mizanMap.get(h.getKod());
+            if (satir == null) continue;
+            BigDecimal tutar = satir.getBorcBakiye() != null && satir.getBorcBakiye().signum() > 0
+                    ? satir.getBorcBakiye() : satir.getAlacakBakiye();
+            if (tutar == null || tutar.signum() == 0) continue;
+
+            BilancoDTO.KalemDTO kalem = BilancoDTO.KalemDTO.builder()
+                    .kod(h.getKod()).ad(h.getAd()).tutar(tutar).build();
+            if ("AKTIF".equals(tip)) {
+                aktifler.add(kalem);
+                aktifToplam = aktifToplam.add(tutar);
+            } else if ("PASIF".equals(tip)) {
+                pasifler.add(kalem);
+                pasifToplam = pasifToplam.add(tutar);
+            }
+        }
+
+        return BilancoDTO.builder()
+                .aktifler(aktifler).pasifler(pasifler)
+                .aktifToplam(aktifToplam).pasifToplam(pasifToplam)
+                .build();
+    }
+
+    // ---------- KÂR / ZARAR (GELİR TABLOSU) ----------
+
+    @Transactional(readOnly = true)
+    public KarZararDTO karZararGetir(Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        Map<String, MizanSatiriDTO> mizanMap = mizanHaritasi(sirketId, baslangic, bitis);
+        List<HesapPlani> hesaplar = hesapPlaniRepository.findBySirketIdOrderByKodAsc(sirketId);
+
+        List<KarZararDTO.KalemDTO> gelirler = new ArrayList<>();
+        List<KarZararDTO.KalemDTO> giderler = new ArrayList<>();
+        BigDecimal gelirToplam = BigDecimal.ZERO;
+        BigDecimal giderToplam = BigDecimal.ZERO;
+
+        for (HesapPlani h : hesaplar) {
+            String tip = h.getTip() != null ? h.getTip().toUpperCase() : "";
+            if (!"GELIR".equals(tip) && !"GIDER".equals(tip)) continue;
+            MizanSatiriDTO satir = mizanMap.get(h.getKod());
+            if (satir == null) continue;
+            BigDecimal tutar = satir.getBorcBakiye() != null && satir.getBorcBakiye().signum() > 0
+                    ? satir.getBorcBakiye() : satir.getAlacakBakiye();
+            if (tutar == null || tutar.signum() == 0) continue;
+
+            KarZararDTO.KalemDTO kalem = KarZararDTO.KalemDTO.builder()
+                    .kod(h.getKod()).ad(h.getAd()).tutar(tutar).build();
+            if ("GELIR".equals(tip)) {
+                gelirler.add(kalem);
+                gelirToplam = gelirToplam.add(tutar);
+            } else {
+                giderler.add(kalem);
+                giderToplam = giderToplam.add(tutar);
+            }
+        }
+
+        BigDecimal netKar = gelirToplam.subtract(giderToplam);
+        return KarZararDTO.builder()
+                .gelirler(gelirler).giderler(giderler)
+                .gelirToplam(gelirToplam).giderToplam(giderToplam).netKar(netKar)
+                .build();
+    }
+
+    private Map<String, MizanSatiriDTO> mizanHaritasi(Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        return mizanGetir(sirketId, baslangic, bitis).stream()
+                .collect(Collectors.toMap(MizanSatiriDTO::getHesapKodu, m -> m));
     }
 
     // ---------- DEFTER-İ KEBİR ----------
@@ -244,7 +336,7 @@ public class MuhasebeService {
                 new BusinessException("Hesap planında '" + kod + "' kodu bulunamadı"));
     }
 
-    private String siradakiFisNo(Long sirketId) {
+    private synchronized String siradakiFisNo(Long sirketId) {
         String sonFisNo = muhasebeFisiRepository.findTopBySirketIdOrderByFisNoDesc(sirketId)
                 .map(MuhasebeFisi::getFisNo).orElse(null);
         int sayi = 1;

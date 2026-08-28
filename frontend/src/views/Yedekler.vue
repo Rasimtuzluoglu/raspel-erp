@@ -39,6 +39,46 @@
       {{ basari }}
     </Message>
 
+    <Card class="dogrulama-kart">
+      <template #title>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+          <span>
+            <i
+              class="pi pi-shield"
+              style="margin-right: 8px"
+            />Yedek Doğrulama
+          </span>
+          <Button
+            icon="pi pi-refresh"
+            class="p-button-sm p-button-text"
+            @click="dogrulamaYukle"
+          />
+        </div>
+      </template>
+      <template #content>
+        <div class="dogrulama-icerik">
+          <Tag
+            :value="dogrulama.durum || 'Kontrol ediliyor…'"
+            :severity="dogrulamaSeverity(dogrulama.durum)"
+          />
+          <span
+            v-if="dogrulama.sonYedek"
+            class="dogrulama-detay"
+          >
+            Son yedek: <strong>{{ dogrulama.sonYedek }}</strong>
+            <template v-if="dogrulama.yasSaat != null"> · {{ dogrulama.yasSaat }} saat önce</template>
+            <template v-if="dogrulama.butunluk === false"> · <strong style="color: var(--red-500)">bütünlük hatası</strong></template>
+          </span>
+          <span
+            v-else-if="dogrulama.mesaj"
+            class="dogrulama-detay"
+          >
+            {{ dogrulama.mesaj }}
+          </span>
+        </div>
+      </template>
+    </Card>
+
     <div class="ozet-grid">
       <Card class="ozet-kart">
         <template #title>
@@ -271,7 +311,7 @@
                 </Column>
               </DataTable>
               <div
-                v-if="!yedekler.length && !yedeklerYukleniyor"
+                v-if="(!yedekler || !yedekler.length) && !yedeklerYukleniyor"
                 class="empty-state"
               >
                 Henüz yedek alınmamış
@@ -305,6 +345,23 @@ const yedekAliniyor = ref(false)
 const hata = ref('')
 const basari = ref('')
 const schedule = ref({})
+const dogrulama = ref({})
+
+const dogrulamaYukle = async () => {
+  try {
+    const r = await backupAPI.dogrula()
+    dogrulama.value = r.data || {}
+  } catch {
+    dogrulama.value = {}
+  }
+}
+
+const dogrulamaSeverity = (durum) => {
+  if (durum === 'OK') return 'success'
+  if (durum === 'UYARI') return 'warn'
+  if (durum === 'KRITIK') return 'danger'
+  return 'info'
+}
 
 const typeLabel = (t) => tipler.find((i) => i.value === t)?.label || t
 const typeSeverity = (t) => {
@@ -461,12 +518,29 @@ const bulutaEsitle = async (filename) => {
 onMounted(() => {
   yukle()
   bulutAyarlariYukle()
+  dogrulamaYukle()
 })
 </script>
 
 <style scoped>
 .yedekler-container {
   padding: 0;
+}
+.dogrulama-kart {
+  margin-bottom: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.dogrulama-icerik {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dogrulama-detay {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 .bulut-kart {
   margin-bottom: 24px;

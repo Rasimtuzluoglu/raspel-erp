@@ -30,6 +30,9 @@ class PdfRaporServiceTest {
     @Mock private SiparisKalemRepository siparisKalemRepository;
     @Mock private IrsaliyeRepository irsaliyeRepository;
     @Mock private IrsaliyeKalemRepository irsaliyeKalemRepository;
+    @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    @Mock private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private PdfRaporService pdfRaporService;
 
     @Test

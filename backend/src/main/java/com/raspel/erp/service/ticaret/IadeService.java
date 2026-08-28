@@ -109,6 +109,19 @@ public class IadeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Iade", id));
         tenantChecker.check(iade.getSirketId(), "Iade");
         String eskiDurum = iade.getDurum();
+
+        if ("TAMAMLANDI".equals(eskiDurum)) {
+            if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
+                throw new BusinessException("Tamamlanmış iadenin kalemleri değiştirilemez. Önce iadeyi iptal edin.");
+            }
+            if (dto.getTutar() != null && dto.getTutar().compareTo(iade.getTutar()) != 0) {
+                throw new BusinessException("Tamamlanmış iadenin tutarı değiştirilemez. Önce iadeyi iptal edin.");
+            }
+            if ("TASLAK".equals(dto.getDurum())) {
+                throw new BusinessException("Tamamlanmış iade TASLAK'a alınamaz. Yalnızca IPTAL edilebilir.");
+            }
+        }
+
         if (dto.getFaturaId() != null) iade.setFaturaId(dto.getFaturaId());
         if (dto.getTarih() != null) iade.setTarih(dto.getTarih());
         if (dto.getAciklama() != null) iade.setAciklama(dto.getAciklama());
@@ -211,6 +224,8 @@ public class IadeService {
             if (alisIadesi) {
                 stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
             } else {
+                if (stok.getMiktar().compareTo(k.getMiktar()) < 0)
+                    throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd() + ", Mevcut: " + stok.getMiktar());
                 stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
             }
             stokRepository.save(stok);

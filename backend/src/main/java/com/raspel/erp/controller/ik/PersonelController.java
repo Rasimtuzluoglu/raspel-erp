@@ -30,8 +30,9 @@ public class PersonelController {
     @GetMapping
     @Operation(summary = "Tüm personeli getir (sayfalı)", description = "Tüm personel kayıtlarını sayfalı olarak listeler")
     public ResponseEntity<Page<PersonelDTO>> tumu(
-            @RequestParam(required = false) Long sirketId,
+            jakarta.servlet.http.HttpServletRequest request,
             @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(personelService.tumunuGetir(sirketId, pageable));
     }
 

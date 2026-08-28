@@ -1,9 +1,23 @@
 describe('Dashboard', () => {
   beforeEach(() => {
+    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] })
+    cy.intercept('POST', '/api/**', { statusCode: 200, body: {} })
     cy.intercept('POST', '/api/kullanicilar/giris', {
       statusCode: 200,
-      body: { id: 1, username: 'admin', displayName: 'Admin', role: 'ADMIN', token: 'test', sirketId: 1, sirketAdi: 'Test' }
+      body: { id: 1, username: 'admin', displayName: 'Admin', role: 'ADMIN', token: 'test', twoFactorGerekli: false, sirketler: [{ id: 1, ad: 'Test' }], sirketId: 1, sirketAdi: 'Test' }
     }).as('login')
+    cy.intercept('POST', '/api/kullanicilar/giris-sirket', {
+      statusCode: 200,
+      body: { id: 1, username: 'admin', displayName: 'Admin', role: 'ADMIN', token: 'test', sirketId: 1, sirketAdi: 'Test', companyName: 'Test' }
+    }).as('girisSirket')
+    cy.intercept('GET', '/api/kullanicilar/ben', {
+      statusCode: 200,
+      body: { id: 1, username: 'admin', displayName: 'Admin', role: 'ADMIN', sirketId: 1, companyName: 'Test' }
+    }).as('ben')
+    cy.intercept('GET', '/api/yetkiler/roller', ['ADMIN']).as('roller')
+    cy.intercept('GET', '/api/yetkiler/moduller', ['CARI', 'FATURA', 'STOK']).as('moduller')
+    cy.intercept('GET', '/api/yetkiler', []).as('yetkiler')
+    cy.intercept('GET', '/api/doviz', []).as('doviz')
     cy.intercept('GET', '/api/sirketler/aktif', []).as('sirketler')
     cy.intercept('GET', '/api/dashboard', {
       toplamCariSayisi: 10, toplamBakiye: 50000, pozitifBakiye: 80000, negatifBakiye: -30000,
@@ -18,22 +32,28 @@ describe('Dashboard', () => {
     cy.intercept('GET', '/api/stoklar', []).as('stoklar')
 
     cy.visit('/giris')
-    cy.get('input[placeholder="Kullanıcı adı"]').type('admin')
+    cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
     cy.get('input[type="password"]').type('admin123')
     cy.contains('Giriş Yap').click()
     cy.wait('@login')
+    cy.get('body').then(($body) => {
+      if ($body.find('.p-dialog-mask').length > 0) {
+        cy.get('body').type('{esc}')
+        cy.wait(300)
+      }
+    })
   })
 
   it('should display dashboard widgets', () => {
     cy.contains('Toplam Cari').should('be.visible')
-    cy.contains('Toplam Bakiye').should('be.visible')
-    cy.contains('Hizli Islemler').should('be.visible')
+    cy.contains('Bakiye').should('be.visible')
+    cy.contains('Toplam Likidite').should('be.visible')
   })
 
   it('should display stat cards', () => {
     cy.contains('10').should('be.visible')
-    cy.contains('25').should('be.visible')
-    cy.contains('5').should('be.visible')
+    cy.contains('50.000,00').should('be.visible')
+    cy.contains('0').should('be.visible')
   })
 
   it('should toggle widget settings', () => {

@@ -34,6 +34,9 @@ public class AuditLog {
     @Column(columnDefinition = "TEXT")
     private String aciklama;
 
+    @Column(columnDefinition = "TEXT")
+    private String detay;
+
     @Column(name = "ip_adresi", length = 50)
     private String ipAdresi;
 

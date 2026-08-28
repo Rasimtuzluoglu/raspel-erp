@@ -21,6 +21,12 @@ public class BildirimKuyrukConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.BILDIRIM_QUEUE)
     public void isle(NotificationMessage message) {
-        log.info("Bildirim kuyruğundan işlendi -> sirketId={}, tur={}, baslik={}", message.sirketId(), message.tur(), message.baslik());
+        try {
+            log.info("Bildirim kuyruğundan işlendi -> sirketId={}, tur={}, baslik={}", message.sirketId(), message.tur(), message.baslik());
+        } catch (Exception e) {
+            // İşlenemeyen mesaj retry (3 deneme) sonrası DLQ'ya düşer; sonsuz döngü oluşmaz
+            log.error("Bildirim işlenirken hata -> baslik={}", message != null ? message.baslik() : null, e);
+            throw e;
+        }
     }
 }

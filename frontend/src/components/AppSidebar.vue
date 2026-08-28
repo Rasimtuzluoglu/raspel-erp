@@ -42,7 +42,7 @@
 
     <div class="sidebar-menu">
       <div
-        v-if="favoriMenuler.length"
+        v-if="favoriMenuler && favoriMenuler.length"
         class="menu-grup"
       >
         {{ $t('common.favorites') }}

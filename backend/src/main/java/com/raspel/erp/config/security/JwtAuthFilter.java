@@ -17,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 import com.raspel.erp.repository.sistem.KullaniciRepository;
+import com.raspel.erp.service.sistem.AktifOturumService;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final KullaniciRepository kullaniciRepository;
+    private final AktifOturumService aktifOturumService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -50,6 +52,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         if (token != null && jwtUtil.validateToken(token)) {
+            // İptal edilmiş (sonlandırılmış) oturumların token'ı geçersizdir.
+            if (aktifOturumService.iptalEdilmis(jwtUtil.getJtiFromToken(token))) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             Long kullaniciId = jwtUtil.getUserIdFromToken(token);
             Long sirketId = jwtUtil.getSirketIdFromToken(token);
             if (kullaniciId != null) {

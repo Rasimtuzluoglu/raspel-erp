@@ -40,6 +40,9 @@ class MuhasebeServiceTest {
     @Mock
     private TenantChecker tenantChecker;
 
+    @Mock
+    private com.raspel.erp.service.sistem.AuditLogService auditLogService;
+
     @InjectMocks
     private MuhasebeService muhasebeService;
 
@@ -115,9 +118,11 @@ class MuhasebeServiceTest {
 
     @Test
     void testMizan_HesapBazliBakiyeHesaplar() {
-        MuhasebeFisKalem borc = MuhasebeFisKalem.builder().hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.valueOf(250)).alacak(BigDecimal.ZERO).build();
-        MuhasebeFisKalem alacak = MuhasebeFisKalem.builder().hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.ZERO).alacak(BigDecimal.valueOf(100)).build();
+        MuhasebeFisKalem borc = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.valueOf(250)).alacak(BigDecimal.ZERO).build();
+        MuhasebeFisKalem alacak = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.ZERO).alacak(BigDecimal.valueOf(100)).build();
         when(muhasebeFisKalemRepository.findBySirketId(1L)).thenReturn(List.of(borc, alacak));
+        when(muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(
+                MuhasebeFisi.builder().id(1L).durum("KAYITLI").tarih(LocalDate.now()).build()));
 
         List<MizanSatiriDTO> mizan = muhasebeService.mizanGetir(1L, LocalDate.now().minusMonths(1), LocalDate.now());
 
@@ -126,10 +131,43 @@ class MuhasebeServiceTest {
     }
 
     @Test
+    void testMizan_IptalFislerDahilEdilmez() {
+        MuhasebeFisKalem kalem = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.valueOf(250)).alacak(BigDecimal.ZERO).build();
+        when(muhasebeFisKalemRepository.findBySirketId(1L)).thenReturn(List.of(kalem));
+        when(muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(
+                MuhasebeFisi.builder().id(1L).durum("IPTAL").tarih(LocalDate.now()).build()));
+
+        List<MizanSatiriDTO> mizan = muhasebeService.mizanGetir(1L, LocalDate.now().minusMonths(1), LocalDate.now());
+
+        assertEquals(0, mizan.size());
+    }
+
+    @Test
     void testFisIptal_OnayliFisIptalEdilemez() {
         MuhasebeFisi onayliFis = MuhasebeFisi.builder().id(1L).durum("ONAYLANDI").build();
         when(muhasebeFisiRepository.findById(1L)).thenReturn(Optional.of(onayliFis));
 
         assertThrows(BusinessException.class, () -> muhasebeService.fisIptalEt(1L));
+    }
+
+    @Test
+    void testFisSil_OnayliFisSilinemez() {
+        MuhasebeFisi onayliFis = MuhasebeFisi.builder().id(1L).durum("ONAYLANDI").sirketId(1L).build();
+        when(muhasebeFisiRepository.findById(1L)).thenReturn(Optional.of(onayliFis));
+
+        assertThrows(BusinessException.class, () -> muhasebeService.fisSil(1L));
+        verify(muhasebeFisKalemRepository, never()).deleteByFisId(anyLong());
+        verify(muhasebeFisiRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void testFisSil_KayitliFisSilinebilir() {
+        MuhasebeFisi kayitliFis = MuhasebeFisi.builder().id(1L).durum("KAYITLI").sirketId(1L).build();
+        when(muhasebeFisiRepository.findById(1L)).thenReturn(Optional.of(kayitliFis));
+
+        muhasebeService.fisSil(1L);
+
+        verify(muhasebeFisKalemRepository).deleteByFisId(1L);
+        verify(muhasebeFisiRepository).deleteById(1L);
     }
 }

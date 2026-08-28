@@ -12,6 +12,7 @@ public class PersonelPuantajDTO {
     private Long id;
     private Long personelId;
     private String personelAdi;
+    private Long sirketId;
     private LocalDate tarih;
     private String durum;
     private String aciklama;

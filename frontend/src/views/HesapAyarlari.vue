@@ -369,6 +369,77 @@
           </div>
         </template>
       </Card>
+
+      <!-- AKTİF OTURUMLAR -->
+      <Card class="ayar-kart">
+        <template #title>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+            <div>
+              <i
+                class="pi pi-desktop"
+                style="margin-right: 8px"
+              />Aktif Oturumlar
+            </div>
+            <Button
+              icon="pi pi-refresh"
+              class="p-button-sm p-button-text"
+              @click="oturumlariYukle"
+            />
+          </div>
+        </template>
+        <template #content>
+          <p class="ai-aciklama">
+            Hesabınıza açık olan oturumları görüntüleyin ve uzaktan sonlandırın.
+          </p>
+          <DataTable
+            :value="aktifOturumlar"
+            :loading="oturumYukleniyor"
+            striped-rows
+            size="small"
+            class="mt-3"
+          >
+            <Column
+              header="Kullanıcı"
+              field="kullaniciAdi"
+            />
+            <Column header="IP">
+              <template #body="s">
+                {{ s.data.ip || '-' }}
+              </template>
+            </Column>
+            <Column header="Giriş Zamanı">
+              <template #body="s">
+                {{ s.data.girisZamani ? new Date(s.data.girisZamani).toLocaleString('tr-TR') : '-' }}
+              </template>
+            </Column>
+            <Column header="Son Kullanım">
+              <template #body="s">
+                {{ s.data.sonKullanim ? new Date(s.data.sonKullanim).toLocaleString('tr-TR') : '-' }}
+              </template>
+            </Column>
+            <Column
+              header=""
+              style="width: 80px"
+            >
+              <template #body="s">
+                <Button
+                  v-if="s.data.kullaniciId !== authStore?.kullanici?.id"
+                  label="Sonlandır"
+                  icon="pi pi-sign-out"
+                  class="p-button-sm p-button-danger p-button-text"
+                  @click="oturumSonlandir(s.data)"
+                />
+              </template>
+            </Column>
+          </DataTable>
+          <div
+            v-if="(!aktifOturumlar || !aktifOturumlar.length) && !oturumYukleniyor"
+            class="empty-state"
+          >
+            Aktif oturum bulunamadı.
+          </div>
+        </template>
+      </Card>
     </div>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
@@ -553,7 +624,33 @@ onMounted(async () => {
     /* empty */
   }
   await aiConfigGetir()
+  oturumlariYukle()
 })
+
+const aktifOturumlar = ref([])
+const oturumYukleniyor = ref(false)
+
+const oturumlariYukle = async () => {
+  oturumYukleniyor.value = true
+  try {
+    const r = await kullaniciAPI.aktifOturumlar()
+    aktifOturumlar.value = r.data || []
+  } catch {
+    aktifOturumlar.value = []
+  } finally {
+    oturumYukleniyor.value = false
+  }
+}
+
+const oturumSonlandir = async (oturum) => {
+  try {
+    await kullaniciAPI.oturumIptal(oturum.jti)
+    toastBildirim.basarili('Oturum sonlandırıldı')
+    oturumlariYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Oturum sonlandırılamadı')
+  }
+}
 
 const profilKaydet = async () => {
   kaydediliyor.value = true
@@ -749,6 +846,14 @@ const kopyala = async (text) => {
 .renk-dot.aktif {
   border-color: #fff;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
+.empty-state {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-muted);
+}
+.mt-3 {
+  margin-top: 0.75rem;
 }
 </style>
 

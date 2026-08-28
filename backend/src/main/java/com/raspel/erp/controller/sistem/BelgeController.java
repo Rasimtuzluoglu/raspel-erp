@@ -97,8 +97,9 @@ public class BelgeController {
 
     @GetMapping("/kayit/{entityAdi}/{entityId}")
     @Operation(summary = "Kayda ait belgeleri getir", description = "Bir kayda iliştirilmiş belgeleri listeler")
-    public ResponseEntity<List<Belge>> kayitBelgeleri(@PathVariable String entityAdi, @PathVariable Long entityId) {
-        return ResponseEntity.ok(belgeRepository.findByEntityAdiAndEntityIdOrderByOlusturmaTarihiDesc(entityAdi, entityId));
+    public ResponseEntity<List<Belge>> kayitBelgeleri(@PathVariable String entityAdi, @PathVariable Long entityId, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(belgeRepository.findByEntityAdiAndEntityIdAndSirketIdOrderByOlusturmaTarihiDesc(entityAdi, entityId, sirketId));
     }
 
     @GetMapping
@@ -110,11 +111,17 @@ public class BelgeController {
 
     @GetMapping("/indir/{filename}")
     @Operation(summary = "Belge indir", description = "Belgeyi indirir")
-    public ResponseEntity<Resource> indir(@PathVariable String filename) {
+    public ResponseEntity<Resource> indir(@PathVariable String filename, HttpServletRequest request) {
         try {
             Path file = belgeDir.resolve(filename).normalize();
             if (!file.startsWith(belgeDir)) {
                 return ResponseEntity.badRequest().build();
+            }
+            Long sirketId = (Long) request.getAttribute("sirketId");
+            boolean aitMi = belgeRepository.findByUrlEndingWith(filename).stream()
+                    .anyMatch(b -> b.getSirketId() == null || b.getSirketId().equals(sirketId));
+            if (!aitMi) {
+                return ResponseEntity.notFound().build();
             }
             Resource resource = new UrlResource(file.toUri());
             if (!resource.exists() || !resource.isReadable()) {
@@ -135,7 +142,12 @@ public class BelgeController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Belge sil", description = "Belgeyi siler")
-    public ResponseEntity<Void> sil(@PathVariable Long id) {
+    public ResponseEntity<Void> sil(@PathVariable Long id, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Belge belge = belgeRepository.findById(id).orElse(null);
+        if (belge == null || (belge.getSirketId() != null && !belge.getSirketId().equals(sirketId))) {
+            return ResponseEntity.notFound().build();
+        }
         belgeRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }

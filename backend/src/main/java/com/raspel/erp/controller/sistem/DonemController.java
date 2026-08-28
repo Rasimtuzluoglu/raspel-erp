@@ -35,13 +35,21 @@ public class DonemController {
 
     @GetMapping("/sirket/{sirketId}")
     @Operation(summary = "Şirkete göre dönemleri getir", description = "Belirli bir şirkete ait dönemleri listeler")
-    public ResponseEntity<List<DonemDTO>> sirketeGore(@PathVariable Long sirketId) {
+    public ResponseEntity<List<DonemDTO>> sirketeGore(@PathVariable Long sirketId, jakarta.servlet.http.HttpServletRequest request) {
+        Long aktifSirketId = (Long) request.getAttribute("sirketId");
+        if (aktifSirketId != null && !aktifSirketId.equals(sirketId)) {
+            throw new com.raspel.erp.exception.ResourceNotFoundException("Donem bu sirkete ait degil");
+        }
         return ResponseEntity.ok(donemService.sirketeGoreGetir(sirketId));
     }
 
     @GetMapping("/sirket/{sirketId}/aktif")
     @Operation(summary = "Aktif dönemleri getir", description = "Şirketin aktif dönemlerini listeler")
-    public ResponseEntity<List<DonemDTO>> aktifDonemler(@PathVariable Long sirketId) {
+    public ResponseEntity<List<DonemDTO>> aktifDonemler(@PathVariable Long sirketId, jakarta.servlet.http.HttpServletRequest request) {
+        Long aktifSirketId = (Long) request.getAttribute("sirketId");
+        if (aktifSirketId != null && !aktifSirketId.equals(sirketId)) {
+            throw new com.raspel.erp.exception.ResourceNotFoundException("Donem bu sirkete ait degil");
+        }
         return ResponseEntity.ok(donemService.aktifDonemler(sirketId));
     }
 

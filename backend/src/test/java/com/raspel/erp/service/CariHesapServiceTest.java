@@ -133,7 +133,7 @@ class CariHesapServiceTest {
     void bakiyeGuncelle_updatesBalance() {
         CariHesap cari = createCariHesap(1L);
         cari.setBakiye(BigDecimal.valueOf(100));
-        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        when(cariHesapRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(cari));
         cariHesapService.bakiyeGuncelle(1L, BigDecimal.valueOf(50));
         assertEquals(BigDecimal.valueOf(150), cari.getBakiye());
         verify(cariHesapRepository).save(cari);

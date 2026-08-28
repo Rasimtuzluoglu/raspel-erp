@@ -36,6 +36,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${app.websocket.relay-port:61613}")
     private int relayPort;
 
+    @Value("${app.cors.allowed-origins:http://localhost:*}")
+    private String allowedOrigins;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         if (relayEnabled) {
@@ -55,7 +58,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(java.util.Arrays.asList(allowedOrigins.split(",")).toArray(new String[0]))
                 .addInterceptors(new JwtHandshakeInterceptor())
                 .withSockJS();
     }

@@ -5,9 +5,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       - ACME_EMAIL=${ACME_EMAIL:-admin@raspel.com}
+      - DASHBOARD_BASIC_AUTH=${DASHBOARD_BASIC_AUTH:-}
     volumes:
       - ./config/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./config/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
@@ -101,7 +102,7 @@ services:
     build: ./backend
     container_name: raspel-backend
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/raspelerp
@@ -111,7 +112,7 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-raspel}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-https://localhost}
@@ -127,6 +128,9 @@ services:
       APP_BACKUP_RETENTION_DAYS: 30
       APP_BACKUP_DB_PASSWORD: ${POSTGRES_PASSWORD}
       APP_BACKUP_AUTO_CRON: 0 0 3 * * ?
+      # Local HTTP erisim: Secure cookie HTTPS gerektirir; traefik yerelde HTTP sundugu icin kapatilir.
+      APP_COOKIE_SECURE: "false"
+      APP_SECURITY_HTTPS_ONLY: "false"
     volumes:
       - backup_data:/app/backups
     depends_on:
@@ -219,15 +223,16 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.27.0
     container_name: raspel-alertmanager
+    entrypoint: ["/bin/sh", "/etc/alertmanager/entrypoint.sh"]
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--config.expand-env=true'
     environment:
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
     ports:
       - "127.0.0.1:9093:9093"
     volumes:
-      - ./config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml.tmpl:ro
+      - ./config/alertmanager/entrypoint.sh:/etc/alertmanager/entrypoint.sh:ro
     restart: unless-stopped
     networks:
       - backend-net
@@ -247,4 +252,3 @@ volumes:
   backup_data:
   rabbitmq_data:
   letsencrypt_data:
-    driver: bridge

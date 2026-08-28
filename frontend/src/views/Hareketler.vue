@@ -63,12 +63,12 @@
       class="table-container"
     >
       <div
-        v-if="selectedItems.length > 0"
+        v-if="selectedItems && selectedItems.length > 0"
         class="batch-action-bar"
       >
         <div class="batch-info">
           <i class="pi pi-check-square" />
-          <span><strong>{{ selectedItems.length }}</strong> kayıt seçildi</span>
+          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> kayıt seçildi</span>
         </div>
         <div class="batch-buttons">
           <Button
@@ -270,6 +270,25 @@
         />
       </div>
 
+      <div
+        v-if="form.cariHesapId && (faturaSecenekleri.length > 0 || faturalarYukleniyor)"
+        class="form-group"
+      >
+        <label for="faturaId">Bağlı Fatura (opsiyonel)</label>
+        <Dropdown
+          id="faturaId"
+          v-model="form.faturaId"
+          :options="faturaSecenekleri"
+          option-label="faturaNumarasi"
+          option-value="id"
+          placeholder="Fatura seçilirse ödeme durumu güncellenir"
+          class="w-full"
+          :show-clear="true"
+          :loading="faturalarYukleniyor"
+        />
+        <small class="fatura-ipucu">Seçilen faturaya tahsilat/ödeme işlenir, kalan tutar otomatik güncellenir.</small>
+      </div>
+
       <div class="form-group">
         <label for="aciklama">Açıklama</label>
         <Textarea
@@ -311,7 +330,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useHareketStore } from '../stores/hareketStore.js'
-import { hareketAPI, excelAPI } from '../api/index.js'
+import { hareketAPI, faturaAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import { formatCurrency } from '../utils/format.js'
@@ -353,7 +372,33 @@ const form = ref({
   odemeSekli: null,
   tutar: null,
   hareketTarihi: new Date(),
-  aciklama: ''
+  aciklama: '',
+  faturaId: null
+})
+
+const faturaSecenekleri = ref([])
+const faturalarYukleniyor = ref(false)
+
+const seciliCariFaturalariYukle = async (cariHesapId) => {
+  faturaSecenekleri.value = []
+  if (!cariHesapId) return
+  faturalarYukleniyor.value = true
+  try {
+    const r = await faturaAPI.getAll({ cariHesapId, page: 0, size: 100 })
+    const faturalar = Array.isArray(r.data?.content) ? r.data.content : Array.isArray(r.data) ? r.data : []
+    faturaSecenekleri.value = faturalar.filter(
+      (f) => f.durum === 'KESILDI' && (f.kalanTutar || 0) > 0
+    )
+  } catch {
+    faturaSecenekleri.value = []
+  } finally {
+    faturalarYukleniyor.value = false
+  }
+}
+
+watch(() => form.value.cariHesapId, (yeni) => {
+  form.value.faturaId = null
+  seciliCariFaturalariYukle(yeni)
 })
 
 const hareketTurleri = [
@@ -378,7 +423,7 @@ const odemeSekliLabel = (val) => {
 }
 
 const cariHesapSeçenekleri = computed(() => {
-  return cariHesapStore.cariHesaplar || []
+  return cariHesapStore?.cariHesaplar || []
 })
 
 onMounted(async () => {
@@ -407,8 +452,10 @@ const openDialog = () => {
     odemeSekli: null,
     tutar: null,
     hareketTarihi: new Date(),
-    aciklama: ''
+    aciklama: '',
+    faturaId: null
   }
+  faturaSecenekleri.value = []
   showDialog.value = true
 }
 
@@ -420,8 +467,10 @@ const openEditDialog = (hareket) => {
     odemeSekli: hareket.odemeSekli || null,
     tutar: hareket.tutar,
     hareketTarihi: new Date(hareket.hareketTarihi),
-    aciklama: hareket.aciklama || ''
+    aciklama: hareket.aciklama || '',
+    faturaId: hareket.faturaId || null
   }
+  seciliCariFaturalariYukle(hareket.cariHesapId)
   showDialog.value = true
 }
 
@@ -453,7 +502,8 @@ const saveHareket = async () => {
       odemeSekli: form.value.odemeSekli || null,
       tutar: form.value.tutar,
       hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().split('T')[0] : null,
-      aciklama: form.value.aciklama
+      aciklama: form.value.aciklama,
+      faturaId: form.value.faturaId || null
     }
 
     if (editingId.value) {
@@ -597,6 +647,13 @@ h1 {
 
 .form-group {
   margin-bottom: 20px;
+}
+
+.fatura-ipucu {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
 }
 
 .form-group label {

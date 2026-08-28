@@ -33,6 +33,8 @@
 | ⚡ **Yüksek Performans & Redis Cache** | Tekil önbellek sorgusu ile anında açılan Dashboard ve optimize edilmiş veri transferi. |
 | ⌨️ **Klavye Kısayolları** | `Ctrl+K` Omnibar hızlı arama, `Esc` kapatma ile fareye ihtiyaç duymadan hızlı operasyon. |
 | 🌙 **Karanlık / Aydınlık Tema** | Gece ve gündüz kullanımına uygun modern tema ve renk paleti desteği. |
+| 🛡️ **Oturum & Anomali Güvenliği** | Aktif oturumları listeleme/uzaktan sonlandırma, mükerrer fatura/ödeme ve yüksek tutar anomalilerini otomatik e-posta/Slack ile bildirme. |
+| 🗄️ **Yedek Doğrulama & Denetim İzi** | Yedeklerin bütünlük/güncellik health-check'i; denetim loglarında değişiklik öncesi/sonrası değer (diff) kaydı. |
 
 ---
 
@@ -41,9 +43,9 @@
 ### 💰 Finans & Muhasebe
 - **Cari Hesaplar**: Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi, IBAN doğrulama, toplu Excel aktarımı ve ekstre.
 - **Fatura Yönetimi**: Alış/Satış faturası, otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi ve çoğaltma.
-- **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, MT940 hesap özeti yükleme ve otomatik mutabakat.
+- **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, CSV/Excel/OFX hesap özeti yükleme ve otomatik mutabakat.
 - **Çek/Senet, Bütçe & Masraflar**: Portföy takibi, departman bütçeleri, masraf fişleri ve nakit akışı projeksiyonu.
-- **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan ve defter-i kebir.
+- **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir, bilanço ve kâr/zarar (gelir tablosu).
 
 ### 🛒 Ticaret & Satış
 - **Hızlı Satış (POS)**: Barkod okuyucu destekli hızlı satış, sepet, indirim ve termal fiş yazdırma.

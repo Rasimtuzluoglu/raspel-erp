@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -43,6 +44,7 @@ public class JwtUtil {
 
     public String generateToken(Kullanici kullanici, Long sirketId, String sirketAdi) {
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(kullanici.getUsername())
                 .claim("userId", kullanici.getId())
                 .claim("role", kullanici.getRole())
@@ -58,6 +60,10 @@ public class JwtUtil {
 
     public String getUsernameFromToken(String token) {
         return getClaims(token).getPayload().getSubject();
+    }
+
+    public String getJtiFromToken(String token) {
+        return getClaims(token).getPayload().getId();
     }
 
     public Long getUserIdFromToken(String token) {

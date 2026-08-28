@@ -5,7 +5,7 @@ describe('Login', () => {
 
   it('should display login page', () => {
     cy.contains('RasPel').should('be.visible')
-    cy.get('input[placeholder="Kullanıcı adı"]').should('be.visible')
+    cy.get('input[placeholder="Kullanıcı Adı"]').should('be.visible')
     cy.get('input[type="password"]').should('be.visible')
     cy.contains('Giriş Yap').should('be.visible')
   })
@@ -19,13 +19,13 @@ describe('Login', () => {
     cy.intercept('POST', '/api/kullanicilar/giris').as('login')
     cy.intercept('GET', '/api/sirketler/aktif').as('sirketler')
 
-    cy.get('input[placeholder="Kullanıcı adı"]').type('admin')
-    cy.get('input[type="password"]').type('admin123')
+    cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
+    cy.get('input[type="password"]').type('Admin123!')
     cy.contains('Giriş Yap').click()
 
     cy.wait('@login', { timeout: 15000 }).its('response.statusCode').should('eq', 200)
     cy.url().should('not.include', '/giris')
-    cy.contains('Raspel ERP Özeti').should('be.visible')
+    cy.get('.dashboard-container').should('be.visible')
   })
 
   it('should show error with wrong credentials', () => {
@@ -34,7 +34,7 @@ describe('Login', () => {
       body: { message: 'Geçersiz kullanıcı adı veya şifre' }
     }).as('loginFail')
 
-    cy.get('input[placeholder="Kullanıcı adı"]').type('admin')
+    cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
     cy.get('input[type="password"]').type('wrongpass')
     cy.contains('Giriş Yap').click()
 

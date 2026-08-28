@@ -11,8 +11,8 @@ route:
 receivers:
   - name: 'default'
     # Slack entegrasyonu: SLACK_WEBHOOK_URL ortam degiskeni tanimliysa alertler Slack'e gider.
-    # Tanimli degilse alertler yalnizca web arayuzunde gorunur.
+    # Tanimli degilse entrypoint bu blogu kaldirir, alertler yalnizca web arayuzunde gorunur.
     slack_configs:
-      - api_url: '${SLACK_WEBHOOK_URL}'
+      - api_url: '__SLACK_WEBHOOK_URL__'
         channel: '#raspel-alerts'
         send_resolved: true

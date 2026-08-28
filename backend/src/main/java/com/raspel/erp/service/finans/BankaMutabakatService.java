@@ -26,6 +26,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.raspel.erp.entity.finans.Banka;
 
 @Service
@@ -121,6 +123,9 @@ public class BankaMutabakatService {
     private List<String[]> parseDosya(MultipartFile dosya) {
         String ad = dosya.getOriginalFilename() != null ? dosya.getOriginalFilename().toLowerCase() : "";
         try {
+            if (ad.endsWith(".ofx") || ad.endsWith(".qfx")) {
+                return parseOfx(dosya);
+            }
             if (ad.endsWith(".csv") || ad.endsWith(".txt")) {
                 return parseCsv(dosya);
             }
@@ -128,6 +133,64 @@ public class BankaMutabakatService {
         } catch (Exception e) {
             throw new BusinessException("Dosya okunamadı: " + e.getMessage());
         }
+    }
+
+    /**
+     * OFX/QFX (Open Financial Exchange) banka hesap özetini ayrıştırır.
+     * STMTTRN bloklarından tarih, açıklama, borç ve alacak bilgisini çıkarır.
+     * Dönen satır formatı mevcut CSV ile aynıdır: [tarih, açıklama, borç, alacak, bakiye].
+     */
+    private List<String[]> parseOfx(MultipartFile dosya) throws Exception {
+        String icerik = new String(dosya.getBytes(), StandardCharsets.UTF_8);
+        List<String[]> satirlar = new ArrayList<>();
+
+        Matcher m = Pattern.compile("<STMTTRN>(.*?)</STMTTRN>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(icerik);
+        DateTimeFormatter ofxTarih = DateTimeFormatter.ofPattern("yyyyMMdd");
+        DateTimeFormatter hedefTarih = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        while (m.find()) {
+            String blok = m.group(1);
+            String tarihHam = etiketOku(blok, "DTPOSTED");
+            String tutarHam = etiketOku(blok, "TRNAMT");
+            if (tarihHam == null || tutarHam == null) continue;
+
+            String tarih;
+            try {
+                String gun = tarihHam.trim().length() >= 8 ? tarihHam.trim().substring(0, 8) : tarihHam.trim();
+                tarih = LocalDate.parse(gun, ofxTarih).format(hedefTarih);
+            } catch (Exception e) {
+                continue;
+            }
+
+            BigDecimal tutar;
+            try {
+                tutar = new BigDecimal(tutarHam.trim());
+            } catch (NumberFormatException e) {
+                continue;
+            }
+
+            String ad = etiketOku(blok, "NAME");
+            String memo = etiketOku(blok, "MEMO");
+            String aciklama = (ad != null && !ad.isBlank() ? ad.trim() : "")
+                    + (memo != null && !memo.isBlank() ? (ad != null && !ad.isBlank() ? " - " : "") + memo.trim() : "");
+            if (aciklama.isBlank()) aciklama = "Banka hareketi";
+
+            String borc = "0";
+            String alacak = "0";
+            if (tutar.signum() < 0) {
+                borc = tutar.abs().toPlainString().replace(".", ",");
+            } else {
+                alacak = tutar.toPlainString().replace(".", ",");
+            }
+
+            satirlar.add(new String[]{tarih, aciklama, borc, alacak, ""});
+        }
+        return satirlar;
+    }
+
+    private String etiketOku(String blok, String etiket) {
+        Matcher m = Pattern.compile("<" + etiket + ">(.*?)</" + etiket + ">", Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(blok);
+        return m.find() ? m.group(1).trim() : null;
     }
 
     private List<String[]> parseCsv(MultipartFile dosya) throws Exception {

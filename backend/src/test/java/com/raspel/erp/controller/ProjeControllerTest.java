@@ -60,7 +60,7 @@ class ProjeControllerTest {
         var list = List.of(ProjeDTO.builder().id(1L).ad("Proje A").build());
         when(projeService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
-        mockMvc.perform(get("/api/projeler").param("sirketId", "1"))
+        mockMvc.perform(get("/api/projeler").param("sirketId", "1").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].ad").value("Proje A"));
     }

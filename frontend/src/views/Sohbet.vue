@@ -91,7 +91,7 @@
       <!-- AI Modu -->
       <template v-else>
         <div
-          v-if="!aiMesajlar.length"
+          v-if="(!aiMesajlar || !aiMesajlar.length)"
           class="ai-bos-durum"
         >
           <i class="pi pi-sparkles ai-ikon-buyuk" />
@@ -317,9 +317,8 @@ const yukle = async () => {
 }
 
 const baglan = () => {
-  const token = authStore.token || ''
-  const SOCKET_URL =
-    import.meta.env.VITE_WS_URL || window.location.origin + '/ws' + (token ? '?token=' + encodeURIComponent(token) : '')
+  // Kimlik doğrulama httpOnly jwt cookie ile yapılır; token query-string'e konmaz
+  const SOCKET_URL = import.meta.env.VITE_WS_URL || window.location.origin + '/ws'
   import('sockjs-client')
     .then((SockJS) => {
       import('@stomp/stompjs').then(({ Client }) => {

@@ -17,10 +17,10 @@
           @click="openDialog"
         />
         <div
-          v-if="selectedCariHesaplar.length > 0"
+          v-if="selectedCariHesaplar && selectedCariHesaplar.length > 0"
           class="batch-actions"
         >
-          <span class="batch-count">{{ selectedCariHesaplar.length }} seçili</span>
+          <span class="batch-count">{{ selectedCariHesaplar ? selectedCariHesaplar.length : 0 }} seçili</span>
           <Button
             label="Toplu Sil"
             icon="pi pi-trash"
@@ -81,7 +81,7 @@
         v-model:selection="selectedCariHesaplar"
         state-storage="session"
         state-key="carihesaplar-table-state"
-        :value="cariHesapStore.cariHesaplar"
+        :value="cariHesapStore?.cariHesaplar || []"
         selection-mode="multiple"
         data-key="id"
         responsive-layout="scroll"
@@ -217,7 +217,7 @@
       </DataTable>
 
       <EmptyState
-        v-if="cariHesapStore.cariHesaplar.length === 0"
+        v-if="cariHesapStore?.cariHesaplar?.length === 0"
         message="Henüz cari hesap yok"
         sub-message="Müşteri ve tedarikçilerinizi ekleyerek başlayın."
         icon="pi pi-users"
@@ -489,7 +489,7 @@
         class="table-container"
       >
         <DataTable
-          v-if="cariHareketler.length > 0"
+          v-if="cariHareketler && cariHareketler.length > 0"
           state-storage="session"
           state-key="carihesaplar-table-state"
           :value="cariHareketler"
@@ -537,7 +537,7 @@
         </DataTable>
 
         <EmptyState
-          v-if="cariHareketler.length === 0"
+          v-if="cariHareketler && cariHareketler.length === 0"
           message="Bu cari hesaba ait hareket bulunmamaktadır."
           icon="pi pi-list"
         />
@@ -564,7 +564,7 @@
             />
           </div>
           <div
-            v-if="!cariNotlar.length"
+            v-if="(!cariNotlar || !cariNotlar.length)"
             class="cari-not-bos"
           >
             Henüz not yok.
@@ -646,8 +646,6 @@ useKisayollar({
   kaydet: () => saveCariHesap()
 })
 
-const { temizle: formTemizle } = useFormKorumasi(form)
-
 const showDialog = ref(false)
 const showHareketlerDialog = ref(false)
 const loading = ref(false)
@@ -703,6 +701,8 @@ const form = ref({
   notlar: '',
   aktif: true
 })
+
+const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
   await loadCariHesaplar()

@@ -2,7 +2,6 @@ package com.raspel.erp.config;
 
 import com.raspel.erp.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -14,53 +13,46 @@ class TenantCheckerTest {
 
     private final TenantChecker tenantChecker = new TenantChecker();
 
-    @BeforeEach
-    void setUp() {
+    @AfterEach
+    void temizle() {
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    private void oturumSirket(Long sirketId) {
         MockHttpServletRequest req = new MockHttpServletRequest();
-        req.setAttribute("sirketId", 1L);
+        req.setAttribute("sirketId", sirketId);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(req));
     }
 
-    @AfterEach
-    void tearDown() {
-        RequestContextHolder.resetRequestAttributes();
+    @Test
+    void check_ayniSirketIcinGecerli() {
+        oturumSirket(1L);
+        assertDoesNotThrow(() -> tenantChecker.check(1L, "Test"));
     }
 
     @Test
-    void getCurrentSirketId_requestAttrsindenOkur() {
-        assertEquals(1L, tenantChecker.getCurrentSirketId());
+    void check_farkliSirketIcinReddedilir() {
+        oturumSirket(1L);
+        assertThrows(ResourceNotFoundException.class, () -> tenantChecker.check(2L, "Test"));
     }
 
     @Test
-    void check_ayniSirket_izinVerir() {
-        assertDoesNotThrow(() -> tenantChecker.check(1L, "Stok"));
+    void tenantKey_sirketBilgisiIcerir() {
+        oturumSirket(3L);
+        assertEquals("42:3", TenantChecker.tenantKey(42L));
     }
 
     @Test
-    void check_farkliSirket_ResourceNotFoundFirlatir() {
-        assertThrows(ResourceNotFoundException.class, () -> tenantChecker.check(2L, "Stok"));
+    void tenantKey_farkliSirketIcinFarklidir() {
+        oturumSirket(3L);
+        String anahtar3 = TenantChecker.tenantKey(42L);
+        oturumSirket(9L);
+        String anahtar9 = TenantChecker.tenantKey(42L);
+        assertNotEquals(anahtar3, anahtar9);
     }
 
     @Test
-    void check_nullEntitySirket_izinVerir() {
-        assertDoesNotThrow(() -> tenantChecker.check(null, "Stok"));
-    }
-
-    @Test
-    void checkSirketId_ayniSirket_izinVerir() {
-        assertDoesNotThrow(() -> tenantChecker.checkSirketId(1L, "Personel"));
-    }
-
-    @Test
-    void checkSirketId_farkliSirket_ResourceNotFoundFirlatir() {
-        assertThrows(ResourceNotFoundException.class, () -> tenantChecker.checkSirketId(3L, "Personel"));
-    }
-
-    @Test
-    void requestContextYoksa_kontrolYapilmaz() {
-        RequestContextHolder.resetRequestAttributes();
-        assertDoesNotThrow(() -> tenantChecker.check(5L, "Stok"));
-        assertDoesNotThrow(() -> tenantChecker.checkSirketId(5L, "Stok"));
-        assertNull(tenantChecker.getCurrentSirketId());
+    void tenantKey_requestYoksaSadeceIdDoner() {
+        assertEquals("42", TenantChecker.tenantKey(42L));
     }
 }

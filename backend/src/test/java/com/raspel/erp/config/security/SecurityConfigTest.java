@@ -45,16 +45,16 @@ class SecurityConfigTest {
     }
 
     @Test
-    void authenticatedEndpoint_returnsForbiddenWhenNoToken() throws Exception {
+    void authenticatedEndpoint_returnsUnauthorizedWhenNoToken() throws Exception {
         mockMvc.perform(get("/api/kullanicilar"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void authenticatedEndpoint_returnsForbiddenWhenInvalidToken() throws Exception {
+    void authenticatedEndpoint_returnsUnauthorizedWhenInvalidToken() throws Exception {
         mockMvc.perform(get("/api/kullanicilar")
                         .header("Authorization", "Bearer invalid.token.here"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

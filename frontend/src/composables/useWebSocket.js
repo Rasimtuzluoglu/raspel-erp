@@ -11,10 +11,9 @@ export function useWebSocket() {
     const authStore = useAuthStore()
     if (!authStore.isLoggedIn || !authStore.sirketId) return
 
-    const token = authStore.token || ''
-    const SOCKET_URL =
-      import.meta.env.VITE_WS_URL ||
-      window.location.origin + '/ws' + (token ? '?token=' + encodeURIComponent(token) : '')
+    // Kimlik doğrulama httpOnly jwt cookie ile yapılır (aynı-orijin SockJS istekleri
+    // cookie'yi otomatik taşır). Token query-string'e asla konmaz (log sızıntısı riski).
+    const SOCKET_URL = import.meta.env.VITE_WS_URL || window.location.origin + '/ws'
 
     import('sockjs-client')
       .then((SockJS) => {

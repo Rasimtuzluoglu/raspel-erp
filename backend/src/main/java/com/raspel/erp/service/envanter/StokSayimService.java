@@ -3,8 +3,10 @@ package com.raspel.erp.service.envanter;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.envanter.StokSayimDTO;
 import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.entity.envanter.StokSayim;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.envanter.StokSayimRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class StokSayimService {
 
     private final StokSayimRepository stokSayimRepository;
     private final StokRepository stokRepository;
+    private final StokHareketRepository stokHareketRepository;
     private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
@@ -90,9 +93,19 @@ public class StokSayimService {
             BigDecimal fark = (sayim.getSayilanMiktar() != null ? sayim.getSayilanMiktar() : BigDecimal.ZERO)
                     .subtract(sayim.getBeklenenMiktar() != null ? sayim.getBeklenenMiktar() : BigDecimal.ZERO);
             sayim.setFark(fark);
-            Stok stok = sayim.getStok();
-            stok.setMiktar(stok.getMiktar().add(fark));
-            stokRepository.save(stok);
+            if (fark.compareTo(BigDecimal.ZERO) != 0) {
+                Stok stok = stokRepository.findByIdForUpdate(sayim.getStok().getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Stok", sayim.getStok().getId()));
+                stok.setMiktar(stok.getMiktar().add(fark));
+                stokRepository.save(stok);
+                stokHareketRepository.save(StokHareket.builder()
+                        .stok(stok)
+                        .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
+                        .miktar(fark.abs())
+                        .hareketTarihi(java.time.LocalDate.now())
+                        .aciklama("Stok sayımı #" + sayim.getId() + " farkı")
+                        .build());
+            }
         }
         sayim.setDurum(yeniDurum);
         return entityToDTO(stokSayimRepository.save(sayim));

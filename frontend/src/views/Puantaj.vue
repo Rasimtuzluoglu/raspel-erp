@@ -89,7 +89,7 @@
       </Column>
     </DataTable>
     <Message
-      v-if="list.length === 0"
+      v-if="list && list.length === 0"
       severity="info"
       text="Kayıt bulunamadı."
     />

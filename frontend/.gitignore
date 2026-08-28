@@ -1,0 +1,5 @@
+﻿
+# Cypress denetim ciktilar
+cypress/*-audit.json
+cypress/screenshots/
+cypress/videos/

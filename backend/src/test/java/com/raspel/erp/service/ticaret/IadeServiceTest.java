@@ -171,4 +171,67 @@ class IadeServiceTest {
         when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
         assertThrows(RuntimeException.class, () -> iadeService.sil(1L));
     }
+
+    @Test
+    void guncelle_tamamlandiIadeninKalemleriDegistirilemez() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        IadeDTO dto = IadeDTO.builder()
+                .kalemler(List.of(IadeKalemDTO.builder()
+                        .stokId(1L).miktar(new BigDecimal("99"))
+                        .birimFiyat(new BigDecimal("1")).build()))
+                .build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> iadeService.guncelle(1L, dto));
+        verify(iadeKalemRepository, never()).deleteByIadeId(anyLong());
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    void guncelle_tamamlandiIadeTaslagaAlinamaz() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        IadeDTO dto = IadeDTO.builder().durum("TASLAK").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> iadeService.guncelle(1L, dto));
+    }
+
+    @Test
+    void guncelle_tamamlandiIadeninTutariDegistirilemez() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        IadeDTO dto = IadeDTO.builder().tutar(new BigDecimal("5000")).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> iadeService.guncelle(1L, dto));
+    }
+
+    @Test
+    void guncelle_taslakIadeGuncellenebilir() {
+        hazirla();
+        Iade i = ornekIade(1L);
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of());
+        when(iadeRepository.save(any(Iade.class))).thenAnswer(inv -> inv.getArgument(0));
+        IadeDTO dto = IadeDTO.builder().durum("TAMAMLANDI").build();
+        var sonuc = iadeService.guncelle(1L, dto);
+        assertEquals("TAMAMLANDI", sonuc.getDurum());
+    }
+
+    @Test
+    void iptal_alisIadesiYetersizStoktaHataVerir() {
+        hazirla();
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        i.setTur("SATIS");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of(
+                IadeKalem.builder().iadeId(1L).stokId(1L)
+                        .miktar(new BigDecimal("5")).build()
+        ));
+        Stok stok = Stok.builder().id(1L).ad("Ürün").miktar(new BigDecimal("3")).build();
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        IadeDTO dto = IadeDTO.builder().durum("IPTAL").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> iadeService.guncelle(1L, dto));
+        verify(stokRepository, never()).save(any());
+    }
 }

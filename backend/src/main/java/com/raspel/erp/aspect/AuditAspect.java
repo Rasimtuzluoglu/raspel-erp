@@ -1,7 +1,9 @@
 package com.raspel.erp.aspect;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raspel.erp.service.sistem.AuditLogService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -13,6 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -20,6 +25,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class AuditAspect {
 
     private final AuditLogService auditLogService;
+    private final ObjectMapper objectMapper;
 
     @Pointcut("execution(* com.raspel.erp.controller..*.olustur(..))")
     public void createPointcut() {}
@@ -67,9 +73,33 @@ public class AuditAspect {
                     if (a instanceof Long) { entityId = (Long) a; break; }
                 }
             }
-            auditLogService.log(kullaniciId, sirketId, islem, entityAdi, entityId, "AOP: " + islem, ip);
+            String detay = detayOlustur(args);
+            auditLogService.log(kullaniciId, sirketId, islem, entityAdi, entityId, "AOP: " + islem, ip, detay);
         } catch (Exception e) {
             log.warn("Audit log kaydedilemedi: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Metot argümanlarındaki DTO'ları JSON olarak yakalar. Bu, değişikliğin
+     * "sonra" (gönderilen) değerlerini denetim izine yazar. ID, HttpServletRequest/Response
+     * gibi teknik parametreler hariç tutulur.
+     */
+    private String detayOlustur(Object[] args) {
+        if (args == null) return null;
+        List<Object> anlamli = new ArrayList<>();
+        for (Object a : args) {
+            if (a == null) continue;
+            if (a instanceof Long || a instanceof Integer) continue;
+            if (a instanceof HttpServletRequest || a instanceof HttpServletResponse) continue;
+            anlamli.add(a);
+        }
+        if (anlamli.isEmpty()) return null;
+        try {
+            Object hedef = anlamli.size() == 1 ? anlamli.get(0) : anlamli;
+            return objectMapper.writeValueAsString(hedef);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

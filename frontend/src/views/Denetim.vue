@@ -177,13 +177,28 @@
             header="Açıklama"
           />
           <Column
+            field="detay"
+            header="Detay"
+          >
+            <template #body="s">
+              <span
+                v-if="s.data.detay"
+                v-tooltip.top="s.data.detay"
+                class="detay-metin"
+              >
+                {{ kisaDetay(s.data.detay) }}
+              </span>
+              <span v-else>-</span>
+            </template>
+          </Column>
+          <Column
             field="ipAdresi"
             header="IP"
             style="width: 120px"
           />
         </DataTable>
         <div
-          v-if="!logs.length && !yukleniyor"
+          v-if="(!logs || !logs.length) && !yukleniyor"
           class="empty-state"
         >
           Henüz denetim kaydı bulunamadı.
@@ -324,6 +339,17 @@ const islemSeverity = (islem) => {
   return 'info'
 }
 
+const kisaDetay = (detay) => {
+  if (!detay) return '-'
+  try {
+    const obj = typeof detay === 'string' ? JSON.parse(detay) : detay
+    const s = JSON.stringify(obj)
+    return s.length > 60 ? s.slice(0, 60) + '…' : s
+  } catch {
+    return detay.length > 60 ? detay.slice(0, 60) + '…' : detay
+  }
+}
+
 const filtreSecenekleriniYukle = async () => {
   try {
     const [islemRes, entityRes] = await Promise.all([auditLogAPI.getIslemTipleri(), auditLogAPI.getEntityListesi()])
@@ -375,5 +401,16 @@ onMounted(() => {
   text-align: center;
   padding: 2rem;
   color: var(--text-muted);
+}
+.detay-metin {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: help;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  display: inline-block;
 }
 </style>

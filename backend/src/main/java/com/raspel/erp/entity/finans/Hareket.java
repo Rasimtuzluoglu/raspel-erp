@@ -46,6 +46,10 @@ public class Hareket {
 
     @Column(name = "odeme_sekli", length = 20)
     private String odemeSekli;
+
+    /** Bağlı fatura (opsiyonel). Tahsilat/ödeme faturaya işlenince fatura ödeme durumu güncellenir. */
+    @Column(name = "fatura_id")
+    private Long faturaId;
     
     @Column(name = "sirket_id")
     private Long sirketId;

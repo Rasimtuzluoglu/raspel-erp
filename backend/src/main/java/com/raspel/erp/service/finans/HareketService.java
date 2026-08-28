@@ -1,13 +1,16 @@
 package com.raspel.erp.service.finans;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,7 +39,34 @@ public class HareketService {
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
     private final BildirimService bildirimService;
+    private final FaturaRepository faturaRepository;
+    private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
     private final TenantChecker tenantChecker;
+    private final CacheYardimci cacheYardimci;
+
+    /**
+     * Faturanın ödenen tutarını ve ödeme durumunu günceller.
+     * delta: TAHSILAT/ODEME hareketi için pozitif, silme/güncelleme tersi için negatif.
+     */
+    private void faturaOdemeUygula(Long faturaId, BigDecimal delta, String aciklama) {
+        if (faturaId == null || delta == null || delta.compareTo(BigDecimal.ZERO) == 0) return;
+        Fatura fatura = faturaRepository.findById(faturaId)
+                .orElseThrow(() -> new BusinessException("Bağlı fatura bulunamadı: " + faturaId));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
+        BigDecimal yeniOdenen = (fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO).add(delta);
+        if (yeniOdenen.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("Fatura ödenen tutarı negatif olamaz. Ödenen: "
+                    + fatura.getOdenenTutar() + ", İşlem: " + delta + " (" + aciklama + ")");
+        }
+        BigDecimal toplam = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
+        BigDecimal kalan = toplam.subtract(yeniOdenen);
+        fatura.setOdenenTutar(yeniOdenen);
+        fatura.setKalanTutar(kalan.max(BigDecimal.ZERO));
+        fatura.setOdemeDurumu(kalan.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
+                : yeniOdenen.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI");
+        faturaRepository.save(fatura);
+        cacheYardimci.temizle("faturalar", "dashboard");
+    }
     
     /**
      * Belirli bir cari hesaba ait hareketleri getir
@@ -75,9 +105,20 @@ public class HareketService {
         log.info("Yeni hareket oluşturuluyor - Cari ID: {}, Tür: {}, Tutar: {}, sirketId: {}", 
                 dto.getCariHesapId(), dto.getTur(), dto.getTutar(), sirketId);
         
-        // Cari hesabın var olduğunu kontrol et
+        // Cari hesabın var olduğunu ve geçerli firmaya ait olduğunu kontrol et
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
+        tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
+
+        // Bağlı fatura varsa önceden doğrula (fatura şirketi ile eşleşmeli)
+        if (dto.getFaturaId() != null) {
+            Fatura fatura = faturaRepository.findById(dto.getFaturaId())
+                    .orElseThrow(() -> new BusinessException("Bağlı fatura bulunamadı: " + dto.getFaturaId()));
+            tenantChecker.check(fatura.getSirketId(), "Fatura");
+            if (fatura.getCariHesap() != null && !fatura.getCariHesap().getId().equals(dto.getCariHesapId())) {
+                throw new BusinessException("Fatura bu cari hesaba ait değil");
+            }
+        }
         
         // Hareket türünü valide et
         Hareket.HareketTuru hareketTuru;
@@ -100,6 +141,7 @@ public class HareketService {
                 .hareketTarihi(dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now())
                 .aciklama(dto.getAciklama())
                 .odemeSekli(dto.getOdemeSekli())
+                .faturaId(dto.getFaturaId())
                 .sirketId(sirketId)
                 .build();
         
@@ -107,6 +149,11 @@ public class HareketService {
         
         // Cari hesabın bakiyesini güncelle
         cariHesapService.bakiyeGuncelle(dto.getCariHesapId(), bakiyeGuncellemeTutari);
+
+        // Faturaya işle (varsa): ödenen tutar artar
+        if (dto.getFaturaId() != null) {
+            faturaOdemeUygula(dto.getFaturaId(), dto.getTutar(), "Hareket #" + kaydedilenHareket.getId());
+        }
         
         try {
             if (sirketId != null) {
@@ -165,6 +212,16 @@ public class HareketService {
 
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
+        tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
+        if (dto.getCariHesapId() != null && !dto.getCariHesapId().equals(hareket.getCariHesap().getId())) {
+            tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
+        }
+
+        if (dto.getFaturaId() != null) {
+            Fatura yeniFatura = faturaRepository.findById(dto.getFaturaId())
+                    .orElseThrow(() -> new BusinessException("Bağlı fatura bulunamadı: " + dto.getFaturaId()));
+            tenantChecker.check(yeniFatura.getSirketId(), "Fatura");
+        }
 
         Hareket.HareketTuru yeniTur;
         try {
@@ -179,12 +236,24 @@ public class HareketService {
         BigDecimal yeniBakiyeEtkisi = yeniTur == Hareket.HareketTuru.TAHSILAT
                 ? dto.getTutar().negate() : dto.getTutar();
 
+        // Eski bağlı fatura etkisini geri al, yeni faturaya uygula
+        Long eskiFaturaId = hareket.getFaturaId();
+        if (eskiFaturaId != null) {
+            faturaOdemeUygula(eskiFaturaId, hareket.getTutar().negate(), "Hareket #" + hareket.getId() + " güncellendi");
+        }
+        if (dto.getFaturaId() != null && !dto.getFaturaId().equals(eskiFaturaId)) {
+            faturaOdemeUygula(dto.getFaturaId(), dto.getTutar(), "Hareket #" + hareket.getId() + " güncellendi");
+        } else if (dto.getFaturaId() != null) {
+            faturaOdemeUygula(dto.getFaturaId(), dto.getTutar(), "Hareket #" + hareket.getId() + " güncellendi");
+        }
+
         hareket.setCariHesap(cariHesap);
         hareket.setTur(yeniTur);
         hareket.setTutar(dto.getTutar());
         hareket.setHareketTarihi(dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now());
         hareket.setAciklama(dto.getAciklama());
         if (dto.getOdemeSekli() != null) hareket.setOdemeSekli(dto.getOdemeSekli());
+        hareket.setFaturaId(dto.getFaturaId());
 
         Hareket guncellenen = hareketRepository.save(hareket);
 
@@ -210,6 +279,16 @@ public class HareketService {
                 : hareket.getTutar().negate();
         
         cariHesapService.bakiyeGuncelle(hareket.getCariHesap().getId(), bakiyeGuncellemeTutari);
+
+        // Bağlı fatura varsa ödenen tutarı geri al
+        if (hareket.getFaturaId() != null) {
+            faturaOdemeUygula(hareket.getFaturaId(), hareket.getTutar().negate(), "Hareket #" + hareket.getId() + " silindi");
+        }
+        
+        auditLogService.finansalSilmeLog("Hareket", id,
+                "Hareket silindi: " + hareket.getTur() + " " + hareket.getTutar() + " TL - Cari: "
+                        + hareket.getCariHesap().getAd() + " (bakiye terslendi)"
+                        + (hareket.getFaturaId() != null ? " - Fatura: " + hareket.getFaturaId() : ""));
         
         hareketRepository.deleteById(id);
         log.info("Hareket başarıyla silindi - ID: {}", id);
@@ -228,6 +307,7 @@ public class HareketService {
                 .hareketTarihi(hareket.getHareketTarihi())
                 .aciklama(hareket.getAciklama())
                 .odemeSekli(hareket.getOdemeSekli())
+                .faturaId(hareket.getFaturaId())
                 .olusturmaTarihi(hareket.getOlusturmaTarihi())
                 .build();
     }

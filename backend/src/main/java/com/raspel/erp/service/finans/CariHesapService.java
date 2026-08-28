@@ -64,7 +64,7 @@ public class CariHesapService {
     /**
      * ID'ye göre cari hesap getir
      */
-    @Cacheable(value = "cariHesaplar", key = "#id")
+    @Cacheable(value = "cariHesaplar", key = "T(com.raspel.erp.config.TenantChecker).tenantKey(#id)")
     public CariHesapDTO cariHesapGetir(Long id) {
         log.debug("ID: {} için cari hesap getiriliyor", id);
         CariHesap cariHesap = cariHesapRepository.findById(id)
@@ -173,7 +173,7 @@ public class CariHesapService {
     public void bakiyeGuncelle(Long cariHesapId, BigDecimal tutar) {
         log.debug("Bakiye güncelleniyor - ID: {}, Tutar: {}", cariHesapId, tutar);
         
-        CariHesap cariHesap = cariHesapRepository.findById(cariHesapId)
+        CariHesap cariHesap = cariHesapRepository.findByIdForUpdate(cariHesapId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
         

@@ -45,7 +45,7 @@
     <div class="crm-istatistik">
       <div class="istatistik-kutu">
         <span>Toplam Fırsat</span>
-        <strong>{{ firsatlar.length }}</strong>
+        <strong>{{ firsatlar ? firsatlar.length : 0 }}</strong>
       </div>
       <div class="istatistik-kutu">
         <span>Toplam Değer</span>

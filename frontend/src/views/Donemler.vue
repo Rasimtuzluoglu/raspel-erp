@@ -252,6 +252,7 @@ const sil = (data) => {
   align-items: center;
   margin-bottom: 24px;
   gap: 16px;
+  flex-wrap: wrap;
 }
 .sayfa-baslik h1 {
   margin: 0;
@@ -260,6 +261,7 @@ const sil = (data) => {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .sirket-dropdown {
   min-width: 200px;

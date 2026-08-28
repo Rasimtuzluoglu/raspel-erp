@@ -129,4 +129,23 @@ public class MuhasebeController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
         return ResponseEntity.ok(muhasebeService.defteriKebirGetir(sirketId(request), hesapKodu, baslangic, bitis));
     }
+
+    // BİLANÇO & KÂR/ZARAR
+
+    @GetMapping("/bilanco")
+    @Operation(summary = "Bilanço getir", description = "Aktif ve pasif kalemlerin özetini (bilanço) getirir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<BilancoDTO> bilanco(HttpServletRequest request) {
+        return ResponseEntity.ok(muhasebeService.bilancoGetir(sirketId(request)));
+    }
+
+    @GetMapping("/kar-zarar")
+    @Operation(summary = "Kâr/Zarar getir", description = "Dönemsel gelir, gider ve net kâr/zarar (gelir tablosu) özetini getirir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<KarZararDTO> karZarar(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        return ResponseEntity.ok(muhasebeService.karZararGetir(sirketId(request), baslangic, bitis));
+    }
 }

@@ -7,21 +7,14 @@ export function useOturumUyarisi() {
   const kalanSaniye = ref(0)
   let interval = null
 
-  let cachedExp = null
-  let lastToken = ''
-
-  const getExp = (token) => {
-    if (!token) return null
-    if (token === lastToken && cachedExp !== null) return cachedExp
+  const getExp = () => {
+    // JWT httpOnly cookie'de olduğu için exp, login yanıtındaki tokenExpiresAt'tan gelir
+    const exp = authStore?.tokenExpiresAt
+    if (exp) return exp
     try {
-      lastToken = token
-      const payload = token.split('.')[1]
-      if (!payload) return null
-      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-      cachedExp = decoded.exp ? decoded.exp * 1000 : null
-      return cachedExp
+      const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
+      return kayitli.tokenExpiresAt || null
     } catch {
-      cachedExp = null
       return null
     }
   }
@@ -29,11 +22,11 @@ export function useOturumUyarisi() {
   const baslat = () => {
     if (interval) return
     interval = setInterval(() => {
-      if (!authStore?.isLoggedIn || !authStore?.token) {
+      if (!authStore?.isLoggedIn) {
         if (goster.value) goster.value = false
         return
       }
-      const exp = getExp(authStore.token)
+      const exp = getExp()
       if (!exp) return
       const kalan = exp - Date.now()
       if (kalan > 0 && kalan < 2 * 60 * 1000) {

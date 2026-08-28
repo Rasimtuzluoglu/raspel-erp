@@ -6,6 +6,7 @@ import com.raspel.erp.dto.sistem.LoginResponse;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.sistem.KullaniciService;
+import com.raspel.erp.service.sistem.AktifOturumService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ class KullaniciControllerTest {
     
     @MockBean
     private KullaniciService kullaniciService;
+
+    @MockBean
+    private AktifOturumService aktifOturumService;
 
     @Test
     void shouldGetAll() throws Exception {

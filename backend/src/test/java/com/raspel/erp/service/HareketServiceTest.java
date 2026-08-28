@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.finans.HareketService;
@@ -35,6 +36,9 @@ class HareketServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private BildirimService bildirimService;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private HareketService hareketService;
 
@@ -108,6 +112,107 @@ class HareketServiceTest {
         HareketDTO dto = HareketDTO.builder().cariHesapId(99L).tur("TAHSILAT")
                 .tutar(BigDecimal.valueOf(100)).build();
         assertThrows(RuntimeException.class, () -> hareketService.hareketOlustur(dto, 1L));
+    }
+
+    @Test
+    void hareketOlustur_baskaSirketCarisineHareketEklenemez() {
+        CariHesap cari = createCariHesap();
+        cari.setSirketId(2L);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        doThrow(new com.raspel.erp.exception.ResourceNotFoundException("Cari Hesap bu sirkete ait degil"))
+                .when(tenantChecker).check(2L, "Cari Hesap");
+        HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT")
+                .tutar(BigDecimal.valueOf(100)).build();
+        assertThrows(RuntimeException.class, () -> hareketService.hareketOlustur(dto, 1L));
+        verify(hareketRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketOlustur_faturaBaglantili_FaturaOdemeDurumuGuncellenir() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        Fatura fatura = new Fatura();
+        fatura.setId(5L);
+        fatura.setGenelToplam(BigDecimal.valueOf(10000));
+        fatura.setOdenenTutar(BigDecimal.ZERO);
+        fatura.setKalanTutar(BigDecimal.valueOf(10000));
+        fatura.setOdemeDurumu("ODENMEDI");
+        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura));
+        HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT").faturaId(5L)
+                .tutar(BigDecimal.valueOf(4000)).hareketTarihi(LocalDate.now()).build();
+        Hareket saved = createHareket(1L);
+        saved.setFaturaId(5L);
+        when(hareketRepository.save(any(Hareket.class))).thenReturn(saved);
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(-4000));
+
+        hareketService.hareketOlustur(dto, 1L);
+
+        assertEquals(0, fatura.getOdenenTutar().compareTo(BigDecimal.valueOf(4000)));
+        assertEquals(0, fatura.getKalanTutar().compareTo(BigDecimal.valueOf(6000)));
+        assertEquals("KISMI_ODENDI", fatura.getOdemeDurumu());
+        verify(faturaRepository).save(fatura);
+    }
+
+    @Test
+    void hareketOlustur_faturaTutariniAsincaOdendiOlur() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        Fatura fatura = new Fatura();
+        fatura.setId(5L);
+        fatura.setGenelToplam(BigDecimal.valueOf(10000));
+        fatura.setOdenenTutar(BigDecimal.valueOf(6000));
+        fatura.setKalanTutar(BigDecimal.valueOf(4000));
+        fatura.setOdemeDurumu("KISMI_ODENDI");
+        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura));
+        HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT").faturaId(5L)
+                .tutar(BigDecimal.valueOf(4000)).hareketTarihi(LocalDate.now()).build();
+        Hareket saved = createHareket(1L);
+        saved.setFaturaId(5L);
+        when(hareketRepository.save(any(Hareket.class))).thenReturn(saved);
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(-4000));
+
+        hareketService.hareketOlustur(dto, 1L);
+
+        assertEquals("ODENDI", fatura.getOdemeDurumu());
+        assertEquals(0, fatura.getKalanTutar().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void hareketOlustur_baskaSirketFaturasinaBaglanamaz() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        Fatura fatura = new Fatura();
+        fatura.setId(9L);
+        fatura.setSirketId(2L);
+        when(faturaRepository.findById(9L)).thenReturn(Optional.of(fatura));
+        doThrow(new com.raspel.erp.exception.ResourceNotFoundException("Fatura bu sirkete ait degil"))
+                .when(tenantChecker).check(2L, "Fatura");
+        HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("ODEME").faturaId(9L)
+                .tutar(BigDecimal.valueOf(100)).build();
+        assertThrows(RuntimeException.class, () -> hareketService.hareketOlustur(dto, 1L));
+        verify(hareketRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketSil_faturaOdemesiniGeriAlir() {
+        CariHesap cari = createCariHesap();
+        Hareket hareket = createHareket(1L);
+        hareket.setFaturaId(5L);
+        hareket.setTutar(BigDecimal.valueOf(4000));
+        when(hareketRepository.findById(1L)).thenReturn(Optional.of(hareket));
+        Fatura fatura = new Fatura();
+        fatura.setId(5L);
+        fatura.setGenelToplam(BigDecimal.valueOf(10000));
+        fatura.setOdenenTutar(BigDecimal.valueOf(4000));
+        fatura.setKalanTutar(BigDecimal.valueOf(6000));
+        fatura.setOdemeDurumu("KISMI_ODENDI");
+        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura));
+
+        hareketService.hareketSil(1L);
+
+        assertEquals(0, fatura.getOdenenTutar().compareTo(BigDecimal.ZERO));
+        assertEquals("ODENMEDI", fatura.getOdemeDurumu());
+        verify(hareketRepository).deleteById(1L);
     }
 
     @Test

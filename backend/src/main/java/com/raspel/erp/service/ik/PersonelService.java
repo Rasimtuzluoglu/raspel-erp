@@ -38,6 +38,11 @@ public class PersonelService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public PersonelDTO olustur(PersonelDTO dto) {
+        Long sirketId = dto.getSirketId() != null ? dto.getSirketId() : tenantChecker.getCurrentSirketId();
+        if (sirketId == null) {
+            throw new com.raspel.erp.exception.BusinessException("Şirket bilgisi zorunludur");
+        }
+        tenantChecker.checkSirketId(sirketId, "Personel");
         Personel p = Personel.builder()
                 .ad(dto.getAd()).soyad(dto.getSoyad())
                 .tcKimlik(dto.getTcKimlik()).dogumTarihi(dto.getDogumTarihi())
@@ -46,9 +51,8 @@ public class PersonelService {
                 .maas(dto.getMaas()).telefon(dto.getTelefon())
                 .email(dto.getEmail()).adres(dto.getAdres())
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
-                .sirketId(dto.getSirketId())
+                .sirketId(sirketId)
                 .build();
-        tenantChecker.checkSirketId(dto.getSirketId(), "Personel");
         return entityToDTO(personelRepository.save(p));
     }
 

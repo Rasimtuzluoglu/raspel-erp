@@ -20,6 +20,7 @@ public class MasrafService {
 
     private final MasrafRepository masrafRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -67,6 +68,9 @@ public class MasrafService {
         Masraf m = masrafRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
         tenantChecker.check(m.getSirketId(), "Masraf");
+        auditLogService.finansalSilmeLog("Masraf", id,
+                "Masraf silindi: " + m.getTutar() + " TL - " + (m.getAciklama() != null ? m.getAciklama() : "")
+                        + (m.getTarih() != null ? " (" + m.getTarih() + ")" : ""));
         masrafRepository.deleteById(id);
     }
 

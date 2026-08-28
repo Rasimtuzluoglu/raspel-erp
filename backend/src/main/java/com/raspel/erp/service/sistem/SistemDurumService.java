@@ -9,6 +9,7 @@ import org.springframework.boot.actuate.health.HealthComponent;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.SystemHealth;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,27 @@ public class SistemDurumService {
 
     @Value("${app.version:1.6.1}")
     private String surum;
+
+    @Value("${app.hata-log.retention-days:30}")
+    private long hataLogRetentionGun;
+
+    /**
+     * Hata loglarının sınırsız büyümesini önler. Varsayılan olarak 30 günden eski
+     * kayıtları her gece 04:00'te siler. Süre app.hata-log.retention-days ile ayarlanır.
+     */
+    @Scheduled(cron = "0 0 4 * * *")
+    @Transactional
+    public void eskiHataLoglariniTemizle() {
+        try {
+            LocalDateTime esik = LocalDateTime.now().minusDays(hataLogRetentionGun);
+            int silinen = hataLogRepository.deleteOlderThan(esik);
+            if (silinen > 0) {
+                log.info("Eski hata logları temizlendi: {} kayıt ({} günden eski)", silinen, hataLogRetentionGun);
+            }
+        } catch (Exception e) {
+            log.warn("Eski hata logları temizlenemedi: {}", e.getMessage());
+        }
+    }
 
     public Map<String, Object> durum() {
         Map<String, Object> result = new LinkedHashMap<>();

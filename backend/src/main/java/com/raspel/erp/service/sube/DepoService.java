@@ -116,7 +116,7 @@ public class DepoService {
         Depo d = depoRepository.findById(depoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", depoId));
         tenantChecker.check(d.getSirketId(), "Depo");
-        DepoStok ds = depoStokRepository.findByDepoIdAndStokId(depoId, stokId)
+        DepoStok ds = depoStokRepository.findByDepoIdAndStokIdForUpdate(depoId, stokId)
                 .orElse(DepoStok.builder().depoId(depoId).stokId(stokId).miktar(BigDecimal.ZERO).build());
         ds.setMiktar(ds.getMiktar().add(miktar));
         depoStokRepository.save(ds);
@@ -129,7 +129,7 @@ public class DepoService {
         Depo d = depoRepository.findById(depoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", depoId));
         tenantChecker.check(d.getSirketId(), "Depo");
-        DepoStok ds = depoStokRepository.findByDepoIdAndStokId(depoId, stokId)
+        DepoStok ds = depoStokRepository.findByDepoIdAndStokIdForUpdate(depoId, stokId)
                 .orElseThrow(() -> new BusinessException("Bu depoda stok bulunamadı"));
         if (ds.getMiktar().compareTo(miktar) < 0)
             throw new BusinessException("Yetersiz stok! Mevcut: " + ds.getMiktar() + ", Çıkış: " + miktar);

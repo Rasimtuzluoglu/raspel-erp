@@ -30,7 +30,8 @@ public class ProjeController {
 
     @GetMapping
     @Operation(summary = "Tüm projeleri getir", description = "Tüm projeleri listeler")
-    public ResponseEntity<Page<ProjeDTO>> tumu(@RequestParam(required = false) Long sirketId, @PageableDefault(size = 50) Pageable pageable) {
+    public ResponseEntity<Page<ProjeDTO>> tumu(jakarta.servlet.http.HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(projeService.tumunuGetir(sirketId, pageable));
     }
 

@@ -28,15 +28,15 @@
             <i class="pi pi-calendar" />
             İzin Talepleri
             <span
-              v-if="bekleyenIzinler.length > 0"
+              v-if="bekleyenIzinler && bekleyenIzinler.length > 0"
               class="badge-sayi bg-blue-600"
-            >{{ bekleyenIzinler.length }}</span>
+            >{{ bekleyenIzinler ? bekleyenIzinler.length : 0 }}</span>
           </span>
         </template>
 
         <div class="onay-icerik">
           <div
-            v-if="bekleyenIzinler.length > 0"
+            v-if="bekleyenIzinler && bekleyenIzinler.length > 0"
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <div
@@ -111,15 +111,15 @@
             <i class="pi pi-wallet" />
             Saha Masraf & Avans
             <span
-              v-if="bekleyenMasraflar.length > 0"
+              v-if="bekleyenMasraflar && bekleyenMasraflar.length > 0"
               class="badge-sayi bg-emerald-600"
-            >{{ bekleyenMasraflar.length }}</span>
+            >{{ bekleyenMasraflar ? bekleyenMasraflar.length : 0 }}</span>
           </span>
         </template>
 
         <div class="onay-icerik">
           <div
-            v-if="bekleyenMasraflar.length > 0"
+            v-if="bekleyenMasraflar && bekleyenMasraflar.length > 0"
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <div
@@ -186,15 +186,15 @@
             <i class="pi pi-shopping-bag" />
             Satın Alma Talepleri
             <span
-              v-if="bekleyenTalepler.length > 0"
+              v-if="bekleyenTalepler && bekleyenTalepler.length > 0"
               class="badge-sayi bg-purple-600"
-            >{{ bekleyenTalepler.length }}</span>
+            >{{ bekleyenTalepler ? bekleyenTalepler.length : 0 }}</span>
           </span>
         </template>
 
         <div class="onay-icerik">
           <div
-            v-if="bekleyenTalepler.length > 0"
+            v-if="bekleyenTalepler && bekleyenTalepler.length > 0"
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <div

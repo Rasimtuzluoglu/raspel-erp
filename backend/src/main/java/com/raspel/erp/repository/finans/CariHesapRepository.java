@@ -1,14 +1,17 @@
 package com.raspel.erp.repository.finans;
 
 import com.raspel.erp.entity.finans.CariHesap;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Cari Hesap Repository
@@ -39,4 +42,8 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     long countBySirketId(@Param("sirketId") Long sirketId);
 
     List<CariHesap> findBySirketIdOrderByAdAsc(Long sirketId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM CariHesap c WHERE c.id = :id")
+    Optional<CariHesap> findByIdForUpdate(@Param("id") Long id);
 }

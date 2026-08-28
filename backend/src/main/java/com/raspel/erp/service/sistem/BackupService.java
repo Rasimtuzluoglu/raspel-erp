@@ -1,17 +1,27 @@
 package com.raspel.erp.service.sistem;
 
+import com.raspel.erp.exception.BusinessException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.nio.file.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 import com.raspel.erp.entity.sistem.Not;
 
 @Service
@@ -42,8 +52,22 @@ public class BackupService {
     @Value("${app.backup.db-password:}")
     private String dbPasswordProperty;
 
+    @Value("${app.backup.cloud-enabled:false}")
+    private boolean cloudEnabled;
+
+    @Value("${app.backup.cloud-endpoint:}")
+    private String cloudEndpoint;
+
     private Path backupPath;
     private Path schedulePath;
+
+    private final DataSource dataSource;
+    private final RestTemplate restTemplate;
+
+    public BackupService(DataSource dataSource, RestTemplate restTemplate) {
+        this.dataSource = dataSource;
+        this.restTemplate = restTemplate;
+    }
 
     @PostConstruct
     public void init() {
@@ -220,8 +244,30 @@ public class BackupService {
         }
     }
 
+    /**
+     * Çoklu instance ortamında aynı anda yalnızca bir örneğin yedek almasını
+     * sağlar (PostgreSQL advisory lock). Kilit alınamazsa görev atlanır.
+     */
+    private boolean yedekKilidiniAl() {
+        try (Connection conn = dataSource.getConnection();
+             Statement st = conn.createStatement()) {
+            try (ResultSet rs = st.executeQuery("SELECT pg_try_advisory_lock(72495631)")) {
+                if (rs.next() && rs.getBoolean(1)) {
+                    log.info("Yedekleme kilidi alındı");
+                    return true;
+                }
+            }
+            log.warn("Yedekleme kilidi başka bir instance tarafından tutuluyor, görev atlanıyor");
+            return false;
+        } catch (Exception e) {
+            log.warn("Yedekleme kilidi alınamadı (tek instance varsayılıyor): {}", e.getMessage());
+            return true;
+        }
+    }
+
     @Scheduled(cron = "0 0 3 * * ?")
     public void dailyAutoBackup() {
+        if (!yedekKilidiniAl()) return;
         log.info("Daily auto backup started");
         try {
             manualBackup("DAILY");
@@ -233,6 +279,7 @@ public class BackupService {
 
     @Scheduled(cron = "0 0 3 ? * SUN")
     public void weeklyAutoBackup() {
+        if (!yedekKilidiniAl()) return;
         log.info("Weekly auto backup started");
         try {
             manualBackup("WEEKLY");
@@ -244,6 +291,7 @@ public class BackupService {
 
     @Scheduled(cron = "0 0 3 1 * ?")
     public void monthlyAutoBackup() {
+        if (!yedekKilidiniAl()) return;
         log.info("Monthly auto backup started");
         try {
             manualBackup("MONTHLY");
@@ -255,6 +303,7 @@ public class BackupService {
 
     @Scheduled(cron = "0 0 3 1 1 ?")
     public void yearlyAutoBackup() {
+        if (!yedekKilidiniAl()) return;
         log.info("Yearly auto backup started");
         try {
             manualBackup("YEARLY");
@@ -300,6 +349,81 @@ public class BackupService {
         schedule.put("totalSize", getTotalBackupSize());
         schedule.put("counts", getTypeCounts());
         return schedule;
+    }
+
+    /**
+     * Yedek doğrulama health-check'i. Son yedeğin varlığını, bütünlüğünü (gzip testi)
+     * ve güncelliğini kontrol eder. Durum: OK, UYARI veya KRITIK.
+     */
+    public Map<String, Object> yedekDogrula() {
+        Map<String, Object> sonuc = new LinkedHashMap<>();
+        List<Map<String, Object>> backups = listBackups();
+        if (backups.isEmpty()) {
+            sonuc.put("durum", "KRITIK");
+            sonuc.put("mesaj", "Hiç yedek bulunamadı");
+            sonuc.put("toplamYedek", 0);
+            return sonuc;
+        }
+        Map<String, Object> latest = backups.get(0);
+        String filename = (String) latest.get("filename");
+        long size = ((Number) latest.get("size")).longValue();
+        long lastModified = ((Number) latest.get("lastModified")).longValue();
+        long yasSaat = (System.currentTimeMillis() - lastModified) / 3_600_000L;
+
+        boolean butunluk = gunzipDogrula(filename);
+
+        String durum;
+        if (!butunluk || size == 0) {
+            durum = "KRITIK";
+        } else if (yasSaat > 168) {
+            durum = "KRITIK";
+        } else if (yasSaat > 48) {
+            durum = "UYARI";
+        } else {
+            durum = "OK";
+        }
+
+        sonuc.put("durum", durum);
+        sonuc.put("sonYedek", filename);
+        sonuc.put("boyut", size);
+        sonuc.put("yasSaat", yasSaat);
+        sonuc.put("butunluk", butunluk);
+        sonuc.put("toplamYedek", backups.size());
+        return sonuc;
+    }
+
+    private boolean gunzipDogrula(String filename) {
+        Path file = backupPath.resolve(filename);
+        try (InputStream is = Files.newInputStream(file);
+             GZIPInputStream gz = new GZIPInputStream(is)) {
+            byte[] buf = new byte[8192];
+            long total = 0;
+            int n;
+            while ((n = gz.read(buf)) != -1) total += n;
+            return total > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Günlük yedek doğrulama health-check'i. Son yedek bayat ya da bozuksa uyarı loglar.
+     * (Gerçek bir "restore" testi yapmaz; bütünlük + güncellik kontrolü yapar.)
+     */
+    @Scheduled(cron = "0 30 4 * * *")
+    public void gunlukYedekDogrulama() {
+        try {
+            Map<String, Object> sonuc = yedekDogrula();
+            String durum = String.valueOf(sonuc.get("durum"));
+            if ("KRITIK".equals(durum) || "UYARI".equals(durum)) {
+                log.warn("Yedek doğrulama uyarısı: durum={}, sonYedek={}, yasSaat={}",
+                        durum, sonuc.get("sonYedek"), sonuc.get("yasSaat"));
+            } else {
+                log.info("Yedek doğrulama OK: sonYedek={}", sonuc.get("sonYedek"));
+            }
+        } catch (Exception e) {
+            log.warn("Yedek doğrulama çalıştırılamadı: {}", e.getMessage());
+        }
     }
 
     public void cleanAllOldBackups() {
@@ -361,18 +485,22 @@ public class BackupService {
     }
 
     private static final Map<String, Object> CLOUD_CONFIG = new HashMap<>(Map.of(
-            "provider", "AWS_S3",
-            "bucketName", "raspel-erp-backups",
-            "region", "eu-central-1",
-            "autoSync", true,
-            "encryptionEnabled", true,
+            "provider", "MANUEL",
+            "bucketName", "",
+            "region", "",
+            "autoSync", false,
+            "encryptionEnabled", false,
             "encryptionAlgorithm", "AES-256",
-            "lastSyncTime", LocalDateTime.now().minusHours(2).toString(),
-            "status", "AKTIF"
+            "lastSyncTime", "",
+            "status", "DEVRE_DISI"
     ));
 
     public Map<String, Object> getCloudConfig() {
-        return new HashMap<>(CLOUD_CONFIG);
+        Map<String, Object> config = new HashMap<>(CLOUD_CONFIG);
+        config.put("status", cloudEnabled ? "AKTIF" : "DEVRE_DISI");
+        config.put("enabled", cloudEnabled);
+        config.put("encryptionEnabled", false);
+        return config;
     }
 
     public Map<String, Object> saveCloudConfig(Map<String, Object> config) {
@@ -382,14 +510,33 @@ public class BackupService {
         return getCloudConfig();
     }
 
+    /**
+     * Bulut yedekleme yalnizca gercek bir uç nokta yapilandirildiginda calisir.
+     * Yapilandirma yoksa basari donmek yerine acik hata verir (sahte basari yok).
+     */
     public Map<String, Object> syncToCloud(String filename) {
-        log.info("Yedek dosyası buluta senkronize ediliyor: {}, Sağlayıcı: {}", filename, CLOUD_CONFIG.get("provider"));
+        if (!cloudEnabled || cloudEndpoint == null || cloudEndpoint.isBlank()) {
+            throw new BusinessException("Bulut yedekleme yapılandırılmamış. "
+                    + "Gerçek bir sağlayıcı uç noktası tanımlanmadan buluta yükleme yapılamaz.");
+        }
+        Path file = backupPath.resolve(filename == null ? "" : filename).normalize();
+        if (!file.startsWith(backupPath) || !Files.exists(file)) {
+            throw new BusinessException("Yedek dosyası bulunamadı: " + filename);
+        }
+        try {
+            byte[] icerik = Files.readAllBytes(file);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            restTemplate.put(cloudEndpoint, new HttpEntity<>(icerik, headers));
+        } catch (Exception e) {
+            log.error("Bulut senkronizasyonu başarısız", e);
+            throw new BusinessException("Bulut senkronizasyonu başarısız: " + e.getMessage());
+        }
         CLOUD_CONFIG.put("lastSyncTime", LocalDateTime.now().toString());
         return Map.of(
-                "message", "Yedek başarıyla bulut sağlayıcısına (" + CLOUD_CONFIG.get("provider") + ") aktarıldı ve şifrelendi.",
-                "filename", filename != null ? filename : "Tüm Yedekler",
+                "message", "Yedek bulut uç noktasına iletildi.",
+                "filename", filename,
                 "provider", CLOUD_CONFIG.get("provider"),
-                "encryption", "AES-256",
                 "syncTime", CLOUD_CONFIG.get("lastSyncTime")
         );
     }

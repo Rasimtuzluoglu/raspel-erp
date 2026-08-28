@@ -107,7 +107,7 @@
         </Column>
       </DataTable>
       <Message
-        v-if="filtrelenmisSatislar.length === 0"
+        v-if="filtrelenmisSatislar && filtrelenmisSatislar.length === 0"
         severity="info"
         text="Satış bulunamadı."
       />
@@ -145,7 +145,7 @@
           <label>Müşteri <span v-if="satisModu === 'SATIS'">*</span></label>
           <Dropdown
             v-model="satisForm.cariHesapId"
-            :options="cariHesapStore.cariHesaplar"
+            :options="cariHesapStore?.cariHesaplar || []"
             option-label="ad"
             option-value="id"
             placeholder="Müşteri seçiniz"

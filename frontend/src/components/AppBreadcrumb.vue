@@ -1,6 +1,6 @@
 <template>
   <nav
-    v-if="items.length > 1"
+    v-if="items && items.length > 1"
     class="breadcrumb"
     aria-label="Breadcrumb"
   >

@@ -4,7 +4,9 @@ import com.raspel.erp.dto.sistem.KullaniciDTO;
 import com.raspel.erp.dto.sistem.LoginRequest;
 import com.raspel.erp.dto.sistem.LoginResponse;
 import com.raspel.erp.dto.sistem.SifreDegistirRequest;
+import com.raspel.erp.dto.sistem.AktifOturumDTO;
 import com.raspel.erp.service.sistem.KullaniciService;
+import com.raspel.erp.service.sistem.AktifOturumService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ import com.raspel.erp.dto.sistem.TwoFactorDTO;
 import com.raspel.erp.dto.sistem.TwoFactorGirisRequest;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.List;
+
 @Tag(name = "Kullanıcılar", description = "Kullanıcı yönetimi ve kimlik doğrulama API")
 @RestController
 @RequestMapping("/api/kullanicilar")
@@ -35,9 +39,13 @@ import org.springframework.beans.factory.annotation.Value;
 public class KullaniciController {
 
     private final KullaniciService kullaniciService;
+    private final AktifOturumService aktifOturumService;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
+
+    @Value("${app.jwt.expiration-ms:86400000}")
+    private long jwtExpirationMs;
 
     @GetMapping
     @Operation(summary = "Tüm kullanıcıları getir", description = "Tüm kullanıcıları listeler (yalnızca ADMIN)")
@@ -156,6 +164,23 @@ public class KullaniciController {
         return ResponseEntity.ok(loginResponse);
     }
 
+    @GetMapping("/aktif-oturumlar")
+    @Operation(summary = "Aktif oturumlar", description = "Oturum açmış kullanıcının veya (admin için) tüm kullanıcıların aktif oturumlarını listeler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<AktifOturumDTO>> aktifOturumlar(HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        boolean admin = request.isUserInRole("ROLE_ADMIN");
+        return ResponseEntity.ok(aktifOturumService.aktifOturumlar(kullaniciId, admin));
+    }
+
+    @DeleteMapping("/oturum/{jti}")
+    @Operation(summary = "Oturum sonlandır", description = "Belirtilen oturumu iptal eder (admin veya oturum sahibi)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Void> oturumIptal(@PathVariable String jti, HttpServletRequest request) {
+        aktifOturumService.oturumIptal(jti);
+        return ResponseEntity.noContent().build();
+    }
+
     private void jwtCookieEkle(HttpServletResponse response, String token) {
         if (token == null || token.isBlank()) return;
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
@@ -163,7 +188,7 @@ public class KullaniciController {
                 .secure(cookieSecure)
                 .sameSite("Strict")
                 .path("/")
-                .maxAge(86400)
+                .maxAge(jwtExpirationMs / 1000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
     }

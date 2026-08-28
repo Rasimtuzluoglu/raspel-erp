@@ -325,6 +325,156 @@
           </Column>
         </DataTable>
       </TabPanel>
+
+      <!-- BİLANÇO -->
+      <TabPanel header="Bilanço">
+        <div class="filtre-bar">
+          <Button
+            icon="pi pi-refresh"
+            label="Yenile"
+            class="p-button-sm"
+            @click="bilancoYukle"
+          />
+        </div>
+        <div class="finansal-grid">
+          <div class="finansal-kolon">
+            <h3 class="finansal-baslik">
+              Aktifler
+            </h3>
+            <DataTable
+              :value="bilanco.aktifler || []"
+              striped-rows
+              size="small"
+              :loading="bilancoYukleniyor"
+            >
+              <Column
+                field="kod"
+                header="Kod"
+              />
+              <Column
+                field="ad"
+                header="Hesap"
+              />
+              <Column header="Tutar">
+                <template #body="{ data }">
+                  {{ formatCurrency(data.tutar) }}
+                </template>
+              </Column>
+            </DataTable>
+            <div class="finansal-toplam">
+              Toplam Aktif: <strong>{{ formatCurrency(bilanco.aktifToplam) }}</strong>
+            </div>
+          </div>
+          <div class="finansal-kolon">
+            <h3 class="finansal-baslik">
+              Pasifler
+            </h3>
+            <DataTable
+              :value="bilanco.pasifler || []"
+              striped-rows
+              size="small"
+              :loading="bilancoYukleniyor"
+            >
+              <Column
+                field="kod"
+                header="Kod"
+              />
+              <Column
+                field="ad"
+                header="Hesap"
+              />
+              <Column header="Tutar">
+                <template #body="{ data }">
+                  {{ formatCurrency(data.tutar) }}
+                </template>
+              </Column>
+            </DataTable>
+            <div class="finansal-toplam">
+              Toplam Pasif: <strong>{{ formatCurrency(bilanco.pasifToplam) }}</strong>
+            </div>
+          </div>
+        </div>
+      </TabPanel>
+
+      <!-- KÂR / ZARAR -->
+      <TabPanel header="Kâr/Zarar">
+        <div class="filtre-bar">
+          <DatePicker
+            v-model="karZararBaslangic"
+            date-format="dd/mm/yy"
+            placeholder="Başlangıç"
+          />
+          <DatePicker
+            v-model="karZararBitis"
+            date-format="dd/mm/yy"
+            placeholder="Bitiş"
+          />
+          <Button
+            icon="pi pi-refresh"
+            label="Hesapla"
+            class="p-button-sm"
+            @click="karZararYukle"
+          />
+        </div>
+        <div class="finansal-grid">
+          <div class="finansal-kolon">
+            <h3 class="finansal-baslik">
+              Gelirler
+            </h3>
+            <DataTable
+              :value="karZarar.gelirler || []"
+              striped-rows
+              size="small"
+              :loading="karZararYukleniyor"
+            >
+              <Column
+                field="kod"
+                header="Kod"
+              />
+              <Column
+                field="ad"
+                header="Hesap"
+              />
+              <Column header="Tutar">
+                <template #body="{ data }">
+                  {{ formatCurrency(data.tutar) }}
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+          <div class="finansal-kolon">
+            <h3 class="finansal-baslik">
+              Giderler
+            </h3>
+            <DataTable
+              :value="karZarar.giderler || []"
+              striped-rows
+              size="small"
+              :loading="karZararYukleniyor"
+            >
+              <Column
+                field="kod"
+                header="Kod"
+              />
+              <Column
+                field="ad"
+                header="Hesap"
+              />
+              <Column header="Tutar">
+                <template #body="{ data }">
+                  {{ formatCurrency(data.tutar) }}
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+        </div>
+        <div class="net-kar-kutusu">
+          Net {{ (karZarar.netKar || 0) >= 0 ? 'Kâr' : 'Zarar' }}:
+          <strong :class="(karZarar.netKar || 0) >= 0 ? 'kar' : 'zarar'">
+            {{ formatCurrency(Math.abs(karZarar.netKar || 0)) }}
+          </strong>
+        </div>
+      </TabPanel>
     </TabView>
 
     <!-- HESAP DIALOG -->
@@ -582,6 +732,16 @@ const kebirHesap = ref(null)
 const kebirBaslangic = ref(null)
 const kebirBitis = ref(null)
 
+// Bilanço
+const bilanco = ref({})
+const bilancoYukleniyor = ref(false)
+
+// Kâr / Zarar
+const karZarar = ref({})
+const karZararYukleniyor = ref(false)
+const karZararBaslangic = ref(null)
+const karZararBitis = ref(null)
+
 const hesapSecenekleri = computed(() => hesaplar.value.map((h) => ({ ad: `${h.kod} - ${h.ad}`, kod: h.kod })))
 const fisToplamBorc = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.borc) || 0), 0))
 const fisToplamAlacak = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.alacak) || 0), 0))
@@ -784,6 +944,33 @@ const kebirYukle = async () => {
   }
   kebirYukleniyor.value = false
 }
+
+const bilancoYukle = async () => {
+  bilancoYukleniyor.value = true
+  try {
+    const r = await muhasebeAPI.getBilanco()
+    bilanco.value = r.data || {}
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Bilanço alınamadı')
+  } finally {
+    bilancoYukleniyor.value = false
+  }
+}
+
+const karZararYukle = async () => {
+  karZararYukleniyor.value = true
+  try {
+    const params = {}
+    if (karZararBaslangic.value) params.baslangic = tarihParam(karZararBaslangic.value)
+    if (karZararBitis.value) params.bitis = tarihParam(karZararBitis.value)
+    const r = await muhasebeAPI.getKarZarar(params)
+    karZarar.value = r.data || {}
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Kâr/Zarar alınamadı')
+  } finally {
+    karZararYukleniyor.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -878,5 +1065,44 @@ const kebirYukle = async () => {
 .negatif {
   color: #ef4444;
   font-weight: 600;
+}
+.finansal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.finansal-kolon {
+  min-width: 0;
+}
+.finansal-baslik {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--text-primary);
+}
+.finansal-toplam {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.net-kar-kutusu {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+.net-kar-kutusu .kar {
+  color: #10b981;
+}
+.net-kar-kutusu .zarar {
+  color: #ef4444;
+}
+@media (max-width: 768px) {
+  .finansal-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

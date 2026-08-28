@@ -31,7 +31,7 @@
     <!-- 1. Akıllı Talep Tahmini Görünümü -->
     <template v-if="gorunumTipi === 'tahmin'">
       <div
-        v-if="tahminList.length"
+        v-if="tahminList && tahminList.length"
         class="tahmin-ozet-grid"
       >
         <div class="ozet-kart acil">
@@ -153,11 +153,11 @@
       </div>
 
       <div
-        v-if="list.length"
+        v-if="list && list.length"
         class="onem-uyari"
       >
         <i class="pi pi-exclamation-triangle" />
-        <strong>{{ list.length }} ürün</strong> kritik seviyede — yeniden sipariş önerisi oluşturuldu.
+        <strong>{{ list ? list.length : 0 }} ürün</strong> kritik seviyede — yeniden sipariş önerisi oluşturuldu.
       </div>
 
       <DataTable

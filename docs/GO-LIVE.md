@@ -10,9 +10,10 @@
 - [ ] `REDIS_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
 - [ ] `RABBITMQ_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
 - [ ] `GRAFANA_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
-- [ ] Traefik dashboard basic-auth sifresi degistirildi (`config/traefik/dynamic.yml`)
+- [ ] `DASHBOARD_BASIC_AUTH` ortam degiskeni htpasswd hash'i ile ayarlandi (Traefik dashboard/adminer; yoksa fail-closed)
 - [ ] `app.cors.allowed-origins` gercek domain'i iceriyor
 - [ ] Veritabani portu (5432) dis dunyaya acik degil (firewall'dan kapali)
+- [ ] Backend 8081 ve Traefik 8080 portlari yalnizca 127.0.0.1'e bagli (docker-compose varsayilani)
 
 ## Yapilandirma
 
@@ -38,10 +39,11 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B test`)
-- [ ] Frontend build alindi (`npm run build`)
-- [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi
+- [ ] Backend testleri gecti (`mvn -B test` -> 678 test)
+- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (153 test)
+- [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)
 - [ ] Login/logout/2FA akisi test edildi
+- [ ] Flyway migration'lari bos bir PostgreSQL'de sifirdan calisti (V53 dahil)
 
 ## Son Kontrol
 

@@ -35,6 +35,7 @@ public class KasaService {
     private final KasaHareketRepository kasaHareketRepository;
     private final KategoriRepository kategoriRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
@@ -115,6 +116,9 @@ public class KasaService {
         if ("GIDER".equals(hareket.getTur())) tutar = tutar.negate();
         kasa.setBakiye(kasa.getBakiye().subtract(tutar));
         kasaRepository.save(kasa);
+        auditLogService.finansalSilmeLog("KasaHareket", hareketId,
+                "Kasa hareketi silindi: " + hareket.getTur() + " " + hareket.getTutar() + " TL - Kasa: "
+                        + kasa.getAd() + " (bakiye terslendi)");
         kasaHareketRepository.deleteById(hareketId);
     }
 

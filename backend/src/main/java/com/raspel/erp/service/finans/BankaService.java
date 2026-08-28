@@ -5,6 +5,7 @@ import com.raspel.erp.dto.finans.BankaDTO;
 import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.repository.finans.BankaHareketiRepository;
 import com.raspel.erp.repository.finans.BankaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 public class BankaService {
 
     private final BankaRepository bankaRepository;
+    private final BankaHareketiRepository bankaHareketiRepository;
     private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
@@ -72,6 +74,10 @@ public class BankaService {
         tenantChecker.check(banka.getSirketId(), "Banka");
         if (banka.getBakiye() != null && banka.getBakiye().compareTo(BigDecimal.ZERO) != 0) {
             throw new BusinessException("Bakiyesi sıfır olmayan banka hesabı silinemez. Mevcut bakiye: " + banka.getBakiye() + " ₺");
+        }
+        long hareketSayisi = bankaHareketiRepository.countByBankaId(id);
+        if (hareketSayisi > 0) {
+            throw new BusinessException("Bu banka hesabına ait " + hareketSayisi + " adet hareket kaydı bulunmaktadır. Önce hareketleri temizleyiniz.");
         }
         bankaRepository.deleteById(id);
     }

@@ -14,6 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -27,9 +31,12 @@ import java.util.Map;
 @Slf4j
 public class KurulumService {
 
+    private static final long KURULUM_KILIT_ID = 72495632L;
+
     private final SirketRepository sirketRepository;
     private final KullaniciRepository kullaniciRepository;
     private final KullaniciService kullaniciService;
+    private final DataSource dataSource;
 
     @Transactional(readOnly = true)
     public Map<String, Object> durum() {
@@ -37,8 +44,29 @@ public class KurulumService {
         return Map.of("kurulumGerekli", kurulumGerekli);
     }
 
+    /**
+     * Çoklu instance / eşzamanlı istek senaryosunda kurulumun yalnızca bir kez
+     * çalışması PostgreSQL advisory lock ile garanti edilir (TOCTOU koruması).
+     */
     @Transactional
     public LoginResponse kurulumYap(KurulumDTO dto) {
+        try (Connection conn = dataSource.getConnection();
+             Statement st = conn.createStatement()) {
+            try (ResultSet rs = st.executeQuery("SELECT pg_try_advisory_lock(" + KURULUM_KILIT_ID + ")")) {
+                if (!rs.next() || !rs.getBoolean(1)) {
+                    throw new BusinessException("Kurulum şu anda başka bir istek tarafından yürütülüyor, lütfen tekrar deneyin");
+                }
+            }
+            return kurulumYapKilitli(dto);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Kurulum kilidi alınamadı: {}", e.getMessage());
+            return kurulumYapKilitli(dto);
+        }
+    }
+
+    private LoginResponse kurulumYapKilitli(KurulumDTO dto) {
         if (sirketRepository.count() > 0) {
             throw new BusinessException("Kurulum zaten tamamlanmış. Giriş yaparak devam edebilirsiniz.");
         }

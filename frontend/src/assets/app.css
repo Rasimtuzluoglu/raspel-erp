@@ -862,6 +862,18 @@ body {
 .p-tabview {
   background: transparent !important;
 }
+.p-tabview .p-tabview-tablist {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.p-tabview .p-tabview-tablist::-webkit-scrollbar {
+  height: 4px;
+}
+.p-tabview .p-tabview-tablist::-webkit-scrollbar-thumb {
+  background: var(--border, rgba(148, 163, 184, 0.4));
+  border-radius: 4px;
+}
 .p-tabview .p-tabview-nav {
   background: transparent !important;
   border-color: var(--border) !important;
@@ -1225,6 +1237,9 @@ body {
   .form-row {
     grid-template-columns: 1fr !important;
   }
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
   .dialog-form .p-dialog-content {
     padding: 16px !important;
   }
@@ -1261,6 +1276,13 @@ body {
     padding: 10px 12px !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
+  }
+  .p-toolbar-start,
+  .p-toolbar-end,
+  .p-toolbar-group-start,
+  .p-toolbar-group-end {
+    flex-wrap: wrap !important;
+    row-gap: 6px !important;
   }
   .stok-kartlar {
     grid-template-columns: 1fr !important;
@@ -1309,6 +1331,9 @@ body {
 
 /* ===== Mobil tablolar -> kart görünümü ===== */
 @media (max-width: 600px) {
+  .p-selectbutton {
+    flex-wrap: wrap !important;
+  }
   .p-datatable .p-datatable-thead {
     display: none !important;
   }

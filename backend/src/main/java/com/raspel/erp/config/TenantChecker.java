@@ -18,6 +18,22 @@ public class TenantChecker {
         }
     }
 
+    /**
+     * Cache anahtarlarina tenant bilgisi ekler. Boylece ayni ID'ye sahip kayitlar
+     * farkli sirketler icin ayri cache entry'lerinde tutulur ve cache HIT'inde
+     * sirket izolasyonu atlanamaz. Request context yoksa (dahili cagrilar) ID
+     * oldugu gibi kullanilir.
+     */
+    public static String tenantKey(Object id) {
+        try {
+            HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+            Object sirketId = req.getAttribute("sirketId");
+            return id + ":" + (sirketId != null ? sirketId : "");
+        } catch (Exception e) {
+            return String.valueOf(id);
+        }
+    }
+
     public void check(Long entitySirketId, String entityName) {
         Long currentSirketId = getCurrentSirketId();
         if (currentSirketId != null && entitySirketId != null && !currentSirketId.equals(entitySirketId)) {

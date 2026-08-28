@@ -87,7 +87,7 @@ class DepoServiceTest {
     void stokEkle_artirirMiktari() {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("10")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
-        when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 2L)).thenReturn(Optional.of(mevcut));
         when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
 
@@ -101,7 +101,7 @@ class DepoServiceTest {
     void stokCikar_yetersizStok_throws() {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("3")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
-        when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 2L)).thenReturn(Optional.of(mevcut));
 
         assertThrows(BusinessException.class, () -> depoService.stokCikar(1L, 2L, new BigDecimal("10")));
     }
@@ -110,7 +110,7 @@ class DepoServiceTest {
     void stokCikar_azaltirMiktari() {
         DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("20")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
-        when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(mevcut));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 2L)).thenReturn(Optional.of(mevcut));
         when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
 
@@ -125,8 +125,8 @@ class DepoServiceTest {
         DepoStok hedef = DepoStok.builder().depoId(3L).stokId(2L).miktar(new BigDecimal("0")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoRepository.findById(3L)).thenReturn(Optional.of(ornekDepo(3L)));
-        when(depoStokRepository.findByDepoIdAndStokId(1L, 2L)).thenReturn(Optional.of(kaynak));
-        when(depoStokRepository.findByDepoIdAndStokId(3L, 2L)).thenReturn(Optional.of(hedef));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 2L)).thenReturn(Optional.of(kaynak));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(3L, 2L)).thenReturn(Optional.of(hedef));
         when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(kaynak));
         when(depoStokRepository.findByDepoId(3L)).thenReturn(List.of(hedef));

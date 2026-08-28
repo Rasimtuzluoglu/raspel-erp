@@ -77,7 +77,7 @@
         </div>
       </div>
       <EmptyState
-        v-if="kullanicilar.length === 0"
+        v-if="kullanicilar && kullanicilar.length === 0"
         message="Henüz kullanıcı bulunamadı"
         sub-message="İlk kullanıcıyı eklemek için Yeni Kullanıcı butonuna tıklayın"
         icon="pi pi-user-plus"

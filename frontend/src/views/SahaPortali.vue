@@ -47,107 +47,12 @@
           </span>
         </template>
 
-        <div class="fade-in-section">
-          <div class="section-title-row">
-            <h3><i class="pi pi-truck text-primary mr-2" />Aktif Saha Siparişleri</h3>
-            <span class="count-pill">{{ siparisler.length }} Sipariş</span>
-          </div>
-
-          <div
-            v-if="siparisler.length > 0"
-            class="cards-grid"
-          >
-            <div
-              v-for="s in siparisler"
-              :key="s.id"
-              class="saha-card"
-            >
-              <div class="card-top">
-                <span class="order-code">#{{ s.siparisNo || s.id }}</span>
-                <Tag
-                  :value="s.durum || 'BEKLIYOR'"
-                  :severity="siparisDurumSeverity(s.durum)"
-                  rounded
-                />
-              </div>
-
-              <h4 class="customer-title">
-                {{ s.cariHesapAdi || s.musteriAdi || 'Müşteri' }}
-              </h4>
-
-              <div
-                v-if="s.teslimatAdresi"
-                class="address-box"
-              >
-                <i class="pi pi-map-marker" />
-                <span>{{ s.teslimatAdresi }}</span>
-              </div>
-
-              <div class="amount-box">
-                <div class="date-col">
-                  <small>Tarih</small>
-                  <strong>{{ formatTarih(s.tarih) }}</strong>
-                </div>
-                <div class="price-col">
-                  <small>Tutar</small>
-                  <span class="price-val">{{ formatPara(s.toplamTutar || s.genelToplam || 0) }}</span>
-                </div>
-              </div>
-
-              <div class="card-bottom-actions">
-                <a
-                  v-if="s.telefon"
-                  :href="'tel:' + s.telefon"
-                  class="call-btn"
-                >
-                  <i class="pi pi-phone" /> Ara
-                </a>
-                <button
-                  v-if="s.telefon || s.cariHesapAdi"
-                  type="button"
-                  class="whatsapp-btn"
-                  @click="whatsappSiparisPaylas(s)"
-                >
-                  <i class="pi pi-whatsapp" /> WhatsApp
-                </button>
-                <a
-                  v-if="s.teslimatAdresi"
-                  :href="'https://maps.google.com/?q=' + encodeURIComponent(s.teslimatAdresi)"
-                  target="_blank"
-                  class="map-btn"
-                >
-                  <i class="pi pi-map" /> Yol Tarifi
-                </a>
-              </div>
-
-              <div
-                v-if="s.durum !== 'TESLIM_EDILDI'"
-                class="delivery-actions"
-              >
-                <Button
-                  label="Durum"
-                  icon="pi pi-sync"
-                  class="p-button-outlined p-button-sm flex-1"
-                  @click="durumSecModalAc(s)"
-                />
-                <Button
-                  label="İmza & Teslim Et"
-                  icon="pi pi-check"
-                  class="p-button-success p-button-sm flex-1 font-bold"
-                  @click="imzaModalAc(s)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div
-            v-else
-            class="empty-box"
-          >
-            <i class="pi pi-inbox empty-icon" />
-            <p>Henüz atanmış aktif bir saha siparişi bulunmuyor.</p>
-          </div>
-        </div>
+        <SahaSiparislerPanel
+          :siparisler="siparisler"
+          @durum-sec="durumSecModalAc"
+          @imza-ac="imzaModalAc"
+          @whatsapp="whatsappSiparisPaylas"
+        />
       </TabPanel>
 
       <TabPanel>
@@ -242,7 +147,7 @@
           </div>
 
           <div
-            v-if="masraflar.length > 0"
+            v-if="masraflar && masraflar.length > 0"
             class="expense-list"
           >
             <div
@@ -300,7 +205,7 @@
           </div>
 
           <div
-            v-if="izinler.length > 0"
+            v-if="izinler && izinler.length > 0"
             class="expense-list"
           >
             <div
@@ -640,6 +545,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useAuthStore } from '../stores/authStore.js'
 import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
+import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
 
 const authStore = useAuthStore()
 const toast = useToast()
@@ -739,10 +645,7 @@ const bekleyenSiparisSayisi = computed(() =>
   siparisler.value.filter(s => s?.durum !== 'TESLIM_EDILDI' && s?.durum !== 'IPTAL').length
 )
 
-const siparisDurumSeverity = (durum) => {
-  const map = { BEKLIYOR: 'warning', HAZIRLANIYOR: 'info', YOLDA: 'help', TESLIM_EDILDI: 'success', IPTAL: 'danger' }
-  return map[durum] || 'info'
-}
+
 const talepDurumSeverity = (durum) => {
   const map = { BEKLEMEDE: 'warning', ONAYLANDI: 'success', REDDEDILDI: 'danger' }
   return map[durum] || 'info'

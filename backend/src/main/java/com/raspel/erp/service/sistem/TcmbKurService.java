@@ -60,14 +60,15 @@ public class TcmbKurService {
                 }
             }
         } catch (Exception e) {
-            log.warn("TCMB servisine erişilemedi, varsayılan kurlar yüklenecek: {}", e.getMessage());
+            log.warn("TCMB servisine erişilemedi: {}", e.getMessage());
         }
 
-        // Default fallbacks if missing
-        rates.putIfAbsent("USD", new BigDecimal[]{new BigDecimal("47.3500"), new BigDecimal("47.4300")});
-        rates.putIfAbsent("EUR", new BigDecimal[]{new BigDecimal("51.2000"), new BigDecimal("51.3000")});
-        rates.putIfAbsent("GBP", new BigDecimal[]{new BigDecimal("60.4000"), new BigDecimal("60.5500")});
-        rates.putIfAbsent("SAR", new BigDecimal[]{new BigDecimal("12.6000"), new BigDecimal("12.6500")});
+        // TCMB'den veri alınamadıysa hiçbir kur KAYDEDİLMEZ; eski kurlar korunur.
+        // Sabit fallback değerleri DB'ye yazmak yanlış kurla işlem yapılmasına yol açar.
+        if (rates.isEmpty()) {
+            log.warn("TCMB kurları alınamadı; mevcut kurlar korunuyor (yeni veri yazılmadı).");
+            return;
+        }
 
         // Calculate Gram Gold (GAU) approx based on USD rate
         BigDecimal usdSatis = rates.get("USD")[1];

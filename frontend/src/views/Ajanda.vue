@@ -66,7 +66,7 @@
         {{ seciliGun.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }) }}
       </h3>
       <div
-        v-if="!seciliOlaylar.length"
+        v-if="(!seciliOlaylar || !seciliOlaylar.length)"
         class="bos"
       >
         Bu günde olay yok.
@@ -176,6 +176,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .ay-etiket {
   font-weight: 700;

@@ -21,4 +21,7 @@ public class LoginResponse {
     private Boolean twoFactorGerekli;
     private String girisToken;
     private List<SirketDTO> sirketler;
+
+    /** JWT'nin sona ereceği an (epoch ms). İstemci oturum sayacı için kullanılır; token'ın kendisi httpOnly cookie'dedir. */
+    private Long tokenExpiresAt;
 }

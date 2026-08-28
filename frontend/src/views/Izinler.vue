@@ -253,5 +253,7 @@ const sil = (data) => {
 .filtre-grup {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 </style>

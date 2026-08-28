@@ -27,7 +27,8 @@ public class CekSenetController {
 
     @GetMapping
     @Operation(summary = "Tüm çek/senetleri getir", description = "Tüm çek ve senetleri listeler")
-    public ResponseEntity<Page<CekSenetDTO>> tumu(@RequestParam(required = false) Long sirketId, @PageableDefault(size = 50) Pageable pageable) {
+    public ResponseEntity<Page<CekSenetDTO>> tumu(jakarta.servlet.http.HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(cekSenetService.tumunuGetir(sirketId, pageable));
     }
 

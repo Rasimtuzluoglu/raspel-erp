@@ -20,6 +20,7 @@ public class ButceService {
 
     private final ButceRepository butceRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public Page<ButceDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -69,6 +70,9 @@ public class ButceService {
         Butce b = butceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Butce", id));
         tenantChecker.check(b.getSirketId(), "Butce");
+        auditLogService.finansalSilmeLog("Butce", id,
+                "Bütçe silindi: " + b.getTutar() + " TL - " + (b.getAd() != null ? b.getAd() : "")
+                        + (b.getYil() != null ? " (" + b.getYil() + ")" : ""));
         butceRepository.deleteById(id);
     }
 

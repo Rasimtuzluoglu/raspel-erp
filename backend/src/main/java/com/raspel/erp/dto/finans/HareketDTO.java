@@ -34,5 +34,8 @@ public class HareketDTO {
 
     private String odemeSekli;
 
+    /** Bağlı fatura ID'si (opsiyonel): verilirse fatura ödeme durumu hareketle birlikte güncellenir */
+    private Long faturaId;
+
     private LocalDateTime olusturmaTarihi;
 }

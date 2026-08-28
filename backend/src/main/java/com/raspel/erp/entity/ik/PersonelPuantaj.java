@@ -20,6 +20,9 @@ public class PersonelPuantaj {
     @Column(name = "personel_id", nullable = false)
     private Long personelId;
 
+    @Column(name = "sirket_id", nullable = false)
+    private Long sirketId;
+
     @Column(nullable = false)
     private LocalDate tarih;
 

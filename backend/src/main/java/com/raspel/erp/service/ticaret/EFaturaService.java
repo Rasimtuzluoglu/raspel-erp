@@ -40,6 +40,7 @@ public class EFaturaService {
     private final CariHesapRepository cariHesapRepository;
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
+    private final RestTemplate restTemplate;
 
     /** GİB/entegratör uç noktası. Boş ise yerel onay (simülasyon) yapılır. */
     @Value("${app.efatura.gib-endpoint:}")
@@ -117,19 +118,19 @@ public class EFaturaService {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_XML);
                 HttpEntity<String> entity = new HttpEntity<>(eFatura.getUblXml(), headers);
-                new RestTemplate().postForEntity(gibEndpoint, entity, String.class);
+                restTemplate.postForEntity(gibEndpoint, entity, String.class);
                 eFatura.setGibDurumKodu(1200);
                 eFatura.setGibDurumAciklama("GİB'e iletildi (entegratör onay bekliyor).");
                 iletildi = true;
                 log.info("E-Fatura GİB uç noktasına iletildi - ETTN: {}", eFatura.getEttn());
             } catch (Exception ex) {
-                log.warn("GİB uç noktasına gönderim başarısız ({}). Yerel onaya düşülüyor.", ex.getMessage());
+                log.warn("GİB uç noktasına gönderim başarısız: {}", ex.getMessage());
             }
         }
 
         if (!iletildi) {
-            eFatura.setGibDurumKodu(1200);
-            eFatura.setGibDurumAciklama("GİB'e iletildi (Onay Bekliyor). GİB entegratör uç noktası tanımlı değil — yerel simülasyon onayı.");
+            throw new BusinessException("E-Fatura GİB'e iletilemedi: uç nokta tanımlı değil veya gönderim başarısız. "
+                    + "Gönderim gerçekleşmeden belge GİB'e iletilmiş olarak işaretlenemez.");
         }
         return entityToDTO(eFaturaRepository.save(eFatura));
     }

@@ -49,20 +49,15 @@ const handleNProgress = (isStart) => {
 apiClient.interceptors.request.use(
   (config) => {
     handleNProgress(true)
+    // JWT httpOnly cookie ile gönderilir (withCredentials: true).
+    // Bellekteki token varsa ek güvenlik katmanı olarak Authorization header'ı da eklenir;
+    // localStorage'dan token ASLA okunmaz (XSS ile çalınamaz).
     let token = ''
     try {
       const authStore = useAuthStore()
       token = authStore.token || ''
     } catch {
       /* empty */
-    }
-    if (!token) {
-      try {
-        const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
-        token = kayitli.token || ''
-      } catch {
-        /* empty */
-      }
     }
     if (token) {
       config.headers = config.headers || {}
@@ -143,12 +138,9 @@ apiClient.interceptors.response.use(
 const tokenSuresiDolduMu = () => {
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
-    const token = kayitli.token || ''
-    if (!token) return true
-    const payload = token.split('.')[1]
-    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-    if (!decoded.exp) return false
-    return decoded.exp * 1000 < Date.now()
+    const bitis = kayitli.tokenExpiresAt
+    if (!bitis) return false
+    return bitis < Date.now()
   } catch {
     return false
   }

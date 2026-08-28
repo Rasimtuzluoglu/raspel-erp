@@ -83,7 +83,7 @@
                 :class="['chip-btn', { aktif: seciliDurumFiltre === 'HEPSI' }]"
                 @click="durumFiltrele('HEPSI')"
               >
-                Tümü ({{ teklifler.length }})
+                Tümü ({{ teklifler ? teklifler.length : 0 }})
               </button>
               <button
                 type="button"
@@ -300,237 +300,275 @@
       class="teklif-form-dialog"
       :style="{ width: '88vw', maxWidth: '1200px' }"
     >
-      <div class="p-fluid grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <div class="col-span-2">
-          <label class="form-label">Müşteri / Cari Hesap *</label>
-          <Dropdown
-            v-model="form.cariHesapId"
-            :options="cariHesaplar"
-            option-label="ad"
-            option-value="id"
-            placeholder="Müşteri Seçin"
-            filter
-            class="w-full"
-          />
-        </div>
-        <div>
-          <label class="form-label">Teklif Tarihi *</label>
-          <InputText
-            v-model="form.tarih"
-            type="date"
-            class="w-full"
-          />
-        </div>
-        <div>
-          <label class="form-label">Geçerlilik Tarihi</label>
-          <InputText
-            v-model="form.gecerlilikTarihi"
-            type="date"
-            class="w-full"
-          />
-        </div>
-      </div>
-
-      <div class="p-fluid grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <div>
-          <label class="form-label">Durum</label>
-          <Dropdown
-            v-model="form.durum"
-            :options="durumSecenekleri"
-            option-label="label"
-            option-value="value"
-            class="w-full"
-          />
-        </div>
-        <div>
-          <label class="form-label">Para Birimi</label>
-          <Dropdown
-            v-model="form.paraBirimi"
-            :options="['TRY', 'USD', 'EUR', 'GBP']"
-            class="w-full"
-          />
-        </div>
-        <div>
-          <label class="form-label">Teslimat Şartı</label>
-          <InputText
-            v-model="form.teslimatSarti"
-            placeholder="Örn: 3 İş Günü / Depo Teslim"
-          />
-        </div>
-        <div>
-          <label class="form-label">Ödeme Şartı</label>
-          <InputText
-            v-model="form.odemeSarti"
-            placeholder="Örn: %50 Peşin, Kalan 30 Gün"
-          />
-        </div>
-      </div>
-
-      <!-- Kalemler Bölümü -->
-      <div class="kalemler-baslik flex justify-between items-center mb-2 mt-4">
-        <h3 class="text-base font-bold">
-          <i class="pi pi-list mr-1" /> Teklif Kalemleri
-        </h3>
-        <Button
-          label="Yeni Kalem Ekle"
-          icon="pi pi-plus"
-          size="small"
-          class="p-button-outlined p-button-sm"
-          @click="kalemEkle"
-        />
-      </div>
-
-      <div class="kalem-tablo-wrapper mb-4">
-        <table class="w-full kalem-tablosu">
-          <thead>
-            <tr>
-              <th style="width: 25%;">
-                Ürün / Stok
-              </th>
-              <th style="width: 25%;">
-                Açıklama
-              </th>
-              <th style="width: 10%;">
-                Miktar
-              </th>
-              <th style="width: 10%;">
-                Birim
-              </th>
-              <th style="width: 12%;">
-                Birim Fiyat
-              </th>
-              <th style="width: 8%;">
-                İsk.%
-              </th>
-              <th style="width: 8%;">
-                KDV%
-              </th>
-              <th style="width: 12%;">
-                Tutar
-              </th>
-              <th style="width: 5%;">
-                Sil
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(k, idx) in form.kalemler"
-              :key="idx"
-            >
-              <td>
+      <div class="form-layout-container flex flex-col gap-6 pt-2">
+        <!-- ÜST BÖLÜM: Genel Bilgiler & Şartlar -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Sol Kolon: Temel Bilgiler -->
+          <div class="p-4 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
+            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+              <i class="pi pi-info-circle text-primary" /> Temel Bilgiler
+            </h3>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-1">
+                <label class="text-xs font-semibold text-gray-600">Müşteri / Cari Hesap <span class="text-red-500">*</span></label>
                 <Dropdown
-                  v-model="k.stokId"
-                  :options="stoklar"
+                  v-model="form.cariHesapId"
+                  :options="cariHesaplar"
                   option-label="ad"
                   option-value="id"
-                  placeholder="Stok Seçin"
+                  placeholder="Müşteri Seçin"
                   filter
                   class="w-full p-inputtext-sm"
-                  @change="stokSecildi(k)"
                 />
-              </td>
-              <td>
-                <InputText
-                  v-model="k.aciklama"
-                  placeholder="Açıklama"
-                  class="w-full p-inputtext-sm"
-                />
-              </td>
-              <td>
-                <input
-                  v-model.number="k.miktar"
-                  type="number"
-                  min="1"
-                  class="p-inputtext p-inputtext-sm w-full"
-                  @input="kalemHesapla(k)"
-                >
-              </td>
-              <td>
-                <Dropdown
-                  v-model="k.birim"
-                  :options="['Adet', 'Kg', 'Metre', 'Paket', 'Koli', 'Saat', 'Ay', 'Yıl']"
-                  class="w-full p-inputtext-sm"
-                />
-              </td>
-              <td>
-                <input
-                  v-model.number="k.birimFiyat"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  class="p-inputtext p-inputtext-sm w-full"
-                  @input="kalemHesapla(k)"
-                >
-              </td>
-              <td>
-                <input
-                  v-model.number="k.iskontoOrani"
-                  type="number"
-                  min="0"
-                  max="100"
-                  class="p-inputtext p-inputtext-sm w-full"
-                  @input="kalemHesapla(k)"
-                >
-              </td>
-              <td>
-                <Dropdown
-                  v-model.number="k.kdvOrani"
-                  :options="[0, 1, 10, 20]"
-                  class="w-full p-inputtext-sm"
-                  @change="kalemHesapla(k)"
-                />
-              </td>
-              <td class="font-bold text-right">
-                {{ formatCurrency(k.tutar) }}
-              </td>
-              <td class="text-center">
-                <button
-                  type="button"
-                  class="text-red-500 hover:text-red-700"
-                  @click="kalemSil(idx)"
-                >
-                  <i class="pi pi-times" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-gray-600">Teklif Tarihi <span class="text-red-500">*</span></label>
+                  <InputText
+                    v-model="form.tarih"
+                    type="date"
+                    class="p-inputtext-sm"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-gray-600">Geçerlilik Tarihi</label>
+                  <InputText
+                    v-model="form.gecerlilikTarihi"
+                    type="date"
+                    class="p-inputtext-sm"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-gray-600">Durum</label>
+                  <Dropdown
+                    v-model="form.durum"
+                    :options="durumSecenekleri"
+                    option-label="label"
+                    option-value="value"
+                    class="p-inputtext-sm"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-gray-600">Para Birimi</label>
+                  <Dropdown
+                    v-model="form.paraBirimi"
+                    :options="['TRY', 'USD', 'EUR', 'GBP']"
+                    class="p-inputtext-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <!-- Alt Özet & Notlar -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="form-label">Garanti & Ek Şartlar / Notlar</label>
-          <Textarea
-            v-model="form.notlar"
-            rows="4"
-            placeholder="Teklife ait özel koşullar, teslim detayları, banka bilgileri vb."
-            class="w-full"
-          />
+          <!-- Sağ Kolon: Şartlar ve Notlar -->
+          <div class="p-4 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
+            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+              <i class="pi pi-file text-primary" /> Koşullar & Notlar
+            </h3>
+            <div class="flex flex-col gap-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-gray-600">Teslimat Şartı</label>
+                  <InputText
+                    v-model="form.teslimatSarti"
+                    placeholder="Örn: 3 İş Günü"
+                    class="p-inputtext-sm"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-gray-600">Ödeme Şartı</label>
+                  <InputText
+                    v-model="form.odemeSarti"
+                    placeholder="Örn: %50 Peşin"
+                    class="p-inputtext-sm"
+                  />
+                </div>
+              </div>
+              <div class="flex flex-col gap-1 h-full">
+                <label class="text-xs font-semibold text-gray-600">Garanti & Ek Şartlar / Notlar</label>
+                <Textarea
+                  v-model="form.notlar"
+                  rows="3"
+                  placeholder="Teklife ait özel koşullar, teslim detayları vb."
+                  class="w-full flex-grow text-sm"
+                  style="resize: none;"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="ozet-kutusu p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-          <div class="flex justify-between py-1">
-            <span>Ara Toplam:</span>
-            <span class="font-semibold">{{ formatCurrency(hesaplananAraToplam) }}</span>
+
+        <!-- ORTA BÖLÜM: Teklif Kalemleri (Ürünler) -->
+        <div class="p-4 border rounded-xl border-blue-100 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-900/10">
+          <div class="flex justify-between items-center mb-4 pb-2 border-b border-blue-100 dark:border-blue-800">
+            <h3 class="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2">
+              <i class="pi pi-list" /> Teklif Kalemleri (Ürün ve Hizmetler)
+            </h3>
+            <Button
+              label="Yeni Ürün Ekle"
+              icon="pi pi-plus"
+              class="p-button-sm p-button-primary"
+              @click="kalemEkle"
+            />
           </div>
-          <div class="flex justify-between py-1 items-center">
-            <span>Genel İskonto (%):</span>
-            <input
-              v-model.number="form.iskontoOrani"
-              type="number"
-              min="0"
-              max="100"
-              class="p-inputtext p-inputtext-sm w-24 text-right"
+
+          <div class="flex flex-col gap-3">
+            <div 
+              v-for="(k, idx) in form.kalemler" 
+              :key="idx"
+              class="p-3 bg-white dark:bg-gray-900 border rounded-lg shadow-sm flex flex-col md:flex-row items-center gap-3 transition hover:border-blue-300 relative"
             >
+              <!-- Kalem Sil Butonu (Mobilde üstte, Desktobta sağda) -->
+              <button 
+                type="button"
+                class="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-sm"
+                title="Kalemi Sil"
+                @click="kalemSil(idx)"
+              >
+                <i class="pi pi-times text-xs" />
+              </button>
+
+              <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-3 w-full">
+                <!-- Ürün Seçimi -->
+                <div class="md:col-span-3">
+                  <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Ürün / Stok</label>
+                  <Dropdown
+                    v-model="k.stokId"
+                    :options="stoklar"
+                    option-label="ad"
+                    option-value="id"
+                    placeholder="Seçiniz..."
+                    filter
+                    class="w-full p-inputtext-sm"
+                    @change="stokSecildi(k)"
+                  />
+                </div>
+                
+                <!-- Açıklama -->
+                <div class="md:col-span-3">
+                  <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Açıklama</label>
+                  <InputText
+                    v-model="k.aciklama"
+                    placeholder="Detay..."
+                    class="w-full p-inputtext-sm"
+                  />
+                </div>
+
+                <!-- Miktar & Birim -->
+                <div class="md:col-span-2 flex gap-2">
+                  <div class="w-1/2">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Miktar</label>
+                    <input
+                      v-model.number="k.miktar"
+                      type="number"
+                      min="1"
+                      class="p-inputtext p-inputtext-sm w-full"
+                      @input="kalemHesapla(k)"
+                    >
+                  </div>
+                  <div class="w-1/2">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Birim</label>
+                    <Dropdown
+                      v-model="k.birim"
+                      :options="['Adet', 'Kg', 'Metre', 'Paket', 'Koli', 'Saat', 'Ay']"
+                      class="w-full p-inputtext-sm"
+                    />
+                  </div>
+                </div>
+
+                <!-- Fiyat, İskonto, KDV -->
+                <div class="md:col-span-4 flex gap-2">
+                  <div class="w-2/5">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Birim Fiyat</label>
+                    <input
+                      v-model.number="k.birimFiyat"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      class="p-inputtext p-inputtext-sm w-full text-right"
+                      @input="kalemHesapla(k)"
+                    >
+                  </div>
+                  <div class="w-1/5">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block text-center">İsk.%</label>
+                    <input
+                      v-model.number="k.iskontoOrani"
+                      type="number"
+                      min="0"
+                      max="100"
+                      class="p-inputtext p-inputtext-sm w-full text-center"
+                      @input="kalemHesapla(k)"
+                    >
+                  </div>
+                  <div class="w-1/5">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block text-center">KDV%</label>
+                    <Dropdown
+                      v-model.number="k.kdvOrani"
+                      :options="[0, 1, 10, 20]"
+                      class="w-full p-inputtext-sm text-center"
+                      @change="kalemHesapla(k)"
+                    />
+                  </div>
+                  <div class="w-1/5 flex flex-col justify-end">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block text-right">Tutar</label>
+                    <div class="font-bold text-sm text-right text-gray-800 dark:text-gray-200 mt-1 whitespace-nowrap">
+                      {{ formatCurrency(k.tutar) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="!form.kalemler || form.kalemler.length === 0"
+              class="p-6 text-center text-gray-400 border-2 border-dashed rounded-lg"
+            >
+              <i class="pi pi-shopping-cart text-3xl mb-2" /><br>
+              Teklife henüz bir ürün veya hizmet eklenmedi.
+            </div>
           </div>
-          <div class="flex justify-between py-1">
-            <span>Hesaplanan KDV:</span>
-            <span class="font-semibold">{{ formatCurrency(hesaplananKdv) }}</span>
-          </div>
-          <div class="flex justify-between py-2 border-t mt-2 text-lg font-bold text-primary">
-            <span>GENEL TOPLAM:</span>
-            <span>{{ formatCurrency(hesaplananGenelToplam) }} {{ form.paraBirimi || 'TRY' }}</span>
+        </div>
+
+        <!-- ALT BÖLÜM: Fiyat Özeti -->
+        <div class="flex justify-end">
+          <div class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border shadow-sm">
+            <h4 class="text-xs uppercase font-bold text-gray-500 mb-3 border-b pb-2">
+              Hesap Özeti
+            </h4>
+            
+            <div class="flex justify-between items-center py-1.5 text-sm">
+              <span class="text-gray-600 dark:text-gray-400">Ara Toplam:</span>
+              <span class="font-semibold">{{ formatCurrency(hesaplananAraToplam) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-1.5 text-sm group">
+              <span class="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                Genel İskonto (%):
+              </span>
+              <input
+                v-model.number="form.iskontoOrani"
+                type="number"
+                min="0"
+                max="100"
+                class="p-inputtext p-inputtext-sm w-20 text-right bg-white dark:bg-gray-900 border-gray-300 group-hover:border-blue-400 transition"
+                title="Tüm teklife uygulanacak ekstra iskonto yüzdesi"
+              >
+            </div>
+            
+            <div class="flex justify-between items-center py-1.5 text-sm">
+              <span class="text-gray-600 dark:text-gray-400">Hesaplanan KDV:</span>
+              <span class="font-semibold">{{ formatCurrency(hesaplananKdv) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-3 mt-2 border-t border-gray-200 dark:border-gray-700">
+              <span class="text-lg font-bold text-gray-800 dark:text-gray-200">GENEL TOPLAM:</span>
+              <div class="text-right">
+                <span class="text-xl font-black text-primary">{{ formatCurrency(hesaplananGenelToplam) }}</span>
+                <span class="text-sm font-bold text-gray-500 ml-1">{{ form.paraBirimi || 'TRY' }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -39,28 +39,28 @@ public class SirketController {
 
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre şirket getir", description = "Şirket ID'sine göre detayları getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SirketDTO> getir(@PathVariable Long id) {
         return ResponseEntity.ok(sirketService.getir(id));
     }
 
     @PostMapping
     @Operation(summary = "Yeni şirket oluştur", description = "Yeni bir şirket kaydı oluşturur")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SirketDTO> olustur(@Valid @RequestBody SirketDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(sirketService.olustur(dto));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Şirket güncelle", description = "Şirket bilgilerini günceller")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SirketDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SirketDTO dto) {
         return ResponseEntity.ok(sirketService.guncelle(id, dto));
     }
 
     @GetMapping("/{id}/konsolide-ozet")
     @Operation(summary = "Konsolide grup şirket özeti", description = "Ana şirket ve bağlı alt şirketlerin toplam stok, bakiye ve ciro özetini getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<com.raspel.erp.dto.sistem.KonsolideOzetDTO> konsolideOzet(@PathVariable Long id) {
         return ResponseEntity.ok(sirketService.konsolideOzet(id));
     }

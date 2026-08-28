@@ -28,7 +28,8 @@ public class SistemDurumController {
     }
 
     @GetMapping("/hata-log")
-    @Operation(summary = "Son hatalar", description = "Sunucuda oluşan son hata kayıtlarını getirir")
+    @Operation(summary = "Son hatalar", description = "Sunucuda oluşan son hata kayıtlarını getirir (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<HataLogDTO>> hataLog() {
         return ResponseEntity.ok(sistemDurumService.sonHatalar(50));
     }

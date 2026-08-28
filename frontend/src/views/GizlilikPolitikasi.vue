@@ -56,7 +56,7 @@
       <!-- Sağ Taraf: Kart Bazlı Dağıtılmış İçerik Grid -->
       <div class="content-cards">
         <div
-          v-if="filtrelenmisMadde.length === 0"
+          v-if="filtrelenmisMadde && filtrelenmisMadde.length === 0"
           class="no-results"
         >
           <i class="pi pi-filter-slash" />

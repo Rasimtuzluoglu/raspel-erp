@@ -41,19 +41,31 @@ describe('authStore', () => {
     expect(store.isLoggedIn).toBe(false)
   })
 
-  it('restores auth from localStorage', () => {
+  it('restores auth from localStorage (token haric — httpOnly cookie)', () => {
     const authData = {
       kullanici: { id: 1, username: 'test' },
       token: 'xyz',
       companyName: 'Co',
       sirketId: 1,
-      sirketAdi: 'Sirket'
+      sirketAdi: 'Sirket',
+      tokenExpiresAt: 9999999999999
     }
     localStorage.setItem('raspel_erp_auth', JSON.stringify(authData))
     store.init()
     expect(store.kullanici).toEqual(authData.kullanici)
-    expect(store.token).toBe('xyz')
+    expect(store.token).toBe('') // token localStorage'dan geri yüklenmez (XSS koruması)
+    expect(store.tokenExpiresAt).toBe(9999999999999)
     expect(store.isLoggedIn).toBe(true)
+  })
+
+  it('oturumKur tokeni localStoragea yazmaz', async () => {
+    kullaniciAPI.girisSirket.mockResolvedValue({ data: { ...mockUser, tokenExpiresAt: 1234567890123 } })
+    await store.girisSirket('pending-token', 1)
+    expect(store.isLoggedIn).toBe(true)
+    expect(store.token).toBe('abc123')
+    const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth'))
+    expect(kayitli.token).toBeUndefined()
+    expect(kayitli.tokenExpiresAt).toBe(1234567890123)
   })
 
   it('girisYap returns user without setting session (sirket secimi beklenir)', async () => {

@@ -10,4 +10,5 @@ import java.util.List;
 public interface BankaHareketiRepository extends JpaRepository<BankaHareketi, Long> {
     List<BankaHareketi> findByBankaIdOrderByTarihDesc(Long bankaId);
     List<BankaHareketi> findByBankaIdAndEslestirildiFalse(Long bankaId);
+    long countByBankaId(Long bankaId);
 }

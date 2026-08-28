@@ -40,10 +40,10 @@
             >{{ seciliDosya }}</span>
           </div>
           <div
-            v-if="csvVeri.length"
+            v-if="csvVeri && csvVeri.length"
             class="csv-preview"
           >
-            <h3>Önizleme ({{ csvVeri.length }} kayıt)</h3>
+            <h3>Önizleme ({{ csvVeri ? csvVeri.length : 0 }} kayıt)</h3>
             <DataTable
               state-storage="session"
               state-key="toplustok-table-state"
@@ -81,7 +81,7 @@
                 header="Miktar"
               />
             </DataTable>
-            <small v-if="csvVeri.length > 5">...ve {{ csvVeri.length - 5 }} kayıt daha</small>
+            <small v-if="csvVeri && csvVeri.length > 5">...ve {{ csvVeri.length - 5 }} kayıt daha</small>
             <div class="csv-actions">
               <Button
                 label="Tümünü Aktar"

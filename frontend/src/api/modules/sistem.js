@@ -42,6 +42,12 @@ export const kullaniciAPI = {
   },
   disable2fa(data) {
     return apiClient.post('/kullanicilar/disable-2fa', data)
+  },
+  aktifOturumlar() {
+    return apiClient.get('/kullanicilar/aktif-oturumlar')
+  },
+  oturumIptal(jti) {
+    return apiClient.delete(`/kullanicilar/oturum/${jti}`)
   }
 }
 

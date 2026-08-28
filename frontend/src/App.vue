@@ -56,7 +56,7 @@
       :visible="sifreDialog"
       @update:visible="sifreDialog = $event"
     />
-    <GuncellemeNotlari />
+    <GuncellemeNotlari v-if="authStore.isLoggedIn" />
     <GeriAlToast />
     <HesapMakinesi
       :visible="hesapMakinesiAcik"

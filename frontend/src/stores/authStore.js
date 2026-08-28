@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const sirketAdi = ref('')
   const yetkiler = ref([])
   const loading = ref(false)
+  const tokenExpiresAt = ref(null)
 
   const isLoggedIn = computed(() => !!kullanici.value)
   const isAdmin = computed(() => kullanici.value?.role === 'ADMIN')
@@ -39,19 +40,27 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const init = () => {
+  /**
+   * Oturum geri yükleme. JWT yalnızca httpOnly cookie'de saklanır; localStorage'da
+   * yalnızca kullanıcı bilgisi ve oturum bitiş zamanı tutulur (XSS ile token
+   * çalınamaz). Sayfa yenilendiğinde cookie otomatik gönderilir; burada yalnızca
+   * kullanıcı bilgisi yenilenir. Cookie geçersizse /ben 401 döner ve oturum kapanır.
+   */
+  const init = async () => {
     try {
       const stored = localStorage.getItem('raspel_erp_auth')
       if (stored) {
         const data = JSON.parse(stored)
         kullanici.value = data.kullanici
-        token.value = data.token || ''
+        token.value = '' // token asla localStorage'dan geri yüklenmez (httpOnly cookie)
         companyName.value = data.companyName || ''
         sirketId.value = data.sirketId || null
         sirketAdi.value = data.sirketAdi || ''
         yetkiler.value = data.yetkiler || []
-        if (kullanici.value && yetkiler.value.length === 0) {
-          yetkileriYukle()
+        tokenExpiresAt.value = data.tokenExpiresAt || null
+        if (kullanici.value) {
+          if (yetkiler.value.length === 0) yetkileriYukle()
+          await kullaniciGuncelle()
         }
       }
     } catch {
@@ -112,16 +121,17 @@ export const useAuthStore = defineStore('auth', () => {
     companyName.value = data.companyName || ''
     sirketId.value = data.sirketId || null
     sirketAdi.value = data.sirketAdi || ''
+    tokenExpiresAt.value = data.tokenExpiresAt || null
 
     localStorage.setItem(
       'raspel_erp_auth',
       JSON.stringify({
         kullanici: kullanici.value,
-        token: token.value,
         companyName: companyName.value,
         sirketId: sirketId.value,
         sirketAdi: sirketAdi.value,
-        yetkiler: yetkiler.value
+        yetkiler: yetkiler.value,
+        tokenExpiresAt: tokenExpiresAt.value
       })
     )
     yetkileriYukle()
@@ -134,6 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
     sirketId.value = null
     sirketAdi.value = ''
     yetkiler.value = []
+    tokenExpiresAt.value = null
     localStorage.removeItem('raspel_erp_auth')
   }
 
@@ -153,15 +164,18 @@ export const useAuthStore = defineStore('auth', () => {
         'raspel_erp_auth',
         JSON.stringify({
           kullanici: kullanici.value,
-          token: token.value,
           companyName: companyName.value,
           sirketId: sirketId.value,
           sirketAdi: sirketAdi.value,
-          yetkiler: yetkiler.value
+          yetkiler: yetkiler.value,
+          tokenExpiresAt: tokenExpiresAt.value
         })
       )
-    } catch {
-      /* empty */
+    } catch (err) {
+      // Oturum geçersizse (401/403) sessizce çıkış yap; geçici sunucu hatalarında (5xx) dokunma.
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        cikisYap()
+      }
     }
   }
 
@@ -174,6 +188,7 @@ export const useAuthStore = defineStore('auth', () => {
     sirketId,
     sirketAdi,
     yetkiler,
+    tokenExpiresAt,
     loading,
     isLoggedIn,
     isAdmin,

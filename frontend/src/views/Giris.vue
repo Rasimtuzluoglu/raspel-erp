@@ -184,7 +184,7 @@
                 {{ $t('giris.selectCompanyHint') }}
               </p>
               <div
-                v-if="sirketler.length > 0"
+                v-if="sirketler && sirketler.length > 0"
                 class="sirket-listesi"
               >
                 <template

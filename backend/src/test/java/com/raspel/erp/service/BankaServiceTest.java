@@ -26,6 +26,7 @@ import com.raspel.erp.service.finans.BankaService;
 class BankaServiceTest {
 
     @Mock private BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private BankaService bankaService;
 
@@ -91,8 +92,19 @@ class BankaServiceTest {
         Banka b = createBanka(1L);
         b.setBakiye(BigDecimal.ZERO);
         when(bankaRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(bankaHareketiRepository.countByBankaId(1L)).thenReturn(0L);
         bankaService.bankaSil(1L);
         verify(bankaRepository).deleteById(1L);
+    }
+
+    @Test
+    void bankaSil_throwsWhenHasHareket() {
+        Banka b = createBanka(1L);
+        b.setBakiye(BigDecimal.ZERO);
+        when(bankaRepository.findById(1L)).thenReturn(Optional.of(b));
+        when(bankaHareketiRepository.countByBankaId(1L)).thenReturn(4L);
+        assertThrows(RuntimeException.class, () -> bankaService.bankaSil(1L));
+        verify(bankaRepository, never()).deleteById(anyLong());
     }
 
     @Test

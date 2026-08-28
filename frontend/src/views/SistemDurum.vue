@@ -108,7 +108,7 @@
       <div class="bolum">
         <h2>Son Hatalar</h2>
         <div
-          v-if="!sonHatalar.length"
+          v-if="(!sonHatalar || !sonHatalar.length)"
           class="bos-kucuk"
         >
           <i class="pi pi-check-circle" /> Hata yok, sistem temiz.

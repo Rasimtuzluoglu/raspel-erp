@@ -14,11 +14,15 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.util.TotpUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +50,10 @@ public class KullaniciService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
+    private final AktifOturumService aktifOturumService;
+
+    @Value("${app.jwt.expiration-ms:86400000}")
+    private long jwtExpirationMs;
 
     /** Bekleyen girişler: girisToken -> (kullaniciId, oluşturmaZamani). 5 dakika geçerli.
      *  Redis'te saklanır (sunucu restart'ında kaybolmaz); Redis'e erişilemezse bellek fallback'i kullanılır. */
@@ -374,6 +382,7 @@ public class KullaniciService {
             sirketAdi = sirketRepository.findById(sirketId).map(Sirket::getAd).orElse(null);
         }
         String token = jwtUtil.generateToken(k, sirketId, sirketAdi);
+        aktifOturumKaydet(token, k, sirketId);
         return LoginResponse.builder()
                 .id(k.getId())
                 .username(k.getUsername())
@@ -384,8 +393,25 @@ public class KullaniciService {
                 .companyName(company)
                 .role(k.getRole())
                 .token(token)
+                .tokenExpiresAt(System.currentTimeMillis() + jwtExpirationMs)
                 .twoFactorGerekli(false)
                 .build();
+    }
+
+    private void aktifOturumKaydet(String token, Kullanici k, Long sirketId) {
+        try {
+            String jti = jwtUtil.getJtiFromToken(token);
+            String ip = null;
+            try {
+                HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+                ip = req.getRemoteAddr();
+            } catch (Exception ignored) {
+                // Request context yoksa (test/dahili çağrı) IP kaydedilmez
+            }
+            aktifOturumService.oturumKaydet(jti, k.getId(), k.getUsername(), sirketId, ip, Duration.ofMillis(jwtExpirationMs));
+        } catch (Exception e) {
+            log.warn("Aktif oturum kaydedilemedi: {}", e.getMessage());
+        }
     }
 
     private KullaniciDTO entityToDTO(Kullanici k) {

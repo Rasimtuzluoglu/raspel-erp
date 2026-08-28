@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -37,9 +38,9 @@ class BelgeControllerTest {
 
     @Test
     void shouldListKayitBelgeleri() throws Exception {
-        when(belgeRepository.findByEntityAdiAndEntityIdOrderByOlusturmaTarihiDesc("Fatura", 5L))
+        when(belgeRepository.findByEntityAdiAndEntityIdAndSirketIdOrderByOlusturmaTarihiDesc("Fatura", 5L, 1L))
                 .thenReturn(List.of(ornek()));
-        mockMvc.perform(get("/api/belgeler/kayit/Fatura/5"))
+        mockMvc.perform(get("/api/belgeler/kayit/Fatura/5").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].dosyaAdi").value("fatura.pdf"));
     }
@@ -68,8 +69,24 @@ class BelgeControllerTest {
 
     @Test
     void shouldDelete() throws Exception {
+        when(belgeRepository.findById(1L)).thenReturn(Optional.of(ornek()));
         doNothing().when(belgeRepository).deleteById(1L);
-        mockMvc.perform(delete("/api/belgeler/1"))
+        mockMvc.perform(delete("/api/belgeler/1").requestAttr("sirketId", 1L))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldNotDeleteOtherCompanyDocument() throws Exception {
+        when(belgeRepository.findById(1L)).thenReturn(Optional.of(ornek()));
+        mockMvc.perform(delete("/api/belgeler/1").requestAttr("sirketId", 2L))
+                .andExpect(status().isNotFound());
+        verify(belgeRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void shouldNotDownloadOtherCompanyDocument() throws Exception {
+        when(belgeRepository.findByUrlEndingWith("x.pdf")).thenReturn(List.of(ornek()));
+        mockMvc.perform(get("/api/belgeler/indir/x.pdf").requestAttr("sirketId", 2L))
+                .andExpect(status().isNotFound());
     }
 }

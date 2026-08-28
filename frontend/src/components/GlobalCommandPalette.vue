@@ -50,7 +50,7 @@
         </div>
 
         <div
-          v-if="filteredItems.length === 0"
+          v-if="filteredItems && filteredItems.length === 0"
           class="text-center py-8 text-gray-400 text-sm"
         >
           <i class="pi pi-search text-2xl mb-2 block opacity-50" />

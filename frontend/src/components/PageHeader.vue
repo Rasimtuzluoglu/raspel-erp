@@ -82,5 +82,6 @@ const headerDesc = computed(() => props.description || props.subtitle || null)
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 </style>

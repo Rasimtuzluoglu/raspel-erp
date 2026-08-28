@@ -100,7 +100,7 @@ class StokServiceTest {
     @Test
     void guncelle_updates() {
         Stok existing = createStok(1L);
-        when(stokRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(existing));
         StokDTO dto = StokDTO.builder().stokKodu("STK001").ad("Guncel Urun").birim("Adet")
                 .fiyat(BigDecimal.valueOf(150)).miktar(BigDecimal.valueOf(200)).minMiktar(BigDecimal.valueOf(20)).build();
         when(stokRepository.save(any(Stok.class))).thenReturn(existing);
@@ -109,8 +109,26 @@ class StokServiceTest {
     }
 
     @Test
+    void guncelle_miktarDegisinceDuzeltmeHareketiOlusur() {
+        Stok existing = createStok(1L);
+        existing.setMiktar(BigDecimal.valueOf(50));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(existing));
+        StokDTO dto = StokDTO.builder().stokKodu("STK001").ad("Guncel Urun").birim("Adet")
+                .fiyat(BigDecimal.valueOf(150)).miktar(BigDecimal.valueOf(80)).minMiktar(BigDecimal.valueOf(20)).build();
+        when(stokRepository.save(any(Stok.class))).thenReturn(existing);
+
+        stokService.guncelle(1L, dto);
+
+        assertEquals(0, existing.getMiktar().compareTo(BigDecimal.valueOf(80)));
+        var h = org.mockito.ArgumentCaptor.forClass(StokHareket.class);
+        verify(stokHareketRepository).save(h.capture());
+        assertEquals("DUZELTME", h.getValue().getTur());
+        assertEquals(0, h.getValue().getMiktar().compareTo(BigDecimal.valueOf(30)));
+    }
+
+    @Test
     void guncelle_throwsWhenNotFound() {
-        when(stokRepository.findById(99L)).thenReturn(Optional.empty());
+        when(stokRepository.findByIdForUpdate(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> stokService.guncelle(99L, new StokDTO()));
     }
 

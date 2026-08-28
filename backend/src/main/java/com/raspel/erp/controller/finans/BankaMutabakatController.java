@@ -31,7 +31,7 @@ public class BankaMutabakatController {
     }
 
     @PostMapping("/yukle")
-    @Operation(summary = "Hesap özeti yükle", description = "CSV/Excel hesap özetini yükler ve faturalarla otomatik eşleştirir (tarih;aciklama;borc;alacak;bakiye)")
+    @Operation(summary = "Hesap özeti yükle", description = "CSV/Excel/OFX hesap özetini yükler ve faturalarla otomatik eşleştirir (tarih;aciklama;borc;alacak;bakiye)")
     public ResponseEntity<List<BankaHareketiDTO>> yukle(@PathVariable Long bankaId,
                                                         @RequestParam("dosya") MultipartFile dosya,
                                                         HttpServletRequest request) {

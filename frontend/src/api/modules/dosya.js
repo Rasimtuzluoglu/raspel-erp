@@ -36,6 +36,9 @@ export const backupAPI = {
   getSchedule() {
     return apiClient.get('/backups/schedule')
   },
+  dogrula() {
+    return apiClient.get('/backups/dogrula')
+  },
   getCloudConfig() {
     return apiClient.get('/backups/cloud-config')
   },

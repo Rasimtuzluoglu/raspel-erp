@@ -72,6 +72,12 @@ public class BackupController {
         return ResponseEntity.ok(backupService.getSchedule());
     }
 
+    @GetMapping("/dogrula")
+    @Operation(summary = "Yedek doğrula", description = "Son yedeğin varlığını, bütünlüğünü ve güncelliğini kontrol eder")
+    public ResponseEntity<Map<String, Object>> dogrula() {
+        return ResponseEntity.ok(backupService.yedekDogrula());
+    }
+
     @GetMapping("/cloud-config")
     @Operation(summary = "Bulut yedekleme yapılandırması", description = "Bulut sağlayıcı (AWS S3, Google Drive, Dropbox) yapılandırma ve durumunu getirir")
     public ResponseEntity<Map<String, Object>> getCloudConfig() {

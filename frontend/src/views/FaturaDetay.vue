@@ -220,7 +220,7 @@
           </div>
         </div>
         <div
-          v-if="belgeler.length === 0"
+          v-if="belgeler && belgeler.length === 0"
           class="belge-bos"
         >
           Henüz belge eklenmemiş.

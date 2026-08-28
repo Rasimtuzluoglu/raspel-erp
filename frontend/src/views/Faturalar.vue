@@ -43,12 +43,12 @@
       class="table-container"
     >
       <div
-        v-if="selectedItems.length > 0"
+        v-if="selectedItems && selectedItems.length > 0"
         class="batch-action-bar"
       >
         <div class="batch-info">
           <i class="pi pi-check-square" />
-          <span><strong>{{ selectedItems.length }}</strong> kayıt seçildi</span>
+          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> kayıt seçildi</span>
         </div>
         <div class="batch-buttons">
           <Button
@@ -227,7 +227,7 @@
         </Column>
       </DataTable>
       <EmptyState
-        v-if="filtrelenmisFaturalar.length === 0"
+        v-if="filtrelenmisFaturalar && filtrelenmisFaturalar.length === 0"
         message="Henüz fatura yok"
         sub-message="İlk faturanızı oluşturarak satış sürecinizi başlatın."
         icon="pi pi-file"
@@ -717,7 +717,7 @@ const cariOnerileri = ref([])
 
 const cariAra = (event) => {
   const q = (event.query || '').toLowerCase().trim()
-  const kaynak = cariHesapStore.cariHesaplar || []
+  const kaynak = cariHesapStore?.cariHesaplar || []
   if (!q) {
     cariOnerileri.value = kaynak.slice(0, 20)
     return
@@ -853,7 +853,7 @@ const openCreateDialog = () => {
 
 const editFatura = (fatura) => {
   editingId.value = fatura.id
-  seciliCariNesnesi.value = cariHesapStore.cariHesaplar.find((c) => c.id === fatura.cariHesapId) || null
+  seciliCariNesnesi.value = cariHesapStore?.cariHesaplar?.find((c) => c.id === fatura.cariHesapId) || null
   form.value = {
     cariHesapId: fatura.cariHesapId,
     tur: fatura.tur,

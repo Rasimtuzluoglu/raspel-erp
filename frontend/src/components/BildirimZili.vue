@@ -89,7 +89,7 @@
           </div>
         </div>
         <div
-          v-if="filtrelenmisBildirimler.length === 0 && !tercihPaneli"
+          v-if="filtrelenmisBildirimler && filtrelenmisBildirimler.length === 0 && !tercihPaneli"
           class="panel-bos"
         >
           <i class="pi pi-inbox" />

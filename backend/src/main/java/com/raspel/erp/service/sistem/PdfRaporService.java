@@ -33,6 +33,7 @@ import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
+import com.raspel.erp.config.TenantChecker;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +47,7 @@ public class PdfRaporService {
     private final FaturaKalemRepository faturaKalemRepository;
     private final CariHesapRepository cariHesapRepository;
     private final SirketRepository sirketRepository;
+    private final TenantChecker tenantChecker;
 
     private static final PDType1Font BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
     private static final PDType1Font REGULAR = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
@@ -56,6 +58,7 @@ public class PdfRaporService {
     public byte[] faturaRaporu(Long faturaId) {
         Fatura f = faturaRepository.findById(faturaId)
                 .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Fatura", faturaId));
+        tenantChecker.check(f.getSirketId(), "Fatura");
         List<FaturaKalem> kalemler = faturaKalemRepository.findByFaturaId(faturaId);
         String cariAd = "";
         String cariId = "-";
@@ -135,6 +138,7 @@ public class PdfRaporService {
     public byte[] siparisRaporu(Long siparisId) {
         Siparis s = siparisRepository.findById(siparisId)
                 .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Siparis", siparisId));
+        tenantChecker.check(s.getSirketId(), "Siparis");
         List<SiparisKalem> kalemler = siparisKalemRepository.findBySiparisId(siparisId);
         return generatePdf("SIPARIS RAPORU", "Siparis No: " + s.getSiparisNo(),
                 "Tarih: " + s.getTarih(), "Durum: " + s.getDurum(), "Cari ID: " + s.getCariHesapId(),
@@ -146,6 +150,7 @@ public class PdfRaporService {
     public byte[] irsaliyeRaporu(Long irsaliyeId) {
         Irsaliye i = irsaliyeRepository.findById(irsaliyeId)
                 .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Irsaliye", irsaliyeId));
+        tenantChecker.check(i.getSirketId(), "Irsaliye");
         List<IrsaliyeKalem> kalemler = irsaliyeKalemRepository.findByIrsaliyeId(irsaliyeId);
         return generatePdf("IRSALIYE RAPORU", "Irsaliye No: " + i.getIrsaliyeNo(),
                 "Tarih: " + i.getTarih(), "Durum: " + i.getDurum(), "Cari ID: " + i.getCariHesapId(),

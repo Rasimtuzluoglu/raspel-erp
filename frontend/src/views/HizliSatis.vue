@@ -75,7 +75,7 @@
 
         <div class="product-section">
           <div class="product-header">
-            <h3>Mevcut Ürünler ({{ filtrelenmisUrunler.length }})</h3>
+            <h3>Mevcut Ürünler ({{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }})</h3>
           </div>
           <div class="product-grid">
             <div
@@ -104,7 +104,7 @@
               </div>
             </div>
             <div
-              v-if="filtrelenmisUrunler.length === 0"
+              v-if="filtrelenmisUrunler && filtrelenmisUrunler.length === 0"
               class="empty-products"
             >
               <i class="pi pi-inbox" />
@@ -222,9 +222,9 @@
         <Card class="sepet-card">
           <template #title>
             <div class="sepet-header">
-              <span>Sipariş Özeti ({{ sepet.length }})</span>
+              <span>Sipariş Özeti ({{ sepet ? sepet.length : 0 }})</span>
               <Button
-                v-if="sepet.length"
+                v-if="sepet && sepet.length"
                 label="Temizle"
                 icon="pi pi-trash"
                 severity="danger"
@@ -235,7 +235,7 @@
           </template>
           <template #content>
             <div
-              v-if="sepet.length === 0"
+              v-if="sepet && sepet.length === 0"
               class="sepet-bos"
             >
               Sepete ürün ekleyin
@@ -485,7 +485,7 @@
                   </div>
                   <div class="fis-odeme-satir fis-odeme-durum">
                     <span>Toplam Ürün</span>
-                    <span>{{ sepet.length }}</span>
+                    <span>{{ sepet ? sepet.length : 0 }}</span>
                   </div>
                   <div class="fis-odeme-satir fis-odeme-durum">
                     <span>Durum</span>
@@ -893,13 +893,13 @@ const filtreleriTemizle = () => {
 
 const musteriAra = (event) => {
   const query = event.query
-  if (!query || query.length < 1) {
-    musteriOnerileri.value = cariHesapStore.cariHesaplar.slice(0, 20)
+  const kaynak = cariHesapStore?.cariHesaplar || []
+  if (!query) {
+    musteriOnerileri.value = kaynak.slice(0, 20)
     return
   }
   const q = query.toLowerCase()
-  musteriOnerileri.value = cariHesapStore.cariHesaplar
-    .filter(
+  musteriOnerileri.value = kaynak.filter(
       (c) => c.ad?.toLowerCase().includes(q) || c.vergiNo?.toLowerCase().includes(q) || c.telefon?.includes(query)
     )
     .slice(0, 20)

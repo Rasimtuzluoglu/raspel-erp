@@ -57,9 +57,21 @@ class PersonelControllerTest {
         var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").build());
         when(personelService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
-        mockMvc.perform(get("/api/personel").param("sirketId", "1"))
+        mockMvc.perform(get("/api/personel").param("sirketId", "1").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].ad").value("Ahmet"));
+        verify(personelService).tumunuGetir(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    void shouldIgnoreSirketIdQueryParam() throws Exception {
+        var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").build());
+        when(personelService.tumunuGetir(eq(7L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/personel").param("sirketId", "999").requestAttr("sirketId", 7L))
+                .andExpect(status().isOk());
+        verify(personelService).tumunuGetir(eq(7L), any(Pageable.class));
+        verify(personelService, never()).tumunuGetir(eq(999L), any(Pageable.class));
     }
 
     @Test

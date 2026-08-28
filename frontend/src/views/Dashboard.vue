@@ -1268,4 +1268,19 @@ const whatsappLink = (f) => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+@media (max-width: 900px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header-sag {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .dashboard-datetime {
+    white-space: normal;
+  }
+}
 </style>

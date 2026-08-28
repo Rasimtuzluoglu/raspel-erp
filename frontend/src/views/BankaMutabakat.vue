@@ -31,7 +31,7 @@
         <input
           ref="dosyaInput"
           type="file"
-          accept=".csv,.xlsx,.txt"
+          accept=".csv,.xlsx,.txt,.ofx,.qfx"
           hidden
           @change="dosyaSecildi"
         >
@@ -58,7 +58,7 @@
       class="mutabakat-ozet"
     >
       <div class="ozet-kutu">
-        <span>Toplam Hareket</span><strong>{{ hareketler.length }}</strong>
+        <span>Toplam Hareket</span><strong>{{ hareketler ? hareketler.length : 0 }}</strong>
       </div>
       <div class="ozet-kutu">
         <span>Eşleşen</span><strong class="pozitif">{{ eslesenSayisi }}</strong>

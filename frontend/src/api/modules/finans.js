@@ -169,5 +169,11 @@ export const muhasebeAPI = {
   },
   getDefteriKebir(params) {
     return apiClient.get('/muhasebe/defteri-kebir', { params })
+  },
+  getBilanco() {
+    return apiClient.get('/muhasebe/bilanco')
+  },
+  getKarZarar(params) {
+    return apiClient.get('/muhasebe/kar-zarar', { params })
   }
 }

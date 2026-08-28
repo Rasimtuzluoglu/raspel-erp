@@ -86,7 +86,7 @@ public class FaturaService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "faturalar", key = "#id")
+    @Cacheable(value = "faturalar", key = "T(com.raspel.erp.config.TenantChecker).tenantKey(#id)")
     public FaturaDTO faturaGetir(Long id) {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));

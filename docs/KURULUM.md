@@ -47,6 +47,10 @@ POSTGRES_PASSWORD=<güçlü-parola>
 REDIS_PASSWORD=<güçlü-parola>
 JWT_SECRET=<uzun-rastgele-base64>
 
+# Traefik dashboard / adminer erişimi (zorunlu; yoksa dashboard fail-closed kalır)
+# Üretmek için: docker run --rm httpd:alpine htpasswd -nb admin GUCLU_SIFRENIZ
+DASHBOARD_BASIC_AUTH=admin:<htpasswd-hash>
+
 # SSL
 ACME_EMAIL=sizi@mail.com
 APP_DOMAIN=erp.sirketiniz.com
@@ -74,7 +78,7 @@ Traefik yapılandırması hazırdır; HTTPS otomatik etkinleşir:
 - [ ] HTTPS çalışıyor (https://alan-adiniz)
 - [ ] SMTP e-postası test edildi
 - [ ] Grafana varsayılan parolası değiştirildi
-- [ ] Traefik dashboard parolası değiştirildi (config/traefik/dynamic.yml)
+- [ ] `DASHBOARD_BASIC_AUTH` .env dosyasında güçlü bir parola ile tanımlandı (config/traefik/dynamic.yml artık .env'den okur)
 
 ## 3. Yedekleme
 
