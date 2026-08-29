@@ -1202,6 +1202,8 @@ body {
     height: 100vh;
     flex-direction: column;
     flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
     padding: 0;
     overflow-y: auto;
     z-index: 1000;
