@@ -177,6 +177,13 @@ public class KullaniciController {
     @Operation(summary = "Oturum sonlandır", description = "Belirtilen oturumu iptal eder (admin veya oturum sahibi)")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Void> oturumIptal(@PathVariable String jti, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        boolean admin = request.isUserInRole("ROLE_ADMIN");
+        AktifOturumDTO oturum = aktifOturumService.oturumGetir(jti);
+        if (!admin && oturum != null && oturum.getKullaniciId() != null
+                && !oturum.getKullaniciId().equals(kullaniciId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         aktifOturumService.oturumIptal(jti);
         return ResponseEntity.noContent().build();
     }

@@ -96,6 +96,18 @@ public class AktifOturumService {
         }
     }
 
+    /** Oturumu jti'ye göre getirir (yoksa null). */
+    public AktifOturumDTO oturumGetir(String jti) {
+        if (jti == null) return null;
+        try {
+            String json = redisTemplate.opsForValue().get(SESSION_KEY + jti);
+            return json == null ? null : objectMapper.readValue(json, AktifOturumDTO.class);
+        } catch (Exception e) {
+            log.warn("Oturum okunamadı: {}", e.getMessage());
+            return null;
+        }
+    }
+
     /** Token'ın iptal edilip edilmediğini kontrol eder. */
     public boolean iptalEdilmis(String jti) {
         if (jti == null) return false;

@@ -1,6 +1,8 @@
 package com.raspel.erp.aspect;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.raspel.erp.service.sistem.AuditLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +19,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Aspect
 @Component
@@ -26,6 +29,12 @@ public class AuditAspect {
 
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
+
+    /** Denetim izine yazılmaması gereken hassas alanlar (küçük harf karşılaştırılır). */
+    private static final Set<String> HASSAS_ALANLAR = Set.of(
+            "password", "sifre", "secret", "apikey", "api_key",
+            "token", "twostepsecret", "twofactorsecret", "two_factor_secret"
+    );
 
     @Pointcut("execution(* com.raspel.erp.controller..*.olustur(..))")
     public void createPointcut() {}
@@ -97,9 +106,39 @@ public class AuditAspect {
         if (anlamli.isEmpty()) return null;
         try {
             Object hedef = anlamli.size() == 1 ? anlamli.get(0) : anlamli;
-            return objectMapper.writeValueAsString(hedef);
+            return hassasAlanlariGizle(objectMapper.writeValueAsString(hedef));
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /** JSON'daki hassas alanları (şifre, token vb.) "***" ile maskeler. */
+    private String hassasAlanlariGizle(String json) {
+        try {
+            JsonNode node = objectMapper.readTree(json);
+            gizle(node);
+            return objectMapper.writeValueAsString(node);
+        } catch (Exception e) {
+            return json;
+        }
+    }
+
+    private void gizle(JsonNode node) {
+        if (node == null) return;
+        if (node.isObject()) {
+            List<String> keys = new ArrayList<>();
+            node.fieldNames().forEachRemaining(keys::add);
+            for (String key : keys) {
+                if (HASSAS_ALANLAR.contains(key.toLowerCase())) {
+                    ((ObjectNode) node).put(key, "***");
+                } else {
+                    gizle(node.get(key));
+                }
+            }
+        } else if (node.isArray()) {
+            for (JsonNode child : node) {
+                gizle(child);
+            }
         }
     }
 }
