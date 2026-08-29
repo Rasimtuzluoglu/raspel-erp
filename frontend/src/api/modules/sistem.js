@@ -48,6 +48,12 @@ export const kullaniciAPI = {
   },
   oturumIptal(jti) {
     return apiClient.delete(`/kullanicilar/oturum/${jti}`)
+  },
+  bildirimTercihleriGetir() {
+    return apiClient.get('/kullanicilar/bildirim-tercihleri')
+  },
+  bildirimTercihleriGuncelle(tercihler) {
+    return apiClient.put('/kullanicilar/bildirim-tercihleri', tercihler)
   }
 }
 

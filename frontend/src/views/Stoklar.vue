@@ -255,6 +255,12 @@
               @click.stop="editStok(s.data)"
             />
             <Button
+              icon="pi pi-barcode"
+              class="p-button-rounded p-button-success p-button-sm"
+              style="margin-right: 6px"
+              @click.stop="barkodEtiket(s.data)"
+            />
+            <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
               @click.stop="confirmDel(s.data.id)"
@@ -738,6 +744,45 @@
       :hareketler="hareketler"
       :hareketler-yukleniyor="hareketlerYukleniyor"
     />
+
+    <Dialog
+      v-model:visible="etiketDialog"
+      header="Barkod Etiket"
+      :modal="true"
+      style="width: 320px"
+    >
+      <div class="etiket-kart">
+        <div class="etiket-ad">
+          {{ etiketStok?.ad }}
+        </div>
+        <div class="etiket-kod">
+          {{ etiketStok?.stokKodu || etiketStok?.barkod }}
+        </div>
+        <img
+          v-if="etiketStok?.barkod"
+          :src="etiketQr(etiketStok.barkod)"
+          alt="Barkod"
+          class="etiket-qr"
+        >
+        <div class="etiket-fiyat">
+          {{ formatCurrency(etiketStok?.satisFiyati) }}
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Kapat"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="etiketDialog = false"
+        />
+        <Button
+          label="Yazdır"
+          icon="pi pi-print"
+          class="p-button-primary"
+          @click="etiketYazdir"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -796,6 +841,35 @@ const hareketler = ref([])
 const hareketlerYukleniyor = ref(false)
 const saving = ref(false)
 const gosterim = ref('tablo')
+
+const etiketDialog = ref(false)
+const etiketStok = ref(null)
+
+const barkodEtiket = (stok) => {
+  etiketStok.value = stok
+  etiketDialog.value = true
+}
+
+const etiketQr = (deger) => `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(deger)}&size=160x160`
+
+const etiketYazdir = () => {
+  const win = window.open('', '_blank', 'width=400,height=500')
+  if (!win) return
+  win.document.write(`
+    <html><head><title>Barkod Etiket</title></head>
+    <body style="font-family: sans-serif; text-align: center; padding: 20px;">
+      <div style="font-size: 22px; font-weight: 700;">${etiketStok.value?.ad || ''}</div>
+      <div style="font-size: 16px; color: #555;">${etiketStok.value?.stokKodu || etiketStok.value?.barkod || ''}</div>
+      ${etiketStok.value?.barkod ? `<img src="${etiketQr(etiketStok.value.barkod)}" width="200" height="200" />` : ''}
+      <div style="font-size: 20px; font-weight: 700; margin-top: 10px;">${formatCurrency(etiketStok.value?.satisFiyati)}</div>
+    </body></html>
+  `)
+  win.document.close()
+  setTimeout(() => {
+    win.focus()
+    win.print()
+  }, 800)
+}
 
 const showDialog = ref(false)
 const editingId = ref(null)
@@ -1164,6 +1238,33 @@ const formatDate = (d) =>
 </script>
 
 <style scoped>
+.etiket-kart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.etiket-ad {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+}
+.etiket-kod {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+.etiket-qr {
+  width: 160px;
+  height: 160px;
+}
+.etiket-fiyat {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
 .foto-satir {
   display: flex;
   align-items: center;

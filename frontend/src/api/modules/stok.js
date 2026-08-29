@@ -72,6 +72,24 @@ export const depoAPI = {
   }
 }
 
+export const depoTransferAPI = {
+  getAll() {
+    return apiClient.get('/depo-transferler')
+  },
+  bekleyenler() {
+    return apiClient.get('/depo-transferler/bekleyenler')
+  },
+  talepOlustur(data) {
+    return apiClient.post('/depo-transferler', data)
+  },
+  onayla(id) {
+    return apiClient.post(`/depo-transferler/${id}/onayla`)
+  },
+  reddet(id) {
+    return apiClient.post(`/depo-transferler/${id}/reddet`)
+  }
+}
+
 export const kategoriAPI = {
   getAll() {
     return apiClient.get('/kategoriler')

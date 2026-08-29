@@ -188,6 +188,22 @@ public class KullaniciController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/bildirim-tercihleri")
+    @Operation(summary = "Bildirim tercihlerini getir", description = "Oturum açmış kullanıcının bildirim tercihlerini döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<String>> bildirimTercihleriGetir(HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(kullaniciService.bildirimTercihleriGetir(kullaniciId));
+    }
+
+    @PutMapping("/bildirim-tercihleri")
+    @Operation(summary = "Bildirim tercihlerini güncelle", description = "Oturum açmış kullanıcının bildirim tercihlerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<String>> bildirimTercihleriGuncelle(@RequestBody List<String> tercihler, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(kullaniciService.bildirimTercihleriGuncelle(kullaniciId, tercihler));
+    }
+
     private void jwtCookieEkle(HttpServletResponse response, String token) {
         if (token == null || token.isBlank()) return;
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)

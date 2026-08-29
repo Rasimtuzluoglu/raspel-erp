@@ -12,6 +12,12 @@
           @click="transferDialog = true"
         />
         <Button
+          label="Transfer Talepleri"
+          icon="pi pi-list"
+          class="p-button-warning p-button-outlined"
+          @click="talepDialogAc"
+        />
+        <Button
           label="Yeni Depo"
           icon="pi pi-plus"
           @click="dialogAc()"
@@ -281,6 +287,69 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="talepDialog"
+      header="Transfer Talepleri"
+      :modal="true"
+      style="width: 720px"
+    >
+      <DataTable
+        :value="transferTalepleri"
+        striped-rows
+        size="small"
+        :loading="talepYukleniyor"
+      >
+        <Column header="Kaynak Depo">
+          <template #body="{ data }">
+            {{ data.kaynakDepoAd || data.kaynakDepoId }}
+          </template>
+        </Column>
+        <Column header="Hedef Depo">
+          <template #body="{ data }">
+            {{ data.hedefDepoAd || data.hedefDepoId }}
+          </template>
+        </Column>
+        <Column header="Stok">
+          <template #body="{ data }">
+            {{ data.stokAd || data.stokId }}
+          </template>
+        </Column>
+        <Column header="Miktar">
+          <template #body="{ data }">
+            {{ data.miktar }}
+          </template>
+        </Column>
+        <Column header="Durum">
+          <template #body="{ data }">
+            <Tag
+              :value="data.durum"
+              :severity="data.durum === 'BEKLIYOR' ? 'warning' : data.durum === 'ONAYLANDI' ? 'success' : 'danger'"
+            />
+          </template>
+        </Column>
+        <Column
+          header=""
+          style="width: 100px"
+        >
+          <template #body="{ data }">
+            <template v-if="data.durum === 'BEKLIYOR'">
+              <Button
+                icon="pi pi-check"
+                class="p-button-rounded p-button-success p-button-sm"
+                style="margin-right: 6px"
+                @click="talepOnayla(data)"
+              />
+              <Button
+                icon="pi pi-times"
+                class="p-button-rounded p-button-danger p-button-sm"
+                @click="talepReddet(data)"
+              />
+            </template>
+          </template>
+        </Column>
+      </DataTable>
+    </Dialog>
   </div>
 </template>
 
@@ -289,7 +358,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { depoAPI, subeAPI, stokAPI } from '../api/index.js'
+import { depoAPI, subeAPI, stokAPI, depoTransferAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 
 const toast = useToast()
@@ -430,6 +499,47 @@ const transferYap = async () => {
     toastBildirim.hata(err?.response?.data?.message || 'Transfer başarısız')
   }
   transferLoading.value = false
+}
+
+const talepDialog = ref(false)
+const transferTalepleri = ref([])
+const talepYukleniyor = ref(false)
+
+const talepDialogAc = async () => {
+  talepDialog.value = true
+  await talepYukle()
+}
+
+const talepYukle = async () => {
+  talepYukleniyor.value = true
+  try {
+    const r = await depoTransferAPI.getAll()
+    transferTalepleri.value = r.data || []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Talepler yüklenemedi')
+  } finally {
+    talepYukleniyor.value = false
+  }
+}
+
+const talepOnayla = async (t) => {
+  try {
+    await depoTransferAPI.onayla(t.id)
+    toastBildirim.basarili('Transfer onaylandı')
+    talepYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Onaylama başarısız')
+  }
+}
+
+const talepReddet = async (t) => {
+  try {
+    await depoTransferAPI.reddet(t.id)
+    toastBildirim.basarili('Transfer reddedildi')
+    talepYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Reddetme başarısız')
+  }
 }
 </script>
 

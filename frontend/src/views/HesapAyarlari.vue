@@ -440,6 +440,42 @@
           </div>
         </template>
       </Card>
+
+      <!-- BİLDİRİM TERCİHLERİ -->
+      <Card class="ayar-kart">
+        <template #title>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+            <div>
+              <i
+                class="pi pi-bell"
+                style="margin-right: 8px"
+              />Bildirim Tercihleri
+            </div>
+            <Button
+              icon="pi pi-save"
+              label="Kaydet"
+              class="p-button-sm p-button-primary"
+              :loading="tercihKaydediliyor"
+              @click="tercihleriKaydet"
+            />
+          </div>
+        </template>
+        <template #content>
+          <p class="ai-aciklama">
+            Hangi bildirim türlerini almak istediğinizi seçin (uygulama içi ve e-posta).
+          </p>
+          <div
+            v-for="t in bildirimTipleri"
+            :key="t.value"
+            class="tercih-satir"
+          >
+            <span>{{ t.label }}</span>
+            <ToggleSwitch
+              v-model="t.secili"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
@@ -625,6 +661,7 @@ onMounted(async () => {
   }
   await aiConfigGetir()
   oturumlariYukle()
+  tercihleriYukle()
 })
 
 const aktifOturumlar = ref([])
@@ -649,6 +686,37 @@ const oturumSonlandir = async (oturum) => {
     oturumlariYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Oturum sonlandırılamadı')
+  }
+}
+
+const bildirimTipleri = ref([
+  { label: 'Fatura Bildirimleri', value: 'FATURA', secili: true },
+  { label: 'Sistem Hata Uyarıları', value: 'HATA', secili: true },
+  { label: 'Anomali Tespitleri', value: 'ANOMALI', secili: true },
+  { label: 'Hatırlatıcılar', value: 'HATIRLATMA', secili: true }
+])
+const tercihKaydediliyor = ref(false)
+
+const tercihleriYukle = async () => {
+  try {
+    const r = await kullaniciAPI.bildirimTercihleriGetir()
+    const secili = r.data || []
+    bildirimTipleri.value.forEach((t) => { t.secili = secili.includes(t.value) })
+  } catch {
+    /* empty */
+  }
+}
+
+const tercihleriKaydet = async () => {
+  tercihKaydediliyor.value = true
+  try {
+    const secili = bildirimTipleri.value.filter((t) => t.secili).map((t) => t.value)
+    await kullaniciAPI.bildirimTercihleriGuncelle(secili)
+    toastBildirim.basarili('Bildirim tercihleri güncellendi')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Tercihler kaydedilemedi')
+  } finally {
+    tercihKaydediliyor.value = false
   }
 }
 
@@ -854,6 +922,14 @@ const kopyala = async (text) => {
 }
 .mt-3 {
   margin-top: 0.75rem;
+}
+.tercih-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
 }
 </style>
 

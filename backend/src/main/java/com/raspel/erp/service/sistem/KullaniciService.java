@@ -109,6 +109,32 @@ public class KullaniciService {
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id)));
     }
 
+    public List<String> bildirimTercihleriGetir(Long kullaniciId) {
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
+        return parseTercihler(k.getBildirimTercihleri());
+    }
+
+    public List<String> bildirimTercihleriGuncelle(Long kullaniciId, List<String> tercihler) {
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
+        k.setBildirimTercihleri(serializeTercihler(tercihler));
+        kullaniciRepository.save(k);
+        return tercihler != null ? tercihler : List.of();
+    }
+
+    private List<String> parseTercihler(String ham) {
+        if (ham == null || ham.isBlank()) return new java.util.ArrayList<>();
+        return java.util.Arrays.stream(ham.split(","))
+                .map(String::trim).filter(s -> !s.isBlank()).collect(Collectors.toList());
+    }
+
+    private String serializeTercihler(List<String> tercihler) {
+        if (tercihler == null || tercihler.isEmpty()) return null;
+        return tercihler.stream().map(String::trim).filter(s -> !s.isBlank())
+                .collect(Collectors.joining(","));
+    }
+
     public KullaniciDTO olustur(KullaniciDTO dto) {
         if (dto.getPassword() == null || dto.getPassword().isBlank()) {
             throw new BusinessException("Kullanici sifresi zorunludur");

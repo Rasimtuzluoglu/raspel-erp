@@ -52,6 +52,20 @@
       </div>
     </div>
 
+    <div
+      v-if="rolHizliEylemler.length"
+      class="rol-eylemler"
+    >
+      <Button
+        v-for="a in rolHizliEylemler"
+        :key="a.route"
+        :label="a.label"
+        :icon="a.icon"
+        class="p-button-sm p-button-outlined"
+        @click="router.push(a.route)"
+      />
+    </div>
+
     <Card
       v-if="widgetAyarlariGoster"
       class="widget-ayarlari"
@@ -500,6 +514,40 @@ const karsilamaMetni = computed(() => {
   if (saat < 18) return 'İyi günler'
   return 'İyi akşamlar'
 })
+
+const rolHizliEylemler = computed(() => {
+  const rol = authStore?.kullanici?.role
+  const eylemler = {
+    ADMIN: [
+      { label: 'Yönetici Kokpiti', route: '/yonetici-kokpiti', icon: 'pi pi-chart-line' },
+      { label: 'Yeni Fatura', route: '/faturalar', icon: 'pi pi-file' },
+      { label: 'Yeni Stok', route: '/stoklar', icon: 'pi pi-box' },
+      { label: 'Kullanıcılar', route: '/kullanicilar', icon: 'pi pi-users' }
+    ],
+    SATIS: [
+      { label: 'Hızlı Satış', route: '/hizli-satis', icon: 'pi pi-bolt' },
+      { label: 'Yeni Fatura', route: '/faturalar', icon: 'pi pi-file' },
+      { label: 'Teklifler', route: '/teklifler', icon: 'pi pi-receipt' },
+      { label: 'CRM', route: '/crm', icon: 'pi pi-star' }
+    ],
+    MUHASEBE: [
+      { label: 'Muhasebe', route: '/muhasebe', icon: 'pi pi-calculator' },
+      { label: 'Bütçeler', route: '/butceler', icon: 'pi pi-chart-bar' },
+      { label: 'Raporlar', route: '/raporlar', icon: 'pi pi-file' }
+    ],
+    DEPO: [
+      { label: 'Depolar', route: '/depolar', icon: 'pi pi-warehouse' },
+      { label: 'Stoklar', route: '/stoklar', icon: 'pi pi-box' },
+      { label: 'Kritik Stok', route: '/kritik-stok', icon: 'pi pi-exclamation-triangle' }
+    ],
+    PERSONEL: [
+      { label: 'Personel', route: '/personel', icon: 'pi pi-id-card' },
+      { label: 'İzinler', route: '/izinler', icon: 'pi pi-calendar' },
+      { label: 'Puantaj', route: '/puantaj', icon: 'pi pi-clock' }
+    ]
+  }
+  return eylemler[rol] || []
+})
 const widgetVarsayilan = () => ({
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
@@ -658,6 +706,12 @@ const whatsappLink = (f) => {
 <style scoped>
 .dashboard-container {
   padding: 0;
+}
+.rol-eylemler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 .dashboard-header {
   display: flex;

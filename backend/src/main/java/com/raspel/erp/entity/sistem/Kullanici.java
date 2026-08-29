@@ -67,6 +67,9 @@ public class Kullanici {
     @Builder.Default
     private Long tokenVersion = 0L;
 
+    @Column(name = "bildirim_tercihleri", columnDefinition = "TEXT")
+    private String bildirimTercihleri;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
