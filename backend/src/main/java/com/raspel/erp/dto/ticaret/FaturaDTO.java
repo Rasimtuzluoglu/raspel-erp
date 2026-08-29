@@ -38,6 +38,7 @@ public class FaturaDTO {
     private BigDecimal kdv;
     private BigDecimal genelToplam;
     private BigDecimal genelIskontoTutari;
+    private BigDecimal toplamAgirlik;
     private String odemeDurumu;
     private BigDecimal odenenTutar;
     private BigDecimal kalanTutar;

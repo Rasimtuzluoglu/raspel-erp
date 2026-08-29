@@ -171,6 +171,12 @@
           <span>Genel Toplam:</span><span>{{ formatCurrency(fatura.genelToplam) }}</span>
         </div>
         <div
+          v-if="fatura.toplamAgirlik > 0"
+          class="ozet-row total"
+        >
+          <span>Toplam Ağırlık:</span><span>{{ fatura.toplamAgirlik }} kg</span>
+        </div>
+        <div
           v-if="fatura.odemeDurumu"
           class="ozet-row odeme"
         >

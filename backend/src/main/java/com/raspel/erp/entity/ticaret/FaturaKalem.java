@@ -43,6 +43,9 @@ public class FaturaKalem {
     @Column(name = "stok_id")
     private Long stokId;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal agirlik;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

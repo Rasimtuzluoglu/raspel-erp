@@ -123,7 +123,17 @@ public class PdfRaporService {
                 cs.setFont(BOLD, 12);
                 cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 120 + MARGIN, y); cs.showText("Genel Toplam:"); cs.endText();
                 cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 40 + MARGIN, y); cs.showText(genelToplam + " TL"); cs.endText();
-                y -= 40;
+                y -= 20;
+
+                BigDecimal toplamAgirlik = kalemler.stream()
+                        .map(k -> k.getAgirlik() != null ? k.getAgirlik().multiply(BigDecimal.valueOf(k.getAdet())) : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (toplamAgirlik.compareTo(BigDecimal.ZERO) > 0) {
+                    cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 120 + MARGIN, y); cs.showText("Toplam Ağırlık:"); cs.endText();
+                    cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 40 + MARGIN, y); cs.showText(toplamAgirlik.stripTrailingZeros().toPlainString() + " kg"); cs.endText();
+                    y -= 20;
+                }
+                y -= 20;
 
                 cs.setFont(BOLD_OBLIQUE, 9);
                 cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RasPel ERP - Otomatik Oluşturulmuştur"); cs.endText();

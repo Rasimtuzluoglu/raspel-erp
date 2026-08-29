@@ -32,4 +32,5 @@ public class FaturaKalemDTO {
     private Long stokId;
     private String stokAd;
     private String stokKodu;
+    private BigDecimal agirlik;
 }

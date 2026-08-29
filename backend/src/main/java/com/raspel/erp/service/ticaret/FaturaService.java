@@ -200,6 +200,16 @@ public class FaturaService {
                 ? dto.getFaturaNumarasi()
                 : seriNoServisi.faturaNoUret(sirketId);
 
+        List<Long> stokIdler = dto.getKalemler().stream()
+                .map(FaturaKalemDTO::getStokId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, BigDecimal> agirlikHaritasi = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .filter(s -> s.getAgirlik() != null)
+                        .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
+
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
@@ -217,6 +227,7 @@ public class FaturaService {
                     .iskontoOrani(iskontoOrani)
                     .tutar(kalemTutar)
                     .stokId(k.getStokId())
+                    .agirlik(k.getStokId() != null ? agirlikHaritasi.get(k.getStokId()) : null)
                     .build();
         }).collect(Collectors.toList());
 
@@ -403,6 +414,16 @@ public class FaturaService {
             throw new BusinessException("Geçersiz fatura türü: " + dto.getTur());
         }
 
+        List<Long> stokIdler = dto.getKalemler().stream()
+                .map(FaturaKalemDTO::getStokId)
+                .filter(sid -> sid != null)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, BigDecimal> agirlikHaritasi = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .filter(s -> s.getAgirlik() != null)
+                        .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
+
         List<FaturaKalem> yeniKalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
@@ -419,6 +440,7 @@ public class FaturaService {
                     .iskontoOrani(iskontoOrani)
                     .tutar(kalemTutar)
                     .stokId(k.getStokId())
+                    .agirlik(k.getStokId() != null ? agirlikHaritasi.get(k.getStokId()) : null)
                     .build();
         }).collect(Collectors.toList());
 
@@ -663,8 +685,15 @@ public class FaturaService {
                     .stokId(k.getStokId())
                     .stokAd(stokAd)
                     .stokKodu(stokKodu)
+                    .agirlik(k.getAgirlik())
                     .build();
         }).collect(Collectors.toList());
+
+        BigDecimal toplamAgirlik = fatura.getKalemler().stream()
+                .map(k -> k.getAgirlik() != null
+                        ? k.getAgirlik().multiply(BigDecimal.valueOf(k.getAdet()))
+                        : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return FaturaDTO.builder()
                 .id(fatura.getId())
@@ -680,6 +709,7 @@ public class FaturaService {
                 .kdv(fatura.getKdv())
                 .genelToplam(fatura.getGenelToplam())
                 .genelIskontoTutari(fatura.getGenelIskontoTutari())
+                .toplamAgirlik(toplamAgirlik)
                 .odemeDurumu(fatura.getOdemeDurumu())
                 .odenenTutar(fatura.getOdenenTutar())
                 .kalanTutar(fatura.getKalanTutar())
