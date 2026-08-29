@@ -40,6 +40,10 @@ class PostgresEntegrasyonTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
+        // Gercek PostgreSQL uzerinde tablolari Flyway olusturur (H2 profili flyway'i kapatir)
+        registry.add("spring.flyway.enabled", () -> "true");
+        // H2 icin yazilmis schema.sql PostgreSQL'de calismaz; devre disi birakilir
+        registry.add("spring.sql.init.mode", () -> "never");
     }
 
     @Autowired

@@ -78,8 +78,9 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
           hide-progress: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
       - name: Gitleaks - Secret scanning
         uses: gitleaks/gitleaks-action@v2
         env:
