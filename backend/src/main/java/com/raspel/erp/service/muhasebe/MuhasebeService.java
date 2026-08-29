@@ -179,15 +179,15 @@ public class MuhasebeService {
     public List<MizanSatiriDTO> mizanGetir(Long sirketId, LocalDate baslangic, LocalDate bitis) {
         LocalDate bas = baslangic != null ? baslangic : LocalDate.now().minusYears(1);
         LocalDate bit = bitis != null ? bitis : LocalDate.now();
-        List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findBySirketId(sirketId);
         Map<Long, MuhasebeFisi> fisMap = new HashMap<>();
-        muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(sirketId).forEach(f -> fisMap.put(f.getId(), f));
+        muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(sirketId, bas, bit)
+                .forEach(f -> fisMap.put(f.getId(), f));
+        List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findBySirketIdAndFisTarihBetween(sirketId, bas, bit);
         Map<String, MizanSatiriDTO> harita = new TreeMap<>();
 
         for (MuhasebeFisKalem k : kalemler) {
             MuhasebeFisi fis = fisMap.get(k.getFisId());
             if (fis == null || "IPTAL".equals(fis.getDurum())) continue;
-            if (fis.getTarih().isBefore(bas) || fis.getTarih().isAfter(bit)) continue;
             MizanSatiriDTO satir = harita.computeIfAbsent(k.getHesapKodu(), kod -> MizanSatiriDTO.builder()
                     .hesapKodu(kod)
                     .hesapAdi(k.getHesapAdi())
@@ -302,9 +302,10 @@ public class MuhasebeService {
     public List<DefteriKebirSatiriDTO> defteriKebirGetir(Long sirketId, String hesapKodu, LocalDate baslangic, LocalDate bitis) {
         LocalDate bas = baslangic != null ? baslangic : LocalDate.now().minusYears(1);
         LocalDate bit = bitis != null ? bitis : LocalDate.now();
-        List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findBySirketId(sirketId);
         Map<Long, MuhasebeFisi> fisMap = new HashMap<>();
-        muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(sirketId).forEach(f -> fisMap.put(f.getId(), f));
+        muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(sirketId, bas, bit)
+                .forEach(f -> fisMap.put(f.getId(), f));
+        List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findBySirketIdAndFisTarihBetween(sirketId, bas, bit);
 
         List<DefteriKebirSatiriDTO> sonuc = new ArrayList<>();
         BigDecimal bakiye = BigDecimal.ZERO;
@@ -314,7 +315,6 @@ public class MuhasebeService {
                 .collect(Collectors.toList())) {
             MuhasebeFisi fis = fisMap.get(k.getFisId());
             if (fis == null || "IPTAL".equals(fis.getDurum())) continue;
-            if (fis.getTarih().isBefore(bas) || fis.getTarih().isAfter(bit)) continue;
             bakiye = bakiye.add(k.getBorc()).subtract(k.getAlacak());
             sonuc.add(DefteriKebirSatiriDTO.builder()
                     .tarih(fis.getTarih())

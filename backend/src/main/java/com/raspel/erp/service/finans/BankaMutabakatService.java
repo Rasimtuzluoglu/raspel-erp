@@ -25,6 +25,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,8 +51,16 @@ public class BankaMutabakatService {
     };
 
     public List<BankaHareketiDTO> listele(Long bankaId) {
-        return bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId)
-                .stream().map(this::entityToDTO).collect(Collectors.toList());
+        List<BankaHareketi> hareketler = bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId);
+        // N+1 önlemi: eşleşen fatura numaralarını tek sorguda topla
+        Set<Long> faturaIds = hareketler.stream()
+                .map(BankaHareketi::getEslesenFaturaId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> faturaNoMap = faturaIds.isEmpty() ? Map.of()
+                : faturaRepository.findAllById(faturaIds).stream()
+                        .collect(Collectors.toMap(Fatura::getId, Fatura::getFaturaNumarasi));
+        return hareketler.stream().map(h -> entityToDTO(h, faturaNoMap)).collect(Collectors.toList());
     }
 
     public int yukle(Long bankaId, MultipartFile dosya, Long sirketId) {
@@ -259,10 +270,18 @@ public class BankaMutabakatService {
     }
 
     private BankaHareketiDTO entityToDTO(BankaHareketi h) {
+        return entityToDTO(h, Map.of());
+    }
+
+    private BankaHareketiDTO entityToDTO(BankaHareketi h, Map<Long, String> faturaNoMap) {
         String faturaNo = null;
         if (h.getEslesenFaturaId() != null) {
-            faturaNo = faturaRepository.findById(h.getEslesenFaturaId())
-                    .map(Fatura::getFaturaNumarasi).orElse(null);
+            if (faturaNoMap.containsKey(h.getEslesenFaturaId())) {
+                faturaNo = faturaNoMap.get(h.getEslesenFaturaId());
+            } else {
+                faturaNo = faturaRepository.findById(h.getEslesenFaturaId())
+                        .map(Fatura::getFaturaNumarasi).orElse(null);
+            }
         }
         return BankaHareketiDTO.builder()
                 .id(h.getId()).bankaId(h.getBankaId()).tarih(h.getTarih())

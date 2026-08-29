@@ -4,14 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raspel.erp.dto.sistem.AktifOturumDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,9 +55,9 @@ public class AktifOturumService {
         try {
             List<String> jtiler = new ArrayList<>();
             if (tumu || kullaniciId == null) {
-                Set<String> anahtarlar = redisTemplate.keys(SESSION_KEY + "*");
-                if (anahtarlar != null) {
-                    for (String k : anahtarlar) jtiler.add(k.substring(SESSION_KEY.length()));
+                // KEYS yerine SCAN kullanılır (production'da Redis'i bloklamaz).
+                for (String anahtar : scanKeys(SESSION_KEY + "*")) {
+                    jtiler.add(anahtar.substring(SESSION_KEY.length()));
                 }
             } else {
                 Set<String> set = redisTemplate.opsForSet().members(SESSION_USER_KEY + kullaniciId);
@@ -102,5 +104,19 @@ public class AktifOturumService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /** Redis SCAN ile deseni eşleşen anahtarları güvenli şekilde döndürür (KEYS yerine). */
+    private Set<String> scanKeys(String pattern) {
+        Set<String> sonuc = new HashSet<>();
+        try (Cursor<String> cursor = redisTemplate.scan(
+                ScanOptions.scanOptions().match(pattern).count(100).build())) {
+            while (cursor.hasNext()) {
+                sonuc.add(cursor.next());
+            }
+        } catch (Exception e) {
+            log.warn("Redis SCAN başarısız: {}", e.getMessage());
+        }
+        return sonuc;
     }
 }

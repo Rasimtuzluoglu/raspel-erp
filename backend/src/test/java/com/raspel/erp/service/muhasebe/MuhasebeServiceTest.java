@@ -120,8 +120,8 @@ class MuhasebeServiceTest {
     void testMizan_HesapBazliBakiyeHesaplar() {
         MuhasebeFisKalem borc = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.valueOf(250)).alacak(BigDecimal.ZERO).build();
         MuhasebeFisKalem alacak = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.ZERO).alacak(BigDecimal.valueOf(100)).build();
-        when(muhasebeFisKalemRepository.findBySirketId(1L)).thenReturn(List.of(borc, alacak));
-        when(muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(
+        when(muhasebeFisKalemRepository.findBySirketIdAndFisTarihBetween(eq(1L), any(), any())).thenReturn(List.of(borc, alacak));
+        when(muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(eq(1L), any(), any())).thenReturn(List.of(
                 MuhasebeFisi.builder().id(1L).durum("KAYITLI").tarih(LocalDate.now()).build()));
 
         List<MizanSatiriDTO> mizan = muhasebeService.mizanGetir(1L, LocalDate.now().minusMonths(1), LocalDate.now());
@@ -133,8 +133,8 @@ class MuhasebeServiceTest {
     @Test
     void testMizan_IptalFislerDahilEdilmez() {
         MuhasebeFisKalem kalem = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").hesapAdi("Kasa").borc(BigDecimal.valueOf(250)).alacak(BigDecimal.ZERO).build();
-        when(muhasebeFisKalemRepository.findBySirketId(1L)).thenReturn(List.of(kalem));
-        when(muhasebeFisiRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(
+        when(muhasebeFisKalemRepository.findBySirketIdAndFisTarihBetween(eq(1L), any(), any())).thenReturn(List.of(kalem));
+        when(muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(eq(1L), any(), any())).thenReturn(List.of(
                 MuhasebeFisi.builder().id(1L).durum("IPTAL").tarih(LocalDate.now()).build()));
 
         List<MizanSatiriDTO> mizan = muhasebeService.mizanGetir(1L, LocalDate.now().minusMonths(1), LocalDate.now());
