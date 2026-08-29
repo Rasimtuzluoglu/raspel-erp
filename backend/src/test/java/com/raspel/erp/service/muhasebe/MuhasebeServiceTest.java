@@ -170,4 +170,44 @@ class MuhasebeServiceTest {
         verify(muhasebeFisKalemRepository).deleteByFisId(1L);
         verify(muhasebeFisiRepository).deleteById(1L);
     }
+
+    @Test
+    void testBilanco_AktifPasifAyrimiYapar() {
+        HesapPlani kasa = HesapPlani.builder().id(1L).kod("100").ad("Kasa").tip("AKTIF").sirketId(1L).build();
+        HesapPlani sermaye = HesapPlani.builder().id(2L).kod("500").ad("Sermaye").tip("PASIF").sirketId(1L).build();
+        when(hesapPlaniRepository.findBySirketIdOrderByKodAsc(1L)).thenReturn(List.of(kasa, sermaye));
+
+        MuhasebeFisKalem kasaBorc = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("100").borc(BigDecimal.valueOf(1000)).alacak(BigDecimal.ZERO).build();
+        MuhasebeFisKalem sermayeAlacak = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("500").borc(BigDecimal.ZERO).alacak(BigDecimal.valueOf(1000)).build();
+        when(muhasebeFisKalemRepository.findBySirketIdAndFisTarihBetween(eq(1L), any(), any())).thenReturn(List.of(kasaBorc, sermayeAlacak));
+        when(muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(eq(1L), any(), any())).thenReturn(List.of(
+                MuhasebeFisi.builder().id(1L).durum("KAYITLI").tarih(LocalDate.now()).build()));
+
+        BilancoDTO bilanco = muhasebeService.bilancoGetir(1L);
+
+        assertEquals(BigDecimal.valueOf(1000), bilanco.getAktifToplam());
+        assertEquals(BigDecimal.valueOf(1000), bilanco.getPasifToplam());
+        assertEquals(1, bilanco.getAktifler().size());
+        assertEquals("Kasa", bilanco.getAktifler().get(0).getAd());
+        assertEquals(1, bilanco.getPasifler().size());
+    }
+
+    @Test
+    void testKarZarar_GelirGiderVeNetKarHesaplar() {
+        HesapPlani satis = HesapPlani.builder().id(1L).kod("600").ad("Satis").tip("GELIR").sirketId(1L).build();
+        HesapPlani stmm = HesapPlani.builder().id(2L).kod("620").ad("STMM").tip("GIDER").sirketId(1L).build();
+        when(hesapPlaniRepository.findBySirketIdOrderByKodAsc(1L)).thenReturn(List.of(satis, stmm));
+
+        MuhasebeFisKalem gelirKalem = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("600").borc(BigDecimal.ZERO).alacak(BigDecimal.valueOf(5000)).build();
+        MuhasebeFisKalem giderKalem = MuhasebeFisKalem.builder().fisId(1L).hesapKodu("620").borc(BigDecimal.valueOf(2000)).alacak(BigDecimal.ZERO).build();
+        when(muhasebeFisKalemRepository.findBySirketIdAndFisTarihBetween(eq(1L), any(), any())).thenReturn(List.of(gelirKalem, giderKalem));
+        when(muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(eq(1L), any(), any())).thenReturn(List.of(
+                MuhasebeFisi.builder().id(1L).durum("KAYITLI").tarih(LocalDate.now()).build()));
+
+        KarZararDTO karZarar = muhasebeService.karZararGetir(1L, LocalDate.now().minusMonths(1), LocalDate.now());
+
+        assertEquals(BigDecimal.valueOf(5000), karZarar.getGelirToplam());
+        assertEquals(BigDecimal.valueOf(2000), karZarar.getGiderToplam());
+        assertEquals(BigDecimal.valueOf(3000), karZarar.getNetKar());
+    }
 }

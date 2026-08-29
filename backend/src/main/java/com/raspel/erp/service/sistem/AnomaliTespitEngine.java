@@ -39,7 +39,6 @@ public class AnomaliTespitEngine {
         mukerrerFaturaKontrol(sirketId, anomaliler);
         mukerrerHareketKontrol(sirketId, anomaliler);
         anormalYuksekTutarKontrol(sirketId, anomaliler);
-        guvenlikAnomaliKontrol(sirketId, anomaliler);
 
         log.info("Akıllı Anomali Taraması Tamamlandı - Toplam {} şüpheli durum tespit edildi. SirketId: {}", anomaliler.size(), sirketId);
         return anomaliler;
@@ -68,29 +67,6 @@ public class AnomaliTespitEngine {
     public List<Map<String, Object>> deleteIpWhitelist(String id) {
         IP_WHITELIST.removeIf(i -> String.valueOf(i.get("id")).equals(id));
         return getIpWhitelist();
-    }
-
-    private void guvenlikAnomaliKontrol(Long sirketId, List<AnomaliDTO> list) {
-        // Mesai saati dışı veya şüpheli denetim log anomali simülasyonu
-        list.add(AnomaliDTO.builder()
-                .id(UUID.randomUUID().toString())
-                .tur("GUVENLIK_IP")
-                .seviye("KRITIK")
-                .baslik("Tanımsız Konum / IP Giriş Uyarısı")
-                .aciklama("Kullanıcı 'admin' için beyaz listede olmayan yabancı bir IP adresinden (185.220.101.5) başarılı giriş tespit edildi.")
-                .oneri("Kullanıcı şifresini sıfırlayın ve 2FA (İki Faktörlü Doğrulama) zorunluluğunu aktif edin.")
-                .tespitTarihi(LocalDateTime.now().minusHours(3))
-                .build());
-
-        list.add(AnomaliDTO.builder()
-                .id(UUID.randomUUID().toString())
-                .tur("MESAI_DISI_ISLEM")
-                .seviye("ORTA")
-                .baslik("Mesai Saatleri Dışı Toplu Veri Değişikliği")
-                .aciklama("Gece 02:45 saatinde 45 adet stok kartında toplu fiyat güncellemesi yapıldı.")
-                .oneri("Denetim loglarından işlemi yapan kullanıcının yetki ve oturum ayrıntılarını inceleyin.")
-                .tespitTarihi(LocalDateTime.now().minusDays(1))
-                .build());
     }
 
     private void mukerrerFaturaKontrol(Long sirketId, List<AnomaliDTO> list) {

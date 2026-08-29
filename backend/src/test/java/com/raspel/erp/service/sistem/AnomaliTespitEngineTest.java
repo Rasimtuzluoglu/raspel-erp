@@ -70,7 +70,6 @@ class AnomaliTespitEngineTest {
 
         assertNotNull(list);
         assertTrue(list.stream().anyMatch(a -> a.getTur().equals("ANORMAL_MASRAF")));
-        assertTrue(list.stream().anyMatch(a -> a.getTur().equals("GUVENLIK_IP")));
     }
 
     @Test
