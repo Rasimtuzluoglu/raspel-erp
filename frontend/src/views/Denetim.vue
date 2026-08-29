@@ -183,8 +183,8 @@
             <template #body="s">
               <span
                 v-if="s.data.detay"
-                v-tooltip.top="s.data.detay"
                 class="detay-metin"
+                @click="detayGoster(s.data)"
               >
                 {{ kisaDetay(s.data.detay) }}
               </span>
@@ -205,6 +205,29 @@
         </div>
       </template>
     </Card>
+
+    <Dialog
+      v-model:visible="detayDialogAcik"
+      header="İşlem Detayı"
+      :modal="true"
+      style="width: 560px"
+    >
+      <div class="detay-dialog-icerik">
+        <div class="detay-dialog-satir">
+          <span class="detay-dialog-etiket">İşlem</span>
+          <strong>{{ seciliDetay?.islem }}</strong>
+        </div>
+        <div class="detay-dialog-satir">
+          <span class="detay-dialog-etiket">Entity</span>
+          <span>{{ seciliDetay?.entityAdi }} #{{ seciliDetay?.entityId }}</span>
+        </div>
+        <div class="detay-dialog-satir">
+          <span class="detay-dialog-etiket">Tarih</span>
+          <span>{{ seciliDetay?.tarih ? formatDate(seciliDetay.tarih) : '-' }}</span>
+        </div>
+        <pre class="detay-json">{{ detayFormatli }}</pre>
+      </div>
+    </Dialog>
   </div>
 </template>
 
@@ -350,6 +373,21 @@ const kisaDetay = (detay) => {
   }
 }
 
+const detayDialogAcik = ref(false)
+const seciliDetay = ref(null)
+const detayFormatli = ref('')
+
+const detayGoster = (log) => {
+  seciliDetay.value = log
+  try {
+    const obj = typeof log.detay === 'string' ? JSON.parse(log.detay) : log.detay
+    detayFormatli.value = JSON.stringify(obj, null, 2)
+  } catch {
+    detayFormatli.value = log.detay || '-'
+  }
+  detayDialogAcik.value = true
+}
+
 const filtreSecenekleriniYukle = async () => {
   try {
     const [islemRes, entityRes] = await Promise.all([auditLogAPI.getIslemTipleri(), auditLogAPI.getEntityListesi()])
@@ -406,11 +444,43 @@ onMounted(() => {
   font-family: monospace;
   font-size: 0.75rem;
   color: var(--text-secondary);
-  cursor: help;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
   display: inline-block;
+}
+.detay-metin:hover {
+  color: var(--primary-color, #3b82f6);
+  text-decoration: underline;
+}
+.detay-dialog-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.detay-dialog-satir {
+  display: flex;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.detay-dialog-etiket {
+  min-width: 90px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.detay-json {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.8rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
 }
 </style>

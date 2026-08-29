@@ -22,5 +22,6 @@ public class StokHareketDTO {
     private String aciklama;
     private Long cariHesapId;
     private String cariHesapAd;
+    private BigDecimal agirlik;
     private LocalDateTime olusturmaTarihi;
 }

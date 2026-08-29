@@ -390,6 +390,14 @@
             </template>
           </Column>
           <Column
+            header="Ağırlık (kg)"
+            style="width: 110px"
+          >
+            <template #body="s">
+              {{ s.data.agirlik != null ? s.data.agirlik : '-' }}
+            </template>
+          </Column>
+          <Column
             header="Cari Hesap"
             style="width: 160px"
           >

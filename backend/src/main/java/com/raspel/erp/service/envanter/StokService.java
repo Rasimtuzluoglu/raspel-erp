@@ -396,12 +396,15 @@ public class StokService {
     }
 
     private StokHareketDTO hareketToDTO(StokHareket h) {
+        BigDecimal agirlik = (h.getStok().getAgirlik() != null && h.getMiktar() != null)
+                ? h.getStok().getAgirlik().multiply(h.getMiktar()) : null;
         return StokHareketDTO.builder().id(h.getId()).stokId(h.getStok().getId())
                 .stokAd(h.getStok().getAd()).stokKodu(h.getStok().getStokKodu())
                 .tur(h.getTur()).miktar(h.getMiktar()).hareketTarihi(h.getHareketTarihi())
                 .aciklama(h.getAciklama())
                 .cariHesapId(h.getCariHesap() != null ? h.getCariHesap().getId() : null)
                 .cariHesapAd(h.getCariHesap() != null ? h.getCariHesap().getAd() : null)
+                .agirlik(agirlik)
                 .olusturmaTarihi(h.getOlusturmaTarihi()).build();
     }
 }

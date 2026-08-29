@@ -85,6 +85,70 @@
       @action="dialogAc()"
     />
 
+    <Card class="gerceklesen-kart">
+      <template #title>
+        <div class="gerceklesen-baslik">
+          <span>
+            <i class="pi pi-chart-line" /> Bütçe vs Gerçekleşen
+          </span>
+          <div class="gerceklesen-filtre">
+            <Select
+              v-model="raporYil"
+              :options="yilSecenekleri"
+              class="yil-select"
+            />
+            <Select
+              v-model="raporAy"
+              :options="aySecenekleri"
+              option-label="label"
+              option-value="value"
+              placeholder="Tüm Aylar"
+              class="ay-select"
+              show-clear
+            />
+            <Button
+              icon="pi pi-refresh"
+              class="p-button-sm"
+              @click="raporYukle"
+            />
+          </div>
+        </div>
+      </template>
+      <template #content>
+        <DataTable
+          :value="raporList"
+          striped-rows
+          size="small"
+          :loading="raporYukleniyor"
+        >
+          <Column
+            field="kategori"
+            header="Kategori"
+          />
+          <Column header="Bütçe">
+            <template #body="{ data }">
+              {{ formatCurrency(data.butce) }}
+            </template>
+          </Column>
+          <Column header="Gerçekleşen">
+            <template #body="{ data }">
+              {{ formatCurrency(data.gerceklesen) }}
+            </template>
+          </Column>
+          <Column header="Sapma">
+            <template #body="{ data }">
+              <span :class="(data.sapma || 0) > 0 ? 'negative' : 'positive'">{{ formatCurrency(data.sapma) }}</span>
+            </template>
+          </Column>
+          <Column header="Kullanım">
+            <template #body="{ data }">
+              {{ data.kullanimYuzdesi != null ? data.kullanimYuzdesi + '%' : '-' }}
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
+
     <Dialog
       v-model:visible="dialog"
       :header="dialogHeader"
@@ -172,7 +236,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { butceAPI } from '../api/index.js'
+import { butceAPI, raporAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 
@@ -195,6 +259,30 @@ const form = ref({
 })
 const turSecenekleri = ['GELIR', 'GIDER']
 
+const raporYil = ref(new Date().getFullYear())
+const raporAy = ref(null)
+const raporList = ref([])
+const raporYukleniyor = ref(false)
+const yilSecenekleri = computed(() => {
+  const yil = new Date().getFullYear()
+  return Array.from({ length: 6 }, (_, i) => yil - i)
+})
+const aySecenekleri = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((a) => ({ label: a, value: a }))
+
+const raporYukle = async () => {
+  raporYukleniyor.value = true
+  try {
+    const params = { yil: raporYil.value }
+    if (raporAy.value) params.ay = raporAy.value
+    const r = await raporAPI.butceGerceklesen(params)
+    raporList.value = r.data || []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Rapor yüklenemedi')
+  } finally {
+    raporYukleniyor.value = false
+  }
+}
+
 const dialogHeader = computed(() => (duzenleme.value ? 'Bütçe Düzenle' : 'Yeni Bütçe'))
 
 
@@ -207,6 +295,7 @@ onMounted(async () => {
     toastBildirim.hata(err?.response?.data?.message || 'Bütçeler yüklenemedi')
   }
   yukleniyor.value = false
+  raporYukle()
 })
 
 const dialogAc = (data) => {
@@ -298,5 +387,35 @@ const sil = (data) => {
 }
 .w-full {
   width: 100%;
+}
+.gerceklesen-kart {
+  margin-top: 24px;
+}
+.gerceklesen-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gerceklesen-filtre {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.yil-select {
+  width: 90px;
+}
+.ay-select {
+  width: 120px;
+}
+.positive {
+  color: #10b981;
+  font-weight: 600;
+}
+.negative {
+  color: #ef4444;
+  font-weight: 600;
 }
 </style>

@@ -36,6 +36,9 @@ export const raporAPI = {
   },
   nakitAkisiProjeksiyonu(gun = 30) {
     return apiClient.get('/raporlar/nakit-akisi-projeksiyonu', { params: { gun } })
+  },
+  butceGerceklesen(params) {
+    return apiClient.get('/raporlar/butce-gerceklesen', { params })
   }
 }
 

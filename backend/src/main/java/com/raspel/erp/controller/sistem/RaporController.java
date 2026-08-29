@@ -111,4 +111,14 @@ public class RaporController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(raporService.nakitAkisiProjeksiyonu(gun, sirketId));
     }
+
+    @GetMapping("/butce-gerceklesen")
+    @Operation(summary = "Bütçe vs Gerçekleşen raporu", description = "Kategori bazlı planlanan bütçe ile gerçekleşen masrafı karşılaştırır")
+    public ResponseEntity<List<com.raspel.erp.dto.sistem.ButceGerceklesenDTO>> butceGerceklesen(
+            HttpServletRequest request,
+            @RequestParam Integer yil,
+            @RequestParam(required = false) Integer ay) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.butceGerceklesenRaporu(sirketId, yil, ay));
+    }
 }

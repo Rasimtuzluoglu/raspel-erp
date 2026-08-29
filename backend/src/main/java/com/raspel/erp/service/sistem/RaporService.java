@@ -24,6 +24,12 @@ import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.service.finans.HareketService;
 import com.raspel.erp.dto.sistem.RaporDTO;
+import com.raspel.erp.entity.finans.Butce;
+import com.raspel.erp.entity.finans.Masraf;
+import com.raspel.erp.repository.finans.ButceRepository;
+import com.raspel.erp.repository.finans.MasrafRepository;
+import com.raspel.erp.dto.sistem.ButceGerceklesenDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +45,8 @@ public class RaporService {
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
+    private final ButceRepository butceRepository;
+    private final MasrafRepository masrafRepository;
 
     public RaporDTO.CariEkstreDTO cariEkstreGetir(Long cariHesapId, LocalDate baslangic, LocalDate bitis) {
         CariHesap cari = cariHesapRepository.findById(cariHesapId)
@@ -419,5 +427,54 @@ public class RaporService {
                 .projeksiyonGunu(gunSayisi)
                 .gunlukAkis(gunlukList)
                 .build();
+    }
+
+    /**
+     * Bütçe vs Gerçekleşen raporu. Belirli bir yıl (ve isteğe bağlı ay) için
+     * kategori bazlı planlanan bütçe ile gerçekleşen masrafı karşılaştırır.
+     */
+    @Transactional(readOnly = true)
+    public List<ButceGerceklesenDTO> butceGerceklesenRaporu(Long sirketId, Integer yil, Integer ay) {
+        List<Butce> butceler = butceRepository.findBySirketIdOrderByYilDescAyDesc(sirketId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+        Map<String, BigDecimal> butceHaritasi = butceler.stream()
+                .filter(b -> b.getYil() != null && b.getYil().equals(yil))
+                .filter(b -> ay == null || (b.getAy() != null && b.getAy().equals(ay)))
+                .filter(b -> b.getKategori() != null && !b.getKategori().isBlank())
+                .collect(Collectors.groupingBy(Butce::getKategori,
+                        Collectors.reducing(BigDecimal.ZERO, Butce::getTutar, BigDecimal::add)));
+
+        LocalDate baslangic = ay != null
+                ? LocalDate.of(yil, ay, 1)
+                : LocalDate.of(yil, 1, 1);
+        LocalDate bitis = ay != null
+                ? YearMonth.of(yil, ay).atEndOfMonth()
+                : LocalDate.of(yil, 12, 31);
+
+        Map<String, BigDecimal> gerceklesenHaritasi = masrafRepository.findBySirketIdAndTarihBetween(sirketId, baslangic, bitis).stream()
+                .filter(m -> m.getKategori() != null && !m.getKategori().isBlank())
+                .collect(Collectors.groupingBy(Masraf::getKategori,
+                        Collectors.reducing(BigDecimal.ZERO, Masraf::getTutar, BigDecimal::add)));
+
+        Set<String> kategoriler = new TreeSet<>();
+        kategoriler.addAll(butceHaritasi.keySet());
+        kategoriler.addAll(gerceklesenHaritasi.keySet());
+
+        List<ButceGerceklesenDTO> sonuc = new ArrayList<>();
+        for (String kategori : kategoriler) {
+            BigDecimal butce = butceHaritasi.getOrDefault(kategori, BigDecimal.ZERO);
+            BigDecimal gerceklesen = gerceklesenHaritasi.getOrDefault(kategori, BigDecimal.ZERO);
+            BigDecimal sapma = gerceklesen.subtract(butce);
+            BigDecimal yuzde = butce.compareTo(BigDecimal.ZERO) > 0
+                    ? gerceklesen.multiply(BigDecimal.valueOf(100)).divide(butce, 1, RoundingMode.HALF_UP)
+                    : null;
+            sonuc.add(ButceGerceklesenDTO.builder()
+                    .kategori(kategori)
+                    .butce(butce)
+                    .gerceklesen(gerceklesen)
+                    .sapma(sapma)
+                    .kullanimYuzdesi(yuzde)
+                    .build());
+        }
+        return sonuc;
     }
 }

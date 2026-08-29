@@ -400,6 +400,13 @@
             </div>
           </div>
         </div>
+        <div class="grafik-kutu">
+          <Doughnut
+            :data="bilancoChartData"
+            :options="{ responsive: true, maintainAspectRatio: false }"
+            style="height: 220px"
+          />
+        </div>
       </TabPanel>
 
       <!-- KÂR / ZARAR -->
@@ -485,6 +492,13 @@
           <strong :class="(karZarar.netKar || 0) >= 0 ? 'kar' : 'zarar'">
             {{ formatCurrency(Math.abs(karZarar.netKar || 0)) }}
           </strong>
+        </div>
+        <div class="grafik-kutu">
+          <Bar
+            :data="karZararChartData"
+            :options="{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }"
+            style="height: 220px"
+          />
         </div>
       </TabPanel>
     </TabView>
@@ -703,6 +717,10 @@ import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
 import { formatCurrency } from '../utils/format.js'
+import { Doughnut, Bar } from 'vue-chartjs'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -757,6 +775,27 @@ const karZararBitis = ref(null)
 const hesapSecenekleri = computed(() => hesaplar.value.map((h) => ({ ad: `${h.kod} - ${h.ad}`, kod: h.kod })))
 const fisToplamBorc = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.borc) || 0), 0))
 const fisToplamAlacak = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.alacak) || 0), 0))
+
+const bilancoChartData = computed(() => ({
+  labels: ['Aktif', 'Pasif'],
+  datasets: [{
+    data: [Number(bilanco.value.aktifToplam) || 0, Number(bilanco.value.pasifToplam) || 0],
+    backgroundColor: ['#3b82f6', '#f59e0b']
+  }]
+}))
+
+const karZararChartData = computed(() => ({
+  labels: ['Gelir', 'Gider', 'Net Kâr'],
+  datasets: [{
+    label: 'Tutar',
+    data: [
+      Number(karZarar.value.gelirToplam) || 0,
+      Number(karZarar.value.giderToplam) || 0,
+      Number(karZarar.value.netKar) || 0
+    ],
+    backgroundColor: ['#10b981', '#ef4444', '#3b82f6']
+  }]
+}))
 
 const formatDate = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
@@ -1143,6 +1182,13 @@ const karZararExcelIndir = async () => {
 }
 .net-kar-kutusu .zarar {
   color: #ef4444;
+}
+.grafik-kutu {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
 }
 @media (max-width: 768px) {
   .finansal-grid {
