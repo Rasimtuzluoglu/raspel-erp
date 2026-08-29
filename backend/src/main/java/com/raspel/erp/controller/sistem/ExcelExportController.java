@@ -18,6 +18,9 @@ import com.raspel.erp.service.sistem.AuditLogService;
 import com.raspel.erp.service.finans.BankaService;
 import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.sistem.ExcelExportService;
+import com.raspel.erp.service.muhasebe.MuhasebeService;
+import com.raspel.erp.dto.muhasebe.BilancoDTO;
+import com.raspel.erp.dto.muhasebe.KarZararDTO;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.service.ticaret.FaturaService;
 import com.raspel.erp.service.finans.HareketService;
@@ -44,6 +47,7 @@ public class ExcelExportController {
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
+    private final MuhasebeService muhasebeService;
 
     @GetMapping("/cari-hesaplar")
     @Operation(summary = "Cari hesapları Excel dışa aktar", description = "Cari hesapları Excel (.xlsx) dosyası olarak dışa aktarır")
@@ -163,6 +167,56 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("DenetimLog", new String[]{"ID", "Tarih", "Kullanıcı ID", "İşlem", "Entity", "Entity ID", "Açıklama", "IP"}, rows);
+    }
+
+    @GetMapping("/bilanco")
+    @Operation(summary = "Bilançoyu Excel dışa aktar", description = "Bilançoyu (aktif/pasif) Excel (.xlsx) dosyası olarak dışa aktarır")
+    public ResponseEntity<byte[]> bilanco(HttpServletRequest req) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        BilancoDTO b = muhasebeService.bilancoGetir(sirketId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (BilancoDTO.KalemDTO k : b.getAktifler()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Taraf", "AKTIF"); m.put("Kod", k.getKod()); m.put("Hesap", k.getAd()); m.put("Tutar", k.getTutar());
+            rows.add(m);
+        }
+        for (BilancoDTO.KalemDTO k : b.getPasifler()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Taraf", "PASIF"); m.put("Kod", k.getKod()); m.put("Hesap", k.getAd()); m.put("Tutar", k.getTutar());
+            rows.add(m);
+        }
+        Map<String, Object> aktifToplam = new LinkedHashMap<>();
+        aktifToplam.put("Taraf", "TOPLAM"); aktifToplam.put("Kod", ""); aktifToplam.put("Hesap", "Aktif Toplam"); aktifToplam.put("Tutar", b.getAktifToplam());
+        rows.add(aktifToplam);
+        Map<String, Object> pasifToplam = new LinkedHashMap<>();
+        pasifToplam.put("Taraf", "TOPLAM"); pasifToplam.put("Kod", ""); pasifToplam.put("Hesap", "Pasif Toplam"); pasifToplam.put("Tutar", b.getPasifToplam());
+        rows.add(pasifToplam);
+        return excel("Bilanco", new String[]{"Taraf", "Kod", "Hesap", "Tutar"}, rows);
+    }
+
+    @GetMapping("/kar-zarar")
+    @Operation(summary = "Kâr/Zararı Excel dışa aktar", description = "Kâr/Zarar (gelir tablosu) özetini Excel (.xlsx) dosyası olarak dışa aktarır")
+    public ResponseEntity<byte[]> karZarar(
+            HttpServletRequest req,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        KarZararDTO kz = muhasebeService.karZararGetir(sirketId, baslangic, bitis);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (KarZararDTO.KalemDTO k : kz.getGelirler()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Tur", "GELIR"); m.put("Kod", k.getKod()); m.put("Hesap", k.getAd()); m.put("Tutar", k.getTutar());
+            rows.add(m);
+        }
+        for (KarZararDTO.KalemDTO k : kz.getGiderler()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Tur", "GIDER"); m.put("Kod", k.getKod()); m.put("Hesap", k.getAd()); m.put("Tutar", k.getTutar());
+            rows.add(m);
+        }
+        Map<String, Object> net = new LinkedHashMap<>();
+        net.put("Tur", "NET"); net.put("Kod", ""); net.put("Hesap", "Net Kâr/Zarar"); net.put("Tutar", kz.getNetKar());
+        rows.add(net);
+        return excel("KarZarar", new String[]{"Tur", "Kod", "Hesap", "Tutar"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

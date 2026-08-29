@@ -335,6 +335,12 @@
             class="p-button-sm"
             @click="bilancoYukle"
           />
+          <Button
+            icon="pi pi-file-excel"
+            label="Excel"
+            class="p-button-sm p-button-outlined"
+            @click="bilancoExcelIndir"
+          />
         </div>
         <div class="finansal-grid">
           <div class="finansal-kolon">
@@ -414,6 +420,12 @@
             label="Hesapla"
             class="p-button-sm"
             @click="karZararYukle"
+          />
+          <Button
+            icon="pi pi-file-excel"
+            label="Excel"
+            class="p-button-sm p-button-outlined"
+            @click="karZararExcelIndir"
           />
         </div>
         <div class="finansal-grid">
@@ -686,7 +698,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { muhasebeAPI } from '../api/index.js'
+import { muhasebeAPI, excelAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
@@ -969,6 +981,38 @@ const karZararYukle = async () => {
     toastBildirim.hata(err?.response?.data?.message || 'Kâr/Zarar alınamadı')
   } finally {
     karZararYukleniyor.value = false
+  }
+}
+
+const excelIndir = (res, dosyaAdi) => {
+  const url = window.URL.createObjectURL(new Blob([res.data]))
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', `${dosyaAdi}-${new Date().toISOString().split('T')[0]}.xlsx`)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+const bilancoExcelIndir = async () => {
+  try {
+    const res = await excelAPI.bilanco()
+    excelIndir(res, 'bilanco')
+  } catch {
+    toastBildirim.hata('Bilanço Excel olarak indirilemedi')
+  }
+}
+
+const karZararExcelIndir = async () => {
+  try {
+    const params = {}
+    if (karZararBaslangic.value) params.baslangic = tarihParam(karZararBaslangic.value)
+    if (karZararBitis.value) params.bitis = tarihParam(karZararBitis.value)
+    const res = await excelAPI.karZarar(params)
+    excelIndir(res, 'kar-zarar')
+  } catch {
+    toastBildirim.hata('Kâr/Zarar Excel olarak indirilemedi')
   }
 }
 </script>

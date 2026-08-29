@@ -74,6 +74,12 @@ export const excelAPI = {
   },
   denetimLog(params) {
     return apiClient.get('/exports/denetim-log', { params, responseType: 'blob' })
+  },
+  bilanco() {
+    return apiClient.get('/exports/bilanco', { responseType: 'blob' })
+  },
+  karZarar(params) {
+    return apiClient.get('/exports/kar-zarar', { params, responseType: 'blob' })
   }
 }
 
