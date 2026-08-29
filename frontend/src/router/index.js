@@ -178,6 +178,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/tahsilat',
+    name: 'Tahsilat',
+    component: () => import('../views/Tahsilat.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/irsaliyeler',
     name: 'Irsaliyeler',
     component: () => import('../views/Irsaliyeler.vue'),

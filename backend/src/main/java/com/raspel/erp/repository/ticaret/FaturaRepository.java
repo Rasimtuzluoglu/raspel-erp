@@ -74,4 +74,16 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                   @Param("durum") Fatura.FaturaDurum durum,
                                   @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
                                   @Param("bugun") java.time.LocalDate bugun);
+
+    /**
+     * Tahsilat merkezi için ödenmemiş (kalan tutarı olan) faturalar.
+     */
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.tur = :tur " +
+            "AND f.durum = :durum AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 " +
+            "ORDER BY f.vadeTarihi ASC")
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findTahsilatEdilecek(@Param("sirketId") Long sirketId,
+                                      @Param("tur") Fatura.FaturaTur tur,
+                                      @Param("durum") Fatura.FaturaDurum durum,
+                                      @Param("odemeDurumlari") java.util.List<String> odemeDurumlari);
 }

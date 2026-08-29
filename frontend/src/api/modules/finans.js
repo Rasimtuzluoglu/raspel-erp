@@ -136,6 +136,15 @@ export const dovizAPI = {
   }
 }
 
+export const tahsilatAPI = {
+  ozet() {
+    return apiClient.get('/tahsilat')
+  },
+  hatirlat(cariId) {
+    return apiClient.post(`/tahsilat/${cariId}/hatirlat`)
+  }
+}
+
 export const muhasebeAPI = {
   getHesapPlani() {
     return apiClient.get('/muhasebe/hesap-plani')
