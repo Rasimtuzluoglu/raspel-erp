@@ -119,11 +119,11 @@ public class YetkiService {
         List<Yetki> tumYetkiler = tumYetkileriGetir();
         List<Rol> list = new ArrayList<>();
 
+        // Rol modeli sadelestirildi: yalnizca ADMIN (tam yetki) ve USER (standart) vardir.
+        // Backend yetkilendirmesi hasAnyRole('ADMIN','USER') ile yapilir; modul bazli
+        // ince ayar icin Yetki kodlari kullanilir.
         list.add(Rol.builder().ad("ADMIN").aciklama("Tam Yetkili Sistem Yöneticisi").yetkiler(new HashSet<>(tumYetkiler)).build());
-        list.add(Rol.builder().ad("MUHASEBE").aciklama("Ön Muhasebe ve Finans Yetkilisi").yetkiler(new HashSet<>(tumYetkiler)).build());
-        list.add(Rol.builder().ad("SATIS").aciklama("Saha ve Mağaza Satış Temsilcisi").yetkiler(new HashSet<>(tumYetkiler)).build());
-        list.add(Rol.builder().ad("DEPO").aciklama("Depo ve Sevkiyat Görevlisi").yetkiler(new HashSet<>(tumYetkiler)).build());
-        list.add(Rol.builder().ad("PERSONEL").aciklama("Genel Şirket Personeli").yetkiler(new HashSet<>()).build());
+        list.add(Rol.builder().ad("USER").aciklama("Standart Kullanıcı").yetkiler(new HashSet<>(tumYetkiler)).build());
 
         return rolRepository.saveAll(list);
     }

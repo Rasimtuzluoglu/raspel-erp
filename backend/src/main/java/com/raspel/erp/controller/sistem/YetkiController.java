@@ -17,25 +17,27 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/yetkiler")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class YetkiController {
 
     private final YetkiService yetkiService;
 
     @GetMapping
     @Operation(summary = "Tüm yetkileri getir", description = "Sistemdeki tüm modül ve eylem yetkilerini listeler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<Yetki>> tumYetkiler() {
         return ResponseEntity.ok(yetkiService.tumYetkileriGetir());
     }
 
     @GetMapping("/roller")
     @Operation(summary = "Tüm rolleri getir", description = "Tüm tanımlı rolleri ve yetkilerini listeler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<Rol>> tumRoller() {
         return ResponseEntity.ok(yetkiService.tumRolleriGetir());
     }
 
     @PutMapping("/roller/{rolId}")
     @Operation(summary = "Rol yetkilerini güncelle", description = "Belirtilen role ait yetki id kümesini günceller")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Rol> rolYetkiGuncelle(@PathVariable Long rolId, @RequestBody Set<Long> yetkiIdleri) {
         return ResponseEntity.ok(yetkiService.rolYetkileriniGuncelle(rolId, yetkiIdleri));
     }
