@@ -225,7 +225,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
-import { personelIzinAPI, satinalmaTalepAPI } from '../api/index.js'
+import { personelIzinAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import KisayolRehberi from './KisayolRehberi.vue'
@@ -404,11 +404,18 @@ const onaySayisi = ref(0)
 
 const onaySayisiniYukle = async () => {
   try {
-    const [iRes, tRes] = await Promise.all([personelIzinAPI.getAll(), satinalmaTalepAPI.getAll()])
+    const [iRes, tRes, sRes] = await Promise.all([
+      personelIzinAPI.getAll(),
+      satinalmaTalepAPI.getAll(),
+      siparisAPI.getAll({ size: 100 })
+    ])
     const izinler = iRes.data?.content || iRes.data || []
     const talepler = tRes.data?.content || tRes.data || []
+    const siparisler = sRes.data?.content || sRes.data || []
     onaySayisi.value =
-      izinler.filter((i) => i.durum === 'BEKLEMEDE').length + talepler.filter((t) => t.durum === 'TASLAK').length
+      izinler.filter((i) => i.durum === 'BEKLEMEDE').length +
+      talepler.filter((t) => t.durum === 'TASLAK').length +
+      siparisler.filter((s) => s.durum === 'BEKLIYOR').length
   } catch {
     onaySayisi.value = 0
   }

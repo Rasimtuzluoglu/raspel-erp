@@ -35,7 +35,7 @@ const ortakStubs = {
   EmptyState: true,
   Dialog: { template: '<div><slot /></div>' },
   AutoComplete: true, Dropdown: true, InputText: true, Button: true, DatePicker: true,
-  Textarea: true, InputNumber: true, Checkbox: true, Message: true, SelectButton: true,
+  Textarea: true, InputNumber: true, Checkbox: true, Message: true, SelectButton: true, InputSwitch: true,
   Tag: true, Skeleton: true, Avatar: true, Badge: true, Card: true, TabView: { template: '<div><slot /></div>' },
   TabPanel: { template: '<div><slot /></div>' }
 }

@@ -346,7 +346,7 @@ const yukle = async () => {
     }
     if (tRes.status === 'fulfilled') {
       const allTalep = tRes.value.data?.content || tRes.value.data || []
-      bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'BEKLIYOR')
+      bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'TASLAK')
     }
     if (sRes.status === 'fulfilled') {
       const allSiparis = sRes.value.data?.content || sRes.value.data || []
