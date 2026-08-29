@@ -40,6 +40,8 @@ class RaporServiceTest {
     @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     @Mock private CariHesapService cariHesapService;
     @Mock private HareketService hareketService;
+    @Mock private com.raspel.erp.repository.finans.ButceRepository butceRepository;
+    @Mock private com.raspel.erp.repository.finans.MasrafRepository masrafRepository;
     @InjectMocks private RaporService raporService;
 
     private CariHesap createCariHesap() {
@@ -263,5 +265,28 @@ class RaporServiceTest {
         assertEquals(BigDecimal.valueOf(5000), result.getToplamBeklenenCikis());
         assertEquals(BigDecimal.valueOf(60000), result.getTahminiBitisBakiyesi());
         assertEquals(31, result.getGunlukAkis().size());
+    }
+
+    @Test
+    void butceGerceklesen_kategoriBazliKarsilastirir() {
+        com.raspel.erp.entity.finans.Butce butce = com.raspel.erp.entity.finans.Butce.builder()
+                .yil(2026).ay(9).kategori("Pazarlama").tutar(BigDecimal.valueOf(1000)).sirketId(1L).build();
+        com.raspel.erp.entity.finans.Masraf masraf = com.raspel.erp.entity.finans.Masraf.builder()
+                .tarih(LocalDate.of(2026, 9, 10)).kategori("Pazarlama").tutar(BigDecimal.valueOf(600)).sirketId(1L).build();
+
+        when(butceRepository.findBySirketIdOrderByYilDescAyDesc(eq(1L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(butce)));
+        when(masrafRepository.findBySirketIdAndTarihBetween(eq(1L), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(List.of(masraf));
+
+        var result = raporService.butceGerceklesenRaporu(1L, 2026, 9);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Pazarlama", result.get(0).getKategori());
+        assertEquals(BigDecimal.valueOf(1000), result.get(0).getButce());
+        assertEquals(BigDecimal.valueOf(600), result.get(0).getGerceklesen());
+        assertEquals(BigDecimal.valueOf(-400), result.get(0).getSapma());
+        assertNotNull(result.get(0).getKullanimYuzdesi());
     }
 }

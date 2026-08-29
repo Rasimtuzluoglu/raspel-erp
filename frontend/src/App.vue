@@ -92,6 +92,8 @@
     />
     <ConfirmDialog />
 
+    <MobilAltMenu v-if="authStore.isLoggedIn" />
+
     <Dialog
       v-model:visible="oturum.goster"
       header="Oturum Süresi Dolmak Üzere"
@@ -140,6 +142,7 @@ import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
 import AppBreadcrumb from './components/AppBreadcrumb.vue'
+import MobilAltMenu from './components/MobilAltMenu.vue'
 
 import HesapMakinesi from './components/HesapMakinesi.vue'
 import DovizCevirici from './components/DovizCevirici.vue'

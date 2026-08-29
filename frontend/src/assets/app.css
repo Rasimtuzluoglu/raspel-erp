@@ -1226,7 +1226,7 @@ body {
   .main-content {
     padding-top: 60px;
     max-width: 100%;
-    padding: 60px 12px 12px;
+    padding: 60px 12px calc(72px + env(safe-area-inset-bottom));
   }
   .main-content.giris-sayfasi {
     padding: 0;
@@ -1371,6 +1371,24 @@ body {
   }
   .p-datatable-wrapper {
     overflow: visible !important;
+  }
+}
+
+/* Dokunmatik hedef boyutları (mobil) */
+@media (max-width: 900px) {
+  .p-button {
+    min-height: 44px;
+  }
+  .p-datatable-tbody .p-button,
+  .p-toolbar .p-button.p-button-rounded {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .p-inputtext,
+  .p-dropdown,
+  .p-multiselect,
+  .p-textarea {
+    font-size: 16px !important;
   }
 }
 
