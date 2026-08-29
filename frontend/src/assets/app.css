@@ -1209,9 +1209,10 @@ body {
     z-index: 1000;
   }
   .sidebar.mobil-acik .sidebar-ust {
+    flex: 0 0 auto;
+    width: 100%;
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
   }
   .sidebar.mobil-acik .sidebar-menu {
     display: flex;
