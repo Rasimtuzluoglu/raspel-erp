@@ -398,7 +398,7 @@ router.beforeEach((to, from, next) => {
     next('/yetki-reddi')
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
     next('/yetki-reddi')
-  } else if (authStore.kullanici?.role === 'SAHA' && to.path !== '/yetki-reddi') {
+  } else if (authStore.isSaha && to.path !== '/yetki-reddi') {
     const sahaIzinli = [
       '/', // Yönlendirme dashboard'a gidecek oradan da portale düşecek
       '/saha-portali',

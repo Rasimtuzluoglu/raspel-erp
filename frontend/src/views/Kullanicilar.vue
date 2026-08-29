@@ -220,6 +220,11 @@
             class="w-full"
           />
         </div>
+        <div class="form-grup saha-grup">
+          <label>Saha Kullanıcısı</label>
+          <ToggleSwitch v-model="form.sahaKullanici" />
+          <small class="saha-ipucu">Saha personeli yalnızca mobil portala erişir</small>
+        </div>
       </div>
       <template #footer>
         <Button
@@ -266,7 +271,8 @@ const form = ref({
   companyName: '',
   sirketIds: [],
   role: 'USER',
-  active: true
+  active: true,
+  sahaKullanici: false
 })
 
 const avatarInput = ref(null)
@@ -309,7 +315,8 @@ const openDialog = () => {
     companyName: '',
     sirketIds: [],
     role: 'USER',
-    active: true
+    active: true,
+    sahaKullanici: false
   }
   showDialog.value = true
 }
@@ -324,7 +331,8 @@ const editKullanici = (u) => {
     companyName: u.companyName || '',
     sirketIds: u.sirketIds || (u.sirketId ? [u.sirketId] : []),
     role: u.role || 'USER',
-    active: u.active !== false
+    active: u.active !== false,
+    sahaKullanici: u.sahaKullanici === true
   }
   showDialog.value = true
 }

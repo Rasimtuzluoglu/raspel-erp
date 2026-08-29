@@ -16,6 +16,7 @@ public class LoginResponse {
     private String sirketAdi;
     private String companyName;
     private String role;
+    private Boolean sahaKullanici;
     private String token;
 
     private Boolean twoFactorGerekli;

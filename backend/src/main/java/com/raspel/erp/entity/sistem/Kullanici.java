@@ -70,6 +70,10 @@ public class Kullanici {
     @Column(name = "bildirim_tercihleri", columnDefinition = "TEXT")
     private String bildirimTercihleri;
 
+    @Column(name = "saha_kullanici", nullable = false)
+    @Builder.Default
+    private Boolean sahaKullanici = false;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

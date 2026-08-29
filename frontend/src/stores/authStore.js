@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!kullanici.value)
   const isAdmin = computed(() => kullanici.value?.role === 'ADMIN')
+  const isSaha = computed(() => kullanici.value?.sahaKullanici === true)
 
   const hasPermission = (permissionCode) => {
     if (!kullanici.value) return false
@@ -115,7 +116,8 @@ export const useAuthStore = defineStore('auth', () => {
       displayName: data.displayName,
       avatarUrl: data.avatarUrl,
       companyName: data.companyName,
-      role: data.role
+      role: data.role,
+      sahaKullanici: data.sahaKullanici === true
     }
     token.value = data.token || ''
     companyName.value = data.companyName || ''
@@ -192,6 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     isLoggedIn,
     isAdmin,
+    isSaha,
     hasPermission,
     girisYap,
     girisSirket,

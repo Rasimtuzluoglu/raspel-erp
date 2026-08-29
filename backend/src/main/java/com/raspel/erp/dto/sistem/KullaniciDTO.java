@@ -23,5 +23,6 @@ public class KullaniciDTO {
     private String role;
     private Boolean active;
     private Boolean twoFactorEnabled;
+    private Boolean sahaKullanici;
     private LocalDateTime olusturmaTarihi;
 }

@@ -151,6 +151,7 @@ public class KullaniciService {
                 .companyName(dto.getCompanyName())
                 .sirketId(dto.getSirketId())
                 .role(dto.getRole() != null ? dto.getRole() : "USER")
+                .sahaKullanici(dto.getSahaKullanici() != null && dto.getSahaKullanici())
                 .active(true)
                 .build();
         setSirketler(k, dto.getSirketIds(), dto.getSirketId());
@@ -171,6 +172,7 @@ public class KullaniciService {
         }
         if (dto.getActive() != null) k.setActive(dto.getActive());
         if (dto.getRole() != null) k.setRole(dto.getRole());
+        if (dto.getSahaKullanici() != null) k.setSahaKullanici(dto.getSahaKullanici());
         return entityToDTO(kullaniciRepository.save(k));
     }
 
@@ -288,7 +290,7 @@ public class KullaniciService {
                 .username(k.getUsername())
                 .displayName(k.getDisplayName())
                 .avatarUrl(k.getAvatarUrl())
-                .role(k.getRole())
+                .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
                 .twoFactorGerekli(twoFactorAktif)
                 .girisToken(girisToken)
                 .sirketler(twoFactorAktif ? null : sirketler)
@@ -330,7 +332,7 @@ public class KullaniciService {
                 .username(k.getUsername())
                 .displayName(k.getDisplayName())
                 .avatarUrl(k.getAvatarUrl())
-                .role(k.getRole())
+                .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
                 .twoFactorGerekli(false)
                 .girisToken(yeniToken)
                 .sirketler(sirketler)
@@ -417,7 +419,7 @@ public class KullaniciService {
                 .sirketId(sirketId)
                 .sirketAdi(sirketAdi)
                 .companyName(company)
-                .role(k.getRole())
+                .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
                 .token(token)
                 .tokenExpiresAt(System.currentTimeMillis() + jwtExpirationMs)
                 .twoFactorGerekli(false)
@@ -447,7 +449,7 @@ public class KullaniciService {
                 .displayName(k.getDisplayName()).avatarUrl(k.getAvatarUrl())
                 .companyName(k.getCompanyName()).sirketId(k.getSirketId())
                 .sirketIds(sirketler != null ? sirketler.stream().map(Sirket::getId).collect(Collectors.toList()) : List.of())
-                .role(k.getRole()).active(k.getActive())
+                .role(k.getRole()).sahaKullanici(k.getSahaKullanici()).active(k.getActive())
                 .twoFactorEnabled(k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled())
                 .olusturmaTarihi(k.getOlusturmaTarihi())
                 .build();

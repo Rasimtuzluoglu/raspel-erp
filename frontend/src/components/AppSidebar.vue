@@ -348,7 +348,7 @@ const gorunenMenuler = computed(() => {
   return tumMenuler.filter((m) => {
     if (m.path === '/') return false
     
-    if (authStore.kullanici?.role === 'SAHA') {
+    if (authStore.isSaha) {
       const sahaErisilebilir = [
         '/saha-portali',
         '/stoklar',

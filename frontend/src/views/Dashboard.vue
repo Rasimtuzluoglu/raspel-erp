@@ -662,7 +662,7 @@ const aylikKarsilastirmayiHesapla = () => {
 }
 
 onMounted(async () => {
-  if (authStore.kullanici?.role === 'SAHA') {
+  if (authStore.isSaha) {
     router.replace('/saha-portali')
     return
   }
