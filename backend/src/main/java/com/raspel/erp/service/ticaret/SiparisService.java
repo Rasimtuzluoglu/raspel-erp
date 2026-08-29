@@ -70,7 +70,8 @@ public class SiparisService {
         Siparis s = Siparis.builder()
                 .siparisNo(siparisNo).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).tur("SATIS")
-                .durum("TEKLIF").aciklama(dto.getAciklama())
+                .durum(dto.getDurum() != null && !dto.getDurum().isBlank() ? dto.getDurum() : "TEKLIF")
+                .aciklama(dto.getAciklama())
                 .araToplam(dto.getAraToplam()).kdv(dto.getKdv())
                 .genelToplam(dto.getGenelToplam()).sirketId(sirketId)
                 .build();

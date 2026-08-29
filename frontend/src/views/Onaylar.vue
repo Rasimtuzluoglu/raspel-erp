@@ -242,13 +242,79 @@
           </div>
         </div>
       </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-receipt" />
+            Saha Siparişleri
+            <span
+              v-if="bekleyenSiparisler && bekleyenSiparisler.length > 0"
+              class="badge-sayi bg-blue-600"
+            >{{ bekleyenSiparisler ? bekleyenSiparisler.length : 0 }}</span>
+          </span>
+        </template>
+
+        <div class="onay-icerik">
+          <div
+            v-if="bekleyenSiparisler && bekleyenSiparisler.length > 0"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            <div
+              v-for="s in bekleyenSiparisler"
+              :key="s.id"
+              class="onay-kart p-4 rounded-xl border bg-white dark:bg-gray-800 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div class="flex justify-between items-start mb-2">
+                  <span class="font-bold text-sm text-primary">#{{ s.siparisNo || s.id }}</span>
+                  <Tag
+                    value="Onay Bekliyor"
+                    severity="warning"
+                  />
+                </div>
+                <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                  {{ s.cariHesapAd || s.musteriAd || s.cariHesapAdi || 'Müşteri' }}
+                </h4>
+                <p class="text-xs text-muted mb-1">
+                  {{ s.aciklama || 'Saha Siparişi' }}
+                </p>
+                <p class="text-xs font-semibold text-primary mb-3">
+                  {{ formatCurrency(s.genelToplam || s.toplamTutar || 0) }}
+                </p>
+              </div>
+              <div class="flex gap-2 pt-2 border-t">
+                <Button
+                  label="Onayla"
+                  icon="pi pi-check"
+                  class="p-button-success p-button-sm flex-1"
+                  @click="siparisOnay(s, 'HAZIRLANIYOR')"
+                />
+                <Button
+                  label="Reddet"
+                  icon="pi pi-times"
+                  class="p-button-danger p-button-outlined p-button-sm flex-1"
+                  @click="siparisOnay(s, 'IPTAL')"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            v-else
+            class="text-center py-12 text-muted"
+          >
+            <i class="pi pi-receipt text-4xl text-gray-400 block mb-2" />
+            Şu anda onay bekleyen saha siparişi bulunmuyor.
+          </div>
+        </div>
+      </TabPanel>
     </TabView>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI } from '../api/index.js'
+import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
@@ -260,14 +326,16 @@ const yukleniyor = ref(false)
 const bekleyenIzinler = ref([])
 const bekleyenMasraflar = ref([])
 const bekleyenTalepler = ref([])
+const bekleyenSiparisler = ref([])
 
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const [iRes, mRes, tRes] = await Promise.allSettled([
+    const [iRes, mRes, tRes, sRes] = await Promise.allSettled([
       personelIzinAPI.getAll(),
       personelMasrafTalepAPI.getBekleyenler(),
-      satinalmaTalepAPI.getAll()
+      satinalmaTalepAPI.getAll(),
+      siparisAPI.getAll({ size: 100 })
     ])
     if (iRes.status === 'fulfilled') {
       const allIzin = iRes.value.data?.content || iRes.value.data || []
@@ -279,6 +347,10 @@ const yukle = async () => {
     if (tRes.status === 'fulfilled') {
       const allTalep = tRes.value.data?.content || tRes.value.data || []
       bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'BEKLIYOR')
+    }
+    if (sRes.status === 'fulfilled') {
+      const allSiparis = sRes.value.data?.content || sRes.value.data || []
+      bekleyenSiparisler.value = allSiparis.filter((s) => s.durum === 'BEKLIYOR')
     }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Onaylar yüklenemedi')
@@ -323,6 +395,16 @@ const talepOnay = async (t, durum) => {
   try {
     await satinalmaTalepAPI.durumGuncelle(t.id, durum)
     toastBildirim.basarili(`Satınalma talebi ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}`)
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+  }
+}
+
+const siparisOnay = async (s, durum) => {
+  try {
+    await siparisAPI.durumGuncelle(s.id, durum)
+    toastBildirim.basarili(durum === 'HAZIRLANIYOR' ? 'Saha siparişi onaylandı' : 'Saha siparişi reddedildi')
     await yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
