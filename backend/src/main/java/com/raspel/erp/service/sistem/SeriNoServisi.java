@@ -19,6 +19,11 @@ public class SeriNoServisi {
     private final SiparisRepository siparisRepository;
     private final TeklifRepository teklifRepository;
 
+    // NOT: `synchronized` yalnızca tek JVM instance içinde mükerrer üretimi engeller.
+    // Çoklu instance (yatay ölçekleme) senaryosunda asıl koruma, tablo üzerindeki
+    // UNIQUE kısıtlardır (fatura.fatura_numarasi, siparis.siparis_no, ticaret.teklif_no).
+    // Böylece iki instance aynı numarayı üretmeye çalışsa bile DB ikincisini reddeder.
+
     public synchronized String faturaNoUret(Long sirketId) {
         String yil = String.valueOf(LocalDate.now().getYear());
         String prefix = "FTR-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
