@@ -264,3 +264,24 @@ export const teklifAPI = {
   }
 }
 
+export const tekrarlayanFaturaAPI = {
+  getAll() {
+    return apiClient.get('/tekrarlayan-faturalar')
+  },
+  getById(id) {
+    return apiClient.get(`/tekrarlayan-faturalar/${id}`)
+  },
+  create(data) {
+    return apiClient.post('/tekrarlayan-faturalar', data)
+  },
+  update(id, data) {
+    return apiClient.put(`/tekrarlayan-faturalar/${id}`, data)
+  },
+  delete(id) {
+    return apiClient.delete(`/tekrarlayan-faturalar/${id}`)
+  },
+  uret(id) {
+    return apiClient.post(`/tekrarlayan-faturalar/${id}/uret`)
+  }
+}
+

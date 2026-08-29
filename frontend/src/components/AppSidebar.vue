@@ -287,6 +287,7 @@ const tumMenuler = [
   { path: '/muhasebe', label: 'Muhasebe', icon: 'pi pi-book', grup: 'Finans', gelismis: true },
   { path: '/cari-hesaplar', label: 'Cari', icon: 'pi pi-users', grup: 'Finans' },
   { path: '/faturalar', label: 'Faturalar', icon: 'pi pi-file', grup: 'Finans' },
+  { path: '/tekrarlayan-faturalar', label: 'Tekrarlayan Faturalar', icon: 'pi pi-sync', grup: 'Finans' },
   { path: '/bankalar', label: 'Banka', icon: 'pi pi-building', grup: 'Finans' },
   { path: '/kasa', label: 'Kasa', icon: 'pi pi-wallet', grup: 'Finans' },
   { path: '/banka-mutabakat', label: 'Banka Mutabakatı', icon: 'pi pi-link', grup: 'Finans', gelismis: true },

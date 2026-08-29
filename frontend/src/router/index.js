@@ -46,6 +46,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/tekrarlayan-faturalar',
+    name: 'TekrarlayanFaturalar',
+    component: () => import('../views/TekrarlayanFaturalar.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/bankalar',
     name: 'Bankalar',
     component: () => import('../views/Bankalar.vue'),

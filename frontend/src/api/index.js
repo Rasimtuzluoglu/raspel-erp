@@ -24,7 +24,8 @@ export {
   fiyatListesiAPI,
   crmAPI,
   satinalmaTalepAPI,
-  satinalmaSiparisAPI
+  satinalmaSiparisAPI,
+  tekrarlayanFaturaAPI
 } from './modules/ticaret.js'
 
 export { stokAPI, depoAPI, kategoriAPI, stokSeriAPI, stokSayimAPI } from './modules/stok.js'
