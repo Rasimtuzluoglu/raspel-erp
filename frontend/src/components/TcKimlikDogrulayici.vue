@@ -80,12 +80,12 @@ const kontrol = () => {
   font-size: 24px;
 }
 .gecerli {
-  background: var(--green-50);
-  color: var(--green-700);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
 }
 .gecersiz {
-  background: var(--red-50);
-  color: var(--red-700);
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
 }
 .tc-uyari {
   font-size: 11px;

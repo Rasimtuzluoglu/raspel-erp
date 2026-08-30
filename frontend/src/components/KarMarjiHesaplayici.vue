@@ -79,24 +79,30 @@ const format = (v) => new Intl.NumberFormat('tr-TR', { style: 'currency', curren
   margin-bottom: 4px;
 }
 .marj-sonuc {
-  background: var(--surface-ground);
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
 }
 .sonuc-satir {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--border);
   font-size: 14px;
+  color: var(--text-secondary);
 }
 .sonuc-satir:last-child {
   border-bottom: none;
 }
+.sonuc-satir strong {
+  color: var(--text-primary);
+  font-family: monospace;
+}
 .positive {
-  color: var(--green-500);
+  color: #10b981;
 }
 .negative {
-  color: var(--red-500);
+  color: #ef4444;
 }
 </style>

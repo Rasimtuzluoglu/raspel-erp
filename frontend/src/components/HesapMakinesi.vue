@@ -9,8 +9,17 @@
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="calc-display">
-      <div class="calc-gecmis">
-        {{ gecmis }}
+      <div class="calc-display-ust">
+        <div class="calc-gecmis">
+          {{ gecmis }}
+        </div>
+        <button
+          class="calc-kopyala"
+          title="Sonucu kopyala"
+          @click="kopyala"
+        >
+          <i class="pi pi-copy" />
+        </button>
       </div>
       <div class="calc-sonuc">
         {{ display }}
@@ -206,6 +215,14 @@ const yuzde = () => {
   }
 }
 
+const kopyala = async () => {
+  try {
+    await navigator.clipboard.writeText(display.value)
+  } catch {
+    /* ignore */
+  }
+}
+
 const klavyeTusu = (e) => {
   if (!props.visible) return
   const k = e.key
@@ -259,22 +276,46 @@ onUnmounted(() => {
 
 <style scoped>
 .calc-display {
-  background: var(--surface-ground);
-  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 12px 16px;
   text-align: right;
-  margin-bottom: 10px;
-  min-height: 60px;
+  margin-bottom: 12px;
+  min-height: 64px;
+}
+.calc-display-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .calc-gecmis {
   font-size: 12px;
   color: var(--text-muted);
   min-height: 18px;
+  flex: 1;
+}
+.calc-kopyala {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  font-size: 14px;
+  transition: color 0.15s;
+}
+.calc-kopyala:hover {
+  color: var(--accent);
 }
 .calc-sonuc {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   font-family: monospace;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .calc-keypad {
   display: grid;
@@ -284,31 +325,35 @@ onUnmounted(() => {
 .calc-btn {
   padding: 12px 8px;
   font-size: 16px;
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   font-weight: 600;
   transition: all 0.15s;
 }
 .calc-btn:hover {
-  background: var(--surface-hover);
+  background: rgba(148, 163, 184, 0.12);
 }
 .calc-btn.operator {
-  background: var(--primary-100);
-  color: var(--primary-700);
-  border-color: var(--primary-200);
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.calc-btn.operator:hover {
+  background: rgba(59, 130, 246, 0.25);
 }
 .calc-btn.equals {
-  background: var(--green-500);
+  background: var(--accent);
   color: white;
-  border-color: var(--green-500);
+  border-color: var(--accent);
 }
 .calc-btn.equals:hover {
-  background: var(--green-600);
+  background: var(--accent-hover);
 }
 .calc-btn.clear {
-  background: var(--surface-hover);
-  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
 }
 </style>

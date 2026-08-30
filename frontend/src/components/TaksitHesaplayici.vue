@@ -59,7 +59,18 @@
         </Column>
       </DataTable>
       <div class="taksit-ozet">
-        Toplam Odeme: <strong>{{ format(toplam) }}</strong>
+        <div class="ozet-satir">
+          <span>Aylık Taksit</span>
+          <strong>{{ format(aylikTaksit) }}</strong>
+        </div>
+        <div class="ozet-satir">
+          <span>Toplam Ödeme</span>
+          <strong>{{ format(toplam) }}</strong>
+        </div>
+        <div class="ozet-satir">
+          <span>Toplam Faiz</span>
+          <strong class="faiz">{{ format(toplamFaiz) }}</strong>
+        </div>
       </div>
     </div>
   </Dialog>
@@ -89,6 +100,8 @@ const plan = computed(() => {
   return p
 })
 const toplam = computed(() => plan.value.reduce((s, p) => s + p.taksit, 0))
+const toplamFaiz = computed(() => toplam.value - (tutar.value || 0))
+const aylikTaksit = computed(() => (plan.value.length ? plan.value[0].taksit : 0))
 const format = (v) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 </script>
 
@@ -105,10 +118,25 @@ const format = (v) => new Intl.NumberFormat('tr-TR', { style: 'currency', curren
   margin-bottom: 4px;
 }
 .taksit-ozet {
-  text-align: right;
-  font-size: 16px;
-  padding: 8px;
-  background: var(--surface-ground);
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.ozet-satir {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.ozet-satir strong {
+  color: var(--text-primary);
+  font-family: monospace;
+}
+.ozet-satir .faiz {
+  color: #f59e0b;
 }
 </style>
