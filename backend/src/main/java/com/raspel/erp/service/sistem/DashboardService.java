@@ -26,6 +26,10 @@ import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
+import com.raspel.erp.repository.finans.MasrafRepository;
+import com.raspel.erp.repository.sistem.SirketHedefRepository;
+import com.raspel.erp.entity.finans.Masraf;
+import com.raspel.erp.entity.sistem.SirketHedef;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +47,8 @@ public class DashboardService {
     private final FaturaRepository faturaRepository;
     private final BankaRepository bankaRepository;
     private final KasaRepository kasaRepository;
+    private final MasrafRepository masrafRepository;
+    private final SirketHedefRepository sirketHedefRepository;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "dashboard", key = "'dashboard:' + #sirketId")
@@ -121,6 +127,49 @@ public class DashboardService {
         BigDecimal toplamKasaBakiye = safeGet(() -> kasaRepository.sumBakiyeBySirketId(sirketId), BigDecimal.ZERO);
         Long kritikStokSayisi = safeGet(() -> stokRepository.countKritikStokBySirketId(sirketId), 0L);
 
+        List<DashboardDTO.KritikStokDTO> kritikStoklar = safeGetList(
+                () -> stokRepository.kritikStoklar(sirketId).stream()
+                        .limit(6)
+                        .map(s -> DashboardDTO.KritikStokDTO.builder()
+                                .id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
+                                .miktar(s.getMiktar()).birim(s.getBirim()).minMiktar(s.getMinMiktar()).build())
+                        .collect(Collectors.toList()),
+                Collections.emptyList());
+
+        // Aylık hedef ve gerçekleşen ciro
+        LocalDate ayBas = LocalDate.now().withDayOfMonth(1);
+        LocalDate aySon = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        Optional<SirketHedef> hedefOpt = safeGet(
+                () -> sirketHedefRepository.findBySirketIdAndYilAndAy(sirketId, LocalDate.now().getYear(), LocalDate.now().getMonthValue()),
+                Optional.empty());
+        BigDecimal hedefCiro = hedefOpt.map(SirketHedef::getHedefCiro).orElse(BigDecimal.ZERO);
+        BigDecimal hedefKar = hedefOpt.map(SirketHedef::getHedefKar).orElse(BigDecimal.ZERO);
+
+        BigDecimal gerceklesenCiro = safeGet(() -> {
+            return faturaRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
+                    .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                    .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }, BigDecimal.ZERO);
+
+        BigDecimal toplamAlisMaliyeti = safeGet(() -> {
+            return faturaRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
+                    .filter(f -> f.getTur() == Fatura.FaturaTur.ALIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                    .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }, BigDecimal.ZERO);
+
+        BigDecimal toplamMasraflar = safeGet(() -> {
+            return masrafRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
+                    .map(Masraf::getTutar).filter(java.util.Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }, BigDecimal.ZERO);
+
+        BigDecimal gerceklesenKar = gerceklesenCiro.subtract(toplamAlisMaliyeti).subtract(toplamMasraflar);
+        BigDecimal ciroIlerlemeYuzdesi = hedefCiro.compareTo(BigDecimal.ZERO) > 0
+                ? gerceklesenCiro.multiply(BigDecimal.valueOf(100)).divide(hedefCiro, 1, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
         return DashboardDTO.builder()
                 .toplamCariSayisi(toplamCariSayisi)
                 .toplamBakiye(toplamBakiye)
@@ -133,10 +182,16 @@ public class DashboardService {
                 .iadeOrani(iadeOrani)
                 .toplamStok(toplamStok)
                 .kritikStokSayisi(kritikStokSayisi)
+                .kritikStoklar(kritikStoklar)
                 .toplamFatura(toplamFatura)
                 .kesilenFatura(kesilenFatura)
                 .toplamBankaBakiye(toplamBankaBakiye)
                 .toplamKasaBakiye(toplamKasaBakiye)
+                .hedefCiro(hedefCiro)
+                .gerceklesenCiro(gerceklesenCiro)
+                .ciroIlerlemeYuzdesi(ciroIlerlemeYuzdesi)
+                .hedefKar(hedefKar)
+                .gerceklesenKar(gerceklesenKar)
                 .stokDevirHizi(stokDevirHizi)
                 .enCokSatanlar(enCokSatanlar)
                 .pozitifBakiye(pozitifBakiye)

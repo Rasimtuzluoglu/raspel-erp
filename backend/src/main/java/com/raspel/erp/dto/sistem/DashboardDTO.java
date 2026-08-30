@@ -40,10 +40,30 @@ public class DashboardDTO {
 
     private Long toplamStok;
     private Long kritikStokSayisi;
+    private List<KritikStokDTO> kritikStoklar;
     private Long toplamFatura;
     private Long kesilenFatura;
     private BigDecimal toplamBankaBakiye;
     private BigDecimal toplamKasaBakiye;
+
+    private BigDecimal hedefCiro;
+    private BigDecimal gerceklesenCiro;
+    private BigDecimal ciroIlerlemeYuzdesi;
+    private BigDecimal hedefKar;
+    private BigDecimal gerceklesenKar;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class KritikStokDTO {
+        private Long id;
+        private String stokKodu;
+        private String ad;
+        private BigDecimal miktar;
+        private String birim;
+        private BigDecimal minMiktar;
+    }
 
     @Data
     @NoArgsConstructor

@@ -25,10 +25,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const vadesiYaklasanFaturalar = ref([])
   const toplamStok = ref(0)
   const kritikStokSayisi = ref(0)
+  const kritikStoklar = ref([])
   const toplamFatura = ref(0)
   const kesilenFatura = ref(0)
   const toplamBankaBakiye = ref(0)
   const toplamKasaBakiye = ref(0)
+  const hedefCiro = ref(0)
+  const gerceklesenCiro = ref(0)
+  const ciroIlerlemeYuzdesi = ref(0)
+  const hedefKar = ref(0)
+  const gerceklesenKar = ref(0)
   const loading = ref(false)
   const error = ref(null)
 
@@ -60,10 +66,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
       vadesiYaklasanFaturalar.value = d.vadesiYaklasanFaturalar || []
       toplamStok.value = d.toplamStok || 0
       kritikStokSayisi.value = d.kritikStokSayisi || 0
+      kritikStoklar.value = d.kritikStoklar || []
       toplamFatura.value = d.toplamFatura || 0
       kesilenFatura.value = d.kesilenFatura || 0
       toplamBankaBakiye.value = d.toplamBankaBakiye || 0
       toplamKasaBakiye.value = d.toplamKasaBakiye || 0
+      hedefCiro.value = d.hedefCiro || 0
+      gerceklesenCiro.value = d.gerceklesenCiro || 0
+      ciroIlerlemeYuzdesi.value = d.ciroIlerlemeYuzdesi || 0
+      hedefKar.value = d.hedefKar || 0
+      gerceklesenKar.value = d.gerceklesenKar || 0
       return d
     } catch (err) {
       error.value = err.message
@@ -97,10 +109,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
     vadesiYaklasanFaturalar,
     toplamStok,
     kritikStokSayisi,
+    kritikStoklar,
     toplamFatura,
     kesilenFatura,
     toplamBankaBakiye,
     toplamKasaBakiye,
+    hedefCiro,
+    gerceklesenCiro,
+    ciroIlerlemeYuzdesi,
+    hedefKar,
+    gerceklesenKar,
     loading,
     error,
     getDashboardData

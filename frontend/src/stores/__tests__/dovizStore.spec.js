@@ -19,7 +19,7 @@ describe('dovizStore', () => {
   })
 
   it('initializes with default kurlar', () => {
-    expect(store.kurlar.length).toBe(5)
+    expect(store.kurlar.length).toBe(6)
     expect(store.aktifParaBirimi).toBe('TRY')
   })
 
@@ -70,7 +70,7 @@ describe('dovizStore', () => {
   it('kurlariYukle keeps defaults on error', async () => {
     dovizAPI.getKurlar.mockRejectedValue(new Error('down'))
     await store.kurlariYukle()
-    expect(store.kurlar.length).toBe(5)
+    expect(store.kurlar.length).toBe(6)
     expect(store.loading).toBe(false)
   })
 })

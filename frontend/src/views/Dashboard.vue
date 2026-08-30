@@ -222,6 +222,69 @@
         </div>
       </div>
 
+      <!-- 1a. BUGÜNÜN ÖZETİ + HEDEF İLERLEMESİ -->
+      <template v-if="widgets.bugunOzet.gorunur">
+        <h2 class="section-title">
+          <i class="pi pi-sun" /> Bugünün Özeti & Hedefler
+        </h2>
+        <div class="bugun-ozet-grid">
+          <div class="bugun-kart tahsilat">
+            <i class="pi pi-arrow-down-left" />
+            <div>
+              <span>Bugünkü Tahsilat</span>
+              <strong>{{ formatCurrency(dashboardStore?.bugunkuTahsilat || 0) }}</strong>
+            </div>
+          </div>
+          <div class="bugun-kart odeme">
+            <i class="pi pi-arrow-up-right" />
+            <div>
+              <span>Bugünkü Ödeme</span>
+              <strong>{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
+            </div>
+          </div>
+          <div class="bugun-kart siparis">
+            <i class="pi pi-shopping-cart" />
+            <div>
+              <span>Bugünkü Sipariş</span>
+              <strong>{{ dashboardStore?.bugunkuSiparis || 0 }}</strong>
+            </div>
+          </div>
+          <div class="bugun-kart teslimat">
+            <i class="pi pi-truck" />
+            <div>
+              <span>Bekleyen Teslimat</span>
+              <strong>{{ dashboardStore?.bekleyenTeslimat || 0 }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="hedef-grid">
+          <div class="hedef-kart">
+            <div class="hedef-baslik">
+              <span><i class="pi pi-bullseye" /> Aylık Ciro Hedefi</span>
+              <strong>{{ formatCurrency(dashboardStore?.gerceklesenCiro || 0) }} / {{ formatCurrency(dashboardStore?.hedefCiro || 0) }}</strong>
+            </div>
+            <div class="hedef-track">
+              <div
+                class="hedef-fill ciro"
+                :style="{ width: Math.min(100, dashboardStore?.ciroIlerlemeYuzdesi || 0) + '%' }"
+              />
+            </div>
+            <span class="hedef-yuzde">%{{ (dashboardStore?.ciroIlerlemeYuzdesi || 0).toFixed(1) }}</span>
+          </div>
+          <div class="hedef-kart">
+            <div class="hedef-baslik">
+              <span><i class="pi pi-chart-line" /> Net Kâr (Bu Ay)</span>
+              <strong :class="(dashboardStore?.gerceklesenKar || 0) >= 0 ? 'positive' : 'negative'">{{ formatCurrency(dashboardStore?.gerceklesenKar || 0) }}</strong>
+            </div>
+            <div class="alacak-borc-satir">
+              <span class="alacak">Alacak: {{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}</span>
+              <span class="borc">Borç: {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- 1b. OPERASYONEL METRİKLER -->
       <div
         v-if="widgets.istatistikler.gorunur"
@@ -492,6 +555,31 @@
         </Card>
       </div>
 
+      <!-- 3c. KRİTİK STOK -->
+      <template v-if="widgets.kritikStok.gorunur && (dashboardStore?.kritikStoklar || []).length">
+        <h2 class="section-title">
+          <i class="pi pi-exclamation-triangle" /> Kritik Stok Uyarıları
+        </h2>
+        <div class="kritik-stok-grid">
+          <div
+            v-for="s in dashboardStore.kritikStoklar"
+            :key="s.id"
+            class="kritik-stok-kart"
+          >
+            <div class="ks-kod">
+              {{ s.stokKodu || '—' }}
+            </div>
+            <div class="ks-ad">
+              {{ s.ad }}
+            </div>
+            <div class="ks-miktar">
+              <span class="ks-deger">{{ s.miktar || 0 }} {{ s.birim || '' }}</span>
+              <span class="ks-min">Min: {{ s.minMiktar || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- 4. ALT BÖLÜM: SON HAREKETLER VE ÖDEME VADELERİ -->
       <h2 class="section-title">
         <i class="pi pi-list" /> Son İşlemler & Vade Takibi
@@ -667,7 +755,9 @@ const karsilamaMetni = computed(() => {
 })
 
 const widgetVarsayilan = () => ({
+  bugunOzet: { gorunur: true, etiket: 'Bugünün Özeti & Hedefler' },
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
+  kritikStok: { gorunur: true, etiket: 'Kritik Stok Uyarıları' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
   odemeVadeleri: { gorunur: true, etiket: 'Ödeme Vadeleri' }
@@ -1201,6 +1291,162 @@ const whatsappLink = (f) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.bugun-ozet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.bugun-kart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.bugun-kart i {
+  font-size: 22px;
+  opacity: 0.9;
+}
+.bugun-kart span {
+  display: block;
+  font-size: 11px;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+.bugun-kart strong {
+  font-size: 18px;
+  font-weight: 800;
+}
+.bugun-kart.tahsilat {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+.bugun-kart.odeme {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+.bugun-kart.siparis {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+.bugun-kart.teslimat {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+}
+
+.hedef-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.hedef-kart {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.hedef-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.hedef-baslik span {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hedef-baslik span i {
+  color: var(--accent);
+}
+.hedef-baslik strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.hedef-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.12));
+  overflow: hidden;
+}
+.hedef-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.hedef-fill.ciro {
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+.hedef-yuzde {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: right;
+}
+.alacak-borc-satir {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.alacak-borc-satir .alacak {
+  color: #10b981;
+}
+.alacak-borc-satir .borc {
+  color: #ef4444;
+}
+
+.kritik-stok-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kritik-stok-kart {
+  background: var(--bg-card);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.ks-kod {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: monospace;
+}
+.ks-ad {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 2px 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ks-miktar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.ks-deger {
+  font-weight: 700;
+  color: #ef4444;
+}
+.ks-min {
+  color: var(--text-muted);
 }
 
 .charts-row {
