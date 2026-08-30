@@ -8,12 +8,11 @@
       class="p-button-rounded p-button-text p-button-sm"
       title="Bildirimler"
       @click.stop="panelAcik = !panelAcik"
-    >
-      <span
-        v-if="okunmamis"
-        class="zil-sayac"
-      >{{ okunmamis }}</span>
-    </Button>
+    />
+    <span
+      v-if="okunmamis"
+      class="zil-sayac"
+    >{{ okunmamis }}</span>
 
     <transition name="panel">
       <div
