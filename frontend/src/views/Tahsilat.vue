@@ -192,9 +192,9 @@
 
       <EmptyState
         v-if="!(ozet?.cariler || []).length"
-        ikon="pi pi-check-circle"
-        baslik="Açık alacak yok"
-        metin="Şu anda ödenmemiş alacağınız bulunmuyor. Harika!"
+        icon="pi pi-check-circle"
+        message="Açık alacak yok"
+        sub-message="Şu anda ödenmemiş alacağınız bulunmuyor. Harika!"
       />
     </template>
   </div>
