@@ -230,6 +230,85 @@
         </div>
       </div>
 
+      <!-- 1b. OPERASYONEL METRİKLER -->
+      <div
+        v-if="widgets.istatistikler.gorunur"
+        class="mini-stats-grid"
+      >
+        <div class="mini-stat">
+          <div class="mini-stat-icon siparis">
+            <i class="pi pi-shopping-cart" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Bugünkü Sipariş</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.bugunkuSiparis || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon teslimat">
+            <i class="pi pi-truck" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Bekleyen Teslimat</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.bekleyenTeslimat || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon iade">
+            <i class="pi pi-replay" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">İade Oranı</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.iadeOrani || 0 }}%</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon devir">
+            <i class="pi pi-sync" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Stok Devir Hızı</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.stokDevirHizi || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon calisan">
+            <i class="pi pi-id-card" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Aktif Çalışan</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.aktifCalisan || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon izinli">
+            <i class="pi pi-calendar" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Bugün İzinli</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.bugunIzinli || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon bekleyen-izin">
+            <i class="pi pi-hourglass" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Bekleyen İzin</span>
+            <strong class="mini-stat-deger">{{ dashboardStore?.bekleyenIzinSayisi || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon odeme">
+            <i class="pi pi-money-bill" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">Bugünkü Ödeme</span>
+            <strong class="mini-stat-deger">{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
+          </div>
+        </div>
+      </div>
+
       <!-- 2. HIZLI İŞLEMLER ÇUBUĞU -->
       <div
         v-if="widgets.istatistikler.gorunur"
@@ -346,6 +425,32 @@
               class="chart-empty"
             >
               Henüz gelir/gider verisi bulunmuyor
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-trophy"
+              style="margin-right: 8px"
+            />En Çok Satan Ürünler
+          </template>
+          <template #content>
+            <div
+              v-if="enCokSatanlarChart.datasets.length"
+              class="chart-wrapper full"
+            >
+              <Bar
+                :data="enCokSatanlarChart"
+                :options="enCokSatanlarOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz satış verisi bulunmuyor
             </div>
           </template>
         </Card>
@@ -594,6 +699,7 @@ const refresh = async () => {
 
 const bakiyeChart = ref({ labels: [], datasets: [] })
 const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
+const enCokSatanlarChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const aylikKarsilastirmaOptions = {
@@ -601,6 +707,16 @@ const aylikKarsilastirmaOptions = {
   maintainAspectRatio: false,
   plugins: { legend: { position: 'bottom' } },
   scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } } }
+}
+const enCokSatanlarOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#94a3b8' } },
+    y: { ticks: { color: '#94a3b8' } }
+  }
 }
 
 const bosSistem = computed(
@@ -633,6 +749,27 @@ const grafikleriHesapla = () => {
   }
 
   aylikKarsilastirmayiHesapla()
+  enCokSatanlariHesapla()
+}
+
+const enCokSatanlariHesapla = () => {
+  const urunler = (dashboardStore.enCokSatanlar || []).slice(0, 7)
+  if (!urunler.length) {
+    enCokSatanlarChart.value = { labels: [], datasets: [] }
+    return
+  }
+  const renkler = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
+  enCokSatanlarChart.value = {
+    labels: urunler.map((u) => u.stokAd),
+    datasets: [
+      {
+        label: 'Satış Miktarı',
+        data: urunler.map((u) => u.satisMiktari),
+        backgroundColor: urunler.map((_, i) => renkler[i % renkler.length]),
+        borderRadius: 4
+      }
+    ]
+  }
 }
 
 const aylikKarsilastirmayiHesapla = () => {
@@ -945,6 +1082,80 @@ const whatsappLink = (f) => {
   color: var(--text-secondary);
 }
 
+.mini-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.mini-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.2s;
+}
+.mini-stat:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+}
+.mini-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  flex-shrink: 0;
+}
+.mini-stat-icon.siparis {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+.mini-stat-icon.teslimat {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+.mini-stat-icon.iade {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+.mini-stat-icon.devir {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+.mini-stat-icon.calisan {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+.mini-stat-icon.izinli {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+.mini-stat-icon.bekleyen-izin {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.mini-stat-icon.odeme {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+.mini-stat-icerik {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mini-stat-etiket {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.mini-stat-deger {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .charts-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -954,6 +1165,11 @@ const whatsappLink = (f) => {
 .chart-wrapper {
   max-width: 350px;
   margin: 0 auto;
+}
+.chart-wrapper.full {
+  max-width: 100%;
+  height: 260px;
+  margin: 0;
 }
 .aylik-chart {
   max-width: 100%;
