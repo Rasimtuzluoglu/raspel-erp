@@ -155,7 +155,7 @@
                     placeholder="••••••"
                     inputmode="numeric"
                     maxlength="6"
-                    style="text-align: center; letter-spacing: 6px; font-size: 20px"
+                    class="kod-input"
                     @keyup="e => e.key === 'Enter' && ikiFaktorDogrula()"
                   />
                 </div>
@@ -999,6 +999,13 @@ const tumAdimlariSifirla = () => {
 }
 .input-wrapper:focus-within > i {
   color: #3b82f6;
+}
+.kod-input {
+  text-align: center !important;
+  letter-spacing: 2px;
+  font-size: 18px;
+  font-family: monospace;
+  padding-right: 14px !important;
 }
 
 .sifre-toggle {

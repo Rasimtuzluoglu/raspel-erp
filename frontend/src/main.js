@@ -19,6 +19,8 @@ import GecmisZamanCizelgesi from './components/GecmisZamanCizelgesi.vue'
 import permissionDirective from './directives/permission.js'
 
 import 'primeicons/primeicons.css'
+import 'primeflex/primeflex.css'
+import './assets/tailwind.css'
 import './assets/app.css'
 import { useTheme } from './composables/useTheme.js'
 import { formatCurrency, formatDate, formatDateTime } from './utils/format.js'

@@ -1,5 +1,8 @@
 * {
   box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, #e5e7eb);
 }
 :root {
   --bg-primary: #0b1329;
@@ -26,6 +29,29 @@
   --accent-hover: #2563eb;
   --border: rgba(148, 163, 184, 0.2);
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Semantik yardımcı sınıflar (uygulama temasına göre) */
+.text-primary {
+  color: var(--text-primary);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+.text-muted {
+  color: var(--text-muted);
+}
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+.bg-card {
+  background-color: var(--bg-card);
+}
+.bg-muted {
+  background-color: var(--bg-muted, rgba(148, 163, 184, 0.08));
 }
 
 [data-theme='light'] body {
