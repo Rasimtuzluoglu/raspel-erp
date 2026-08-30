@@ -94,6 +94,15 @@ public class DashboardService {
                         .build())
                 .collect(Collectors.toList());
 
+        var yediGunOnce = LocalDate.now().minusDays(6);
+        var gunlukNakitAkisi = safeGetList(() -> hareketRepository.gunlukNakitAkisi(yediGunOnce, sirketId), Collections.emptyList())
+                .stream().map(row -> DashboardDTO.GunlukNakitAkisiDTO.builder()
+                        .gun((String) row[0])
+                        .gelir((BigDecimal) row[1])
+                        .gider((BigDecimal) row[2])
+                        .build())
+                .collect(Collectors.toList());
+
         var odemeDurumlari = List.of("ODENDI", "IPTAL");
         var bugun = LocalDate.now();
         List<DashboardDTO.VadeBildirimiDTO> vadesiGecenFaturalar = safeGetList(
@@ -136,6 +145,7 @@ public class DashboardService {
                 .bugunkuOdeme(bugunkuOdeme)
                 .bekleyenIzinSayisi(bekleyenIzinSayisi)
                 .aylikGelirGider(aylikGelirGider)
+                .gunlukNakitAkisi(gunlukNakitAkisi)
                 .vadesiGecenFaturalar(vadesiGecenFaturalar)
                 .vadesiYaklasanFaturalar(vadesiYaklasanFaturalar)
                 .build();

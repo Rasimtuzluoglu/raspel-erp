@@ -20,6 +20,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const bugunkuOdeme = ref(0)
   const bekleyenIzinSayisi = ref(0)
   const aylikGelirGider = ref([])
+  const gunlukNakitAkisi = ref([])
   const vadesiGecenFaturalar = ref([])
   const vadesiYaklasanFaturalar = ref([])
   const toplamStok = ref(0)
@@ -54,6 +55,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       bugunkuOdeme.value = d.bugunkuOdeme || 0
       bekleyenIzinSayisi.value = d.bekleyenIzinSayisi || 0
       aylikGelirGider.value = d.aylikGelirGider || []
+      gunlukNakitAkisi.value = d.gunlukNakitAkisi || []
       vadesiGecenFaturalar.value = d.vadesiGecenFaturalar || []
       vadesiYaklasanFaturalar.value = d.vadesiYaklasanFaturalar || []
       toplamStok.value = d.toplamStok || 0
@@ -90,6 +92,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     bugunkuOdeme,
     bekleyenIzinSayisi,
     aylikGelirGider,
+    gunlukNakitAkisi,
     vadesiGecenFaturalar,
     vadesiYaklasanFaturalar,
     toplamStok,

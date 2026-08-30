@@ -34,6 +34,7 @@ public class DashboardDTO {
     private BigDecimal bugunkuOdeme;
     private Long bekleyenIzinSayisi;
     private List<AylikGelirGiderDTO> aylikGelirGider;
+    private List<GunlukNakitAkisiDTO> gunlukNakitAkisi;
     private List<VadeBildirimiDTO> vadesiGecenFaturalar;
     private List<VadeBildirimiDTO> vadesiYaklasanFaturalar;
 
@@ -73,6 +74,16 @@ public class DashboardDTO {
     @Builder
     public static class AylikGelirGiderDTO {
         private String ay;
+        private BigDecimal gelir;
+        private BigDecimal gider;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class GunlukNakitAkisiDTO {
+        private String gun;
         private BigDecimal gelir;
         private BigDecimal gider;
     }

@@ -29,6 +29,13 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
            "GROUP BY ay ORDER BY ay", nativeQuery = true)
     List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic, @Param("sirketId") Long sirketId);
 
+    @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM-DD') AS gun, " +
+           "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
+           "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +
+           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic AND h.sirket_id = :sirketId " +
+           "GROUP BY gun ORDER BY gun", nativeQuery = true)
+    List<Object[]> gunlukNakitAkisi(@Param("baslangic") LocalDate baslangic, @Param("sirketId") Long sirketId);
+
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findBySirketIdOrderByHareketTarihiDescOlusturmaTarihiDesc(Long sirketId, Pageable pageable);
 

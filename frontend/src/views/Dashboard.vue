@@ -52,20 +52,6 @@
       </div>
     </div>
 
-    <div
-      v-if="rolHizliEylemler.length"
-      class="rol-eylemler"
-    >
-      <Button
-        v-for="a in rolHizliEylemler"
-        :key="a.route"
-        :label="a.label"
-        :icon="a.icon"
-        class="p-button-sm p-button-outlined"
-        @click="router.push(a.route)"
-      />
-    </div>
-
     <Card
       v-if="widgetAyarlariGoster"
       class="widget-ayarlari"
@@ -456,6 +442,38 @@
         </Card>
       </div>
 
+      <!-- 3b. SON 7 GÜN NAKİT AKIŞI -->
+      <div
+        v-if="widgets.grafikler.gorunur"
+        class="nakit-akisi-kart"
+      >
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-chart-line"
+              style="margin-right: 8px"
+            />Son 7 Gün Nakit Akışı (Gelir / Gider)
+          </template>
+          <template #content>
+            <div
+              v-if="nakitAkisiChart.datasets.length"
+              class="nakit-akisi-wrapper"
+            >
+              <Line
+                :data="nakitAkisiChart"
+                :options="nakitAkisiOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz nakit akışı verisi bulunmuyor
+            </div>
+          </template>
+        </Card>
+      </div>
+
       <!-- 4. ALT BÖLÜM: SON HAREKETLER VE ÖDEME VADELERİ -->
       <div class="bottom-grid">
         <div
@@ -539,6 +557,13 @@
                 <span class="reminder-ad">#{{ f.faturaNumarasi }} <small>{{ f.cariHesapAd }}</small></span>
                 <span class="reminder-tutar negative">{{ formatCurrency(f.kalanTutar) }}</span>
               </div>
+              <router-link
+                v-if="(dashboardStore?.vadesiGecenFaturalar || []).length"
+                to="/tahsilat"
+                class="tumu-gor"
+              >
+                Tümünü gör <i class="pi pi-arrow-right" />
+              </router-link>
             </template>
           </Card>
 
@@ -591,7 +616,7 @@ import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { Doughnut, Bar } from 'vue-chartjs'
+import { Doughnut, Bar, Line } from 'vue-chartjs'
 import Onboarding from '../components/Onboarding.vue'
 import SaatGostergesi from '../components/SaatGostergesi.vue'
 import {
@@ -620,39 +645,6 @@ const karsilamaMetni = computed(() => {
   return 'İyi akşamlar'
 })
 
-const rolHizliEylemler = computed(() => {
-  const rol = authStore?.kullanici?.role
-  const eylemler = {
-    ADMIN: [
-      { label: 'Yönetici Kokpiti', route: '/yonetici-kokpiti', icon: 'pi pi-chart-line' },
-      { label: 'Yeni Fatura', route: '/faturalar', icon: 'pi pi-file' },
-      { label: 'Yeni Stok', route: '/stoklar', icon: 'pi pi-box' },
-      { label: 'Kullanıcılar', route: '/kullanicilar', icon: 'pi pi-users' }
-    ],
-    SATIS: [
-      { label: 'Hızlı Satış', route: '/hizli-satis', icon: 'pi pi-bolt' },
-      { label: 'Yeni Fatura', route: '/faturalar', icon: 'pi pi-file' },
-      { label: 'Teklifler', route: '/teklifler', icon: 'pi pi-receipt' },
-      { label: 'CRM', route: '/crm', icon: 'pi pi-star' }
-    ],
-    MUHASEBE: [
-      { label: 'Muhasebe', route: '/muhasebe', icon: 'pi pi-calculator' },
-      { label: 'Bütçeler', route: '/butceler', icon: 'pi pi-chart-bar' },
-      { label: 'Raporlar', route: '/raporlar', icon: 'pi pi-file' }
-    ],
-    DEPO: [
-      { label: 'Depolar', route: '/depolar', icon: 'pi pi-warehouse' },
-      { label: 'Stoklar', route: '/stoklar', icon: 'pi pi-box' },
-      { label: 'Kritik Stok', route: '/kritik-stok', icon: 'pi pi-exclamation-triangle' }
-    ],
-    PERSONEL: [
-      { label: 'Personel', route: '/personel', icon: 'pi pi-id-card' },
-      { label: 'İzinler', route: '/izinler', icon: 'pi pi-calendar' },
-      { label: 'Puantaj', route: '/puantaj', icon: 'pi pi-clock' }
-    ]
-  }
-  return eylemler[rol] || []
-})
 const widgetVarsayilan = () => ({
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
@@ -700,6 +692,7 @@ const refresh = async () => {
 const bakiyeChart = ref({ labels: [], datasets: [] })
 const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
 const enCokSatanlarChart = ref({ labels: [], datasets: [] })
+const nakitAkisiChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const aylikKarsilastirmaOptions = {
@@ -716,6 +709,15 @@ const enCokSatanlarOptions = {
   scales: {
     x: { ticks: { color: '#94a3b8' } },
     y: { ticks: { color: '#94a3b8' } }
+  }
+}
+const nakitAkisiOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } },
+  scales: {
+    x: { ticks: { color: '#94a3b8' } },
+    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
   }
 }
 
@@ -750,6 +752,7 @@ const grafikleriHesapla = () => {
 
   aylikKarsilastirmayiHesapla()
   enCokSatanlariHesapla()
+  nakitAkisiniHesapla()
 }
 
 const enCokSatanlariHesapla = () => {
@@ -767,6 +770,35 @@ const enCokSatanlariHesapla = () => {
         data: urunler.map((u) => u.satisMiktari),
         backgroundColor: urunler.map((_, i) => renkler[i % renkler.length]),
         borderRadius: 4
+      }
+    ]
+  }
+}
+
+const nakitAkisiniHesapla = () => {
+  const gunler = dashboardStore.gunlukNakitAkisi || []
+  if (!gunler.length) {
+    nakitAkisiChart.value = { labels: [], datasets: [] }
+    return
+  }
+  nakitAkisiChart.value = {
+    labels: gunler.map((g) => g.gun.slice(5)),
+    datasets: [
+      {
+        label: 'Gelir',
+        data: gunler.map((g) => g.gelir),
+        borderColor: '#4caf50',
+        backgroundColor: '#4caf50',
+        tension: 0.3,
+        pointRadius: 3
+      },
+      {
+        label: 'Gider',
+        data: gunler.map((g) => g.gider),
+        borderColor: '#f44336',
+        backgroundColor: '#f44336',
+        tension: 0.3,
+        pointRadius: 3
       }
     ]
   }
@@ -843,12 +875,6 @@ const whatsappLink = (f) => {
 <style scoped>
 .dashboard-container {
   padding: 0;
-}
-.rol-eylemler {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
 }
 .dashboard-header {
   display: flex;
@@ -1170,6 +1196,26 @@ const whatsappLink = (f) => {
   max-width: 100%;
   height: 260px;
   margin: 0;
+}
+.nakit-akisi-kart {
+  margin-bottom: 24px;
+}
+.nakit-akisi-wrapper {
+  height: 260px;
+}
+.tumu-gor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.tumu-gor:hover {
+  color: var(--accent-hover);
 }
 .aylik-chart {
   max-width: 100%;
