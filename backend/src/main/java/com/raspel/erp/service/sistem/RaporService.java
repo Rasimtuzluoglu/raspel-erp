@@ -121,21 +121,44 @@ public class RaporService {
 
     public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu(Long sirketId) {
         LocalDate bugun = LocalDate.now();
-        return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                .filter(c -> c.getBakiye().compareTo(BigDecimal.ZERO) > 0)
-                .map(c -> {
-                    int gun = (int) ChronoUnit.DAYS.between(c.getGuncellemeTarihi().toLocalDate(), bugun);
-                    String aralik;
-                    if (gun <= 30) aralik = "0-30 Gün";
-                    else if (gun <= 60) aralik = "31-60 Gün";
-                    else if (gun <= 90) aralik = "61-90 Gün";
-                    else aralik = "90+ Gün";
 
+        // Cari bazında en çok geciken faturanın gecikme gününü vade tarihine göre hesapla
+        Map<Long, Integer> cariGecikme = new HashMap<>();
+        for (Fatura f : faturaRepository.findTahsilatEdilecek(
+                sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"))) {
+            if (f.getCariHesap() == null) continue;
+            int gun = (int) ChronoUnit.DAYS.between(vadeTarihi(f), bugun);
+            if (gun > 0) {
+                cariGecikme.merge(f.getCariHesap().getId(), gun, Math::max);
+            }
+        }
+
+        return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
+                .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) > 0)
+                .map(c -> {
+                    int gun = cariGecikme.getOrDefault(c.getId(), 0);
                     return RaporDTO.YaslandirmaDTO.builder()
-                            .cariAd(c.getAd()).bakiye(c.getBakiye().abs()).gun(gun).aralik(aralik).build();
+                            .cariAd(c.getAd()).bakiye(c.getBakiye().abs()).gun(gun).aralik(aralik(gun)).build();
                 })
                 .sorted(Comparator.comparingInt(RaporDTO.YaslandirmaDTO::getGun).reversed())
                 .collect(Collectors.toList());
+    }
+
+    private LocalDate vadeTarihi(Fatura f) {
+        if (f.getVadeTarihi() != null) return f.getVadeTarihi();
+        CariHesap cari = f.getCariHesap();
+        if (cari != null && cari.getOdemeVadesi() != null) {
+            return f.getTarih().plusDays(cari.getOdemeVadesi());
+        }
+        return f.getTarih();
+    }
+
+    private String aralik(int gun) {
+        if (gun <= 0) return "Vadesi Gelmemiş";
+        if (gun <= 30) return "0-30 Gün";
+        if (gun <= 60) return "31-60 Gün";
+        if (gun <= 90) return "61-90 Gün";
+        return "90+ Gün";
     }
 
     /** Belirtilen ay (YYYY-MM) için KDV beyannameye hazırlık listesi üretir. */

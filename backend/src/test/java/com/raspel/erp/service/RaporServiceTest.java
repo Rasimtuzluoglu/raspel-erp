@@ -119,14 +119,27 @@ class RaporServiceTest {
     void yaslandirmaRaporu_returnsYaslandirma() {
         CariHesap cari1 = createCariHesap();
         cari1.setBakiye(BigDecimal.valueOf(3000));
-        cari1.setGuncellemeTarihi(LocalDateTime.now().minusDays(45));
         CariHesap cari2 = createCariHesap();
         cari2.setId(2L);
         cari2.setAd("Cari 2");
         cari2.setBakiye(BigDecimal.valueOf(1000));
-        cari2.setGuncellemeTarihi(LocalDateTime.now().minusDays(15));
+
+        Fatura fatura1 = new Fatura();
+        fatura1.setCariHesap(cari1);
+        fatura1.setVadeTarihi(LocalDate.now().minusDays(45));
+        fatura1.setTarih(LocalDate.now().minusDays(75));
+
+        Fatura fatura2 = new Fatura();
+        fatura2.setCariHesap(cari2);
+        fatura2.setVadeTarihi(LocalDate.now().minusDays(15));
+        fatura2.setTarih(LocalDate.now().minusDays(45));
+
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari1, cari2));
+        when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), any()))
+                .thenReturn(List.of(fatura1, fatura2));
+
         var result = raporService.yaslandirmaRaporu(1L);
+
         assertEquals(2, result.size());
         assertEquals("31-60 Gün", result.get(0).getAralik());
         assertEquals("0-30 Gün", result.get(1).getAralik());
