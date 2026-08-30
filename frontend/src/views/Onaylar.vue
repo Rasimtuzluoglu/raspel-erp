@@ -47,11 +47,11 @@
               <div>
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex items-center gap-2">
-                    <div class="user-avatar bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                    <div class="user-avatar bg-blue-100 dark:bg-blue-900/60 text-accent dark:text-blue-300">
                       <i class="pi pi-user" />
                     </div>
                     <div>
-                      <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100">
+                      <h4 class="font-bold text-sm text-primary dark:text-gray-100">
                         {{ i.personelAdi || 'Personel #' + i.personelId }}
                       </h4>
                       <span class="text-xs text-muted">{{ i.izinTuru }}</span>
@@ -62,7 +62,7 @@
                     severity="warn"
                   />
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
+                <div class="bg-secondary dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
                   <div class="flex justify-between">
                     <span>Tarih Aralığı:</span>
                     <strong>{{ formatDate(i.baslangic) }} → {{ formatDate(i.bitis) }}</strong>
@@ -134,7 +134,7 @@
                       <i class="pi pi-receipt" />
                     </div>
                     <div>
-                      <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100">
+                      <h4 class="font-bold text-sm text-primary dark:text-gray-100">
                         {{ m.personelAdi || m.kullaniciAdi || 'Saha Personeli' }}
                       </h4>
                       <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-semibold">{{ m.tur === 'AVANS' ? 'Avans' : m.kategori }}</span>
@@ -144,12 +144,12 @@
                     {{ formatCurrency(m.tutar) }} {{ m.paraBirimi || 'TRY' }}
                   </div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
+                <div class="bg-secondary dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
                   <div class="flex justify-between text-muted">
                     <span>Fiş / Talep Tarihi:</span>
                     <strong>{{ formatDate(m.tarih) }}</strong>
                   </div>
-                  <div class="text-gray-800 dark:text-gray-200">
+                  <div class="text-primary dark:text-gray-200">
                     {{ m.aciklama }}
                   </div>
                 </div>
@@ -210,7 +210,7 @@
                     severity="warning"
                   />
                 </div>
-                <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                <h4 class="font-bold text-sm text-primary dark:text-gray-100 mb-1">
                   {{ t.talepEden || '-' }} · {{ t.departman || 'Genel' }}
                 </h4>
                 <p class="text-xs text-muted mb-3">
@@ -273,7 +273,7 @@
                     severity="warning"
                   />
                 </div>
-                <h4 class="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                <h4 class="font-bold text-sm text-primary dark:text-gray-100 mb-1">
                   {{ s.cariHesapAd || s.musteriAd || s.cariHesapAdi || 'Müşteri' }}
                 </h4>
                 <p class="text-xs text-muted mb-1">

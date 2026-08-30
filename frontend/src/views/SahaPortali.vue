@@ -100,10 +100,10 @@
                   class="w-full"
                 />
               </div>
-              <div class="gps-location-row flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg mb-3">
+              <div class="gps-location-row flex items-center justify-between p-3 bg-secondary dark:bg-gray-800 rounded-lg mb-3">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-map-marker text-red-500 text-lg" />
-                  <span class="text-sm text-gray-700 dark:text-gray-200">
+                  <span class="text-sm text-secondary dark:text-gray-200">
                     {{ ziyaretKonum || 'Konum alınmadı' }}
                   </span>
                 </div>
@@ -215,7 +215,7 @@
             >
               <div class="expense-left">
                 <div class="flex items-center gap-2 mb-1">
-                  <strong class="text-base text-gray-800 dark:text-gray-100">{{ i.izinTuru }}</strong>
+                  <strong class="text-base text-primary dark:text-gray-100">{{ i.izinTuru }}</strong>
                   <Tag
                     :value="i.durum"
                     :severity="talepDurumSeverity(i.durum)"
@@ -378,7 +378,7 @@
           </div>
           <canvas
             ref="imzaCanvas"
-            class="imza-canvas w-full h-36 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 touch-none"
+            class="imza-canvas w-full h-36 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-secondary dark:bg-gray-800 touch-none"
             @mousedown="imzaBaslat"
             @mousemove="imzaCiz"
             @mouseup="imzaBitir"

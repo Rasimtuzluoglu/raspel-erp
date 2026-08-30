@@ -41,6 +41,9 @@
 .text-muted {
   color: var(--text-muted);
 }
+.text-accent {
+  color: var(--accent);
+}
 .bg-primary {
   background-color: var(--bg-primary);
 }

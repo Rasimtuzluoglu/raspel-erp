@@ -100,7 +100,7 @@
         </div>
         <div class="kpi-card-footer">
           <span>Hedef: {{ formatPara(kokpit?.hedefCiro || 0) }}</span>
-          <span class="font-medium text-gray-500">{{ kokpit?.kalanGun || 0 }} gün kaldı</span>
+          <span class="font-medium text-muted">{{ kokpit?.kalanGun || 0 }} gün kaldı</span>
         </div>
       </div>
 
@@ -125,16 +125,16 @@
       <div class="kpi-card">
         <div class="kpi-card-header">
           <span class="kpi-card-title">Kasa & Banka Likidite</span>
-          <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-accent">
             <i class="pi pi-wallet" />
           </div>
         </div>
-        <div class="kpi-card-value text-gray-900 dark:text-gray-100">
+        <div class="kpi-card-value text-primary dark:text-gray-100">
           {{ formatPara(kokpit?.kasaBankaToplam || 0) }}
         </div>
         <div class="kpi-card-footer mt-4 pt-2 border-t">
           <span>Piyasa Alacağı:</span>
-          <strong class="text-blue-600">{{ formatPara(kokpit?.toplamAlacak || 0) }}</strong>
+          <strong class="text-accent">{{ formatPara(kokpit?.toplamAlacak || 0) }}</strong>
         </div>
       </div>
 
@@ -282,7 +282,7 @@
             <div class="flex items-center gap-3">
               <span class="rank-badge">{{ idx + 1 }}</span>
               <div>
-                <strong class="text-sm text-gray-800 dark:text-gray-100 block">{{ m?.cariAdi || m?.unvan || 'Müşteri' }}</strong>
+                <strong class="text-sm text-primary dark:text-gray-100 block">{{ m?.cariAdi || m?.unvan || 'Müşteri' }}</strong>
                 <span class="text-xs text-muted">{{ m?.faturaSayisi || 0 }} Fatura</span>
               </div>
             </div>
@@ -326,7 +326,7 @@
             class="risk-row"
           >
             <div>
-              <strong class="text-sm text-gray-900 dark:text-gray-100 block">{{ a?.cariAdi || a?.unvan || 'Cari Hesap' }}</strong>
+              <strong class="text-sm text-primary dark:text-gray-100 block">{{ a?.cariAdi || a?.unvan || 'Cari Hesap' }}</strong>
               <div class="text-xs text-muted flex items-center gap-2 mt-0.5">
                 <span>Vade: {{ a?.vadeTarihi || '-' }}</span>
                 <span class="text-red-600 font-bold">({{ a?.gecikmeGunu || 0 }} gün gecikti)</span>
@@ -368,7 +368,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Aylık Ciro Hedefi (₺) *</label>
+          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Aylık Ciro Hedefi (₺) *</label>
           <input
             v-model.number="hedefForm.hedefCiro"
             type="number"
@@ -380,7 +380,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Aylık Net Kâr Hedefi (₺)</label>
+          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Aylık Net Kâr Hedefi (₺)</label>
           <input
             v-model.number="hedefForm.hedefKar"
             type="number"
@@ -393,7 +393,7 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Yeni Müşteri Hedefi</label>
+            <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Yeni Müşteri Hedefi</label>
             <input
               v-model.number="hedefForm.hedefYeniMusteri"
               type="number"
@@ -403,7 +403,7 @@
             >
           </div>
           <div>
-            <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Satış Adedi Hedefi</label>
+            <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Satış Adedi Hedefi</label>
             <input
               v-model.number="hedefForm.hedefSatisAdedi"
               type="number"
@@ -415,7 +415,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Aylık Strateji / Odak Notu</label>
+          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Aylık Strateji / Odak Notu</label>
           <Textarea
             v-model="hedefForm.notlar"
             rows="3"

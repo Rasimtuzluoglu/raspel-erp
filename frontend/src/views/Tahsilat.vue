@@ -98,7 +98,7 @@
             sortable
           >
             <template #body="{ data }">
-              <strong class="text-gray-900 dark:text-gray-100">{{ formatCurrency(data.toplamAlacak) }}</strong>
+              <strong class="text-primary dark:text-gray-100">{{ formatCurrency(data.toplamAlacak) }}</strong>
             </template>
           </Column>
           <Column

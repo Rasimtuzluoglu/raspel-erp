@@ -16,13 +16,13 @@
             v-model="query"
             type="text"
             placeholder="Sayfa, modül veya işlem ara... (Örn: Fatura, Stok, Rapor, POS)"
-            class="w-full bg-transparent border-none outline-none text-base font-medium text-gray-800 dark:text-gray-100 placeholder-gray-400"
+            class="w-full bg-transparent border-none outline-none text-base font-medium text-primary dark:text-gray-100 placeholder-gray-400"
             @keydown.down.prevent="navigateResults(1)"
             @keydown.up.prevent="navigateResults(-1)"
             @keydown.enter.prevent="selectResult"
             @keydown.esc="visible = false"
           >
-          <kbd class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 font-mono">ESC</kbd>
+          <kbd class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-muted font-mono">ESC</kbd>
         </div>
       </template>
 
@@ -30,7 +30,7 @@
         <div
           v-for="(item, idx) in filteredItems"
           :key="item.path || idx"
-          :class="['result-item flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors', idx === selectedIndex ? 'bg-primary text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200']"
+          :class="['result-item flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors', idx === selectedIndex ? 'bg-primary text-white' : 'hover:bg-secondary dark:hover:bg-gray-800 text-secondary dark:text-gray-200']"
           @click="executeItem(item)"
         >
           <div class="flex items-center gap-3">
@@ -44,7 +44,7 @@
               </div>
             </div>
           </div>
-          <span :class="['text-xs font-mono px-1.5 py-0.5 rounded', idx === selectedIndex ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500']">
+          <span :class="['text-xs font-mono px-1.5 py-0.5 rounded', idx === selectedIndex ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-muted']">
             {{ item.shortcut || '↵ Git' }}
           </span>
         </div>

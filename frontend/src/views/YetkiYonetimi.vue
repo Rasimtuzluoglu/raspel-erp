@@ -78,7 +78,7 @@
       >
         <div class="matrix-card-header flex justify-between items-center pb-4 border-b mb-4">
           <div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <h3 class="text-lg font-bold text-primary dark:text-gray-100 flex items-center gap-2">
               <i class="pi pi-shield text-primary" /> {{ seciliRol.ad }}
             </h3>
             <p class="text-xs text-muted mt-0.5">
@@ -119,7 +119,7 @@
               <tr
                 v-for="m in moduller"
                 :key="m.kod"
-                class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50"
+                class="hover:bg-secondary/50 dark:hover:bg-gray-800/50"
               >
                 <td class="font-semibold text-sm">
                   <div class="flex items-center gap-2">

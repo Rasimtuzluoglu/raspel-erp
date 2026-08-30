@@ -202,7 +202,7 @@
           sortable
         >
           <template #body="{ data }">
-            <span class="font-bold text-base text-gray-900 dark:text-gray-100">
+            <span class="font-bold text-base text-primary dark:text-gray-100">
               {{ formatCurrency(data.genelToplam) }} {{ data.paraBirimi || 'TRY' }}
             </span>
           </template>
@@ -304,13 +304,13 @@
         <!-- ÜST BÖLÜM: Genel Bilgiler & Şartlar -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Sol Kolon: Temel Bilgiler -->
-          <div class="p-4 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+          <div class="p-4 border rounded-xl bg-secondary/50 dark:bg-gray-800/50">
+            <h3 class="text-sm font-bold text-secondary dark:text-gray-300 mb-4 flex items-center gap-2">
               <i class="pi pi-info-circle text-primary" /> Temel Bilgiler
             </h3>
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs font-semibold text-gray-600">Müşteri / Cari Hesap <span class="text-red-500">*</span></label>
+                <label class="text-xs font-semibold text-secondary">Müşteri / Cari Hesap <span class="text-red-500">*</span></label>
                 <Dropdown
                   v-model="form.cariHesapId"
                   :options="cariHesaplar"
@@ -323,7 +323,7 @@
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-gray-600">Teklif Tarihi <span class="text-red-500">*</span></label>
+                  <label class="text-xs font-semibold text-secondary">Teklif Tarihi <span class="text-red-500">*</span></label>
                   <InputText
                     v-model="form.tarih"
                     type="date"
@@ -331,7 +331,7 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-gray-600">Geçerlilik Tarihi</label>
+                  <label class="text-xs font-semibold text-secondary">Geçerlilik Tarihi</label>
                   <InputText
                     v-model="form.gecerlilikTarihi"
                     type="date"
@@ -341,7 +341,7 @@
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-gray-600">Durum</label>
+                  <label class="text-xs font-semibold text-secondary">Durum</label>
                   <Dropdown
                     v-model="form.durum"
                     :options="durumSecenekleri"
@@ -351,7 +351,7 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-gray-600">Para Birimi</label>
+                  <label class="text-xs font-semibold text-secondary">Para Birimi</label>
                   <Dropdown
                     v-model="form.paraBirimi"
                     :options="['TRY', 'USD', 'EUR', 'GBP']"
@@ -363,14 +363,14 @@
           </div>
 
           <!-- Sağ Kolon: Şartlar ve Notlar -->
-          <div class="p-4 border rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+          <div class="p-4 border rounded-xl bg-secondary/50 dark:bg-gray-800/50">
+            <h3 class="text-sm font-bold text-secondary dark:text-gray-300 mb-4 flex items-center gap-2">
               <i class="pi pi-file text-primary" /> Koşullar & Notlar
             </h3>
             <div class="flex flex-col gap-4">
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-gray-600">Teslimat Şartı</label>
+                  <label class="text-xs font-semibold text-secondary">Teslimat Şartı</label>
                   <InputText
                     v-model="form.teslimatSarti"
                     placeholder="Örn: 3 İş Günü"
@@ -378,7 +378,7 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-gray-600">Ödeme Şartı</label>
+                  <label class="text-xs font-semibold text-secondary">Ödeme Şartı</label>
                   <InputText
                     v-model="form.odemeSarti"
                     placeholder="Örn: %50 Peşin"
@@ -387,7 +387,7 @@
                 </div>
               </div>
               <div class="flex flex-col gap-1 h-full">
-                <label class="text-xs font-semibold text-gray-600">Garanti & Ek Şartlar / Notlar</label>
+                <label class="text-xs font-semibold text-secondary">Garanti & Ek Şartlar / Notlar</label>
                 <Textarea
                   v-model="form.notlar"
                   rows="3"
@@ -403,7 +403,7 @@
         <!-- ORTA BÖLÜM: Teklif Kalemleri (Ürünler) -->
         <div class="p-4 border rounded-xl border-blue-100 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-900/10">
           <div class="flex justify-between items-center mb-4 pb-2 border-b border-blue-100 dark:border-blue-800">
-            <h3 class="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2">
+            <h3 class="text-sm font-bold text-accent dark:text-blue-300 flex items-center gap-2">
               <i class="pi pi-list" /> Teklif Kalemleri (Ürün ve Hizmetler)
             </h3>
             <Button
@@ -433,7 +433,7 @@
               <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-3 w-full">
                 <!-- Ürün Seçimi -->
                 <div class="md:col-span-3">
-                  <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Ürün / Stok</label>
+                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Ürün / Stok</label>
                   <Dropdown
                     v-model="k.stokId"
                     :options="stoklar"
@@ -448,7 +448,7 @@
                 
                 <!-- Açıklama -->
                 <div class="md:col-span-3">
-                  <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Açıklama</label>
+                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Açıklama</label>
                   <InputText
                     v-model="k.aciklama"
                     placeholder="Detay..."
@@ -459,7 +459,7 @@
                 <!-- Miktar & Birim -->
                 <div class="md:col-span-2 flex gap-2">
                   <div class="w-1/2">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Miktar</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Miktar</label>
                     <input
                       v-model.number="k.miktar"
                       type="number"
@@ -469,7 +469,7 @@
                     >
                   </div>
                   <div class="w-1/2">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Birim</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Birim</label>
                     <Dropdown
                       v-model="k.birim"
                       :options="['Adet', 'Kg', 'Metre', 'Paket', 'Koli', 'Saat', 'Ay']"
@@ -481,7 +481,7 @@
                 <!-- Fiyat, İskonto, KDV -->
                 <div class="md:col-span-4 flex gap-2">
                   <div class="w-2/5">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Birim Fiyat</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Birim Fiyat</label>
                     <input
                       v-model.number="k.birimFiyat"
                       type="number"
@@ -492,7 +492,7 @@
                     >
                   </div>
                   <div class="w-1/5">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block text-center">İsk.%</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">İsk.%</label>
                     <input
                       v-model.number="k.iskontoOrani"
                       type="number"
@@ -503,7 +503,7 @@
                     >
                   </div>
                   <div class="w-1/5">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block text-center">KDV%</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">KDV%</label>
                     <Dropdown
                       v-model.number="k.kdvOrani"
                       :options="[0, 1, 10, 20]"
@@ -512,8 +512,8 @@
                     />
                   </div>
                   <div class="w-1/5 flex flex-col justify-end">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 mb-1 block text-right">Tutar</label>
-                    <div class="font-bold text-sm text-right text-gray-800 dark:text-gray-200 mt-1 whitespace-nowrap">
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-right">Tutar</label>
+                    <div class="font-bold text-sm text-right text-primary dark:text-gray-200 mt-1 whitespace-nowrap">
                       {{ formatCurrency(k.tutar) }}
                     </div>
                   </div>
@@ -533,18 +533,18 @@
 
         <!-- ALT BÖLÜM: Fiyat Özeti -->
         <div class="flex justify-end">
-          <div class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border shadow-sm">
-            <h4 class="text-xs uppercase font-bold text-gray-500 mb-3 border-b pb-2">
+          <div class="w-full md:w-1/3 bg-secondary dark:bg-gray-800 rounded-xl p-4 border shadow-sm">
+            <h4 class="text-xs uppercase font-bold text-muted mb-3 border-b pb-2">
               Hesap Özeti
             </h4>
             
             <div class="flex justify-between items-center py-1.5 text-sm">
-              <span class="text-gray-600 dark:text-gray-400">Ara Toplam:</span>
+              <span class="text-secondary dark:text-gray-400">Ara Toplam:</span>
               <span class="font-semibold">{{ formatCurrency(hesaplananAraToplam) }}</span>
             </div>
             
             <div class="flex justify-between items-center py-1.5 text-sm group">
-              <span class="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+              <span class="text-secondary dark:text-gray-400 flex items-center gap-1">
                 Genel İskonto (%):
               </span>
               <input
@@ -558,15 +558,15 @@
             </div>
             
             <div class="flex justify-between items-center py-1.5 text-sm">
-              <span class="text-gray-600 dark:text-gray-400">Hesaplanan KDV:</span>
+              <span class="text-secondary dark:text-gray-400">Hesaplanan KDV:</span>
               <span class="font-semibold">{{ formatCurrency(hesaplananKdv) }}</span>
             </div>
             
             <div class="flex justify-between items-center py-3 mt-2 border-t border-gray-200 dark:border-gray-700">
-              <span class="text-lg font-bold text-gray-800 dark:text-gray-200">GENEL TOPLAM:</span>
+              <span class="text-lg font-bold text-primary dark:text-gray-200">GENEL TOPLAM:</span>
               <div class="text-right">
                 <span class="text-xl font-black text-primary">{{ formatCurrency(hesaplananGenelToplam) }}</span>
-                <span class="text-sm font-bold text-gray-500 ml-1">{{ form.paraBirimi || 'TRY' }}</span>
+                <span class="text-sm font-bold text-muted ml-1">{{ form.paraBirimi || 'TRY' }}</span>
               </div>
             </div>
           </div>
@@ -614,7 +614,7 @@
             </p>
           </div>
           <div class="text-right">
-            <h3 class="text-lg font-bold text-gray-800 tracking-wider">
+            <h3 class="text-lg font-bold text-primary tracking-wider">
               SATIŞ TEKLİFİ
             </h3>
             <div class="text-xs text-muted mt-1">
@@ -638,15 +638,15 @@
           </div>
         </div>
 
-        <div class="musteri-kutusu bg-gray-50 p-3 rounded mb-4 border">
-          <span class="text-xs font-bold text-gray-600 block mb-1">SAYIN (MÜŞTERİ / ALICI):</span>
-          <div class="font-bold text-gray-800">
+        <div class="musteri-kutusu bg-secondary p-3 rounded mb-4 border">
+          <span class="text-xs font-bold text-secondary block mb-1">SAYIN (MÜŞTERİ / ALICI):</span>
+          <div class="font-bold text-primary">
             {{ seciliTeklif?.cariHesapAdi || 'Müşteri' }}
           </div>
-          <div class="text-xs text-gray-600">
+          <div class="text-xs text-secondary">
             {{ seciliTeklif?.cariAdres || 'Adres bilgisi girilmedi' }}
           </div>
-          <div class="text-xs text-gray-600">
+          <div class="text-xs text-secondary">
             VKN/TC: {{ seciliTeklif?.cariVergiNo || '-' }} | Tel: {{ seciliTeklif?.cariTelefon || '-' }}
           </div>
         </div>
@@ -713,7 +713,7 @@
             <h4 class="font-bold mb-1">
               Teklif Koşulları & Şartlar:
             </h4>
-            <ul class="list-disc pl-4 space-y-1 text-gray-700">
+            <ul class="list-disc pl-4 space-y-1 text-secondary">
               <li v-if="seciliTeklif?.teslimatSarti">
                 <strong>Teslimat:</strong> {{ seciliTeklif.teslimatSarti }}
               </li>
@@ -728,7 +728,7 @@
               </li>
             </ul>
           </div>
-          <div class="toplamlar-alani w-4/12 text-xs bg-gray-50 p-3 rounded border">
+          <div class="toplamlar-alani w-4/12 text-xs bg-secondary p-3 rounded border">
             <div class="flex justify-between py-1">
               <span>Ara Toplam:</span>
               <span class="font-semibold">{{ formatCurrency(seciliTeklif?.araToplam) }}</span>
@@ -753,11 +753,11 @@
 
         <div class="imza-kutulari grid grid-cols-2 gap-8 pt-4 border-t text-center text-xs">
           <div class="border p-4 rounded min-h-24 flex flex-col justify-between">
-            <span class="font-bold text-gray-700">Teklifi Hazırlayan (Firma Yetkilisi)</span>
+            <span class="font-bold text-secondary">Teklifi Hazırlayan (Firma Yetkilisi)</span>
             <span class="text-gray-400">İmza & Kaşe</span>
           </div>
           <div class="border p-4 rounded min-h-24 flex flex-col justify-between">
-            <span class="font-bold text-gray-700">Teklifi Onaylayan (Müşteri Yetkilisi)</span>
+            <span class="font-bold text-secondary">Teklifi Onaylayan (Müşteri Yetkilisi)</span>
             <span class="text-gray-400">Onay Tarihi & İmza</span>
           </div>
         </div>

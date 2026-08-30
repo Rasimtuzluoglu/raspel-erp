@@ -134,6 +134,12 @@
 
     <template v-if="!loading && !bosSistem">
       <!-- 1. TEMEL 4 KPI KARTI -->
+      <h2
+        v-if="widgets.istatistikler.gorunur"
+        class="section-title"
+      >
+        <i class="pi pi-chart-pie" /> Finansal Özet
+      </h2>
       <div
         v-if="widgets.istatistikler.gorunur"
         class="stats-grid"
@@ -296,6 +302,12 @@
       </div>
 
       <!-- 2. HIZLI İŞLEMLER ÇUBUĞU -->
+      <h2
+        v-if="widgets.istatistikler.gorunur"
+        class="section-title"
+      >
+        <i class="pi pi-bolt" /> Hızlı İşlemler
+      </h2>
       <div
         v-if="widgets.istatistikler.gorunur"
         class="quick-actions"
@@ -361,6 +373,12 @@
       </div>
 
       <!-- 3. GRAFİK VE ANALİZ PANELLERİ -->
+      <h2
+        v-if="widgets.grafikler.gorunur"
+        class="section-title"
+      >
+        <i class="pi pi-chart-line" /> Grafikler & Analiz
+      </h2>
       <div
         v-if="widgets.grafikler.gorunur"
         class="charts-row"
@@ -475,6 +493,9 @@
       </div>
 
       <!-- 4. ALT BÖLÜM: SON HAREKETLER VE ÖDEME VADELERİ -->
+      <h2 class="section-title">
+        <i class="pi pi-list" /> Son İşlemler & Vade Takibi
+      </h2>
       <div class="bottom-grid">
         <div
           v-if="widgets.sonHareketler.gorunur"
@@ -1362,12 +1383,25 @@ const whatsappLink = (f) => {
 }
 
 .section-title {
-  font-size: 16px;
-  margin: 24px 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 28px 0 14px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: -0.01em;
+}
+.section-title i {
+  color: var(--accent);
+  font-size: 16px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  margin-left: 4px;
 }
 .nakit-akisi {
   margin-bottom: 24px;

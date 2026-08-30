@@ -282,8 +282,8 @@
       >
         <div class="grid grid-cols-3 gap-3">
           <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-100">
-            <span class="text-xs text-blue-600 font-bold block">Toplam Stok Değeri</span>
-            <span class="text-lg font-extrabold text-blue-800 dark:text-blue-200">{{ formatPara(konsolideVeri.toplamStokDegeri) }}</span>
+            <span class="text-xs text-accent font-bold block">Toplam Stok Değeri</span>
+            <span class="text-lg font-extrabold text-accent dark:text-blue-200">{{ formatPara(konsolideVeri.toplamStokDegeri) }}</span>
           </div>
           <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-100">
             <span class="text-xs text-emerald-600 font-bold block">Toplam Alacak</span>
@@ -295,7 +295,7 @@
           </div>
         </div>
 
-        <h4 class="font-bold text-sm text-gray-700 dark:text-gray-200 mt-3">
+        <h4 class="font-bold text-sm text-secondary dark:text-gray-200 mt-3">
           Grup ve Yıllık Alt Şirketler ({{ konsolideVeri.sirketler?.length || 0 }})
         </h4>
         <DataTable
