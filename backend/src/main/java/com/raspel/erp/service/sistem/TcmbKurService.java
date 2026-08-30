@@ -76,12 +76,19 @@ public class TcmbKurService {
         BigDecimal goldGramSatis = usdSatis.multiply(new BigDecimal("90.50")).setScale(4, RoundingMode.HALF_UP);
         rates.put("GAU", new BigDecimal[]{goldGramAlis, goldGramSatis});
 
+        // Bitcoin (BTC) kuru kripto borsasından çekilir (TCMB'de yer almaz)
+        BigDecimal btcFiyat = btcFiyatiGetir();
+        if (btcFiyat != null && btcFiyat.compareTo(BigDecimal.ZERO) > 0) {
+            rates.put("BTC", new BigDecimal[]{btcFiyat, btcFiyat});
+        }
+
         Map<String, String[]> metadata = Map.of(
             "USD", new String[]{"ABD Doları", "$"},
             "EUR", new String[]{"Euro", "€"},
             "GBP", new String[]{"İngiliz Sterlini", "£"},
             "SAR", new String[]{"Suudi Arabistan Riyali", "﷼"},
-            "GAU", new String[]{"Gram Altın", "GAU"}
+            "GAU", new String[]{"Gram Altın", "GAU"},
+            "BTC", new String[]{"Bitcoin", "₿"}
         );
 
         rates.forEach((kod, vals) -> {
@@ -138,6 +145,48 @@ public class TcmbKurService {
         NodeList nodeList = element.getElementsByTagName(tag);
         if (nodeList != null && nodeList.getLength() > 0) {
             return nodeList.item(0).getTextContent();
+        }
+        return null;
+    }
+
+    /** Bitcoin (BTC) fiyatını TRY cinsinden kripto borsası API'sinden çeker. */
+    private BigDecimal btcFiyatiGetir() {
+        String[] kaynaklar = {
+            "https://api.binance.com/api/v3/ticker/price?symbol=BTCTRY",
+            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=try"
+        };
+        for (String urlStr : kaynaklar) {
+            try {
+                URL url = new URL(urlStr);
+                URLConnection conn = url.openConnection();
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36");
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                try (InputStream is = conn.getInputStream()) {
+                    String json = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    BigDecimal fiyat = parseBtcFiyat(json);
+                    if (fiyat != null && fiyat.compareTo(BigDecimal.ZERO) > 0) {
+                        return fiyat;
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("BTC kuru alınamadı ({}): {}", urlStr, e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    /** Binance ("price":"...") veya CoinGecko ("try":...) JSON yanıtından BTC fiyatını ayıklar. */
+    private BigDecimal parseBtcFiyat(String json) {
+        java.util.regex.Matcher binance = java.util.regex.Pattern
+                .compile("\"price\"\\s*:\\s*\"([0-9.]+)\"").matcher(json);
+        if (binance.find()) {
+            return new BigDecimal(binance.group(1));
+        }
+        java.util.regex.Matcher coingecko = java.util.regex.Pattern
+                .compile("\"try\"\\s*:\\s*([0-9.]+)").matcher(json);
+        if (coingecko.find()) {
+            return new BigDecimal(coingecko.group(1));
         }
         return null;
     }

@@ -8,7 +8,8 @@ export const useDovizStore = defineStore('doviz', () => {
     { kod: 'EUR', ad: 'Euro', sembol: '€', alisFiyati: 51.2, satisFiyati: 51.3 },
     { kod: 'GBP', ad: 'İngiliz Sterlini', sembol: '£', alisFiyati: 60.4, satisFiyati: 60.55 },
     { kod: 'SAR', ad: 'Suudi Arabistan Riyali', sembol: '﷼', alisFiyati: 12.6, satisFiyati: 12.65 },
-    { kod: 'GAU', ad: 'Gram Altın', sembol: 'GAU', alisFiyati: 4200.0, satisFiyati: 4230.0 }
+    { kod: 'GAU', ad: 'Gram Altın', sembol: 'GAU', alisFiyati: 4200.0, satisFiyati: 4230.0 },
+    { kod: 'BTC', ad: 'Bitcoin', sembol: '₿', alisFiyati: 0, satisFiyati: 0 }
   ])
   const aktifParaBirimi = ref('TRY')
   const loading = ref(false)
@@ -55,7 +56,7 @@ export const useDovizStore = defineStore('doviz', () => {
 
   const formatPara = (tutar, birim = 'TRY') => {
     const v = tutar ?? 0
-    const sembolMap = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', SAR: '﷼', GAU: ' GAU' }
+    const sembolMap = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', SAR: '﷼', GAU: ' GAU', BTC: '₿' }
     const sembol = sembolMap[birim] || ` ${birim}`
 
     const formatted = new Intl.NumberFormat('tr-TR', {
