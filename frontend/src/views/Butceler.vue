@@ -111,6 +111,12 @@
               class="p-button-sm"
               @click="raporYukle"
             />
+            <Button
+              icon="pi pi-file-pdf"
+              label="PDF"
+              class="p-button-sm p-button-secondary"
+              @click="raporPdfIndir"
+            />
           </div>
         </div>
       </template>
@@ -280,6 +286,23 @@ const raporYukle = async () => {
     toastBildirim.hata(err?.response?.data?.message || 'Rapor yüklenemedi')
   } finally {
     raporYukleniyor.value = false
+  }
+}
+
+const raporPdfIndir = async () => {
+  try {
+    const params = { yil: raporYil.value }
+    if (raporAy.value) params.ay = raporAy.value
+    const r = await raporAPI.butceGerceklesenPdf(params)
+    const blob = new Blob([r.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `butce-gerceklesen-${raporYil.value}${raporAy.value ? '-' + raporAy.value : ''}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    toastBildirim.hata('PDF oluşturulamadı')
   }
 }
 

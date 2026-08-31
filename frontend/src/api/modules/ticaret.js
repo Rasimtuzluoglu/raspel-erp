@@ -91,6 +91,9 @@ export const eFaturaAPI = {
   gibGonder(id) {
     return apiClient.post(`/e-fatura/${id}/gib-gonder`)
   },
+  durumSorgula(id) {
+    return apiClient.post(`/e-fatura/${id}/durum-sorgula`)
+  },
   xmlIndir(id) {
     return apiClient.get(`/e-fatura/${id}/xml`, { responseType: 'blob' })
   }

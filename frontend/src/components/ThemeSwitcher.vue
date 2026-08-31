@@ -34,17 +34,25 @@
         <div class="mode-toggle-group">
           <button
             class="mode-btn"
-            :class="{ active: !isDark }"
+            :class="{ active: !isDark && mode !== 'system' }"
             @click="applyMode('light')"
           >
             <i class="pi pi-sun" /> {{ $t('theme.lightShort') }}
           </button>
           <button
             class="mode-btn"
-            :class="{ active: isDark }"
+            :class="{ active: isDark && mode !== 'system' }"
             @click="applyMode('dark')"
           >
             <i class="pi pi-moon" /> {{ $t('theme.darkShort') }}
+          </button>
+          <button
+            class="mode-btn"
+            :class="{ active: mode === 'system' }"
+            title="Sistem tercihine göre otomatik"
+            @click="applyMode('system')"
+          >
+            <i class="pi pi-desktop" /> {{ $t('theme.systemShort') }}
           </button>
         </div>
       </div>
@@ -75,7 +83,7 @@ const menuAcik = ref(false)
 const wrapperRef = ref(null)
 const menuRef = ref(null)
 const menuStil = ref({})
-const { isDark, accentColor, applyMode, applyColor, initTheme } = useTheme()
+const { isDark, mode, accentColor, applyMode, applyColor, initTheme } = useTheme()
 
 const colors = [
   { name: 'Okyanus Mavisi', value: '#3b82f6' },

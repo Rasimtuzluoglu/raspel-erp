@@ -476,6 +476,62 @@
           </div>
         </template>
       </Card>
+
+      <!-- API ERİŞİM TOKENLARI -->
+      <Card class="ayar-kart">
+        <template #title>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+            <div>
+              <i
+                class="pi pi-key"
+                style="margin-right: 8px"
+              />API Erişim Tokenları
+            </div>
+            <Button
+              icon="pi pi-plus"
+              label="Yeni Token"
+              class="p-button-sm p-button-primary"
+              @click="tokenOlustur"
+            />
+          </div>
+        </template>
+        <template #content>
+          <p class="ai-aciklama">
+            Üçüncü taraf uygulamaların REST API'ye erişebilmesi için kişisel erişim token'ları oluşturun.
+            Token yalnızca oluşturulduğu anda gösterilir; <code>Authorization: Bearer raspel_pat_...</code>
+            başlığıyla kullanılır.
+          </p>
+          <div
+            v-if="yeniToken"
+            class="token-uyari"
+          >
+            <i class="pi pi-info-circle" />
+            <span>Yeni token'ınızı kopyalayın — bir daha gösterilmez:</span>
+            <code class="token-deger">{{ yeniToken }}</code>
+          </div>
+          <div
+            v-if="tokenlar.length === 0 && !yeniToken"
+            class="token-bos"
+          >
+            Henüz token oluşturulmadı.
+          </div>
+          <div
+            v-for="t in tokenlar"
+            :key="t.id"
+            class="token-satir"
+          >
+            <div>
+              <span class="token-ad">{{ t.ad }}</span>
+              <span class="token-tarih">{{ t.olusturmaTarihi ? formatTarih(t.olusturmaTarihi) : '' }}</span>
+            </div>
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              @click="tokenSil(t)"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
@@ -486,7 +542,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { kullaniciAPI, aiConfigAPI } from '../api/index.js'
+import { kullaniciAPI, aiConfigAPI, apiTokenAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
@@ -546,6 +602,42 @@ const aiForm = ref({ provider: 'OPENAI', apiKey: '', model: 'gpt-4o' })
 const aiDurum = ref('YAPILANDIRILMADI') // AKTIF / YAPILANDIRILMADI
 const aiMevcutMaskeliKey = ref('')
 const aiKeyGoster = ref(false)
+
+// API Token state
+const tokenlar = ref([])
+const yeniToken = ref('')
+
+const formatTarih = (d) =>
+  d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : ''
+
+const tokenlariYukle = async () => {
+  try {
+    const r = await apiTokenAPI.listele()
+    tokenlar.value = r.data || []
+  } catch {
+    tokenlar.value = []
+  }
+}
+
+const tokenOlustur = async () => {
+  try {
+    const r = await apiTokenAPI.olustur('API Token')
+    yeniToken.value = r.data?.token || ''
+    tokenlariYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Token oluşturulamadı')
+  }
+}
+
+const tokenSil = async (t) => {
+  try {
+    await apiTokenAPI.sil(t.id)
+    tokenlar.value = tokenlar.value.filter((x) => x.id !== t.id)
+    toast.add({ severity: 'success', summary: 'Silindi', detail: 'Token silindi', life: 3000 })
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Token silinemedi')
+  }
+}
 const aiKaydediliyor = ref(false)
 const aiTestEdiliyor = ref(false)
 
@@ -662,6 +754,7 @@ onMounted(async () => {
   await aiConfigGetir()
   oturumlariYukle()
   tercihleriYukle()
+  tokenlariYukle()
 })
 
 const aktifOturumlar = ref([])
@@ -930,6 +1023,46 @@ const kopyala = async (text) => {
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
+}
+.token-uyari {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.token-deger {
+  font-family: monospace;
+  word-break: break-all;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.token-bos {
+  padding: 16px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.token-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.token-ad {
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: block;
+}
+.token-tarih {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 </style>
 

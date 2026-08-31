@@ -48,7 +48,8 @@ export {
   notAPI,
   projeAPI,
   anomaliAPI,
-  aiConfigAPI
+  aiConfigAPI,
+  apiTokenAPI
 } from './modules/sistem.js'
 
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'

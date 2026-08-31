@@ -42,6 +42,7 @@ class RaporServiceTest {
     @Mock private HareketService hareketService;
     @Mock private com.raspel.erp.repository.finans.ButceRepository butceRepository;
     @Mock private com.raspel.erp.repository.finans.MasrafRepository masrafRepository;
+    @Mock private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
     @InjectMocks private RaporService raporService;
 
     private CariHesap createCariHesap() {

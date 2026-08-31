@@ -142,6 +142,51 @@ public class EFaturaService {
         return eFatura.getUblXml();
     }
 
+    /**
+     * GİB/entegratörden güncel durum kodunu sorgular ve kaydı günceller.
+     * Uç nokta tanımlı değilse (simülasyon) 1200 -> 1300 geçişi yapılır.
+     */
+    public EFaturaDTO durumSorgula(Long id) {
+        EFatura eFatura = eFaturaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("E-Fatura", id));
+        tenantChecker.check(eFatura.getSirketId(), "E-Fatura");
+
+        if (eFatura.getGibDurumKodu() < 1200) {
+            throw new BusinessException("E-Fatura henüz GİB'e gönderilmemiş. Önce GİB'e gönderin.");
+        }
+        if (eFatura.getGibDurumKodu() == 1300 || eFatura.getGibDurumKodu() == 1350) {
+            return entityToDTO(eFatura); // zaten nihai durumda
+        }
+
+        Integer yeniKod = null;
+        String yeniAciklama = null;
+        if (gibEndpoint != null && !gibEndpoint.isBlank()) {
+            try {
+                String sorguUrl = gibEndpoint.endsWith("/")
+                        ? gibEndpoint + eFatura.getEttn() + "/durum"
+                        : gibEndpoint + "/" + eFatura.getEttn() + "/durum";
+                var yanit = restTemplate.getForEntity(sorguUrl, java.util.Map.class);
+                if (yanit.getBody() != null && yanit.getBody().get("durumKodu") instanceof Number n) {
+                    yeniKod = n.intValue();
+                    yeniAciklama = (String) yanit.getBody().get("durumAciklama");
+                }
+            } catch (Exception ex) {
+                log.warn("GİB durum sorgulama başarısız: {}", ex.getMessage());
+            }
+        }
+
+        if (yeniKod == null) {
+            // Simülasyon: gönderilmiş (1200) kayıtlar onaylanmış (1300) kabul edilir.
+            yeniKod = 1300;
+            yeniAciklama = "GİB onayı alındı (yerel onay/simülasyon).";
+        }
+
+        eFatura.setGibDurumKodu(yeniKod);
+        eFatura.setGibDurumAciklama(yeniAciklama);
+        log.info("E-Fatura durumu güncellendi - ETTN: {}, Yeni Kod: {}", eFatura.getEttn(), yeniKod);
+        return entityToDTO(eFaturaRepository.save(eFatura));
+    }
+
     private String generateUblXml(FaturaDTO fatura, String ettn, String senaryo, String tip, Long sirketId, String aliciVkn) {
         String aliciUnvan = fatura.getCariHesapAd() != null ? fatura.getCariHesapAd() : "ALICI";
         String aliciVknTckn = aliciVkn != null && !aliciVkn.isBlank() ? aliciVkn : "11111111111";

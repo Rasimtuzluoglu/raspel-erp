@@ -108,6 +108,18 @@ export const sistemDurumAPI = {
   }
 }
 
+export const apiTokenAPI = {
+  listele() {
+    return apiClient.get('/api-tokenlar')
+  },
+  olustur(ad) {
+    return apiClient.post('/api-tokenlar', { ad })
+  },
+  sil(id) {
+    return apiClient.delete(`/api-tokenlar/${id}`)
+  }
+}
+
 export const sirketAPI = {
   getAll() {
     return apiClient.get('/sirketler')

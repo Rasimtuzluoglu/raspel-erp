@@ -18,6 +18,8 @@ import java.io.IOException;
 
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.service.sistem.AktifOturumService;
+import com.raspel.erp.service.sistem.ApiTokenService;
+import com.raspel.erp.entity.sistem.Kullanici;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final KullaniciRepository kullaniciRepository;
     private final AktifOturumService aktifOturumService;
+    private final ApiTokenService apiTokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -49,6 +52,28 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     }
                 }
             }
+        }
+
+        // Kişisel erişim token'ı (REST API entegrasyonu): raspel_pat_ önekiyle gelir.
+        if (token != null && token.startsWith("raspel_pat_")) {
+            Kullanici kullanici = apiTokenService.tokenIleKullaniciBul(token);
+            if (kullanici != null && Boolean.TRUE.equals(kullanici.getActive())
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(kullanici.getUsername());
+                if (userDetails != null && userDetails.isEnabled()) {
+                    request.setAttribute("kullaniciId", kullanici.getId());
+                    request.setAttribute("sirketId", kullanici.getSirketId());
+                    request.setAttribute("displayName", kullanici.getDisplayName());
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    apiTokenService.sonKullanimGuncelle(token);
+                }
+            }
+            filterChain.doFilter(request, response);
+            return;
         }
 
         if (token != null && jwtUtil.validateToken(token)) {

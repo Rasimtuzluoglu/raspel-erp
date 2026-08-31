@@ -100,6 +100,13 @@
               @click="gibGonder(data)"
             />
             <Button
+              v-if="data.gibDurumKodu === 1200"
+              icon="pi pi-refresh"
+              class="p-button-rounded p-button-text"
+              title="GİB Durumunu Sorgula"
+              @click="durumSorgula(data)"
+            />
+            <Button
               icon="pi pi-download"
               class="p-button-rounded p-button-text"
               title="XML İndir"
@@ -247,6 +254,16 @@ const gibGonder = async (data) => {
     yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Gönderim başarısız')
+  }
+}
+
+const durumSorgula = async (data) => {
+  try {
+    await eFaturaAPI.durumSorgula(data.id)
+    toast.add({ severity: 'success', summary: 'Güncellendi', detail: 'GİB durumu sorgulandı', life: 3000 })
+    yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Durum sorgulanamadı')
   }
 }
 

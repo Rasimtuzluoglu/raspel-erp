@@ -137,4 +137,36 @@ class EFaturaServiceTest {
         assertEquals(1000, mockEFatura.getGibDurumKodu());
         verify(eFaturaRepository, never()).save(any());
     }
+
+    @Test
+    void testDurumSorgula_GonderilmemisIseHataVerir() {
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+
+        assertThrows(BusinessException.class, () -> eFaturaService.durumSorgula(10L));
+        verify(eFaturaRepository, never()).save(any());
+    }
+
+    @Test
+    void testDurumSorgula_SimulasyondaOnaylar() {
+        mockEFatura.setGibDurumKodu(1200);
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(eFaturaRepository.save(any(EFatura.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        EFaturaDTO result = eFaturaService.durumSorgula(10L);
+
+        assertEquals(1300, result.getGibDurumKodu());
+        assertNotNull(result.getGibDurumAciklama());
+        verify(eFaturaRepository, times(1)).save(mockEFatura);
+    }
+
+    @Test
+    void testDurumSorgula_NihaiDurumdaDegismez() {
+        mockEFatura.setGibDurumKodu(1300);
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+
+        EFaturaDTO result = eFaturaService.durumSorgula(10L);
+
+        assertEquals(1300, result.getGibDurumKodu());
+        verify(eFaturaRepository, never()).save(any());
+    }
 }

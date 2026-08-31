@@ -47,6 +47,7 @@ public class RaporService {
     private final HareketService hareketService;
     private final ButceRepository butceRepository;
     private final MasrafRepository masrafRepository;
+    private final PdfRaporService pdfRaporService;
 
     public RaporDTO.CariEkstreDTO cariEkstreGetir(Long cariHesapId, LocalDate baslangic, LocalDate bitis) {
         CariHesap cari = cariHesapRepository.findById(cariHesapId)
@@ -499,5 +500,10 @@ public class RaporService {
                     .build());
         }
         return sonuc;
+    }
+
+    public byte[] butceGerceklesenPdf(String[] kolonlar, List<String[]> satirlar, Integer yil, Integer ay) {
+        String baslik = "Bütçe vs Gerçekleşen Raporu - " + yil + (ay != null ? "/" + ay : "");
+        return pdfRaporService.tabloRaporu(baslik, kolonlar, satirlar);
     }
 }

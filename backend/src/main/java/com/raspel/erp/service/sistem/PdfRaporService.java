@@ -278,4 +278,77 @@ public class PdfRaporService {
             throw new RuntimeException("PDF oluşturulamadı", e);
         }
     }
+
+    /**
+     * Genel tablo raporu: başlık + sütun başlıkları + satırlar. Rapor ekranlarındaki
+     * verileri PDF olarak dışa aktarmak için kullanılır (ör. Bütçe vs Gerçekleşen).
+     */
+    public byte[] tabloRaporu(String baslik, String[] kolonlar, List<String[]> satirlar) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            doc.addPage(page);
+            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+                float y = PDRectangle.A4.getHeight() - MARGIN;
+                y = header(cs, y, baslik);
+                y -= 10;
+
+                float[] genislikler = esitGenislikler(kolonlar.length);
+                y = tabloBaslikSatiri(cs, y, genislikler, kolonlar);
+                y -= 4;
+                y = cizgi(cs, y);
+                y -= 6;
+
+                int sira = 0;
+                for (String[] satir : satirlar) {
+                    boolean alternate = sira % 2 == 0;
+                    y = tabloVeriSatiri(cs, y, genislikler, satir, alternate);
+                    if (y < 100) {
+                        y = yeniSayfa(doc, cs, y);
+                        y = tabloBaslikSatiri(cs, y, genislikler, kolonlar);
+                        y -= 4;
+                        y = cizgi(cs, y);
+                        y -= 6;
+                    }
+                    sira++;
+                }
+            }
+            doc.save(baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("PDF oluşturulamadı", e);
+        }
+    }
+
+    private float tabloBaslikSatiri(PDPageContentStream cs, float y, float[] genislikler, String[] kolonlar) throws IOException {
+        cs.setFont(BOLD, 10);
+        float x = MARGIN;
+        for (int i = 0; i < kolonlar.length; i++) {
+            cs.beginText(); cs.newLineAtOffset(x + 2, y); cs.showText(kolonlar[i]); cs.endText();
+            x += genislikler[i];
+        }
+        return y - 16;
+    }
+
+    private float tabloVeriSatiri(PDPageContentStream cs, float y, float[] genislikler, String[] kolonlar, boolean alternate) throws IOException {
+        cs.setFont(REGULAR, 10);
+        if (alternate) {
+            cs.setNonStrokingColor(0.95f, 0.95f, 0.95f);
+            cs.addRect(MARGIN, y - 2, PAGE_WIDTH, 16);
+            cs.fill();
+            cs.setNonStrokingColor(0f, 0f, 0f);
+        }
+        float x = MARGIN;
+        for (int i = 0; i < kolonlar.length; i++) {
+            cs.beginText(); cs.newLineAtOffset(x + 2, y); cs.showText(kolonlar[i] != null ? kolonlar[i] : "-"); cs.endText();
+            x += genislikler[i];
+        }
+        return y - 16;
+    }
+
+    private float[] esitGenislikler(int kolonSayisi) {
+        float[] genislikler = new float[kolonSayisi];
+        float genislik = PAGE_WIDTH / kolonSayisi;
+        for (int i = 0; i < kolonSayisi; i++) genislikler[i] = genislik;
+        return genislikler;
+    }
 }

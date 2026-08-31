@@ -121,4 +121,30 @@ public class RaporController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(raporService.butceGerceklesenRaporu(sirketId, yil, ay));
     }
+
+    @GetMapping("/butce-gerceklesen/pdf")
+    @Operation(summary = "Bütçe vs Gerçekleşen PDF", description = "Bütçe vs gerçekleşen raporunu PDF olarak dışa aktarır")
+    public ResponseEntity<byte[]> butceGerceklesenPdf(
+            HttpServletRequest request,
+            @RequestParam Integer yil,
+            @RequestParam(required = false) Integer ay) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        List<com.raspel.erp.dto.sistem.ButceGerceklesenDTO> rapor = raporService.butceGerceklesenRaporu(sirketId, yil, ay);
+
+        String[] kolonlar = {"Kategori", "Bütçe", "Gerçekleşen", "Sapma", "Kullanım %"};
+        List<String[]> satirlar = rapor.stream().map(r -> new String[]{
+                r.getKategori(),
+                r.getButce() != null ? r.getButce().toPlainString() : "0",
+                r.getGerceklesen() != null ? r.getGerceklesen().toPlainString() : "0",
+                r.getSapma() != null ? r.getSapma().toPlainString() : "0",
+                r.getKullanimYuzdesi() != null ? r.getKullanimYuzdesi().toPlainString() : "-"
+        }).collect(java.util.stream.Collectors.toList());
+
+        byte[] pdf = raporService.butceGerceklesenPdf(kolonlar, satirlar, yil, ay);
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment()
+                .filename("butce-gerceklesen-" + yil + (ay != null ? "-" + ay : "") + ".pdf").build());
+        return ResponseEntity.ok().headers(headers).body(pdf);
+    }
 }

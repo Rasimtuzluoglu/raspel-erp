@@ -59,6 +59,12 @@ public class EFaturaController {
         return ResponseEntity.ok(eFaturaService.gibGonder(id));
     }
 
+    @PostMapping("/{id}/durum-sorgula")
+    @Operation(summary = "GİB durumunu sorgula", description = "GİB/entegratörden güncel durum kodunu sorgular ve kaydı günceller")
+    public ResponseEntity<EFaturaDTO> durumSorgula(@PathVariable Long id) {
+        return ResponseEntity.ok(eFaturaService.durumSorgula(id));
+    }
+
     @GetMapping("/{id}/xml")
     @Operation(summary = "UBL-TR XML İndir", description = "E-Faturaya ait UBL-TR 2.1 XML belgesini indirir")
     public ResponseEntity<byte[]> xmlIndir(@PathVariable Long id) {

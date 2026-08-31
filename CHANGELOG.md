@@ -2,6 +2,20 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.9.0] - 2026-08-31 (Yeni Özellikler & Entegrasyon Katmanı)
+### Eklenenler
+- **E-Fatura GİB durum sorgulama**: `POST /api/e-fatura/{id}/durum-sorgula` — GİB/entegratörden güncel durum kodunu çeker; uç nokta yoksa yerel onay (simülasyon) ile 1200→1300 geçişi yapılır.
+- **Rapor PDF dışa aktarım**: `GET /api/raporlar/butce-gerceklesen/pdf` — Bütçe vs Gerçekleşen raporunu PDF olarak indirir; `PdfRaporService.tabloRaporu` genel tablo render'ı eklendi.
+- **REST API erişim token'ları**: Kişisel erişim token'ı (`raspel_pat_...`) üretimi/listeleme/silme (`/api/api-tokenlar`). Token SHA-256 hash olarak saklanır; `Authorization: Bearer raspel_pat_...` ile kimlik doğrulanır (V62).
+- **Müşteri kayıp (churn) riski skorlama**: `GET /api/churn` — son işlem tarihine göre müşteri kayıp riskini 0-100 skorlar (YUKSEK/ORTA/DUSUK) ve aksiyon önerisi üretir.
+- **Onay iş akışı eşikleri**: `GET/POST /api/onay-ayarlari` — modül bazlı (MASRAF/SATINALMA/IZIN) onay eşiği ve otomatik onay kuralı yapılandırması (V63).
+- **Feature flag sistemi**: `FeatureFlagService` — `app.features.enabled/disabled` ile yeni özellikleri kademeli açma.
+- **Tema "system" modu**: Karanlık/aydınlık tema artık işletim sistemi tercihine otomatik bağlanabilir (Oto modu).
+
+### Eklenen Testler
+- Backend: 795 → 820 (ApiTokenService, ChurnAnalizService, OnayAyariService, FeatureFlagService, EFatura durum sorgulama).
+- Frontend: 157 → 158 (tema system modu).
+
 ## [1.8.0] - 2026-08-16 (Güvenlik & Ölçeklenebilirlik İyileştirmeleri)
 ### Düzeltmeler (güvenlik)
 - **Tenant izolasyonu**: `GET /api/hareketler/son/{limit}`, `GET /api/hareketler/cari/{id}`, hareket filtreleme, `GET /api/stoklar/hareketler/tum`, stok hareketleri ve `GET /api/kategoriler/tur/{tur}` uç noktalarına firma filtresi/doğrulaması eklendi (önceden başka firmaların verilerini görebiliyordu).

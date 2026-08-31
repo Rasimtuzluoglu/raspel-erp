@@ -158,6 +158,7 @@
     "accent": "Accent Color",
     "lightShort": "Light",
     "darkShort": "Dark",
+    "systemShort": "Auto",
     "language": "Language"
   },
   "shortcuts": {

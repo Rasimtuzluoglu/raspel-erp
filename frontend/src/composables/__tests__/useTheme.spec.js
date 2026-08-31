@@ -34,4 +34,12 @@ describe('useTheme', () => {
     applyColor('')
     expect(accentColor.value).toBe(onceki)
   })
+
+  it('system mode persists and resolves isDark from media query', () => {
+    const { mode, applyMode } = useTheme()
+    applyMode('system')
+    expect(mode.value).toBe('system')
+    expect(localStorage.getItem('raspel_erp_theme')).toBe('system')
+    expect(typeof useTheme().isDark.value).toBe('boolean')
+  })
 })
