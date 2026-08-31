@@ -8,12 +8,12 @@ Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 - **Rapor PDF dışa aktarım**: `GET /api/raporlar/butce-gerceklesen/pdf` — Bütçe vs Gerçekleşen raporunu PDF olarak indirir; `PdfRaporService.tabloRaporu` genel tablo render'ı eklendi.
 - **REST API erişim token'ları**: Kişisel erişim token'ı (`raspel_pat_...`) üretimi/listeleme/silme (`/api/api-tokenlar`). Token SHA-256 hash olarak saklanır; `Authorization: Bearer raspel_pat_...` ile kimlik doğrulanır (V62).
 - **Müşteri kayıp (churn) riski skorlama**: `GET /api/churn` — son işlem tarihine göre müşteri kayıp riskini 0-100 skorlar (YUKSEK/ORTA/DUSUK) ve aksiyon önerisi üretir.
-- **Onay iş akışı eşikleri**: `GET/POST /api/onay-ayarlari` — modül bazlı (MASRAF/SATINALMA/IZIN) onay eşiği ve otomatik onay kuralı yapılandırması (V63).
+- **Onay iş akışı eşikleri**: `GET/POST /api/onay-ayarlari` — modül bazlı (MASRAF/SATINALMA/IZIN) onay eşiği ve otomatik onay kuralı yapılandırması (V63). Masraf talepleri artık eşik altındaysa otomatik onaylanıp finans masraf modülüne işlenir.
 - **Feature flag sistemi**: `FeatureFlagService` — `app.features.enabled/disabled` ile yeni özellikleri kademeli açma.
 - **Tema "system" modu**: Karanlık/aydınlık tema artık işletim sistemi tercihine otomatik bağlanabilir (Oto modu).
 
 ### Eklenen Testler
-- Backend: 795 → 820 (ApiTokenService, ChurnAnalizService, OnayAyariService, FeatureFlagService, EFatura durum sorgulama).
+- Backend: 795 → 821 (ApiTokenService, ChurnAnalizService, OnayAyariService, FeatureFlagService, EFatura durum sorgulama, masraf otomatik onay).
 - Frontend: 157 → 158 (tema system modu).
 
 ## [1.8.0] - 2026-08-16 (Güvenlik & Ölçeklenebilirlik İyileştirmeleri)

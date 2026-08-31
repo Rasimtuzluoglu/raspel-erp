@@ -179,6 +179,74 @@
       </Column>
     </AppDataTable>
 
+    <Card class="churn-kart">
+      <template #title>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+          <span><i class="pi pi-chart-line" /> Müşteri Kayıp Riski (Churn)</span>
+          <Button
+            icon="pi pi-refresh"
+            class="p-button-sm p-button-text"
+            :loading="churnYukleniyor"
+            @click="churnYukle"
+          />
+        </div>
+      </template>
+      <template #content>
+        <p class="churn-aciklama">
+          Son işlem tarihine göre kayıp riski taşıyan müşteriler. Uzun süredir işlem yapmayan müşteriler yüksek risk olarak işaretlenir.
+        </p>
+        <DataTable
+          :value="churnList"
+          size="small"
+          striped-rows
+          :loading="churnYukleniyor"
+        >
+          <Column
+            field="cariAd"
+            header="Müşteri"
+          />
+          <Column header="Risk">
+            <template #body="{ data }">
+              <Tag
+                :value="data.seviye"
+                :severity="churnSeverity(data.seviye)"
+              />
+            </template>
+          </Column>
+          <Column
+            field="skor"
+            header="Skor"
+          >
+            <template #body="{ data }">
+              {{ data.skor }}
+            </template>
+          </Column>
+          <Column
+            field="sonIslemGunOnce"
+            header="Son İşlem (gün önce)"
+          />
+          <Column
+            field="toplamCiro"
+            header="Toplam Ciro"
+          >
+            <template #body="{ data }">
+              {{ formatCurrency(data.toplamCiro) }}
+            </template>
+          </Column>
+          <Column
+            field="oneri"
+            header="Öneri"
+          />
+        </DataTable>
+        <div
+          v-if="churnList.length === 0 && !churnYukleniyor"
+          class="churn-bos"
+        >
+          Kayıp riski analizi için yeterli veri bulunamadı.
+        </div>
+      </template>
+    </Card>
+
     <Dialog
       v-model:visible="dialog"
       :header="dialogHeader"
@@ -275,7 +343,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { crmAPI, cariHesapAPI } from '../api/index.js'
+import { crmAPI, cariHesapAPI, churnAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
@@ -329,6 +397,7 @@ const filtreDegistir = (d) => {
 
 onMounted(async () => {
   firsatlariYukle()
+  churnYukle()
   try {
     const r = await cariHesapAPI.getAll()
     cariler.value = r.data?.content || r.data || []
@@ -336,6 +405,23 @@ onMounted(async () => {
     /* empty */
   }
 })
+
+const churnList = ref([])
+const churnYukleniyor = ref(false)
+
+const churnYukle = async () => {
+  churnYukleniyor.value = true
+  try {
+    const r = await churnAPI.analiz()
+    churnList.value = r.data || []
+  } catch {
+    churnList.value = []
+  } finally {
+    churnYukleniyor.value = false
+  }
+}
+
+const churnSeverity = (s) => (s === 'YUKSEK' ? 'danger' : s === 'ORTA' ? 'warning' : 'success')
 
 const firsatlariYukle = async () => {
   yukleniyor.value = true
@@ -631,5 +717,19 @@ const sil = (data) => {
 }
 :deep(.p-invalid) {
   border-color: #ef4444 !important;
+}
+.churn-kart {
+  margin-top: 24px;
+}
+.churn-aciklama {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.churn-bos {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 </style>

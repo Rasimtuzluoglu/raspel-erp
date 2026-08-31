@@ -308,13 +308,65 @@
           </div>
         </div>
       </TabPanel>
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-sliders-h" />
+            Onay Ayarları
+          </span>
+        </template>
+        <div class="onay-icerik p-4">
+          <p class="text-xs text-muted mb-4">
+            Modül bazlı onay eşikleri belirleyin. Eşiğin altındaki tutarlar otomatik onaylanabilir.
+          </p>
+          <DataTable
+            :value="onayAyarlari"
+            size="small"
+            striped-rows
+            :loading="ayarYukleniyor"
+          >
+            <Column
+              field="modul"
+              header="Modül"
+            />
+            <Column header="Eşik Tutar (₺)">
+              <template #body="{ data }">
+                <InputNumber
+                  v-model="data.esikTutar"
+                  mode="currency"
+                  currency="TRY"
+                  locale="tr-TR"
+                  size="small"
+                />
+              </template>
+            </Column>
+            <Column header="Otomatik Onay">
+              <template #body="{ data }">
+                <ToggleSwitch
+                  v-model="data.otomatikOnay"
+                />
+              </template>
+            </Column>
+            <Column header="İşlem">
+              <template #body="{ data }">
+                <Button
+                  icon="pi pi-save"
+                  size="small"
+                  label="Kaydet"
+                  @click="ayarKaydet(data)"
+                />
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </TabPanel>
     </TabView>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
+import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI, siparisAPI, onayAyariAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
@@ -411,7 +463,35 @@ const siparisOnay = async (s, durum) => {
   }
 }
 
-onMounted(yukle)
+const onayAyarlari = ref([])
+const ayarYukleniyor = ref(false)
+
+const ayarlariYukle = async () => {
+  ayarYukleniyor.value = true
+  try {
+    const r = await onayAyariAPI.listele()
+    onayAyarlari.value = r.data || []
+  } catch {
+    onayAyarlari.value = []
+  } finally {
+    ayarYukleniyor.value = false
+  }
+}
+
+const ayarKaydet = async (ayar) => {
+  try {
+    await onayAyariAPI.kaydet({ modul: ayar.modul, esikTutar: ayar.esikTutar, otomatikOnay: ayar.otomatikOnay })
+    toastBildirim.basarili(`${ayar.modul} ayarı kaydedildi`)
+    await ayarlariYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Ayar kaydedilemedi')
+  }
+}
+
+onMounted(() => {
+  yukle()
+  ayarlariYukle()
+})
 </script>
 
 <style scoped>

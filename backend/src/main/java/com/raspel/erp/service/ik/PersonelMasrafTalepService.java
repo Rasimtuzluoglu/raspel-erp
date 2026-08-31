@@ -13,6 +13,7 @@ import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.service.finans.MasrafService;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.OnayAyariService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,7 @@ public class PersonelMasrafTalepService {
     private final MasrafService masrafService;
     private final BildirimService bildirimService;
     private final TenantChecker tenantChecker;
+    private final OnayAyariService onayAyariService;
 
     @Transactional(readOnly = true)
     public Page<PersonelMasrafTalepDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -78,6 +80,20 @@ public class PersonelMasrafTalepService {
 
         talep = talepRepository.save(talep);
 
+        // Otomatik onay kuralı: eşiğin altındaki masraf talepleri otomatik onaylanır.
+        try {
+            if (onayAyariService.otomatikOnayGecerli(sirketId, "MASRAF", talep.getTutar())) {
+                talep.setDurum("ONAYLANDI");
+                talep.setOnaylayan("OTOMATIK");
+                talep.setOnayNotu("Otomatik onay (eşik altı tutar).");
+                talep = talepRepository.save(talep);
+                masrafIleEsle(talep);
+                log.info("Masraf talebi otomatik onaylandı - Talep #{}", talep.getId());
+            }
+        } catch (Exception e) {
+            log.warn("Otomatik onay kontrolü başarısız: {}", e.getMessage());
+        }
+
         try {
             if (sirketId != null) {
                 bildirimService.bildirimGonder(sirketId, "MASRAF_TALEBI",
@@ -89,6 +105,25 @@ public class PersonelMasrafTalepService {
         }
 
         return entityToDTO(talep);
+    }
+
+    /** Onaylanan MASRAF talebini finans masraf modülüne işler. */
+    private void masrafIleEsle(PersonelMasrafTalep talep) {
+        if (!"MASRAF".equalsIgnoreCase(talep.getTur())) return;
+        String personelAd = "";
+        if (talep.getPersonelId() != null) {
+            personelAd = personelRepository.findById(talep.getPersonelId())
+                    .map(p -> " (" + p.getAd() + " " + p.getSoyad() + ")")
+                    .orElse("");
+        }
+        MasrafDTO masrafDTO = MasrafDTO.builder()
+                .tarih(talep.getTarih())
+                .tutar(talep.getTutar())
+                .kategori("PERSONEL_" + talep.getKategori())
+                .aciklama("Saha Masrafı" + personelAd + ": " + talep.getAciklama())
+                .belgeNo("TALEP-" + talep.getId())
+                .build();
+        masrafService.olustur(masrafDTO, talep.getSirketId());
     }
 
     public PersonelMasrafTalepDTO onayla(Long id, String onaylayan, String onayNotu) {
@@ -104,20 +139,7 @@ public class PersonelMasrafTalepService {
         // Eğer MASRAF ise otomatik Finans Masraflar modülüne işle
         if ("MASRAF".equalsIgnoreCase(talep.getTur())) {
             try {
-                String personelAd = "";
-                if (talep.getPersonelId() != null) {
-                    personelAd = personelRepository.findById(talep.getPersonelId())
-                            .map(p -> " (" + p.getAd() + " " + p.getSoyad() + ")")
-                            .orElse("");
-                }
-                MasrafDTO masrafDTO = MasrafDTO.builder()
-                        .tarih(talep.getTarih())
-                        .tutar(talep.getTutar())
-                        .kategori("PERSONEL_" + talep.getKategori())
-                        .aciklama("Saha Masrafı" + personelAd + ": " + talep.getAciklama())
-                        .belgeNo("TALEP-" + talep.getId())
-                        .build();
-                masrafService.olustur(masrafDTO, talep.getSirketId());
+                masrafIleEsle(talep);
             } catch (Exception e) {
                 throw new BusinessException("Onaylanan masraf finans modülüne işlenemedi: " + e.getMessage());
             }

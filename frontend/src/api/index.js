@@ -49,7 +49,9 @@ export {
   projeAPI,
   anomaliAPI,
   aiConfigAPI,
-  apiTokenAPI
+  apiTokenAPI,
+  churnAPI,
+  onayAyariAPI
 } from './modules/sistem.js'
 
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'

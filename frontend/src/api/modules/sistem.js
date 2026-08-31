@@ -120,6 +120,21 @@ export const apiTokenAPI = {
   }
 }
 
+export const churnAPI = {
+  analiz() {
+    return apiClient.get('/churn')
+  }
+}
+
+export const onayAyariAPI = {
+  listele() {
+    return apiClient.get('/onay-ayarlari')
+  },
+  kaydet(data) {
+    return apiClient.post('/onay-ayarlari', data)
+  }
+}
+
 export const sirketAPI = {
   getAll() {
     return apiClient.get('/sirketler')

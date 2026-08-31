@@ -112,7 +112,7 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 820 Test (0 Hata)
+mvn -B test -q          # 821 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
