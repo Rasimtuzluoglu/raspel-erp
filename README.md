@@ -52,10 +52,10 @@
 - **Tahsilat Merkezi**: Vade takibi, yaşlandırma raporu, hatırlatma e-postası, WhatsApp/arama aksiyonları.
 
 ### Ticaret & Satış
-- **Hızlı Satış (POS)**: Barkod okuyucu destekli hızlı satış, sepet, indirim ve termal fiş yazdırma.
+- **Hızlı Satış (POS)**: Barkod okuyucu destekli hızlı satış, sepet, indirim ve termal fiş yazdırma. Sezgisel sekmeli arayüz (Sipariş / Teslimat / Fiş), global barkod girişi (USB tarayıcı kesintisiz okuma), kameralı sürekli okuma modu, çok satanlar hızlı erişim paneli, offline satış kuyruğu (bağlantı gelince otomatik senkron) ve ESC/POS termal yazıcı desteği.
 - **Sipariş & İrsaliye**: Siparişten irsaliyeye, irsaliyeden faturaya tek tıkla kontrollü iş akışı. Saha siparişleri onay akışı.
-- **E-Fatura**: UBL-TR 2.1 standardında GİB uyumlu e-fatura ve e-arşiv entegrasyonu.
-- **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri.
+- **E-Fatura**: UBL-TR 2.1 standardında GİB uyumlu e-fatura ve e-arşiv entegrasyonu. GİB durum sorgulama.
+- **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri. Müşteri kayıp (churn) riski skorlama.
 
 ### Stok & Envanter
 - **Stok Kartları & Barkod**: Kritik seviye alarmı, akıllı AI talep tahmini, hareket geçmişi.
