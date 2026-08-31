@@ -39,8 +39,8 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B test` -> 823 test)
-- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (158 test)
+- [ ] Backend testleri gecti (`mvn -B test` -> 825 test)
+- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (160 test)
 - [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)
 - [ ] Login/logout/2FA akisi test edildi
 - [ ] Flyway migration'lari bos bir PostgreSQL'de sifirdan calisti (V61 dahil)

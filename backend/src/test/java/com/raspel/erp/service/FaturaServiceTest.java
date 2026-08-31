@@ -172,9 +172,9 @@ class FaturaServiceTest {
         assertEquals(1L, stok.getTedarikciId());
         assertEquals(0, stok.getFiyat().compareTo(new BigDecimal("50.98")));
         assertEquals(0, stok.getTedarikciFiyat().compareTo(BigDecimal.valueOf(100)));
-        ArgumentCaptor<com.raspel.erp.entity.envanter.StokHareket> captor = ArgumentCaptor.forClass(com.raspel.erp.entity.envanter.StokHareket.class);
-        verify(stokHareketRepository).save(captor.capture());
-        assertEquals("GIRIS", captor.getValue().getTur());
+        ArgumentCaptor<List<com.raspel.erp.entity.envanter.StokHareket>> captor = ArgumentCaptor.forClass(List.class);
+        verify(stokHareketRepository).saveAll(captor.capture());
+        assertEquals("GIRIS", captor.getValue().get(0).getTur());
         verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("-120"));
     }
 

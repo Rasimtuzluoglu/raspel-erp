@@ -2,6 +2,20 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.10.0] - 2026-08-31 (POS / Hızlı Satış İyileştirmeleri)
+### Eklenenler
+- **Global barkod girişi**: Hızlı Satış'ta her an aktif barkod input'u (Enter ile ekleme + autofocus); USB barkod tarayıcıyla kesintisiz okuma.
+- **Sürekli okuma modu**: Kameralı barkod okuyucu artık "sürekli mod" ile art arda okuma yapabiliyor (aynı kodu tekrar okumayı engelleyen debounce).
+- **Sunucu-taraflı barkod arama**: Barkod yerel listede bulunamazsa `GET /api/stoklar/ara` ile backend'de aranır.
+- **Çok satanlar hızlı erişim**: `GET /api/stoklar/en-cok-satanlar` + POS'ta tek dokunuşla sepete eklenen çok satanlar paneli.
+- **Offline satış kuyruğu**: Ağ yoksa satış localStorage kuyruğuna alınır; bağlantı gelince otomatik senkronize edilir.
+- **ESC/POS termal yazıcı**: Fişi termal yazıcıya gönderme (WebUSB) + tarayıcı yazdırma fallback'i.
+- **Stok hareketi batch kayıt**: Fatura kalemleri tek `saveAll` ile kaydedilir (kalem başına INSERT yerine).
+
+### Eklenen Testler
+- Backend: 823 → 825 (StokService.enCokSatanlar).
+- Frontend: 158 → 160 (escpos fiş üretici).
+
 ## [1.9.0] - 2026-08-31 (Yeni Özellikler & Entegrasyon Katmanı)
 ### Eklenenler
 - **E-Fatura GİB durum sorgulama**: `POST /api/e-fatura/{id}/durum-sorgula` — GİB/entegratörden güncel durum kodunu çeker; uç nokta yoksa yerel onay (simülasyon) ile 1200→1300 geçişi yapılır.

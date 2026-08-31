@@ -47,6 +47,14 @@
           />
         </div>
       </div>
+
+      <div class="continuous-toggle">
+        <label>Sürekli Okuma Modu</label>
+        <InputSwitch
+          v-model="continuousMode"
+        />
+        <span class="hint">Açıksa her okumada ekran kapanmaz, art arda okuma yapılır.</span>
+      </div>
     </div>
     <template #footer>
       <Button
@@ -71,8 +79,10 @@ const emit = defineEmits(['update:visible', 'scan'])
 const videoRef = ref(null)
 const manualBarcode = ref('')
 const cameraError = ref(null)
+const continuousMode = ref(false)
 let streamInstance = null
 let animationFrameId = null
+let sonTaramaZamani = 0
 
 const startCamera = async () => {
   cameraError.value = null
@@ -111,9 +121,18 @@ const detectBarcode = async () => {
           const barcodes = await barcodeDetector.detect(videoRef.value)
           if (barcodes.length > 0) {
             const code = barcodes[0].rawValue
+            // Aynı kodu kısa süre içinde tekrar okumayı engelle (debounce)
+            const simdi = Date.now()
+            if (simdi - sonTaramaZamani < 1200) {
+              animationFrameId = requestAnimationFrame(scanFrame)
+              return
+            }
+            sonTaramaZamani = simdi
             emit('scan', code)
-            closeModal()
-            return
+            if (!continuousMode.value) {
+              closeModal()
+              return
+            }
           }
         } catch {
           /* empty */
@@ -131,7 +150,9 @@ const submitManual = () => {
   if (manualBarcode.value.trim()) {
     emit('scan', manualBarcode.value.trim())
     manualBarcode.value = ''
-    closeModal()
+    if (!continuousMode.value) {
+      closeModal()
+    }
   }
 }
 
@@ -217,6 +238,17 @@ onUnmounted(() => {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.35rem;
+}
+.continuous-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.continuous-toggle .hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 .w-full {
   width: 100%;

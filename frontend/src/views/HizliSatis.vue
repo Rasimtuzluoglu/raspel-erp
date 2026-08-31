@@ -48,6 +48,17 @@
         </Card>
 
         <div class="serial-search">
+          <span class="p-input-icon-left global-barkod">
+            <i class="pi pi-barcode" />
+            <InputText
+              ref="barkodInputRef"
+              v-model="globalBarkod"
+              placeholder="Barkod okutun veya tarayıcıyla okuyun (Enter)"
+              class="w-full"
+              autofocus
+              @keyup.enter="globalBarkodEkle"
+            />
+          </span>
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
             <InputText
@@ -71,6 +82,27 @@
             outlined
             @click="scannerAcik = true"
           />
+        </div>
+
+        <div
+          v-if="cokSatanlar.length > 0"
+          class="cok-satanlar-section"
+        >
+          <div class="product-header">
+            <h3>Çok Satanlar</h3>
+          </div>
+          <div class="cok-satanlar-grid">
+            <button
+              v-for="u in cokSatanlar"
+              :key="u.id"
+              type="button"
+              class="cok-satan-chip"
+              @click="sepeteEkle(u)"
+            >
+              <span class="cok-satan-ad">{{ u.ad }}</span>
+              <span class="cok-satan-fiyat">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
+            </button>
+          </div>
         </div>
 
         <div class="product-section">
@@ -399,6 +431,15 @@
                   :disabled="sepet.length === 0"
                   @click="fisiYazdir"
                 />
+                <Button
+                  label="Termal"
+                  icon="pi pi-send"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  :disabled="sepet.length === 0"
+                  @click="termalYazdir"
+                />
               </div>
             </div>
           </template>
@@ -622,11 +663,13 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { faturaAPI, cariHesapAPI, personelAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, personelAPI, stokAPI } from '../api/index.js'
+import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { formatCurrency } from '../utils/format.js'
+import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -634,6 +677,18 @@ const authStore = useAuthStore()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const kategoriStore = useKategoriStore()
+const offlineKuyruk = useOfflineSatisKuyrugu()
+
+const offlineKuyruguSenkronizeEt = async () => {
+  try {
+    const gonderilen = await offlineKuyruk.senkronizeEt((s) => faturaAPI.create(s))
+    if (gonderilen > 0) {
+      toast.add({ severity: 'success', summary: 'Senkronize edildi', detail: `${gonderilen} satış gönderildi`, life: 3000 })
+    }
+  } catch {
+    /* empty */
+  }
+}
 
 useKisayollar({
   kaydet: () => satisiTamamla(),
@@ -669,27 +724,51 @@ const handlePosKeys = (e) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handlePosKeys)
+  window.addEventListener('online', offlineKuyruguSenkronizeEt)
+  if (navigator.onLine) offlineKuyruguSenkronizeEt()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handlePosKeys)
+  window.removeEventListener('online', offlineKuyruguSenkronizeEt)
 })
 
 const sirketAdi = computed(() => authStore.sirketAdi || '')
 
 const aramaMetni = ref('')
 const seriNoArama = ref('')
+const globalBarkod = ref('')
 const scannerAcik = ref(false)
+const barkodInputRef = ref(null)
 
-const barkodTarandi = (barkod) => {
-  scannerAcik.value = false
+const globalBarkodEkle = () => {
+  const barkod = globalBarkod.value.trim()
   if (!barkod) return
-  const urun = stokStore.stoklar.find((s) => s.barkod === barkod)
+  barkodTarandi(barkod)
+  globalBarkod.value = ''
+  // Odak tekrar bu inputa gelsin ki USB tarayıcı kesintisiz okusun
+  barkodInputRef.value?.$el?.focus?.() || barkodInputRef.value?.focus?.()
+}
+
+const barkodTarandi = async (barkod) => {
+  if (!barkod) return
+  let urun = stokStore.stoklar.find((s) => s.barkod === barkod || s.seriNo === barkod)
   if (urun) {
     sepeteEkle(urun)
     toast.add({ severity: 'success', summary: 'Ürün Eklendi', detail: urun.ad, life: 2000 })
   } else {
-    seriNoArama.value = barkod
+    // Sunucuda ara (büyük envanterde tümü yüklenmemiş olabilir)
+    try {
+      const r = await stokAPI.ara(barkod)
+      const bulunan = (r.data || []).find((s) => s.barkod === barkod || s.seriNo === barkod)
+      if (bulunan) {
+        sepeteEkle(bulunan)
+        toast.add({ severity: 'success', summary: 'Ürün Eklendi', detail: bulunan.ad, life: 2000 })
+        return
+      }
+    } catch {
+      /* sunucu araması başarısız olabilir */
+    }
     toast.add({ severity: 'warn', summary: 'Bulunamadı', detail: `"${barkod}" barkodlu ürün bulunamadı`, life: 3000 })
   }
 }
@@ -749,6 +828,16 @@ const odemeTipleri = ref([
 const odenenTutar = ref(0)
 
 const kategoriler = computed(() => kategoriStore.kategoriler || [])
+const cokSatanlar = ref([])
+
+const cokSatanlariYukle = async () => {
+  try {
+    const r = await stokAPI.enCokSatanlar(12)
+    cokSatanlar.value = r.data || []
+  } catch {
+    cokSatanlar.value = []
+  }
+}
 
 const aracListesi = computed(() => {
   const araclar = new Set()
@@ -856,7 +945,8 @@ onMounted(async () => {
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
       kategoriStore.getAllKategoriler(),
-      personelListesiniYukle()
+      personelListesiniYukle(),
+      cokSatanlariYukle()
     ])
   } catch (e) {
     console.error('Yukleme hatasi', e)
@@ -1079,6 +1169,27 @@ const fisiYazdir = () => {
   }, 300)
 }
 
+const termalYazdir = async () => {
+  if (!sepet.value.length) return
+  const bytes = escPosFisiUret({
+    baslik: sirketAdi.value || 'RASPEL ERP',
+    tarih: simdikiTarih.value,
+    fisNo: fisNo.value || undefined,
+    kalemler: sepet.value.map((i) => ({ ad: i.ad, adet: i.miktar, tutar: i.miktar * i.fiyat })),
+    toplam: genelToplam.value,
+    altNot: fisAltNotu.value || undefined
+  })
+  try {
+    const gonderildi = await escPosYazdir(bytes)
+    if (!gonderildi) {
+      // WebUSB desteklenmiyorsa browser print fallback
+      fisiYazdir()
+    }
+  } catch {
+    toastBildirim.hata('Termal yazıcıya gönderilemedi')
+  }
+}
+
 const escapeHtml = (metin) => {
   return String(metin ?? '')
     .replace(/&/g, '&amp;')
@@ -1094,51 +1205,73 @@ const satisiTamamla = async () => {
   if (!anlikMusteri.value && !seciliMusteri.value) return
   if (sepet.value.length === 0) return
   kaydediliyor.value = true
+  const satisVerisi = {
+    cariHesapId: anlikMusteri.value ? null : seciliMusteri.value.id,
+    cariHesapAdi: anlikMusteri.value ? 'Anlik Musteri' : seciliMusteri.value.ad,
+    tur: 'SATIS',
+    durum: 'KESILDI',
+    tarih: new Date().toISOString().split('T')[0],
+    teslimEden: teslimEden.value || null,
+    teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
+    teslimNotu: teslimNotu.value || null,
+    aciklama: 'Hizli Satis',
+    araToplam: toplam.value,
+    indirim: indirimTutari.value,
+    genelToplam: genelToplam.value,
+    odenenTutar: odenenTutar.value,
+    odemeDurumu: odemeDurumEnum.value,
+    kalemler: sepet.value.map((i) => ({
+      stokId: i.id,
+      aciklama: i.ad,
+      adet: i.miktar,
+      birimFiyat: i.fiyat,
+      kdvOrani: 20,
+      tutar: Math.round(i.miktar * i.fiyat * 100) / 100
+    }))
+  }
   try {
-    await faturaAPI.create({
-      cariHesapId: anlikMusteri.value ? null : seciliMusteri.value.id,
-      cariHesapAdi: anlikMusteri.value ? 'Anlik Musteri' : seciliMusteri.value.ad,
-      tur: 'SATIS',
-      durum: 'KESILDI',
-      tarih: new Date().toISOString().split('T')[0],
-      teslimEden: teslimEden.value || null,
-      teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
-      teslimNotu: teslimNotu.value || null,
-      aciklama: 'Hizli Satis',
-      araToplam: toplam.value,
-      indirim: indirimTutari.value,
-      genelToplam: genelToplam.value,
-      odenenTutar: odenenTutar.value,
-      odemeDurumu: odemeDurumEnum.value,
-      kalemler: sepet.value.map((i) => ({
-        stokId: i.id,
-        aciklama: i.ad,
-        adet: i.miktar,
-        birimFiyat: i.fiyat,
-        kdvOrani: 20,
-        tutar: Math.round(i.miktar * i.fiyat * 100) / 100
-      }))
-    })
+    await faturaAPI.create(satisVerisi)
     toastBildirim.basarili(`Satış tamamlandı - ${formatCurrency(genelToplam.value)}`)
     try {
       fisiYazdir()
     } catch {
       /* empty */
     }
-    sepet.value = []
-    seciliMusteri.value = null
-    musteriGiris.value = ''
-    teslimEden.value = ''
-    teslimDurumu.value = 'BEKLIYOR'
-    teslimNotu.value = ''
-    musteriModu.value = 'musteri'
-    indirimDegeri.value = 0
-    odemeDurumu.value = 'tam'
-    odenenTutar.value = 0
+    sepetiTemizle()
   } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || 'Satış başarısız')
+    // Ağ yoksa satışı kuyruğa al (offline satış)
+    if (!e?.response) {
+      offlineKuyruk.ekle(satisVerisi)
+      toast.add({
+        severity: 'warn',
+        summary: 'Çevrimdışı satış kuyruğa alındı',
+        detail: 'Bağlantı gelince otomatik gönderilecek',
+        life: 4000
+      })
+      try {
+        fisiYazdir()
+      } catch {
+        /* empty */
+      }
+      sepetiTemizle()
+    } else {
+      toastBildirim.hata(e?.response?.data?.message || 'Satış başarısız')
+    }
   }
   kaydediliyor.value = false
+}
+
+const sepetiTemizle = () => {
+  sepet.value = []
+  seciliMusteri.value = null
+  musteriGiris.value = ''
+  teslimEden.value = ''
+  teslimDurumu.value = 'BEKLIYOR'
+  teslimNotu.value = ''
+  musteriModu.value = 'musteri'
+  indirimDegeri.value = 0
+  odemeDurumu.value = 'tam'
+  odenenTutar.value = 0
 }
 </script>
 
@@ -1302,6 +1435,46 @@ const satisiTamamla = async () => {
   text-align: center;
   padding: 40px;
   color: var(--text-muted);
+}
+.cok-satanlar-section {
+  margin-top: 8px;
+}
+.cok-satanlar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cok-satan-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+.cok-satan-chip:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.cok-satan-ad {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cok-satan-fiyat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.global-barkod {
+  display: flex;
+  align-items: center;
 }
 .empty-products i {
   font-size: 36px;

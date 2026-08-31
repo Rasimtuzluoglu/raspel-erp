@@ -564,6 +564,7 @@ public class FaturaService {
 
     private List<Long> stokHareketleriIsle(Fatura fatura, String tur, String aciklama) {
         List<Long> kritikStokIds = new ArrayList<>();
+        List<StokHareket> hareketler = new ArrayList<>();
         for (FaturaKalem k : fatura.getKalemler()) {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
@@ -606,14 +607,17 @@ public class FaturaService {
                 kritikStokIds.add(stok.getId());
             }
 
-            StokHareket h = StokHareket.builder()
+            hareketler.add(StokHareket.builder()
                     .stok(stok).tur(tur)
                     .miktar(BigDecimal.valueOf(k.getAdet()))
                     .hareketTarihi(LocalDate.now())
                     .aciklama(aciklama)
                     .cariHesap(fatura.getCariHesap())
-                    .build();
-            stokHareketRepository.save(h);
+                    .build());
+        }
+        // Hareketleri tek batch'te kaydet (kalem başına ayrı INSERT yerine)
+        if (!hareketler.isEmpty()) {
+            stokHareketRepository.saveAll(hareketler);
         }
         cacheYardimci.temizle("stoklar", "dashboard");
         return kritikStokIds;

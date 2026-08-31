@@ -290,4 +290,24 @@ class StokServiceTest {
         assertTrue(result.get(0).getTahminiTukenmeGunu() > 0);
         assertNotNull(result.get(0).getProaktifOneri());
     }
+
+    @Test
+    void enCokSatanlar_nullSirketBosDoner() {
+        assertTrue(stokService.enCokSatanlar(null, 12).isEmpty());
+    }
+
+    @Test
+    void enCokSatanlar_satislaraGoreStokDoner() {
+        when(stokHareketRepository.enCokSatanlarBySirket(1L)).thenReturn(List.of(
+                java.util.Map.of("stokAd", "Urun 1", "stokKodu", "STK001", "satisMiktari", BigDecimal.valueOf(10))
+        ));
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        when(stokRepository.findBySirketIdAndStokKodu(1L, "STK001")).thenReturn(Optional.of(stok));
+
+        var result = stokService.enCokSatanlar(1L, 12);
+
+        assertEquals(1, result.size());
+        assertEquals("Urun 1", result.get(0).getAd());
+    }
 }

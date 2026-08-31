@@ -62,6 +62,24 @@ public class StokService {
         return sonuc.stream().map(s -> entityToDTO(s, tedarikciAdlari)).collect(Collectors.toList());
     }
 
+    /**
+     * En çok satan ürünleri (CIKIS hareket miktarına göre) tam StokDTO olarak döner.
+     * POS ekranında hızlı erişim paneli için kullanılır.
+     */
+    @Transactional(readOnly = true)
+    public List<StokDTO> enCokSatanlar(Long sirketId, int limit) {
+        if (sirketId == null) return List.of();
+        List<Map<String, Object>> satislar = stokHareketRepository.enCokSatanlarBySirket(sirketId);
+        int cap = limit > 0 ? Math.min(limit, 50) : 12;
+        return satislar.stream().limit(cap).map(m -> {
+            Object kod = m.get("stokKodu");
+            if (kod == null) return null;
+            return stokRepository.findBySirketIdAndStokKodu(sirketId, kod.toString()).orElse(null);
+        }).filter(s -> s != null)
+                .map(s -> entityToDTO(s, tekTedarikciAdi(s)))
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public StokDTO barkodIleBul(String barkod, Long sirketId) {
         if (sirketId == null) return null;

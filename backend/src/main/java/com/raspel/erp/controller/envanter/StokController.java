@@ -45,6 +45,15 @@ public class StokController {
         return ResponseEntity.ok(stokService.ara(q, sirketId));
     }
 
+    @GetMapping("/en-cok-satanlar")
+    @Operation(summary = "En çok satanlar", description = "Satış miktarına göre en çok satan ürünleri tam detaylarıyla getirir (POS hızlı erişim)")
+    public ResponseEntity<List<StokDTO>> enCokSatanlar(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "12") int limit) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.enCokSatanlar(sirketId, limit));
+    }
+
     @GetMapping("/kritik")
     @Operation(summary = "Kritik stoklar", description = "Kritik seviyeye düşen stokları ve önerilen sipariş miktarlarını listeler")
     public ResponseEntity<List<KritikStokDTO>> kritikStoklar(HttpServletRequest request) {
