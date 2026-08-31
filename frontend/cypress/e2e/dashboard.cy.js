@@ -31,6 +31,10 @@ describe('Dashboard', () => {
     cy.intercept('GET', '/api/kasalar', []).as('kasalar')
     cy.intercept('GET', '/api/stoklar', []).as('stoklar')
 
+    cy.window().then((win) => {
+      win.localStorage.setItem('raspel_gorulen_surum', '1.1.0')
+    })
+
     cy.visit('/giris')
     cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
     cy.get('input[type="password"]').type('admin123')
@@ -57,7 +61,7 @@ describe('Dashboard', () => {
   })
 
   it('should toggle widget settings', () => {
-    cy.get('.pi-cog').click()
+    cy.get('button[title="Widget Ayarları"]').click()
     cy.contains('Gösterilecek Widget').should('be.visible')
     cy.contains('İstatistik Kartları').should('be.visible')
     cy.contains('Uygula').click()
