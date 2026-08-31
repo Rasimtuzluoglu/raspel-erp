@@ -13,7 +13,7 @@ Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 - **Tema "system" modu**: Karanlık/aydınlık tema artık işletim sistemi tercihine otomatik bağlanabilir (Oto modu).
 
 ### Eklenen Testler
-- Backend: 795 → 821 (ApiTokenService, ChurnAnalizService, OnayAyariService, FeatureFlagService, EFatura durum sorgulama, masraf otomatik onay).
+- Backend: 795 → 823 (ApiTokenService, ChurnAnalizService, OnayAyariService, FeatureFlagService, EFatura durum sorgulama, masraf otomatik onay).
 - Frontend: 157 → 158 (tema system modu).
 
 ## [1.8.0] - 2026-08-16 (Güvenlik & Ölçeklenebilirlik İyileştirmeleri)

@@ -39,7 +39,7 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B test` -> 821 test)
+- [ ] Backend testleri gecti (`mvn -B test` -> 823 test)
 - [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (158 test)
 - [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)
 - [ ] Login/logout/2FA akisi test edildi

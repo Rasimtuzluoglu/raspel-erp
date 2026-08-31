@@ -80,4 +80,31 @@ class OnayAyariServiceTest {
 
         assertFalse(onayAyariService.otomatikOnayGecerli(1L, "MASRAF", new BigDecimal("500")));
     }
+
+    @Test
+    void listele_kayitYoksaVarsayilanModulleriDoner() {
+        when(onayAyariRepository.findBySirketIdOrderByModulAsc(1L)).thenReturn(java.util.List.of());
+
+        java.util.List<OnayAyariDTO> liste = onayAyariService.listele(1L);
+
+        assertEquals(3, liste.size());
+        assertEquals("MASRAF", liste.get(0).getModul());
+        assertEquals("SATINALMA", liste.get(1).getModul());
+        assertEquals("IZIN", liste.get(2).getModul());
+        assertNull(liste.get(0).getId());
+        assertEquals(0, liste.get(0).getEsikTutar().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void listele_kayitliModulleriKorur() {
+        when(onayAyariRepository.findBySirketIdOrderByModulAsc(1L)).thenReturn(java.util.List.of(
+                OnayAyari.builder().id(1L).sirketId(1L).modul("MASRAF").esikTutar(new BigDecimal("5000")).otomatikOnay(true).build()));
+
+        java.util.List<OnayAyariDTO> liste = onayAyariService.listele(1L);
+
+        assertEquals(3, liste.size());
+        OnayAyariDTO masraf = liste.stream().filter(x -> "MASRAF".equals(x.getModul())).findFirst().orElseThrow();
+        assertEquals(1L, masraf.getId());
+        assertEquals(0, masraf.getEsikTutar().compareTo(new BigDecimal("5000")));
+    }
 }

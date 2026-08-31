@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,8 +26,18 @@ public class OnayAyariService {
     private static final List<String> MODULLER = List.of("MASRAF", "SATINALMA", "IZIN");
 
     public List<OnayAyariDTO> listele(Long sirketId) {
-        return onayAyariRepository.findBySirketIdOrderByModulAsc(sirketId)
-                .stream().map(this::entityToDTO).collect(Collectors.toList());
+        Map<String, OnayAyari> kayitli = onayAyariRepository.findBySirketIdOrderByModulAsc(sirketId)
+                .stream().collect(Collectors.toMap(OnayAyari::getModul, a -> a));
+
+        // Kayıtlı olmayan modüller varsayılan değerlerle döner, böylece UI her zaman dolu görünür.
+        return MODULLER.stream().map(m -> {
+            OnayAyari a = kayitli.get(m);
+            if (a != null) return entityToDTO(a);
+            return OnayAyariDTO.builder()
+                    .sirketId(sirketId).modul(m)
+                    .esikTutar(BigDecimal.ZERO).otomatikOnay(false)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public OnayAyariDTO kaydet(Long sirketId, OnayAyariDTO dto) {
