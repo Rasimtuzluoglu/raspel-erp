@@ -609,7 +609,10 @@
           >
             <Column header="Fatura No">
               <template #body="{ data }">
-                {{ data.faturaNumarasi }}
+                <a
+                  class="fatura-link"
+                  @click="faturaDetayAc(data)"
+                >{{ data.faturaNumarasi }}</a>
               </template>
             </Column>
             <Column header="Tarih">
@@ -879,6 +882,80 @@
           label="E-posta İstemcisini Aç"
           icon="pi pi-envelope"
           @click="topluEmailGonder"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="faturaDetayDialog"
+      header="Fatura Detayı"
+      :modal="true"
+      style="width: 620px"
+    >
+      <div
+        v-if="seciliFatura"
+        class="fatura-detay"
+      >
+        <div class="fatura-detay-ust">
+          <div>
+            <strong>{{ seciliFatura.faturaNumarasi }}</strong>
+            <span class="fatura-detay-tarih">{{ formatDate(seciliFatura.tarih) }}</span>
+          </div>
+          <Tag
+            :value="seciliFatura.tur === 'SATIS' ? 'Satış' : 'Alış'"
+            :severity="seciliFatura.tur === 'SATIS' ? 'success' : 'warning'"
+          />
+        </div>
+        <div
+          v-if="seciliFatura.cariHesapAd"
+          class="fatura-detay-cari"
+        >
+          Cari: {{ seciliFatura.cariHesapAd }}
+        </div>
+        <DataTable
+          :value="seciliFatura.kalemler || []"
+          size="small"
+          striped-rows
+        >
+          <Column header="Açıklama">
+            <template #body="{ data }">
+              {{ data.aciklama }}
+            </template>
+          </Column>
+          <Column header="Adet">
+            <template #body="{ data }">
+              {{ data.adet }}
+            </template>
+          </Column>
+          <Column header="Birim Fiyat">
+            <template #body="{ data }">
+              {{ formatCurrency(data.birimFiyat) }}
+            </template>
+          </Column>
+          <Column header="Tutar">
+            <template #body="{ data }">
+              {{ formatCurrency(data.tutar) }}
+            </template>
+          </Column>
+        </DataTable>
+        <div class="fatura-detay-ozet">
+          <div class="ozet-satir">
+            <span>Ara Toplam</span><span>{{ formatCurrency(seciliFatura.araToplam) }}</span>
+          </div>
+          <div class="ozet-satir">
+            <span>KDV</span><span>{{ formatCurrency(seciliFatura.kdv) }}</span>
+          </div>
+          <div class="ozet-satir ozet-genel">
+            <span>Genel Toplam</span><strong>{{ formatCurrency(seciliFatura.genelToplam) }}</strong>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Kapat"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="faturaDetayDialog = false"
         />
       </template>
     </Dialog>
@@ -1316,6 +1393,20 @@ const cariFaturalariYukle = async (cariId) => {
   }
 }
 
+const faturaDetayDialog = ref(false)
+const seciliFatura = ref(null)
+
+const faturaDetayAc = async (fatura) => {
+  try {
+    const r = await faturaAPI.getById(fatura.id)
+    seciliFatura.value = r.data
+    faturaDetayDialog.value = true
+  } catch {
+    seciliFatura.value = fatura
+    faturaDetayDialog.value = true
+  }
+}
+
 const sonUrunler = ref([])
 
 const sonUrunleriYukle = async (cariId) => {
@@ -1405,6 +1496,46 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+.fatura-link {
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+}
+.fatura-link:hover {
+  text-decoration: underline;
+}
+.fatura-detay-ust {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.fatura-detay-tarih {
+  margin-left: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.fatura-detay-cari {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.fatura-detay-ozet {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+.fatura-detay-ozet .ozet-satir {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.fatura-detay-ozet .ozet-genel {
+  font-weight: 700;
+  font-size: 15px;
+}
 .bakiye-rozet {
   display: inline-flex;
   align-items: center;

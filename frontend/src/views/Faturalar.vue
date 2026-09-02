@@ -503,7 +503,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -527,6 +527,7 @@ import { formatCurrency } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -631,6 +632,16 @@ onMounted(async () => {
     toastBildirim.hata('Veriler yüklenirken hata oluştu')
   } finally {
     loading.value = false
+  }
+  // Cari ekranından gelen "Yeni Fatura" kısayolu: cariId query'si varsa cariyi seçip dialog aç
+  if (route.query.cariId) {
+    const cariId = Number(route.query.cariId)
+    const cari = cariHesapStore?.cariHesaplar?.find((c) => c.id === cariId)
+    if (cari) {
+      seciliCariNesnesi.value = cari
+      openCreateDialog()
+      form.value.cariHesapId = cariId
+    }
   }
 })
 
