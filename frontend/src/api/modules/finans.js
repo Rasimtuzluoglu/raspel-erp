@@ -70,6 +70,9 @@ export const kasaAPI = {
   },
   aktar(data) {
     return apiClient.post('/kasalar/aktar', data)
+  },
+  getAllKasalar() {
+    return apiClient.get('/kasalar', { params: { size: 500 } })
   }
 }
 

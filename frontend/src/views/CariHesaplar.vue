@@ -22,6 +22,12 @@
         >
           <span class="batch-count">{{ selectedCariHesaplar ? selectedCariHesaplar.length : 0 }} seçili</span>
           <Button
+            label="Toplu E-posta"
+            icon="pi pi-envelope"
+            class="p-button-sm p-button-info"
+            @click="topluEmailDialog = true"
+          />
+          <Button
             label="Toplu Sil"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"
@@ -75,13 +81,43 @@
 
     <div
       v-if="!loading"
+      class="cari-filtreler"
+    >
+      <Dropdown
+        v-model="filtreTur"
+        :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
+        placeholder="Tür"
+        class="filtre-select"
+        show-clear
+      />
+      <Dropdown
+        v-model="filtreBakiye"
+        :options="bakiyeFiltreleri"
+        option-label="label"
+        option-value="value"
+        placeholder="Bakiye"
+        class="filtre-select"
+        show-clear
+      />
+      <Button
+        v-if="filtreTur || filtreBakiye"
+        label="Temizle"
+        icon="pi pi-times"
+        size="small"
+        class="p-button-outlined"
+        @click="filtreleriTemizle"
+      />
+    </div>
+
+    <div
+      v-if="!loading"
       class="table-container"
     >
       <DataTable
         v-model:selection="selectedCariHesaplar"
         state-storage="session"
         state-key="carihesaplar-table-state"
-        :value="cariHesapStore?.cariHesaplar || []"
+        :value="filtrelenmisCariler"
         selection-mode="multiple"
         data-key="id"
         responsive-layout="scroll"
@@ -175,35 +211,45 @@
           v-if="kolonlar[7].visible"
           field="bakiye"
           header="Bakiye"
-          style="width: 120px"
+          style="width: 140px"
         >
           <template #body="slotProps">
-            <span :class="slotProps.data.bakiye >= 0 ? 'positive' : 'negative'">
+            <span
+              class="bakiye-rozet"
+              :class="slotProps.data.bakiye >= 0 ? 'alacak' : 'borc'"
+            >
+              <i :class="slotProps.data.bakiye >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ formatCurrency(slotProps.data.bakiye) }}
             </span>
           </template>
         </Column>
         <Column
           header="İşlemler"
-          style="width: 190px"
+          style="width: 250px"
         >
           <template #body="slotProps">
             <Button
-              icon="pi pi-pencil"
+              icon="pi pi-file-plus"
+              class="p-button-rounded p-button-success p-button-sm"
+              title="Yeni Fatura"
+              @click="yeniFatura(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-money-bill"
               class="p-button-rounded p-button-info p-button-sm"
+              title="Tahsilat"
+              @click="tahsilatAc(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-warning p-button-sm"
               title="Düzenle"
               @click="editCariHesap(slotProps.data)"
             />
             <Button
-              icon="pi pi-copy"
-              class="p-button-rounded p-button-secondary p-button-sm"
-              title="Kopyala (yeni kayıt için şablon)"
-              @click="kopyalaCari(slotProps.data)"
-            />
-            <Button
               icon="pi pi-list"
-              class="p-button-rounded p-button-warning p-button-sm"
-              title="Hareketleri Göster"
+              class="p-button-rounded p-button-secondary p-button-sm"
+              title="Hareketler / Detay"
               @click="viewHareketler(slotProps.data)"
             />
             <Button
@@ -543,6 +589,105 @@
         />
 
         <div
+          v-if="cariFaturalar && cariFaturalar.length > 0"
+          class="cari-faturalar"
+        >
+          <div class="cari-not-baslik">
+            <h4>
+              <i
+                class="pi pi-file"
+                style="margin-right: 6px"
+              />Geçmiş Faturalar ({{ cariFaturalar.length }})
+            </h4>
+          </div>
+          <DataTable
+            :value="cariFaturalar"
+            size="small"
+            striped-rows
+            :rows="5"
+            :paginator="cariFaturalar.length > 5"
+          >
+            <Column header="Fatura No">
+              <template #body="{ data }">
+                {{ data.faturaNumarasi }}
+              </template>
+            </Column>
+            <Column header="Tarih">
+              <template #body="{ data }">
+                {{ formatDate(data.tarih) }}
+              </template>
+            </Column>
+            <Column header="Tür">
+              <template #body="{ data }">
+                {{ data.tur === 'SATIS' ? 'Satış' : 'Alış' }}
+              </template>
+            </Column>
+            <Column header="Tutar">
+              <template #body="{ data }">
+                <span class="positive">{{ formatCurrency(data.genelToplam) }}</span>
+              </template>
+            </Column>
+            <Column header="Durum">
+              <template #body="{ data }">
+                <span :class="['badge', data.odemeDurumu === 'ODENDI' ? 'tahsilat' : 'odeme']">
+                  {{ data.odemeDurumu === 'ODENDI' ? 'Ödendi' : data.odemeDurumu === 'KISMI_ODENDI' ? 'Kısmi' : 'Ödenmedi' }}
+                </span>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+
+        <div class="cari-ozel-fiyatlar">
+          <div class="cari-not-baslik">
+            <h4>
+              <i
+                class="pi pi-tag"
+                style="margin-right: 6px"
+              />Cariye Özel Fiyatlar
+            </h4>
+          </div>
+          <div
+            v-for="f in cariOzelFiyatlar"
+            :key="f.id"
+            class="ozel-fiyat-satir"
+          >
+            <span class="ozel-fiyat-urun">{{ f.stokAd }}</span>
+            <span class="ozel-fiyat-tutar">{{ formatCurrency(f.fiyat) }}</span>
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              @click="cariOzelFiyatSil(f)"
+            />
+          </div>
+          <div class="ozel-fiyat-ekle">
+            <Dropdown
+              v-model="ozelFiyatStok"
+              :options="stokSecenekleri"
+              option-label="ad"
+              option-value="id"
+              placeholder="Ürün seç"
+              filter
+              class="ozel-fiyat-stok-select"
+            />
+            <InputNumber
+              v-model="ozelFiyatTutar"
+              mode="currency"
+              currency="TRY"
+              locale="tr-TR"
+              :min-fraction-digits="2"
+              placeholder="Fiyat"
+              class="ozel-fiyat-tutar-input"
+            />
+            <Button
+              icon="pi pi-plus"
+              label="Ekle"
+              size="small"
+              @click="cariOzelFiyatEkle"
+            />
+          </div>
+        </div>
+
+        <div
           v-if="sonUrunler && sonUrunler.length > 0"
           class="cari-urunler"
         >
@@ -648,6 +793,96 @@
       </template>
     </Dialog>
 
+    <Dialog
+      v-model:visible="tahsilatDialog"
+      header="Tahsilat Ekle"
+      :modal="true"
+      style="width: 450px"
+    >
+      <div
+        v-if="tahsilatHedefCari"
+        class="tahsilat-cari"
+      >
+        Cari: <strong>{{ tahsilatHedefCari.ad }}</strong>
+      </div>
+      <div class="form-group">
+        <label>Tutar *</label>
+        <InputNumber
+          v-model="tahsilatForm.tutar"
+          :min="0.01"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          mode="currency"
+          currency="TRY"
+          locale="tr-TR"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Açıklama</label>
+        <InputText
+          v-model="tahsilatForm.aciklama"
+          placeholder="Tahsilat açıklaması"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="tahsilatDialog = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          @click="tahsilatKaydet"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="topluEmailDialog"
+      header="Toplu E-posta"
+      :modal="true"
+      style="width: 520px"
+    >
+      <p class="toplu-email-aciklama">
+        Seçili {{ selectedCariHesaplar ? selectedCariHesaplar.length : 0 }} cariye e-posta gönderilecek.
+        E-posta adresi olmayan cariler atlanır.
+      </p>
+      <div class="form-group">
+        <label>Konu</label>
+        <InputText
+          v-model="topluEmailKonu"
+          class="w-full"
+          placeholder="E-posta konusu"
+        />
+      </div>
+      <div class="form-group">
+        <label>Mesaj</label>
+        <Textarea
+          v-model="topluEmailMesaj"
+          rows="5"
+          class="w-full"
+          placeholder="E-posta içeriği"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="topluEmailDialog = false"
+        />
+        <Button
+          label="E-posta İstemcisini Aç"
+          icon="pi pi-envelope"
+          @click="topluEmailGonder"
+        />
+      </template>
+    </Dialog>
+
     <Message
       v-if="cariHesapStore.error"
       severity="error"
@@ -658,11 +893,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { excelAPI, hareketAPI, notAPI, faturaAPI } from '../api/index.js'
+import { useRouter } from 'vue-router'
+import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -671,10 +906,10 @@ import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { formatCurrency } from '../utils/format.js'
 
-const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
+const router = useRouter()
 const { kopyala } = usePanoyaKopyala()
 
 const tabloYogunluk = ref('comfortable')
@@ -711,6 +946,31 @@ let aramaZamanlayici = null
 onUnmounted(() => {
   if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
 })
+
+const filtreTur = ref(null)
+const filtreBakiye = ref(null)
+const bakiyeFiltreleri = [
+  { label: 'Alacaklı', value: 'alacak' },
+  { label: 'Borçlu', value: 'borc' }
+]
+
+const filtrelenmisCariler = computed(() => {
+  let list = cariHesapStore?.cariHesaplar || []
+  if (filtreTur.value) {
+    list = list.filter((c) => c.tur === filtreTur.value || c.tur === 'Her Ikisi')
+  }
+  if (filtreBakiye.value === 'alacak') {
+    list = list.filter((c) => (c.bakiye || 0) > 0)
+  } else if (filtreBakiye.value === 'borc') {
+    list = list.filter((c) => (c.bakiye || 0) < 0)
+  }
+  return list
+})
+
+const filtreleriTemizle = () => {
+  filtreTur.value = null
+  filtreBakiye.value = null
+}
 
 const toplamTahsilat = computed(() =>
   cariHareketler.value.filter((h) => h.tur === 'TAHSILAT').reduce((s, h) => s + (h.tutar || 0), 0)
@@ -757,6 +1017,12 @@ const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
   await loadCariHesaplar()
+  try {
+    const r = await stokAPI.getAll({ size: 1000 })
+    stokSecenekleri.value = r.data?.content || r.data || []
+  } catch {
+    stokSecenekleri.value = []
+  }
 })
 
 const cariSayfa = ref(0)
@@ -816,20 +1082,6 @@ const openDialog = () => {
   submitted.value = false
   formTemizle()
   showDialog.value = true
-}
-
-const kopyalaCari = (cari) => {
-  editingId.value = null
-  form.value = { ...cari, id: undefined }
-  submitted.value = false
-  formTemizle()
-  showDialog.value = true
-  toast.add({
-    severity: 'info',
-    summary: 'Kopyalandı',
-    detail: 'Yeni kayıt için şablon oluşturuldu. Kaydetmeden önce bilgileri güncelleyin.',
-    life: 4000
-  })
 }
 
 const closeDialog = () => {
@@ -935,8 +1187,60 @@ const batchCsvExport = () => {
   window.open(`/api/cari-hesaplar/export/csv?ids=${ids}`, '_blank')
 }
 
-const viewHareketler = async (cariHesap) => {
-  selectedCariHesap.value = cariHesap
+const yeniFatura = (cariHesap) => {
+  router.push({ name: 'Faturalar', query: { cariId: cariHesap.id } })
+}
+
+const topluEmailDialog = ref(false)
+const topluEmailKonu = ref('')
+const topluEmailMesaj = ref('')
+
+const topluEmailGonder = () => {
+  const alicilar = (selectedCariHesaplar.value || [])
+    .filter((c) => c.email)
+    .map((c) => c.email)
+  if (alicilar.length === 0) {
+    toastBildirim.uyari('E-posta adresi olan seçili cari yok')
+    return
+  }
+  const mailto = `mailto:?bcc=${alicilar.join(',')}&subject=${encodeURIComponent(topluEmailKonu.value || '')}&body=${encodeURIComponent(topluEmailMesaj.value || '')}`
+  window.open(mailto, '_blank')
+  topluEmailDialog.value = false
+  toastBildirim.basarili(`${alicilar.length} alıcıya e-posta istemcisi açıldı`)
+}
+
+const tahsilatDialog = ref(false)
+const tahsilatForm = ref({ tutar: null, aciklama: '' })
+const tahsilatHedefCari = ref(null)
+
+const tahsilatAc = (cariHesap) => {
+  tahsilatHedefCari.value = cariHesap
+  tahsilatForm.value = { tutar: null, aciklama: '' }
+  tahsilatDialog.value = true
+}
+
+const tahsilatKaydet = async () => {
+  if (!tahsilatForm.value.tutar || tahsilatForm.value.tutar <= 0) {
+    toastBildirim.uyari('Geçerli tutar giriniz')
+    return
+  }
+  try {
+    await hareketAPI.create({
+      cariHesapId: tahsilatHedefCari.value.id,
+      tur: 'TAHSILAT',
+      tutar: tahsilatForm.value.tutar,
+      hareketTarihi: new Date().toISOString().split('T')[0],
+      aciklama: tahsilatForm.value.aciklama || 'Tahsilat'
+    })
+    toastBildirim.basarili('Tahsilat kaydedildi')
+    tahsilatDialog.value = false
+    await cariHesapStore.getAllCariHesaplar()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Tahsilat başarısız')
+  }
+}
+
+const viewHareketler = async (cariHesap) => {  selectedCariHesap.value = cariHesap
   showHareketlerDialog.value = true
   cariHareketlerYukleniyor.value = true
   try {
@@ -954,6 +1258,62 @@ const viewHareketler = async (cariHesap) => {
   }
   cariNotlariYukle(cariHesap.id)
   sonUrunleriYukle(cariHesap.id)
+  cariFaturalariYukle(cariHesap.id)
+  cariOzelFiyatlariYukle(cariHesap.id)
+}
+
+const cariOzelFiyatlar = ref([])
+const ozelFiyatStok = ref(null)
+const ozelFiyatTutar = ref(null)
+const stokSecenekleri = ref([])
+
+const cariOzelFiyatlariYukle = async (cariId) => {
+  try {
+    const r = await cariHesapAPI.getFiyatlar(cariId)
+    cariOzelFiyatlar.value = r.data || []
+  } catch {
+    cariOzelFiyatlar.value = []
+  }
+}
+
+const cariOzelFiyatEkle = async () => {
+  if (!ozelFiyatStok.value || !ozelFiyatTutar.value) {
+    toastBildirim.uyari('Ürün ve fiyat seçin')
+    return
+  }
+  try {
+    await cariHesapAPI.fiyatKaydet(selectedCariHesap.value.id, {
+      stokId: ozelFiyatStok.value,
+      fiyat: ozelFiyatTutar.value
+    })
+    ozelFiyatStok.value = null
+    ozelFiyatTutar.value = null
+    cariOzelFiyatlariYukle(selectedCariHesap.value.id)
+    toastBildirim.basarili('Özel fiyat eklendi')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Fiyat eklenemedi')
+  }
+}
+
+const cariOzelFiyatSil = async (f) => {
+  try {
+    await cariHesapAPI.fiyatSil(f.id)
+    cariOzelFiyatlar.value = cariOzelFiyatlar.value.filter((x) => x.id !== f.id)
+    toastBildirim.basarili('Özel fiyat silindi')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+  }
+}
+
+const cariFaturalar = ref([])
+
+const cariFaturalariYukle = async (cariId) => {
+  try {
+    const r = await faturaAPI.cariFaturalari(cariId, { size: 100 })
+    cariFaturalar.value = r.data?.content || r.data || []
+  } catch {
+    cariFaturalar.value = []
+  }
 }
 
 const sonUrunler = ref([])
@@ -1045,6 +1405,80 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+.bakiye-rozet {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.bakiye-rozet.alacak {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+}
+.bakiye-rozet.borc {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+.cari-filtreler {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+.filtre-select {
+  width: 180px;
+}
+.tahsilat-cari {
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.toplu-email-aciklama {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.cari-ozel-fiyatlar {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.ozel-fiyat-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ozel-fiyat-urun {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ozel-fiyat-tutar {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.ozel-fiyat-ekle {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+.ozel-fiyat-stok-select {
+  flex: 1;
+}
+.ozel-fiyat-tutar-input {
+  width: 140px;
+}
+.cari-faturalar {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
 .cari-urunler {
   margin-top: 20px;
   border-top: 1px solid var(--border);

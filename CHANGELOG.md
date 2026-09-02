@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.12.0] - 2026-09-02 (POS & Cari Geliştirmeleri)
+### POS (Hızlı Satış)
+- **Ödeme yöntemi**: Nakit/Kart/Havale butonları.
+- **Kasa seçimi**: Satış hangi kasaya işlendi seçilebilir; tahsilat otomatik kasa girişi olur (V65).
+- **Son satışı iptal**: Tek tıkla son satışı iptal edip stoğu geri alma.
+- **Müşteri bakiye/kredi limiti uyarısı**: Müşteri seçince borç/alacak ve limit aşımı uyarısı.
+- **Günlük satış geçmişi**: "Bugün" sekmesiyle günün satışlarını görme.
+- **Adet klavye girişi**: Sepette adedi doğrudan yazma.
+
+### Cari Hesaplar
+- **Hızlı işlem butonları**: Yeni Fatura, Tahsilat, Düzenle, Detay tek tıkla.
+- **Bakiye durum rozeti**: Alacak/Borç renkli rozet.
+- **Filtreler**: Tür (müşteri/tedarikçi) ve bakiye (alacaklı/borçlu) filtresi.
+- **Toplu e-posta**: Seçili carilere toplu e-posta istemcisi açma.
+- **Cariye özel fiyat**: Cari+ürün bazında özel fiyat tanımı (V66), satışta kullanılır.
+
+### Eklenen Testler
+- Backend: 830 → 831 (cariFaturalari).
+
 ## [1.11.0] - 2026-08-31 (Satış & Finans İyileştirmeleri)
 ### Eklenenler
 - **Çoklu fiyat**: Bir ürüne birden fazla fiyat tanımı (`StokFiyat`, V64) — Perakende/Toptan/Kurumsal vb. Stok kartından yönetilir, POS satışında satıcı seçebilir.

@@ -197,6 +197,14 @@
                           <i class="pi pi-times" />
                         </button>
                       </div>
+                      <div
+                        v-if="musteriBakiyeUyarisi"
+                        class="musteri-bakiye-uyari"
+                        :class="musteriBakiyeUyarisi.seviye"
+                      >
+                        <i :class="musteriBakiyeUyarisi.seviye === 'danger' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'" />
+                        {{ musteriBakiyeUyarisi.mesaj }}
+                      </div>
                       <Button
                         label="+ Yeni"
                         severity="secondary"
@@ -246,7 +254,13 @@
                         size="small"
                         @click="miktarAzalt(idx)"
                       />
-                      <span class="sepet-adet">{{ item.miktar }}</span>
+                      <input
+                        v-model.number="item.miktar"
+                        type="number"
+                        min="1"
+                        class="sepet-adet-input"
+                        title="Adet"
+                      >
                       <Button
                         icon="pi pi-plus"
                         rounded
@@ -254,8 +268,7 @@
                         severity="secondary"
                         size="small"
                         @click="item.miktar++"
-                      />
-                      <select
+                      />                      <select
                         v-model="item.fiyatTipi"
                         class="fiyat-tip-select"
                         @change="fiyatTipiDegisti(item)"
@@ -343,6 +356,39 @@
                       class="w-full"
                     />
                   </div>
+
+                  <div
+                    v-if="odemeDurumu !== 'yok'"
+                    class="odenen-satir"
+                  >
+                    <label>Ödeme Yöntemi</label>
+                    <div class="odeme-yontem-grid">
+                      <button
+                        v-for="y in odemeYontemleri"
+                        :key="y.value"
+                        type="button"
+                        class="odeme-yontem-btn"
+                        :class="{ active: odemeYontemi === y.value }"
+                        @click="odemeYontemi = y.value"
+                      >
+                        <i :class="y.icon" />
+                        {{ y.label }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="odenen-satir">
+                    <label>Kasa</label>
+                    <Dropdown
+                      v-model="seciliKasa"
+                      :options="kasalar"
+                      option-label="ad"
+                      option-value="id"
+                      placeholder="Kasa seçin"
+                      class="w-full"
+                    />
+                  </div>
+
                   <div class="odeme-durum">
                     <Tag
                       :value="odemeDurumText"
@@ -367,6 +413,13 @@
                 :loading="kaydediliyor"
                 :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
                 @click="satisiTamamla"
+              />
+              <Button
+                v-if="sonSatis"
+                label="Son Satışı İptal Et"
+                icon="pi pi-undo"
+                class="p-button-outlined p-button-danger w-full"
+                @click="sonSatisiIptalEt"
               />
             </div>
           </TabPanel>
@@ -417,6 +470,36 @@
                   placeholder="Teslimat notu (isteğe bağlı)"
                   class="w-full"
                 />
+              </div>
+            </div>
+          </TabPanel>
+
+          <TabPanel header="Bugün">
+            <div class="tab-icerik">
+              <div class="gunluk-baslik">
+                <span><i class="pi pi-clock" /> Bugünkü Satışlar ({{ gunlukSatislar.length }})</span>
+                <Button
+                  icon="pi pi-refresh"
+                  class="p-button-sm p-button-text"
+                  @click="gunlukSatislariYukle"
+                />
+              </div>
+              <div
+                v-if="gunlukSatislar.length === 0"
+                class="sepet-bos"
+              >
+                Bugün henüz satış yapılmadı
+              </div>
+              <div
+                v-for="s in gunlukSatislar"
+                :key="s.id"
+                class="gunluk-satis-satir"
+              >
+                <div class="gunluk-satis-bilgi">
+                  <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
+                  <span class="gunluk-satis-cari">{{ s.cariHesapAd || 'Anlık' }}</span>
+                </div>
+                <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
               </div>
             </div>
           </TabPanel>
@@ -675,7 +758,7 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { faturaAPI, cariHesapAPI, personelAPI, stokAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
@@ -839,6 +922,45 @@ const odemeTipleri = ref([
 ])
 const odenenTutar = ref(0)
 
+// Ödeme yöntemi (Nakit/Kart/Havale/Borç)
+const odemeYontemi = ref('NAKIT')
+const odemeYontemleri = [
+  { label: 'Nakit', value: 'NAKIT', icon: 'pi pi-money-bill' },
+  { label: 'Kart', value: 'KART', icon: 'pi pi-credit-card' },
+  { label: 'Havale', value: 'HAVALE', icon: 'pi pi-send' }
+]
+
+// Kasa seçimi
+const seciliKasa = ref(null)
+const kasalar = ref([])
+
+// Günlük satış geçmişi
+const gunlukSatislar = ref([])
+const sonSatis = ref(null)
+
+const kasalariYukle = async () => {
+  try {
+    const r = await kasaAPI.getAllKasalar()
+    kasalar.value = r.data?.content || r.data || []
+    if (kasalar.value.length > 0 && !seciliKasa.value) {
+      seciliKasa.value = kasalar.value[0].id
+    }
+  } catch {
+    kasalar.value = []
+  }
+}
+
+const gunlukSatislariYukle = async () => {
+  try {
+    const bugun = new Date().toISOString().split('T')[0]
+    const r = await faturaAPI.getAll({ size: 50, sort: 'tarih,desc' })
+    const list = r.data?.content || r.data || []
+    gunlukSatislar.value = list.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
+  } catch {
+    gunlukSatislar.value = []
+  }
+}
+
 const kategoriler = computed(() => kategoriStore.kategoriler || [])
 const cokSatanlar = ref([])
 
@@ -912,6 +1034,22 @@ const musteriAdi = computed(() => {
   return seciliMusteri.value?.ad || ''
 })
 
+const musteriBakiyeUyarisi = computed(() => {
+  if (!seciliMusteri.value) return null
+  const bakiye = seciliMusteri.value.bakiye
+  const krediLimiti = seciliMusteri.value.krediLimiti
+  if (krediLimiti != null && bakiye != null && bakiye < 0 && Math.abs(bakiye) >= krediLimiti) {
+    return { seviye: 'danger', mesaj: `Kredi limiti aşıldı! Borç: ${formatCurrency(Math.abs(bakiye))}` }
+  }
+  if (bakiye != null && bakiye < 0) {
+    return { seviye: 'warn', mesaj: `Borç: ${formatCurrency(Math.abs(bakiye))}` }
+  }
+  if (bakiye != null && bakiye > 0) {
+    return { seviye: 'info', mesaj: `Alacak: ${formatCurrency(bakiye)}` }
+  }
+  return null
+})
+
 const filtrelenmisUrunler = computed(() => {
   let list = stokStore.stoklar || []
 
@@ -958,7 +1096,9 @@ onMounted(async () => {
       stokStore.getAll(),
       kategoriStore.getAllKategoriler(),
       personelListesiniYukle(),
-      cokSatanlariYukle()
+      cokSatanlariYukle(),
+      kasalariYukle(),
+      gunlukSatislariYukle()
     ])
   } catch (e) {
     console.error('Yukleme hatasi', e)
@@ -1235,6 +1375,8 @@ const satisiTamamla = async () => {
     genelToplam: genelToplam.value,
     odenenTutar: odenenTutar.value,
     odemeDurumu: odemeDurumEnum.value,
+    odemeYontemi: odemeYontemi.value,
+    kasaId: seciliKasa.value || null,
     kalemler: sepet.value.map((i) => ({
       stokId: i.id,
       aciklama: i.ad,
@@ -1245,7 +1387,8 @@ const satisiTamamla = async () => {
     }))
   }
   try {
-    await faturaAPI.create(satisVerisi)
+    const yanit = await faturaAPI.create(satisVerisi)
+    sonSatis.value = yanit.data
     toastBildirim.basarili(`Satış tamamlandı - ${formatCurrency(genelToplam.value)}`)
     try {
       fisiYazdir()
@@ -1253,6 +1396,8 @@ const satisiTamamla = async () => {
       /* empty */
     }
     sepetiTemizle()
+    gunlukSatislariYukle()
+    kasalariYukle()
   } catch (e) {
     // Ağ yoksa satışı kuyruğa al (offline satış)
     if (!e?.response) {
@@ -1274,6 +1419,24 @@ const satisiTamamla = async () => {
     }
   }
   kaydediliyor.value = false
+}
+
+// Son satışı iptal et (stok geri alınır)
+const sonSatisiIptalEt = async () => {
+  if (!sonSatis.value?.id) {
+    toastBildirim.uyari('Geri alınacak son satış yok')
+    return
+  }
+  try {
+    await faturaAPI.updateDurum(sonSatis.value.id, 'IPTAL')
+    toastBildirim.basarili('Son satış iptal edildi, stok geri alındı')
+    sonSatis.value = null
+    gunlukSatislariYukle()
+    stokStore.getAll()
+    kasalariYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'İptal başarısız')
+  }
 }
 
 const sepetiTemizle = () => {
@@ -1336,8 +1499,7 @@ const sepetiTemizle = () => {
 .pos-tabview {
   display: flex;
   flex-direction: column;
-}
-.pos-tabview :deep(.p-tabview-panels) {
+}.pos-tabview :deep(.p-tabview-panels) {
   flex: 1;
   overflow-y: auto;
 }
@@ -1632,6 +1794,106 @@ const sepetiTemizle = () => {
   text-align: center;
   font-weight: 700;
   font-size: 13px;
+}
+.sepet-adet-input {
+  width: 52px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 4px;
+  outline: none;
+}
+.odeme-yontem-grid {
+  display: flex;
+  gap: 6px;
+}
+.odeme-yontem-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.odeme-yontem-btn:hover {
+  border-color: var(--accent);
+}
+.odeme-yontem-btn.active {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent);
+}
+.odeme-yontem-btn i {
+  font-size: 16px;
+}
+.musteri-bakiye-uyari {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.musteri-bakiye-uyari.danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.musteri-bakiye-uyari.warn {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.musteri-bakiye-uyari.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+.gunluk-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.gunluk-satis-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.gunluk-satis-bilgi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gunluk-satis-no {
+  font-size: 12px;
+  font-weight: 600;
+}
+.gunluk-satis-cari {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.gunluk-satis-tutar {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
 }
 .sepet-birimfiyat {
   font-size: 11px;

@@ -18,6 +18,15 @@ export const cariHesapAPI = {
   },
   delete(id) {
     return apiClient.delete(`/cari-hesaplar/${id}`)
+  },
+  getFiyatlar(id) {
+    return apiClient.get(`/cari-hesaplar/${id}/fiyatlar`)
+  },
+  fiyatKaydet(id, data) {
+    return apiClient.post(`/cari-hesaplar/${id}/fiyatlar`, data)
+  },
+  fiyatSil(fiyatId) {
+    return apiClient.delete(`/cari-hesaplar/fiyatlar/${fiyatId}`)
   }
 }
 
@@ -75,6 +84,9 @@ export const faturaAPI = {
   },
   cariUrunFiyatGecmisi(cariId, stokId) {
     return apiClient.get(`/faturalar/cari/${cariId}/stok/${stokId}/fiyat-gecmisi`)
+  },
+  cariFaturalari(cariId, params) {
+    return apiClient.get(`/faturalar/cari/${cariId}`, { params })
   },
   stokFiyatGecmisi(stokId) {
     return apiClient.get(`/faturalar/stok/${stokId}/fiyat-gecmisi`)

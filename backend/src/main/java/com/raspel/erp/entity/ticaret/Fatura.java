@@ -107,6 +107,12 @@ public class Fatura {
     @Column(name = "para_birimi", length = 10)
     private String paraBirimi;
 
+    @Column(name = "odeme_yontemi", length = 20)
+    private String odemeYontemi;
+
+    @Column(name = "kasa_id")
+    private Long kasaId;
+
     @Version
     private Long version;
 

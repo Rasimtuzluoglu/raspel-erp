@@ -700,12 +700,10 @@
           />
         </div>
 
-        <div
-          v-if="editingId"
-          class="form-grup coklu-fiyat-bolumu"
-        >
+        <div class="form-grup coklu-fiyat-bolumu">
           <div class="coklu-fiyat-baslik">
-            <label>Çoklu Fiyatlar</label>
+            <label>Fiyatlar (satışta seçilebilir)</label>
+            <span class="coklu-fiyat-ipucu">Perakende / Toptan / Kurumsal gibi birden fazla fiyat tanımlayın</span>
           </div>
           <div
             v-for="f in form.fiyatlar"
@@ -1032,7 +1030,12 @@ const openDialog = () => {
     tedarikciStokKodu: '',
     tedarikciFiyat: null,
     maliyetYontemi: 'ORTALAMA',
-    aciklama: ''
+    aciklama: '',
+    fiyatlar: [
+      { ad: 'Perakende', fiyat: 0 },
+      { ad: 'Toptan', fiyat: 0 },
+      { ad: 'Kurumsal', fiyat: 0 }
+    ]
   }
   formTemizle()
   showDialog.value = true
@@ -1095,15 +1098,19 @@ const saveStok = async () => {
   try {
     if (editingId.value) {
       await stokStore.updateStok(editingId.value, form.value)
-      // Fiyatları senkronize et
       await fiyatlariKaydet(editingId.value)
       toastBildirim.basarili('Ürün güncellendi')
     } else {
-      await stokStore.addStok(form.value)
+      const yeniStok = await stokStore.addStok(form.value)
+      // Yeni stokun ID'siyle fiyatları kaydet
+      if (yeniStok?.id) {
+        await fiyatlariKaydet(yeniStok.id)
+      }
       toastBildirim.basarili('Ürün eklendi')
     }
     formTemizle()
     showDialog.value = false
+    await stokStore.getAll()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
   } finally {
@@ -1113,7 +1120,7 @@ const saveStok = async () => {
 
 const fiyatlariKaydet = async (stokId) => {
   for (const f of form.value.fiyatlar) {
-    if (!f.ad || !f.ad.trim()) continue
+    if (!f.ad || !f.ad.trim() || f.fiyat == null || f.fiyat <= 0) continue
     if (f.id) {
       await stokAPI.fiyatGuncelle(f.id, { ad: f.ad, fiyat: f.fiyat })
     } else {
@@ -1509,6 +1516,17 @@ h2 {
 }
 .coklu-fiyat-baslik {
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.coklu-fiyat-ipucu {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
 }
 .coklu-fiyat-satir {
   display: flex;

@@ -69,6 +69,16 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.cariSonUrunler(cariId, sirketId, limit));
     }
 
+    @GetMapping("/cari/{cariId}")
+    @Operation(summary = "Carinin faturalari", description = "Cari hesaba ait tüm faturaları (fişleri) sayfalı olarak listeler")
+    public ResponseEntity<Page<FaturaDTO>> cariFaturalari(
+            @PathVariable Long cariId,
+            HttpServletRequest request,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.cariFaturalari(cariId, sirketId, pageable));
+    }
+
     @GetMapping("/cari/{cariId}/stok/{stokId}/fiyat-gecmisi")
     @Operation(summary = "Cari-urun fiyat gecmisi", description = "Bir cari hesabin belirli bir urunu gecmiste aldıgı fiyatları dondurur")
     public ResponseEntity<com.raspel.erp.dto.ticaret.CariUrunFiyatDTO> cariUrunFiyatGecmisi(

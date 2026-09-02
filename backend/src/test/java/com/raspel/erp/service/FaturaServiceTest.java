@@ -277,4 +277,15 @@ class FaturaServiceTest {
         when(faturaRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> faturaService.faturaSil(99L));
     }
+
+    @Test
+    void cariFaturalari_listeler() {
+        Fatura f = createFatura(1L);
+        when(faturaRepository.findByCariHesapIdAndSirketIdOrderByTarihDesc(eq(1L), eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(f)));
+
+        var result = faturaService.cariFaturalari(1L, 1L, Pageable.unpaged());
+
+        assertEquals(1, result.getContent().size());
+    }
 }

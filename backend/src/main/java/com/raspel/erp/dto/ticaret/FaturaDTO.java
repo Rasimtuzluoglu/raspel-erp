@@ -57,4 +57,7 @@ public class FaturaDTO {
     private Long depoId;
     private String depoAd;
     private String paraBirimi;
+    private String odemeYontemi;
+    private Long kasaId;
+    private String kasaAd;
 }

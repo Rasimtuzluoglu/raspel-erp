@@ -54,6 +54,10 @@ import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.sube.DepoStokRepository;
 import com.raspel.erp.repository.sube.DepoRepository;
+import com.raspel.erp.entity.finans.Kasa;
+import com.raspel.erp.entity.finans.KasaHareket;
+import com.raspel.erp.repository.finans.KasaRepository;
+import com.raspel.erp.repository.finans.KasaHareketRepository;
 
 @Service
 @Transactional
@@ -77,6 +81,8 @@ public class FaturaService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final TcmbKurService tcmbKurService;
+    private final KasaRepository kasaRepository;
+    private final KasaHareketRepository kasaHareketRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -104,6 +110,15 @@ public class FaturaService {
         return faturaRepository.findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, sirketId)
                 .map(this::entityDTOyeCevir)
                 .orElse(null);
+    }
+
+    /**
+     * Bir cari hesaba ait tüm faturaları (fişleri) sayfalı olarak döndürür.
+     */
+    @Transactional(readOnly = true)
+    public Page<FaturaDTO> cariFaturalari(Long cariId, Long sirketId, Pageable pageable) {
+        return faturaRepository.findByCariHesapIdAndSirketIdOrderByTarihDesc(cariId, sirketId, pageable)
+                .map(this::entityDTOyeCevir);
     }
 
     /**
@@ -319,6 +334,8 @@ public class FaturaService {
                 .teslimFotograf(dto.getTeslimFotograf())
                 .depoId(dto.getDepoId())
                 .paraBirimi(dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY")
+                .odemeYontemi(dto.getOdemeYontemi())
+                .kasaId(dto.getKasaId())
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -352,7 +369,30 @@ public class FaturaService {
         } catch (Exception e) {
             log.warn("Fatura bildirimi gönderilemedi: {}", e.getMessage());
         }
+
+        // Kasa seçilmiş ve tahsilat yapılmışsa kasaya giriş işle
+        if (kaydedilen.getKasaId() != null && odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
+            kasaGirisi(kaydedilen, odenenTutar);
+        }
         return entityDTOyeCevir(kaydedilen);
+    }
+
+    /** Tahsil edilen tutarı seçili kasaya giriş olarak işler. */
+    private void kasaGirisi(Fatura fatura, BigDecimal tutar) {
+        try {
+            Kasa kasa = kasaRepository.findByIdForUpdate(fatura.getKasaId())
+                    .orElseThrow(() -> new BusinessException("Kasa bulunamadı: " + fatura.getKasaId()));
+            tenantChecker.check(kasa.getSirketId(), "Kasa");
+            kasa.setBakiye(kasa.getBakiye().add(tutar));
+            kasaRepository.save(kasa);
+            kasaHareketRepository.save(KasaHareket.builder()
+                    .kasa(kasa).tur("GELIR").tutar(tutar)
+                    .hareketTarihi(fatura.getTarih())
+                    .aciklama("Satış: " + fatura.getFaturaNumarasi())
+                    .build());
+        } catch (Exception e) {
+            log.warn("Kasa girişi işlenemedi: {}", e.getMessage());
+        }
     }
 
     /** Fatura PDF'ini cari hesabın e-posta adresine gönderir. */
@@ -756,6 +796,11 @@ public class FaturaService {
                         ? depoRepository.findById(fatura.getDepoId()).map(com.raspel.erp.entity.sube.Depo::getAd).orElse(null)
                         : null)
                 .paraBirimi(fatura.getParaBirimi())
+                .odemeYontemi(fatura.getOdemeYontemi())
+                .kasaId(fatura.getKasaId())
+                .kasaAd(fatura.getKasaId() != null
+                        ? kasaRepository.findById(fatura.getKasaId()).map(Kasa::getAd).orElse(null)
+                        : null)
                 .build();
     }
 }

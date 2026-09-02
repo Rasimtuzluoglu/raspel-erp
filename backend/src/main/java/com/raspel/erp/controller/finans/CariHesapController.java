@@ -122,4 +122,30 @@ public class CariHesapController {
         cariHesapService.cariHesapSil(id);
         return ResponseEntity.noContent().build();
     }
+
+    // CARİYE ÖZEL FİYAT
+
+    @GetMapping("/{id}/fiyatlar")
+    @Operation(summary = "Cariye özel fiyatlar", description = "Bir cariye özel tanımlanmış ürün fiyatlarını listeler")
+    public ResponseEntity<List<com.raspel.erp.dto.finans.CariFiyatDTO>> cariFiyatlar(@PathVariable Long id) {
+        return ResponseEntity.ok(cariHesapService.cariFiyatlari(id));
+    }
+
+    @PostMapping("/{id}/fiyatlar")
+    @Operation(summary = "Cariye özel fiyat ekle", description = "Cariye özel ürün fiyatı ekler/günceller")
+    public ResponseEntity<com.raspel.erp.dto.finans.CariFiyatDTO> cariFiyatKaydet(
+            @PathVariable Long id,
+            @RequestBody com.raspel.erp.dto.finans.CariFiyatDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariHesapService.cariFiyatKaydet(id, dto, sirketId));
+    }
+
+    @DeleteMapping("/fiyatlar/{fiyatId}")
+    @Operation(summary = "Cariye özel fiyat sil", description = "Cariye özel fiyatı siler")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> cariFiyatSil(@PathVariable Long fiyatId) {
+        cariHesapService.cariFiyatSil(fiyatId);
+        return ResponseEntity.noContent().build();
+    }
 }

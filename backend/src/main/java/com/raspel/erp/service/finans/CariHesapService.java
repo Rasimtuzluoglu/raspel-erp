@@ -9,6 +9,11 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.finans.CariFiyatRepository;
+import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.entity.finans.CariFiyat;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.dto.finans.CariFiyatDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -21,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.sistem.Sirket;
@@ -40,6 +46,60 @@ public class CariHesapService {
     private final FaturaRepository faturaRepository;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
+    private final CariFiyatRepository cariFiyatRepository;
+    private final StokRepository stokRepository;
+
+    // ---------- CARİYE ÖZEL FİYAT ----------
+
+    @Transactional(readOnly = true)
+    public List<CariFiyatDTO> cariFiyatlari(Long cariHesapId) {
+        List<CariFiyat> fiyatlar = cariFiyatRepository.findByCariHesapIdOrderByStokId(cariHesapId);
+        Map<Long, Stok> stokMap = fiyatlar.stream().map(CariFiyat::getStokId).distinct()
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList()).isEmpty() ? Map.of()
+                : stokRepository.findAllById(fiyatlar.stream().map(CariFiyat::getStokId).distinct().collect(Collectors.toList()))
+                        .stream().collect(Collectors.toMap(Stok::getId, s -> s));
+        return fiyatlar.stream().map(f -> {
+            Stok s = stokMap.get(f.getStokId());
+            return CariFiyatDTO.builder()
+                    .id(f.getId()).cariHesapId(f.getCariHesapId()).stokId(f.getStokId())
+                    .stokAd(s != null ? s.getAd() : null).stokKodu(s != null ? s.getStokKodu() : null)
+                    .fiyat(f.getFiyat()).sirketId(f.getSirketId()).olusturmaTarihi(f.getOlusturmaTarihi())
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    public CariFiyatDTO cariFiyatKaydet(Long cariHesapId, CariFiyatDTO dto, Long sirketId) {
+        CariHesap cari = cariHesapRepository.findById(cariHesapId)
+                .orElseThrow(() -> new ResourceNotFoundException("CariHesap", cariHesapId));
+        tenantChecker.check(cari.getSirketId(), "CariHesap");
+        CariFiyat fiyat = cariFiyatRepository.findByCariHesapIdAndStokId(cariHesapId, dto.getStokId())
+                .orElseGet(() -> CariFiyat.builder().cariHesapId(cariHesapId).stokId(dto.getStokId())
+                        .sirketId(sirketId).build());
+        fiyat.setFiyat(dto.getFiyat() != null ? dto.getFiyat() : BigDecimal.ZERO);
+        CariFiyat saved = cariFiyatRepository.save(fiyat);
+        Stok s = stokRepository.findById(saved.getStokId()).orElse(null);
+        return CariFiyatDTO.builder().id(saved.getId()).cariHesapId(saved.getCariHesapId())
+                .stokId(saved.getStokId()).stokAd(s != null ? s.getAd() : null)
+                .stokKodu(s != null ? s.getStokKodu() : null).fiyat(saved.getFiyat())
+                .sirketId(saved.getSirketId()).olusturmaTarihi(saved.getOlusturmaTarihi()).build();
+    }
+
+    public void cariFiyatSil(Long id) {
+        CariFiyat fiyat = cariFiyatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("CariFiyat", id));
+        CariHesap cari = cariHesapRepository.findById(fiyat.getCariHesapId())
+                .orElseThrow(() -> new ResourceNotFoundException("CariHesap", fiyat.getCariHesapId()));
+        tenantChecker.check(cari.getSirketId(), "CariHesap");
+        cariFiyatRepository.deleteById(id);
+    }
+
+    /** Bir cariye özel fiyat varsa onu, yoksa null döner (satışta kullanılır). */
+    @Transactional(readOnly = true)
+    public BigDecimal cariOzelFiyat(Long cariHesapId, Long stokId) {
+        return cariFiyatRepository.findByCariHesapIdAndStokId(cariHesapId, stokId)
+                .map(CariFiyat::getFiyat).orElse(null);
+    }
 
     /**
      * Tüm cari hesapları getir
