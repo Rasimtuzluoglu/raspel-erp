@@ -509,22 +509,8 @@
               <Card class="fis-card">
                 <template #title>
                   <div class="fis-card-header">
-                    <span><i class="pi pi-print" /> Termal Fiş Ayarları</span>
+                    <span><i class="pi pi-print" /> Fiş Önizleme</span>
                     <div class="fis-ayarlar">
-                      <InputText
-                        v-model="fisAltNotu"
-                        placeholder="Fiş alt notu..."
-                        size="small"
-                        style="width: 160px"
-                        title="Fiş altı özel mesajı"
-                      />
-                      <SelectButton
-                        v-model="fisFiyatli"
-                        :options="fisSecenekleri"
-                        option-label="label"
-                        option-value="value"
-                        size="small"
-                      />
                       <Button
                         label="Yazdır (F9)"
                         icon="pi pi-print"
@@ -899,11 +885,8 @@ const sepet = ref([])
 const kaydediliyor = ref(false)
 const fisNo = ref('')
 
-const fisFiyatli = ref(true)
-const fisSecenekleri = ref([
-  { label: 'Fiyatlı', value: true },
-  { label: 'Fiyatsız', value: false }
-])
+const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
+watch(fisFiyatli, (v) => localStorage.setItem('raspel_fis_fiyatli', String(v)))
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
 watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
 

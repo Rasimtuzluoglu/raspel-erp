@@ -537,6 +537,40 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="durumSecModal"
+      :modal="true"
+      header="Sipariş Durumunu Güncelle"
+      :style="{ width: '90%', maxWidth: '400px' }"
+    >
+      <div class="modal-form-content">
+        <div class="form-group">
+          <label>Durum</label>
+          <Dropdown
+            v-model="seciliYeniDurum"
+            :options="durumSecenekleri"
+            class="w-full"
+            placeholder="Durum seçin"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="durumSecModal = false"
+        />
+        <Button
+          label="Kaydet"
+          icon="pi pi-check"
+          class="p-button-primary"
+          :loading="durumKaydediliyor"
+          @click="durumKaydet"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -692,10 +726,29 @@ const teslimatOnayla = async () => {
 }
 
 const durumSecModalAc = (siparis) => {
-  const durum = prompt('Yeni durum: (HAZIRLANIYOR, YOLDA, TESLIM_EDILDI)', siparis.durum || 'YOLDA')
-  if (durum) {
-    siparis.durum = durum.toUpperCase()
+  seciliSiparis.value = siparis
+  seciliYeniDurum.value = siparis.durum || 'BEKLIYOR'
+  durumSecModal.value = true
+}
+
+const durumSecModal = ref(false)
+const seciliYeniDurum = ref('BEKLIYOR')
+const durumKaydediliyor = ref(false)
+const durumSecenekleri = ['BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'TESLIM_EDILDI', 'IPTAL']
+
+const durumKaydet = async () => {
+  if (!seciliSiparis.value) return
+  durumKaydediliyor.value = true
+  try {
+    await siparisAPI.durumGuncelle(seciliSiparis.value.id, seciliYeniDurum.value)
+    seciliSiparis.value.durum = seciliYeniDurum.value
+    durumSecModal.value = false
     toast.add({ severity: 'success', summary: 'Güncellendi', detail: 'Sipariş durumu güncellendi.', life: 2500 })
+    await tumunuYukle()
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err.message, life: 3000 })
+  } finally {
+    durumKaydediliyor.value = false
   }
 }
 

@@ -532,6 +532,40 @@
           </div>
         </template>
       </Card>
+
+      <!-- FİŞ YAZDIRMA AYARLARI -->
+      <Card class="ayar-kart">
+        <template #title>
+          <div>
+            <i
+              class="pi pi-print"
+              style="margin-right: 8px"
+            />Fiş Yazdırma Ayarları
+          </div>
+        </template>
+        <template #content>
+          <p class="ai-aciklama">
+            Hızlı satışta (POS) yazdırılan fişler için genel ayarlar. Bu ayarlar tüm POS ekranında geçerlidir.
+          </p>
+          <div class="fis-ayar-satir">
+            <label>Fiş Alt Notu</label>
+            <InputText
+              v-model="fisAltNotu"
+              placeholder="Fiş altı özel mesajı"
+              class="w-full"
+            />
+          </div>
+          <div class="fis-ayar-satir">
+            <label>Fişte Fiyat Göster</label>
+            <SelectButton
+              v-model="fisFiyatli"
+              :options="fisSecenekleri"
+              option-label="label"
+              option-value="value"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
@@ -539,7 +573,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { kullaniciAPI, aiConfigAPI, apiTokenAPI } from '../api/index.js'
@@ -549,6 +583,17 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 
 const faturaTasarimModalAcik = ref(false)
+
+// Fiş yazdırma ayarları (POS ile ortak localStorage)
+const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
+const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
+const fisSecenekleri = [
+  { label: 'Fiyatlı', value: true },
+  { label: 'Fiyatsız', value: false }
+]
+
+watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
+watch(fisFiyatli, (v) => localStorage.setItem('raspel_fis_fiyatli', String(v)))
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -903,6 +948,17 @@ const kopyala = async (text) => {
 </script>
 
 <style scoped>
+.fis-ayar-satir {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.fis-ayar-satir label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
 .hesap-ayarlari {
   padding: 0;
 }
