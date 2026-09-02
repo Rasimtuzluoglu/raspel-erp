@@ -51,26 +51,26 @@
     </div>
 
     <!-- AI FİNANSAL ZEKA & İÇGÖRÜ KARTI -->
-    <div class="ai-insight-box flex items-center justify-between p-4 rounded-xl mb-5 bg-gradient-to-r from-blue-900/80 to-indigo-900/80 text-white border border-blue-500/30 shadow-sm">
-      <div class="flex items-start gap-3">
-        <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <i class="pi pi-sparkles text-amber-300 text-xl" />
+    <div class="ai-insight-box">
+      <div class="ai-insight-ic">
+        <div class="ai-insight-icon">
+          <i class="pi pi-sparkles ai-insight-icon-i" />
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h4 class="font-bold text-sm text-blue-100">
+          <div class="ai-insight-baslik">
+            <h4 class="ai-insight-title">
               Yapay Zeka Finansal Değerlendirmesi
             </h4>
-            <span class="text-[10px] bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full font-mono">Otomatik Analiz</span>
+            <span class="ai-insight-rozet">Otomatik Analiz</span>
           </div>
-          <p class="text-xs text-blue-100/90 mt-1 leading-relaxed">
+          <p class="ai-insight-yorum">
             {{ aiYorum }}
           </p>
         </div>
       </div>
       <Button
         icon="pi pi-sync"
-        class="p-button-rounded p-button-text text-blue-200 p-button-sm flex-shrink-0"
+        class="p-button-rounded p-button-text ai-insight-btn p-button-sm flex-shrink-0"
         title="Yeniden Değerlendir"
         @click="aiYorumOlustur"
       />
@@ -719,6 +719,68 @@ const hatirlatWhatsApp = (cari) => {
 <style scoped>
 .yonetici-kokpiti-sayfasi {
   padding-bottom: 40px;
+}
+
+.ai-insight-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.ai-insight-ic {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.ai-insight-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: rgba(59, 130, 246, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+.ai-insight-icon-i {
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+.ai-insight-baslik {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.ai-insight-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ai-insight-rozet {
+  font-size: 0.625rem;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-family: monospace;
+}
+.ai-insight-yorum {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  line-height: 1.6;
+}
+.ai-insight-btn {
+  color: var(--text-secondary);
 }
 
 .kokpit-header-card {
