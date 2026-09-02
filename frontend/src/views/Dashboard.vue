@@ -52,49 +52,6 @@
       </div>
     </div>
 
-    <div class="hizli-islemler">
-      <button
-        type="button"
-        class="hizli-islem-btn"
-        @click="router.push('/hizli-satis')"
-      >
-        <i class="pi pi-bolt" />
-        <span>Hızlı Satış</span>
-      </button>
-      <button
-        type="button"
-        class="hizli-islem-btn"
-        @click="router.push('/faturalar')"
-      >
-        <i class="pi pi-file-plus" />
-        <span>Yeni Fatura</span>
-      </button>
-      <button
-        type="button"
-        class="hizli-islem-btn"
-        @click="router.push('/kasa')"
-      >
-        <i class="pi pi-money-bill" />
-        <span>Kasa</span>
-      </button>
-      <button
-        type="button"
-        class="hizli-islem-btn"
-        @click="router.push('/cari-hesaplar')"
-      >
-        <i class="pi pi-users" />
-        <span>Cari Hesaplar</span>
-      </button>
-      <button
-        type="button"
-        class="hizli-islem-btn"
-        @click="router.push('/stoklar')"
-      >
-        <i class="pi pi-box" />
-        <span>Stoklar</span>
-      </button>
-    </div>
-
     <Card
       v-if="widgetAyarlariGoster"
       class="widget-ayarlari"
@@ -460,6 +417,18 @@
           class="action-card tahsilat"
         >
           <i class="pi pi-money-bill" /><span>Tahsilat/Ödeme</span>
+        </router-link>
+        <router-link
+          to="/kasa"
+          class="action-card kasa"
+        >
+          <i class="pi pi-wallet" /><span>Kasa</span>
+        </router-link>
+        <router-link
+          to="/stoklar"
+          class="action-card stok"
+        >
+          <i class="pi pi-box" /><span>Stoklar</span>
         </router-link>
       </div>
 
@@ -1027,35 +996,6 @@ const whatsappLink = (f) => {
 </script>
 
 <style scoped>
-.hizli-islemler {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.hizli-islem-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.hizli-islem-btn:hover {
-  border-color: var(--accent);
-  background: rgba(59, 130, 246, 0.08);
-  transform: translateY(-1px);
-}
-.hizli-islem-btn i {
-  color: var(--accent);
-  font-size: 16px;
-}
 .dashboard-container {
   padding: 0;
 }
@@ -1793,19 +1733,6 @@ const whatsappLink = (f) => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.hizli-islemler {
-  margin-bottom: 24px;
-}
-.islem-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-.islem-grid .p-button {
-  height: 56px;
-  font-size: 13px;
-  justify-content: center;
-}
 
 @media (max-width: 900px) {
   .charts-row,
@@ -1904,6 +1831,12 @@ const whatsappLink = (f) => {
 }
 .action-card.tahsilat {
   background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+.action-card.kasa {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+}
+.action-card.stok {
+  background: linear-gradient(135deg, #b45309, #d97706);
 }
 
 .backup-reminder {
