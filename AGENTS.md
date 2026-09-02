@@ -19,7 +19,7 @@ cd frontend
 npm ci                      # Install deps
 npm run dev                 # Dev server :5173
 npm run build               # Production build
-npm run test                # Run 160 tests (Vitest)
+npm run test                # Run 163 tests (Vitest)
 npm run lint                # ESLint
 npm run cypress:run         # E2E tests
 
@@ -40,7 +40,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (831) + Vitest (160) + Cypress |
+| Tests | JUnit 5 (831) + Vitest (163) + Cypress |
 
 ## Project Structure
 
@@ -111,7 +111,7 @@ raspel-erp/
 ## Code Quality
 
 - Backend: 831 tests (JUnit 5, H2, Mockito), must pass before commit
-- Frontend: 160 tests (Vitest), zero ESLint warnings required
+- Frontend: 163 tests (Vitest), zero ESLint warnings required
 - CI runs on push/PR to main: backend (compile+test), frontend (lint+test+build), security (Trivy)
 
 ## Dev Setup (Minimal)

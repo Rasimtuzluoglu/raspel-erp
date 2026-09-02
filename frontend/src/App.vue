@@ -58,6 +58,7 @@
     />
     <GuncellemeNotlari v-if="authStore.isLoggedIn" />
     <GeriAlToast />
+    <KisayolRehberi />
     <HesapMakinesi
       :visible="hesapMakinesiAcik"
       @update:visible="hesapMakinesiAcik = $event"
@@ -152,6 +153,7 @@ import KarMarjiHesaplayici from './components/KarMarjiHesaplayici.vue'
 import IbanDogrulayici from './components/IbanDogrulayici.vue'
 import TcKimlikDogrulayici from './components/TcKimlikDogrulayici.vue'
 import PasswordChangeModal from './components/PasswordChangeModal.vue'
+import KisayolRehberi from './components/KisayolRehberi.vue'
 
 const authStore = useAuthStore()
 const toast = useToast()

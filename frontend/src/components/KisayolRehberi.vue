@@ -1,156 +1,79 @@
 <template>
-  <transition name="dialog-fade">
-    <div
-      v-if="goster"
-      class="rehber-overlay"
-      @click.self="kapat"
-    >
-      <div class="rehber-kutu">
-        <div class="rehber-baslik">
-          <strong>{{ $t('shortcuts.title') }}</strong>
-          <Button
-            icon="pi pi-times"
-            class="p-button-rounded p-button-text"
-            @click="kapat"
-          />
-        </div>
-        <div class="rehber-icerik">
-          <div
-            v-for="k in kisayollar"
-            :key="k.kod"
-            class="rehber-satir"
-          >
-            <span class="kisa-tuslar">
-              <kbd
-                v-for="t in k.tuslar"
-                :key="t"
-              >{{ t }}</kbd>
-            </span>
-            <span class="kisa-aciklama">{{ $t(k.aciklamaAnahtar) }}</span>
-          </div>
-        </div>
-        <div class="rehber-alt">
-          <small>{{ $t('shortcuts.closeHint') }}</small>
-        </div>
+  <Dialog
+    v-model:visible="acik"
+    header="Klavye Kısayolları"
+    :modal="false"
+    :style="{ width: '520px' }"
+  >
+    <div class="kisayol-grid">
+      <div class="kisayol-satir">
+        <kbd>Ctrl</kbd> + <kbd>K</kbd><span>Hızlı Arama</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>Ctrl</kbd> + <kbd>S</kbd><span>Kaydet</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>Ctrl</kbd> + <kbd>P</kbd><span>Yazdır</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>Esc</kbd><span>Kapat / İptal</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F2</kbd><span>Hızlı Satış</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F4</kbd><span>Stoklar</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F9</kbd><span>POS'ta Satışı Tamamla</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>G</kbd> + harf<span>Hızlı gezinme (g+c cari, g+f fatura, g+h POS)</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>?</kbd><span>Bu rehberi aç</span>
       </div>
     </div>
-  </transition>
+  </Dialog>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({ goster: { type: Boolean, default: false } })
-const emit = defineEmits(['update:goster'])
+const acik = ref(false)
 
-const kapat = () => emit('update:goster', false)
-
-const kisayollar = [
-  { kod: 'ara', tuslar: ['Ctrl', 'K'], aciklamaAnahtar: 'shortcuts.search' },
-  { kod: 'kaydet', tuslar: ['Ctrl', 'S'], aciklamaAnahtar: 'shortcuts.save' },
-  { kod: 'yazdir', tuslar: ['Ctrl', 'P'], aciklamaAnahtar: 'shortcuts.print' },
-  { kod: 'yeni', tuslar: ['F2'], aciklamaAnahtar: 'shortcuts.new' },
-  { kod: 'iptal', tuslar: ['Esc'], aciklamaAnahtar: 'shortcuts.close' },
-  { kod: 'rehber', tuslar: ['?'], aciklamaAnahtar: 'shortcuts.guide' },
-  { kod: 'gezin-cari', tuslar: ['g', 'c'], aciklamaAnahtar: 'shortcuts.gotoCari' },
-  { kod: 'gezin-fatura', tuslar: ['g', 'f'], aciklamaAnahtar: 'shortcuts.gotoFatura' },
-  { kod: 'gezin-stok', tuslar: ['g', 's'], aciklamaAnahtar: 'shortcuts.gotoStok' },
-  { kod: 'gezin-banka', tuslar: ['g', 'b'], aciklamaAnahtar: 'shortcuts.gotoBanka' },
-  { kod: 'gezin-kasa', tuslar: ['g', 'k'], aciklamaAnahtar: 'shortcuts.gotoKasa' },
-  { kod: 'gezin-personel', tuslar: ['g', 'p'], aciklamaAnahtar: 'shortcuts.gotoPersonel' },
-  { kod: 'gezin-hizli-satis', tuslar: ['g', 'h'], aciklamaAnahtar: 'shortcuts.gotoHizliSatis' },
-  { kod: 'gezin-rapor', tuslar: ['g', 'r'], aciklamaAnahtar: 'shortcuts.gotoRapor' },
-  { kod: 'gezin-not', tuslar: ['g', 'n'], aciklamaAnahtar: 'shortcuts.gotoNot' },
-  { kod: 'gezin-dashboard', tuslar: ['g', 'd'], aciklamaAnahtar: 'shortcuts.gotoDashboard' }
-]
-
-const tusHandler = (e) => {
-  if (e.key === 'Escape' && props.goster) {
-    kapat()
-  }
-  if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-    const aktif = document.activeElement
-    const girdi = aktif && (aktif.tagName === 'INPUT' || aktif.tagName === 'TEXTAREA' || aktif.isContentEditable)
-    if (!girdi) {
-      e.preventDefault()
-      emit('update:goster', !props.goster)
-    }
-  }
+const acListener = () => {
+  acik.value = true
 }
 
-onMounted(() => window.addEventListener('keydown', tusHandler))
-onUnmounted(() => window.removeEventListener('keydown', tusHandler))
+onMounted(() => window.addEventListener('kisayol-rehberi-ac', acListener))
+onUnmounted(() => window.removeEventListener('kisayol-rehberi-ac', acListener))
 </script>
 
 <style scoped>
-.rehber-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100000;
-  background: rgba(0, 0, 0, 0.5);
+.kisayol-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kisayol-satir {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
 }
-.rehber-kutu {
-  width: 440px;
-  max-width: 92vw;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-.rehber-baslik {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
-  font-size: 15px;
-}
-.rehber-icerik {
-  padding: 12px 18px;
-}
-.rehber-satir {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 9px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
-}
-.rehber-satir:last-child {
-  border-bottom: none;
-}
-.kisa-tuslar {
-  display: flex;
-  gap: 4px;
-  min-width: 90px;
+.kisayol-satir span {
+  margin-left: auto;
+  color: var(--text-muted);
 }
 kbd {
-  background: rgba(148, 163, 184, 0.15);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-bottom-width: 2px;
   border-radius: 5px;
   padding: 2px 7px;
+  font-family: monospace;
   font-size: 12px;
-  font-family: inherit;
   color: var(--text-primary);
-}
-.kisa-aciklama {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.rehber-alt {
-  padding: 10px 18px;
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
-}
-.dialog-fade-enter-active,
-.dialog-fade-leave-active {
-  transition: opacity 0.2s;
-}
-.dialog-fade-enter-from,
-.dialog-fade-leave-to {
-  opacity: 0;
 }
 </style>

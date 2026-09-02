@@ -67,6 +67,12 @@ function handler(e) {
     }
     return
   }
+  // "?" ile kısayol rehberini aç
+  if (e.key === '?' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !girdiMi()) {
+    e.preventDefault()
+    window.dispatchEvent(new CustomEvent('kisayol-rehberi-ac'))
+    return
+  }
 
   if (girdiMi()) {
     gAktif = false

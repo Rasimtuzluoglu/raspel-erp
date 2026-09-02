@@ -2,6 +2,20 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.13.0] - 2026-09-02 (UX & Kullanım Kolaylığı)
+### Eklenenler
+- **Canlı senkron**: Fiş yazdırma ayarları sekmeler arası anlık senkronize olur (storage event).
+- **Klavye kısayol rehberi**: `?` tuşuyla açılan kısayol paneli.
+- **POS satış sonrası özet**: Satış tamamlanınca özet dialog (fatura no, toplam, ödenen, para üstü).
+- **Para üstü hesaplama**: Nakit ödemede alınan tutara göre otomatik para üstü.
+- **Sepet kaydet/yükle**: POS'ta sepeti kaydedip sonra geri yükleme.
+- **Gün sonu (Z raporu)**: Kasa ekranında günlük satış adedi, nakit/kart/havale dağılımı ve kasa bakiyeleri.
+- **Dashboard hızlı işlemler**: Hızlı Satış, Yeni Fatura, Kasa, Cari, Stok kısayol butonları.
+- **Cari not önem derecesi**: Görüşme notlarına Normal/Yüksek/Kritik etiketi.
+
+### Eklenen Testler
+- Frontend: 160 → 163 (useCanliAyar).
+
 ## [1.12.0] - 2026-09-02 (POS & Cari Geliştirmeleri)
 ### POS (Hızlı Satış)
 - **Ödeme yöntemi**: Nakit/Kart/Havale butonları.

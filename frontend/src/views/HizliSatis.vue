@@ -220,14 +220,30 @@
                 <template #title>
                   <div class="sepet-header">
                     <span>Sipariş Özeti ({{ sepet ? sepet.length : 0 }})</span>
-                    <Button
-                      v-if="sepet && sepet.length"
-                      label="Temizle"
-                      icon="pi pi-trash"
-                      severity="danger"
-                      size="small"
-                      @click="sepet = []"
-                    />
+                    <div class="sepet-baslik-btnler">
+                      <Button
+                        v-if="sepet && sepet.length"
+                        icon="pi pi-save"
+                        class="p-button-rounded p-button-text p-button-sm"
+                        title="Sepeti Kaydet"
+                        @click="sepetKaydet"
+                      />
+                      <Button
+                        v-if="kayitliSepetVar && sepet.length === 0"
+                        icon="pi pi-folder-open"
+                        class="p-button-rounded p-button-text p-button-sm"
+                        title="Kayıtlı Sepeti Yükle"
+                        @click="sepetYukle"
+                      />
+                      <Button
+                        v-if="sepet && sepet.length"
+                        label="Temizle"
+                        icon="pi pi-trash"
+                        severity="danger"
+                        size="small"
+                        @click="sepet = []"
+                      />
+                    </div>
                   </div>
                 </template>
                 <template #content>
@@ -355,6 +371,28 @@
                       locale="tr-TR"
                       class="w-full"
                     />
+                  </div>
+
+                  <div
+                    v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
+                    class="odenen-satir"
+                  >
+                    <label>Alınan Nakit</label>
+                    <InputNumber
+                      v-model="alinanNakit"
+                      :min="0"
+                      mode="currency"
+                      currency="TRY"
+                      locale="tr-TR"
+                      class="w-full"
+                    />
+                    <div
+                      v-if="paraUstu > 0"
+                      class="para-ustu"
+                    >
+                      <span>Para Üstü:</span>
+                      <strong>{{ formatCurrency(paraUstu) }}</strong>
+                    </div>
                   </div>
 
                   <div
@@ -732,6 +770,57 @@
       v-model:visible="scannerAcik"
       @scan="barkodTarandi"
     />
+
+    <Dialog
+      v-model:visible="satisOzetDialog"
+      header="Satış Tamamlandı"
+      :modal="true"
+      style="width: 420px"
+    >
+      <div
+        v-if="satisOzet"
+        class="satis-ozet"
+      >
+        <div class="satis-ozet-baslik">
+          <i class="pi pi-check-circle" />
+          <span>İşlem Başarılı</span>
+        </div>
+        <div class="satis-ozet-satir">
+          <span>Fatura No</span>
+          <strong>{{ satisOzet.faturaNo }}</strong>
+        </div>
+        <div class="satis-ozet-satir">
+          <span>Toplam</span>
+          <strong>{{ formatCurrency(satisOzet.toplam) }}</strong>
+        </div>
+        <div class="satis-ozet-satir">
+          <span>Ödenen</span>
+          <strong>{{ formatCurrency(satisOzet.odenen) }}</strong>
+        </div>
+        <div
+          v-if="satisOzet.kalan > 0"
+          class="satis-ozet-satir"
+        >
+          <span>Kalan</span>
+          <strong class="borc">{{ formatCurrency(satisOzet.kalan) }}</strong>
+        </div>
+        <div
+          v-if="satisOzet.paraUstu > 0"
+          class="satis-ozet-satir"
+        >
+          <span>Para Üstü</span>
+          <strong class="para">{{ formatCurrency(satisOzet.paraUstu) }}</strong>
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Kapat"
+          icon="pi pi-check"
+          class="p-button-primary"
+          @click="satisOzetDialog = false"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -884,11 +973,19 @@ const musteriKaydediliyor = ref(false)
 const sepet = ref([])
 const kaydediliyor = ref(false)
 const fisNo = ref('')
-
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
-watch(fisFiyatli, (v) => localStorage.setItem('raspel_fis_fiyatli', String(v)))
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
-watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
+
+// Sekmeler arası canlı senkron: Ayarlar'da değişince POS'a anında yansır
+const dinleyici = (e) => {
+  if (e.key === 'raspel_fis_fiyatli' && e.newValue !== null) {
+    fisFiyatli.value = e.newValue !== 'false'
+  } else if (e.key === 'raspel_fis_notu' && e.newValue !== null) {
+    fisAltNotu.value = e.newValue
+  }
+}
+onMounted(() => window.addEventListener('storage', dinleyici))
+onUnmounted(() => window.removeEventListener('storage', dinleyici))
 
 const indirimTipi = ref('tutar')
 const indirimTipleri = ref([
@@ -916,6 +1013,17 @@ const odemeYontemleri = [
 // Kasa seçimi
 const seciliKasa = ref(null)
 const kasalar = ref([])
+
+// Para üstü
+const alinanNakit = ref(0)
+const paraUstu = computed(() => {
+  if (odemeYontemi.value !== 'NAKIT' || odemeDurumu.value === 'yok') return 0
+  return Math.max(0, (alinanNakit.value || 0) - (odenenTutar.value || 0))
+})
+
+// Satış sonrası özet
+const satisOzet = ref(null)
+const satisOzetDialog = ref(false)
 
 // Günlük satış geçmişi
 const gunlukSatislar = ref([])
@@ -953,6 +1061,29 @@ const cokSatanlariYukle = async () => {
     cokSatanlar.value = r.data || []
   } catch {
     cokSatanlar.value = []
+  }
+}
+
+// Sepet kaydet / yükle
+const SEPET_KEY = 'raspel_kayitli_sepet'
+const kayitliSepetVar = ref(false)
+
+const sepetKaydet = () => {
+  if (!sepet.value.length) return
+  localStorage.setItem(SEPET_KEY, JSON.stringify(sepet.value))
+  kayitliSepetVar.value = true
+  toast.add({ severity: 'success', summary: 'Sepet Kaydedildi', detail: 'Kayıtlı sepete istediğinizde dönebilirsiniz.', life: 3000 })
+}
+
+const sepetYukle = () => {
+  try {
+    const kayit = JSON.parse(localStorage.getItem(SEPET_KEY) || '[]')
+    sepet.value = kayit
+    kayitliSepetVar.value = false
+    localStorage.removeItem(SEPET_KEY)
+    toast.add({ severity: 'info', summary: 'Sepet Yüklendi', detail: 'Kayıtlı sepet geri yüklendi.', life: 3000 })
+  } catch {
+    /* empty */
   }
 }
 
@@ -1083,6 +1214,7 @@ onMounted(async () => {
       kasalariYukle(),
       gunlukSatislariYukle()
     ])
+    kayitliSepetVar.value = !!localStorage.getItem('raspel_kayitli_sepet')
   } catch (e) {
     console.error('Yukleme hatasi', e)
   }
@@ -1372,6 +1504,14 @@ const satisiTamamla = async () => {
   try {
     const yanit = await faturaAPI.create(satisVerisi)
     sonSatis.value = yanit.data
+    satisOzet.value = {
+      faturaNo: yanit.data?.faturaNumarasi,
+      toplam: genelToplam.value,
+      odenen: odenenTutar.value,
+      kalan: kalanTutar.value,
+      yontem: odemeYontemi.value,
+      paraUstu: paraUstu.value
+    }
     toastBildirim.basarili(`Satış tamamlandı - ${formatCurrency(genelToplam.value)}`)
     try {
       fisiYazdir()
@@ -1379,6 +1519,8 @@ const satisiTamamla = async () => {
       /* empty */
     }
     sepetiTemizle()
+    alinanNakit.value = 0
+    satisOzetDialog.value = true
     gunlukSatislariYukle()
     kasalariYukle()
   } catch (e) {
@@ -1749,6 +1891,11 @@ const sepetiTemizle = () => {
   align-items: center;
   width: 100%;
 }
+.sepet-baslik-btnler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .sepet-bos {
   text-align: center;
   padding: 20px;
@@ -1820,6 +1967,55 @@ const sepetiTemizle = () => {
 }
 .odeme-yontem-btn i {
   font-size: 16px;
+}
+.para-ustu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.para-ustu strong {
+  color: #34d399;
+  font-size: 16px;
+}
+.satis-ozet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.satis-ozet-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #34d399;
+  margin-bottom: 8px;
+}
+.satis-ozet-baslik i {
+  font-size: 22px;
+}
+.satis-ozet-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.satis-ozet-satir span {
+  color: var(--text-muted);
+}
+.satis-ozet-satir .borc {
+  color: #f87171;
+}
+.satis-ozet-satir .para {
+  color: #34d399;
 }
 .musteri-bakiye-uyari {
   display: flex;

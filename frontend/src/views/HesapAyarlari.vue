@@ -573,7 +573,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { kullaniciAPI, aiConfigAPI, apiTokenAPI } from '../api/index.js'
@@ -594,6 +594,16 @@ const fisSecenekleri = [
 
 watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
 watch(fisFiyatli, (v) => localStorage.setItem('raspel_fis_fiyatli', String(v)))
+
+const fisAyariDinleyici = (e) => {
+  if (e.key === 'raspel_fis_fiyatli' && e.newValue !== null) {
+    fisFiyatli.value = e.newValue !== 'false'
+  } else if (e.key === 'raspel_fis_notu' && e.newValue !== null) {
+    fisAltNotu.value = e.newValue
+  }
+}
+onMounted(() => window.addEventListener('storage', fisAyariDinleyici))
+onUnmounted(() => window.removeEventListener('storage', fisAyariDinleyici))
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

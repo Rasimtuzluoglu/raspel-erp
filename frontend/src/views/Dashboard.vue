@@ -52,6 +52,49 @@
       </div>
     </div>
 
+    <div class="hizli-islemler">
+      <button
+        type="button"
+        class="hizli-islem-btn"
+        @click="router.push('/hizli-satis')"
+      >
+        <i class="pi pi-bolt" />
+        <span>Hızlı Satış</span>
+      </button>
+      <button
+        type="button"
+        class="hizli-islem-btn"
+        @click="router.push('/faturalar')"
+      >
+        <i class="pi pi-file-plus" />
+        <span>Yeni Fatura</span>
+      </button>
+      <button
+        type="button"
+        class="hizli-islem-btn"
+        @click="router.push('/kasa')"
+      >
+        <i class="pi pi-money-bill" />
+        <span>Kasa</span>
+      </button>
+      <button
+        type="button"
+        class="hizli-islem-btn"
+        @click="router.push('/cari-hesaplar')"
+      >
+        <i class="pi pi-users" />
+        <span>Cari Hesaplar</span>
+      </button>
+      <button
+        type="button"
+        class="hizli-islem-btn"
+        @click="router.push('/stoklar')"
+      >
+        <i class="pi pi-box" />
+        <span>Stoklar</span>
+      </button>
+    </div>
+
     <Card
       v-if="widgetAyarlariGoster"
       class="widget-ayarlari"
@@ -984,6 +1027,35 @@ const whatsappLink = (f) => {
 </script>
 
 <style scoped>
+.hizli-islemler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.hizli-islem-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.hizli-islem-btn:hover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+}
+.hizli-islem-btn i {
+  color: var(--accent);
+  font-size: 16px;
+}
 .dashboard-container {
   padding: 0;
 }

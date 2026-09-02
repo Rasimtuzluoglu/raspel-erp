@@ -750,7 +750,15 @@
                 style="margin-right: 6px"
               />Görüşme Notları
             </h4>
-          </div>          <div class="cari-not-ekle">
+          </div>
+          <div class="cari-not-ekle">
+            <Dropdown
+              v-model="yeniCariNotOnem"
+              :options="notOnemSecenekleri"
+              option-label="label"
+              option-value="value"
+              class="not-onem-select"
+            />
             <InputText
               v-model="yeniCariNot"
               placeholder="Yeni görüşme notu..."
@@ -774,7 +782,16 @@
             class="cari-not-satir"
           >
             <div class="cari-not-icerik">
-              <strong>{{ n.baslik }}</strong>
+              <div class="cari-not-baslik-satir">
+                <strong>{{ n.baslik }}</strong>
+                <span
+                  v-if="n.onemDerecesi && n.onemDerecesi !== 'NORMAL'"
+                  class="not-onem-rozet"
+                  :class="n.onemDerecesi.toLowerCase()"
+                >
+                  {{ n.onemDerecesi === 'YUKSEK' ? 'Yüksek' : 'Kritik' }}
+                </span>
+              </div>
               <p>{{ n.icerik }}</p>
               <small>{{ n.olusturmaTarihi ? new Date(n.olusturmaTarihi).toLocaleString('tr-TR') : '' }}</small>
             </div>
@@ -1432,6 +1449,12 @@ const urunFiyatGecmisiGoster = async (urun) => {
 
 const cariNotlar = ref([])
 const yeniCariNot = ref('')
+const yeniCariNotOnem = ref('NORMAL')
+const notOnemSecenekleri = [
+  { label: 'Normal', value: 'NORMAL' },
+  { label: 'Yüksek', value: 'YUKSEK' },
+  { label: 'Kritik', value: 'KRITIK' }
+]
 
 const cariNotlariYukle = async (cariId) => {
   try {
@@ -1446,8 +1469,14 @@ const cariNotEkle = async () => {
   const metin = yeniCariNot.value.trim()
   if (!metin || !selectedCariHesap.value) return
   try {
-    await notAPI.create({ baslik: 'Görüşme', icerik: metin, cariHesapId: selectedCariHesap.value.id })
+    await notAPI.create({
+      baslik: yeniCariNotOnem.value === 'YUKSEK' ? 'Önemli Not' : 'Görüşme',
+      icerik: metin,
+      cariHesapId: selectedCariHesap.value.id,
+      onemDerecesi: yeniCariNotOnem.value
+    })
     yeniCariNot.value = ''
+    yeniCariNotOnem.value = 'NORMAL'
     await cariNotlariYukle(selectedCariHesap.value.id)
   } catch (err) {
     toastBildirim.hata('Not eklenemedi')
@@ -1710,7 +1739,30 @@ const formatDate = (dateString) => {
 .cari-not-ekle {
   display: flex;
   gap: 8px;
-  margin-bottom: 10px;
+  align-items: center;
+}
+.not-onem-select {
+  width: 110px;
+  flex-shrink: 0;
+}
+.cari-not-baslik-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.not-onem-rozet {
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.not-onem-rozet.yuksek {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+.not-onem-rozet.kritik {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 .cari-not-ekle .p-inputtext {
   flex: 1;

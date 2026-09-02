@@ -19,6 +19,12 @@
           @click="openAktarDialog"
         />
         <Button
+          label="Gün Sonu"
+          icon="pi pi-calendar"
+          class="p-button-sm p-button-outlined mr-2"
+          @click="gunSonuAc"
+        />
+        <Button
           label="Excel"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
@@ -339,6 +345,63 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="gunSonuDialog"
+      header="Gün Sonu (Z Raporu)"
+      :modal="true"
+      style="width: 480px"
+    >
+      <div
+        v-if="gunSonuVerisi"
+        class="gun-sonu"
+      >
+        <div class="gun-sonu-tarih">
+          {{ formatDate(gunSonuVerisi.tarih) }}
+        </div>
+        <div class="gun-sonu-satir">
+          <span>Satış Adedi</span>
+          <strong>{{ gunSonuVerisi.satisAdedi }}</strong>
+        </div>
+        <div class="gun-sonu-satir">
+          <span>Toplam Satış</span>
+          <strong>{{ formatCurrency(gunSonuVerisi.toplamSatis) }}</strong>
+        </div>
+        <div class="gun-sonu-satir">
+          <span>Nakit</span>
+          <strong>{{ formatCurrency(gunSonuVerisi.nakitSatis) }}</strong>
+        </div>
+        <div class="gun-sonu-satir">
+          <span>Kart</span>
+          <strong>{{ formatCurrency(gunSonuVerisi.kartSatis) }}</strong>
+        </div>
+        <div class="gun-sonu-satir">
+          <span>Havale</span>
+          <strong>{{ formatCurrency(gunSonuVerisi.havaleSatis) }}</strong>
+        </div>
+        <div class="gun-sonu-kasalar">
+          <div class="gun-sonu-alt-baslik">
+            Kasa Bakiyeleri
+          </div>
+          <div
+            v-for="k in gunSonuVerisi.kasalar"
+            :key="k.ad"
+            class="gun-sonu-satir"
+          >
+            <span>{{ k.ad }}</span>
+            <strong>{{ formatCurrency(k.bakiye) }}</strong>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Kapat"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="gunSonuDialog = false"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -348,7 +411,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { kasaAPI, excelAPI } from '../api/index.js'
+import { kasaAPI, excelAPI, faturaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 
@@ -497,6 +560,34 @@ const delHareket = async (id) => {
 const openAktarDialog = () => {
   aktarForm.value = { kaynakKasaId: null, hedefKasaId: null, tutar: null, aciklama: '' }
   showAktarDialog.value = true
+}
+
+const gunSonuDialog = ref(false)
+const gunSonuVerisi = ref(null)
+
+const gunSonuAc = async () => {
+  gunSonuDialog.value = true
+  try {
+    const bugun = new Date().toISOString().split('T')[0]
+    const r = await faturaAPI.getAll({ size: 200, sort: 'tarih,desc' })
+    const faturalar = r.data?.content || r.data || []
+    const bugunSatislar = faturalar.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
+    const toplamSatis = bugunSatislar.reduce((t, f) => t + (f.genelToplam || 0), 0)
+    const nakitSatis = bugunSatislar.filter((f) => f.odemeYontemi === 'NAKIT').reduce((t, f) => t + (f.odenenTutar || 0), 0)
+    const kartSatis = bugunSatislar.filter((f) => f.odemeYontemi === 'KART').reduce((t, f) => t + (f.odenenTutar || 0), 0)
+    const havaleSatis = bugunSatislar.filter((f) => f.odemeYontemi === 'HAVALE').reduce((t, f) => t + (f.odenenTutar || 0), 0)
+    gunSonuVerisi.value = {
+      tarih: bugun,
+      satisAdedi: bugunSatislar.length,
+      toplamSatis,
+      nakitSatis,
+      kartSatis,
+      havaleSatis,
+      kasalar: kasaStore.kasalar.map((k) => ({ ad: k.ad, bakiye: k.bakiye }))
+    }
+  } catch {
+    gunSonuVerisi.value = null
+  }
 }
 
 const saveAktar = async () => {
@@ -665,6 +756,37 @@ h2 {
 }
 .w-full {
   width: 100% !important;
+}
+.gun-sonu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gun-sonu-tarih {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.gun-sonu-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.gun-sonu-satir span {
+  color: var(--text-secondary);
+}
+.gun-sonu-kasalar {
+  margin-top: 10px;
+}
+.gun-sonu-alt-baslik {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 .full-width {
   grid-column: 1 / -1;
