@@ -31,6 +31,18 @@ export const stokAPI = {
   getHareketler(id) {
     return apiClient.get(`/stoklar/${id}/hareketler`)
   },
+  getFiyatlar(id) {
+    return apiClient.get(`/stoklar/${id}/fiyatlar`)
+  },
+  fiyatEkle(id, data) {
+    return apiClient.post(`/stoklar/${id}/fiyatlar`, data)
+  },
+  fiyatGuncelle(fiyatId, data) {
+    return apiClient.put(`/stoklar/fiyatlar/${fiyatId}`, data)
+  },
+  fiyatSil(fiyatId) {
+    return apiClient.delete(`/stoklar/fiyatlar/${fiyatId}`)
+  },
   tumHareketler() {
     return apiClient.get('/stoklar/hareketler/tum')
   },

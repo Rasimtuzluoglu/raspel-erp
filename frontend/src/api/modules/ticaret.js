@@ -73,6 +73,9 @@ export const faturaAPI = {
   cariSonFatura(cariId) {
     return apiClient.get(`/faturalar/cari/${cariId}/son-fatura`)
   },
+  cariUrunFiyatGecmisi(cariId, stokId) {
+    return apiClient.get(`/faturalar/cari/${cariId}/stok/${stokId}/fiyat-gecmisi`)
+  },
   stokFiyatGecmisi(stokId) {
     return apiClient.get(`/faturalar/stok/${stokId}/fiyat-gecmisi`)
   }

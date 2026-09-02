@@ -43,16 +43,16 @@
 ## Modül Mimarisi
 
 ### Finans & Muhasebe
-- **Cari Hesaplar**: Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi, IBAN doğrulama, toplu Excel aktarımı ve ekstre.
+- **Cari Hesaplar**: Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi, IBAN doğrulama, toplu Excel aktarımı ve ekstre. Cariye özel geçmiş ürünler ve ürün bazlı fiyat geçmişi.
 - **Fatura Yönetimi**: Alış/Satış faturası, otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi ve çoğaltma.
-- **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, CSV/Excel/OFX hesap özeti yükleme ve otomatik mutabakat.
+- **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, CSV/Excel/OFX hesap özeti yükleme, otomatik mutabakat ve kasalar arası para aktarımı.
 - **Çek/Senet, Bütçe & Masraflar**: Portföy takibi, departman bütçeleri, masraf fişleri ve nakit akışı projeksiyonu.
 - **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir, bilanço ve kâr/zarar.
 - **Döviz Kurları & BTC**: Canlı döviz/kripto kurları, otomatik çevirici, Manuel kur girişi.
 - **Tahsilat Merkezi**: Vade takibi, yaşlandırma raporu, hatırlatma e-postası, WhatsApp/arama aksiyonları.
 
 ### Ticaret & Satış
-- **Hızlı Satış (POS)**: Barkod okuyucu destekli hızlı satış, sepet, indirim ve termal fiş yazdırma. Sezgisel sekmeli arayüz (Sipariş / Teslimat / Fiş), global barkod girişi (USB tarayıcı kesintisiz okuma), kameralı sürekli okuma modu, çok satanlar hızlı erişim paneli, offline satış kuyruğu (bağlantı gelince otomatik senkron) ve ESC/POS termal yazıcı desteği.
+- **Hızlı Satış (POS)**: Barkod okuyucu destekli hızlı satış, sepet, indirim ve termal fiş yazdırma. Sezgisel sekmeli arayüz (Sipariş / Teslimat / Fiş), global barkod girişi (USB tarayıcı kesintisiz okuma), kameralı sürekli okuma modu, çok satanlar hızlı erişim paneli, offline satış kuyruğu (bağlantı gelince otomatik senkron) ve ESC/POS termal yazıcı desteği. Tam ekran ferah düzen ve ürün bazlı çoklu fiyat seçimi.
 - **Sipariş & İrsaliye**: Siparişten irsaliyeye, irsaliyeden faturaya tek tıkla kontrollü iş akışı. Saha siparişleri onay akışı.
 - **E-Fatura**: UBL-TR 2.1 standardında GİB uyumlu e-fatura ve e-arşiv entegrasyonu. GİB durum sorgulama.
 - **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri. Müşteri kayıp (churn) riski skorlama.
@@ -112,7 +112,7 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 825 Test (0 Hata)
+mvn -B test -q          # 830 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend

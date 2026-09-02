@@ -13,6 +13,12 @@
       </template>
       <template #end>
         <Button
+          label="Kasa Aktar"
+          icon="pi pi-arrow-right-arrow-left"
+          class="p-button-sm p-button-outlined mr-2"
+          @click="openAktarDialog"
+        />
+        <Button
           label="Excel"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
@@ -271,6 +277,68 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="showAktarDialog"
+      header="Kasa Aktar"
+      :modal="true"
+      style="width: 480px"
+    >
+      <div class="form-group">
+        <label>Kaynak Kasa *</label>
+        <Dropdown
+          v-model="aktarForm.kaynakKasaId"
+          :options="kasaStore.kasalar"
+          option-label="ad"
+          option-value="id"
+          placeholder="Seçiniz"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Hedef Kasa *</label>
+        <Dropdown
+          v-model="aktarForm.hedefKasaId"
+          :options="kasaStore.kasalar"
+          option-label="ad"
+          option-value="id"
+          placeholder="Seçiniz"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Tutar *</label>
+        <InputNumber
+          v-model="aktarForm.tutar"
+          :min="0.01"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Açıklama</label>
+        <InputText
+          v-model="aktarForm.aciklama"
+          placeholder="Örn: Şube devir"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showAktarDialog = false"
+        />
+        <Button
+          label="Aktar"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveAktar"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -301,6 +369,9 @@ const kasaForm = ref({ ad: '', bakiye: 0 })
 const showHareketDialog = ref(false)
 const hareketTur = ref('GELIR')
 const hareketForm = ref({ tutar: null, hareketTarihi: new Date(), kategoriId: null, aciklama: '' })
+
+const showAktarDialog = ref(false)
+const aktarForm = ref({ kaynakKasaId: null, hedefKasaId: null, tutar: null, aciklama: '' })
 
 const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? 'Gelir Ekle' : 'Gider Ekle'))
 
@@ -420,6 +491,33 @@ const delHareket = async (id) => {
     toastBildirim.basarili('Hareket silindi')
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+  }
+}
+
+const openAktarDialog = () => {
+  aktarForm.value = { kaynakKasaId: null, hedefKasaId: null, tutar: null, aciklama: '' }
+  showAktarDialog.value = true
+}
+
+const saveAktar = async () => {
+  if (!aktarForm.value.kaynakKasaId || !aktarForm.value.hedefKasaId) {
+    toastBildirim.uyari('Kaynak ve hedef kasayı seçiniz')
+    return
+  }
+  if (!aktarForm.value.tutar || aktarForm.value.tutar <= 0) {
+    toastBildirim.uyari('Geçerli tutar giriniz')
+    return
+  }
+  saving.value = true
+  try {
+    await kasaAPI.aktar(aktarForm.value)
+    showAktarDialog.value = false
+    await kasaStore.getAllKasalar()
+    toastBildirim.basarili('Kasa aktarımı yapıldı')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Aktarım başarısız')
+  } finally {
+    saving.value = false
   }
 }
 

@@ -699,6 +699,46 @@
             class="w-full"
           />
         </div>
+
+        <div
+          v-if="editingId"
+          class="form-grup coklu-fiyat-bolumu"
+        >
+          <div class="coklu-fiyat-baslik">
+            <label>Çoklu Fiyatlar</label>
+          </div>
+          <div
+            v-for="f in form.fiyatlar"
+            :key="f.id || f.ad"
+            class="coklu-fiyat-satir"
+          >
+            <InputText
+              v-model="f.ad"
+              placeholder="Fiyat adı (Perakende/Toptan...)"
+              class="fiyat-ad-input"
+            />
+            <InputNumber
+              v-model="f.fiyat"
+              mode="currency"
+              currency="TRY"
+              locale="tr-TR"
+              :min-fraction-digits="2"
+              class="fiyat-tutar-input"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              @click="fiyatSil(f)"
+            />
+          </div>
+          <Button
+            label="Fiyat Ekle"
+            icon="pi pi-plus"
+            size="small"
+            class="p-button-outlined"
+            @click="fiyatEkle"
+          />
+        </div>
       </div>
       <template #footer>
         <Button
@@ -900,7 +940,8 @@ const form = ref({
   tedarikciFiyat: null,
   maliyetYontemi: 'ORTALAMA',
   aciklama: '',
-  fotoUrl: ''
+  fotoUrl: '',
+  fiyatlar: []
 })
 
 const { temizle: formTemizle } = useFormKorumasi(form)
@@ -1021,10 +1062,28 @@ const editStok = (s) => {
     tedarikciFiyat: s.tedarikciFiyat || null,
     maliyetYontemi: s.maliyetYontemi || 'ORTALAMA',
     aciklama: s.aciklama || '',
-    fotoUrl: s.fotoUrl || ''
+    fotoUrl: s.fotoUrl || '',
+    fiyatlar: (s.fiyatlar || []).map((f) => ({ ...f }))
   }
   formTemizle()
   showDialog.value = true
+}
+
+const fiyatEkle = () => {
+  form.value.fiyatlar.push({ ad: '', fiyat: 0 })
+}
+
+const fiyatSil = async (f) => {
+  if (f.id) {
+    try {
+      await stokAPI.fiyatSil(f.id)
+      toastBildirim.basarili('Fiyat silindi')
+    } catch (err) {
+      toastBildirim.hata(err?.response?.data?.message || 'Fiyat silinemedi')
+      return
+    }
+  }
+  form.value.fiyatlar = form.value.fiyatlar.filter((x) => x !== f)
 }
 
 const saveStok = async () => {
@@ -1036,6 +1095,8 @@ const saveStok = async () => {
   try {
     if (editingId.value) {
       await stokStore.updateStok(editingId.value, form.value)
+      // Fiyatları senkronize et
+      await fiyatlariKaydet(editingId.value)
       toastBildirim.basarili('Ürün güncellendi')
     } else {
       await stokStore.addStok(form.value)
@@ -1047,6 +1108,17 @@ const saveStok = async () => {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
   } finally {
     saving.value = false
+  }
+}
+
+const fiyatlariKaydet = async (stokId) => {
+  for (const f of form.value.fiyatlar) {
+    if (!f.ad || !f.ad.trim()) continue
+    if (f.id) {
+      await stokAPI.fiyatGuncelle(f.id, { ad: f.ad, fiyat: f.fiyat })
+    } else {
+      await stokAPI.fiyatEkle(stokId, { ad: f.ad, fiyat: f.fiyat })
+    }
   }
 }
 
@@ -1430,6 +1502,25 @@ h2 {
 }
 .form-grup {
   margin-bottom: 18px;
+}
+.coklu-fiyat-bolumu {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.coklu-fiyat-baslik {
+  margin-bottom: 8px;
+}
+.coklu-fiyat-satir {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.fiyat-ad-input {
+  flex: 1;
+}
+.fiyat-tutar-input {
+  width: 160px;
 }
 .form-grup label {
   display: block;

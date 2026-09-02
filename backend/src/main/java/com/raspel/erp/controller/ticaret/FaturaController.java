@@ -69,6 +69,16 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.cariSonUrunler(cariId, sirketId, limit));
     }
 
+    @GetMapping("/cari/{cariId}/stok/{stokId}/fiyat-gecmisi")
+    @Operation(summary = "Cari-urun fiyat gecmisi", description = "Bir cari hesabin belirli bir urunu gecmiste aldıgı fiyatları dondurur")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.CariUrunFiyatDTO> cariUrunFiyatGecmisi(
+            @PathVariable Long cariId,
+            @PathVariable Long stokId,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.cariUrunFiyatGecmisi(cariId, stokId, sirketId));
+    }
+
     @GetMapping("/cari/{cariId}/son-fatura")
     @Operation(summary = "Carinin son faturasi", description = "Cari hesabin son faturasini dondurur (kopyalama icin)")
     public ResponseEntity<FaturaDTO> cariSonFatura(

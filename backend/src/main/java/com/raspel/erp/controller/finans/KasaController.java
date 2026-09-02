@@ -70,6 +70,16 @@ public class KasaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(kasaService.hareketEkle(dto));
     }
 
+    @PostMapping("/aktar")
+    @Operation(summary = "Kasalar arası aktarım", description = "Bir kasadan diğer kasaya para aktarır")
+    public ResponseEntity<Void> aktar(
+            @RequestBody KasaAktarRequest request,
+            HttpServletRequest httpRequest) {
+        Long sirketId = (Long) httpRequest.getAttribute("sirketId");
+        kasaService.kasaAktar(request.kaynakKasaId, request.hedefKasaId, request.tutar, request.aciklama, sirketId);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/hareketler/{hareketId}")
     @Operation(summary = "Kasa hareketi sil", description = "Kasa hareketini siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -77,4 +87,6 @@ public class KasaController {
         kasaService.hareketSil(hareketId);
         return ResponseEntity.noContent().build();
     }
+
+    record KasaAktarRequest(Long kaynakKasaId, Long hedefKasaId, java.math.BigDecimal tutar, String aciklama) {}
 }

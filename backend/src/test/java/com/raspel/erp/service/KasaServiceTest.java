@@ -169,4 +169,38 @@ class KasaServiceTest {
         assertEquals(BigDecimal.valueOf(4000), kasa.getBakiye());
         verify(kasaHareketRepository).deleteById(1L);
     }
+
+    @Test
+    void kasaAktar_aynıKasaHataFirlatir() {
+        assertThrows(RuntimeException.class, () ->
+                kasaService.kasaAktar(1L, 1L, BigDecimal.valueOf(100), null, 1L));
+    }
+
+    @Test
+    void kasaAktar_yetersizBakiyeHataFirlatir() {
+        Kasa kaynak = createKasa(1L);
+        kaynak.setBakiye(BigDecimal.valueOf(50));
+        Kasa hedef = createKasa(2L);
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kaynak));
+        when(kasaRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(hedef));
+
+        assertThrows(RuntimeException.class, () ->
+                kasaService.kasaAktar(1L, 2L, BigDecimal.valueOf(100), null, 1L));
+    }
+
+    @Test
+    void kasaAktar_basariliAktarim() {
+        Kasa kaynak = createKasa(1L);
+        kaynak.setBakiye(BigDecimal.valueOf(5000));
+        Kasa hedef = createKasa(2L);
+        hedef.setBakiye(BigDecimal.valueOf(1000));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kaynak));
+        when(kasaRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(hedef));
+
+        kasaService.kasaAktar(1L, 2L, BigDecimal.valueOf(1500), "Devir", 1L);
+
+        assertEquals(BigDecimal.valueOf(3500), kaynak.getBakiye());
+        assertEquals(BigDecimal.valueOf(2500), hedef.getBakiye());
+        verify(kasaHareketRepository, times(2)).save(any(KasaHareket.class));
+    }
 }

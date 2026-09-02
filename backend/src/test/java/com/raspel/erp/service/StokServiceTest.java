@@ -41,6 +41,7 @@ class StokServiceTest {
     @Mock private BildirimService bildirimService;
     @Mock private TenantChecker tenantChecker;
     @Mock private CacheYardimci cacheYardimci;
+    @Mock private com.raspel.erp.repository.envanter.StokFiyatRepository stokFiyatRepository;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -309,5 +310,39 @@ class StokServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Urun 1", result.get(0).getAd());
+    }
+
+    @Test
+    void fiyatlariGetir_listeler() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokFiyatRepository.findByStokIdOrderByFiyatAsc(1L)).thenReturn(List.of(
+                com.raspel.erp.entity.envanter.StokFiyat.builder().id(2L).stokId(1L).ad("Toptan").fiyat(BigDecimal.valueOf(80)).sirketId(1L).build(),
+                com.raspel.erp.entity.envanter.StokFiyat.builder().id(1L).stokId(1L).ad("Perakende").fiyat(BigDecimal.valueOf(100)).sirketId(1L).build()
+        ));
+
+        var result = stokService.fiyatlariGetir(1L);
+
+        assertEquals(2, result.size());
+        assertEquals("Toptan", result.get(0).getAd());
+    }
+
+    @Test
+    void fiyatEkle_kaydeder() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokFiyatRepository.save(any())).thenAnswer(inv -> {
+            com.raspel.erp.entity.envanter.StokFiyat f = inv.getArgument(0);
+            f.setId(1L);
+            return f;
+        });
+
+        var result = stokService.fiyatEkle(1L,
+                com.raspel.erp.dto.envanter.StokFiyatDTO.builder().ad("Kurumsal").fiyat(BigDecimal.valueOf(90)).build(), 1L);
+
+        assertEquals("Kurumsal", result.getAd());
+        assertEquals(0, result.getFiyat().compareTo(BigDecimal.valueOf(90)));
     }
 }

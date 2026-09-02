@@ -67,6 +67,9 @@ export const kasaAPI = {
   },
   deleteHareket(hareketId) {
     return apiClient.delete(`/kasalar/hareketler/${hareketId}`)
+  },
+  aktar(data) {
+    return apiClient.post('/kasalar/aktar', data)
   }
 }
 

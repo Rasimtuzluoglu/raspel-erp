@@ -542,6 +542,58 @@
           icon="pi pi-list"
         />
 
+        <div
+          v-if="sonUrunler && sonUrunler.length > 0"
+          class="cari-urunler"
+        >
+          <div class="cari-not-baslik">
+            <h4>
+              <i
+                class="pi pi-box"
+                style="margin-right: 6px"
+              />Geçmişte Aldığı Ürünler
+            </h4>
+          </div>
+          <div class="cari-urunler-grid">
+            <button
+              v-for="u in sonUrunler"
+              :key="u.stokId"
+              type="button"
+              class="cari-urun-chip"
+              @click="urunFiyatGecmisiGoster(u)"
+            >
+              <span class="cari-urun-ad">{{ u.stokAd }}</span>
+              <span class="cari-urun-bilgi">{{ u.sonAlisTarihi }} · {{ u.adet }} adet</span>
+              <span class="cari-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
+            </button>
+          </div>
+          <div
+            v-if="seciliUrunFiyatGecmisi"
+            class="cari-urun-fiyat-gecmisi"
+          >
+            <div class="fg-baslik">
+              <span><i class="pi pi-chart-line" /> {{ seciliUrunFiyatGecmisi.urunAd }} — Fiyat Geçmişi</span>
+              <button
+                type="button"
+                class="fg-kapat"
+                @click="seciliUrunFiyatGecmisi = null"
+              >
+                <i class="pi pi-times" />
+              </button>
+            </div>
+            <div
+              v-for="(k, i) in seciliUrunFiyatGecmisi.gecmis"
+              :key="i"
+              class="fg-satir"
+            >
+              <span class="fg-tarih">{{ formatDate(k.tarih) }}</span>
+              <span class="fg-fatura">{{ k.faturaNumarasi }}</span>
+              <span class="fg-adet">{{ k.adet }} adet</span>
+              <span class="fg-fiyat">{{ formatCurrency(k.birimFiyat) }}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="cari-notlar">
           <div class="cari-not-baslik">
             <h4>
@@ -550,8 +602,7 @@
                 style="margin-right: 6px"
               />Görüşme Notları
             </h4>
-          </div>
-          <div class="cari-not-ekle">
+          </div>          <div class="cari-not-ekle">
             <InputText
               v-model="yeniCariNot"
               placeholder="Yeni görüşme notu..."
@@ -611,7 +662,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { excelAPI, hareketAPI, notAPI } from '../api/index.js'
+import { excelAPI, hareketAPI, notAPI, faturaAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -902,6 +953,30 @@ const viewHareketler = async (cariHesap) => {
     cariHareketlerYukleniyor.value = false
   }
   cariNotlariYukle(cariHesap.id)
+  sonUrunleriYukle(cariHesap.id)
+}
+
+const sonUrunler = ref([])
+
+const sonUrunleriYukle = async (cariId) => {
+  try {
+    const r = await faturaAPI.cariSonUrunler(cariId, 20)
+    sonUrunler.value = r.data || []
+  } catch {
+    sonUrunler.value = []
+  }
+}
+
+const seciliUrunFiyatGecmisi = ref(null)
+
+const urunFiyatGecmisiGoster = async (urun) => {
+  if (!selectedCariHesap.value || !urun.stokId) return
+  try {
+    const r = await faturaAPI.cariUrunFiyatGecmisi(selectedCariHesap.value.id, urun.stokId)
+    seciliUrunFiyatGecmisi.value = { ...r.data, urunAd: urun.stokAd }
+  } catch {
+    seciliUrunFiyatGecmisi.value = null
+  }
 }
 
 const cariNotlar = ref([])
@@ -970,6 +1045,94 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+.cari-urunler {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.cari-urunler-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cari-urun-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+.cari-urun-chip:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.cari-urun-ad {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cari-urun-bilgi {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.cari-urun-fiyat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.cari-urun-fiyat-gecmisi {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 8px;
+}
+.fg-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a78bfa;
+  margin-bottom: 8px;
+}
+.fg-kapat {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+}
+.fg-satir {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 3px 0;
+}
+.fg-tarih {
+  width: 80px;
+  flex-shrink: 0;
+}
+.fg-fatura {
+  flex: 1;
+}
+.fg-adet {
+  width: 60px;
+  text-align: right;
+}
+.fg-fiyat {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
+  text-align: right;
+}
 .cari-notlar {
   margin-top: 20px;
   border-top: 1px solid var(--border);

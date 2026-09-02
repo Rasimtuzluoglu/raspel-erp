@@ -107,7 +107,7 @@ public class KasaService {
         return hareketToDTO(kasaHareketRepository.save(hareket));
     }
 
-    public void hareketSil(Long hareketId) {
+        public void hareketSil(Long hareketId) {
         KasaHareket hareket = kasaHareketRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", hareketId));
         Kasa kasa = hareket.getKasa();
@@ -120,6 +120,50 @@ public class KasaService {
                 "Kasa hareketi silindi: " + hareket.getTur() + " " + hareket.getTutar() + " TL - Kasa: "
                         + kasa.getAd() + " (bakiye terslendi)");
         kasaHareketRepository.deleteById(hareketId);
+    }
+
+    /**
+     * Kasalar arası para aktarımı. Kaynak kasadan düşer, hedef kasaya ekler.
+     * Her iki taraf için de hareket kaydı oluşturur.
+     */
+    public void kasaAktar(Long kaynakKasaId, Long hedefKasaId, BigDecimal tutar, String aciklama, Long sirketId) {
+        if (kaynakKasaId.equals(hedefKasaId)) {
+            throw new BusinessException("Kaynak ve hedef kasa aynı olamaz");
+        }
+        if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Aktarılacak tutar sıfırdan büyük olmalıdır");
+        }
+
+        Kasa kaynak = kasaRepository.findByIdForUpdate(kaynakKasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", kaynakKasaId));
+        tenantChecker.check(kaynak.getSirketId(), "Kasa");
+        Kasa hedef = kasaRepository.findByIdForUpdate(hedefKasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", hedefKasaId));
+        tenantChecker.check(hedef.getSirketId(), "Kasa");
+
+        if (kaynak.getBakiye().compareTo(tutar) < 0) {
+            throw new BusinessException("Kaynak kasada yetersiz bakiye. Mevcut: " + kaynak.getBakiye() + " ₺");
+        }
+
+        java.time.LocalDate bugun = java.time.LocalDate.now();
+        kaynak.setBakiye(kaynak.getBakiye().subtract(tutar));
+        hedef.setBakiye(hedef.getBakiye().add(tutar));
+
+        String not = aciklama != null && !aciklama.isBlank() ? aciklama : "Kasa aktarımı";
+
+        kasaRepository.save(kaynak);
+        kasaRepository.save(hedef);
+
+        kasaHareketRepository.save(KasaHareket.builder()
+                .kasa(kaynak).tur("GIDER").tutar(tutar)
+                .hareketTarihi(bugun).aciklama(not + " → " + hedef.getAd())
+                .build());
+        kasaHareketRepository.save(KasaHareket.builder()
+                .kasa(hedef).tur("GELIR").tutar(tutar)
+                .hareketTarihi(bugun).aciklama(not + " ← " + kaynak.getAd())
+                .build());
+
+        log.info("Kasa aktarımı yapıldı: {} → {} ({} ₺)", kaynak.getAd(), hedef.getAd(), tutar);
     }
 
     private KasaDTO entityToDTO(Kasa k) {

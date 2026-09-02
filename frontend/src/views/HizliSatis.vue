@@ -13,7 +13,7 @@
     </div>
 
     <div class="pos-body grid">
-      <div class="col-8 pos-left">
+      <div class="pos-left">
         <Card class="filter-card">
           <template #title>
             <div class="filter-title">
@@ -146,7 +146,7 @@
         </div>
       </div>
 
-      <div class="col-4 pos-right">
+      <div class="pos-right">
         <TabView class="pos-tabview">
           <TabPanel header="Sipariş">
             <div class="tab-icerik">
@@ -260,14 +260,12 @@
                         class="fiyat-tip-select"
                         @change="fiyatTipiDegisti(item)"
                       >
-                        <option value="perakende">
-                          Perakende
-                        </option>
-                        <option value="toptan">
-                          Toptan (-10%)
-                        </option>
-                        <option value="ozel">
-                          Özel (-20%)
+                        <option
+                          v-for="f in item.fiyatlar"
+                          :key="f.ad"
+                          :value="f.ad"
+                        >
+                          {{ f.ad }}
                         </option>
                       </select>
                       <input
@@ -1044,19 +1042,23 @@ const sepeteEkle = (u) => {
     varOlan.miktar++
   } else {
     const stdFiyat = u.fiyat || u.satisFiyati || 0
-    const toptan = u.toptanFiyati || Math.round(stdFiyat * 0.9 * 100) / 100
-    const ozel = u.ozelFiyati || Math.round(stdFiyat * 0.8 * 100) / 100
+    // Çoklu fiyat tanımlıysa onları kullan, yoksa eski sabit kademelere düş
+    const fiyatlar = (u.fiyatlar && u.fiyatlar.length > 0)
+      ? u.fiyatlar.map((f) => ({ ad: f.ad, fiyat: f.fiyat }))
+      : [
+          { ad: 'Perakende', fiyat: stdFiyat },
+          { ad: 'Toptan', fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
+          { ad: 'Özel', fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
+        ]
     sepet.value.push({
       id: u.id,
       ad: u.ad,
       stokKodu: u.stokKodu,
       barkod: u.barkod,
       miktar: 1,
-      fiyat: stdFiyat,
-      perakendeFiyati: stdFiyat,
-      toptanFiyati: toptan,
-      ozelFiyati: ozel,
-      fiyatTipi: 'perakende',
+      fiyat: fiyatlar[0]?.fiyat ?? stdFiyat,
+      fiyatlar,
+      fiyatTipi: fiyatlar[0]?.ad ?? 'Perakende',
       birim: u.birim || 'adet',
       birimHacim: u.birimHacim || 1
     })
@@ -1064,9 +1066,8 @@ const sepeteEkle = (u) => {
 }
 
 const fiyatTipiDegisti = (item) => {
-  if (item.fiyatTipi === 'toptan') item.fiyat = item.toptanFiyati
-  else if (item.fiyatTipi === 'ozel') item.fiyat = item.ozelFiyati
-  else item.fiyat = item.perakendeFiyati
+  const secili = item.fiyatlar?.find((f) => f.ad === item.fiyatTipi)
+  if (secili) item.fiyat = secili.fiyat
 }
 
 const miktarAzalt = (idx) => {
@@ -1291,9 +1292,8 @@ const sepetiTemizle = () => {
 
 <style scoped>
 .pos-container {
-  padding: 20px;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
+  padding: 16px 20px;
+  min-height: 100vh;
 }
 .pos-header {
   display: flex;
@@ -1319,15 +1319,15 @@ const sepetiTemizle = () => {
 .pos-body {
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 .pos-left {
-  flex: 0 0 66.666%;
-  max-width: 66.666%;
+  flex: 1 1 0;
+  min-width: 0;
 }
 .pos-right {
-  flex: 0 0 33.333%;
-  max-width: 33.333%;
+  flex: 0 0 400px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1386,7 +1386,7 @@ const sepetiTemizle = () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
-  max-height: calc(100vh - 280px);
+  max-height: calc(100vh - 220px);
   overflow-y: auto;
   padding-bottom: 8px;
 }
@@ -1901,7 +1901,7 @@ const sepetiTemizle = () => {
   }
   .pos-left,
   .pos-right {
-    flex: 0 0 100%;
+    flex: 1 1 100%;
     max-width: 100%;
   }
   .product-grid {

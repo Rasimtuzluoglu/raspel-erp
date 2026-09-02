@@ -38,6 +38,7 @@ public class StokDTO {
     private BigDecimal tedarikciFiyat;
     private String maliyetYontemi;
     private LocalDateTime olusturmaTarihi;
+    private java.util.List<StokFiyatDTO> fiyatlar;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

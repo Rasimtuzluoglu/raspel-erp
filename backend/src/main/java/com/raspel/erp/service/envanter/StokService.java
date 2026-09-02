@@ -28,8 +28,11 @@ import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
+import com.raspel.erp.entity.envanter.StokFiyat;
+import com.raspel.erp.dto.envanter.StokFiyatDTO;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.envanter.StokFiyatRepository;
 
 @Service
 @Transactional
@@ -43,6 +46,61 @@ public class StokService {
     private final BildirimService bildirimService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
+    private final StokFiyatRepository stokFiyatRepository;
+
+    // ---------- ÇOKLU FİYAT ----------
+
+    @Transactional(readOnly = true)
+    public List<StokFiyatDTO> fiyatlariGetir(Long stokId) {
+        Stok stok = stokRepository.findById(stokId)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        return stokFiyatRepository.findByStokIdOrderByFiyatAsc(stokId)
+                .stream().map(this::fiyatEntityToDTO).collect(Collectors.toList());
+    }
+
+    public StokFiyatDTO fiyatEkle(Long stokId, StokFiyatDTO dto, Long sirketId) {
+        Stok stok = stokRepository.findById(stokId)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        if (dto.getAd() == null || dto.getAd().isBlank()) {
+            throw new BusinessException("Fiyat adı boş olamaz");
+        }
+        StokFiyat fiyat = StokFiyat.builder()
+                .stokId(stokId)
+                .ad(dto.getAd())
+                .fiyat(dto.getFiyat() != null ? dto.getFiyat() : BigDecimal.ZERO)
+                .sirketId(sirketId)
+                .build();
+        return fiyatEntityToDTO(stokFiyatRepository.save(fiyat));
+    }
+
+    public StokFiyatDTO fiyatGuncelle(Long id, StokFiyatDTO dto) {
+        StokFiyat fiyat = stokFiyatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("StokFiyat", id));
+        Stok stok = stokRepository.findById(fiyat.getStokId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", fiyat.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        if (dto.getAd() != null && !dto.getAd().isBlank()) fiyat.setAd(dto.getAd());
+        if (dto.getFiyat() != null) fiyat.setFiyat(dto.getFiyat());
+        return fiyatEntityToDTO(stokFiyatRepository.save(fiyat));
+    }
+
+    public void fiyatSil(Long id) {
+        StokFiyat fiyat = stokFiyatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("StokFiyat", id));
+        Stok stok = stokRepository.findById(fiyat.getStokId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", fiyat.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        stokFiyatRepository.deleteById(id);
+    }
+
+    private StokFiyatDTO fiyatEntityToDTO(StokFiyat f) {
+        return StokFiyatDTO.builder()
+                .id(f.getId()).stokId(f.getStokId()).ad(f.getAd()).fiyat(f.getFiyat())
+                .sirketId(f.getSirketId()).olusturmaTarihi(f.getOlusturmaTarihi())
+                .build();
+    }
 
     @Transactional(readOnly = true)
     public Page<StokDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -382,6 +440,13 @@ public class StokService {
     }
 
     private StokDTO entityToDTO(Stok s, Map<Long, String> tedarikciAdlari) {
+        List<StokFiyatDTO> fiyatlar = null;
+        try {
+            fiyatlar = stokFiyatRepository.findByStokIdOrderByFiyatAsc(s.getId())
+                    .stream().map(this::fiyatEntityToDTO).collect(Collectors.toList());
+        } catch (Exception ignored) {
+            // fiyat yüklenemezse boş bırakılır
+        }
         return StokDTO.builder().id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
                 .birim(s.getBirim()).fiyat(s.getFiyat()).satisFiyati(s.getSatisFiyati())
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar()).kdvOrani(s.getKdvOrani())
@@ -392,6 +457,7 @@ public class StokService {
                 .tedarikciAd(s.getTedarikciId() != null ? tedarikciAdlari.get(s.getTedarikciId()) : null)
                 .tedarikciStokKodu(s.getTedarikciStokKodu()).tedarikciFiyat(s.getTedarikciFiyat())
                 .maliyetYontemi(s.getMaliyetYontemi())
+                .fiyatlar(fiyatlar)
                 .olusturmaTarihi(s.getOlusturmaTarihi()).build();
     }
 

@@ -72,6 +72,40 @@ public class StokController {
     @Operation(summary = "ID'ye göre stok getir", description = "Stok ID'sine göre detayları getirir")
     public ResponseEntity<StokDTO> getir(@PathVariable Long id) { return ResponseEntity.ok(stokService.getir(id)); }
 
+    // ÇOKLU FİYAT
+
+    @GetMapping("/{id}/fiyatlar")
+    @Operation(summary = "Stok fiyatlarını getir", description = "Bir stoğa ait tüm fiyat tanımlarını listeler")
+    public ResponseEntity<List<com.raspel.erp.dto.envanter.StokFiyatDTO>> fiyatlar(@PathVariable Long id) {
+        return ResponseEntity.ok(stokService.fiyatlariGetir(id));
+    }
+
+    @PostMapping("/{id}/fiyatlar")
+    @Operation(summary = "Stok fiyatı ekle", description = "Stoğa yeni bir fiyat tanımı ekler")
+    public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatEkle(
+            @PathVariable Long id,
+            @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.status(HttpStatus.CREATED).body(stokService.fiyatEkle(id, dto, sirketId));
+    }
+
+    @PutMapping("/fiyatlar/{fiyatId}")
+    @Operation(summary = "Stok fiyatı güncelle", description = "Fiyat tanımını günceller")
+    public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatGuncelle(
+            @PathVariable Long fiyatId,
+            @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto) {
+        return ResponseEntity.ok(stokService.fiyatGuncelle(fiyatId, dto));
+    }
+
+    @DeleteMapping("/fiyatlar/{fiyatId}")
+    @Operation(summary = "Stok fiyatı sil", description = "Fiyat tanımını siler")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> fiyatSil(@PathVariable Long fiyatId) {
+        stokService.fiyatSil(fiyatId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping
     @Operation(summary = "Yeni stok oluştur", description = "Yeni bir stok/ürün oluşturur")
     public ResponseEntity<StokDTO> olustur(@RequestBody @jakarta.validation.Valid StokDTO dto, HttpServletRequest request) {

@@ -2,6 +2,17 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.11.0] - 2026-08-31 (Satış & Finans İyileştirmeleri)
+### Eklenenler
+- **Çoklu fiyat**: Bir ürüne birden fazla fiyat tanımı (`StokFiyat`, V64) — Perakende/Toptan/Kurumsal vb. Stok kartından yönetilir, POS satışında satıcı seçebilir.
+- **Cari geçmiş ürünler**: Cari hesap detayında "Geçmişte Aldığı Ürünler" paneli (hover/tıklama ile).
+- **Cari-ürün fiyat geçmişi**: `GET /api/faturalar/cari/{cariId}/stok/{stokId}/fiyat-gecmisi` — carinin bir ürünü geçmişte hangi fiyattan aldığını listeler.
+- **Kasa aktarımı**: `POST /api/kasalar/aktar` — kasalar arası para transferi (her iki taraf için hareket kaydı).
+- **POS tam ekran düzen**: Hızlı satış sayfası tam genişlikte ve daha ferah düzenlendi.
+
+### Eklenen Testler
+- Backend: 825 → 830 (StokService çoklu fiyat, KasaService aktarım).
+
 ## [1.10.0] - 2026-08-31 (POS / Hızlı Satış İyileştirmeleri)
 ### Eklenenler
 - **Global barkod girişi**: Hızlı Satış'ta her an aktif barkod input'u (Enter ile ekleme + autofocus); USB barkod tarayıcıyla kesintisiz okuma.

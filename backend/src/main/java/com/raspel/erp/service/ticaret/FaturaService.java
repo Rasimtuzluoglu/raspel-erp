@@ -5,6 +5,8 @@ import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.CariSonUrunDTO;
+import com.raspel.erp.dto.ticaret.CariUrunFiyatDTO;
+import com.raspel.erp.repository.ticaret.CariUrunFiyatProjeksiyon;
 import com.raspel.erp.dto.envanter.StokFiyatGecmisiDTO;
 import com.raspel.erp.repository.ticaret.StokFiyatGecmisiProjeksiyon;
 import com.raspel.erp.exception.BusinessException;
@@ -102,6 +104,30 @@ public class FaturaService {
         return faturaRepository.findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, sirketId)
                 .map(this::entityDTOyeCevir)
                 .orElse(null);
+    }
+
+    /**
+     * Bir cari hesabın belirli bir ürünü geçmişte aldığı fiyatları döndürür.
+     */
+    @Transactional(readOnly = true)
+    public CariUrunFiyatDTO cariUrunFiyatGecmisi(Long cariId, Long stokId, Long sirketId) {
+        List<CariUrunFiyatProjeksiyon> gecmis = faturaKalemRepository.cariUrunFiyatGecmisi(
+                cariId, stokId, sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI);
+
+        List<CariUrunFiyatDTO.Kayit> kayitlar = gecmis.stream()
+                .map(p -> CariUrunFiyatDTO.Kayit.builder()
+                        .birimFiyat(p.getBirimFiyat())
+                        .tarih(p.getTarih())
+                        .faturaNumarasi(p.getFaturaNumarasi())
+                        .adet(p.getAdet())
+                        .build())
+                .collect(Collectors.toList());
+
+        BigDecimal sonFiyat = kayitlar.isEmpty() ? null : kayitlar.get(0).getBirimFiyat();
+        return CariUrunFiyatDTO.builder()
+                .gecmis(kayitlar)
+                .sonFiyat(sonFiyat)
+                .build();
     }
 
     /**
