@@ -122,6 +122,19 @@ public class RaporController {
         return ResponseEntity.ok(raporService.butceGerceklesenRaporu(sirketId, yil, ay));
     }
 
+    @GetMapping("/pivot")
+    @Operation(summary = "Dinamik pivot tablo", description = "Satır/sütun/değer boyutlarına göre fatura kalemlerini çaprazlar ve özetler")
+    public ResponseEntity<com.raspel.erp.dto.sistem.PivotDTO> pivot(
+            HttpServletRequest request,
+            @RequestParam(required = false, defaultValue = "cari") String satir,
+            @RequestParam(required = false, defaultValue = "ay") String sutun,
+            @RequestParam(required = false, defaultValue = "tutar") String deger,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.pivot(sirketId, satir, sutun, deger, baslangic, bitis));
+    }
+
     @GetMapping("/butce-gerceklesen/pdf")
     @Operation(summary = "Bütçe vs Gerçekleşen PDF", description = "Bütçe vs gerçekleşen raporunu PDF olarak dışa aktarır")
     public ResponseEntity<byte[]> butceGerceklesenPdf(

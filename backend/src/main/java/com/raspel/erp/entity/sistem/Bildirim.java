@@ -22,6 +22,9 @@ public class Bildirim {
     @Column(length = 20)
     private String tur;
 
+    @Column(name = "kullanici_adi", length = 100)
+    private String kullaniciAdi;
+
     @Column(length = 200)
     private String baslik;
 

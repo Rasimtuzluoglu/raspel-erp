@@ -37,12 +37,12 @@
           <Button
             label="Rapor Al"
             icon="pi pi-print"
-            class="p-button-outlined p-button-sm text-white"
+            class="p-button-outlined p-button-sm"
             @click="raporYazdir"
           />
           <Button
             icon="pi pi-refresh"
-            class="p-button-outlined p-button-sm text-white"
+            class="p-button-outlined p-button-sm"
             :loading="yukleniyor"
             @click="verileriYukle"
           />
@@ -784,12 +784,13 @@ const hatirlatWhatsApp = (cari) => {
 }
 
 .kokpit-header-card {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  color: white;
+  background: var(--bg-card);
+  color: var(--text-primary);
   padding: 1.25rem 1.5rem;
   border-radius: 1rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .kokpit-header-content {
@@ -805,11 +806,12 @@ const hatirlatWhatsApp = (cari) => {
   font-weight: 800;
   margin: 0 0 0.2rem 0;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .page-subtitle {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin: 0;
 }
 

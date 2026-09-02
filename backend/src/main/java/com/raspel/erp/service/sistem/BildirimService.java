@@ -28,10 +28,15 @@ public class BildirimService {
     private final BildirimRepository bildirimRepository;
 
     public void bildirimGonder(Long sirketId, String tur, String baslik, String mesaj) {
+        bildirimGonder(sirketId, tur, baslik, mesaj, null);
+    }
+
+    public void bildirimGonder(Long sirketId, String tur, String baslik, String mesaj, String kullaniciAdi) {
         var bildirim = Map.of(
                 "tur", tur,
                 "baslik", baslik,
                 "mesaj", mesaj,
+                "kullaniciAdi", kullaniciAdi != null ? kullaniciAdi : "",
                 "tarih", LocalDateTime.now().toString()
         );
         String destination = "/topic/bildirimler/" + sirketId;
@@ -40,7 +45,8 @@ public class BildirimService {
 
         try {
             bildirimRepository.save(Bildirim.builder()
-                    .sirketId(sirketId).tur(tur).baslik(baslik).mesaj(mesaj).okundu(false).build());
+                    .sirketId(sirketId).tur(tur).kullaniciAdi(kullaniciAdi)
+                    .baslik(baslik).mesaj(mesaj).okundu(false).build());
         } catch (Exception e) {
             log.warn("Bildirim kaydedilemedi: {}", e.getMessage());
         }
@@ -96,6 +102,7 @@ public class BildirimService {
     private BildirimDTO toDTO(Bildirim b) {
         return BildirimDTO.builder()
                 .id(b.getId()).sirketId(b.getSirketId()).tur(b.getTur())
+                .kullaniciAdi(b.getKullaniciAdi())
                 .baslik(b.getBaslik()).mesaj(b.getMesaj()).okundu(b.getOkundu())
                 .olusturmaTarihi(b.getOlusturmaTarihi()).build();
     }

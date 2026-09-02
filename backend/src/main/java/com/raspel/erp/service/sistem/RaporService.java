@@ -29,6 +29,8 @@ import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.repository.finans.ButceRepository;
 import com.raspel.erp.repository.finans.MasrafRepository;
 import com.raspel.erp.dto.sistem.ButceGerceklesenDTO;
+import com.raspel.erp.dto.sistem.PivotDTO;
+import com.raspel.erp.repository.ticaret.PivotSatirProjeksiyon;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -505,5 +507,68 @@ public class RaporService {
     public byte[] butceGerceklesenPdf(String[] kolonlar, List<String[]> satirlar, Integer yil, Integer ay) {
         String baslik = "Bütçe vs Gerçekleşen Raporu - " + yil + (ay != null ? "/" + ay : "");
         return pdfRaporService.tabloRaporu(baslik, kolonlar, satirlar);
+    }
+
+    /**
+     * Dinamik pivot tablo. satirBoyut / sutunBoyut / degerMetrik parametrelerine göre
+     * fatura kalemlerini çaprazlar ve özetler.
+     */
+    @Transactional(readOnly = true)
+    public PivotDTO pivot(Long sirketId, String satirBoyut, String sutunBoyut, String degerMetrik,
+                          LocalDate baslangic, LocalDate bitis) {
+        LocalDate bas = baslangic != null ? baslangic : LocalDate.now().withDayOfMonth(1);
+        LocalDate bit = bitis != null ? bitis : LocalDate.now();
+        List<PivotSatirProjeksiyon> satirlar = faturaKalemRepository.pivotSatirlari(sirketId,
+                Fatura.FaturaDurum.KESILDI, bas, bit);
+
+        String satir = satirBoyut != null ? satirBoyut : "cari";
+        String sutun = sutunBoyut != null ? sutunBoyut : "ay";
+        String metrik = degerMetrik != null ? degerMetrik : "tutar";
+
+        Map<String, Map<String, BigDecimal>> hucreler = new LinkedHashMap<>();
+        Map<String, BigDecimal> satirToplam = new LinkedHashMap<>();
+        Map<String, BigDecimal> sutunToplam = new LinkedHashMap<>();
+        Set<String> sutunSet = new TreeSet<>();
+
+        for (PivotSatirProjeksiyon p : satirlar) {
+            String satirK = boyutDegeri(p, satir);
+            String sutunK = boyutDegeri(p, sutun);
+            BigDecimal deger = metrikDegeri(p, metrik);
+
+            hucreler.computeIfAbsent(satirK, k -> new LinkedHashMap<>())
+                    .merge(sutunK, deger, BigDecimal::add);
+            satirToplam.merge(satirK, deger, BigDecimal::add);
+            sutunToplam.merge(sutunK, deger, BigDecimal::add);
+            sutunSet.add(sutunK);
+        }
+
+        BigDecimal genel = satirToplam.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return PivotDTO.builder()
+                .satirlar(new ArrayList<>(hucreler.keySet()))
+                .sutunlar(new ArrayList<>(sutunSet))
+                .hucreler(hucreler)
+                .satirToplamlari(satirToplam)
+                .sutunToplamlari(sutunToplam)
+                .genelToplam(genel)
+                .build();
+    }
+
+    private String boyutDegeri(PivotSatirProjeksiyon p, String boyut) {
+        return switch (boyut) {
+            case "stok" -> p.getStokAd() != null ? p.getStokAd() : (p.getStokId() != null ? "Ürün #" + p.getStokId() : "-");
+            case "kategori" -> p.getKategori() != null ? p.getKategori() : "-";
+            case "tur" -> p.getTur() != null ? p.getTur() : "-";
+            case "odeme" -> p.getOdemeDurumu() != null ? p.getOdemeDurumu() : "-";
+            case "ay" -> p.getTarih() != null ? p.getTarih().getYear() + "-" + String.format("%02d", p.getTarih().getMonthValue()) : "-";
+            default -> p.getCariAd() != null ? p.getCariAd() : (p.getCariHesapId() != null ? "Cari #" + p.getCariHesapId() : "Anlık");
+        };
+    }
+
+    private BigDecimal metrikDegeri(PivotSatirProjeksiyon p, String metrik) {
+        if ("adet".equals(metrik)) {
+            return BigDecimal.valueOf(p.getAdet() != null ? p.getAdet() : 0);
+        }
+        return p.getTutar() != null ? p.getTutar() : BigDecimal.ZERO;
     }
 }

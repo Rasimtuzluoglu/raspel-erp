@@ -2,6 +2,16 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.15.0] - 2026-09-02 (Pivot Rapor, Aktivite Akışı, İş Emri)
+### Eklenenler
+- **Dinamik pivot tablo**: `GET /api/raporlar/pivot` + Raporlar'da "Pivot Tablo" sekmesi. Satır (cari/ürün/kategori/tür/ödeme/ay), sütun ve değer (tutar/adet) seçilerek çapraz rapor.
+- **Aktivite akışı**: Bildirimlere kullanıcı adı eklendi (V67) — "Ahmet yeni fatura kesti" görünür.
+- **İş emri**: Siparişten iş emri oluşturup personele atama (`POST /api/siparisler/{id}/is-emri`, V67).
+- **Yönetici Kokpiti tema düzeltmesi**: AI analiz kutusu ve header artık tema değişkenlerini kullanıyor (açık/koyu temada okunabilir).
+
+### Eklenen Testler
+- Backend: 831 → 832 (SiparisService iş emri).
+
 ## [1.14.0] - 2026-09-02 (Ölçeklenebilirlik & Büyük Veri Performansı)
 ### Eklenenler
 - **Stok server-side filtre/pagination**: 5000+ kayıt için `GET /api/stoklar/filtreli` — arama, kategori, marka, stok grubu ve fiyat aralığı sunucu tarafında filtrelenir, lazy pagination + debounce ile.

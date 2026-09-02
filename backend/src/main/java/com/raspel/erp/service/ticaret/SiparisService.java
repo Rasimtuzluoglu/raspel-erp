@@ -30,6 +30,9 @@ import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.service.sistem.SeriNoServisi;
+import com.raspel.erp.entity.sistem.Gorev;
+import com.raspel.erp.repository.sistem.GorevRepository;
+import com.raspel.erp.repository.ik.PersonelRepository;
 
 @Service
 @Transactional
@@ -46,6 +49,8 @@ public class SiparisService {
     private final BildirimService bildirimService;
     private final EmailService emailService;
     private final TenantChecker tenantChecker;
+    private final GorevRepository gorevRepository;
+    private final PersonelRepository personelRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -186,6 +191,35 @@ public class SiparisService {
         }
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
+    }
+
+    /**
+     * Siparişten iş emri oluşturur ve bir personele atar.
+     */
+    public Gorev isEmriOlustur(Long siparisId, Long personelId, String aciklama) {
+        Siparis s = siparisRepository.findById(siparisId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", siparisId));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
+
+        String personelAd = null;
+        if (personelId != null) {
+            personelAd = personelRepository.findById(personelId)
+                    .map(p -> (p.getAd() != null ? p.getAd() : "") + " " + (p.getSoyad() != null ? p.getSoyad() : ""))
+                    .orElse(null);
+        }
+
+        Gorev gorev = Gorev.builder()
+                .ad("İş Emri: " + s.getSiparisNo())
+                .aciklama(aciklama != null ? aciklama : "Sipariş #" + s.getSiparisNo() + " için iş emri")
+                .durum("YAPILACAK")
+                .atanan(personelAd != null ? personelAd.trim() : null)
+                .baslangic(java.time.LocalDate.now())
+                .siparisId(siparisId)
+                .personelId(personelId)
+                .build();
+        Gorev kaydedilen = gorevRepository.save(gorev);
+        log.info("Sipariş #{} için iş emri oluşturuldu: {}", s.getSiparisNo(), kaydedilen.getId());
+        return kaydedilen;
     }
 
     private SiparisDTO entityToDTO(Siparis s) {

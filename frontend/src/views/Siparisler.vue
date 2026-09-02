@@ -96,6 +96,12 @@
             @click="durumGuncelle(data, 'IPTAL')"
           />
           <Button
+            icon="pi pi-briefcase"
+            class="p-button-rounded p-button-text p-button-info"
+            title="İş Emri Oluştur"
+            @click="isEmriAc(data)"
+          />
+          <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-text p-button-danger"
             @click="sil(data)"
@@ -168,6 +174,55 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="isEmriDialog"
+      header="İş Emri Oluştur"
+      :modal="true"
+      style="width: 480px"
+    >
+      <div
+        v-if="isEmriSiparis"
+        class="isemri-siparis"
+      >
+        Sipariş: <strong>{{ isEmriSiparis.siparisNo }}</strong>
+      </div>
+      <div class="form-group">
+        <label>Atanacak Personel</label>
+        <Dropdown
+          v-model="isEmriPersonelId"
+          :options="personeller"
+          option-label="label"
+          option-value="value"
+          placeholder="Personel seçin"
+          filter
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Açıklama</label>
+        <Textarea
+          v-model="isEmriAciklama"
+          rows="3"
+          placeholder="İş emri açıklaması (isteğe bağlı)"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="isEmriDialog = false"
+        />
+        <Button
+          label="Oluştur"
+          icon="pi pi-briefcase"
+          :loading="isEmriKaydediliyor"
+          @click="isEmriOlustur"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -175,7 +230,7 @@
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { siparisAPI, cariHesapAPI } from '../api/index.js'
+import { siparisAPI, cariHesapAPI, personelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -193,11 +248,52 @@ onMounted(async () => {
     const [sR, cR] = await Promise.all([siparisAPI.getAll(), cariHesapAPI.getAll()])
     siparisler.value = sR.data?.content || sR.data || []
     cariler.value = cR.data
+    personelleriYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
   }
   yukleniyor.value = false
 })
+
+const personeller = ref([])
+const isEmriDialog = ref(false)
+const isEmriSiparis = ref(null)
+const isEmriPersonelId = ref(null)
+const isEmriAciklama = ref('')
+const isEmriKaydediliyor = ref(false)
+
+const personelleriYukle = async () => {
+  try {
+    const r = await personelAPI.getAll({ size: 500 })
+    const list = r.data?.content || r.data || []
+    personeller.value = list.map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: p.id }))
+  } catch {
+    personeller.value = []
+  }
+}
+
+const isEmriAc = (siparis) => {
+  isEmriSiparis.value = siparis
+  isEmriPersonelId.value = null
+  isEmriAciklama.value = ''
+  isEmriDialog.value = true
+}
+
+const isEmriOlustur = async () => {
+  isEmriKaydediliyor.value = true
+  try {
+    await siparisAPI.isEmriOlustur(isEmriSiparis.value.id, {
+      personelId: isEmriPersonelId.value,
+      aciklama: isEmriAciklama.value
+    })
+    toastBildirim.basarili('İş emri oluşturuldu')
+    isEmriDialog.value = false
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'İş emri oluşturulamadı')
+  } finally {
+    isEmriKaydediliyor.value = false
+  }
+}
 
 const dialogAc = () => {
   form.value = { siparisNo: 'TKF-' + Date.now(), tarih: new Date(), cariHesapId: null, aciklama: '' }

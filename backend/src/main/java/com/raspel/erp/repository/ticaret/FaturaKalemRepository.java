@@ -70,4 +70,19 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
                                                         @Param("sirketId") Long sirketId,
                                                         @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
                                                         @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
+
+    /**
+     * Pivot tablo için tarih aralığındaki kesilmiş fatura kalemlerini düz satır olarak döndürür.
+     */
+    @Query("SELECT f.cariHesap.id AS cariHesapId, f.cariHesap.ad AS cariAd, " +
+           "k.stokId AS stokId, s.ad AS stokAd, s.kategori AS kategori, " +
+           "f.tur AS tur, f.odemeDurumu AS odemeDurumu, f.tarih AS tarih, " +
+           "k.tutar AS tutar, k.adet AS adet " +
+           "FROM FaturaKalem k JOIN k.fatura f LEFT JOIN Stok s ON s.id = k.stokId " +
+           "WHERE f.sirketId = :sirketId AND f.durum = :durum " +
+           "AND f.tarih BETWEEN :baslangic AND :bitis")
+    List<PivotSatirProjeksiyon> pivotSatirlari(@Param("sirketId") Long sirketId,
+                                               @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
+                                               @Param("baslangic") java.time.LocalDate baslangic,
+                                               @Param("bitis") java.time.LocalDate bitis);
 }

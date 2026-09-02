@@ -113,7 +113,13 @@
             <div class="item-icerik">
               <strong>{{ b.baslik }}</strong>
               <p>{{ b.mesaj }}</p>
-              <small>{{ formatTarih(b.tarih || b.olusturmaTarihi) }}</small>
+              <small>
+                <span
+                  v-if="b.kullaniciAdi"
+                  class="kullanici-adi"
+                >{{ b.kullaniciAdi }} · </span>
+                {{ formatTarih(b.tarih || b.olusturmaTarihi) }}
+              </small>
             </div>
           </div>
         </div>
@@ -411,6 +417,10 @@ const temizle = async () => {
 .item-icerik small {
   font-size: 11px;
   color: var(--text-muted);
+}
+.kullanici-adi {
+  color: var(--accent);
+  font-weight: 600;
 }
 .panel-enter-active,
 .panel-leave-active {

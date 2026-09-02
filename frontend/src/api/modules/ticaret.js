@@ -133,6 +133,9 @@ export const siparisAPI = {
   durumGuncelle(id, durum) {
     return apiClient.put(`/siparisler/${id}/durum`, { durum })
   },
+  isEmriOlustur(id, data) {
+    return apiClient.post(`/siparisler/${id}/is-emri`, data)
+  },
   delete(id) {
     return apiClient.delete(`/siparisler/${id}`)
   }

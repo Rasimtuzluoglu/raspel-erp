@@ -65,4 +65,15 @@ public class SiparisController {
         siparisService.sil(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/is-emri")
+    @Operation(summary = "Siparişten iş emri oluştur", description = "Siparişi bir personele atayarak iş emri oluşturur")
+    public ResponseEntity<com.raspel.erp.entity.sistem.Gorev> isEmriOlustur(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> govde) {
+        Long personelId = govde != null && govde.get("personelId") != null
+                ? Long.valueOf(govde.get("personelId").toString()) : null;
+        String aciklama = govde != null ? (String) govde.get("aciklama") : null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(siparisService.isEmriOlustur(id, personelId, aciklama));
+    }
 }

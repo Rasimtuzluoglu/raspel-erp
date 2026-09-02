@@ -10,7 +10,7 @@
 # Backend (Java 21 + Spring Boot 3.2 + Maven)
 cd backend
 mvn -B compile -q          # Compile
-mvn -B test -q             # Run 831 tests (H2 in-memory)
+mvn -B test -q             # Run 832 tests (H2 in-memory)
 mvn -B clean verify        # Full build with tests
 mvn spring-boot:run        # Run dev server on :8081
 
@@ -40,7 +40,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (831) + Vitest (163) + Cypress |
+| Tests | JUnit 5 (832) + Vitest (163) + Cypress |
 
 ## Project Structure
 
@@ -110,7 +110,7 @@ raspel-erp/
 
 ## Code Quality
 
-- Backend: 831 tests (JUnit 5, H2, Mockito), must pass before commit
+- Backend: 832 tests (JUnit 5, H2, Mockito), must pass before commit
 - Frontend: 163 tests (Vitest), zero ESLint warnings required
 - CI runs on push/PR to main: backend (compile+test), frontend (lint+test+build), security (Trivy)
 

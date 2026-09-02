@@ -42,6 +42,9 @@ export const raporAPI = {
   },
   butceGerceklesenPdf(params) {
     return apiClient.get('/raporlar/butce-gerceklesen/pdf', { params, responseType: 'blob' })
+  },
+  pivot(params) {
+    return apiClient.get('/raporlar/pivot', { params })
   }
 }
 

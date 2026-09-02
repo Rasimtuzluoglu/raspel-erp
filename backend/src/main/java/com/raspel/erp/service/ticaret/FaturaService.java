@@ -364,7 +364,8 @@ public class FaturaService {
             if (sirketId != null) {
                 bildirimService.bildirimGonder(sirketId, "FATURA",
                         "Yeni Fatura: " + faturaNo,
-                        "Tutar: " + genelToplam + " ₺" + (cariHesap != null ? " - " + cariHesap.getAd() : ""));
+                        "Tutar: " + genelToplam + " ₺" + (cariHesap != null ? " - " + cariHesap.getAd() : ""),
+                        displayName);
             }
         } catch (Exception e) {
             log.warn("Fatura bildirimi gönderilemedi: {}", e.getMessage());

@@ -43,6 +43,8 @@ class SiparisServiceTest {
     @Mock private BildirimService bildirimService;
     @Mock private EmailService emailService;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.repository.sistem.GorevRepository gorevRepository;
+    @Mock private com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {
@@ -123,5 +125,23 @@ class SiparisServiceTest {
         s.setDurum("FATURA_KESILDI");
         when(siparisRepository.findById(1L)).thenReturn(Optional.of(s));
         assertThrows(RuntimeException.class, () -> siparisService.sil(1L));
+    }
+
+    @Test
+    void isEmriOlustur_gorevOlusturur() {
+        Siparis s = createSiparis(1L);
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(s));
+        when(gorevRepository.save(any(com.raspel.erp.entity.sistem.Gorev.class))).thenAnswer(inv -> {
+            com.raspel.erp.entity.sistem.Gorev g = inv.getArgument(0);
+            g.setId(1L);
+            return g;
+        });
+
+        var gorev = siparisService.isEmriOlustur(1L, null, "Test iş emri");
+
+        assertNotNull(gorev);
+        assertEquals("İş Emri: " + s.getSiparisNo(), gorev.getAd());
+        assertEquals("YAPILACAK", gorev.getDurum());
+        verify(gorevRepository).save(any(com.raspel.erp.entity.sistem.Gorev.class));
     }
 }

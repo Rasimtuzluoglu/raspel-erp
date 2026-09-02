@@ -17,8 +17,14 @@ public class Gorev {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "proje_id", nullable = false)
+    @Column(name = "proje_id")
     private Long projeId;
+
+    @Column(name = "siparis_id")
+    private Long siparisId;
+
+    @Column(name = "personel_id")
+    private Long personelId;
 
     @Column(nullable = false, length = 200)
     private String ad;
