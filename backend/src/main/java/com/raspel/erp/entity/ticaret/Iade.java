@@ -45,6 +45,7 @@ public class Iade {
     private LocalDateTime olusturmaTarihi;
 
     @Transient
+    @Builder.Default
     private List<IadeKalem> kalemler = new ArrayList<>();
 
     @PrePersist
