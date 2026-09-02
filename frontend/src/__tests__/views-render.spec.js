@@ -10,7 +10,9 @@ import Stoklar from '../views/Stoklar.vue'
 vi.mock('../api/index.js', () => ({
   cariHesapAPI: {
     getAll: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0 } }),
-    create: vi.fn(), update: vi.fn(), delete: vi.fn(), search: vi.fn()
+    create: vi.fn(), update: vi.fn(), delete: vi.fn(), search: vi.fn(),
+    filtreli: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0 } }),
+    ozet: vi.fn().mockResolvedValue({ data: { toplamKayit: 0, alacakli: 0, borclu: 0 } })
   },
   hareketAPI: { getByCariHesap: vi.fn().mockResolvedValue({ data: [] }) },
   notAPI: { cariNotlari: vi.fn().mockResolvedValue({ data: [] }) },
@@ -19,6 +21,7 @@ vi.mock('../api/index.js', () => ({
     getAll: vi.fn().mockResolvedValue({ data: [] }),
     create: vi.fn().mockResolvedValue({ data: {} }),
     update: vi.fn(), delete: vi.fn(),
+    filtreli: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0 } }),
     hareketEkle: vi.fn(), topluFiyat: vi.fn(), topluOlustur: vi.fn()
   },
   kategoriAPI: { getAll: vi.fn().mockResolvedValue({ data: [] }) },

@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.sistem.Sirket;
@@ -108,6 +109,18 @@ public class CariHesapService {
         log.debug("Tüm cari hesaplar getiriliyor, sirketId: {}", sirketId);
         return cariHesapRepository.findBySirketId(sirketId, pageable)
                 .map(this::entityDTOyeCevir);
+    }
+
+    /**
+     * Sunucu tarafında filtrelenmiş, aranmış ve sayfalanmış cari listesi.
+     */
+    public Page<CariHesapDTO> filtreli(Long sirketId, String q, String tur, String bakiyeYonu, Pageable pageable) {
+        return cariHesapRepository.filtreli(sirketId, bosIseNull(q), bosIseNull(tur), bosIseNull(bakiyeYonu), pageable)
+                .map(this::entityDTOyeCevir);
+    }
+
+    private String bosIseNull(String s) {
+        return (s == null || s.isBlank()) ? null : s;
     }
 
     /**
@@ -277,6 +290,16 @@ public class CariHesapService {
             return BigDecimal.ZERO;
         }
         return cariHesapRepository.toplamNegatifBakiyeBySirketId(sirketId);
+    }
+
+    /** Cari listesi için istatistik özeti (toplam kayıt, alacaklı, borçlu). */
+    @Transactional(readOnly = true)
+    public Map<String, Object> ozet(Long sirketId) {
+        Map<String, Object> ozet = new LinkedHashMap<>();
+        ozet.put("toplamKayit", cariHesapRepository.countBySirketId(sirketId));
+        ozet.put("alacakli", cariHesapRepository.toplamPozitifBakiyeBySirketId(sirketId));
+        ozet.put("borclu", cariHesapRepository.toplamNegatifBakiyeBySirketId(sirketId).abs());
+        return ozet;
     }
 
     /**

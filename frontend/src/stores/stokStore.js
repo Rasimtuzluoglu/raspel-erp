@@ -40,6 +40,23 @@ export const useStokStore = defineStore('stok', () => {
     }
   }
 
+  const filtreli = async (params = {}) => {
+    loading.value = true
+    error.value = null
+    try {
+      const r = await stokAPI.filtreli(params)
+      const icerik = r.data.content || r.data
+      stoklar.value = Array.isArray(icerik) ? icerik : []
+      toplamKayit.value = r.data.totalElements ?? stoklar.value.length
+      return r.data
+    } catch (err) {
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const addStok = async (data) => {
     try {
       const r = await stokAPI.create(data)
@@ -77,5 +94,5 @@ export const useStokStore = defineStore('stok', () => {
 
   const dusukStoklar = computed(() => stoklar.value.filter((s) => s.minMiktar && s.miktar <= s.minMiktar))
 
-  return { stoklar, loading, error, toplamKayit, getAll, ara, addStok, updateStok, deleteStok, dusukStoklar }
+  return { stoklar, loading, error, toplamKayit, getAll, ara, filtreli, addStok, updateStok, deleteStok, dusukStoklar }
 })

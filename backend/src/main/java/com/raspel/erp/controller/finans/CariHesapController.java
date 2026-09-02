@@ -46,6 +46,25 @@ public class CariHesapController {
         Page<CariHesapDTO> cariHesaplar = cariHesapService.tumCariHesaplariGetir(sirketId, pageable);
         return ResponseEntity.ok(cariHesaplar);
     }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Cari hesapları filtrele (sayfalı)", description = "Arama, tür ve bakiye yönüne göre sunucu tarafında filtreler")
+    public ResponseEntity<Page<CariHesapDTO>> filtreli(
+            HttpServletRequest request,
+            @PageableDefault(size = 25) Pageable pageable,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String bakiyeYonu) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariHesapService.filtreli(sirketId, q, tur, bakiyeYonu, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Cari özeti", description = "Toplam kayıt, alacaklı ve borçlu tutarlarını getirir")
+    public ResponseEntity<java.util.Map<String, Object>> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariHesapService.ozet(sirketId));
+    }
     
     @GetMapping("/export/csv")
     @Operation(summary = "Cari hesapları CSV dışa aktar", description = "Cari hesapları CSV dosyası olarak dışa aktarır")

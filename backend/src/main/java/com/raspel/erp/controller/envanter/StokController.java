@@ -38,6 +38,21 @@ public class StokController {
         return ResponseEntity.ok(stokService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/filtreli")
+    @Operation(summary = "Stokları filtrele (sayfalı)", description = "Arama, kategori, marka, stok grubu ve fiyat aralığına göre sunucu tarafında filtreler")
+    public ResponseEntity<Page<StokDTO>> filtreli(
+            HttpServletRequest request,
+            @PageableDefault(size = 25) Pageable pageable,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String kategori,
+            @RequestParam(required = false) String marka,
+            @RequestParam(required = false) String stokGrubu,
+            @RequestParam(required = false) java.math.BigDecimal minFiyat,
+            @RequestParam(required = false) java.math.BigDecimal maxFiyat) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.filtreli(sirketId, q, kategori, marka, stokGrubu, minFiyat, maxFiyat, pageable));
+    }
+
     @GetMapping("/ara")
     @Operation(summary = "Stok ara", description = "Stokları ada/barkoda göre arar")
     public ResponseEntity<List<StokDTO>> ara(@RequestParam String q, HttpServletRequest request) {

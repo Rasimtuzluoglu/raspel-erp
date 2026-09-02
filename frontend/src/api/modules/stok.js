@@ -7,6 +7,9 @@ export const stokAPI = {
   ara(q) {
     return apiClient.get('/stoklar/ara', { params: { q } })
   },
+  filtreli(params) {
+    return apiClient.get('/stoklar/filtreli', { params })
+  },
   enCokSatanlar(limit = 12) {
     return apiClient.get('/stoklar/en-cok-satanlar', { params: { limit } })
   },

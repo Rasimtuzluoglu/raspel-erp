@@ -73,39 +73,39 @@
         <InputText
           v-model="filtreArama"
           placeholder="Urun adi, kod, barkod..."
-          @input="filtrele"
+          @input="filtreDegisti"
         />
       </span>
       <InputText
         v-model="filtreKategori"
         placeholder="Kategori"
         class="filter-input"
-        @input="filtrele"
+        @input="filtreDegisti"
       />
       <InputText
         v-model="filtreMarka"
         placeholder="Marka"
         class="filter-input"
-        @input="filtrele"
+        @input="filtreDegisti"
       />
       <Dropdown
         v-model="filtreStokGrubu"
         :options="['', 'Hammadde', 'Mamul', 'Yari Mamul', 'Sarf', 'Aksesuar']"
         placeholder="Stok Grubu"
         class="filter-dropdown"
-        @change="filtrele"
+        @change="filtreDegisti"
       />
       <InputNumber
         v-model="filtreMinFiyat"
         placeholder="Min Fiyat"
         class="filter-input-sm"
-        @input="filtrele"
+        @input="filtreDegisti"
       />
       <InputNumber
         v-model="filtreMaxFiyat"
         placeholder="Max Fiyat"
         class="filter-input-sm"
-        @input="filtrele"
+        @input="filtreDegisti"
       />
       <Button
         icon="pi pi-times"
@@ -125,12 +125,12 @@
     <template v-if="!stokStore.loading && gosterim === 'tablo'">
       <DataTable
         v-model:selection="seciliStoklar"
-        state-storage="session"
-        state-key="stoklar-table-state"
-        :value="filtrelenmisStoklar"
+        :value="stokStore.stoklar"
         :paginator="true"
         :rows="25"
         :rows-per-page-options="[15, 25, 50, 100]"
+        :lazy="true"
+        :total-records="stokStore.toplamKayit"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
         current-page-report-template="{totalRecords} kayıttan {first}-{last}"
         selection-mode="multiple"
@@ -140,11 +140,12 @@
         :sort-order="1"
         class="p-datatable-sm"
         :global-filter-fields="['ad', 'stokKodu', 'birim']"
+        @page="stokSayfaDegisti"
         @row-click="stokSec($event.data)"
       >
         <template #header>
           <div class="table-header">
-            <span class="toplam-bilgi">{{ stokStore.stoklar.length }} ürün</span>
+            <span class="toplam-bilgi">{{ stokStore.toplamKayit }} ürün</span>
             <span
               v-if="kritikAdet > 0"
               class="kritik-bilgi"
@@ -275,7 +276,7 @@
       class="stok-kartlar"
     >
       <div
-        v-for="s in filtrelenmisStoklar"
+        v-for="s in stokStore.stoklar"
         :key="s.id"
         class="stok-kart"
         :class="{ 'dusuk-stok': s.minMiktar && s.miktar <= s.minMiktar }"
@@ -869,6 +870,10 @@ const filtreStokGrubu = ref('')
 const filtreMinFiyat = ref(null)
 const filtreMaxFiyat = ref(null)
 
+const stokSayfa = ref(0)
+const stokSayfaBoyutu = ref(25)
+let stokAramaZaman = null
+
 const seciliStok = ref(null)
 const seciliStokId = ref(null)
 const seciliStoklar = ref([])
@@ -970,19 +975,37 @@ const filtrelenmisStoklar = computed(() => {
   })
 })
 
+const stoklariYukle = async () => {
+  const params = { page: stokSayfa.value, size: stokSayfaBoyutu.value }
+  if (filtreArama.value.trim()) params.q = filtreArama.value.trim()
+  if (filtreKategori.value) params.kategori = filtreKategori.value
+  if (filtreMarka.value) params.marka = filtreMarka.value
+  if (filtreStokGrubu.value) params.stokGrubu = filtreStokGrubu.value
+  if (filtreMinFiyat.value != null) params.minFiyat = filtreMinFiyat.value
+  if (filtreMaxFiyat.value != null) params.maxFiyat = filtreMaxFiyat.value
+  await stokStore.filtreli(params)
+}
+
+const stokSayfaDegisti = (event) => {
+  stokSayfa.value = event.page
+  stokSayfaBoyutu.value = event.rows
+  stoklariYukle()
+}
+
+// Filtre değişince debounce ile yeniden yükle
+const filtreDegisti = () => {
+  if (stokAramaZaman) clearTimeout(stokAramaZaman)
+  stokAramaZaman = setTimeout(() => {
+    stokSayfa.value = 0
+    stoklariYukle()
+  }, 300)
+}
+
 const kritikAdet = computed(() => stokStore.stoklar.filter((s) => s.minMiktar && s.miktar <= s.minMiktar).length)
 
 onMounted(async () => {
-  await Promise.all([stokStore.getAll({ size: 1000 }), cariHesapStore.getAllCariHesaplar()])
+  await Promise.all([stoklariYukle(), cariHesapStore.getAllCariHesaplar()])
 })
-
-const ara = () => {
-  filtreArama.value = aramaMetni.value
-}
-
-const filtrele = () => {
-  // reactivity handles filtering via computed
-}
 
 const filtreTemizle = () => {
   filtreArama.value = ''
@@ -991,6 +1014,8 @@ const filtreTemizle = () => {
   filtreStokGrubu.value = ''
   filtreMinFiyat.value = null
   filtreMaxFiyat.value = null
+  stokSayfa.value = 0
+  stoklariYukle()
 }
 
 const stokSec = async (s) => {

@@ -42,4 +42,20 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
 
     @Query("SELECT COUNT(s) FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar")
     long countKritikStokBySirketId(@Param("sirketId") Long sirketId);
+
+    @Query("SELECT s FROM Stok s WHERE s.sirketId = :sirketId " +
+            "AND (:q IS NULL OR lower(s.ad) LIKE lower(concat('%', :q, '%')) OR lower(s.stokKodu) LIKE lower(concat('%', :q, '%')) OR lower(s.barkod) LIKE lower(concat('%', :q, '%'))) " +
+            "AND (:kategori IS NULL OR s.kategori = :kategori) " +
+            "AND (:marka IS NULL OR lower(s.marka) LIKE lower(concat('%', :marka, '%'))) " +
+            "AND (:stokGrubu IS NULL OR s.stokGrubu = :stokGrubu) " +
+            "AND (:minFiyat IS NULL OR s.satisFiyati >= :minFiyat OR s.fiyat >= :minFiyat) " +
+            "AND (:maxFiyat IS NULL OR s.satisFiyati <= :maxFiyat OR s.fiyat <= :maxFiyat)")
+    Page<Stok> filtreli(@Param("sirketId") Long sirketId,
+                        @Param("q") String q,
+                        @Param("kategori") String kategori,
+                        @Param("marka") String marka,
+                        @Param("stokGrubu") String stokGrubu,
+                        @Param("minFiyat") BigDecimal minFiyat,
+                        @Param("maxFiyat") BigDecimal maxFiyat,
+                        Pageable pageable);
 }

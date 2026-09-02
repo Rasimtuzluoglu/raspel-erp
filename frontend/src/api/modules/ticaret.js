@@ -4,6 +4,12 @@ export const cariHesapAPI = {
   getAll(params) {
     return apiClient.get('/cari-hesaplar', { params })
   },
+  filtreli(params) {
+    return apiClient.get('/cari-hesaplar/filtreli', { params })
+  },
+  ozet() {
+    return apiClient.get('/cari-hesaplar/ozet')
+  },
   getById(id) {
     return apiClient.get(`/cari-hesaplar/${id}`)
   },

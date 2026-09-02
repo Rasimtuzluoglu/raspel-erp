@@ -109,6 +109,23 @@ public class StokService {
         return page.map(s -> entityToDTO(s, tedarikciAdlari));
     }
 
+    /**
+     * Sunucu tarafında filtrelenmiş, aranmış ve sayfalanmış stok listesi.
+     * 5000+ kayıt için tüm kayıtları çekmek yerine sorgu seviyesinde filtre uygular.
+     */
+    @Transactional(readOnly = true)
+    public Page<StokDTO> filtreli(Long sirketId, String q, String kategori, String marka,
+                                  String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Pageable pageable) {
+        Page<Stok> page = stokRepository.filtreli(sirketId, bosIseNull(q), bosIseNull(kategori),
+                bosIseNull(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, pageable);
+        Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
+        return page.map(s -> entityToDTO(s, tedarikciAdlari));
+    }
+
+    private String bosIseNull(String s) {
+        return (s == null || s.isBlank()) ? null : s;
+    }
+
     @Transactional(readOnly = true)
     public List<StokDTO> ara(String q, Long sirketId) {
         if (sirketId == null) return List.of();

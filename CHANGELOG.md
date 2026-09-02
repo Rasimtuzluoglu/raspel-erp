@@ -2,6 +2,13 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.14.0] - 2026-09-02 (Ölçeklenebilirlik & Büyük Veri Performansı)
+### Eklenenler
+- **Stok server-side filtre/pagination**: 5000+ kayıt için `GET /api/stoklar/filtreli` — arama, kategori, marka, stok grubu ve fiyat aralığı sunucu tarafında filtrelenir, lazy pagination + debounce ile.
+- **Cari server-side filtre**: `GET /api/cari-hesaplar/filtreli` — arama, tür ve bakiye yönü sunucu tarafında.
+- **Cari istatistik şeridi**: `GET /api/cari-hesaplar/ozet` — toplam kayıt, alacaklı ve borçlu tutarları.
+- Stoklar ve Cariler artık tüm kayıtları çekmek yerine sayfalı çalışır (performans).
+
 ## [1.13.0] - 2026-09-02 (UX & Kullanım Kolaylığı)
 ### Eklenenler
 - **Canlı senkron**: Fiş yazdırma ayarları sekmeler arası anlık senkronize olur (storage event).

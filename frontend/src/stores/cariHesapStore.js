@@ -92,6 +92,23 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
     }
   }
 
+  const filtreliCari = async (params = {}) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await cariHesapAPI.filtreli(params)
+      const icerik = response.data?.content || response.data || []
+      cariHesaplar.value = Array.isArray(icerik) ? icerik : []
+      toplamKayit.value = response.data?.totalElements ?? cariHesaplar.value.length
+      return cariHesaplar.value
+    } catch (err) {
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     cariHesaplar,
     loading,
@@ -99,6 +116,7 @@ export const useCariHesapStore = defineStore('cariHesap', () => {
     toplamKayit,
     getAllCariHesaplar,
     ara,
+    filtreliCari,
     addCariHesap,
     updateCariHesap,
     deleteCariHesap

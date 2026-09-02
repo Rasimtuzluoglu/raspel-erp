@@ -81,6 +81,24 @@
 
     <div
       v-if="!loading"
+      class="cari-istatistik"
+    >
+      <div class="istatistik-kutu">
+        <span>Toplam Cari</span>
+        <strong>{{ cariOzet.toplamKayit ?? cariHesapStore.toplamKayit }}</strong>
+      </div>
+      <div class="istatistik-kutu">
+        <span>Alacaklı</span>
+        <strong class="positive">{{ formatCurrency(cariOzet.alacakli ?? 0) }}</strong>
+      </div>
+      <div class="istatistik-kutu">
+        <span>Borçlu</span>
+        <strong class="negative">{{ formatCurrency(cariOzet.borclu ?? 0) }}</strong>
+      </div>
+    </div>
+
+    <div
+      v-if="!loading"
       class="cari-filtreler"
     >
       <Dropdown
@@ -89,6 +107,7 @@
         placeholder="Tür"
         class="filtre-select"
         show-clear
+        @change="filtreDegisti"
       />
       <Dropdown
         v-model="filtreBakiye"
@@ -98,6 +117,7 @@
         placeholder="Bakiye"
         class="filtre-select"
         show-clear
+        @change="filtreDegisti"
       />
       <Button
         v-if="filtreTur || filtreBakiye"
@@ -117,7 +137,7 @@
         v-model:selection="selectedCariHesaplar"
         state-storage="session"
         state-key="carihesaplar-table-state"
-        :value="filtrelenmisCariler"
+        :value="cariHesapStore?.cariHesaplar || []"
         selection-mode="multiple"
         data-key="id"
         responsive-layout="scroll"
@@ -1048,22 +1068,27 @@ const bakiyeFiltreleri = [
   { label: 'Borçlu', value: 'borc' }
 ]
 
-const filtrelenmisCariler = computed(() => {
-  let list = cariHesapStore?.cariHesaplar || []
-  if (filtreTur.value) {
-    list = list.filter((c) => c.tur === filtreTur.value || c.tur === 'Her Ikisi')
+const cariOzet = ref({})
+
+const cariOzetYukle = async () => {
+  try {
+    const r = await cariHesapAPI.ozet()
+    cariOzet.value = r.data || {}
+  } catch {
+    cariOzet.value = {}
   }
-  if (filtreBakiye.value === 'alacak') {
-    list = list.filter((c) => (c.bakiye || 0) > 0)
-  } else if (filtreBakiye.value === 'borc') {
-    list = list.filter((c) => (c.bakiye || 0) < 0)
-  }
-  return list
-})
+}
 
 const filtreleriTemizle = () => {
   filtreTur.value = null
   filtreBakiye.value = null
+  cariSayfa.value = 0
+  loadCariHesaplar(0, cariSayfaBoyutu.value)
+}
+
+const filtreDegisti = () => {
+  cariSayfa.value = 0
+  loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
 const toplamTahsilat = computed(() =>
@@ -1111,6 +1136,7 @@ const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
   await loadCariHesaplar()
+  cariOzetYukle()
   try {
     const r = await stokAPI.getAll({ size: 1000 })
     stokSecenekleri.value = r.data?.content || r.data || []
@@ -1127,7 +1153,9 @@ const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu
   try {
     const params = { page: sayfa, size: boyut }
     if (aramaMetni.value.trim()) params.q = aramaMetni.value.trim()
-    await cariHesapStore.getAllCariHesaplar(params)
+    if (filtreTur.value) params.tur = filtreTur.value
+    if (filtreBakiye.value) params.bakiyeYonu = filtreBakiye.value
+    await cariHesapStore.filtreliCari(params)
   } catch (error) {
     toastBildirim.hata('Cari hesaplar yüklenirken hata oluştu')
   } finally {
@@ -1145,11 +1173,7 @@ const ara = () => {
   if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
   aramaZamanlayici = setTimeout(async () => {
     cariSayfa.value = 0
-    if (!aramaMetni.value.trim()) {
-      await loadCariHesaplar(0, cariSayfaBoyutu.value)
-    } else {
-      await cariHesapStore.ara(aramaMetni.value)
-    }
+    await loadCariHesaplar(0, cariSayfaBoyutu.value)
   }, 300)
 }
 
@@ -1587,6 +1611,29 @@ const formatDate = (dateString) => {
   gap: 8px;
   margin-bottom: 12px;
   align-items: center;
+}
+.cari-istatistik {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.istatistik-kutu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.istatistik-kutu span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.istatistik-kutu strong {
+  font-size: 18px;
+  color: var(--text-primary);
 }
 .filtre-select {
   width: 180px;
