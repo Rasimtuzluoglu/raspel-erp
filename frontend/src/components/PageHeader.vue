@@ -46,6 +46,7 @@ const headerDesc = computed(() => props.description || props.subtitle || null)
 <style scoped>
 .page-header {
   margin-bottom: 24px;
+  max-width: 100%;
 }
 .page-header-main {
   display: flex;
@@ -53,10 +54,11 @@ const headerDesc = computed(() => props.description || props.subtitle || null)
   align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 .page-header-content {
-  flex: 1;
-  min-width: 250px;
+  flex: 1 1 220px;
+  min-width: 0;
 }
 .page-header-title {
   display: flex;
@@ -72,16 +74,22 @@ const headerDesc = computed(() => props.description || props.subtitle || null)
   font-weight: 600;
   margin: 0;
   color: var(--text-primary, #f1f5f9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 .page-header-desc {
   margin: 6px 0 0 0;
   font-size: 14px;
   color: var(--text-secondary, #94a3b8);
+  overflow-wrap: anywhere;
 }
 .page-header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 </style>

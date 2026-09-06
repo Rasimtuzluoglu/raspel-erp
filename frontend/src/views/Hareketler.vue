@@ -611,7 +611,8 @@ const formatDate = (dateString) => {
 
 <style scoped>
 .hareketler-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 
 h1 {

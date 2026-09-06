@@ -18,7 +18,6 @@
         <template #title>
           <i
             class="pi pi-user"
-            style="margin-right: 8px"
           />Profil
         </template>
         <template #content>
@@ -63,7 +62,6 @@
         <template #title>
           <i
             class="pi pi-lock"
-            style="margin-right: 8px"
           />Şifre Değiştir
         </template>
         <template #content>
@@ -104,7 +102,6 @@
         <template #title>
           <i
             class="pi pi-shield"
-            style="margin-right: 8px"
           />İki Faktörlü Doğrulama (2FA)
         </template>
         <template #content>
@@ -196,7 +193,6 @@
         <template #title>
           <i
             class="pi pi-palette"
-            style="margin-right: 8px"
           />Görünüm
         </template>
         <template #content>
@@ -207,14 +203,14 @@
                 <Button
                   label="Açık"
                   icon="pi pi-sun"
-                  :severity="!isDark ? 'primary' : 'secondary'"
+                  :severity="!isDark ? 'contrast' : 'secondary'"
                   :outlined="isDark"
                   @click="applyMode('light')"
                 />
                 <Button
                   label="Koyu"
                   icon="pi pi-moon"
-                  :severity="isDark ? 'primary' : 'secondary'"
+                  :severity="isDark ? 'contrast' : 'secondary'"
                   :outlined="!isDark"
                   @click="applyMode('dark')"
                 />
@@ -242,10 +238,9 @@
       <Card class="ayar-kart ai-ayar-kart">
         <template #title>
           <div class="ai-baslik-satir">
-            <div>
+            <div class="baslik-ic ai-baslik-ic">
               <i
                 class="pi pi-sparkles"
-                style="margin-right: 8px; color: #8b5cf6"
               />Yapay Zeka (AI) Entegrasyonu
             </div>
             <Tag
@@ -342,13 +337,12 @@
       <!-- FATURA YAZDIRMA ŞABLON TASARIMI -->
       <Card class="ayar-kart">
         <template #title>
-          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-            <div>
+          <div class="baslik-satir">
+            <span>
               <i
                 class="pi pi-print"
-                style="margin-right: 8px"
               />Fatura Yazdırma Şablonu
-            </div>
+            </span>
             <Tag
               value="Özelleştirilebilir"
               severity="info"
@@ -373,13 +367,12 @@
       <!-- AKTİF OTURUMLAR -->
       <Card class="ayar-kart">
         <template #title>
-          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-            <div>
+          <div class="baslik-satir">
+            <span>
               <i
                 class="pi pi-desktop"
-                style="margin-right: 8px"
               />Aktif Oturumlar
-            </div>
+            </span>
             <Button
               icon="pi pi-refresh"
               class="p-button-sm p-button-text"
@@ -444,13 +437,12 @@
       <!-- BİLDİRİM TERCİHLERİ -->
       <Card class="ayar-kart">
         <template #title>
-          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-            <div>
+          <div class="baslik-satir">
+            <span>
               <i
                 class="pi pi-bell"
-                style="margin-right: 8px"
               />Bildirim Tercihleri
-            </div>
+            </span>
             <Button
               icon="pi pi-save"
               label="Kaydet"
@@ -480,13 +472,12 @@
       <!-- API ERİŞİM TOKENLARI -->
       <Card class="ayar-kart">
         <template #title>
-          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-            <div>
+          <div class="baslik-satir">
+            <span>
               <i
                 class="pi pi-key"
-                style="margin-right: 8px"
               />API Erişim Tokenları
-            </div>
+            </span>
             <Button
               icon="pi pi-plus"
               label="Yeni Token"
@@ -536,10 +527,9 @@
       <!-- FİŞ YAZDIRMA AYARLARI -->
       <Card class="ayar-kart">
         <template #title>
-          <div>
+          <div class="baslik-ic">
             <i
               class="pi pi-print"
-              style="margin-right: 8px"
             />Fiş Yazdırma Ayarları
           </div>
         </template>
@@ -977,11 +967,49 @@ const kopyala = async (text) => {
 }
 .ayarlar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
   gap: 20px;
+  align-items: start;
+}
+.ayar-kart {
+  display: flex;
+  flex-direction: column;
 }
 .ayar-kart :deep(.p-card-content) {
   padding-top: 8px;
+  flex: 1;
+}
+.ayar-kart :deep(.p-card-title) {
+  display: flex;
+  align-items: center;
+}
+.ayar-kart :deep(.p-card-title i) {
+  margin-right: 8px;
+}
+.baslik-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.baslik-satir > span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.baslik-satir > span i {
+  margin-right: 8px;
+}
+.baslik-ic {
+  display: inline-flex;
+  align-items: center;
+}
+.baslik-ic i {
+  margin-right: 8px;
+}
+.ai-baslik-ic i {
+  color: #8b5cf6;
 }
 .form-grid {
   display: flex;
@@ -1005,6 +1033,7 @@ const kopyala = async (text) => {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .iki-fa-acik .iki-fa-baslik {
   display: flex;
@@ -1118,6 +1147,8 @@ const kopyala = async (text) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }

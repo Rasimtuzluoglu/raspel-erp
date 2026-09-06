@@ -148,6 +148,10 @@ export const tahsilatAPI = {
   },
   hatirlat(cariId) {
     return apiClient.post(`/tahsilat/${cariId}/hatirlat`)
+  },
+  gir(data) {
+    // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, aciklama, hareketTarihi }
+    return apiClient.post('/tahsilat', data)
   }
 }
 

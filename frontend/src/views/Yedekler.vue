@@ -41,11 +41,10 @@
 
     <Card class="dogrulama-kart">
       <template #title>
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+        <div class="baslik-satir">
           <span>
             <i
               class="pi pi-shield"
-              style="margin-right: 8px"
             />Yedek Doğrulama
           </span>
           <Button
@@ -532,6 +531,21 @@ onMounted(() => {
   border: 1px solid var(--border);
   border-radius: 12px;
 }
+.baslik-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.baslik-satir > span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.baslik-satir > span i {
+  margin-right: 8px;
+}
 .dogrulama-icerik {
   display: flex;
   align-items: center;
@@ -556,7 +570,7 @@ onMounted(() => {
 }
 .bulut-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 16px;
   align-items: flex-end;
 }
@@ -607,7 +621,7 @@ onMounted(() => {
 
 .ozet-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 24px;
 }
@@ -646,7 +660,7 @@ onMounted(() => {
 
 @media (max-width: 900px) {
   .ozet-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 500px) {

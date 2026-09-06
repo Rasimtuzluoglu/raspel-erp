@@ -24,6 +24,10 @@ public class EmailService {
     @Value("${spring.mail.from:noreply@raspel-erp.com}")
     private String fromEmail;
 
+    /** SMTP kullanıcı adı tanımlı değilse e-posta gerçekten gönderilmez (mock akışı). */
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
     private static final String TEMPLATE_CSS = """
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 0; }
@@ -45,7 +49,7 @@ public class EmailService {
     @Async
     public void emailGonder(String to, String subject, String body) {
         try {
-            if (mailSender != null) {
+            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
                 MimeMessage message = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
                 helper.setFrom(fromEmail);
@@ -55,7 +59,7 @@ public class EmailService {
                 mailSender.send(message);
                 log.info("E-posta başarıyla gönderildi -> To: {}, Subject: {}", to, subject);
             } else {
-                log.info("[E-POSTA MOCK] MailSender yapılandırılmadığı için e-posta loga yazıldı -> To: {}, Subject: {}\nBody: {}", to, subject, body);
+                log.info("[E-POSTA MOCK] SMTP yapılandırılmadığı için e-posta loga yazıldı -> To: {}, Subject: {}\nBody: {}", to, subject, body);
             }
         } catch (Exception e) {
             log.error("E-posta gönderilirken hata oluştu -> To: {}, Error: {}", to, e.getMessage());
@@ -123,7 +127,7 @@ public class EmailService {
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(aliciAdi != null ? aliciAdi : "Müşterimiz", faturaNo, faturaNo, tutar) + sablonAlt();
         try {
-            if (mailSender != null) {
+            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
                 MimeMessage message = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
                 helper.setFrom(fromEmail);
@@ -195,7 +199,7 @@ public class EmailService {
 
     private void htmlGonder(String to, String subject, String html) {
         try {
-            if (mailSender != null) {
+            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
                 MimeMessage message = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
                 helper.setFrom(fromEmail);

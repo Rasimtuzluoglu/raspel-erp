@@ -726,6 +726,7 @@ const hatirlatWhatsApp = (cari) => {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
   padding: 1rem 1.25rem;
   border-radius: 0.75rem;
   margin-bottom: 1.25rem;
@@ -819,6 +820,7 @@ const hatirlatWhatsApp = (cari) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .ay-select {
@@ -861,6 +863,8 @@ const hatirlatWhatsApp = (cari) => {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .progress-track {

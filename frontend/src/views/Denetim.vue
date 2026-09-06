@@ -407,14 +407,15 @@ onMounted(() => {
 
 <style scoped>
 .denetim-page {
-  padding: 1.5rem;
+  padding: 0;
+  max-width: 100%;
 }
 .filtre-karti {
   margin-bottom: 1rem;
 }
 .filtre-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 12px;
   align-items: end;
 }
@@ -433,7 +434,7 @@ onMounted(() => {
   width: 100% !important;
 }
 .kayitli-filtre {
-  min-width: 170px !important;
+  min-width: min(170px, 100%) !important;
 }
 .empty-state {
   text-align: center;

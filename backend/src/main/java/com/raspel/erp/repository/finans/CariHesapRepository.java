@@ -48,7 +48,7 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     Optional<CariHesap> findByIdForUpdate(@Param("id") Long id);
 
     @Query("SELECT c FROM CariHesap c WHERE c.sirketId = :sirketId " +
-            "AND (:q IS NULL OR lower(c.ad) LIKE lower(concat('%', :q, '%')) OR lower(c.vergiNumarasi) LIKE lower(concat('%', :q, '%')) OR lower(c.telefon) LIKE lower(concat('%', :q, '%'))) " +
+            "AND (:q IS NULL OR lower(c.ad) LIKE :q OR lower(c.vergiNumarasi) LIKE :q OR lower(c.telefon) LIKE :q) " +
             "AND (:tur IS NULL OR c.tur = :tur OR c.tur = 'Her Ikisi') " +
             "AND (:bakiyeYonu IS NULL OR (:bakiyeYonu = 'alacak' AND c.bakiye > 0) OR (:bakiyeYonu = 'borc' AND c.bakiye < 0))")
     Page<CariHesap> filtreli(@Param("sirketId") Long sirketId,

@@ -44,9 +44,9 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
     long countKritikStokBySirketId(@Param("sirketId") Long sirketId);
 
     @Query("SELECT s FROM Stok s WHERE s.sirketId = :sirketId " +
-            "AND (:q IS NULL OR lower(s.ad) LIKE lower(concat('%', :q, '%')) OR lower(s.stokKodu) LIKE lower(concat('%', :q, '%')) OR lower(s.barkod) LIKE lower(concat('%', :q, '%'))) " +
+            "AND (:q IS NULL OR lower(s.ad) LIKE :q OR lower(s.stokKodu) LIKE :q OR lower(s.barkod) LIKE :q) " +
             "AND (:kategori IS NULL OR s.kategori = :kategori) " +
-            "AND (:marka IS NULL OR lower(s.marka) LIKE lower(concat('%', :marka, '%'))) " +
+            "AND (:marka IS NULL OR lower(s.marka) LIKE :marka) " +
             "AND (:stokGrubu IS NULL OR s.stokGrubu = :stokGrubu) " +
             "AND (:minFiyat IS NULL OR s.satisFiyati >= :minFiyat OR s.fiyat >= :minFiyat) " +
             "AND (:maxFiyat IS NULL OR s.satisFiyati <= :maxFiyat OR s.fiyat <= :maxFiyat)")

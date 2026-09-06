@@ -61,6 +61,13 @@
         </template>
         <template #end>
           <Button
+            icon="pi pi-money-bill"
+            label="Tahsilat Gir"
+            class="p-button-success p-button-sm"
+            :disabled="!(ozet?.cariler || []).length"
+            @click="tahsilatGir()"
+          />
+          <Button
             icon="pi pi-refresh"
             label="Yenile"
             class="p-button-outlined p-button-sm"
@@ -124,10 +131,16 @@
           </Column>
           <Column
             header="İşlem"
-            style="width: 160px"
+            style="width: 200px"
           >
             <template #body="{ data }">
               <div class="islem-grup">
+                <Button
+                  icon="pi pi-money-bill"
+                  class="p-button-rounded p-button-text p-button-success"
+                  title="Tahsilat Gir"
+                  @click="tahsilatGir(data)"
+                />
                 <Button
                   icon="pi pi-envelope"
                   class="p-button-rounded p-button-text p-button-primary"
@@ -197,6 +210,13 @@
         sub-message="Şu anda ödenmemiş alacağınız bulunmuyor. Harika!"
       />
     </template>
+
+    <TahsilatGirDialog
+      v-model:visible="tahsilatDialogAcik"
+      :cariler="ozet?.cariler || []"
+      :baslangic-cari-id="seciliCariId"
+      @kaydedildi="yukle"
+    />
   </div>
 </template>
 
@@ -205,11 +225,19 @@ import { ref, onMounted } from 'vue'
 import { tahsilatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
+import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
 
 const toastBildirim = useToastBildirim()
 const yukleniyor = ref(false)
 const ozet = ref(null)
 const genisletilenler = ref([])
+const tahsilatDialogAcik = ref(false)
+const seciliCariId = ref(null)
+
+const tahsilatGir = (cari) => {
+  seciliCariId.value = cari?.cariId || null
+  tahsilatDialogAcik.value = true
+}
 
 const aralikSeverity = (aralik) => {
   if (!aralik) return 'info'
@@ -285,7 +313,7 @@ onMounted(yukle)
 }
 .ozet-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 14px;
   margin-bottom: 16px;
 }
@@ -366,13 +394,14 @@ onMounted(yukle)
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+  flex-wrap: wrap;
 }
 .fatura-satir:last-child {
   border-bottom: none;
 }
 .fatura-no {
   font-weight: 600;
-  min-width: 140px;
+  min-width: min(140px, 100%);
 }
 .fatura-vade {
   flex: 1;

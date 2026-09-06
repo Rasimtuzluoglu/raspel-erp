@@ -412,11 +412,12 @@ onMounted(() => {
 
 <style scoped>
 .tf-page {
-  padding: 1.5rem;
+  padding: 0;
+  max-width: 100%;
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -442,6 +443,7 @@ onMounted(() => {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .kalem-aciklama {
   flex: 1;

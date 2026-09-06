@@ -260,6 +260,7 @@ const yukle = async () => {
   align-items: flex-end;
   gap: 8px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 .donem-secim label {
   font-size: 12px;
@@ -293,7 +294,7 @@ const yukle = async () => {
 }
 .ozet-kutu {
   flex: 1;
-  min-width: 180px;
+  min-width: min(180px, 100%);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -319,7 +320,7 @@ const yukle = async () => {
 }
 .kdv-tablolar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 .kdv-tablo h3 {

@@ -371,8 +371,17 @@ onUnmounted(() => {
 .sohbet-sayfasi {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
+  height: calc(100dvh - 140px);
+  max-height: calc(100dvh - 140px);
+  min-height: 360px;
   padding: 0;
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  .sohbet-sayfasi {
+    height: calc(100dvh - 200px);
+    max-height: calc(100dvh - 200px);
+  }
 }
 .sohbet-baslik {
   display: flex;

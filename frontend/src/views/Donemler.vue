@@ -264,7 +264,7 @@ const sil = (data) => {
   flex-wrap: wrap;
 }
 .sirket-dropdown {
-  min-width: 200px;
+  min-width: min(200px, 100%);
 }
 .form-grid {
   display: flex;

@@ -833,53 +833,12 @@
       </template>
     </Dialog>
 
-    <Dialog
+    <TahsilatGirDialog
       v-model:visible="tahsilatDialog"
-      header="Tahsilat Ekle"
-      :modal="true"
-      style="width: 450px"
-    >
-      <div
-        v-if="tahsilatHedefCari"
-        class="tahsilat-cari"
-      >
-        Cari: <strong>{{ tahsilatHedefCari.ad }}</strong>
-      </div>
-      <div class="form-group">
-        <label>Tutar *</label>
-        <InputNumber
-          v-model="tahsilatForm.tutar"
-          :min="0.01"
-          :min-fraction-digits="2"
-          :max-fraction-digits="2"
-          mode="currency"
-          currency="TRY"
-          locale="tr-TR"
-          class="w-full"
-        />
-      </div>
-      <div class="form-group">
-        <label>Açıklama</label>
-        <InputText
-          v-model="tahsilatForm.aciklama"
-          placeholder="Tahsilat açıklaması"
-          class="w-full"
-        />
-      </div>
-      <template #footer>
-        <Button
-          label="İptal"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="tahsilatDialog = false"
-        />
-        <Button
-          label="Kaydet"
-          icon="pi pi-check"
-          @click="tahsilatKaydet"
-        />
-      </template>
-    </Dialog>
+      :cari="tahsilatHedefCari"
+      :cariler="[]"
+      @kaydedildi="tahsilatSonrasiYenile"
+    />
 
     <Dialog
       v-model:visible="topluEmailDialog"
@@ -1018,6 +977,7 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
 import { formatCurrency } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
@@ -1328,34 +1288,33 @@ const topluEmailGonder = () => {
 }
 
 const tahsilatDialog = ref(false)
-const tahsilatForm = ref({ tutar: null, aciklama: '' })
 const tahsilatHedefCari = ref(null)
 
-const tahsilatAc = (cariHesap) => {
+const tahsilatAc = async (cariHesap) => {
   tahsilatHedefCari.value = cariHesap
-  tahsilatForm.value = { tutar: null, aciklama: '' }
   tahsilatDialog.value = true
+  try {
+    const r = await faturaAPI.cariFaturalari(cariHesap.id, { size: 200 })
+    const faturalar = r.data?.content || r.data || []
+    tahsilatHedefCari.value = {
+      ...cariHesap,
+      acikFaturalar: faturalar
+        .filter((f) => Number(f.kalanTutar) > 0)
+        .map((f) => ({
+          faturaId: f.id,
+          faturaNumarasi: f.faturaNumarasi,
+          vadeTarihi: f.vadeTarihi,
+          kalanTutar: f.kalanTutar
+        }))
+    }
+  } catch {
+    tahsilatHedefCari.value = cariHesap
+  }
 }
 
-const tahsilatKaydet = async () => {
-  if (!tahsilatForm.value.tutar || tahsilatForm.value.tutar <= 0) {
-    toastBildirim.uyari('Geçerli tutar giriniz')
-    return
-  }
-  try {
-    await hareketAPI.create({
-      cariHesapId: tahsilatHedefCari.value.id,
-      tur: 'TAHSILAT',
-      tutar: tahsilatForm.value.tutar,
-      hareketTarihi: new Date().toISOString().split('T')[0],
-      aciklama: tahsilatForm.value.aciklama || 'Tahsilat'
-    })
-    toastBildirim.basarili('Tahsilat kaydedildi')
-    tahsilatDialog.value = false
-    await cariHesapStore.getAllCariHesaplar()
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Tahsilat başarısız')
-  }
+const tahsilatSonrasiYenile = async () => {
+  tahsilatHedefCari.value = null
+  await cariHesapStore.getAllCariHesaplar()
 }
 
 const viewHareketler = async (cariHesap) => {  selectedCariHesap.value = cariHesap
@@ -1839,7 +1798,8 @@ const formatDate = (dateString) => {
 }
 
 .cari-hesaplar-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 
 h1 {

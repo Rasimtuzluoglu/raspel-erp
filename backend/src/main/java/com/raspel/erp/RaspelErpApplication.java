@@ -2,10 +2,11 @@ package com.raspel.erp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = MailSenderAutoConfiguration.class)
 @EnableScheduling
 @EnableAsync
 public class RaspelErpApplication {

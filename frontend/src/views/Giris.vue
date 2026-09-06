@@ -585,13 +585,17 @@ const tumAdimlariSifirla = () => {
 <style scoped>
 .giris-sayfasi {
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
   overflow-x: hidden;
+  overflow-y: auto;
   padding: 30px 20px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Company Selection Enhance */
@@ -701,7 +705,8 @@ const tumAdimlariSifirla = () => {
   z-index: 1;
   display: flex;
   width: 100%;
-  max-width: 1140px;
+  max-width: min(1140px, 100%);
+  min-width: 0;
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -788,7 +793,7 @@ const tumAdimlariSifirla = () => {
 /* Feature Cards Grid */
 .hero-features-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 32px;
 }

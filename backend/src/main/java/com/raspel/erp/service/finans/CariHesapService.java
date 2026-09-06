@@ -115,7 +115,9 @@ public class CariHesapService {
      * Sunucu tarafında filtrelenmiş, aranmış ve sayfalanmış cari listesi.
      */
     public Page<CariHesapDTO> filtreli(Long sirketId, String q, String tur, String bakiyeYonu, Pageable pageable) {
-        return cariHesapRepository.filtreli(sirketId, bosIseNull(q), bosIseNull(tur), bosIseNull(bakiyeYonu), pageable)
+        String arama = bosIseNull(q);
+        if (arama != null) arama = "%" + arama.toLowerCase() + "%";
+        return cariHesapRepository.filtreli(sirketId, arama, bosIseNull(tur), bosIseNull(bakiyeYonu), pageable)
                 .map(this::entityDTOyeCevir);
     }
 

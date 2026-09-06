@@ -589,12 +589,15 @@ public class FaturaService {
 
     /**
      * Faturanın cari hesap bakiyesine etkisini uygular.
-     * Satış faturası alacak (+) , alış faturası borç (-) yönünde işler; ters=true iptal/geri alma için işareti çevirir.
+     * Kullanıcı görünümü: pozitif = alacak, negatif = borç.
+     * Satış faturası müşteriyi borçlandırır (bakiye eksi), alış faturası tedarikçiye borç olarak artar.
+     * ters=true iptal/geri alma için işareti çevirir.
      */
     private void cariBakiyeGuncelle(Fatura fatura, boolean ters) {
         if (fatura.getCariHesap() == null) return;
         BigDecimal tutar = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
-        if (fatura.getTur() == Fatura.FaturaTur.ALIS) {
+        if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
+            // Satış: müşteri borçlanır -> bakiye negatif (borçlu)
             tutar = tutar.negate();
         }
         if (ters) {

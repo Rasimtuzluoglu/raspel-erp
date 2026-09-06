@@ -335,16 +335,18 @@ onMounted(() => {
 
 <style scoped>
 .yetki-page {
-  padding: 1rem;
+  padding: 0;
+  max-width: 100%;
 }
 .matrix-container {
   display: flex;
   gap: 1.25rem;
   margin-top: 1rem;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 .roles-sidebar {
-  width: 240px;
+  width: min(240px, 100%);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -376,15 +378,19 @@ onMounted(() => {
 
 .matrix-card {
   flex: 1;
+  min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  overflow-x: auto;
 }
 
 .rbac-table {
   border-collapse: collapse;
+  width: 100%;
+  min-width: 480px;
 }
 .rbac-table th {
   padding: 10px 12px;

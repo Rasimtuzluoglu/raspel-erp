@@ -302,17 +302,22 @@ const temizle = async () => {
 }
 .bildirim-panel {
   position: fixed;
-  left: 245px;
+  left: 16px;
   bottom: 70px;
   top: auto;
   z-index: 99999;
-  width: 340px;
-  max-height: 420px;
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(420px, calc(100vh - 90px));
   overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+}
+@media (min-width: 901px) {
+  .bildirim-panel {
+    left: 245px;
+  }
 }
 .panel-baslik {
   display: flex;

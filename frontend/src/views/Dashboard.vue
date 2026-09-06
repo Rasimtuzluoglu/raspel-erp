@@ -116,7 +116,7 @@
           height="120px"
         />
       </div>
-      <div style="grid-column: 1/-1; display: grid; grid-template-columns: 1fr 1fr; gap: 18px">
+      <div class="skeleton-bottom">
         <Skeleton
           width="100%"
           height="220px"
@@ -1041,6 +1041,8 @@ const whatsappLink = (f) => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .dashboard-datetime {
   font-size: 13px;
@@ -1052,9 +1054,15 @@ const whatsappLink = (f) => {
 }
 .skeleton-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 24px;
+}
+.skeleton-bottom {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
 }
 .skeleton-card {
   border-radius: 14px;
@@ -1079,7 +1087,7 @@ const whatsappLink = (f) => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -1208,6 +1216,9 @@ const whatsappLink = (f) => {
   font-size: 22px;
   font-weight: 700;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .stat-value small {
   font-size: 12px;
@@ -1233,7 +1244,7 @@ const whatsappLink = (f) => {
 
 .mini-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -1307,7 +1318,7 @@ const whatsappLink = (f) => {
 
 .bugun-ozet-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -1349,7 +1360,7 @@ const whatsappLink = (f) => {
 
 .hedef-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 14px;
   margin-bottom: 20px;
 }
@@ -1381,6 +1392,8 @@ const whatsappLink = (f) => {
   color: var(--text-primary);
   font-size: 14px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hedef-track {
   height: 8px;
@@ -1421,7 +1434,7 @@ const whatsappLink = (f) => {
 
 .kritik-stok-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -1463,7 +1476,7 @@ const whatsappLink = (f) => {
 
 .charts-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 18px;
   margin-bottom: 24px;
 }
@@ -1534,7 +1547,7 @@ const whatsappLink = (f) => {
 
 .bottom-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 .recent-transactions {
@@ -1558,7 +1571,7 @@ const whatsappLink = (f) => {
 }
 .vade-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 18px;
 }
 .vade-card .p-card-title {
@@ -1575,8 +1588,17 @@ const whatsappLink = (f) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+.reminder-ad {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
 }
 .reminder-aksiyon {
   display: flex;
@@ -1593,9 +1615,6 @@ const whatsappLink = (f) => {
 }
 .reminder-item:last-child {
   border-bottom: none;
-}
-.reminder-ad {
-  font-size: 13px;
 }
 .reminder-tutar {
   font-size: 13px;
@@ -1666,7 +1685,7 @@ const whatsappLink = (f) => {
 }
 .nakit-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 14px;
 }
 .nakit-kart .p-card-title {
@@ -1693,7 +1712,7 @@ const whatsappLink = (f) => {
 }
 .sg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
   gap: 10px;
 }
 .sg-item {
@@ -1786,7 +1805,7 @@ const whatsappLink = (f) => {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -1843,6 +1862,7 @@ const whatsappLink = (f) => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   padding: 12px 20px;
   margin-bottom: 20px;
   background: var(--yellow-50, #fefce8);
@@ -1866,7 +1886,13 @@ const whatsappLink = (f) => {
 
 @media (max-width: 768px) {
   .quick-actions {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .quick-actions,
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1882,6 +1908,10 @@ const whatsappLink = (f) => {
   }
   .dashboard-datetime {
     white-space: normal;
+  }
+  .skeleton-bottom,
+  .bottom-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

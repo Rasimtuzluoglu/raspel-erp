@@ -263,6 +263,9 @@ watch(
   font-size: 13px;
   font-weight: 500;
   border-bottom: 1px solid #f59e0b;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 [data-theme='dark'] .offline-banner {
   background: rgba(245, 158, 11, 0.15);
@@ -272,6 +275,10 @@ watch(
 .offline-banner i {
   font-size: 16px;
   flex-shrink: 0;
+}
+.offline-banner span {
+  flex: 1;
+  min-width: 0;
 }
 .offline-tekrar-dene {
   margin-left: auto;

@@ -415,7 +415,8 @@ const confirmDel = (id) => {
 
 <style scoped>
 .kullanicilar-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 h1 {
   color: var(--text-primary);
@@ -436,7 +437,7 @@ h1 {
 }
 .kullanici-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
   gap: 16px;
 }
 .kullanici-kart {
@@ -582,7 +583,7 @@ h1 {
 }
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 }
 .w-full {

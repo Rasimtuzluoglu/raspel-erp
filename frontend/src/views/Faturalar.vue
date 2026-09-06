@@ -1073,7 +1073,8 @@ const formatDate = (dateString) => {
 
 <style scoped>
 .faturalar-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 h1 {
   color: var(--text-primary);
@@ -1103,7 +1104,7 @@ h1 {
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 }
 .form-group {
@@ -1221,6 +1222,8 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 10px 16px;
   background: var(--blue-50, #eff6ff);
   border: 1px solid var(--blue-200, #bfdbfe);

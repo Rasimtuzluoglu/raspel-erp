@@ -128,11 +128,22 @@ public class HareketService {
             throw new BusinessException("Geçersiz hareket türü: " + dto.getTur());
         }
         
-        // Bakiye güncelleme tutarını hesapla (Alacak +, Borç -: Tahsilat alacağı azaltır, Ödeme borcu azaltır)
-        BigDecimal bakiyeGuncellemeTutari = hareketTuru == Hareket.HareketTuru.TAHSILAT 
-                ? dto.getTutar().negate() 
-                : dto.getTutar();
-        
+        // Bakiye güncelleme tutarını hesapla.
+        // Bakiye gösterimi: pozitif = alacak, negatif = borç (kullanıcıya eksi olarak görünür).
+        // Satış faturası kesilince cari borçlanır (bakiye azalır/negatif), tahsilat alınınca bakiye artar (borç kapanır).
+        BigDecimal bakiyeGuncellemeTutari = hareketTuru == Hareket.HareketTuru.TAHSILAT
+                ? dto.getTutar()
+                : dto.getTutar().negate();
+
+        // Ödeme yöntemi geçerli değilse reddet
+        String odemeYontemi = odemeYontemiDogrula(dto.getOdemeYontemi());
+        // Taksit için kurum ve tutar zorunlu
+        if ("TAKSIT".equals(odemeYontemi)
+                && (dto.getTaksitKurum() == null || dto.getTaksitKurum().isBlank()
+                || dto.getTaksitTutar() == null || dto.getTaksitTutar().compareTo(BigDecimal.ZERO) <= 0)) {
+            throw new BusinessException("Taksit seçildiğinde taksit kurumu ve çekilen tutar girilmelidir");
+        }
+
         // Hareket oluştur
         Hareket hareket = Hareket.builder()
                 .cariHesap(cariHesap)
@@ -141,6 +152,9 @@ public class HareketService {
                 .hareketTarihi(dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now())
                 .aciklama(dto.getAciklama())
                 .odemeSekli(dto.getOdemeSekli())
+                .odemeYontemi(odemeYontemi)
+                .taksitKurum(dto.getTaksitKurum())
+                .taksitTutar(dto.getTaksitTutar())
                 .faturaId(dto.getFaturaId())
                 .sirketId(sirketId)
                 .build();
@@ -231,10 +245,10 @@ public class HareketService {
         }
 
         BigDecimal eskiBakiyeEtkisi = hareket.getTur() == Hareket.HareketTuru.TAHSILAT
-                ? hareket.getTutar().negate() : hareket.getTutar();
+                ? hareket.getTutar() : hareket.getTutar().negate();
 
         BigDecimal yeniBakiyeEtkisi = yeniTur == Hareket.HareketTuru.TAHSILAT
-                ? dto.getTutar().negate() : dto.getTutar();
+                ? dto.getTutar() : dto.getTutar().negate();
 
         // Eski bağlı fatura etkisini geri al, yeni faturaya uygula
         Long eskiFaturaId = hareket.getFaturaId();
@@ -253,6 +267,9 @@ public class HareketService {
         hareket.setHareketTarihi(dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now());
         hareket.setAciklama(dto.getAciklama());
         if (dto.getOdemeSekli() != null) hareket.setOdemeSekli(dto.getOdemeSekli());
+        if (dto.getOdemeYontemi() != null) hareket.setOdemeYontemi(odemeYontemiDogrula(dto.getOdemeYontemi()));
+        if (dto.getTaksitKurum() != null) hareket.setTaksitKurum(dto.getTaksitKurum());
+        if (dto.getTaksitTutar() != null) hareket.setTaksitTutar(dto.getTaksitTutar());
         hareket.setFaturaId(dto.getFaturaId());
 
         Hareket guncellenen = hareketRepository.save(hareket);
@@ -273,10 +290,10 @@ public class HareketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
         tenantChecker.check(hareket.getSirketId(), "Hareket");
         
-        // Bakiye güncellemeyi ters işlemle yap
+        // Bakiye güncellemeyi ters işlemle yap (tahsilat silinirse bakiye azalır, ödeme silinirse artar)
         BigDecimal bakiyeGuncellemeTutari = hareket.getTur() == Hareket.HareketTuru.TAHSILAT 
-                ? hareket.getTutar() 
-                : hareket.getTutar().negate();
+                ? hareket.getTutar().negate()
+                : hareket.getTutar();
         
         cariHesapService.bakiyeGuncelle(hareket.getCariHesap().getId(), bakiyeGuncellemeTutari);
 
@@ -307,8 +324,18 @@ public class HareketService {
                 .hareketTarihi(hareket.getHareketTarihi())
                 .aciklama(hareket.getAciklama())
                 .odemeSekli(hareket.getOdemeSekli())
+                .odemeYontemi(hareket.getOdemeYontemi())
+                .taksitKurum(hareket.getTaksitKurum())
+                .taksitTutar(hareket.getTaksitTutar())
                 .faturaId(hareket.getFaturaId())
                 .olusturmaTarihi(hareket.getOlusturmaTarihi())
                 .build();
+    }
+
+    /** Ödeme yöntemini doğrular; geçersizse null döner. */
+    private String odemeYontemiDogrula(String odemeYontemi) {
+        if (odemeYontemi == null || odemeYontemi.isBlank()) return null;
+        String yontem = odemeYontemi.toUpperCase();
+        return java.util.Set.of("NAKIT", "KART", "TAKSIT", "HAVALE").contains(yontem) ? yontem : null;
     }
 }

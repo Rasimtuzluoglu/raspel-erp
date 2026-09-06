@@ -34,6 +34,15 @@ public class HareketDTO {
 
     private String odemeSekli;
 
+    /** Ödeme yöntemi: NAKIT, KART, TAKSIT, HAVALE */
+    private String odemeYontemi;
+
+    /** Taksit çekilen banka / finans kurumu adı */
+    private String taksitKurum;
+
+    /** Taksit olarak çekilen tutar */
+    private BigDecimal taksitTutar;
+
     /** Bağlı fatura ID'si (opsiyonel): verilirse fatura ödeme durumu hareketle birlikte güncellenir */
     private Long faturaId;
 

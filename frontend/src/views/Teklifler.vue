@@ -76,7 +76,7 @@
         class="p-datatable-sm"
       >
         <template #header>
-          <div class="tablo-toolbar flex justify-between items-center">
+          <div class="tablo-toolbar">
             <div class="durum-filtre-chips flex gap-2">
               <button
                 type="button"

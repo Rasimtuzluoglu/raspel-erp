@@ -95,7 +95,7 @@ class HareketServiceTest {
         Hareket saved = createHareket(1L);
         saved.setTutar(BigDecimal.valueOf(1000));
         when(hareketRepository.save(any(Hareket.class))).thenReturn(saved);
-        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(-1000));
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(1000));
         var result = hareketService.hareketOlustur(dto, 1L);
         assertEquals(Hareket.HareketTuru.TAHSILAT.name(), result.getTur());
     }
@@ -143,7 +143,7 @@ class HareketServiceTest {
         Hareket saved = createHareket(1L);
         saved.setFaturaId(5L);
         when(hareketRepository.save(any(Hareket.class))).thenReturn(saved);
-        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(-4000));
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(4000));
 
         hareketService.hareketOlustur(dto, 1L);
 
@@ -169,7 +169,7 @@ class HareketServiceTest {
         Hareket saved = createHareket(1L);
         saved.setFaturaId(5L);
         when(hareketRepository.save(any(Hareket.class))).thenReturn(saved);
-        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(-4000));
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(4000));
 
         hareketService.hareketOlustur(dto, 1L);
 
@@ -253,7 +253,7 @@ class HareketServiceTest {
         HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT")
                 .tutar(BigDecimal.valueOf(500)).hareketTarihi(LocalDate.now()).build();
         when(hareketRepository.save(any(Hareket.class))).thenReturn(existing);
-        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(-800));
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(800));
         var result = hareketService.hareketGuncelle(1L, dto);
         assertNotNull(result);
     }

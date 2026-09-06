@@ -413,6 +413,7 @@ const sil = (data) => {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .kalem-stok {
   flex: 2;

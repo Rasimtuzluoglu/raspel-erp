@@ -34,9 +34,8 @@
         v-for="d in durumlar"
         :key="d.value"
         :label="d.label"
-        :class="{ 'filtre-aktif': aktifDurum === d.value }"
         size="small"
-        :severity="aktifDurum === d.value ? 'primary' : 'secondary'"
+        :severity="aktifDurum === d.value ? 'contrast' : 'secondary'"
         :outlined="aktifDurum !== d.value"
         @click="filtreDegistir(d.value)"
       />
@@ -181,7 +180,7 @@
 
     <Card class="churn-kart">
       <template #title>
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+        <div class="churn-baslik">
           <span><i class="pi pi-chart-line" /> Müşteri Kayıp Riski (Churn)</span>
           <Button
             icon="pi pi-refresh"
@@ -561,6 +560,8 @@ const sil = (data) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .baslik-aksiyonlar {
   display: flex;
@@ -602,7 +603,7 @@ const sil = (data) => {
 }
 .crm-kanban-board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 16px;
   margin-top: 10px;
   align-items: start;
@@ -612,7 +613,8 @@ const sil = (data) => {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  min-height: 450px;
+  min-height: 280px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -720,6 +722,18 @@ const sil = (data) => {
 }
 .churn-kart {
   margin-top: 24px;
+}
+.churn-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.churn-baslik span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
 }
 .churn-aciklama {
   font-size: 0.85rem;

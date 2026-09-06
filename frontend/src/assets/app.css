@@ -137,6 +137,10 @@
   color: #94a3b8;
 }
 
+html {
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   font-family:
@@ -151,11 +155,24 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  max-width: 100%;
+}
+
+#app {
+  max-width: 100%;
+}
+
+img {
+  max-width: 100%;
 }
 
 .app-container {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -175,6 +192,14 @@ body {
 .sidebar-ust {
   padding: 16px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-top-actions {
+  display: none;
+  align-items: center;
   flex-shrink: 0;
 }
 .brand {
@@ -308,6 +333,25 @@ body {
   font-size: 15px;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
+}
+.sidebar-menu a > span:not(.menu-sayac) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gelismis-mod-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  user-select: none;
+}
+.gelismis-mod-btn:hover {
+  color: var(--text-primary);
 }
 .pi-star {
   font-size: 11px !important;
@@ -503,14 +547,17 @@ body {
   flex-shrink: 0;
 }
 .main-content {
-  flex: 1;
-  padding: 24px;
-  max-width: calc(100vw - var(--sidebar-w));
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 20px 24px 32px;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .main-content.giris-sayfasi {
   max-width: 100%;
   padding: 0;
+  overflow: visible;
 }
 
 .sidebar-credit {
@@ -590,6 +637,14 @@ body {
 .p-datatable {
   background: transparent !important;
   color: var(--text-primary) !important;
+  width: 100%;
+}
+.p-datatable-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.p-datatable .p-datatable-table {
+  min-width: 100%;
 }
 .p-datatable .p-datatable-thead > tr > th {
   background: rgba(30, 41, 59, 0.8) !important;
@@ -673,6 +728,22 @@ body {
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
   padding: 14px 18px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  align-items: center !important;
+  width: 100%;
+  max-width: 100%;
+}
+.p-toolbar .p-toolbar-group-start,
+.p-toolbar .p-toolbar-group-end,
+.p-toolbar-start,
+.p-toolbar-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .p-dropdown {
@@ -1213,8 +1284,12 @@ body {
     padding: 0;
     border: none;
     flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
+  }
+  .sidebar-top-actions {
+    display: flex;
   }
   .sidebar-menu,
   .sidebar-alt {
@@ -1260,8 +1335,8 @@ body {
   }
 
   .main-content {
-    padding-top: 60px;
     max-width: 100%;
+    min-width: 0;
     padding: 60px 12px calc(72px + env(safe-area-inset-bottom));
   }
   .main-content.giris-sayfasi {
@@ -1280,8 +1355,18 @@ body {
     padding: 16px !important;
   }
   .p-dialog {
-    width: 95vw !important;
-    margin: 10px !important;
+    width: min(95vw, 100%) !important;
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px !important;
+  }
+  .p-dialog .p-dialog-header,
+  .p-dialog .p-dialog-content,
+  .p-dialog .p-dialog-footer {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .p-dialog .p-dialog-content {
+    overflow-x: hidden;
   }
   .p-datatable {
     font-size: 12px !important;
@@ -1521,4 +1606,206 @@ h3 {
 /* Seçili DataTable satırına sol çubuk */
 .p-datatable .p-datatable-tbody > tr.p-highlight {
   box-shadow: inset 3px 0 0 var(--accent, #3b82f6);
+}
+
+/* ===== Taşma / kayma düzeltmeleri ===== */
+.form-row,
+.form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 100%;
+}
+.form-grid {
+  width: 100%;
+  max-width: 100%;
+}
+.filter-bar,
+.rapor-filtre,
+.tablo-toolbar,
+.batch-action-bar,
+.batch-actions,
+.page-header,
+.page-header-main,
+.page-header-actions,
+.sayfa-baslik,
+.ajanda-baslik,
+.detay-header,
+.raporlar-header-bar,
+.header-islem,
+.field-row,
+.fis-card-header {
+  max-width: 100%;
+  min-width: 0;
+}
+.sayfa-baslik,
+.ajanda-baslik,
+.detay-header,
+.raporlar-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tablo-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.filter-bar,
+.rapor-filtre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+.p-paginator {
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  justify-content: flex-end;
+}
+.p-datatable .p-datatable-thead > tr > th {
+  white-space: nowrap;
+}
+.p-inputtext,
+.p-dropdown,
+.p-multiselect,
+.p-calendar,
+.p-inputnumber,
+.p-autocomplete {
+  max-width: 100%;
+}
+.p-dialog {
+  max-width: calc(100vw - 24px) !important;
+}
+.p-dialog .p-dialog-content {
+  overflow-x: auto;
+}
+.p-overlaypanel,
+.p-dropdown-panel,
+.p-datepicker,
+.p-autocomplete-panel {
+  max-width: calc(100vw - 16px);
+}
+
+.dashboard-container,
+.pos-container {
+  max-width: 100%;
+  min-width: 0;
+}
+.cari-hesaplar-container,
+.stoklar-container,
+.faturalar-container,
+.kasa-container,
+.raporlar-container,
+.kullanicilar-container,
+.hareketler-container,
+.satis-container,
+.bankalar-container,
+.kategori-container,
+.puantaj-container,
+.pos-container {
+  padding: 0;
+}
+
+.p-card,
+.card,
+.table-container,
+.stat-card,
+.recent-transactions {
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .form-row,
+  .form-grid,
+  .form-row-2,
+  .finansal-grid,
+  .detail-grid,
+  .bottom-grid,
+  .hero-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .form-row .flex-2,
+  .form-grid .full-width {
+    grid-column: auto;
+  }
+  .batch-action-bar,
+  .batch-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+  }
+  .p-paginator {
+    justify-content: center !important;
+  }
+  .page-title,
+  .page-header-heading,
+  h1 {
+    font-size: 22px !important;
+    word-break: break-word;
+  }
+  .kullanici-grid,
+  .stok-kartlar,
+  .cards-grid,
+  .not-grid,
+  .ozet-grid,
+  .bugun-ozet-grid,
+  .kritik-stok-grid,
+  .sg-grid,
+  .nakit-grid,
+  .product-grid,
+  .hedef-grid,
+  .vade-grid,
+  .charts-row,
+  .ayarlar-grid,
+  .bulut-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .fis-kalem-baslik,
+  .fis-kalem {
+    grid-template-columns: 1fr !important;
+  }
+  .kebir-select,
+  .tip-select,
+  .filter-input,
+  .filter-dropdown {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100%;
+  }
+  .takvim-grid {
+    overflow-x: auto;
+  }
+  .gun-basliklar,
+  .gun-hucreleri {
+    min-width: 490px;
+  }
+  .fatura-kagit {
+    padding: 16px !important;
+  }
+  .kdv-tablolar,
+  .import-grid,
+  .ym-form-grid,
+  .skeleton-bottom {
+    grid-template-columns: 1fr !important;
+  }
+  .matrix-container {
+    flex-direction: column;
+  }
+  .roles-sidebar {
+    width: 100% !important;
+  }
 }

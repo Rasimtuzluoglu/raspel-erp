@@ -1383,7 +1383,8 @@ const formatDate = (d) =>
 }
 
 .stoklar-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 h1 {
   color: var(--text-primary);
@@ -1408,6 +1409,8 @@ h2 {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .table-header {
   display: flex;
@@ -1433,7 +1436,7 @@ h2 {
 }
 .stok-kartlar {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 15px;
   margin-bottom: 30px;
 }
@@ -1558,6 +1561,7 @@ h2 {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .fiyat-ad-input {
   flex: 1;
@@ -1576,7 +1580,7 @@ h2 {
 }
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 }
 .form-row .flex-2 {
@@ -1634,13 +1638,13 @@ h2 {
   align-items: center;
 }
 .filter-input {
-  width: 150px !important;
+  width: min(150px, 100%) !important;
 }
 .filter-input-sm {
-  width: 120px !important;
+  width: min(120px, 100%) !important;
 }
 .filter-dropdown {
-  width: 160px !important;
+  width: min(160px, 100%) !important;
 }
 .batch-actions {
   display: inline-flex;
@@ -1657,7 +1661,7 @@ h2 {
 }
 .detail-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 8px;
 }

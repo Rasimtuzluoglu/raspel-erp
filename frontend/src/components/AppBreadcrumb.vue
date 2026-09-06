@@ -116,9 +116,12 @@ const items = computed(() => {
 
 <style scoped>
 .breadcrumb {
-  padding: 8px 24px;
-  border-bottom: 1px solid var(--surface-border, #e2e8f0);
-  background: var(--surface-card, #ffffff);
+  padding: 0 0 12px;
+  margin: 0 0 8px;
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+  background: transparent;
+  max-width: 100%;
+  overflow: hidden;
 }
 .breadcrumb-list {
   list-style: none;
@@ -128,6 +131,7 @@ const items = computed(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 2px;
+  min-width: 0;
 }
 .breadcrumb-item {
   display: flex;
@@ -159,8 +163,12 @@ const items = computed(() => {
   margin: 0 4px;
 }
 .breadcrumb-current {
-  color: var(--text-primary, #1e293b);
+  color: var(--text-primary);
   font-weight: 500;
   padding: 2px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
 }
 </style>

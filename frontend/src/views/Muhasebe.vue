@@ -1111,7 +1111,7 @@ const karZararExcelIndir = async () => {
 .fis-kalem-baslik,
 .fis-kalem {
   display: grid;
-  grid-template-columns: 1fr 140px 140px 40px;
+  grid-template-columns: minmax(0, 1fr) minmax(80px, 140px) minmax(80px, 140px) 40px;
   gap: 8px;
   align-items: center;
 }
@@ -1139,7 +1139,7 @@ const karZararExcelIndir = async () => {
   margin-bottom: 12px;
 }
 .kebir-select {
-  min-width: 240px;
+  min-width: min(240px, 100%);
 }
 .pozitif {
   color: #10b981;
@@ -1151,7 +1151,7 @@ const karZararExcelIndir = async () => {
 }
 .finansal-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 .finansal-kolon {

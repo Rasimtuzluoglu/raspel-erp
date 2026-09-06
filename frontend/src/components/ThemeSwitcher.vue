@@ -99,10 +99,11 @@ const menuAc = () => {
       const rect = wrapperRef.value?.getBoundingClientRect()
       if (!rect) return
       const mh = menuRef.value ? menuRef.value.offsetHeight : 220
+      const mw = menuRef.value ? menuRef.value.offsetWidth : 240
       menuStil.value = {
         position: 'fixed',
         top: Math.max(8, rect.top - mh - 8) + 'px',
-        left: Math.max(8, rect.left) + 'px',
+        left: Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - mw - 8)) + 'px',
         bottom: 'auto'
       }
     })
@@ -156,7 +157,7 @@ onUnmounted(() => {
 }
 
 .theme-menu {
-  width: 240px;
+  width: min(240px, calc(100vw - 16px));
   background: var(--bg-card, #1e293b);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
   border-radius: 12px;
@@ -206,6 +207,7 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.2);
   padding: 4px;
   border-radius: 8px;
+  flex-wrap: wrap;
 }
 
 .mode-btn {

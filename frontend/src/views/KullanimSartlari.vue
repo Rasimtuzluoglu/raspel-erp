@@ -212,7 +212,7 @@ const yazdir = () => {
 
 <style scoped>
 .yasal-page {
-  padding: 1.5rem;
+  padding: 0;
   max-width: 1300px;
   margin: 0 auto;
 }

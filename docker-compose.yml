@@ -183,9 +183,9 @@ services:
     restart: unless-stopped
     networks:
       - db-net
-    profiles:
-      - dev
-      - debug
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DEFAULT_DB: raspelerp
 
   prometheus:
     image: prom/prometheus:v2.53.0

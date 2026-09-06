@@ -242,6 +242,7 @@ h1 {
   align-items: center;
   gap: 12px;
   margin: 16px 0;
+  flex-wrap: wrap;
 }
 .dosya-adi {
   font-size: 13px;

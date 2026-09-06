@@ -448,7 +448,8 @@ const formatDateTime = (d) => {
 
 <style scoped>
 .fatura-detay {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 .detay-header {
   display: flex;

@@ -496,7 +496,8 @@ onMounted(() => {
 
 <style scoped>
 .onaylar-sayfasi {
-  padding: 1rem;
+  padding: 0;
+  max-width: 100%;
 }
 
 .badge-sayi {

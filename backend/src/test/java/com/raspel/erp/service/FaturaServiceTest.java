@@ -175,11 +175,12 @@ class FaturaServiceTest {
         ArgumentCaptor<List<com.raspel.erp.entity.envanter.StokHareket>> captor = ArgumentCaptor.forClass(List.class);
         verify(stokHareketRepository).saveAll(captor.capture());
         assertEquals("GIRIS", captor.getValue().get(0).getTur());
-        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("-120"));
+        // Alış faturası tedarikçiyi alacaklandırır -> bakiye pozitif (alacak)
+        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("120"));
     }
 
     @Test
-    void faturaDurumGuncelle_satis_updatesCariBakiyePositive() {
+    void faturaDurumGuncelle_satis_updatesCariBakiyeNegative() {
         Fatura fatura = createFatura(1L);
         Stok stok = createStok();
         FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
@@ -190,7 +191,8 @@ class FaturaServiceTest {
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
         faturaService.faturaDurumGuncelle(1L, "KESILDI");
-        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("120"));
+        // Satış faturası müşteriyi borçlandırır -> bakiye negatif (borçlu)
+        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("-120"));
     }
 
     @Test

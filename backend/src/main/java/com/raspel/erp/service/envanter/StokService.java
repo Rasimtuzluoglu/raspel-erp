@@ -116,14 +116,19 @@ public class StokService {
     @Transactional(readOnly = true)
     public Page<StokDTO> filtreli(Long sirketId, String q, String kategori, String marka,
                                   String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Pageable pageable) {
-        Page<Stok> page = stokRepository.filtreli(sirketId, bosIseNull(q), bosIseNull(kategori),
-                bosIseNull(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, pageable);
+        Page<Stok> page = stokRepository.filtreli(sirketId, likeDeseni(q), bosIseNull(kategori),
+                likeDeseni(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, pageable);
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
         return page.map(s -> entityToDTO(s, tedarikciAdlari));
     }
 
     private String bosIseNull(String s) {
         return (s == null || s.isBlank()) ? null : s;
+    }
+
+    private String likeDeseni(String s) {
+        if (s == null || s.isBlank()) return null;
+        return "%" + s.toLowerCase() + "%";
     }
 
     @Transactional(readOnly = true)

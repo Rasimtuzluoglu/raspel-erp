@@ -1,12 +1,15 @@
 package com.raspel.erp.service.finans;
 
 import com.raspel.erp.dto.finans.TahsilatDTO;
+import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.sistem.EmailService;
+import com.raspel.erp.service.finans.HareketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,8 +34,11 @@ public class TahsilatService {
 
     private final FaturaRepository faturaRepository;
     private final EmailService emailService;
+    private final CariHesapRepository cariHesapRepository;
+    private final HareketService hareketService;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
+    private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
     private static final DateTimeFormatter VADE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     @Transactional(readOnly = true)
@@ -83,6 +89,83 @@ public class TahsilatService {
                 .gecikmisCariSayisi(gecikmisCariSayisi)
                 .cariler(cariler)
                 .build();
+    }
+
+    /**
+     * Tahsilat girişi: cariye ait ödenmemiş faturalara (en eski vade öncelikli) girilen tutarı dağıtır.
+     * Her tahsis için ayrı TAHSILAT hareketi oluşturur; fatura ödeme durumunu ve cari bakiyeyi günceller.
+     */
+    @Transactional
+    public Map<String, Object> tahsilatGir(Long cariId, BigDecimal tutar, String odemeYontemi,
+                                           String taksitKurum, BigDecimal taksitTutar, String aciklama,
+                                           LocalDate hareketTarihi, Long sirketId) {
+        if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Tahsilat tutarı 0'dan büyük olmalıdır");
+        }
+        CariHesap cari = cariHesapRepository.findById(cariId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariId));
+
+        // Ödeme yöntemi geçerli mi?
+        if (odemeYontemi != null && !odemeYontemi.isBlank() && !GECERLI_ODEME_YONTEMLERI.contains(odemeYontemi.toUpperCase())) {
+            throw new BusinessException("Geçersiz ödeme yöntemi: " + odemeYontemi);
+        }
+        if ("TAKSIT".equalsIgnoreCase(odemeYontemi)
+                && (taksitKurum == null || taksitKurum.isBlank()
+                || taksitTutar == null || taksitTutar.compareTo(BigDecimal.ZERO) <= 0)) {
+            throw new BusinessException("Taksit seçildiğinde taksit kurumu ve çekilen tutar girilmelidir");
+        }
+
+        // Açık faturaları vade öncelikli al
+        List<Fatura> acikFaturalar = faturaRepository.findTahsilatEdilecek(
+                        sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, ODENDI_DURUMLARI)
+                .stream()
+                .filter(f -> f.getCariHesap() != null && f.getCariHesap().getId().equals(cariId))
+                .sorted(Comparator.comparing(this::vade, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+
+        if (acikFaturalar.isEmpty()) {
+            throw new BusinessException("Bu cari için ödenmemiş satış faturası bulunmuyor");
+        }
+
+        BigDecimal kalan = tutar;
+        List<Long> uygulananFaturalar = new ArrayList<>();
+        for (Fatura f : acikFaturalar) {
+            if (kalan.compareTo(BigDecimal.ZERO) <= 0) break;
+            BigDecimal faturaKalan = f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO;
+            if (faturaKalan.compareTo(BigDecimal.ZERO) <= 0) continue;
+            BigDecimal tahsis = kalan.min(faturaKalan);
+
+            hareketService.hareketOlustur(HareketDTO.builder()
+                            .cariHesapId(cariId)
+                            .tur("TAHSILAT")
+                            .tutar(tahsis)
+                            .hareketTarihi(hareketTarihi != null ? hareketTarihi : LocalDate.now())
+                            .aciklama(aciklama != null && !aciklama.isBlank()
+                                    ? aciklama : "Tahsilat: " + f.getFaturaNumarasi())
+                            .odemeYontemi(odemeYontemi)
+                            .taksitKurum(taksitKurum)
+                            .taksitTutar(taksitTutar)
+                            .faturaId(f.getId())
+                            .build(), sirketId);
+
+            kalan = kalan.subtract(tahsis);
+            uygulananFaturalar.add(f.getId());
+        }
+
+        if (kalan.compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException("Girilen tutar açık faturaların toplam kalanından büyük");
+        }
+
+        log.info("Tahsilat kaydedildi -> Cari: {}, Tutar: {}, Yöntem: {}, Fatura sayısı: {}",
+                cari.getAd(), tutar, odemeYontemi, uygulananFaturalar.size());
+
+        Map<String, Object> sonuc = new java.util.LinkedHashMap<>();
+        sonuc.put("cariId", cariId);
+        sonuc.put("cariAd", cari.getAd());
+        sonuc.put("tutar", tutar);
+        sonuc.put("odemeYontemi", odemeYontemi);
+        sonuc.put("uygulananFaturalar", uygulananFaturalar);
+        return sonuc;
     }
 
     @Transactional(readOnly = true)

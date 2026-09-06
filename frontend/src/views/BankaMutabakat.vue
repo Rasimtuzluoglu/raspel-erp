@@ -306,7 +306,7 @@ const eslestirmeyiKaldir = (hareket) => {
   flex-wrap: wrap;
 }
 .banka-secim {
-  min-width: 280px;
+  min-width: min(280px, 100%);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -329,7 +329,7 @@ const eslestirmeyiKaldir = (hareket) => {
 }
 .ozet-kutu {
   flex: 1;
-  min-width: 140px;
+  min-width: min(140px, 100%);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;

@@ -1013,7 +1013,7 @@ const hizliSiparisKaydet = async () => {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 1rem;
 }
 
@@ -1091,6 +1091,7 @@ const hizliSiparisKaydet = async () => {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.65rem;
+  flex-wrap: wrap;
 }
 
 .call-btn, .map-btn, .whatsapp-btn {
@@ -1132,6 +1133,7 @@ const hizliSiparisKaydet = async () => {
   margin-top: auto;
   padding-top: 0.5rem;
   border-top: 1px dashed var(--border);
+  flex-wrap: wrap;
 }
 
 .form-container-card {
@@ -1171,7 +1173,7 @@ const hizliSiparisKaydet = async () => {
 
 .form-row-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
 

@@ -257,11 +257,12 @@ const aktar = async (tur) => {
 
 <style scoped>
 .import-page {
-  padding: 1.5rem;
+  padding: 0;
+  max-width: 100%;
 }
 .import-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem;
   margin-top: 1.5rem;
 }

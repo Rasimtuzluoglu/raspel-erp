@@ -149,6 +149,7 @@ watch(
   align-items: center;
   gap: 4px;
   max-width: 320px;
+  width: 100%;
   margin-bottom: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -173,12 +174,15 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 10px;
   padding: 8px 16px;
   margin-bottom: 12px;
   color: var(--text-primary, #f1f5f9);
+  max-width: 100%;
 }
 
 .batch-info {

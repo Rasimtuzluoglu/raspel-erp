@@ -63,15 +63,7 @@
             <i class="pi pi-search" />
             <InputText
               v-model="seriNoArama"
-              placeholder="Seri No / Barkod ile ara..."
-              class="w-full"
-            />
-          </span>
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
-            <InputText
-              v-model="aramaMetni"
-              placeholder="Ürün adı ile ara..."
+              placeholder="Ürün adı / kod / seri / barkod ara..."
               class="w-full"
             />
           </span>
@@ -130,8 +122,14 @@
               />
               <div class="product-details">
                 <span class="product-name">{{ u.ad }}</span>
-                <span class="product-serial">{{ u.barkod || '-' }}</span>
-                <span class="product-meta">{{ u.marka || '-' }} / {{ u.olcu || '-' }} / {{ u.birimHacim || '-' }} ft³</span>
+                <span class="product-serial">{{ u.barkod || u.stokKodu || '-' }}</span>
+                <div class="product-alt-bilgi">
+                  <span class="product-flow">⚠ {{ u.birimHacim || '-' }} ft³</span>
+                  <span
+                    v-if="urunFiyatlari[u.id]?.length > 1"
+                    class="product-coklu-fiyat"
+                  >{{ urunFiyatlari[u.id].length }} fiyat</span>
+                </div>
                 <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
               </div>
             </div>
@@ -258,33 +256,47 @@
                     :key="idx"
                     class="sepet-item"
                   >
-                    <div class="sepet-ad">
-                      {{ item.ad }}
-                    </div>
-                    <div class="sepet-satir">
-                      <Button
-                        icon="pi pi-minus"
-                        rounded
-                        text
-                        severity="secondary"
-                        size="small"
-                        @click="miktarAzalt(idx)"
-                      />
-                      <input
-                        v-model.number="item.miktar"
-                        type="number"
-                        min="1"
-                        class="sepet-adet-input"
-                        title="Adet"
+                    <div class="sepet-ust">
+                      <span
+                        class="sepet-kod"
+                        :title="item.barkod"
+                      >{{ item.barkod || item.stokKodu }}</span>
+                      <span class="sepet-ad">{{ item.ad }}</span>
+                      <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
+                      <button
+                        type="button"
+                        class="sepet-sil"
+                        title="Kaldır"
+                        @click="sepetSil(idx)"
                       >
-                      <Button
-                        icon="pi pi-plus"
-                        rounded
-                        text
-                        severity="secondary"
-                        size="small"
-                        @click="item.miktar++"
-                      />                      <select
+                        <i class="pi pi-times" />
+                      </button>
+                    </div>
+                    <div class="sepet-kontroller">
+                      <div class="sepet-adet-grup">
+                        <button
+                          type="button"
+                          class="adet-btn"
+                          @click="miktarAzalt(idx)"
+                        >
+                          −
+                        </button>
+                        <input
+                          v-model.number="item.miktar"
+                          type="number"
+                          min="1"
+                          class="sepet-adet-input"
+                          title="Adet"
+                        >
+                        <button
+                          type="button"
+                          class="adet-btn"
+                          @click="item.miktar++"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <select
                         v-model="item.fiyatTipi"
                         class="fiyat-tip-select"
                         @change="fiyatTipiDegisti(item)"
@@ -302,17 +314,17 @@
                         type="number"
                         step="0.01"
                         class="fiyat-giris-input"
-                        title="Birim Fiyatı Düzenle"
+                        title="Birim Fiyatı"
                       >
-                      <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
-                      <Button
-                        icon="pi pi-times"
-                        rounded
-                        text
-                        severity="danger"
-                        size="small"
-                        @click="sepetSil(idx)"
-                      />
+                    </div>
+                    <div
+                      v-if="item.sonAldigiFiyat"
+                      class="sepet-son-alis"
+                    >
+                      <i class="pi pi-history" />
+                      {{ seciliMusteri?.ad || 'Müşteri' }} bu ürünü en son
+                      <strong>{{ formatCurrency(item.sonAldigiFiyat) }}</strong>
+                      {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} aldı
                     </div>
                   </div>
                   <hr class="ozet-ayrac">
@@ -838,7 +850,7 @@ import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, formatDate } from '../utils/format.js'
 import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
 
 const toast = useToast()
@@ -866,7 +878,7 @@ useKisayollar({
     if (yeniMusteriDialog.value) yeniMusteriDialog.value = false
   },
   yeni: () => {
-    aramaMetni.value = ''
+    seriNoArama.value = ''
     sepet.value = []
   },
   yazdir: () => fisiYazdir()
@@ -905,7 +917,6 @@ onUnmounted(() => {
 
 const sirketAdi = computed(() => authStore.sirketAdi || '')
 
-const aramaMetni = ref('')
 const seriNoArama = ref('')
 const globalBarkod = ref('')
 const scannerAcik = ref(false)
@@ -1055,10 +1066,49 @@ const gunlukSatislariYukle = async () => {
 const kategoriler = computed(() => kategoriStore.kategoriler || [])
 const cokSatanlar = ref([])
 
+// Ürün başına çoklu fiyat listesi (stok fiyatları endpoint'inden)
+const urunFiyatlari = ref({})
+
+// Görünen ürünlerin fiyat listelerini topluca çeker
+const urunFiyatlariniYukle = async (urunler) => {
+  const yeni = { ...urunFiyatlari.value }
+  await Promise.all((urunler || []).map(async (u) => {
+    if (u.id == null || yeni[u.id]) return
+    try {
+      const r = await stokAPI.getFiyatlar(u.id)
+      const liste = r.data || []
+      if (liste.length) {
+        yeni[u.id] = liste.map((f) => ({ ad: f.ad || f.fiyatTipi || f.tip || 'Fiyat', fiyat: Number(f.fiyat) }))
+      }
+    } catch {
+      /* fiyat listesi alınamadı */
+    }
+  }))
+  urunFiyatlari.value = yeni
+}
+
+// Sepete ürün eklenirken çoklu fiyat listesini de getirir
+const urunFiyatlariniYukleTek = async (urun) => {
+  if (urunFiyatlari.value[urun.id]) return urunFiyatlari.value[urun.id]
+  try {
+    const r = await stokAPI.getFiyatlar(urun.id)
+    const liste = r.data || []
+    if (liste.length) {
+      const map = liste.map((f) => ({ ad: f.ad || f.fiyatTipi || 'Fiyat', fiyat: Number(f.fiyat) }))
+      urunFiyatlari.value = { ...urunFiyatlari.value, [urun.id]: map }
+      return map
+    }
+  } catch {
+    /* */
+  }
+  return []
+}
+
 const cokSatanlariYukle = async () => {
   try {
     const r = await stokAPI.enCokSatanlar(12)
     cokSatanlar.value = r.data || []
+    urunFiyatlariniYukle(cokSatanlar.value)
   } catch {
     cokSatanlar.value = []
   }
@@ -1177,19 +1227,22 @@ const filtrelenmisUrunler = computed(() => {
 
   if (seriNoArama.value) {
     const q = seriNoArama.value.toLowerCase()
-    list = list.filter((u) => u.barkod?.toLowerCase().includes(q) || u.seriNo?.toLowerCase().includes(q))
-  }
-
-  if (aramaMetni.value) {
-    const q = aramaMetni.value.toLowerCase()
     list = list.filter(
       (u) =>
-        u.ad?.toLowerCase().includes(q) || u.stokKodu?.toLowerCase().includes(q) || u.barkod?.toLowerCase().includes(q)
+        u.ad?.toLowerCase().includes(q) ||
+        u.stokKodu?.toLowerCase().includes(q) ||
+        u.barkod?.toLowerCase().includes(q) ||
+        u.seriNo?.toLowerCase().includes(q)
     )
   }
 
   return list.slice(0, 100)
 })
+
+// Görünen ürünler değiştiğinde çoklu fiyat listelerini besle
+watch(filtrelenmisUrunler, (list) => {
+  if (list && list.length) urunFiyatlariniYukle(list)
+}, { immediate: true })
 
 const kritikStokMu = (u) => {
   if (!u?.miktar) return false
@@ -1245,7 +1298,6 @@ const filtreleriTemizle = () => {
   filtreKategori.value = null
   filtreArac.value = null
   seriNoArama.value = ''
-  aramaMetni.value = ''
 }
 
 const musteriAra = (event) => {
@@ -1291,33 +1343,66 @@ const musteriKaydet = async () => {
   musteriKaydediliyor.value = false
 }
 
-const sepeteEkle = (u) => {
+const sepeteEkle = async (u) => {
   const varOlan = sepet.value.find((i) => i.id === u.id)
   if (varOlan) {
     varOlan.miktar++
-  } else {
-    const stdFiyat = u.fiyat || u.satisFiyati || 0
-    // Çoklu fiyat tanımlıysa onları kullan, yoksa eski sabit kademelere düş
-    const fiyatlar = (u.fiyatlar && u.fiyatlar.length > 0)
-      ? u.fiyatlar.map((f) => ({ ad: f.ad, fiyat: f.fiyat }))
-      : [
-          { ad: 'Perakende', fiyat: stdFiyat },
-          { ad: 'Toptan', fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
-          { ad: 'Özel', fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
-        ]
-    sepet.value.push({
-      id: u.id,
-      ad: u.ad,
-      stokKodu: u.stokKodu,
-      barkod: u.barkod,
-      miktar: 1,
-      fiyat: fiyatlar[0]?.fiyat ?? stdFiyat,
-      fiyatlar,
-      fiyatTipi: fiyatlar[0]?.ad ?? 'Perakende',
-      birim: u.birim || 'adet',
-      birimHacim: u.birimHacim || 1
-    })
+    return
   }
+  const stdFiyat = u.fiyat || u.satisFiyati || 0
+  // Çoklu fiyat tanımlıysa onları kullan, yoksa stoğun fiyat listesini çek, yoksa sabit kademelere düş
+  let fiyatlar = (u.fiyatlar && u.fiyatlar.length > 0)
+    ? u.fiyatlar.map((f) => ({ ad: f.ad, fiyat: f.fiyat }))
+    : null
+  if (!fiyatlar) {
+    const tckilen = await urunFiyatlariniYukleTek(u)
+    fiyatlar = (tckilen && tckilen.length > 0) ? tckilen : [
+      { ad: 'Perakende', fiyat: stdFiyat },
+      { ad: 'Toptan', fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
+      { ad: 'Özel', fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
+    ]
+  }
+
+  const yeniItem = {
+    id: u.id,
+    ad: u.ad,
+    stokKodu: u.stokKodu,
+    barkod: u.barkod,
+    miktar: 1,
+    fiyat: fiyatlar[0]?.fiyat ?? stdFiyat,
+    fiyatlar,
+    fiyatTipi: fiyatlar[0]?.ad ?? 'Perakende',
+    birim: u.birim || 'adet',
+    birimHacim: u.birimHacim || 1,
+    sonAldigiFiyat: null,
+    sonAldigiTarih: null,
+    sonAldigiBilgisiYukleniyor: false
+  }
+
+  // Seçili müşteri varsa ürünü en son hangi fiyata aldığını sor
+  if (seciliMusteri.value?.id) {
+    yeniItem.sonAldigiBilgisiYukleniyor = true
+    try {
+      const r = await faturaAPI.cariUrunFiyatGecmisi(seciliMusteri.value.id, u.id)
+      const data = r.data
+      if (data && data.sonFiyat != null) {
+        yeniItem.sonAldigiFiyat = data.sonFiyat
+        const enSon = (data.gecmis || [])[0]
+        yeniItem.sonAldigiTarih = enSon?.tarih || null
+        // Müşteri daha önce almışsa son aldığı fiyat ile öner, fiyatlara da ekle
+        yeniItem.fiyat = data.sonFiyat
+        if (!fiyatlar.some((f) => f.ad === 'Son Aldığı')) {
+          fiyatlar.unshift({ ad: 'Son Aldığı', fiyat: data.sonFiyat })
+        }
+        yeniItem.fiyatTipi = fiyatlar[0]?.ad ?? 'Perakende'
+      }
+    } catch {
+      /* cari fiyat geçmişi alınamadı */
+    }
+    yeniItem.sonAldigiBilgisiYukleniyor = false
+  }
+
+  sepet.value.push(yeniItem)
 }
 
 const fiyatTipiDegisti = (item) => {
@@ -1580,14 +1665,17 @@ const sepetiTemizle = () => {
 
 <style scoped>
 .pos-container {
-  padding: 16px 20px;
-  min-height: 100vh;
+  padding: 0;
+  min-height: 0;
+  max-width: 100%;
 }
 .pos-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .breadcrumb {
   font-size: 13px;
@@ -1624,7 +1712,8 @@ const sepetiTemizle = () => {
 .pos-tabview {
   display: flex;
   flex-direction: column;
-}.pos-tabview :deep(.p-tabview-panels) {
+}
+.pos-tabview :deep(.p-tabview-panels) {
   flex: 1;
   overflow-y: auto;
 }
@@ -1647,6 +1736,7 @@ const sepetiTemizle = () => {
 .filter-row {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .filter-select {
   flex: 1;
@@ -1654,10 +1744,20 @@ const sepetiTemizle = () => {
 
 .serial-search {
   margin: 8px 0;
+  display: grid;
+  grid-template-columns: 1.4fr 1.6fr auto;
+  gap: 8px;
+  align-items: center;
 }
 .serial-search :deep(.p-inputtext) {
   width: 100%;
   padding-left: 42px;
+}
+
+@media (max-width: 720px) {
+  .serial-search {
+    grid-template-columns: 1fr;
+  }
 }
 
 .product-section {
@@ -1671,7 +1771,7 @@ const sepetiTemizle = () => {
 }
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
   gap: 10px;
   max-height: calc(100vh - 220px);
   overflow-y: auto;
@@ -1724,6 +1824,10 @@ const sepetiTemizle = () => {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 .product-serial {
   display: block;
@@ -1745,6 +1849,27 @@ const sepetiTemizle = () => {
   padding: 2px 10px;
   background: rgba(59, 130, 246, 0.1);
   border-radius: 12px;
+}
+.product-alt-bilgi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0;
+}
+.product-flow {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.product-coklu-fiyat {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 1px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
 }
 .empty-products {
   grid-column: 1 / -1;
@@ -1903,38 +2028,101 @@ const sepetiTemizle = () => {
   font-size: 13px;
 }
 .sepet-item {
-  padding: 6px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
 .sepet-item:last-child {
   border-bottom: none;
 }
-.sepet-ad {
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 2px;
+.sepet-ust {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
 }
-.sepet-satir {
+.sepet-kod {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+.sepet-ad {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sepet-sil {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sepet-sil:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+.sepet-kontroller {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sepet-adet-grup {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
-.sepet-adet {
-  width: 22px;
-  text-align: center;
+.adet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 14px;
   font-weight: 700;
-  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.adet-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .sepet-adet-input {
-  width: 52px;
+  width: 46px;
   text-align: center;
   font-weight: 700;
   font-size: 13px;
+  height: 26px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 3px 4px;
+  padding: 0 4px;
   outline: none;
 }
 .odeme-yontem-grid {
@@ -2084,6 +2272,25 @@ const sepetiTemizle = () => {
   font-weight: 700;
   min-width: 60px;
   text-align: right;
+}
+.sepet-son-alis {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+}
+.sepet-son-alis i {
+  font-size: 12px;
+  color: #f59e0b;
+}
+.sepet-son-alis strong {
+  color: var(--accent);
 }
 
 .ozet-satir {
@@ -2286,7 +2493,7 @@ const sepetiTemizle = () => {
 
 .ym-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 .ym-form-grid .full-width {
@@ -2316,22 +2523,26 @@ const sepetiTemizle = () => {
 }
 
 .fiyat-tip-select {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 11px;
-  padding: 2px 4px;
+  padding: 0 4px;
   outline: none;
 }
 .fiyat-giris-input {
-  width: 70px;
+  width: 68px;
+  height: 26px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 12px;
-  padding: 2px 4px;
+  padding: 0 4px;
   text-align: right;
   outline: none;
 }
@@ -2346,7 +2557,7 @@ const sepetiTemizle = () => {
     max-width: 100%;
   }
   .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
   }
 }
 </style>

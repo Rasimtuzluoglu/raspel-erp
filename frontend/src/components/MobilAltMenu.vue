@@ -76,7 +76,15 @@ const aktif = (path) => {
   font-size: 11px;
   font-weight: 600;
   min-height: 48px;
+  min-width: 0;
   transition: color 0.15s;
+  overflow: hidden;
+}
+.mam-item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mam-item i {
   font-size: 20px;

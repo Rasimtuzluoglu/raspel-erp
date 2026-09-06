@@ -1254,7 +1254,8 @@ const formatDate = (d) =>
   color: var(--accent);
 }
 .raporlar-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 .raporlar-header-bar {
   display: flex;
@@ -1303,7 +1304,8 @@ h1 {
   border-radius: 12px;
 }
 .form-group {
-  min-width: 200px;
+  min-width: min(200px, 100%);
+  flex: 1 1 160px;
 }
 .form-group label {
   display: block;
@@ -1378,7 +1380,7 @@ h1 {
 }
 .ozet-kartlar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 15px;
 }
 .ozet-kart {

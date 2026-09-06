@@ -162,7 +162,8 @@ const confirmDel = (id) => {
 
 <style scoped>
 .kategori-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 h1 {
   color: var(--text-primary);

@@ -635,7 +635,8 @@ const formatDate = (d) =>
 
 <style scoped>
 .kasa-container {
-  padding: 20px;
+  padding: 0;
+  max-width: 100%;
 }
 h1 {
   color: var(--text-primary);
@@ -663,7 +664,7 @@ h2 {
 }
 .kasa-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 15px;
   margin-bottom: 30px;
 }
