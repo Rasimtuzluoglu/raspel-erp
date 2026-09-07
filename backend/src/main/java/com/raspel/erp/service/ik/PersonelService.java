@@ -23,6 +23,7 @@ public class PersonelService {
 
     private final PersonelRepository personelRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.config.CacheYardimci cacheYardimci;
 
     public Page<PersonelDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return personelRepository.findBySirketIdOrderByAdAsc(sirketId, pageable)
@@ -53,6 +54,7 @@ public class PersonelService {
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .sirketId(sirketId)
                 .build();
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(personelRepository.save(p));
     }
 
@@ -72,6 +74,7 @@ public class PersonelService {
         if (dto.getAdres() != null) p.setAdres(dto.getAdres());
         if (dto.getAktif() != null) p.setAktif(dto.getAktif());
         if (dto.getCikisTarihi() != null) p.setCikisTarihi(dto.getCikisTarihi());
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(personelRepository.save(p));
     }
 
@@ -81,6 +84,7 @@ public class PersonelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
         tenantChecker.check(p.getSirketId(), "Personel");
         personelRepository.deleteById(id);
+        cacheYardimci.temizle("dashboard");
     }
 
     private PersonelDTO entityToDTO(Personel p) {

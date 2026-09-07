@@ -25,6 +25,7 @@ public class PersonelIzinService {
     private final PersonelIzinRepository izinRepository;
     private final PersonelRepository personelRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.config.CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public Page<PersonelIzinDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -70,6 +71,7 @@ public class PersonelIzinService {
                 .durum("BEKLEMEDE")
                 .aciklama(dto.getAciklama())
                 .build();
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }
 
@@ -89,6 +91,7 @@ public class PersonelIzinService {
         if (dto.getDurum() != null) izin.setDurum(dto.getDurum());
         izin.setAciklama(dto.getAciklama());
         izin.setOnaylayan(dto.getOnaylayan());
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }
 
@@ -102,6 +105,7 @@ public class PersonelIzinService {
         }
         izin.setDurum(durum);
         if (onaylayan != null) izin.setOnaylayan(onaylayan);
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }
 
@@ -114,6 +118,7 @@ public class PersonelIzinService {
             tenantChecker.check(personel.getSirketId(), "Personel Izin");
         }
         izinRepository.deleteById(id);
+        cacheYardimci.temizle("dashboard");
     }
 
     @Transactional(readOnly = true)

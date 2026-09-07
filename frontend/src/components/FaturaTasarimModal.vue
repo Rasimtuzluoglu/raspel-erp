@@ -1055,7 +1055,7 @@ const yazdir = () => {
 /* Şablon Kart Butonları */
 .sablon-secici {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .sablon-btn {
@@ -1577,7 +1577,7 @@ const yazdir = () => {
 /* 5. İMZA ALANI */
 .imza-alani-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 40px;
   margin-top: 24px;
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,6 +128,133 @@ public class LlmClientService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
         ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
         
+        Map responseBody = response.getBody();
+        if (responseBody != null && responseBody.containsKey("content")) {
+            List<Map<String, Object>> contents = (List<Map<String, Object>>) responseBody.get("content");
+            if (!contents.isEmpty()) {
+                return (String) contents.get(0).get("text");
+            }
+        }
+        return "Bos yanit alindi.";
+    }
+
+    /**
+     * Görüntü (base64) + metin ile çok modlu (vision) sorgu gönderir.
+     * OCR/fatura-fiş okuma gibi görüntü analizi için kullanılır.
+     */
+    public String sendVisionQuery(String provider, String model, String apiKey, String systemPrompt, String userPrompt, String base64Image, String mimeType) {
+        if (provider == null) {
+            throw new IllegalArgumentException("Provider is null");
+        }
+        try {
+            switch (provider.toUpperCase()) {
+                case "OPENAI":
+                    return sendOpenAIVisionRequest(model, apiKey, systemPrompt, userPrompt, base64Image, mimeType);
+                case "GOOGLE":
+                    return sendGoogleVisionRequest(model, apiKey, systemPrompt, userPrompt, base64Image, mimeType);
+                case "ANTHROPIC":
+                    return sendAnthropicVisionRequest(model, apiKey, systemPrompt, userPrompt, base64Image, mimeType);
+                default:
+                    throw new IllegalArgumentException("Unsupported AI provider: " + provider);
+            }
+        } catch (Exception e) {
+            log.error("LLM vision call failed for provider {}", provider, e);
+            throw new RuntimeException("LLM görüntü yaniti alinamadi: " + e.getMessage(), e);
+        }
+    }
+
+    private String sendOpenAIVisionRequest(String model, String apiKey, String systemPrompt, String userPrompt, String base64Image, String mimeType) {
+        String url = "https://api.openai.com/v1/chat/completions";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        List<Map<String, Object>> content = new ArrayList<>();
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            content.add(Map.of("type", "text", "text", systemPrompt));
+        }
+        content.add(Map.of("type", "text", "text", userPrompt));
+        content.add(Map.of("type", "image_url", "image_url", Map.of(
+                "url", "data:" + mimeType + ";base64," + base64Image
+        )));
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", model != null ? model : "gpt-4o");
+        body.put("messages", List.of(Map.of("role", "user", "content", content)));
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+        Map responseBody = response.getBody();
+        if (responseBody != null && responseBody.containsKey("choices")) {
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+            if (!choices.isEmpty()) {
+                Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                return (String) message.get("content");
+            }
+        }
+        return "Bos yanit alindi.";
+    }
+
+    private String sendGoogleVisionRequest(String model, String apiKey, String systemPrompt, String userPrompt, String base64Image, String mimeType) {
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
+                model != null ? model : "gemini-2.5-flash", apiKey);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        List<Map<String, Object>> parts = new ArrayList<>();
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            parts.add(Map.of("text", systemPrompt));
+        }
+        parts.add(Map.of("text", userPrompt));
+        parts.add(Map.of("inline_data", Map.of(
+                "mime_type", mimeType,
+                "data", base64Image
+        )));
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("contents", List.of(Map.of("parts", parts)));
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+        Map responseBody = response.getBody();
+        if (responseBody != null && responseBody.containsKey("candidates")) {
+            List<Map<String, Object>> candidates = (List<Map<String, Object>>) responseBody.get("candidates");
+            if (!candidates.isEmpty()) {
+                Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                List<Map<String, Object>> partsList = (List<Map<String, Object>>) content.get("parts");
+                if (!partsList.isEmpty()) {
+                    return (String) partsList.get(0).get("text");
+                }
+            }
+        }
+        return "Bos yanit alindi.";
+    }
+
+    private String sendAnthropicVisionRequest(String model, String apiKey, String systemPrompt, String userPrompt, String base64Image, String mimeType) {
+        String url = "https://api.anthropic.com/v1/messages";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", apiKey);
+        headers.set("anthropic-version", "2023-06-01");
+
+        List<Map<String, Object>> content = new ArrayList<>();
+        content.add(Map.of("type", "text", "text", userPrompt));
+        content.add(Map.of("type", "image", "source", Map.of(
+                "type", "base64",
+                "media_type", mimeType,
+                "data", base64Image
+        )));
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", model != null ? model : "claude-3-sonnet-20240229");
+        body.put("max_tokens", 1024);
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            body.put("system", systemPrompt);
+        }
+        body.put("messages", List.of(Map.of("role", "user", "content", content)));
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
         Map responseBody = response.getBody();
         if (responseBody != null && responseBody.containsKey("content")) {
             List<Map<String, Object>> contents = (List<Map<String, Object>>) responseBody.get("content");

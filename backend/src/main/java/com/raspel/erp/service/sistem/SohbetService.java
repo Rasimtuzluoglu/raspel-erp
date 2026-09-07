@@ -4,6 +4,7 @@ import com.raspel.erp.dto.sistem.AISorguSonucDTO;
 import com.raspel.erp.dto.sistem.SohbetMesajDTO;
 import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.entity.finans.Kasa;
+import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.sistem.SohbetMesaj;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.repository.envanter.StokRepository;
@@ -83,7 +84,11 @@ public class SohbetService {
             com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
             if (aiConfig != null && Boolean.TRUE.equals(aiConfig.getAktif()) && !"YAPILANDIRILMADI".equals(aiConfig.getDurum())) {
                 String apiKey = aiConfigService.getDecryptedKey(sirketId);
-                String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Kullanıcının sorularına ERP bağlamında, profesyonel, kısa ve net cevaplar ver.";
+                String veriBaglami = veriBaglamiOlustur(sirketId);
+                String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Aşağıda şirketin güncel özet verileri var. "
+                        + "Soruları bu verilere dayanarak, Türkçe, profesyonel ve net cevapla. "
+                        + "Sayısal cevaplarda para birimi TL, adet vb. belirt.\n\n"
+                        + "ŞİRKET VERİLERİ:\n" + veriBaglami;
                 String response = llmClientService.sendQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru);
                 
                 return AISorguSonucDTO.builder()
@@ -228,13 +233,160 @@ public class SohbetService {
                     .build();
         }
 
-        // 4. Varsayılan / Genel Yanıt
+        // 4. Stok Durumu & Kritik Stoklar
+        if (temizSoru.contains("stok") || temizSoru.contains("kritik") || temizSoru.contains("depo") || temizSoru.contains("envanter")) {
+            List<Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId);
+            List<Map<String, Object>> tablo = new ArrayList<>();
+            int kritikSayisi = 0;
+
+            List<Stok> sirali = stoklar.stream()
+                    .sorted((a, b) -> {
+                        BigDecimal am = a.getMiktar() != null ? a.getMiktar() : BigDecimal.ZERO;
+                        BigDecimal bm = b.getMiktar() != null ? b.getMiktar() : BigDecimal.ZERO;
+                        return am.compareTo(bm);
+                    })
+                    .limit(10)
+                    .collect(Collectors.toList());
+
+            for (Stok s : sirali) {
+                boolean kritik = s.getMinMiktar() != null && s.getMiktar() != null && s.getMiktar().compareTo(s.getMinMiktar()) <= 0;
+                if (kritik) kritikSayisi++;
+                tablo.add(Map.of(
+                        "stok", s.getAd(),
+                        "miktar", (s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO) + " " + (s.getBirim() != null ? s.getBirim() : "adet"),
+                        "durum", kritik ? "Kritik" : "Yeterli"
+                ));
+            }
+
+            Map<String, Object> grafik = Map.of(
+                    "labels", sirali.stream().map(Stok::getAd).collect(Collectors.toList()),
+                    "datasets", List.of(Map.of(
+                            "data", sirali.stream().map(s -> s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO).collect(Collectors.toList()),
+                            "backgroundColor", List.of("#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444")
+                    ))
+            );
+
+            return AISorguSonucDTO.builder()
+                    .soru(soru)
+                    .cevapMetni(String.format("En düşük stok seviyesine sahip %d ürün listelendi (%d tanesi kritik seviyede).", sirali.size(), kritikSayisi))
+                    .grafikTipi("bar")
+                    .grafikVerisi(grafik)
+                    .tabloVerisi(tablo)
+                    .intent("STOK_DURUM")
+                    .build();
+        }
+
+        // 5. Kârlılık / Kâr Marjı
+        if (temizSoru.contains("kâr") || temizSoru.contains("kar") || temizSoru.contains("marj") || temizSoru.contains("kazanç") || temizSoru.contains("karlılık")) {
+            List<Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId);
+
+            List<Map<String, Object>> tablo = new ArrayList<>();
+            for (Stok s : stoklar) {
+                BigDecimal satis = s.getSatisFiyati() != null ? s.getSatisFiyati() : s.getFiyat();
+                BigDecimal maliyet = s.getFiyat() != null ? s.getFiyat() : BigDecimal.ZERO;
+                BigDecimal marj = satis != null ? satis.subtract(maliyet) : BigDecimal.ZERO;
+                BigDecimal marjYuzde = BigDecimal.ZERO;
+                if (satis != null && satis.signum() > 0) {
+                    marjYuzde = marj.multiply(BigDecimal.valueOf(100)).divide(satis, 2, java.math.RoundingMode.HALF_UP);
+                }
+                tablo.add(Map.of(
+                        "stok", s.getAd(),
+                        "maliyet", maliyet + " ₺",
+                        "satis", (satis != null ? satis : BigDecimal.ZERO) + " ₺",
+                        "marj", marj + " ₺ (%" + marjYuzde + ")"
+                ));
+            }
+
+            List<Map<String, Object>> enKarlilar = tablo.stream()
+                    .sorted((a, b) -> {
+                        String am = (String) a.get("marj");
+                        String bm = (String) b.get("marj");
+                        return bm.compareTo(am);
+                    })
+                    .limit(5)
+                    .collect(Collectors.toList());
+
+            return AISorguSonucDTO.builder()
+                    .soru(soru)
+                    .cevapMetni(String.format("%d ürün için kâr marjı hesaplandı. En yüksek marjlı ilk %d ürün aşağıda listelenmiştir.", tablo.size(), enKarlilar.size()))
+                    .grafikTipi("none")
+                    .tabloVerisi(enKarlilar)
+                    .intent("KARLILIK")
+                    .build();
+        }
+
+        // 6. Varsayılan / Genel Yanıt
         return AISorguSonucDTO.builder()
                 .soru(soru)
-                .cevapMetni("Sorunuzu tam olarak anlayamadım. Aşağıdaki gibi soruları deneyebilirsiniz:\n- 'Bu ay en çok ciro yaptığımız müşteriler kimler?'\n- 'Gelecek hafta vadesi gelen ödemelerim neler?'\n- 'Kasa ve banka toplam bakiyemiz nedir?'")
+                .cevapMetni("Sorunuzu tam olarak anlayamadım. Aşağıdaki gibi soruları deneyebilirsiniz:\n- 'Bu ay en çok ciro yaptığımız müşteriler kimler?'\n- 'Gelecek hafta vadesi gelen ödemelerim neler?'\n- 'Kasa ve banka toplam bakiyemiz nedir?'\n- 'Kritik seviyede stoklarım hangileri?'\n- 'En kârlı ürünlerim hangileri?'")
                 .grafikTipi("none")
                 .intent("GENEL")
                 .build();
+    }
+
+    /** Şirketin güncel özet verisini LLM'e bağlam olarak üretir. */
+    private String veriBaglamiOlustur(Long sirketId) {
+        try {
+            StringBuilder sb = new StringBuilder();
+
+            List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+                    .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                    .collect(Collectors.toList());
+            int satisSayisi = (int) faturalar.stream().filter(f -> f.getTur() == Fatura.FaturaTur.SATIS).count();
+            BigDecimal satisToplam = faturalar.stream().filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
+                    .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            List<Kasa> kasalar = kasaRepository.findBySirketIdOrderByAd(sirketId);
+            List<Banka> bankalar = bankaRepository.findBySirketIdOrderByAd(sirketId);
+            BigDecimal kasaToplam = kasalar.stream().map(k -> k.getBakiye() != null ? k.getBakiye() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal bankaToplam = bankalar.stream().map(b -> b.getBakiye() != null ? b.getBakiye() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            long stokSayisi = stokRepository.countBySirketId(sirketId);
+            long kritikStok = stokRepository.countKritikStokBySirketId(sirketId);
+
+            long cariSayisi = cariHesapRepository.countBySirketId(sirketId);
+
+            sb.append("- Kesilmiş satış faturası sayısı: ").append(satisSayisi).append("\n");
+            sb.append("- Toplam satış cirosu: ").append(satisToplam).append(" TL\n");
+            sb.append("- Kasa toplamı: ").append(kasaToplam).append(" TL\n");
+            sb.append("- Banka toplamı: ").append(bankaToplam).append(" TL\n");
+            sb.append("- Toplam ürün sayısı: ").append(stokSayisi).append("\n");
+            sb.append("- Kritik stok seviyesindeki ürün sayısı: ").append(kritikStok).append("\n");
+            sb.append("- Toplam cari hesap sayısı: ").append(cariSayisi).append("\n");
+
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("AI veri bağlamı oluşturulamadı: {}", e.getMessage());
+            return "Veri bağlamı oluşturulamadı.";
+        }
+    }
+
+    /**
+     * Görüntüdeki fatura/fişi OCR ile okur. Görüntüyü LLM vision'a gönderip
+     * yapılandırılmış metin (fatura kalemleri) döndürür.
+     */
+    public String aiOcrOku(String base64Image, String mimeType, Long sirketId) {
+        if (base64Image == null || base64Image.isBlank()) {
+            throw new com.raspel.erp.exception.BusinessException("Görüntü verisi boş olamaz");
+        }
+        try {
+            com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
+            if (aiConfig == null || !Boolean.TRUE.equals(aiConfig.getAktif()) || "YAPILANDIRILMADI".equals(aiConfig.getDurum())) {
+                throw new com.raspel.erp.exception.BusinessException("OCR için önce Yapay Zeka (AI) yapılandırmasını tamamlayın");
+            }
+            String apiKey = aiConfigService.getDecryptedKey(sirketId);
+            String systemPrompt = "Sen bir fatura/fiş okuma (OCR) uzmanısın. Görüntüdeki faturayı analiz et ve yalnızca JSON formatında dön. "
+                    + "JSON şeması: {\"faturaNo\":\"...\", \"tarih\":\"...\", \"cari\":\"...\", \"kalemler\":[{\"ad\":\"ürün adı\", \"adet\":1, \"birimFiyat\":0.00, \"kdv\":0}] , \"genelToplam\":0.00}. "
+                    + "Başka hiçbir açıklama ekleme, yalnızca JSON döndür.";
+            return llmClientService.sendVisionQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey,
+                    systemPrompt, "Aşağıdaki faturayı oku ve JSON çıktısı ver.", base64Image, mimeType);
+        } catch (com.raspel.erp.exception.BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("OCR okuma başarısız: {}", e.getMessage());
+            throw new com.raspel.erp.exception.BusinessException("Fatura okunamadı: " + e.getMessage());
+        }
     }
 
     private SohbetMesajDTO toDTO(SohbetMesaj m) {

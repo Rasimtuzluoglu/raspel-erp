@@ -36,6 +36,8 @@ class YoneticiKokpitServiceTest {
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private KasaRepository kasaRepository;
     @Mock private BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.repository.envanter.StokRepository stokRepository;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @InjectMocks private YoneticiKokpitService kokpitService;
 
     @Test

@@ -14,62 +14,44 @@
 
     <div class="pos-body grid">
       <div class="pos-left">
-        <Card class="filter-card">
-          <template #title>
-            <div class="filter-title">
-              <span>Hızlı Filtreler</span>
-              <Button
-                label="Temizle"
-                severity="secondary"
-                size="small"
-                @click="filtreleriTemizle"
-              />
-            </div>
-          </template>
-          <template #content>
-            <div class="filter-row">
-              <Dropdown
-                v-model="filtreKategori"
-                :options="kategoriler"
-                option-label="ad"
-                placeholder="Kategori"
-                class="filter-select"
-                show-clear
-              />
-              <Dropdown
-                v-model="filtreArac"
-                :options="aracListesi"
-                placeholder="Araç"
-                class="filter-select"
-                show-clear
-              />
-            </div>
-          </template>
-        </Card>
-
-        <div class="serial-search">
-          <span class="p-input-icon-left global-barkod">
+        <div class="pos-arac-cubugu">
+          <span class="p-input-icon-left arama-kutusu">
             <i class="pi pi-barcode" />
             <InputText
               ref="barkodInputRef"
               v-model="globalBarkod"
-              placeholder="Barkod okutun veya tarayıcıyla okuyun (Enter)"
+              placeholder="Barkod okutun (Enter)"
               class="w-full"
               autofocus
               @keyup.enter="globalBarkodEkle"
             />
           </span>
-          <span class="p-input-icon-left">
+          <span class="p-input-icon-left arama-kutusu">
             <i class="pi pi-search" />
             <InputText
               v-model="seriNoArama"
-              placeholder="Ürün adı / kod / seri / barkod ara..."
+              placeholder="Ürün / kod / seri ara..."
               class="w-full"
             />
           </span>
+          <Dropdown
+            v-model="filtreKategori"
+            :options="kategoriler"
+            option-label="ad"
+            placeholder="Kategori"
+            class="arac-dropdown"
+            show-clear
+          />
+          <Dropdown
+            v-model="filtreArac"
+            :options="aracListesi"
+            placeholder="Marka"
+            class="arac-dropdown"
+            show-clear
+          />
           <Button
             icon="pi pi-camera"
-            label="Barkod Oku"
+            label="Barkod"
             severity="secondary"
             outlined
             @click="scannerAcik = true"
@@ -81,7 +63,7 @@
           class="cok-satanlar-section"
         >
           <div class="product-header">
-            <h3>Çok Satanlar</h3>
+            <h3><i class="pi pi-star-fill" /> Çok Satanlar</h3>
           </div>
           <div class="cok-satanlar-grid">
             <button
@@ -99,7 +81,7 @@
 
         <div class="product-section">
           <div class="product-header">
-            <h3>Mevcut Ürünler ({{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }})</h3>
+            <h3>Mevcut Ürünler <span class="urun-sayaci">{{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }}</span></h3>
           </div>
           <div class="product-grid">
             <div
@@ -108,38 +90,31 @@
               class="product-card"
               @click="sepeteEkle(u)"
             >
-              <div class="product-img">
-                <i class="pi pi-box" />
+              <div class="product-ust">
+                <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
+                <Tag
+                  :value="kritikStokMu(u) ? 'Son ' + Math.floor(u.miktar) : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
+                  :severity="kritikStokMu(u) ? 'danger' : 'info'"
+                />
               </div>
-              <Tag
-                :value="
-                  kritikStokMu(u)
-                    ? 'Son ' + Math.floor(u.miktar) + ' adet'
-                    : (u.miktar || 0) + ' ' + (u.birim || 'adet')
-                "
-                :severity="kritikStokMu(u) ? 'danger' : 'info'"
-                class="stock-badge"
-              />
-              <div class="product-details">
-                <span class="product-name">{{ u.ad }}</span>
-                <span class="product-serial">{{ u.barkod || u.stokKodu || '-' }}</span>
-                <div class="product-alt-bilgi">
-                  <span class="product-flow">⚠ {{ u.birimHacim || '-' }} ft³</span>
-                  <span
-                    v-if="urunFiyatlari[u.id]?.length > 1"
-                    class="product-coklu-fiyat"
-                  >{{ urunFiyatlari[u.id].length }} fiyat</span>
-                </div>
-                <div class="product-fiyat-satiri">
-                  <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
-                  <span
-                    v-if="cariFiyati(u.id)"
-                    class="product-cari-fiyat"
-                    :title="'Cari özel fiyat'"
-                  >
-                    <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
-                  </span>
-                </div>
+              <div class="product-name">
+                {{ u.ad }}
+              </div>              <div class="product-alt-bilgi">
+                <span class="product-flow">⚠ {{ u.birimHacim || '-' }} ft³</span>
+                <span
+                  v-if="urunFiyatlari[u.id]?.length > 1"
+                  class="product-coklu-fiyat"
+                >{{ urunFiyatlari[u.id].length }} fiyat</span>
+              </div>
+              <div class="product-fiyat-satiri">
+                <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
+                <span
+                  v-if="cariFiyati(u.id)"
+                  class="product-cari-fiyat"
+                  :title="'Cari özel fiyat'"
+                >
+                  <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
+                </span>
               </div>
             </div>
             <div
@@ -154,359 +129,354 @@
       </div>
 
       <div class="pos-right">
-        <TabView class="pos-tabview">
-          <TabPanel header="Sipariş">
-            <div class="tab-icerik">
-              <Card class="siparis-kart">
-                <template #content>
-                  <div class="pos-bolum">
-                    <div class="pos-bolum-baslik">
-                      <i class="pi pi-user" /> Müşteri
-                    </div>
-                    <div class="customer-field">
-                      <SelectButton
-                        v-model="musteriModu"
-                        :options="musteriModlari"
-                        option-label="label"
-                        option-value="value"
-                        class="w-full musteri-modu"
-                      />
-                      <template v-if="musteriModu === 'musteri'">
-                        <AutoComplete
-                          v-model="musteriGiris"
-                          :suggestions="musteriOnerileri"
-                          option-label="ad"
-                          placeholder="Müşteri ara (isim, vergi no, telefon)..."
-                          class="w-full"
-                          @complete="musteriAra($event)"
-                          @option-select="musteriSec"
-                        >
-                          <template #option="slotProps">
-                            <div class="musteri-option">
-                              {{ slotProps.option.ad }}
-                              <span class="musteri-option-detay">{{
-                                slotProps.option.vergiNo || slotProps.option.telefon
-                              }}</span>
-                            </div>
-                          </template>
-                        </AutoComplete>
-                        <div
-                          v-if="seciliMusteri"
-                          class="secili-musteri-chip"
-                        >
-                          <i class="pi pi-user" />
-                          <span class="secili-musteri-ad">{{ seciliMusteri.ad }}</span>
-                          <button
-                            type="button"
-                            class="secili-musteri-sil"
-                            title="Müşteriyi Kaldır"
-                            @click="musteriTemizle"
-                          >
-                            <i class="pi pi-times" />
-                          </button>
-                        </div>
-                        <div
-                          v-if="musteriBakiyeUyarisi"
-                          class="musteri-bakiye-uyari"
-                          :class="musteriBakiyeUyarisi.seviye"
-                        >
-                          <i :class="musteriBakiyeUyarisi.seviye === 'danger' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'" />
-                          {{ musteriBakiyeUyarisi.mesaj }}
-                        </div>
-                        <Button
-                          label="+ Yeni"
-                          severity="secondary"
-                          size="small"
-                          @click="yeniMusteriDialog = true"
-                        />
-                      </template>
-                    </div>
+        <Card class="siparis-kart">
+          <template #content>
+            <div class="pos-bolum">
+              <div class="pos-bolum-baslik">
+                <i class="pi pi-user" /> Müşteri
+              </div>
+              <div class="customer-field">
+                <SelectButton
+                  v-model="musteriModu"
+                  :options="musteriModlari"
+                  option-label="label"
+                  option-value="value"
+                  class="w-full musteri-modu"
+                />
+                <template v-if="musteriModu === 'musteri'">
+                  <AutoComplete
+                    v-model="musteriGiris"
+                    :suggestions="musteriOnerileri"
+                    option-label="ad"
+                    placeholder="Müşteri ara (isim, vergi no, telefon)..."
+                    class="w-full"
+                    @complete="musteriAra($event)"
+                    @option-select="musteriSec"
+                  >
+                    <template #option="slotProps">
+                      <div class="musteri-option">
+                        {{ slotProps.option.ad }}
+                        <span class="musteri-option-detay">{{
+                          slotProps.option.vergiNo || slotProps.option.telefon
+                        }}</span>
+                      </div>
+                    </template>
+                  </AutoComplete>
+                  <div
+                    v-if="seciliMusteri"
+                    class="secili-musteri-chip"
+                  >
+                    <i class="pi pi-user" />
+                    <span class="secili-musteri-ad">{{ seciliMusteri.ad }}</span>
+                    <button
+                      type="button"
+                      class="secili-musteri-sil"
+                      title="Müşteriyi Kaldır"
+                      @click="musteriTemizle"
+                    >
+                      <i class="pi pi-times" />
+                    </button>
                   </div>
-
-                  <div class="pos-bolum sepet-bolum">
-                    <div class="pos-bolum-baslik sepet-baslik">
-                      <span>Sipariş Özeti ({{ sepet ? sepet.length : 0 }})</span>
-                      <div class="sepet-baslik-btnler">
-                        <Button
-                          v-if="sepet && sepet.length"
-                          icon="pi pi-save"
-                          class="p-button-rounded p-button-text p-button-sm"
-                          title="Sepeti Kaydet"
-                          @click="sepetKaydet"
-                        />
-                        <Button
-                          v-if="kayitliSepetVar && sepet.length === 0"
-                          icon="pi pi-folder-open"
-                          class="p-button-rounded p-button-text p-button-sm"
-                          title="Kayıtlı Sepeti Yükle"
-                          @click="sepetYukle"
-                        />
-                        <Button
-                          v-if="sepet && sepet.length"
-                          label="Temizle"
-                          icon="pi pi-trash"
-                          severity="danger"
-                          size="small"
-                          @click="sepet = []"
-                        />
-                      </div>
-                    </div>
-                    <div
-                      v-if="sepet && sepet.length === 0"
-                      class="sepet-bos"
-                    >
-                      Sepete ürün ekleyin
-                    </div>
-                    <div
-                      v-for="(item, idx) in sepet"
-                      :key="idx"
-                      class="sepet-item"
-                    >
-                      <div class="sepet-ust">
-                        <span
-                          class="sepet-kod"
-                          :title="item.barkod"
-                        >{{ item.barkod || item.stokKodu }}</span>
-                        <span class="sepet-ad">{{ item.ad }}</span>
-                        <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
-                        <button
-                          type="button"
-                          class="sepet-sil"
-                          title="Kaldır"
-                          @click="sepetSil(idx)"
-                        >
-                          <i class="pi pi-times" />
-                        </button>
-                      </div>
-                      <div class="sepet-kontroller">
-                        <div class="sepet-adet-grup">
-                          <button
-                            type="button"
-                            class="adet-btn"
-                            @click="miktarAzalt(idx)"
-                          >
-                            −
-                          </button>
-                          <input
-                            v-model.number="item.miktar"
-                            type="number"
-                            min="1"
-                            class="sepet-adet-input"
-                            title="Adet"
-                          >
-                          <button
-                            type="button"
-                            class="adet-btn"
-                            @click="item.miktar++"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <select
-                          v-model="item.fiyatTipi"
-                          class="fiyat-tip-select"
-                          @change="fiyatTipiDegisti(item)"
-                        >
-                          <option
-                            v-for="f in item.fiyatlar"
-                            :key="f.ad"
-                            :value="f.ad"
-                          >
-                            {{ f.ad }}
-                          </option>
-                        </select>
-                        <input
-                          v-model.number="item.fiyat"
-                          type="number"
-                          step="0.01"
-                          class="fiyat-giris-input"
-                          title="Birim Fiyatı"
-                        >
-                      </div>
-                      <div
-                        v-if="item.sonAldigiFiyat"
-                        class="sepet-son-alis"
-                      >
-                        <i class="pi pi-history" />
-                        {{ seciliMusteri?.ad || 'Müşteri' }} bu ürünü en son
-                        <strong>{{ formatCurrency(item.sonAldigiFiyat) }}</strong>
-                        {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} aldı
-                      </div>
-                    </div>
-                    <hr class="ozet-ayrac">
-                    <div class="ozet-satir">
-                      <span>Toplam Ft³</span>
-                      <span>{{ toplamFt3.toFixed(2) }} ft³</span>
-                    </div>
-                    <div class="ozet-satir">
-                      <span>İndirim</span>
-                      <div class="ozet-indirim">
-                        <SelectButton
-                          v-model="indirimTipi"
-                          :options="indirimTipleri"
-                          option-label="label"
-                          option-value="value"
-                        />
-                        <InputNumber
-                          v-model="indirimDegeri"
-                          :min="0"
-                          :max="indirimTipi === 'yuzde' ? 100 : toplam"
-                          :suffix="indirimTipi === 'yuzde' ? '%' : ' ₺'"
-                          class="indirim-input"
-                        />
-                      </div>
-                    </div>
-                    <div class="ozet-satir ozet-genel">
-                      <span>Genel Toplam</span>
-                      <span class="genel-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
-                    </div>
+                  <div
+                    v-if="musteriBakiyeUyarisi"
+                    class="musteri-bakiye-uyari"
+                    :class="musteriBakiyeUyarisi.seviye"
+                  >
+                    <i :class="musteriBakiyeUyarisi.seviye === 'danger' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'" />
+                    {{ musteriBakiyeUyarisi.mesaj }}
                   </div>
-
-                  <div class="pos-bolum">
-                    <div class="pos-bolum-baslik">
-                      <i class="pi pi-wallet" /> Ödeme
-                    </div>
-                    <SelectButton
-                      v-model="odemeDurumu"
-                      :options="odemeTipleri"
-                      option-label="label"
-                      option-value="value"
-                      class="w-full"
-                    />
-                    <div
-                      v-if="odemeDurumu !== 'yok'"
-                      class="odenen-satir"
-                    >
-                      <label>Ödenen Tutar</label>
-                      <InputNumber
-                        v-model="odenenTutar"
-                        :min="0"
-                        :max="genelToplam"
-                        mode="currency"
-                        currency="TRY"
-                        locale="tr-TR"
-                        class="w-full"
-                      />
-                    </div>
-
-                    <div
-                      v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
-                      class="odenen-satir"
-                    >
-                      <label>Alınan Nakit</label>
-                      <InputNumber
-                        v-model="alinanNakit"
-                        :min="0"
-                        mode="currency"
-                        currency="TRY"
-                        locale="tr-TR"
-                        class="w-full"
-                      />
-                      <div
-                        v-if="paraUstu > 0"
-                        class="para-ustu"
-                      >
-                        <span>Para Üstü:</span>
-                        <strong>{{ formatCurrency(paraUstu) }}</strong>
-                      </div>
-                    </div>
-
-                    <div
-                      v-if="odemeDurumu !== 'yok'"
-                      class="odenen-satir"
-                    >
-                      <label>Ödeme Yöntemi</label>
-                      <div class="odeme-yontem-grid">
-                        <button
-                          v-for="y in odemeYontemleri"
-                          :key="y.value"
-                          type="button"
-                          class="odeme-yontem-btn"
-                          :class="{ active: odemeYontemi === y.value }"
-                          @click="odemeYontemi = y.value"
-                        >
-                          <i :class="y.icon" />
-                          {{ y.label }}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div
-                      v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
-                      class="taksit-panel"
-                    >
-                      <div class="odenen-satir">
-                        <label>Taksit Çekilen Kurum</label>
-                        <InputText
-                          v-model="taksitKurum"
-                          placeholder="Banka / finans kurumu"
-                          class="w-full"
-                        />
-                      </div>
-                      <div class="odenen-satir">
-                        <label>Çekilen Taksit Tutarı</label>
-                        <InputNumber
-                          v-model="taksitTutar"
-                          :min="0"
-                          :max="genelToplam"
-                          mode="currency"
-                          currency="TRY"
-                          locale="tr-TR"
-                          class="w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="odenen-satir">
-                      <label>Kasa</label>
-                      <Dropdown
-                        v-model="seciliKasa"
-                        :options="kasalar"
-                        option-label="ad"
-                        option-value="id"
-                        placeholder="Kasa seçin"
-                        class="w-full"
-                      />
-                    </div>
-
-                    <div class="odeme-durum">
-                      <Tag
-                        :value="odemeDurumText"
-                        :severity="odemeDurumSeverity"
-                        class="w-full"
-                      />
-                    </div>
-                    <div
-                      v-if="kalanTutar > 0"
-                      class="odeme-kalan"
-                    >
-                      <span>Kalan:</span>
-                      <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
-                    </div>
-                  </div>
-
                   <Button
-                    label="Satışı Tamamla"
-                    icon="pi pi-check"
-                    class="p-button-success w-full satis-buton"
-                    :loading="kaydediliyor"
-                    :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
-                    @click="satisiTamamla"
-                  />
-                  <Button
-                    v-if="sonSatis"
-                    label="Son Satışı İptal Et"
-                    icon="pi pi-undo"
-                    class="p-button-outlined p-button-danger w-full"
-                    @click="sonSatisiIptalEt"
+                    label="+ Yeni"
+                    severity="secondary"
+                    size="small"
+                    @click="yeniMusteriDialog = true"
                   />
                 </template>
-              </Card>
+              </div>
             </div>
-          </TabPanel>
 
-          <TabPanel header="Teslimat">
-            <div class="tab-icerik">
+            <div class="pos-bolum sepet-bolum">
+              <div class="pos-bolum-baslik sepet-baslik">
+                <span>Sipariş Özeti ({{ sepet ? sepet.length : 0 }})</span>
+                <div class="sepet-baslik-btnler">
+                  <Button
+                    v-if="sepet && sepet.length"
+                    icon="pi pi-save"
+                    class="p-button-rounded p-button-text p-button-sm"
+                    title="Sepeti Kaydet"
+                    @click="sepetKaydet"
+                  />
+                  <Button
+                    v-if="kayitliSepetVar && sepet.length === 0"
+                    icon="pi pi-folder-open"
+                    class="p-button-rounded p-button-text p-button-sm"
+                    title="Kayıtlı Sepeti Yükle"
+                    @click="sepetYukle"
+                  />
+                  <Button
+                    v-if="sepet && sepet.length"
+                    label="Temizle"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    size="small"
+                    @click="sepet = []"
+                  />
+                </div>
+              </div>
+              <div
+                v-if="sepet && sepet.length === 0"
+                class="sepet-bos"
+              >
+                Sepete ürün ekleyin
+              </div>
+              <div
+                v-for="(item, idx) in sepet"
+                :key="idx"
+                class="sepet-item"
+              >
+                <div class="sepet-ust">
+                  <span
+                    class="sepet-kod"
+                    :title="item.barkod"
+                  >{{ item.barkod || item.stokKodu }}</span>
+                  <span class="sepet-ad">{{ item.ad }}</span>
+                  <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
+                  <button
+                    type="button"
+                    class="sepet-sil"
+                    title="Kaldır"
+                    @click="sepetSil(idx)"
+                  >
+                    <i class="pi pi-times" />
+                  </button>
+                </div>
+                <div class="sepet-kontroller">
+                  <div class="sepet-adet-grup">
+                    <button
+                      type="button"
+                      class="adet-btn"
+                      @click="miktarAzalt(idx)"
+                    >
+                      −
+                    </button>
+                    <input
+                      v-model.number="item.miktar"
+                      type="number"
+                      min="1"
+                      class="sepet-adet-input"
+                      title="Adet"
+                    >
+                    <button
+                      type="button"
+                      class="adet-btn"
+                      @click="item.miktar++"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <select
+                    v-model="item.fiyatTipi"
+                    class="fiyat-tip-select"
+                    @change="fiyatTipiDegisti(item)"
+                  >
+                    <option
+                      v-for="f in item.fiyatlar"
+                      :key="f.ad"
+                      :value="f.ad"
+                    >
+                      {{ f.ad }}
+                    </option>
+                  </select>
+                  <input
+                    v-model.number="item.fiyat"
+                    type="number"
+                    step="0.01"
+                    class="fiyat-giris-input"
+                    title="Birim Fiyatı"
+                  >
+                </div>
+                <div
+                  v-if="item.sonAldigiFiyat"
+                  class="sepet-son-alis"
+                >
+                  <i class="pi pi-history" />
+                  {{ seciliMusteri?.ad || 'Müşteri' }} bu ürünü en son
+                  <strong>{{ formatCurrency(item.sonAldigiFiyat) }}</strong>
+                  {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} aldı
+                </div>
+              </div>
+              <hr class="ozet-ayrac">
+              <div class="ozet-satir">
+                <span>Toplam Ft³</span>
+                <span>{{ toplamFt3.toFixed(2) }} ft³</span>
+              </div>
+              <div class="ozet-satir">
+                <span>İndirim</span>
+                <div class="ozet-indirim">
+                  <SelectButton
+                    v-model="indirimTipi"
+                    :options="indirimTipleri"
+                    option-label="label"
+                    option-value="value"
+                  />
+                  <InputNumber
+                    v-model="indirimDegeri"
+                    :min="0"
+                    :max="indirimTipi === 'yuzde' ? 100 : toplam"
+                    :suffix="indirimTipi === 'yuzde' ? '%' : ' ₺'"
+                    class="indirim-input"
+                  />
+                </div>
+              </div>
+              <div class="ozet-satir ozet-genel">
+                <span>Genel Toplam</span>
+                <span class="genel-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
+              </div>
+            </div>
+
+            <div class="pos-bolum">
+              <div class="pos-bolum-baslik">
+                <i class="pi pi-wallet" /> Ödeme
+              </div>
+              <SelectButton
+                v-model="odemeDurumu"
+                :options="odemeTipleri"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+              <div
+                v-if="odemeDurumu !== 'yok'"
+                class="odenen-satir"
+              >
+                <label>Ödenen Tutar</label>
+                <InputNumber
+                  v-model="odenenTutar"
+                  :min="0"
+                  :max="genelToplam"
+                  mode="currency"
+                  currency="TRY"
+                  locale="tr-TR"
+                  class="w-full"
+                />
+              </div>
+
+              <div
+                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
+                class="odenen-satir"
+              >
+                <label>Alınan Nakit</label>
+                <InputNumber
+                  v-model="alinanNakit"
+                  :min="0"
+                  mode="currency"
+                  currency="TRY"
+                  locale="tr-TR"
+                  class="w-full"
+                />
+                <div
+                  v-if="paraUstu > 0"
+                  class="para-ustu"
+                >
+                  <span>Para Üstü:</span>
+                  <strong>{{ formatCurrency(paraUstu) }}</strong>
+                </div>
+              </div>
+
+              <div
+                v-if="odemeDurumu !== 'yok'"
+                class="odenen-satir"
+              >
+                <label>Ödeme Yöntemi</label>
+                <div class="odeme-yontem-grid">
+                  <button
+                    v-for="y in odemeYontemleri"
+                    :key="y.value"
+                    type="button"
+                    class="odeme-yontem-btn"
+                    :class="{ active: odemeYontemi === y.value }"
+                    @click="odemeYontemi = y.value"
+                  >
+                    <i :class="y.icon" />
+                    {{ y.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
+                class="taksit-panel"
+              >
+                <div class="odenen-satir">
+                  <label>Taksit Çekilen Kurum</label>
+                  <InputText
+                    v-model="taksitKurum"
+                    placeholder="Banka / finans kurumu"
+                    class="w-full"
+                  />
+                </div>
+                <div class="odenen-satir">
+                  <label>Çekilen Taksit Tutarı</label>
+                  <InputNumber
+                    v-model="taksitTutar"
+                    :min="0"
+                    :max="genelToplam"
+                    mode="currency"
+                    currency="TRY"
+                    locale="tr-TR"
+                    class="w-full"
+                  />
+                </div>
+              </div>
+
+              <div class="odenen-satir">
+                <label>Kasa</label>
+                <Dropdown
+                  v-model="seciliKasa"
+                  :options="kasalar"
+                  option-label="ad"
+                  option-value="id"
+                  placeholder="Kasa seçin"
+                  class="w-full"
+                />
+              </div>
+
+              <div class="odeme-durum">
+                <Tag
+                  :value="odemeDurumText"
+                  :severity="odemeDurumSeverity"
+                  class="w-full"
+                />
+              </div>
+              <div
+                v-if="kalanTutar > 0"
+                class="odeme-kalan"
+              >
+                <span>Kalan:</span>
+                <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
+              </div>
+            </div>
+
+            <Button
+              label="Satışı Tamamla"
+              icon="pi pi-check"
+              class="p-button-success w-full satis-buton"
+              :loading="kaydediliyor"
+              :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
+              @click="satisiTamamla"
+            />
+            <Button
+              v-if="sonSatis"
+              label="Son Satışı İptal Et"
+              icon="pi pi-undo"
+              class="p-button-outlined p-button-danger w-full"
+              @click="sonSatisiIptalEt"
+            />
+
+            <div class="pos-bolum">
+              <div class="pos-bolum-baslik">
+                <i class="pi pi-truck" /> Teslimat
+              </div>
               <div class="teslim-eden-alan">
                 <label for="hizli-teslim-eden">Teslim Eden</label>
                 <Dropdown
@@ -547,16 +517,144 @@
                 <Textarea
                   id="hizli-teslim-not"
                   v-model="teslimNotu"
-                  rows="3"
+                  rows="2"
                   placeholder="Teslimat notu (isteğe bağlı)"
                   class="w-full"
                 />
               </div>
             </div>
-          </TabPanel>
 
-          <TabPanel header="Bugün">
-            <div class="tab-icerik">
+            <div
+              v-if="sepet.length > 0"
+              class="pos-bolum"
+            >
+              <div class="pos-bolum-baslik fis-baslik-satir">
+                <span><i class="pi pi-print" /> Fiş Önizleme</span>
+                <div class="fis-ayarlar">
+                  <Button
+                    label="Yazdır (F9)"
+                    icon="pi pi-print"
+                    size="small"
+                    @click="fisiYazdir"
+                  />
+                  <Button
+                    label="Termal"
+                    icon="pi pi-send"
+                    size="small"
+                    severity="secondary"
+                    outlined
+                    @click="termalYazdir"
+                  />
+                </div>
+              </div>
+              <div class="fis-onizleme-kapsam">
+                <div
+                  id="fisOnizleme"
+                  class="fis-onizleme"
+                >
+                  <div class="fis-header">
+                    <div class="fis-baslik">
+                      {{ sirketAdi || 'RASPEL ERP' }}
+                    </div>
+                    <div class="fis-tarih">
+                      {{ simdikiTarih }}
+                    </div>
+                    <div class="fis-fisno">
+                      Fiş No: {{ fisNo || '-------' }}
+                    </div>
+                  </div>
+                  <div
+                    v-if="musteriAdi"
+                    class="fis-musteri"
+                  >
+                    <span>Müşteri: {{ musteriAdi }}</span>
+                  </div>
+                  <div class="fis-ayrac">
+                    ---
+                  </div>
+                  <div class="fis-kalemler">
+                    <div
+                      v-for="i in sepet"
+                      :key="i.id"
+                      class="fis-kalem"
+                    >
+                      <div class="fis-kalem-ad">
+                        {{ i.ad }} x{{ i.miktar }}
+                      </div>
+                      <div
+                        v-if="fisFiyatli"
+                        class="fis-kalem-tutar"
+                      >
+                        {{ formatCurrency(i.miktar * i.fiyat) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="fis-ayrac">
+                    ---
+                  </div>
+                  <template v-if="fisFiyatli">
+                    <div class="fis-toplam">
+                      <span>Ara Toplam</span>
+                      <span>{{ formatCurrency(toplam) }}</span>
+                    </div>
+                    <div
+                      v-if="indirimDegeri > 0"
+                      class="fis-indirim"
+                    >
+                      <span>İndirim ({{ indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }})</span>
+                      <span>-{{ formatCurrency(indirimTutari) }}</span>
+                    </div>
+                    <div class="fis-genel-toplam">
+                      <span>GENEL TOPLAM</span>
+                      <span class="fis-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
+                    </div>
+                    <div class="fis-ayrac">
+                      ---
+                    </div>
+                  </template>
+                  <div class="fis-odeme">
+                    <div
+                      v-if="fisFiyatli"
+                      class="fis-odeme-satir"
+                    >
+                      <span>Ödenen</span>
+                      <span>{{ formatCurrency(odenenTutar) }}</span>
+                    </div>
+                    <div
+                      v-if="fisFiyatli && kalanTutar > 0"
+                      class="fis-odeme-satir"
+                    >
+                      <span>Kalan</span>
+                      <span>{{ formatCurrency(kalanTutar) }}</span>
+                    </div>
+                    <div class="fis-odeme-satir fis-odeme-durum">
+                      <span>Toplam Ürün</span>
+                      <span>{{ sepet ? sepet.length : 0 }}</span>
+                    </div>
+                    <div class="fis-odeme-satir fis-odeme-durum">
+                      <span>Durum</span>
+                      <span>{{ odemeDurumText }}</span>
+                    </div>
+                  </div>
+                  <div class="fis-footer">
+                    <div class="fis-ayrac">
+                      ---
+                    </div>
+                    <div class="fis-tesekkur">
+                      {{ fisAltNotu || 'Bizi tercih ettiginiz icin tesekkur ederiz!' }}
+                    </div>
+                    <div
+                      v-if="authStore?.kullanici?.displayName"
+                      class="fis-satici"
+                    >
+                      Islem Yapan: {{ authStore?.kullanici?.displayName }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pos-bolum">
               <div class="gunluk-baslik">
                 <span><i class="pi pi-clock" /> Bugünkü Satışlar ({{ gunlukSatislar.length }})</span>
                 <Button
@@ -583,288 +681,151 @@
                 <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
               </div>
             </div>
-          </TabPanel>
-
-          <TabPanel header="Fiş">
-            <div class="tab-icerik">
-              <Card class="fis-card">
-                <template #title>
-                  <div class="fis-card-header">
-                    <span><i class="pi pi-print" /> Fiş Önizleme</span>
-                    <div class="fis-ayarlar">
-                      <Button
-                        label="Yazdır (F9)"
-                        icon="pi pi-print"
-                        size="small"
-                        :disabled="sepet.length === 0"
-                        @click="fisiYazdir"
-                      />
-                      <Button
-                        label="Termal"
-                        icon="pi pi-send"
-                        size="small"
-                        severity="secondary"
-                        outlined
-                        :disabled="sepet.length === 0"
-                        @click="termalYazdir"
-                      />
-                    </div>
-                  </div>
-                </template>
-                <template #content>
-                  <div class="fis-onizleme-kapsam">
-                    <div
-                      id="fisOnizleme"
-                      class="fis-onizleme"
-                    >
-                      <div class="fis-header">
-                        <div class="fis-baslik">
-                          {{ sirketAdi || 'RASPEL ERP' }}
-                        </div>
-                        <div class="fis-tarih">
-                          {{ simdikiTarih }}
-                        </div>
-                        <div class="fis-fisno">
-                          Fiş No: {{ fisNo || '-------' }}
-                        </div>
-                      </div>
-                      <div
-                        v-if="musteriAdi"
-                        class="fis-musteri"
-                      >
-                        <span>Müşteri: {{ musteriAdi }}</span>
-                      </div>
-                      <div class="fis-ayrac">
-                        ---
-                      </div>
-                      <div class="fis-kalemler">
-                        <div
-                          v-for="i in sepet"
-                          :key="i.id"
-                          class="fis-kalem"
-                        >
-                          <div class="fis-kalem-ad">
-                            {{ i.ad }} x{{ i.miktar }}
-                          </div>
-                          <div
-                            v-if="fisFiyatli"
-                            class="fis-kalem-tutar"
-                          >
-                            {{ formatCurrency(i.miktar * i.fiyat) }}
-                          </div>
-                        </div>
-                      </div>
-                      <div class="fis-ayrac">
-                        ---
-                      </div>
-                      <template v-if="fisFiyatli">
-                        <div class="fis-toplam">
-                          <span>Ara Toplam</span>
-                          <span>{{ formatCurrency(toplam) }}</span>
-                        </div>
-                        <div
-                          v-if="indirimDegeri > 0"
-                          class="fis-indirim"
-                        >
-                          <span>İndirim ({{ indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }})</span>
-                          <span>-{{ formatCurrency(indirimTutari) }}</span>
-                        </div>
-                        <div class="fis-genel-toplam">
-                          <span>GENEL TOPLAM</span>
-                          <span class="fis-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
-                        </div>
-                        <div class="fis-ayrac">
-                          ---
-                        </div>
-                      </template>
-                      <div class="fis-odeme">
-                        <div
-                          v-if="fisFiyatli"
-                          class="fis-odeme-satir"
-                        >
-                          <span>Ödenen</span>
-                          <span>{{ formatCurrency(odenenTutar) }}</span>
-                        </div>
-                        <div
-                          v-if="fisFiyatli && kalanTutar > 0"
-                          class="fis-odeme-satir"
-                        >
-                          <span>Kalan</span>
-                          <span>{{ formatCurrency(kalanTutar) }}</span>
-                        </div>
-                        <div class="fis-odeme-satir fis-odeme-durum">
-                          <span>Toplam Ürün</span>
-                          <span>{{ sepet ? sepet.length : 0 }}</span>
-                        </div>
-                        <div class="fis-odeme-satir fis-odeme-durum">
-                          <span>Durum</span>
-                          <span>{{ odemeDurumText }}</span>
-                        </div>
-                      </div>
-                      <div class="fis-footer">
-                        <div class="fis-ayrac">
-                          ---
-                        </div>
-                        <div class="fis-tesekkur">
-                          {{ fisAltNotu || 'Bizi tercih ettiginiz icin tesekkur ederiz!' }}
-                        </div>
-                        <div
-                          v-if="authStore?.kullanici?.displayName"
-                          class="fis-satici"
-                        >
-                          Islem Yapan: {{ authStore?.kullanici?.displayName }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </Card>
-            </div>
-          </TabPanel>
-        </TabView>
+          </template>
+        </Card>
       </div>
     </div>
+  </div>
 
-    <Dialog
-      v-model:visible="yeniMusteriDialog"
-      header="Yeni Cari Hesap Ekle"
-      :modal="true"
-      :style="{ width: '520px' }"
-      class="yeni-musteri-dialog"
-    >
-      <div class="ym-form-grid">
-        <div class="field full-width">
-          <label for="ym-ad">Ad / Firma Adı <span class="required">*</span></label>
-          <InputText
-            id="ym-ad"
-            v-model="yeniMusteri.ad"
-            placeholder="Örn: Ahmet Yılmaz veya Yılmaz A.Ş."
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label for="ym-telefon">Telefon</label>
-          <InputText
-            id="ym-telefon"
-            v-model="yeniMusteri.telefon"
-            placeholder="05XX XXX XX XX"
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label for="ym-email">E-posta</label>
-          <InputText
-            id="ym-email"
-            v-model="yeniMusteri.email"
-            placeholder="ornek@domain.com"
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label for="ym-vergi">Vergi / TC No</label>
-          <InputText
-            id="ym-vergi"
-            v-model="yeniMusteri.vergiNo"
-            placeholder="10 veya 11 haneli numara"
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label for="ym-tur">Cari Türü</label>
-          <Dropdown
-            id="ym-tur"
-            v-model="yeniMusteri.tur"
-            :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
-            placeholder="MÜŞTERİ"
-            class="w-full"
-          />
-        </div>
-        <div class="field full-width">
-          <label for="ym-adres">Adres</label>
-          <Textarea
-            id="ym-adres"
-            v-model="yeniMusteri.adres"
-            rows="2"
-            placeholder="Fatura adresi..."
-            class="w-full"
-          />
-        </div>
+  <Dialog
+    v-model:visible="yeniMusteriDialog"
+    header="Yeni Cari Hesap Ekle"
+    :modal="true"
+    :style="{ width: '520px' }"
+    class="yeni-musteri-dialog"
+  >
+    <div class="ym-form-grid">
+      <div class="field full-width">
+        <label for="ym-ad">Ad / Firma Adı <span class="required">*</span></label>
+        <InputText
+          id="ym-ad"
+          v-model="yeniMusteri.ad"
+          placeholder="Örn: Ahmet Yılmaz veya Yılmaz A.Ş."
+          class="w-full"
+        />
       </div>
-      <template #footer>
-        <div class="dialog-footer-btns">
-          <Button
-            label="İptal"
-            icon="pi pi-times"
-            class="p-button-text"
-            @click="yeniMusteriDialog = false"
-          />
-          <Button
-            label="Kaydet & Seç"
-            icon="pi pi-check"
-            class="p-button-primary"
-            :loading="musteriKaydediliyor"
-            @click="musteriKaydet"
-          />
-        </div>
-      </template>
-    </Dialog>
-
-    <BarcodeScannerModal
-      v-model:visible="scannerAcik"
-      @scan="barkodTarandi"
-    />
-
-    <Dialog
-      v-model:visible="satisOzetDialog"
-      header="Satış Tamamlandı"
-      :modal="true"
-      style="width: 420px"
-    >
-      <div
-        v-if="satisOzet"
-        class="satis-ozet"
-      >
-        <div class="satis-ozet-baslik">
-          <i class="pi pi-check-circle" />
-          <span>İşlem Başarılı</span>
-        </div>
-        <div class="satis-ozet-satir">
-          <span>Fatura No</span>
-          <strong>{{ satisOzet.faturaNo }}</strong>
-        </div>
-        <div class="satis-ozet-satir">
-          <span>Toplam</span>
-          <strong>{{ formatCurrency(satisOzet.toplam) }}</strong>
-        </div>
-        <div class="satis-ozet-satir">
-          <span>Ödenen</span>
-          <strong>{{ formatCurrency(satisOzet.odenen) }}</strong>
-        </div>
-        <div
-          v-if="satisOzet.kalan > 0"
-          class="satis-ozet-satir"
-        >
-          <span>Kalan</span>
-          <strong class="borc">{{ formatCurrency(satisOzet.kalan) }}</strong>
-        </div>
-        <div
-          v-if="satisOzet.paraUstu > 0"
-          class="satis-ozet-satir"
-        >
-          <span>Para Üstü</span>
-          <strong class="para">{{ formatCurrency(satisOzet.paraUstu) }}</strong>
-        </div>
+      <div class="field">
+        <label for="ym-telefon">Telefon</label>
+        <InputText
+          id="ym-telefon"
+          v-model="yeniMusteri.telefon"
+          placeholder="05XX XXX XX XX"
+          class="w-full"
+        />
       </div>
-      <template #footer>
+      <div class="field">
+        <label for="ym-email">E-posta</label>
+        <InputText
+          id="ym-email"
+          v-model="yeniMusteri.email"
+          placeholder="ornek@domain.com"
+          class="w-full"
+        />
+      </div>
+      <div class="field">
+        <label for="ym-vergi">Vergi / TC No</label>
+        <InputText
+          id="ym-vergi"
+          v-model="yeniMusteri.vergiNo"
+          placeholder="10 veya 11 haneli numara"
+          class="w-full"
+        />
+      </div>
+      <div class="field">
+        <label for="ym-tur">Cari Türü</label>
+        <Dropdown
+          id="ym-tur"
+          v-model="yeniMusteri.tur"
+          :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
+          placeholder="MÜŞTERİ"
+          class="w-full"
+        />
+      </div>
+      <div class="field full-width">
+        <label for="ym-adres">Adres</label>
+        <Textarea
+          id="ym-adres"
+          v-model="yeniMusteri.adres"
+          rows="2"
+          placeholder="Fatura adresi..."
+          class="w-full"
+        />
+      </div>
+    </div>
+    <template #footer>
+      <div class="dialog-footer-btns">
         <Button
-          label="Kapat"
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="yeniMusteriDialog = false"
+        />
+        <Button
+          label="Kaydet & Seç"
           icon="pi pi-check"
           class="p-button-primary"
-          @click="satisOzetDialog = false"
+          :loading="musteriKaydediliyor"
+          @click="musteriKaydet"
         />
-      </template>
-    </Dialog>
-  </div>
+      </div>
+    </template>
+  </Dialog>
+
+  <BarcodeScannerModal
+    v-model:visible="scannerAcik"
+    @scan="barkodTarandi"
+  />
+
+  <Dialog
+    v-model:visible="satisOzetDialog"
+    header="Satış Tamamlandı"
+    :modal="true"
+    style="width: 420px"
+  >
+    <div
+      v-if="satisOzet"
+      class="satis-ozet"
+    >
+      <div class="satis-ozet-baslik">
+        <i class="pi pi-check-circle" />
+        <span>İşlem Başarılı</span>
+      </div>
+      <div class="satis-ozet-satir">
+        <span>Fatura No</span>
+        <strong>{{ satisOzet.faturaNo }}</strong>
+      </div>
+      <div class="satis-ozet-satir">
+        <span>Toplam</span>
+        <strong>{{ formatCurrency(satisOzet.toplam) }}</strong>
+      </div>
+      <div class="satis-ozet-satir">
+        <span>Ödenen</span>
+        <strong>{{ formatCurrency(satisOzet.odenen) }}</strong>
+      </div>
+      <div
+        v-if="satisOzet.kalan > 0"
+        class="satis-ozet-satir"
+      >
+        <span>Kalan</span>
+        <strong class="borc">{{ formatCurrency(satisOzet.kalan) }}</strong>
+      </div>
+      <div
+        v-if="satisOzet.paraUstu > 0"
+        class="satis-ozet-satir"
+      >
+        <span>Para Üstü</span>
+        <strong class="para">{{ formatCurrency(satisOzet.paraUstu) }}</strong>
+      </div>
+    </div>
+    <template #footer>
+      <Button
+        label="Kapat"
+        icon="pi pi-check"
+        class="p-button-primary"
+        @click="satisOzetDialog = false"
+      />
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
@@ -1335,12 +1296,6 @@ const personelListesiniYukle = async () => {
   }
 }
 
-const filtreleriTemizle = () => {
-  filtreKategori.value = null
-  filtreArac.value = null
-  seriNoArama.value = ''
-}
-
 const musteriAra = (event) => {
   const query = event.query
   const kaynak = cariHesapStore?.cariHesaplar || []
@@ -1800,20 +1755,6 @@ const sepetiTemizle = () => {
   gap: 12px;
 }
 
-.pos-tabview {
-  display: flex;
-  flex-direction: column;
-}
-.pos-tabview :deep(.p-tabview-panels) {
-  flex: 1;
-  overflow-y: auto;
-}
-.tab-icerik {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 4px;
-}
 .siparis-kart :deep(.p-card-content) {
   display: flex;
   flex-direction: column;
@@ -1864,20 +1805,56 @@ const sepetiTemizle = () => {
   flex: 1;
 }
 
-.serial-search {
-  margin: 8px 0;
+.pos-arac-cubugu {
   display: grid;
-  grid-template-columns: 1.4fr 1.6fr auto;
+  grid-template-columns: 1.4fr 1.6fr 1fr 1fr auto;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
+  margin-bottom: 12px;
 }
-.serial-search :deep(.p-inputtext) {
+.pos-arac-cubugu .arama-kutusu {
+  display: block;
+  position: relative;
+}
+.pos-arac-cubugu .arama-kutusu .p-inputtext {
   width: 100%;
-  padding-left: 42px;
+  height: 42px;
+  padding-left: 2.75rem !important;
+}
+.pos-arac-cubugu .arama-kutusu > i {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  z-index: 1;
+}
+.pos-arac-cubugu .arac-dropdown {
+  height: 42px;
+  width: 100%;
+}
+.pos-arac-cubugu .arac-dropdown :deep(.p-dropdown) {
+  width: 100%;
+  height: 42px;
+}
+.pos-arac-cubugu .arac-dropdown :deep(.p-dropdown-label) {
+  line-height: 42px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.pos-arac-cubugu .p-button {
+  height: 42px;
 }
 
-@media (max-width: 720px) {
-  .serial-search {
+@media (max-width: 900px) {
+  .pos-arac-cubugu {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .pos-arac-cubugu {
     grid-template-columns: 1fr;
   }
 }
@@ -1890,12 +1867,26 @@ const sepetiTemizle = () => {
   font-weight: 600;
   margin: 0 0 8px 0;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.product-header h3 i {
+  color: var(--accent);
+}
+.urun-sayaci {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.12);
+  padding: 1px 8px;
+  border-radius: 10px;
 }
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
   gap: 10px;
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
   padding-bottom: 8px;
 }
@@ -1910,27 +1901,26 @@ const sepetiTemizle = () => {
   transition: all 0.15s;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
 }
 .product-card:hover {
   border-color: var(--accent);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
-.product-img {
-  width: 64px;
-  height: 64px;
-  background: var(--surface-ground);
-  border-radius: 8px;
+.product-ust {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
-.product-img i {
-  font-size: 28px;
+.product-kod {
+  font-size: 10px;
+  font-weight: 600;
   color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .stock-badge {
   position: absolute;
@@ -1956,12 +1946,6 @@ const sepetiTemizle = () => {
   font-size: 11px;
   color: var(--text-muted);
 }
-.product-meta {
-  display: block;
-  font-size: 10px;
-  color: var(--text-muted);
-  margin: 2px 0;
-}
 .product-price {
   display: inline-block;
   font-size: 15px;
@@ -1975,7 +1959,6 @@ const sepetiTemizle = () => {
 .product-fiyat-satiri {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
   flex-wrap: wrap;
 }
@@ -2056,10 +2039,6 @@ const sepetiTemizle = () => {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent);
-}
-.global-barkod {
-  display: flex;
-  align-items: center;
 }
 .empty-products i {
   font-size: 36px;
@@ -2509,6 +2488,9 @@ const sepetiTemizle = () => {
 
 .fis-card :deep(.p-card-content) {
   padding: 0;
+}
+.fis-baslik-satir {
+  justify-content: space-between;
 }
 .fis-card-header {
   display: flex;

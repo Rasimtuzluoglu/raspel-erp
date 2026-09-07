@@ -442,6 +442,13 @@ public class FaturaService {
             throw new BusinessException("İptal edilmiş fatura güncellenemez");
         }
 
+        // Ödeme yapılmış fatura iptal edilemez (bakiye/tahsilat tutarsızlığı önlenir)
+        if (durum == Fatura.FaturaDurum.IPTAL
+                && fatura.getOdenenTutar() != null
+                && fatura.getOdenenTutar().compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException("Ödeme yapılmış fatura iptal edilemez. Önce tahsilat/ödeme hareketlerini silin.");
+        }
+
         if (durum == Fatura.FaturaDurum.KESILDI && fatura.getDurum() != Fatura.FaturaDurum.KESILDI) {
             List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(fatura.getTur()), "Fatura #" + fatura.getFaturaNumarasi());
             cariBakiyeGuncelle(fatura, false);

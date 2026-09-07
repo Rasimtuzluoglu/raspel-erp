@@ -382,24 +382,56 @@ public class KullaniciService {
     private List<com.raspel.erp.dto.sistem.SirketDTO> getSirketlerForKullanici(Kullanici k) {
         if ("ADMIN".equals(k.getRole())) {
             return sirketRepository.findByAktifTrue().stream()
-                    .map(s -> com.raspel.erp.dto.sistem.SirketDTO.builder()
-                            .id(s.getId()).ad(s.getAd()).logoUrl(s.getLogoUrl()).build())
+                    .map(this::sirketToDTO)
                     .collect(Collectors.toList());
         }
         Set<Sirket> sirketler = k.getSirketler();
         if (sirketler != null && !sirketler.isEmpty()) {
             return sirketler.stream()
-                    .map(s -> com.raspel.erp.dto.sistem.SirketDTO.builder()
-                            .id(s.getId()).ad(s.getAd()).logoUrl(s.getLogoUrl()).build())
+                    .map(this::sirketToDTO)
                     .collect(Collectors.toList());
         }
         if (k.getSirketId() != null) {
             return sirketRepository.findById(k.getSirketId())
-                    .map(s -> List.of(com.raspel.erp.dto.sistem.SirketDTO.builder()
-                            .id(s.getId()).ad(s.getAd()).logoUrl(s.getLogoUrl()).build()))
+                    .map(s -> List.of(sirketToDTO(s)))
                     .orElse(List.of());
         }
         return List.of();
+    }
+
+    private com.raspel.erp.dto.sistem.SirketDTO sirketToDTO(Sirket s) {
+        return com.raspel.erp.dto.sistem.SirketDTO.builder()
+                .id(s.getId()).ad(s.getAd()).vergiNo(s.getVergiNo())
+                .tur(s.getTur()).yil(s.getYil()).logoUrl(s.getLogoUrl())
+                .build();
+    }
+
+    /** Oturum açmış kullanıcının erişebileceği şirketleri döndürür. */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.sistem.SirketDTO> sirketlerim(Long kullaniciId) {
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
+        return getSirketlerForKullanici(k);
+    }
+
+    /** Oturum açıkken şirket değiştirir; yeni JWT üretir. */
+    public LoginResponse sirketDegistir(Long kullaniciId, Long sirketId) {
+        if (sirketId == null) {
+            throw new BusinessException("Şirket seçimi zorunludur");
+        }
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
+        if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
+
+        // Admin herhangi bir aktif firmaya geçebilir; USER yalnızca atandığı firmalara
+        if (!"ADMIN".equals(k.getRole())) {
+            boolean uye = k.getSirketler() != null && k.getSirketler().stream()
+                    .anyMatch(s -> s.getId().equals(sirketId));
+            if (!uye && (k.getSirketId() == null || !k.getSirketId().equals(sirketId))) {
+                throw new BusinessException("Bu şirkette çalışma yetkiniz yok");
+            }
+        }
+        return tokenOlusturVeDon(k, null, sirketId);
     }
 
     private LoginResponse tokenOlusturVeDon(Kullanici k, String istekFirma, Long istekSirketId) {

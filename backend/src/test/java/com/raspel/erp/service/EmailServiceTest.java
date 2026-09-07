@@ -22,6 +22,7 @@ class EmailServiceTest {
 
     private void hazirla() {
         ReflectionTestUtils.setField(emailService, "fromEmail", "noreply@raspel-erp.com");
+        ReflectionTestUtils.setField(emailService, "mailUsername", "test@test.com");
     }
 
     @Test

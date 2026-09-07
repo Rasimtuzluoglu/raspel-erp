@@ -901,6 +901,38 @@ img {
   font-weight: 600 !important;
   transition: all 0.2s ease !important;
 }
+/* PrimeVue 4'te olmayan eski boyut/sekilleri karsila */
+.p-button.p-button-sm {
+  padding: 0.4rem 0.75rem !important;
+  font-size: 0.85rem !important;
+}
+.p-button.p-button-xs {
+  padding: 0.15rem 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+.p-button.p-button-rounded {
+  border-radius: 50% !important;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 !important;
+}
+.p-button.p-button-secondary {
+  background: rgba(148, 163, 184, 0.15) !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  color: var(--text-primary) !important;
+}
+.p-button.p-button-secondary:hover {
+  background: rgba(148, 163, 184, 0.25) !important;
+}
+.p-button.p-button-primary {
+  background: var(--accent, #3b82f6) !important;
+  border: 1px solid var(--accent, #3b82f6) !important;
+  color: #ffffff !important;
+}
+.p-button.p-button-primary:hover {
+  background: var(--accent-hover, #2563eb) !important;
+  border-color: var(--accent-hover, #2563eb) !important;
+}
 .p-button.p-button-success {
   background: linear-gradient(135deg, #22c55e, #16a34a) !important;
   border: none !important;

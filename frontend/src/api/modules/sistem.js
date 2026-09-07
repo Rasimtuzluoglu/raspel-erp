@@ -54,6 +54,12 @@ export const kullaniciAPI = {
   },
   bildirimTercihleriGuncelle(tercihler) {
     return apiClient.put('/kullanicilar/bildirim-tercihleri', tercihler)
+  },
+  sirketlerim() {
+    return apiClient.get('/kullanicilar/sirketlerim')
+  },
+  sirketDegistir(sirketId) {
+    return apiClient.post('/kullanicilar/sirket-degistir', { sirketId })
   }
 }
 
@@ -75,6 +81,9 @@ export const sohbetAPI = {
   },
   aiSorgu(soru) {
     return apiClient.post('/sohbet/ai-sorgu', { soru })
+  },
+  aiOcr(gorsel, mimeType) {
+    return apiClient.post('/sohbet/ai-ocr', { gorsel, mimeType })
   }
 }
 

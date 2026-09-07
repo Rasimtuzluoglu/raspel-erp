@@ -29,6 +29,7 @@ class MasrafServiceTest {
     @Mock private MasrafRepository masrafRepository;
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @InjectMocks private MasrafService masrafService;
 
     private Masraf ornekMasraf(Long id) {

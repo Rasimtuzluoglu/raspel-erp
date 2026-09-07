@@ -123,6 +123,17 @@
       </div>
 
       <div class="admin-card">
+        <button
+          v-if="authStore.sirketAdi || authStore.companyName"
+          class="firma-secici"
+          :title="'Şirket değiştir'"
+          @click="sirketDegistirAc"
+        >
+          <i class="pi pi-building" />
+          <span class="firma-secici-ad">{{ authStore.sirketAdi || authStore.companyName }}</span>
+          <i class="pi pi-chevron-down firma-secici-ok" />
+        </button>
+
         <div class="admin-profile">
           <div class="admin-avatar">
             <img
@@ -217,6 +228,49 @@
     </div>
 
     <KisayolRehberi v-model:goster="rehberGoster" />
+
+    <Dialog
+      v-model:visible="sirketDialogAcik"
+      header="Şirket Değiştir"
+      :modal="true"
+      :style="{ width: '440px' }"
+    >
+      <div
+        v-if="sirketSecenekleri.length === 0"
+        class="sirket-degistir-bos"
+      >
+        <i class="pi pi-building" />
+        <p>Şirket listesi yüklenemedi.</p>
+      </div>
+      <div class="sirket-degistir-liste">
+        <button
+          v-for="s in sirketSecenekleri"
+          :key="s.id"
+          class="sirket-degistir-kart"
+          :class="{ aktif: s.id === authStore.sirketId }"
+          @click="sirketDegistir(s)"
+        >
+          <div class="sirket-degistir-bilgi">
+            <i class="pi pi-building" />
+            <div>
+              <span class="sirket-degistir-ad">{{ s.ad }}</span>
+              <span
+                v-if="s.vergiNo"
+                class="sirket-degistir-vkn"
+              >VKN: {{ s.vergiNo }}</span>
+            </div>
+          </div>
+          <i
+            v-if="s.id === authStore.sirketId"
+            class="pi pi-check-circle sirket-degistir-aktif"
+          />
+          <i
+            v-else
+            class="pi pi-arrow-right"
+          />
+        </button>
+      </div>
+    </Dialog>
   </aside>
 </template>
 
@@ -251,6 +305,32 @@ const mobilMenuAcik = ref(false)
 const rehberGoster = ref(false)
 const aracAcik = ref(false)
 const gelismisMod = ref(safeGet('raspel_erp_gelismis_mod', false))
+const sirketDialogAcik = ref(false)
+const sirketSecenekleri = ref([])
+const sirketDegistiriliyor = ref(false)
+
+const sirketDegistirAc = async () => {
+  sirketSecenekleri.value = await authStore.sirketlerim()
+  sirketDialogAcik.value = true
+}
+
+const sirketDegistir = async (sirket) => {
+  if (sirket.id === authStore.sirketId) {
+    sirketDialogAcik.value = false
+    return
+  }
+  sirketDegistiriliyor.value = true
+  try {
+    await authStore.sirketDegistir(sirket.id)
+    sirketDialogAcik.value = false
+    // Aktif şirket değişti; verilerin tazelenmesi için tam yenileme
+    window.location.reload()
+  } catch {
+    // Hata kullanıcıya bildirilmeden dialog açık kalır
+  } finally {
+    sirketDegistiriliyor.value = false
+  }
+}
 
 const toggleGelismisMod = () => {
   gelismisMod.value = !gelismisMod.value
@@ -326,7 +406,7 @@ const tumMenuler = [
   },
   { path: '/vardiyalar', label: 'Vardiya', icon: 'pi pi-clock', grup: 'Yönetim', gelismis: true },
   { path: '/sirketler', label: 'Şirket', icon: 'pi pi-building', grup: 'Sistem', admin: true, gelismis: true },
-  { path: '/yeni-yil-sihirbazi', label: 'Yeni Yıl Aç', icon: 'pi pi-magic', grup: 'Sistem', admin: true, gelismis: true },
+  { path: '/yeni-yil-sihirbazi', label: 'Yeni Yıl Aç', icon: 'pi pi-sparkles', grup: 'Sistem', admin: true, gelismis: true },
   { path: '/donemler', label: 'Dönem', icon: 'pi pi-calendar', grup: 'Sistem', gelismis: true },
   { path: '/kullanicilar', label: 'Kullanıcı', icon: 'pi pi-user', grup: 'Sistem', admin: true, gelismis: true },
   { path: '/yetki-yonetimi', label: 'Yetkiler', icon: 'pi pi-key', grup: 'Sistem', admin: true, gelismis: true },
@@ -437,5 +517,108 @@ const onaySayisiniYukle = async () => {
   align-items: center;
   justify-content: center;
   padding: 0 6px;
+}
+
+.firma-secici {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.firma-secici:hover {
+  background: rgba(59, 130, 246, 0.18);
+}
+.firma-secici i:first-child {
+  color: var(--accent);
+  font-size: 14px;
+}
+.firma-secici-ad {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.firma-secici-ok {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sirket-degistir-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sirket-degistir-kart {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sirket-degistir-kart:hover {
+  border-color: var(--accent);
+}
+.sirket-degistir-kart.aktif {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+}
+.sirket-degistir-bilgi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.sirket-degistir-bilgi > i {
+  color: var(--accent);
+  font-size: 16px;
+}
+.sirket-degistir-bilgi > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sirket-degistir-ad {
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sirket-degistir-vkn {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.sirket-degistir-aktif {
+  color: #10b981;
+  font-size: 16px;
+}
+.sirket-degistir-bos {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+}
+.sirket-degistir-bos i {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
 }
 </style>

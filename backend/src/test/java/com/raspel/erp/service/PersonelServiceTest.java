@@ -28,6 +28,7 @@ class PersonelServiceTest {
 
     @Mock private PersonelRepository personelRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @InjectMocks private PersonelService personelService;
 
     private Personel createPersonel(Long id) {

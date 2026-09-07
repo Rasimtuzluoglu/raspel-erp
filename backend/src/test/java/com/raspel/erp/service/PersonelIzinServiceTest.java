@@ -30,6 +30,7 @@ class PersonelIzinServiceTest {
     @Mock private PersonelIzinRepository izinRepository;
     @Mock private PersonelRepository personelRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @InjectMocks private PersonelIzinService personelIzinService;
 
     private PersonelIzin createIzin(Long id) {

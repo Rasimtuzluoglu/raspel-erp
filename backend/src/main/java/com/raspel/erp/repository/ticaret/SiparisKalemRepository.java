@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface SiparisKalemRepository extends JpaRepository<SiparisKalem, Long> {
     List<SiparisKalem> findBySiparisId(Long siparisId);
+    List<SiparisKalem> findBySiparisIdIn(List<Long> siparisIds);
     void deleteBySiparisId(Long siparisId);
 }

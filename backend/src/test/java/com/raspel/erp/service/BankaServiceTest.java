@@ -28,6 +28,7 @@ class BankaServiceTest {
     @Mock private BankaRepository bankaRepository;
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @InjectMocks private BankaService bankaService;
 
     private Banka createBanka(Long id) {

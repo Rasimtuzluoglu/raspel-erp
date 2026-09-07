@@ -43,6 +43,7 @@ public class YoneticiKokpitService {
     private final KasaRepository kasaRepository;
     private final BankaRepository bankaRepository;
     private final StokRepository stokRepository;
+    private final com.raspel.erp.config.CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public YoneticiKokpitDTO getKokpitVerileri(Long sirketId, Integer yil, Integer ay) {
@@ -161,13 +162,18 @@ public class YoneticiKokpitService {
                 .filter(k -> k.getStokId() != null)
                 .collect(Collectors.groupingBy(FaturaKalem::getStokId));
 
+        // N+1 önlemi: tüm stokları tek sorguda çek
+        Map<Long, Stok> stokHaritasi = stokGrup.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokGrup.keySet()).stream()
+                        .collect(Collectors.toMap(Stok::getId, s -> s));
+
         List<TopUrunDTO> topUrunler = stokGrup.entrySet().stream()
                 .map(e -> {
                     Long stokId = e.getKey();
                     List<FaturaKalem> kalemler = e.getValue();
-                    Optional<Stok> stokOpt = stokRepository.findById(stokId);
-                    String stokKodu = stokOpt.map(Stok::getStokKodu).orElse("STK-" + stokId);
-                    String stokAdi = stokOpt.map(Stok::getAd).orElse(kalemler.get(0).getAciklama());
+                    Stok stok = stokHaritasi.get(stokId);
+                    String stokKodu = stok != null && stok.getStokKodu() != null ? stok.getStokKodu() : "STK-" + stokId;
+                    String stokAdi = stok != null && stok.getAd() != null ? stok.getAd() : kalemler.get(0).getAciklama();
 
                     BigDecimal toplamMiktar = kalemler.stream()
                             .map(k -> k.getAdet() != null ? BigDecimal.valueOf(k.getAdet()) : BigDecimal.ZERO)
@@ -283,6 +289,9 @@ public class YoneticiKokpitService {
         if (dto.getNotlar() != null) hedef.setNotlar(dto.getNotlar());
 
         hedef = sirketHedefRepository.save(hedef);
+
+        // Dashboard ve kokpit önbelleklerini temizle (hedef anında yansısın)
+        cacheYardimci.temizle("dashboard");
 
         return SirketHedefDTO.builder()
                 .id(hedef.getId())

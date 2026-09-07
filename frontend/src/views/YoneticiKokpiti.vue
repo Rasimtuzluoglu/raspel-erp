@@ -473,7 +473,11 @@ const bugun = new Date()
 const seciliYil = ref(bugun.getFullYear())
 const seciliAy = ref(bugun.getMonth() + 1)
 
-const yilSecenekleri = [2024, 2025, 2026, 2027]
+// 2024'ten bugüne +5 yıl ileriye kadar dinamik yıl listesi
+const yilSecenekleri = Array.from(
+  { length: (bugun.getFullYear() + 5) - 2024 + 1 },
+  (_, i) => 2024 + i
+)
 const aySecenekleri = [
   { ad: 'Ocak', deger: 1 }, { ad: 'Şubat', deger: 2 }, { ad: 'Mart', deger: 3 },
   { ad: 'Nisan', deger: 4 }, { ad: 'Mayıs', deger: 5 }, { ad: 'Haziran', deger: 6 },

@@ -96,6 +96,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Oturum açıkken şirket değiştir
+  const sirketDegistir = async (sirketId) => {
+    loading.value = true
+    try {
+      const res = await kullaniciAPI.sirketDegistir(sirketId)
+      oturumKur(res.data)
+      localStorage.setItem('raspel_erp_son_sirket', sirketId)
+      return res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Oturum açmış kullanıcının erişebileceği şirketler
+  const sirketlerim = async () => {
+    try {
+      const res = await kullaniciAPI.sirketlerim()
+      return res.data || []
+    } catch {
+      return []
+    }
+  }
+
   const giris2fa = async (girisToken, code) => {
     loading.value = true
     try {
@@ -199,6 +222,8 @@ export const useAuthStore = defineStore('auth', () => {
     girisYap,
     girisSirket,
     giris2fa,
+    sirketDegistir,
+    sirketlerim,
     cikisYap,
     kullanicilariGetir,
     kullaniciGuncelle,

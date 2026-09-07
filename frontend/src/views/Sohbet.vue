@@ -51,6 +51,27 @@
       >
         {{ oneri }}
       </button>
+      <button
+        class="oneri-cip oneri-ocr"
+        @click="dosyaInput.click()"
+      >
+        <i class="pi pi-camera" /> Fatura/Fiş Oku
+      </button>
+      <input
+        ref="dosyaInput"
+        type="file"
+        accept="image/*"
+        hidden
+        @change="faturaOku"
+      >
+    </div>
+
+    <!-- OCR Yükleniyor -->
+    <div
+      v-if="ocrYukleniyor"
+      class="ocr-bilgi"
+    >
+      <i class="pi pi-spin pi-spinner" /> Fatura okunuyor, yapay zeka analiz ediyor...
     </div>
 
     <!-- Mesaj Alanı -->
@@ -208,7 +229,9 @@ const modSecenekleri = [
 const hizliSorular = [
   'Bu ay en çok ciro yaptığımız 3 müşteri kim?',
   'Gelecek hafta vadesi gelen ödemelerim neler?',
-  'Kasa ve banka toplam bakiyemiz nedir?'
+  'Kasa ve banka toplam bakiyemiz nedir?',
+  'Kritik seviyede stoklarım hangileri?',
+  'En kârlı ürünlerim hangileri?'
 ]
 
 const mesajlar = ref([])
@@ -216,9 +239,11 @@ const aiMesajlar = ref([])
 const yeniMesaj = ref('')
 const gonderiliyor = ref(false)
 const aiYukleniyor = ref(false)
+const ocrYukleniyor = ref(false)
 const yukleniyor = ref(false)
 const bagli = ref(false)
 const mesajKutusu = ref(null)
+const dosyaInput = ref(null)
 
 const kendiId = computed(() => authStore?.kullanici?.id)
 
@@ -242,7 +267,13 @@ const formatTabloBaslik = (key) => {
     tur: 'İşlem Türü',
     tutar: 'Tutar',
     hesap: 'Hesap Adı',
-    bakiye: 'Bakiye'
+    bakiye: 'Bakiye',
+    stok: 'Ürün',
+    miktar: 'Miktar',
+    durum: 'Durum',
+    maliyet: 'Maliyet',
+    satis: 'Satış Fiyatı',
+    marj: 'Kâr Marjı'
   }
   return map[key] || key
 }
@@ -257,6 +288,47 @@ const hizliSoruSor = (soru) => {
   yeniMesaj.value = soru
   gonder()
 }
+
+// Fatura/fiş görüntüsünü OCR ile okur ve AI mesajına ekler
+const faturaOku = async (event) => {
+  const dosya = event.target.files?.[0]
+  if (!dosya) return
+  ocrYukleniyor.value = true
+  try {
+    const base64 = await dosyaBase64(dosya)
+    const res = await sohbetAPI.aiOcr(base64, dosya.type || 'image/jpeg')
+    const sonuc = res.data?.sonuc || ''
+    aiMesajlar.value.push({
+      rol: 'ai',
+      metin: '📄 Okunan fatura bilgisi:\n' + sonuc,
+      zaman: new Date()
+    })
+    kaydir()
+  } catch (err) {
+    const mesaj = err?.response?.data?.message || 'Fatura okunamadı. AI yapılandırmasını kontrol edin.'
+    aiMesajlar.value.push({
+      rol: 'ai',
+      metin: mesaj,
+      zaman: new Date()
+    })
+    kaydir()
+  } finally {
+    ocrYukleniyor.value = false
+    if (event.target) event.target.value = ''
+  }
+}
+
+const dosyaBase64 = (dosya) =>
+  new Promise((resolve, reject) => {
+    const okuyucu = new FileReader()
+    okuyucu.onload = () => {
+      const sonuc = okuyucu.result || ''
+      const virgul = sonuc.indexOf(',')
+      resolve(virgul >= 0 ? sonuc.substring(virgul + 1) : sonuc)
+    }
+    okuyucu.onerror = reject
+    okuyucu.readAsDataURL(dosya)
+  })
 
 const gonder = async () => {
   const metin = yeniMesaj.value.trim()
@@ -441,6 +513,31 @@ onUnmounted(() => {
   background: rgba(59, 130, 246, 0.1);
   border-color: var(--accent, #3b82f6);
   color: var(--accent, #3b82f6);
+}
+.oneri-cip.oneri-ocr {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #a78bfa;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.oneri-cip.oneri-ocr:hover {
+  background: rgba(139, 92, 246, 0.22);
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+}
+.ocr-bilgi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #a78bfa;
 }
 .mesaj-kutusu {
   flex: 1;

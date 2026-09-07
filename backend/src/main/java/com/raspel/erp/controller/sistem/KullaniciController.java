@@ -204,6 +204,27 @@ public class KullaniciController {
         return ResponseEntity.ok(kullaniciService.bildirimTercihleriGuncelle(kullaniciId, tercihler));
     }
 
+    @GetMapping("/sirketlerim")
+    @Operation(summary = "Şirketlerim", description = "Oturum açmış kullanıcının erişebileceği şirketleri döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<com.raspel.erp.dto.sistem.SirketDTO>> sirketlerim(HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(kullaniciService.sirketlerim(kullaniciId));
+    }
+
+    @PostMapping("/sirket-degistir")
+    @Operation(summary = "Şirket değiştir", description = "Oturum açıkken şirketi değiştirir ve yeni JWT token döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<LoginResponse> sirketDegistir(@RequestBody java.util.Map<String, Object> req,
+                                                        HttpServletRequest request,
+                                                        HttpServletResponse response) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        Long sirketId = req.get("sirketId") != null ? Long.valueOf(req.get("sirketId").toString()) : null;
+        LoginResponse loginResponse = kullaniciService.sirketDegistir(kullaniciId, sirketId);
+        jwtCookieEkle(response, loginResponse.getToken());
+        return ResponseEntity.ok(loginResponse);
+    }
+
     private void jwtCookieEkle(HttpServletResponse response, String token) {
         if (token == null || token.isBlank()) return;
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)

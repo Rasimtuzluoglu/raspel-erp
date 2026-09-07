@@ -45,4 +45,14 @@ public class SohbetController {
         String soru = body != null ? body.get("soru") : "";
         return ResponseEntity.ok(sohbetService.aiSorgula(soru, sirketId));
     }
+
+    @PostMapping("/ai-ocr")
+    @Operation(summary = "Fatura/Fiş OCR okuma", description = "Görüntüyü (base64) AI vision ile okuyup fatura kalemlerini JSON döndürür")
+    public ResponseEntity<java.util.Map<String, Object>> aiOcr(@RequestBody java.util.Map<String, String> body, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        String base64Image = body != null ? body.get("gorsel") : "";
+        String mimeType = body != null ? (body.get("mimeType") != null ? body.get("mimeType") : "image/jpeg") : "image/jpeg";
+        String sonuc = sohbetService.aiOcrOku(base64Image, mimeType, sirketId);
+        return ResponseEntity.ok(java.util.Map.of("sonuc", sonuc));
+    }
 }

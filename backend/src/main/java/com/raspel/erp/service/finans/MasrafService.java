@@ -21,6 +21,7 @@ public class MasrafService {
     private final MasrafRepository masrafRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
+    private final com.raspel.erp.config.CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -46,6 +47,7 @@ public class MasrafService {
                 .belgeNo(dto.getBelgeNo())
                 .sirketId(sirketId)
                 .build();
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(masrafRepository.save(masraf));
     }
 
@@ -60,6 +62,7 @@ public class MasrafService {
         if (dto.getKategori() != null) masraf.setKategori(dto.getKategori());
         if (dto.getCariHesapId() != null) masraf.setCariHesapId(dto.getCariHesapId());
         if (dto.getBelgeNo() != null) masraf.setBelgeNo(dto.getBelgeNo());
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(masrafRepository.save(masraf));
     }
 
@@ -72,6 +75,7 @@ public class MasrafService {
                 "Masraf silindi: " + m.getTutar() + " TL - " + (m.getAciklama() != null ? m.getAciklama() : "")
                         + (m.getTarih() != null ? " (" + m.getTarih() + ")" : ""));
         masrafRepository.deleteById(id);
+        cacheYardimci.temizle("dashboard");
     }
 
     private MasrafDTO entityToDTO(Masraf m) {

@@ -12,551 +12,555 @@
       metin="Profil bilgilerinizi güncelleyin, şifrenizi değiştirin ve iki faktörlü doğrulama (2FA) ile hesabınızı güvenceye alın."
     />
 
-    <div class="ayarlar-grid">
-      <!-- PROFİL -->
-      <Card class="ayar-kart">
-        <template #title>
-          <i
-            class="pi pi-user"
-          />Profil
+    <TabView class="ayarlar-tabview">
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-user" />Profil</span>
         </template>
-        <template #content>
-          <div class="form-grid">
-            <div class="field">
-              <label>Kullanıcı Adı</label><InputText
-                :model-value="kullanici?.username"
-                disabled
-                class="w-full"
-              />
-            </div>
-            <div class="field">
-              <label>Görünen Ad</label><InputText
-                v-model="profilForm.displayName"
-                class="w-full"
-              />
-            </div>
-            <div class="field">
-              <label>Firma Adı</label><InputText
-                v-model="profilForm.companyName"
-                class="w-full"
-              />
-            </div>
-            <div class="field">
-              <label>Avatar URL</label><InputText
-                v-model="profilForm.avatarUrl"
-                class="w-full"
-              />
-            </div>
-            <Button
-              label="Profili Kaydet"
-              icon="pi pi-check"
-              :loading="kaydediliyor"
-              @click="profilKaydet"
-            />
-          </div>
-        </template>
-      </Card>
-
-      <!-- ŞİFRE -->
-      <Card class="ayar-kart">
-        <template #title>
-          <i
-            class="pi pi-lock"
-          />Şifre Değiştir
-        </template>
-        <template #content>
-          <div class="form-grid">
-            <div class="field">
-              <label>Mevcut Şifre</label><InputText
-                v-model="sifreForm.mevcutSifre"
-                type="password"
-                class="w-full"
-              />
-            </div>
-            <div class="field">
-              <label>Yeni Şifre</label><InputText
-                v-model="sifreForm.yeniSifre"
-                type="password"
-                class="w-full"
-              />
-            </div>
-            <div class="field">
-              <label>Yeni Şifre (Tekrar)</label><InputText
-                v-model="sifreForm.yeniSifreTekrar"
-                type="password"
-                class="w-full"
-              />
-            </div>
-            <Button
-              label="Şifreyi Güncelle"
-              icon="pi pi-key"
-              :loading="kaydediliyor"
-              @click="sifreKaydet"
-            />
-          </div>
-        </template>
-      </Card>
-
-      <!-- 2FA -->
-      <Card class="ayar-kart">
-        <template #title>
-          <i
-            class="pi pi-shield"
-          />İki Faktörlü Doğrulama (2FA)
-        </template>
-        <template #content>
-          <div
-            v-if="twoFactorDurum === 'ACIK'"
-            class="iki-fa-acik"
-          >
-            <div class="iki-fa-baslik">
-              <i
-                class="pi pi-check-circle"
-                style="color: #10b981"
-              />
-              <span>2FA <strong>aktif</strong>. Hesabınız güvende.</span>
-            </div>
-            <div
-              class="field"
-              style="margin-top: 14px"
-            >
-              <label>Kapatmak için doğrulama kodu</label>
-              <div class="kod-satir">
-                <InputText
-                  v-model="kapatmaKodu"
-                  class="w-full"
-                  placeholder="6 haneli kod"
-                />
-                <Button
-                  label="2FA'yı Kapat"
-                  icon="pi pi-shield"
-                  severity="danger"
-                  outlined
-                  :loading="kaydediliyor"
-                  @click="ikiFakapat"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div v-else>
-            <template v-if="!kurulumData">
-              <p class="iki-fa-aciklama">
-                Google Authenticator / Authy gibi bir uygulama ile girişlerinize ikinci bir güvenlik katmanı ekleyin.
-              </p>
-              <Button
-                label="2FA Kur"
-                icon="pi pi-qrcode"
-                :loading="kaydediliyor"
-                @click="kurulumBaslat"
-              />
-            </template>
-            <template v-else>
-              <div class="iki-fa-kurulum">
-                <p>
-                  <strong>1.</strong> Aşağıdaki gizli anahtarı (veya otpauth URI'sini) kimlik doğrulayıcı uygulamanıza
-                  ekleyin:
-                </p>
-                <div class="secret-kutu">
-                  <code>{{ kurulumData.secret }}</code>
+        <div class="sekme-icerik">
+          <div class="ayarlar-grid">
+            <Card class="ayar-kart">
+              <template #title>
+                <i class="pi pi-user" />Profil Bilgileri
+              </template>
+              <template #content>
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Kullanıcı Adı</label>
+                    <InputText
+                      :model-value="kullanici?.username"
+                      disabled
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Görünen Ad</label>
+                    <InputText
+                      v-model="profilForm.displayName"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Firma Adı</label>
+                    <InputText
+                      v-model="profilForm.companyName"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Avatar URL</label>
+                    <InputText
+                      v-model="profilForm.avatarUrl"
+                      class="w-full"
+                    />
+                  </div>
                   <Button
-                    icon="pi pi-copy"
-                    class="p-button-rounded p-button-text"
-                    @click="kopyala(kurulumData.secret)"
-                  />
-                </div>
-                <p class="otpauth-satir">
-                  <small>{{ kurulumData.qrCodeUri }}</small>
-                </p>
-                <p><strong>2.</strong> Uygulamanın ürettiği 6 haneli kodu girin:</p>
-                <div class="kod-satir">
-                  <InputText
-                    v-model="dogrulamaKodu"
-                    class="w-full"
-                    placeholder="6 haneli kod"
-                  />
-                  <Button
-                    label="Doğrula ve Aktif Et"
+                    label="Profili Kaydet"
                     icon="pi pi-check"
                     :loading="kaydediliyor"
-                    @click="ikiFakAktifEt"
+                    @click="profilKaydet"
                   />
+                </div>
+              </template>
+            </Card>
+
+            <Card class="ayar-kart">
+              <template #title>
+                <i class="pi pi-lock" />Şifre Değiştir
+              </template>
+              <template #content>
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Mevcut Şifre</label>
+                    <InputText
+                      v-model="sifreForm.mevcutSifre"
+                      type="password"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Yeni Şifre</label>
+                    <InputText
+                      v-model="sifreForm.yeniSifre"
+                      type="password"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Yeni Şifre (Tekrar)</label>
+                    <InputText
+                      v-model="sifreForm.yeniSifreTekrar"
+                      type="password"
+                      class="w-full"
+                    />
+                  </div>
+                  <Button
+                    label="Şifreyi Güncelle"
+                    icon="pi pi-key"
+                    :loading="kaydediliyor"
+                    @click="sifreKaydet"
+                  />
+                </div>
+              </template>
+            </Card>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-shield" />Güvenlik</span>
+        </template>
+        <div class="sekme-icerik">
+          <div class="ayarlar-grid">
+            <Card class="ayar-kart">
+              <template #title>
+                <i class="pi pi-shield" />İki Faktörlü Doğrulama (2FA)
+              </template>
+              <template #content>
+                <div
+                  v-if="twoFactorDurum === 'ACIK'"
+                  class="iki-fa-acik"
+                >
+                  <div class="iki-fa-baslik">
+                    <i
+                      class="pi pi-check-circle"
+                      style="color: #10b981"
+                    />
+                    <span>2FA <strong>aktif</strong>. Hesabınız güvende.</span>
+                  </div>
+                  <div
+                    class="field"
+                    style="margin-top: 14px"
+                  >
+                    <label>Kapatmak için doğrulama kodu</label>
+                    <div class="kod-satir">
+                      <InputText
+                        v-model="kapatmaKodu"
+                        class="w-full"
+                        placeholder="6 haneli kod"
+                      />
+                      <Button
+                        label="2FA'yı Kapat"
+                        icon="pi pi-shield"
+                        severity="danger"
+                        outlined
+                        :loading="kaydediliyor"
+                        @click="ikiFakapat"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div v-else>
+                  <template v-if="!kurulumData">
+                    <p class="iki-fa-aciklama">
+                      Google Authenticator / Authy gibi bir uygulama ile girişlerinize ikinci bir güvenlik katmanı ekleyin.
+                    </p>
+                    <Button
+                      label="2FA Kur"
+                      icon="pi pi-qrcode"
+                      :loading="kaydediliyor"
+                      @click="kurulumBaslat"
+                    />
+                  </template>
+                  <template v-else>
+                    <div class="iki-fa-kurulum">
+                      <p>
+                        <strong>1.</strong> Aşağıdaki gizli anahtarı (veya otpauth URI'sini) kimlik doğrulayıcı uygulamanıza ekleyin:
+                      </p>
+                      <div class="secret-kutu">
+                        <code>{{ kurulumData.secret }}</code>
+                        <Button
+                          icon="pi pi-copy"
+                          class="p-button-rounded p-button-text"
+                          @click="kopyala(kurulumData.secret)"
+                        />
+                      </div>
+                      <p class="otpauth-satir">
+                        <small>{{ kurulumData.qrCodeUri }}</small>
+                      </p>
+                      <p><strong>2.</strong> Uygulamanın ürettiği 6 haneli kodu girin:</p>
+                      <div class="kod-satir">
+                        <InputText
+                          v-model="dogrulamaKodu"
+                          class="w-full"
+                          placeholder="6 haneli kod"
+                        />
+                        <Button
+                          label="Doğrula ve Aktif Et"
+                          icon="pi pi-check"
+                          :loading="kaydediliyor"
+                          @click="ikiFakAktifEt"
+                        />
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </Card>
+
+            <Card class="ayar-kart">
+              <template #title>
+                <div class="baslik-satir">
+                  <span><i class="pi pi-desktop" />Aktif Oturumlar</span>
+                  <Button
+                    icon="pi pi-refresh"
+                    class="p-button-sm p-button-text"
+                    @click="oturumlariYukle"
+                  />
+                </div>
+              </template>
+              <template #content>
+                <p class="ai-aciklama">
+                  Hesabınıza açık olan oturumları görüntüleyin ve uzaktan sonlandırın.
+                </p>
+                <DataTable
+                  :value="aktifOturumlar"
+                  :loading="oturumYukleniyor"
+                  striped-rows
+                  size="small"
+                >
+                  <Column
+                    header="Kullanıcı"
+                    field="kullaniciAdi"
+                  />
+                  <Column header="IP">
+                    <template #body="s">
+                      {{ s.data.ip || '-' }}
+                    </template>
+                  </Column>
+                  <Column header="Giriş Zamanı">
+                    <template #body="s">
+                      {{ s.data.girisZamani ? new Date(s.data.girisZamani).toLocaleString('tr-TR') : '-' }}
+                    </template>
+                  </Column>
+                  <Column
+                    header=""
+                    style="width: 90px"
+                  >
+                    <template #body="s">
+                      <Button
+                        v-if="s.data.kullaniciId !== authStore?.kullanici?.id"
+                        label="Sonlandır"
+                        icon="pi pi-sign-out"
+                        class="p-button-sm p-button-danger p-button-text"
+                        @click="oturumSonlandir(s.data)"
+                      />
+                    </template>
+                  </Column>
+                </DataTable>
+                <div
+                  v-if="(!aktifOturumlar || !aktifOturumlar.length) && !oturumYukleniyor"
+                  class="empty-state"
+                >
+                  Aktif oturum bulunamadı.
+                </div>
+              </template>
+            </Card>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-palette" />Görünüm</span>
+        </template>
+        <div class="sekme-icerik">
+          <Card class="ayar-kart">
+            <template #title>
+              <i class="pi pi-palette" />Görünüm
+            </template>
+            <template #content>
+              <div class="form-grid">
+                <div class="field">
+                  <label>Tema Modu</label>
+                  <div class="tema-butonlari">
+                    <Button
+                      label="Açık"
+                      icon="pi pi-sun"
+                      :severity="!isDark ? 'contrast' : 'secondary'"
+                      :outlined="isDark"
+                      @click="applyMode('light')"
+                    />
+                    <Button
+                      label="Koyu"
+                      icon="pi pi-moon"
+                      :severity="isDark ? 'contrast' : 'secondary'"
+                      :outlined="!isDark"
+                      @click="applyMode('dark')"
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Vurgu Rengi</label>
+                  <div class="renk-secenekleri">
+                    <button
+                      v-for="c in renkler"
+                      :key="c.value"
+                      class="renk-dot"
+                      :class="{ aktif: accentColor === c.value }"
+                      :style="{ background: c.value }"
+                      :title="c.name"
+                      @click="applyColor(c.value)"
+                    />
+                  </div>
                 </div>
               </div>
             </template>
-          </div>
-        </template>
-      </Card>
+          </Card>
+        </div>
+      </TabPanel>
 
-      <!-- GÖRÜNÜM -->
-      <Card class="ayar-kart">
-        <template #title>
-          <i
-            class="pi pi-palette"
-          />Görünüm
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-bell" />Bildirimler</span>
         </template>
-        <template #content>
-          <div class="form-grid">
-            <div class="field">
-              <label>Tema Modu</label>
-              <div class="tema-butonlari">
+        <div class="sekme-icerik">
+          <Card class="ayar-kart">
+            <template #title>
+              <div class="baslik-satir">
+                <span><i class="pi pi-bell" />Bildirim Tercihleri</span>
                 <Button
-                  label="Açık"
-                  icon="pi pi-sun"
-                  :severity="!isDark ? 'contrast' : 'secondary'"
-                  :outlined="isDark"
-                  @click="applyMode('light')"
-                />
-                <Button
-                  label="Koyu"
-                  icon="pi pi-moon"
-                  :severity="isDark ? 'contrast' : 'secondary'"
-                  :outlined="!isDark"
-                  @click="applyMode('dark')"
+                  icon="pi pi-save"
+                  label="Kaydet"
+                  class="p-button-sm p-button-primary"
+                  :loading="tercihKaydediliyor"
+                  @click="tercihleriKaydet"
                 />
               </div>
-            </div>
-            <div class="field">
-              <label>Vurgu Rengi</label>
-              <div class="renk-secenekleri">
-                <button
-                  v-for="c in renkler"
-                  :key="c.value"
-                  class="renk-dot"
-                  :class="{ aktif: accentColor === c.value }"
-                  :style="{ background: c.value }"
-                  :title="c.name"
-                  @click="applyColor(c.value)"
-                />
-              </div>
-            </div>
-          </div>
-        </template>
-      </Card>
-
-      <!-- YAPAY ZEKA (AI) AYARLARI -->
-      <Card class="ayar-kart ai-ayar-kart">
-        <template #title>
-          <div class="ai-baslik-satir">
-            <div class="baslik-ic ai-baslik-ic">
-              <i
-                class="pi pi-sparkles"
-              />Yapay Zeka (AI) Entegrasyonu
-            </div>
-            <Tag
-              :value="aiDurum === 'AKTIF' ? 'AI Aktif' : 'Yapılandırılmadı'"
-              :severity="aiDurum === 'AKTIF' ? 'success' : 'warn'"
-            />
-          </div>
-        </template>
-        <template #content>
-          <div class="form-grid">
-            <p class="ai-aciklama">
-              Kendi AI API anahtarınızı girerek ERP içi akıllı sohbet asistanını ve veri sorgulama motorunu etkinleştirin.
-            </p>
-
-            <div class="field">
-              <label>AI Sağlayıcı</label>
-              <Dropdown
-                v-model="aiForm.provider"
-                :options="aiSaglayicilar"
-                option-label="name"
-                option-value="value"
-                placeholder="Sağlayıcı seçin"
-                class="w-full"
-                @change="onProviderChange"
-              />
-            </div>
-
-            <div class="field">
-              <label>API Key</label>
-              <div class="p-inputgroup w-full">
-                <InputText
-                  v-model="aiForm.apiKey"
-                  :type="aiKeyGoster ? 'text' : 'password'"
-                  placeholder="sk-... veya API Anahtarınız"
-                  class="w-full"
-                />
-                <Button
-                  :icon="aiKeyGoster ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                  severity="secondary"
-                  outlined
-                  @click="aiKeyGoster = !aiKeyGoster"
-                />
-              </div>
-              <small
-                v-if="aiMevcutMaskeliKey && !aiForm.apiKey"
-                class="text-muted"
+            </template>
+            <template #content>
+              <p class="ai-aciklama">
+                Hangi bildirim türlerini almak istediğinizi seçin (uygulama içi ve e-posta).
+              </p>
+              <div
+                v-for="t in bildirimTipleri"
+                :key="t.value"
+                class="tercih-satir"
               >
-                Mevcut Anahtar: <code>{{ aiMevcutMaskeliKey }}</code>
-              </small>
-            </div>
+                <span>{{ t.label }}</span>
+                <ToggleSwitch v-model="t.secili" />
+              </div>
+            </template>
+          </Card>
+        </div>
+      </TabPanel>
 
-            <div class="field">
-              <label>Model</label>
-              <Dropdown
-                v-model="aiForm.model"
-                :options="aktifModelListesi"
-                option-label="name"
-                option-value="value"
-                placeholder="Model seçin"
-                class="w-full"
-              />
-            </div>
-
-            <div class="ai-aksiyonlar">
-              <Button
-                label="Bağlantıyı Test Et"
-                icon="pi pi-bolt"
-                severity="info"
-                outlined
-                :loading="aiTestEdiliyor"
-                :disabled="aiDurum !== 'AKTIF' && !aiForm.apiKey"
-                @click="aiBaglantiTestEt"
-              />
-              <Button
-                label="AI Ayarlarını Kaydet"
-                icon="pi pi-check"
-                :loading="aiKaydediliyor"
-                @click="aiConfigKaydet"
-              />
-              <Button
-                v-if="aiDurum === 'AKTIF'"
-                label="Kaldır"
-                icon="pi pi-trash"
-                severity="danger"
-                outlined
-                :loading="aiKaydediliyor"
-                @click="aiConfigSil"
-              />
-            </div>
-          </div>
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-plug" />Entegrasyonlar</span>
         </template>
-      </Card>
-
-      <!-- FATURA YAZDIRMA ŞABLON TASARIMI -->
-      <Card class="ayar-kart">
-        <template #title>
-          <div class="baslik-satir">
-            <span>
-              <i
-                class="pi pi-print"
-              />Fatura Yazdırma Şablonu
-            </span>
-            <Tag
-              value="Özelleştirilebilir"
-              severity="info"
-            />
-          </div>
-        </template>
-        <template #content>
-          <div class="form-grid">
-            <p class="ai-aciklama">
-              Müşterilerinize keseceğiniz ve yazdıracağınız faturaların kurumsal şablonunu, renklerini, kolonlarını ve dipnotlarını tasarlayın.
-            </p>
-            <Button
-              label="Fatura Şablon Tasarımcısını Aç"
-              icon="pi pi-palette"
-              class="p-button-primary"
-              @click="faturaTasarimModalAcik = true"
-            />
-          </div>
-        </template>
-      </Card>
-
-      <!-- AKTİF OTURUMLAR -->
-      <Card class="ayar-kart">
-        <template #title>
-          <div class="baslik-satir">
-            <span>
-              <i
-                class="pi pi-desktop"
-              />Aktif Oturumlar
-            </span>
-            <Button
-              icon="pi pi-refresh"
-              class="p-button-sm p-button-text"
-              @click="oturumlariYukle"
-            />
-          </div>
-        </template>
-        <template #content>
-          <p class="ai-aciklama">
-            Hesabınıza açık olan oturumları görüntüleyin ve uzaktan sonlandırın.
-          </p>
-          <DataTable
-            :value="aktifOturumlar"
-            :loading="oturumYukleniyor"
-            striped-rows
-            size="small"
-            class="mt-3"
-          >
-            <Column
-              header="Kullanıcı"
-              field="kullaniciAdi"
-            />
-            <Column header="IP">
-              <template #body="s">
-                {{ s.data.ip || '-' }}
+        <div class="sekme-icerik">
+          <div class="ayarlar-grid">
+            <Card class="ayar-kart ai-ayar-kart">
+              <template #title>
+                <div class="ai-baslik-satir">
+                  <div class="baslik-ic ai-baslik-ic">
+                    <i class="pi pi-sparkles" />Yapay Zeka (AI) Entegrasyonu
+                  </div>
+                  <Tag
+                    :value="aiDurum === 'AKTIF' ? 'AI Aktif' : 'Yapılandırılmadı'"
+                    :severity="aiDurum === 'AKTIF' ? 'success' : 'warn'"
+                  />
+                </div>
               </template>
-            </Column>
-            <Column header="Giriş Zamanı">
-              <template #body="s">
-                {{ s.data.girisZamani ? new Date(s.data.girisZamani).toLocaleString('tr-TR') : '-' }}
+              <template #content>
+                <div class="form-grid">
+                  <p class="ai-aciklama">
+                    Kendi AI API anahtarınızı girerek ERP içi akıllı sohbet asistanını ve veri sorgulama motorunu etkinleştirin.
+                  </p>
+                  <div class="field">
+                    <label>AI Sağlayıcı</label>
+                    <Dropdown
+                      v-model="aiForm.provider"
+                      :options="aiSaglayicilar"
+                      option-label="name"
+                      option-value="value"
+                      placeholder="Sağlayıcı seçin"
+                      class="w-full"
+                      @change="onProviderChange"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>API Key</label>
+                    <div class="p-inputgroup w-full">
+                      <InputText
+                        v-model="aiForm.apiKey"
+                        :type="aiKeyGoster ? 'text' : 'password'"
+                        placeholder="sk-... veya API Anahtarınız"
+                        class="w-full"
+                      />
+                      <Button
+                        :icon="aiKeyGoster ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                        severity="secondary"
+                        outlined
+                        @click="aiKeyGoster = !aiKeyGoster"
+                      />
+                    </div>
+                    <small
+                      v-if="aiMevcutMaskeliKey && !aiForm.apiKey"
+                      class="text-muted"
+                    >
+                      Mevcut Anahtar: <code>{{ aiMevcutMaskeliKey }}</code>
+                    </small>
+                  </div>
+                  <div class="field">
+                    <label>Model</label>
+                    <Dropdown
+                      v-model="aiForm.model"
+                      :options="aktifModelListesi"
+                      option-label="name"
+                      option-value="value"
+                      placeholder="Model seçin"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="ai-aksiyonlar">
+                    <Button
+                      label="Bağlantıyı Test Et"
+                      icon="pi pi-bolt"
+                      severity="info"
+                      outlined
+                      :loading="aiTestEdiliyor"
+                      :disabled="aiDurum !== 'AKTIF' && !aiForm.apiKey"
+                      @click="aiBaglantiTestEt"
+                    />
+                    <Button
+                      label="AI Ayarlarını Kaydet"
+                      icon="pi pi-check"
+                      :loading="aiKaydediliyor"
+                      @click="aiConfigKaydet"
+                    />
+                    <Button
+                      v-if="aiDurum === 'AKTIF'"
+                      label="Kaldır"
+                      icon="pi pi-trash"
+                      severity="danger"
+                      outlined
+                      :loading="aiKaydediliyor"
+                      @click="aiConfigSil"
+                    />
+                  </div>
+                </div>
               </template>
-            </Column>
-            <Column header="Son Kullanım">
-              <template #body="s">
-                {{ s.data.sonKullanim ? new Date(s.data.sonKullanim).toLocaleString('tr-TR') : '-' }}
+            </Card>
+
+            <Card class="ayar-kart">
+              <template #title>
+                <div class="baslik-satir">
+                  <span><i class="pi pi-key" />API Erişim Tokenları</span>
+                  <Button
+                    icon="pi pi-plus"
+                    label="Yeni Token"
+                    class="p-button-sm p-button-primary"
+                    @click="tokenOlustur"
+                  />
+                </div>
               </template>
-            </Column>
-            <Column
-              header=""
-              style="width: 80px"
-            >
-              <template #body="s">
-                <Button
-                  v-if="s.data.kullaniciId !== authStore?.kullanici?.id"
-                  label="Sonlandır"
-                  icon="pi pi-sign-out"
-                  class="p-button-sm p-button-danger p-button-text"
-                  @click="oturumSonlandir(s.data)"
-                />
+              <template #content>
+                <p class="ai-aciklama">
+                  Üçüncü taraf uygulamaların REST API'ye erişebilmesi için kişisel erişim token'ları oluşturun.
+                  Token yalnızca oluşturulduğu anda gösterilir; <code>Authorization: Bearer raspel_pat_...</code> başlığıyla kullanılır.
+                </p>
+                <div
+                  v-if="yeniToken"
+                  class="token-uyari"
+                >
+                  <i class="pi pi-info-circle" />
+                  <span>Yeni token'ınızı kopyalayın — bir daha gösterilmez:</span>
+                  <code class="token-deger">{{ yeniToken }}</code>
+                </div>
+                <div
+                  v-if="tokenlar.length === 0 && !yeniToken"
+                  class="token-bos"
+                >
+                  Henüz token oluşturulmadı.
+                </div>
+                <div
+                  v-for="t in tokenlar"
+                  :key="t.id"
+                  class="token-satir"
+                >
+                  <div>
+                    <span class="token-ad">{{ t.ad }}</span>
+                    <span class="token-tarih">{{ t.olusturmaTarihi ? formatTarih(t.olusturmaTarihi) : '' }}</span>
+                  </div>
+                  <Button
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    @click="tokenSil(t)"
+                  />
+                </div>
               </template>
-            </Column>
-          </DataTable>
-          <div
-            v-if="(!aktifOturumlar || !aktifOturumlar.length) && !oturumYukleniyor"
-            class="empty-state"
-          >
-            Aktif oturum bulunamadı.
+            </Card>
           </div>
-        </template>
-      </Card>
+        </div>
+      </TabPanel>
 
-      <!-- BİLDİRİM TERCİHLERİ -->
-      <Card class="ayar-kart">
-        <template #title>
-          <div class="baslik-satir">
-            <span>
-              <i
-                class="pi pi-bell"
-              />Bildirim Tercihleri
-            </span>
-            <Button
-              icon="pi pi-save"
-              label="Kaydet"
-              class="p-button-sm p-button-primary"
-              :loading="tercihKaydediliyor"
-              @click="tercihleriKaydet"
-            />
-          </div>
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-print" />Yazdırma</span>
         </template>
-        <template #content>
-          <p class="ai-aciklama">
-            Hangi bildirim türlerini almak istediğinizi seçin (uygulama içi ve e-posta).
-          </p>
-          <div
-            v-for="t in bildirimTipleri"
-            :key="t.value"
-            class="tercih-satir"
-          >
-            <span>{{ t.label }}</span>
-            <ToggleSwitch
-              v-model="t.secili"
-            />
-          </div>
-        </template>
-      </Card>
+        <div class="sekme-icerik">
+          <div class="ayarlar-grid">
+            <Card class="ayar-kart">
+              <template #title>
+                <div class="baslik-satir">
+                  <span><i class="pi pi-print" />Fatura Yazdırma Şablonu</span>
+                  <Tag
+                    value="Özelleştirilebilir"
+                    severity="info"
+                  />
+                </div>
+              </template>
+              <template #content>
+                <div class="form-grid">
+                  <p class="ai-aciklama">
+                    Müşterilerinize keseceğiniz ve yazdıracağınız faturaların kurumsal şablonunu, renklerini, kolonlarını ve dipnotlarını tasarlayın.
+                  </p>
+                  <Button
+                    label="Fatura Şablon Tasarımcısını Aç"
+                    icon="pi pi-palette"
+                    class="p-button-primary"
+                    @click="faturaTasarimModalAcik = true"
+                  />
+                </div>
+              </template>
+            </Card>
 
-      <!-- API ERİŞİM TOKENLARI -->
-      <Card class="ayar-kart">
-        <template #title>
-          <div class="baslik-satir">
-            <span>
-              <i
-                class="pi pi-key"
-              />API Erişim Tokenları
-            </span>
-            <Button
-              icon="pi pi-plus"
-              label="Yeni Token"
-              class="p-button-sm p-button-primary"
-              @click="tokenOlustur"
-            />
+            <Card class="ayar-kart">
+              <template #title>
+                <div class="baslik-ic">
+                  <i class="pi pi-print" />Fiş Yazdırma Ayarları
+                </div>
+              </template>
+              <template #content>
+                <p class="ai-aciklama">
+                  Hızlı satışta (POS) yazdırılan fişler için genel ayarlar. Bu ayarlar tüm POS ekranında geçerlidir.
+                </p>
+                <div class="fis-ayar-satir">
+                  <label>Fiş Alt Notu</label>
+                  <InputText
+                    v-model="fisAltNotu"
+                    placeholder="Fiş altı özel mesajı"
+                    class="w-full"
+                  />
+                </div>
+                <div class="fis-ayar-satir">
+                  <label>Fişte Fiyat Göster</label>
+                  <SelectButton
+                    v-model="fisFiyatli"
+                    :options="fisSecenekleri"
+                    option-label="label"
+                    option-value="value"
+                  />
+                </div>
+              </template>
+            </Card>
           </div>
-        </template>
-        <template #content>
-          <p class="ai-aciklama">
-            Üçüncü taraf uygulamaların REST API'ye erişebilmesi için kişisel erişim token'ları oluşturun.
-            Token yalnızca oluşturulduğu anda gösterilir; <code>Authorization: Bearer raspel_pat_...</code>
-            başlığıyla kullanılır.
-          </p>
-          <div
-            v-if="yeniToken"
-            class="token-uyari"
-          >
-            <i class="pi pi-info-circle" />
-            <span>Yeni token'ınızı kopyalayın — bir daha gösterilmez:</span>
-            <code class="token-deger">{{ yeniToken }}</code>
-          </div>
-          <div
-            v-if="tokenlar.length === 0 && !yeniToken"
-            class="token-bos"
-          >
-            Henüz token oluşturulmadı.
-          </div>
-          <div
-            v-for="t in tokenlar"
-            :key="t.id"
-            class="token-satir"
-          >
-            <div>
-              <span class="token-ad">{{ t.ad }}</span>
-              <span class="token-tarih">{{ t.olusturmaTarihi ? formatTarih(t.olusturmaTarihi) : '' }}</span>
-            </div>
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text p-button-danger"
-              @click="tokenSil(t)"
-            />
-          </div>
-        </template>
-      </Card>
-
-      <!-- FİŞ YAZDIRMA AYARLARI -->
-      <Card class="ayar-kart">
-        <template #title>
-          <div class="baslik-ic">
-            <i
-              class="pi pi-print"
-            />Fiş Yazdırma Ayarları
-          </div>
-        </template>
-        <template #content>
-          <p class="ai-aciklama">
-            Hızlı satışta (POS) yazdırılan fişler için genel ayarlar. Bu ayarlar tüm POS ekranında geçerlidir.
-          </p>
-          <div class="fis-ayar-satir">
-            <label>Fiş Alt Notu</label>
-            <InputText
-              v-model="fisAltNotu"
-              placeholder="Fiş altı özel mesajı"
-              class="w-full"
-            />
-          </div>
-          <div class="fis-ayar-satir">
-            <label>Fişte Fiyat Göster</label>
-            <SelectButton
-              v-model="fisFiyatli"
-              :options="fisSecenekleri"
-              option-label="label"
-              option-value="value"
-            />
-          </div>
-        </template>
-      </Card>
-    </div>
+        </div>
+      </TabPanel>
+    </TabView>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
   </div>
@@ -965,9 +969,20 @@ const kopyala = async (text) => {
 .sayfa-baslik {
   margin-bottom: 24px;
 }
+.ayarlar-tabview :deep(.p-tabview-nav-link) {
+  gap: 8px;
+}
+.tab-baslik {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sekme-icerik {
+  padding-top: 16px;
+}
 .ayarlar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
   gap: 20px;
   align-items: start;
 }

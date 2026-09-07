@@ -36,6 +36,7 @@ public class KasaService {
     private final KategoriRepository kategoriRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
+    private final com.raspel.erp.config.CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
@@ -53,6 +54,7 @@ public class KasaService {
     @CacheEvict(value = "lookup", allEntries = true)
     public KasaDTO kasaOlustur(KasaDTO dto, Long sirketId) {
         Kasa kasa = Kasa.builder().ad(dto.getAd()).bakiye(dto.getBakiye() != null ? dto.getBakiye() : BigDecimal.ZERO).sirketId(sirketId).build();
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(kasaRepository.save(kasa));
     }
 
@@ -62,6 +64,7 @@ public class KasaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", id));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
         kasa.setAd(dto.getAd());
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(kasaRepository.save(kasa));
     }
 
@@ -76,6 +79,7 @@ public class KasaService {
         if (kasaHareketRepository.countByKasaId(id) > 0)
             throw new BusinessException("Bu kasaya ait hareketler var, önce hareketleri silin");
         kasaRepository.deleteById(id);
+        cacheYardimci.temizle("dashboard");
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +108,7 @@ public class KasaService {
                 .kategori(kategori).build();
 
         kasaRepository.save(kasa);
+        cacheYardimci.temizle("dashboard");
         return hareketToDTO(kasaHareketRepository.save(hareket));
     }
 
@@ -120,6 +125,7 @@ public class KasaService {
                 "Kasa hareketi silindi: " + hareket.getTur() + " " + hareket.getTutar() + " TL - Kasa: "
                         + kasa.getAd() + " (bakiye terslendi)");
         kasaHareketRepository.deleteById(hareketId);
+        cacheYardimci.temizle("dashboard");
     }
 
     /**
@@ -163,6 +169,7 @@ public class KasaService {
                 .hareketTarihi(bugun).aciklama(not + " ← " + kaynak.getAd())
                 .build());
 
+        cacheYardimci.temizle("dashboard");
         log.info("Kasa aktarımı yapıldı: {} → {} ({} ₺)", kaynak.getAd(), hedef.getAd(), tutar);
     }
 
