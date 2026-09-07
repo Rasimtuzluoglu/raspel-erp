@@ -43,6 +43,10 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     List<Hareket> findByCariHesapIdOrderByHareketTarihiDesc(Long cariHesapId);
 
     @EntityGraph(attributePaths = {"cariHesap"})
+    Page<Hareket> findBySirketIdAndTurOrderByHareketTarihiDescOlusturmaTarihiDesc(
+            Long sirketId, Hareket.HareketTuru tur, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findBySirketIdOrderByHareketTarihiDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})

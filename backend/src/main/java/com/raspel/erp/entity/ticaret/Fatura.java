@@ -110,6 +110,14 @@ public class Fatura {
     @Column(name = "odeme_yontemi", length = 20)
     private String odemeYontemi;
 
+    /** Taksit çekilen banka / finans kurumu adı */
+    @Column(name = "taksit_kurum", length = 255)
+    private String taksitKurum;
+
+    /** Taksit olarak çekilen tutar */
+    @Column(name = "taksit_tutar", precision = 19, scale = 2)
+    private BigDecimal taksitTutar;
+
     @Column(name = "kasa_id")
     private Long kasaId;
 

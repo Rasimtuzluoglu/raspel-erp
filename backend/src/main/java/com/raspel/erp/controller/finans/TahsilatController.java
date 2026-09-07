@@ -17,6 +17,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,6 +40,15 @@ public class TahsilatController {
     public ResponseEntity<TahsilatDTO> ozet(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(tahsilatService.ozetGetir(sirketId));
+    }
+
+    @GetMapping("/gecmis")
+    @Operation(summary = "Tahsilat geçmişi", description = "Yapılan tüm tahsilat hareketlerini (ödeme yöntemi ve taksit bilgisiyle) sayfalı getirir")
+    public ResponseEntity<org.springframework.data.domain.Page<com.raspel.erp.dto.finans.HareketDTO>> gecmis(
+            HttpServletRequest request,
+            @PageableDefault(size = 25) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(tahsilatService.gecmis(sirketId, pageable));
     }
 
     @PostMapping("/{cariId}/hatirlat")

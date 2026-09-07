@@ -132,17 +132,35 @@
           >
             #{{ data.eslesenFaturaNo }}
           </div>
+          <div
+            v-else-if="data.onerilenFaturaNo"
+            class="oneri-fatura"
+          >
+            <i class="pi pi-lightbulb" />
+            <span>Öneri: #{{ data.onerilenFaturaNo }}</span>
+            <span
+              class="guven-skoru"
+              :class="skorSinifi(data.guvenSkoru)"
+            >%{{ data.guvenSkoru }}</span>
+          </div>
         </template>
       </Column>
       <Column
         header="İşlem"
-        style="width: 70px"
+        style="width: 200px"
       >
         <template #body="{ data }">
           <div
             v-if="!data.eslestirildi"
             class="eylem-btns"
           >
+            <Button
+              v-if="data.onerilenFaturaId"
+              label="Onayla"
+              icon="pi pi-check"
+              class="p-button-sm p-button-success p-button-outlined"
+              @click="oneriOnayla(data)"
+            />
             <Select
               v-model="data.eslesenFaturaId"
               :options="faturalar"
@@ -270,6 +288,19 @@ const manuelEslestir = async (hareket) => {
   }
 }
 
+const skorSinifi = (skor) => {
+  if (skor == null) return ''
+  if (skor >= 90) return 'yuksek'
+  if (skor >= 70) return 'orta'
+  return 'dusuk'
+}
+
+const oneriOnayla = async (hareket) => {
+  if (!hareket.onerilenFaturaId) return
+  hareket.eslesenFaturaId = hareket.onerilenFaturaId
+  await manuelEslestir(hareket)
+}
+
 const eslestirmeyiKaldir = (hareket) => {
   confirm.require({
     message: 'Bu eşleştirmeyi kaldırmak istediğinize emin misiniz?',
@@ -360,6 +391,36 @@ const eslestirmeyiKaldir = (hareket) => {
   color: #10b981;
   margin-top: 4px;
   font-weight: 600;
+}
+.oneri-fatura {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.oneri-fatura i {
+  color: #f59e0b;
+}
+.guven-skoru {
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+}
+.guven-skoru.yuksek {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+.guven-skoru.orta {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+.guven-skoru.dusuk {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 .fatura-bagla {
   min-width: 160px;

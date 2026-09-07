@@ -60,7 +60,15 @@ public class BankaMutabakatService {
         Map<Long, String> faturaNoMap = faturaIds.isEmpty() ? Map.of()
                 : faturaRepository.findAllById(faturaIds).stream()
                         .collect(Collectors.toMap(Fatura::getId, Fatura::getFaturaNumarasi));
-        return hareketler.stream().map(h -> entityToDTO(h, faturaNoMap)).collect(Collectors.toList());
+
+        // Eşleşmemiş hareketler için öneri skorları hesapla
+        List<Fatura> acikFaturalar = hareketler.stream().anyMatch(h -> !Boolean.TRUE.equals(h.getEslestirildi()))
+                ? faturaRepository.findByTurAndOdemeDurumuNotIn(Fatura.FaturaTur.SATIS, List.of("ODENDI", "IPTAL"))
+                : List.of();
+
+        return hareketler.stream()
+                .map(h -> entityToDTO(h, faturaNoMap, acikFaturalar))
+                .collect(Collectors.toList());
     }
 
     public int yukle(Long bankaId, MultipartFile dosya, Long sirketId) {
@@ -270,10 +278,14 @@ public class BankaMutabakatService {
     }
 
     private BankaHareketiDTO entityToDTO(BankaHareketi h) {
-        return entityToDTO(h, Map.of());
+        return entityToDTO(h, Map.of(), List.of());
     }
 
     private BankaHareketiDTO entityToDTO(BankaHareketi h, Map<Long, String> faturaNoMap) {
+        return entityToDTO(h, faturaNoMap, List.of());
+    }
+
+    private BankaHareketiDTO entityToDTO(BankaHareketi h, Map<Long, String> faturaNoMap, List<Fatura> acikFaturalar) {
         String faturaNo = null;
         if (h.getEslesenFaturaId() != null) {
             if (faturaNoMap.containsKey(h.getEslesenFaturaId())) {
@@ -283,12 +295,63 @@ public class BankaMutabakatService {
                         .map(Fatura::getFaturaNumarasi).orElse(null);
             }
         }
+
+        Long onerilenId = null;
+        String onerilenNo = null;
+        Integer skor = null;
+        if (!Boolean.TRUE.equals(h.getEslestirildi())) {
+            BigDecimal tutar = h.getBorc() != null && h.getBorc().signum() > 0 ? h.getBorc() : h.getAlacak();
+            enIyiOneri oneri = enIyiEslesmeOnergesi(tutar, h.getTarih(), acikFaturalar);
+            if (oneri != null) {
+                onerilenId = oneri.faturaId;
+                onerilenNo = oneri.faturaNo;
+                skor = oneri.skor;
+            }
+        }
+
         return BankaHareketiDTO.builder()
                 .id(h.getId()).bankaId(h.getBankaId()).tarih(h.getTarih())
                 .aciklama(h.getAciklama()).borc(h.getBorc()).alacak(h.getAlacak())
                 .bakiye(h.getBakiye()).eslesenFaturaId(h.getEslesenFaturaId())
                 .eslesenFaturaNo(faturaNo).eslestirildi(h.getEslestirildi())
+                .onerilenFaturaId(onerilenId).onerilenFaturaNo(onerilenNo).guvenSkoru(skor)
                 .sirketId(h.getSirketId()).olusturmaTarihi(h.getOlusturmaTarihi())
                 .build();
+    }
+
+    private static class enIyiOneri {
+        final Long faturaId;
+        final String faturaNo;
+        final int skor;
+        enIyiOneri(Long faturaId, String faturaNo, int skor) {
+            this.faturaId = faturaId; this.faturaNo = faturaNo; this.skor = skor;
+        }
+    }
+
+    /**
+     * Bir banka hareketi için en olası fatura eşleşmesini ve güven skorunu (0-100) hesaplar.
+     * Skor: tutar eşleşmesi (60) + tarih yakınlığı (40'a kadar). Tutar eşleşmezse öneri döndürülmez.
+     */
+    private enIyiOneri enIyiEslesmeOnergesi(BigDecimal tutar, LocalDate tarih, List<Fatura> faturalar) {
+        if (tutar == null || tutar.signum() == 0 || faturalar.isEmpty()) return null;
+        enIyiOneri enIyi = null;
+        int enIyiSkor = -1;
+        for (Fatura f : faturalar) {
+            BigDecimal kalan = f.getKalanTutar() != null && f.getKalanTutar().signum() > 0
+                    ? f.getKalanTutar() : f.getGenelToplam();
+            if (kalan == null || kalan.compareTo(tutar) != 0) continue;
+            long gunFarki = f.getTarih() != null && tarih != null
+                    ? Math.abs(f.getTarih().toEpochDay() - tarih.toEpochDay()) : 999;
+            int skor;
+            if (gunFarki == 0) skor = 100;
+            else if (gunFarki <= 3) skor = 80;
+            else if (gunFarki <= 7) skor = 60;
+            else skor = 50;
+            if (skor > enIyiSkor) {
+                enIyiSkor = skor;
+                enIyi = new enIyiOneri(f.getId(), f.getFaturaNumarasi(), skor);
+            }
+        }
+        return enIyi;
     }
 }

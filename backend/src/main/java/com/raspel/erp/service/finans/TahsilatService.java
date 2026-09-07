@@ -7,11 +7,14 @@ import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.service.finans.HareketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +39,7 @@ public class TahsilatService {
     private final EmailService emailService;
     private final CariHesapRepository cariHesapRepository;
     private final HareketService hareketService;
+    private final HareketRepository hareketRepository;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
     private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
@@ -166,6 +170,17 @@ public class TahsilatService {
         sonuc.put("odemeYontemi", odemeYontemi);
         sonuc.put("uygulananFaturalar", uygulananFaturalar);
         return sonuc;
+    }
+
+    /**
+     * Tahsilat geçmişi: yapılan tüm TAHSILAT hareketlerini (ödeme yöntemi ve taksit bilgisiyle) getirir.
+     */
+    @Transactional(readOnly = true)
+    public Page<HareketDTO> gecmis(Long sirketId, Pageable pageable) {
+        return hareketRepository
+                .findBySirketIdAndTurOrderByHareketTarihiDescOlusturmaTarihiDesc(
+                        sirketId, com.raspel.erp.entity.finans.Hareket.HareketTuru.TAHSILAT, pageable)
+                .map(hareketService::entityDTOyeCevir);
     }
 
     @Transactional(readOnly = true)

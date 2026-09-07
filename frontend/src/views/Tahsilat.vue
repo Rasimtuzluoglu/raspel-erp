@@ -211,11 +211,88 @@
       />
     </template>
 
+    <div class="gecmis-bolum">
+      <div class="gecmis-baslik">
+        <span><i class="pi pi-history" /> Tahsilat Geçmişi</span>
+        <Button
+          icon="pi pi-refresh"
+          class="p-button-sm p-button-text"
+          :loading="gecmisYukleniyor"
+          @click="gecmisYukle"
+        />
+      </div>
+      <div class="table-container">
+        <DataTable
+          :value="gecmis"
+          :loading="gecmisYukleniyor"
+          striped-rows
+          :paginator="true"
+          :rows="10"
+          paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+        >
+          <Column header="Tarih">
+            <template #body="s">
+              {{ formatDate(s.data.hareketTarihi) }}
+            </template>
+          </Column>
+          <Column
+            field="cariHesapAd"
+            header="Cari Hesap"
+            sortable
+          />
+          <Column header="Tutar">
+            <template #body="s">
+              <strong class="text-green-500">{{ formatCurrency(s.data.tutar) }}</strong>
+            </template>
+          </Column>
+          <Column header="Ödeme Yöntemi">
+            <template #body="s">
+              <Tag
+                v-if="s.data.odemeYontemi"
+                :value="odemeYontemiLabel(s.data.odemeYontemi)"
+                :severity="odemeYontemiSeverity(s.data.odemeYontemi)"
+              />
+              <span
+                v-else
+                class="text-muted"
+              >-</span>
+            </template>
+          </Column>
+          <Column header="Taksit Bilgisi">
+            <template #body="s">
+              <span v-if="s.data.odemeYontemi === 'TAKSIT'">
+                {{ s.data.taksitKurum || '-' }}
+                <small
+                  v-if="s.data.taksitTutar"
+                  class="text-muted"
+                > ({{ formatCurrency(s.data.taksitTutar) }})</small>
+              </span>
+              <span
+                v-else
+                class="text-muted"
+              >-</span>
+            </template>
+          </Column>
+          <Column header="Açıklama">
+            <template #body="s">
+              <span class="text-muted">{{ s.data.aciklama || '-' }}</span>
+            </template>
+          </Column>
+        </DataTable>
+        <EmptyState
+          v-if="!gecmisYukleniyor && !gecmis.length"
+          icon="pi pi-history"
+          message="Tahsilat geçmişi yok"
+          sub-message="Henüz tahsilat kaydı yapılmamış."
+        />
+      </div>
+    </div>
+
     <TahsilatGirDialog
       v-model:visible="tahsilatDialogAcik"
       :cariler="ozet?.cariler || []"
       :baslangic-cari-id="seciliCariId"
-      @kaydedildi="yukle"
+      @kaydedildi="kaydetSonrasi"
     />
   </div>
 </template>
@@ -234,9 +311,43 @@ const genisletilenler = ref([])
 const tahsilatDialogAcik = ref(false)
 const seciliCariId = ref(null)
 
+const gecmis = ref([])
+const gecmisYukleniyor = ref(false)
+
 const tahsilatGir = (cari) => {
   seciliCariId.value = cari?.cariId || null
   tahsilatDialogAcik.value = true
+}
+
+const odemeYontemiLabel = (y) => ({
+  NAKIT: 'Nakit',
+  KART: 'Kart',
+  TAKSIT: 'Taksit',
+  HAVALE: 'Havale'
+}[y] || y)
+
+const odemeYontemiSeverity = (y) => ({
+  NAKIT: 'success',
+  KART: 'info',
+  TAKSIT: 'warn',
+  HAVALE: 'secondary'
+}[y] || 'info')
+
+const gecmisYukle = async () => {
+  gecmisYukleniyor.value = true
+  try {
+    const r = await tahsilatAPI.gecmis({ size: 50 })
+    gecmis.value = r.data?.content || r.data || []
+  } catch {
+    gecmis.value = []
+  } finally {
+    gecmisYukleniyor.value = false
+  }
+}
+
+const kaydetSonrasi = () => {
+  yukle()
+  gecmisYukle()
 }
 
 const aralikSeverity = (aralik) => {
@@ -287,12 +398,36 @@ const ara = (cari) => {
   window.location.href = `tel:${cari.telefon}`
 }
 
-onMounted(yukle)
+onMounted(() => {
+  yukle()
+  gecmisYukle()
+})
 </script>
 
 <style scoped>
 .tahsilat-container {
   padding: 0.5rem 0;
+}
+.gecmis-bolum {
+  margin-top: 28px;
+}
+.gecmis-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.gecmis-baslik span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.gecmis-baslik i {
+  color: var(--accent);
 }
 .sayfa-baslik h1 {
   display: flex;

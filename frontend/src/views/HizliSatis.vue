@@ -130,7 +130,16 @@
                     class="product-coklu-fiyat"
                   >{{ urunFiyatlari[u.id].length }} fiyat</span>
                 </div>
-                <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
+                <div class="product-fiyat-satiri">
+                  <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
+                  <span
+                    v-if="cariFiyati(u.id)"
+                    class="product-cari-fiyat"
+                    :title="'Cari özel fiyat'"
+                  >
+                    <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
+                  </span>
+                </div>
               </div>
             </div>
             <div
@@ -419,6 +428,32 @@
                           <i :class="y.icon" />
                           {{ y.label }}
                         </button>
+                      </div>
+                    </div>
+
+                    <div
+                      v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
+                      class="taksit-panel"
+                    >
+                      <div class="odenen-satir">
+                        <label>Taksit Çekilen Kurum</label>
+                        <InputText
+                          v-model="taksitKurum"
+                          placeholder="Banka / finans kurumu"
+                          class="w-full"
+                        />
+                      </div>
+                      <div class="odenen-satir">
+                        <label>Çekilen Taksit Tutarı</label>
+                        <InputNumber
+                          v-model="taksitTutar"
+                          :min="0"
+                          :max="genelToplam"
+                          mode="currency"
+                          currency="TRY"
+                          locale="tr-TR"
+                          class="w-full"
+                        />
                       </div>
                     </div>
 
@@ -1009,13 +1044,18 @@ const odemeTipleri = ref([
 ])
 const odenenTutar = ref(0)
 
-// Ödeme yöntemi (Nakit/Kart/Havale/Borç)
+// Ödeme yöntemi (Nakit/Kart/Havale/Taksit)
 const odemeYontemi = ref('NAKIT')
 const odemeYontemleri = [
   { label: 'Nakit', value: 'NAKIT', icon: 'pi pi-money-bill' },
   { label: 'Kart', value: 'KART', icon: 'pi pi-credit-card' },
-  { label: 'Havale', value: 'HAVALE', icon: 'pi pi-send' }
+  { label: 'Havale', value: 'HAVALE', icon: 'pi pi-send' },
+  { label: 'Taksit', value: 'TAKSIT', icon: 'pi pi-calendar' }
 ]
+
+// Taksit bilgisi
+const taksitKurum = ref('')
+const taksitTutar = ref(0)
 
 // Kasa seçimi
 const seciliKasa = ref(null)
@@ -1064,6 +1104,11 @@ const cokSatanlar = ref([])
 
 // Ürün başına çoklu fiyat listesi (stok fiyatları endpoint'inden)
 const urunFiyatlari = ref({})
+// Cariye özel fiyatlar (stokId -> fiyat)
+const cariOzelFiyatlar = ref({})
+
+// Müşterinin ürüne özel fiyatını döndürür
+const cariFiyati = (urunId) => cariOzelFiyatlar.value[urunId] || null
 
 // Görünen ürünlerin fiyat listelerini topluca çeker
 const urunFiyatlariniYukle = async (urunler) => {
@@ -1313,11 +1358,31 @@ const musteriAra = (event) => {
 const musteriSec = (event) => {
   seciliMusteri.value = event.value
   musteriGiris.value = ''
+  sepeteCariFiyatUygula()
+  cariOzelFiyatlariYukle()
 }
 
 const musteriTemizle = () => {
   seciliMusteri.value = null
   musteriGiris.value = ''
+  cariOzelFiyatlar.value = {}
+}
+
+// Cariye özel tanımlı fiyatları yükler (stokId -> fiyat)
+const cariOzelFiyatlariYukle = async () => {
+  const cariId = seciliMusteri.value?.id
+  if (!cariId) return
+  try {
+    const r = await cariHesapAPI.getFiyatlar(cariId)
+    const liste = r.data || []
+    const map = {}
+    liste.forEach((f) => {
+      if (f.stokId != null) map[f.stokId] = f.fiyat
+    })
+    cariOzelFiyatlar.value = map
+  } catch {
+    cariOzelFiyatlar.value = {}
+  }
 }
 
 const musteriKaydet = async () => {
@@ -1404,6 +1469,30 @@ const sepeteEkle = async (u) => {
 const fiyatTipiDegisti = (item) => {
   const secili = item.fiyatlar?.find((f) => f.ad === item.fiyatTipi)
   if (secili) item.fiyat = secili.fiyat
+}
+
+// Müşteri seçilince sepetteki tüm ürünlere cari bazlı fiyatı uygular
+const sepeteCariFiyatUygula = async () => {
+  const cariId = seciliMusteri.value?.id
+  if (!cariId || !sepet.value.length) return
+  await Promise.all(sepet.value.map(async (item) => {
+    try {
+      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, item.id)
+      const data = r.data
+      if (data && data.sonFiyat != null) {
+        item.sonAldigiFiyat = data.sonFiyat
+        const enSon = (data.gecmis || [])[0]
+        item.sonAldigiTarih = enSon?.tarih || null
+        item.fiyat = data.sonFiyat
+        if (!item.fiyatlar.some((f) => f.ad === 'Son Aldığı')) {
+          item.fiyatlar.unshift({ ad: 'Son Aldığı', fiyat: data.sonFiyat })
+        }
+        item.fiyatTipi = 'Son Aldığı'
+      }
+    } catch {
+      /* cari fiyat geçmişi alınamadı */
+    }
+  }))
 }
 
 const miktarAzalt = (idx) => {
@@ -1555,6 +1644,10 @@ const teslimDurumEtiketi = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLI
 const satisiTamamla = async () => {
   if (!anlikMusteri.value && !seciliMusteri.value) return
   if (sepet.value.length === 0) return
+  if (odemeYontemi.value === 'TAKSIT' && (!taksitKurum.value.trim() || !taksitTutar.value || taksitTutar.value <= 0)) {
+    toastBildirim.uyari('Taksit seçildiğinde kurum ve çekilen tutar girilmelidir')
+    return
+  }
   kaydediliyor.value = true
   const satisVerisi = {
     cariHesapId: anlikMusteri.value ? null : seciliMusteri.value.id,
@@ -1572,6 +1665,8 @@ const satisiTamamla = async () => {
     odenenTutar: odenenTutar.value,
     odemeDurumu: odemeDurumEnum.value,
     odemeYontemi: odemeYontemi.value,
+    taksitKurum: odemeYontemi.value === 'TAKSIT' ? taksitKurum.value : null,
+    taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
     kasaId: seciliKasa.value || null,
     kalemler: sepet.value.map((i) => ({
       stokId: i.id,
@@ -1877,6 +1972,28 @@ const sepetiTemizle = () => {
   background: rgba(59, 130, 246, 0.1);
   border-radius: 12px;
 }
+.product-fiyat-satiri {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.product-cari-fiyat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.product-cari-fiyat i {
+  font-size: 11px;
+}
 .product-alt-bilgi {
   display: flex;
   align-items: center;
@@ -2149,6 +2266,16 @@ const sepetiTemizle = () => {
 .odeme-yontem-grid {
   display: flex;
   gap: 6px;
+}
+.taksit-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.08);
+  margin-top: 8px;
 }
 .odeme-yontem-btn {
   flex: 1;

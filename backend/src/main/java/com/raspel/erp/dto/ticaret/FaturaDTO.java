@@ -58,6 +58,8 @@ public class FaturaDTO {
     private String depoAd;
     private String paraBirimi;
     private String odemeYontemi;
+    private String taksitKurum;
+    private BigDecimal taksitTutar;
     private Long kasaId;
     private String kasaAd;
 }

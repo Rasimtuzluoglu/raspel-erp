@@ -335,6 +335,8 @@ public class FaturaService {
                 .depoId(dto.getDepoId())
                 .paraBirimi(dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY")
                 .odemeYontemi(dto.getOdemeYontemi())
+                .taksitKurum(dto.getTaksitKurum())
+                .taksitTutar(dto.getTaksitTutar())
                 .kasaId(dto.getKasaId())
                 .build();
 
@@ -801,6 +803,8 @@ public class FaturaService {
                         : null)
                 .paraBirimi(fatura.getParaBirimi())
                 .odemeYontemi(fatura.getOdemeYontemi())
+                .taksitKurum(fatura.getTaksitKurum())
+                .taksitTutar(fatura.getTaksitTutar())
                 .kasaId(fatura.getKasaId())
                 .kasaAd(fatura.getKasaId() != null
                         ? kasaRepository.findById(fatura.getKasaId()).map(Kasa::getAd).orElse(null)
