@@ -50,6 +50,56 @@ public class DosyaDepolamaService {
     }
 
     /**
+     * MinIO için süreli (imzalı) erişim URL'i üretir. Yerel modda null döner.
+     */
+    public String presignedUrl(String klasor, String filename, int saniye) {
+        if (!minioAktif()) return null;
+        try {
+            bucketOlustur();
+            return minioClient.getPresignedObjectUrl(io.minio.GetPresignedObjectUrlArgs.builder()
+                    .method(io.minio.http.Method.GET)
+                    .bucket(bucket)
+                    .object(klasor + "/" + filename)
+                    .expiry(saniye)
+                    .build());
+        } catch (Exception e) {
+            log.warn("İmzalı URL üretilemedi: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Depolama kullanım bilgisi (MinIO aktifse nesne sayısı ve toplam boyut).
+     */
+    public java.util.Map<String, Object> kullanim() {
+        java.util.Map<String, Object> r = new java.util.LinkedHashMap<>();
+        r.put("tip", minioAktif() ? "minio" : "local");
+        r.put("bucket", bucket);
+        if (!minioAktif()) {
+            r.put("nesneSayisi", 0);
+            r.put("toplamBoyut", 0);
+            return r;
+        }
+        try {
+            bucketOlustur();
+            long sayi = 0;
+            long boyut = 0;
+            Iterable<io.minio.Result<io.minio.messages.Item>> items = minioClient.listObjects(
+                    io.minio.ListObjectsArgs.builder().bucket(bucket).recursive(true).build());
+            for (io.minio.Result<io.minio.messages.Item> res : items) {
+                io.minio.messages.Item item = res.get();
+                sayi++;
+                boyut += item.size();
+            }
+            r.put("nesneSayisi", sayi);
+            r.put("toplamBoyut", boyut);
+        } catch (Exception e) {
+            r.put("hata", e.getMessage());
+        }
+        return r;
+    }
+
+    /**
      * Ham byte dizisini kaydeder (yedekleme gibi multipart olmayan akışlar için).
      */
     public void kaydetBytes(String klasor, String filename, byte[] icerik, String contentType) {

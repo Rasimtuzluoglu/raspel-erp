@@ -87,6 +87,20 @@ public class FileUploadController {
         return dosyaGetir(filename, "sohbet");
     }
 
+    @GetMapping("/dosya/imzali-url")
+    @Operation(summary = "İmzalı (presigned) URL", description = "Bir dosya için süreli erişim URL'i üretir (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> imzaliUrl(
+            @RequestParam String klasor,
+            @RequestParam String dosya,
+            @RequestParam(defaultValue = "3600") int sure) {
+        String url = dosyaDepolama.presignedUrl(klasor, dosya, sure);
+        if (url == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "İmzalı URL üretilemedi (MinIO aktif olmayabilir)"));
+        }
+        return ResponseEntity.ok(Map.of("url", url));
+    }
+
     private ResponseEntity<Map<String, String>> dosyaYukle(MultipartFile file, String klasor, String urlPrefix) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));

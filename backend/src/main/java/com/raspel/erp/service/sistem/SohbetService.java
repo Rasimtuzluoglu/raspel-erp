@@ -39,6 +39,9 @@ public class SohbetService {
     private final AiConfigService aiConfigService;
     private final LlmClientService llmClientService;
 
+    /** Şirket bazlı kısa dönem sohbet belleği (AI asistan çok turlu bağlam). */
+    private final Map<Long, java.util.ArrayDeque<String>> sohbetHafizasi = new java.util.concurrent.ConcurrentHashMap<>();
+
     @Transactional(readOnly = true)
     public List<SohbetMesajDTO> sonMesajlar(Long sirketId) {
         List<SohbetMesaj> mesajlar = sohbetMesajRepository.findTop50BySirketIdOrderByOlusturmaTarihiDesc(sirketId);
@@ -88,8 +91,9 @@ public class SohbetService {
                 String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Aşağıda şirketin güncel özet verileri var. "
                         + "Soruları bu verilere dayanarak, Türkçe, profesyonel ve net cevapla. "
                         + "Sayısal cevaplarda para birimi TL, adet vb. belirt.\n\n"
-                        + "ŞİRKET VERİLERİ:\n" + veriBaglami;
+                        + "ŞİRKET VERİLERİ:\n" + veriBaglami + "\n\n" + hafizaBaglami(sirketId);
                 String response = llmClientService.sendQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru);
+                hafizaEkle(sirketId, soru, response);
                 
                 return AISorguSonucDTO.builder()
                         .soru(soru)
@@ -341,8 +345,13 @@ public class SohbetService {
                 String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Aşağıda şirketin güncel özet verileri var. "
                         + "Soruları bu verilere dayanarak, Türkçe, profesyonel ve net cevapla. "
                         + "Sayısal cevaplarda para birimi TL, adet vb. belirt.\n\n"
-                        + "ŞİRKET VERİLERİ:\n" + veriBaglami;
-                llmClientService.streamQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru, onToken);
+                        + "ŞİRKET VERİLERİ:\n" + veriBaglami + "\n\n" + hafizaBaglami(sirketId);
+                StringBuilder toplanan = new StringBuilder();
+                llmClientService.streamQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru, token -> {
+                    toplanan.append(token);
+                    onToken.accept(token);
+                });
+                hafizaEkle(sirketId, soru, toplanan.toString());
                 return;
             }
         } catch (Exception e) {
@@ -351,6 +360,23 @@ public class SohbetService {
         // Kural tabanlı yanıtı tek parça olarak ilet.
         String cevap = aiSorgula(soru, sirketId).getCevapMetni();
         onToken.accept(cevap);
+    }
+
+    private String hafizaBaglami(Long sirketId) {
+        java.util.ArrayDeque<String> q = sohbetHafizasi.get(sirketId);
+        if (q == null || q.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("ÖNCEKİ KONUŞMA:\n");
+        q.forEach(s -> sb.append(s).append("\n"));
+        return sb.toString();
+    }
+
+    private void hafizaEkle(Long sirketId, String soru, String cevap) {
+        if (sirketId == null) return;
+        java.util.ArrayDeque<String> q = sohbetHafizasi.computeIfAbsent(sirketId, k -> new java.util.ArrayDeque<>());
+        q.addLast("Kullanıcı: " + soru);
+        q.addLast("Asistan: " + (cevap != null ? cevap : ""));
+        while (q.size() > 10) q.removeFirst();
     }
 
     /** Şirketin güncel özet verisini LLM'e bağlam olarak üretir. */

@@ -82,6 +82,21 @@
       </div>
 
       <div class="bolum">
+        <h2>Depolama</h2>
+        <div class="yedek-ozet">
+          <div>
+            <span>Tip</span><strong>{{ durum?.depolama?.tip === 'minio' ? 'MinIO (S3)' : 'Yerel Disk' }}</strong>
+          </div>
+          <div>
+            <span>Nesne Sayısı</span><strong>{{ durum?.depolama?.nesneSayisi ?? 0 }}</strong>
+          </div>
+          <div>
+            <span>Toplam Boyut</span><strong>{{ formatByte(durum?.depolama?.toplamBoyut) }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="bolum">
         <h2>Yedekleme</h2>
         <div class="yedek-ozet">
           <div>

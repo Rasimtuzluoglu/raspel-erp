@@ -2,6 +2,7 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.repository.sistem.HataLogRepository;
 import com.raspel.erp.service.sistem.BackupService;
+import com.raspel.erp.service.sistem.DosyaDepolamaService;
 import com.raspel.erp.service.sistem.SistemDurumService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,7 @@ class SistemDurumServiceTest {
     @Mock private HealthEndpoint healthEndpoint;
     @Mock private HataLogRepository hataLogRepository;
     @Mock private BackupService backupService;
+    @Mock private DosyaDepolamaService dosyaDepolama;
     @InjectMocks private SistemDurumService sistemDurumService;
 
     @Test
@@ -32,6 +34,7 @@ class SistemDurumServiceTest {
         when(hataLogRepository.count()).thenReturn(0L);
         when(hataLogRepository.findTop50ByOrderByOlusturmaTarihiDesc()).thenReturn(List.of());
         when(backupService.getSchedule()).thenReturn(Map.of("totalBackups", 0));
+        when(dosyaDepolama.kullanim()).thenReturn(Map.of("tip", "local"));
         ReflectionTestUtils.setField(sistemDurumService, "surum", "1.6.1");
 
         Map<String, Object> result = sistemDurumService.durum();
@@ -42,5 +45,6 @@ class SistemDurumServiceTest {
         assertNotNull(result.get("uptimeMs"));
         assertNotNull(result.get("bellek"));
         assertNotNull(result.get("disk"));
+        assertNotNull(result.get("depolama"));
     }
 }

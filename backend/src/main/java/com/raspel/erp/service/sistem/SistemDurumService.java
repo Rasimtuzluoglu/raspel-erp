@@ -35,6 +35,7 @@ public class SistemDurumService {
     private final HealthEndpoint healthEndpoint;
     private final HataLogRepository hataLogRepository;
     private final BackupService backupService;
+    private final DosyaDepolamaService dosyaDepolama;
 
     @Value("${app.version:1.8.0}")
     private String surum;
@@ -88,6 +89,11 @@ public class SistemDurumService {
         result.put("bilesenler", bilesenler);
         result.put("hataSayisi", hataLogRepository.count());
         result.put("sonHatalar", sonHatalar(5));
+        try {
+            result.put("depolama", dosyaDepolama.kullanim());
+        } catch (Exception e) {
+            log.warn("Depolama bilgisi alınamadı: {}", e.getMessage());
+        }
         try {
             result.put("yedekleme", backupService.getSchedule());
         } catch (Exception e) {
