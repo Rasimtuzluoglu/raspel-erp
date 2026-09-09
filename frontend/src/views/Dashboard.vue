@@ -300,6 +300,19 @@
               <span class="borc">Borç: {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}</span>
             </div>
           </div>
+          <div class="hedef-kart">
+            <div class="hedef-baslik">
+              <span><i class="pi pi-trophy" /> Kâr Hedefi</span>
+              <strong>{{ formatCurrency(dashboardStore?.gerceklesenKar || 0) }} / {{ formatCurrency(dashboardStore?.hedefKar || 0) }}</strong>
+            </div>
+            <div class="hedef-track">
+              <div
+                class="hedef-fill kar"
+                :style="{ width: karIlerleme + '%' }"
+              />
+            </div>
+            <span class="hedef-yuzde">%{{ karIlerleme.toFixed(1) }}</span>
+          </div>
         </div>
       </template>
 
@@ -536,7 +549,7 @@
             <i
               class="pi pi-chart-bar"
               style="margin-right: 8px"
-            />Aylık Gelir / Gider Trendi (Son 6 Ay)
+            />Aylık Gelir / Gider Trendi (Son 12 Ay)
           </template>
           <template #content>
             <div
@@ -631,6 +644,56 @@
               class="chart-empty"
             >
               Henüz kategori verisi bulunmuyor
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-user-plus"
+              style="margin-right: 8px"
+            />En Çok Alacaklı Cariler
+          </template>
+          <template #content>
+            <div
+              v-if="enCokAlacakCarilerChart.datasets.length"
+              class="chart-wrapper full"
+            >
+              <Bar
+                :data="enCokAlacakCarilerChart"
+                :options="enCokAlacakCarilerOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Alacaklı cari bulunmuyor
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-wallet"
+              style="margin-right: 8px"
+            />Kasa / Banka Dağılımı
+          </template>
+          <template #content>
+            <div
+              v-if="kasaBankaChart.datasets.length"
+              class="chart-wrapper"
+            >
+              <Doughnut
+                :data="kasaBankaChart"
+                :options="pieOptions"
+              />
+            </div>
+            <div class="chart-summary">
+              <span class="dot kasa" /> Kasa: {{ formatCurrency(dashboardStore?.toplamKasaBakiye || 0) }}
+              <span class="dot banka" /> Banka: {{ formatCurrency(dashboardStore?.toplamBankaBakiye || 0) }}
             </div>
           </template>
         </Card>
@@ -919,7 +982,9 @@ const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
 const enCokSatanlarChart = ref({ labels: [], datasets: [] })
 const nakitAkisiChart = ref({ labels: [], datasets: [] })
 const enCokBorcCarilerChart = ref({ labels: [], datasets: [] })
+const enCokAlacakCarilerChart = ref({ labels: [], datasets: [] })
 const kategoriSatislariChart = ref({ labels: [], datasets: [] })
+const kasaBankaChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const aylikKarsilastirmaOptions = {
@@ -939,6 +1004,16 @@ const enCokSatanlarOptions = {
   }
 }
 const enCokBorcCarilerOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
+    y: { ticks: { color: '#94a3b8' } }
+  }
+}
+const enCokAlacakCarilerOptions = {
   indexAxis: 'y',
   responsive: true,
   maintainAspectRatio: false,
@@ -974,6 +1049,12 @@ const toplamKasaBakiye = computed(() => dashboardStore.toplamKasaBakiye || 0)
 const toplamLikidite = computed(() => (dashboardStore.toplamBankaBakiye || 0) + (dashboardStore.toplamKasaBakiye || 0))
 const toplamStok = computed(() => dashboardStore.toplamStok || 0)
 const dusukStokAdet = computed(() => dashboardStore.kritikStokSayisi || 0)
+const karIlerleme = computed(() => {
+  const hedef = dashboardStore.hedefKar || 0
+  const gercek = dashboardStore.gerceklesenKar || 0
+  if (!hedef) return 0
+  return Math.min(100, Math.max(0, (gercek / hedef) * 100))
+})
 
 const grafikleriHesapla = () => {
   bakiyeChart.value = {
@@ -991,7 +1072,9 @@ const grafikleriHesapla = () => {
   enCokSatanlariHesapla()
   nakitAkisiniHesapla()
   enCokBorcCarileriHesapla()
+  enCokAlacakCarileriHesapla()
   kategoriSatislariniHesapla()
+  kasaBankayiHesapla()
 }
 
 const enCokSatanlariHesapla = () => {
@@ -1062,6 +1145,44 @@ const enCokBorcCarileriHesapla = () => {
   }
 }
 
+const enCokAlacakCarileriHesapla = () => {
+  const cariler = (dashboardStore.enCokAlacakCariler || []).slice(0, 7)
+  if (!cariler.length) {
+    enCokAlacakCarilerChart.value = { labels: [], datasets: [] }
+    return
+  }
+  enCokAlacakCarilerChart.value = {
+    labels: cariler.map((c) => c.cariAd),
+    datasets: [
+      {
+        label: 'Alacak (TL)',
+        data: cariler.map((c) => c.tutar),
+        backgroundColor: '#10b981',
+        borderRadius: 4
+      }
+    ]
+  }
+}
+
+const kasaBankayiHesapla = () => {
+  const kasa = dashboardStore.toplamKasaBakiye || 0
+  const banka = dashboardStore.toplamBankaBakiye || 0
+  if (!kasa && !banka) {
+    kasaBankaChart.value = { labels: [], datasets: [] }
+    return
+  }
+  kasaBankaChart.value = {
+    labels: ['Kasa', 'Banka'],
+    datasets: [
+      {
+        data: [kasa, banka],
+        backgroundColor: ['#f59e0b', '#3b82f6'],
+        hoverBackgroundColor: ['#fbbf24', '#60a5fa']
+      }
+    ]
+  }
+}
+
 const kategoriSatislariniHesapla = () => {
   const kategoriler = dashboardStore.kategoriSatislari || []
   if (!kategoriler.length) {
@@ -1101,6 +1222,15 @@ const aylikKarsilastirmayiHesapla = () => {
         data: aylikVeri.map((v) => v.gider),
         backgroundColor: '#f44336',
         borderRadius: 4
+      },
+      {
+        label: 'Net',
+        type: 'line',
+        data: aylikVeri.map((v) => (v.gelir || 0) - (v.gider || 0)),
+        borderColor: '#8b5cf6',
+        backgroundColor: '#8b5cf6',
+        pointRadius: 3,
+        tension: 0.3
       }
     ]
   }
@@ -1636,6 +1766,9 @@ const whatsappLink = (f) => {
 .hedef-fill.ciro {
   background: linear-gradient(90deg, #2563eb, #3b82f6);
 }
+.hedef-fill.kar {
+  background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+}
 .hedef-yuzde {
   display: block;
   margin-top: 6px;
@@ -1770,6 +1903,12 @@ const whatsappLink = (f) => {
 }
 .dot.neg {
   background: #f44336;
+}
+.dot.kasa {
+  background: #f59e0b;
+}
+.dot.banka {
+  background: #3b82f6;
 }
 
 .bottom-grid {

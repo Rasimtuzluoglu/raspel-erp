@@ -95,8 +95,8 @@ public class DashboardService {
         BigDecimal bugunkuOdeme = safeGet(() -> hareketRepository.sumTutarByTurAndHareketTarihi(Hareket.HareketTuru.ODEME, LocalDate.now(), sirketId), BigDecimal.ZERO);
         Long bekleyenIzinSayisi = safeGet(() -> personelIzinRepository.countByDurumAndSirketId("BEKLEMEDE", sirketId), 0L);
 
-        var altiAyOnce = LocalDate.now().minusMonths(6).withDayOfMonth(1);
-        var aylikGelirGider = safeGetList(() -> hareketRepository.aylikGelirGider(altiAyOnce, sirketId), Collections.emptyList())
+        var onIkiAyOnce = LocalDate.now().minusMonths(11).withDayOfMonth(1);
+        var aylikGelirGider = safeGetList(() -> hareketRepository.aylikGelirGider(onIkiAyOnce, sirketId), Collections.emptyList())
                 .stream().map(row -> DashboardDTO.AylikGelirGiderDTO.builder()
                         .ay((String) row[0])
                         .gelir((BigDecimal) row[1])
