@@ -21,6 +21,8 @@ import com.raspel.erp.repository.ik.PersonelIzinRepository;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
@@ -45,6 +47,8 @@ public class DashboardService {
     private final StokHareketRepository stokHareketRepository;
     private final StokRepository stokRepository;
     private final FaturaRepository faturaRepository;
+    private final FaturaKalemRepository faturaKalemRepository;
+    private final CariHesapRepository cariHesapRepository;
     private final BankaRepository bankaRepository;
     private final KasaRepository kasaRepository;
     private final MasrafRepository masrafRepository;
@@ -170,6 +174,37 @@ public class DashboardService {
                 ? gerceklesenCiro.multiply(BigDecimal.valueOf(100)).divide(hedefCiro, 1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
+        // En çok borçlu ve alacaklı cariler
+        List<DashboardDTO.CariOzetDTO> enCokBorcCariler = safeGetList(
+                () -> cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
+                        .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) < 0)
+                        .sorted((a, b) -> a.getBakiye().compareTo(b.getBakiye()))
+                        .limit(5)
+                        .map(c -> DashboardDTO.CariOzetDTO.builder().cariAd(c.getAd()).tutar(c.getBakiye().abs()).build())
+                        .collect(Collectors.toList()),
+                Collections.emptyList());
+
+        List<DashboardDTO.CariOzetDTO> enCokAlacakCariler = safeGetList(
+                () -> cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
+                        .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) > 0)
+                        .sorted((a, b) -> b.getBakiye().compareTo(a.getBakiye()))
+                        .limit(5)
+                        .map(c -> DashboardDTO.CariOzetDTO.builder().cariAd(c.getAd()).tutar(c.getBakiye()).build())
+                        .collect(Collectors.toList()),
+                Collections.emptyList());
+
+        List<DashboardDTO.KategoriSatisDTO> kategoriSatislari = safeGetList(
+                () -> faturaKalemRepository.kategoriSatislari(sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI)
+                        .stream()
+                        .map(row -> DashboardDTO.KategoriSatisDTO.builder()
+                                .kategori((String) row[0])
+                                .tutar((BigDecimal) row[1])
+                                .build())
+                        .collect(Collectors.toList()),
+                Collections.emptyList());
+
+        String ozet = ozetOlustur(gerceklesenCiro, kritikStokSayisi, vadesiGecenFaturalar, enCokBorcCariler);
+
         return DashboardDTO.builder()
                 .toplamCariSayisi(toplamCariSayisi)
                 .toplamBakiye(toplamBakiye)
@@ -203,7 +238,27 @@ public class DashboardService {
                 .gunlukNakitAkisi(gunlukNakitAkisi)
                 .vadesiGecenFaturalar(vadesiGecenFaturalar)
                 .vadesiYaklasanFaturalar(vadesiYaklasanFaturalar)
+                .enCokBorcCariler(enCokBorcCariler)
+                .enCokAlacakCariler(enCokAlacakCariler)
+                .kategoriSatislari(kategoriSatislari)
+                .ozet(ozet)
                 .build();
+    }
+
+    private String ozetOlustur(BigDecimal ciro, Long kritikStok, List<DashboardDTO.VadeBildirimiDTO> vadesiGecen,
+                               List<DashboardDTO.CariOzetDTO> enCokBorc) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Bu ay kesilen satış cirosu ").append(ciro != null ? ciro.toPlainString() : "0").append(" TL.");
+        if (kritikStok != null && kritikStok > 0) {
+            sb.append(" ").append(kritikStok).append(" ürün kritik stok seviyesinde; sipariş planlaması önerilir.");
+        }
+        if (vadesiGecen != null && !vadesiGecen.isEmpty()) {
+            sb.append(" ").append(vadesiGecen.size()).append(" faturanın vadesi geçmiş durumda.");
+        }
+        if (enCokBorc != null && !enCokBorc.isEmpty()) {
+            sb.append(" En yüksek borçlu cari: ").append(enCokBorc.get(0).getCariAd()).append(".");
+        }
+        return sb.toString();
     }
 
     private DashboardDTO.VadeBildirimiDTO vadeDTOyaCevir(Fatura f) {

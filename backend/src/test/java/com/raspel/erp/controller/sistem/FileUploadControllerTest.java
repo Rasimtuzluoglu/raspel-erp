@@ -1,10 +1,12 @@
 package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.controller.TestSecurityMocks;
+import com.raspel.erp.service.sistem.DosyaDepolamaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
@@ -22,6 +24,9 @@ class FileUploadControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private DosyaDepolamaService dosyaDepolama;
 
     @Test
     void uploadAvatar_bosDosyaReddedilir() throws Exception {

@@ -85,4 +85,16 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
                                                @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
                                                @Param("baslangic") java.time.LocalDate baslangic,
                                                @Param("bitis") java.time.LocalDate bitis);
+
+    /**
+     * Kategori bazlı satış toplamları (SATIS + KESILDI faturalar), tutara göre azalan.
+     */
+    @Query("SELECT COALESCE(s.kategori, 'Kategorisiz') AS kategori, COALESCE(SUM(k.tutar), 0) AS tutar " +
+           "FROM FaturaKalem k JOIN k.fatura f LEFT JOIN Stok s ON s.id = k.stokId " +
+           "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+           "GROUP BY COALESCE(s.kategori, 'Kategorisiz') " +
+           "ORDER BY COALESCE(SUM(k.tutar), 0) DESC")
+    List<Object[]> kategoriSatislari(@Param("sirketId") Long sirketId,
+                                     @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                     @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
 }

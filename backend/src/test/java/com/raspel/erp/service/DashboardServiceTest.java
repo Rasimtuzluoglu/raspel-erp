@@ -19,9 +19,11 @@ import com.raspel.erp.service.finans.HareketService;
 import com.raspel.erp.repository.ik.PersonelIzinRepository;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
+import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
-import com.raspel.erp.repository.ticaret.FaturaRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
@@ -35,6 +37,8 @@ class DashboardServiceTest {
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private StokRepository stokRepository;
     @Mock private FaturaRepository faturaRepository;
+    @Mock private FaturaKalemRepository faturaKalemRepository;
+    @Mock private CariHesapRepository cariHesapRepository;
     @InjectMocks private DashboardService dashboardService;
 
     @Test

@@ -52,6 +52,10 @@ public class Sirket {
     @Column(nullable = false)
     private Boolean aktif;
 
+    @Column(name = "negatif_stok_izni", nullable = false)
+    @Builder.Default
+    private Boolean negatifStokIzni = false;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

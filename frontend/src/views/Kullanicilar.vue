@@ -197,7 +197,8 @@
             v-model="form.role"
             :options="[
               { label: 'Admin', value: 'ADMIN' },
-              { label: 'Kullanıcı', value: 'USER' }
+              { label: 'Kullanıcı', value: 'USER' },
+              { label: 'Şoför', value: 'DRIVER' }
             ]"
             option-label="label"
             option-value="value"
@@ -513,6 +514,10 @@ h1 {
 .rol-badge.user {
   background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
+}
+.rol-badge.driver {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
 }
 .kart-alt {
   display: flex;

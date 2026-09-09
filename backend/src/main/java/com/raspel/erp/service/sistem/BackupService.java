@@ -63,10 +63,12 @@ public class BackupService {
 
     private final DataSource dataSource;
     private final RestTemplate restTemplate;
+    private final DosyaDepolamaService dosyaDepolama;
 
-    public BackupService(DataSource dataSource, RestTemplate restTemplate) {
+    public BackupService(DataSource dataSource, RestTemplate restTemplate, DosyaDepolamaService dosyaDepolama) {
         this.dataSource = dataSource;
         this.restTemplate = restTemplate;
+        this.dosyaDepolama = dosyaDepolama;
     }
 
     @PostConstruct
@@ -134,10 +136,21 @@ public class BackupService {
 
             long size = Files.size(outputFile);
             log.info("Backup created: {} ({} bytes, type={})", filename, size, type);
+            minioyaAktar(outputFile, filename);
             return filename;
         } catch (Exception e) {
             log.error("Backup failed", e);
             throw new RuntimeException("Backup failed: " + e.getMessage());
+        }
+    }
+
+    private void minioyaAktar(Path outputFile, String filename) {
+        if (dosyaDepolama == null || !dosyaDepolama.isMinioAktif()) return;
+        try {
+            dosyaDepolama.kaydetBytes("backups", filename, Files.readAllBytes(outputFile), "application/gzip");
+            log.info("Yedek MinIO'ya aktarıldı: {}", filename);
+        } catch (Exception e) {
+            log.warn("Yedek MinIO'ya aktarılamadı ({}): {}", filename, e.getMessage());
         }
     }
 

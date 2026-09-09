@@ -203,10 +203,10 @@
               @click="cogalt(s.data)"
             />
             <Button
-              v-if="s.data.durum === 'TASLAK'"
+              v-if="s.data.durum === 'TASLAK' || s.data.durum === 'KESILDI'"
               icon="pi pi-pencil"
               class="p-button-rounded p-button-sm p-button-warning"
-              title="Düzenle"
+              :title="s.data.durum === 'KESILDI' ? 'Revize Et' : 'Düzenle'"
               @click="editFatura(s.data)"
             />
             <Button
@@ -391,6 +391,58 @@
             class="w-full"
           />
         </div>
+
+        <template v-if="form.tur === 'SATIS'">
+          <div
+            class="form-group teslimat-baslik"
+            style="grid-column: 1 / -1; margin-top: 6px"
+          >
+            <label style="font-weight: 700; color: var(--text-primary)">
+              <i
+                class="pi pi-truck"
+                style="margin-right: 6px"
+              /> Teslimat Bilgileri
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Şoför</label>
+            <Dropdown
+              v-model="form.driverId"
+              :options="suruculer"
+              option-label="ad"
+              option-value="id"
+              placeholder="Şoför seçin"
+              class="w-full"
+              :show-clear="true"
+            />
+          </div>
+          <div class="form-group">
+            <label>Beklenen Teslim Tarihi</label>
+            <DatePicker
+              v-model="form.beklenenTeslimTarihi"
+              date-format="dd.mm.yy"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group">
+            <label>Teslimat Adresi</label>
+            <Textarea
+              v-model="form.teslimatAdresi"
+              rows="2"
+              placeholder="Müşteri adresinden otomatik doldurulur, elle düzenlenebilir"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group">
+            <label>Teslimat Notu</label>
+            <Textarea
+              v-model="form.teslimatNotu"
+              rows="2"
+              placeholder="İsteğe bağlı"
+              class="w-full"
+            />
+          </div>
+        </template>
       </div>
 
       <div class="urun-ekleme">
@@ -513,7 +565,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 
 const dovizStore = useDovizStore()
-import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI, teslimatAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -574,10 +626,15 @@ const form = ref({
   depoId: null,
   paraBirimi: 'TRY',
   aciklama: '',
+  driverId: null,
+  beklenenTeslimTarihi: null,
+  teslimatAdresi: '',
+  teslimatNotu: '',
   kalemler: []
 })
 
 const depolar = ref([])
+const suruculer = ref([])
 
 const teslimDurumSecenekleri = [
   { label: 'Bekliyor', value: 'BEKLIYOR' },
@@ -626,7 +683,8 @@ onMounted(async () => {
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
       personelListesiniYukle(),
-      depolarıYukle()
+      depolarıYukle(),
+      suruculeriYukle()
     ])
   } catch (err) {
     toastBildirim.hata('Veriler yüklenirken hata oluştu')
@@ -653,6 +711,15 @@ const depolarıYukle = async () => {
     depolar.value = r.data?.content || r.data || []
   } catch {
     depolar.value = []
+  }
+}
+
+const suruculeriYukle = async () => {
+  try {
+    const r = await teslimatAPI.suruculer()
+    suruculer.value = r.data || []
+  } catch {
+    suruculer.value = []
   }
 }
 
@@ -745,6 +812,10 @@ const cariAra = (event) => {
 
 const cariSecildi = (event) => {
   form.value.cariHesapId = event.value?.id || null
+  const adres = event.value?.adres || ''
+  if (adres && !form.value.teslimatAdresi) {
+    form.value.teslimatAdresi = adres
+  }
 }
 
 const cariSonUrunler = ref([])
@@ -856,6 +927,10 @@ const openCreateDialog = () => {
     depoId: null,
     paraBirimi: 'TRY',
     aciklama: '',
+    driverId: null,
+    beklenenTeslimTarihi: null,
+    teslimatAdresi: '',
+    teslimatNotu: '',
     kalemler: [{ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 }]
   }
   formTemizle()
@@ -875,6 +950,10 @@ const editFatura = (fatura) => {
     depoId: fatura.depoId || null,
     paraBirimi: fatura.paraBirimi || 'TRY',
     aciklama: fatura.aciklama || '',
+    driverId: null,
+    beklenenTeslimTarihi: null,
+    teslimatAdresi: '',
+    teslimatNotu: '',
     kalemler: fatura.kalemler.map((k) => ({
       id: k.id,
       aciklama: k.aciklama,
@@ -901,6 +980,10 @@ const cogalt = (fatura) => {
     paraBirimi: fatura.paraBirimi || 'TRY',
     depoId: fatura.depoId || null,
     aciklama: fatura.aciklama || '',
+    driverId: null,
+    beklenenTeslimTarihi: null,
+    teslimatAdresi: '',
+    teslimatNotu: '',
     kalemler: fatura.kalemler.map((k) => ({
       aciklama: k.aciklama,
       adet: k.adet,
@@ -960,8 +1043,25 @@ const saveFatura = async () => {
       await faturaStore.updateFatura(editingId.value, payload)
       toastBildirim.basarili('Fatura güncellendi')
     } else {
-      await faturaStore.addFatura(payload)
+      const yeni = await faturaStore.addFatura(payload)
       toastBildirim.basarili('Fatura oluşturuldu')
+      if (form.value.driverId && form.value.teslimatAdresi?.trim()) {
+        try {
+          await teslimatAPI.olustur({
+            faturaId: yeni.id,
+            driverId: form.value.driverId,
+            teslimatAdresi: form.value.teslimatAdresi,
+            beklenenTeslimTarihi: form.value.beklenenTeslimTarihi
+              ? form.value.beklenenTeslimTarihi.toISOString().split('T')[0]
+              : null,
+            notlar: form.value.teslimatNotu || null
+          })
+        } catch (teslimatHata) {
+          toastBildirim.hata(
+            'Teslimat kaydı oluşturulamadı: ' + (teslimatHata?.response?.data?.message || 'Bilinmeyen hata')
+          )
+        }
+      }
     }
     taslakTemizle()
     formTemizle()

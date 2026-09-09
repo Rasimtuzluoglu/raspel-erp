@@ -21,6 +21,7 @@ public class SirketDTO {
     private String tur;
     private Integer yil;
     private Boolean aktif;
+    private Boolean negatifStokIzni;
     private LocalDateTime olusturmaTarihi;
     private LocalDateTime sonAdGuncellemeTarihi;
 }

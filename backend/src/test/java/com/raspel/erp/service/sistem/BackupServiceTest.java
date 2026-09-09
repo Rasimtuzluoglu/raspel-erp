@@ -22,12 +22,14 @@ class BackupServiceTest {
     Path tempDir;
 
     private BackupService backupService;
+    private DosyaDepolamaService dosyaDepolama;
 
     @BeforeEach
     void setUp() {
         DataSource dataSource = mock(DataSource.class);
         RestTemplate restTemplate = mock(RestTemplate.class);
-        backupService = new BackupService(dataSource, restTemplate);
+        dosyaDepolama = mock(DosyaDepolamaService.class);
+        backupService = new BackupService(dataSource, restTemplate, dosyaDepolama);
         ReflectionTestUtils.setField(backupService, "backupDir", tempDir.toString());
         ReflectionTestUtils.setField(backupService, "dbHost", "localhost");
         ReflectionTestUtils.setField(backupService, "dbPort", "5432");

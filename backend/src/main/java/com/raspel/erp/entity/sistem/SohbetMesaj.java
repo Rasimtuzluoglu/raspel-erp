@@ -28,6 +28,9 @@ public class SohbetMesaj {
     @Column(name = "kullanici_adi", length = 100)
     private String kullaniciAd;
 
+    @Column(name = "oda_id")
+    private Long odaId;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String mesaj;
 

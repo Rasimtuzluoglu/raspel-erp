@@ -312,3 +312,26 @@ export const tekrarlayanFaturaAPI = {
   }
 }
 
+export const teslimatAPI = {
+  suruculer() {
+    return apiClient.get('/drivers')
+  },
+  byDriver() {
+    return apiClient.get('/deliveries/by-driver')
+  },
+  teslimatlar(driverId) {
+    return apiClient.get('/deliveries', { params: { driverId } })
+  },
+  olustur(data) {
+    return apiClient.post('/deliveries', data)
+  },
+  durumGuncelle(id, durum) {
+    return apiClient.patch(`/deliveries/${id}/status`, { durum })
+  },
+  fotoYukle(id, file) {
+    const form = new FormData()
+    form.append('file', file)
+    return apiClient.post(`/deliveries/${id}/foto`, form)
+  }
+}
+

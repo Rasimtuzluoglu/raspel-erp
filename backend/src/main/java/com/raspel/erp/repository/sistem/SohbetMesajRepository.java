@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface SohbetMesajRepository extends JpaRepository<SohbetMesaj, Long> {
     List<SohbetMesaj> findTop50BySirketIdOrderByOlusturmaTarihiDesc(Long sirketId);
+    List<SohbetMesaj> findTop100ByOdaIdOrderByOlusturmaTarihiDesc(Long odaId);
 }

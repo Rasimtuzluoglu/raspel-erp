@@ -52,6 +52,12 @@ public class DashboardDTO {
     private BigDecimal hedefKar;
     private BigDecimal gerceklesenKar;
 
+    private List<CariOzetDTO> enCokBorcCariler;
+    private List<CariOzetDTO> enCokAlacakCariler;
+    private List<KategoriSatisDTO> kategoriSatislari;
+
+    private String ozet;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -106,5 +112,23 @@ public class DashboardDTO {
         private String gun;
         private BigDecimal gelir;
         private BigDecimal gider;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CariOzetDTO {
+        private String cariAd;
+        private BigDecimal tutar;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class KategoriSatisDTO {
+        private String kategori;
+        private BigDecimal tutar;
     }
 }

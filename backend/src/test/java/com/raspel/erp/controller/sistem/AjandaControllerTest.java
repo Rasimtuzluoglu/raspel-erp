@@ -35,7 +35,7 @@ class AjandaControllerTest {
 
     @Test
     void olaylar_donar() throws Exception {
-        when(ajandaService.olaylar(any(), any(), any())).thenReturn(List.of(
+        when(ajandaService.olaylar(any(), any(), any(), any())).thenReturn(List.of(
                 AjandaOlayDTO.builder().tarih(LocalDate.of(2026, 8, 1)).tip("GOREV").baslik("Görev").build()));
 
         mockMvc.perform(get("/api/ajanda")

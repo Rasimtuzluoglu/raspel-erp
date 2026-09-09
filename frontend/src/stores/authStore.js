@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!kullanici.value)
   const isAdmin = computed(() => kullanici.value?.role === 'ADMIN')
   const isSaha = computed(() => kullanici.value?.sahaKullanici === true)
+  const isDriver = computed(() => kullanici.value?.role === 'DRIVER')
 
   const hasPermission = (permissionCode) => {
     if (!kullanici.value) return false
@@ -218,6 +219,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     isAdmin,
     isSaha,
+    isDriver,
     hasPermission,
     girisYap,
     girisSirket,

@@ -190,6 +190,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/teslimatlar',
+    name: 'Teslimatlar',
+    component: () => import('../views/Teslimatlar.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/projeler',
     name: 'Projeler',
     component: () => import('../views/Projeler.vue'),
@@ -420,6 +426,8 @@ router.beforeEach((to, from, next) => {
     } else {
       next()
     }
+  } else if (authStore.isDriver && to.path === '/') {
+    next('/teslimatlar')
   } else {
     next()
   }

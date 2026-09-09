@@ -87,9 +87,66 @@ export const sohbetAPI = {
   }
 }
 
+export const sohbetOdaAPI = {
+  odalar() {
+    return apiClient.get('/sohbet/odalar')
+  },
+  olustur(data) {
+    return apiClient.post('/sohbet/odalar', data)
+  },
+  guncelle(id, data) {
+    return apiClient.put(`/sohbet/odalar/${id}`, data)
+  },
+  sil(id) {
+    return apiClient.delete(`/sohbet/odalar/${id}`)
+  },
+  katil(id) {
+    return apiClient.post(`/sohbet/odalar/${id}/katil`)
+  },
+  ayril(id) {
+    return apiClient.delete(`/sohbet/odalar/${id}/katil`)
+  },
+  uyeEkle(id, kullaniciId) {
+    return apiClient.post(`/sohbet/odalar/${id}/uye`, { kullaniciId })
+  },
+  uyeCikar(id, kullaniciId) {
+    return apiClient.delete(`/sohbet/odalar/${id}/uye/${kullaniciId}`)
+  },
+  mesajlar(id) {
+    return apiClient.get(`/sohbet/odalar/${id}/mesajlar`)
+  },
+  mesajGonder(id, data) {
+    return apiClient.post(`/sohbet/odalar/${id}/mesajlar`, data)
+  }
+}
+
 export const ajandaAPI = {
   olaylar(params) {
     return apiClient.get('/ajanda', { params })
+  },
+  gorevler() {
+    return apiClient.get('/ajanda/tasks')
+  },
+  gorevOlustur(data) {
+    return apiClient.post('/ajanda/tasks', data)
+  },
+  gorevGuncelle(id, data) {
+    return apiClient.put(`/ajanda/tasks/${id}`, data)
+  },
+  gorevTamamla(id) {
+    return apiClient.post(`/ajanda/tasks/${id}/complete`)
+  },
+  gorevSil(id) {
+    return apiClient.delete(`/ajanda/tasks/${id}`)
+  },
+  hatirlaticilar() {
+    return apiClient.get('/ajanda/reminders')
+  },
+  hatirlaticiOlustur(data) {
+    return apiClient.post('/ajanda/reminders', data)
+  },
+  hatirlaticiSil(id) {
+    return apiClient.delete(`/ajanda/reminders/${id}`)
   }
 }
 

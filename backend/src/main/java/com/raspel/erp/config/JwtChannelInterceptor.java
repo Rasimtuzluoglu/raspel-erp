@@ -20,6 +20,9 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private static final Pattern SIRKET_TOPIC_PATTERN =
             Pattern.compile("^/topic/(bildirimler|sohbet)/(\\d+)$");
 
+    private static final Pattern ODA_TOPIC_PATTERN =
+            Pattern.compile("^/topic/sohbet/oda/(\\d+)/(\\d+)$");
+
     private final JwtUtil jwtUtil;
 
     @Override
@@ -48,14 +51,24 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             if (destination == null) {
                 return message;
             }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> sessionAttrs = (Map<String, Object>) accessor.getSessionAttributes();
+            Long oturumSirketId = sessionAttrs != null ? (Long) sessionAttrs.get("sirketId") : null;
+
             Matcher m = SIRKET_TOPIC_PATTERN.matcher(destination);
             if (m.matches()) {
                 Long aboneSirketId = Long.valueOf(m.group(2));
-                @SuppressWarnings("unchecked")
-                Map<String, Object> sessionAttrs = (Map<String, Object>) accessor.getSessionAttributes();
-                Long oturumSirketId = sessionAttrs != null ? (Long) sessionAttrs.get("sirketId") : null;
                 if (oturumSirketId == null || !oturumSirketId.equals(aboneSirketId)) {
                     throw new MessageDeliveryException("Bu sirkete ait kanala abone olma yetkiniz yok");
+                }
+                return message;
+            }
+
+            Matcher odaM = ODA_TOPIC_PATTERN.matcher(destination);
+            if (odaM.matches()) {
+                Long aboneSirketId = Long.valueOf(odaM.group(1));
+                if (oturumSirketId == null || !oturumSirketId.equals(aboneSirketId)) {
+                    throw new MessageDeliveryException("Bu sohbet odasına abone olma yetkiniz yok");
                 }
             }
         }

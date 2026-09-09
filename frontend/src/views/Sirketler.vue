@@ -246,6 +246,10 @@
           <label>Aktif</label>
           <InputSwitch v-model="form.aktif" />
         </div>
+        <div class="field">
+          <label>Negatif Stok İzni (satışta yetersiz stokta satışa izin ver)</label>
+          <InputSwitch v-model="form.negatifStokIzni" />
+        </div>
       </div>
       <template #footer>
         <Button
@@ -371,7 +375,8 @@ const form = ref({
   email: '',
   webSite: '',
   logoUrl: '',
-  aktif: true
+  aktif: true,
+  negatifStokIzni: false
 })
 const uyariMesaji = ref('')
 const logoYukleniyor = ref(false)
@@ -427,7 +432,8 @@ const dialogAc = (data) => {
         email: '',
         webSite: '',
         logoUrl: '',
-        aktif: true
+        aktif: true,
+        negatifStokIzni: false
       }
   eskiAd.value = data?.ad || ''
   uyariMesaji.value = ''

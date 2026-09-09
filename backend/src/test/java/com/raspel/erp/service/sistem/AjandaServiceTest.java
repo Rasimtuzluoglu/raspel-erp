@@ -46,7 +46,7 @@ class AjandaServiceTest {
         when(faturaRepository.findVadesiYaklasan(eq(1L), eq(Fatura.FaturaDurum.KESILDI), any(), eq(bas), eq(bit)))
                 .thenReturn(List.of(f1));
 
-        List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit);
+        List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit, null);
 
         assertEquals(3, olaylar.size());
         assertEquals("GOREV", olaylar.get(0).getTip());
@@ -63,7 +63,7 @@ class AjandaServiceTest {
         when(gorevRepository.sirketGorevleri(1L, bas, bit)).thenReturn(List.of());
         when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bas), eq(bit))).thenReturn(List.of());
 
-        List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit);
+        List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit, null);
 
         assertTrue(olaylar.isEmpty());
     }
@@ -76,7 +76,7 @@ class AjandaServiceTest {
         when(gorevRepository.sirketGorevleri(1L, bas, bit)).thenReturn(List.of(g));
         when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bas), eq(bit))).thenReturn(List.of());
 
-        List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit);
+        List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit, null);
 
         assertEquals(1, olaylar.size());
         assertEquals(bas, olaylar.get(0).getTarih());

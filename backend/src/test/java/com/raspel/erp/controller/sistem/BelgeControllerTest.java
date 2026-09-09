@@ -3,6 +3,7 @@ package com.raspel.erp.controller.sistem;
 import com.raspel.erp.controller.TestSecurityMocks;
 import com.raspel.erp.entity.sistem.Belge;
 import com.raspel.erp.repository.sistem.BelgeRepository;
+import com.raspel.erp.service.sistem.DosyaDepolamaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +30,7 @@ class BelgeControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @MockBean private BelgeRepository belgeRepository;
+    @MockBean private DosyaDepolamaService dosyaDepolama;
 
     private Belge ornek() {
         return Belge.builder().id(1L).entityAdi("Fatura").entityId(5L)

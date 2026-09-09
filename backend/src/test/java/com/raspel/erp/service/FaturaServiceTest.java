@@ -251,11 +251,46 @@ class FaturaServiceTest {
     }
 
     @Test
-    void faturaGuncelle_throwsWhenNotDraft() {
+    void faturaGuncelle_throwsWhenIptal() {
         Fatura fatura = createFatura(1L);
-        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        fatura.setDurum(Fatura.FaturaDurum.IPTAL);
         when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
         assertThrows(RuntimeException.class, () -> faturaService.faturaGuncelle(1L, new FaturaDTO()));
+    }
+
+    @Test
+    void faturaGuncelle_kesilmisRevize_stokFarkiniIsler() {
+        Fatura fatura = createFatura(1L);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        FaturaKalem eskiKalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
+                .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(eskiKalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
+        Stok stok = createStok();
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(5)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+
+        faturaService.faturaGuncelle(1L, dto);
+
+        assertEquals(0, stok.getMiktar().compareTo(BigDecimal.valueOf(97)));
+    }
+
+    @Test
+    void faturaGuncelle_kesilmisOdemeli_throws() {
+        Fatura fatura = createFatura(1L);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        fatura.setOdenenTutar(BigDecimal.valueOf(50));
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).kalemler(List.of()).build();
+        assertThrows(RuntimeException.class, () -> faturaService.faturaGuncelle(1L, dto));
     }
 
     @Test

@@ -133,6 +133,24 @@
     />
 
     <template v-if="!loading && !bosSistem">
+      <!-- 0. GÜNLÜK ÖZET -->
+      <Card
+        v-if="dashboardStore?.ozet"
+        class="ozet-kart"
+      >
+        <template #title>
+          <i
+            class="pi pi-sparkles"
+            style="margin-right: 8px; color: #8b5cf6"
+          />Günün Özeti
+        </template>
+        <template #content>
+          <p class="ozet-metin">
+            {{ dashboardStore.ozet }}
+          </p>
+        </template>
+      </Card>
+
       <!-- 1. TEMEL 4 KPI KARTI -->
       <h2
         v-if="widgets.istatistikler.gorunur"
@@ -364,6 +382,37 @@
         </div>
       </div>
 
+      <!-- 1c. CARİ ÖZET & TAHSİLAT TAKİBİ -->
+      <template v-if="widgets.cariOzet.gorunur">
+        <h2 class="section-title">
+          <i class="pi pi-handshake" /> Cari Özet & Tahsilat Takibi
+        </h2>
+        <div class="cari-ozet-grid">
+          <div class="cari-ozet-kart alacak">
+            <i class="pi pi-arrow-down-left" />
+            <div>
+              <span>Toplam Alacak</span>
+              <strong>{{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}</strong>
+            </div>
+          </div>
+          <div class="cari-ozet-kart borc">
+            <i class="pi pi-arrow-up-right" />
+            <div>
+              <span>Toplam Borç</span>
+              <strong>{{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}</strong>
+            </div>
+          </div>
+          <div class="cari-ozet-kart enborc">
+            <i class="pi pi-user-minus" />
+            <div>
+              <span>En Borçlu Cari</span>
+              <strong>{{ (dashboardStore?.enCokBorcCariler || [])[0]?.cariAd || '—' }}</strong>
+              <small v-if="(dashboardStore?.enCokBorcCariler || [])[0]">{{ formatCurrency(dashboardStore.enCokBorcCariler[0].tutar) }}</small>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- 2. HIZLI İŞLEMLER ÇUBUĞU -->
       <h2
         v-if="widgets.istatistikler.gorunur"
@@ -530,6 +579,58 @@
               class="chart-empty"
             >
               Henüz satış verisi bulunmuyor
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-user-minus"
+              style="margin-right: 8px"
+            />En Çok Borçlu Cariler
+          </template>
+          <template #content>
+            <div
+              v-if="enCokBorcCarilerChart.datasets.length"
+              class="chart-wrapper full"
+            >
+              <Bar
+                :data="enCokBorcCarilerChart"
+                :options="enCokBorcCarilerOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Borçlu cari bulunmuyor
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-tags"
+              style="margin-right: 8px"
+            />Kategori Satış Dağılımı
+          </template>
+          <template #content>
+            <div
+              v-if="kategoriSatislariChart.datasets.length"
+              class="chart-wrapper"
+            >
+              <Doughnut
+                :data="kategoriSatislariChart"
+                :options="pieOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz kategori verisi bulunmuyor
             </div>
           </template>
         </Card>
@@ -769,6 +870,7 @@ const karsilamaMetni = computed(() => {
 const widgetVarsayilan = () => ({
   bugunOzet: { gorunur: true, etiket: 'Bugünün Özeti & Hedefler' },
   istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
+  cariOzet: { gorunur: true, etiket: 'Cari Özet & Tahsilat Takibi' },
   kritikStok: { gorunur: true, etiket: 'Kritik Stok Uyarıları' },
   grafikler: { gorunur: true, etiket: 'Grafikler' },
   sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
@@ -816,6 +918,8 @@ const bakiyeChart = ref({ labels: [], datasets: [] })
 const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
 const enCokSatanlarChart = ref({ labels: [], datasets: [] })
 const nakitAkisiChart = ref({ labels: [], datasets: [] })
+const enCokBorcCarilerChart = ref({ labels: [], datasets: [] })
+const kategoriSatislariChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const aylikKarsilastirmaOptions = {
@@ -831,6 +935,16 @@ const enCokSatanlarOptions = {
   plugins: { legend: { display: false } },
   scales: {
     x: { ticks: { color: '#94a3b8' } },
+    y: { ticks: { color: '#94a3b8' } }
+  }
+}
+const enCokBorcCarilerOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
     y: { ticks: { color: '#94a3b8' } }
   }
 }
@@ -876,6 +990,8 @@ const grafikleriHesapla = () => {
   aylikKarsilastirmayiHesapla()
   enCokSatanlariHesapla()
   nakitAkisiniHesapla()
+  enCokBorcCarileriHesapla()
+  kategoriSatislariniHesapla()
 }
 
 const enCokSatanlariHesapla = () => {
@@ -922,6 +1038,43 @@ const nakitAkisiniHesapla = () => {
         backgroundColor: '#f44336',
         tension: 0.3,
         pointRadius: 3
+      }
+    ]
+  }
+}
+
+const enCokBorcCarileriHesapla = () => {
+  const cariler = (dashboardStore.enCokBorcCariler || []).slice(0, 7)
+  if (!cariler.length) {
+    enCokBorcCarilerChart.value = { labels: [], datasets: [] }
+    return
+  }
+  enCokBorcCarilerChart.value = {
+    labels: cariler.map((c) => c.cariAd),
+    datasets: [
+      {
+        label: 'Borç (TL)',
+        data: cariler.map((c) => c.tutar),
+        backgroundColor: '#ef4444',
+        borderRadius: 4
+      }
+    ]
+  }
+}
+
+const kategoriSatislariniHesapla = () => {
+  const kategoriler = dashboardStore.kategoriSatislari || []
+  if (!kategoriler.length) {
+    kategoriSatislariChart.value = { labels: [], datasets: [] }
+    return
+  }
+  const renkler = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16']
+  kategoriSatislariChart.value = {
+    labels: kategoriler.map((k) => k.kategori),
+    datasets: [
+      {
+        data: kategoriler.map((k) => k.tutar),
+        backgroundColor: kategoriler.map((_, i) => renkler[i % renkler.length])
       }
     ]
   }
@@ -1006,6 +1159,13 @@ const whatsappLink = (f) => {
   margin-bottom: 24px;
   gap: 16px;
   flex-wrap: wrap;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08) 55%, rgba(16, 185, 129, 0.06)),
+    var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
 }
 .dashboard-header h1 {
   margin: 0;
@@ -1076,6 +1236,16 @@ const whatsappLink = (f) => {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+}
+.ozet-kart {
+  margin-bottom: 20px;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+.ozet-metin {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
 }
 .widget-toggle {
   display: flex;
@@ -1356,6 +1526,63 @@ const whatsappLink = (f) => {
 }
 .bugun-kart.teslimat {
   background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+}
+
+.cari-ozet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cari-ozet-kart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.cari-ozet-kart i {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  flex-shrink: 0;
+}
+.cari-ozet-kart.alacak i {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+.cari-ozet-kart.borc i {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+.cari-ozet-kart.enborc i {
+  background: linear-gradient(135deg, #b45309, #f59e0b);
+}
+.cari-ozet-kart span {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.cari-ozet-kart strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cari-ozet-kart small {
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 600;
 }
 
 .hedef-grid {

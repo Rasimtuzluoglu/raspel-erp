@@ -2,11 +2,10 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.entity.sistem.Belge;
 import com.raspel.erp.repository.sistem.BelgeRepository;
+import com.raspel.erp.service.sistem.DosyaDepolamaService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +16,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import com.raspel.erp.entity.ticaret.Fatura;
 
 @Tag(name = "Belge Yönetimi", description = "Fatura, sipariş gibi kayıtlara belge ekleme API")
 @RestController
@@ -35,6 +28,8 @@ import com.raspel.erp.entity.ticaret.Fatura;
 @Slf4j
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class BelgeController {
+
+    private static final String BELGE_KLASOR = "belgeler";
 
     private static final Set<String> IZIN_VERILEN_UZANTILAR = Set.of(
         ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".csv",
@@ -51,7 +46,7 @@ public class BelgeController {
     );
 
     private final BelgeRepository belgeRepository;
-    private final Path belgeDir = Paths.get("uploads/belgeler").toAbsolutePath().normalize();
+    private final DosyaDepolamaService dosyaDepolama;
 
     @PostMapping("/yukle")
     @Operation(summary = "Belge yükle", description = "Bir kayda (fatura, sipariş vb.) dosya iliştirir")
@@ -74,14 +69,7 @@ public class BelgeController {
         }
         Long sirketId = (Long) request.getAttribute("sirketId");
         try {
-            Files.createDirectories(belgeDir);
-            String filename = UUID.randomUUID().toString() + uzanti;
-            Path target = belgeDir.resolve(filename).normalize();
-            if (!target.startsWith(belgeDir)) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya yolu"));
-            }
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
+            String filename = dosyaDepolama.kaydet(BELGE_KLASOR, file);
             String url = "/api/belgeler/indir/" + filename;
             Belge belge = belgeRepository.save(Belge.builder()
                     .entityAdi(entityAdi).entityId(entityId)
@@ -111,33 +99,27 @@ public class BelgeController {
 
     @GetMapping("/indir/{filename}")
     @Operation(summary = "Belge indir", description = "Belgeyi indirir")
-    public ResponseEntity<Resource> indir(@PathVariable String filename, HttpServletRequest request) {
-        try {
-            Path file = belgeDir.resolve(filename).normalize();
-            if (!file.startsWith(belgeDir)) {
-                return ResponseEntity.badRequest().build();
-            }
-            Long sirketId = (Long) request.getAttribute("sirketId");
-            boolean aitMi = belgeRepository.findByUrlEndingWith(filename).stream()
-                    .anyMatch(b -> b.getSirketId() == null || b.getSirketId().equals(sirketId));
-            if (!aitMi) {
-                return ResponseEntity.notFound().build();
-            }
-            Resource resource = new UrlResource(file.toUri());
-            if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.notFound().build();
-            }
-            String contentType = Files.probeContentType(file);
-            if (contentType == null) contentType = "application/octet-stream";
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                    .body(resource);
-        } catch (MalformedURLException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().build();
+    public ResponseEntity<byte[]> indir(@PathVariable String filename, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        boolean aitMi = belgeRepository.findByUrlEndingWith(filename).stream()
+                .anyMatch(b -> b.getSirketId() == null || b.getSirketId().equals(sirketId));
+        if (!aitMi) {
+            return ResponseEntity.notFound().build();
         }
+        DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(BELGE_KLASOR, filename);
+        if (dosya == null) {
+            return ResponseEntity.notFound().build();
+        }
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(dosya.contentType());
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(dosya.icerik());
     }
 
     @DeleteMapping("/{id}")
@@ -147,6 +129,10 @@ public class BelgeController {
         Belge belge = belgeRepository.findById(id).orElse(null);
         if (belge == null || (belge.getSirketId() != null && !belge.getSirketId().equals(sirketId))) {
             return ResponseEntity.notFound().build();
+        }
+        if (belge.getUrl() != null && belge.getUrl().contains("/")) {
+            String filename = belge.getUrl().substring(belge.getUrl().lastIndexOf("/") + 1);
+            dosyaDepolama.sil(BELGE_KLASOR, filename);
         }
         belgeRepository.deleteById(id);
         return ResponseEntity.noContent().build();

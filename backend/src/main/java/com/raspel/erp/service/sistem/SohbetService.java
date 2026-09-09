@@ -324,6 +324,35 @@ public class SohbetService {
                 .build();
     }
 
+    /**
+     * AI sorgusunu akışlı (streaming) olarak çalıştırır; üretilen her token parçası
+     * onToken geri çağrısına iletilir. AI yapılandırılmamışsa kural tabanlı yanıt tek parça halinde iletilir.
+     */
+    public void aiSorgulaStream(String soru, Long sirketId, java.util.function.Consumer<String> onToken) {
+        if (soru == null || soru.isBlank()) {
+            onToken.accept("Lütfen sormak istediğiniz soruyu yazın.");
+            return;
+        }
+        try {
+            com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
+            if (aiConfig != null && Boolean.TRUE.equals(aiConfig.getAktif()) && !"YAPILANDIRILMADI".equals(aiConfig.getDurum())) {
+                String apiKey = aiConfigService.getDecryptedKey(sirketId);
+                String veriBaglami = veriBaglamiOlustur(sirketId);
+                String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Aşağıda şirketin güncel özet verileri var. "
+                        + "Soruları bu verilere dayanarak, Türkçe, profesyonel ve net cevapla. "
+                        + "Sayısal cevaplarda para birimi TL, adet vb. belirt.\n\n"
+                        + "ŞİRKET VERİLERİ:\n" + veriBaglami;
+                llmClientService.streamQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru, onToken);
+                return;
+            }
+        } catch (Exception e) {
+            log.error("LLM akış sorgusu başarısız oldu, kural tabanlı sisteme geçiliyor: {}", e.getMessage());
+        }
+        // Kural tabanlı yanıtı tek parça olarak ilet.
+        String cevap = aiSorgula(soru, sirketId).getCevapMetni();
+        onToken.accept(cevap);
+    }
+
     /** Şirketin güncel özet verisini LLM'e bağlam olarak üretir. */
     private String veriBaglamiOlustur(Long sirketId) {
         try {
@@ -395,6 +424,7 @@ public class SohbetService {
                 .sirketId(m.getSirketId())
                 .kullaniciId(m.getKullaniciId())
                 .kullaniciAd(m.getKullaniciAd())
+                .odaId(m.getOdaId())
                 .mesaj(m.getMesaj())
                 .olusturmaTarihi(m.getOlusturmaTarihi())
                 .build();

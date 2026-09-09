@@ -28,8 +28,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
@@ -473,8 +476,27 @@ public class FaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
 
-        if (fatura.getDurum() != Fatura.FaturaDurum.TASLAK) {
-            throw new BusinessException("Yalnızca taslak faturalar düzenlenebilir. Güncel durum: " + fatura.getDurum());
+        if (fatura.getDurum() == Fatura.FaturaDurum.IPTAL) {
+            throw new BusinessException("İptal edilmiş fatura düzenlenemez");
+        }
+        boolean kesilmisti = fatura.getDurum() == Fatura.FaturaDurum.KESILDI;
+
+        // Ödeme (tahsilat) yapılmış kesilmiş fatura revize edilemez (bakiye tutarsızlığı önlenir)
+        if (kesilmisti && fatura.getOdenenTutar() != null
+                && fatura.getOdenenTutar().compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessException("Ödeme yapılmış fatura revize edilemez. Önce tahsilat/ödeme hareketlerini silin.");
+        }
+
+        // Kesilmiş faturanın eski durumu (stok + bakiye geri alma için)
+        Map<Long, BigDecimal> eskiMiktarlar = new HashMap<>();
+        BigDecimal eskiGenelToplam = fatura.getGenelToplam();
+        Fatura.FaturaTur eskiTur = fatura.getTur();
+        Long eskiCariId = fatura.getCariHesap() != null ? fatura.getCariHesap().getId() : null;
+        if (kesilmisti) {
+            for (FaturaKalem k : fatura.getKalemler()) {
+                if (k.getStokId() == null) continue;
+                eskiMiktarlar.merge(k.getStokId(), BigDecimal.valueOf(k.getAdet()), BigDecimal::add);
+            }
         }
 
         CariHesap cariHesap = null;
@@ -572,6 +594,20 @@ public class FaturaService {
         yeniKalemler.forEach(k -> k.setFatura(fatura));
         fatura.getKalemler().addAll(yeniKalemler);
 
+        if (kesilmisti) {
+            // Stok farkını işle (revize)
+            Map<Long, BigDecimal> yeniMiktarlar = new HashMap<>();
+            for (FaturaKalem k : yeniKalemler) {
+                if (k.getStokId() == null) continue;
+                yeniMiktarlar.merge(k.getStokId(), BigDecimal.valueOf(k.getAdet()), BigDecimal::add);
+            }
+            stokFarkiIsle(fatura, eskiMiktarlar, yeniMiktarlar, tur);
+
+            // Cari bakiye farkını işle (revize)
+            bakiyeUygula(eskiCariId, eskiTur, eskiGenelToplam, true);
+            bakiyeUygula(cariHesap != null ? cariHesap.getId() : null, tur, genelToplam, false);
+        }
+
         Fatura guncellenen = faturaRepository.save(fatura);
         log.info("Fatura düzenlendi - ID: {}, No: {}", id, guncellenen.getFaturaNumarasi());
         return entityDTOyeCevir(guncellenen);
@@ -596,6 +632,17 @@ public class FaturaService {
         return tur == Fatura.FaturaTur.ALIS ? "CIKIS" : "GIRIS";
     }
 
+    private boolean negatifStokIzinli(Long sirketId) {
+        if (sirketId == null) return false;
+        try {
+            return sirketRepository.findById(sirketId)
+                    .map(s -> Boolean.TRUE.equals(s.getNegatifStokIzni()))
+                    .orElse(false);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /**
      * Faturanın cari hesap bakiyesine etkisini uygular.
      * Kullanıcı görünümü: pozitif = alacak, negatif = borç.
@@ -613,6 +660,69 @@ public class FaturaService {
             tutar = tutar.negate();
         }
         cariHesapService.bakiyeGuncelle(fatura.getCariHesap().getId(), tutar);
+    }
+
+    /**
+     * Cari bakiyesine açık değerlerle etki uygular (revize için kullanılır).
+     */
+    private void bakiyeUygula(Long cariId, Fatura.FaturaTur tur, BigDecimal genelToplam, boolean ters) {
+        if (cariId == null) return;
+        BigDecimal tutar = genelToplam != null ? genelToplam : BigDecimal.ZERO;
+        if (tur == Fatura.FaturaTur.SATIS) {
+            tutar = tutar.negate();
+        }
+        if (ters) {
+            tutar = tutar.negate();
+        }
+        cariHesapService.bakiyeGuncelle(cariId, tutar);
+    }
+
+    /**
+     * Revize edilen faturanın eski/yeni kalem miktarları arasındaki farkı stoğa işler.
+     * Maliyet fiyatına dokunmaz; yalnızca miktarı düzeltir ve hareket kaydı oluşturur.
+     */
+    private void stokFarkiIsle(Fatura fatura, Map<Long, BigDecimal> eski, Map<Long, BigDecimal> yeni, Fatura.FaturaTur tur) {
+        Set<Long> stokIdler = new HashSet<>();
+        stokIdler.addAll(eski.keySet());
+        stokIdler.addAll(yeni.keySet());
+
+        List<StokHareket> hareketler = new ArrayList<>();
+        for (Long stokId : stokIdler) {
+            BigDecimal eskiAdet = eski.getOrDefault(stokId, BigDecimal.ZERO);
+            BigDecimal yeniAdet = yeni.getOrDefault(stokId, BigDecimal.ZERO);
+            BigDecimal delta = yeniAdet.subtract(eskiAdet);
+            if (delta.compareTo(BigDecimal.ZERO) == 0) continue;
+
+            // SATIS'te miktar artınca stok düşer; ALIS'te artınca stok artar.
+            BigDecimal stokDegisim = tur == Fatura.FaturaTur.SATIS ? delta.negate() : delta;
+
+            Stok stok = stokRepository.findByIdForUpdate(stokId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+            BigDecimal yeniMiktar = (stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO).add(stokDegisim);
+            if (yeniMiktar.compareTo(BigDecimal.ZERO) < 0) {
+                if (negatifStokIzinli(fatura.getSirketId())) {
+                    log.warn("Negatif stok izni açık; revize ile stok eksiye düşüyor. Ürün: {}", stok.getAd());
+                } else {
+                    throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
+                            + ", Mevcut: " + stok.getMiktar() + ", Revize sonrası: " + yeniMiktar);
+                }
+            }
+            stok.setMiktar(yeniMiktar);
+            stokRepository.save(stok);
+
+            String hareketTuru = stokDegisim.compareTo(BigDecimal.ZERO) >= 0 ? "GIRIS" : "CIKIS";
+            hareketler.add(StokHareket.builder()
+                    .stok(stok).tur(hareketTuru)
+                    .miktar(stokDegisim.abs())
+                    .hareketTarihi(LocalDate.now())
+                    .aciklama("Fatura revize #" + fatura.getFaturaNumarasi())
+                    .cariHesap(fatura.getCariHesap())
+                    .build());
+        }
+        if (!hareketler.isEmpty()) {
+            stokHareketRepository.saveAll(hareketler);
+        }
+        cacheYardimci.temizle("stoklar", "dashboard");
     }
 
     /**
@@ -650,9 +760,15 @@ public class FaturaService {
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
             if ("CIKIS".equals(tur)) {
                 BigDecimal adet = BigDecimal.valueOf(k.getAdet());
-                if (stok.getMiktar().compareTo(adet) < 0)
-                    throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
-                            + ", Mevcut: " + stok.getMiktar() + ", İstenen: " + adet);
+                if (stok.getMiktar().compareTo(adet) < 0) {
+                    if (negatifStokIzinli(fatura.getSirketId())) {
+                        log.warn("Negatif stok izni açık; stok eksiye düşüyor. Ürün: {} - Mevcut: {}, İstenen: {}",
+                                stok.getAd(), stok.getMiktar(), adet);
+                    } else {
+                        throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
+                                + ", Mevcut: " + stok.getMiktar() + ", İstenen: " + adet);
+                    }
+                }
                 stok.setMiktar(stok.getMiktar().subtract(adet));
             } else {
                 BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;

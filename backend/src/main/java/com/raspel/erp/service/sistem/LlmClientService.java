@@ -1,5 +1,7 @@
 package com.raspel.erp.service.sistem;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -10,11 +12,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +31,10 @@ import java.util.Map;
 public class LlmClientService {
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HttpClient streamingClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(20))
+            .build();
 
     public String sendQuery(String provider, String model, String apiKey, String systemPrompt, String userPrompt) {
         if (provider == null) {
@@ -263,5 +276,146 @@ public class LlmClientService {
             }
         }
         return "Bos yanit alindi.";
+    }
+
+    /**
+     * LLM yanıtını akış (streaming) olarak okur ve her token parçasını onToken
+     * geri çağrısına iletir. SSE (Server-Sent Events) tabanlı akış kullanılır.
+     */
+    public void streamQuery(String provider, String model, String apiKey, String systemPrompt, String userPrompt, Consumer<String> onToken) {
+        if (provider == null) {
+            throw new IllegalArgumentException("Provider is null");
+        }
+        switch (provider.toUpperCase()) {
+            case "OPENAI":
+                streamOpenAI(model, apiKey, systemPrompt, userPrompt, onToken);
+                return;
+            case "GOOGLE":
+                streamGoogle(model, apiKey, systemPrompt, userPrompt, onToken);
+                return;
+            case "ANTHROPIC":
+                streamAnthropic(model, apiKey, systemPrompt, userPrompt, onToken);
+                return;
+            default:
+                throw new IllegalArgumentException("Unsupported AI provider: " + provider);
+        }
+    }
+
+    private void streamOpenAI(String model, String apiKey, String systemPrompt, String userPrompt, Consumer<String> onToken) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", model != null ? model : "gpt-4o");
+        body.put("stream", true);
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemPrompt != null ? systemPrompt : ""));
+        messages.add(Map.of("role", "user", "content", userPrompt));
+        body.put("messages", messages);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.openai.com/v1/chat/completions"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(writeJson(body)))
+                .build();
+
+        streamSse(request, (data, consumer) -> {
+            try {
+                JsonNode node = objectMapper.readTree(data);
+                JsonNode delta = node.path("choices").path(0).path("delta").path("content");
+                if (delta.isTextual() && !delta.asText().isEmpty()) {
+                    consumer.accept(delta.asText());
+                }
+            } catch (Exception ignored) {
+                // Tek parçalık JSON hatası akışı durdurmaz
+            }
+        }, onToken);
+    }
+
+    private void streamGoogle(String model, String apiKey, String systemPrompt, String userPrompt, Consumer<String> onToken) {
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?alt=sse&key=%s",
+                model != null ? model : "gemini-2.5-flash", apiKey);
+
+        Map<String, Object> body = new HashMap<>();
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            body.put("systemInstruction", Map.of("parts", List.of(Map.of("text", systemPrompt))));
+        }
+        body.put("contents", List.of(Map.of("parts", List.of(Map.of("text", userPrompt)))));
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(writeJson(body)))
+                .build();
+
+        streamSse(request, (data, consumer) -> {
+            try {
+                JsonNode node = objectMapper.readTree(data);
+                JsonNode text = node.path("candidates").path(0).path("content").path("parts").path(0).path("text");
+                if (text.isTextual() && !text.asText().isEmpty()) {
+                    consumer.accept(text.asText());
+                }
+            } catch (Exception ignored) {
+            }
+        }, onToken);
+    }
+
+    private void streamAnthropic(String model, String apiKey, String systemPrompt, String userPrompt, Consumer<String> onToken) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", model != null ? model : "claude-3-sonnet-20240229");
+        body.put("max_tokens", 1024);
+        body.put("stream", true);
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            body.put("system", systemPrompt);
+        }
+        body.put("messages", List.of(Map.of("role", "user", "content", userPrompt)));
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.anthropic.com/v1/messages"))
+                .header("Content-Type", "application/json")
+                .header("x-api-key", apiKey)
+                .header("anthropic-version", "2023-06-01")
+                .POST(HttpRequest.BodyPublishers.ofString(writeJson(body)))
+                .build();
+
+        streamSse(request, (data, consumer) -> {
+            try {
+                JsonNode node = objectMapper.readTree(data);
+                String type = node.path("type").asText();
+                if ("content_block_delta".equals(type)) {
+                    JsonNode text = node.path("delta").path("text");
+                    if (text.isTextual() && !text.asText().isEmpty()) {
+                        consumer.accept(text.asText());
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }, onToken);
+    }
+
+    private void streamSse(HttpRequest request, java.util.function.BiConsumer<String, Consumer<String>> lineParser, Consumer<String> onToken) {
+        try {
+            HttpResponse<Stream<String>> response = streamingClient.send(request, HttpResponse.BodyHandlers.ofLines());
+            try (Stream<String> lines = response.body()) {
+                lines.forEach(line -> {
+                    if (line == null) return;
+                    String trimmed = line.trim();
+                    if (trimmed.startsWith("data:")) {
+                        String data = trimmed.substring(5).trim();
+                        if ("[DONE]".equals(data)) return;
+                        lineParser.accept(data, onToken);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            log.error("LLM akış okunamadı: {}", e.getMessage(), e);
+            throw new RuntimeException("LLM akış okunamadı: " + e.getMessage(), e);
+        }
+    }
+
+    private String writeJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON yazılamadı: " + e.getMessage(), e);
+        }
     }
 }

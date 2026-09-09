@@ -56,6 +56,7 @@ public class SirketService {
                 .tur(dto.getTur() != null ? dto.getTur() : "DIGER")
                 .yil(dto.getYil())
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
+                .negatifStokIzni(dto.getNegatifStokIzni() != null && dto.getNegatifStokIzni())
                 .build();
         return entityToDTO(sirketRepository.save(s));
     }
@@ -86,6 +87,7 @@ public class SirketService {
         if (dto.getTur() != null) s.setTur(dto.getTur());
         if (dto.getYil() != null) s.setYil(dto.getYil());
         if (dto.getAktif() != null) s.setAktif(dto.getAktif());
+        if (dto.getNegatifStokIzni() != null) s.setNegatifStokIzni(dto.getNegatifStokIzni());
         return entityToDTO(sirketRepository.save(s));
     }
 
@@ -166,7 +168,9 @@ public class SirketService {
                 .parentId(s.getParentId())
                 .tur(s.getTur())
                 .yil(s.getYil())
-                .aktif(s.getAktif()).olusturmaTarihi(s.getOlusturmaTarihi())
+                .aktif(s.getAktif())
+                .negatifStokIzni(s.getNegatifStokIzni())
+                .olusturmaTarihi(s.getOlusturmaTarihi())
                 .sonAdGuncellemeTarihi(s.getSonAdGuncellemeTarihi())
                 .build();
     }
