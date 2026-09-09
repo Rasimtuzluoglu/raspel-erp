@@ -21,6 +21,9 @@ public class UretimEmri {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    @Column(name = "siparis_id")
+    private Long siparisId;
+
     @Column(name = "urun_id", nullable = false)
     private Long urunId;
 

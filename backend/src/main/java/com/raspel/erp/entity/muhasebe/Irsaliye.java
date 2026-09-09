@@ -29,6 +29,9 @@ public class Irsaliye {
     @Column(name = "fatura_id")
     private Long faturaId;
 
+    @Column(name = "siparis_id")
+    private Long siparisId;
+
     @Column(nullable = false, length = 20)
     private String durum;
 

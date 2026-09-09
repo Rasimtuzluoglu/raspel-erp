@@ -27,6 +27,9 @@ public class Teslimat {
     @Column(name = "fatura_id")
     private Long faturaId;
 
+    @Column(name = "siparis_id")
+    private Long siparisId;
+
     @Column(name = "fatura_numarasi", length = 100)
     private String faturaNumarasi;
 

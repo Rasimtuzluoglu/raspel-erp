@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface UretimEmriRepository extends JpaRepository<UretimEmri, Long> {
     List<UretimEmri> findBySirketIdOrderByOlusturmaTarihiDesc(Long sirketId);
+    List<UretimEmri> findBySirketIdAndSiparisId(Long sirketId, Long siparisId);
 }

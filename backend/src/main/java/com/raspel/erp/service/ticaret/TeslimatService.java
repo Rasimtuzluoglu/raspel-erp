@@ -106,6 +106,7 @@ public class TeslimatService {
         Teslimat t = Teslimat.builder()
                 .sirketId(sirketId)
                 .faturaId(fatura.getId())
+                .siparisId(dto.getSiparisId())
                 .faturaNumarasi(fatura.getFaturaNumarasi())
                 .driverId(surucu.getId())
                 .teslimatAdresi(dto.getTeslimatAdresi().trim())

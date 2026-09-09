@@ -61,6 +61,7 @@ public class IrsaliyeService {
         Irsaliye i = Irsaliye.builder()
                 .irsaliyeNo(dto.getIrsaliyeNo()).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).faturaId(dto.getFaturaId())
+                .siparisId(dto.getSiparisId())
                 .durum("TASLAK").tur(dto.getTur() != null ? dto.getTur() : "SATIS")
                 .aciklama(dto.getAciklama()).sirketId(sirketId).build();
         i = irsaliyeRepository.save(i);

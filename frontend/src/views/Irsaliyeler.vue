@@ -130,6 +130,61 @@
             class="w-full"
           />
         </div>
+        <div class="field">
+          <label>Sipariş (opsiyonel)</label>
+          <Dropdown
+            v-model="form.siparisId"
+            :options="siparisler"
+            option-label="siparisNo"
+            option-value="id"
+            filter
+            placeholder="Siparişe bağla"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <div class="kalem-baslik">
+            <label>Kalemler</label>
+            <Button
+              icon="pi pi-camera"
+              label="Barkod"
+              class="p-button-sm p-button-outlined"
+              @click="barkodAcik = true"
+            />
+          </div>
+          <div
+            v-for="(k, i) in form.kalemler"
+            :key="i"
+            class="kalem-satir"
+          >
+            <Dropdown
+              v-model="k.stokId"
+              :options="stoklar"
+              option-label="ad"
+              option-value="id"
+              filter
+              class="w-full"
+              placeholder="Ürün"
+            />
+            <InputNumber
+              v-model="k.miktar"
+              :min="0"
+              class="kalem-miktar"
+              placeholder="Miktar"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-text p-button-danger p-button-sm"
+              @click="form.kalemler.splice(i, 1)"
+            />
+          </div>
+          <Button
+            label="Kalem Ekle"
+            icon="pi pi-plus"
+            class="p-button-sm p-button-text"
+            @click="form.kalemler.push({ stokId: null, miktar: 1, aciklama: '', birim: 'Adet' })"
+          />
+        </div>
       </div>
       <template #footer>
         <Button
@@ -146,6 +201,11 @@
         />
       </template>
     </Dialog>
+
+    <BarcodeScannerModal
+      v-model:visible="barkodAcik"
+      @scan="barkodOkundu"
+    />
   </div>
 </template>
 
@@ -153,24 +213,35 @@
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { irsaliyeAPI, cariHesapAPI } from '../api/index.js'
+import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
 const list = ref([])
 const cariler = ref([])
+const stoklar = ref([])
+const siparisler = ref([])
+const barkodAcik = ref(false)
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
-const form = ref({ irsaliyeNo: '', tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '' })
+const form = ref({ irsaliyeNo: '', tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '', siparisId: null, kalemler: [] })
 
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [r, c] = await Promise.all([irsaliyeAPI.getAll(), cariHesapAPI.getAll()])
+    const [r, c, s, sp] = await Promise.all([
+      irsaliyeAPI.getAll(),
+      cariHesapAPI.getAll(),
+      stokAPI.getAll({ size: 500 }),
+      siparisAPI.getAll({ size: 500 })
+    ])
     list.value = r.data?.content || r.data || []
     cariler.value = c.data?.content || c.data || []
+    stoklar.value = s.data?.content || s.data || []
+    siparisler.value = sp.data?.content || sp.data || []
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliyeler yüklenirken hata oluştu')
   }
@@ -178,13 +249,28 @@ onMounted(async () => {
 })
 
 const dialogAc = () => {
-  form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '' }
+  form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '', siparisId: null, kalemler: [] }
   dialog.value = true
 }
+
+const barkodOkundu = (kod) => {
+  const stok = stoklar.value.find((s) => s.barkod === kod || s.stokKodu === kod)
+  if (!stok) {
+    toastBildirim.uyari('Barkod bulunamadı: ' + kod)
+    return
+  }
+  form.value.kalemler.push({ stokId: stok.id, miktar: 1, aciklama: stok.ad, birim: stok.birim || 'Adet' })
+  toastBildirim.basarili(stok.ad + ' eklendi')
+}
+
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    await irsaliyeAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] })
+    await irsaliyeAPI.create({
+      ...form.value,
+      tarih: form.value.tarih?.toISOString().split('T')[0],
+      kalemler: form.value.kalemler.filter((k) => k.stokId && k.miktar > 0)
+    })
     dialog.value = false
     const r = await irsaliyeAPI.getAll()
     list.value = r.data?.content || r.data || []
@@ -252,5 +338,20 @@ const sil = (data) => {
 }
 .w-full {
   width: 100%;
+}
+.kalem-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.kalem-satir {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kalem-miktar {
+  width: 110px;
 }
 </style>

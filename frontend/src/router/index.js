@@ -154,6 +154,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/siparis-takip',
+    name: 'SiparisTakip',
+    component: () => import('../views/SiparisTakip.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/teklifler',
     name: 'Teklifler',
     component: () => import('../views/Teklifler.vue'),

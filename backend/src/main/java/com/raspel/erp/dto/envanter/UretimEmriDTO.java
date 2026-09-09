@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class UretimEmriDTO {
     private Long id;
     private Long sirketId;
+    private Long siparisId;
     private Long urunId;
     private String urunAd;
     private BigDecimal miktar;

@@ -11,4 +11,5 @@ import java.util.List;
 public interface IrsaliyeRepository extends JpaRepository<Irsaliye, Long> {
     Page<Irsaliye> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
     List<Irsaliye> findByFaturaId(Long faturaId);
+    List<Irsaliye> findBySirketIdAndSiparisId(Long sirketId, Long siparisId);
 }

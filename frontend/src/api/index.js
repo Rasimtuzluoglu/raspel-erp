@@ -28,7 +28,8 @@ export {
   satinalmaTalepAPI,
   satinalmaSiparisAPI,
   tekrarlayanFaturaAPI,
-  teslimatAPI
+  teslimatAPI,
+  siparisTakipAPI
 } from './modules/ticaret.js'
 
 export { stokAPI, depoAPI, kategoriAPI, stokSeriAPI, stokSayimAPI, depoTransferAPI, uretimAPI, stokDuzeltmeAPI } from './modules/stok.js'

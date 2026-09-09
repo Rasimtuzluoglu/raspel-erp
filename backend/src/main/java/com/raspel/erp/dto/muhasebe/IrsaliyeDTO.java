@@ -16,6 +16,7 @@ public class IrsaliyeDTO {
     private Long cariHesapId;
     private String cariHesapAdi;
     private Long faturaId;
+    private Long siparisId;
     private String durum;
     private String tur;
     private String aciklama;

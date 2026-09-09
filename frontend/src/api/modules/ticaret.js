@@ -159,6 +159,12 @@ export const irsaliyeAPI = {
   }
 }
 
+export const siparisTakipAPI = {
+  zincir() {
+    return apiClient.get('/siparis-takip')
+  }
+}
+
 export const iadeAPI = {
   getAll() {
     return apiClient.get('/iadeler')

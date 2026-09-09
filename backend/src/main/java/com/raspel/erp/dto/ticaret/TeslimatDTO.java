@@ -13,6 +13,7 @@ public class TeslimatDTO {
     private Long id;
     private Long sirketId;
     private Long faturaId;
+    private Long siparisId;
     private String faturaNumarasi;
     private Long driverId;
     private String driverAd;

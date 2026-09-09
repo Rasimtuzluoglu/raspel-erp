@@ -384,6 +384,7 @@ const tumMenuler = [
   { path: '/e-fatura', label: 'E-Fatura', icon: 'pi pi-file-pdf', grup: 'Ticaret', gelismis: true },
   { path: '/satinalma', label: 'Satın Alma', icon: 'pi pi-shopping-bag', grup: 'Ticaret', gelismis: true },
   { path: '/siparisler', label: 'Sipariş', icon: 'pi pi-receipt', grup: 'Ticaret', gelismis: true },
+  { path: '/siparis-takip', label: 'Sipariş Takibi', icon: 'pi pi-sitemap', grup: 'Ticaret' },
   { path: '/teslimatlar', label: 'Teslimatlar', icon: 'pi pi-truck', grup: 'Ticaret' },
   { path: '/irsaliyeler', label: 'İrsaliye', icon: 'pi pi-truck', grup: 'Ticaret', gelismis: true },
   { path: '/fiyat-listesi', label: 'Fiyat Listesi', icon: 'pi pi-tag', grup: 'Ticaret', gelismis: true },

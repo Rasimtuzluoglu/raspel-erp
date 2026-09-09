@@ -96,6 +96,7 @@ public class UretimService {
         }
         UretimEmri e = uretimEmriRepository.save(UretimEmri.builder()
                 .sirketId(sirketId)
+                .siparisId(dto.getSiparisId())
                 .urunId(dto.getUrunId())
                 .miktar(dto.getMiktar())
                 .durum(UretimEmri.Durum.TASLAK.name())
