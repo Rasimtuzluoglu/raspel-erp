@@ -128,11 +128,12 @@
     </div>
 
     <Onboarding
-      v-if="!loading && bosSistem"
+      v-if="!loading && bosSistem && onboardingGoster"
       @demo-loaded="demoYuklendi"
+      @atla="onboardingAtla"
     />
 
-    <template v-if="!loading && !bosSistem">
+    <template v-if="!loading && (!bosSistem || !onboardingGoster)">
       <!-- 0. GÜNLÜK ÖZET -->
       <Card
         v-if="dashboardStore?.ozet"
@@ -1042,6 +1043,24 @@ const bosSistem = computed(
 
 const yedekUyarisiGoster = ref(true)
 
+const onboardingGoster = ref(false)
+
+const onboardingAtla = () => {
+  localStorage.setItem('raspel_erp_onboarding_atlandi', '1')
+  onboardingGoster.value = false
+}
+
+const demoYuklendi = async () => {
+  localStorage.setItem('raspel_erp_onboarding_atlandi', '1')
+  onboardingGoster.value = false
+  try {
+    await dashboardStore.getDashboardData()
+    grafikleriHesapla()
+  } catch (e) {
+    console.error('Demo sonrası dashboard yenilenemedi:', e)
+  }
+}
+
 const toplamFatura = computed(() => dashboardStore.toplamFatura || 0)
 const kesilenFatura = computed(() => dashboardStore.kesilenFatura || 0)
 const toplamBankaBakiye = computed(() => dashboardStore.toplamBankaBakiye || 0)
@@ -1242,6 +1261,8 @@ onMounted(async () => {
     return
   }
 
+  onboardingGoster.value = !localStorage.getItem('raspel_erp_onboarding_atlandi')
+
   try {
     const kayitli = JSON.parse(localStorage.getItem('raspel_erp_widgets'))
     if (kayitli) {
@@ -1286,10 +1307,10 @@ const whatsappLink = (f) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 20px 22px;
+  padding: 16px 20px;
   border-radius: 16px;
   background:
     linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08) 55%, rgba(16, 185, 129, 0.06)),
@@ -1836,13 +1857,13 @@ const whatsappLink = (f) => {
 
 .charts-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-  gap: 18px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
 }
 .chart-wrapper {
-  max-width: 350px;
-  margin: 0 auto;
+  width: 100%;
+  height: 260px;
 }
 .chart-wrapper.full {
   max-width: 100%;
@@ -1850,7 +1871,7 @@ const whatsappLink = (f) => {
   margin: 0;
 }
 .nakit-akisi-kart {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .nakit-akisi-wrapper {
   height: 260px;
@@ -2028,7 +2049,7 @@ const whatsappLink = (f) => {
 .section-title {
   font-size: 15px;
   font-weight: 700;
-  margin: 28px 0 14px;
+  margin: 20px 0 12px;
   color: var(--text-primary);
   display: flex;
   align-items: center;

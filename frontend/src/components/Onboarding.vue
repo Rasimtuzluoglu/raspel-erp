@@ -69,7 +69,7 @@ const toast = useToast()
 const toastBildirim = useToastBildirim()
 const demoVeriIsteniyor = ref(true)
 const demoYukleniyor = ref(false)
-const emit = defineEmits(['demo-loaded'])
+const emit = defineEmits(['demo-loaded', 'atla'])
 
 const adimlar = reactive([
   {
@@ -111,7 +111,7 @@ const adimTikla = (adim) => {
 }
 
 const atla = () => {
-  router.push('/')
+  emit('atla')
 }
 
 const demoYukle = async () => {
