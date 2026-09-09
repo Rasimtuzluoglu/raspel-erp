@@ -268,6 +268,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/uretim',
+    name: 'Uretim',
+    component: () => import('../views/Uretim.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/stok-duzeltmeler',
+    name: 'StokDuzeltmeler',
+    component: () => import('../views/StokDuzeltmeler.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/maas-bordro',
     name: 'MaasBordro',
     component: () => import('../views/MaasBordro.vue'),

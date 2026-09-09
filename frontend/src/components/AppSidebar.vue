@@ -394,6 +394,8 @@ const tumMenuler = [
   { path: '/depolar', label: 'Depo', icon: 'pi pi-warehouse', grup: 'Envanter', gelismis: true },
   { path: '/stok-seriler', label: 'Seri/Lot', icon: 'pi pi-qrcode', grup: 'Envanter', gelismis: true },
   { path: '/stok-sayim', label: 'Stok Sayım', icon: 'pi pi-sort-alt', grup: 'Envanter', gelismis: true },
+  { path: '/stok-duzeltmeler', label: 'Stok Düzeltme', icon: 'pi pi-sliders-h', grup: 'Envanter', gelismis: true },
+  { path: '/uretim', label: 'Üretim', icon: 'pi pi-cog', grup: 'Envanter' },
   { path: '/subeler', label: 'Şube', icon: 'pi pi-sitemap', grup: 'Yönetim', gelismis: true },
   { path: '/personel', label: 'Personel', icon: 'pi pi-id-card', grup: 'Yönetim' },
   { path: '/izinler', label: 'İzin', icon: 'pi pi-calendar', grup: 'Yönetim', gelismis: true },

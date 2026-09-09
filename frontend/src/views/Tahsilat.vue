@@ -6,6 +6,13 @@
         Ödenmemiş alacaklarınızı tek ekrandan takip edin, yaşlandırma analizi yapın ve müşterilerinize tek tıkla
         hatırlatma gönderin.
       </p>
+      <Button
+        label="Tüm Borçlulara WhatsApp"
+        icon="pi pi-whatsapp"
+        class="p-button-success"
+        :disabled="!borcluCariler.length"
+        @click="tumuWhatsapp"
+      />
     </div>
 
     <div
@@ -312,7 +319,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { tahsilatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
@@ -406,6 +413,15 @@ const whatsappAc = (cari) => {
     `Sayın ${cari.cariAd}, hesabınızda ${formatCurrency(cari.toplamAlacak)} tutarında ödenmemiş bakiye bulunmaktadır. Ödeme konusunda bilgi almak için bize ulaşabilirsiniz.`
   )
   window.open(`https://wa.me/${no}?text=${mesaj}`, '_blank')
+}
+
+const borcluCariler = computed(() => (ozet.value?.cariler || []).filter((c) => c.telefon && c.toplamAlacak > 0))
+
+const tumuWhatsapp = () => {
+  borcluCariler.value.forEach((c, i) => {
+    setTimeout(() => whatsappAc(c), i * 400)
+  })
+  toastBildirim.bilgi(`${borcluCariler.value.length} müşteri için WhatsApp açılıyor`)
 }
 
 const ara = (cari) => {

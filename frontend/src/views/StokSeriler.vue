@@ -11,6 +11,21 @@
       />
     </div>
 
+    <div
+      v-if="sonKullanma.length"
+      class="skt-uyari"
+    >
+      <i class="pi pi-exclamation-triangle" />
+      <span><strong>{{ sonKullanma.length }}</strong> seri/lot'un son kullanma tarihi yaklaşıyor veya geçmiş:</span>
+      <div
+        v-for="s in sonKullanma.slice(0, 5)"
+        :key="s.id"
+        class="skt-satir"
+      >
+        {{ s.stokAdi }} — {{ s.seriNo }} (SKT: {{ formatDate(s.sonKullanmaTarihi) }})
+      </div>
+    </div>
+
     <DataTable
       state-storage="session"
       state-key="stokseriler-table-state"
@@ -123,6 +138,7 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const list = ref([])
 const stokListesi = ref([])
+const sonKullanma = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
@@ -142,6 +158,12 @@ onMounted(async () => {
     const [sR, stR] = await Promise.all([stokSeriAPI.getAll(), stokAPI.getAll()])
     list.value = sR.data?.content || sR.data || []
     stokListesi.value = stR.data.content || stR.data
+    try {
+      const sk = await stokSeriAPI.sonKullanma(30)
+      sonKullanma.value = sk.data || []
+    } catch {
+      sonKullanma.value = []
+    }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
   }
@@ -223,5 +245,23 @@ const sil = (data) => {
 }
 .w-full {
   width: 100%;
+}
+.skt-uyari {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.skt-uyari > i {
+  color: #f59e0b;
+  margin-right: 6px;
+}
+.skt-satir {
+  padding: 2px 0 2px 22px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 </style>

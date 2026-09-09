@@ -138,6 +138,39 @@ export const stokSeriAPI = {
   },
   delete(id) {
     return apiClient.delete(`/stok-seri/${id}`)
+  },
+  sonKullanma(gun = 30) {
+    return apiClient.get('/stok-seri/son-kullanma', { params: { gun } })
+  }
+}
+
+export const uretimAPI = {
+  receteler() {
+    return apiClient.get('/uretim/receteler')
+  },
+  receteOlustur(data) {
+    return apiClient.post('/uretim/receteler', data)
+  },
+  receteSil(id) {
+    return apiClient.delete(`/uretim/receteler/${id}`)
+  },
+  emirler() {
+    return apiClient.get('/uretim/emirler')
+  },
+  emirOlustur(data) {
+    return apiClient.post('/uretim/emirler', data)
+  },
+  emirTamamla(id) {
+    return apiClient.post(`/uretim/emirler/${id}/tamamla`)
+  }
+}
+
+export const stokDuzeltmeAPI = {
+  gecmis() {
+    return apiClient.get('/stok-duzeltme')
+  },
+  duzelt(data) {
+    return apiClient.post('/stok-duzeltme', data)
   }
 }
 

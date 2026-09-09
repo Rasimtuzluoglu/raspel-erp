@@ -44,6 +44,14 @@ public class StokSeriService {
     }
 
     @Transactional(readOnly = true)
+    public List<StokSeriDTO> sonKullanmaYaklasan(Long sirketId, int gun) {
+        if (sirketId == null) return List.of();
+        java.time.LocalDate esik = java.time.LocalDate.now().plusDays(Math.max(0, gun));
+        return stokSeriRepository.sonKullanmaYaklasan(sirketId, esik).stream()
+                .map(this::entityToDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public StokSeriDTO getir(Long id) {
         StokSeri seri = stokSeriRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSeri", id));

@@ -31,7 +31,7 @@ export {
   teslimatAPI
 } from './modules/ticaret.js'
 
-export { stokAPI, depoAPI, kategoriAPI, stokSeriAPI, stokSayimAPI, depoTransferAPI } from './modules/stok.js'
+export { stokAPI, depoAPI, kategoriAPI, stokSeriAPI, stokSayimAPI, depoTransferAPI, uretimAPI, stokDuzeltmeAPI } from './modules/stok.js'
 
 export { personelAPI, personelIzinAPI, puantajAPI, maasBordroAPI, vardiyaAPI, personelMasrafTalepAPI } from './modules/ik.js'
 

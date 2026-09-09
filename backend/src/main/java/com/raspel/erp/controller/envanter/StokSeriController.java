@@ -40,6 +40,13 @@ public class StokSeriController {
         return ResponseEntity.ok(stokSeriService.stokIcinGetir(stokId));
     }
 
+    @GetMapping("/son-kullanma")
+    @Operation(summary = "Son kullanma yaklaşan seri/lotlar", description = "Son kullanma tarihi yaklaşan/geçmiş seri/lotları listeler")
+    public ResponseEntity<List<StokSeriDTO>> sonKullanma(HttpServletRequest request, @RequestParam(defaultValue = "30") int gun) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokSeriService.sonKullanmaYaklasan(sirketId, gun));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre seri/lot getir", description = "Seri/lot ID'sine göre detayları getirir")
     public ResponseEntity<StokSeriDTO> getir(@PathVariable Long id) {
