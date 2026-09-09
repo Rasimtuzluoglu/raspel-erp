@@ -179,6 +179,12 @@ export const sistemDurumAPI = {
   },
   hataLog() {
     return apiClient.get('/sistem/hata-log')
+  },
+  hataLogTemizle() {
+    return apiClient.delete('/sistem/hata-log')
+  },
+  guncelleme() {
+    return apiClient.get('/sistem/guncelleme')
   }
 }
 

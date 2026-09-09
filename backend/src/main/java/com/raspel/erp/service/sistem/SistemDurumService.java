@@ -36,7 +36,7 @@ public class SistemDurumService {
     private final HataLogRepository hataLogRepository;
     private final BackupService backupService;
 
-    @Value("${app.version:1.6.1}")
+    @Value("${app.version:1.8.0}")
     private String surum;
 
     @Value("${app.hata-log.retention-days:30}")
@@ -123,6 +123,13 @@ public class SistemDurumService {
                 .limit(Math.max(1, Math.min(limit, 50)))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public int hataLoglariniTemizle() {
+        int silinen = hataLogRepository.deleteAllLogs();
+        log.info("Tüm hata logları temizlendi: {} kayıt", silinen);
+        return silinen;
     }
 
     private HataLogDTO toDTO(HataLog h) {

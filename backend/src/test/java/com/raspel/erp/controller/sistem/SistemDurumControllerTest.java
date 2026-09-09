@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.controller.TestSecurityMocks;
 import com.raspel.erp.dto.sistem.HataLogDTO;
+import com.raspel.erp.service.sistem.GuncellemeService;
 import com.raspel.erp.service.sistem.SistemDurumService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class SistemDurumControllerTest {
 
     @MockBean
     private SistemDurumService sistemDurumService;
+
+    @MockBean
+    private GuncellemeService guncellemeService;
 
     @Test
     void durum_donar() throws Exception {

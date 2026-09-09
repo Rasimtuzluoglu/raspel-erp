@@ -1,6 +1,7 @@
 package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.dto.sistem.HataLogDTO;
+import com.raspel.erp.service.sistem.GuncellemeService;
 import com.raspel.erp.service.sistem.SistemDurumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class SistemDurumController {
 
     private final SistemDurumService sistemDurumService;
+    private final GuncellemeService guncellemeService;
 
     @GetMapping("/durum")
     @Operation(summary = "Sistem durumu", description = "Uptime, bellek, disk, bileşen durumu ve son hataları getirir")
@@ -32,5 +34,20 @@ public class SistemDurumController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<HataLogDTO>> hataLog() {
         return ResponseEntity.ok(sistemDurumService.sonHatalar(50));
+    }
+
+    @DeleteMapping("/hata-log")
+    @Operation(summary = "Hata loglarını temizle", description = "Tüm hata kayıtlarını siler (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> hataLogTemizle() {
+        int silinen = sistemDurumService.hataLoglariniTemizle();
+        return ResponseEntity.ok(Map.of("silinen", silinen));
+    }
+
+    @GetMapping("/guncelleme")
+    @Operation(summary = "Güncelleme kontrolü", description = "GitHub'daki son sürüm/commit bilgisini getirir")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> guncelleme() {
+        return ResponseEntity.ok(guncellemeService.durum());
     }
 }

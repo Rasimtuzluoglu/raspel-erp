@@ -106,7 +106,17 @@
       </div>
 
       <div class="bolum">
-        <h2>Son Hatalar</h2>
+        <div class="bolum-baslik">
+          <h2>Son Hatalar</h2>
+          <Button
+            v-if="authStore.isAdmin && sonHatalar?.length"
+            label="Hataları Temizle"
+            icon="pi pi-trash"
+            class="p-button-sm p-button-text p-button-danger"
+            :loading="temizleniyor"
+            @click="hataTemizle"
+          />
+        </div>
         <div
           v-if="(!sonHatalar || !sonHatalar.length)"
           class="bos-kucuk"
@@ -133,13 +143,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { sistemDurumAPI, backupAPI } from '../api/index.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 
 const toastBildirim = useToastBildirim()
+const authStore = useAuthStore()
 const durum = ref(null)
 const sonHatalar = ref([])
 const yukleniyor = ref(false)
 const yedekleniyor = ref(false)
+const temizleniyor = ref(false)
 
 const bilesenAdi = (k) =>
   ({ db: 'Veritabanı', redis: 'Redis', rabbit: 'RabbitMQ', diskSpace: 'Disk', ping: 'Ping', mail: 'E-posta' })[k] || k
@@ -199,6 +212,18 @@ const yedekAl = async () => {
     toastBildirim.hata(err?.response?.data?.message || 'Yedekleme başarısız')
   }
   yedekleniyor.value = false
+}
+
+const hataTemizle = async () => {
+  temizleniyor.value = true
+  try {
+    await sistemDurumAPI.hataLogTemizle()
+    toastBildirim.basarili('Hata logları temizlendi')
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Hata logları temizlenemedi')
+  }
+  temizleniyor.value = false
 }
 
 onMounted(yukle)
@@ -263,6 +288,16 @@ onMounted(yukle)
 }
 .bolum h2 {
   margin: 0 0 12px;
+  font-size: 15px;
+}
+.bolum-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.bolum-baslik h2 {
+  margin: 0;
   font-size: 15px;
 }
 .bilesenler {

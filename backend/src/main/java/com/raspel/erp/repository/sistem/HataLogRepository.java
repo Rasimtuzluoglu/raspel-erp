@@ -17,4 +17,8 @@ public interface HataLogRepository extends JpaRepository<HataLog, Long> {
     @Modifying
     @Query("DELETE FROM HataLog h WHERE h.olusturmaTarihi < :tarih")
     int deleteOlderThan(@Param("tarih") LocalDateTime tarih);
+
+    @Modifying
+    @Query("DELETE FROM HataLog")
+    int deleteAllLogs();
 }

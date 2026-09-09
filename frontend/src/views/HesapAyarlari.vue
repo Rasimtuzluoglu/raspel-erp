@@ -560,6 +560,71 @@
           </div>
         </div>
       </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="tab-baslik"><i class="pi pi-sync" />Sistem</span>
+        </template>
+        <div class="sekme-icerik">
+          <div class="ayarlar-grid">
+            <Card class="ayar-kart">
+              <template #title>
+                <i class="pi pi-cloud-download" />Güncelleme
+              </template>
+              <template #content>
+                <p class="ai-aciklama">
+                  GitHub'daki son sürümü kontrol edin. Yeni sürüm mevcutsa güncellemeyi sunucuda uygulayabilirsiniz.
+                </p>
+                <Button
+                  label="GitHub'dan Güncelleme Al"
+                  icon="pi pi-cloud-download"
+                  :loading="guncellemeYukleniyor"
+                  @click="guncellemeKontrol"
+                />
+                <div
+                  v-if="guncellemeBilgi"
+                  class="guncelleme-bilgi"
+                >
+                  <div class="guncelleme-satir">
+                    <strong>Sürüm:</strong> {{ guncellemeBilgi.mevcutSurum || '-' }}
+                  </div>
+                  <div
+                    v-if="guncellemeBilgi.sonSurum"
+                    class="guncelleme-satir"
+                  >
+                    <strong>Son sürüm:</strong> {{ guncellemeBilgi.sonSurum }}
+                  </div>
+                  <div
+                    v-if="guncellemeBilgi.sonCommit"
+                    class="guncelleme-satir"
+                  >
+                    <strong>Son commit:</strong> {{ guncellemeBilgi.sonCommit }} — {{ guncellemeBilgi.sonCommitMesaj }}
+                  </div>
+                  <div
+                    v-if="guncellemeBilgi.guncellemeVar"
+                    class="guncelleme-satir"
+                  >
+                    <Tag
+                      value="Yeni sürüm mevcut"
+                      severity="warn"
+                    />
+                  </div>
+                  <p
+                    v-if="guncellemeBilgi.hata"
+                    class="guncelleme-hata"
+                  >
+                    {{ guncellemeBilgi.hata }}
+                  </p>
+                  <p class="guncelleme-ipucu">
+                    Güncellemeyi uygulamak için sunucuda
+                    <code>git pull &amp;&amp; docker compose up -d --build</code> çalıştırın.
+                  </p>
+                </div>
+              </template>
+            </Card>
+          </div>
+        </div>
+      </TabPanel>
     </TabView>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
@@ -570,13 +635,28 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { kullaniciAPI, aiConfigAPI, apiTokenAPI } from '../api/index.js'
+import { kullaniciAPI, aiConfigAPI, apiTokenAPI, sistemDurumAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 
 const faturaTasarimModalAcik = ref(false)
+
+// Güncelleme kontrolü (GitHub)
+const guncellemeYukleniyor = ref(false)
+const guncellemeBilgi = ref(null)
+
+const guncellemeKontrol = async () => {
+  guncellemeYukleniyor.value = true
+  try {
+    const r = await sistemDurumAPI.guncelleme()
+    guncellemeBilgi.value = r.data
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Güncelleme kontrolü yapılamadı')
+  }
+  guncellemeYukleniyor.value = false
+}
 
 // Fiş yazdırma ayarları (POS ile ortak localStorage)
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
@@ -1061,6 +1141,38 @@ const kopyala = async (text) => {
   margin-bottom: 8px;
   font-size: 13px;
   line-height: 1.5;
+}
+.guncelleme-bilgi {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guncelleme-satir {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.guncelleme-satir strong {
+  color: var(--text-primary);
+}
+.guncelleme-hata {
+  color: #f87171;
+  font-size: 12px;
+}
+.guncelleme-ipucu {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+.guncelleme-ipucu code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
 }
 .ai-baslik-satir {
   display: flex;
