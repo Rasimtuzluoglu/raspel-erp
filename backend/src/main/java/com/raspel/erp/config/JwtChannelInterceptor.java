@@ -23,6 +23,9 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private static final Pattern ODA_TOPIC_PATTERN =
             Pattern.compile("^/topic/sohbet/oda/(\\d+)/(\\d+)$");
 
+    private static final Pattern ODA_YAZIYOR_TOPIC_PATTERN =
+            Pattern.compile("^/topic/sohbet/oda/(\\d+)/(\\d+)/yaziyor$");
+
     private final JwtUtil jwtUtil;
 
     @Override
@@ -67,6 +70,15 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             Matcher odaM = ODA_TOPIC_PATTERN.matcher(destination);
             if (odaM.matches()) {
                 Long aboneSirketId = Long.valueOf(odaM.group(1));
+                if (oturumSirketId == null || !oturumSirketId.equals(aboneSirketId)) {
+                    throw new MessageDeliveryException("Bu sohbet odasına abone olma yetkiniz yok");
+                }
+                return message;
+            }
+
+            Matcher yaziyorM = ODA_YAZIYOR_TOPIC_PATTERN.matcher(destination);
+            if (yaziyorM.matches()) {
+                Long aboneSirketId = Long.valueOf(yaziyorM.group(1));
                 if (oturumSirketId == null || !oturumSirketId.equals(aboneSirketId)) {
                     throw new MessageDeliveryException("Bu sohbet odasına abone olma yetkiniz yok");
                 }

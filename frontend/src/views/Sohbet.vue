@@ -112,6 +112,10 @@
         >
           <i class="pi pi-hashtag" />
           <span class="oda-ad">{{ o.ad }}</span>
+          <span
+            v-if="o.uyeMi && o.okunmamisSayisi > 0 && seciliOdaId !== o.id"
+            class="okunmamis-rozet"
+          >{{ o.okunmamisSayisi }}</span>
           <i
             v-if="!o.uyeMi"
             class="pi pi-sign-in oda-katil"
@@ -182,17 +186,54 @@
               <span class="mesaj-zaman">{{ formatZaman(m.olusturmaTarihi) }}</span>
             </div>
             <div class="mesaj-icerik">
-              {{ m.mesaj }}
+              <template v-if="m.dosyaUrl">
+                <a
+                  :href="m.dosyaUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="mesaj-dosya"
+                >
+                  <img
+                    v-if="resimMi(m.dosyaUrl)"
+                    :src="m.dosyaUrl"
+                    class="mesaj-gorsel"
+                    alt="Paylaşılan görsel"
+                  >
+                  <span v-else><i class="pi pi-paperclip" /> {{ m.mesaj || 'Dosya' }}</span>
+                </a>
+              </template>
+              <template v-if="m.mesaj">
+                {{ m.mesaj }}
+              </template>
             </div>
           </div>
         </div>
 
+        <div
+          v-if="yaziyorKullanici"
+          class="yaziyor-gosterge"
+        >
+          {{ yaziyorKullanici }} yazıyor...
+        </div>
         <div class="mesaj-giris">
+          <Button
+            icon="pi pi-paperclip"
+            class="p-button-text"
+            title="Dosya/Görsel Paylaş"
+            @click="sohbetDosyaInput.click()"
+          />
+          <input
+            ref="sohbetDosyaInput"
+            type="file"
+            hidden
+            @change="sohbetDosyaYukle"
+          >
           <InputText
             v-model="yeniMesaj"
             placeholder="Mesajınızı yazın..."
             class="mesaj-input"
             @keyup.enter="gonder"
+            @input="yaziyorGonder"
           />
           <Button
             icon="pi pi-send"
@@ -434,6 +475,8 @@ const odaYukleniyor = ref(false)
 const bagli = ref(false)
 const mesajKutusu = ref(null)
 const dosyaInput = ref(null)
+const sohbetDosyaInput = ref(null)
+const yaziyorKullanici = ref('')
 
 const odaDialogAc = ref(false)
 const odaKaydediliyor = ref(false)
@@ -454,6 +497,9 @@ const eklenecekKullanicilar = computed(() => {
 let stompClient = null
 let subscription = null
 let odaSubscription = null
+let yaziyorSubscription = null
+let yaziyorZamanlayici = null
+let yaziyorGizlemeZamanlayici = null
 
 const formatZaman = (t) => {
   if (!t) return ''
@@ -686,6 +732,8 @@ const odaSec = async (o) => {
   seciliOdaId.value = o.id
   odaAboneligiYenile()
   odaMesajlariYukle(o.id)
+  o.okunmamisSayisi = 0
+  sohbetOdaAPI.okundu(o.id).catch(() => {})
 }
 
 const odaMesajlariYukle = async (odaId) => {
@@ -798,6 +846,11 @@ const odaAboneligiYenile = () => {
     odaSubscription.unsubscribe()
     odaSubscription = null
   }
+  if (yaziyorSubscription) {
+    yaziyorSubscription.unsubscribe()
+    yaziyorSubscription = null
+  }
+  yaziyorKullanici.value = ''
   if (stompClient && stompClient.connected && seciliOdaId.value) {
     const sirketId = authStore.sirketId
     odaSubscription = stompClient.subscribe(`/topic/sohbet/oda/${sirketId}/${seciliOdaId.value}`, (msg) => {
@@ -811,6 +864,55 @@ const odaAboneligiYenile = () => {
         /* empty */
       }
     })
+    yaziyorSubscription = stompClient.subscribe(`/topic/sohbet/oda/${sirketId}/${seciliOdaId.value}/yaziyor`, (msg) => {
+      try {
+        const y = JSON.parse(msg.body)
+        if (y.kullaniciAd && y.kullaniciAd !== authStore?.kullanici?.displayName) {
+          yaziyorKullanici.value = y.kullaniciAd
+          if (yaziyorGizlemeZamanlayici) clearTimeout(yaziyorGizlemeZamanlayici)
+          yaziyorGizlemeZamanlayici = setTimeout(() => {
+            yaziyorKullanici.value = ''
+          }, 2500)
+        }
+      } catch {
+        /* empty */
+      }
+    })
+  }
+}
+
+const yaziyorGonder = () => {
+  if (!stompClient || !stompClient.connected || !seciliOdaId.value) return
+  if (yaziyorZamanlayici) clearTimeout(yaziyorZamanlayici)
+  yaziyorZamanlayici = setTimeout(() => {
+    stompClient.publish({
+      destination: '/app/sohbet/oda/yaziyor',
+      body: JSON.stringify({
+        sirketId: authStore.sirketId,
+        odaId: seciliOdaId.value,
+        kullaniciAd: authStore?.kullanici?.displayName
+      })
+    })
+  }, 400)
+}
+
+const resimMi = (url) => /\.(png|jpe?g|gif|webp|bmp)$/i.test(url || '')
+
+const sohbetDosyaYukle = async (event) => {
+  const dosya = event.target.files?.[0]
+  if (!dosya || !seciliOdaId.value) return
+  gonderiliyor.value = true
+  try {
+    const res = await sohbetOdaAPI.dosyaYukle(seciliOdaId.value, dosya)
+    const url = res.data?.url
+    if (url) {
+      await sohbetOdaAPI.mesajGonder(seciliOdaId.value, { mesaj: dosya.name, dosyaUrl: url })
+    }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Dosya yüklenemedi')
+  } finally {
+    gonderiliyor.value = false
+    event.target.value = ''
   }
 }
 
@@ -835,6 +937,9 @@ onMounted(async () => {
 onUnmounted(() => {
   if (subscription) subscription.unsubscribe()
   if (odaSubscription) odaSubscription.unsubscribe()
+  if (yaziyorSubscription) yaziyorSubscription.unsubscribe()
+  if (yaziyorZamanlayici) clearTimeout(yaziyorZamanlayici)
+  if (yaziyorGizlemeZamanlayici) clearTimeout(yaziyorGizlemeZamanlayici)
   if (stompClient) stompClient.deactivate()
 })
 </script>
@@ -997,6 +1102,19 @@ onUnmounted(() => {
 .oda-katil {
   font-size: 12px;
   opacity: 0.7;
+}
+.okunmamis-rozet {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent, #3b82f6);
+  color: #fff;
 }
 .oda-bos {
   font-size: 12px;
@@ -1161,6 +1279,26 @@ onUnmounted(() => {
 }
 .mesaj-input {
   flex: 1;
+}
+.yaziyor-gosterge {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 2px 4px;
+  min-height: 18px;
+}
+.mesaj-dosya {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent, #3b82f6);
+  text-decoration: none;
+}
+.mesaj-gorsel {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 10px;
+  display: block;
+  margin: 4px 0;
 }
 .ajanda-form {
   display: flex;

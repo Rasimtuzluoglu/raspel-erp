@@ -18,7 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,9 @@ public class SohbetOdaService {
     private final SohbetMesajRepository mesajRepository;
     private final KullaniciRepository kullaniciRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final DosyaDepolamaService dosyaDepolama;
+
+    private static final String DOSYA_KLASOR = "sohbet";
 
     @Transactional(readOnly = true)
     public List<SohbetOdaDTO> odalar(Long sirketId, Long kullaniciId) {
@@ -132,7 +138,9 @@ public class SohbetOdaService {
     @Transactional
     public SohbetMesajDTO mesajGonder(Long odaId, SohbetMesajDTO dto, Long sirketId, Long kullaniciId, String kullaniciAd) {
         uyeKontrol(odaId, sirketId, kullaniciId);
-        if (dto.getMesaj() == null || dto.getMesaj().isBlank()) {
+        boolean mesajVar = dto.getMesaj() != null && !dto.getMesaj().isBlank();
+        boolean dosyaVar = dto.getDosyaUrl() != null && !dto.getDosyaUrl().isBlank();
+        if (!mesajVar && !dosyaVar) {
             throw new BusinessException("Mesaj boş olamaz");
         }
         SohbetMesaj mesaj = SohbetMesaj.builder()
@@ -140,7 +148,8 @@ public class SohbetOdaService {
                 .odaId(odaId)
                 .kullaniciId(kullaniciId)
                 .kullaniciAd(kullaniciAd)
-                .mesaj(dto.getMesaj().trim())
+                .mesaj(mesajVar ? dto.getMesaj().trim() : "")
+                .dosyaUrl(dosyaVar ? dto.getDosyaUrl() : null)
                 .build();
         mesaj = mesajRepository.save(mesaj);
         SohbetMesajDTO dtoKayit = mesajDTO(mesaj);
@@ -150,6 +159,28 @@ public class SohbetOdaService {
             log.warn("Oda mesajı yayınlanamadı: {}", e.getMessage());
         }
         return dtoKayit;
+    }
+
+    @Transactional
+    public void okunduIsaretle(Long odaId, Long kullaniciId) {
+        uyeRepository.findByOdaIdAndKullaniciId(odaId, kullaniciId).ifPresent(u -> {
+            u.setSonOkuma(LocalDateTime.now());
+            uyeRepository.save(u);
+        });
+    }
+
+    @Transactional
+    public String dosyaYukle(Long odaId, MultipartFile file, Long sirketId, Long kullaniciId) {
+        uyeKontrol(odaId, sirketId, kullaniciId);
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("Dosya boş");
+        }
+        try {
+            String filename = dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+            return "/api/uploads/sohbet/" + filename;
+        } catch (IOException e) {
+            throw new BusinessException("Dosya yüklenemedi: " + e.getMessage());
+        }
     }
 
     private SohbetOda odaBul(Long odaId, Long sirketId) {
@@ -195,6 +226,14 @@ public class SohbetOdaService {
                         .kullaniciAd(kullaniciAdi(u.getKullaniciId()))
                         .build())
                 .collect(Collectors.toList());
+        long okunmamis = 0;
+        if (uyeMi) {
+            LocalDateTime sonOkuma = uyeRepository.findByOdaIdAndKullaniciId(oda.getId(), kullaniciId)
+                    .map(SohbetOdaUye::getSonOkuma)
+                    .orElse(null);
+            LocalDateTime esik = sonOkuma != null ? sonOkuma : LocalDateTime.of(1970, 1, 1, 0, 0);
+            okunmamis = mesajRepository.countByOdaIdAndOlusturmaTarihiGreaterThan(oda.getId(), esik);
+        }
         return SohbetOdaDTO.builder()
                 .id(oda.getId())
                 .sirketId(oda.getSirketId())
@@ -203,6 +242,7 @@ public class SohbetOdaService {
                 .olusturanKullaniciId(oda.getOlusturanKullaniciId())
                 .uyeMi(uyeMi)
                 .uyeSayisi(uyeler.size())
+                .okunmamisSayisi(okunmamis)
                 .uyeler(uyeler)
                 .build();
     }
@@ -220,6 +260,7 @@ public class SohbetOdaService {
                 .kullaniciId(m.getKullaniciId())
                 .kullaniciAd(m.getKullaniciAd())
                 .mesaj(m.getMesaj())
+                .dosyaUrl(m.getDosyaUrl())
                 .olusturmaTarihi(m.getOlusturmaTarihi())
                 .build();
     }

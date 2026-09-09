@@ -13,6 +13,7 @@ public class SohbetMesajDTO {
     private Long kullaniciId;
     private String kullaniciAd;
     private Long odaId;
+    private String dosyaUrl;
     private String mesaj;
     private LocalDateTime olusturmaTarihi;
 }

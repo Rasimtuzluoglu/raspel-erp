@@ -107,4 +107,23 @@ public class SohbetOdaController {
         String displayName = (String) request.getAttribute("displayName");
         return ResponseEntity.ok(odaService.mesajGonder(id, dto, sirketId, kullaniciId, displayName));
     }
+
+    @PostMapping("/{id}/okundu")
+    @Operation(summary = "Odayı okundu işaretle", description = "Odadaki mesajları okundu olarak işaretler")
+    public ResponseEntity<Void> okundu(@PathVariable Long id, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        odaService.okunduIsaretle(id, kullaniciId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/dosya")
+    @Operation(summary = "Odaya dosya yükle", description = "Sohbette paylaşılmak üzere dosya/görsel yükler")
+    public ResponseEntity<Map<String, String>> dosyaYukle(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(Map.of("url", odaService.dosyaYukle(id, file, sirketId, kullaniciId)));
+    }
 }

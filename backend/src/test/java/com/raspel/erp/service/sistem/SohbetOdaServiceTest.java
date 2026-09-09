@@ -4,6 +4,7 @@ import com.raspel.erp.dto.sistem.SohbetOdaDTO;
 import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.entity.sistem.SohbetMesaj;
 import com.raspel.erp.entity.sistem.SohbetOda;
+import com.raspel.erp.entity.sistem.SohbetOdaUye;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.sistem.SohbetMesajRepository;
@@ -15,7 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.mock.web.MockMultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,6 +33,7 @@ class SohbetOdaServiceTest {
     @Mock private SohbetMesajRepository mesajRepository;
     @Mock private KullaniciRepository kullaniciRepository;
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private DosyaDepolamaService dosyaDepolama;
     @InjectMocks private SohbetOdaService odaService;
 
     @Test
@@ -79,5 +83,38 @@ class SohbetOdaServiceTest {
 
         assertEquals("merhaba", sonuc.getMesaj());
         assertEquals(1L, sonuc.getOdaId());
+    }
+
+    @Test
+    void okunduIsaretle_sonOkumayiGunceller() {
+        SohbetOdaUye uye = SohbetOdaUye.builder().odaId(1L).kullaniciId(99L).build();
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 99L)).thenReturn(Optional.of(uye));
+
+        odaService.okunduIsaretle(1L, 99L);
+
+        assertNotNull(uye.getSonOkuma());
+        verify(uyeRepository).save(uye);
+    }
+
+    @Test
+    void dosyaYukle_uyeDegilseHataVerir() {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(false);
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
+
+        MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", new byte[]{1});
+        assertThrows(BusinessException.class, () -> odaService.dosyaYukle(1L, file, 1L, 99L));
+    }
+
+    @Test
+    void dosyaYukle_urlDondurur() throws Exception {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+        when(dosyaDepolama.kaydet(anyString(), any())).thenReturn("a.png");
+
+        MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", new byte[]{1});
+        String url = odaService.dosyaYukle(1L, file, 1L, 99L);
+
+        assertEquals("/api/uploads/sohbet/a.png", url);
     }
 }

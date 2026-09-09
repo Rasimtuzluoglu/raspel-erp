@@ -117,6 +117,14 @@ export const sohbetOdaAPI = {
   },
   mesajGonder(id, data) {
     return apiClient.post(`/sohbet/odalar/${id}/mesajlar`, data)
+  },
+  okundu(id) {
+    return apiClient.post(`/sohbet/odalar/${id}/okundu`)
+  },
+  dosyaYukle(id, file) {
+    const form = new FormData()
+    form.append('file', file)
+    return apiClient.post(`/sohbet/odalar/${id}/dosya`, form)
   }
 }
 

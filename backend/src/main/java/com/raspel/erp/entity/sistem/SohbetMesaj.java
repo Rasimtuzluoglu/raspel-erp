@@ -31,6 +31,9 @@ public class SohbetMesaj {
     @Column(name = "oda_id")
     private Long odaId;
 
+    @Column(name = "dosya_url", columnDefinition = "TEXT")
+    private String dosyaUrl;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String mesaj;
 

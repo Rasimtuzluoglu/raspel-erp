@@ -80,6 +80,13 @@ public class FileUploadController {
         return dosyaGetir(filename, "teslimat-fotolari");
     }
 
+    @GetMapping("/uploads/sohbet/{filename}")
+    @Operation(summary = "Sohbet dosyası getir", description = "Sohbette paylaşılan dosyayı/görseli döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<byte[]> getSohbetDosya(@PathVariable String filename) {
+        return dosyaGetir(filename, "sohbet");
+    }
+
     private ResponseEntity<Map<String, String>> dosyaYukle(MultipartFile file, String klasor, String urlPrefix) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));

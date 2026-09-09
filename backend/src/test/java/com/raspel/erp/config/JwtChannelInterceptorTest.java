@@ -93,4 +93,20 @@ class JwtChannelInterceptorTest {
         Message<?> mesaj = subscribeMesaji("/topic/genel", attrs);
         assertDoesNotThrow(() -> interceptor.preSend(mesaj, null));
     }
+
+    @Test
+    void subscribe_odaYaziyorKanalinaIzinVerilir() {
+        Map<String, Object> attrs = new HashMap<>();
+        attrs.put("sirketId", 5L);
+        Message<?> mesaj = subscribeMesaji("/topic/sohbet/oda/5/7/yaziyor", attrs);
+        assertDoesNotThrow(() -> interceptor.preSend(mesaj, null));
+    }
+
+    @Test
+    void subscribe_odaYaziyorBaskaSirketKanalinaReddedilir() {
+        Map<String, Object> attrs = new HashMap<>();
+        attrs.put("sirketId", 5L);
+        Message<?> mesaj = subscribeMesaji("/topic/sohbet/oda/9/7/yaziyor", attrs);
+        assertThrows(MessageDeliveryException.class, () -> interceptor.preSend(mesaj, null));
+    }
 }

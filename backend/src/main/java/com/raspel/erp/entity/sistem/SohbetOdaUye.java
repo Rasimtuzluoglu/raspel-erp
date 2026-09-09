@@ -26,6 +26,9 @@ public class SohbetOdaUye {
     @Column(name = "kullanici_id", nullable = false)
     private Long kullaniciId;
 
+    @Column(name = "son_okuma")
+    private LocalDateTime sonOkuma;
+
     @Column(name = "eklenme_tarihi", nullable = false)
     private LocalDateTime eklenmeTarihi;
 

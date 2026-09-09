@@ -16,5 +16,6 @@ public class SohbetOdaDTO {
     private Long olusturanKullaniciId;
     private boolean uyeMi;
     private long uyeSayisi;
+    private long okunmamisSayisi;
     private List<SohbetOdaUyeDTO> uyeler;
 }
