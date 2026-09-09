@@ -209,11 +209,8 @@
           </div>
         </div>
 
-        <div
-          v-if="yaziyorKullanici"
-          class="yaziyor-gosterge"
-        >
-          {{ yaziyorKullanici }} yazıyor...
+        <div class="yaziyor-gosterge">
+          <span v-if="yaziyorKullanici">{{ yaziyorKullanici }} yazıyor...</span>
         </div>
         <div class="mesaj-giris">
           <Button
@@ -950,7 +947,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: calc(100dvh - 140px);
   max-height: calc(100dvh - 140px);
-  min-height: 360px;
+  min-height: 0;
   padding: 0;
   max-width: 100%;
 }
@@ -1281,10 +1278,12 @@ onUnmounted(() => {
   flex: 1;
 }
 .yaziyor-gosterge {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
   font-size: 12px;
   color: var(--text-muted);
-  padding: 2px 4px;
-  min-height: 18px;
+  padding: 0 4px;
 }
 .mesaj-dosya {
   display: inline-flex;
