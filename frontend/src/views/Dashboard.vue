@@ -225,6 +225,9 @@
             <p class="stat-value">
               {{ toplamStok }} <small>ürün</small>
             </p>
+            <p class="stat-sub">
+              Stok Değeri: <strong>{{ formatCurrency(dashboardStore?.toplamStokDegeri || 0) }}</strong>
+            </p>
             <p
               v-if="dusukStokAdet > 0"
               class="critical-hint"
@@ -698,6 +701,32 @@
             </div>
           </template>
         </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-history"
+              style="margin-right: 8px"
+            />Alacak Yaşlandırma
+          </template>
+          <template #content>
+            <div
+              v-if="alacakYaslandirmaChart.datasets.length"
+              class="chart-wrapper full"
+            >
+              <Bar
+                :data="alacakYaslandirmaChart"
+                :options="alacakYaslandirmaOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              Henüz alacak verisi bulunmuyor
+            </div>
+          </template>
+        </Card>
       </div>
 
       <!-- 3b. SON 7 GÜN NAKİT AKIŞI -->
@@ -986,6 +1015,7 @@ const enCokBorcCarilerChart = ref({ labels: [], datasets: [] })
 const enCokAlacakCarilerChart = ref({ labels: [], datasets: [] })
 const kategoriSatislariChart = ref({ labels: [], datasets: [] })
 const kasaBankaChart = ref({ labels: [], datasets: [] })
+const alacakYaslandirmaChart = ref({ labels: [], datasets: [] })
 
 const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
 const aylikKarsilastirmaOptions = {
@@ -1022,6 +1052,15 @@ const enCokAlacakCarilerOptions = {
   scales: {
     x: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
     y: { ticks: { color: '#94a3b8' } }
+  }
+}
+const alacakYaslandirmaOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#94a3b8' } },
+    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
   }
 }
 const nakitAkisiOptions = {
@@ -1094,6 +1133,7 @@ const grafikleriHesapla = () => {
   enCokAlacakCarileriHesapla()
   kategoriSatislariniHesapla()
   kasaBankayiHesapla()
+  alacakYaslandirmayiHesapla()
 }
 
 const enCokSatanlariHesapla = () => {
@@ -1215,6 +1255,25 @@ const kategoriSatislariniHesapla = () => {
       {
         data: kategoriler.map((k) => k.tutar),
         backgroundColor: kategoriler.map((_, i) => renkler[i % renkler.length])
+      }
+    ]
+  }
+}
+
+const alacakYaslandirmayiHesapla = () => {
+  const yaslar = dashboardStore.alacakYaslandirma || []
+  if (!yaslar.length) {
+    alacakYaslandirmaChart.value = { labels: [], datasets: [] }
+    return
+  }
+  alacakYaslandirmaChart.value = {
+    labels: yaslar.map((y) => y.aralik),
+    datasets: [
+      {
+        label: 'Kalan Tutar (TL)',
+        data: yaslar.map((y) => y.tutar),
+        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'],
+        borderRadius: 4
       }
     ]
   }

@@ -203,6 +203,15 @@ public class DashboardService {
                         .collect(Collectors.toList()),
                 Collections.emptyList());
 
+        List<DashboardDTO.AlacakYasDTO> alacakYaslandirma = alacakYaslandirmaHesapla(sirketId);
+
+        BigDecimal toplamStokDegeri = safeGet(
+                () -> stokRepository.findBySirketIdOrderByAd(sirketId).stream()
+                        .map(s -> (s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO)
+                                .multiply(s.getFiyat() != null ? s.getFiyat() : BigDecimal.ZERO))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                BigDecimal.ZERO);
+
         String ozet = ozetOlustur(gerceklesenCiro, kritikStokSayisi, vadesiGecenFaturalar, enCokBorcCariler);
 
         return DashboardDTO.builder()
@@ -241,8 +250,36 @@ public class DashboardService {
                 .enCokBorcCariler(enCokBorcCariler)
                 .enCokAlacakCariler(enCokAlacakCariler)
                 .kategoriSatislari(kategoriSatislari)
+                .alacakYaslandirma(alacakYaslandirma)
+                .toplamStokDegeri(toplamStokDegeri)
                 .ozet(ozet)
                 .build();
+    }
+
+    private List<DashboardDTO.AlacakYasDTO> alacakYaslandirmaHesapla(Long sirketId) {
+        List<String> odemeDurumlari = List.of("ODENDI", "IPTAL");
+        LocalDate bugun = LocalDate.now();
+        BigDecimal vadesiGecen = safeGet(
+                () -> faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bugun).stream()
+                        .map(f -> f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                BigDecimal.ZERO);
+        return List.of(
+                DashboardDTO.AlacakYasDTO.builder().aralik("Vadesi Geçti").tutar(vadesiGecen).build(),
+                DashboardDTO.AlacakYasDTO.builder().aralik("0-30 Gün")
+                        .tutar(kalanTopla(sirketId, odemeDurumlari, bugun, bugun.plusDays(30))).build(),
+                DashboardDTO.AlacakYasDTO.builder().aralik("31-60 Gün")
+                        .tutar(kalanTopla(sirketId, odemeDurumlari, bugun.plusDays(31), bugun.plusDays(60))).build(),
+                DashboardDTO.AlacakYasDTO.builder().aralik("60+ Gün")
+                        .tutar(kalanTopla(sirketId, odemeDurumlari, bugun.plusDays(61), bugun.plusDays(3650))).build());
+    }
+
+    private BigDecimal kalanTopla(Long sirketId, List<String> odemeDurumlari, LocalDate bas, LocalDate bit) {
+        return safeGet(
+                () -> faturaRepository.findVadesiYaklasan(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bas, bit).stream()
+                        .map(f -> f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                BigDecimal.ZERO);
     }
 
     private String ozetOlustur(BigDecimal ciro, Long kritikStok, List<DashboardDTO.VadeBildirimiDTO> vadesiGecen,

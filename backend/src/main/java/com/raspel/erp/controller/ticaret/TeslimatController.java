@@ -2,6 +2,7 @@ package com.raspel.erp.controller.ticaret;
 
 import com.raspel.erp.dto.ticaret.SurucuDTO;
 import com.raspel.erp.dto.ticaret.TeslimatDTO;
+import com.raspel.erp.dto.ticaret.TeslimatDurumLogDTO;
 import com.raspel.erp.service.ticaret.TeslimatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,6 +77,16 @@ public class TeslimatController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(teslimatService.fotoYukle(id, file, sirketId, kullaniciId));
+    }
+
+    @GetMapping("/api/deliveries/{id}/gecmis")
+    @Operation(summary = "Teslimat durum geçmişi", description = "Teslimatın durum değişim geçmişini getirir")
+    public ResponseEntity<List<TeslimatDurumLogDTO>> gecmis(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(teslimatService.gecmis(id, sirketId, kullaniciId));
     }
 
     record DurumRequest(String durum) {}

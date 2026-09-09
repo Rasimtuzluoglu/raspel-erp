@@ -42,6 +42,10 @@ public class Teslimat {
     @Column(name = "teslimat_foto", columnDefinition = "TEXT")
     private String teslimatFoto;
 
+    @Column(name = "gecikme_bildirildi", nullable = false)
+    @Builder.Default
+    private Boolean gecikmeBildirildi = false;
+
     @Column(name = "musteri_adi", length = 255)
     private String musteriAdi;
 

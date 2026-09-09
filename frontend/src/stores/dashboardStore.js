@@ -38,6 +38,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const enCokBorcCariler = ref([])
   const enCokAlacakCariler = ref([])
   const kategoriSatislari = ref([])
+  const alacakYaslandirma = ref([])
+  const toplamStokDegeri = ref(0)
   const ozet = ref('')
   const loading = ref(false)
   const error = ref(null)
@@ -83,6 +85,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
       enCokBorcCariler.value = d.enCokBorcCariler || []
       enCokAlacakCariler.value = d.enCokAlacakCariler || []
       kategoriSatislari.value = d.kategoriSatislari || []
+      alacakYaslandirma.value = d.alacakYaslandirma || []
+      toplamStokDegeri.value = d.toplamStokDegeri || 0
       ozet.value = d.ozet || ''
       return d
     } catch (err) {
@@ -130,6 +134,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     enCokBorcCariler,
     enCokAlacakCariler,
     kategoriSatislari,
+    alacakYaslandirma,
+    toplamStokDegeri,
     ozet,
     loading,
     error,

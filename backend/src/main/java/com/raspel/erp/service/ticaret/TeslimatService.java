@@ -2,13 +2,16 @@ package com.raspel.erp.service.ticaret;
 
 import com.raspel.erp.dto.ticaret.SurucuDTO;
 import com.raspel.erp.dto.ticaret.TeslimatDTO;
+import com.raspel.erp.dto.ticaret.TeslimatDurumLogDTO;
 import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.ticaret.Teslimat;
+import com.raspel.erp.entity.ticaret.TeslimatDurumLog;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.TeslimatDurumLogRepository;
 import com.raspel.erp.repository.ticaret.TeslimatRepository;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.sistem.DosyaDepolamaService;
@@ -34,6 +37,7 @@ public class TeslimatService {
     private final FaturaRepository faturaRepository;
     private final DosyaDepolamaService dosyaDepolama;
     private final BildirimService bildirimService;
+    private final TeslimatDurumLogRepository durumLogRepository;
 
     private static final List<String> BEKLEYEN_DURUMLAR = List.of("BEKLEMEDE", "YOLDA");
     private static final String FOTO_KLASOR = "teslimat-fotolari";
@@ -162,6 +166,7 @@ public class TeslimatService {
         if (driverMi(kullaniciId) && !kullaniciId.equals(t.getDriverId())) {
             throw new BusinessException("Yalnızca kendi teslimatlarınızı güncelleyebilirsiniz");
         }
+        String oncekiDurum = t.getDurum();
         t.setDurum(durum);
         if (Teslimat.Durum.TESLIM_EDILDI.name().equals(durum)) {
             t.setTeslimTarihi(LocalDateTime.now());
@@ -169,7 +174,46 @@ public class TeslimatService {
             t.setTeslimTarihi(null);
         }
         t = teslimatRepository.save(t);
+        durumLogRepository.save(TeslimatDurumLog.builder()
+                .teslimatId(t.getId())
+                .oncekiDurum(oncekiDurum)
+                .yeniDurum(durum)
+                .kullaniciId(kullaniciId)
+                .build());
         return toDTO(t, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TeslimatDurumLogDTO> gecmis(Long id, Long sirketId, Long kullaniciId) {
+        Teslimat t = teslimatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teslimat", id));
+        if (sirketId != null && !sirketId.equals(t.getSirketId())) {
+            throw new BusinessException("Bu teslimata erişim yetkiniz yok");
+        }
+        if (driverMi(kullaniciId) && !kullaniciId.equals(t.getDriverId())) {
+            throw new BusinessException("Yalnızca kendi teslimatlarınızın geçmişini görebilirsiniz");
+        }
+        return durumLogRepository.findByTeslimatIdOrderByOlusturmaTarihiDesc(id).stream()
+                .map(l -> TeslimatDurumLogDTO.builder()
+                        .id(l.getId()).teslimatId(l.getTeslimatId())
+                        .oncekiDurum(l.getOncekiDurum()).yeniDurum(l.getYeniDurum())
+                        .kullaniciId(l.getKullaniciId()).olusturmaTarihi(l.getOlusturmaTarihi())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Teslimat> gecikmisTeslimatlar() {
+        return teslimatRepository.findByDurumInAndBeklenenTeslimTarihiBeforeAndGecikmeBildirildiFalse(
+                List.of("BEKLEMEDE", "YOLDA"), LocalDate.now());
+    }
+
+    @Transactional
+    public void gecikmeBildirildiIsaretle(Long id) {
+        teslimatRepository.findById(id).ifPresent(t -> {
+            t.setGecikmeBildirildi(true);
+            teslimatRepository.save(t);
+        });
     }
 
     private boolean gecerliDurum(String durum) {

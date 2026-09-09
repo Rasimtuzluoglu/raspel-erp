@@ -61,4 +61,26 @@ class DashboardServiceTest {
         assertNotNull(result);
         assertEquals(0L, result.getToplamCariSayisi());
     }
+
+    @Test
+    void dashboard_alacakYaslandirmayiHesaplar() {
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+        var result = dashboardService.dashboardVerileriGetir(1L);
+        assertEquals(4, result.getAlacakYaslandirma().size());
+        assertEquals("Vadesi Geçti", result.getAlacakYaslandirma().get(0).getAralik());
+        assertEquals(0, result.getAlacakYaslandirma().get(0).getTutar().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void dashboard_toplamStokDegeriniHesaplar() {
+        com.raspel.erp.entity.envanter.Stok s1 = new com.raspel.erp.entity.envanter.Stok();
+        s1.setMiktar(BigDecimal.valueOf(10));
+        s1.setFiyat(BigDecimal.valueOf(50));
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(s1));
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+        var result = dashboardService.dashboardVerileriGetir(1L);
+        assertEquals(0, result.getToplamStokDegeri().compareTo(BigDecimal.valueOf(500)));
+    }
 }

@@ -56,6 +56,9 @@ public class DashboardDTO {
     private List<CariOzetDTO> enCokAlacakCariler;
     private List<KategoriSatisDTO> kategoriSatislari;
 
+    private List<AlacakYasDTO> alacakYaslandirma;
+    private BigDecimal toplamStokDegeri;
+
     private String ozet;
 
     @Data
@@ -129,6 +132,15 @@ public class DashboardDTO {
     @Builder
     public static class KategoriSatisDTO {
         private String kategori;
+        private BigDecimal tutar;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AlacakYasDTO {
+        private String aralik;
         private BigDecimal tutar;
     }
 }
