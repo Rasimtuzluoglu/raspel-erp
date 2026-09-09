@@ -1,14 +1,20 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.dto.finans.TahsilatDTO;
+import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.finans.PosTerminali;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.finans.PosTerminaliRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.service.finans.HareketService;
 import com.raspel.erp.service.finans.TahsilatService;
 import com.raspel.erp.service.sistem.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -28,6 +35,12 @@ class TahsilatServiceTest {
     private FaturaRepository faturaRepository;
     @Mock
     private EmailService emailService;
+    @Mock
+    private CariHesapRepository cariHesapRepository;
+    @Mock
+    private HareketService hareketService;
+    @Mock
+    private PosTerminaliRepository posTerminaliRepository;
     @InjectMocks
     private TahsilatService tahsilatService;
 
@@ -114,5 +127,24 @@ class TahsilatServiceTest {
         when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), anyList())).thenReturn(faturalar);
 
         assertThrows(BusinessException.class, () -> tahsilatService.hatirlat(1L, 1L));
+    }
+
+    @Test
+    void tahsilatGir_karttaPosAdiniCozer() {
+        CariHesap c1 = cari(1L, "A Ltd", null);
+        Fatura f = fatura(1L, c1, LocalDate.now().minusDays(5), "10000");
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(c1));
+        when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), anyList())).thenReturn(List.of(f));
+        when(posTerminaliRepository.findById(9L)).thenReturn(Optional.of(PosTerminali.builder().id(9L).ad("Halkbank POS").build()));
+        when(hareketService.hareketOlustur(any(), eq(1L))).thenReturn(null);
+
+        tahsilatService.tahsilatGir(1L, new BigDecimal("10000"), "KART", null, null, null,
+                LocalDate.now(), 1L, 9L, new BigDecimal("250"), LocalDate.now().plusDays(2));
+
+        ArgumentCaptor<HareketDTO> captor = ArgumentCaptor.forClass(HareketDTO.class);
+        verify(hareketService).hareketOlustur(captor.capture(), eq(1L));
+        assertEquals(9L, captor.getValue().getPosTerminaliId());
+        assertEquals("Halkbank POS", captor.getValue().getPosAd());
+        assertEquals(new BigDecimal("250"), captor.getValue().getKomisyonTutar());
     }
 }

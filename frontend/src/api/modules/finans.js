@@ -153,8 +153,29 @@ export const tahsilatAPI = {
     return apiClient.get('/tahsilat/gecmis', { params })
   },
   gir(data) {
-    // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, aciklama, hareketTarihi }
+    // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, posTerminaliId, komisyonTutar, valorTarihi, aciklama, hareketTarihi }
     return apiClient.post('/tahsilat', data)
+  }
+}
+
+export const posAPI = {
+  liste() {
+    return apiClient.get('/pos-terminalleri')
+  },
+  aktif() {
+    return apiClient.get('/pos-terminalleri/aktif')
+  },
+  ozet() {
+    return apiClient.get('/pos-terminalleri/ozet')
+  },
+  olustur(data) {
+    return apiClient.post('/pos-terminalleri', data)
+  },
+  guncelle(id, data) {
+    return apiClient.put(`/pos-terminalleri/${id}`, data)
+  },
+  sil(id) {
+    return apiClient.delete(`/pos-terminalleri/${id}`)
   }
 }
 

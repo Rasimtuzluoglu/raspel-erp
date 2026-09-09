@@ -59,6 +59,22 @@ public class Hareket {
     @Column(name = "taksit_tutar", precision = 19, scale = 2)
     private BigDecimal taksitTutar;
 
+    /** POS terminali ID (kart tek çekim) */
+    @Column(name = "pos_terminali_id")
+    private Long posTerminaliId;
+
+    /** POS terminali adı (görüntüleme için denormalize) */
+    @Column(name = "pos_ad", length = 150)
+    private String posAd;
+
+    /** Kart komisyon tutarı */
+    @Column(name = "komisyon_tutar", precision = 19, scale = 2)
+    private BigDecimal komisyonTutar;
+
+    /** Valör (bankaya geçiş) tarihi */
+    @Column(name = "valor_tarihi")
+    private LocalDate valorTarihi;
+
     /** Bağlı fatura (opsiyonel). Tahsilat/ödeme faturaya işlenince fatura ödeme durumu güncellenir. */
     @Column(name = "fatura_id")
     private Long faturaId;

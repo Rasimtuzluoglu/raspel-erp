@@ -68,7 +68,8 @@ public class TahsilatController {
         Map<String, Object> sonuc = tahsilatService.tahsilatGir(
                 dto.getCariId(), dto.getTutar(), dto.getOdemeYontemi(),
                 dto.getTaksitKurum(), dto.getTaksitTutar(), dto.getAciklama(),
-                dto.getHareketTarihi(), sirketId);
+                dto.getHareketTarihi(), sirketId,
+                dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi());
         return ResponseEntity.status(HttpStatus.CREATED).body(sonuc);
     }
 
@@ -88,6 +89,12 @@ public class TahsilatController {
         private String taksitKurum;
         /** Taksit olarak çekilen tutar */
         private java.math.BigDecimal taksitTutar;
+        /** POS terminali ID (kart tek çekim) */
+        private Long posTerminaliId;
+        /** Kart komisyon tutarı */
+        private java.math.BigDecimal komisyonTutar;
+        /** Valör (bankaya geçiş) tarihi */
+        private java.time.LocalDate valorTarihi;
         /** Hareket açıklaması */
         @Size(max = 500, message = "Açıklama en fazla 500 karakter olabilir")
         private String aciklama;

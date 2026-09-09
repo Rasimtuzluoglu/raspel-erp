@@ -3,11 +3,13 @@ package com.raspel.erp.service.finans;
 import com.raspel.erp.dto.finans.TahsilatDTO;
 import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.finans.PosTerminali;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
+import com.raspel.erp.repository.finans.PosTerminaliRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.service.finans.HareketService;
@@ -40,6 +42,7 @@ public class TahsilatService {
     private final CariHesapRepository cariHesapRepository;
     private final HareketService hareketService;
     private final HareketRepository hareketRepository;
+    private final PosTerminaliRepository posTerminaliRepository;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
     private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
@@ -102,7 +105,8 @@ public class TahsilatService {
     @Transactional
     public Map<String, Object> tahsilatGir(Long cariId, BigDecimal tutar, String odemeYontemi,
                                            String taksitKurum, BigDecimal taksitTutar, String aciklama,
-                                           LocalDate hareketTarihi, Long sirketId) {
+                                           LocalDate hareketTarihi, Long sirketId,
+                                           Long posTerminaliId, BigDecimal komisyonTutar, LocalDate valorTarihi) {
         if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Tahsilat tutarı 0'dan büyük olmalıdır");
         }
@@ -117,6 +121,14 @@ public class TahsilatService {
                 && (taksitKurum == null || taksitKurum.isBlank()
                 || taksitTutar == null || taksitTutar.compareTo(BigDecimal.ZERO) <= 0)) {
             throw new BusinessException("Taksit seçildiğinde taksit kurumu ve çekilen tutar girilmelidir");
+        }
+
+        // POS terminali adını çöz (kart tek çekim için)
+        String posAd = null;
+        if (posTerminaliId != null) {
+            posAd = posTerminaliRepository.findById(posTerminaliId)
+                    .map(PosTerminali::getAd)
+                    .orElseThrow(() -> new ResourceNotFoundException("POS Terminali", posTerminaliId));
         }
 
         // Açık faturaları vade öncelikli al
@@ -149,6 +161,10 @@ public class TahsilatService {
                             .odemeYontemi(odemeYontemi)
                             .taksitKurum(taksitKurum)
                             .taksitTutar(taksitTutar)
+                            .posTerminaliId(posTerminaliId)
+                            .posAd(posAd)
+                            .komisyonTutar(komisyonTutar)
+                            .valorTarihi(valorTarihi)
                             .faturaId(f.getId())
                             .build(), sirketId);
 

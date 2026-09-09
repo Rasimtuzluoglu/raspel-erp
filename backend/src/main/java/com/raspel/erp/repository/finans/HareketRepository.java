@@ -90,4 +90,7 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(Long sirketId, LocalDate baslangic, LocalDate bitis);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Hareket> findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(Long sirketId, Long posTerminaliId);
 }

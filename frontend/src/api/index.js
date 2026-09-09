@@ -10,6 +10,7 @@ export {
   cekSenetAPI,
   dovizAPI,
   tahsilatAPI,
+  posAPI,
   muhasebeAPI
 } from './modules/finans.js'
 

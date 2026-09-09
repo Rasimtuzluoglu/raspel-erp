@@ -155,6 +155,10 @@ public class HareketService {
                 .odemeYontemi(odemeYontemi)
                 .taksitKurum(dto.getTaksitKurum())
                 .taksitTutar(dto.getTaksitTutar())
+                .posTerminaliId(dto.getPosTerminaliId())
+                .posAd(dto.getPosAd())
+                .komisyonTutar(dto.getKomisyonTutar())
+                .valorTarihi(dto.getValorTarihi())
                 .faturaId(dto.getFaturaId())
                 .sirketId(sirketId)
                 .build();
@@ -327,6 +331,10 @@ public class HareketService {
                 .odemeYontemi(hareket.getOdemeYontemi())
                 .taksitKurum(hareket.getTaksitKurum())
                 .taksitTutar(hareket.getTaksitTutar())
+                .posTerminaliId(hareket.getPosTerminaliId())
+                .posAd(hareket.getPosAd())
+                .komisyonTutar(hareket.getKomisyonTutar())
+                .valorTarihi(hareket.getValorTarihi())
                 .faturaId(hareket.getFaturaId())
                 .olusturmaTarihi(hareket.getOlusturmaTarihi())
                 .build();

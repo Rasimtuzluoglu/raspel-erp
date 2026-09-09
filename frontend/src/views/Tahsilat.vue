@@ -268,6 +268,20 @@
                 > ({{ formatCurrency(s.data.taksitTutar) }})</small>
               </span>
               <span
+                v-else-if="s.data.posAd"
+                class="pos-bilgi"
+              >
+                <i class="pi pi-credit-card" /> {{ s.data.posAd }}
+                <small
+                  v-if="s.data.komisyonTutar"
+                  class="text-muted"
+                > · Kom: {{ formatCurrency(s.data.komisyonTutar) }}</small>
+                <small
+                  v-if="s.data.valorTarihi"
+                  class="text-muted"
+                > · Valör: {{ s.data.valorTarihi }}</small>
+              </span>
+              <span
                 v-else
                 class="text-muted"
               >-</span>

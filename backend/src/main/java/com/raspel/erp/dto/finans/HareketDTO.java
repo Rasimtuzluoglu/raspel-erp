@@ -43,6 +43,18 @@ public class HareketDTO {
     /** Taksit olarak çekilen tutar */
     private BigDecimal taksitTutar;
 
+    /** POS terminali ID (kart tek çekim) */
+    private Long posTerminaliId;
+
+    /** POS terminali adı (görüntüleme için denormalize) */
+    private String posAd;
+
+    /** Kart komisyon tutarı */
+    private BigDecimal komisyonTutar;
+
+    /** Valör (bankaya geçiş) tarihi */
+    private LocalDate valorTarihi;
+
     /** Bağlı fatura ID'si (opsiyonel): verilirse fatura ödeme durumu hareketle birlikte güncellenir */
     private Long faturaId;
 

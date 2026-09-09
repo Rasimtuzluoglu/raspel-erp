@@ -184,6 +184,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/pos-terminalleri',
+    name: 'PosTerminalleri',
+    component: () => import('../views/PosTerminalleri.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/irsaliyeler',
     name: 'Irsaliyeler',
     component: () => import('../views/Irsaliyeler.vue'),

@@ -99,6 +99,44 @@
           </div>
         </div>
 
+        <div
+          v-if="form.odemeYontemi === 'KART'"
+          class="taksit-panel"
+        >
+          <div class="form-grid-2">
+            <FormField label="POS Terminali">
+              <Select
+                v-model="form.posTerminaliId"
+                :options="posSecenekleri"
+                option-label="ad"
+                option-value="id"
+                :filter="true"
+                placeholder="POS seçin"
+                class="w-full"
+                @change="posSecildi"
+              />
+            </FormField>
+            <FormField label="Komisyon Tutarı (₺)">
+              <InputNumber
+                v-model="form.komisyonTutar"
+                :min="0"
+                :min-fraction-digits="2"
+                :max-fraction-digits="2"
+                placeholder="Komisyon"
+                class="w-full"
+              />
+            </FormField>
+          </div>
+          <FormField label="Valör Tarihi (Bankaya Geçiş)">
+            <DatePicker
+              v-model="form.valorTarihi"
+              show-icon
+              date-format="dd/mm/yy"
+              class="w-full"
+            />
+          </FormField>
+        </div>
+
         <FormField label="Açıklama">
           <Textarea
             v-model="form.aciklama"
@@ -161,7 +199,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { tahsilatAPI, bankaAPI } from '../api/index.js'
+import { tahsilatAPI, bankaAPI, posAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import FormField from './FormField.vue'
@@ -200,6 +238,7 @@ const yontemler = [
 ]
 
 const kurumlar = ref([])
+const posSecenekleri = ref([])
 const kaydediliyor = ref(false)
 
 const form = ref({
@@ -209,6 +248,9 @@ const form = ref({
   odemeYontemi: 'NAKIT',
   taksitKurum: null,
   taksitTutar: null,
+  posTerminaliId: null,
+  komisyonTutar: null,
+  valorTarihi: null,
   aciklama: ''
 })
 
@@ -254,6 +296,14 @@ watch(
           kurumlar.value = []
         }
       }
+      if (!posSecenekleri.value.length) {
+        try {
+          const r = await posAPI.aktif()
+          posSecenekleri.value = r.data || []
+        } catch {
+          posSecenekleri.value = []
+        }
+      }
     } else {
       form.value = {
         cariId: props.cari?.id || props.baslangicCariId,
@@ -262,6 +312,9 @@ watch(
         odemeYontemi: 'NAKIT',
         taksitKurum: null,
         taksitTutar: null,
+        posTerminaliId: null,
+        komisyonTutar: null,
+        valorTarihi: null,
         aciklama: ''
       }
     }
@@ -275,6 +328,23 @@ const cariDegisti = () => {
   }
 }
 
+const seciliPos = computed(() => posSecenekleri.value.find((p) => p.id === form.value.posTerminaliId))
+
+const komisyonHesapla = () => {
+  if (form.value.odemeYontemi === 'KART' && form.value.posTerminaliId && form.value.tutar && seciliPos.value?.komisyonOrani) {
+    form.value.komisyonTutar = Number((form.value.tutar * Number(seciliPos.value.komisyonOrani) / 100).toFixed(2))
+  }
+}
+
+const posSecildi = () => {
+  komisyonHesapla()
+}
+
+watch(
+  () => form.value.tutar,
+  () => komisyonHesapla()
+)
+
 const kaydet = async () => {
   if (!gecerli.value) return
   kaydediliyor.value = true
@@ -285,6 +355,10 @@ const kaydet = async () => {
       odemeYontemi: form.value.odemeYontemi,
       taksitKurum: form.value.odemeYontemi === 'TAKSIT' ? form.value.taksitKurum : null,
       taksitTutar: form.value.odemeYontemi === 'TAKSIT' ? form.value.taksitTutar : null,
+      posTerminaliId: form.value.odemeYontemi === 'KART' ? form.value.posTerminaliId : null,
+      komisyonTutar: form.value.odemeYontemi === 'KART' ? form.value.komisyonTutar : null,
+      valorTarihi: form.value.odemeYontemi === 'KART' && form.value.valorTarihi
+        ? form.value.valorTarihi.toISOString().slice(0, 10) : null,
       aciklama: form.value.aciklama || null,
       hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().slice(0, 10) : null
     })
