@@ -71,6 +71,9 @@ export const kasaAPI = {
   aktar(data) {
     return apiClient.post('/kasalar/aktar', data)
   },
+  bankayaAktar(data) {
+    return apiClient.post('/kasalar/bankaya-aktar', data)
+  },
   getAllKasalar() {
     return apiClient.get('/kasalar', { params: { size: 500 } })
   }
@@ -167,6 +170,9 @@ export const posAPI = {
   },
   ozet() {
     return apiClient.get('/pos-terminalleri/ozet')
+  },
+  musteriler(id) {
+    return apiClient.get(`/pos-terminalleri/${id}/musteriler`)
   },
   olustur(data) {
     return apiClient.post('/pos-terminalleri', data)

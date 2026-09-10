@@ -501,7 +501,14 @@ let yaziyorGizlemeZamanlayici = null
 const formatZaman = (t) => {
   if (!t) return ''
   const d = new Date(t)
-  return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 const formatTabloBaslik = (key) => {

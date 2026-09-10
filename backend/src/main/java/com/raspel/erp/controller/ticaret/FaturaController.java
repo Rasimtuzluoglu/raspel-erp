@@ -36,11 +36,15 @@ public class FaturaController {
     private static final long IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
 
     @GetMapping
-    @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler")
+    @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler. search ile fatura no/cari adı araması yapılır.")
     public ResponseEntity<Page<FaturaDTO>> tumFaturalariGetir(
             HttpServletRequest request,
-            @PageableDefault(size = 50) Pageable pageable) {
+            @PageableDefault(size = 50) Pageable pageable,
+            @RequestParam(value = "search", required = false) String search) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        if (search != null && !search.isBlank()) {
+            return ResponseEntity.ok(faturaService.ara(sirketId, search, pageable));
+        }
         return ResponseEntity.ok(faturaService.tumFaturalariGetir(sirketId, pageable));
     }
 

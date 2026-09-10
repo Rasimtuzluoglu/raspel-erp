@@ -61,8 +61,8 @@ export const hareketAPI = {
 }
 
 export const faturaAPI = {
-  getAll() {
-    return apiClient.get('/faturalar')
+  getAll(params) {
+    return apiClient.get('/faturalar', { params })
   },
   getById(id) {
     return apiClient.get(`/faturalar/${id}`)

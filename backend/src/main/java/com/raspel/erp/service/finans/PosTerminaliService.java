@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,6 +112,30 @@ public class PosTerminaliService {
     private String bankaAd(Long bankaId) {
         if (bankaId == null) return null;
         return bankaRepository.findById(bankaId).map(Banka::getAd).orElse(null);
+    }
+
+    /**
+     * Bir POS terminalinden hangi cariden ne kadar çekildiğini döndürür.
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> musteriDetay(Long sirketId, Long posId) {
+        Map<Long, BigDecimal> toplamlar = new LinkedHashMap<>();
+        Map<Long, String> adlar = new LinkedHashMap<>();
+        for (Hareket h : hareketRepository.findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(sirketId, posId)) {
+            if (h.getCariHesap() == null) continue;
+            Long cid = h.getCariHesap().getId();
+            toplamlar.merge(cid, h.getTutar() != null ? h.getTutar() : BigDecimal.ZERO, BigDecimal::add);
+            adlar.putIfAbsent(cid, h.getCariHesap().getAd());
+        }
+        return toplamlar.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("cariId", e.getKey());
+                    m.put("cariAd", adlar.get(e.getKey()));
+                    m.put("toplamTutar", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
     }
 
     private PosTerminaliDTO toDTO(PosTerminali p) {

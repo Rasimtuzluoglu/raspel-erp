@@ -18,6 +18,12 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
+            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
+            "ORDER BY f.tarih DESC")
+    Page<Fatura> ara(@Param("sirketId") Long sirketId, @Param("q") String q, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})

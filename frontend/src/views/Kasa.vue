@@ -13,6 +13,12 @@
       </template>
       <template #end>
         <Button
+          label="Bankaya Aktar"
+          icon="pi pi-building"
+          class="p-button-sm p-button-outlined mr-2"
+          @click="openBankaAktarDialog"
+        />
+        <Button
           label="Kasa Aktar"
           icon="pi pi-arrow-right-arrow-left"
           class="p-button-sm p-button-outlined mr-2"
@@ -347,6 +353,69 @@
     </Dialog>
 
     <Dialog
+      v-model:visible="showBankaAktarDialog"
+      header="Kasadan Bankaya Aktar"
+      :modal="true"
+      style="width: 480px"
+    >
+      <div class="form-group">
+        <label>Kaynak Kasa *</label>
+        <Dropdown
+          v-model="bankaAktarForm.kasaId"
+          :options="kasaStore.kasalar"
+          option-label="ad"
+          option-value="id"
+          placeholder="Seçiniz"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Hedef Banka *</label>
+        <Dropdown
+          v-model="bankaAktarForm.bankaId"
+          :options="bankalar"
+          option-label="ad"
+          option-value="id"
+          filter
+          placeholder="Seçiniz"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Tutar *</label>
+        <InputNumber
+          v-model="bankaAktarForm.tutar"
+          :min="0.01"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>Açıklama</label>
+        <InputText
+          v-model="bankaAktarForm.aciklama"
+          placeholder="Örn: Gün sonu devri"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="İptal"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showBankaAktarDialog = false"
+        />
+        <Button
+          label="Aktar"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveBankaAktar"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
       v-model:visible="gunSonuDialog"
       header="Gün Sonu (Z Raporu)"
       :modal="true"
@@ -411,7 +480,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { kasaAPI, excelAPI, faturaAPI } from '../api/index.js'
+import { kasaAPI, excelAPI, faturaAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 
@@ -436,12 +505,22 @@ const hareketForm = ref({ tutar: null, hareketTarihi: new Date(), kategoriId: nu
 const showAktarDialog = ref(false)
 const aktarForm = ref({ kaynakKasaId: null, hedefKasaId: null, tutar: null, aciklama: '' })
 
+const showBankaAktarDialog = ref(false)
+const bankaAktarForm = ref({ kasaId: null, bankaId: null, tutar: null, aciklama: '' })
+const bankalar = ref([])
+
 const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? 'Gelir Ekle' : 'Gider Ekle'))
 
 const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter((k) => k.tur === hareketTur.value))
 
 onMounted(async () => {
   await Promise.all([kasaStore.getAllKasalar(), kategoriStore.getAllKategoriler()])
+  try {
+    const r = await bankaAPI.getAll({ size: 500 })
+    bankalar.value = r.data?.content || r.data || []
+  } catch {
+    bankalar.value = []
+  }
 })
 
 const kasaSec = async (kasa) => {
@@ -560,6 +639,33 @@ const delHareket = async (id) => {
 const openAktarDialog = () => {
   aktarForm.value = { kaynakKasaId: null, hedefKasaId: null, tutar: null, aciklama: '' }
   showAktarDialog.value = true
+}
+
+const openBankaAktarDialog = () => {
+  bankaAktarForm.value = { kasaId: null, bankaId: null, tutar: null, aciklama: '' }
+  showBankaAktarDialog.value = true
+}
+
+const saveBankaAktar = async () => {
+  if (!bankaAktarForm.value.kasaId || !bankaAktarForm.value.bankaId) {
+    toastBildirim.uyari('Kaynak kasa ve hedef banka seçiniz')
+    return
+  }
+  if (!bankaAktarForm.value.tutar || bankaAktarForm.value.tutar <= 0) {
+    toastBildirim.uyari('Geçerli bir tutar giriniz')
+    return
+  }
+  saving.value = true
+  try {
+    await kasaAPI.bankayaAktar(bankaAktarForm.value)
+    showBankaAktarDialog.value = false
+    toastBildirim.basarili('Kasadan bankaya aktarım yapıldı')
+    await kasaStore.getAllKasalar()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Aktarım başarısız')
+  } finally {
+    saving.value = false
+  }
 }
 
 const gunSonuDialog = ref(false)

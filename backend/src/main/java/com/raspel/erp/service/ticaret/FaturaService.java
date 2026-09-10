@@ -97,6 +97,12 @@ public class FaturaService {
     }
 
     @Transactional(readOnly = true)
+    public Page<FaturaDTO> ara(Long sirketId, String q, Pageable pageable) {
+        String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
+        return faturaRepository.ara(sirketId, like, pageable).map(this::entityDTOyeCevir);
+    }
+
+    @Transactional(readOnly = true)
     @Cacheable(value = "faturalar", key = "T(com.raspel.erp.config.TenantChecker).tenantKey(#id)")
     public FaturaDTO faturaGetir(Long id) {
         Fatura fatura = faturaRepository.findById(id)

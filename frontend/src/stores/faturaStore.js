@@ -7,11 +7,11 @@ export const useFaturaStore = defineStore('fatura', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  const getAllFaturalar = async () => {
+  const getAllFaturalar = async (search) => {
     loading.value = true
     error.value = null
     try {
-      const response = await faturaAPI.getAll()
+      const response = await faturaAPI.getAll(search ? { search } : undefined)
       faturalar.value = response.data?.content || response.data || []
       return faturalar.value
     } catch (err) {

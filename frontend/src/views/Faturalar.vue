@@ -16,6 +16,17 @@
           class="p-button-success"
           @click="openCreateDialog"
         />
+        <span
+          class="p-input-icon-left arama-kutu"
+        >
+          <i class="pi pi-search" />
+          <InputText
+            v-model="arama"
+            placeholder="Fatura no veya cari ara..."
+            class="arama-input"
+            @input="aramaDebounce"
+          />
+        </span>
       </template>
       <template #end>
         <TarihHizliSecim
@@ -610,6 +621,21 @@ const editingId = ref(null)
 const tarihAraligi = ref(null)
 const selectedItems = ref([])
 const topluSiliniyor = ref(false)
+const arama = ref('')
+let aramaZamanlayici = null
+
+const aramaDebounce = () => {
+  if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
+  aramaZamanlayici = setTimeout(async () => {
+    loading.value = true
+    try {
+      await faturaStore.getAllFaturalar(arama.value.trim() || undefined)
+    } catch {
+      /* toast yok */
+    }
+    loading.value = false
+  }, 300)
+}
 
 const turSecenekler = [
   { label: 'Satış', value: 'SATIS' },
@@ -1189,6 +1215,12 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 18px;
+}
+.arama-kutu {
+  margin-left: 12px;
+}
+.arama-input {
+  width: 260px;
 }
 .table-container {
   background: var(--bg-card);

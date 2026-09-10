@@ -22,6 +22,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.entity.finans.Kasa;
 import com.raspel.erp.entity.finans.KasaHareket;
+import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.KasaHareketRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.service.finans.KasaService;
@@ -32,6 +34,7 @@ class KasaServiceTest {
 
     @Mock private KasaRepository kasaRepository;
     @Mock private KasaHareketRepository kasaHareketRepository;
+    @Mock private BankaRepository bankaRepository;
     @Mock private KategoriRepository kategoriRepository;
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
@@ -203,5 +206,32 @@ class KasaServiceTest {
         assertEquals(BigDecimal.valueOf(3500), kaynak.getBakiye());
         assertEquals(BigDecimal.valueOf(2500), hedef.getBakiye());
         verify(kasaHareketRepository, times(2)).save(any(KasaHareket.class));
+    }
+
+    @Test
+    void kasaBankayaAktar_basariliAktarim() {
+        Kasa kasa = createKasa(1L);
+        kasa.setBakiye(BigDecimal.valueOf(5000));
+        Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.valueOf(1000)).sirketId(1L).build();
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        when(bankaRepository.findById(3L)).thenReturn(Optional.of(banka));
+
+        kasaService.kasaBankayaAktar(1L, 3L, BigDecimal.valueOf(2000), "Gün sonu", 1L);
+
+        assertEquals(BigDecimal.valueOf(3000), kasa.getBakiye());
+        assertEquals(BigDecimal.valueOf(3000), banka.getBakiye());
+        verify(kasaHareketRepository).save(any(KasaHareket.class));
+    }
+
+    @Test
+    void kasaBankayaAktar_yetersizBakiyeHataFirlatir() {
+        Kasa kasa = createKasa(1L);
+        kasa.setBakiye(BigDecimal.valueOf(100));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.ZERO).sirketId(1L).build();
+        when(bankaRepository.findById(3L)).thenReturn(Optional.of(banka));
+
+        assertThrows(RuntimeException.class, () ->
+                kasaService.kasaBankayaAktar(1L, 3L, BigDecimal.valueOf(500), null, 1L));
     }
 }

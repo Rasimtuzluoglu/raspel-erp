@@ -18,9 +18,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.raspel.erp.entity.sistem.GelirGiderKategori;
+import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.finans.Kasa;
 import com.raspel.erp.entity.finans.KasaHareket;
+import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.KasaHareketRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.repository.sistem.KategoriRepository;
@@ -33,6 +35,7 @@ public class KasaService {
 
     private final KasaRepository kasaRepository;
     private final KasaHareketRepository kasaHareketRepository;
+    private final BankaRepository bankaRepository;
     private final KategoriRepository kategoriRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
@@ -171,6 +174,41 @@ public class KasaService {
 
         cacheYardimci.temizle("dashboard");
         log.info("Kasa aktarımı yapıldı: {} → {} ({} ₺)", kaynak.getAd(), hedef.getAd(), tutar);
+    }
+
+    /**
+     * Kasadan banka hesabına para aktarımı. Kasadan düşer, banka bakiyesine ekler.
+     */
+    public void kasaBankayaAktar(Long kasaId, Long bankaId, BigDecimal tutar, String aciklama, Long sirketId) {
+        if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Aktarılacak tutar sıfırdan büyük olmalıdır");
+        }
+        Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
+        Banka banka = bankaRepository.findById(bankaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
+        tenantChecker.check(banka.getSirketId(), "Banka");
+
+        if (kasa.getBakiye().compareTo(tutar) < 0) {
+            throw new BusinessException("Kasada yetersiz bakiye. Mevcut: " + kasa.getBakiye() + " ₺");
+        }
+
+        kasa.setBakiye(kasa.getBakiye().subtract(tutar));
+        banka.setBakiye(banka.getBakiye() != null ? banka.getBakiye().add(tutar) : tutar);
+
+        String not = aciklama != null && !aciklama.isBlank() ? aciklama : "Kasa → Banka aktarımı";
+        java.time.LocalDate bugun = java.time.LocalDate.now();
+
+        kasaRepository.save(kasa);
+        bankaRepository.save(banka);
+        kasaHareketRepository.save(KasaHareket.builder()
+                .kasa(kasa).tur("GIDER").tutar(tutar)
+                .hareketTarihi(bugun).aciklama(not + " → " + banka.getAd())
+                .build());
+
+        cacheYardimci.temizle("dashboard");
+        log.info("Kasa → Banka aktarımı: {} → {} ({} ₺)", kasa.getAd(), banka.getAd(), tutar);
     }
 
     private KasaDTO entityToDTO(Kasa k) {

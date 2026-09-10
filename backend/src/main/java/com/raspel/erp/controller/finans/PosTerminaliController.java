@@ -44,6 +44,13 @@ public class PosTerminaliController {
         return ResponseEntity.ok(posService.ozet(sirketId));
     }
 
+    @GetMapping("/{id}/musteriler")
+    @Operation(summary = "POS müşteri detayı", description = "Bir POS terminalinden hangi cariden ne kadar çekildiğini getirir")
+    public ResponseEntity<List<java.util.Map<String, Object>>> musteriler(@PathVariable Long id, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(posService.musteriDetay(sirketId, id));
+    }
+
     @PostMapping
     @Operation(summary = "POS terminali oluştur")
     public ResponseEntity<PosTerminaliDTO> olustur(@RequestBody PosTerminaliDTO dto, HttpServletRequest request) {

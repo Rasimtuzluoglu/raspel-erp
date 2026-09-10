@@ -58,6 +58,10 @@
           @update:model-value="gorevDurumDegistir(g)"
         />
         <span class="gorev-baslik">{{ g.baslik }}</span>
+        <span
+          v-if="g.aciklama"
+          class="gorev-aciklama"
+        >{{ g.aciklama }}</span>
         <Tag
           :value="oncelikAdi(g.oncelik)"
           :severity="oncelikSeverity(g.oncelik)"
@@ -619,6 +623,15 @@ onMounted(() => {
 .gorev-baslik {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gorev-aciklama {
+  flex: 0 1 auto;
+  max-width: 40%;
+  font-size: 11px;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

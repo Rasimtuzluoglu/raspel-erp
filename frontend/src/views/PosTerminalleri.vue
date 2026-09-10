@@ -57,6 +57,12 @@
           :severity="p.aktif ? 'success' : 'danger'"
         />
         <Button
+          icon="pi pi-users"
+          class="p-button-rounded p-button-text p-button-sm"
+          title="Müşteri Detayı"
+          @click="musteriDetayAc(p)"
+        />
+        <Button
           icon="pi pi-pencil"
           class="p-button-rounded p-button-text p-button-sm"
           @click="dialogAc(p)"
@@ -126,6 +132,28 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="musteriDialog"
+      :header="'Müşteri Detayı — ' + (seciliPos?.ad || '')"
+      :modal="true"
+      :style="{ width: '440px' }"
+    >
+      <div
+        v-if="!musteriler.length"
+        class="bos"
+      >
+        Bu POS'tan henüz çekim yapılmamış.
+      </div>
+      <div
+        v-for="m in musteriler"
+        :key="m.cariId"
+        class="musteri-satir"
+      >
+        <span>{{ m.cariAd }}</span>
+        <strong>{{ formatPara(m.toplamTutar) }}</strong>
+      </div>
+    </Dialog>
   </div>
 </template>
 
@@ -141,6 +169,9 @@ const ozetler = ref([])
 const bankalar = ref([])
 const dialog = ref(false)
 const duzenlenenId = ref(null)
+const musteriDialog = ref(false)
+const seciliPos = ref(null)
+const musteriler = ref([])
 const kaydediliyor = ref(false)
 const yukleniyor = ref(false)
 
@@ -207,6 +238,17 @@ const sil = async (p) => {
     yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+  }
+}
+
+const musteriDetayAc = async (p) => {
+  seciliPos.value = p
+  musteriDialog.value = true
+  try {
+    const r = await posAPI.musteriler(p.id)
+    musteriler.value = r.data || []
+  } catch {
+    musteriler.value = []
   }
 }
 
@@ -326,5 +368,16 @@ onMounted(() => {
   text-align: center;
   color: var(--text-muted);
   padding: 32px;
+}
+.musteri-satir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.musteri-satir:last-child {
+  border-bottom: none;
 }
 </style>

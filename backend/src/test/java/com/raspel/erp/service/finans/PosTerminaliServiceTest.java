@@ -2,6 +2,7 @@ package com.raspel.erp.service.finans;
 
 import com.raspel.erp.dto.finans.PosTerminaliDTO;
 import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.finans.PosTerminali;
 import com.raspel.erp.exception.BusinessException;
@@ -74,5 +75,23 @@ class PosTerminaliServiceTest {
         assertEquals(new BigDecimal("1000"), ozetler.get(0).getBugunTutar());
         assertEquals(new BigDecimal("3000"), ozetler.get(0).getToplamTutar());
         assertEquals(new BigDecimal("75"), ozetler.get(0).getToplamKomisyon());
+    }
+
+    @Test
+    void musteriDetay_cariBazliToplamHesaplar() {
+        CariHesap c1 = CariHesap.builder().id(1L).ad("A Ltd").build();
+        CariHesap c2 = CariHesap.builder().id(2L).ad("B Ltd").build();
+        Hareket h1 = Hareket.builder().tutar(new BigDecimal("1000")).cariHesap(c1).build();
+        Hareket h2 = Hareket.builder().tutar(new BigDecimal("2000")).cariHesap(c1).build();
+        Hareket h3 = Hareket.builder().tutar(new BigDecimal("500")).cariHesap(c2).build();
+        when(hareketRepository.findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(1L, 1L)).thenReturn(List.of(h1, h2, h3));
+
+        var detay = posService.musteriDetay(1L, 1L);
+
+        assertEquals(2, detay.size());
+        assertEquals("A Ltd", detay.get(0).get("cariAd"));
+        assertEquals(new BigDecimal("3000"), detay.get(0).get("toplamTutar"));
+        assertEquals("B Ltd", detay.get(1).get("cariAd"));
+        assertEquals(new BigDecimal("500"), detay.get(1).get("toplamTutar"));
     }
 }
