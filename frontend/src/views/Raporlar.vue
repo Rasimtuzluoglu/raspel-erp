@@ -34,7 +34,10 @@
       />
     </div>
 
-    <TabView v-model:active-index="aktifSekme">
+    <TabView
+      v-model:active-index="aktifSekme"
+      :lazy="true"
+    >
       <TabPanel>
         <template #header>
           <div class="rapor-sekme-baslik">
@@ -1114,12 +1117,21 @@ const formatDateForApi = (d) => {
 
 onMounted(async () => {
   await cariHesapStore.getAllCariHesaplar()
-  getGelirGider()
-  getKdv()
-  getTedarikciUrunler()
-  getUrunKarlilik()
-  getNakitAkisi()
+  sekmeYukle(aktifSekme.value)
 })
+
+// Raporları yalnızca ilgili sekme açıldığında yükle (ilk açılışta donmayı önler).
+const sekmeYukle = (idx) => {
+  if (idx === 1) getGelirGider()
+  else if (idx === 2) getKdv()
+  else if (idx === 3) getYaslandirma()
+  else if (idx === 4) getCariKarlilik()
+  else if (idx === 5) getTedarikciUrunler()
+  else if (idx === 6) getUrunKarlilik()
+  else if (idx === 7) getNakitAkisi()
+}
+
+watch(aktifSekme, (idx) => sekmeYukle(idx))
 
 const getCariEkstre = async () => {
   if (!ekstreCariId.value) {

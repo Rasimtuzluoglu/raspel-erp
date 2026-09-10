@@ -171,6 +171,7 @@ let recognition = null
 
 const grupEtiketi = (type) => {
   const etiketler = {
+    modul: 'Sayfalar',
     cari: 'Cari Hesaplar',
     stok: 'Stoklar',
     fatura: 'Faturalar',
@@ -190,6 +191,7 @@ const grupluSonuclar = computed(() => {
   const gruplar = []
   let globalIndex = 0
   const siraliTipler = [
+    'modul',
     'cari',
     'fatura',
     'stok',
@@ -288,6 +290,40 @@ const komutCalistir = (k) => {
   router.push(k.route)
 }
 
+const moduller = [
+  { etiket: 'Cari Hesaplar', anahtar: ['cari', 'cariler', 'müşteri', 'musteri'], icon: 'pi pi-users', route: '/cari-hesaplar' },
+  { etiket: 'Faturalar', anahtar: ['fatura', 'faturalar'], icon: 'pi pi-file', route: '/faturalar' },
+  { etiket: 'Stoklar', anahtar: ['stok', 'stoklar', 'ürün', 'urun'], icon: 'pi pi-box', route: '/stoklar' },
+  { etiket: 'Hızlı Satış', anahtar: ['pos', 'hızlı satış', 'hizli satis', 'satis', 'satış'], icon: 'pi pi-bolt', route: '/hizli-satis' },
+  { etiket: 'Siparişler', anahtar: ['sipariş', 'siparis', 'siparişler'], icon: 'pi pi-receipt', route: '/siparisler' },
+  { etiket: 'Teslimatlar', anahtar: ['teslimat', 'şoför', 'sofor'], icon: 'pi pi-truck', route: '/teslimatlar' },
+  { etiket: 'Üretim', anahtar: ['üretim', 'uretim'], icon: 'pi pi-cog', route: '/uretim' },
+  { etiket: 'Kasa', anahtar: ['kasa', 'kasalar'], icon: 'pi pi-wallet', route: '/kasa' },
+  { etiket: 'Bankalar', anahtar: ['banka', 'bankalar'], icon: 'pi pi-building', route: '/bankalar' },
+  { etiket: 'Personel', anahtar: ['personel'], icon: 'pi pi-id-card', route: '/personel' },
+  { etiket: 'Raporlar', anahtar: ['rapor', 'raporlar'], icon: 'pi pi-chart-bar', route: '/raporlar' },
+  { etiket: 'Ajanda', anahtar: ['ajanda', 'takvim'], icon: 'pi pi-calendar', route: '/ajanda' },
+  { etiket: 'Sohbet', anahtar: ['sohbet', 'chat', 'mesaj'], icon: 'pi pi-comments', route: '/sohbet' },
+  { etiket: 'Projeler', anahtar: ['proje', 'projeler'], icon: 'pi pi-folder', route: '/projeler' },
+  { etiket: 'Depolar', anahtar: ['depo', 'depolar'], icon: 'pi pi-warehouse', route: '/depolar' },
+  { etiket: 'Şubeler', anahtar: ['şube', 'sube', 'şubeler', 'subeler'], icon: 'pi pi-sitemap', route: '/subeler' },
+  { etiket: 'POS Terminalleri', anahtar: ['pos terminal', 'terminal'], icon: 'pi pi-credit-card', route: '/pos-terminalleri' },
+  { etiket: 'Tahsilat', anahtar: ['tahsilat'], icon: 'pi pi-dollar', route: '/tahsilat' },
+  { etiket: 'Sipariş Takibi', anahtar: ['sipariş takip', 'zincir'], icon: 'pi pi-sitemap', route: '/siparis-takip' }
+]
+
+const modulAra = (q) =>
+  moduller
+    .filter((m) => m.etiket.toLowerCase().includes(q) || (m.anahtar || []).some((a) => a.toLowerCase().includes(q)))
+    .map((m) => ({
+      type: 'modul',
+      icon: m.icon,
+      severity: 'info',
+      route: m.route,
+      title: m.etiket,
+      subtitle: 'Sayfaya git'
+    }))
+
 watch(
   () => props.visible,
   (v) => {
@@ -345,6 +381,10 @@ const handleKeydown = (e) => {
 const navigate = (item) => {
   sonAramaKaydet(query.value)
   kapat()
+  if (item.type === 'modul') {
+    router.push(item.route)
+    return
+  }
   if (item.type === 'cari' || item.type === 'fatura' || item.type === 'proje' || item.type === 'siparis') {
     router.push(`${typeConfig[item.type].route}/${item.id}`)
   } else {
@@ -545,6 +585,7 @@ watch(query, (val) => {
           )
           .catch(() => [])
       ])
+      const moduller2 = modulAra(q)
       const birlesik = [
         ...cariler,
         ...stoklar,
@@ -559,9 +600,9 @@ watch(query, (val) => {
         ...subeler,
         ...belgeler
       ]
-      const sirali = birlesik
-        .filter((i) => i.title?.toLowerCase().startsWith(q))
-        .concat(birlesik.filter((i) => !i.title?.toLowerCase().startsWith(q)))
+      const digerleri = birlesik.filter((i) => !i.title?.toLowerCase().startsWith(q))
+      const baslayanlar = birlesik.filter((i) => i.title?.toLowerCase().startsWith(q))
+      const sirali = [...moduller2, ...baslayanlar, ...digerleri]
       results.value = sirali.slice(0, 15)
     } catch (e) {
       error.value = 'Arama sırasında hata oluştu'
