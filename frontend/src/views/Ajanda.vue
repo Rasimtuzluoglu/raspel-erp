@@ -682,5 +682,7 @@ onMounted(() => {
   margin: 2px 0 0;
   font-size: 12px;
   color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

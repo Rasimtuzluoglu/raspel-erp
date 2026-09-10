@@ -123,8 +123,6 @@
             </div>
           </div>
           <DataTable
-            state-storage="session"
-            state-key="raporlar-table-state"
             :value="ekstreData.hareketler"
             striped-rows
             :rows="10"
@@ -252,8 +250,6 @@
             Aylık Dağılım
           </h3>
           <DataTable
-            state-storage="session"
-            state-key="raporlar-table-state"
             :value="ggData.aylikDagilim"
             striped-rows
           >
@@ -357,8 +353,6 @@
           class="rapor-sonuc"
         >
           <DataTable
-            state-storage="session"
-            state-key="raporlar-table-state"
             :value="yasData"
             striped-rows
             :rows="10"
@@ -469,8 +463,6 @@
           </div>
 
           <DataTable
-            state-storage="session"
-            state-key="raporlar-table-state"
             :value="ckData.satirlar"
             striped-rows
             :rows="10"
@@ -563,8 +555,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="raporlar-table-state"
           :value="tuFiltrelenmisData"
           size="small"
           striped-rows
@@ -627,8 +617,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="raporlar-table-state"
           :value="ukData"
           size="small"
           striped-rows
@@ -739,8 +727,6 @@
             Günlük Nakit Akışı Detayı
           </h3>
           <DataTable
-            state-storage="session"
-            state-key="nakit-akis-table-state"
             :value="nakitData.gunlukAkis"
             striped-rows
             size="small"

@@ -56,8 +56,6 @@
         <div class="kdv-tablo">
           <h3>1-2 no.lu Tablo (Hesaplanan KDV)</h3>
           <DataTable
-            state-storage="session"
-            state-key="vergiraporlari-table-state"
             :value="kdvBeyanname.satislar"
             striped-rows
           >
@@ -90,8 +88,6 @@
         <div class="kdv-tablo">
           <h3>19-20 no.lu Tablo (İndirilecek KDV)</h3>
           <DataTable
-            state-storage="session"
-            state-key="vergiraporlari-table-state"
             :value="kdvBeyanname.alislar"
             striped-rows
           >
@@ -143,8 +139,6 @@
         />
       </div>
       <DataTable
-        state-storage="session"
-        state-key="vergiraporlari-table-state"
         :value="aktifBs ? bsRapor?.kayitlar || [] : baRapor?.kayitlar || []"
         striped-rows
       >

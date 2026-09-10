@@ -16,8 +16,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="satinalma-table-state"
           :value="talepler"
           striped-rows
           :loading="taleplerYukleniyor"
@@ -89,8 +87,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="satinalma-table-state"
           :value="siparisler"
           striped-rows
           :loading="siparislerYukleniyor"

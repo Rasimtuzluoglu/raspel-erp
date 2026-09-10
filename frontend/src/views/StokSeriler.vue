@@ -27,8 +27,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="stokseriler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"

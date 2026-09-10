@@ -361,8 +361,6 @@
       </div>
       <div class="table-container">
         <DataTable
-          state-storage="session"
-          state-key="stoklar-table-state"
           :value="stokHareketler"
           striped-rows
           :rows="8"

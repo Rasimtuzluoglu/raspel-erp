@@ -45,8 +45,6 @@
           >
             <h3>Önizleme ({{ csvVeri ? csvVeri.length : 0 }} kayıt)</h3>
             <DataTable
-              state-storage="session"
-              state-key="toplustok-table-state"
               :value="csvVeri.slice(0, 5)"
               size="small"
               striped-rows

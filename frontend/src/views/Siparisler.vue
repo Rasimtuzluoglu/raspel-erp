@@ -12,8 +12,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="siparisler-table-state"
       :value="siparisler"
       striped-rows
       :loading="yukleniyor"

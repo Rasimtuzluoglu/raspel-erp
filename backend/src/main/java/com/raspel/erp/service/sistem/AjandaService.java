@@ -63,10 +63,14 @@ public class AjandaService {
                     .findByKullaniciIdAndBitisTarihiBetweenOrderByBitisTarihiAsc(kullaniciId, baslangic, bitis);
             for (AjandaGorev g : gorevlerim) {
                 if (g.getBitisTarihi() == null) continue;
+                String aciklama = "Öncelik: " + oncelikAdi(g.getOncelik()) + " · " + (g.getDurum() != null ? g.getDurum() : "");
+                if (g.getAciklama() != null && !g.getAciklama().isBlank()) {
+                    aciklama += "\n" + g.getAciklama();
+                }
                 olaylar.add(AjandaOlayDTO.builder()
                         .tarih(g.getBitisTarihi()).tip("KISISEL_GOREV")
                         .baslik(g.getBaslik())
-                        .aciklama("Öncelik: " + oncelikAdi(g.getOncelik()) + " · " + (g.getDurum() != null ? g.getDurum() : ""))
+                        .aciklama(aciklama)
                         .build());
             }
             // Kişisel hatırlatıcılar

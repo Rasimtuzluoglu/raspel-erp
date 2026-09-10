@@ -12,8 +12,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="vardiyalar-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"

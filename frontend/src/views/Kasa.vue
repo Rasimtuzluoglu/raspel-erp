@@ -157,8 +157,6 @@
 
       <div class="table-container">
         <DataTable
-          state-storage="session"
-          state-key="kasa-table-state"
           :value="kasaHareketler"
           striped-rows
           :rows="10"

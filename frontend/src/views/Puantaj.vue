@@ -37,8 +37,6 @@
       </template>
     </Toolbar>
     <DataTable
-      state-storage="session"
-      state-key="puantaj-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"

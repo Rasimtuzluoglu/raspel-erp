@@ -28,8 +28,6 @@
 
     <div class="table-container">
       <DataTable
-        state-storage="session"
-        state-key="satis-table-state"
         :value="filtrelenmisSatislar"
         :paginator="true"
         :rows="15"
@@ -237,8 +235,6 @@
         Satış Kalemleri
       </h3>
       <DataTable
-        state-storage="session"
-        state-key="satis-table-state"
         :value="satisForm.kalemler"
         striped-rows
       >

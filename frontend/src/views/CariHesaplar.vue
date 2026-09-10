@@ -135,8 +135,6 @@
     >
       <DataTable
         v-model:selection="selectedCariHesaplar"
-        state-storage="session"
-        state-key="carihesaplar-table-state"
         :value="cariHesapStore?.cariHesaplar || []"
         selection-mode="multiple"
         data-key="id"
@@ -556,8 +554,6 @@
       >
         <DataTable
           v-if="cariHareketler && cariHareketler.length > 0"
-          state-storage="session"
-          state-key="carihesaplar-table-state"
           :value="cariHareketler"
           responsive-layout="scroll"
           striped-rows

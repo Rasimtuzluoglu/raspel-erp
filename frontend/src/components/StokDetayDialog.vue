@@ -73,8 +73,6 @@
     />
     <DataTable
       v-else
-      state-storage="session"
-      state-key="stok-hareketler-table-state"
       :value="hareketler"
       size="small"
       striped-rows

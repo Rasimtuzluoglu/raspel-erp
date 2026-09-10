@@ -33,8 +33,6 @@
       class="table-container"
     >
       <DataTable
-        state-storage="session"
-        state-key="bankalar-table-state"
         :value="bankaStore.bankalar"
         responsive-layout="scroll"
         striped-rows

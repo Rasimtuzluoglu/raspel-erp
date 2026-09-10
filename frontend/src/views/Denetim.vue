@@ -121,8 +121,6 @@
     <Card>
       <template #content>
         <DataTable
-          state-storage="session"
-          state-key="denetim-table-state"
           :value="logs"
           :loading="yukleniyor"
           striped-rows

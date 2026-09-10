@@ -370,6 +370,10 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/profil',
+    redirect: '/hesap-ayarlari'
+  },
+  {
     path: '/banka-mutabakat',
     name: 'BankaMutabakat',
     component: () => import('../views/BankaMutabakat.vue'),

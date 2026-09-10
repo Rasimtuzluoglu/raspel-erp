@@ -15,8 +15,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="belgeler-table-state"
       :value="liste"
       striped-rows
       :loading="yukleniyor"

@@ -100,8 +100,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="muhasebe-table-state"
           :value="fisler"
           striped-rows
           :loading="fisYukleniyor"
@@ -196,8 +194,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="muhasebe-table-state"
           :value="mizan"
           striped-rows
           :loading="mizanYukleniyor"
@@ -277,8 +273,6 @@
           />
         </div>
         <DataTable
-          state-storage="session"
-          state-key="muhasebe-table-state"
           :value="kebir"
           striped-rows
           :loading="kebirYukleniyor"
@@ -672,8 +666,6 @@
         {{ fisDetay.aciklama }}
       </p>
       <DataTable
-        state-storage="session"
-        state-key="muhasebe-table-state"
         :value="fisDetay?.kalemler || []"
         striped-rows
       >

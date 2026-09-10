@@ -15,8 +15,6 @@
 
     <div class="table-container">
       <DataTable
-        state-storage="session"
-        state-key="kategoriler-table-state"
         :value="kategoriStore.kategoriler"
         striped-rows
         :rows="20"

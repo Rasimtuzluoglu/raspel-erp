@@ -64,8 +64,6 @@
     <!-- Teklifler Listesi Tablosu -->
     <div class="kart-kutu">
       <DataTable
-        state-storage="session"
-        state-key="teklifler-table-state"
         :value="teklifler"
         :loading="yukleniyor"
         paginator

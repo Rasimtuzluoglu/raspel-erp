@@ -13,8 +13,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="projeler-table-state"
       :value="list"
       striped-rows
       :loading="yukleniyor"
@@ -86,8 +84,6 @@
             />
           </div>
           <DataTable
-            state-storage="session"
-            state-key="projeler-table-state"
             :value="data.gorevler || []"
             striped-rows
             size="small"

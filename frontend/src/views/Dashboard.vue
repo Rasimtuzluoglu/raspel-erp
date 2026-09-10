@@ -797,8 +797,6 @@
         >
           <h2>Son Finansal Hareketler</h2>
           <DataTable
-            state-storage="session"
-            state-key="dashboard-table-state"
             :value="dashboardStore?.sonHareketler || []"
             :rows="5"
             striped-rows

@@ -88,8 +88,6 @@
       </div>
       <DataTable
         v-model:selection="selectedItems"
-        state-storage="session"
-        state-key="hareketler-table-state"
         selection-mode="multiple"
         :value="tümHareketler"
         responsive-layout="scroll"

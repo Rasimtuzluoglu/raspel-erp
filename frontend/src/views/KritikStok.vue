@@ -58,8 +58,6 @@
       </div>
 
       <DataTable
-        state-storage="session"
-        state-key="stok-tahmin-table-state"
         :value="tahminList"
         striped-rows
         :loading="yukleniyor"
@@ -161,8 +159,6 @@
       </div>
 
       <DataTable
-        state-storage="session"
-        state-key="kritikstok-table-state"
         :value="list"
         striped-rows
         :loading="yukleniyor"

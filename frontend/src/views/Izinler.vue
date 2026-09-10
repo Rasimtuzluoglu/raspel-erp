@@ -15,8 +15,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="izinler-table-state"
       :value="filtrelenmisIzinler"
       striped-rows
       :loading="yukleniyor"

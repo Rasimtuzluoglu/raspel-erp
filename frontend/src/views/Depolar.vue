@@ -28,8 +28,6 @@
     <TabView>
       <TabPanel header="Depolar">
         <DataTable
-          state-storage="session"
-          state-key="depolar-table-state"
           :value="list"
           striped-rows
           :loading="yukleniyor"
@@ -135,8 +133,6 @@
             </div>
           </div>
           <DataTable
-            state-storage="session"
-            state-key="depolar-table-state"
             :value="depoStoklari"
             striped-rows
             size="small"

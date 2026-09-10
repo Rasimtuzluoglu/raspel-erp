@@ -1,8 +1,6 @@
 <template>
   <div>
     <DataTable
-      state-storage="session"
-      state-key="fatura-kalemler-table-state"
       :value="kalemler"
       striped-rows
     >

@@ -227,8 +227,6 @@
             </template>
             <template #content>
               <DataTable
-                state-storage="session"
-                state-key="yedekler-table-state"
                 :value="yedekler"
                 :loading="yedeklerYukleniyor"
                 striped-rows

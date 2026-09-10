@@ -98,8 +98,6 @@
         </div>
 
         <DataTable
-          state-storage="session"
-          state-key="ip-whitelist-table-state"
           :value="ipListesi"
           striped-rows
           :loading="ipYukleniyor"

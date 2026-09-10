@@ -12,8 +12,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="sirketler-table-state"
       :value="sirketler"
       striped-rows
       responsive-layout="scroll"

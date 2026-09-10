@@ -79,8 +79,6 @@
       </div>
       <DataTable
         v-model:selection="selectedItems"
-        state-storage="session"
-        state-key="faturalar-table-state"
         selection-mode="multiple"
         :value="filtrelenmisFaturalar"
         responsive-layout="scroll"

@@ -30,8 +30,6 @@
     <TabView>
       <TabPanel header="Personel Listesi">
         <DataTable
-          state-storage="session"
-          state-key="personel-table-state"
           :value="personeller"
           striped-rows
           :loading="yukleniyor"
@@ -110,8 +108,6 @@
 
       <TabPanel header="İzin Talepleri">
         <DataTable
-          state-storage="session"
-          state-key="personel-table-state"
           :value="tumIzinler"
           striped-rows
         >

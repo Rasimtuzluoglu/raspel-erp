@@ -24,8 +24,6 @@
     </div>
 
     <DataTable
-      state-storage="session"
-      state-key="donemler-table-state"
       :value="donemler"
       striped-rows
       responsive-layout="scroll"
