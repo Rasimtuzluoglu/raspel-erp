@@ -50,6 +50,7 @@ public class SiparisTakipService {
                     .siparisNo(s.getSiparisNo())
                     .cariAd(cariAd)
                     .siparisDurum(s.getDurum())
+                    .driverAd(s.getDriverAd())
                     .uretimDurum(emirler.isEmpty() ? null : emirler.get(0).getDurum())
                     .uretimSayisi(emirler.size())
                     .sevkDurum(irsaliyeler.isEmpty() ? null : irsaliyeler.get(0).getDurum())

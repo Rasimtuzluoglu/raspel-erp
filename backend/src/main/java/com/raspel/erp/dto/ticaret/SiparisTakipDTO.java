@@ -11,6 +11,7 @@ public class SiparisTakipDTO {
     private String siparisNo;
     private String cariAd;
     private String siparisDurum;
+    private String driverAd;
     private String uretimDurum;
     private long uretimSayisi;
     private String sevkDurum;

@@ -136,6 +136,9 @@ export const siparisAPI = {
   isEmriOlustur(id, data) {
     return apiClient.post(`/siparisler/${id}/is-emri`, data)
   },
+  soforAta(id, driverId) {
+    return apiClient.post(`/siparisler/${id}/sofor-ata`, { driverId })
+  },
   delete(id) {
     return apiClient.delete(`/siparisler/${id}`)
   }

@@ -33,6 +33,11 @@
           v-if="s.cariAd"
           class="muted"
         >{{ s.cariAd }}</span>
+        <Tag
+          v-if="s.driverAd"
+          :value="'Şoför: ' + s.driverAd"
+          severity="info"
+        />
       </div>
       <div class="adimlar">
         <div

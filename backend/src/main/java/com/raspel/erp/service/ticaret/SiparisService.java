@@ -9,9 +9,12 @@ import com.raspel.erp.entity.ticaret.Siparis;
 import com.raspel.erp.entity.ticaret.SiparisKalem;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.repository.finans.CariHesapRepository;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +55,8 @@ public class SiparisService {
     private final TenantChecker tenantChecker;
     private final GorevRepository gorevRepository;
     private final PersonelRepository personelRepository;
+    private final KullaniciRepository kullaniciRepository;
+    private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
@@ -286,7 +291,56 @@ public class SiparisService {
         return SiparisDTO.builder().id(s.getId()).siparisNo(s.getSiparisNo()).tarih(s.getTarih())
                 .cariHesapId(s.getCariHesapId()).cariHesapAdi(cariAdi)
                 .tur(s.getTur()).durum(s.getDurum()).aciklama(s.getAciklama())
+                .driverId(s.getDriverId()).driverAd(s.getDriverAd())
                 .araToplam(s.getAraToplam()).kdv(s.getKdv()).genelToplam(s.getGenelToplam())
                 .sirketId(s.getSirketId()).olusturmaTarihi(s.getOlusturmaTarihi()).kalemler(kalemler).build();
+    }
+
+    /**
+     * Siparişe şoför atar ve bu atamayı Teslimatlar'a da yansıtır (sipariş bazlı teslimat oluşturur/günceller).
+     */
+    @Transactional
+    public SiparisDTO soforAta(Long id, Long driverId, Long sirketId) {
+        Siparis s = siparisRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
+        tenantChecker.check(s.getSirketId(), "Sipariş");
+
+        String driverAd = null;
+        if (driverId != null) {
+            Kullanici surucu = kullaniciRepository.findById(driverId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", driverId));
+            if (!"DRIVER".equalsIgnoreCase(surucu.getRole())) {
+                throw new BusinessException("Seçilen kullanıcı şoför (DRIVER) değil");
+            }
+            driverAd = surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername();
+        }
+        s.setDriverId(driverId);
+        s.setDriverAd(driverAd);
+        s = siparisRepository.save(s);
+
+        if (driverId != null) {
+            String musteriAdi = null;
+            String adres = null;
+            if (s.getCariHesapId() != null) {
+                CariHesap cari = cariHesapRepository.findById(s.getCariHesapId()).orElse(null);
+                if (cari != null) {
+                    musteriAdi = cari.getAd();
+                    adres = cari.getAdres();
+                }
+            }
+            try {
+                teslimatService.siparisTeslimatiUpsert(s.getId(), driverId, sirketId, musteriAdi, adres);
+            } catch (Exception e) {
+                log.warn("Sipariş teslimatı oluşturulamadı ({}): {}", s.getSiparisNo(), e.getMessage());
+            }
+            try {
+                bildirimService.bildirimGonder(sirketId, "TESLIMAT",
+                        "Şoför atandı: " + s.getSiparisNo(),
+                        "Şoför: " + driverAd);
+            } catch (Exception e) {
+                log.warn("Şoför atama bildirimi gönderilemedi: {}", e.getMessage());
+            }
+        }
+        return entityToDTO(s);
     }
 }

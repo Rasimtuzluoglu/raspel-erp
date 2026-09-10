@@ -45,6 +45,12 @@ public class Siparis {
     @Column(length = 500)
     private String aciklama;
 
+    @Column(name = "driver_id")
+    private Long driverId;
+
+    @Column(name = "driver_ad", length = 100)
+    private String driverAd;
+
     @Column(name = "sirket_id")
     private Long sirketId;
 

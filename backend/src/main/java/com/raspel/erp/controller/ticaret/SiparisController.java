@@ -66,6 +66,18 @@ public class SiparisController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{id}/sofor-ata")
+    @Operation(summary = "Siparişe şoför ata", description = "Siparişe şoför atar ve Teslimatlar'a yansıtır")
+    public ResponseEntity<SiparisDTO> soforAta(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> govde,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long driverId = govde != null && govde.get("driverId") != null
+                ? Long.valueOf(govde.get("driverId").toString()) : null;
+        return ResponseEntity.ok(siparisService.soforAta(id, driverId, sirketId));
+    }
+
     @PostMapping("/{id}/is-emri")
     @Operation(summary = "Siparişten iş emri oluştur", description = "Siparişi bir personele atayarak iş emri oluşturur")
     public ResponseEntity<com.raspel.erp.entity.sistem.Gorev> isEmriOlustur(

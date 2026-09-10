@@ -131,6 +131,36 @@ public class TeslimatService {
         return toDTO(t, surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername());
     }
 
+    /**
+     * Sipariş bazlı teslimatı oluşturur veya günceller (şoför ataması Teslimatlar'a da yansır).
+     */
+    @Transactional
+    public TeslimatDTO siparisTeslimatiUpsert(Long siparisId, Long driverId, Long sirketId, String musteriAdi, String teslimatAdresi) {
+        List<Teslimat> mevcut = teslimatRepository.findBySirketIdAndSiparisId(sirketId, siparisId);
+        Teslimat t;
+        if (!mevcut.isEmpty()) {
+            t = mevcut.get(0);
+            t.setDriverId(driverId);
+            if (teslimatAdresi != null && !teslimatAdresi.isBlank()) t.setTeslimatAdresi(teslimatAdresi);
+            if (musteriAdi != null && !musteriAdi.isBlank()) t.setMusteriAdi(musteriAdi);
+            t = teslimatRepository.save(t);
+        } else {
+            t = Teslimat.builder()
+                    .sirketId(sirketId)
+                    .siparisId(siparisId)
+                    .driverId(driverId)
+                    .teslimatAdresi(teslimatAdresi)
+                    .musteriAdi(musteriAdi)
+                    .durum(Teslimat.Durum.BEKLEMEDE.name())
+                    .build();
+            t = teslimatRepository.save(t);
+        }
+        String driverAd = kullaniciRepository.findById(driverId)
+                .map(k -> k.getDisplayName() != null ? k.getDisplayName() : k.getUsername())
+                .orElse(null);
+        return toDTO(t, driverAd);
+    }
+
     @Transactional
     public TeslimatDTO fotoYukle(Long id, MultipartFile file, Long sirketId, Long kullaniciId) {
         Teslimat t = teslimatRepository.findById(id)
@@ -240,6 +270,7 @@ public class TeslimatService {
                 .id(t.getId())
                 .sirketId(t.getSirketId())
                 .faturaId(t.getFaturaId())
+                .siparisId(t.getSiparisId())
                 .faturaNumarasi(t.getFaturaNumarasi())
                 .driverId(t.getDriverId())
                 .driverAd(driverAd)

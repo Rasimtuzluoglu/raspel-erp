@@ -61,6 +61,24 @@
         </template>
       </Column>
       <Column
+        header="Şoför"
+        style="width: 190px"
+      >
+        <template #body="{ data }">
+          <Dropdown
+            :model-value="data.driverId"
+            :options="suruculer"
+            option-label="ad"
+            option-value="id"
+            filter
+            placeholder="Şoför ata"
+            class="w-full"
+            :show-clear="true"
+            @update:model-value="(d) => soforAta(data, d)"
+          />
+        </template>
+      </Column>
+      <Column
         header="İşlemler"
         style="width: 220px"
       >
@@ -228,7 +246,7 @@
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { siparisAPI, cariHesapAPI, personelAPI } from '../api/index.js'
+import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -247,6 +265,7 @@ onMounted(async () => {
     siparisler.value = sR.data?.content || sR.data || []
     cariler.value = cR.data
     personelleriYukle()
+    suruculeriYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
   }
@@ -254,11 +273,33 @@ onMounted(async () => {
 })
 
 const personeller = ref([])
+const suruculer = ref([])
 const isEmriDialog = ref(false)
 const isEmriSiparis = ref(null)
 const isEmriPersonelId = ref(null)
 const isEmriAciklama = ref('')
 const isEmriKaydediliyor = ref(false)
+
+const suruculeriYukle = async () => {
+  try {
+    const r = await teslimatAPI.suruculer()
+    suruculer.value = r.data || []
+  } catch {
+    suruculer.value = []
+  }
+}
+
+const soforAta = async (siparis, driverId) => {
+  try {
+    await siparisAPI.soforAta(siparis.id, driverId)
+    siparis.driverId = driverId
+    const surucu = suruculer.value.find((s) => s.id === driverId)
+    siparis.driverAd = surucu?.ad || ''
+    toastBildirim.basarili('Şoför atandı ve Teslimatlar\'a yansıtıldı')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Şoför atanamadı')
+  }
+}
 
 const personelleriYukle = async () => {
   try {

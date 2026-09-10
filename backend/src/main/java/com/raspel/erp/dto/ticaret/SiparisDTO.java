@@ -22,6 +22,8 @@ public class SiparisDTO {
     private BigDecimal kdv;
     private BigDecimal genelToplam;
     private String aciklama;
+    private Long driverId;
+    private String driverAd;
     private Long sirketId;
     private LocalDateTime olusturmaTarihi;
     private List<SiparisKalemDTO> kalemler;

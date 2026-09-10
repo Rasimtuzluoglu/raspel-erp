@@ -130,4 +130,35 @@ class TeslimatServiceTest {
 
         assertTrue(teslimatService.gecikmisTeslimatlar().isEmpty());
     }
+
+    @Test
+    void siparisTeslimatiUpsert_yeniTeslimatOlusturur() {
+        when(teslimatRepository.findBySirketIdAndSiparisId(1L, 10L)).thenReturn(List.of());
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+            Teslimat t = inv.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).displayName("Ali").build()));
+
+        TeslimatDTO sonuc = teslimatService.siparisTeslimatiUpsert(10L, 5L, 1L, "A Ltd", "Adres");
+
+        assertEquals(10L, sonuc.getSiparisId());
+        assertEquals(5L, sonuc.getDriverId());
+        assertEquals("BEKLEMEDE", sonuc.getDurum());
+        assertEquals("Ali", sonuc.getDriverAd());
+    }
+
+    @Test
+    void siparisTeslimatiUpsert_mevcutTeslimattaSoforGunceller() {
+        Teslimat mevcut = Teslimat.builder().id(1L).sirketId(1L).siparisId(10L).driverId(3L).durum("BEKLEMEDE").build();
+        when(teslimatRepository.findBySirketIdAndSiparisId(1L, 10L)).thenReturn(List.of(mevcut));
+        when(teslimatRepository.save(any(Teslimat.class))).thenReturn(mevcut);
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).displayName("Veli").build()));
+
+        TeslimatDTO sonuc = teslimatService.siparisTeslimatiUpsert(10L, 5L, 1L, "A Ltd", "Adres");
+
+        assertEquals(5L, mevcut.getDriverId());
+        assertEquals(5L, sonuc.getDriverId());
+    }
 }
