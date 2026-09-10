@@ -437,12 +437,7 @@ const odemeDurumLabel = (d) => ({ ODENMEDI: t('faturaDetay.odenmedi'), KISMI_ODE
 const teslimDurumLabel = (d) => ({ BEKLIYOR: t('faturalar.durumBekliyor'), YOLDA: t('faturalar.durumYolda'), TESLIM_EDILDI: t('faturalar.durumTeslimEdildi') })[d] || d
 
 
-import { formatTarih as formatDate } from '../utils/format.js'
-
-const formatDateTime = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d))
-}
+import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '../utils/format.js'
 </script>
 
 <style scoped>

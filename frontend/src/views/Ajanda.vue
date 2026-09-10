@@ -265,6 +265,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ajandaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { formatGunAy as formatTarih } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const olaylar = ref([])
@@ -340,7 +341,7 @@ const olayTipSeverity = (tip) => {
   return map[tip] || 'info'
 }
 
-const formatTarih = (d) => (d ? new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) : '')
+
 const formatZaman = (t) => (t ? new Date(t).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '')
 
 const yukle = async () => {

@@ -641,6 +641,7 @@ import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import { formatTarihKisa as formatTarih } from '../utils/format.js'
 
 const { t } = useI18n()
 const faturaTasarimModalAcik = ref(false)
@@ -737,9 +738,6 @@ const aiKeyGoster = ref(false)
 // API Token state
 const tokenlar = ref([])
 const yeniToken = ref('')
-
-const formatTarih = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : ''
 
 const tokenlariYukle = async () => {
   try {

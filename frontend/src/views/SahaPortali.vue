@@ -581,6 +581,7 @@ import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stok
 import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
 import { useI18n } from 'vue-i18n'
+import { formatTarih } from '../utils/format.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -643,11 +644,6 @@ const formatPara = (v) => {
   if (v == null || isNaN(v)) return '0,00 ₺'
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 }
-const formatTarih = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
-
 // Canvas
 const imzaCanvas = ref(null)
 let cizimYapiliyor = false

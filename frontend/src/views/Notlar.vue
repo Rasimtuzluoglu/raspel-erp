@@ -172,6 +172,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useNotStore } from '../stores/notStore.js'
 import FormField from '../components/FormField.vue'
 import { useI18n } from 'vue-i18n'
+import { formatDateTime as formatTarih } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -284,16 +285,6 @@ const geriAl = async () => {
   }
 }
 
-const formatTarih = (t) => {
-  if (!t) return ''
-  return new Date(t).toLocaleString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 </script>
 
 <style scoped>

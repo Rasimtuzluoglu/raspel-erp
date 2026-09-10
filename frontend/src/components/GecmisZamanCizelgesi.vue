@@ -57,6 +57,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { auditLogAPI } from '../api/index.js'
+import { formatDateTime as formatTarih } from '../utils/format.js'
 
 const props = defineProps({
   entityTipi: {
@@ -103,17 +104,6 @@ const yukle = async () => {
 
 watch(() => [props.entityTipi, props.entityId], yukle)
 onMounted(yukle)
-
-const formatTarih = (d) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 const getMarkerIcon = (islem) => {
   const islemStr = (islem || '').toUpperCase()

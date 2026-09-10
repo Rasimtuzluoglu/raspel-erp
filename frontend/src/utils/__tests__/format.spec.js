@@ -31,4 +31,11 @@ describe('format.js', () => {
     expect(durumLabel('KESILDI')).toBe('Kesildi')
     expect(durumLabel('BILINMEYEN')).toBe('BILINMEYEN')
   })
+
+  it('durumLabel uses i18n keys when a translator is provided', () => {
+    const fakeT = (key) => `tr:${key}`
+    expect(durumLabel('TASLAK', fakeT)).toBe('tr:common.durumTaslak')
+    expect(durumLabel('ODEME', fakeT)).toBe('tr:common.durumOdeme')
+    expect(durumLabel('BILINMEYEN', fakeT)).toBe('BILINMEYEN')
+  })
 })

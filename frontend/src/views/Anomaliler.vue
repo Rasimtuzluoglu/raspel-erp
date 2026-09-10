@@ -201,6 +201,7 @@ import { anomaliAPI } from '../api/index.js'
 import PageHeader from '../components/PageHeader.vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
 import { useI18n } from 'vue-i18n'
+import { formatTarihSaat as formatTarih } from '../utils/format.js'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -279,11 +280,6 @@ const ipSil = async (id) => {
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('anomaliler.ipSilinemedi'))
   }
-}
-
-const formatTarih = (t) => {
-  if (!t) return ''
-  return new Date(t).toLocaleString('tr-TR')
 }
 
 onMounted(() => {

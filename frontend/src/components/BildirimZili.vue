@@ -135,6 +135,7 @@ import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
 import { bildirimAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
+import { formatGunSaat as formatTarih } from '../utils/format.js'
 
 const router = useRouter()
 const panelAcik = ref(false)
@@ -216,11 +217,6 @@ const ikonSinifi = (tur) => {
     INFO: 'pi pi-info-circle'
   }
   return ikonlar[tur] || ikonlar.INFO
-}
-
-const formatTarih = (t) => {
-  if (!t) return ''
-  return new Date(t).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 const bildirimTikla = async (b) => {

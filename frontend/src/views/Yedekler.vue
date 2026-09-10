@@ -326,6 +326,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { backupAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
+import { formatTarihSaat as formatDate } from '../utils/format.js'
 
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -464,11 +465,6 @@ const formatSize = (bytes) => {
     i++
   }
   return size.toFixed(1) + ' ' + units[i]
-}
-
-const formatDate = (d) => {
-  if (!d) return '—'
-  return new Date(d).toLocaleString('tr-TR')
 }
 
 const cloudConfig = ref({

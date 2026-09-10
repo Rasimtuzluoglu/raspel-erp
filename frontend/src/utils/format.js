@@ -13,39 +13,74 @@ const parseDate = (value) => {
   return isNaN(d.getTime()) ? null : d
 }
 
-export const formatDate = (date) => {
+export const formatDate = (date, bos = '') => {
   const d = parseDate(date)
-  if (!d) return ''
+  if (!d) return bos
   return d.toLocaleDateString('tr-TR')
 }
 
-export const formatDateTime = (date) => {
+export const formatDateTime = (date, bos = '') => {
   const d = parseDate(date)
-  if (!d) return ''
+  if (!d) return bos
   return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 }
 
 export const formatTarih = (date) => formatDate(date) || '-'
 
-export const formatTarihSaat = (date) => {
+export const formatTarihSaat = (date, bos = '-') => {
   const d = parseDate(date)
-  if (!d) return '-'
+  if (!d) return bos
   return d.toLocaleString('tr-TR')
 }
 
-export const durumLabel = (durum) => {
-  const labels = {
-    TASLAK: 'Taslak',
-    TEKLIF: 'Teklif',
-    KESILDI: 'Kesildi',
-    IPTAL: 'İptal',
-    BEKLEMEDE: 'Beklemede',
-    ONAYLANDI: 'Onaylandı',
-    TAMAMLANDI: 'Tamamlandı',
-    DEVAM_EDIYOR: 'Devam Ediyor',
-    PORTFOY: 'Portföy',
-    TAHSILAT: 'Tahsilat',
-    ODEME: 'Ödeme'
-  }
-  return labels[durum] || durum
+export const formatTarihKisa = (date, bos = '') => {
+  const d = parseDate(date)
+  if (!d) return bos
+  return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(d)
+}
+
+export const formatGunAy = (date) => {
+  const d = parseDate(date)
+  if (!d) return ''
+  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })
+}
+
+export const formatGunSaat = (date) => {
+  const d = parseDate(date)
+  if (!d) return ''
+  return d.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+const DURUM_KEYS = {
+  TASLAK: 'common.durumTaslak',
+  TEKLIF: 'common.durumTeklif',
+  KESILDI: 'common.durumKesildi',
+  IPTAL: 'common.durumIptal',
+  BEKLEMEDE: 'common.durumBeklemede',
+  ONAYLANDI: 'common.durumOnaylandi',
+  TAMAMLANDI: 'common.durumTamamlandi',
+  DEVAM_EDIYOR: 'common.durumDevamEdiyor',
+  PORTFOY: 'common.durumPortfoy',
+  TAHSILAT: 'common.durumTahsilat',
+  ODEME: 'common.durumOdeme'
+}
+
+const DURUM_TR = {
+  TASLAK: 'Taslak',
+  TEKLIF: 'Teklif',
+  KESILDI: 'Kesildi',
+  IPTAL: 'İptal',
+  BEKLEMEDE: 'Beklemede',
+  ONAYLANDI: 'Onaylandı',
+  TAMAMLANDI: 'Tamamlandı',
+  DEVAM_EDIYOR: 'Devam Ediyor',
+  PORTFOY: 'Portföy',
+  TAHSILAT: 'Tahsilat',
+  ODEME: 'Ödeme'
+}
+
+export const durumLabel = (durum, t) => {
+  const key = DURUM_KEYS[durum]
+  if (!key) return durum
+  return t ? t(key) : DURUM_TR[durum]
 }

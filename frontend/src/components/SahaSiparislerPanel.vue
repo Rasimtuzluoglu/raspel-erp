@@ -103,18 +103,13 @@
 </template>
 
 <script setup>
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, formatTarih } from '../utils/format.js'
 
 defineProps({
   siparisler: { type: Array, default: () => [] }
 })
 
 defineEmits(['durum-sec', 'imza-ac', 'whatsapp'])
-
-const formatTarih = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
 
 const siparisDurumSeverity = (durum) => {
   const map = { BEKLIYOR: 'warning', HAZIRLANIYOR: 'info', YOLDA: 'help', TESLIM_EDILDI: 'success', IPTAL: 'danger' }

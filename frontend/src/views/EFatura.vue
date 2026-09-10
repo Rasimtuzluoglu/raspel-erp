@@ -176,7 +176,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { eFaturaAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, formatTarihKisa as formatDateTime } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
@@ -190,8 +190,6 @@ const kaydediliyor = ref(false)
 const olusturDialog = ref(false)
 const olusturForm = ref({ faturaId: null, senaryo: 'TEMELFATURA', tip: 'SATIS' })
 
-const formatDateTime = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : '-'
 const kisaEttn = (e) => (e ? e.slice(0, 8) + '…' : '-')
 const durumEtiketi = (k) =>
   ({ 1000: t('efatura.durumHazirlandi'), 1200: t('efatura.durumGonderildi'), 1300: t('efatura.durumOnaylandi'), 1350: t('efatura.durumReddedildi') })[k] || k
