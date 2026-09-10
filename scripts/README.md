@@ -1,4 +1,6 @@
-# Database Maintenance Scripts
+# Repository Scripts
+
+## Database Maintenance Scripts
 
 ## Prerequisites
 - Docker containers must be running (`docker compose up -d`)
@@ -43,3 +45,13 @@ Access at http://localhost:8082
 - Username: postgres
 - Password: postgres
 - Database: raspelerp
+
+## i18n Integrity Check
+Validates that every translation key used in `frontend/src` exists in both `tr.json` and `en.json`, that `{parametre}` placeholders match call sites, and that no garbage values slipped in.
+
+```bash
+node scripts/check-i18n.mjs      # repo root
+npm run i18n:check               # from frontend/
+```
+
+Also runs as `i18n integrity check` step in CI. Exit code 1 on any problem. New i18n keys are auto-detected; if a key is unused it is allowed, but missing/parametrized/garbage keys fail the gate.

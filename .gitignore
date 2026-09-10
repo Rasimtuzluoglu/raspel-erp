@@ -52,6 +52,12 @@ dependency-reduced-pom.xml
 
 # Vite
 .vite/
+coverage/
+
+# Cypress artifacts
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
 
 # Misc
 *.pem

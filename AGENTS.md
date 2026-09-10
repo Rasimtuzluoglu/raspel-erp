@@ -10,8 +10,8 @@
 # Backend (Java 21 + Spring Boot 3.2 + Maven)
 cd backend
 mvn -B compile -q          # Compile
-mvn -B test -q             # Run 832 tests (H2 in-memory)
-mvn -B clean verify        # Full build with tests
+mvn -B test -q             # Run 873 tests (H2 in-memory)
+mvn -B clean verify        # Full build with tests + JaCoCo gate
 mvn spring-boot:run        # Run dev server on :8081
 
 # Frontend (Vue 3 + Vite + PrimeVue 4)
@@ -19,9 +19,10 @@ cd frontend
 npm ci                      # Install deps
 npm run dev                 # Dev server :5173
 npm run build               # Production build
-npm run test                # Run 163 tests (Vitest)
+npm run test                # Run 165 tests (Vitest) + coverage gate
 npm run lint                # ESLint
-npm run cypress:run         # E2E tests
+npm run i18n:check          # i18n bütünlük kontrolü (scripts/check-i18n.mjs)
+npm run cypress:run         # E2E tests (dev server :5173 üzerinde)
 
 # Full stack with Docker
 docker-compose up -d        # Full production setup (9 containers)
@@ -40,7 +41,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (832) + Vitest (163) + Cypress |
+| Tests | JUnit 5 (873) + Vitest (165) + Cypress (7 E2E spec) |
 
 ## Project Structure
 
@@ -110,9 +111,9 @@ raspel-erp/
 
 ## Code Quality
 
-- Backend: 832 tests (JUnit 5, H2, Mockito), must pass before commit
-- Frontend: 163 tests (Vitest), zero ESLint warnings required
-- CI runs on push/PR to main: backend (compile+test), frontend (lint+test+build), security (Trivy)
+- Backend: 873 tests (JUnit 5, H2, Mockito) + JaCoCo coverage gate, must pass before commit
+- Frontend: 165 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
+- CI runs on push/PR to main: backend (compile+test+coverage), frontend (lint+i18n+test+build), e2e (Cypress, dev-server), security (Trivy, Gitleaks)
 
 ## Dev Setup (Minimal)
 

@@ -4,10 +4,11 @@
 
 ## Kısa Vadeli (v1.9.0)
 
-- [ ] Kalan servis/controller test kapsamını tamamlama (Ajanda, Bildirim, Crm, Tahsilat, TekrarlayanFatura, Yetki vb.)
+- [x] Kalan servis/controller test kapsamını tamamlama (Ajanda, Bildirim, Crm, Tahsilat, TekrarlayanFatura, Yetki vb.) — 59 controller + 146 test sinifi mevcut
 - [ ] Büyük view dosyalarının (Dashboard, HizliSatis, Stoklar, Teklifler) alt bileşenlere ayrıştırılması
-- [ ] CI'da JaCoCo/Vitest coverage eşik (gate) tanımlanması
-- [ ] i18n eksik anahtar otomatik kontrol script'i
+- [x] CI'da JaCoCo/Vitest coverage eşik (gate) tanımlanması (JaCoCo INSTR %50 / BRANCH %30 / LINE %55; Vitest global eşikler)
+- [x] i18n eksik anahtar otomatik kontrol script'i (`scripts/check-i18n.mjs` + CI'de `npm run i18n:check`)
+- [x] Cypress E2E suite'in CI'ye bağlanması (7 spec, dev-server üzerinde, auto-retry)
 
 ## Orta Vadeli
 

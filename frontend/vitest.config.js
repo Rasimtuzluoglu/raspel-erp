@@ -12,7 +12,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.{js,vue}'],
-      exclude: ['src/main.js', 'src/**/__tests__/**', 'src/api/modules/**', 'src/locales/**']
+      exclude: ['src/main.js', 'src/**/__tests__/**', 'src/api/modules/**', 'src/locales/**'],
+      thresholds: {
+        statements: 16,
+        lines: 16,
+        functions: 8,
+        branches: 6
+      }
     },
     server: {
       deps: {

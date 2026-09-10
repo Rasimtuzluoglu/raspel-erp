@@ -275,54 +275,14 @@
       v-if="!stokStore.loading && gosterim === 'kart'"
       class="stok-kartlar"
     >
-      <div
+      <StokKart
         v-for="s in stokStore.stoklar"
         :key="s.id"
-        class="stok-kart"
-        :class="{ 'dusuk-stok': s.minMiktar && s.miktar <= s.minMiktar }"
-        @click="stokSec(s)"
-      >
-        <div class="kart-ust">
-          <div
-            v-if="s.stokKodu"
-            class="stok-kod"
-          >
-            {{ s.stokKodu }}
-          </div>
-          <span
-            v-if="s.minMiktar && s.miktar <= s.minMiktar"
-            class="uyari-eti"
-          ><i class="pi pi-exclamation-triangle" /> {{ t('stoklar.colKritik') }}</span>
-        </div>
-        <h3>{{ s.ad }}</h3>
-        <div class="kart-bilgi">
-          <div class="bilgi-item">
-            <span class="bilgi-label">{{ t('stoklar.colMiktar') }}</span>
-            <span
-              class="bilgi-deger"
-              :class="s.miktar <= (s.minMiktar || 0) ? 'kritik' : 'normal'"
-            >
-              {{ s.miktar }} {{ s.birim || '' }}
-            </span>
-          </div>
-          <div class="bilgi-item">
-            <span class="bilgi-label">{{ t('stoklar.colBirimFiyat') }}</span>
-            <span class="bilgi-deger">{{ formatCurrency(s.fiyat) }}</span>
-          </div>
-        </div>
-        <div class="kart-islem">
-          <Button
-            icon="pi pi-pencil"
-            class="p-button-rounded p-button-info p-button-sm"
-            @click.stop="editStok(s)"
-          />
-          <Button
-            icon="pi pi-trash"
-            class="p-button-rounded p-button-danger p-button-sm"
-            @click.stop="confirmDel(s.id)"
-          />
-        </div>
-      </div>
+        :stok="s"
+        @sec="stokSec"
+        @duzenle="editStok"
+        @sil="confirmDel"
+      />
       <Message
         v-if="filtrelenmisStoklar && filtrelenmisStoklar.length === 0"
         severity="info"
@@ -331,106 +291,15 @@
       />
     </div>
 
-    <div
+    <StokHareketBolum
       v-if="seciliStok"
-      class="hareket-bolumu"
-    >
-      <div class="hareket-header">
-        <h2>
-          {{ seciliStok.ad }}
-          <small style="color: #64748b; font-weight: 400">({{ seciliStok.miktar }} {{ seciliStok.birim || 'Adet' }})</small>
-        </h2>
-        <Button
-          :label="t('stoklar.stokGiris')"
-          icon="pi pi-plus-circle"
-          class="p-button-success p-button-sm"
-          @click="openHareketDialog('GIRIS')"
-        />
-        <Button
-          :label="t('stoklar.stokCikis')"
-          icon="pi pi-minus-circle"
-          class="p-button-danger p-button-sm"
-          @click="openHareketDialog('CIKIS')"
-        />
-        <Button
-          icon="pi pi-chevron-up"
-          class="p-button-text p-button-sm"
-          :title="t('stoklar.kapat')"
-          @click="seciliStok = null"
-        />
-      </div>
-      <div class="table-container">
-        <DataTable
-          :value="stokHareketler"
-          striped-rows
-          :rows="8"
-          :paginator="true"
-          paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-          current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
-        >
-          <Column
-            :header="t('common.date')"
-            style="width: 100px"
-          >
-            <template #body="s">
-              {{ formatDate(s.data.hareketTarihi) }}
-            </template>
-          </Column>
-          <Column
-            :header="t('faturalar.colTur')"
-            style="width: 90px"
-          >
-            <template #body="s">
-              <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
-                {{ s.data.tur === 'GIRIS' ? t('stoklar.giris') : t('stoklar.cikis') }}
-              </span>
-            </template>
-          </Column>
-          <Column
-            :header="t('stoklar.colMiktar')"
-            style="width: 90px"
-          >
-            <template #body="s">
-              <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
-            </template>
-          </Column>
-          <Column
-            :header="t('stoklar.hareketAgirlik')"
-            style="width: 110px"
-          >
-            <template #body="s">
-              {{ s.data.agirlik != null ? s.data.agirlik : '-' }}
-            </template>
-          </Column>
-          <Column
-            :header="t('stoklar.hareketCari')"
-            style="width: 160px"
-          >
-            <template #body="s">
-              {{ s.data.cariHesapAd || '-' }}
-            </template>
-          </Column>
-          <Column :header="t('stoklar.hareketAciklama')" />
-          <Column
-            header=""
-            style="width: 60px"
-          >
-            <template #body="s">
-              <Button
-                icon="pi pi-trash"
-                class="p-button-rounded p-button-danger p-button-sm"
-                @click="delHareket(s.data.id)"
-              />
-            </template>
-          </Column>
-        </DataTable>
-        <Message
-          v-if="stokHareketler && stokHareketler.length === 0"
-          severity="info"
-          :text="t('stoklar.hareketYok')"
-        />
-      </div>
-    </div>
+      :stok="seciliStok"
+      :hareketler="stokHareketler"
+      @giris="openHareketDialog('GIRIS')"
+      @cikis="openHareketDialog('CIKIS')"
+      @kapat="seciliStok = null"
+      @sil="delHareket"
+    />
 
     <Dialog
       v-model:visible="showDialog"
@@ -782,54 +651,15 @@
       :hareketler-yukleniyor="hareketlerYukleniyor"
     />
 
-    <Dialog
+    <BarkodEtiketDialog
       v-model:visible="etiketDialog"
-      :header="t('stoklar.barkodEtiket')"
-      :modal="true"
-      style="width: 320px"
-    >
-      <div class="etiket-kart">
-        <div class="etiket-ad">
-          {{ etiketStok?.ad }}
-        </div>
-        <div class="etiket-kod">
-          {{ etiketStok?.stokKodu || etiketStok?.barkod }}
-        </div>
-        <svg
-          v-if="etiketStok?.barkod"
-          ref="barkodSvgRef"
-          class="etiket-barkod"
-        />
-        <img
-          v-if="etiketStok?.barkod"
-          :src="etiketQr(etiketStok.barkod)"
-          alt="Barkod"
-          class="etiket-qr"
-        >
-        <div class="etiket-fiyat">
-          {{ formatCurrency(etiketStok?.satisFiyati) }}
-        </div>
-      </div>
-      <template #footer>
-        <Button
-          :label="t('stoklar.kapat')"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="etiketDialog = false"
-        />
-        <Button
-          :label="t('stoklar.yazdir')"
-          icon="pi pi-print"
-          class="p-button-primary"
-          @click="etiketYazdir"
-        />
-      </template>
-    </Dialog>
+      :stok="etiketStok"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -842,6 +672,9 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import StokHareketDialog from '../components/StokHareketDialog.vue'
 import StokTopluFiyatDialog from '../components/StokTopluFiyatDialog.vue'
 import StokDetayDialog from '../components/StokDetayDialog.vue'
+import StokKart from '../components/StokKart.vue'
+import StokHareketBolum from '../components/StokHareketBolum.vue'
+import BarkodEtiketDialog from '../components/BarkodEtiketDialog.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
@@ -892,50 +725,10 @@ const gosterim = ref('tablo')
 
 const etiketDialog = ref(false)
 const etiketStok = ref(null)
-const barkodSvgRef = ref(null)
 
 const barkodEtiket = (stok) => {
   etiketStok.value = stok
   etiketDialog.value = true
-}
-
-watch(etiketDialog, async (acik) => {
-  if (acik && etiketStok.value?.barkod) {
-    await nextTick()
-    try {
-      const { default: JsBarcode } = await import('jsbarcode')
-      JsBarcode(barkodSvgRef.value, etiketStok.value.barkod, {
-        format: 'CODE128',
-        width: 2,
-        height: 60,
-        displayValue: false,
-        margin: 0
-      })
-    } catch {
-      /* jsbarcode yüklenemedi */
-    }
-  }
-})
-
-const etiketQr = (deger) => `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(deger)}&size=160x160`
-
-const etiketYazdir = () => {
-  const win = window.open('', '_blank', 'width=400,height=500')
-  if (!win) return
-  win.document.write(`
-    <html><head><title>Barkod Etiket</title></head>
-    <body style="font-family: sans-serif; text-align: center; padding: 20px;">
-      <div style="font-size: 22px; font-weight: 700;">${etiketStok.value?.ad || ''}</div>
-      <div style="font-size: 16px; color: #555;">${etiketStok.value?.stokKodu || etiketStok.value?.barkod || ''}</div>
-      ${etiketStok.value?.barkod ? `<img src="${etiketQr(etiketStok.value.barkod)}" width="200" height="200" />` : ''}
-      <div style="font-size: 20px; font-weight: 700; margin-top: 10px;">${formatCurrency(etiketStok.value?.satisFiyati)}</div>
-    </body></html>
-  `)
-  win.document.close()
-  setTimeout(() => {
-    win.focus()
-    win.print()
-  }, 800)
 }
 
 const showDialog = ref(false)
@@ -1360,42 +1153,9 @@ const stokHareketleriYukle = async (stokId) => {
     hareketlerYukleniyor.value = false
   }
 }
-
-import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>
-.etiket-kart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-}
-.etiket-ad {
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-align: center;
-}
-.etiket-kod {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-family: monospace;
-}
-.etiket-qr {
-  width: 160px;
-  height: 160px;
-}
-.etiket-barkod {
-  width: 220px;
-  height: 70px;
-}
-.etiket-fiyat {
-  font-size: 1.2rem;
-  font-weight: 700;
-}
 .foto-satir {
   display: flex;
   align-items: center;
@@ -1467,101 +1227,6 @@ h2 {
   gap: 15px;
   margin-bottom: 30px;
 }
-.stok-kart {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.stok-kart:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: rgba(59, 130, 246, 0.25);
-}
-.stok-kart.dusuk-stok {
-  border-color: rgba(239, 68, 68, 0.3);
-}
-.stok-kart.dusuk-stok:hover {
-  border-color: rgba(239, 68, 68, 0.5);
-}
-.kart-ust {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.stok-kod {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.uyari-eti {
-  font-size: 11px;
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.15);
-  padding: 2px 8px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.stok-kart h3 {
-  margin: 0 0 12px;
-  font-size: 15px;
-  color: var(--text-primary);
-}
-.kart-bilgi {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 14px;
-}
-.bilgi-item {
-  flex: 1;
-}
-.bilgi-label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-  text-transform: uppercase;
-}
-.bilgi-deger {
-  font-size: 16px;
-  font-weight: 700;
-}
-.bilgi-deger.normal {
-  color: #4ade80;
-}
-.bilgi-deger.kritik {
-  color: #f87171;
-}
-.kart-islem {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-.hareket-bolumu {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
-}
-.hareket-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-.table-container {
-  overflow-x: auto;
-}
 .form-grup {
   margin-bottom: 18px;
 }
@@ -1628,28 +1293,6 @@ h2 {
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
-}
-.badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.badge.giris {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-}
-.badge.cikis {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-.positive {
-  color: #4ade80;
-  font-weight: 700;
-}
-.negative {
-  color: #f87171;
-  font-weight: 700;
 }
 .w-full {
   width: 100% !important;

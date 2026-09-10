@@ -39,8 +39,10 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B test` -> 832 test)
-- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (163 test)
+- [ ] Backend testleri gecti (`mvn -B clean verify` -> 873 test, JaCoCo gate dahil)
+- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (165 test, coverage gate dahil)
+- [ ] Cypress E2E suite CI'da gecti (7 spec)
+- [ ] `npm run i18n:check` temiz (eksik/cop anahtar yok)
 - [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)
 - [ ] Login/logout/2FA akisi test edildi
 - [ ] Flyway migration'lari bos bir PostgreSQL'de sifirdan calisti (V61 dahil)

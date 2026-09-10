@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "i18n:check": "node ../scripts/check-i18n.mjs",
     "lint": "eslint src --ext .js,.vue",
     "format": "prettier --write \"src/**/*.{js,vue,css}\"",
     "cypress:open": "cypress open",
