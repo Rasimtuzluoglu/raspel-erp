@@ -25,7 +25,7 @@
       </Column>
       <Column
         header="Adet *"
-        style="width: 90px"
+        style="width: 110px"
       >
         <template #body="s">
           <InputNumber
@@ -37,7 +37,7 @@
       </Column>
       <Column
         header="Birim Fiyat *"
-        style="width: 130px"
+        style="width: 140px"
       >
         <template #body="s">
           <InputNumber
@@ -77,7 +77,7 @@
       </Column>
       <Column
         header="Tutar"
-        style="width: 120px"
+        style="width: 130px"
       >
         <template #body="s">
           {{ formatCurrency(kalemTutar(s.data)) }}

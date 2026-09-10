@@ -252,7 +252,7 @@
       v-model:visible="showDialog"
       :header="dialogBaslik"
       :modal="true"
-      style="width: 750px"
+      style="width: 920px; max-width: 96vw"
       :closable="false"
     >
       <div class="form-grid">
