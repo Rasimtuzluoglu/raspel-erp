@@ -5,10 +5,10 @@
         <i
           class="pi pi-folder-open"
           style="margin-right: 8px"
-        />Belgeler
+        />{{ t('belgeler.title') }}
       </h1>
       <Button
-        label="Belge Yükle"
+        :label="t('belgeler.belgeYukle')"
         icon="pi pi-upload"
         @click="yukleDialog = true"
       />
@@ -21,7 +21,7 @@
     >
       <Column
         field="dosyaAdi"
-        header="Dosya"
+        :header="t('belgeler.dosya')"
       >
         <template #body="{ data }">
           <div class="dosya-ad">
@@ -32,37 +32,37 @@
       </Column>
       <Column
         field="entityAdi"
-        header="Bağlı Kayıt"
+        :header="t('belgeler.bagliKayit')"
       />
       <Column
         field="olusturmaTarihi"
-        header="Tarih"
+        :header="t('common.date')"
       >
         <template #body="{ data }">
           {{ data.olusturmaTarihi ? new Date(data.olusturmaTarihi).toLocaleString('tr-TR') : '-' }}
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('belgeler.islem')"
         style="width: 180px"
       >
         <template #body="{ data }">
           <Button
             icon="pi pi-eye"
             class="p-button-rounded p-button-text"
-            title="Önizle"
+            :title="t('belgeler.onizle')"
             @click="onizle(data)"
           />
           <Button
             icon="pi pi-download"
             class="p-button-rounded p-button-text"
-            title="İndir"
+            :title="t('belgeler.indir')"
             @click="indir(data)"
           />
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-text p-button-danger"
-            title="Sil"
+            :title="t('common.delete')"
             @click="sil(data)"
           />
         </template>
@@ -72,33 +72,33 @@
       v-if="!yukleniyor && !liste.length"
       class="bos"
     >
-      Henüz belge yok.
+      {{ t('belgeler.bos') }}
     </div>
 
     <Dialog
       v-model:visible="yukleDialog"
-      header="Belge Yükle"
+      :header="t('belgeler.belgeYukle')"
       modal
       :style="{ width: '480px' }"
     >
       <div class="form-grup">
-        <label>Bağlı Kayıt Türü</label>
+        <label>{{ t('belgeler.bagliKayitTuru') }}</label>
         <InputText
           v-model="yukleForm.entityAdi"
-          placeholder="örn. Fatura, Sipariş, Cari..."
+          :placeholder="t('belgeler.bagliKayitTuruPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="form-grup">
-        <label>Kayıt ID</label>
+        <label>{{ t('belgeler.kayitId') }}</label>
         <InputNumber
           v-model="yukleForm.entityId"
-          placeholder="örn. 123"
+          :placeholder="t('belgeler.kayitIdPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="form-grup">
-        <label>Dosya</label>
+        <label>{{ t('belgeler.dosya') }}</label>
         <input
           type="file"
           class="w-full"
@@ -107,13 +107,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="yukleDialog = false"
         />
         <Button
-          label="Yükle"
+          :label="t('belgeler.yukle')"
           icon="pi pi-upload"
           :loading="yukleniyor"
           @click="yukle"
@@ -133,7 +133,7 @@
       >
         <img
           :src="onizleUrl"
-          alt="önizle"
+          :alt="t('belgeler.onizle')"
         >
       </div>
       <div
@@ -144,9 +144,9 @@
           class="pi pi-file"
           style="font-size: 40px"
         />
-        <p>Bu dosya türü için önizleme yok. İndirerek görüntüleyebilirsiniz.</p>
+        <p>{{ t('belgeler.onizlemeYok') }}</p>
         <Button
-          label="İndir"
+          :label="t('belgeler.indir')"
           icon="pi pi-download"
           @click="onizleBelge && indir(onizleBelge)"
         />
@@ -160,7 +160,9 @@ import { ref, onMounted } from 'vue'
 import { belgeAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const liste = ref([])
@@ -183,18 +185,18 @@ const dosyaIkon = (ad) => {
 
 const yukle = async () => {
   if (!yukleForm.value.file) {
-    toastBildirim.uyari('Lütfen dosya seçin')
+    toastBildirim.uyari(t('belgeler.dosyaSecin'))
     return
   }
   yukleniyor.value = true
   try {
-    await belgeAPI.yukle(yukleForm.value.entityAdi || 'Genel', yukleForm.value.entityId || 0, yukleForm.value.file)
-    toastBildirim.basarili('Belge yüklendi')
+    await belgeAPI.yukle(yukleForm.value.entityAdi || t('belgeler.genel'), yukleForm.value.entityId || 0, yukleForm.value.file)
+    toastBildirim.basarili(t('belgeler.yuklendi'))
     yukleDialog.value = false
     yukleForm.value = { entityAdi: '', entityId: null, file: null }
     await yukleListe()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Belge yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('belgeler.yuklenemedi'))
   }
   yukleniyor.value = false
 }
@@ -209,7 +211,7 @@ const yukleListe = async () => {
     const r = await belgeAPI.tumBelgeler()
     liste.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Belgeler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('belgeler.listelenemedi'))
   }
   yukleniyor.value = false
 }
@@ -226,7 +228,7 @@ const indir = async (belge) => {
     a.click()
     window.URL.revokeObjectURL(url)
   } catch (err) {
-    toastBildirim.hata('İndirme başarısız')
+    toastBildirim.hata(t('belgeler.indirmeBasarisiz'))
   }
 }
 
@@ -242,18 +244,18 @@ const onizle = async (belge) => {
 
 const sil = (belge) => {
   confirm.require({
-    message: `"${belge.dosyaAdi}" silinsin mi?`,
-    header: 'Silme Onayı',
+    message: t('belgeler.silinsinMi', { ad: belge.dosyaAdi }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet',
-    rejectLabel: 'İptal',
+    acceptLabel: t('belgeler.evet'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await belgeAPI.sil(belge.id)
-        toastBildirim.basarili('Belge silindi')
+        toastBildirim.basarili(t('belgeler.silindi'))
         await yukleListe()
       } catch (err) {
-        toastBildirim.hata('Silme başarısız')
+        toastBildirim.hata(t('belgeler.silmeBasarisiz'))
       }
     },
     reject: () => {}

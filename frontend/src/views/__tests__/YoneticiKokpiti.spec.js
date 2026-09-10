@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -89,7 +90,7 @@ describe('YoneticiKokpiti.vue', () => {
   it('renders executive pulse and target progress metrics', async () => {
     const YoneticiKokpiti = (await import('../YoneticiKokpiti.vue')).default
     const wrapper = mount(YoneticiKokpiti, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.yonetici-kokpiti-sayfasi').exists()).toBe(true)

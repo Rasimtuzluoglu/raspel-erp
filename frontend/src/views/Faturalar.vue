@@ -1,17 +1,17 @@
 <template>
   <div class="faturalar-container">
-    <h1>Fatura Yönetimi</h1>
+    <h1>{{ t('faturalar.title') }}</h1>
 
     <IlkZiyaretIpuclari
       anahtar="faturalar"
-      baslik="Fatura Oluşturma"
-      metin="'Yeni Fatura' ile satış/alış faturası kesin. Satış faturası stok düşer, alış faturası fabrikadan/tedarikçiden gelen ürünleri stoğa ekler ve tedarikçiyi ürüne işler. Cari seçince son aldığı ürünler önerilir."
+      :baslik="t('faturalar.ipucuBaslik')"
+      :metin="t('faturalar.ipucuMetin')"
     />
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Fatura"
+          :label="t('faturalar.yeniFatura')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openCreateDialog"
@@ -22,7 +22,7 @@
           <i class="pi pi-search" />
           <InputText
             v-model="arama"
-            placeholder="Fatura no veya cari ara..."
+            :placeholder="t('faturalar.aramaPlaceholder')"
             class="arama-input"
             @input="aramaDebounce"
           />
@@ -59,18 +59,18 @@
       >
         <div class="batch-info">
           <i class="pi pi-check-square" />
-          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> kayıt seçildi</span>
+          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> {{ t('faturalar.kayitSecildi') }}</span>
         </div>
         <div class="batch-buttons">
           <Button
-            label="Seçilenleri Sil"
+            :label="t('faturalar.secilenleriSil')"
             icon="pi pi-trash"
             class="p-button-danger p-button-sm"
             :loading="topluSiliniyor"
             @click="topluSil()"
           />
           <Button
-            label="Seçimi Temizle"
+            :label="t('common.clearSelection')"
             icon="pi pi-times"
             class="p-button-text p-button-sm"
             @click="selectedItems = []"
@@ -91,12 +91,12 @@
       >
         <Column
           field="faturaNumarasi"
-          header="Fatura No"
+          :header="t('faturalar.colFaturaNo')"
           style="width: 160px"
         />
         <Column
           field="tarih"
-          header="Tarih"
+          :header="t('common.date')"
           style="width: 110px"
         >
           <template #body="s">
@@ -105,18 +105,18 @@
         </Column>
         <Column
           field="tur"
-          header="Tür"
+          :header="t('faturalar.colTur')"
           style="width: 90px"
         >
           <template #body="s">
             <span :class="['badge', s.data.tur === 'SATIS' ? 'satis' : 'alis']">
-              {{ s.data.tur === 'SATIS' ? 'Satış' : 'Alış' }}
+              {{ s.data.tur === 'SATIS' ? t('faturalar.satis') : t('faturalar.alis') }}
             </span>
           </template>
         </Column>
         <Column
           field="cariHesapAd"
-          header="Cari Hesap"
+          :header="t('faturalar.colCari')"
           style="width: 180px"
         >
           <template #body="s">
@@ -125,7 +125,7 @@
         </Column>
         <Column
           field="genelToplam"
-          header="Toplam"
+          :header="t('faturalar.colToplam')"
           style="width: 130px"
         >
           <template #body="s">
@@ -134,7 +134,7 @@
         </Column>
         <Column
           field="durum"
-          header="Durum"
+          :header="t('common.status')"
           style="width: 110px"
         >
           <template #body="s">
@@ -145,7 +145,7 @@
         </Column>
         <Column
           field="olusturanKullaniciAdi"
-          header="İşlemi Yapan"
+          :header="t('faturalar.colIslemiYapan')"
           style="width: 140px"
         >
           <template #body="s">
@@ -161,7 +161,7 @@
         </Column>
         <Column
           field="teslimEden"
-          header="Teslim Eden"
+          :header="t('faturalar.colTeslimEden')"
           style="width: 140px"
         >
           <template #body="s">
@@ -176,60 +176,60 @@
           </template>
         </Column>
         <Column
-          header="İşlemler"
+          :header="t('common.actions')"
           style="width: 310px"
         >
           <template #body="s">
             <Button
               icon="pi pi-eye"
               class="p-button-rounded p-button-sm p-button-info"
-              title="Görüntüle"
+              :title="t('faturalar.goruntule')"
               @click="viewFatura(s.data.id)"
             />
             <Button
               icon="pi pi-print"
               class="p-button-rounded p-button-sm p-button-secondary"
-              title="Yazdır & Şablon Tasarla"
+              :title="t('faturalar.yazdirTasarla')"
               @click="tasarlaVeYazdir(s.data.id)"
             />
             <Button
               icon="pi pi-download"
               class="p-button-rounded p-button-sm p-button-help"
-              title="PDF İndir"
+              :title="t('faturalar.pdfIndir')"
               @click="pdfIndir(s.data)"
             />
             <Button
               icon="pi pi-whatsapp"
               class="p-button-rounded p-button-sm p-button-success"
-              title="WhatsApp İle Gönder"
+              :title="t('faturalar.whatsapp')"
               style="background: #25d366; border-color: #25d366"
               @click="whatsappGonder(s.data)"
             />
             <Button
               icon="pi pi-copy"
               class="p-button-rounded p-button-sm p-button-secondary"
-              title="Çoğalt"
+              :title="t('common.duplicate')"
               @click="cogalt(s.data)"
             />
             <Button
               v-if="s.data.durum === 'TASLAK' || s.data.durum === 'KESILDI'"
               icon="pi pi-pencil"
               class="p-button-rounded p-button-sm p-button-warning"
-              :title="s.data.durum === 'KESILDI' ? 'Revize Et' : 'Düzenle'"
+              :title="s.data.durum === 'KESILDI' ? t('faturalar.revize') : t('common.edit')"
               @click="editFatura(s.data)"
             />
             <Button
               v-if="s.data.durum === 'TASLAK'"
               icon="pi pi-check"
               class="p-button-rounded p-button-sm p-button-success"
-              title="Kes"
+              :title="t('faturalar.kes')"
               @click="confirmKes(s.data.id)"
             />
             <Button
               v-if="s.data.durum !== 'IPTAL'"
               icon="pi pi-ban"
               class="p-button-rounded p-button-sm p-button-danger"
-              title="İptal"
+              :title="t('common.cancel')"
               @click="confirmIptal(s.data.id)"
             />
           </template>
@@ -237,10 +237,10 @@
       </DataTable>
       <EmptyState
         v-if="filtrelenmisFaturalar && filtrelenmisFaturalar.length === 0"
-        message="Henüz fatura yok"
-        sub-message="İlk faturanızı oluşturarak satış sürecinizi başlatın."
+        :message="t('faturalar.empty')"
+        :sub-message="t('faturalar.emptyHint')"
         icon="pi pi-file"
-        action-label="İlk Faturayı Oluştur"
+        :action-label="t('faturalar.emptyAction')"
         action-icon="pi pi-plus"
         @action="openCreateDialog"
       />
@@ -255,7 +255,7 @@
     >
       <div class="form-grid">
         <div class="form-group">
-          <label>{{ form.tur === 'ALIS' ? 'Tedarikçi (Fabrika)' : 'Müşteri' }}</label>
+          <label>{{ form.tur === 'ALIS' ? t('faturalar.tedarikci') : t('faturalar.musteri') }}</label>
           <AutoComplete
             v-model="seciliCariNesnesi"
             :suggestions="cariOnerileri"
@@ -263,8 +263,8 @@
             option-value="id"
             :placeholder="
               form.tur === 'ALIS'
-                ? 'Tedarikçi ara ve seç (isim, vergi no, telefon)...'
-                : 'Cari ara ve seç (isim, vergi no, telefon)...'
+                ? t('faturalar.tedarikciAra')
+                : t('faturalar.cariAra')
             "
             class="w-full"
             :force-selection="false"
@@ -282,7 +282,7 @@
           </AutoComplete>
           <Button
             v-if="form.cariHesapId"
-            label="Son Faturayı Kopyala"
+            :label="t('faturalar.sonFaturaKopyala')"
             icon="pi pi-copy"
             class="p-button-text p-button-sm son-fatura-kopyala"
             :loading="sonFaturaYukleniyor"
@@ -290,13 +290,13 @@
           />
         </div>
         <div class="form-group">
-          <label>Fatura Türü *</label>
+          <label>{{ t('faturalar.faturaTuru') }}</label>
           <Dropdown
             v-model="form.tur"
             :options="turSecenekler"
             option-label="label"
             option-value="value"
-            placeholder="Seçiniz"
+            :placeholder="t('faturalar.seciniz')"
             class="w-full"
           />
         </div>
@@ -304,19 +304,19 @@
           v-if="form.tur === 'ALIS'"
           class="form-group"
         >
-          <label>Giriş Deposu</label>
+          <label>{{ t('faturalar.girisDeposu') }}</label>
           <Dropdown
             v-model="form.depoId"
             :options="depolar"
             option-label="ad"
             option-value="id"
-            placeholder="Depo Seçin"
+            :placeholder="t('faturalar.depoSecin')"
             class="w-full"
             :show-clear="true"
           />
         </div>
         <div class="form-group">
-          <label>Tarih *</label>
+          <label>{{ t('faturalar.tarihZorunlu') }}</label>
           <DatePicker
             v-model="form.tarih"
             date-format="dd.mm.yy"
@@ -325,7 +325,7 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Para Birimi</label>
+            <label>{{ t('faturalar.paraBirimi') }}</label>
             <Dropdown
               v-model="form.paraBirimi"
               :options="['TRY', 'USD', 'EUR', 'GBP', 'SAR', 'GAU']"
@@ -337,7 +337,7 @@
             v-if="form.paraBirimi && form.paraBirimi !== 'TRY'"
             class="form-group"
           >
-            <label>Kur Bilgisi (TL Karşılığı)</label>
+            <label>{{ t('faturalar.kurBilgisi') }}</label>
             <div class="kur-bilgi-box">
               1 {{ form.paraBirimi }} =
               {{
@@ -350,7 +350,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Teslim Eden Personel</label>
+          <label>{{ t('faturalar.teslimEdenPersonel') }}</label>
           <div class="teslim-eden-grup">
             <Dropdown
               v-model="form.teslimEden"
@@ -359,7 +359,7 @@
               option-value="value"
               filter
               editable
-              placeholder="Götüren personeli seçin veya yazın"
+              :placeholder="t('faturalar.teslimEdenPlaceholder')"
               class="w-full"
               :show-clear="true"
             >
@@ -373,7 +373,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Teslim Durumu</label>
+          <label>{{ t('faturalar.teslimDurumu') }}</label>
           <Dropdown
             v-model="form.teslimDurumu"
             :options="teslimDurumSecenekleri"
@@ -383,20 +383,20 @@
           />
         </div>
         <div class="form-group">
-          <label>Teslim Notu</label>
+          <label>{{ t('faturalar.teslimNotu') }}</label>
           <Textarea
             v-model="form.teslimNotu"
             rows="2"
-            placeholder="Teslimat notu (isteğe bağlı)"
+            :placeholder="t('faturalar.teslimNotuPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="form-group">
-          <label>Açıklama</label>
+          <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="form.aciklama"
             rows="2"
-            placeholder="İsteğe bağlı"
+            :placeholder="t('faturalar.istegeBagli')"
             class="w-full"
           />
         </div>
@@ -410,23 +410,23 @@
               <i
                 class="pi pi-truck"
                 style="margin-right: 6px"
-              /> Teslimat Bilgileri
+              /> {{ t('faturalar.teslimatBilgileri') }}
             </label>
           </div>
           <div class="form-group">
-            <label>Şoför</label>
+            <label>{{ t('faturalar.sofor') }}</label>
             <Dropdown
               v-model="form.driverId"
               :options="suruculer"
               option-label="ad"
               option-value="id"
-              placeholder="Şoför seçin"
+              :placeholder="t('faturalar.soforSecin')"
               class="w-full"
               :show-clear="true"
             />
           </div>
           <div class="form-group">
-            <label>Beklenen Teslim Tarihi</label>
+            <label>{{ t('faturalar.beklenenTeslimTarihi') }}</label>
             <DatePicker
               v-model="form.beklenenTeslimTarihi"
               date-format="dd.mm.yy"
@@ -434,20 +434,20 @@
             />
           </div>
           <div class="form-group">
-            <label>Teslimat Adresi</label>
+            <label>{{ t('faturalar.teslimatAdresi') }}</label>
             <Textarea
               v-model="form.teslimatAdresi"
               rows="2"
-              placeholder="Müşteri adresinden otomatik doldurulur, elle düzenlenebilir"
+              :placeholder="t('faturalar.adresPlaceholder')"
               class="w-full"
             />
           </div>
           <div class="form-group">
-            <label>Teslimat Notu</label>
+            <label>{{ t('faturalar.teslimNotu') }}</label>
             <Textarea
               v-model="form.teslimatNotu"
               rows="2"
-              placeholder="İsteğe bağlı"
+              :placeholder="t('faturalar.istegeBagli')"
               class="w-full"
             />
           </div>
@@ -463,14 +463,14 @@
             class="form-group"
             style="flex: 3; margin: 0"
           >
-            <label>Ürün Seç (Stoktan Otomatik Ekle)</label>
+            <label>{{ t('faturalar.urunSec') }}</label>
             <Dropdown
               v-model="urunSecimi"
               :options="stokStore.stoklar"
               filter
               option-label="ad"
               option-value="id"
-              placeholder="Ürün ara ve seç..."
+              :placeholder="t('faturalar.urunAra')"
               class="w-full"
               @change="urunSecildi"
             >
@@ -480,8 +480,8 @@
                   <span
                     v-if="kritikStokMu(s.option)"
                     class="kitlik-rozeti"
-                    :title="'Kritik stok seviyesi: minimum ' + (s.option.minMiktar || 0)"
-                  >Son {{ Math.floor(s.option.miktar) }} adet</span>
+                    :title="t('faturalar.kritikStokTitle', { n: s.option.minMiktar || 0 })"
+                  >{{ t('faturalar.sonAdet', { n: Math.floor(s.option.miktar) }) }}</span>
                   <span style="color: #4ade80; font-size: 12px; font-weight: 600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
                   <span style="color: #94a3b8; font-size: 12px">{{ formatCurrency(s.option.fiyat) }}</span>
                 </div>
@@ -492,7 +492,7 @@
             class="form-group"
             style="flex: 1; margin: 0"
           >
-            <label>Miktar</label>
+            <label>{{ t('faturalar.miktar') }}</label>
             <InputNumber
               v-model="urunAdet"
               :min="1"
@@ -522,7 +522,7 @@
       />
 
       <h3 style="margin: 20px 0 10px">
-        Fatura Kalemleri
+        {{ t('faturalar.faturaKalemleri') }}
       </h3>
       <FaturaKalemleri
         :kalemler="form.kalemler"
@@ -535,13 +535,13 @@
 
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="closeDialog"
         />
         <Button
-          :label="editingId ? 'Faturayı Güncelle' : 'Faturayı Oluştur'"
+          :label="editingId ? t('faturalar.guncelle') : t('faturalar.olustur')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveFatura"
@@ -568,6 +568,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import { useI18n } from 'vue-i18n'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
@@ -592,6 +593,7 @@ const route = useRoute()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const faturaStore = useFaturaStore()
 
 const tasarimModalAcik = ref(false)
@@ -635,10 +637,10 @@ const aramaDebounce = () => {
   }, 300)
 }
 
-const turSecenekler = [
-  { label: 'Satış', value: 'SATIS' },
-  { label: 'Alış', value: 'ALIS' }
-]
+const turSecenekler = computed(() => [
+  { label: t('faturalar.satis'), value: 'SATIS' },
+  { label: t('faturalar.alis'), value: 'ALIS' }
+])
 
 const form = ref({
   cariHesapId: null,
@@ -660,16 +662,16 @@ const form = ref({
 const depolar = ref([])
 const suruculer = ref([])
 
-const teslimDurumSecenekleri = [
-  { label: 'Bekliyor', value: 'BEKLIYOR' },
-  { label: 'Yolda', value: 'YOLDA' },
-  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' }
-]
+const teslimDurumSecenekleri = computed(() => [
+  { label: t('faturalar.durumBekliyor'), value: 'BEKLIYOR' },
+  { label: t('faturalar.durumYolda'), value: 'YOLDA' },
+  { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
+])
 
 const urunSecimi = ref(null)
 const urunAdet = ref(1)
 
-const dialogBaslik = computed(() => (editingId.value ? 'Fatura Düzenle' : 'Yeni Fatura Oluştur'))
+const dialogBaslik = computed(() => (editingId.value ? t('faturalar.dialogDuzenle') : t('faturalar.dialogYeni')))
 
 const filtrelenmisFaturalar = computed(() => {
   if (!tarihAraligi.value || tarihAraligi.value.length !== 2 || !tarihAraligi.value[0]) {
@@ -690,8 +692,8 @@ const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
   onRestore: () => {
     toast.add({
       severity: 'info',
-      summary: 'Taslak Geri Yüklendi',
-      detail: 'Kesilmemiş faturanız geri yüklendi.',
+      summary: t('faturalar.taslakGeriYuklendi'),
+      detail: t('faturalar.taslakGeriYuklendiDetay'),
       life: 5000
     })
   }
@@ -711,7 +713,7 @@ onMounted(async () => {
       suruculeriYukle()
     ])
   } catch (err) {
-    toastBildirim.hata('Veriler yüklenirken hata oluştu')
+    toastBildirim.hata(t('faturalar.hataYukleme'))
   } finally {
     loading.value = false
   }
@@ -878,7 +880,7 @@ const sonUrunuEkle = (urun) => {
     kdvOrani: 20,
     stokId: urun.stokId || null
   })
-  toastBildirim.basarili('Kalem eklendi')
+    toastBildirim.basarili(t('faturalar.kalemEklendi'))
 }
 
 const sonFaturaYukleniyor = ref(false)
@@ -906,9 +908,9 @@ const sonFaturayiKopyala = async () => {
     if (form.value.kalemler.length === 0) {
       form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 })
     }
-    toastBildirim.basarili('Son fatura kopyalandı')
+    toastBildirim.basarili(t('faturalar.sonFaturaKopyalandi'))
   } catch {
-    toastBildirim.hata('Son fatura yüklenemedi')
+    toastBildirim.hata(t('faturalar.sonFaturaYuklenemedi'))
   } finally {
     sonFaturaYukleniyor.value = false
   }
@@ -1019,7 +1021,7 @@ const cogalt = (fatura) => {
   }
   formTemizle()
   showDialog.value = true
-  toastBildirim.basarili('Fatura çoğaltıldı, değişiklikleri kaydedin')
+    toastBildirim.basarili(t('faturalar.faturaCogaltildi'))
 }
 
 const closeDialog = () => {
@@ -1065,10 +1067,10 @@ const saveFatura = async () => {
   try {
     if (editingId.value) {
       await faturaStore.updateFatura(editingId.value, payload)
-      toastBildirim.basarili('Fatura güncellendi')
+      toastBildirim.basarili(t('faturalar.faturaGuncellendi'))
     } else {
       const yeni = await faturaStore.addFatura(payload)
-      toastBildirim.basarili('Fatura oluşturuldu')
+      toastBildirim.basarili(t('faturalar.faturaOlusturuldu'))
       if (form.value.driverId && form.value.teslimatAdresi?.trim()) {
         try {
           await teslimatAPI.olustur({
@@ -1082,7 +1084,7 @@ const saveFatura = async () => {
           })
         } catch (teslimatHata) {
           toastBildirim.hata(
-            'Teslimat kaydı oluşturulamadı: ' + (teslimatHata?.response?.data?.message || 'Bilinmeyen hata')
+            t('faturalar.teslimatOlusturulamadi') + (teslimatHata?.response?.data?.message || t('faturalar.bilinmeyenHata'))
           )
         }
       }
@@ -1091,7 +1093,7 @@ const saveFatura = async () => {
     formTemizle()
     closeDialog()
   } catch (err) {
-    const msg = err.response?.data?.message || 'İşlem başarısız'
+    const msg = err.response?.data?.message || t('faturalar.islemBasarisiz')
     toastBildirim.hata(msg)
   } finally {
     saving.value = false
@@ -1113,21 +1115,21 @@ const pdfIndir = async (fatura) => {
     link.remove()
     window.URL.revokeObjectURL(url)
   } catch {
-    toastBildirim.hata('PDF indirilemedi')
+    toastBildirim.hata(t('faturalar.pdfIndirilemedi'))
   }
 }
 
 const confirmKes = (id) => {
   confirm.require({
-    message: 'Faturayı kesmek istediğinizden emin misiniz?',
-    header: 'Fatura Kes',
+    message: t('faturalar.kesOnayMesaj'),
+    header: t('faturalar.kesOnayBaslik'),
     icon: 'pi pi-check-circle',
     accept: async () => {
       try {
         await faturaStore.updateDurum(id, 'KESILDI')
-        toastBildirim.basarili('Fatura kesildi')
+        toastBildirim.basarili(t('faturalar.faturaKesildi'))
       } catch {
-        toastBildirim.hata('İşlem başarısız')
+        toastBildirim.hata(t('faturalar.islemBasarisiz'))
       }
     }
   })
@@ -1135,22 +1137,27 @@ const confirmKes = (id) => {
 
 const confirmIptal = (id) => {
   confirm.require({
-    message: 'Faturayı iptal etmek istediğinizden emin misiniz?',
-    header: 'Fatura İptal',
+    message: t('faturalar.iptalOnayMesaj'),
+    header: t('faturalar.iptalOnayBaslik'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await faturaStore.updateDurum(id, 'IPTAL')
-        toastBildirim.basarili('Fatura iptal edildi')
+        toastBildirim.basarili(t('faturalar.faturaIptalEdildi'))
       } catch {
-        toastBildirim.hata('İşlem başarısız')
+        toastBildirim.hata(t('faturalar.islemBasarisiz'))
       }
     }
   })
 }
 
 const durumLabel = (d) => {
-  const lbl = { TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' }
+  const lbl = {
+    TASLAK: t('faturalar.durumTaslak'),
+    TEKLIF: t('faturalar.durumTeklif'),
+    KESILDI: t('faturalar.durumKesildi'),
+    IPTAL: t('faturalar.durumIptal')
+  }
   return lbl[d] || d
 }
 
@@ -1176,23 +1183,18 @@ const topluSil = async () => {
     for (const item of selectedItems.value) {
       await faturaAPI.delete(item.id)
     }
-    toastBildirim.basarili(`${selectedItems.value.length} kayıt silindi`)
+    toastBildirim.basarili(t('faturalar.kayitSilindi', { n: selectedItems.value.length }))
     selectedItems.value = []
     await faturaStore.getAllFaturalar()
   } catch {
-    toastBildirim.hata('Silme işlemi başarısız')
+    toastBildirim.hata(t('faturalar.silmeBasarisiz'))
   } finally {
     topluSiliniyor.value = false
   }
 }
 
 
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-    new Date(dateString)
-  )
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

@@ -1,8 +1,8 @@
 <template>
   <div class="import-page">
     <PageHeader
-      title="Veri İçe Aktar"
-      subtitle="CSV dosyaları ile toplu stok ve cari hesap aktarımı yapın."
+      :title="t('veriImport.title')"
+      :subtitle="t('veriImport.subtitle')"
     />
 
     <div class="import-grid">
@@ -11,11 +11,11 @@
           <i
             class="pi pi-box"
             style="margin-right: 8px"
-          />Stok Aktar
+          />{{ t('veriImport.stokAktar') }}
         </template>
         <template #content>
           <p class="import-desc">
-            CSV dosyası ile toplu stok girişi. Kolonlar: <code>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar</code>
+            {{ t('veriImport.stokDesc') }} <code>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar</code>
           </p>
           <div
             class="import-dropzone"
@@ -31,11 +31,11 @@
               @change="dosyaDegisti($event, 'stok')"
             >
             <i class="pi pi-upload" />
-            <span>{{ stokDosya ? stokDosya.name : 'CSV dosyasını seçin veya sürükleyin' }}</span>
+            <span>{{ stokDosya ? stokDosya.name : t('veriImport.csvSecin') }}</span>
           </div>
           <Button
             v-if="stokDosya"
-            label="Aktar"
+            :label="t('veriImport.aktar')"
             icon="pi pi-upload"
             class="p-button-success w-full"
             :loading="stokYukleniyor"
@@ -49,8 +49,8 @@
               :severity="stokSonuc.hatalar?.length ? 'warn' : 'success'"
               :closable="true"
             >
-              <strong>{{ stokSonuc.basarili }} stok aktarıldı.</strong>
-              <span v-if="stokSonuc.hatalar?.length"> {{ stokSonuc.hatalar.length }} hata.</span>
+              <strong>{{ t('veriImport.stokAktarildi', { n: stokSonuc.basarili }) }}</strong>
+              <span v-if="stokSonuc.hatalar?.length"> {{ t('veriImport.hataSayisi', { n: stokSonuc.hatalar.length }) }}</span>
             </Message>
             <ul
               v-if="stokSonuc.hatalar?.length"
@@ -72,11 +72,11 @@
           <i
             class="pi pi-users"
             style="margin-right: 8px"
-          />Cari Hesap Aktar
+          />{{ t('veriImport.cariAktar') }}
         </template>
         <template #content>
           <p class="import-desc">
-            CSV dosyası ile toplu cari hesap girişi. Kolonlar: <code>ad;vergiNo;telefon;eposta;il;ilce;adres</code>
+            {{ t('veriImport.cariDesc') }} <code>ad;vergiNo;telefon;eposta;il;ilce;adres</code>
           </p>
           <div
             class="import-dropzone"
@@ -92,11 +92,11 @@
               @change="dosyaDegisti($event, 'cari')"
             >
             <i class="pi pi-upload" />
-            <span>{{ cariDosya ? cariDosya.name : 'CSV dosyasını seçin veya sürükleyin' }}</span>
+            <span>{{ cariDosya ? cariDosya.name : t('veriImport.csvSecin') }}</span>
           </div>
           <Button
             v-if="cariDosya"
-            label="Aktar"
+            :label="t('veriImport.aktar')"
             icon="pi pi-upload"
             class="p-button-success w-full"
             :loading="cariYukleniyor"
@@ -110,8 +110,8 @@
               :severity="cariSonuc.hatalar?.length ? 'warn' : 'success'"
               :closable="true"
             >
-              <strong>{{ cariSonuc.basarili }} cari hesap aktarıldı.</strong>
-              <span v-if="cariSonuc.hatalar?.length"> {{ cariSonuc.hatalar.length }} hata.</span>
+              <strong>{{ t('veriImport.cariAktarildi', { n: cariSonuc.basarili }) }}</strong>
+              <span v-if="cariSonuc.hatalar?.length"> {{ t('veriImport.hataSayisi', { n: cariSonuc.hatalar.length }) }}</span>
             </Message>
             <ul
               v-if="cariSonuc.hatalar?.length"
@@ -133,13 +133,12 @@
           <i
             class="pi pi-file-import"
             style="margin-right: 8px"
-          />Alış Faturası Aktar
+          />{{ t('veriImport.alisFaturaAktar') }}
         </template>
         <template #content>
           <p class="import-desc">
-            CSV dosyası ile toplu alış faturası girişi. Kolonlar:
-            <code>faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani</code> (aynı faturaNo'ya sahip
-            satırlar tek faturada birleştirilir, stoklar otomatik eklenir)
+            {{ t('veriImport.alisFaturaDesc') }}
+            <code>faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani</code> {{ t('veriImport.alisFaturaNot') }}
           </p>
           <div
             class="import-dropzone"
@@ -155,11 +154,11 @@
               @change="dosyaDegisti($event, 'alisFatura')"
             >
             <i class="pi pi-upload" />
-            <span>{{ alisFaturaDosya ? alisFaturaDosya.name : 'CSV dosyasını seçin veya sürükleyin' }}</span>
+            <span>{{ alisFaturaDosya ? alisFaturaDosya.name : t('veriImport.csvSecin') }}</span>
           </div>
           <Button
             v-if="alisFaturaDosya"
-            label="Aktar"
+            :label="t('veriImport.aktar')"
             icon="pi pi-upload"
             class="p-button-success w-full"
             :loading="alisFaturaYukleniyor"
@@ -173,8 +172,8 @@
               :severity="alisFaturaSonuc.hatalar?.length ? 'warn' : 'success'"
               :closable="true"
             >
-              <strong>{{ alisFaturaSonuc.basarili }} alış faturası aktarıldı.</strong>
-              <span v-if="alisFaturaSonuc.hatalar?.length"> {{ alisFaturaSonuc.hatalar.length }} hata.</span>
+              <strong>{{ t('veriImport.alisFaturaAktarildi', { n: alisFaturaSonuc.basarili }) }}</strong>
+              <span v-if="alisFaturaSonuc.hatalar?.length"> {{ t('veriImport.hataSayisi', { n: alisFaturaSonuc.hatalar.length }) }}</span>
             </Message>
             <ul
               v-if="alisFaturaSonuc.hatalar?.length"
@@ -199,9 +198,11 @@ import { ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { importAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const stokDosya = ref(null)
 const cariDosya = ref(null)
 const alisFaturaDosya = ref(null)
@@ -243,12 +244,12 @@ const aktar = async (tur) => {
     sonuc.value = res.data
     toast.add({
       severity: res.data.hatalar?.length ? 'warn' : 'success',
-      summary: 'İşlem Tamam',
+      summary: t('veriImport.islemTamam'),
       detail: res.data.mesaj,
       life: 5000
     })
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Aktarma başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('veriImport.aktarmaBasarisiz'))
   } finally {
     loading.value = false
   }

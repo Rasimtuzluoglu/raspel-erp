@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -29,7 +30,7 @@ describe('Sohbet.vue', () => {
   it('renders chat page and AI Assistant header', async () => {
     const Sohbet = (await import('../Sohbet.vue')).default
     const wrapper = mount(Sohbet, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.sohbet-sayfasi').exists()).toBe(true)
@@ -39,7 +40,7 @@ describe('Sohbet.vue', () => {
   it('renders quick question chips in AI mode', async () => {
     const Sohbet = (await import('../Sohbet.vue')).default
     const wrapper = mount(Sohbet, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.findAll('.oneri-cip').length).toBeGreaterThan(0)

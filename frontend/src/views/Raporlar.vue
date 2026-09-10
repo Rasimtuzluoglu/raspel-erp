@@ -1,13 +1,13 @@
 <template>
   <div class="raporlar-container">
     <div class="raporlar-header-bar">
-      <h1>Raporlar</h1>
+      <h1>{{ t('raporlar.title') }}</h1>
       <TarihHizliSecim
         v-model="tarihAraligi"
         style="margin-right: 12px"
       />
       <div class="rapor-doviz-secim">
-        <label><i class="pi pi-dollar" /> Rapor Para Birimi:</label>
+        <label><i class="pi pi-dollar" /> {{ t('raporlar.raporParaBirimi') }}</label>
         <Dropdown
           v-model="dovizStore.aktifParaBirimi"
           :options="['TRY', 'USD', 'EUR', 'GBP', 'SAR', 'GAU']"
@@ -23,7 +23,7 @@
       <span class="favori-baslik"><i
         class="pi pi-star-fill"
         style="color: #fbbf24"
-      /> Sık Kullanılanlar:</span>
+      /> {{ t('raporlar.sikKullanilanlar') }}</span>
       <Button
         v-for="r in favoriRaporlar"
         :key="r.key"
@@ -44,25 +44,25 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('cariEkstre') }"
-              @click.stop="raporFavoriDegistir('cariEkstre', 0, 'Cari Ekstre')"
+              @click.stop="raporFavoriDegistir('cariEkstre', 0, t('raporlar.cariEkstre'))"
             />
-            Cari Ekstre
+            {{ t('raporlar.cariEkstre') }}
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
-            <label>Cari Hesap</label>
+            <label>{{ t('raporlar.cariHesap') }}</label>
             <Dropdown
               v-model="ekstreCariId"
               :options="cariHesapStore?.cariHesaplar || []"
               option-label="ad"
               option-value="id"
-              placeholder="Seçiniz"
+              :placeholder="t('faturalar.seciniz')"
               class="w-full"
             />
           </div>
           <div class="form-group">
-            <label>Başlangıç</label>
+            <label>{{ t('raporlar.baslangic') }}</label>
             <DatePicker
               v-model="ekstreBas"
               date-format="dd.mm.yy"
@@ -70,7 +70,7 @@
             />
           </div>
           <div class="form-group">
-            <label>Bitiş</label>
+            <label>{{ t('raporlar.bitis') }}</label>
             <DatePicker
               v-model="ekstreBit"
               date-format="dd.mm.yy"
@@ -80,7 +80,7 @@
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
             <Button
-              label="Rapor Getir"
+              :label="t('raporlar.raporGetir')"
               icon="pi pi-search"
               :loading="ekstreLoading"
               @click="getCariEkstre"
@@ -96,13 +96,13 @@
           <div class="rapor-bilgi">
             <h3>{{ ekstreData.cariAd }}</h3>
             <p>
-              Dönem Başı Bakiye:
+              {{ t('raporlar.donemBasBakiye') }}
               <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{
                 formatCurrency(ekstreData.donemBasBakiye)
               }}</strong>
             </p>
             <p>
-              Dönem Sonu Bakiye:
+              {{ t('raporlar.donemSonBakiye') }}
               <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{
                 formatCurrency(ekstreData.donemSonBakiye)
               }}</strong>
@@ -110,15 +110,15 @@
             <div class="rapor-aksiyonlar">
               <Button
                 icon="pi pi-print"
-                label="PDF"
+                :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
                 @click="yazdir(ekstreKart)"
               />
               <Button
                 icon="pi pi-envelope"
-                label="E-posta Gönder"
+                :label="t('raporlar.epostaGonder')"
                 class="p-button-sm p-button-outlined"
-                @click="epostaGonder(ekstreData.cariAd, 'Cari Ekstre Raporu')"
+                @click="epostaGonder(ekstreData.cariAd, t('raporlar.cariEkstreRaporu'))"
               />
             </div>
           </div>
@@ -131,7 +131,7 @@
           >
             <Column
               field="hareketTarihi"
-              header="Tarih"
+              :header="t('common.date')"
               style="width: 100px"
             >
               <template #body="s">
@@ -140,18 +140,18 @@
             </Column>
             <Column
               field="tur"
-              header="Tür"
+              :header="t('raporlar.tur')"
               style="width: 90px"
             >
               <template #body="s">
                 <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
-                  {{ s.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
+                  {{ s.data.tur === 'TAHSILAT' ? t('raporlar.tahsilat') : t('raporlar.odeme') }}
                 </span>
               </template>
             </Column>
             <Column
               field="tutar"
-              header="Tutar"
+              :header="t('common.amount')"
               style="width: 120px"
             >
               <template #body="s">
@@ -162,13 +162,13 @@
             </Column>
             <Column
               field="aciklama"
-              header="Açıklama"
+              :header="t('common.description')"
             />
           </DataTable>
           <Message
             v-if="ekstreData.hareketler.length === 0"
             severity="info"
-            text="Bu dönemde hareket bulunmamaktadır."
+            :text="t('raporlar.hareketYok')"
           />
         </div>
       </TabPanel>
@@ -179,14 +179,14 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('gelirGider') }"
-              @click.stop="raporFavoriDegistir('gelirGider', 1, 'Gelir/Gider Özeti')"
+              @click.stop="raporFavoriDegistir('gelirGider', 1, t('raporlar.gelirGiderOzeti'))"
             />
-            Gelir/Gider Özeti
+            {{ t('raporlar.gelirGiderOzeti') }}
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
-            <label>Başlangıç</label>
+            <label>{{ t('raporlar.baslangic') }}</label>
             <DatePicker
               v-model="ggBas"
               date-format="dd.mm.yy"
@@ -194,7 +194,7 @@
             />
           </div>
           <div class="form-group">
-            <label>Bitiş</label>
+            <label>{{ t('raporlar.bitis') }}</label>
             <DatePicker
               v-model="ggBit"
               date-format="dd.mm.yy"
@@ -204,7 +204,7 @@
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
             <Button
-              label="Rapor Getir"
+              :label="t('raporlar.raporGetir')"
               icon="pi pi-search"
               :loading="ggLoading"
               @click="getGelirGider"
@@ -233,13 +233,13 @@
             <div class="rapor-aksiyonlar">
               <Button
                 icon="pi pi-print"
-                label="PDF"
+                :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
                 @click="yazdir(ggKart)"
               />
               <Button
                 icon="pi pi-envelope"
-                label="E-posta Gönder"
+                :label="t('raporlar.epostaGonder')"
                 class="p-button-sm p-button-outlined"
                 @click="epostaGonder('Gelir/Gider Özeti', 'Gelir/Gider Raporu')"
               />
@@ -275,14 +275,14 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('kdv') }"
-              @click.stop="raporFavoriDegistir('kdv', 2, 'KDV Raporu')"
+              @click.stop="raporFavoriDegistir('kdv', 2, t('raporlar.kdvRaporu'))"
             />
-            KDV Raporu
+            {{ t('raporlar.kdvRaporu') }}
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
-            <label>Başlangıç</label>
+            <label>{{ t('raporlar.baslangic') }}</label>
             <DatePicker
               v-model="kdvBas"
               date-format="dd.mm.yy"
@@ -290,7 +290,7 @@
             />
           </div>
           <div class="form-group">
-            <label>Bitiş</label>
+            <label>{{ t('raporlar.bitis') }}</label>
             <DatePicker
               v-model="kdvBit"
               date-format="dd.mm.yy"
@@ -300,7 +300,7 @@
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
             <Button
-              label="Rapor Getir"
+              :label="t('raporlar.raporGetir')"
               icon="pi pi-search"
               :loading="kdvLoading"
               @click="getKdv"
@@ -335,9 +335,9 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('yaslandirma') }"
-              @click.stop="raporFavoriDegistir('yaslandirma', 3, 'Yaşlandırma')"
+              @click.stop="raporFavoriDegistir('yaslandirma', 3, t('raporlar.yaslandirma'))"
             />
-            Yaşlandırma
+            {{ t('raporlar.yaslandirma') }}
           </div>
         </template>
         <div class="rapor-filtre">
@@ -401,14 +401,14 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('cariKarlilik') }"
-              @click.stop="raporFavoriDegistir('cariKarlilik', 4, 'Cari Karlılık')"
+              @click.stop="raporFavoriDegistir('cariKarlilik', 4, t('raporlar.cariKarlilik'))"
             />
-            Cari Karlılık
+            {{ t('raporlar.cariKarlilik') }}
           </div>
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
-            <label>Başlangıç</label>
+            <label>{{ t('raporlar.baslangic') }}</label>
             <DatePicker
               v-model="ckBas"
               date-format="dd.mm.yy"
@@ -416,7 +416,7 @@
             />
           </div>
           <div class="form-group">
-            <label>Bitiş</label>
+            <label>{{ t('raporlar.bitis') }}</label>
             <DatePicker
               v-model="ckBit"
               date-format="dd.mm.yy"
@@ -426,7 +426,7 @@
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
             <Button
-              label="Rapor Getir"
+              :label="t('raporlar.raporGetir')"
               icon="pi pi-search"
               :loading="ckLoading"
               @click="getCariKarlilik"
@@ -455,7 +455,7 @@
             <div class="rapor-aksiyonlar">
               <Button
                 icon="pi pi-print"
-                label="PDF"
+                :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
                 @click="yazdir(ckKart)"
               />
@@ -529,9 +529,9 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('tedarikciUrunler') }"
-              @click.stop="raporFavoriDegistir('tedarikciUrunler', 5, 'Tedarikçi Ürünleri')"
+              @click.stop="raporFavoriDegistir('tedarikciUrunler', 5, t('raporlar.tedarikciUrunleri'))"
             />
-            Tedarikçi Ürünleri
+            {{ t('raporlar.tedarikciUrunleri') }}
           </div>
         </template>
         <div class="rapor-filtre">
@@ -546,7 +546,7 @@
             />
           </div>
           <Button
-            label="Yenile"
+            :label="t('raporlar.yenile')"
             icon="pi pi-refresh"
             size="small"
             class="p-button-outlined"
@@ -601,14 +601,14 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('urunKarlilik') }"
-              @click.stop="raporFavoriDegistir('urunKarlilik', 6, 'Ürün Kârlılığı')"
+              @click.stop="raporFavoriDegistir('urunKarlilik', 6, t('raporlar.urunKarliligi'))"
             />
-            Ürün Kârlılığı
+            {{ t('raporlar.urunKarliligi') }}
           </div>
         </template>
         <div class="rapor-filtre">
           <Button
-            label="Yenile"
+            :label="t('raporlar.yenile')"
             icon="pi pi-refresh"
             size="small"
             class="p-button-outlined"
@@ -665,9 +665,9 @@
             <i
               class="pi pi-star"
               :class="{ favori: raporFavori('nakitAkisi') }"
-              @click.stop="raporFavoriDegistir('nakitAkisi', 7, 'Nakit Akışı')"
+              @click.stop="raporFavoriDegistir('nakitAkisi', 7, t('raporlar.nakitAkisi'))"
             />
-            Nakit Akışı Projeksiyonu
+            {{ t('raporlar.nakitAkisiProjeksiyonu') }}
           </div>
         </template>
         <div class="rapor-filtre">
@@ -689,7 +689,7 @@
           <div class="form-group filtre-btn">
             <label>&nbsp;</label>
             <Button
-              label="Yenile"
+              :label="t('raporlar.yenile')"
               icon="pi pi-refresh"
               :loading="nakitLoading"
               @click="getNakitAkisi"
@@ -736,7 +736,7 @@
           >
             <Column
               field="tarih"
-              header="Tarih"
+              :header="t('common.date')"
               style="width: 120px"
             >
               <template #body="s">
@@ -781,7 +781,7 @@
             </Column>
             <Column
               field="aciklama"
-              header="Açıklama"
+              :header="t('common.description')"
             />
           </DataTable>
         </div>
@@ -894,11 +894,13 @@ import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 import { raporAPI } from '../api/index.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import { useI18n } from 'vue-i18n'
 
 const dovizStore = useDovizStore()
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const cariHesapStore = useCariHesapStore()
 
@@ -1218,8 +1220,7 @@ const formatCurrency = (v) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(deger)
 }
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

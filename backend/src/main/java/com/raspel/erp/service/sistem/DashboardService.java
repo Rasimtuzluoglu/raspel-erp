@@ -313,7 +313,7 @@ public class DashboardService {
         try {
             return supplier.get();
         } catch (Exception e) {
-            log.error("Dashboard verisi alinirken hata: {}", e.getMessage(), e);
+            log.warn("Dashboard verisi alinamadi (varsayilan kullanilacak): {}", e.getMessage());
             return defaultValue;
         }
     }
@@ -322,7 +322,7 @@ public class DashboardService {
         try {
             return supplier.get();
         } catch (Exception e) {
-            log.error("Dashboard listesi alinirken hata: {}", e.getMessage(), e);
+            log.warn("Dashboard listesi alinamadi (varsayilan kullanilacak): {}", e.getMessage());
             return defaultValue;
         }
     }

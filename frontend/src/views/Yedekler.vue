@@ -1,7 +1,7 @@
 <template>
   <div class="yedekler-container">
     <div class="page-header">
-      <h1><i class="pi pi-save" /> Yedekleme</h1>
+      <h1><i class="pi pi-save" /> {{ t('yedekler.title') }}</h1>
       <div class="header-islem">
         <Select
           v-model="yedekTipi"
@@ -11,7 +11,7 @@
           class="tip-select"
         />
         <Button
-          label="Yedek Al"
+          :label="t('yedekler.yedekAl')"
           icon="pi pi-plus-circle"
           class="p-button-success"
           :loading="yedekAliniyor"
@@ -45,7 +45,7 @@
           <span>
             <i
               class="pi pi-shield"
-            />Yedek Doğrulama
+            />{{ t('yedekler.yedekDogrulama') }}
           </span>
           <Button
             icon="pi pi-refresh"
@@ -57,16 +57,16 @@
       <template #content>
         <div class="dogrulama-icerik">
           <Tag
-            :value="dogrulama.durum || 'Kontrol ediliyor…'"
+            :value="dogrulama.durum || t('yedekler.kontrolEdiliyor')"
             :severity="dogrulamaSeverity(dogrulama.durum)"
           />
           <span
             v-if="dogrulama.sonYedek"
             class="dogrulama-detay"
           >
-            Son yedek: <strong>{{ dogrulama.sonYedek }}</strong>
-            <template v-if="dogrulama.yasSaat != null"> · {{ dogrulama.yasSaat }} saat önce</template>
-            <template v-if="dogrulama.butunluk === false"> · <strong style="color: var(--red-500)">bütünlük hatası</strong></template>
+            {{ t('yedekler.sonYedek') }}: <strong>{{ dogrulama.sonYedek }}</strong>
+            <template v-if="dogrulama.yasSaat != null"> · {{ t('yedekler.saatOnce', { n: dogrulama.yasSaat }) }}</template>
+            <template v-if="dogrulama.butunluk === false"> · <strong style="color: var(--red-500)">{{ t('yedekler.butunlukHatasi') }}</strong></template>
           </span>
           <span
             v-else-if="dogrulama.mesaj"
@@ -84,17 +84,17 @@
           <i
             class="pi pi-calendar"
             style="margin-right: 8px"
-          />Günlük
+          />{{ t('yedekler.gunluk') }}
         </template>
         <template #content>
           <div class="ozet-satir">
-            <span>Adet</span><strong>{{ schedule.counts?.DAILY || 0 }}</strong>
+            <span>{{ t('yedekler.adet') }}</span><strong>{{ schedule.counts?.DAILY || 0 }}</strong>
           </div>
           <div class="ozet-satir">
-            <span>Saklama</span><strong>30 gün</strong>
+            <span>{{ t('yedekler.saklama') }}</span><strong>{{ t('yedekler.gunSayisi', { n: 30 }) }}</strong>
           </div>
           <div class="ozet-saat">
-            <i class="pi pi-clock" /> Her gün 03:00
+            <i class="pi pi-clock" /> {{ t('yedekler.herGun') }}
           </div>
         </template>
       </Card>
@@ -103,17 +103,17 @@
           <i
             class="pi pi-calendar-week"
             style="margin-right: 8px"
-          />Haftalık
+          />{{ t('yedekler.haftalik') }}
         </template>
         <template #content>
           <div class="ozet-satir">
-            <span>Adet</span><strong>{{ schedule.counts?.WEEKLY || 0 }}</strong>
+            <span>{{ t('yedekler.adet') }}</span><strong>{{ schedule.counts?.WEEKLY || 0 }}</strong>
           </div>
           <div class="ozet-satir">
-            <span>Saklama</span><strong>180 gün</strong>
+            <span>{{ t('yedekler.saklama') }}</span><strong>{{ t('yedekler.gunSayisi', { n: 180 }) }}</strong>
           </div>
           <div class="ozet-saat">
-            <i class="pi pi-clock" /> Pazar 03:00
+            <i class="pi pi-clock" /> {{ t('yedekler.pazar') }}
           </div>
         </template>
       </Card>
@@ -122,17 +122,17 @@
           <i
             class="pi pi-calendar-plus"
             style="margin-right: 8px"
-          />Aylık
+          />{{ t('yedekler.aylik') }}
         </template>
         <template #content>
           <div class="ozet-satir">
-            <span>Adet</span><strong>{{ schedule.counts?.MONTHLY || 0 }}</strong>
+            <span>{{ t('yedekler.adet') }}</span><strong>{{ schedule.counts?.MONTHLY || 0 }}</strong>
           </div>
           <div class="ozet-satir">
-            <span>Saklama</span><strong>365 gün</strong>
+            <span>{{ t('yedekler.saklama') }}</span><strong>{{ t('yedekler.gunSayisi', { n: 365 }) }}</strong>
           </div>
           <div class="ozet-saat">
-            <i class="pi pi-clock" /> Ayın 1'i 03:00
+            <i class="pi pi-clock" /> {{ t('yedekler.ayinIlkGunu') }}
           </div>
         </template>
       </Card>
@@ -141,14 +141,14 @@
           <i
             class="pi pi-calendar-star"
             style="margin-right: 8px"
-          />Yıllık
+          />{{ t('yedekler.yillik') }}
         </template>
         <template #content>
           <div class="ozet-satir">
-            <span>Adet</span><strong>{{ schedule.counts?.YEARLY || 0 }}</strong>
+            <span>{{ t('yedekler.adet') }}</span><strong>{{ schedule.counts?.YEARLY || 0 }}</strong>
           </div>
           <div class="ozet-satir">
-            <span>Saklama</span><strong>Sınırsız</strong>
+            <span>{{ t('yedekler.saklama') }}</span><strong>{{ t('yedekler.sinirsiz') }}</strong>
           </div>
           <!-- Bulut Yedekleme (Cloud Storage) Kartı -->
           <Card class="bulut-kart">
@@ -157,9 +157,9 @@
                 <span><i
                   class="pi pi-cloud"
                   style="margin-right: 8px; color: #3b82f6"
-                />Bulut Yedekleme & Şifreleme</span>
+                />{{ t('yedekler.bulutYedekleme') }}</span>
                 <Tag
-                  :value="cloudConfig.encryptionEnabled ? 'AES-256 ŞİFRELİ' : 'ŞİFRESİZ'"
+                  :value="cloudConfig.encryptionEnabled ? t('yedekler.aesSifreli') : t('yedekler.sifresiz')"
                   :severity="cloudConfig.encryptionEnabled ? 'success' : 'warn'"
                 />
               </div>
@@ -167,7 +167,7 @@
             <template #content>
               <div class="bulut-grid">
                 <div class="field">
-                  <label>Bulut Sağlayıcı</label>
+                  <label>{{ t('yedekler.bulutSaglayici') }}</label>
                   <Select
                     v-model="cloudConfig.provider"
                     :options="[
@@ -181,24 +181,24 @@
                   />
                 </div>
                 <div class="field">
-                  <label>Hedef Dizin / Bucket</label>
+                  <label>{{ t('yedekler.hedefDizin') }}</label>
                   <InputText
                     v-model="cloudConfig.bucketName"
-                    placeholder="Örn: s3://raspel-erp-backups"
+                    :placeholder="t('yedekler.hedefDizinPlaceholder')"
                     class="w-full"
                   />
                 </div>
                 <div class="field">
-                  <label>Bölge (Region)</label>
+                  <label>{{ t('yedekler.bolge') }}</label>
                   <InputText
                     v-model="cloudConfig.region"
-                    placeholder="Örn: eu-central-1"
+                    :placeholder="t('yedekler.bolgePlaceholder')"
                     class="w-full"
                   />
                 </div>
                 <div class="bulut-aksiyonlar">
                   <Button
-                    label="Bulut Ayarlarını Kaydet"
+                    :label="t('yedekler.bulutAyarlariKaydet')"
                     icon="pi pi-save"
                     size="small"
                     class="p-button-outlined"
@@ -206,7 +206,7 @@
                     @click="bulutAyarlariKaydet"
                   />
                   <Button
-                    label="Buluta Senkronize Et"
+                    :label="t('yedekler.bulutaSenkronize')"
                     icon="pi pi-cloud-upload"
                     size="small"
                     class="p-button-primary"
@@ -223,7 +223,7 @@
               <i
                 class="pi pi-list"
                 style="margin-right: 8px"
-              />Yedek Dosyaları
+              />{{ t('yedekler.yedekDosyalari') }}
             </template>
             <template #content>
               <DataTable
@@ -238,7 +238,7 @@
               >
                 <Column
                   field="filename"
-                  header="Dosya Adı"
+                  :header="t('yedekler.dosyaAdi')"
                   sortable
                 >
                   <template #body="s">
@@ -250,7 +250,7 @@
                 </Column>
                 <Column
                   field="type"
-                  header="Tür"
+                  :header="t('yedekler.tur')"
                   sortable
                   style="width: 100px"
                 >
@@ -263,7 +263,7 @@
                 </Column>
                 <Column
                   field="size"
-                  header="Boyut"
+                  :header="t('yedekler.boyut')"
                   sortable
                   style="width: 100px"
                 >
@@ -273,7 +273,7 @@
                 </Column>
                 <Column
                   field="lastModified"
-                  header="Tarih"
+                  :header="t('common.date')"
                   sortable
                   style="width: 170px"
                 >
@@ -282,26 +282,26 @@
                   </template>
                 </Column>
                 <Column
-                  header="İşlem"
+                  :header="t('yedekler.islem')"
                   style="width: 100px"
                 >
                   <template #body="s">
                     <Button
                       icon="pi pi-download"
                       class="p-button-sm p-button-text"
-                      title="İndir"
+                      :title="t('yedekler.indir')"
                       @click="indir(s.data.filename)"
                     />
                     <Button
                       icon="pi pi-upload"
                       class="p-button-sm p-button-text p-button-warning"
-                      title="Geri Yükle"
+                      :title="t('yedekler.geriYukle')"
                       @click="geriYukle(s.data.filename)"
                     />
                     <Button
                       icon="pi pi-trash"
                       class="p-button-sm p-button-text p-button-danger"
-                      title="Sil"
+                      :title="t('common.delete')"
                       @click="sil(s.data.filename)"
                     />
                   </template>
@@ -311,29 +311,31 @@
                 v-if="(!yedekler || !yedekler.length) && !yedeklerYukleniyor"
                 class="empty-state"
               >
-                Henüz yedek alınmamış
+                {{ t('yedekler.yedekYok') }}
               </div>
             </template>
           </Card>
         </template>
-      </card>
+      </Card>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { backupAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const confirm = useConfirm()
+const { t } = useI18n()
 
-const tipler = [
-  { value: 'DAILY', label: 'Günlük' },
-  { value: 'WEEKLY', label: 'Haftalık' },
-  { value: 'MONTHLY', label: 'Aylık' },
-  { value: 'YEARLY', label: 'Yıllık' }
-]
+const tipler = computed(() => [
+  { value: 'DAILY', label: t('yedekler.gunluk') },
+  { value: 'WEEKLY', label: t('yedekler.haftalik') },
+  { value: 'MONTHLY', label: t('yedekler.aylik') },
+  { value: 'YEARLY', label: t('yedekler.yillik') }
+])
 
 const yedekTipi = ref('DAILY')
 const yedekler = ref([])
@@ -360,7 +362,7 @@ const dogrulamaSeverity = (durum) => {
   return 'info'
 }
 
-const typeLabel = (t) => tipler.find((i) => i.value === t)?.label || t
+const typeLabel = (tip) => tipler.value.find((i) => i.value === tip)?.label || tip
 const typeSeverity = (t) => {
   if (t === 'DAILY') return 'info'
   if (t === 'WEEKLY') return 'warn'
@@ -376,7 +378,7 @@ const yukle = async () => {
     yedekler.value = yedekRes.data || []
     schedule.value = scheduleRes.data || {}
   } catch (err) {
-    hata.value = 'Yedekler yüklenirken hata oluştu'
+    hata.value = t('yedekler.hataYukleme')
   } finally {
     yedeklerYukleniyor.value = false
   }
@@ -388,10 +390,10 @@ const manuelYedek = async () => {
   basari.value = ''
   try {
     const res = await backupAPI.manual(yedekTipi.value)
-    basari.value = res.data.message || 'Yedek başarıyla alındı'
+    basari.value = res.data.message || t('yedekler.yedekAlindi')
     await yukle()
   } catch (err) {
-    hata.value = err.response?.data?.message || 'Yedekleme başarısız'
+    hata.value = err.response?.data?.message || t('yedekler.yedeklemeBasarisiz')
   } finally {
     yedekAliniyor.value = false
   }
@@ -411,24 +413,24 @@ const indir = (filename) => {
       window.URL.revokeObjectURL(url)
     })
     .catch(() => {
-      hata.value = 'Dosya indirilemedi'
+      hata.value = t('yedekler.dosyaIndirilemedi')
     })
 }
 
 const sil = (filename) => {
   confirm.require({
-    message: `"${filename}" dosyasını silmek istediğinize emin misiniz?`,
-    header: 'Yedek Sil',
+    message: t('yedekler.silOnayMesaj', { ad: filename }),
+    header: t('yedekler.yedekSil'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await backupAPI.delete(filename)
-        basari.value = `"${filename}" silindi`
+        basari.value = t('yedekler.silindi', { ad: filename })
         await yukle()
       } catch (err) {
-        hata.value = err.response?.data?.message || 'Silme başarısız'
+        hata.value = err.response?.data?.message || t('yedekler.silmeBasarisiz')
       }
     }
   })
@@ -436,17 +438,17 @@ const sil = (filename) => {
 
 const geriYukle = (filename) => {
   confirm.require({
-    message: `"${filename}" yedeğinden geri yükleme yapılacak. Mevcut veriler bu yedekteki verilerle DEĞİŞTİRİLECEK. Emin misiniz?`,
-    header: 'Geri Yükleme Onayı',
+    message: t('yedekler.geriYuklemeOnayMesaj', { ad: filename }),
+    header: t('yedekler.geriYuklemeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Geri Yükle',
-    rejectLabel: 'İptal',
+    acceptLabel: t('yedekler.evetGeriYukle'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         const res = await backupAPI.restore(filename)
-        basari.value = res.data?.message || 'Geri yükleme tamamlandı'
+        basari.value = res.data?.message || t('yedekler.geriYuklemeTamamlandi')
       } catch (err) {
-        hata.value = err.response?.data?.message || 'Geri yükleme başarısız'
+        hata.value = err.response?.data?.message || t('yedekler.geriYuklemeBasarisiz')
       }
     }
   })
@@ -492,9 +494,9 @@ const bulutAyarlariKaydet = async () => {
   cloudKaydediliyor.value = true
   try {
     await backupAPI.saveCloudConfig(cloudConfig.value)
-    basari.value = 'Bulut yedekleme ayarları kaydedildi'
+    basari.value = t('yedekler.bulutAyarlariKaydedildi')
   } catch (err) {
-    hata.value = err.response?.data?.message || 'Bulut ayarları kaydedilemedi'
+    hata.value = err.response?.data?.message || t('yedekler.bulutAyarlariKaydedilemedi')
   } finally {
     cloudKaydediliyor.value = false
   }
@@ -504,9 +506,9 @@ const bulutaEsitle = async (filename) => {
   cloudSenkronizeEdiliyor.value = true
   try {
     const res = await backupAPI.syncToCloud(filename)
-    basari.value = res.data?.message || 'Buluta senkronizasyon başarılı'
+    basari.value = res.data?.message || t('yedekler.bulutSenkronizasyonBasari')
   } catch (err) {
-    hata.value = err.response?.data?.message || 'Buluta senkronizasyon başarısız'
+    hata.value = err.response?.data?.message || t('yedekler.bulutSenkronizasyonBasarisiz')
   } finally {
     cloudSenkronizeEdiliyor.value = false
   }

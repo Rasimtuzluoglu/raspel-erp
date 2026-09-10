@@ -2,10 +2,10 @@
   <div class="butce-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Bütçe Yönetimi
+        {{ t('butceler.title') }}
       </h1>
       <Button
-        label="Yeni Bütçe"
+        :label="t('butceler.yeniButce')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,33 +18,33 @@
     >
       <Column
         field="ad"
-        header="Ad"
+        :header="t('butceler.ad')"
         sortable
       />
       <Column
         field="yil"
-        header="Yıl"
+        :header="t('butceler.yil')"
         sortable
       />
       <Column
         field="ay"
-        header="Ay"
+        :header="t('butceler.ay')"
         sortable
       />
       <Column
         field="tur"
-        header="Tür"
+        :header="t('butceler.tur')"
       >
         <template #body="{ data }">
           <Tag
-            :value="data.tur === 'GELIR' ? 'Gelir' : 'Gider'"
+            :value="data.tur === 'GELIR' ? t('butceler.gelir') : t('butceler.gider')"
             :severity="data.tur === 'GELIR' ? 'success' : 'danger'"
           />
         </template>
       </Column>
       <Column
         field="tutar"
-        header="Tutar"
+        :header="t('common.amount')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.tutar) }}
@@ -52,10 +52,10 @@
       </Column>
       <Column
         field="kategori"
-        header="Kategori"
+        :header="t('butceler.kategori')"
       />
       <Column
-        header="İşlem"
+        :header="t('butceler.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -75,10 +75,10 @@
 
     <EmptyState
       v-if="!yukleniyor && list.length === 0"
-      message="Henüz bütçe bulunamadı"
-      sub-message="İlk bütçenizi eklemek için Yeni Bütçe butonuna tıklayın"
+      :message="t('butceler.empty')"
+      :sub-message="t('butceler.emptyHint')"
       icon="pi pi-chart-bar"
-      action-label="Yeni Bütçe"
+      :action-label="t('butceler.yeniButce')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
@@ -87,7 +87,7 @@
       <template #title>
         <div class="gerceklesen-baslik">
           <span>
-            <i class="pi pi-chart-line" /> Bütçe vs Gerçekleşen
+            <i class="pi pi-chart-line" /> {{ t('butceler.butceVsGerceklesen') }}
           </span>
           <div class="gerceklesen-filtre">
             <Select
@@ -100,7 +100,7 @@
               :options="aySecenekleri"
               option-label="label"
               option-value="value"
-              placeholder="Tüm Aylar"
+              :placeholder="t('butceler.tumAylar')"
               class="ay-select"
               show-clear
             />
@@ -111,7 +111,7 @@
             />
             <Button
               icon="pi pi-file-pdf"
-              label="PDF"
+              :label="t('butceler.pdf')"
               class="p-button-sm p-button-secondary"
               @click="raporPdfIndir"
             />
@@ -127,24 +127,24 @@
         >
           <Column
             field="kategori"
-            header="Kategori"
+            :header="t('butceler.kategori')"
           />
-          <Column header="Bütçe">
+          <Column :header="t('butceler.butce')">
             <template #body="{ data }">
               {{ formatCurrency(data.butce) }}
             </template>
           </Column>
-          <Column header="Gerçekleşen">
+          <Column :header="t('butceler.gerceklesen')">
             <template #body="{ data }">
               {{ formatCurrency(data.gerceklesen) }}
             </template>
           </Column>
-          <Column header="Sapma">
+          <Column :header="t('butceler.sapma')">
             <template #body="{ data }">
               <span :class="(data.sapma || 0) > 0 ? 'negative' : 'positive'">{{ formatCurrency(data.sapma) }}</span>
             </template>
           </Column>
-          <Column header="Kullanım">
+          <Column :header="t('butceler.kullanim')">
             <template #body="{ data }">
               {{ data.kullanimYuzdesi != null ? data.kullanimYuzdesi + '%' : '-' }}
             </template>
@@ -161,14 +161,14 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Ad *</label><InputText
+          <label>{{ t('butceler.adZorunlu') }}</label><InputText
             v-model="form.ad"
             class="w-full"
           />
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Yıl</label><InputNumber
+            <label>{{ t('butceler.yil') }}</label><InputNumber
               v-model="form.yil"
               class="w-full"
               :min="2000"
@@ -177,7 +177,7 @@
             />
           </div>
           <div class="field">
-            <label>Ay (1-12)</label><InputNumber
+            <label>{{ t('butceler.ayAralik') }}</label><InputNumber
               v-model="form.ay"
               class="w-full"
               :min="1"
@@ -187,16 +187,16 @@
           </div>
         </div>
         <div class="field">
-          <label>Tür *</label>
+          <label>{{ t('butceler.turZorunlu') }}</label>
           <Dropdown
             v-model="form.tur"
             :options="turSecenekleri"
-            placeholder="Seçin"
+            :placeholder="t('common.select')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tutar</label><InputNumber
+          <label>{{ t('common.amount') }}</label><InputNumber
             v-model="form.tutar"
             mode="currency"
             currency="TRY"
@@ -204,13 +204,13 @@
           />
         </div>
         <div class="field">
-          <label>Kategori</label><InputText
+          <label>{{ t('butceler.kategori') }}</label><InputText
             v-model="form.kategori"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="3"
             class="w-full"
@@ -219,13 +219,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -243,10 +243,12 @@ import { useConfirm } from 'primevue/useconfirm'
 import { butceAPI, raporAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -281,7 +283,7 @@ const raporYukle = async () => {
     const r = await raporAPI.butceGerceklesen(params)
     raporList.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Rapor yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('butceler.hataRapor'))
   } finally {
     raporYukleniyor.value = false
   }
@@ -300,11 +302,11 @@ const raporPdfIndir = async () => {
     a.click()
     URL.revokeObjectURL(url)
   } catch (err) {
-    toastBildirim.hata('PDF oluşturulamadı')
+    toastBildirim.hata(t('butceler.hataPdf'))
   }
 }
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Bütçe Düzenle' : 'Yeni Bütçe'))
+const dialogHeader = computed(() => (duzenleme.value ? t('butceler.butceDuzenle') : t('butceler.yeniButce')))
 
 
 onMounted(async () => {
@@ -313,7 +315,7 @@ onMounted(async () => {
     const r = await butceAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Bütçeler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('butceler.hataYukleme'))
   }
   yukleniyor.value = false
   raporYukle()
@@ -340,34 +342,34 @@ const kaydet = async () => {
   try {
     if (duzenleme.value) {
       await butceAPI.update(form.value.id, form.value)
-      toastBildirim.basarili('Bütçe güncellendi')
+      toastBildirim.basarili(t('butceler.guncellendi'))
     } else {
       await butceAPI.create(form.value)
-      toastBildirim.basarili('Bütçe oluşturuldu')
+      toastBildirim.basarili(t('butceler.olusturuldu'))
     }
     dialog.value = false
     const r = await butceAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('butceler.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: `${data.ad} bütçesini silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('butceler.silOnayMesaj', { ad: data.ad }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await butceAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Bütçe silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('butceler.silindi'), detail: t('butceler.butceSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('butceler.silmeBasarisiz'))
       }
     }
   })

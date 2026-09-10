@@ -187,8 +187,16 @@ public class SiparisService {
                     .kalemler(faturaKalemler)
                     .build();
 
-            faturaService.faturaOlustur(faturaDTO, s.getSirketId(), null, null);
+            FaturaDTO olusanFatura = faturaService.faturaOlustur(faturaDTO, s.getSirketId(), null, null);
             log.info("Sipariş #{} için fatura oluşturuldu", s.getSiparisNo());
+            if (s.getDriverId() != null) {
+                try {
+                    teslimatService.siparisFaturaBagla(s.getId(), olusanFatura.getId(),
+                            olusanFatura.getFaturaNumarasi(), s.getSirketId());
+                } catch (Exception e) {
+                    log.warn("Sipariş teslimatı faturaya bağlanamadı ({}): {}", s.getSiparisNo(), e.getMessage());
+                }
+            }
         }
 
         s.setDurum(durum);
@@ -249,33 +257,33 @@ public class SiparisService {
 
     private SiparisDTO entityToDTO(Siparis s) {
         List<SiparisKalem> kalemEntities = kalemRepository.findBySiparisId(s.getId());
-        List<Long> stokIdler = kalemEntities.stream()
-                .map(SiparisKalem::getStokId)
-                .filter(java.util.Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<Long, String> stokAdlari = stokIdler.isEmpty() ? Map.of()
-                : stokRepository.findAllById(stokIdler).stream()
-                        .collect(Collectors.toMap(Stok::getId, Stok::getAd));
-        String cariAdi = s.getCariHesapId() != null
-                ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null)
-                : null;
+        Map<Long, String> stokAdlari = stokAdlariYukle(kalemEntities);
+        String cariAdi = cariAdi(s);
         Map<Long, List<SiparisKalem>> kalemHaritasi = Map.of(s.getId(), kalemEntities);
         Map<Long, String> cariAdlari = cariAdi != null ? Map.of(s.getCariHesapId(), cariAdi) : Map.of();
         return entityToDTO(s, kalemHaritasi, cariAdlari, stokAdlari);
     }
 
     private SiparisDTO entityToDTO(Siparis s, Map<Long, List<SiparisKalem>> kalemHaritasi, Map<Long, String> cariAdlari) {
-        List<SiparisKalem> kalemEntities = kalemHaritasi.getOrDefault(s.getId(), List.of());
+        Map<Long, String> stokAdlari = stokAdlariYukle(kalemHaritasi.getOrDefault(s.getId(), List.of()));
+        return entityToDTO(s, kalemHaritasi, cariAdlari, stokAdlari);
+    }
+
+    private Map<Long, String> stokAdlariYukle(List<SiparisKalem> kalemEntities) {
         List<Long> stokIdler = kalemEntities.stream()
                 .map(SiparisKalem::getStokId)
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<Long, String> stokAdlari = stokIdler.isEmpty() ? Map.of()
+        return stokIdler.isEmpty() ? Map.of()
                 : stokRepository.findAllById(stokIdler).stream()
                         .collect(Collectors.toMap(Stok::getId, Stok::getAd));
-        return entityToDTO(s, kalemHaritasi, cariAdlari, stokAdlari);
+    }
+
+    private String cariAdi(Siparis s) {
+        return s.getCariHesapId() != null
+                ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null)
+                : null;
     }
 
     private SiparisDTO entityToDTO(Siparis s, Map<Long, List<SiparisKalem>> kalemHaritasi, Map<Long, String> cariAdlari, Map<Long, String> stokAdlari) {

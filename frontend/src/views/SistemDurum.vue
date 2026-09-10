@@ -5,11 +5,11 @@
         <i
           class="pi pi-server"
           style="margin-right: 8px"
-        />Sistem Durumu & Bakım
+        />{{ t('sistemDurum.title') }}
       </h1>
       <Button
         icon="pi pi-refresh"
-        label="Yenile"
+        :label="t('sistemDurum.refresh')"
         class="p-button-outlined"
         :loading="yukleniyor"
         @click="yukle"
@@ -20,7 +20,7 @@
       v-if="!durum && !yukleniyor"
       class="bos"
     >
-      Durum bilgisi alınamadı.
+      {{ t('sistemDurum.durumAlinamadi') }}
     </div>
 
     <div
@@ -29,28 +29,28 @@
     >
       <div class="kart-grid">
         <div class="durum-kart">
-          <span class="kart-etiket">Genel Durum</span>
+          <span class="kart-etiket">{{ t('sistemDurum.genelDurum') }}</span>
           <strong :class="durum?.durum === 'UP' ? 'iyi' : 'kotu'">
             <i :class="durum?.durum === 'UP' ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'" />
             {{ durum?.durum || '...' }}
           </strong>
         </div>
         <div class="durum-kart">
-          <span class="kart-etiket">Uptime</span>
+          <span class="kart-etiket">{{ t('sistemDurum.uptime') }}</span>
           <strong>{{ formatSure(durum?.uptimeMs) }}</strong>
         </div>
         <div class="durum-kart">
-          <span class="kart-etiket">Sürüm</span>
+          <span class="kart-etiket">{{ t('sistemDurum.surum') }}</span>
           <strong>{{ durum?.surum || '...' }}</strong>
         </div>
         <div class="durum-kart">
-          <span class="kart-etiket">Toplam Hata</span>
+          <span class="kart-etiket">{{ t('sistemDurum.toplamHata') }}</span>
           <strong :class="durum?.hataSayisi > 0 ? 'kotu' : 'iyi'">{{ durum?.hataSayisi ?? '...' }}</strong>
         </div>
       </div>
 
       <div class="bolum">
-        <h2>Bileşenler</h2>
+        <h2>{{ t('sistemDurum.bilesenler') }}</h2>
         <div class="bilesenler">
           <div
             v-for="(v, k) in durum?.bilesenler || {}"
@@ -64,16 +64,16 @@
       </div>
 
       <div class="bolum">
-        <h2>Kaynak Kullanımı</h2>
+        <h2>{{ t('sistemDurum.kaynakKullanimi') }}</h2>
         <div class="kaynaklar">
           <div class="kaynak">
-            <span>Bellek (kullanılan / toplam)</span>
+            <span>{{ t('sistemDurum.bellek') }}</span>
             <ProgressBar :value="bellekYuzde" />
             <small>{{ formatByte(durum?.bellek?.toplam - durum?.bellek?.bos) }} /
               {{ formatByte(durum?.bellek?.toplam) }}</small>
           </div>
           <div class="kaynak">
-            <span>Disk (kullanılan / toplam)</span>
+            <span>{{ t('sistemDurum.disk') }}</span>
             <ProgressBar :value="diskYuzde" />
             <small>{{ formatByte(durum?.disk?.toplam - durum?.disk?.kullanilabilir) }} /
               {{ formatByte(durum?.disk?.toplam) }}</small>
@@ -82,36 +82,36 @@
       </div>
 
       <div class="bolum">
-        <h2>Depolama</h2>
+        <h2>{{ t('sistemDurum.depolama') }}</h2>
         <div class="yedek-ozet">
           <div>
-            <span>Tip</span><strong>{{ durum?.depolama?.tip === 'minio' ? 'MinIO (S3)' : 'Yerel Disk' }}</strong>
+            <span>{{ t('sistemDurum.tip') }}</span><strong>{{ durum?.depolama?.tip === 'minio' ? 'MinIO (S3)' : t('sistemDurum.yerelDisk') }}</strong>
           </div>
           <div>
-            <span>Nesne Sayısı</span><strong>{{ durum?.depolama?.nesneSayisi ?? 0 }}</strong>
+            <span>{{ t('sistemDurum.nesneSayisi') }}</span><strong>{{ durum?.depolama?.nesneSayisi ?? 0 }}</strong>
           </div>
           <div>
-            <span>Toplam Boyut</span><strong>{{ formatByte(durum?.depolama?.toplamBoyut) }}</strong>
+            <span>{{ t('sistemDurum.toplamBoyut') }}</span><strong>{{ formatByte(durum?.depolama?.toplamBoyut) }}</strong>
           </div>
         </div>
       </div>
 
       <div class="bolum">
-        <h2>Yedekleme</h2>
+        <h2>{{ t('sistemDurum.yedekleme') }}</h2>
         <div class="yedek-ozet">
           <div>
-            <span>Toplam Yedek</span><strong>{{ durum?.yedekleme?.totalBackups ?? 0 }}</strong>
+            <span>{{ t('sistemDurum.toplamYedek') }}</span><strong>{{ durum?.yedekleme?.totalBackups ?? 0 }}</strong>
           </div>
           <div>
-            <span>Toplam Boyut</span><strong>{{ formatByte(durum?.yedekleme?.totalSize) }}</strong>
+            <span>{{ t('sistemDurum.toplamBoyut') }}</span><strong>{{ formatByte(durum?.yedekleme?.totalSize) }}</strong>
           </div>
           <div>
-            <span>Son Yedek</span><strong class="kucuk">{{
+            <span>{{ t('sistemDurum.sonYedek') }}</span><strong class="kucuk">{{
               durum?.yedekleme?.lastBackup ? new Date(durum.yedekleme.lastBackup).toLocaleString('tr-TR') : '-'
             }}</strong>
           </div>
           <Button
-            label="Yedek Al"
+            :label="t('sistemDurum.yedekAl')"
             icon="pi pi-save"
             class="p-button-success p-button-sm"
             :loading="yedekleniyor"
@@ -122,10 +122,10 @@
 
       <div class="bolum">
         <div class="bolum-baslik">
-          <h2>Son Hatalar</h2>
+          <h2>{{ t('sistemDurum.sonHatalar') }}</h2>
           <Button
             v-if="authStore.isAdmin && sonHatalar?.length"
-            label="Hataları Temizle"
+            :label="t('sistemDurum.hatalariTemizle')"
             icon="pi pi-trash"
             class="p-button-sm p-button-text p-button-danger"
             :loading="temizleniyor"
@@ -136,7 +136,7 @@
           v-if="(!sonHatalar || !sonHatalar.length)"
           class="bos-kucuk"
         >
-          <i class="pi pi-check-circle" /> Hata yok, sistem temiz.
+          <i class="pi pi-check-circle" /> {{ t('sistemDurum.hataYok') }}
         </div>
         <div
           v-for="h in sonHatalar"
@@ -157,10 +157,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { sistemDurumAPI, backupAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const authStore = useAuthStore()
 const durum = ref(null)
@@ -170,7 +172,7 @@ const yedekleniyor = ref(false)
 const temizleniyor = ref(false)
 
 const bilesenAdi = (k) =>
-  ({ db: 'Veritabanı', redis: 'Redis', rabbit: 'RabbitMQ', diskSpace: 'Disk', ping: 'Ping', mail: 'E-posta' })[k] || k
+  ({ db: t('sistemDurum.veritabani'), redis: 'Redis', rabbit: 'RabbitMQ', diskSpace: 'Disk', ping: 'Ping', mail: t('sistemDurum.eposta') })[k] || k
 
 const bellekYuzde = computed(() => {
   if (!durum.value?.bellek?.toplam) return 0
@@ -212,7 +214,7 @@ const yukle = async () => {
     durum.value = d.data
     sonHatalar.value = h.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Durum bilgisi alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('sistemDurum.durumAlinamadi'))
   }
   yukleniyor.value = false
 }
@@ -221,10 +223,10 @@ const yedekAl = async () => {
   yedekleniyor.value = true
   try {
     await backupAPI.manual('DAILY')
-    toastBildirim.basarili('Yedekleme başlatıldı')
+    toastBildirim.basarili(t('sistemDurum.yedeklemeBaslatildi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Yedekleme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('sistemDurum.yedeklemeBasarisiz'))
   }
   yedekleniyor.value = false
 }
@@ -233,10 +235,10 @@ const hataTemizle = async () => {
   temizleniyor.value = true
   try {
     await sistemDurumAPI.hataLogTemizle()
-    toastBildirim.basarili('Hata logları temizlendi')
+    toastBildirim.basarili(t('sistemDurum.hataLoglariTemizlendi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Hata logları temizlenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('sistemDurum.hataLoglariTemizlenemedi'))
   }
   temizleniyor.value = false
 }

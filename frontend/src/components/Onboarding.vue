@@ -63,6 +63,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { cariHesapAPI, stokAPI, kategoriAPI } from '../api/index.js'
 
 const router = useRouter()
 const toast = useToast()
@@ -117,8 +118,6 @@ const atla = () => {
 const demoYukle = async () => {
   demoYukleniyor.value = true
   try {
-    const { cariHesapAPI, stokAPI, kategoriAPI } = await import('../api/index.js')
-
     await kategoriAPI.create({ ad: 'Mobilya', tur: 'GIDER' })
     await kategoriAPI.create({ ad: 'Satış', tur: 'GELIR' })
 

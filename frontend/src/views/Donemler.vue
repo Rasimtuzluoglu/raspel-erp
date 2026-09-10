@@ -2,7 +2,7 @@
   <div class="donemler-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Dönemler
+        {{ t('donemler.title') }}
       </h1>
       <div class="baslik-aksiyon">
         <Dropdown
@@ -10,12 +10,12 @@
           :options="sirketler"
           option-label="ad"
           option-value="id"
-          placeholder="Şirket Seçin"
+          :placeholder="t('donemler.sirketSecin')"
           class="sirket-dropdown"
           @change="donemleriYukle"
         />
         <Button
-          label="Yeni Dönem"
+          :label="t('donemler.yeniDonem')"
           icon="pi pi-plus"
           :disabled="!seciliSirketId"
           @click="dialogAc"
@@ -36,12 +36,12 @@
       />
       <Column
         field="ad"
-        header="Dönem Adı"
+        :header="t('donemler.donemAdi')"
         sortable
       />
       <Column
         field="baslangic"
-        header="Başlangıç"
+        :header="t('donemler.baslangic')"
       >
         <template #body="{ data }">
           {{ data.baslangic }}
@@ -49,7 +49,7 @@
       </Column>
       <Column
         field="bitis"
-        header="Bitiş"
+        :header="t('donemler.bitis')"
       >
         <template #body="{ data }">
           {{ data.bitis }}
@@ -57,17 +57,17 @@
       </Column>
       <Column
         field="aktif"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
-            :value="data.aktif ? 'Aktif' : 'Pasif'"
+            :value="data.aktif ? t('donemler.aktif') : t('donemler.pasif')"
             :severity="data.aktif ? 'success' : 'danger'"
           />
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('donemler.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -87,21 +87,21 @@
 
     <Dialog
       v-model:visible="dialog"
-      :header="duzenleme ? 'Dönem Düzenle' : 'Yeni Dönem'"
+      :header="duzenleme ? t('donemler.donemDuzenle') : t('donemler.yeniDonem')"
       modal
       :style="{ width: '450px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Dönem Adı *</label>
+          <label>{{ t('donemler.donemAdiZorunlu') }}</label>
           <InputText
             v-model="form.ad"
             class="w-full"
-            placeholder="Örn: 2026 Yılı"
+            :placeholder="t('donemler.donemAdiPlaceholder')"
           />
         </div>
         <div class="field">
-          <label>Başlangıç Tarihi *</label>
+          <label>{{ t('donemler.baslangicTarihiZorunlu') }}</label>
           <DatePicker
             v-model="form.baslangic"
             date-format="dd/mm/yy"
@@ -109,7 +109,7 @@
           />
         </div>
         <div class="field">
-          <label>Bitiş Tarihi *</label>
+          <label>{{ t('donemler.bitisTarihiZorunlu') }}</label>
           <DatePicker
             v-model="form.bitis"
             date-format="dd/mm/yy"
@@ -117,19 +117,19 @@
           />
         </div>
         <div class="field">
-          <label>Aktif</label>
+          <label>{{ t('donemler.aktif') }}</label>
           <InputSwitch v-model="form.aktif" />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -144,8 +144,10 @@ import { ref, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { donemAPI, sirketAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const donemler = ref([])
 const sirketler = ref([])
@@ -166,7 +168,7 @@ onMounted(async () => {
       await donemleriYukle()
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.hataSirketler'))
   }
 })
 
@@ -180,7 +182,7 @@ const donemleriYukle = async () => {
     const r = await donemAPI.getBySirket(seciliSirketId.value)
     donemler.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Dönemler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.hataYukleme'))
   }
   yukleniyor.value = false
 }
@@ -215,24 +217,24 @@ const kaydet = async () => {
     dialog.value = false
     await donemleriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Dönem kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.hataKaydet'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await donemAPI.delete(data.id)
         await donemleriYukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Dönem silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.hataSil'))
       }
     },
     reject: () => {}

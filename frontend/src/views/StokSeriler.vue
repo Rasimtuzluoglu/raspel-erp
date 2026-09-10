@@ -2,10 +2,10 @@
   <div class="stokseri-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Seri/Lot Takibi
+        {{ t('stokSeriler.title') }}
       </h1>
       <Button
-        label="Yeni Seri/Lot"
+        :label="t('stokSeriler.yeniSeriLot')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -16,7 +16,7 @@
       class="skt-uyari"
     >
       <i class="pi pi-exclamation-triangle" />
-      <span><strong>{{ sonKullanma.length }}</strong> seri/lot'un son kullanma tarihi yaklaşıyor veya geçmiş:</span>
+      <span>{{ t('stokSeriler.sktUyari', { n: sonKullanma.length }) }}</span>
       <div
         v-for="s in sonKullanma.slice(0, 5)"
         :key="s.id"
@@ -33,28 +33,28 @@
     >
       <Column
         field="stokAd"
-        header="Ürün"
+        :header="t('stokSeriler.urun')"
         sortable
       />
       <Column
         field="seriNo"
-        header="Seri No"
+        :header="t('stokSeriler.seriNo')"
         sortable
       />
       <Column
         field="lotNo"
-        header="Lot No"
+        :header="t('stokSeriler.lotNo')"
       />
       <Column
         field="skt"
-        header="SKT"
+        :header="t('stokSeriler.skt')"
       >
         <template #body="{ data }">
           {{ formatDate(data.skt) }}
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('stokSeriler.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -75,31 +75,31 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Ürün *</label>
+          <label>{{ t('stokSeriler.urunZorunlu') }}</label>
           <Dropdown
             v-model="form.stokId"
             :options="stokListesi"
             option-label="ad"
             option-value="id"
-            placeholder="Ürün Seç"
+            :placeholder="t('stokSeriler.urunSec')"
             class="w-full"
             filter
           />
         </div>
         <div class="field">
-          <label>Seri No *</label><InputText
+          <label>{{ t('stokSeriler.seriNoZorunlu') }}</label><InputText
             v-model="form.seriNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Lot No</label><InputText
+          <label>{{ t('stokSeriler.lotNo') }}</label><InputText
             v-model="form.lotNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Son Kullanma Tarihi</label><DatePicker
+          <label>{{ t('stokSeriler.sonKullanmaTarihi') }}</label><DatePicker
             v-model="form.skt"
             date-format="dd/mm/yy"
             class="w-full"
@@ -108,13 +108,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -130,10 +130,12 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { stokSeriAPI, stokAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const stokListesi = ref([])
 const sonKullanma = ref([])
@@ -143,12 +145,9 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ stokId: null, seriNo: '', lotNo: '', skt: null })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Seri/Lot Düzenle' : 'Yeni Seri/Lot'))
+const dialogHeader = computed(() => (duzenleme.value ? t('stokSeriler.seriLotDuzenle') : t('stokSeriler.yeniSeriLot')))
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -163,7 +162,7 @@ onMounted(async () => {
       sonKullanma.value = []
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('stokSeriler.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -182,34 +181,34 @@ const kaydet = async () => {
     const payload = { ...form.value, skt: form.value.skt?.toISOString?.().split('T')[0] ?? form.value.skt }
     if (duzenleme.value) {
       await stokSeriAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Seri/Lot güncellendi')
+      toastBildirim.basarili(t('stokSeriler.guncellendi'))
     } else {
       await stokSeriAPI.create(payload)
-      toastBildirim.basarili('Seri/Lot oluşturuldu')
+      toastBildirim.basarili(t('stokSeriler.olusturuldu'))
     }
     dialog.value = false
     const r = await stokSeriAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('stokSeriler.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: `"${data.seriNo}" seri numaralı kaydı silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('stokSeriler.silOnayMesaj', { seriNo: data.seriNo }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await stokSeriAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Seri/Lot silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('stokSeriler.silindi'), detail: t('stokSeriler.seriLotSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('stokSeriler.silmeBasarisiz'))
       }
     }
   })

@@ -1,11 +1,11 @@
 <template>
   <div class="kasa-container">
-    <h1>Kasa Yönetimi</h1>
+    <h1>{{ t('kasa.title') }}</h1>
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Kasa"
+          :label="t('kasa.yeniKasa')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openKasaDialog"
@@ -13,25 +13,25 @@
       </template>
       <template #end>
         <Button
-          label="Bankaya Aktar"
+          :label="t('kasa.bankayaAktar')"
           icon="pi pi-building"
           class="p-button-sm p-button-outlined mr-2"
           @click="openBankaAktarDialog"
         />
         <Button
-          label="Kasa Aktar"
+          :label="t('kasa.kasaAktar')"
           icon="pi pi-arrow-right-arrow-left"
           class="p-button-sm p-button-outlined mr-2"
           @click="openAktarDialog"
         />
         <Button
-          label="Gün Sonu"
+          :label="t('kasa.gunSonu')"
           icon="pi pi-calendar"
           class="p-button-sm p-button-outlined mr-2"
           @click="gunSonuAc"
         />
         <Button
-          label="Excel"
+          :label="t('kasa.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
           @click="excelIndir"
@@ -82,10 +82,10 @@
       </div>
       <EmptyState
         v-if="kasaStore.kasalar.length === 0"
-        message="Henüz kasa hesabı bulunamadı"
-        sub-message="İlk kasa hesabınızı eklemek için Yeni Kasa butonuna tıklayın"
+        :message="t('kasa.empty')"
+        :sub-message="t('kasa.emptyHint')"
         icon="pi pi-wallet"
-        action-label="Yeni Kasa"
+        :action-label="t('kasa.yeniKasa')"
         action-icon="pi pi-plus"
         class="full-width"
         @action="openKasaDialog"
@@ -94,15 +94,15 @@
 
     <Dialog
       v-model:visible="showKasaDialog"
-      :header="editingKasaId ? 'Kasa Düzenle' : 'Yeni Kasa'"
+      :header="editingKasaId ? t('kasa.kasaDuzenle') : t('kasa.yeniKasa')"
       :modal="true"
       style="width: 400px"
     >
       <div class="form-group">
-        <label>Kasa Adı *</label>
+        <label>{{ t('kasa.kasaAdi') }}</label>
         <InputText
           v-model="kasaForm.ad"
-          placeholder="Kasa adı"
+          :placeholder="t('kasa.kasaAdiPlaceholder')"
           class="w-full"
         />
       </div>
@@ -110,7 +110,7 @@
         v-if="!editingKasaId"
         class="form-group"
       >
-        <label>Açılış Bakiyesi</label>
+        <label>{{ t('kasa.acilisBakiyesi') }}</label>
         <InputNumber
           v-model="kasaForm.bakiye"
           :min="0"
@@ -121,13 +121,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showKasaDialog = false"
         />
         <Button
-          :label="editingKasaId ? 'Güncelle' : 'Kaydet'"
+          :label="editingKasaId ? t('kasa.guncelle') : t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveKasa"
@@ -140,15 +140,15 @@
       class="hareket-bolumu"
     >
       <div class="hareket-header">
-        <h2>{{ seciliKasa.ad }} - Hareketler</h2>
+        <h2>{{ seciliKasa.ad }} {{ t('kasa.hareketler') }}</h2>
         <Button
-          label="+ Gelir Ekle"
+          :label="t('kasa.gelirEkle')"
           icon="pi pi-plus-circle"
           class="p-button-success p-button-sm"
           @click="openHareketDialog('GELIR')"
         />
         <Button
-          label="+ Gider Ekle"
+          :label="t('kasa.giderEkle')"
           icon="pi pi-minus-circle"
           class="p-button-danger p-button-sm"
           @click="openHareketDialog('GIDER')"
@@ -166,7 +166,7 @@
         >
           <Column
             field="tarih"
-            header="Tarih"
+            :header="t('common.date')"
             style="width: 100px"
           >
             <template #body="s">
@@ -175,18 +175,18 @@
           </Column>
           <Column
             field="tur"
-            header="Tür"
+            :header="t('kasa.tur')"
             style="width: 80px"
           >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GELIR' ? 'gelir' : 'gider']">
-                {{ s.data.tur === 'GELIR' ? 'Gelir' : 'Gider' }}
+                {{ s.data.tur === 'GELIR' ? t('kasa.gelir') : t('kasa.gider') }}
               </span>
             </template>
           </Column>
           <Column
             field="tutar"
-            header="Tutar"
+            :header="t('common.amount')"
             style="width: 120px"
           >
             <template #body="s">
@@ -197,7 +197,7 @@
           </Column>
           <Column
             field="kategoriAd"
-            header="Kategori"
+            :header="t('kasa.kategori')"
             style="width: 140px"
           >
             <template #body="s">
@@ -206,7 +206,7 @@
           </Column>
           <Column
             field="aciklama"
-            header="Açıklama"
+            :header="t('common.description')"
           />
           <Column
             header=""
@@ -224,7 +224,7 @@
         <Message
           v-if="kasaHareketler && kasaHareketler.length === 0"
           severity="info"
-          text="Hareket bulunmamaktadır."
+          :text="t('kasa.hareketYok')"
         />
       </div>
     </div>
@@ -236,7 +236,7 @@
       style="width: 500px"
     >
       <div class="form-group">
-        <label>Tutar *</label>
+        <label>{{ t('kasa.tutar') }}</label>
         <InputNumber
           v-model="hareketForm.tutar"
           :min="0.01"
@@ -246,7 +246,7 @@
         />
       </div>
       <div class="form-group">
-        <label>Tarih *</label>
+        <label>{{ t('kasa.tarihZorunlu') }}</label>
         <DatePicker
           v-model="hareketForm.hareketTarihi"
           date-format="dd.mm.yy"
@@ -254,18 +254,18 @@
         />
       </div>
       <div class="form-group">
-        <label>Kategori</label>
+        <label>{{ t('kasa.kategori') }}</label>
         <Dropdown
           v-model="hareketForm.kategoriId"
           :options="kategoriSecenekler"
           option-label="ad"
           option-value="id"
-          placeholder="Seçiniz"
+          :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Açıklama</label>
+        <label>{{ t('common.description') }}</label>
         <Textarea
           v-model="hareketForm.aciklama"
           rows="2"
@@ -274,13 +274,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showHareketDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveHareket"
@@ -290,34 +290,34 @@
 
     <Dialog
       v-model:visible="showAktarDialog"
-      header="Kasa Aktar"
+      :header="t('kasa.kasaAktar')"
       :modal="true"
       style="width: 480px"
     >
       <div class="form-group">
-        <label>Kaynak Kasa *</label>
+        <label>{{ t('kasa.kaynakKasa') }}</label>
         <Dropdown
           v-model="aktarForm.kaynakKasaId"
           :options="kasaStore.kasalar"
           option-label="ad"
           option-value="id"
-          placeholder="Seçiniz"
+          :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Hedef Kasa *</label>
+        <label>{{ t('kasa.hedefKasa') }}</label>
         <Dropdown
           v-model="aktarForm.hedefKasaId"
           :options="kasaStore.kasalar"
           option-label="ad"
           option-value="id"
-          placeholder="Seçiniz"
+          :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Tutar *</label>
+        <label>{{ t('kasa.tutar') }}</label>
         <InputNumber
           v-model="aktarForm.tutar"
           :min="0.01"
@@ -327,22 +327,22 @@
         />
       </div>
       <div class="form-group">
-        <label>Açıklama</label>
+        <label>{{ t('common.description') }}</label>
         <InputText
           v-model="aktarForm.aciklama"
-          placeholder="Örn: Şube devir"
+          :placeholder="t('kasa.ornekSubeDevir')"
           class="w-full"
         />
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showAktarDialog = false"
         />
         <Button
-          label="Aktar"
+          :label="t('kasa.aktar')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveAktar"
@@ -352,35 +352,35 @@
 
     <Dialog
       v-model:visible="showBankaAktarDialog"
-      header="Kasadan Bankaya Aktar"
+      :header="t('kasa.kasadanBankaya')"
       :modal="true"
       style="width: 480px"
     >
       <div class="form-group">
-        <label>Kaynak Kasa *</label>
+        <label>{{ t('kasa.kaynakKasa') }}</label>
         <Dropdown
           v-model="bankaAktarForm.kasaId"
           :options="kasaStore.kasalar"
           option-label="ad"
           option-value="id"
-          placeholder="Seçiniz"
+          :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Hedef Banka *</label>
+        <label>{{ t('kasa.hedefBanka') }}</label>
         <Dropdown
           v-model="bankaAktarForm.bankaId"
           :options="bankalar"
           option-label="ad"
           option-value="id"
           filter
-          placeholder="Seçiniz"
+          :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Tutar *</label>
+        <label>{{ t('kasa.tutar') }}</label>
         <InputNumber
           v-model="bankaAktarForm.tutar"
           :min="0.01"
@@ -390,22 +390,22 @@
         />
       </div>
       <div class="form-group">
-        <label>Açıklama</label>
+        <label>{{ t('common.description') }}</label>
         <InputText
           v-model="bankaAktarForm.aciklama"
-          placeholder="Örn: Gün sonu devri"
+          :placeholder="t('kasa.ornekGunSonu')"
           class="w-full"
         />
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showBankaAktarDialog = false"
         />
         <Button
-          label="Aktar"
+          :label="t('kasa.aktar')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveBankaAktar"
@@ -415,7 +415,7 @@
 
     <Dialog
       v-model:visible="gunSonuDialog"
-      header="Gün Sonu (Z Raporu)"
+      :header="t('kasa.gunSonuBaslik')"
       :modal="true"
       style="width: 480px"
     >
@@ -427,28 +427,28 @@
           {{ formatDate(gunSonuVerisi.tarih) }}
         </div>
         <div class="gun-sonu-satir">
-          <span>Satış Adedi</span>
+          <span>{{ t('kasa.satisAdedi') }}</span>
           <strong>{{ gunSonuVerisi.satisAdedi }}</strong>
         </div>
         <div class="gun-sonu-satir">
-          <span>Toplam Satış</span>
+          <span>{{ t('kasa.toplamSatis') }}</span>
           <strong>{{ formatCurrency(gunSonuVerisi.toplamSatis) }}</strong>
         </div>
         <div class="gun-sonu-satir">
-          <span>Nakit</span>
+          <span>{{ t('kasa.nakit') }}</span>
           <strong>{{ formatCurrency(gunSonuVerisi.nakitSatis) }}</strong>
         </div>
         <div class="gun-sonu-satir">
-          <span>Kart</span>
+          <span>{{ t('kasa.kart') }}</span>
           <strong>{{ formatCurrency(gunSonuVerisi.kartSatis) }}</strong>
         </div>
         <div class="gun-sonu-satir">
-          <span>Havale</span>
+          <span>{{ t('kasa.havale') }}</span>
           <strong>{{ formatCurrency(gunSonuVerisi.havaleSatis) }}</strong>
         </div>
         <div class="gun-sonu-kasalar">
           <div class="gun-sonu-alt-baslik">
-            Kasa Bakiyeleri
+            {{ t('kasa.kasaBakiyeleri') }}
           </div>
           <div
             v-for="k in gunSonuVerisi.kasalar"
@@ -462,7 +462,7 @@
       </div>
       <template #footer>
         <Button
-          label="Kapat"
+          :label="t('kasa.kapat')"
           icon="pi pi-times"
           class="p-button-text"
           @click="gunSonuDialog = false"
@@ -481,9 +481,11 @@ import { useKategoriStore } from '../stores/kategoriStore.js'
 import { kasaAPI, excelAPI, faturaAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const kasaStore = useKasaStore()
 const kategoriStore = useKategoriStore()
 
@@ -507,7 +509,7 @@ const showBankaAktarDialog = ref(false)
 const bankaAktarForm = ref({ kasaId: null, bankaId: null, tutar: null, aciklama: '' })
 const bankalar = ref([])
 
-const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? 'Gelir Ekle' : 'Gider Ekle'))
+const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? t('kasa.gelirEkleBaslik') : t('kasa.giderEkleBaslik')))
 
 const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter((k) => k.tur === hareketTur.value))
 
@@ -528,7 +530,7 @@ const kasaSec = async (kasa) => {
     const r = await kasaAPI.getHareketler(kasa.id)
     kasaHareketler.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.hareketYuklenemedi'))
   }
 }
 
@@ -546,21 +548,21 @@ const editKasa = (kasa) => {
 
 const saveKasa = async () => {
   if (!kasaForm.value.ad.trim()) {
-    toastBildirim.uyari('Kasa adı giriniz')
+    toastBildirim.uyari(t('kasa.kasaAdiGiriniz'))
     return
   }
   saving.value = true
   try {
     if (editingKasaId.value) {
       await kasaStore.updateKasa(editingKasaId.value, kasaForm.value)
-      toastBildirim.basarili('Kasa güncellendi')
+      toastBildirim.basarili(t('kasa.kasaGuncellendi'))
     } else {
       await kasaStore.addKasa(kasaForm.value)
-      toastBildirim.basarili('Kasa oluşturuldu')
+      toastBildirim.basarili(t('kasa.kasaOlusturuldu'))
     }
     showKasaDialog.value = false
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -568,8 +570,8 @@ const saveKasa = async () => {
 
 const confirmDel = (id) => {
   confirm.require({
-    message: 'Bu kasayı silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('kasa.silOnayMesaj'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
@@ -579,9 +581,9 @@ const confirmDel = (id) => {
           seciliKasa.value = null
           kasaHareketler.value = []
         }
-        toastBildirim.basarili('Kasa silindi')
+        toastBildirim.basarili(t('kasa.kasaSilindi'))
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.silmeBasarisiz'))
       }
     }
   })
@@ -595,7 +597,7 @@ const openHareketDialog = (tur) => {
 
 const saveHareket = async () => {
   if (!hareketForm.value.tutar || hareketForm.value.tutar <= 0) {
-    toastBildirim.uyari('Geçerli tutar giriniz')
+    toastBildirim.uyari(t('kasa.gecerliTutar'))
     return
   }
   saving.value = true
@@ -613,9 +615,9 @@ const saveHareket = async () => {
     const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
     showHareketDialog.value = false
-    toastBildirim.basarili('Hareket eklendi')
+    toastBildirim.basarili(t('kasa.hareketEklendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -628,9 +630,9 @@ const delHareket = async (id) => {
     await kasaStore.getAllKasalar()
     const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
     if (guncel) seciliKasa.value = guncel
-    toastBildirim.basarili('Hareket silindi')
+    toastBildirim.basarili(t('kasa.hareketSilindi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.silmeBasarisiz'))
   }
 }
 
@@ -646,21 +648,21 @@ const openBankaAktarDialog = () => {
 
 const saveBankaAktar = async () => {
   if (!bankaAktarForm.value.kasaId || !bankaAktarForm.value.bankaId) {
-    toastBildirim.uyari('Kaynak kasa ve hedef banka seçiniz')
+    toastBildirim.uyari(t('kasa.kaynakHedefSecin'))
     return
   }
   if (!bankaAktarForm.value.tutar || bankaAktarForm.value.tutar <= 0) {
-    toastBildirim.uyari('Geçerli bir tutar giriniz')
+    toastBildirim.uyari(t('kasa.gecerliTutarGiriniz'))
     return
   }
   saving.value = true
   try {
     await kasaAPI.bankayaAktar(bankaAktarForm.value)
     showBankaAktarDialog.value = false
-    toastBildirim.basarili('Kasadan bankaya aktarım yapıldı')
+    toastBildirim.basarili(t('kasa.bankayaAktarildi'))
     await kasaStore.getAllKasalar()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Aktarım başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.aktarimBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -696,11 +698,11 @@ const gunSonuAc = async () => {
 
 const saveAktar = async () => {
   if (!aktarForm.value.kaynakKasaId || !aktarForm.value.hedefKasaId) {
-    toastBildirim.uyari('Kaynak ve hedef kasayı seçiniz')
+    toastBildirim.uyari(t('kasa.kaynakHedefKasa'))
     return
   }
   if (!aktarForm.value.tutar || aktarForm.value.tutar <= 0) {
-    toastBildirim.uyari('Geçerli tutar giriniz')
+    toastBildirim.uyari(t('kasa.gecerliTutar'))
     return
   }
   saving.value = true
@@ -708,9 +710,9 @@ const saveAktar = async () => {
     await kasaAPI.aktar(aktarForm.value)
     showAktarDialog.value = false
     await kasaStore.getAllKasalar()
-    toastBildirim.basarili('Kasa aktarımı yapıldı')
+    toastBildirim.basarili(t('kasa.kasaAktarildi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Aktarım başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.aktarimBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -733,8 +735,7 @@ const excelIndir = async () => {
 }
 
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

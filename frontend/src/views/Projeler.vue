@@ -3,10 +3,10 @@
   <div class="proje-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Projeler & Görevler
+        {{ t('projeler.title') }}
       </h1>
       <Button
-        label="Yeni Proje"
+        :label="t('projeler.yeniProje')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -27,24 +27,24 @@
       />
       <Column
         field="ad"
-        header="Proje Adı"
+        :header="t('projeler.projeAdi')"
         sortable
       />
       <Column
         field="sorumlu"
-        header="Sorumlu"
+        :header="t('projeler.sorumlu')"
       />
       <Column
         field="baslangic"
-        header="Başlangıç"
+        :header="t('projeler.baslangic')"
       />
       <Column
         field="bitis"
-        header="Bitiş"
+        :header="t('projeler.bitis')"
       />
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -54,7 +54,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('projeler.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -62,7 +62,7 @@
             v-if="data.durum === 'DEVAM_EDIYOR'"
             icon="pi pi-check-circle"
             class="p-button-rounded p-button-text p-button-success"
-            title="Tamamla"
+            :title="t('projeler.tamamla')"
             @click="durumGuncelle(data, 'TAMAMLANDI')"
           />
           <Button
@@ -75,9 +75,9 @@
       <template #expansion="{ data }">
         <div class="gorevler">
           <div class="gorev-baslik">
-            <h3>Görevler</h3>
+            <h3>{{ t('projeler.gorevler') }}</h3>
             <Button
-              label="Görev Ekle"
+              :label="t('projeler.gorevEkle')"
               icon="pi pi-plus"
               size="small"
               @click="gorevDialogAc(data)"
@@ -90,23 +90,23 @@
           >
             <Column
               field="ad"
-              header="Görev"
+              :header="t('projeler.gorev')"
             />
             <Column
               field="atanan"
-              header="Atanan"
+              :header="t('projeler.atanan')"
             />
             <Column
               field="baslangic"
-              header="Başlangıç"
+              :header="t('projeler.baslangic')"
             />
             <Column
               field="bitis"
-              header="Bitiş"
+              :header="t('projeler.bitis')"
             />
             <Column
               field="durum"
-              header="Durum"
+              :header="t('common.status')"
             >
               <template #body="{ data: g }">
                 <Tag
@@ -116,7 +116,7 @@
               </template>
             </Column>
             <Column
-              header="İşlem"
+              :header="t('projeler.islem')"
               style="width: 80px"
             >
               <template #body="{ data: g }">
@@ -125,7 +125,7 @@
                   icon="pi pi-check"
                   class="p-button-rounded p-button-text p-button-success"
                   size="small"
-                  title="Tamamla"
+                  :title="t('projeler.tamamla')"
                   @click="gorevTamamla(g)"
                 />
               </template>
@@ -137,30 +137,30 @@
 
     <EmptyState
       v-if="!yukleniyor && list.length === 0"
-      message="Henüz proje bulunamadı"
-      sub-message="İlk projenizi eklemek için Yeni Proje butonuna tıklayın"
+      :message="t('projeler.empty')"
+      :sub-message="t('projeler.emptyHint')"
       icon="pi pi-folder"
-      action-label="Yeni Proje"
+      :action-label="t('projeler.yeniProje')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
 
     <Dialog
       v-model:visible="dialog"
-      header="Yeni Proje"
+      :header="t('projeler.yeniProje')"
       modal
       :style="{ width: '500px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Proje Adı *</label><InputText
+          <label>{{ t('projeler.projeAdiZorunlu') }}</label><InputText
             v-model="form.ad"
             class="w-full"
           />
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Sorumlu</label><InputText
+            <label>{{ t('projeler.sorumlu') }}</label><InputText
               v-model="form.sorumlu"
               class="w-full"
             />
@@ -168,14 +168,14 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Başlangıç</label><DatePicker
+            <label>{{ t('projeler.baslangic') }}</label><DatePicker
               v-model="form.baslangic"
               date-format="dd/mm/yy"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Bitiş</label><DatePicker
+            <label>{{ t('projeler.bitis') }}</label><DatePicker
               v-model="form.bitis"
               date-format="dd/mm/yy"
               class="w-full"
@@ -183,7 +183,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="3"
             class="w-full"
@@ -192,13 +192,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -208,33 +208,33 @@
 
     <Dialog
       v-model:visible="gorevDialog"
-      header="Görev Ekle"
+      :header="t('projeler.gorevEkle')"
       modal
       :style="{ width: '450px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Görev Adı *</label><InputText
+          <label>{{ t('projeler.gorevAdiZorunlu') }}</label><InputText
             v-model="gorevForm.ad"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Atanan</label><InputText
+          <label>{{ t('projeler.atanan') }}</label><InputText
             v-model="gorevForm.atanan"
             class="w-full"
           />
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Başlangıç</label><DatePicker
+            <label>{{ t('projeler.baslangic') }}</label><DatePicker
               v-model="gorevForm.baslangic"
               date-format="dd/mm/yy"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Bitiş</label><DatePicker
+            <label>{{ t('projeler.bitis') }}</label><DatePicker
               v-model="gorevForm.bitis"
               date-format="dd/mm/yy"
               class="w-full"
@@ -242,7 +242,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="gorevForm.aciklama"
             rows="2"
             class="w-full"
@@ -251,13 +251,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="gorevDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="gorevKaydet"
@@ -274,10 +274,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { projeAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -288,7 +290,7 @@ const form = ref({ ad: '', aciklama: '', baslangic: new Date(), bitis: null, sor
 const gorevForm = ref({ ad: '', aciklama: '', atanan: '', baslangic: new Date(), bitis: null })
 
 const hataGoster = (err) => {
-  toastBildirim.hata(err?.response?.data?.message || err?.message || 'Bir hata oluştu')
+  toastBildirim.hata(err?.response?.data?.message || err?.message || t('projeler.hataOlustu'))
 }
 
 onMounted(async () => {
@@ -317,7 +319,7 @@ const kaydet = async () => {
     dialog.value = false
     const r = await projeAPI.getAll()
     list.value = r.data?.content || r.data || []
-    toastBildirim.basarili('Proje oluşturuldu')
+    toastBildirim.basarili(t('projeler.olusturuldu'))
   } catch (e) {
     hataGoster(e)
   }
@@ -328,23 +330,23 @@ const durumGuncelle = async (data, durum) => {
     await projeAPI.durumGuncelle(data.id, durum)
     const r = await projeAPI.getAll()
     list.value = r.data?.content || r.data || []
-    toastBildirim.basarili('Durum güncellendi')
+    toastBildirim.basarili(t('projeler.durumGuncellendi'))
   } catch (e) {
     hataGoster(e)
   }
 }
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await projeAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Proje silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('projeler.silindi'), detail: t('projeler.projeSilindi'), life: 3000 })
       } catch (e) {
         hataGoster(e)
       }
@@ -370,7 +372,7 @@ const gorevKaydet = async () => {
     gorevDialog.value = false
     const r = await projeAPI.getAll()
     list.value = r.data?.content || r.data || []
-    toastBildirim.basarili('Görev eklendi')
+    toastBildirim.basarili(t('projeler.gorevEklendi'))
   } catch (e) {
     hataGoster(e)
   }
@@ -381,7 +383,7 @@ const gorevTamamla = async (g) => {
     await projeAPI.gorevDurumGuncelle(g.id, 'TAMAMLANDI')
     const r = await projeAPI.getAll()
     list.value = r.data?.content || r.data || []
-    toastBildirim.basarili('Görev tamamlandı')
+    toastBildirim.basarili(t('projeler.gorevTamamlandi'))
   } catch (e) {
     hataGoster(e)
   }

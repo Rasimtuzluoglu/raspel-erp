@@ -5,15 +5,15 @@
         <h1 class="page-title text-xl font-bold">
           <i
             class="pi pi-check-circle text-primary mr-2"
-          />Yönetici & Muhasebe Onay Merkezi
+          />{{ t('onaylar.title') }}
         </h1>
         <p class="text-xs text-muted">
-          Personel izinleri, saha masrafları ve satınalma taleplerini tek merkezden inceleyip onaylayın.
+          {{ t('onaylar.subtitle') }}
         </p>
       </div>
       <Button
         icon="pi pi-refresh"
-        label="Yenile"
+        :label="t('onaylar.yenile')"
         class="p-button-outlined p-button-sm"
         :loading="yukleniyor"
         @click="yukle"
@@ -26,7 +26,7 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-calendar" />
-            İzin Talepleri
+            {{ t('onaylar.izinTalepleri') }}
             <span
               v-if="bekleyenIzinler && bekleyenIzinler.length > 0"
               class="badge-sayi bg-blue-600"
@@ -52,24 +52,24 @@
                     </div>
                     <div>
                       <h4 class="font-bold text-sm text-primary dark:text-gray-100">
-                        {{ i.personelAdi || 'Personel #' + i.personelId }}
+                        {{ i.personelAdi || `${t('onaylar.personel')} #${i.personelId}` }}
                       </h4>
                       <span class="text-xs text-muted">{{ i.izinTuru }}</span>
                     </div>
                   </div>
                   <Tag
-                    value="Bekliyor"
+                    :value="t('onaylar.bekliyor')"
                     severity="warn"
                   />
                 </div>
                 <div class="bg-secondary dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
                   <div class="flex justify-between">
-                    <span>Tarih Aralığı:</span>
+                    <span>{{ t('onaylar.tarihAraligi') }}:</span>
                     <strong>{{ formatDate(i.baslangic) }} → {{ formatDate(i.bitis) }}</strong>
                   </div>
                   <div class="flex justify-between text-primary font-semibold">
-                    <span>İzin Süresi:</span>
-                    <span>{{ i.gunSayisi }} Gün</span>
+                    <span>{{ t('onaylar.izinSuresi') }}:</span>
+                    <span>{{ i.gunSayisi }} {{ t('onaylar.gun') }}</span>
                   </div>
                   <div
                     v-if="i.aciklama"
@@ -81,13 +81,13 @@
               </div>
               <div class="flex gap-2 pt-2 border-t">
                 <Button
-                  label="Onayla"
+                  :label="t('onaylar.onayla')"
                   icon="pi pi-check"
                   class="p-button-success p-button-sm flex-1"
                   @click="izinOnay(i, 'ONAYLANDI')"
                 />
                 <Button
-                  label="Reddet"
+                  :label="t('onaylar.reddet')"
                   icon="pi pi-times"
                   class="p-button-danger p-button-outlined p-button-sm flex-1"
                   @click="izinOnay(i, 'REDDEDILDI')"
@@ -100,7 +100,7 @@
             class="text-center py-12 text-muted"
           >
             <i class="pi pi-calendar text-4xl text-gray-400 block mb-2" />
-            Şu anda bekleyen izin talebi bulunmuyor.
+            {{ t('onaylar.bekleyenIzinYok') }}
           </div>
         </div>
       </TabPanel>
@@ -109,7 +109,7 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-wallet" />
-            Saha Masraf & Avans
+            {{ t('onaylar.sahaMasrafAvans') }}
             <span
               v-if="bekleyenMasraflar && bekleyenMasraflar.length > 0"
               class="badge-sayi bg-emerald-600"
@@ -135,9 +135,9 @@
                     </div>
                     <div>
                       <h4 class="font-bold text-sm text-primary dark:text-gray-100">
-                        {{ m.personelAdi || m.kullaniciAdi || 'Saha Personeli' }}
+                        {{ m.personelAdi || m.kullaniciAdi || t('onaylar.sahaPersoneli') }}
                       </h4>
-                      <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-semibold">{{ m.tur === 'AVANS' ? 'Avans' : m.kategori }}</span>
+                      <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-semibold">{{ m.tur === 'AVANS' ? t('onaylar.avans') : m.kategori }}</span>
                     </div>
                   </div>
                   <div class="text-right font-extrabold text-base text-emerald-600">
@@ -146,7 +146,7 @@
                 </div>
                 <div class="bg-secondary dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
                   <div class="flex justify-between text-muted">
-                    <span>Fiş / Talep Tarihi:</span>
+                    <span>{{ t('onaylar.fisTarihi') }}:</span>
                     <strong>{{ formatDate(m.tarih) }}</strong>
                   </div>
                   <div class="text-primary dark:text-gray-200">
@@ -156,13 +156,13 @@
               </div>
               <div class="flex gap-2 pt-2 border-t">
                 <Button
-                  label="Onayla (Gidere İşle)"
+                  :label="t('onaylar.onaylaGidereIsle')"
                   icon="pi pi-check"
                   class="p-button-success p-button-sm flex-1"
                   @click="masrafOnayla(m)"
                 />
                 <Button
-                  label="Reddet"
+                  :label="t('onaylar.reddet')"
                   icon="pi pi-times"
                   class="p-button-danger p-button-outlined p-button-sm flex-1"
                   @click="masrafReddet(m)"
@@ -175,7 +175,7 @@
             class="text-center py-12 text-muted"
           >
             <i class="pi pi-wallet text-4xl text-gray-400 block mb-2" />
-            Şu anda onay bekleyen saha masrafı veya avans talebi bulunmuyor.
+            {{ t('onaylar.bekleyenMasrafYok') }}
           </div>
         </div>
       </TabPanel>
@@ -184,7 +184,7 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-shopping-bag" />
-            Satın Alma Talepleri
+            {{ t('onaylar.satinAlmaTalepleri') }}
             <span
               v-if="bekleyenTalepler && bekleyenTalepler.length > 0"
               class="badge-sayi bg-purple-600"
@@ -198,37 +198,37 @@
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <div
-              v-for="t in bekleyenTalepler"
-              :key="t.id"
+              v-for="talep in bekleyenTalepler"
+              :key="talep.id"
               class="onay-kart p-4 rounded-xl border bg-white dark:bg-gray-800 shadow-sm flex flex-col justify-between"
             >
               <div>
                 <div class="flex justify-between items-start mb-2">
-                  <span class="font-bold text-sm text-primary">#{{ t.talepNo }}</span>
+                  <span class="font-bold text-sm text-primary">#{{ talep.talepNo }}</span>
                   <Tag
-                    value="Onay Bekliyor"
+                    :value="t('onaylar.onayBekliyor')"
                     severity="warning"
                   />
                 </div>
                 <h4 class="font-bold text-sm text-primary dark:text-gray-100 mb-1">
-                  {{ t.talepEden || '-' }} · {{ t.departman || 'Genel' }}
+                  {{ talep.talepEden || '-' }} · {{ talep.departman || t('onaylar.genel') }}
                 </h4>
                 <p class="text-xs text-muted mb-3">
-                  {{ t.aciklama }}
+                  {{ talep.aciklama }}
                 </p>
               </div>
               <div class="flex gap-2 pt-2 border-t">
                 <Button
-                  label="Onayla"
+                  :label="t('onaylar.onayla')"
                   icon="pi pi-check"
                   class="p-button-success p-button-sm flex-1"
-                  @click="talepOnay(t, 'ONAYLANDI')"
+                  @click="talepOnay(talep, 'ONAYLANDI')"
                 />
                 <Button
-                  label="Reddet"
+                  :label="t('onaylar.reddet')"
                   icon="pi pi-times"
                   class="p-button-danger p-button-outlined p-button-sm flex-1"
-                  @click="talepOnay(t, 'REDDEDILDI')"
+                  @click="talepOnay(talep, 'REDDEDILDI')"
                 />
               </div>
             </div>
@@ -238,7 +238,7 @@
             class="text-center py-12 text-muted"
           >
             <i class="pi pi-shopping-bag text-4xl text-gray-400 block mb-2" />
-            Şu anda bekleyen satın alma talebi bulunmuyor.
+            {{ t('onaylar.bekleyenTalepYok') }}
           </div>
         </div>
       </TabPanel>
@@ -247,7 +247,7 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-receipt" />
-            Saha Siparişleri
+            {{ t('onaylar.sahaSiparisleri') }}
             <span
               v-if="bekleyenSiparisler && bekleyenSiparisler.length > 0"
               class="badge-sayi bg-blue-600"
@@ -269,15 +269,15 @@
                 <div class="flex justify-between items-start mb-2">
                   <span class="font-bold text-sm text-primary">#{{ s.siparisNo || s.id }}</span>
                   <Tag
-                    value="Onay Bekliyor"
+                    :value="t('onaylar.onayBekliyor')"
                     severity="warning"
                   />
                 </div>
                 <h4 class="font-bold text-sm text-primary dark:text-gray-100 mb-1">
-                  {{ s.cariHesapAd || s.musteriAd || s.cariHesapAdi || 'Müşteri' }}
+                  {{ s.cariHesapAd || s.musteriAd || s.cariHesapAdi || t('onaylar.musteri') }}
                 </h4>
                 <p class="text-xs text-muted mb-1">
-                  {{ s.aciklama || 'Saha Siparişi' }}
+                  {{ s.aciklama || t('onaylar.sahaSiparisi') }}
                 </p>
                 <p class="text-xs font-semibold text-primary mb-3">
                   {{ formatCurrency(s.genelToplam || s.toplamTutar || 0) }}
@@ -285,13 +285,13 @@
               </div>
               <div class="flex gap-2 pt-2 border-t">
                 <Button
-                  label="Onayla"
+                  :label="t('onaylar.onayla')"
                   icon="pi pi-check"
                   class="p-button-success p-button-sm flex-1"
                   @click="siparisOnay(s, 'HAZIRLANIYOR')"
                 />
                 <Button
-                  label="Reddet"
+                  :label="t('onaylar.reddet')"
                   icon="pi pi-times"
                   class="p-button-danger p-button-outlined p-button-sm flex-1"
                   @click="siparisOnay(s, 'IPTAL')"
@@ -304,7 +304,7 @@
             class="text-center py-12 text-muted"
           >
             <i class="pi pi-receipt text-4xl text-gray-400 block mb-2" />
-            Şu anda onay bekleyen saha siparişi bulunmuyor.
+            {{ t('onaylar.bekleyenSiparisYok') }}
           </div>
         </div>
       </TabPanel>
@@ -312,12 +312,12 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-sliders-h" />
-            Onay Ayarları
+            {{ t('onaylar.onayAyarlari') }}
           </span>
         </template>
         <div class="onay-icerik p-4">
           <p class="text-xs text-muted mb-4">
-            Modül bazlı onay eşikleri belirleyin. Eşiğin altındaki tutarlar otomatik onaylanabilir.
+            {{ t('onaylar.ayarAciklama') }}
           </p>
           <DataTable
             :value="onayAyarlari"
@@ -327,9 +327,9 @@
           >
             <Column
               field="modul"
-              header="Modül"
+              :header="t('onaylar.modul')"
             />
-            <Column header="Eşik Tutar (₺)">
+            <Column :header="t('onaylar.esikTutar')">
               <template #body="{ data }">
                 <InputNumber
                   v-model="data.esikTutar"
@@ -340,19 +340,19 @@
                 />
               </template>
             </Column>
-            <Column header="Otomatik Onay">
+            <Column :header="t('onaylar.otomatikOnay')">
               <template #body="{ data }">
                 <ToggleSwitch
                   v-model="data.otomatikOnay"
                 />
               </template>
             </Column>
-            <Column header="İşlem">
+            <Column :header="t('onaylar.islem')">
               <template #body="{ data }">
                 <Button
                   icon="pi pi-save"
                   size="small"
-                  label="Kaydet"
+                  :label="t('common.save')"
                   @click="ayarKaydet(data)"
                 />
               </template>
@@ -366,11 +366,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI, siparisAPI, onayAyariAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
 
@@ -405,7 +407,7 @@ const yukle = async () => {
       bekleyenSiparisler.value = allSiparis.filter((s) => s.durum === 'BEKLIYOR')
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Onaylar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.yuklemeHatasi'))
   } finally {
     yukleniyor.value = false
   }
@@ -414,52 +416,52 @@ const yukle = async () => {
 const izinOnay = async (i, durum) => {
   try {
     await personelIzinAPI.durumGuncelle(i.id, durum, authStore?.kullanici?.displayName || authStore?.kullanici?.username)
-    toastBildirim.basarili(`İzin ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}`)
+    toastBildirim.basarili(durum === 'ONAYLANDI' ? t('onaylar.izinOnaylandi') : t('onaylar.izinReddedildi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.islemBasarisiz'))
   }
 }
 
 const masrafOnayla = async (m) => {
   try {
-    await personelMasrafTalepAPI.onayla(m.id, 'Muhasebe tarafından onaylandı')
-    toastBildirim.basarili('Masraf talebi onaylandı ve şirket giderlerine işlendi')
+    await personelMasrafTalepAPI.onayla(m.id, t('onaylar.muhasebeOnayiNotu'))
+    toastBildirim.basarili(t('onaylar.masrafOnaylandi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.islemBasarisiz'))
   }
 }
 
 const masrafReddet = async (m) => {
-  const not = prompt('Ret gerekçesi:', 'Belge veya fiş yetersiz')
+  const not = prompt(t('onaylar.retGerekcesi'), t('onaylar.belgeFisYetersiz'))
   if (not === null) return
   try {
     await personelMasrafTalepAPI.reddet(m.id, not)
-    toastBildirim.basarili('Masraf talebi reddedildi')
+    toastBildirim.basarili(t('onaylar.masrafReddedildi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.islemBasarisiz'))
   }
 }
 
-const talepOnay = async (t, durum) => {
+const talepOnay = async (talep, durum) => {
   try {
-    await satinalmaTalepAPI.durumGuncelle(t.id, durum)
-    toastBildirim.basarili(`Satınalma talebi ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}`)
+    await satinalmaTalepAPI.durumGuncelle(talep.id, durum)
+    toastBildirim.basarili(durum === 'ONAYLANDI' ? t('onaylar.satinalmaOnaylandi') : t('onaylar.satinalmaReddedildi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.islemBasarisiz'))
   }
 }
 
 const siparisOnay = async (s, durum) => {
   try {
     await siparisAPI.durumGuncelle(s.id, durum)
-    toastBildirim.basarili(durum === 'HAZIRLANIYOR' ? 'Saha siparişi onaylandı' : 'Saha siparişi reddedildi')
+    toastBildirim.basarili(durum === 'HAZIRLANIYOR' ? t('onaylar.siparisOnaylandi') : t('onaylar.siparisReddedildi'))
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.islemBasarisiz'))
   }
 }
 
@@ -481,10 +483,10 @@ const ayarlariYukle = async () => {
 const ayarKaydet = async (ayar) => {
   try {
     await onayAyariAPI.kaydet({ modul: ayar.modul, esikTutar: ayar.esikTutar, otomatikOnay: ayar.otomatikOnay })
-    toastBildirim.basarili(`${ayar.modul} ayarı kaydedildi`)
+    toastBildirim.basarili(`${ayar.modul} ${t('onaylar.ayarKaydedildi')}`)
     await ayarlariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Ayar kaydedilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('onaylar.ayarKaydetHatasi'))
   }
 }
 

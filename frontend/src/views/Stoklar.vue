@@ -1,21 +1,21 @@
 <template>
   <div class="stoklar-container">
-    <h1>Stok Yönetimi</h1>
+    <h1>{{ t('stoklar.title') }}</h1>
     <IlkZiyaretIpuclari
       anahtar="stoklar"
-      baslik="Stok & Ürün Yönetimi"
-      metin="Ürün kartı oluşturup barkod ve kritik stok seviyesi tanımlayın. Giriş/çıkış hareketleri ekleyin, toplu fiyat güncelleme ile tek seferde kategorideki ürünlerin fiyatını değiştirin."
+      :baslik="t('stoklar.ipucuBaslik')"
+      :metin="t('stoklar.ipucuMetin')"
     />
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Ürün"
+          :label="t('stoklar.yeniUrun')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
         />
         <Button
-          label="Toplu Fiyat Güncelle"
+          :label="t('stoklar.topluFiyatGuncelle')"
           icon="pi pi-dollar"
           class="p-button-help"
           style="margin-left: 8px"
@@ -25,15 +25,15 @@
           v-if="seciliStoklar && seciliStoklar.length > 0"
           class="batch-actions"
         >
-          <span class="batch-count">{{ seciliStoklar ? seciliStoklar.length : 0 }} seçili</span>
+          <span class="batch-count">{{ seciliStoklar ? seciliStoklar.length : 0 }} {{ t('stoklar.secili') }}</span>
           <Button
-            label="Toplu Sil"
+            :label="t('stoklar.topluSil')"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"
             @click="batchSil"
           />
           <Button
-            label="CSV Aktar"
+            :label="t('stoklar.csvAktar')"
             icon="pi pi-download"
             class="p-button-sm p-button-outlined"
             @click="batchCsvExport"
@@ -53,14 +53,14 @@
             <i class="pi pi-search" />
             <InputText
               v-model="aramaMetni"
-              placeholder="Ürün adı, kod veya birim..."
+              :placeholder="t('stoklar.aramaPlaceholder')"
               @input="ara"
             />
           </span>
           <Button
             :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'"
             class="p-button-text p-button-sm"
-            :title="gosterim === 'tablo' ? 'Kart Görünümü' : 'Tablo Görünümü'"
+            :title="gosterim === 'tablo' ? t('stoklar.kartGorunumu') : t('stoklar.tabloGorunumu')"
             @click="gosterim = gosterim === 'tablo' ? 'kart' : 'tablo'"
           />
         </div>
@@ -72,45 +72,45 @@
         <i class="pi pi-search" />
         <InputText
           v-model="filtreArama"
-          placeholder="Urun adi, kod, barkod..."
+          :placeholder="t('stoklar.filtreArama')"
           @input="filtreDegisti"
         />
       </span>
       <InputText
         v-model="filtreKategori"
-        placeholder="Kategori"
+        :placeholder="t('stoklar.filtreKategori')"
         class="filter-input"
         @input="filtreDegisti"
       />
       <InputText
         v-model="filtreMarka"
-        placeholder="Marka"
+        :placeholder="t('stoklar.filtreMarka')"
         class="filter-input"
         @input="filtreDegisti"
       />
       <Dropdown
         v-model="filtreStokGrubu"
         :options="['', 'Hammadde', 'Mamul', 'Yari Mamul', 'Sarf', 'Aksesuar']"
-        placeholder="Stok Grubu"
+        :placeholder="t('stoklar.filtreStokGrubu')"
         class="filter-dropdown"
         @change="filtreDegisti"
       />
       <InputNumber
         v-model="filtreMinFiyat"
-        placeholder="Min Fiyat"
+        :placeholder="t('stoklar.minFiyat')"
         class="filter-input-sm"
         @input="filtreDegisti"
       />
       <InputNumber
         v-model="filtreMaxFiyat"
-        placeholder="Max Fiyat"
+        :placeholder="t('stoklar.maxFiyat')"
         class="filter-input-sm"
         @input="filtreDegisti"
       />
       <Button
         icon="pi pi-times"
         class="p-button-text p-button-sm"
-        title="Temizle"
+        :title="t('stoklar.temizle')"
         @click="filtreTemizle"
       />
     </div>
@@ -145,19 +145,19 @@
       >
         <template #header>
           <div class="table-header">
-            <span class="toplam-bilgi">{{ stokStore.toplamKayit }} ürün</span>
+            <span class="toplam-bilgi">{{ stokStore.toplamKayit }} {{ t('stoklar.urun') }}</span>
             <span
               v-if="kritikAdet > 0"
               class="kritik-bilgi"
-            ><i class="pi pi-exclamation-triangle" /> {{ kritikAdet }} kritik</span>
+            ><i class="pi pi-exclamation-triangle" /> {{ kritikAdet }} {{ t('stoklar.kritik') }}</span>
           </div>
         </template>
         <template #empty>
           <EmptyState
-            message="Henüz ürün yok"
-            sub-message="Stok ürünlerinizi ekleyerek envanterinizi oluşturun."
+            :message="t('stoklar.empty')"
+            :sub-message="t('stoklar.emptyHint')"
             icon="pi pi-box"
-            action-label="İlk Ürünü Ekle"
+            :action-label="t('stoklar.emptyAction')"
             action-icon="pi pi-plus"
             @action="openDialog"
           />
@@ -168,25 +168,25 @@
         />
         <Column
           field="stokKodu"
-          header="Stok Kodu"
+          :header="t('stoklar.colStokKodu')"
           sortable
           style="width: 120px"
         />
         <Column
           field="ad"
-          header="Ürün Adı"
+          :header="t('stoklar.colUrunAdi')"
           sortable
           style="min-width: 180px"
         />
         <Column
           field="birim"
-          header="Birim"
+          :header="t('stoklar.colBirim')"
           sortable
           style="width: 90px"
         />
         <Column
           field="miktar"
-          header="Miktar"
+          :header="t('stoklar.colMiktar')"
           sortable
           style="width: 110px"
         >
@@ -198,7 +198,7 @@
         </Column>
         <Column
           field="fiyat"
-          header="Birim Fiyat"
+          :header="t('stoklar.colBirimFiyat')"
           sortable
           style="width: 130px"
         >
@@ -208,7 +208,7 @@
         </Column>
         <Column
           field="tedarikciAd"
-          header="Tedarikçi"
+          :header="t('stoklar.colTedarikci')"
           sortable
           style="width: 150px"
         >
@@ -224,7 +224,7 @@
           </template>
         </Column>
         <Column
-          header="Stok Değeri"
+          :header="t('stoklar.colStokDegeri')"
           sortable
           style="width: 130px"
         >
@@ -233,7 +233,7 @@
           </template>
         </Column>
         <Column
-          header="Kritik"
+          :header="t('stoklar.colKritik')"
           style="width: 80px"
         >
           <template #body="s">
@@ -292,12 +292,12 @@
           <span
             v-if="s.minMiktar && s.miktar <= s.minMiktar"
             class="uyari-eti"
-          ><i class="pi pi-exclamation-triangle" /> Kritik</span>
+          ><i class="pi pi-exclamation-triangle" /> {{ t('stoklar.colKritik') }}</span>
         </div>
         <h3>{{ s.ad }}</h3>
         <div class="kart-bilgi">
           <div class="bilgi-item">
-            <span class="bilgi-label">Miktar</span>
+            <span class="bilgi-label">{{ t('stoklar.colMiktar') }}</span>
             <span
               class="bilgi-deger"
               :class="s.miktar <= (s.minMiktar || 0) ? 'kritik' : 'normal'"
@@ -306,7 +306,7 @@
             </span>
           </div>
           <div class="bilgi-item">
-            <span class="bilgi-label">Birim Fiyat</span>
+            <span class="bilgi-label">{{ t('stoklar.colBirimFiyat') }}</span>
             <span class="bilgi-deger">{{ formatCurrency(s.fiyat) }}</span>
           </div>
         </div>
@@ -326,7 +326,7 @@
       <Message
         v-if="filtrelenmisStoklar && filtrelenmisStoklar.length === 0"
         severity="info"
-        text="Eşleşen ürün bulunamadı."
+        :text="t('stoklar.eslesenYok')"
         class="full-width"
       />
     </div>
@@ -341,13 +341,13 @@
           <small style="color: #64748b; font-weight: 400">({{ seciliStok.miktar }} {{ seciliStok.birim || 'Adet' }})</small>
         </h2>
         <Button
-          label="+ Stok Giriş"
+          :label="t('stoklar.stokGiris')"
           icon="pi pi-plus-circle"
           class="p-button-success p-button-sm"
           @click="openHareketDialog('GIRIS')"
         />
         <Button
-          label="- Stok Çıkış"
+          :label="t('stoklar.stokCikis')"
           icon="pi pi-minus-circle"
           class="p-button-danger p-button-sm"
           @click="openHareketDialog('CIKIS')"
@@ -355,7 +355,7 @@
         <Button
           icon="pi pi-chevron-up"
           class="p-button-text p-button-sm"
-          title="Kapat"
+          :title="t('stoklar.kapat')"
           @click="seciliStok = null"
         />
       </div>
@@ -369,7 +369,7 @@
           current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
         >
           <Column
-            header="Tarih"
+            :header="t('common.date')"
             style="width: 100px"
           >
             <template #body="s">
@@ -377,17 +377,17 @@
             </template>
           </Column>
           <Column
-            header="Tür"
+            :header="t('faturalar.colTur')"
             style="width: 90px"
           >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
-                {{ s.data.tur === 'GIRIS' ? 'Giriş' : 'Çıkış' }}
+                {{ s.data.tur === 'GIRIS' ? t('stoklar.giris') : t('stoklar.cikis') }}
               </span>
             </template>
           </Column>
           <Column
-            header="Miktar"
+            :header="t('stoklar.colMiktar')"
             style="width: 90px"
           >
             <template #body="s">
@@ -395,7 +395,7 @@
             </template>
           </Column>
           <Column
-            header="Ağırlık (kg)"
+            :header="t('stoklar.hareketAgirlik')"
             style="width: 110px"
           >
             <template #body="s">
@@ -403,14 +403,14 @@
             </template>
           </Column>
           <Column
-            header="Cari Hesap"
+            :header="t('stoklar.hareketCari')"
             style="width: 160px"
           >
             <template #body="s">
               {{ s.data.cariHesapAd || '-' }}
             </template>
           </Column>
-          <Column header="Açıklama" />
+          <Column :header="t('stoklar.hareketAciklama')" />
           <Column
             header=""
             style="width: 60px"
@@ -427,105 +427,105 @@
         <Message
           v-if="stokHareketler && stokHareketler.length === 0"
           severity="info"
-          text="Hareket bulunmamaktadır."
+          :text="t('stoklar.hareketYok')"
         />
       </div>
     </div>
 
     <Dialog
       v-model:visible="showDialog"
-      :header="editingId ? 'Ürün Düzenle' : 'Yeni Ürün'"
+      :header="editingId ? t('stoklar.urunDuzenle') : t('stoklar.yeniUrunDialog')"
       :modal="true"
       style="width: 650px"
     >
       <div class="form-section">
         <div class="form-section-title">
-          Temel Bilgiler
+          {{ t('stoklar.temelBilgiler') }}
         </div>
         <div class="form-row">
           <div class="form-grup flex-2">
-            <label>Ürün Adı *</label>
+            <label>{{ t('stoklar.urunAdi') }}</label>
             <InputText
               v-model="form.ad"
-              placeholder="Ürün adı"
+              :placeholder="t('stoklar.urunAdiPlaceholder')"
               class="w-full"
             />
           </div>
           <div class="form-grup">
-            <label>Birim</label>
+            <label>{{ t('stoklar.birim') }}</label>
             <Dropdown
               v-model="form.birim"
               :options="['Adet', 'Koli', 'Kg', 'Metre', 'Litre', 'Paket']"
-              placeholder="Seçiniz"
+              :placeholder="t('stoklar.seciniz')"
               class="w-full"
             />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Stok Kodu</label>
+            <label>{{ t('stoklar.stokKodu') }}</label>
             <InputText
               v-model="form.stokKodu"
-              placeholder="Örn: URN-001"
+              :placeholder="t('stoklar.stokKoduPlaceholder')"
               class="w-full"
             />
           </div>
           <div class="form-grup">
-            <label>Barkod</label>
+            <label>{{ t('stoklar.barkod') }}</label>
             <InputText
               v-model="form.barkod"
-              placeholder="Barkod numarası"
+              :placeholder="t('stoklar.barkodPlaceholder')"
               class="w-full"
             />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Marka</label>
+            <label>{{ t('stoklar.marka') }}</label>
             <InputText
               v-model="form.marka"
-              placeholder="Ürün markası"
+              :placeholder="t('stoklar.markaPlaceholder')"
               class="w-full"
             />
           </div>
           <div class="form-grup">
-            <label>Kategori</label>
+            <label>{{ t('stoklar.kategori') }}</label>
             <InputText
               v-model="form.kategori"
-              placeholder="Ürün kategorisi"
+              :placeholder="t('stoklar.kategoriPlaceholder')"
               class="w-full"
             />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Stok Grubu</label>
+            <label>{{ t('stoklar.stokGrubu') }}</label>
             <InputText
               v-model="form.stokGrubu"
-              placeholder="Örn: Hammadde, Mamül"
+              :placeholder="t('stoklar.stokGrubuPlaceholder')"
               class="w-full"
             />
           </div>
           <div class="form-grup">
-            <label>Raf No</label>
+            <label>{{ t('stoklar.rafNo') }}</label>
             <InputText
               v-model="form.rafNo"
-              placeholder="Örn: A-12"
+              :placeholder="t('stoklar.rafNoPlaceholder')"
               class="w-full"
             />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>2. Birim</label>
+            <label>{{ t('stoklar.birim2') }}</label>
             <InputText
               v-model="form.birim2"
-              placeholder="İkinci birim"
+              :placeholder="t('stoklar.birim2Placeholder')"
               class="w-full"
             />
           </div>
           <div class="form-grup">
-            <label>Çevrim Katsayısı</label>
+            <label>{{ t('stoklar.cevrimKatsayisi') }}</label>
             <InputNumber
               v-model="form.cevrimKatsayisi"
               :min="0"
@@ -538,11 +538,11 @@
       </div>
       <div class="form-section">
         <div class="form-section-title">
-          Fiyat & Stok
+          {{ t('stoklar.fiyatStok') }}
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Alış Fiyatı *</label>
+            <label>{{ t('stoklar.alisFiyati') }}</label>
             <InputNumber
               v-model="form.fiyat"
               :min="0"
@@ -551,7 +551,7 @@
             />
           </div>
           <div class="form-grup">
-            <label>Satış Fiyatı</label>
+            <label>{{ t('stoklar.satisFiyati') }}</label>
             <InputNumber
               v-model="form.satisFiyati"
               :min="0"
@@ -562,7 +562,7 @@
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>KDV Oranı (%)</label>
+            <label>{{ t('stoklar.kdvOrani') }}</label>
             <InputNumber
               v-model="form.kdvOrani"
               :min="0"
@@ -572,7 +572,7 @@
             />
           </div>
           <div class="form-grup">
-            <label>Ağırlık (kg)</label>
+            <label>{{ t('stoklar.agirlik') }}</label>
             <InputNumber
               v-model="form.agirlik"
               :min="0"
@@ -583,7 +583,7 @@
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Mevcut Miktar</label>
+            <label>{{ t('stoklar.mevcutMiktar') }}</label>
             <InputNumber
               v-model="form.miktar"
               :min="0"
@@ -592,7 +592,7 @@
             />
           </div>
           <div class="form-grup">
-            <label>Min. Stok Seviyesi</label>
+            <label>{{ t('stoklar.minStok') }}</label>
             <InputNumber
               v-model="form.minMiktar"
               :min="0"
@@ -603,7 +603,7 @@
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Maliyet Yöntemi</label>
+            <label>{{ t('stoklar.maliyetYontemi') }}</label>
             <Dropdown
               v-model="form.maliyetYontemi"
               :options="maliyetYontemiSecenekleri"
@@ -617,32 +617,32 @@
       </div>
       <div class="form-section">
         <div class="form-section-title">
-          Tedarikçi Bilgileri
+          {{ t('stoklar.tedarikciBilgileri') }}
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Tedarikçi</label>
+            <label>{{ t('stoklar.tedarikci') }}</label>
             <Dropdown
               v-model="form.tedarikciId"
               :options="cariHesapStore?.cariHesaplar || []"
               option-label="ad"
               option-value="id"
-              placeholder="Tedarikçi seçin"
+              :placeholder="t('stoklar.tedarikciSecin')"
               class="w-full"
             />
           </div>
           <div class="form-grup">
-            <label>Tedarikçi Stok Kodu</label>
+            <label>{{ t('stoklar.tedarikciStokKodu') }}</label>
             <InputText
               v-model="form.tedarikciStokKodu"
-              placeholder="Tedarikçideki stok kodu"
+              :placeholder="t('stoklar.tedarikciStokKoduPlaceholder')"
               class="w-full"
             />
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
-            <label>Tedarikçi Fiyatı</label>
+            <label>{{ t('stoklar.tedarikciFiyati') }}</label>
             <InputNumber
               v-model="form.tedarikciFiyat"
               :min="0"
@@ -657,10 +657,10 @@
       </div>
       <div class="form-section">
         <div class="form-section-title">
-          Ek Bilgiler
+          {{ t('stoklar.ekBilgiler') }}
         </div>
         <div class="form-grup">
-          <label>Ürün Fotoğrafı</label>
+          <label>{{ t('stoklar.urunFotografi') }}</label>
           <div class="foto-satir">
             <img
               v-if="form.fotoUrl"
@@ -676,14 +676,14 @@
               @change="fotoSec"
             >
             <Button
-              label="Fotoğraf Yükle"
+              :label="t('stoklar.fotografYukle')"
               icon="pi pi-image"
               class="p-button-outlined"
               @click="$refs.fotoInput.click()"
             />
             <Button
               v-if="form.fotoUrl"
-              label="Kaldır"
+              :label="t('stoklar.kaldir')"
               icon="pi pi-times"
               class="p-button-text p-button-danger"
               @click="form.fotoUrl = ''"
@@ -691,7 +691,7 @@
           </div>
         </div>
         <div class="form-grup">
-          <label>Açıklama</label>
+          <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="form.aciklama"
             rows="2"
@@ -701,8 +701,8 @@
 
         <div class="form-grup coklu-fiyat-bolumu">
           <div class="coklu-fiyat-baslik">
-            <label>Fiyatlar (satışta seçilebilir)</label>
-            <span class="coklu-fiyat-ipucu">Perakende / Toptan / Kurumsal gibi birden fazla fiyat tanımlayın</span>
+            <label>{{ t('stoklar.fiyatlar') }}</label>
+            <span class="coklu-fiyat-ipucu">{{ t('stoklar.fiyatIpuclari') }}</span>
           </div>
           <div
             v-for="f in form.fiyatlar"
@@ -711,7 +711,7 @@
           >
             <InputText
               v-model="f.ad"
-              placeholder="Fiyat adı (Perakende/Toptan...)"
+              :placeholder="t('stoklar.fiyatAdiPlaceholder')"
               class="fiyat-ad-input"
             />
             <InputNumber
@@ -729,7 +729,7 @@
             />
           </div>
           <Button
-            label="Fiyat Ekle"
+            :label="t('stoklar.fiyatEkle')"
             icon="pi pi-plus"
             size="small"
             class="p-button-outlined"
@@ -739,13 +739,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showDialog = false"
         />
         <Button
-          :label="editingId ? 'Güncelle' : 'Kaydet'"
+          :label="editingId ? t('stoklar.guncelle') : t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveStok"
@@ -784,7 +784,7 @@
 
     <Dialog
       v-model:visible="etiketDialog"
-      header="Barkod Etiket"
+      :header="t('stoklar.barkodEtiket')"
       :modal="true"
       style="width: 320px"
     >
@@ -812,13 +812,13 @@
       </div>
       <template #footer>
         <Button
-          label="Kapat"
+          :label="t('stoklar.kapat')"
           icon="pi pi-times"
           class="p-button-text"
           @click="etiketDialog = false"
         />
         <Button
-          label="Yazdır"
+          :label="t('stoklar.yazdir')"
           icon="pi pi-print"
           class="p-button-primary"
           @click="etiketYazdir"
@@ -833,6 +833,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import { useI18n } from 'vue-i18n'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { stokAPI, excelAPI, uploadAPI } from '../api/index.js'
@@ -849,6 +850,7 @@ import { formatCurrency } from '../utils/format.js'
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const stokStore = useStokStore()
 const cariHesapStore = useCariHesapStore()
 
@@ -938,11 +940,11 @@ const etiketYazdir = () => {
 
 const showDialog = ref(false)
 const editingId = ref(null)
-const maliyetYontemiSecenekleri = [
-  { label: 'Ortalama Maliyet', value: 'ORTALAMA' },
-  { label: 'FIFO', value: 'FIFO' },
-  { label: 'LIFO', value: 'LIFO' }
-]
+const maliyetYontemiSecenekleri = computed(() => [
+  { label: t('stoklar.ortalamaMaliyet'), value: 'ORTALAMA' },
+  { label: t('stoklar.fifo'), value: 'FIFO' },
+  { label: t('stoklar.lifo'), value: 'LIFO' }
+])
 const form = ref({
   stokKodu: '',
   barkod: '',
@@ -976,7 +978,7 @@ const showHareketDialog = ref(false)
 const hareketTur = ref('GIRIS')
 const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' })
 
-const hareketBaslik = computed(() => (hareketTur.value === 'GIRIS' ? 'Stok Girişi' : 'Stok Çıkışı'))
+const hareketBaslik = computed(() => (hareketTur.value === 'GIRIS' ? t('stoklar.hareketGiris') : t('stoklar.hareketCikis')))
 
 const filtrelenmisStoklar = computed(() => {
   return stokStore.stoklar.filter((s) => {
@@ -1047,7 +1049,7 @@ const stokSec = async (s) => {
     const r = await stokAPI.getHareketler(s.id)
     stokHareketler.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.hareketYuklenemedi'))
   }
   detailStok.value = s
   showDetailDialog.value = true
@@ -1127,9 +1129,9 @@ const fiyatSil = async (f) => {
   if (f.id) {
     try {
       await stokAPI.fiyatSil(f.id)
-      toastBildirim.basarili('Fiyat silindi')
+      toastBildirim.basarili(t('stoklar.fiyatSilindi'))
     } catch (err) {
-      toastBildirim.hata(err?.response?.data?.message || 'Fiyat silinemedi')
+      toastBildirim.hata(err?.response?.data?.message || t('stoklar.fiyatSilinemedi'))
       return
     }
   }
@@ -1146,20 +1148,20 @@ const saveStok = async () => {
     if (editingId.value) {
       await stokStore.updateStok(editingId.value, form.value)
       await fiyatlariKaydet(editingId.value)
-      toastBildirim.basarili('Ürün güncellendi')
+      toastBildirim.basarili(t('stoklar.urunGuncellendi'))
     } else {
       const yeniStok = await stokStore.addStok(form.value)
       // Yeni stokun ID'siyle fiyatları kaydet
       if (yeniStok?.id) {
         await fiyatlariKaydet(yeniStok.id)
       }
-      toastBildirim.basarili('Ürün eklendi')
+      toastBildirim.basarili(t('stoklar.urunEklendi'))
     }
     formTemizle()
     showDialog.value = false
     await stokStore.getAll()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -1182,17 +1184,17 @@ const fotoSec = async (e) => {
   try {
     const r = await uploadAPI.foto(file)
     form.value.fotoUrl = r.data?.url || ''
-    toastBildirim.basarili('Fotoğraf yüklendi')
+    toastBildirim.basarili(t('stoklar.fotografYuklendi'))
   } catch (err) {
-    toastBildirim.hata('Fotoğraf yüklenemedi')
+    toastBildirim.hata(t('stoklar.fotografYuklenemedi'))
   }
 }
 
 const confirmDel = (id) => {
   const silinecek = stokStore.stoklar.find((s) => s.id === id)
   confirm.require({
-    message: 'Bu ürünü silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('stoklar.silOnayMesaj'),
+    header: t('stoklar.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
@@ -1202,11 +1204,11 @@ const confirmDel = (id) => {
           seciliStokId.value = null
           stokHareketler.value = []
         }
-        toastBildirim.basarili('Ürün silindi')
+        toastBildirim.basarili(t('stoklar.urunSilindi'))
         if (silinecek)
           silVeGeriAl({ veri: silinecek, metin: `${silinecek.ad} silindi`, geriYukle: (v) => stokStore.addStok(v) })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.silmeBasarisiz'))
       }
     }
   })
@@ -1221,8 +1223,8 @@ const openHareketDialog = (tur) => {
 const batchSil = () => {
   if (!seciliStoklar.value.length) return
   confirm.require({
-    message: `${seciliStoklar.value.length} ürün silinecek. Emin misiniz?`,
-    header: 'Toplu Silme Onayı',
+    message: t('stoklar.topluSilOnayMesaj', { n: seciliStoklar.value.length }),
+    header: t('stoklar.topluSilOnay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       let basarili = 0,
@@ -1238,8 +1240,8 @@ const batchSil = () => {
       seciliStoklar.value = []
       toast.add({
         severity: hatali ? 'warn' : 'success',
-        summary: 'Tamamlandı',
-        detail: `${basarili} silindi${hatali ? ', ' + hatali + ' hata' : ''}`,
+        summary: t('stoklar.tamamlandi'),
+        detail: `${basarili} ${t('stoklar.silindi')}${hatali ? ', ' + hatali + ' ' + t('stoklar.hata') : ''}`,
         life: 5000
       })
     }
@@ -1281,9 +1283,9 @@ const saveHareket = async () => {
     stokHareketler.value = hr.data
     seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
     showHareketDialog.value = false
-    toastBildirim.basarili('Hareket eklendi')
+    toastBildirim.basarili(t('stoklar.hareketEklendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -1295,9 +1297,9 @@ const delHareket = async (id) => {
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
     stokHareketler.value = hr.data
     seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
-    toastBildirim.basarili('Hareket silindi')
+    toastBildirim.basarili(t('stoklar.hareketSilindi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Silme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.silmeBasarisiz'))
   }
 }
 
@@ -1322,9 +1324,9 @@ const batchFiyatUygula = async () => {
     const guncellenen = r.data?.etkilenenStokSayisi || r.data?.guncellenen || 0
     await stokStore.getAll({ size: 1000 })
     batchFiyatDialog.value = false
-    toastBildirim.basarili(`${guncellenen} ürünün fiyatı başarıyla güncellendi.`)
+    toastBildirim.basarili(t('stoklar.fiyatGuncellendi', { n: guncellenen }))
   } catch (e) {
-    toastBildirim.hata(e.response?.data?.message || 'Toplu fiyat güncelleme başarısız')
+    toastBildirim.hata(e.response?.data?.message || t('stoklar.topluFiyatBasarisiz'))
   } finally {
     batchLoading.value = false
   }
@@ -1353,14 +1355,13 @@ const stokHareketleriYukle = async (stokId) => {
     const r = await stokAPI.getHareketler(stokId)
     hareketler.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Hareketler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.hareketYuklenemedi'))
   } finally {
     hareketlerYukleniyor.value = false
   }
 }
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

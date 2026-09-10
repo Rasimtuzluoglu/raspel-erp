@@ -5,7 +5,7 @@
   >
     <div class="detay-header">
       <Button
-        label="Geri"
+        :label="t('faturaDetay.geri')"
         icon="pi pi-arrow-left"
         class="p-button-text no-print"
         @click="$router.push('/faturalar')"
@@ -19,14 +19,14 @@
           size="small"
         />
         <Button
-          label="E-posta Gönder"
+          :label="t('faturaDetay.epostaGonder')"
           icon="pi pi-envelope"
           :loading="emailGonderiliyor"
           :disabled="!fatura?.cariHesapAd"
           @click="gonderEmail"
         />
         <Button
-          label="Şablonu Tasarla & Yazdır"
+          :label="t('faturaDetay.sablonTasarlaYazdir')"
           icon="pi pi-palette"
           class="p-button-primary"
           @click="tasarimModalAcik = true"
@@ -43,7 +43,7 @@
       v-if="loading"
       class="loading"
     >
-      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
     <div
@@ -52,44 +52,44 @@
     >
       <div class="fatura-baslik">
         <div class="firma-bilgi">
-          <h2>ÖN MUHASEBE</h2>
+          <h2>{{ t('faturaDetay.onMuhasebe') }}</h2>
           <p>{{ sirket?.ad || authStore.sirketAdi || 'RasPel ERP' }}</p>
           <p v-if="sirket?.vergiDairesi">
-            Vergi Dairesi: {{ sirket.vergiDairesi }}
+            {{ t('faturaDetay.vergiDairesi') }} {{ sirket.vergiDairesi }}
           </p>
           <p v-if="sirket?.vergiNo">
-            Vergi No: {{ sirket.vergiNo }}
+            {{ t('faturaDetay.vergiNo') }} {{ sirket.vergiNo }}
           </p>
           <p v-if="sirket?.adres">
             {{ sirket.adres }}
           </p>
         </div>
         <div class="fatura-bilgi">
-          <h1>{{ fatura.tur === 'SATIS' ? 'SATIŞ FATURASI' : 'ALIŞ FATURASI' }}</h1>
-          <p><strong>Fatura No:</strong> {{ fatura.faturaNumarasi }}</p>
-          <p><strong>Tarih:</strong> {{ formatDate(fatura.tarih) }}</p>
+          <h1>{{ fatura.tur === 'SATIS' ? t('faturaDetay.satisFaturasi') : t('faturaDetay.alisFaturasi') }}</h1>
+          <p><strong>{{ t('faturaDetay.faturaNo') }}</strong> {{ fatura.faturaNumarasi }}</p>
+          <p><strong>{{ t('faturaDetay.tarihLabel') }}</strong> {{ formatDate(fatura.tarih) }}</p>
           <p>
-            <strong>Durum:</strong>
+            <strong>{{ t('faturaDetay.durumBaslik') }}</strong>
             <span :class="['durum-badge', (fatura.durum || '').toLowerCase()]">{{ durumLabel(fatura.durum) }}</span>
           </p>
-          <p><strong>İşlemi Yapan:</strong> {{ fatura.olusturanKullaniciAdi }}</p>
+          <p><strong>{{ t('faturaDetay.islemiYapan') }}</strong> {{ fatura.olusturanKullaniciAdi }}</p>
           <p v-if="fatura.teslimEden">
-            <strong>Teslim Eden:</strong> {{ fatura.teslimEden }}
+            <strong>{{ t('faturaDetay.teslimEden') }}</strong> {{ fatura.teslimEden }}
           </p>
           <p v-if="fatura.teslimDurumu">
-            <strong>Teslim Durumu:</strong>
+            <strong>{{ t('faturaDetay.teslimDurumu') }}</strong>
             <span :class="['teslim-badge', (fatura.teslimDurumu || '').toLowerCase()]">{{
               teslimDurumLabel(fatura.teslimDurumu)
             }}</span>
           </p>
           <p v-if="fatura.teslimNotu">
-            <strong>Teslim Notu:</strong> {{ fatura.teslimNotu }}
+            <strong>{{ t('faturaDetay.teslimNotu') }}</strong> {{ fatura.teslimNotu }}
           </p>
           <img
             v-if="fatura.teslimFotograf"
             :src="fatura.teslimFotograf"
             class="teslim-fotograf"
-            alt="Teslimat Fotoğrafı"
+            :alt="t('faturaDetay.teslimatFotografi')"
           >
         </div>
       </div>
@@ -98,7 +98,7 @@
         v-if="fatura.cariHesapAd"
         class="cari-bilgi"
       >
-        <h3>Müşteri / Tedarikçi Bilgisi</h3>
+        <h3>{{ t('faturaDetay.musteriTedarikciBilgisi') }}</h3>
         <p>
           <strong>{{ fatura.cariHesapAd }}</strong>
         </p>
@@ -108,19 +108,19 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Açıklama</th>
-            <th>Adet</th>
+            <th>{{ t('common.description') }}</th>
+            <th>{{ t('faturaDetay.adet') }}</th>
             <th v-if="faturaFiyatli">
-              Birim Fiyat
+              {{ t('faturaDetay.birimFiyat') }}
             </th>
             <th v-if="faturaFiyatli">
-              İskonto %
+              {{ t('faturaDetay.iskonto') }}
             </th>
             <th v-if="faturaFiyatli">
-              KDV %
+              {{ t('faturaDetay.kdv') }}
             </th>
             <th v-if="faturaFiyatli">
-              Toplam
+              {{ t('faturaDetay.toplam') }}
             </th>
           </tr>
         </thead>
@@ -156,31 +156,31 @@
         class="fatura-ozet"
       >
         <div class="ozet-row">
-          <span>Ara Toplam:</span><span>{{ formatCurrency(fatura.araToplam) }}</span>
+          <span>{{ t('faturaDetay.araToplam') }}</span><span>{{ formatCurrency(fatura.araToplam) }}</span>
         </div>
         <div class="ozet-row">
-          <span>KDV Toplam:</span><span>{{ formatCurrency(fatura.kdv) }}</span>
+          <span>{{ t('faturaDetay.kdvToplam') }}</span><span>{{ formatCurrency(fatura.kdv) }}</span>
         </div>
         <div
           v-if="fatura.genelIskontoTutari > 0"
           class="ozet-row"
         >
-          <span>Genel İskonto:</span><span class="negative">-{{ formatCurrency(fatura.genelIskontoTutari) }}</span>
+          <span>{{ t('faturaDetay.genelIskonto') }}</span><span class="negative">-{{ formatCurrency(fatura.genelIskontoTutari) }}</span>
         </div>
         <div class="ozet-row total">
-          <span>Genel Toplam:</span><span>{{ formatCurrency(fatura.genelToplam) }}</span>
+          <span>{{ t('faturaDetay.genelToplam') }}</span><span>{{ formatCurrency(fatura.genelToplam) }}</span>
         </div>
         <div
           v-if="fatura.toplamAgirlik > 0"
           class="ozet-row total"
         >
-          <span>Toplam Ağırlık:</span><span>{{ fatura.toplamAgirlik }} kg</span>
+          <span>{{ t('faturaDetay.toplamAgirlik') }}</span><span>{{ fatura.toplamAgirlik }} kg</span>
         </div>
         <div
           v-if="fatura.odemeDurumu"
           class="ozet-row odeme"
         >
-          <span>Ödeme Durumu:</span><span :class="fatura.odemeDurumu === 'ODENDI' ? 'positive' : 'negative'">{{
+          <span>{{ t('faturaDetay.odemeDurumu') }}</span><span :class="fatura.odemeDurumu === 'ODENDI' ? 'positive' : 'negative'">{{
             odemeDurumLabel(fatura.odemeDurumu)
           }}</span>
         </div>
@@ -188,13 +188,13 @@
           v-if="fatura.odenenTutar > 0"
           class="ozet-row odeme"
         >
-          <span>Ödenen:</span><span>{{ formatCurrency(fatura.odenenTutar) }}</span>
+          <span>{{ t('faturaDetay.odenen') }}</span><span>{{ formatCurrency(fatura.odenenTutar) }}</span>
         </div>
         <div
           v-if="fatura.kalanTutar > 0"
           class="ozet-row odeme"
         >
-          <span>Kalan:</span><span class="negative">{{ formatCurrency(fatura.kalanTutar) }}</span>
+          <span>{{ t('faturaDetay.kalan') }}</span><span class="negative">{{ formatCurrency(fatura.kalanTutar) }}</span>
         </div>
       </div>
 
@@ -202,12 +202,12 @@
         v-if="fatura.aciklama"
         class="fatura-yazi"
       >
-        <p><strong>Açıklama:</strong> {{ fatura.aciklama }}</p>
+        <p><strong>{{ t('faturaDetay.aciklamaBaslik') }}</strong> {{ fatura.aciklama }}</p>
       </div>
 
       <div class="belgeler no-print">
         <div class="belgeler-baslik">
-          <h3><i class="pi pi-paperclip" /> Belgeler</h3>
+          <h3><i class="pi pi-paperclip" /> {{ t('faturaDetay.belgeler') }}</h3>
           <div class="belge-yukleme">
             <input
               ref="dosyaInput"
@@ -216,7 +216,7 @@
               @change="dosyaSecildi"
             >
             <Button
-              label="Belge Ekle"
+              :label="t('faturaDetay.belgeEkle')"
               icon="pi pi-plus"
               size="small"
               class="p-button-sm p-button-outlined"
@@ -229,7 +229,7 @@
           v-if="belgeler && belgeler.length === 0"
           class="belge-bos"
         >
-          Henüz belge eklenmemiş.
+          {{ t('faturaDetay.belgeBos') }}
         </div>
         <div
           v-else
@@ -246,13 +246,13 @@
             <Button
               icon="pi pi-download"
               class="p-button-rounded p-button-text p-button-sm"
-              title="İndir"
+              :title="t('faturaDetay.indir')"
               @click="belgeIndir(b)"
             />
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-text p-button-danger p-button-sm"
-              title="Sil"
+              :title="t('common.delete')"
               @click="belgeSil(b.id)"
             />
           </div>
@@ -260,7 +260,7 @@
       </div>
 
       <div class="fatura-alt">
-        <p>Oluşturma: {{ formatDateTime(fatura.olusturmaTarihi) }}</p>
+        <p>{{ t('faturaDetay.olusturma') }} {{ formatDateTime(fatura.olusturmaTarihi) }}</p>
       </div>
     </div>
 
@@ -273,7 +273,7 @@
         :text="error"
       />
       <Button
-        label="Faturalara Dön"
+        :label="t('faturaDetay.faturalaraDon')"
         icon="pi pi-arrow-left"
         @click="$router.push('/faturalar')"
       />
@@ -282,7 +282,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -293,12 +293,14 @@ import { belgeAPI, faturaAPI, sirketAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const faturaStore = useFaturaStore()
 const authStore = useAuthStore()
 const win = window
+const { t } = useI18n()
 
 const fatura = ref(null)
 const sirket = ref(null)
@@ -331,9 +333,9 @@ const gonderEmail = async () => {
   emailGonderiliyor.value = true
   try {
     await faturaAPI.gonderEmail(fatura.value.id)
-    toast.add({ severity: 'success', summary: 'Gönderildi', detail: 'Fatura PDF e-posta ile iletildi', life: 3000 })
+    toast.add({ severity: 'success', summary: t('faturaDetay.gonderildi'), detail: t('faturaDetay.faturaPdfGonderildi'), life: 3000 })
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'E-posta gönderilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('faturaDetay.epostaGonderilemedi'))
   }
   emailGonderiliyor.value = false
 }
@@ -353,10 +355,10 @@ const dosyaSecildi = async (e) => {
   belgeYukleniyor.value = true
   try {
     await belgeAPI.yukle('FATURA', route.params.id, file)
-    toast.add({ severity: 'success', summary: 'Eklendi', detail: 'Belge yüklendi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('faturaDetay.eklendi'), detail: t('faturaDetay.belgeYuklendi'), life: 3000 })
     await belgeleriYukle()
   } catch {
-    toastBildirim.hata('Belge yüklenemedi.')
+    toastBildirim.hata(t('faturaDetay.belgeYuklenemedi'))
   } finally {
     belgeYukleniyor.value = false
     e.target.value = ''
@@ -376,7 +378,7 @@ const belgeIndir = async (b) => {
     link.remove()
     window.URL.revokeObjectURL(blobUrl)
   } catch {
-    toastBildirim.hata('Belge indirilemedi.')
+    toastBildirim.hata(t('faturaDetay.belgeIndirilemedi'))
   }
 }
 
@@ -384,16 +386,16 @@ const belgeSil = async (id) => {
   try {
     await belgeAPI.sil(id)
     belgeler.value = belgeler.value.filter((b) => b.id !== id)
-    toast.add({ severity: 'success', summary: 'Silindi', detail: 'Belge silindi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('faturaDetay.silindi'), detail: t('faturaDetay.belgeSilindi'), life: 3000 })
   } catch {
-    toastBildirim.hata('Silme başarısız.')
+    toastBildirim.hata(t('faturaDetay.silmeBasarisiz'))
   }
 }
 
 const faturaFiyatli = ref(true)
-const fiyatSecenekleri = ref([
-  { label: 'Fiyatlı', value: true },
-  { label: 'Fiyatsız', value: false }
+const fiyatSecenekleri = computed(() => [
+  { label: t('faturaDetay.fiyatli'), value: true },
+  { label: t('faturaDetay.fiyatsiz'), value: false }
 ])
 
 onMounted(async () => {
@@ -407,7 +409,7 @@ onMounted(async () => {
     )
     belgeleriYukle()
   } catch (err) {
-    error.value = err.response?.data?.message || 'Fatura bulunamadı'
+    error.value = err.response?.data?.message || t('faturaDetay.faturaBulunamadi')
   } finally {
     loading.value = false
   }
@@ -430,15 +432,12 @@ onMounted(async () => {
     }, 300)
 })
 
-const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
-const odemeDurumLabel = (d) => ({ ODENMEDI: 'Ödenmedi', KISMI_ODENDI: 'Kısmi Ödendi', ODENDI: 'Ödendi' })[d] || d
-const teslimDurumLabel = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLIM_EDILDI: 'Teslim Edildi' })[d] || d
+const durumLabel = (d) => ({ TASLAK: t('faturalar.durumTaslak'), TEKLIF: t('faturalar.durumTeklif'), KESILDI: t('faturalar.durumKesildi'), IPTAL: t('faturalar.durumIptal') })[d] || d
+const odemeDurumLabel = (d) => ({ ODENMEDI: t('faturaDetay.odenmedi'), KISMI_ODENDI: t('faturaDetay.kismiOdedi'), ODENDI: t('faturaDetay.odendi') })[d] || d
+const teslimDurumLabel = (d) => ({ BEKLIYOR: t('faturalar.durumBekliyor'), YOLDA: t('faturalar.durumYolda'), TESLIM_EDILDI: t('faturalar.durumTeslimEdildi') })[d] || d
 
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 const formatDateTime = (d) => {
   if (!d) return '-'

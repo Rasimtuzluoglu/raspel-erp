@@ -2,10 +2,10 @@
   <div class="stoksayim-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Stok Sayımı
+        {{ t('stokSayim.title') }}
       </h1>
       <Button
-        label="Yeni Sayım"
+        :label="t('stokSayim.yeniSayim')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,7 +18,7 @@
     >
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
         sortable
       >
         <template #body="{ data }">
@@ -27,12 +27,12 @@
       </Column>
       <Column
         field="stokAd"
-        header="Ürün"
+        :header="t('stokSayim.urun')"
         sortable
       />
       <Column
         field="beklenenMiktar"
-        header="Beklenen"
+        :header="t('stokSayim.beklenen')"
       >
         <template #body="{ data }">
           {{ formatNumber(data.beklenenMiktar) }}
@@ -40,7 +40,7 @@
       </Column>
       <Column
         field="sayilanMiktar"
-        header="Sayılan"
+        :header="t('stokSayim.sayilan')"
       >
         <template #body="{ data }">
           {{ formatNumber(data.sayilanMiktar) }}
@@ -48,7 +48,7 @@
       </Column>
       <Column
         field="fark"
-        header="Fark"
+        :header="t('stokSayim.fark')"
       >
         <template #body="{ data }">
           <span :class="(data.fark ?? data.sayilanMiktar - data.beklenenMiktar) >= 0 ? 'positive' : 'negative'">
@@ -58,7 +58,7 @@
       </Column>
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -68,7 +68,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('stokSayim.islem')"
         style="width: 200px"
       >
         <template #body="{ data }">
@@ -76,14 +76,14 @@
             v-if="data.durum !== 'TAMAMLANDI'"
             icon="pi pi-check-circle"
             class="p-button-rounded p-button-text p-button-success"
-            title="Tamamla"
+            :title="t('stokSayim.tamamla')"
             @click="durumGuncelle(data, 'TAMAMLANDI')"
           />
           <Button
             v-if="data.durum !== 'IPTAL'"
             icon="pi pi-times-circle"
             class="p-button-rounded p-button-text p-button-danger"
-            title="İptal"
+            :title="t('common.cancel')"
             @click="durumGuncelle(data, 'IPTAL')"
           />
           <Button
@@ -103,27 +103,27 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Tarih *</label><DatePicker
+          <label>{{ t('stokSayim.tarihZorunlu') }}</label><DatePicker
             v-model="form.tarih"
             date-format="dd/mm/yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Ürün *</label>
+          <label>{{ t('stokSayim.urunZorunlu') }}</label>
           <Dropdown
             v-model="form.stokId"
             :options="stokListesi"
             option-label="ad"
             option-value="id"
-            placeholder="Ürün Seç"
+            :placeholder="t('stokSayim.urunSec')"
             class="w-full"
             filter
             @change="onStokSec"
           />
         </div>
         <div class="field">
-          <label>Beklenen Miktar</label><InputNumber
+          <label>{{ t('stokSayim.beklenenMiktar') }}</label><InputNumber
             v-model="form.beklenenMiktar"
             class="w-full"
             :min="0"
@@ -131,14 +131,14 @@
           />
         </div>
         <div class="field">
-          <label>Sayılan Miktar *</label><InputNumber
+          <label>{{ t('stokSayim.sayilanMiktarZorunlu') }}</label><InputNumber
             v-model="form.sayilanMiktar"
             class="w-full"
             :min="0"
           />
         </div>
         <div class="field">
-          <label>Fark</label>
+          <label>{{ t('stokSayim.fark') }}</label>
           <span
             :class="{
               positive: form.sayilanMiktar - form.beklenenMiktar >= 0,
@@ -152,13 +152,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -174,10 +174,12 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { stokSayimAPI, stokAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const stokListesi = ref([])
 const yukleniyor = ref(false)
@@ -186,12 +188,9 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ tarih: new Date(), stokId: null, beklenenMiktar: 0, sayilanMiktar: 0 })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Sayım Düzenle' : 'Yeni Sayım'))
+const dialogHeader = computed(() => (duzenleme.value ? t('stokSayim.sayimDuzenle') : t('stokSayim.yeniSayim')))
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 const formatNumber = (v) => {
   if (v === null || v === undefined) return '0'
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
@@ -204,7 +203,7 @@ onMounted(async () => {
     list.value = sR.data?.content || sR.data || []
     stokListesi.value = stR.data.content || stR.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('stokSayim.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -233,16 +232,16 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await stokSayimAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Sayım güncellendi')
+      toastBildirim.basarili(t('stokSayim.guncellendi'))
     } else {
       await stokSayimAPI.create(payload)
-      toastBildirim.basarili('Sayım oluşturuldu')
+      toastBildirim.basarili(t('stokSayim.olusturuldu'))
     }
     dialog.value = false
     const r = await stokSayimAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('stokSayim.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
@@ -252,26 +251,26 @@ const durumGuncelle = async (data, durum) => {
     await stokSayimAPI.durumGuncelle(data.id, durum)
     const r = await stokSayimAPI.getAll()
     list.value = r.data?.content || r.data || []
-    toastBildirim.basarili(`Sayım durumu "${durum}" olarak güncellendi`)
+    toastBildirim.basarili(t('stokSayim.durumGuncellendi', { durum }))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Durum güncellenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || t('stokSayim.durumHata'))
   }
 }
 
 const sil = (data) => {
   confirm.require({
-    message: `Bu sayım kaydını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('stokSayim.silOnayMesaj'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await stokSayimAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Sayım kaydı silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('stokSayim.silindi'), detail: t('stokSayim.sayimSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('stokSayim.silmeBasarisiz'))
       }
     }
   })

@@ -2,7 +2,7 @@
   <div class="crm-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        CRM — Fırsat Takibi
+        {{ t('crm.title') }}
       </h1>
       <div class="baslik-aksiyonlar">
         <SelectButton
@@ -13,7 +13,7 @@
           class="mr-2"
         />
         <Button
-          label="Yeni Fırsat"
+          :label="t('crm.yeniFirsat')"
           icon="pi pi-plus"
           @click="dialogAc()"
         />
@@ -22,8 +22,8 @@
 
     <IlkZiyaretIpuclari
       anahtar="crm"
-      baslik="CRM Fırsat Takibi"
-      metin="Potansiyel müşterileri fırsat olarak kaydedin, aşamalarını (Yeni → Temas → Teklif → Kazanıldı) takip edin. İster tablo görünümünde ister Kanban panosunda sürükle-bırak ile yönetin."
+      :baslik="t('crm.ipucuBaslik')"
+      :metin="t('crm.ipucuMetin')"
     />
 
     <div
@@ -43,15 +43,15 @@
 
     <div class="crm-istatistik">
       <div class="istatistik-kutu">
-        <span>Toplam Fırsat</span>
+        <span>{{ t('crm.toplamFirsat') }}</span>
         <strong>{{ firsatlar ? firsatlar.length : 0 }}</strong>
       </div>
       <div class="istatistik-kutu">
-        <span>Toplam Değer</span>
+        <span>{{ t('crm.toplamDeger') }}</span>
         <strong>{{ formatCurrency(toplamDeger) }}</strong>
       </div>
       <div class="istatistik-kutu">
-        <span>Kazanılan</span>
+        <span>{{ t('crm.kazanilan') }}</span>
         <strong>{{ kazananSayisi }}</strong>
       </div>
     </div>
@@ -89,7 +89,7 @@
               <span class="kart-tutar">{{ formatCurrency(item.deger) }}</span>
             </div>
             <div class="kart-cari">
-              <i class="pi pi-building" /> {{ item.cariHesapAd || 'Cari Belirtilmemiş' }}
+              <i class="pi pi-building" /> {{ item.cariHesapAd || t('crm.cariBelirtilmemis') }}
             </div>
             <div
               v-if="item.tahminiKapanis"
@@ -102,7 +102,7 @@
             v-if="!firsatlarByDurum(kolon.value).length"
             class="kolon-bos"
           >
-            Fırsat yok
+            {{ t('crm.firsatYok') }}
           </div>
         </div>
       </div>
@@ -114,17 +114,17 @@
       :value="firsatlar"
       :loading="yukleniyor"
       arama-aktif
-      arama-placeholder="Fırsatlarda ara..."
+      :arama-placeholder="t('crm.aramaPlaceholder')"
       gorunum-anahtari="crm_firsatlar"
     >
       <Column
         field="ad"
-        header="Fırsat"
+        :header="t('crm.firsat')"
         sortable
       />
       <Column
         field="cariHesapAd"
-        header="Cari Hesap"
+        :header="t('crm.cariHesap')"
       >
         <template #body="{ data }">
           {{ data.cariHesapAd || '-' }}
@@ -132,7 +132,7 @@
       </Column>
       <Column
         field="deger"
-        header="Değer"
+        :header="t('crm.deger')"
         sortable
       >
         <template #body="{ data }">
@@ -141,7 +141,7 @@
       </Column>
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -152,11 +152,11 @@
       </Column>
       <Column
         field="kaynak"
-        header="Kaynak"
+        :header="t('crm.kaynak')"
       />
       <Column
         field="tahminiKapanis"
-        header="Tahmini Kapanış"
+        :header="t('crm.tahminiKapanis')"
         sortable
       >
         <template #body="{ data }">
@@ -164,7 +164,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('crm.islem')"
         style="width: 60px"
       >
         <template #body="{ data }">
@@ -181,7 +181,7 @@
     <Card class="churn-kart">
       <template #title>
         <div class="churn-baslik">
-          <span><i class="pi pi-chart-line" /> Müşteri Kayıp Riski (Churn)</span>
+          <span><i class="pi pi-chart-line" /> {{ t('crm.churnBaslik') }}</span>
           <Button
             icon="pi pi-refresh"
             class="p-button-sm p-button-text"
@@ -192,7 +192,7 @@
       </template>
       <template #content>
         <p class="churn-aciklama">
-          Son işlem tarihine göre kayıp riski taşıyan müşteriler. Uzun süredir işlem yapmayan müşteriler yüksek risk olarak işaretlenir.
+          {{ t('crm.churnAciklama') }}
         </p>
         <DataTable
           :value="churnList"
@@ -202,9 +202,9 @@
         >
           <Column
             field="cariAd"
-            header="Müşteri"
+            :header="t('crm.musteri')"
           />
-          <Column header="Risk">
+          <Column :header="t('crm.risk')">
             <template #body="{ data }">
               <Tag
                 :value="data.seviye"
@@ -214,7 +214,7 @@
           </Column>
           <Column
             field="skor"
-            header="Skor"
+            :header="t('crm.skor')"
           >
             <template #body="{ data }">
               {{ data.skor }}
@@ -222,11 +222,11 @@
           </Column>
           <Column
             field="sonIslemGunOnce"
-            header="Son İşlem (gün önce)"
+            :header="t('crm.sonIslem')"
           />
           <Column
             field="toplamCiro"
-            header="Toplam Ciro"
+            :header="t('crm.toplamCiro')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.toplamCiro) }}
@@ -234,14 +234,14 @@
           </Column>
           <Column
             field="oneri"
-            header="Öneri"
+            :header="t('crm.oneri')"
           />
         </DataTable>
         <div
           v-if="churnList.length === 0 && !churnYukleniyor"
           class="churn-bos"
         >
-          Kayıp riski analizi için yeterli veri bulunamadı.
+          {{ t('crm.churnBos') }}
         </div>
       </template>
     </Card>
@@ -254,7 +254,7 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label class="zorunlu">Fırsat Adı</label>
+          <label class="zorunlu">{{ t('crm.firsatAdi') }}</label>
           <InputText
             v-model="form.ad"
             class="w-full"
@@ -263,10 +263,10 @@
           <small
             v-if="formHatali.ad"
             class="hata-mesaj"
-          >Fırsat adı zorunludur</small>
+          >{{ t('crm.firsatAdiZorunlu') }}</small>
         </div>
         <div class="field">
-          <label>Durum</label>
+          <label>{{ t('common.status') }}</label>
           <Select
             v-model="form.durum"
             :options="durumlar"
@@ -276,7 +276,7 @@
           />
         </div>
         <div class="field">
-          <label>Cari Hesap</label>
+          <label>{{ t('crm.cariHesap') }}</label>
           <Select
             v-model="form.cariHesapId"
             :options="cariler"
@@ -288,7 +288,7 @@
           />
         </div>
         <div class="field">
-          <label>Değer (₺)</label><InputNumber
+          <label>{{ t('crm.degerTL') }}</label><InputNumber
             v-model="form.deger"
             mode="currency"
             currency="TRY"
@@ -296,23 +296,23 @@
           />
         </div>
         <div class="field">
-          <label>Kaynak</label>
+          <label>{{ t('crm.kaynak') }}</label>
           <Select
             v-model="form.kaynak"
-            :options="['Web', 'Telefon', 'Referans', 'Fuarlar', 'Sosyal Medya', 'E-Posta']"
+            :options="kaynakSecenekleri"
             class="w-full"
             show-clear
           />
         </div>
         <div class="field">
-          <label>Tahmini Kapanış</label><DatePicker
+          <label>{{ t('crm.tahminiKapanis') }}</label><DatePicker
             v-model="form.tahminiKapanis"
             date-format="dd/mm/yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="3"
             class="w-full"
@@ -321,13 +321,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -347,19 +347,21 @@ import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { silVeGeriAl } = useGeriAl()
+const { t } = useI18n()
 
-const durumlar = [
-  { label: 'Yeni', value: 'YENI' },
-  { label: 'Temas', value: 'TEMAS' },
-  { label: 'Teklif', value: 'TEKLIF' },
-  { label: 'Kazanıldı', value: 'KAZANILDI' },
-  { label: 'Kaybedildi', value: 'KAYBEDILDI' }
-]
+const durumlar = computed(() => [
+  { label: t('crm.durumYeni'), value: 'YENI' },
+  { label: t('crm.durumTemas'), value: 'TEMAS' },
+  { label: t('crm.durumTeklif'), value: 'TEKLIF' },
+  { label: t('crm.durumKazanildi'), value: 'KAZANILDI' },
+  { label: t('crm.durumKaybedildi'), value: 'KAYBEDILDI' }
+])
 
 const firsatlar = ref([])
 const cariler = ref([])
@@ -379,13 +381,12 @@ const form = ref({
 })
 const formHatali = ref({ ad: false })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Fırsat Düzenle' : 'Yeni Fırsat'))
+const dialogHeader = computed(() => (duzenleme.value ? t('crm.firsatDuzenle') : t('crm.yeniFirsat')))
 const toplamDeger = computed(() => firsatlar.value.reduce((t, f) => t + (Number(f.deger) || 0), 0))
 const kazananSayisi = computed(() => firsatlar.value.filter((f) => f.durum === 'KAZANILDI').length)
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
-const durumEtiketi = (d) => durumlar.find((x) => x.value === d)?.label || d
+import { formatTarih as formatDate } from '../utils/format.js'
+const durumEtiketi = (d) => durumlar.value.find((x) => x.value === d)?.label || d
 const durumSeverity = (d) =>
   ({ YENI: 'info', TEMAS: 'primary', TEKLIF: 'warning', KAZANILDI: 'success', KAYBEDILDI: 'danger' })[d] || 'secondary'
 
@@ -429,7 +430,7 @@ const firsatlariYukle = async () => {
     const r = await crmAPI.getFirsatlar(params)
     firsatlar.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Fırsatlar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('crm.hataYukleme'))
   }
   yukleniyor.value = false
 }
@@ -444,7 +445,7 @@ const dialogAc = (data) => {
 }
 
 const cogalt = (data) => {
-  const kopya = { ...data, id: null, ad: data.ad + ' (Kopya)' }
+  const kopya = { ...data, id: null, ad: t('crm.kopya', { ad: data.ad }) }
   dialogAc(kopya)
   duzenleme.value = false
 }
@@ -452,7 +453,7 @@ const cogalt = (data) => {
 const kaydet = async () => {
   if (!form.value.ad.trim()) {
     formHatali.value.ad = true
-    toastBildirim.uyari('Fırsat adı zorunludur')
+    toastBildirim.uyari(t('crm.firsatAdiZorunlu'))
     return
   }
   formHatali.value.ad = false
@@ -466,20 +467,29 @@ const kaydet = async () => {
     }
     if (duzenleme.value) await crmAPI.firsatGuncelle(form.value.id, payload)
     else await crmAPI.firsatOlustur(payload)
-    toastBildirim.basarili('Fırsat kaydedildi')
+    toastBildirim.basarili(t('crm.firsatKaydedildi'))
     dialog.value = false
     firsatlariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('crm.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const gorunumTipi = ref('kanban')
-const gorunumSecenekleri = [
-  { label: 'Kanban', value: 'kanban' },
-  { label: 'Tablo', value: 'tablo' }
-]
+const gorunumSecenekleri = computed(() => [
+  { label: t('crm.kanban'), value: 'kanban' },
+  { label: t('crm.tablo'), value: 'tablo' }
+])
+
+const kaynakSecenekleri = computed(() => [
+  t('crm.kaynakWeb'),
+  t('crm.kaynakTelefon'),
+  t('crm.kaynakReferans'),
+  t('crm.kaynakFuarlar'),
+  t('crm.kaynakSosyalMedya'),
+  t('crm.kaynakEposta')
+])
 
 const firsatlarByDurum = (durum) => {
   return firsatlar.value.filter((f) => f.durum === durum)
@@ -506,10 +516,10 @@ const firsatSurukleBirak = async (e, yeniDurum) => {
       ...item,
       durum: yeniDurum
     })
-    toastBildirim.basarili(`Fırsat "${durumEtiketi(yeniDurum)}" aşamasına taşındı`)
+    toastBildirim.basarili(t('crm.asamaTasindi', { durum: durumEtiketi(yeniDurum) }))
   } catch {
     item.durum = eskiDurum
-    toastBildirim.hata('Aşama güncellenemedi')
+    toastBildirim.hata(t('crm.asamaGuncellenemedi'))
   } finally {
     suruklenenFirsat.value = null
   }
@@ -517,18 +527,18 @@ const firsatSurukleBirak = async (e, yeniDurum) => {
 
 const sil = (data) => {
   confirm.require({
-    message: `"${data.ad}" fırsatını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('crm.silOnayMesaj', { ad: data.ad }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await crmAPI.firsatSil(data.id)
         firsatlar.value = firsatlar.value.filter((f) => f.id !== data.id)
         silVeGeriAl({
           veri: data,
-          metin: `"${data.ad}" fırsatı silindi`,
+          metin: t('crm.firsatSilindi', { ad: data.ad }),
           geriYukle: async (kayit) => {
             await crmAPI.firsatOlustur({
               ad: kayit.ad,
@@ -542,9 +552,9 @@ const sil = (data) => {
             firsatlariYukle()
           }
         })
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Fırsat silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('crm.silindi'), detail: t('crm.firsatSilindiDetay'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('crm.silmeBasarisiz'))
       }
     }
   })

@@ -2,10 +2,10 @@
   <div class="siparisler-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Siparişler & Teklifler
+        {{ t('siparisler.title') }}
       </h1>
       <Button
-        label="Yeni Teklif"
+        :label="t('siparisler.newTeklif')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,32 +18,32 @@
     >
       <Column
         field="siparisNo"
-        header="No"
+        :header="t('siparisler.colNo')"
         sortable
       />
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
       />
       <Column
         field="cariHesapAdi"
-        header="Müşteri"
+        :header="t('siparisler.colMusteri')"
       />
       <Column
         field="tur"
-        header="Tür"
+        :header="t('siparisler.colTur')"
       />
       <Column
         field="genelToplam"
-        header="Tutar"
+        :header="t('common.amount')"
       >
         <template #body="{ data }">
-          {{ data.genelToplam?.toFixed(2) }} ₺
+          {{ formatCurrency(data.genelToplam) }}
         </template>
       </Column>
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -61,7 +61,7 @@
         </template>
       </Column>
       <Column
-        header="Şoför"
+        :header="t('siparisler.colSofor')"
         style="width: 190px"
       >
         <template #body="{ data }">
@@ -71,7 +71,7 @@
             option-label="ad"
             option-value="id"
             filter
-            placeholder="Şoför ata"
+            :placeholder="t('siparisler.soforAta')"
             class="w-full"
             :show-clear="true"
             @update:model-value="(d) => soforAta(data, d)"
@@ -79,7 +79,7 @@
         </template>
       </Column>
       <Column
-        header="İşlemler"
+        :header="t('common.actions')"
         style="width: 220px"
       >
         <template #body="{ data }">
@@ -87,34 +87,34 @@
             v-if="data.durum === 'TEKLIF'"
             icon="pi pi-check-circle"
             class="p-button-rounded p-button-text p-button-info"
-            title="Siparişe Çevir"
+            :title="t('siparisler.sipariseCevir')"
             @click="durumGuncelle(data, 'SIPARIS')"
           />
           <Button
             v-if="data.durum === 'SIPARIS'"
             icon="pi pi-file"
             class="p-button-rounded p-button-text p-button-success"
-            title="Faturalaştır"
+            :title="t('siparisler.faturalastir')"
             @click="durumGuncelle(data, 'FATURA_KESILDI')"
           />
           <Button
             v-if="data.durum === 'FATURA_KESILDI' || data.durum === 'IPTAL'"
             icon="pi pi-undo"
             class="p-button-rounded p-button-text p-button-help"
-            title="Siparişe Geri Al"
+            :title="t('siparisler.sipariseGeriAl')"
             @click="durumGuncelle(data, 'SIPARIS')"
           />
           <Button
             v-if="data.durum !== 'IPTAL' && data.durum !== 'FATURA_KESILDI'"
             icon="pi pi-times-circle"
             class="p-button-rounded p-button-text p-button-warning"
-            title="İptal Et"
+            :title="t('siparisler.iptalEt')"
             @click="durumGuncelle(data, 'IPTAL')"
           />
           <Button
             icon="pi pi-briefcase"
             class="p-button-rounded p-button-text p-button-info"
-            title="İş Emri Oluştur"
+            :title="t('siparisler.isEmriOlustur')"
             @click="isEmriAc(data)"
           />
           <Button
@@ -128,47 +128,47 @@
 
     <EmptyState
       v-if="!yukleniyor && siparisler.length === 0"
-      message="Henüz sipariş bulunamadı"
-      sub-message="İlk teklif/siparişinizi eklemek için Yeni Teklif butonuna tıklayın"
+      :message="t('siparisler.empty')"
+      :sub-message="t('siparisler.emptyHint')"
       icon="pi pi-shopping-cart"
-      action-label="Yeni Teklif"
+      :action-label="t('siparisler.newTeklif')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
 
     <Dialog
       v-model:visible="dialog"
-      header="Yeni Teklif / Sipariş"
+      :header="t('siparisler.dialogTitle')"
       modal
       :style="{ width: '550px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Teklif No *</label><InputText
+          <label>{{ t('siparisler.teklifNo') }}</label><InputText
             v-model="form.siparisNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tarih</label><DatePicker
+          <label>{{ t('common.date') }}</label><DatePicker
             v-model="form.tarih"
             date-format="dd/mm/yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Müşteri *</label>
+          <label>{{ t('siparisler.musteri') }}</label>
           <Dropdown
             v-model="form.cariHesapId"
             :options="cariler"
             option-label="ad"
             option-value="id"
-            placeholder="Seçin"
+            :placeholder="t('common.select')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
             class="w-full"
@@ -177,13 +177,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -193,7 +193,7 @@
 
     <Dialog
       v-model:visible="isEmriDialog"
-      header="İş Emri Oluştur"
+      :header="t('siparisler.isEmriTitle')"
       :modal="true"
       style="width: 480px"
     >
@@ -201,38 +201,38 @@
         v-if="isEmriSiparis"
         class="isemri-siparis"
       >
-        Sipariş: <strong>{{ isEmriSiparis.siparisNo }}</strong>
+        {{ t('siparisler.isEmriSiparis') }} <strong>{{ isEmriSiparis.siparisNo }}</strong>
       </div>
       <div class="form-group">
-        <label>Atanacak Personel</label>
+        <label>{{ t('siparisler.atanacakPersonel') }}</label>
         <Dropdown
           v-model="isEmriPersonelId"
           :options="personeller"
           option-label="label"
           option-value="value"
-          placeholder="Personel seçin"
+          :placeholder="t('siparisler.personelSecin')"
           filter
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Açıklama</label>
+        <label>{{ t('common.description') }}</label>
         <Textarea
           v-model="isEmriAciklama"
           rows="3"
-          placeholder="İş emri açıklaması (isteğe bağlı)"
+          :placeholder="t('siparisler.isEmriAciklama')"
           class="w-full"
         />
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="isEmriDialog = false"
         />
         <Button
-          label="Oluştur"
+          :label="t('siparisler.olustur')"
           icon="pi pi-briefcase"
           :loading="isEmriKaydediliyor"
           @click="isEmriOlustur"
@@ -246,10 +246,13 @@
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import { useI18n } from 'vue-i18n'
 import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import { formatCurrency } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const siparisler = ref([])
 const cariler = ref([])
@@ -267,7 +270,7 @@ onMounted(async () => {
     personelleriYukle()
     suruculeriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -295,9 +298,9 @@ const soforAta = async (siparis, driverId) => {
     siparis.driverId = driverId
     const surucu = suruculer.value.find((s) => s.id === driverId)
     siparis.driverAd = surucu?.ad || ''
-    toastBildirim.basarili('Şoför atandı ve Teslimatlar\'a yansıtıldı')
+    toastBildirim.basarili(t('siparisler.soforAtandi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Şoför atanamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('siparisler.soforAtanamadi'))
   }
 }
 
@@ -325,10 +328,10 @@ const isEmriOlustur = async () => {
       personelId: isEmriPersonelId.value,
       aciklama: isEmriAciklama.value
     })
-    toastBildirim.basarili('İş emri oluşturuldu')
+    toastBildirim.basarili(t('siparisler.isEmriOlusturuldu'))
     isEmriDialog.value = false
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İş emri oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('siparisler.isEmriOlusturulamadi'))
   } finally {
     isEmriKaydediliyor.value = false
   }
@@ -347,7 +350,7 @@ const kaydet = async () => {
     const r = await siparisAPI.getAll()
     siparisler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataKaydet'))
   }
   kaydediliyor.value = false
 }
@@ -358,23 +361,23 @@ const durumGuncelle = async (data, durum) => {
     const r = await siparisAPI.getAll()
     siparisler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataDurum'))
   }
 }
 
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('siparisler.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('siparisler.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await siparisAPI.delete(data.id)
         siparisler.value = siparisler.value.filter((s) => s.id !== data.id)
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataSil'))
       }
     },
     reject: () => {}

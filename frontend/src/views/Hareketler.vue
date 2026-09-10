@@ -1,11 +1,11 @@
 <template>
   <div class="hareketler-container">
-    <h1>Cari Hareket Yönetimi</h1>
+    <h1>{{ t('hareketler.title') }}</h1>
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Hareket"
+          :label="t('hareketler.yeniHareket')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -14,14 +14,14 @@
       <template #end>
         <TarihHizliSecim v-model="tarihAraligi" />
         <Button
-          label="Excel"
+          :label="t('hareketler.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
           style="margin-right: 4px"
           @click="excelIndir"
         />
         <Button
-          label="CSV"
+          :label="t('hareketler.csv')"
           icon="pi pi-download"
           class="p-button-sm p-button-outlined"
           style="margin-right: 8px"
@@ -29,14 +29,14 @@
         />
         <DatePicker
           v-model="filtreBaslangic"
-          placeholder="Başlangıç"
+          :placeholder="t('hareketler.baslangic')"
           date-format="dd.mm.yy"
           class="filter-date"
           @update:model-value="filtrele"
         />
         <DatePicker
           v-model="filtreBitis"
-          placeholder="Bitiş"
+          :placeholder="t('hareketler.bitis')"
           date-format="dd.mm.yy"
           class="filter-date"
           @update:model-value="filtrele"
@@ -45,7 +45,7 @@
           v-if="filtreBaslangic || filtreBitis"
           icon="pi pi-times"
           class="p-button-rounded p-button-text p-button-sm"
-          title="Filtreyi Temizle"
+          :title="t('hareketler.filtreyiTemizle')"
           @click="filtreTemizle"
         />
       </template>
@@ -55,7 +55,7 @@
       v-if="loading"
       class="loading"
     >
-      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
     <div
@@ -68,18 +68,18 @@
       >
         <div class="batch-info">
           <i class="pi pi-check-square" />
-          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> kayıt seçildi</span>
+          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> {{ t('hareketler.kayitSecildi') }}</span>
         </div>
         <div class="batch-buttons">
           <Button
-            label="Seçilenleri Sil"
+            :label="t('hareketler.secilenleriSil')"
             icon="pi pi-trash"
             class="p-button-danger p-button-sm"
             :loading="topluSiliniyor"
             @click="topluSil()"
           />
           <Button
-            label="Seçimi Temizle"
+            :label="t('common.clearSelection')"
             icon="pi pi-times"
             class="p-button-text p-button-sm"
             @click="selectedItems = []"
@@ -100,12 +100,12 @@
       >
         <Column
           field="cariHesapAd"
-          header="Cari Hesap"
+          :header="t('hareketler.cariHesap')"
           style="width: 200px"
         />
         <Column
           field="tur"
-          header="Tür"
+          :header="t('hareketler.tur')"
           style="width: 100px"
         >
           <template #body="slotProps">
@@ -123,15 +123,15 @@
                 String(
                   typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur
                 ).toUpperCase() === 'TAHSILAT'
-                  ? 'Tahsilat'
-                  : 'Ödeme'
+                  ? t('hareketler.tahsilat')
+                  : t('hareketler.odeme')
               }}
             </span>
           </template>
         </Column>
         <Column
           field="odemeSekli"
-          header="Ödeme Şekli"
+          :header="t('hareketler.odemeSekli')"
           style="width: 120px"
         >
           <template #body="slotProps">
@@ -144,7 +144,7 @@
         </Column>
         <Column
           field="tutar"
-          header="Tutar"
+          :header="t('common.amount')"
           style="width: 120px"
         >
           <template #body="slotProps">
@@ -155,7 +155,7 @@
         </Column>
         <Column
           field="hareketTarihi"
-          header="Tarih"
+          :header="t('common.date')"
           style="width: 120px"
         >
           <template #body="slotProps">
@@ -164,24 +164,24 @@
         </Column>
         <Column
           field="aciklama"
-          header="Açıklama"
+          :header="t('common.description')"
         />
         <Column
-          header="İşlemler"
+          :header="t('common.actions')"
           style="width: 140px"
         >
           <template #body="slotProps">
             <Button
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
-              title="Düzenle"
+              :title="t('common.edit')"
               style="margin-right: 6px"
               @click="openEditDialog(slotProps.data)"
             />
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
-              title="Sil"
+              :title="t('common.delete')"
               @click="confirmDelete(slotProps.data.id)"
             />
           </template>
@@ -190,10 +190,10 @@
 
       <EmptyState
         v-if="tümHareketler.length === 0"
-        message="Henüz hareket bulunamadı"
-        sub-message="İlk hareketinizi eklemek için Yeni Hareket butonuna tıklayın"
+        :message="t('hareketler.empty')"
+        :sub-message="t('hareketler.emptyHint')"
         icon="pi pi-exchange"
-        action-label="Yeni Hareket"
+        :action-label="t('hareketler.yeniHareket')"
         action-icon="pi pi-plus"
         @action="openDialog"
       />
@@ -202,51 +202,51 @@
     <!-- Hareket Ekleme/Düzenleme Dialog -->
     <Dialog
       v-model:visible="showDialog"
-      :header="editingId ? 'Hareket Düzenle' : 'Yeni Hareket Ekle'"
+      :header="editingId ? t('hareketler.duzenle') : t('hareketler.yeniEkle')"
       :modal="true"
       style="width: 500px"
     >
       <div class="form-group">
-        <label for="cariHesapId">Cari Hesap *</label>
+        <label for="cariHesapId">{{ t('hareketler.cariHesapZorunlu') }}</label>
         <Dropdown
           id="cariHesapId"
           v-model="form.cariHesapId"
           :options="cariHesapSeçenekleri"
           option-label="ad"
           option-value="id"
-          placeholder="Cari hesap seçiniz"
+          :placeholder="t('hareketler.cariHesapSeciniz')"
           class="w-full"
         />
       </div>
 
       <div class="form-group">
-        <label for="tur">Hareket Türü *</label>
+        <label for="tur">{{ t('hareketler.hareketTuruZorunlu') }}</label>
         <Dropdown
           id="tur"
           v-model="form.tur"
           :options="hareketTurleri"
           option-label="label"
           option-value="value"
-          placeholder="Hareket türü seçiniz"
+          :placeholder="t('hareketler.hareketTuruSeciniz')"
           class="w-full"
         />
       </div>
 
       <div class="form-group">
-        <label for="odemeSekli">Ödeme Şekli</label>
+        <label for="odemeSekli">{{ t('hareketler.odemeSekli') }}</label>
         <Dropdown
           id="odemeSekli"
           v-model="form.odemeSekli"
           :options="odemeSekliSecenekleri"
           option-label="label"
           option-value="value"
-          placeholder="Ödeme şekli seçiniz"
+          :placeholder="t('hareketler.odemeSekliSeciniz')"
           class="w-full"
         />
       </div>
 
       <div class="form-group">
-        <label for="tutar">Tutar *</label>
+        <label for="tutar">{{ t('hareketler.tutarZorunlu') }}</label>
         <InputNumber
           id="tutar"
           v-model="form.tutar"
@@ -259,7 +259,7 @@
       </div>
 
       <div class="form-group">
-        <label for="hareketTarihi">Hareket Tarihi *</label>
+        <label for="hareketTarihi">{{ t('hareketler.hareketTarihiZorunlu') }}</label>
         <DatePicker
           id="hareketTarihi"
           v-model="form.hareketTarihi"
@@ -272,27 +272,27 @@
         v-if="form.cariHesapId && (faturaSecenekleri.length > 0 || faturalarYukleniyor)"
         class="form-group"
       >
-        <label for="faturaId">Bağlı Fatura (opsiyonel)</label>
+        <label for="faturaId">{{ t('hareketler.bagliFatura') }}</label>
         <Dropdown
           id="faturaId"
           v-model="form.faturaId"
           :options="faturaSecenekleri"
           option-label="faturaNumarasi"
           option-value="id"
-          placeholder="Fatura seçilirse ödeme durumu güncellenir"
+          :placeholder="t('hareketler.faturaSecinPlaceholder')"
           class="w-full"
           :show-clear="true"
           :loading="faturalarYukleniyor"
         />
-        <small class="fatura-ipucu">Seçilen faturaya tahsilat/ödeme işlenir, kalan tutar otomatik güncellenir.</small>
+        <small class="fatura-ipucu">{{ t('hareketler.faturaIpucu') }}</small>
       </div>
 
       <div class="form-group">
-        <label for="aciklama">Açıklama</label>
+        <label for="aciklama">{{ t('common.description') }}</label>
         <Textarea
           id="aciklama"
           v-model="form.aciklama"
-          placeholder="Hareket açıklamasını giriniz"
+          :placeholder="t('hareketler.aciklamaPlaceholder')"
           rows="3"
           class="w-full"
         />
@@ -300,13 +300,13 @@
 
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="closeDialog"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveHareket"
@@ -332,11 +332,13 @@ import { hareketAPI, faturaAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const hareketStore = useHareketStore()
+const { t } = useI18n()
 
 const showDialog = ref(false)
 const loading = ref(false)
@@ -399,24 +401,24 @@ watch(() => form.value.cariHesapId, (yeni) => {
   seciliCariFaturalariYukle(yeni)
 })
 
-const hareketTurleri = [
-  { label: 'Tahsilat', value: 'TAHSILAT' },
-  { label: 'Ödeme', value: 'ODEME' }
-]
+const hareketTurleri = computed(() => [
+  { label: t('hareketler.tahsilat'), value: 'TAHSILAT' },
+  { label: t('hareketler.odeme'), value: 'ODEME' }
+])
 
-const odemeSekliSecenekleri = [
-  { label: 'Nakit', value: 'NAKIT' },
-  { label: 'Kredi Kartı', value: 'KREDI_KARTI' },
-  { label: 'Havale/EFT', value: 'HAVALE_EFT' },
-  { label: 'Çek', value: 'CEK' },
-  { label: 'Senet', value: 'SENET' },
-  { label: 'Banka', value: 'BANKA' }
-]
+const odemeSekliSecenekleri = computed(() => [
+  { label: t('hareketler.nakit'), value: 'NAKIT' },
+  { label: t('hareketler.krediKarti'), value: 'KREDI_KARTI' },
+  { label: t('hareketler.havaleEft'), value: 'HAVALE_EFT' },
+  { label: t('hareketler.cek'), value: 'CEK' },
+  { label: t('hareketler.senet'), value: 'SENET' },
+  { label: t('hareketler.banka'), value: 'BANKA' }
+])
 
 const odemeSekliLabel = (val) => {
   if (!val) return '-'
   const code = typeof val === 'object' ? val.value || val.label : val
-  const item = odemeSekliSecenekleri.find((s) => s.value === code || s.label === code)
+  const item = odemeSekliSecenekleri.value.find((s) => s.value === code || s.label === code)
   return item ? item.label : String(code)
 }
 
@@ -435,8 +437,8 @@ const loadData = async () => {
     const hareketler = await hareketStore.getAllHareketler()
     tümHareketler.value = hareketler
   } catch (err) {
-    error.value = 'Veriler yüklenirken hata oluştu'
-    toastBildirim.hata('Veriler yüklenirken hata oluştu')
+    error.value = t('hareketler.hataYukleme')
+    toastBildirim.hata(t('hareketler.hataYukleme'))
   } finally {
     loading.value = false
   }
@@ -478,17 +480,17 @@ const closeDialog = () => {
 
 const saveHareket = async () => {
   if (!form.value.cariHesapId) {
-    toastBildirim.uyari('Cari hesap seçiniz')
+    toastBildirim.uyari(t('hareketler.cariHesapSecinUyari'))
     return
   }
 
   if (!form.value.tur) {
-    toastBildirim.uyari('Hareket türü seçiniz')
+    toastBildirim.uyari(t('hareketler.hareketTuruSecinUyari'))
     return
   }
 
   if (!form.value.tutar || form.value.tutar <= 0) {
-    toastBildirim.uyari('Geçerli bir tutar giriniz')
+    toastBildirim.uyari(t('hareketler.gecerliTutarUyari'))
     return
   }
 
@@ -506,16 +508,16 @@ const saveHareket = async () => {
 
     if (editingId.value) {
       await hareketStore.updateHareket(editingId.value, hareketDTO)
-      toastBildirim.basarili('Hareket güncellendi')
+      toastBildirim.basarili(t('hareketler.guncellendi'))
     } else {
       await hareketStore.addHareket(hareketDTO)
-      toastBildirim.basarili('Hareket eklendi')
+      toastBildirim.basarili(t('hareketler.eklendi'))
     }
 
     tümHareketler.value = await hareketStore.getAllHareketler()
     closeDialog()
   } catch (err) {
-    toastBildirim.hata('İşlem başarısız oldu')
+    toastBildirim.hata(t('hareketler.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -523,8 +525,8 @@ const saveHareket = async () => {
 
 const confirmDelete = (id) => {
   confirm.require({
-    message: 'Bu hareketi silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('hareketler.silOnayMesaj'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: () => deleteHareket(id),
     reject: () => {}
@@ -535,9 +537,9 @@ const deleteHareket = async (id) => {
   try {
     await hareketStore.deleteHareket(id)
     tümHareketler.value = await hareketStore.getAllHareketler()
-    toastBildirim.basarili('Hareket silindi')
+    toastBildirim.basarili(t('hareketler.silindi'))
   } catch (error) {
-    toastBildirim.hata('Hareket silinirken hata oluştu')
+    toastBildirim.hata(t('hareketler.silmeHata'))
   }
 }
 
@@ -549,7 +551,7 @@ const filtrele = async () => {
     const response = await hareketAPI.filtrele(params)
     tümHareketler.value = response.data?.content || response.data || []
   } catch (err) {
-    toastBildirim.hata('Filtreleme başarısız')
+    toastBildirim.hata(t('hareketler.filtrelemeBasarisiz'))
   }
 }
 
@@ -585,26 +587,18 @@ const topluSil = async () => {
     for (const item of selectedItems.value) {
       await hareketAPI.delete(item.id)
     }
-    toastBildirim.basarili(`${selectedItems.value.length} kayıt silindi`)
+    toastBildirim.basarili(t('hareketler.topluSilindi', { n: selectedItems.value.length }))
     selectedItems.value = []
     await loadData()
   } catch {
-    toastBildirim.hata('Silme işlemi başarısız')
+    toastBildirim.hata(t('hareketler.silmeBasarisiz'))
   } finally {
     topluSiliniyor.value = false
   }
 }
 
 
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('tr-TR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(date)
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

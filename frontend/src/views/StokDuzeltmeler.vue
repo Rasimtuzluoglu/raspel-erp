@@ -1,12 +1,12 @@
 <template>
   <div class="duzeltme-sayfasi">
     <div class="sayfa-baslik">
-      <h1><i class="pi pi-sliders-h" /> Stok Düzeltmeleri</h1>
+      <h1><i class="pi pi-sliders-h" /> {{ t('stokDuzeltmeler.title') }}</h1>
     </div>
 
     <div class="bolum">
       <div class="bolum-baslik">
-        <h2>Stok Düzelt</h2>
+        <h2>{{ t('stokDuzeltmeler.stokDuzelt') }}</h2>
       </div>
       <div class="form-satir">
         <Dropdown
@@ -16,21 +16,21 @@
           option-value="id"
           filter
           class="w-full"
-          placeholder="Stok seçin"
+          :placeholder="t('stokDuzeltmeler.stokSecin')"
         />
         <InputNumber
           v-model="form.yeniMiktar"
           :min="0"
-          placeholder="Yeni miktar"
+          :placeholder="t('stokDuzeltmeler.yeniMiktar')"
           class="miktar-input"
         />
         <InputText
           v-model="form.neden"
-          placeholder="Neden (opsiyonel)"
+          :placeholder="t('stokDuzeltmeler.nedenOpsiyonel')"
           class="w-full"
         />
         <Button
-          label="Düzelt"
+          :label="t('stokDuzeltmeler.duzelt')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="duzelt"
@@ -40,7 +40,7 @@
 
     <div class="bolum">
       <div class="bolum-baslik">
-        <h2>Düzeltme Geçmişi</h2>
+        <h2>{{ t('stokDuzeltmeler.duzeltmeGecmisi') }}</h2>
         <Button
           icon="pi pi-refresh"
           class="p-button-text p-button-sm"
@@ -51,7 +51,7 @@
         v-if="!gecmis.length"
         class="bos"
       >
-        Henüz düzeltme yapılmadı.
+        {{ t('stokDuzeltmeler.bos') }}
       </div>
       <div
         v-for="d in gecmis"
@@ -76,8 +76,10 @@
 import { ref, onMounted } from 'vue'
 import { stokDuzeltmeAPI, stokAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const stoklar = ref([])
 const gecmis = ref([])
@@ -90,13 +92,13 @@ const yukle = async () => {
     gecmis.value = g.data || []
     stoklar.value = s.data?.content || s.data || []
   } catch (err) {
-    toastBildirim.hata('Düzeltme verileri yüklenemedi')
+    toastBildirim.hata(t('stokDuzeltmeler.hataYukleme'))
   }
 }
 
 const duzelt = async () => {
   if (!form.value.stokId || form.value.yeniMiktar == null) {
-    toastBildirim.uyari('Stok ve yeni miktar zorunludur')
+    toastBildirim.uyari(t('stokDuzeltmeler.zorunlu'))
     return
   }
   kaydediliyor.value = true
@@ -106,11 +108,11 @@ const duzelt = async () => {
       yeniMiktar: form.value.yeniMiktar,
       neden: form.value.neden || null
     })
-    toastBildirim.basarili('Stok düzeltildi')
+    toastBildirim.basarili(t('stokDuzeltmeler.duzeltildi'))
     form.value = { stokId: null, yeniMiktar: null, neden: '' }
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Düzeltme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('stokDuzeltmeler.islemBasarisiz'))
   } finally {
     kaydediliyor.value = false
   }

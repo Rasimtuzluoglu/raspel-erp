@@ -34,12 +34,7 @@ defineProps({
   fiyatGecmisi: { type: Object, default: null }
 })
 
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-    new Date(dateString)
-  )
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 const trendLabel = (trend) => ({ ARTIS: 'Yükseliyor', AZALIS: 'Düşüyor', STABIL: 'Sabit' })[trend] || '-'
 </script>

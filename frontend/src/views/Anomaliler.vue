@@ -1,13 +1,13 @@
 <template>
   <div class="anomaliler-page">
     <PageHeader
-      title="Güvenlik Anomalileri & IP Kısıtlaması"
-      subtitle="Yapay zeka anomali tespiti, şüpheli giriş uyarıları ve güvenli IP beyaz listesi yönetimi"
+      :title="t('anomaliler.title')"
+      :subtitle="t('anomaliler.subtitle')"
     >
       <template #actions>
         <Button
           v-if="aktifSekme === 'anomali'"
-          label="Yeniden Tara"
+          :label="t('anomaliler.yenidenTara')"
           icon="pi pi-refresh"
           class="p-button-primary"
           :loading="yukleniyor"
@@ -15,7 +15,7 @@
         />
         <Button
           v-else
-          label="Yeni IP Ekle"
+          :label="t('anomaliler.yeniIpEkle')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="ipModalAcik = true"
@@ -28,7 +28,7 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-shield" />
-            Anomali & Risk Tespiti
+            {{ t('anomaliler.anomaliRisk') }}
           </span>
         </template>
 
@@ -44,8 +44,8 @@
           class="empty-box"
         >
           <i class="pi pi-check-circle success-icon" />
-          <h3>Harika! Hiçbir Şüpheli Durum Veya Mükerrer Kayıt Bulunamadı.</h3>
-          <p>Sistemdeki tüm faturalar, hareketler, bakiyeler ve oturumlar tutarlı görünmektedir.</p>
+          <h3>{{ t('anomaliler.bosBaslik') }}</h3>
+          <p>{{ t('anomaliler.bosAciklama') }}</p>
         </div>
 
         <div
@@ -63,7 +63,7 @@
                 <span
                   class="badge"
                   :class="(item.seviye || '').toLowerCase()"
-                >{{ item.seviye }} ÖNCELİK</span>
+                >{{ item.seviye }} {{ t('anomaliler.oncelik') }}</span>
                 <span class="tur-label">{{ item.tur }}</span>
               </div>
               <span class="tarih">{{ formatTarih(item.tespitTarihi) }}</span>
@@ -75,7 +75,7 @@
               {{ item.aciklama }}
             </p>
             <div class="oneri-box">
-              <strong><i class="pi pi-lightbulb" /> Öneri:</strong> {{ item.oneri }}
+              <strong><i class="pi pi-lightbulb" /> {{ t('anomaliler.oneri') }}:</strong> {{ item.oneri }}
             </div>
           </div>
         </div>
@@ -85,15 +85,15 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-lock" />
-            IP Beyaz Listesi
+            {{ t('anomaliler.ipBeyazListesi') }}
           </span>
         </template>
 
         <div class="ip-info-box">
           <i class="pi pi-shield" />
           <div>
-            <strong>IP Kısıtlaması & Beyaz Liste Politikası</strong>
-            <p>Tanımlı IP adresleri veya alt ağlar dışından sisteme giriş denemeleri yapay zeka tarafından güvenlik anomalisi olarak algılanır ve anında bildirim üretilir.</p>
+            <strong>{{ t('anomaliler.ipPolitika') }}</strong>
+            <p>{{ t('anomaliler.ipPolitikaAciklama') }}</p>
           </div>
         </div>
 
@@ -104,7 +104,7 @@
         >
           <Column
             field="ipAdresi"
-            header="İzin Verilen IP / CIDR"
+            :header="t('anomaliler.izinVerilenIp')"
             style="width: 220px"
           >
             <template #body="{ data }">
@@ -113,16 +113,16 @@
           </Column>
           <Column
             field="aciklama"
-            header="Açıklama / Lokasyon"
+            :header="t('anomaliler.aciklamaLokasyon')"
           />
           <Column
             field="eklemeTarihi"
-            header="Tanımlama Tarihi"
+            :header="t('anomaliler.tanimlamaTarihi')"
             style="width: 160px"
           />
           <Column
             field="durum"
-            header="Durum"
+            :header="t('common.status')"
             style="width: 120px"
           >
             <template #body="{ data }">
@@ -133,14 +133,14 @@
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('anomaliler.islem')"
             style="width: 100px"
           >
             <template #body="{ data }">
               <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text p-button-danger"
-                title="IP'yi Sil"
+                :title="t('anomaliler.ipSil')"
                 @click="ipSil(data.id)"
               />
             </template>
@@ -150,37 +150,37 @@
         <!-- IP Ekleme Modalı -->
         <Dialog
           v-model:visible="ipModalAcik"
-          header="Yeni Güvenli IP / Alt Ağ Ekle"
+          :header="t('anomaliler.yeniIpBaslik')"
           :modal="true"
           :style="{ width: '450px' }"
         >
           <div class="p-fluid">
             <div class="field mb-3">
-              <label for="ipAdresi">IP Adresi veya CIDR Blok</label>
+              <label for="ipAdresi">{{ t('anomaliler.ipAdresi') }}</label>
               <InputText
                 id="ipAdresi"
                 v-model="yeniIp.ipAdresi"
-                placeholder="Örn: 88.255.120.45 veya 192.168.1.0/24"
+                :placeholder="t('anomaliler.ipAdresiPlaceholder')"
               />
             </div>
             <div class="field mb-3">
-              <label for="ipAciklama">Açıklama / Ofis Tanımı</label>
+              <label for="ipAciklama">{{ t('anomaliler.aciklamaOfis') }}</label>
               <InputText
                 id="ipAciklama"
                 v-model="yeniIp.aciklama"
-                placeholder="Örn: Ankara Merkez Ofis Statik IP"
+                :placeholder="t('anomaliler.ipAciklamaPlaceholder')"
               />
             </div>
           </div>
           <template #footer>
             <Button
-              label="İptal"
+              :label="t('common.cancel')"
               icon="pi pi-times"
               class="p-button-text"
               @click="ipModalAcik = false"
             />
             <Button
-              label="Kaydet"
+              :label="t('common.save')"
               icon="pi pi-check"
               class="p-button-primary"
               :loading="ipKaydediliyor"
@@ -200,7 +200,9 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { anomaliAPI } from '../api/index.js'
 import PageHeader from '../components/PageHeader.vue'
 import SkeletonLoader from '../components/SkeletonLoader.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 
@@ -226,13 +228,13 @@ const anomalileriYukle = async () => {
     if (anomaliler.value.length > 0) {
       toast.add({
         severity: 'warn',
-        summary: 'Anomali Tespiti',
-        detail: `${anomaliler.value.length} adet şüpheli durum tespit edildi.`,
+        summary: t('anomaliler.anomaliTespiti'),
+        detail: t('anomaliler.supheliDurum', { sayi: anomaliler.value.length }),
         life: 5000
       })
     }
   } catch {
-    toastBildirim.hata('Anomaliler taranırken hata oluştu.')
+    toastBildirim.hata(t('anomaliler.taramaHatasi'))
   } finally {
     yukleniyor.value = false
   }
@@ -252,7 +254,7 @@ const ipListesiYukle = async () => {
 
 const ipKaydet = async () => {
   if (!yeniIp.value.ipAdresi) {
-    toastBildirim.uyari('Lütfen IP adresini giriniz.')
+    toastBildirim.uyari(t('anomaliler.ipGiriniz'))
     return
   }
   ipKaydediliyor.value = true
@@ -261,9 +263,9 @@ const ipKaydet = async () => {
     ipListesi.value = res.data || []
     ipModalAcik.value = false
     yeniIp.value = { ipAdresi: '', aciklama: '' }
-    toastBildirim.basarili('Güvenli IP adresi başarıyla tanımlandı.')
+    toastBildirim.basarili(t('anomaliler.ipTanimlandi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'IP eklenemedi.')
+    toastBildirim.hata(err?.response?.data?.message || t('anomaliler.ipEklenemedi'))
   } finally {
     ipKaydediliyor.value = false
   }
@@ -273,9 +275,9 @@ const ipSil = async (id) => {
   try {
     const res = await anomaliAPI.deleteIpWhitelist(id)
     ipListesi.value = res.data || []
-    toastBildirim.basarili('IP adresi listeden kaldırıldı.')
+    toastBildirim.basarili(t('anomaliler.ipKaldirildi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'IP silinemedi.')
+    toastBildirim.hata(err?.response?.data?.message || t('anomaliler.ipSilinemedi'))
   }
 }
 

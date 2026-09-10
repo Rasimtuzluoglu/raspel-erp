@@ -2,11 +2,11 @@
   <div class="efatura-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        E-Fatura
+        {{ t('efatura.title') }}
       </h1>
       <div class="sag-butonlar">
         <Button
-          label="Faturadan Oluştur"
+          :label="t('efatura.faturadanOlustur')"
           icon="pi pi-file-plus"
           @click="olusturDialogAc"
         />
@@ -15,26 +15,25 @@
 
     <IlkZiyaretIpuclari
       anahtar="efatura"
-      baslik="E-Fatura"
-      metin="Satış faturanızdan UBL-TR 2.1 e-fatura taslağı oluşturun, GİB'e gönderin ve XML belgesini indirin. GİB entegratör uç noktası tanımlı değilse gönderimler yerel onay olarak işaretlenir."
+      :baslik="t('efatura.ipucuBaslik')"
+      :metin="t('efatura.ipucuMetin')"
     />
 
     <div class="bilgi-kutu">
       <i class="pi pi-info-circle" />
-      GİB entegratör uç noktası (<code>app.efatura.gib-endpoint</code>) tanımlı değilse gönderimler yerel onay
-      (simülasyon) olarak işaretlenir.
+      {{ t('efatura.bilgiKutu1') }}<code>app.efatura.gib-endpoint</code>{{ t('efatura.bilgiKutu2') }}
     </div>
 
     <AppDataTable
       :value="list"
       :loading="yukleniyor"
       arama-aktif
-      arama-placeholder="E-Faturalarda ara..."
+      :arama-placeholder="t('efatura.aramaPlaceholder')"
       gorunum-anahtari="efatura_liste"
     >
       <Column
         field="faturaNo"
-        header="Fatura No"
+        :header="t('efatura.faturaNo')"
         sortable
       />
       <Column
@@ -47,11 +46,11 @@
       </Column>
       <Column
         field="aliciUnvan"
-        header="Alıcı"
+        :header="t('efatura.alici')"
       />
       <Column
         field="odenecekTutar"
-        header="Tutar"
+        :header="t('common.amount')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.odenecekTutar) }}
@@ -59,11 +58,11 @@
       </Column>
       <Column
         field="senaryo"
-        header="Senaryo"
+        :header="t('efatura.senaryo')"
       />
       <Column
         field="gibDurumKodu"
-        header="GİB Durumu"
+        :header="t('efatura.gibDurumu')"
       >
         <template #body="{ data }">
           <Tag
@@ -80,14 +79,14 @@
       </Column>
       <Column
         field="olusturmaTarihi"
-        header="Oluşturulma"
+        :header="t('efatura.olusturulma')"
       >
         <template #body="{ data }">
           {{ formatDateTime(data.olusturmaTarihi) }}
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('efatura.islem')"
         style="width: 90px"
       >
         <template #body="{ data }">
@@ -96,20 +95,20 @@
               v-if="data.gibDurumKodu < 1200"
               icon="pi pi-send"
               class="p-button-rounded p-button-text"
-              title="GİB'e Gönder"
+              :title="t('efatura.gibGonder')"
               @click="gibGonder(data)"
             />
             <Button
               v-if="data.gibDurumKodu === 1200"
               icon="pi pi-refresh"
               class="p-button-rounded p-button-text"
-              title="GİB Durumunu Sorgula"
+              :title="t('efatura.gibSorgula')"
               @click="durumSorgula(data)"
             />
             <Button
               icon="pi pi-download"
               class="p-button-rounded p-button-text"
-              title="XML İndir"
+              :title="t('efatura.xmlIndir')"
               @click="xmlIndir(data)"
             />
           </div>
@@ -119,13 +118,13 @@
 
     <Dialog
       v-model:visible="olusturDialog"
-      header="Faturadan E-Fatura Oluştur"
+      :header="t('efatura.olusturBaslik')"
       modal
       :style="{ width: '520px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Fatura</label>
+          <label>{{ t('efatura.fatura') }}</label>
           <Select
             v-model="olusturForm.faturaId"
             :options="faturalar"
@@ -133,11 +132,11 @@
             option-value="id"
             class="w-full"
             filter
-            placeholder="Fatura seçin"
+            :placeholder="t('efatura.faturaSecin')"
           />
         </div>
         <div class="field">
-          <label>Senaryo</label>
+          <label>{{ t('efatura.senaryo') }}</label>
           <Select
             v-model="olusturForm.senaryo"
             :options="['TEMELFATURA', 'TICARIFATURA', 'EARSIVEFATURA']"
@@ -145,7 +144,7 @@
           />
         </div>
         <div class="field">
-          <label>Tip</label>
+          <label>{{ t('efatura.tip') }}</label>
           <Select
             v-model="olusturForm.tip"
             :options="['SATIS', 'IADE', 'TEVKIFAT', 'ISTISNA']"
@@ -155,13 +154,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="olusturDialog = false"
         />
         <Button
-          label="Oluştur"
+          :label="t('efatura.olustur')"
           icon="pi pi-file-plus"
           :loading="kaydediliyor"
           @click="olustur"
@@ -178,9 +177,11 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { eFaturaAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const list = ref([])
 const faturalar = ref([])
@@ -193,7 +194,7 @@ const formatDateTime = (d) =>
   d ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(d)) : '-'
 const kisaEttn = (e) => (e ? e.slice(0, 8) + '…' : '-')
 const durumEtiketi = (k) =>
-  ({ 1000: 'Hazırlandı', 1200: "GİB'e Gönderildi", 1300: 'Onaylandı', 1350: 'Reddedildi' })[k] || k
+  ({ 1000: t('efatura.durumHazirlandi'), 1200: t('efatura.durumGonderildi'), 1300: t('efatura.durumOnaylandi'), 1350: t('efatura.durumReddedildi') })[k] || k
 const durumSeverity = (k) => (k >= 1300 ? 'success' : k === 1200 ? 'warning' : k === 1350 ? 'danger' : 'info')
 
 onMounted(() => {
@@ -207,7 +208,7 @@ const yukle = async () => {
     const r = await eFaturaAPI.getTumu()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'E-Faturalar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('efatura.hataYukleme'))
   }
   yukleniyor.value = false
 }
@@ -232,17 +233,17 @@ const olusturDialogAc = () => {
 
 const olustur = async () => {
   if (!olusturForm.value.faturaId) {
-    toastBildirim.uyari('Fatura seçiniz')
+    toastBildirim.uyari(t('efatura.faturaSeciniz'))
     return
   }
   kaydediliyor.value = true
   try {
     await eFaturaAPI.olustur(olusturForm.value.faturaId, olusturForm.value.senaryo, olusturForm.value.tip)
-    toastBildirim.basarili('E-Fatura taslağı oluşturuldu')
+    toastBildirim.basarili(t('efatura.taslakOlusturuldu'))
     olusturDialog.value = false
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Oluşturma başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('efatura.olusturmaBasarisiz'))
   }
   kaydediliyor.value = false
 }
@@ -250,20 +251,20 @@ const olustur = async () => {
 const gibGonder = async (data) => {
   try {
     await eFaturaAPI.gibGonder(data.id)
-    toast.add({ severity: 'success', summary: 'Gönderildi', detail: "E-Fatura GİB'e iletildi", life: 3000 })
+    toast.add({ severity: 'success', summary: t('efatura.gonderildi'), detail: t('efatura.gibIletildi'), life: 3000 })
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Gönderim başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('efatura.gonderimBasarisiz'))
   }
 }
 
 const durumSorgula = async (data) => {
   try {
     await eFaturaAPI.durumSorgula(data.id)
-    toast.add({ severity: 'success', summary: 'Güncellendi', detail: 'GİB durumu sorgulandı', life: 3000 })
+    toast.add({ severity: 'success', summary: t('efatura.guncellendi'), detail: t('efatura.gibSorgulandi'), life: 3000 })
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Durum sorgulanamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('efatura.durumSorgulanamadi'))
   }
 }
 
@@ -278,7 +279,7 @@ const xmlIndir = async (data) => {
     a.click()
     URL.revokeObjectURL(url)
   } catch (err) {
-    toastBildirim.hata('XML indirilemedi')
+    toastBildirim.hata(t('efatura.xmlIndirilemedi'))
   }
 }
 </script>

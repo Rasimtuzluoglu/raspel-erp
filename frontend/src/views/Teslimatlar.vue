@@ -5,7 +5,7 @@
         <i
           class="pi pi-truck"
           style="margin-right: 8px; color: #3b82f6"
-        />Teslimatlar
+        />{{ t('teslimatlar.title') }}
       </h1>
       <Button
         icon="pi pi-refresh"
@@ -22,13 +22,13 @@
           v-if="yukleniyor"
           class="bos"
         >
-          Yükleniyor...
+          {{ t('common.loading') }}
         </div>
         <div
           v-else-if="!suruculer.length"
           class="bos"
         >
-          Henüz şoför (DRIVER rolü) tanımlanmamış.
+          {{ t('teslimatlar.soforYok') }}
         </div>
         <button
           v-for="s in suruculer"
@@ -53,7 +53,7 @@
           class="bos buyuk"
         >
           <i class="pi pi-user" />
-          <p>Bir şoför seçin; o şoförün teslimat noktaları burada listelensin.</p>
+          <p>{{ t('teslimatlar.soforSec') }}</p>
         </div>
 
         <template v-else>
@@ -62,96 +62,126 @@
               <i class="pi pi-user" /> {{ seciliSurucu.ad }}
             </h2>
             <Tag
-              :value="seciliSurucu.bekleyenTeslimatSayisi + ' bekleyen'"
+              :value="t('teslimatlar.bekleyen', { n: seciliSurucu.bekleyenTeslimatSayisi })"
               :severity="seciliSurucu.bekleyenTeslimatSayisi > 0 ? 'warn' : 'success'"
             />
+          </div>
+
+          <div class="filtre-sekmeleri">
+            <button
+              class="filtre-sekme"
+              :class="{ aktif: filtre === 'TUMU' }"
+              @click="filtre = 'TUMU'"
+            >
+              {{ t('teslimatlar.tumu') }}
+            </button>
+            <button
+              class="filtre-sekme"
+              :class="{ aktif: filtre === 'BUGUN' }"
+              @click="filtre = 'BUGUN'"
+            >
+              {{ t('teslimatlar.bugun') }}
+            </button>
+            <button
+              class="filtre-sekme"
+              :class="{ aktif: filtre === 'GECIKEN' }"
+              @click="filtre = 'GECIKEN'"
+            >
+              {{ t('teslimatlar.geciken') }}
+            </button>
           </div>
 
           <div
             v-if="teslimatYukleniyor"
             class="bos"
           >
-            Yükleniyor...
+            {{ t('common.loading') }}
           </div>
           <div
             v-else-if="!teslimatlar.length"
             class="bos"
           >
-            Bu şoförün atanmış teslimatı yok.
+            {{ t('teslimatlar.teslimatYok') }}
+          </div>
+          <div
+            v-else-if="!filtreliTeslimatlar.length"
+            class="bos"
+          >
+            {{ t('teslimatlar.filtreBos') }}
           </div>
 
           <div
-            v-for="t in teslimatlar"
-            :key="t.id"
+            v-for="teslim in filtreliTeslimatlar"
+            :key="teslim.id"
             class="teslimat-kart"
           >
             <div class="teslimat-ust">
               <span class="fatura-no">
-                <i class="pi pi-file" /> {{ t.faturaNumarasi ? '#' + t.faturaNumarasi : 'Fatura #' + t.faturaId }}
+                <i class="pi pi-file" /> {{ teslim.faturaNumarasi ? '#' + teslim.faturaNumarasi : t('teslimatlar.faturaNo', { id: teslim.faturaId }) }}
               </span>
               <span
-                v-if="t.musteriAdi"
+                v-if="teslim.musteriAdi"
                 class="musteri"
-              >{{ t.musteriAdi }}</span>
+              >{{ teslim.musteriAdi }}</span>
               <Tag
-                :value="durumAdi(t.durum)"
-                :severity="durumSeverity(t.durum)"
+                :value="durumAdi(teslim.durum)"
+                :severity="durumSeverity(teslim.durum)"
               />
               <Tag
-                v-if="t.gecikti"
-                value="Gecikti"
+                v-if="teslim.gecikti"
+                :value="t('teslimatlar.gecikti')"
                 severity="danger"
               />
             </div>
             <div class="adres">
               <i class="pi pi-map-marker" />
-              <span>{{ t.teslimatAdresi || '—' }}</span>
+              <span>{{ teslim.teslimatAdresi || '—' }}</span>
             </div>
             <div
-              v-if="t.beklenenTeslimTarihi"
+              v-if="teslim.beklenenTeslimTarihi"
               class="beklenen"
             >
-              <i class="pi pi-calendar" /> Beklenen teslim: {{ t.beklenenTeslimTarihi }}
+              <i class="pi pi-calendar" /> {{ t('teslimatlar.beklenenTeslim') }}: {{ formatTarih(teslim.beklenenTeslimTarihi) }}
             </div>
             <div
-              v-if="t.notlar"
+              v-if="teslim.notlar"
               class="not"
             >
-              <i class="pi pi-comment" /> {{ t.notlar }}
+              <i class="pi pi-comment" /> {{ teslim.notlar }}
             </div>
             <div class="teslimat-aksiyonlar">
               <div class="foto-alan">
                 <img
-                  v-if="t.teslimatFoto"
-                  :src="t.teslimatFoto"
+                  v-if="teslim.teslimatFoto"
+                  :src="teslim.teslimatFoto"
                   class="teslimat-foto"
-                  alt="Teslimat fotoğrafı"
+                  :alt="t('teslimatlar.teslimatFotografi')"
                 >
                 <label class="foto-yukle">
-                  <i class="pi pi-camera" /> Foto
+                  <i class="pi pi-camera" /> {{ t('teslimatlar.foto') }}
                   <input
                     type="file"
                     accept="image/*"
                     hidden
-                    @change="(e) => fotoYukle(t, e)"
+                    @change="(e) => fotoYukle(teslim, e)"
                   >
                 </label>
               </div>
               <a
                 class="yol-tarifi"
-                :href="yolTarifiUrl(t)"
+                :href="yolTarifiUrl(teslim)"
                 target="_blank"
                 rel="noopener"
               >
-                <i class="pi pi-directions" /> Yol Tarifi Al
+                <i class="pi pi-directions" /> {{ t('teslimatlar.yolTarifiAl') }}
               </a>
               <Dropdown
-                :model-value="t.durum"
+                :model-value="teslim.durum"
                 :options="durumSecenekleri"
                 option-label="label"
                 option-value="value"
                 class="durum-dropdown"
-                @update:model-value="(d) => durumGuncelle(t, d)"
+                @update:model-value="(d) => durumGuncelle(teslim, d)"
               />
             </div>
           </div>
@@ -162,34 +192,55 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { teslimatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useI18n } from 'vue-i18n'
+import { formatTarih } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const suruculer = ref([])
 const teslimatlar = ref([])
 const seciliSurucu = ref(null)
 const yukleniyor = ref(false)
 const teslimatYukleniyor = ref(false)
+const filtre = ref('TUMU')
 
-const durumSecenekleri = [
-  { label: 'Beklemede', value: 'BEKLEMEDE' },
-  { label: 'Yolda', value: 'YOLDA' },
-  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' },
-  { label: 'İptal', value: 'IPTAL' }
-]
+const bugunStr = () => {
+  const bugun = new Date()
+  const ay = String(bugun.getMonth() + 1).padStart(2, '0')
+  const gun = String(bugun.getDate()).padStart(2, '0')
+  return `${bugun.getFullYear()}-${ay}-${gun}`
+}
 
-const durumAdi = (d) => durumSecenekleri.find((x) => x.value === d)?.label || d || '—'
+const filtreliTeslimatlar = computed(() => {
+  if (filtre.value === 'BUGUN') {
+    return teslimatlar.value.filter((t) => t.beklenenTeslimTarihi === bugunStr())
+  }
+  if (filtre.value === 'GECIKEN') {
+    return teslimatlar.value.filter((t) => t.gecikti)
+  }
+  return teslimatlar.value
+})
+
+const durumSecenekleri = computed(() => [
+  { label: t('teslimatlar.durumBeklemede'), value: 'BEKLEMEDE' },
+  { label: t('teslimatlar.durumYolda'), value: 'YOLDA' },
+  { label: t('teslimatlar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' },
+  { label: t('teslimatlar.durumIptal'), value: 'IPTAL' }
+])
+
+const durumAdi = (d) => durumSecenekleri.value.find((x) => x.value === d)?.label || d || '—'
 
 const durumSeverity = (d) => {
   const map = { BEKLEMEDE: 'warn', YOLDA: 'info', TESLIM_EDILDI: 'success', IPTAL: 'danger' }
   return map[d] || 'secondary'
 }
 
-const yolTarifiUrl = (t) =>
-  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.teslimatAdresi || '')}`
+const yolTarifiUrl = (teslim) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(teslim.teslimatAdresi || '')}`
 
 const suruculeriYukle = async () => {
   yukleniyor.value = true
@@ -205,9 +256,11 @@ const suruculeriYukle = async () => {
         seciliSurucu.value = null
         teslimatlar.value = []
       }
+    } else if (suruculer.value.length === 1) {
+      await surucuSec(suruculer.value[0])
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Şoförler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.hataSoforYukleme'))
     suruculer.value = []
   } finally {
     yukleniyor.value = false
@@ -220,7 +273,7 @@ const teslimatlarYukle = async (driverId) => {
     const r = await teslimatAPI.teslimatlar(driverId)
     teslimatlar.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Teslimatlar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.hataTeslimatYukleme'))
     teslimatlar.value = []
   } finally {
     teslimatYukleniyor.value = false
@@ -232,28 +285,28 @@ const surucuSec = async (s) => {
   await teslimatlarYukle(s.id)
 }
 
-const durumGuncelle = async (t, yeniDurum) => {
+const durumGuncelle = async (teslim, yeniDurum) => {
   try {
-    await teslimatAPI.durumGuncelle(t.id, yeniDurum)
-    t.durum = yeniDurum
-    toastBildirim.basarili('Durum güncellendi')
+    await teslimatAPI.durumGuncelle(teslim.id, yeniDurum)
+    teslim.durum = yeniDurum
+    toastBildirim.basarili(t('teslimatlar.durumGuncellendi'))
     if (seciliSurucu.value) {
       await suruculeriYukle()
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Durum güncellenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.hataDurumGuncelleme'))
   }
 }
 
-const fotoYukle = async (t, event) => {
+const fotoYukle = async (teslim, event) => {
   const dosya = event.target.files?.[0]
   if (!dosya) return
   try {
-    const res = await teslimatAPI.fotoYukle(t.id, dosya)
-    t.teslimatFoto = res.data?.teslimatFoto || t.teslimatFoto
-    toastBildirim.basarili('Fotoğraf yüklendi')
+    const res = await teslimatAPI.fotoYukle(teslim.id, dosya)
+    teslim.teslimatFoto = res.data?.teslimatFoto || teslim.teslimatFoto
+    toastBildirim.basarili(t('teslimatlar.fotografYuklendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Fotoğraf yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.fotografYuklenemedi'))
   } finally {
     event.target.value = ''
   }
@@ -360,6 +413,29 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.filtre-sekmeleri {
+  display: flex;
+  gap: 6px;
+}
+.filtre-sekme {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filtre-sekme:hover {
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
+}
+.filtre-sekme.aktif {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
 }
 .teslimat-kart {
   background: var(--bg-card);

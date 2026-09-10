@@ -2,16 +2,22 @@
   <div class="not-found">
     <div class="not-found-content">
       <h1>404</h1>
-      <p>Aradığınız sayfa bulunamadı.</p>
+      <p>{{ t('notFound.bulunamadi') }}</p>
       <router-link to="/">
         <Button
-          label="Ana Sayfaya Dön"
+          :label="t('notFound.anaSayfa')"
           icon="pi pi-home"
         />
       </router-link>
     </div>
   </div>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
 
 <style scoped>
 .not-found {

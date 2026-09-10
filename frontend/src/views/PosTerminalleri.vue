@@ -1,17 +1,17 @@
 <template>
   <div class="pos-sayfasi">
     <div class="pos-baslik">
-      <h1><i class="pi pi-credit-card" /> POS Terminalleri</h1>
+      <h1><i class="pi pi-credit-card" /> {{ t('posTerminalleri.title') }}</h1>
       <div class="pos-baslik-aksiyon">
         <Button
-          label="Gün Sonu İşle"
+          :label="t('posTerminalleri.gunSonuIsle')"
           icon="pi pi-calendar"
           class="p-button-sm p-button-outlined"
           :loading="gunSonuYukleniyor"
           @click="gunSonuIsle"
         />
         <Button
-          label="Yeni POS"
+          :label="t('posTerminalleri.yeniPos')"
           icon="pi pi-plus"
           class="p-button-sm"
           @click="dialogAc(null)"
@@ -34,18 +34,18 @@
           </div>
         </div>
         <div class="ozet-degerler">
-          <span>Bugün: <strong>{{ formatPara(o.bugunTutar) }}</strong></span>
-          <span>Toplam: <strong>{{ formatPara(o.toplamTutar) }}</strong></span>
+          <span>{{ t('posTerminalleri.bugun') }} <strong>{{ formatPara(o.bugunTutar) }}</strong></span>
+          <span>{{ t('posTerminalleri.toplam') }} <strong>{{ formatPara(o.toplamTutar) }}</strong></span>
         </div>
         <div class="ozet-komisyon">
-          Komisyon (bugün): {{ formatPara(o.bugunKomisyon) }} · Toplam: {{ formatPara(o.toplamKomisyon) }}
+          {{ t('posTerminalleri.komisyonBugun') }} {{ formatPara(o.bugunKomisyon) }} · {{ t('posTerminalleri.toplam') }} {{ formatPara(o.toplamKomisyon) }}
         </div>
       </div>
       <div
         v-if="!ozetler.length && !yukleniyor"
         class="bos"
       >
-        Henüz POS terminali yok.
+        {{ t('posTerminalleri.empty') }}
       </div>
     </div>
 
@@ -58,17 +58,17 @@
       >
         <div class="pos-kart-bilgi">
           <strong>{{ p.ad }}</strong>
-          <span class="pos-banka">{{ p.bankaAd || 'Banka atanmamış' }}</span>
-          <span class="pos-komisyon">Komisyon: %{{ p.komisyonOrani ?? 0 }}</span>
+          <span class="pos-banka">{{ p.bankaAd || t('posTerminalleri.bankaAtanmamis') }}</span>
+          <span class="pos-komisyon">{{ t('posTerminalleri.komisyon') }} %{{ p.komisyonOrani ?? 0 }}</span>
         </div>
         <Tag
-          :value="p.aktif ? 'Aktif' : 'Pasif'"
+          :value="p.aktif ? t('posTerminalleri.aktif') : t('posTerminalleri.pasif')"
           :severity="p.aktif ? 'success' : 'danger'"
         />
         <Button
           icon="pi pi-users"
           class="p-button-rounded p-button-text p-button-sm"
-          title="Müşteri Detayı"
+          :title="t('posTerminalleri.musteriDetayi')"
           @click="musteriDetayAc(p)"
         />
         <Button
@@ -86,33 +86,33 @@
 
     <Dialog
       v-model:visible="dialog"
-      :header="duzenlenenId ? 'POS Düzenle' : 'Yeni POS Terminali'"
+      :header="duzenlenenId ? t('posTerminalleri.posDuzenle') : t('posTerminalleri.yeniPosTerminali')"
       :modal="true"
       :style="{ width: '440px' }"
     >
       <div class="pos-form">
         <div class="field">
-          <label>POS Adı *</label>
+          <label>{{ t('posTerminalleri.posAdiZorunlu') }}</label>
           <InputText
             v-model="form.ad"
-            placeholder="Örn: Halkbank POS"
+            :placeholder="t('posTerminalleri.posAdiPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Banka</label>
+          <label>{{ t('posTerminalleri.banka') }}</label>
           <Dropdown
             v-model="form.bankaId"
             :options="bankalar"
             option-label="ad"
             option-value="id"
             filter
-            placeholder="Banka seçin"
+            :placeholder="t('posTerminalleri.bankaSecin')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Komisyon Oranı (%)</label>
+          <label>{{ t('posTerminalleri.komisyonOrani') }}</label>
           <InputNumber
             v-model="form.komisyonOrani"
             :min="0"
@@ -123,18 +123,18 @@
           />
         </div>
         <div class="field">
-          <label>Aktif</label>
+          <label>{{ t('posTerminalleri.aktif') }}</label>
           <InputSwitch v-model="form.aktif" />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -144,7 +144,7 @@
 
     <Dialog
       v-model:visible="musteriDialog"
-      :header="'Müşteri Detayı — ' + (seciliPos?.ad || '')"
+      :header="t('posTerminalleri.musteriDetayi') + ' — ' + (seciliPos?.ad || '')"
       :modal="true"
       :style="{ width: '440px' }"
     >
@@ -152,7 +152,7 @@
         v-if="!musteriler.length"
         class="bos"
       >
-        Bu POS'tan henüz çekim yapılmamış.
+        {{ t('posTerminalleri.cekimYok') }}
       </div>
       <div
         v-for="m in musteriler"
@@ -170,8 +170,10 @@
 import { ref, onMounted } from 'vue'
 import { posAPI, bankaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const terminaller = ref([])
 const ozetler = ref([])
@@ -196,7 +198,7 @@ const yukle = async () => {
     terminaller.value = t.data || []
     ozetler.value = o.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'POS listesi yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('posTerminalleri.hataYukleme'))
   }
   yukleniyor.value = false
 }
@@ -220,22 +222,22 @@ const dialogAc = (p) => {
 
 const kaydet = async () => {
   if (!form.value.ad?.trim()) {
-    toastBildirim.uyari('POS adı zorunludur')
+    toastBildirim.uyari(t('posTerminalleri.posAdiZorunluUyari'))
     return
   }
   kaydediliyor.value = true
   try {
     if (duzenlenenId.value) {
       await posAPI.guncelle(duzenlenenId.value, form.value)
-      toastBildirim.basarili('POS güncellendi')
+      toastBildirim.basarili(t('posTerminalleri.guncellendi'))
     } else {
       await posAPI.olustur(form.value)
-      toastBildirim.basarili('POS oluşturuldu')
+      toastBildirim.basarili(t('posTerminalleri.olusturuldu'))
     }
     dialog.value = false
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Kaydedilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('posTerminalleri.kaydedilemedi'))
   } finally {
     kaydediliyor.value = false
   }
@@ -244,10 +246,10 @@ const kaydet = async () => {
 const sil = async (p) => {
   try {
     await posAPI.sil(p.id)
-    toastBildirim.basarili('POS silindi')
+    toastBildirim.basarili(t('posTerminalleri.silindi'))
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('posTerminalleri.silinemedi'))
   }
 }
 
@@ -268,13 +270,13 @@ const gunSonuIsle = async () => {
     const r = await posAPI.gunSonu()
     const islenen = r.data || []
     if (islenen.length) {
-      toastBildirim.basarili(`${islenen.length} POS için gün sonu aktarımı yapıldı`)
+      toastBildirim.basarili(t('posTerminalleri.gunSonuAktarildi', { n: islenen.length }))
     } else {
-      toastBildirim.bilgi('Bugün için aktarılacak POS tutarı yok')
+      toastBildirim.bilgi(t('posTerminalleri.gunSonuTutarYok'))
     }
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Gün sonu işlemi başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('posTerminalleri.gunSonuBasarisiz'))
   } finally {
     gunSonuYukleniyor.value = false
   }

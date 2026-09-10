@@ -1,17 +1,17 @@
 <template>
   <div class="cari-hesaplar-container">
-    <h1>Cari Hesaplar Yönetimi</h1>
+    <h1>{{ t('cariHesaplar.title') }}</h1>
 
     <IlkZiyaretIpuclari
       anahtar="cari-hesaplar"
-      baslik="Cari Hesaplar"
-      metin="Müşteri ve tedarikçilerinizi buradan yönetin. Bakiye, kredi limiti ve vade takibi yapın. Fatura keserken buradaki kayıtlı cari hesapları seçersiniz."
+      :baslik="t('cariHesaplar.ipucuBaslik')"
+      :metin="t('cariHesaplar.ipucuMetin')"
     />
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Cari Hesap"
+          :label="t('cariHesaplar.yeniCariHesap')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -20,21 +20,21 @@
           v-if="selectedCariHesaplar && selectedCariHesaplar.length > 0"
           class="batch-actions"
         >
-          <span class="batch-count">{{ selectedCariHesaplar ? selectedCariHesaplar.length : 0 }} seçili</span>
+          <span class="batch-count">{{ t('cariHesaplar.nSecili', { n: selectedCariHesaplar ? selectedCariHesaplar.length : 0 }) }}</span>
           <Button
-            label="Toplu E-posta"
+            :label="t('cariHesaplar.topluEposta')"
             icon="pi pi-envelope"
             class="p-button-sm p-button-info"
             @click="topluEmailDialog = true"
           />
           <Button
-            label="Toplu Sil"
+            :label="t('cariHesaplar.topluSil')"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"
             @click="batchSil"
           />
           <Button
-            label="CSV Aktar"
+            :label="t('cariHesaplar.csvAktar')"
             icon="pi pi-download"
             class="p-button-sm p-button-outlined"
             @click="batchCsvExport"
@@ -48,14 +48,14 @@
           @update:yogunluk="tabloYogunluk = $event"
         />
         <Button
-          label="Excel"
+          :label="t('cariHesaplar.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
           style="margin-right: 4px"
           @click="excelIndir"
         />
         <Button
-          label="CSV"
+          :label="t('cariHesaplar.csv')"
           icon="pi pi-download"
           class="p-button-sm p-button-outlined"
           style="margin-right: 8px"
@@ -65,7 +65,7 @@
           <i class="pi pi-search" />
           <InputText
             v-model="aramaMetni"
-            placeholder="Cari ara (Ctrl+F)..."
+            :placeholder="t('cariHesaplar.aramaPlaceholder')"
             @input="ara"
           />
         </span>
@@ -76,7 +76,7 @@
       v-if="loading"
       class="loading"
     >
-      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
     <div
@@ -84,15 +84,15 @@
       class="cari-istatistik"
     >
       <div class="istatistik-kutu">
-        <span>Toplam Cari</span>
+        <span>{{ t('cariHesaplar.toplamCari') }}</span>
         <strong>{{ cariOzet.toplamKayit ?? cariHesapStore.toplamKayit }}</strong>
       </div>
       <div class="istatistik-kutu">
-        <span>Alacaklı</span>
+        <span>{{ t('cariHesaplar.alacakli') }}</span>
         <strong class="positive">{{ formatCurrency(cariOzet.alacakli ?? 0) }}</strong>
       </div>
       <div class="istatistik-kutu">
-        <span>Borçlu</span>
+        <span>{{ t('cariHesaplar.borclu') }}</span>
         <strong class="negative">{{ formatCurrency(cariOzet.borclu ?? 0) }}</strong>
       </div>
     </div>
@@ -104,7 +104,7 @@
       <Dropdown
         v-model="filtreTur"
         :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
-        placeholder="Tür"
+        :placeholder="t('cariHesaplar.tur')"
         class="filtre-select"
         show-clear
         @change="filtreDegisti"
@@ -114,14 +114,14 @@
         :options="bakiyeFiltreleri"
         option-label="label"
         option-value="value"
-        placeholder="Bakiye"
+        :placeholder="t('cariHesaplar.bakiye')"
         class="filtre-select"
         show-clear
         @change="filtreDegisti"
       />
       <Button
         v-if="filtreTur || filtreBakiye"
-        label="Temizle"
+        :label="t('cariHesaplar.temizle')"
         icon="pi pi-times"
         size="small"
         class="p-button-outlined"
@@ -169,14 +169,14 @@
         <Column
           v-if="kolonlar[1].visible"
           field="ad"
-          header="Adı"
+          :header="t('cariHesaplar.ad')"
           sortable
           style="width: 200px"
         />
         <Column
           v-if="kolonlar[2].visible"
           field="tur"
-          header="Tür"
+          :header="t('cariHesaplar.tur')"
           style="width: 100px"
         >
           <template #body="s">
@@ -189,20 +189,20 @@
         <Column
           v-if="kolonlar[3].visible"
           field="yetkiliKisi"
-          header="Yetkili"
+          :header="t('cariHesaplar.yetkili')"
           style="width: 130px"
         />
         <Column
           v-if="kolonlar[4].visible"
           field="telefon"
-          header="Telefon"
+          :header="t('cariHesaplar.telefon')"
           style="width: 130px"
         >
           <template #body="s">
             <span
               v-if="s.data.telefon"
               class="kopyalanabilir"
-              @click="kopyala(s.data.telefon, 'Telefon Kopyalandı')"
+              @click="kopyala(s.data.telefon, t('cariHesaplar.telefonKopyalandi'))"
             >
               {{ s.data.telefon }} <i class="pi pi-copy kopyala-ikon" />
             </span>
@@ -212,7 +212,7 @@
         <Column
           v-if="kolonlar[5].visible"
           field="krediLimiti"
-          header="Kredi Limiti"
+          :header="t('cariHesaplar.krediLimiti')"
           style="width: 120px"
         >
           <template #body="s">
@@ -222,13 +222,13 @@
         <Column
           v-if="kolonlar[6].visible"
           field="odemeVadesi"
-          header="Vade (Gün)"
+          :header="t('cariHesaplar.vadeGun')"
           style="width: 80px"
         />
         <Column
           v-if="kolonlar[7].visible"
           field="bakiye"
-          header="Bakiye"
+          :header="t('cariHesaplar.bakiye')"
           style="width: 140px"
         >
           <template #body="slotProps">
@@ -242,38 +242,38 @@
           </template>
         </Column>
         <Column
-          header="İşlemler"
+          :header="t('common.actions')"
           style="width: 250px"
         >
           <template #body="slotProps">
             <Button
               icon="pi pi-file-plus"
               class="p-button-rounded p-button-success p-button-sm"
-              title="Yeni Fatura"
+              :title="t('cariHesaplar.yeniFatura')"
               @click="yeniFatura(slotProps.data)"
             />
             <Button
               icon="pi pi-money-bill"
               class="p-button-rounded p-button-info p-button-sm"
-              title="Tahsilat"
+              :title="t('cariHesaplar.tahsilat')"
               @click="tahsilatAc(slotProps.data)"
             />
             <Button
               icon="pi pi-pencil"
               class="p-button-rounded p-button-warning p-button-sm"
-              title="Düzenle"
+              :title="t('common.edit')"
               @click="editCariHesap(slotProps.data)"
             />
             <Button
               icon="pi pi-list"
               class="p-button-rounded p-button-secondary p-button-sm"
-              title="Hareketler / Detay"
+              :title="t('cariHesaplar.hareketlerDetay')"
               @click="viewHareketler(slotProps.data)"
             />
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
-              title="Sil"
+              :title="t('common.delete')"
               @click="confirmDelete(slotProps.data.id)"
             />
           </template>
@@ -282,10 +282,10 @@
 
       <EmptyState
         v-if="cariHesapStore?.cariHesaplar?.length === 0"
-        message="Henüz cari hesap yok"
-        sub-message="Müşteri ve tedarikçilerinizi ekleyerek başlayın."
+        :message="t('cariHesaplar.empty')"
+        :sub-message="t('cariHesaplar.emptyHint')"
         icon="pi pi-users"
-        action-label="İlk Cari Hesabı Ekle"
+        :action-label="t('cariHesaplar.emptyAction')"
         action-icon="pi pi-plus"
         @action="openDialog"
       />
@@ -294,7 +294,7 @@
     <!-- Cari Hesap Dialog -->
     <Dialog
       v-model:visible="showDialog"
-      :header="editingId ? 'Cari Hesap Düzenle' : 'Yeni Cari Hesap'"
+      :header="editingId ? t('cariHesaplar.duzenle') : t('cariHesaplar.yeniCariHesap')"
       :modal="true"
       style="width: 650px"
       :draggable="false"
@@ -302,40 +302,40 @@
       <div class="dialog-form">
         <div class="form-section">
           <div class="form-section-title">
-            Genel Bilgiler
+            {{ t('cariHesaplar.genelBilgiler') }}
           </div>
           <div class="form-group">
-            <label for="ad">Cari Adı <span class="required">*</span></label>
+            <label for="ad">{{ t('cariHesaplar.cariAdi') }} <span class="required">*</span></label>
             <InputText
               id="ad"
               v-model="form.ad"
-              placeholder="Müşteri veya tedarikçi adı"
+              :placeholder="t('cariHesaplar.adPlaceholder')"
               class="w-full"
             />
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="tur">Cari Türü</label>
+              <label for="tur">{{ t('cariHesaplar.cariTuru') }}</label>
               <Dropdown
                 v-model="form.tur"
                 :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
-                placeholder="Seçiniz"
+                :placeholder="t('faturalar.seciniz')"
                 class="w-full"
               />
             </div>
             <div class="form-group">
-              <label for="vergiNumarasi">Vergi No / TC Kimlik</label>
+              <label for="vergiNumarasi">{{ t('cariHesaplar.vergiNoTc') }}</label>
               <InputText
                 id="vergiNumarasi"
                 v-model="form.vergiNumarasi"
-                placeholder="Vergi veya TC kimlik no"
+                :placeholder="t('cariHesaplar.vergiNoPlaceholder')"
                 class="w-full"
               />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="telefon">Telefon</label>
+              <label for="telefon">{{ t('cariHesaplar.telefon') }}</label>
               <InputText
                 id="telefon"
                 v-model="form.telefon"
@@ -344,7 +344,7 @@
               />
             </div>
             <div class="form-group">
-              <label for="email">E-posta</label>
+              <label for="email">{{ t('cariHesaplar.eposta') }}</label>
               <InputText
                 id="email"
                 v-model="form.email"
@@ -355,16 +355,16 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="vergiDairesi">Vergi Dairesi</label>
+              <label for="vergiDairesi">{{ t('cariHesaplar.vergiDairesi') }}</label>
               <InputText
                 id="vergiDairesi"
                 v-model="form.vergiDairesi"
-                placeholder="Bağlı olunan vergi dairesi"
+                :placeholder="t('cariHesaplar.vergiDairesiPlaceholder')"
                 class="w-full"
               />
             </div>
             <div class="form-group">
-              <label for="iban">IBAN</label>
+              <label for="iban">{{ t('cariHesaplar.iban') }}</label>
               <InputText
                 id="iban"
                 v-model="form.iban"
@@ -374,46 +374,46 @@
               <small
                 v-if="ibanGecerli === true"
                 class="iban-gecerli"
-              >&#x2713; Gecerli IBAN</small>
+              >&#x2713; {{ t('cariHesaplar.ibanGecerli') }}</small>
               <small
                 v-if="ibanGecerli === false"
                 class="iban-gecersiz"
-              >&#x2717; Gecersiz IBAN</small>
-              <small class="iban-yardim">TR ile baslayan 26 haneli IBAN giriniz</small>
+              >&#x2717; {{ t('cariHesaplar.ibanGecersiz') }}</small>
+              <small class="iban-yardim">{{ t('cariHesaplar.ibanYardim') }}</small>
             </div>
           </div>
         </div>
 
         <div class="form-section">
           <div class="form-section-title">
-            Adres Bilgileri
+            {{ t('cariHesaplar.adresBilgileri') }}
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="il">İl</label>
+              <label for="il">{{ t('cariHesaplar.il') }}</label>
               <InputText
                 id="il"
                 v-model="form.il"
-                placeholder="İl"
+                :placeholder="t('cariHesaplar.il')"
                 class="w-full"
               />
             </div>
             <div class="form-group">
-              <label for="ilce">İlçe</label>
+              <label for="ilce">{{ t('cariHesaplar.ilce') }}</label>
               <InputText
                 id="ilce"
                 v-model="form.ilce"
-                placeholder="İlçe"
+                :placeholder="t('cariHesaplar.ilce')"
                 class="w-full"
               />
             </div>
           </div>
           <div class="form-group">
-            <label for="adres">Adres</label>
+            <label for="adres">{{ t('cariHesaplar.adres') }}</label>
             <Textarea
               id="adres"
               v-model="form.adres"
-              placeholder="Mahalle, cadde, sokak, no..."
+              :placeholder="t('cariHesaplar.adresPlaceholder')"
               rows="2"
               class="w-full"
             />
@@ -422,20 +422,20 @@
 
         <div class="form-section">
           <div class="form-section-title">
-            Yetkili Kişi
+            {{ t('cariHesaplar.yetkiliKisi') }}
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="yetkiliKisi">Ad Soyad</label>
+              <label for="yetkiliKisi">{{ t('cariHesaplar.adSoyad') }}</label>
               <InputText
                 id="yetkiliKisi"
                 v-model="form.yetkiliKisi"
-                placeholder="Yetkili kişi adı soyadı"
+                :placeholder="t('cariHesaplar.adSoyadPlaceholder')"
                 class="w-full"
               />
             </div>
             <div class="form-group">
-              <label for="yetkiliTelefon">Telefon</label>
+              <label for="yetkiliTelefon">{{ t('cariHesaplar.telefon') }}</label>
               <InputText
                 id="yetkiliTelefon"
                 v-model="form.yetkiliTelefon"
@@ -448,11 +448,11 @@
 
         <div class="form-section">
           <div class="form-section-title">
-            Kredi & Vade
+            {{ t('cariHesaplar.krediVade') }}
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="krediLimiti">Kredi Limiti (TL)</label>
+              <label for="krediLimiti">{{ t('cariHesaplar.krediLimitiTL') }}</label>
               <InputNumber
                 id="krediLimiti"
                 v-model="form.krediLimiti"
@@ -462,7 +462,7 @@
               />
             </div>
             <div class="form-group">
-              <label for="odemeVadesi">Ödeme Vadesi (Gün)</label>
+              <label for="odemeVadesi">{{ t('cariHesaplar.odemeVadesiGun') }}</label>
               <InputNumber
                 id="odemeVadesi"
                 v-model="form.odemeVadesi"
@@ -476,14 +476,14 @@
 
         <div class="form-section">
           <div class="form-section-title">
-            Ek Bilgiler
+            {{ t('cariHesaplar.ekBilgiler') }}
           </div>
           <div class="form-group">
-            <label for="notlar">Notlar</label>
+            <label for="notlar">{{ t('cariHesaplar.notlar') }}</label>
             <Textarea
               id="notlar"
               v-model="form.notlar"
-              placeholder="Özel notlar..."
+              :placeholder="t('cariHesaplar.notlarPlaceholder')"
               rows="3"
               class="w-full"
             />
@@ -492,7 +492,7 @@
             v-if="editingId"
             class="form-group"
           >
-            <label>Aktif</label>
+            <label>{{ t('cariHesaplar.aktif') }}</label>
             <InputSwitch v-model="form.aktif" />
           </div>
         </div>
@@ -501,13 +501,13 @@
       <template #footer>
         <div class="dialog-footer">
           <Button
-            label="İptal"
+            :label="t('common.cancel')"
             icon="pi pi-times"
             class="p-button-text"
             @click="closeDialog"
           />
           <Button
-            :label="editingId ? 'Güncelle' : 'Kaydet'"
+            :label="editingId ? t('cariHesaplar.guncelle') : t('common.save')"
             icon="pi pi-check"
             :loading="saving"
             @click="saveCariHesap"
@@ -519,7 +519,7 @@
     <!-- Hareketler Dialog -->
     <Dialog
       v-model:visible="showHareketlerDialog"
-      header="Cari Hesap Hareketleri"
+      :header="t('cariHesaplar.hareketlerBaslik')"
       :modal="true"
       style="width: 800px"
     >
@@ -527,15 +527,15 @@
         <h3>{{ selectedCariHesap?.ad }}</h3>
         <div class="bakiye-ozet">
           <div class="ozet-satir">
-            <span class="ozet-etiket">Toplam Tahsilat:</span>
+            <span class="ozet-etiket">{{ t('cariHesaplar.toplamTahsilat') }}</span>
             <span class="positive">{{ formatCurrency(toplamTahsilat) }}</span>
           </div>
           <div class="ozet-satir">
-            <span class="ozet-etiket">Toplam Ödeme:</span>
+            <span class="ozet-etiket">{{ t('cariHesaplar.toplamOdeme') }}</span>
             <span class="negative">{{ formatCurrency(toplamOdeme) }}</span>
           </div>
           <div class="ozet-satir ozet-bakiye">
-            <span class="ozet-etiket">Güncel Bakiye:</span>
+            <span class="ozet-etiket">{{ t('cariHesaplar.guncelBakiye') }}</span>
             <strong :class="guncelBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(guncelBakiye) }}</strong>
           </div>
         </div>
@@ -545,7 +545,7 @@
         v-if="cariHareketlerYukleniyor"
         class="loading"
       >
-        <p><i class="pi pi-spin pi-spinner" /> Hareketler yükleniyor...</p>
+        <p><i class="pi pi-spin pi-spinner" /> {{ t('cariHesaplar.hareketlerYukleniyor') }}</p>
       </div>
 
       <div
@@ -563,7 +563,7 @@
         >
           <Column
             field="hareketTarihi"
-            header="Tarih"
+            :header="t('common.date')"
             style="width: 120px"
           >
             <template #body="slotProps">
@@ -572,18 +572,18 @@
           </Column>
           <Column
             field="tur"
-            header="Tür"
+            :header="t('cariHesaplar.tur')"
             style="width: 100px"
           >
             <template #body="slotProps">
               <span :class="['badge', slotProps.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
-                {{ slotProps.data.tur === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme' }}
+                {{ slotProps.data.tur === 'TAHSILAT' ? t('cariHesaplar.tahsilat') : t('cariHesaplar.odeme') }}
               </span>
             </template>
           </Column>
           <Column
             field="tutar"
-            header="Tutar"
+            :header="t('common.amount')"
             style="width: 120px"
           >
             <template #body="slotProps">
@@ -594,13 +594,13 @@
           </Column>
           <Column
             field="aciklama"
-            header="Açıklama"
+            :header="t('common.description')"
           />
         </DataTable>
 
         <EmptyState
           v-if="cariHareketler && cariHareketler.length === 0"
-          message="Bu cari hesaba ait hareket bulunmamaktadır."
+          :message="t('cariHesaplar.hareketYok')"
           icon="pi pi-list"
         />
 
@@ -613,7 +613,7 @@
               <i
                 class="pi pi-file"
                 style="margin-right: 6px"
-              />Geçmiş Faturalar ({{ cariFaturalar.length }})
+              />{{ t('cariHesaplar.gecmisFaturalar', { n: cariFaturalar.length }) }}
             </h4>
           </div>
           <DataTable
@@ -623,7 +623,7 @@
             :rows="5"
             :paginator="cariFaturalar.length > 5"
           >
-            <Column header="Fatura No">
+            <Column :header="t('cariHesaplar.faturaNo')">
               <template #body="{ data }">
                 <a
                   class="fatura-link"
@@ -631,25 +631,25 @@
                 >{{ data.faturaNumarasi }}</a>
               </template>
             </Column>
-            <Column header="Tarih">
+            <Column :header="t('common.date')">
               <template #body="{ data }">
                 {{ formatDate(data.tarih) }}
               </template>
             </Column>
-            <Column header="Tür">
+            <Column :header="t('cariHesaplar.tur')">
               <template #body="{ data }">
-                {{ data.tur === 'SATIS' ? 'Satış' : 'Alış' }}
+                {{ data.tur === 'SATIS' ? t('cariHesaplar.satis') : t('cariHesaplar.alis') }}
               </template>
             </Column>
-            <Column header="Tutar">
+            <Column :header="t('common.amount')">
               <template #body="{ data }">
                 <span class="positive">{{ formatCurrency(data.genelToplam) }}</span>
               </template>
             </Column>
-            <Column header="Durum">
+            <Column :header="t('common.status')">
               <template #body="{ data }">
                 <span :class="['badge', data.odemeDurumu === 'ODENDI' ? 'tahsilat' : 'odeme']">
-                  {{ data.odemeDurumu === 'ODENDI' ? 'Ödendi' : data.odemeDurumu === 'KISMI_ODENDI' ? 'Kısmi' : 'Ödenmedi' }}
+                  {{ data.odemeDurumu === 'ODENDI' ? t('cariHesaplar.odendi') : data.odemeDurumu === 'KISMI_ODENDI' ? t('cariHesaplar.kismi') : t('cariHesaplar.odenmedi') }}
                 </span>
               </template>
             </Column>
@@ -662,7 +662,7 @@
               <i
                 class="pi pi-tag"
                 style="margin-right: 6px"
-              />Cariye Özel Fiyatlar
+              />{{ t('cariHesaplar.ozelFiyatlar') }}
             </h4>
           </div>
           <div
@@ -684,7 +684,7 @@
               :options="stokSecenekleri"
               option-label="ad"
               option-value="id"
-              placeholder="Ürün seç"
+              :placeholder="t('cariHesaplar.urunSec')"
               filter
               class="ozel-fiyat-stok-select"
             />
@@ -694,12 +694,12 @@
               currency="TRY"
               locale="tr-TR"
               :min-fraction-digits="2"
-              placeholder="Fiyat"
+              :placeholder="t('cariHesaplar.fiyat')"
               class="ozel-fiyat-tutar-input"
             />
             <Button
               icon="pi pi-plus"
-              label="Ekle"
+              :label="t('cariHesaplar.ekle')"
               size="small"
               @click="cariOzelFiyatEkle"
             />
@@ -715,7 +715,7 @@
               <i
                 class="pi pi-box"
                 style="margin-right: 6px"
-              />Geçmişte Aldığı Ürünler
+              />{{ t('cariHesaplar.gecmisteAldigiUrunler') }}
             </h4>
           </div>
           <div class="cari-urunler-grid">
@@ -727,7 +727,7 @@
               @click="urunFiyatGecmisiGoster(u)"
             >
               <span class="cari-urun-ad">{{ u.stokAd }}</span>
-              <span class="cari-urun-bilgi">{{ u.sonAlisTarihi }} · {{ u.adet }} adet</span>
+              <span class="cari-urun-bilgi">{{ u.sonAlisTarihi }} · {{ t('cariHesaplar.nAdet', { n: u.adet }) }}</span>
               <span class="cari-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
             </button>
           </div>
@@ -736,7 +736,7 @@
             class="cari-urun-fiyat-gecmisi"
           >
             <div class="fg-baslik">
-              <span><i class="pi pi-chart-line" /> {{ seciliUrunFiyatGecmisi.urunAd }} — Fiyat Geçmişi</span>
+              <span><i class="pi pi-chart-line" /> {{ seciliUrunFiyatGecmisi.urunAd }} — {{ t('cariHesaplar.fiyatGecmisi') }}</span>
               <button
                 type="button"
                 class="fg-kapat"
@@ -752,7 +752,7 @@
             >
               <span class="fg-tarih">{{ formatDate(k.tarih) }}</span>
               <span class="fg-fatura">{{ k.faturaNumarasi }}</span>
-              <span class="fg-adet">{{ k.adet }} adet</span>
+              <span class="fg-adet">{{ t('cariHesaplar.nAdet', { n: k.adet }) }}</span>
               <span class="fg-fiyat">{{ formatCurrency(k.birimFiyat) }}</span>
             </div>
           </div>
@@ -764,7 +764,7 @@
               <i
                 class="pi pi-pen-to-square"
                 style="margin-right: 6px"
-              />Görüşme Notları
+              />{{ t('cariHesaplar.gorusmeNotlari') }}
             </h4>
           </div>
           <div class="cari-not-ekle">
@@ -777,7 +777,7 @@
             />
             <InputText
               v-model="yeniCariNot"
-              placeholder="Yeni görüşme notu..."
+              :placeholder="t('cariHesaplar.yeniNotPlaceholder')"
               @keyup.enter="cariNotEkle"
             />
             <Button
@@ -790,7 +790,7 @@
             v-if="(!cariNotlar || !cariNotlar.length)"
             class="cari-not-bos"
           >
-            Henüz not yok.
+            {{ t('cariHesaplar.notYok') }}
           </div>
           <div
             v-for="n in cariNotlar"
@@ -805,7 +805,7 @@
                   class="not-onem-rozet"
                   :class="n.onemDerecesi.toLowerCase()"
                 >
-                  {{ n.onemDerecesi === 'YUKSEK' ? 'Yüksek' : 'Kritik' }}
+                  {{ n.onemDerecesi === 'YUKSEK' ? t('cariHesaplar.yuksek') : t('cariHesaplar.kritik') }}
                 </span>
               </div>
               <p>{{ n.icerik }}</p>
@@ -822,7 +822,7 @@
 
       <template #footer>
         <Button
-          label="Kapat"
+          :label="t('stoklar.kapat')"
           icon="pi pi-times"
           @click="showHareketlerDialog = false"
         />
@@ -838,40 +838,39 @@
 
     <Dialog
       v-model:visible="topluEmailDialog"
-      header="Toplu E-posta"
+      :header="t('cariHesaplar.topluEposta')"
       :modal="true"
       style="width: 520px"
     >
       <p class="toplu-email-aciklama">
-        Seçili {{ selectedCariHesaplar ? selectedCariHesaplar.length : 0 }} cariye e-posta gönderilecek.
-        E-posta adresi olmayan cariler atlanır.
+        {{ t('cariHesaplar.topluEpostaAciklama', { n: selectedCariHesaplar ? selectedCariHesaplar.length : 0 }) }}
       </p>
       <div class="form-group">
-        <label>Konu</label>
+        <label>{{ t('cariHesaplar.konu') }}</label>
         <InputText
           v-model="topluEmailKonu"
           class="w-full"
-          placeholder="E-posta konusu"
+          :placeholder="t('cariHesaplar.epostaKonusuPlaceholder')"
         />
       </div>
       <div class="form-group">
-        <label>Mesaj</label>
+        <label>{{ t('cariHesaplar.mesaj') }}</label>
         <Textarea
           v-model="topluEmailMesaj"
           rows="5"
           class="w-full"
-          placeholder="E-posta içeriği"
+          :placeholder="t('cariHesaplar.epostaIcerigiPlaceholder')"
         />
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="topluEmailDialog = false"
         />
         <Button
-          label="E-posta İstemcisini Aç"
+          :label="t('cariHesaplar.epostaIstemisiniAc')"
           icon="pi pi-envelope"
           @click="topluEmailGonder"
         />
@@ -880,7 +879,7 @@
 
     <Dialog
       v-model:visible="faturaDetayDialog"
-      header="Fatura Detayı"
+      :header="t('cariHesaplar.faturaDetayi')"
       :modal="true"
       style="width: 620px"
     >
@@ -894,7 +893,7 @@
             <span class="fatura-detay-tarih">{{ formatDate(seciliFatura.tarih) }}</span>
           </div>
           <Tag
-            :value="seciliFatura.tur === 'SATIS' ? 'Satış' : 'Alış'"
+            :value="seciliFatura.tur === 'SATIS' ? t('cariHesaplar.satis') : t('cariHesaplar.alis')"
             :severity="seciliFatura.tur === 'SATIS' ? 'success' : 'warning'"
           />
         </div>
@@ -902,29 +901,29 @@
           v-if="seciliFatura.cariHesapAd"
           class="fatura-detay-cari"
         >
-          Cari: {{ seciliFatura.cariHesapAd }}
+          {{ t('cariHesaplar.cari') }}: {{ seciliFatura.cariHesapAd }}
         </div>
         <DataTable
           :value="seciliFatura.kalemler || []"
           size="small"
           striped-rows
         >
-          <Column header="Açıklama">
+          <Column :header="t('common.description')">
             <template #body="{ data }">
               {{ data.aciklama }}
             </template>
           </Column>
-          <Column header="Adet">
+          <Column :header="t('cariHesaplar.adet')">
             <template #body="{ data }">
               {{ data.adet }}
             </template>
           </Column>
-          <Column header="Birim Fiyat">
+          <Column :header="t('cariHesaplar.birimFiyat')">
             <template #body="{ data }">
               {{ formatCurrency(data.birimFiyat) }}
             </template>
           </Column>
-          <Column header="Tutar">
+          <Column :header="t('common.amount')">
             <template #body="{ data }">
               {{ formatCurrency(data.tutar) }}
             </template>
@@ -932,19 +931,19 @@
         </DataTable>
         <div class="fatura-detay-ozet">
           <div class="ozet-satir">
-            <span>Ara Toplam</span><span>{{ formatCurrency(seciliFatura.araToplam) }}</span>
+            <span>{{ t('cariHesaplar.araToplam') }}</span><span>{{ formatCurrency(seciliFatura.araToplam) }}</span>
           </div>
           <div class="ozet-satir">
-            <span>KDV</span><span>{{ formatCurrency(seciliFatura.kdv) }}</span>
+            <span>{{ t('cariHesaplar.kdv') }}</span><span>{{ formatCurrency(seciliFatura.kdv) }}</span>
           </div>
           <div class="ozet-satir ozet-genel">
-            <span>Genel Toplam</span><strong>{{ formatCurrency(seciliFatura.genelToplam) }}</strong>
+            <span>{{ t('cariHesaplar.genelToplam') }}</span><strong>{{ formatCurrency(seciliFatura.genelToplam) }}</strong>
           </div>
         </div>
       </div>
       <template #footer>
         <Button
-          label="Kapat"
+          :label="t('stoklar.kapat')"
           icon="pi pi-times"
           class="p-button-text"
           @click="faturaDetayDialog = false"
@@ -975,23 +974,25 @@ import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const router = useRouter()
 const { kopyala } = usePanoyaKopyala()
+const { t } = useI18n()
 
 const tabloYogunluk = ref('comfortable')
-const kolonlar = ref([
+const kolonlar = computed(() => [
   { field: 'id', header: 'ID', visible: true },
-  { field: 'ad', header: 'Adı', visible: true },
-  { field: 'tur', header: 'Tür', visible: true },
-  { field: 'yetkiliKisi', header: 'Yetkili', visible: true },
-  { field: 'telefon', header: 'Telefon', visible: true },
-  { field: 'krediLimiti', header: 'Kredi Limiti', visible: true },
-  { field: 'odemeVadesi', header: 'Vade (Gün)', visible: true },
-  { field: 'bakiye', header: 'Bakiye', visible: true }
+  { field: 'ad', header: t('cariHesaplar.ad'), visible: true },
+  { field: 'tur', header: t('cariHesaplar.tur'), visible: true },
+  { field: 'yetkiliKisi', header: t('cariHesaplar.yetkili'), visible: true },
+  { field: 'telefon', header: t('cariHesaplar.telefon'), visible: true },
+  { field: 'krediLimiti', header: t('cariHesaplar.krediLimiti'), visible: true },
+  { field: 'odemeVadesi', header: t('cariHesaplar.vadeGun'), visible: true },
+  { field: 'bakiye', header: t('cariHesaplar.bakiye'), visible: true }
 ])
 
 useKisayollar({
@@ -1019,10 +1020,10 @@ onUnmounted(() => {
 
 const filtreTur = ref(null)
 const filtreBakiye = ref(null)
-const bakiyeFiltreleri = [
-  { label: 'Alacaklı', value: 'alacak' },
-  { label: 'Borçlu', value: 'borc' }
-]
+const bakiyeFiltreleri = computed(() => [
+  { label: t('cariHesaplar.alacakli'), value: 'alacak' },
+  { label: t('cariHesaplar.borclu'), value: 'borc' }
+])
 
 const cariOzet = ref({})
 
@@ -1113,7 +1114,7 @@ const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu
     if (filtreBakiye.value) params.bakiyeYonu = filtreBakiye.value
     await cariHesapStore.filtreliCari(params)
   } catch (error) {
-    toastBildirim.hata('Cari hesaplar yüklenirken hata oluştu')
+    toastBildirim.hata(t('cariHesaplar.hataYukleme'))
   } finally {
     loading.value = false
   }
@@ -1191,7 +1192,7 @@ const editCariHesap = (cariHesap) => {
 const saveCariHesap = async () => {
   submitted.value = true
   if (!form.value.ad.trim()) {
-    toastBildirim.uyari('Cari adı boş olamaz')
+    toastBildirim.uyari(t('cariHesaplar.adBosOlamaz'))
     return
   }
 
@@ -1199,15 +1200,15 @@ const saveCariHesap = async () => {
   try {
     if (editingId.value) {
       await cariHesapStore.updateCariHesap(editingId.value, form.value)
-      toastBildirim.basarili('Cari hesap güncellendi')
+      toastBildirim.basarili(t('cariHesaplar.guncellendi'))
     } else {
       await cariHesapStore.addCariHesap(form.value)
-      toastBildirim.basarili('Cari hesap oluşturuldu')
+      toastBildirim.basarili(t('cariHesaplar.olusturuldu'))
     }
     formTemizle()
     closeDialog()
   } catch (error) {
-    toastBildirim.hata('İşlem başarısız oldu')
+    toastBildirim.hata(t('cariHesaplar.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -1215,8 +1216,8 @@ const saveCariHesap = async () => {
 
 const confirmDelete = (id) => {
   confirm.require({
-    message: 'Bu cari hesabı silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('cariHesaplar.silOnayMesaj'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: () => deleteCariHesap(id),
     reject: () => {}
@@ -1226,17 +1227,17 @@ const confirmDelete = (id) => {
 const deleteCariHesap = async (id) => {
   try {
     await cariHesapStore.deleteCariHesap(id)
-    toastBildirim.basarili('Cari hesap silindi')
+    toastBildirim.basarili(t('cariHesaplar.silindi'))
   } catch (error) {
-    toastBildirim.hata('Cari hesap silinirken hata oluştu')
+    toastBildirim.hata(t('cariHesaplar.silmeHata'))
   }
 }
 
 const batchSil = () => {
   if (selectedCariHesaplar.value.length === 0) return
   confirm.require({
-    message: `${selectedCariHesaplar.value.length} cari hesap silinecek. Emin misiniz?`,
-    header: 'Toplu Silme Onayı',
+    message: t('cariHesaplar.topluSilOnayMesaj', { n: selectedCariHesaplar.value.length }),
+    header: t('cariHesaplar.topluSilmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       const sonuclar = await Promise.allSettled(
@@ -1245,13 +1246,13 @@ const batchSil = () => {
       sonuclar.forEach((r) => {
         if (r.status === 'rejected') {
           toastBildirim.hata(
-            r.reason?.response?.data?.message || r.reason?.message || 'Cari hesap silinirken hata oluştu'
+            r.reason?.response?.data?.message || r.reason?.message || t('cariHesaplar.silmeHata')
           )
         }
       })
       selectedCariHesaplar.value = []
       await loadCariHesaplar()
-      toastBildirim.basarili('Seçili cari hesaplar silindi')
+      toastBildirim.basarili(t('cariHesaplar.topluSilindi'))
     }
   })
 }
@@ -1274,13 +1275,13 @@ const topluEmailGonder = () => {
     .filter((c) => c.email)
     .map((c) => c.email)
   if (alicilar.length === 0) {
-    toastBildirim.uyari('E-posta adresi olan seçili cari yok')
+    toastBildirim.uyari(t('cariHesaplar.epostaAdresiYok'))
     return
   }
   const mailto = `mailto:?bcc=${alicilar.join(',')}&subject=${encodeURIComponent(topluEmailKonu.value || '')}&body=${encodeURIComponent(topluEmailMesaj.value || '')}`
   window.open(mailto, '_blank')
   topluEmailDialog.value = false
-  toastBildirim.basarili(`${alicilar.length} alıcıya e-posta istemcisi açıldı`)
+  toastBildirim.basarili(t('cariHesaplar.epostaIstemiAcildi', { n: alicilar.length }))
 }
 
 const tahsilatDialog = ref(false)
@@ -1324,7 +1325,7 @@ const viewHareketler = async (cariHesap) => {  selectedCariHesap.value = cariHes
         ? res.data
         : res.data.content || []
   } catch (error) {
-    toastBildirim.hata('Hareketler yüklenirken hata oluştu')
+    toastBildirim.hata(t('cariHesaplar.hareketlerHata'))
     cariHareketler.value = []
   } finally {
     cariHareketlerYukleniyor.value = false
@@ -1351,7 +1352,7 @@ const cariOzelFiyatlariYukle = async (cariId) => {
 
 const cariOzelFiyatEkle = async () => {
   if (!ozelFiyatStok.value || !ozelFiyatTutar.value) {
-    toastBildirim.uyari('Ürün ve fiyat seçin')
+    toastBildirim.uyari(t('cariHesaplar.urunFiyatSecin'))
     return
   }
   try {
@@ -1362,9 +1363,9 @@ const cariOzelFiyatEkle = async () => {
     ozelFiyatStok.value = null
     ozelFiyatTutar.value = null
     cariOzelFiyatlariYukle(selectedCariHesap.value.id)
-    toastBildirim.basarili('Özel fiyat eklendi')
+    toastBildirim.basarili(t('cariHesaplar.ozelFiyatEklendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Fiyat eklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('cariHesaplar.fiyatEklenemedi'))
   }
 }
 
@@ -1372,9 +1373,9 @@ const cariOzelFiyatSil = async (f) => {
   try {
     await cariHesapAPI.fiyatSil(f.id)
     cariOzelFiyatlar.value = cariOzelFiyatlar.value.filter((x) => x.id !== f.id)
-    toastBildirim.basarili('Özel fiyat silindi')
+    toastBildirim.basarili(t('cariHesaplar.ozelFiyatSilindi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('cariHesaplar.silinemedi'))
   }
 }
 
@@ -1429,11 +1430,11 @@ const urunFiyatGecmisiGoster = async (urun) => {
 const cariNotlar = ref([])
 const yeniCariNot = ref('')
 const yeniCariNotOnem = ref('NORMAL')
-const notOnemSecenekleri = [
-  { label: 'Normal', value: 'NORMAL' },
-  { label: 'Yüksek', value: 'YUKSEK' },
-  { label: 'Kritik', value: 'KRITIK' }
-]
+const notOnemSecenekleri = computed(() => [
+  { label: t('cariHesaplar.normal'), value: 'NORMAL' },
+  { label: t('cariHesaplar.yuksek'), value: 'YUKSEK' },
+  { label: t('cariHesaplar.kritik'), value: 'KRITIK' }
+])
 
 const cariNotlariYukle = async (cariId) => {
   try {
@@ -1449,7 +1450,7 @@ const cariNotEkle = async () => {
   if (!metin || !selectedCariHesap.value) return
   try {
     await notAPI.create({
-      baslik: yeniCariNotOnem.value === 'YUKSEK' ? 'Önemli Not' : 'Görüşme',
+      baslik: yeniCariNotOnem.value === 'YUKSEK' ? t('cariHesaplar.onemliNot') : t('cariHesaplar.gorusme'),
       icerik: metin,
       cariHesapId: selectedCariHesap.value.id,
       onemDerecesi: yeniCariNotOnem.value
@@ -1458,7 +1459,7 @@ const cariNotEkle = async () => {
     yeniCariNotOnem.value = 'NORMAL'
     await cariNotlariYukle(selectedCariHesap.value.id)
   } catch (err) {
-    toastBildirim.hata('Not eklenemedi')
+    toastBildirim.hata(t('cariHesaplar.notEklenemedi'))
   }
 }
 
@@ -1467,7 +1468,7 @@ const cariNotSil = async (n) => {
     await notAPI.delete(n.id)
     await cariNotlariYukle(selectedCariHesap.value.id)
   } catch (err) {
-    toastBildirim.hata('Not silinemedi')
+    toastBildirim.hata(t('cariHesaplar.notSilinemedi'))
   }
 }
 
@@ -1492,15 +1493,7 @@ const excelIndir = async () => {
 }
 
 
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('tr-TR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(date)
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

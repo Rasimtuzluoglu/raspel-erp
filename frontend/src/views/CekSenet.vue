@@ -2,10 +2,10 @@
   <div class="ceksenet-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Çek / Senet Portföyü
+        {{ t('cekSenet.title') }}
       </h1>
       <Button
-        label="Yeni Çek/Senet"
+        :label="t('cekSenet.yeniCekSenet')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,7 +18,7 @@
     >
       <Column
         field="tur"
-        header="Tür"
+        :header="t('cekSenet.tur')"
       >
         <template #body="{ data }">
           <Tag
@@ -29,31 +29,31 @@
       </Column>
       <Column
         field="cariHesapAdi"
-        header="Cari Hesap"
+        :header="t('cekSenet.cariHesap')"
       />
       <Column
         field="cekNo"
-        header="Çek No"
+        :header="t('cekSenet.cekNo')"
       />
       <Column
         field="bankaAdi"
-        header="Banka"
+        :header="t('cekSenet.banka')"
       />
       <Column
         field="vadeTarihi"
-        header="Vade"
+        :header="t('cekSenet.vade')"
       />
       <Column
         field="tutar"
-        header="Tutar"
+        :header="t('common.amount')"
       >
         <template #body="{ data }">
-          {{ data.tutar?.toFixed(2) }} ₺
+          {{ formatCurrency(data.tutar) }}
         </template>
       </Column>
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -71,7 +71,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('cekSenet.islem')"
         style="width: 160px"
       >
         <template #body="{ data }">
@@ -79,14 +79,14 @@
             v-if="data.durum === 'PORTFOY'"
             icon="pi pi-check"
             class="p-button-rounded p-button-text p-button-success"
-            title="Tahsil Et"
+            :title="t('cekSenet.tahsilEt')"
             @click="durumGuncelle(data, 'TAHSIL_EDILDI')"
           />
           <Button
             v-if="data.durum === 'PORTFOY'"
             icon="pi pi-sync"
             class="p-button-rounded p-button-text p-button-info"
-            title="Ciro Et"
+            :title="t('cekSenet.ciroEt')"
             @click="durumGuncelle(data, 'CIRO_EDILDI')"
           />
           <Button
@@ -100,24 +100,24 @@
 
     <EmptyState
       v-if="!yukleniyor && list.length === 0"
-      message="Henüz çek/senet bulunamadı"
-      sub-message="İlk çek veya senedinizi eklemek için Yeni Çek/Senet butonuna tıklayın"
+      :message="t('cekSenet.empty')"
+      :sub-message="t('cekSenet.emptyHint')"
       icon="pi pi-credit-card"
-      action-label="Yeni Çek/Senet"
+      :action-label="t('cekSenet.yeniCekSenet')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
 
     <Dialog
       v-model:visible="dialog"
-      header="Yeni Çek/Senet"
+      :header="t('cekSenet.yeniCekSenet')"
       modal
       :style="{ width: '500px' }"
     >
       <div class="form-grid">
         <div class="field-row">
           <div class="field">
-            <label>Tür *</label>
+            <label>{{ t('cekSenet.turZorunlu') }}</label>
             <Dropdown
               v-model="form.tur"
               :options="['CEK', 'SENET']"
@@ -125,26 +125,26 @@
             />
           </div>
           <div class="field">
-            <label>Cari Hesap *</label>
+            <label>{{ t('cekSenet.cariHesapZorunlu') }}</label>
             <Dropdown
               v-model="form.cariHesapId"
               :options="cariler"
               option-label="ad"
               option-value="id"
-              placeholder="Seçin"
+              :placeholder="t('common.select')"
               class="w-full"
             />
           </div>
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Banka</label><InputText
+            <label>{{ t('cekSenet.banka') }}</label><InputText
               v-model="form.bankaAdi"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Çek No</label><InputText
+            <label>{{ t('cekSenet.cekNo') }}</label><InputText
               v-model="form.cekNo"
               class="w-full"
             />
@@ -152,14 +152,14 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Vade Tarihi *</label><DatePicker
+            <label>{{ t('cekSenet.vadeTarihiZorunlu') }}</label><DatePicker
               v-model="form.vadeTarihi"
               date-format="dd/mm/yy"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Tutar *</label><InputNumber
+            <label>{{ t('cekSenet.tutarZorunlu') }}</label><InputNumber
               v-model="form.tutar"
               mode="currency"
               currency="TRY"
@@ -168,7 +168,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
             class="w-full"
@@ -177,13 +177,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -199,8 +199,11 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { cekSenetAPI, cariHesapAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const list = ref([])
 const cariler = ref([])
@@ -224,7 +227,7 @@ onMounted(async () => {
     list.value = r.data?.content || r.data || []
     cariler.value = c.data?.content || c.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet listesi yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -250,7 +253,7 @@ const kaydet = async () => {
     const r = await cekSenetAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataKaydet'))
   }
   kaydediliyor.value = false
 }
@@ -261,23 +264,23 @@ const durumGuncelle = async (data, durum) => {
     const r = await cekSenetAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataDurum'))
   }
 }
 
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await cekSenetAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Çek/Senet silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataSil'))
       }
     },
     reject: () => {}

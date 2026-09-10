@@ -5,15 +5,15 @@
       <div class="baslik-kutu">
         <h1 class="page-title">
           <i class="pi pi-file-edit text-primary mr-2" />
-          Satış Teklifleri & Proforma
+          {{ t('teklifler.title') }}
         </h1>
         <p class="text-muted">
-          Müşterilerinize profesyonel teklifler hazırlayın, revizyonları takip edin ve tek tıkla siparişe veya faturaya dönüştürün.
+          {{ t('teklifler.subtitle') }}
         </p>
       </div>
       <div class="aksiyon-kutu">
         <Button
-          label="Yeni Teklif Oluştur"
+          :label="t('teklifler.yeniTeklif')"
           icon="pi pi-plus"
           class="p-button-primary"
           @click="yeniTeklifAc"
@@ -28,7 +28,7 @@
           <i class="pi pi-folder" />
         </div>
         <div class="kart-icerik">
-          <span class="kart-etiket">Toplam Teklif</span>
+          <span class="kart-etiket">{{ t('teklifler.toplamTeklif') }}</span>
           <span class="kart-deger">{{ toplamTeklifSayisi }}</span>
         </div>
       </div>
@@ -37,7 +37,7 @@
           <i class="pi pi-send" />
         </div>
         <div class="kart-icerik">
-          <span class="kart-etiket">Gönderilen / Bekleyen</span>
+          <span class="kart-etiket">{{ t('teklifler.gonderilenBekleyen') }}</span>
           <span class="kart-deger">{{ gonderilenTeklifSayisi }}</span>
         </div>
       </div>
@@ -46,7 +46,7 @@
           <i class="pi pi-check-circle" />
         </div>
         <div class="kart-icerik">
-          <span class="kart-etiket">Onaylanan Teklifler</span>
+          <span class="kart-etiket">{{ t('teklifler.onaylanan') }}</span>
           <span class="kart-deger">{{ onaylananTeklifSayisi }}</span>
         </div>
       </div>
@@ -55,7 +55,7 @@
           <i class="pi pi-sync" />
         </div>
         <div class="kart-icerik">
-          <span class="kart-etiket">Dönüşen Toplam Hacim</span>
+          <span class="kart-etiket">{{ t('teklifler.donusenHacim') }}</span>
           <span class="kart-deger">{{ formatCurrency(donusenHacim) }}</span>
         </div>
       </div>
@@ -81,42 +81,42 @@
                 :class="['chip-btn', { aktif: seciliDurumFiltre === 'HEPSI' }]"
                 @click="durumFiltrele('HEPSI')"
               >
-                Tümü ({{ teklifler ? teklifler.length : 0 }})
+                {{ t('teklifler.tumu') }} ({{ teklifler ? teklifler.length : 0 }})
               </button>
               <button
                 type="button"
                 :class="['chip-btn', { aktif: seciliDurumFiltre === 'TASLAK' }]"
                 @click="durumFiltrele('TASLAK')"
               >
-                Taslak
+                {{ t('teklifler.durumTaslak') }}
               </button>
               <button
                 type="button"
                 :class="['chip-btn', { aktif: seciliDurumFiltre === 'GONDERILDI' }]"
                 @click="durumFiltrele('GONDERILDI')"
               >
-                Gönderildi
+                {{ t('teklifler.durumGonderildi') }}
               </button>
               <button
                 type="button"
                 :class="['chip-btn', { aktif: seciliDurumFiltre === 'ONAYLANDI' }]"
                 @click="durumFiltrele('ONAYLANDI')"
               >
-                Onaylandı
+                {{ t('teklifler.durumOnaylandi') }}
               </button>
               <button
                 type="button"
                 :class="['chip-btn', { aktif: seciliDurumFiltre === 'SIPARISE_DONUSTU' }]"
                 @click="durumFiltrele('SIPARISE_DONUSTU')"
               >
-                Siparişe Dönüştü
+                {{ t('teklifler.durumSipariseDonustu') }}
               </button>
             </div>
             <span class="p-input-icon-left">
               <i class="pi pi-search" />
               <InputText
                 v-model="aramaMetni"
-                placeholder="Teklif No veya Cari Ara..."
+                :placeholder="t('teklifler.aramaPlaceholder')"
                 class="p-inputtext-sm"
               />
             </span>
@@ -125,7 +125,7 @@
 
         <Column
           field="teklifNo"
-          header="Teklif No"
+          :header="t('teklifler.teklifNo')"
           sortable
         >
           <template #body="{ data }">
@@ -134,14 +134,14 @@
               <span
                 v-if="data.revizyonNo > 0"
                 class="badge-rev"
-              >Rev.{{ data.revizyonNo }}</span>
+              >{{ t('teklifler.rev') }}{{ data.revizyonNo }}</span>
             </div>
           </template>
         </Column>
 
         <Column
           field="tarih"
-          header="Tarih"
+          :header="t('common.date')"
           sortable
         >
           <template #body="{ data }">
@@ -151,7 +151,7 @@
 
         <Column
           field="gecerlilikTarihi"
-          header="Geçerlilik"
+          :header="t('teklifler.gecerlilik')"
           sortable
         >
           <template #body="{ data }">
@@ -160,7 +160,7 @@
               <small
                 v-if="isGecmis(data.gecerlilikTarihi) && data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
                 class="text-red-500 block"
-              >(Süresi Doldu)</small>
+              >{{ t('teklifler.suresiDoldu') }}</small>
             </div>
             <span
               v-else
@@ -171,32 +171,32 @@
 
         <Column
           field="cariHesapAdi"
-          header="Müşteri / Cari"
+          :header="t('teklifler.musteriCari')"
           sortable
         >
           <template #body="{ data }">
             <div class="font-medium">
-              {{ data.cariHesapAdi || 'Genel Müşteri' }}
+              {{ data.cariHesapAdi || t('teklifler.genelMusteri') }}
             </div>
             <small
               v-if="data.cariVergiNo"
               class="text-muted"
-            >VKN/TC: {{ data.cariVergiNo }}</small>
+            >{{ t('teklifler.vknTc') }} {{ data.cariVergiNo }}</small>
           </template>
         </Column>
 
         <Column
           field="kalemler"
-          header="Kalem"
+          :header="t('teklifler.kalem')"
         >
           <template #body="{ data }">
-            <span class="badge-kalem">{{ data.kalemler?.length || 0 }} Kalem</span>
+            <span class="badge-kalem">{{ t('teklifler.nKalem', { n: data.kalemler?.length || 0 }) }}</span>
           </template>
         </Column>
 
         <Column
           field="genelToplam"
-          header="Genel Toplam"
+          :header="t('teklifler.genelToplam')"
           sortable
         >
           <template #body="{ data }">
@@ -208,7 +208,7 @@
 
         <Column
           field="durum"
-          header="Durum"
+          :header="t('common.status')"
           sortable
         >
           <template #body="{ data }">
@@ -220,7 +220,7 @@
         </Column>
 
         <Column
-          header="İşlemler"
+          :header="t('common.actions')"
           class="text-right"
           style="min-width: 220px;"
         >
@@ -230,7 +230,7 @@
               <Button
                 icon="pi pi-print"
                 class="p-button-text p-button-sm p-button-secondary"
-                title="Teklif Mektubu & Proforma Önizle / Yazdır"
+                :title="t('teklifler.onizleYazdir')"
                 @click="onizlemeAc(data)"
               />
 
@@ -238,7 +238,7 @@
               <Button
                 icon="pi pi-copy"
                 class="p-button-text p-button-sm p-button-info"
-                title="Yeni Revizyon Oluştur"
+                :title="t('teklifler.yeniRevizyon')"
                 @click="revizyonOlustur(data)"
               />
 
@@ -247,7 +247,7 @@
                 v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
                 icon="pi pi-shopping-cart"
                 class="p-button-text p-button-sm p-button-success"
-                title="Siparişe Dönüştür"
+                :title="t('teklifler.sipariseDonustur')"
                 @click="sipariseDonustur(data)"
               />
 
@@ -256,7 +256,7 @@
                 v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
                 icon="pi pi-file"
                 class="p-button-text p-button-sm p-button-warning"
-                title="Faturaya Dönüştür"
+                :title="t('teklifler.faturayaDonustur')"
                 @click="faturayaDonustur(data)"
               />
 
@@ -265,7 +265,7 @@
                 v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
                 icon="pi pi-pencil"
                 class="p-button-text p-button-sm"
-                title="Düzenle"
+                :title="t('common.edit')"
                 @click="duzenle(data)"
               />
 
@@ -274,7 +274,7 @@
                 v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
                 icon="pi pi-trash"
                 class="p-button-text p-button-sm p-button-danger"
-                title="Sil"
+                :title="t('common.delete')"
                 @click="silOnay(data)"
               />
             </div>
@@ -284,7 +284,7 @@
         <template #empty>
           <div class="text-center py-6 text-muted">
             <i class="pi pi-inbox text-4xl mb-2 block text-gray-400" />
-            Henüz kayıtlı bir satış teklifi bulunmuyor.
+            {{ t('teklifler.empty') }}
           </div>
         </template>
       </DataTable>
@@ -294,7 +294,7 @@
     <Dialog
       v-model:visible="formDialog"
       :modal="true"
-      :header="duzenlemeModu ? 'Teklifi Düzenle' : 'Yeni Satış Teklifi Hazırla'"
+      :header="duzenlemeModu ? t('teklifler.duzenle') : t('teklifler.yeniBaslik')"
       class="teklif-form-dialog"
       :style="{ width: '88vw', maxWidth: '1200px' }"
     >
@@ -304,24 +304,24 @@
           <!-- Sol Kolon: Temel Bilgiler -->
           <div class="p-4 border rounded-xl bg-secondary/50 dark:bg-gray-800/50">
             <h3 class="text-sm font-bold text-secondary dark:text-gray-300 mb-4 flex items-center gap-2">
-              <i class="pi pi-info-circle text-primary" /> Temel Bilgiler
+              <i class="pi pi-info-circle text-primary" /> {{ t('teklifler.temelBilgiler') }}
             </h3>
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-1">
-                <label class="text-xs font-semibold text-secondary">Müşteri / Cari Hesap <span class="text-red-500">*</span></label>
+                <label class="text-xs font-semibold text-secondary">{{ t('teklifler.musteriCariHesap') }} <span class="text-red-500">*</span></label>
                 <Dropdown
                   v-model="form.cariHesapId"
                   :options="cariHesaplar"
                   option-label="ad"
                   option-value="id"
-                  placeholder="Müşteri Seçin"
+                  :placeholder="t('teklifler.musteriSecin')"
                   filter
                   class="w-full p-inputtext-sm"
                 />
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-secondary">Teklif Tarihi <span class="text-red-500">*</span></label>
+                  <label class="text-xs font-semibold text-secondary">{{ t('teklifler.teklifTarihi') }} <span class="text-red-500">*</span></label>
                   <InputText
                     v-model="form.tarih"
                     type="date"
@@ -329,7 +329,7 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-secondary">Geçerlilik Tarihi</label>
+                  <label class="text-xs font-semibold text-secondary">{{ t('teklifler.gecerlilikTarihi') }}</label>
                   <InputText
                     v-model="form.gecerlilikTarihi"
                     type="date"
@@ -339,7 +339,7 @@
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-secondary">Durum</label>
+                  <label class="text-xs font-semibold text-secondary">{{ t('common.status') }}</label>
                   <Dropdown
                     v-model="form.durum"
                     :options="durumSecenekleri"
@@ -349,7 +349,7 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-secondary">Para Birimi</label>
+                  <label class="text-xs font-semibold text-secondary">{{ t('teklifler.paraBirimi') }}</label>
                   <Dropdown
                     v-model="form.paraBirimi"
                     :options="['TRY', 'USD', 'EUR', 'GBP']"
@@ -363,33 +363,33 @@
           <!-- Sağ Kolon: Şartlar ve Notlar -->
           <div class="p-4 border rounded-xl bg-secondary/50 dark:bg-gray-800/50">
             <h3 class="text-sm font-bold text-secondary dark:text-gray-300 mb-4 flex items-center gap-2">
-              <i class="pi pi-file text-primary" /> Koşullar & Notlar
+              <i class="pi pi-file text-primary" /> {{ t('teklifler.kosullarNotlar') }}
             </h3>
             <div class="flex flex-col gap-4">
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-secondary">Teslimat Şartı</label>
+                  <label class="text-xs font-semibold text-secondary">{{ t('teklifler.teslimatSarti') }}</label>
                   <InputText
                     v-model="form.teslimatSarti"
-                    placeholder="Örn: 3 İş Günü"
+                    :placeholder="t('teklifler.teslimatSartiPlaceholder')"
                     class="p-inputtext-sm"
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label class="text-xs font-semibold text-secondary">Ödeme Şartı</label>
+                  <label class="text-xs font-semibold text-secondary">{{ t('teklifler.odemeSarti') }}</label>
                   <InputText
                     v-model="form.odemeSarti"
-                    placeholder="Örn: %50 Peşin"
+                    :placeholder="t('teklifler.odemeSartiPlaceholder')"
                     class="p-inputtext-sm"
                   />
                 </div>
               </div>
               <div class="flex flex-col gap-1 h-full">
-                <label class="text-xs font-semibold text-secondary">Garanti & Ek Şartlar / Notlar</label>
+                <label class="text-xs font-semibold text-secondary">{{ t('teklifler.garantiNotlar') }}</label>
                 <Textarea
                   v-model="form.notlar"
                   rows="3"
-                  placeholder="Teklife ait özel koşullar, teslim detayları vb."
+                  :placeholder="t('teklifler.notlarPlaceholder')"
                   class="w-full flex-grow text-sm"
                   style="resize: none;"
                 />
@@ -402,10 +402,10 @@
         <div class="p-4 border rounded-xl border-blue-100 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-900/10">
           <div class="flex justify-between items-center mb-4 pb-2 border-b border-blue-100 dark:border-blue-800">
             <h3 class="text-sm font-bold text-accent dark:text-blue-300 flex items-center gap-2">
-              <i class="pi pi-list" /> Teklif Kalemleri (Ürün ve Hizmetler)
+              <i class="pi pi-list" /> {{ t('teklifler.kalemler') }}
             </h3>
             <Button
-              label="Yeni Ürün Ekle"
+              :label="t('teklifler.yeniUrunEkle')"
               icon="pi pi-plus"
               class="p-button-sm p-button-primary"
               @click="kalemEkle"
@@ -422,7 +422,7 @@
               <button 
                 type="button"
                 class="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-sm"
-                title="Kalemi Sil"
+                :title="t('teklifler.kalemiSil')"
                 @click="kalemSil(idx)"
               >
                 <i class="pi pi-times text-xs" />
@@ -431,13 +431,13 @@
               <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-3 w-full">
                 <!-- Ürün Seçimi -->
                 <div class="md:col-span-3">
-                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Ürün / Stok</label>
+                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.urunStok') }}</label>
                   <Dropdown
                     v-model="k.stokId"
                     :options="stoklar"
                     option-label="ad"
                     option-value="id"
-                    placeholder="Seçiniz..."
+                    :placeholder="t('teklifler.seciniz')"
                     filter
                     class="w-full p-inputtext-sm"
                     @change="stokSecildi(k)"
@@ -446,10 +446,10 @@
                 
                 <!-- Açıklama -->
                 <div class="md:col-span-3">
-                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Açıklama</label>
+                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('common.description') }}</label>
                   <InputText
                     v-model="k.aciklama"
-                    placeholder="Detay..."
+                    :placeholder="t('teklifler.detay')"
                     class="w-full p-inputtext-sm"
                   />
                 </div>
@@ -457,7 +457,7 @@
                 <!-- Miktar & Birim -->
                 <div class="md:col-span-2 flex gap-2">
                   <div class="w-1/2">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Miktar</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.miktar') }}</label>
                     <input
                       v-model.number="k.miktar"
                       type="number"
@@ -467,7 +467,7 @@
                     >
                   </div>
                   <div class="w-1/2">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Birim</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.birim') }}</label>
                     <Dropdown
                       v-model="k.birim"
                       :options="['Adet', 'Kg', 'Metre', 'Paket', 'Koli', 'Saat', 'Ay']"
@@ -479,7 +479,7 @@
                 <!-- Fiyat, İskonto, KDV -->
                 <div class="md:col-span-4 flex gap-2">
                   <div class="w-2/5">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">Birim Fiyat</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.birimFiyat') }}</label>
                     <input
                       v-model.number="k.birimFiyat"
                       type="number"
@@ -490,7 +490,7 @@
                     >
                   </div>
                   <div class="w-1/5">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">İsk.%</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">{{ t('teklifler.isk') }}</label>
                     <input
                       v-model.number="k.iskontoOrani"
                       type="number"
@@ -501,7 +501,7 @@
                     >
                   </div>
                   <div class="w-1/5">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">KDV%</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">{{ t('teklifler.kdv') }}</label>
                     <Dropdown
                       v-model.number="k.kdvOrani"
                       :options="[0, 1, 10, 20]"
@@ -510,7 +510,7 @@
                     />
                   </div>
                   <div class="w-1/5 flex flex-col justify-end">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-right">Tutar</label>
+                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-right">{{ t('teklifler.tutar') }}</label>
                     <div class="font-bold text-sm text-right text-primary dark:text-gray-200 mt-1 whitespace-nowrap">
                       {{ formatCurrency(k.tutar) }}
                     </div>
@@ -524,7 +524,7 @@
               class="p-6 text-center text-gray-400 border-2 border-dashed rounded-lg"
             >
               <i class="pi pi-shopping-cart text-3xl mb-2" /><br>
-              Teklife henüz bir ürün veya hizmet eklenmedi.
+              {{ t('teklifler.kalemYok') }}
             </div>
           </div>
         </div>
@@ -533,17 +533,17 @@
         <div class="flex justify-end">
           <div class="w-full md:w-1/3 bg-secondary dark:bg-gray-800 rounded-xl p-4 border shadow-sm">
             <h4 class="text-xs uppercase font-bold text-muted mb-3 border-b pb-2">
-              Hesap Özeti
+              {{ t('teklifler.hesapOzeti') }}
             </h4>
             
             <div class="flex justify-between items-center py-1.5 text-sm">
-              <span class="text-secondary dark:text-gray-400">Ara Toplam:</span>
+              <span class="text-secondary dark:text-gray-400">{{ t('teklifler.araToplam') }}</span>
               <span class="font-semibold">{{ formatCurrency(hesaplananAraToplam) }}</span>
             </div>
             
             <div class="flex justify-between items-center py-1.5 text-sm group">
               <span class="text-secondary dark:text-gray-400 flex items-center gap-1">
-                Genel İskonto (%):
+                {{ t('teklifler.genelIskonto') }}
               </span>
               <input
                 v-model.number="form.iskontoOrani"
@@ -551,17 +551,17 @@
                 min="0"
                 max="100"
                 class="p-inputtext p-inputtext-sm w-20 text-right bg-white dark:bg-gray-900 border-gray-300 group-hover:border-blue-400 transition"
-                title="Tüm teklife uygulanacak ekstra iskonto yüzdesi"
+                :title="t('teklifler.genelIskontoTitle')"
               >
             </div>
             
             <div class="flex justify-between items-center py-1.5 text-sm">
-              <span class="text-secondary dark:text-gray-400">Hesaplanan KDV:</span>
+              <span class="text-secondary dark:text-gray-400">{{ t('teklifler.hesaplananKdv') }}</span>
               <span class="font-semibold">{{ formatCurrency(hesaplananKdv) }}</span>
             </div>
             
             <div class="flex justify-between items-center py-3 mt-2 border-t border-gray-200 dark:border-gray-700">
-              <span class="text-lg font-bold text-primary dark:text-gray-200">GENEL TOPLAM:</span>
+              <span class="text-lg font-bold text-primary dark:text-gray-200">{{ t('teklifler.genelToplam') }}</span>
               <div class="text-right">
                 <span class="text-xl font-black text-primary">{{ formatCurrency(hesaplananGenelToplam) }}</span>
                 <span class="text-sm font-bold text-muted ml-1">{{ form.paraBirimi || 'TRY' }}</span>
@@ -573,13 +573,13 @@
 
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="formDialog = false"
         />
         <Button
-          :label="duzenlemeModu ? 'Değişiklikleri Kaydet' : 'Teklifi Kaydet'"
+          :label="duzenlemeModu ? t('teklifler.degisiklikleriKaydet') : t('teklifler.kaydet')"
           icon="pi pi-check"
           class="p-button-primary"
           :loading="kaydediliyor"
@@ -592,7 +592,7 @@
     <Dialog
       v-model:visible="onizlemeDialog"
       :modal="true"
-      header="Satış Teklifi / Proforma Mektubu"
+      :header="t('teklifler.mektupBaslik')"
       :style="{ width: '850px', maxWidth: '95vw' }"
     >
       <div
@@ -613,39 +613,39 @@
           </div>
           <div class="text-right">
             <h3 class="text-lg font-bold text-primary tracking-wider">
-              SATIŞ TEKLİFİ
+              {{ t('teklifler.satisTeklifi') }}
             </h3>
             <div class="text-xs text-muted mt-1">
-              <strong>Teklif No:</strong> {{ seciliTeklif?.teklifNo }}
+              <strong>{{ t('teklifler.teklifNoLabel') }}</strong> {{ seciliTeklif?.teklifNo }}
             </div>
             <div
               v-if="seciliTeklif?.revizyonNo > 0"
               class="text-xs text-muted"
             >
-              <strong>Revizyon:</strong> Rev.{{ seciliTeklif?.revizyonNo }}
+              <strong>{{ t('teklifler.revizyon') }}</strong> {{ t('teklifler.rev') }}{{ seciliTeklif?.revizyonNo }}
             </div>
             <div class="text-xs text-muted">
-              <strong>Tarih:</strong> {{ formatDate(seciliTeklif?.tarih) }}
+              <strong>{{ t('teklifler.tarihLabel') }}</strong> {{ formatDate(seciliTeklif?.tarih) }}
             </div>
             <div
               v-if="seciliTeklif?.gecerlilikTarihi"
               class="text-xs text-muted"
             >
-              <strong>Geçerlilik:</strong> {{ formatDate(seciliTeklif?.gecerlilikTarihi) }}
+              <strong>{{ t('teklifler.gecerlilikLabel') }}</strong> {{ formatDate(seciliTeklif?.gecerlilikTarihi) }}
             </div>
           </div>
         </div>
 
         <div class="musteri-kutusu bg-secondary p-3 rounded mb-4 border">
-          <span class="text-xs font-bold text-secondary block mb-1">SAYIN (MÜŞTERİ / ALICI):</span>
+          <span class="text-xs font-bold text-secondary block mb-1">{{ t('teklifler.sayin') }}</span>
           <div class="font-bold text-primary">
-            {{ seciliTeklif?.cariHesapAdi || 'Müşteri' }}
+            {{ seciliTeklif?.cariHesapAdi || t('teklifler.musteri') }}
           </div>
           <div class="text-xs text-secondary">
-            {{ seciliTeklif?.cariAdres || 'Adres bilgisi girilmedi' }}
+            {{ seciliTeklif?.cariAdres || t('teklifler.adresGirilmedi') }}
           </div>
           <div class="text-xs text-secondary">
-            VKN/TC: {{ seciliTeklif?.cariVergiNo || '-' }} | Tel: {{ seciliTeklif?.cariTelefon || '-' }}
+            {{ t('teklifler.vknTc') }} {{ seciliTeklif?.cariVergiNo || '-' }} | Tel: {{ seciliTeklif?.cariTelefon || '-' }}
           </div>
         </div>
 
@@ -656,22 +656,22 @@
                 #
               </th>
               <th class="p-2 text-left">
-                Ürün / Hizmet Açıklaması
+                {{ t('teklifler.urunHizmet') }}
               </th>
               <th class="p-2 text-center">
-                Miktar
+                {{ t('teklifler.miktar') }}
               </th>
               <th class="p-2 text-right">
-                Birim Fiyat
+                {{ t('teklifler.birimFiyat') }}
               </th>
               <th class="p-2 text-center">
-                İsk.%
+                {{ t('teklifler.isk') }}
               </th>
               <th class="p-2 text-center">
-                KDV%
+                {{ t('teklifler.kdv') }}
               </th>
               <th class="p-2 text-right">
-                Tutar
+                {{ t('teklifler.tutar') }}
               </th>
             </tr>
           </thead>
@@ -709,41 +709,41 @@
         <div class="flex justify-between items-start mb-6">
           <div class="sartlar-alani w-7/12 text-xs">
             <h4 class="font-bold mb-1">
-              Teklif Koşulları & Şartlar:
+              {{ t('teklifler.kosullarSartlar') }}
             </h4>
             <ul class="list-disc pl-4 space-y-1 text-secondary">
               <li v-if="seciliTeklif?.teslimatSarti">
-                <strong>Teslimat:</strong> {{ seciliTeklif.teslimatSarti }}
+                <strong>{{ t('teklifler.teslimatLabel') }}</strong> {{ seciliTeklif.teslimatSarti }}
               </li>
               <li v-if="seciliTeklif?.odemeSarti">
-                <strong>Ödeme:</strong> {{ seciliTeklif.odemeSarti }}
+                <strong>{{ t('teklifler.odemeLabel') }}</strong> {{ seciliTeklif.odemeSarti }}
               </li>
               <li v-if="seciliTeklif?.garantiSarti">
-                <strong>Garanti:</strong> {{ seciliTeklif.garantiSarti }}
+                <strong>{{ t('teklifler.garantiLabel') }}</strong> {{ seciliTeklif.garantiSarti }}
               </li>
               <li v-if="seciliTeklif?.notlar">
-                <strong>Notlar:</strong> {{ seciliTeklif.notlar }}
+                <strong>{{ t('teklifler.notlarLabel') }}</strong> {{ seciliTeklif.notlar }}
               </li>
             </ul>
           </div>
           <div class="toplamlar-alani w-4/12 text-xs bg-secondary p-3 rounded border">
             <div class="flex justify-between py-1">
-              <span>Ara Toplam:</span>
+              <span>{{ t('teklifler.araToplam') }}</span>
               <span class="font-semibold">{{ formatCurrency(seciliTeklif?.araToplam) }}</span>
             </div>
             <div
               v-if="seciliTeklif?.iskontoTutari > 0"
               class="flex justify-between py-1 text-red-600"
             >
-              <span>İskonto (%{{ seciliTeklif?.iskontoOrani }}):</span>
+              <span>{{ t('teklifler.iskonto', { n: seciliTeklif?.iskontoOrani }) }}</span>
               <span>-{{ formatCurrency(seciliTeklif?.iskontoTutari) }}</span>
             </div>
             <div class="flex justify-between py-1">
-              <span>KDV Toplamı:</span>
+              <span>{{ t('teklifler.kdvToplami') }}</span>
               <span class="font-semibold">{{ formatCurrency(seciliTeklif?.kdv) }}</span>
             </div>
             <div class="flex justify-between py-2 border-t mt-1 font-bold text-sm text-primary">
-              <span>GENEL TOPLAM:</span>
+              <span>{{ t('teklifler.genelToplam') }}</span>
               <span>{{ formatCurrency(seciliTeklif?.genelToplam) }} {{ seciliTeklif?.paraBirimi }}</span>
             </div>
           </div>
@@ -751,25 +751,25 @@
 
         <div class="imza-kutulari grid grid-cols-2 gap-8 pt-4 border-t text-center text-xs">
           <div class="border p-4 rounded min-h-24 flex flex-col justify-between">
-            <span class="font-bold text-secondary">Teklifi Hazırlayan (Firma Yetkilisi)</span>
-            <span class="text-gray-400">İmza & Kaşe</span>
+            <span class="font-bold text-secondary">{{ t('teklifler.hazirlayan') }}</span>
+            <span class="text-gray-400">{{ t('teklifler.imzaKase') }}</span>
           </div>
           <div class="border p-4 rounded min-h-24 flex flex-col justify-between">
-            <span class="font-bold text-secondary">Teklifi Onaylayan (Müşteri Yetkilisi)</span>
-            <span class="text-gray-400">Onay Tarihi & İmza</span>
+            <span class="font-bold text-secondary">{{ t('teklifler.onaylayan') }}</span>
+            <span class="text-gray-400">{{ t('teklifler.onayTarihiImza') }}</span>
           </div>
         </div>
       </div>
 
       <template #footer>
         <Button
-          label="WhatsApp ile Paylaş"
+          :label="t('teklifler.whatsapp')"
           icon="pi pi-whatsapp"
           class="p-button-success p-button-outlined"
           @click="whatsAppPaylas"
         />
         <Button
-          label="Yazdır / PDF İndir"
+          :label="t('teklifler.yazdirPdf')"
           icon="pi pi-print"
           class="p-button-primary"
           @click="yazdirTeklif"
@@ -784,8 +784,10 @@ import { ref, computed, onMounted } from 'vue'
 import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import { useToast } from 'primevue/usetoast'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
+const { t } = useI18n()
 
 const teklifler = ref([])
 const cariHesaplar = ref([])
@@ -801,14 +803,14 @@ const duzenlemeModu = ref(false)
 const onizlemeDialog = ref(false)
 const seciliTeklif = ref(null)
 
-const durumSecenekleri = [
-  { label: 'Taslak', value: 'TASLAK' },
-  { label: 'Gönderildi', value: 'GONDERILDI' },
-  { label: 'Onaylandı', value: 'ONAYLANDI' },
-  { label: 'Reddedildi', value: 'REDDEDILDI' },
-  { label: 'Siparişe Dönüştü', value: 'SIPARISE_DONUSTU' },
-  { label: 'Faturalaştı', value: 'FATURALASTI' }
-]
+const durumSecenekleri = computed(() => [
+  { label: t('teklifler.durumTaslak'), value: 'TASLAK' },
+  { label: t('teklifler.durumGonderildi'), value: 'GONDERILDI' },
+  { label: t('teklifler.durumOnaylandi'), value: 'ONAYLANDI' },
+  { label: t('teklifler.durumReddedildi'), value: 'REDDEDILDI' },
+  { label: t('teklifler.durumSipariseDonustu'), value: 'SIPARISE_DONUSTU' },
+  { label: t('teklifler.durumFaturalasti'), value: 'FATURALASTI' }
+])
 
 const varsayilanForm = {
   id: null,
@@ -844,7 +846,7 @@ const teklifleriGetir = async () => {
     const res = await teklifAPI.getAll({ size: 100 })
     teklifler.value = res.data?.content || res.data || []
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Teklifler yüklenemedi: ' + err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: t('teklifler.tekliflerYuklenemedi') + err.message, life: 3000 })
   } finally {
     yukleniyor.value = false
   }
@@ -899,12 +901,12 @@ const isGecmis = (tarihStr) => {
 
 const durumLabel = (durum) => {
   const map = {
-    TASLAK: 'Taslak',
-    GONDERILDI: 'Gönderildi',
-    ONAYLANDI: 'Onaylandı',
-    REDDEDILDI: 'Reddedildi',
-    SIPARISE_DONUSTU: 'Siparişe Dönüştü',
-    FATURALASTI: 'Faturalaştı'
+    TASLAK: t('teklifler.durumTaslak'),
+    GONDERILDI: t('teklifler.durumGonderildi'),
+    ONAYLANDI: t('teklifler.durumOnaylandi'),
+    REDDEDILDI: t('teklifler.durumReddedildi'),
+    SIPARISE_DONUSTU: t('teklifler.durumSipariseDonustu'),
+    FATURALASTI: t('teklifler.durumFaturalasti')
   }
   return map[durum] || durum
 }
@@ -1005,11 +1007,11 @@ const duzenle = (teklif) => {
 
 const teklifKaydet = async () => {
   if (!form.value.cariHesapId) {
-    toast.add({ severity: 'warn', summary: 'Eksik Bilgi', detail: 'Lütfen bir müşteri/cari seçin.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('teklifler.eksikBilgi'), detail: t('teklifler.musteriSecinUyari'), life: 3000 })
     return
   }
   if (!form.value.kalemler || form.value.kalemler.length === 0 || !form.value.kalemler[0].aciklama) {
-    toast.add({ severity: 'warn', summary: 'Eksik Bilgi', detail: 'En az bir kalem açıklaması girilmelidir.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('teklifler.eksikBilgi'), detail: t('teklifler.kalemAciklamaUyari'), life: 3000 })
     return
   }
 
@@ -1017,64 +1019,64 @@ const teklifKaydet = async () => {
   try {
     if (duzenlemeModu.value) {
       await teklifAPI.update(form.value.id, form.value)
-      toast.add({ severity: 'success', summary: 'Güncellendi', detail: 'Teklif başarıyla güncellendi.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('teklifler.guncellendi'), detail: t('teklifler.teklifGuncellendi'), life: 3000 })
     } else {
       await teklifAPI.create(form.value)
-      toast.add({ severity: 'success', summary: 'Oluşturuldu', detail: 'Yeni satış teklifi kaydedildi.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('teklifler.olusturuldu'), detail: t('teklifler.teklifOlusturuldu'), life: 3000 })
     }
     formDialog.value = false
     await teklifleriGetir()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Kaydedilemedi: ' + err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: t('teklifler.kaydedilemedi') + err.message, life: 3000 })
   } finally {
     kaydediliyor.value = false
   }
 }
 
 const silOnay = async (teklif) => {
-  if (confirm(`"${teklif.teklifNo}" numaralı teklifi silmek istediğinize emin misiniz?`)) {
+  if (confirm(t('teklifler.silOnay', { n: teklif.teklifNo }))) {
     try {
       await teklifAPI.delete(teklif.id)
-      toast.add({ severity: 'success', summary: 'Silindi', detail: 'Teklif silindi.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('teklifler.silindi'), detail: t('teklifler.teklifSilindi'), life: 3000 })
       await teklifleriGetir()
     } catch (err) {
-      toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
     }
   }
 }
 
 const revizyonOlustur = async (teklif) => {
-  if (confirm(`"${teklif.teklifNo}" için yeni bir revizyon (Rev.${teklif.revizyonNo + 1}) oluşturulsun mu?`)) {
+  if (confirm(t('teklifler.revizyonOnay', { n: teklif.teklifNo, r: teklif.revizyonNo + 1 }))) {
     try {
       await teklifAPI.revizyonOlustur(teklif.id)
-      toast.add({ severity: 'success', summary: 'Revizyon Oluşturuldu', detail: 'Teklifin yeni revizyonu hazırlandı.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('teklifler.revizyonOlusturuldu'), detail: t('teklifler.revizyonHazirlandi'), life: 3000 })
       await teklifleriGetir()
     } catch (err) {
-      toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
     }
   }
 }
 
 const sipariseDonustur = async (teklif) => {
-  if (confirm(`"${teklif.teklifNo}" numaralı teklif Satış Siparişine dönüştürülsün mü?`)) {
+  if (confirm(t('teklifler.siparisOnay', { n: teklif.teklifNo }))) {
     try {
       const res = await teklifAPI.sipariseDonustur(teklif.id)
-      toast.add({ severity: 'success', summary: 'Dönüştürüldü', detail: `Sipariş #${res.data?.siparisNo} olarak kaydedildi.`, life: 3500 })
+      toast.add({ severity: 'success', summary: t('teklifler.donusturuldu'), detail: t('teklifler.siparisKaydedildi', { n: res.data?.siparisNo }), life: 3500 })
       await teklifleriGetir()
     } catch (err) {
-      toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
     }
   }
 }
 
 const faturayaDonustur = async (teklif) => {
-  if (confirm(`"${teklif.teklifNo}" numaralı teklif Satış Faturasına dönüştürülsün mü?`)) {
+  if (confirm(t('teklifler.faturaOnay', { n: teklif.teklifNo }))) {
     try {
       const res = await teklifAPI.faturayaDonustur(teklif.id)
-      toast.add({ severity: 'success', summary: 'Faturalaştı', detail: `Fatura #${res.data?.faturaNumarasi} olarak kesildi.`, life: 3500 })
+      toast.add({ severity: 'success', summary: t('teklifler.faturalasti'), detail: t('teklifler.faturaKesildi', { n: res.data?.faturaNumarasi }), life: 3500 })
       await teklifleriGetir()
     } catch (err) {
-      toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
     }
   }
 }

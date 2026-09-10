@@ -2,10 +2,10 @@
   <div class="yeni-yil-sihirbazi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        <i class="pi pi-sparkles" /> Yeni Yıl / Şirket Açılış Sihirbazı
+        <i class="pi pi-sparkles" /> {{ t('yeniYilSihirbazi.title') }}
       </h1>
       <p class="aciklama">
-        Yeni mali yıl için şirket oluşturun ve isterseniz mevcut şirketinizden stok/cari verilerini aktarın.
+        {{ t('yeniYilSihirbazi.aciklama') }}
       </p>
     </div>
 
@@ -23,19 +23,19 @@
           class="step-content"
         >
           <h3 class="adim-baslik">
-            <i class="pi pi-building" /> 1. Yeni Şirket Bilgileri
+            <i class="pi pi-building" /> {{ t('yeniYilSihirbazi.adim1') }}
           </h3>
           <div class="form-grid">
             <div class="field">
-              <label for="form-ad">Şirket Adı *</label>
+              <label for="form-ad">{{ t('yeniYilSihirbazi.sirketAdiZorunlu') }}</label>
               <InputText
                 id="form-ad"
                 v-model="form.ad"
-                placeholder="Örn: RasPel 2026 Resmi"
+                :placeholder="t('yeniYilSihirbazi.sirketAdiPlaceholder')"
               />
             </div>
             <div class="field">
-              <label for="form-yil">Mali Yıl *</label>
+              <label for="form-yil">{{ t('yeniYilSihirbazi.maliYilZorunlu') }}</label>
               <InputNumber
                 id="form-yil"
                 v-model="form.yil"
@@ -43,24 +43,24 @@
               />
             </div>
             <div class="field">
-              <label for="form-tur">Şirket Türü</label>
+              <label for="form-tur">{{ t('yeniYilSihirbazi.sirketTuru') }}</label>
               <Dropdown
                 id="form-tur"
                 v-model="form.tur"
-                :options="[{label:'Resmi', value:'RESMI'}, {label:'Gayriresmi', value:'GAYRIRESMI'}, {label:'Diğer', value:'DIGER'}]"
+                :options="[{label: t('yeniYilSihirbazi.resmi'), value:'RESMI'}, {label: t('yeniYilSihirbazi.gayriresmi'), value:'GAYRIRESMI'}, {label: t('yeniYilSihirbazi.diger'), value:'DIGER'}]"
                 option-label="label"
                 option-value="value"
               />
             </div>
             <div class="field">
-              <label for="form-vkn">Vergi Numarası</label>
+              <label for="form-vkn">{{ t('yeniYilSihirbazi.vergiNumarasi') }}</label>
               <InputText
                 id="form-vkn"
                 v-model="form.vergiNo"
               />
             </div>
             <div class="field full-width">
-              <label for="form-parent">Ana Şirket (İsteğe Bağlı)</label>
+              <label for="form-parent">{{ t('yeniYilSihirbazi.anaSirket') }}</label>
               <Dropdown
                 id="form-parent"
                 v-model="form.parentId"
@@ -68,7 +68,7 @@
                 option-label="ad"
                 option-value="id"
                 show-clear
-                placeholder="Bu şirket hangi ana şirkete/müşteriye bağlı?"
+                :placeholder="t('yeniYilSihirbazi.anaSirketPlaceholder')"
               />
             </div>
           </div>
@@ -80,10 +80,10 @@
           class="step-content"
         >
           <h3 class="adim-baslik">
-            <i class="pi pi-database" /> 2. Veri Aktarımı
+            <i class="pi pi-database" /> {{ t('yeniYilSihirbazi.adim2') }}
           </h3>
           <div class="field mb-4">
-            <label for="kaynak-sirket">Verilerin Çekileceği Kaynak Şirket</label>
+            <label for="kaynak-sirket">{{ t('yeniYilSihirbazi.kaynakSirket') }}</label>
             <Dropdown
               id="kaynak-sirket"
               v-model="aktarim.kaynakSirketId"
@@ -91,7 +91,7 @@
               option-label="ad"
               option-value="id"
               show-clear
-              placeholder="Kaynak şirketi seçin (Veri aktarılmayacaksa boş bırakın)"
+              :placeholder="t('yeniYilSihirbazi.kaynakSirketPlaceholder')"
             />
           </div>
 
@@ -109,7 +109,7 @@
                 <label
                   for="stokAktar"
                   class="aktarim-etiket"
-                >Stok Kartlarını Aktar</label>
+                >{{ t('yeniYilSihirbazi.stoklariAktar') }}</label>
               </div>
               <div class="aktarim-alt">
                 <div class="aktarim-satir">
@@ -122,10 +122,10 @@
                   <label
                     for="fiyatKoru"
                     class="aktarim-etiket"
-                  >Stok satış ve alış fiyatlarını koru</label>
+                  >{{ t('yeniYilSihirbazi.fiyatlariKoru') }}</label>
                 </div>
                 <small class="ipucu">
-                  <i class="pi pi-info-circle" /> Fiyatlar korunmazsa 0 olur. Miktarlar yeni şirkette 0'dan başlar.
+                  <i class="pi pi-info-circle" /> {{ t('yeniYilSihirbazi.fiyatIpucu') }}
                 </small>
               </div>
             </div>
@@ -140,7 +140,7 @@
                 <label
                   for="cariAktar"
                   class="aktarim-etiket"
-                >Cari Hesapları Aktar</label>
+                >{{ t('yeniYilSihirbazi.carileriAktar') }}</label>
               </div>
               <div class="aktarim-alt">
                 <div class="aktarim-satir">
@@ -153,10 +153,10 @@
                   <label
                     for="bakiyeSifirla"
                     class="aktarim-etiket"
-                  >Cari bakiyeleri sıfırla</label>
+                  >{{ t('yeniYilSihirbazi.bakiyeleriSifirla') }}</label>
                 </div>
                 <small class="ipucu">
-                  <i class="pi pi-info-circle" /> Sıfırlanmazsa mevcut bakiyeler devir olarak aktarılır.
+                  <i class="pi pi-info-circle" /> {{ t('yeniYilSihirbazi.bakiyeIpucu') }}
                 </small>
               </div>
             </div>
@@ -166,7 +166,7 @@
             class="bos-uyari"
           >
             <i class="pi pi-info-circle" />
-            <span>Kaynak şirket seçilmediği için yeni şirket tamamen boş oluşturulacaktır.</span>
+            <span>{{ t('yeniYilSihirbazi.bosUyari') }}</span>
           </div>
         </div>
 
@@ -176,53 +176,53 @@
           class="step-content"
         >
           <h3 class="adim-baslik">
-            <i class="pi pi-check-circle" /> 3. Özet ve Onay
+            <i class="pi pi-check-circle" /> {{ t('yeniYilSihirbazi.adim3') }}
           </h3>
           <div class="ozet-kutu">
             <h4 class="ozet-baslik">
-              Oluşturulacak Şirket
+              {{ t('yeniYilSihirbazi.olusturulacakSirket') }}
             </h4>
             <div class="ozet-satir">
-              <span>Şirket Adı</span>
+              <span>{{ t('yeniYilSihirbazi.sirketAdi') }}</span>
               <strong>{{ form.ad }}</strong>
             </div>
             <div class="ozet-satir">
-              <span>Tür / Yıl</span>
+              <span>{{ t('yeniYilSihirbazi.turYil') }}</span>
               <strong>{{ form.tur }} / {{ form.yil }}</strong>
             </div>
             <div class="ozet-satir">
-              <span>Ana Şirket</span>
+              <span>{{ t('yeniYilSihirbazi.anaSirketOzet') }}</span>
               <strong>{{ seciliAnaSirketAdi || '-' }}</strong>
             </div>
 
             <h4 class="ozet-baslik mt-4">
-              Veri Aktarımı
+              {{ t('yeniYilSihirbazi.veriAktarimi') }}
             </h4>
             <div
               v-if="aktarim.kaynakSirketId"
             >
               <div class="ozet-satir">
-                <span>Kaynak Şirket</span>
+                <span>{{ t('yeniYilSihirbazi.kaynakSirketOzet') }}</span>
                 <strong>{{ seciliKaynakSirketAdi }}</strong>
               </div>
               <div class="ozet-satir">
-                <span>Stok Kartları</span>
+                <span>{{ t('yeniYilSihirbazi.stokKartlari') }}</span>
                 <strong
                   :class="aktarim.stoklariAktar ? 'pozitif' : 'negatif'"
-                >{{ aktarim.stoklariAktar ? 'Evet' : 'Hayır' }}</strong>
+                >{{ aktarim.stoklariAktar ? t('yeniYilSihirbazi.evet') : t('yeniYilSihirbazi.hayir') }}</strong>
               </div>
               <div class="ozet-satir">
-                <span>Cari Hesaplar</span>
+                <span>{{ t('yeniYilSihirbazi.cariHesaplar') }}</span>
                 <strong
                   :class="aktarim.carileriAktar ? 'pozitif' : 'negatif'"
-                >{{ aktarim.carileriAktar ? 'Evet' : 'Hayır' }}</strong>
+                >{{ aktarim.carileriAktar ? t('yeniYilSihirbazi.evet') : t('yeniYilSihirbazi.hayir') }}</strong>
               </div>
             </div>
             <div
               v-else
               class="ipucu"
             >
-              Veri aktarımı yapılmayacak.
+              {{ t('yeniYilSihirbazi.aktarimYok') }}
             </div>
           </div>
 
@@ -232,14 +232,14 @@
             :closable="false"
           >
             <i class="pi pi-exclamation-triangle mr-2" />
-            Aktarım işlemi veritabanı boyutuna göre birkaç saniye sürebilir. Lütfen işlem bitene kadar sayfadan ayrılmayın.
+            {{ t('yeniYilSihirbazi.aktarimUyari') }}
           </Message>
         </div>
       </div>
 
       <div class="adim-butonlar">
         <Button
-          label="Geri"
+          :label="t('yeniYilSihirbazi.geri')"
           icon="pi pi-angle-left"
           :disabled="aktifAdim === 0"
           class="p-button-outlined"
@@ -247,7 +247,7 @@
         />
         <Button
           v-if="aktifAdim < 2"
-          label="İleri"
+          :label="t('yeniYilSihirbazi.ileri')"
           icon="pi pi-angle-right"
           icon-pos="right"
           :disabled="!ileriGidebilir"
@@ -255,7 +255,7 @@
         />
         <Button
           v-else
-          label="Şirketi Oluştur ve Aktarımı Başlat"
+          :label="t('yeniYilSihirbazi.olusturVeAktar')"
           icon="pi pi-check"
           icon-pos="right"
           severity="success"
@@ -273,16 +273,18 @@ import { useRouter } from 'vue-router'
 import { sirketAPI, apiClient } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const router = useRouter()
 const toast = useToastBildirim()
 const authStore = useAuthStore()
 
 const aktifAdim = ref(0)
-const adımlar = ref([
-  { label: 'Şirket Bilgileri' },
-  { label: 'Veri Aktarımı' },
-  { label: 'Onay' }
+const adımlar = computed(() => [
+  { label: t('yeniYilSihirbazi.sirketBilgileri') },
+  { label: t('yeniYilSihirbazi.veriAktarimi') },
+  { label: t('kasa.onay') }
 ])
 
 const sirketler = ref([])
@@ -333,7 +335,7 @@ onMounted(async () => {
       aktarim.value.kaynakSirketId = authStore.sirketId
     }
   } catch (err) {
-    toast.hata('Şirketler yüklenemedi')
+    toast.hata(t('yeniYilSihirbazi.sirketlerYuklenemedi'))
   }
 })
 
@@ -364,9 +366,9 @@ const tamamla = async () => {
       const aktarimRes = await apiClient.post('/veri-aktarim/sirketler-arasi', payload)
       const sonuc = aktarimRes.data
       
-      toast.basarili(`Şirket oluşturuldu ve veriler aktarıldı! ${sonuc.aktarilanStokSayisi} Stok, ${sonuc.aktarilanCariSayisi} Cari kopyalandı.`)
+      toast.basarili(t('yeniYilSihirbazi.aktarimBasarili', { stok: sonuc.aktarilanStokSayisi, cari: sonuc.aktarilanCariSayisi }))
     } else {
-      toast.basarili('Yeni şirket başarıyla oluşturuldu.')
+      toast.basarili(t('yeniYilSihirbazi.sirketOlusturuldu'))
     }
 
     setTimeout(() => {
@@ -374,7 +376,7 @@ const tamamla = async () => {
     }, 1500)
 
   } catch (err) {
-    toast.hata(err.response?.data?.message || 'İşlem sırasında bir hata oluştu.')
+    toast.hata(err.response?.data?.message || t('yeniYilSihirbazi.islemHatasi'))
   } finally {
     islemYapiliyor.value = false
   }

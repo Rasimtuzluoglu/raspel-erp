@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -37,7 +38,7 @@ describe('KritikStok.vue', () => {
   it('renders page without errors', async () => {
     const KritikStok = (await import('../KritikStok.vue')).default
     const wrapper = mount(KritikStok, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.kritik-stok-container').exists()).toBe(true)
@@ -46,7 +47,7 @@ describe('KritikStok.vue', () => {
   it('renders forecast view by default', async () => {
     const KritikStok = (await import('../KritikStok.vue')).default
     const wrapper = mount(KritikStok, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Kritik Stok & Akıllı Talep Tahmini')

@@ -1,25 +1,25 @@
 <template>
   <div class="yetki-page">
     <PageHeader
-      title="Rol & Yetki Matrisi (RBAC)"
-      subtitle="Sistemdeki rollerin modül bazlı okuma, yazma, silme ve dışa aktarım izinleri"
+      :title="t('yetkiYonetimi.title')"
+      :subtitle="t('yetkiYonetimi.subtitle')"
     >
       <template #actions>
         <div class="flex items-center gap-2">
           <Button
-            label="Tümünü Seç"
+            :label="t('yetkiYonetimi.tumunuSec')"
             icon="pi pi-check-square"
             class="p-button-outlined p-button-sm"
             @click="tumunuSec"
           />
           <Button
-            label="Tümünü Temizle"
+            :label="t('yetkiYonetimi.tumunuTemizle')"
             icon="pi pi-times-circle"
             class="p-button-outlined p-button-secondary p-button-sm"
             @click="tumunuTemizle"
           />
           <Button
-            label="Değişiklikleri Kaydet"
+            :label="t('yetkiYonetimi.degisiklikleriKaydet')"
             icon="pi pi-check"
             class="p-button-primary p-button-sm"
             :loading="kaydediliyor"
@@ -43,7 +43,7 @@
       <!-- Sol Rol Seçim Menüsü -->
       <div class="roles-sidebar">
         <h4 class="text-xs font-bold uppercase text-muted mb-2 px-2">
-          Sistem Rolleri
+          {{ t('yetkiYonetimi.sistemRolleri') }}
         </h4>
         <button
           v-for="r in roller"
@@ -60,7 +60,7 @@
                 {{ r.ad }}
               </div>
               <div class="text-xs text-muted leading-tight mt-0.5">
-                {{ r.yetkiler?.length || 0 }} İzin Aktif
+                {{ r.yetkiler?.length || 0 }} {{ t('yetkiYonetimi.izinAktif') }}
               </div>
             </div>
           </div>
@@ -82,11 +82,11 @@
               <i class="pi pi-shield text-primary" /> {{ seciliRol.ad }}
             </h3>
             <p class="text-xs text-muted mt-0.5">
-              {{ seciliRol.aciklama || 'Bu role atanmış yetkileri aşağıdan yönetebilirsiniz.' }}
+              {{ seciliRol.aciklama || t('yetkiYonetimi.rolAciklamaBos') }}
             </p>
           </div>
           <Tag
-            :value="`${seciliRol.yetkiler?.length || 0} / ${yetkiler.length} Yetki Tanımlı`"
+            :value="`${seciliRol.yetkiler?.length || 0} / ${yetkiler.length} ${t('yetkiYonetimi.yetkiTanimli')}`"
             severity="info"
           />
         </div>
@@ -96,22 +96,22 @@
             <thead>
               <tr>
                 <th class="text-left">
-                  Modül Adı
+                  {{ t('yetkiYonetimi.modulAdi') }}
                 </th>
                 <th class="text-center">
-                  <i class="pi pi-eye mr-1" /> Okuma
+                  <i class="pi pi-eye mr-1" /> {{ t('yetkiYonetimi.okuma') }}
                 </th>
                 <th class="text-center">
-                  <i class="pi pi-pencil mr-1" /> Yazma / Ekleme
+                  <i class="pi pi-pencil mr-1" /> {{ t('yetkiYonetimi.yazma') }}
                 </th>
                 <th class="text-center">
-                  <i class="pi pi-trash mr-1" /> Silme
+                  <i class="pi pi-trash mr-1" /> {{ t('yetkiYonetimi.silme') }}
                 </th>
                 <th class="text-center">
-                  <i class="pi pi-download mr-1" /> Dışa Aktar
+                  <i class="pi pi-download mr-1" /> {{ t('yetkiYonetimi.disaAktar') }}
                 </th>
                 <th class="text-right">
-                  Hızlı İşlem
+                  {{ t('yetkiYonetimi.hizliIslem') }}
                 </th>
               </tr>
             </thead>
@@ -185,7 +185,7 @@
                 <!-- Satır Bazlı Hızlı Toggle -->
                 <td class="text-right">
                   <Button
-                    :label="modulTumYetkilerVarMi(m) ? 'Kaldır' : 'Tümü'"
+                    :label="modulTumYetkilerVarMi(m) ? t('yetkiYonetimi.kaldir') : t('yetkiYonetimi.tumu')"
                     :class="modulTumYetkilerVarMi(m) ? 'p-button-text p-button-danger p-button-xs' : 'p-button-text p-button-primary p-button-xs'"
                     @click="modulToggle(m)"
                   />
@@ -201,9 +201,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { apiClient } from '../api/index.js'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -225,7 +227,7 @@ const verileriYukle = async () => {
       seciliRol.value = { ...roller.value[0], yetkiler: [...(roller.value[0].yetkiler || [])] }
     }
   } catch {
-    toastBildirim.hata('Yetki matrisi yüklenemedi.')
+    toastBildirim.hata(t('yetkiYonetimi.yuklemeHatasi'))
   } finally {
     yukleniyor.value = false
   }
@@ -238,16 +240,16 @@ const rolSec = (r) => {
 // Modül bazlı gruplandırma
 const moduller = computed(() => {
   const modulMap = {
-    Cari: { ad: 'Cari Hesaplar', kod: 'CARI' },
-    Fatura: { ad: 'Faturalar & E-Fatura', kod: 'FATURA' },
-    Stok: { ad: 'Stok & Depo Yönetimi', kod: 'STOK' },
-    Finans: { ad: 'Finans (Banka, Kasa, Çek)', kod: 'FINANS' },
-    Siparis: { ad: 'Siparişler & Teklifler', kod: 'SIPARIS' },
-    Satinalma: { ad: 'Satın Alma Yönetimi', kod: 'SATINALMA' },
-    Irsaliye: { ad: 'İrsaliye İşlemleri', kod: 'IRSALIYE' },
-    IK: { ad: 'İnsan Kaynakları & Personel', kod: 'IK' },
-    Rapor: { ad: 'Raporlar & Analizler', kod: 'RAPOR' },
-    Sistem: { ad: 'Sistem & Kullanıcı Ayarları', kod: 'SISTEM' }
+    Cari: { ad: t('yetkiYonetimi.modulCari'), kod: 'CARI' },
+    Fatura: { ad: t('yetkiYonetimi.modulFatura'), kod: 'FATURA' },
+    Stok: { ad: t('yetkiYonetimi.modulStok'), kod: 'STOK' },
+    Finans: { ad: t('yetkiYonetimi.modulFinans'), kod: 'FINANS' },
+    Siparis: { ad: t('yetkiYonetimi.modulSiparis'), kod: 'SIPARIS' },
+    Satinalma: { ad: t('yetkiYonetimi.modulSatinalma'), kod: 'SATINALMA' },
+    Irsaliye: { ad: t('yetkiYonetimi.modulIrsaliye'), kod: 'IRSALIYE' },
+    IK: { ad: t('yetkiYonetimi.modulIK'), kod: 'IK' },
+    Rapor: { ad: t('yetkiYonetimi.modulRapor'), kod: 'RAPOR' },
+    Sistem: { ad: t('yetkiYonetimi.modulSistem'), kod: 'SISTEM' }
   }
 
   return Object.entries(modulMap).map(([mKey, mVal]) => {
@@ -319,10 +321,10 @@ const kaydet = async () => {
   try {
     const yetkiIds = seciliRol.value.yetkiler.map(y => y.id || y)
     await apiClient.put(`/yetkiler/roller/${seciliRol.value.id}`, yetkiIds)
-    toastBildirim.basarili(`"${seciliRol.value.ad}" rolü izinleri başarıyla güncellendi.`)
+    toastBildirim.basarili(t('yetkiYonetimi.kaydedildi', { rol: seciliRol.value.ad }))
     await verileriYukle()
   } catch {
-    toastBildirim.hata('Rol yetkileri güncellenemedi.')
+    toastBildirim.hata(t('yetkiYonetimi.kayitHatasi'))
   } finally {
     kaydediliyor.value = false
   }

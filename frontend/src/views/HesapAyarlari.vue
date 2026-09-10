@@ -2,31 +2,31 @@
   <div class="hesap-ayarlari">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Hesap Ayarları
+        {{ t('hesapAyarlari.title') }}
       </h1>
     </div>
 
     <IlkZiyaretIpuclari
       anahtar="hesap-ayarlari"
-      baslik="Hesap Ayarları"
-      metin="Profil bilgilerinizi güncelleyin, şifrenizi değiştirin ve iki faktörlü doğrulama (2FA) ile hesabınızı güvenceye alın."
+      :baslik="t('hesapAyarlari.title')"
+      :metin="t('hesapAyarlari.introText')"
     />
 
     <TabView class="ayarlar-tabview">
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-user" />Profil</span>
+          <span class="tab-baslik"><i class="pi pi-user" />{{ t('hesapAyarlari.profil') }}</span>
         </template>
         <div class="sekme-icerik">
           <div class="ayarlar-grid">
             <Card class="ayar-kart">
               <template #title>
-                <i class="pi pi-user" />Profil Bilgileri
+                <i class="pi pi-user" />{{ t('hesapAyarlari.profilBilgileri') }}
               </template>
               <template #content>
                 <div class="form-grid">
                   <div class="field">
-                    <label>Kullanıcı Adı</label>
+                    <label>{{ t('hesapAyarlari.kullaniciAdi') }}</label>
                     <InputText
                       :model-value="kullanici?.username"
                       disabled
@@ -34,14 +34,14 @@
                     />
                   </div>
                   <div class="field">
-                    <label>Görünen Ad</label>
+                    <label>{{ t('hesapAyarlari.gorunenAd') }}</label>
                     <InputText
                       v-model="profilForm.displayName"
                       class="w-full"
                     />
                   </div>
                   <div class="field">
-                    <label>Firma Adı</label>
+                    <label>{{ t('hesapAyarlari.firmaAdi') }}</label>
                     <InputText
                       v-model="profilForm.companyName"
                       class="w-full"
@@ -55,7 +55,7 @@
                     />
                   </div>
                   <Button
-                    label="Profili Kaydet"
+                    :label="t('hesapAyarlari.profiliKaydet')"
                     icon="pi pi-check"
                     :loading="kaydediliyor"
                     @click="profilKaydet"
@@ -66,12 +66,12 @@
 
             <Card class="ayar-kart">
               <template #title>
-                <i class="pi pi-lock" />Şifre Değiştir
+                <i class="pi pi-lock" />{{ t('hesapAyarlari.sifreDegistir') }}
               </template>
               <template #content>
                 <div class="form-grid">
                   <div class="field">
-                    <label>Mevcut Şifre</label>
+                    <label>{{ t('hesapAyarlari.mevcutSifre') }}</label>
                     <InputText
                       v-model="sifreForm.mevcutSifre"
                       type="password"
@@ -79,7 +79,7 @@
                     />
                   </div>
                   <div class="field">
-                    <label>Yeni Şifre</label>
+                    <label>{{ t('hesapAyarlari.yeniSifre') }}</label>
                     <InputText
                       v-model="sifreForm.yeniSifre"
                       type="password"
@@ -87,7 +87,7 @@
                     />
                   </div>
                   <div class="field">
-                    <label>Yeni Şifre (Tekrar)</label>
+                    <label>{{ t('hesapAyarlari.yeniSifreTekrar') }}</label>
                     <InputText
                       v-model="sifreForm.yeniSifreTekrar"
                       type="password"
@@ -95,7 +95,7 @@
                     />
                   </div>
                   <Button
-                    label="Şifreyi Güncelle"
+                    :label="t('hesapAyarlari.sifreyiGuncelle')"
                     icon="pi pi-key"
                     :loading="kaydediliyor"
                     @click="sifreKaydet"
@@ -109,13 +109,13 @@
 
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-shield" />Güvenlik</span>
+          <span class="tab-baslik"><i class="pi pi-shield" />{{ t('hesapAyarlari.guvenlik') }}</span>
         </template>
         <div class="sekme-icerik">
           <div class="ayarlar-grid">
             <Card class="ayar-kart">
               <template #title>
-                <i class="pi pi-shield" />İki Faktörlü Doğrulama (2FA)
+                <i class="pi pi-shield" />{{ t('hesapAyarlari.ikiFaktorluDogrulama') }}
               </template>
               <template #content>
                 <div
@@ -127,21 +127,21 @@
                       class="pi pi-check-circle"
                       style="color: #10b981"
                     />
-                    <span>2FA <strong>aktif</strong>. Hesabınız güvende.</span>
+                    <span>2FA <strong>{{ t('hesapAyarlari.aktif') }}</strong>. {{ t('hesapAyarlari.hesabinizGuvende') }}</span>
                   </div>
                   <div
                     class="field"
                     style="margin-top: 14px"
                   >
-                    <label>Kapatmak için doğrulama kodu</label>
+                    <label>{{ t('hesapAyarlari.kapatmaKoduLabel') }}</label>
                     <div class="kod-satir">
                       <InputText
                         v-model="kapatmaKodu"
                         class="w-full"
-                        placeholder="6 haneli kod"
+                        :placeholder="t('hesapAyarlari.altiHaneliKod')"
                       />
                       <Button
-                        label="2FA'yı Kapat"
+                        :label="t('hesapAyarlari.ikiFaKapat')"
                         icon="pi pi-shield"
                         severity="danger"
                         outlined
@@ -154,10 +154,10 @@
                 <div v-else>
                   <template v-if="!kurulumData">
                     <p class="iki-fa-aciklama">
-                      Google Authenticator / Authy gibi bir uygulama ile girişlerinize ikinci bir güvenlik katmanı ekleyin.
+                      {{ t('hesapAyarlari.ikiFaAciklama') }}
                     </p>
                     <Button
-                      label="2FA Kur"
+                      :label="t('hesapAyarlari.ikiFaKur')"
                       icon="pi pi-qrcode"
                       :loading="kaydediliyor"
                       @click="kurulumBaslat"
@@ -166,7 +166,7 @@
                   <template v-else>
                     <div class="iki-fa-kurulum">
                       <p>
-                        <strong>1.</strong> Aşağıdaki gizli anahtarı (veya otpauth URI'sini) kimlik doğrulayıcı uygulamanıza ekleyin:
+                        <strong>1.</strong> {{ t('hesapAyarlari.adim1Metin') }}
                       </p>
                       <div class="secret-kutu">
                         <code>{{ kurulumData.secret }}</code>
@@ -179,15 +179,15 @@
                       <p class="otpauth-satir">
                         <small>{{ kurulumData.qrCodeUri }}</small>
                       </p>
-                      <p><strong>2.</strong> Uygulamanın ürettiği 6 haneli kodu girin:</p>
+                      <p><strong>2.</strong> {{ t('hesapAyarlari.adim2Metin') }}</p>
                       <div class="kod-satir">
                         <InputText
                           v-model="dogrulamaKodu"
                           class="w-full"
-                          placeholder="6 haneli kod"
+                          :placeholder="t('hesapAyarlari.altiHaneliKod')"
                         />
                         <Button
-                          label="Doğrula ve Aktif Et"
+                          :label="t('hesapAyarlari.dogrulaAktifEt')"
                           icon="pi pi-check"
                           :loading="kaydediliyor"
                           @click="ikiFakAktifEt"
@@ -202,7 +202,7 @@
             <Card class="ayar-kart">
               <template #title>
                 <div class="baslik-satir">
-                  <span><i class="pi pi-desktop" />Aktif Oturumlar</span>
+                  <span><i class="pi pi-desktop" />{{ t('hesapAyarlari.aktifOturumlar') }}</span>
                   <Button
                     icon="pi pi-refresh"
                     class="p-button-sm p-button-text"
@@ -212,7 +212,7 @@
               </template>
               <template #content>
                 <p class="ai-aciklama">
-                  Hesabınıza açık olan oturumları görüntüleyin ve uzaktan sonlandırın.
+                  {{ t('hesapAyarlari.oturumAciklama') }}
                 </p>
                 <DataTable
                   :value="aktifOturumlar"
@@ -221,7 +221,7 @@
                   size="small"
                 >
                   <Column
-                    header="Kullanıcı"
+                    :header="t('hesapAyarlari.kullanici')"
                     field="kullaniciAdi"
                   />
                   <Column header="IP">
@@ -229,7 +229,7 @@
                       {{ s.data.ip || '-' }}
                     </template>
                   </Column>
-                  <Column header="Giriş Zamanı">
+                  <Column :header="t('hesapAyarlari.girisZamani')">
                     <template #body="s">
                       {{ s.data.girisZamani ? new Date(s.data.girisZamani).toLocaleString('tr-TR') : '-' }}
                     </template>
@@ -241,7 +241,7 @@
                     <template #body="s">
                       <Button
                         v-if="s.data.kullaniciId !== authStore?.kullanici?.id"
-                        label="Sonlandır"
+                        :label="t('hesapAyarlari.sonlandir')"
                         icon="pi pi-sign-out"
                         class="p-button-sm p-button-danger p-button-text"
                         @click="oturumSonlandir(s.data)"
@@ -253,7 +253,7 @@
                   v-if="(!aktifOturumlar || !aktifOturumlar.length) && !oturumYukleniyor"
                   class="empty-state"
                 >
-                  Aktif oturum bulunamadı.
+                  {{ t('hesapAyarlari.aktifOturumYok') }}
                 </div>
               </template>
             </Card>
@@ -263,27 +263,27 @@
 
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-palette" />Görünüm</span>
+          <span class="tab-baslik"><i class="pi pi-palette" />{{ t('hesapAyarlari.gorunum') }}</span>
         </template>
         <div class="sekme-icerik">
           <Card class="ayar-kart">
             <template #title>
-              <i class="pi pi-palette" />Görünüm
+              <i class="pi pi-palette" />{{ t('hesapAyarlari.gorunum') }}
             </template>
             <template #content>
               <div class="form-grid">
                 <div class="field">
-                  <label>Tema Modu</label>
+                  <label>{{ t('hesapAyarlari.temaModu') }}</label>
                   <div class="tema-butonlari">
                     <Button
-                      label="Açık"
+                      :label="t('hesapAyarlari.acik')"
                       icon="pi pi-sun"
                       :severity="!isDark ? 'contrast' : 'secondary'"
                       :outlined="isDark"
                       @click="applyMode('light')"
                     />
                     <Button
-                      label="Koyu"
+                      :label="t('hesapAyarlari.koyu')"
                       icon="pi pi-moon"
                       :severity="isDark ? 'contrast' : 'secondary'"
                       :outlined="!isDark"
@@ -292,7 +292,7 @@
                   </div>
                 </div>
                 <div class="field">
-                  <label>Vurgu Rengi</label>
+                  <label>{{ t('hesapAyarlari.vurguRengi') }}</label>
                   <div class="renk-secenekleri">
                     <button
                       v-for="c in renkler"
@@ -313,16 +313,16 @@
 
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-bell" />Bildirimler</span>
+          <span class="tab-baslik"><i class="pi pi-bell" />{{ t('hesapAyarlari.bildirimler') }}</span>
         </template>
         <div class="sekme-icerik">
           <Card class="ayar-kart">
             <template #title>
               <div class="baslik-satir">
-                <span><i class="pi pi-bell" />Bildirim Tercihleri</span>
+                <span><i class="pi pi-bell" />{{ t('hesapAyarlari.bildirimTercihleri') }}</span>
                 <Button
                   icon="pi pi-save"
-                  label="Kaydet"
+                  :label="t('common.save')"
                   class="p-button-sm p-button-primary"
                   :loading="tercihKaydediliyor"
                   @click="tercihleriKaydet"
@@ -331,15 +331,15 @@
             </template>
             <template #content>
               <p class="ai-aciklama">
-                Hangi bildirim türlerini almak istediğinizi seçin (uygulama içi ve e-posta).
+                {{ t('hesapAyarlari.bildirimAciklama') }}
               </p>
               <div
-                v-for="t in bildirimTipleri"
-                :key="t.value"
+                v-for="tip in bildirimTipleri"
+                :key="tip.value"
                 class="tercih-satir"
               >
-                <span>{{ t.label }}</span>
-                <ToggleSwitch v-model="t.secili" />
+                <span>{{ tip.label }}</span>
+                <ToggleSwitch v-model="tip.secili" />
               </div>
             </template>
           </Card>
@@ -348,7 +348,7 @@
 
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-plug" />Entegrasyonlar</span>
+          <span class="tab-baslik"><i class="pi pi-plug" />{{ t('hesapAyarlari.entegrasyonlar') }}</span>
         </template>
         <div class="sekme-icerik">
           <div class="ayarlar-grid">
@@ -356,10 +356,10 @@
               <template #title>
                 <div class="ai-baslik-satir">
                   <div class="baslik-ic ai-baslik-ic">
-                    <i class="pi pi-sparkles" />Yapay Zeka (AI) Entegrasyonu
+                    <i class="pi pi-sparkles" />{{ t('hesapAyarlari.yapayZekaEntegrasyonu') }}
                   </div>
                   <Tag
-                    :value="aiDurum === 'AKTIF' ? 'AI Aktif' : 'Yapılandırılmadı'"
+                    :value="aiDurum === 'AKTIF' ? t('hesapAyarlari.aiAktif') : t('hesapAyarlari.yapilandirilmadi')"
                     :severity="aiDurum === 'AKTIF' ? 'success' : 'warn'"
                   />
                 </div>
@@ -367,16 +367,16 @@
               <template #content>
                 <div class="form-grid">
                   <p class="ai-aciklama">
-                    Kendi AI API anahtarınızı girerek ERP içi akıllı sohbet asistanını ve veri sorgulama motorunu etkinleştirin.
+                    {{ t('hesapAyarlari.aiAciklama') }}
                   </p>
                   <div class="field">
-                    <label>AI Sağlayıcı</label>
+                    <label>{{ t('hesapAyarlari.aiSaglayici') }}</label>
                     <Dropdown
                       v-model="aiForm.provider"
                       :options="aiSaglayicilar"
                       option-label="name"
                       option-value="value"
-                      placeholder="Sağlayıcı seçin"
+                      :placeholder="t('hesapAyarlari.saglayiciSecin')"
                       class="w-full"
                       @change="onProviderChange"
                     />
@@ -387,7 +387,7 @@
                       <InputText
                         v-model="aiForm.apiKey"
                         :type="aiKeyGoster ? 'text' : 'password'"
-                        placeholder="sk-... veya API Anahtarınız"
+                        :placeholder="t('hesapAyarlari.apiKeyPlaceholder')"
                         class="w-full"
                       />
                       <Button
@@ -401,23 +401,23 @@
                       v-if="aiMevcutMaskeliKey && !aiForm.apiKey"
                       class="text-muted"
                     >
-                      Mevcut Anahtar: <code>{{ aiMevcutMaskeliKey }}</code>
+                      {{ t('hesapAyarlari.mevcutAnahtar') }}: <code>{{ aiMevcutMaskeliKey }}</code>
                     </small>
                   </div>
                   <div class="field">
-                    <label>Model</label>
+                    <label>{{ t('hesapAyarlari.model') }}</label>
                     <Dropdown
                       v-model="aiForm.model"
                       :options="aktifModelListesi"
                       option-label="name"
                       option-value="value"
-                      placeholder="Model seçin"
+                      :placeholder="t('hesapAyarlari.modelSecin')"
                       class="w-full"
                     />
                   </div>
                   <div class="ai-aksiyonlar">
                     <Button
-                      label="Bağlantıyı Test Et"
+                      :label="t('hesapAyarlari.baglantiyiTestEt')"
                       icon="pi pi-bolt"
                       severity="info"
                       outlined
@@ -426,14 +426,14 @@
                       @click="aiBaglantiTestEt"
                     />
                     <Button
-                      label="AI Ayarlarını Kaydet"
+                      :label="t('hesapAyarlari.aiAyarlariniKaydet')"
                       icon="pi pi-check"
                       :loading="aiKaydediliyor"
                       @click="aiConfigKaydet"
                     />
                     <Button
                       v-if="aiDurum === 'AKTIF'"
-                      label="Kaldır"
+                      :label="t('hesapAyarlari.kaldir')"
                       icon="pi pi-trash"
                       severity="danger"
                       outlined
@@ -448,10 +448,10 @@
             <Card class="ayar-kart">
               <template #title>
                 <div class="baslik-satir">
-                  <span><i class="pi pi-key" />API Erişim Tokenları</span>
+                  <span><i class="pi pi-key" />{{ t('hesapAyarlari.apiErisimTokenlari') }}</span>
                   <Button
                     icon="pi pi-plus"
-                    label="Yeni Token"
+                    :label="t('hesapAyarlari.yeniToken')"
                     class="p-button-sm p-button-primary"
                     @click="tokenOlustur"
                   />
@@ -459,36 +459,36 @@
               </template>
               <template #content>
                 <p class="ai-aciklama">
-                  Üçüncü taraf uygulamaların REST API'ye erişebilmesi için kişisel erişim token'ları oluşturun.
-                  Token yalnızca oluşturulduğu anda gösterilir; <code>Authorization: Bearer raspel_pat_...</code> başlığıyla kullanılır.
+                  {{ t('hesapAyarlari.tokenAciklama') }}
+                  {{ t('hesapAyarlari.tokenUyariNotu') }} <code>Authorization: Bearer raspel_pat_...</code> {{ t('hesapAyarlari.tokenBaslikIleKullanilir') }}
                 </p>
                 <div
                   v-if="yeniToken"
                   class="token-uyari"
                 >
                   <i class="pi pi-info-circle" />
-                  <span>Yeni token'ınızı kopyalayın — bir daha gösterilmez:</span>
+                  <span>{{ t('hesapAyarlari.yeniTokenUyari') }}</span>
                   <code class="token-deger">{{ yeniToken }}</code>
                 </div>
                 <div
                   v-if="tokenlar.length === 0 && !yeniToken"
                   class="token-bos"
                 >
-                  Henüz token oluşturulmadı.
+                  {{ t('hesapAyarlari.tokenYok') }}
                 </div>
                 <div
-                  v-for="t in tokenlar"
-                  :key="t.id"
+                  v-for="token in tokenlar"
+                  :key="token.id"
                   class="token-satir"
                 >
                   <div>
-                    <span class="token-ad">{{ t.ad }}</span>
-                    <span class="token-tarih">{{ t.olusturmaTarihi ? formatTarih(t.olusturmaTarihi) : '' }}</span>
+                    <span class="token-ad">{{ token.ad }}</span>
+                    <span class="token-tarih">{{ token.olusturmaTarihi ? formatTarih(token.olusturmaTarihi) : '' }}</span>
                   </div>
                   <Button
                     icon="pi pi-trash"
                     class="p-button-rounded p-button-text p-button-danger"
-                    @click="tokenSil(t)"
+                    @click="tokenSil(token)"
                   />
                 </div>
               </template>
@@ -499,16 +499,16 @@
 
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-print" />Yazdırma</span>
+          <span class="tab-baslik"><i class="pi pi-print" />{{ t('hesapAyarlari.yazdirma') }}</span>
         </template>
         <div class="sekme-icerik">
           <div class="ayarlar-grid">
             <Card class="ayar-kart">
               <template #title>
                 <div class="baslik-satir">
-                  <span><i class="pi pi-print" />Fatura Yazdırma Şablonu</span>
+                  <span><i class="pi pi-print" />{{ t('hesapAyarlari.faturaYazdirmaSablonu') }}</span>
                   <Tag
-                    value="Özelleştirilebilir"
+                    :value="t('hesapAyarlari.ozellestirilebilir')"
                     severity="info"
                   />
                 </div>
@@ -516,10 +516,10 @@
               <template #content>
                 <div class="form-grid">
                   <p class="ai-aciklama">
-                    Müşterilerinize keseceğiniz ve yazdıracağınız faturaların kurumsal şablonunu, renklerini, kolonlarını ve dipnotlarını tasarlayın.
+                    {{ t('hesapAyarlari.faturaSablonAciklama') }}
                   </p>
                   <Button
-                    label="Fatura Şablon Tasarımcısını Aç"
+                    :label="t('hesapAyarlari.faturaSablonTasarimci')"
                     icon="pi pi-palette"
                     class="p-button-primary"
                     @click="faturaTasarimModalAcik = true"
@@ -531,23 +531,23 @@
             <Card class="ayar-kart">
               <template #title>
                 <div class="baslik-ic">
-                  <i class="pi pi-print" />Fiş Yazdırma Ayarları
+                  <i class="pi pi-print" />{{ t('hesapAyarlari.fisYazdirmaAyarlari') }}
                 </div>
               </template>
               <template #content>
                 <p class="ai-aciklama">
-                  Hızlı satışta (POS) yazdırılan fişler için genel ayarlar. Bu ayarlar tüm POS ekranında geçerlidir.
+                  {{ t('hesapAyarlari.fisAciklama') }}
                 </p>
                 <div class="fis-ayar-satir">
-                  <label>Fiş Alt Notu</label>
+                  <label>{{ t('hesapAyarlari.fisAltNotu') }}</label>
                   <InputText
                     v-model="fisAltNotu"
-                    placeholder="Fiş altı özel mesajı"
+                    :placeholder="t('hesapAyarlari.fisAltiMesajPlaceholder')"
                     class="w-full"
                   />
                 </div>
                 <div class="fis-ayar-satir">
-                  <label>Fişte Fiyat Göster</label>
+                  <label>{{ t('hesapAyarlari.fisteFiyatGoster') }}</label>
                   <SelectButton
                     v-model="fisFiyatli"
                     :options="fisSecenekleri"
@@ -563,20 +563,20 @@
 
       <TabPanel>
         <template #header>
-          <span class="tab-baslik"><i class="pi pi-sync" />Sistem</span>
+          <span class="tab-baslik"><i class="pi pi-sync" />{{ t('hesapAyarlari.sistem') }}</span>
         </template>
         <div class="sekme-icerik">
           <div class="ayarlar-grid">
             <Card class="ayar-kart">
               <template #title>
-                <i class="pi pi-cloud-download" />Güncelleme
+                <i class="pi pi-cloud-download" />{{ t('hesapAyarlari.guncelleme') }}
               </template>
               <template #content>
                 <p class="ai-aciklama">
-                  GitHub'daki son sürümü kontrol edin. Yeni sürüm mevcutsa güncellemeyi sunucuda uygulayabilirsiniz.
+                  {{ t('hesapAyarlari.guncellemeAciklama') }}
                 </p>
                 <Button
-                  label="GitHub'dan Güncelleme Al"
+                  :label="t('hesapAyarlari.githubdanGuncellemeAl')"
                   icon="pi pi-cloud-download"
                   :loading="guncellemeYukleniyor"
                   @click="guncellemeKontrol"
@@ -586,26 +586,26 @@
                   class="guncelleme-bilgi"
                 >
                   <div class="guncelleme-satir">
-                    <strong>Sürüm:</strong> {{ guncellemeBilgi.mevcutSurum || '-' }}
+                    <strong>{{ t('hesapAyarlari.surum') }}:</strong> {{ guncellemeBilgi.mevcutSurum || '-' }}
                   </div>
                   <div
                     v-if="guncellemeBilgi.sonSurum"
                     class="guncelleme-satir"
                   >
-                    <strong>Son sürüm:</strong> {{ guncellemeBilgi.sonSurum }}
+                    <strong>{{ t('hesapAyarlari.sonSurum') }}:</strong> {{ guncellemeBilgi.sonSurum }}
                   </div>
                   <div
                     v-if="guncellemeBilgi.sonCommit"
                     class="guncelleme-satir"
                   >
-                    <strong>Son commit:</strong> {{ guncellemeBilgi.sonCommit }} — {{ guncellemeBilgi.sonCommitMesaj }}
+                    <strong>{{ t('hesapAyarlari.sonCommit') }}:</strong> {{ guncellemeBilgi.sonCommit }} — {{ guncellemeBilgi.sonCommitMesaj }}
                   </div>
                   <div
                     v-if="guncellemeBilgi.guncellemeVar"
                     class="guncelleme-satir"
                   >
                     <Tag
-                      value="Yeni sürüm mevcut"
+                      :value="t('hesapAyarlari.yeniSurumMevcut')"
                       severity="warn"
                     />
                   </div>
@@ -616,8 +616,8 @@
                     {{ guncellemeBilgi.hata }}
                   </p>
                   <p class="guncelleme-ipucu">
-                    Güncellemeyi uygulamak için sunucuda
-                    <code>git pull &amp;&amp; docker compose up -d --build</code> çalıştırın.
+                    {{ t('hesapAyarlari.guncellemeIpucu') }}
+                    <code>git pull &amp;&amp; docker compose up -d --build</code> {{ t('hesapAyarlari.calistirin') }}
                   </p>
                 </div>
               </template>
@@ -633,6 +633,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { kullaniciAPI, aiConfigAPI, apiTokenAPI, sistemDurumAPI } from '../api/index.js'
@@ -641,6 +642,7 @@ import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 
+const { t } = useI18n()
 const faturaTasarimModalAcik = ref(false)
 
 // Güncelleme kontrolü (GitHub)

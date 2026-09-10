@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 const notlarMock = [
   {
@@ -52,7 +53,7 @@ describe('Notlar.vue', () => {
   it('renders notes list from store', async () => {
     const Notlar = (await import('../Notlar.vue')).default
     const wrapper = mount(Notlar, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.notlar-page').exists()).toBe(true)

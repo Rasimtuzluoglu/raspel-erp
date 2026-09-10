@@ -6,7 +6,7 @@
           :class="aktifMod === 'ai' ? 'pi pi-sparkles' : 'pi pi-comments'"
           style="margin-right: 8px; color: #3b82f6"
         />
-        {{ aktifMod === 'ai' ? 'Yapay Zeka (AI) Asistanı' : 'Ekip Sohbeti' }}
+        {{ aktifMod === 'ai' ? t('sohbet.aiAsistan') : t('sohbet.ekipSohbeti') }}
       </h1>
       <div class="header-sag">
         <SelectButton
@@ -18,22 +18,22 @@
         />
         <Tag
           v-if="aktifMod === 'ai' && aiYapilandirildi"
-          value="Gerçek AI (LLM)"
+          :value="t('sohbet.gercekAi')"
           severity="success"
         />
         <Tag
           v-else-if="aktifMod === 'ai'"
-          value="Kural Tabanlı AI"
+          :value="t('sohbet.kuralTabanliAi')"
           severity="info"
         />
         <span
           v-if="aktifMod === 'ekip' && bagli"
           class="bagli-durum"
-        ><i class="pi pi-circle-on" /> Bağlı</span>
+        ><i class="pi pi-circle-on" /> {{ t('sohbet.bagli') }}</span>
         <span
           v-else-if="aktifMod === 'ekip'"
           class="bagli-durum bagli-degil"
-        ><i class="pi pi-circle-off" /> Bağlanıyor...</span>
+        ><i class="pi pi-circle-off" /> {{ t('sohbet.baglaniyor') }}</span>
       </div>
     </div>
 
@@ -42,7 +42,7 @@
       v-if="aktifMod === 'ai'"
       class="ai-oneriler"
     >
-      <span class="oneri-baslik"><i class="pi pi-bolt" /> Hızlı Sorular:</span>
+      <span class="oneri-baslik"><i class="pi pi-bolt" /> {{ t('sohbet.hizliSorular') }}</span>
       <button
         v-for="oneri in hizliSorular"
         :key="oneri"
@@ -55,7 +55,7 @@
         class="oneri-cip oneri-ocr"
         @click="dosyaInput.click()"
       >
-        <i class="pi pi-camera" /> Fatura/Fiş Oku
+        <i class="pi pi-camera" /> {{ t('sohbet.faturaFisOku') }}
       </button>
       <input
         ref="dosyaInput"
@@ -71,7 +71,7 @@
       v-if="ocrYukleniyor"
       class="ocr-bilgi"
     >
-      <i class="pi pi-spin pi-spinner" /> Fatura okunuyor, yapay zeka analiz ediyor...
+      <i class="pi pi-spin pi-spinner" /> {{ t('sohbet.ocrAnaliz') }}
     </div>
 
     <!-- Ekip Modu: oda listesi + mesaj alanı -->
@@ -81,11 +81,11 @@
     >
       <div class="oda-listesi">
         <div class="oda-listesi-baslik">
-          <span>Sohbet Kanalları</span>
+          <span>{{ t('sohbet.sohbetKanallari') }}</span>
           <Button
             icon="pi pi-plus"
             class="p-button-text p-button-sm"
-            title="Yeni Oda"
+            :title="t('sohbet.yeniOda')"
             @click="odaDialogAc = true"
           />
         </div>
@@ -95,13 +95,13 @@
           @click="genelSec"
         >
           <i class="pi pi-users" />
-          <span>Genel Sohbet</span>
+          <span>{{ t('sohbet.genelSohbet') }}</span>
         </button>
         <div
           v-if="!odalar.length"
           class="oda-bos"
         >
-          Henüz oda yok. "+" ile oluşturun.
+          {{ t('sohbet.odaYok') }}
         </div>
         <button
           v-for="o in odalar"
@@ -119,7 +119,7 @@
           <i
             v-if="!o.uyeMi"
             class="pi pi-sign-in oda-katil"
-            title="Katıl"
+            :title="t('sohbet.katil')"
           />
         </button>
       </div>
@@ -132,20 +132,20 @@
           <span class="oda-baslik">
             <i class="pi pi-hashtag" /> {{ seciliOda.ad }}
             <Tag
-              :value="seciliOda.uyeSayisi + ' üye'"
+              :value="t('sohbet.uyeSayisi', { n: seciliOda.uyeSayisi })"
               severity="info"
             />
           </span>
           <div class="oda-aksiyonlar">
             <Button
-              label="Üyeler"
+              :label="t('sohbet.uyeler')"
               icon="pi pi-users"
               class="p-button-sm p-button-outlined"
               @click="uyeYonetAc"
             />
             <Button
               v-if="seciliOda.uyeMi"
-              label="Ayrıl"
+              :label="t('sohbet.ayril')"
               icon="pi pi-sign-out"
               class="p-button-sm p-button-text p-button-danger"
               @click="odadanAyril"
@@ -161,19 +161,19 @@
             v-if="yukleniyor || odaYukleniyor"
             class="bos"
           >
-            Yükleniyor...
+            {{ t('common.loading') }}
           </div>
           <div
             v-else-if="seciliOdaId !== null && !seciliOda?.uyeMi"
             class="bos"
           >
-            Mesajları görmek için odaya katılın.
+            {{ t('sohbet.odayaKatilin') }}
           </div>
           <div
             v-else-if="!aktifMesajlar.length"
             class="bos"
           >
-            Henüz mesaj yok. İlk mesajı siz yazın.
+            {{ t('sohbet.mesajYok') }}
           </div>
           <div
             v-for="m in aktifMesajlar"
@@ -182,7 +182,7 @@
             :class="{ kendi: m.kullaniciId === kendiId }"
           >
             <div class="mesaj-ust">
-              <strong>{{ m.kullaniciAd || 'Bilinmeyen' }}</strong>
+              <strong>{{ m.kullaniciAd || t('sohbet.bilinmeyen') }}</strong>
               <span class="mesaj-zaman">{{ formatZaman(m.olusturmaTarihi) }}</span>
             </div>
             <div class="mesaj-icerik">
@@ -197,9 +197,9 @@
                     v-if="resimMi(m.dosyaUrl)"
                     :src="m.dosyaUrl"
                     class="mesaj-gorsel"
-                    alt="Paylaşılan görsel"
+                    :alt="t('sohbet.paylasilanGorsel')"
                   >
-                  <span v-else><i class="pi pi-paperclip" /> {{ m.mesaj || 'Dosya' }}</span>
+                  <span v-else><i class="pi pi-paperclip" /> {{ m.mesaj || t('sohbet.dosya') }}</span>
                 </a>
               </template>
               <template v-if="m.mesaj">
@@ -210,13 +210,13 @@
         </div>
 
         <div class="yaziyor-gosterge">
-          <span v-if="yaziyorKullanici">{{ yaziyorKullanici }} yazıyor...</span>
+          <span v-if="yaziyorKullanici">{{ yaziyorKullanici }} {{ t('sohbet.yaziyor') }}</span>
         </div>
         <div class="mesaj-giris">
           <Button
             icon="pi pi-paperclip"
             class="p-button-text"
-            title="Dosya/Görsel Paylaş"
+            :title="t('sohbet.dosyaGorselPaylas')"
             @click="sohbetDosyaInput.click()"
           />
           <input
@@ -227,14 +227,14 @@
           >
           <InputText
             v-model="yeniMesaj"
-            placeholder="Mesajınızı yazın..."
+            :placeholder="t('sohbet.mesajPlaceholder')"
             class="mesaj-input"
             @keyup.enter="gonder"
             @input="yaziyorGonder"
           />
           <Button
             icon="pi pi-send"
-            label="Gönder"
+            :label="t('sohbet.gonder')"
             :loading="gonderiliyor"
             @click="gonder"
           />
@@ -253,8 +253,8 @@
           class="ai-bos-durum"
         >
           <i class="pi pi-sparkles ai-ikon-buyuk" />
-          <h3>RasPel Yapay Zeka ERP Asistanı</h3>
-          <p>Şirketinizin finans, ciro, stok, kasa ve vadesi gelen ödemeleri hakkında doğal dilde sorular sorabilirsiniz.</p>
+          <h3>{{ t('sohbet.aiBaslik') }}</h3>
+          <p>{{ t('sohbet.aiAciklama') }}</p>
         </div>
         <div
           v-for="(m, i) in aiMesajlar"
@@ -265,7 +265,7 @@
           <div class="mesaj-ust">
             <strong>
               <i :class="m.rol === 'user' ? 'pi pi-user' : 'pi pi-sparkles'" />
-              {{ m.rol === 'user' ? 'Siz' : 'RasPel AI' }}
+              {{ m.rol === 'user' ? t('sohbet.siz') : t('sohbet.raspelAi') }}
             </strong>
             <span class="mesaj-zaman">{{ formatZaman(m.zaman) }}</span>
           </div>
@@ -322,20 +322,20 @@
           v-if="aiYukleniyor"
           class="ai-loading"
         >
-          <i class="pi pi-spin pi-spinner" /> Yapay zeka verileri analiz ediyor...
+          <i class="pi pi-spin pi-spinner" /> {{ t('sohbet.aiAnaliz') }}
         </div>
       </div>
 
       <div class="mesaj-giris">
         <InputText
           v-model="yeniMesaj"
-          placeholder="Yapay zekaya bir soru sorun (Örn: Bu ay en çok ciro yapan 3 müşteri kim?)..."
+          :placeholder="t('sohbet.aiPlaceholder')"
           class="mesaj-input"
           @keyup.enter="gonder"
         />
         <Button
           icon="pi pi-sparkles"
-          label="Sor"
+          :label="t('sohbet.sor')"
           :loading="gonderiliyor || aiYukleniyor"
           @click="gonder"
         />
@@ -345,36 +345,36 @@
     <!-- Yeni Oda Dialog -->
     <Dialog
       v-model:visible="odaDialogAc"
-      header="Yeni Sohbet Odası"
+      :header="t('sohbet.yeniOdaBaslik')"
       :modal="true"
       :style="{ width: '440px' }"
     >
       <div class="ajanda-form">
         <div class="field">
-          <label>Oda Adı *</label>
+          <label>{{ t('sohbet.odaAdiZorunlu') }}</label>
           <InputText
             v-model="odaForm.ad"
-            placeholder="Örn: Satış Ekibi"
+            :placeholder="t('sohbet.odaAdiPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label>
+          <label>{{ t('common.description') }}</label>
           <InputText
             v-model="odaForm.aciklama"
-            placeholder="Kısa açıklama"
+            :placeholder="t('sohbet.aciklamaPlaceholder')"
             class="w-full"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="odaDialogAc = false"
         />
         <Button
-          label="Oluştur"
+          :label="t('sohbet.olustur')"
           icon="pi pi-check"
           :loading="odaKaydediliyor"
           @click="odaOlustur"
@@ -385,7 +385,7 @@
     <!-- Üye Yönetim Dialog -->
     <Dialog
       v-model:visible="uyeDialogAc"
-      header="Oda Üyeleri"
+      :header="t('sohbet.odaUyeleri')"
       :modal="true"
       :style="{ width: '440px' }"
     >
@@ -400,7 +400,7 @@
           <button
             v-if="u.kullaniciId !== kendiId"
             class="uye-cikar"
-            title="Çıkar"
+            :title="t('sohbet.cikar')"
             @click="uyeCikar(u.kullaniciId)"
           >
             <i class="pi pi-times" />
@@ -413,19 +413,19 @@
           :options="eklenecekKullanicilar"
           option-label="displayName"
           option-value="id"
-          placeholder="Üye ekle..."
+          :placeholder="t('sohbet.uyeEkle')"
           class="uye-dropdown"
         />
         <Button
           icon="pi pi-plus"
           class="p-button-sm"
-          title="Ekle"
+          :title="t('sohbet.ekle')"
           @click="uyeEkle"
         />
       </div>
       <template #footer>
         <Button
-          label="Kapat"
+          :label="t('common.close')"
           class="p-button-text"
           @click="uyeDialogAc = false"
         />
@@ -439,24 +439,26 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useAuthStore } from '../stores/authStore.js'
 import { sohbetAPI, sohbetOdaAPI, aiConfigAPI, kullaniciAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useI18n } from 'vue-i18n'
 
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const aktifMod = ref('ai')
 const aiYapilandirildi = ref(false)
-const modSecenekleri = [
-  { label: 'AI Asistan', value: 'ai' },
-  { label: 'Ekip Sohbeti', value: 'ekip' }
-]
+const modSecenekleri = computed(() => [
+  { label: t('sohbet.aiAsistan'), value: 'ai' },
+  { label: t('sohbet.ekipSohbeti'), value: 'ekip' }
+])
 
-const hizliSorular = [
-  'Bu ay en çok ciro yaptığımız 3 müşteri kim?',
-  'Gelecek hafta vadesi gelen ödemelerim neler?',
-  'Kasa ve banka toplam bakiyemiz nedir?',
-  'Kritik seviyede stoklarım hangileri?',
-  'En kârlı ürünlerim hangileri?'
-]
+const hizliSorular = computed(() => [
+  t('sohbet.soruCiro'),
+  t('sohbet.soruVade'),
+  t('sohbet.soruBakiye'),
+  t('sohbet.soruKritikStok'),
+  t('sohbet.soruKarliUrun')
+])
 
 const mesajlar = ref([])
 const odaMesajlar = ref([])
@@ -514,21 +516,21 @@ const formatZaman = (t) => {
 const formatTabloBaslik = (key) => {
   const map = {
     sira: '#',
-    musteri: 'Müşteri',
-    ciro: 'Toplam Ciro',
-    faturaNo: 'Fatura No',
-    cari: 'Cari Hesap',
-    vade: 'Vade Tarihi',
-    tur: 'İşlem Türü',
-    tutar: 'Tutar',
-    hesap: 'Hesap Adı',
-    bakiye: 'Bakiye',
-    stok: 'Ürün',
-    miktar: 'Miktar',
-    durum: 'Durum',
-    maliyet: 'Maliyet',
-    satis: 'Satış Fiyatı',
-    marj: 'Kâr Marjı'
+    musteri: t('sohbet.musteri'),
+    ciro: t('sohbet.toplamCiro'),
+    faturaNo: t('sohbet.faturaNo'),
+    cari: t('sohbet.cariHesap'),
+    vade: t('sohbet.vadeTarihi'),
+    tur: t('sohbet.islemTuru'),
+    tutar: t('common.amount'),
+    hesap: t('sohbet.hesapAdi'),
+    bakiye: t('sohbet.bakiye'),
+    stok: t('sohbet.urun'),
+    miktar: t('sohbet.miktar'),
+    durum: t('common.status'),
+    maliyet: t('sohbet.maliyet'),
+    satis: t('sohbet.satisFiyati'),
+    marj: t('sohbet.karMarji')
   }
   return map[key] || key
 }
@@ -616,7 +618,7 @@ const aiYanitGeriDus = async (aiMesaj, metin) => {
     aiMesaj.tabloVerisi = data.tabloVerisi
   } catch {
     if (!aiMesaj.metin) {
-      aiMesaj.metin = 'Üzgünüm, sorunuzu işlerken bir hata oluştu. Lütfen tekrar deneyin.'
+      aiMesaj.metin = t('sohbet.hataAi')
     }
   }
 }
@@ -631,12 +633,12 @@ const faturaOku = async (event) => {
     const sonuc = res.data?.sonuc || ''
     aiMesajlar.value.push({
       rol: 'ai',
-      metin: '📄 Okunan fatura bilgisi:\n' + sonuc,
+      metin: '📄 ' + t('sohbet.okunanFatura') + '\n' + sonuc,
       zaman: new Date()
     })
     kaydir()
   } catch (err) {
-    const mesaj = err?.response?.data?.message || 'Fatura okunamadı. AI yapılandırmasını kontrol edin.'
+    const mesaj = err?.response?.data?.message || t('sohbet.faturaOkunamadi')
     aiMesajlar.value.push({
       rol: 'ai',
       metin: mesaj,
@@ -680,7 +682,7 @@ const gonder = async () => {
     }
     yeniMesaj.value = ''
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Mesaj gönderilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.mesajGonderilemedi'))
   } finally {
     gonderiliyor.value = false
   }
@@ -729,7 +731,7 @@ const odaSec = async (o) => {
       await sohbetOdaAPI.katil(o.id)
       await odalariYukle()
     } catch (err) {
-      toastBildirim.hata(err?.response?.data?.message || 'Odaya katılınamadı')
+      toastBildirim.hata(err?.response?.data?.message || t('sohbet.odayaKatilnamadi'))
       return
     }
   }
@@ -754,7 +756,7 @@ const odaMesajlariYukle = async (odaId) => {
 
 const odaOlustur = async () => {
   if (!odaForm.value.ad.trim()) {
-    toastBildirim.uyari('Oda adı zorunludur')
+    toastBildirim.uyari(t('sohbet.odaAdiZorunluUyari'))
     return
   }
   odaKaydediliyor.value = true
@@ -767,7 +769,7 @@ const odaOlustur = async () => {
     odaAboneligiYenile()
     odaMesajlariYukle(r.data.id)
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Oda oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.odaOlusturulamadi'))
   } finally {
     odaKaydediliyor.value = false
   }
@@ -777,13 +779,13 @@ const odadanAyril = async () => {
   if (!seciliOdaId.value) return
   try {
     await sohbetOdaAPI.ayril(seciliOdaId.value)
-    toastBildirim.basarili('Odadan ayrıldınız')
+    toastBildirim.basarili(t('sohbet.odadanAyrildiniz'))
     seciliOdaId.value = null
     await odalariYukle()
     odaAboneligiYenile()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.islemBasarisiz'))
   }
 }
 
@@ -799,7 +801,7 @@ const uyeEkle = async () => {
     eklenecekKullaniciId.value = null
     await odalariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Üye eklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.uyeEklenemedi'))
   }
 }
 
@@ -809,7 +811,7 @@ const uyeCikar = async (kullaniciId) => {
     await sohbetOdaAPI.uyeCikar(seciliOdaId.value, kullaniciId)
     await odalariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Üye çıkarılamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.uyeCikarilamadi'))
   }
 }
 
@@ -913,7 +915,7 @@ const sohbetDosyaYukle = async (event) => {
       await sohbetOdaAPI.mesajGonder(seciliOdaId.value, { mesaj: dosya.name, dosyaUrl: url })
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Dosya yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.dosyaYuklenemedi'))
   } finally {
     gonderiliyor.value = false
     event.target.value = ''

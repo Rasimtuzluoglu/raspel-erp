@@ -1,13 +1,12 @@
 <template>
   <div class="tahsilat-container">
     <div class="sayfa-baslik">
-      <h1><i class="pi pi-money-bill" /> Tahsilat Merkezi</h1>
+      <h1><i class="pi pi-money-bill" /> {{ t('tahsilat.title') }}</h1>
       <p class="aciklama">
-        Ödenmemiş alacaklarınızı tek ekrandan takip edin, yaşlandırma analizi yapın ve müşterilerinize tek tıkla
-        hatırlatma gönderin.
+        {{ t('tahsilat.aciklama') }}
       </p>
       <Button
-        label="Tüm Borçlulara WhatsApp"
+        :label="t('tahsilat.tumBorclularaWhatsapp')"
         icon="pi pi-whatsapp"
         class="p-button-success"
         :disabled="!borcluCariler.length"
@@ -19,7 +18,7 @@
       v-if="yukleniyor"
       class="yukleniyor"
     >
-      <i class="pi pi-spin pi-spinner" /> Yükleniyor...
+      <i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}
     </div>
 
     <template v-else>
@@ -29,7 +28,7 @@
             <i class="pi pi-wallet" />
           </div>
           <div>
-            <span class="ozet-etiket">Toplam Alacak</span>
+            <span class="ozet-etiket">{{ t('tahsilat.toplamAlacak') }}</span>
             <strong class="ozet-deger">{{ formatCurrency(ozet?.toplamAlacak || 0) }}</strong>
           </div>
         </div>
@@ -38,7 +37,7 @@
             <i class="pi pi-exclamation-triangle" />
           </div>
           <div>
-            <span class="ozet-etiket">Vadesi Geçmiş</span>
+            <span class="ozet-etiket">{{ t('tahsilat.vadesiGecmis') }}</span>
             <strong class="ozet-deger text-red-600">{{ formatCurrency(ozet?.vadesiGecmisToplam || 0) }}</strong>
           </div>
         </div>
@@ -47,7 +46,7 @@
             <i class="pi pi-calendar-clock" />
           </div>
           <div>
-            <span class="ozet-etiket">30 Gün İçinde Vadesi Gelecek</span>
+            <span class="ozet-etiket">{{ t('tahsilat.otuzGunIcinde') }}</span>
             <strong class="ozet-deger text-amber-600">{{ formatCurrency(ozet?.vadesiYaklasanToplam || 0) }}</strong>
           </div>
         </div>
@@ -56,7 +55,7 @@
             <i class="pi pi-users" />
           </div>
           <div>
-            <span class="ozet-etiket">Gecikmiş Cari / Açık Fatura</span>
+            <span class="ozet-etiket">{{ t('tahsilat.gecikmisCariAcikFatura') }}</span>
             <strong class="ozet-deger">{{ ozet?.gecikmisCariSayisi || 0 }} / {{ ozet?.acikFaturaSayisi || 0 }}</strong>
           </div>
         </div>
@@ -64,19 +63,19 @@
 
       <Toolbar class="toolbar">
         <template #start>
-          <span class="filtre-etiket">Alacak yaşlandırmasına göre sıralı</span>
+          <span class="filtre-etiket">{{ t('tahsilat.yaslandirmaSirali') }}</span>
         </template>
         <template #end>
           <Button
             icon="pi pi-money-bill"
-            label="Tahsilat Gir"
+            :label="t('tahsilat.tahsilatGir')"
             class="p-button-success p-button-sm"
             :disabled="!(ozet?.cariler || []).length"
             @click="tahsilatGir()"
           />
           <Button
             icon="pi pi-refresh"
-            label="Yenile"
+            :label="t('tahsilat.yenile')"
             class="p-button-outlined p-button-sm"
             @click="yukle"
           />
@@ -97,18 +96,18 @@
           />
           <Column
             field="cariAd"
-            header="Cari Hesap"
+            :header="t('tahsilat.cariHesap')"
             sortable
           >
             <template #body="{ data }">
               <div class="cari-hucre">
                 <strong>{{ data.cariAd }}</strong>
-                <span class="cari-alt">{{ data.faturaSayisi }} açık fatura</span>
+                <span class="cari-alt">{{ t('tahsilat.acikFatura', { n: data.faturaSayisi }) }}</span>
               </div>
             </template>
           </Column>
           <Column
-            header="Toplam Alacak"
+            :header="t('tahsilat.toplamAlacak')"
             sortable
           >
             <template #body="{ data }">
@@ -116,7 +115,7 @@
             </template>
           </Column>
           <Column
-            header="Gecikmiş"
+            :header="t('tahsilat.gecikmis')"
             sortable
           >
             <template #body="{ data }">
@@ -126,7 +125,7 @@
             </template>
           </Column>
           <Column
-            header="Yaşlandırma"
+            :header="t('tahsilat.yaslandirma')"
             sortable
           >
             <template #body="{ data }">
@@ -137,7 +136,7 @@
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('tahsilat.islem')"
             style="width: 200px"
           >
             <template #body="{ data }">
@@ -145,13 +144,13 @@
                 <Button
                   icon="pi pi-money-bill"
                   class="p-button-rounded p-button-text p-button-success"
-                  title="Tahsilat Gir"
+                  :title="t('tahsilat.tahsilatGir')"
                   @click="tahsilatGir(data)"
                 />
                 <Button
                   icon="pi pi-envelope"
                   class="p-button-rounded p-button-text p-button-primary"
-                  :title="data.email ? 'E-posta ile hatırlat' : 'E-posta tanımlı değil'"
+                  :title="data.email ? t('tahsilat.epostaIleHatirlat') : t('tahsilat.epostaTanimliDegil')"
                   :disabled="!data.email"
                   @click="hatirlat(data)"
                 />
@@ -159,14 +158,14 @@
                   v-if="data.telefon"
                   icon="pi pi-whatsapp"
                   class="p-button-rounded p-button-text p-button-success"
-                  title="WhatsApp'ta aç"
+                  :title="t('tahsilat.whatsappAc')"
                   @click="whatsappAc(data)"
                 />
                 <Button
                   v-if="data.telefon"
                   icon="pi pi-phone"
                   class="p-button-rounded p-button-text p-button-info"
-                  title="Ara"
+                  :title="t('tahsilat.ara')"
                   @click="ara(data)"
                 />
               </div>
@@ -184,15 +183,15 @@
                   <i class="pi pi-file" /> {{ f.faturaNumarasi }}
                 </div>
                 <div class="fatura-vade">
-                  Vade: {{ formatDate(f.vadeTarihi) }}
+                  {{ t('tahsilat.vade') }}: {{ formatDate(f.vadeTarihi) }}
                   <span
                     v-if="f.gecikmeGunu > 0"
                     class="gecikme-pill"
-                  >{{ f.gecikmeGunu }} gün gecikti</span>
+                  >{{ t('tahsilat.gunGecikti', { n: f.gecikmeGunu }) }}</span>
                   <span
                     v-else
                     class="vade-pill"
-                  >{{ Math.abs(f.gecikmeGunu) }} gün kaldı</span>
+                  >{{ t('tahsilat.gunKaldi', { n: Math.abs(f.gecikmeGunu) }) }}</span>
                 </div>
                 <div class="fatura-tutar">
                   {{ formatCurrency(f.kalanTutar) }}
@@ -202,7 +201,7 @@
                 v-if="!slotProps.data.faturalar?.length"
                 class="bos-satir"
               >
-                Fatura detayı bulunmuyor.
+                {{ t('tahsilat.faturaDetayiYok') }}
               </div>
             </div>
           </template>
@@ -213,14 +212,14 @@
       <EmptyState
         v-if="!(ozet?.cariler || []).length"
         icon="pi pi-check-circle"
-        message="Açık alacak yok"
-        sub-message="Şu anda ödenmemiş alacağınız bulunmuyor. Harika!"
+        :message="t('tahsilat.acikAlacakYok')"
+        :sub-message="t('tahsilat.acikAlacakYokHint')"
       />
     </template>
 
     <div class="gecmis-bolum">
       <div class="gecmis-baslik">
-        <span><i class="pi pi-history" /> Tahsilat Geçmişi</span>
+        <span><i class="pi pi-history" /> {{ t('tahsilat.tahsilatGecmisi') }}</span>
         <Button
           icon="pi pi-refresh"
           class="p-button-sm p-button-text"
@@ -237,22 +236,22 @@
           :rows="10"
           paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
         >
-          <Column header="Tarih">
+          <Column :header="t('common.date')">
             <template #body="s">
               {{ formatDate(s.data.hareketTarihi) }}
             </template>
           </Column>
           <Column
             field="cariHesapAd"
-            header="Cari Hesap"
+            :header="t('tahsilat.cariHesap')"
             sortable
           />
-          <Column header="Tutar">
+          <Column :header="t('common.amount')">
             <template #body="s">
               <strong class="text-green-500">{{ formatCurrency(s.data.tutar) }}</strong>
             </template>
           </Column>
-          <Column header="Ödeme Yöntemi">
+          <Column :header="t('tahsilat.odemeYontemi')">
             <template #body="s">
               <Tag
                 v-if="s.data.odemeYontemi"
@@ -265,7 +264,7 @@
               >-</span>
             </template>
           </Column>
-          <Column header="Taksit Bilgisi">
+          <Column :header="t('tahsilat.taksitBilgisi')">
             <template #body="s">
               <span v-if="s.data.odemeYontemi === 'TAKSIT'">
                 {{ s.data.taksitKurum || '-' }}
@@ -282,11 +281,11 @@
                 <small
                   v-if="s.data.komisyonTutar"
                   class="text-muted"
-                > · Kom: {{ formatCurrency(s.data.komisyonTutar) }}</small>
+                > · {{ t('tahsilat.kom') }}: {{ formatCurrency(s.data.komisyonTutar) }}</small>
                 <small
                   v-if="s.data.valorTarihi"
                   class="text-muted"
-                > · Valör: {{ s.data.valorTarihi }}</small>
+                > · {{ t('tahsilat.valor') }}: {{ s.data.valorTarihi }}</small>
               </span>
               <span
                 v-else
@@ -294,7 +293,7 @@
               >-</span>
             </template>
           </Column>
-          <Column header="Açıklama">
+          <Column :header="t('common.description')">
             <template #body="s">
               <span class="text-muted">{{ s.data.aciklama || '-' }}</span>
             </template>
@@ -303,8 +302,8 @@
         <EmptyState
           v-if="!gecmisYukleniyor && !gecmis.length"
           icon="pi pi-history"
-          message="Tahsilat geçmişi yok"
-          sub-message="Henüz tahsilat kaydı yapılmamış."
+          :message="t('tahsilat.gecmisYok')"
+          :sub-message="t('tahsilat.gecmisYokHint')"
         />
       </div>
     </div>
@@ -324,8 +323,10 @@ import { tahsilatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const yukleniyor = ref(false)
 const ozet = ref(null)
 const genisletilenler = ref([])
@@ -341,10 +342,10 @@ const tahsilatGir = (cari) => {
 }
 
 const odemeYontemiLabel = (y) => ({
-  NAKIT: 'Nakit',
-  KART: 'Kart',
-  TAKSIT: 'Taksit',
-  HAVALE: 'Havale'
+  NAKIT: t('tahsilat.nakit'),
+  KART: t('tahsilat.kart'),
+  TAKSIT: t('tahsilat.taksit'),
+  HAVALE: t('tahsilat.havale')
 }[y] || y)
 
 const odemeYontemiSeverity = (y) => ({
@@ -385,7 +386,7 @@ const yukle = async () => {
     const r = await tahsilatAPI.ozet()
     ozet.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Tahsilat özeti yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('tahsilat.ozetYuklenemedi'))
   } finally {
     yukleniyor.value = false
   }
@@ -394,9 +395,9 @@ const yukle = async () => {
 const hatirlat = async (cari) => {
   try {
     const r = await tahsilatAPI.hatirlat(cari.cariId)
-    toastBildirim.basarili(`${cari.cariAd} için ${r.data?.gonderilen || 0} hatırlatma e-postası gönderildi`)
+    toastBildirim.basarili(t('tahsilat.hatirlatmaGonderildi', { ad: cari.cariAd, n: r.data?.gonderilen || 0 }))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Hatırlatma gönderilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('tahsilat.hatirlatmaGonderilemedi'))
   }
 }
 
@@ -410,7 +411,7 @@ const telefonNormalle = (telefon) => {
 const whatsappAc = (cari) => {
   const no = telefonNormalle(cari.telefon)
   const mesaj = encodeURIComponent(
-    `Sayın ${cari.cariAd}, hesabınızda ${formatCurrency(cari.toplamAlacak)} tutarında ödenmemiş bakiye bulunmaktadır. Ödeme konusunda bilgi almak için bize ulaşabilirsiniz.`
+    t('tahsilat.whatsappMesaj', { ad: cari.cariAd, tutar: formatCurrency(cari.toplamAlacak) })
   )
   window.open(`https://wa.me/${no}?text=${mesaj}`, '_blank')
 }
@@ -421,7 +422,7 @@ const tumuWhatsapp = () => {
   borcluCariler.value.forEach((c, i) => {
     setTimeout(() => whatsappAc(c), i * 400)
   })
-  toastBildirim.bilgi(`${borcluCariler.value.length} müşteri için WhatsApp açılıyor`)
+  toastBildirim.bilgi(t('tahsilat.whatsappAciliyor', { n: borcluCariler.value.length }))
 }
 
 const ara = (cari) => {

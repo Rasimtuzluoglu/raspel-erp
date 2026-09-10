@@ -2,15 +2,15 @@
   <div class="satinalma-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Satın Alma
+        {{ t('satinalma.title') }}
       </h1>
     </div>
 
     <TabView>
-      <TabPanel header="Talepler">
+      <TabPanel :header="t('satinalma.talepler')">
         <div class="panel-baslik">
           <Button
-            label="Yeni Talep"
+            :label="t('satinalma.yeniTalep')"
             icon="pi pi-plus"
             @click="talepDialogAc()"
           />
@@ -22,24 +22,24 @@
         >
           <Column
             field="talepNo"
-            header="Talep No"
+            :header="t('satinalma.talepNo')"
             sortable
           />
           <Column
             field="tarih"
-            header="Tarih"
+            :header="t('common.date')"
           />
           <Column
             field="talepEden"
-            header="Talep Eden"
+            :header="t('satinalma.talepEden')"
           />
           <Column
             field="departman"
-            header="Departman"
+            :header="t('satinalma.departman')"
           />
           <Column
             field="durum"
-            header="Durum"
+            :header="t('common.status')"
           >
             <template #body="{ data }">
               <Tag
@@ -49,7 +49,7 @@
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('satinalma.islem')"
             style="width: 150px"
           >
             <template #body="{ data }">
@@ -57,20 +57,20 @@
                 v-if="data.durum === 'TASLAK'"
                 icon="pi pi-check"
                 class="p-button-rounded p-button-text p-button-success"
-                title="Onayla"
+                :title="t('satinalma.onayla')"
                 @click="talepDurumGuncelle(data, 'ONAYLANDI')"
               />
               <Button
                 v-if="data.durum === 'TASLAK'"
                 icon="pi pi-times"
                 class="p-button-rounded p-button-text p-button-danger"
-                title="Reddet"
+                :title="t('satinalma.reddet')"
                 @click="talepDurumGuncelle(data, 'REDDEDILDI')"
               />
               <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text"
-                title="Sil"
+                :title="t('common.delete')"
                 @click="talepSil(data)"
               />
             </template>
@@ -78,10 +78,10 @@
         </DataTable>
       </TabPanel>
 
-      <TabPanel header="Siparişler">
+      <TabPanel :header="t('satinalma.siparisler')">
         <div class="panel-baslik">
           <Button
-            label="Yeni Sipariş"
+            :label="t('satinalma.yeniSiparis')"
             icon="pi pi-plus"
             @click="siparisDialogAc()"
           />
@@ -93,28 +93,28 @@
         >
           <Column
             field="siparisNo"
-            header="Sipariş No"
+            :header="t('satinalma.siparisNo')"
             sortable
           />
           <Column
             field="tarih"
-            header="Tarih"
+            :header="t('common.date')"
           />
           <Column
             field="cariHesapAdi"
-            header="Tedarikçi"
+            :header="t('satinalma.tedarikci')"
           />
           <Column
             field="genelToplam"
-            header="Toplam"
+            :header="t('satinalma.toplam')"
           >
             <template #body="{ data }">
-              {{ data.genelToplam?.toFixed(2) }} ₺
+              {{ formatCurrency(data.genelToplam) }}
             </template>
           </Column>
           <Column
             field="durum"
-            header="Durum"
+            :header="t('common.status')"
           >
             <template #body="{ data }">
               <Tag
@@ -132,7 +132,7 @@
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('satinalma.islem')"
             style="width: 150px"
           >
             <template #body="{ data }">
@@ -140,27 +140,27 @@
                 v-if="data.durum === 'TASLAK'"
                 icon="pi pi-check-circle"
                 class="p-button-rounded p-button-text p-button-info"
-                title="Sipariş Ver"
+                :title="t('satinalma.siparisVer')"
                 @click="siparisDurumGuncelle(data, 'SIPARIS_VERILDI')"
               />
               <Button
                 v-if="data.durum === 'SIPARIS_VERILDI'"
                 icon="pi pi-box"
                 class="p-button-rounded p-button-text p-button-success"
-                title="Teslim Al"
+                :title="t('satinalma.teslimAl')"
                 @click="siparisDurumGuncelle(data, 'TESLIM_ALINDI')"
               />
               <Button
                 v-if="data.durum === 'TESLIM_ALINDI'"
                 icon="pi pi-file"
                 class="p-button-rounded p-button-text p-button-warning"
-                title="Alış Faturasına Çevir"
+                :title="t('satinalma.alisFaturasinaCevir')"
                 @click="siparisFaturayaCevir(data)"
               />
               <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text"
-                title="Sil"
+                :title="t('common.delete')"
                 @click="siparisSil(data)"
               />
             </template>
@@ -171,20 +171,20 @@
 
     <Dialog
       v-model:visible="talepDialog"
-      header="Yeni Satın Alma Talebi"
+      :header="t('satinalma.yeniTalepBaslik')"
       modal
       :style="{ width: '600px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Talep No *</label>
+          <label>{{ t('satinalma.talepNoZorunlu') }}</label>
           <InputText
             v-model="talepForm.talepNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tarih</label>
+          <label>{{ t('common.date') }}</label>
           <DatePicker
             v-model="talepForm.tarih"
             date-format="dd/mm/yy"
@@ -192,21 +192,21 @@
           />
         </div>
         <div class="field">
-          <label>Talep Eden</label>
+          <label>{{ t('satinalma.talepEden') }}</label>
           <InputText
             v-model="talepForm.talepEden"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Departman</label>
+          <label>{{ t('satinalma.departman') }}</label>
           <InputText
             v-model="talepForm.departman"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label>
+          <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="talepForm.aciklama"
             rows="3"
@@ -216,13 +216,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="talepDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="talepKaydet"
@@ -232,20 +232,20 @@
 
     <Dialog
       v-model:visible="siparisDialog"
-      header="Yeni Satın Alma Siparişi"
+      :header="t('satinalma.yeniSiparisBaslik')"
       modal
       :style="{ width: '600px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Sipariş No *</label>
+          <label>{{ t('satinalma.siparisNoZorunlu') }}</label>
           <InputText
             v-model="siparisForm.siparisNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tarih</label>
+          <label>{{ t('common.date') }}</label>
           <DatePicker
             v-model="siparisForm.tarih"
             date-format="dd/mm/yy"
@@ -253,18 +253,18 @@
           />
         </div>
         <div class="field">
-          <label>Tedarikçi *</label>
+          <label>{{ t('satinalma.tedarikciZorunlu') }}</label>
           <Dropdown
             v-model="siparisForm.cariHesapId"
             :options="cariler"
             option-label="ad"
             option-value="id"
-            placeholder="Tedarikçi Seçin"
+            :placeholder="t('satinalma.tedarikciSecin')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label>
+          <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="siparisForm.aciklama"
             rows="3"
@@ -274,13 +274,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="siparisDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="siparisKaydet"
@@ -295,8 +295,11 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI } from '../api/index.js'
+import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const talepler = ref([])
 const siparisler = ref([])
@@ -319,7 +322,7 @@ const talepleriYukle = async () => {
     const r = await satinalmaTalepAPI.getAll()
     talepler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talepler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataTalepYukleme'))
   }
   taleplerYukleniyor.value = false
 }
@@ -330,7 +333,7 @@ const siparisleriYukle = async () => {
     const r = await satinalmaSiparisAPI.getAll()
     siparisler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Siparişler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataSiparisYukleme'))
   }
   siparislerYukleniyor.value = false
 }
@@ -340,7 +343,7 @@ const carieleriYukle = async () => {
     const r = await cariHesapAPI.getAll()
     cariler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cariler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataCariYukleme'))
   }
 }
 
@@ -356,7 +359,7 @@ const talepKaydet = async () => {
     talepDialog.value = false
     await talepleriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talep kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataTalepKaydet'))
   }
   kaydediliyor.value = false
 }
@@ -366,23 +369,23 @@ const talepDurumGuncelle = async (data, durum) => {
     await satinalmaTalepAPI.durumGuncelle(data.id, durum)
     await talepleriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataDurumGuncelle'))
   }
 }
 
 const talepSil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await satinalmaTalepAPI.delete(data.id)
         await talepleriYukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Talep silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataTalepSil'))
       }
     },
     reject: () => {}
@@ -404,7 +407,7 @@ const siparisKaydet = async () => {
     siparisDialog.value = false
     await siparisleriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataSiparisKaydet'))
   }
   kaydediliyor.value = false
 }
@@ -414,24 +417,24 @@ const siparisDurumGuncelle = async (data, durum) => {
     await satinalmaSiparisAPI.durumGuncelle(data.id, durum)
     await siparisleriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataDurumGuncelle'))
   }
 }
 
 const siparisFaturayaCevir = (data) => {
   confirm.require({
-    message: `"${data.siparisNo}" siparişi alış faturasına dönüştürülecek ve stoklar güncellenecek. Devam edilsin mi?`,
-    header: 'Alış Faturasına Dönüştür',
+    message: t('satinalma.faturayaCevirMesaj', { no: data.siparisNo }),
+    header: t('satinalma.faturayaCevirBaslik'),
     icon: 'pi pi-file',
-    acceptLabel: 'Evet, Dönüştür',
-    rejectLabel: 'İptal',
+    acceptLabel: t('satinalma.evetDonustur'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await satinalmaSiparisAPI.faturayaCevir(data.id)
-        toastBildirim.basarili('Sipariş alış faturasına dönüştürüldü, stoklar güncellendi.')
+        toastBildirim.basarili(t('satinalma.donusturuldu'))
         await siparisleriYukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Faturaya dönüştürülürken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataFaturayaCevir'))
       }
     },
     reject: () => {}
@@ -440,17 +443,17 @@ const siparisFaturayaCevir = (data) => {
 
 const siparisSil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await satinalmaSiparisAPI.delete(data.id)
         await siparisleriYukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Sipariş silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataSiparisSil'))
       }
     },
     reject: () => {}

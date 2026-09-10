@@ -1,10 +1,10 @@
 <template>
   <div class="puantaj-container">
-    <h1>Personel Puantaj Yönetimi</h1>
+    <h1>{{ t('puantaj.title') }}</h1>
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Kayıt"
+          :label="t('puantaj.yeniKayit')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="dialogAc()"
@@ -16,20 +16,20 @@
           :options="personelList"
           option-label="ad"
           option-value="id"
-          placeholder="Personel seçin"
+          :placeholder="t('puantaj.personelSecin')"
           class="personel-dropdown"
           @change="loadData"
         />
         <DatePicker
           v-model="filtreBaslangic"
-          placeholder="Başlangıç"
+          :placeholder="t('puantaj.baslangic')"
           date-format="dd.mm.yy"
           class="filter-date"
           @update:model-value="loadData"
         />
         <DatePicker
           v-model="filtreBitis"
-          placeholder="Bitiş"
+          :placeholder="t('puantaj.bitis')"
           date-format="dd.mm.yy"
           class="filter-date"
           @update:model-value="loadData"
@@ -43,7 +43,7 @@
     >
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
       >
         <template #body="{ data }">
           {{ formatDate(data.tarih) }}
@@ -51,11 +51,11 @@
       </Column>
       <Column
         field="personelAdi"
-        header="Personel"
+        :header="t('puantaj.personel')"
       />
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -66,10 +66,10 @@
       </Column>
       <Column
         field="aciklama"
-        header="Açıklama"
+        :header="t('common.description')"
       />
       <Column
-        header="İşlem"
+        :header="t('puantaj.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -89,42 +89,42 @@
     <Message
       v-if="list && list.length === 0"
       severity="info"
-      text="Kayıt bulunamadı."
+      :text="t('puantaj.kayitBulunamadi')"
     />
     <Dialog
       v-model:visible="dialog"
-      :header="duzenleme ? 'Puantaj Düzenle' : 'Yeni Puantaj'"
+      :header="duzenleme ? t('puantaj.duzenle') : t('puantaj.yeni')"
       modal
       :style="{ width: '500px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Personel *</label><Dropdown
+          <label>{{ t('puantaj.personelZorunlu') }}</label><Dropdown
             v-model="form.personelId"
             :options="personelList"
             option-label="ad"
             option-value="id"
-            placeholder="Seçiniz"
+            :placeholder="t('faturalar.seciniz')"
             class="w-full"
             filter
           />
         </div>
         <div class="field">
-          <label>Tarih *</label><DatePicker
+          <label>{{ t('puantaj.tarihZorunlu') }}</label><DatePicker
             v-model="form.tarih"
             date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Durum</label><Dropdown
+          <label>{{ t('common.status') }}</label><Dropdown
             v-model="form.durum"
             :options="durumList"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
             class="w-full"
@@ -133,13 +133,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -155,10 +155,12 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { puantajAPI, personelAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const personelList = ref([])
 const yukleniyor = ref(false)
@@ -178,7 +180,7 @@ onMounted(async () => {
     if (personelList.value.length) seciliPersonelId.value = personelList.value[0].id
     await loadData()
   } catch {
-    toastBildirim.hata('Personel listesi yüklenemedi')
+    toastBildirim.hata(t('puantaj.personelYuklenemedi'))
   }
 })
 
@@ -191,13 +193,12 @@ const loadData = async () => {
     const r = await puantajAPI.getByPersonel(seciliPersonelId.value, bas, bit)
     list.value = r.data || []
   } catch {
-    toastBildirim.hata('Puantaj verileri yüklenemedi')
+    toastBildirim.hata(t('puantaj.veriYuklenemedi'))
   }
   yukleniyor.value = false
 }
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
@@ -214,7 +215,7 @@ const dialogAc = (data) => {
 
 const kaydet = async () => {
   if (!form.value.personelId) {
-    toastBildirim.uyari('Personel seçiniz')
+    toastBildirim.uyari(t('puantaj.personelSeciniz'))
     return
   }
   kaydediliyor.value = true
@@ -222,31 +223,31 @@ const kaydet = async () => {
     const payload = { ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }
     if (duzenleme.value) {
       await puantajAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Puantaj güncellendi')
+      toastBildirim.basarili(t('puantaj.guncellendi'))
     } else {
       await puantajAPI.create(payload)
-      toastBildirim.basarili('Puantaj eklendi')
+      toastBildirim.basarili(t('puantaj.eklendi'))
     }
     dialog.value = false
     await loadData()
   } catch {
-    toastBildirim.hata('İşlem başarısız')
+    toastBildirim.hata(t('puantaj.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Onay',
+    message: t('common.confirmDelete'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await puantajAPI.delete(data.id)
         await loadData()
-        toast.add({ severity: 'success', summary: 'Silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('puantaj.silindi'), life: 3000 })
       } catch {
-        toastBildirim.hata('Silme başarısız')
+        toastBildirim.hata(t('puantaj.silmeBasarisiz'))
       }
     }
   })

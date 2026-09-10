@@ -1,11 +1,11 @@
 <template>
   <div class="kullanicilar-container">
-    <h1>Kullanıcı Yönetimi</h1>
+    <h1>{{ t('kullanicilar.title') }}</h1>
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Kullanıcı"
+          :label="t('kullanicilar.yeniKullanici')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -17,7 +17,7 @@
       v-if="loading"
       class="loading"
     >
-      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
     <div
@@ -57,18 +57,18 @@
             class="durum"
             :class="u.active ? 'aktif' : 'pasif'"
           >
-            {{ u.active ? 'Aktif' : 'Pasif' }}
+            {{ u.active ? t('kullanicilar.aktif') : t('kullanicilar.pasif') }}
           </span>
         </div>
         <div class="kart-islem">
           <Button
-            v-tooltip.top="'Düzenle'"
+            v-tooltip.top="t('common.edit')"
             icon="pi pi-pencil"
             class="p-button-rounded p-button-sm islem-btn duzenle"
             @click="editKullanici(u)"
           />
           <Button
-            v-tooltip.top="'Sil'"
+            v-tooltip.top="t('common.delete')"
             icon="pi pi-trash"
             class="p-button-rounded p-button-sm islem-btn sil"
             :disabled="u.id === authStore?.kullanici?.id"
@@ -78,10 +78,10 @@
       </div>
       <EmptyState
         v-if="kullanicilar && kullanicilar.length === 0"
-        message="Henüz kullanıcı bulunamadı"
-        sub-message="İlk kullanıcıyı eklemek için Yeni Kullanıcı butonuna tıklayın"
+        :message="t('kullanicilar.bosDurum')"
+        :sub-message="t('kullanicilar.bosDurumIpucu')"
         icon="pi pi-user-plus"
-        action-label="Yeni Kullanıcı"
+        :action-label="t('kullanicilar.yeniKullanici')"
         action-icon="pi pi-plus"
         class="full-width"
         @action="openDialog"
@@ -90,29 +90,29 @@
 
     <Dialog
       v-model:visible="showDialog"
-      :header="editingId ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'"
+      :header="editingId ? t('kullanicilar.duzenle') : t('kullanicilar.yeniKullanici')"
       :modal="true"
       style="width: 500px"
     >
       <div class="form-grup">
-        <label>Kullanıcı Adı *</label>
+        <label>{{ t('kullanicilar.kullaniciAdi') }}</label>
         <InputText
           v-model="form.username"
-          placeholder="Kullanıcı adı"
+          :placeholder="t('kullanicilar.kullaniciAdiPlaceholder')"
           class="w-full"
           :disabled="!!editingId"
         />
       </div>
       <div class="form-grup">
-        <label>Görünen Ad *</label>
+        <label>{{ t('kullanicilar.gorunenAd') }}</label>
         <InputText
           v-model="form.displayName"
-          placeholder="Ad soyad"
+          :placeholder="t('kullanicilar.gorunenAdPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="form-grup">
-        <label>{{ editingId ? 'Yeni Şifre (boş bırakılırsa değişmez)' : 'Şifre' }}</label>
+        <label>{{ editingId ? t('kullanicilar.yeniSifre') : t('kullanicilar.sifre') }}</label>
         <InputText
           v-model="form.password"
           type="password"
@@ -121,7 +121,7 @@
         />
       </div>
       <div class="form-grup">
-        <label>Avatar</label>
+        <label>{{ t('kullanicilar.avatar') }}</label>
         <div class="avatar-upload">
           <div class="avatar-upload-preview">
             <img
@@ -144,7 +144,7 @@
               @change="avatarDosyaSec"
             >
             <Button
-              label="Dosya Seç"
+              :label="t('kullanicilar.dosyaSec')"
               icon="pi pi-upload"
               size="small"
               class="p-button-outlined"
@@ -157,7 +157,7 @@
             <span
               v-else
               class="avatar-veya"
-            >veya URL girin</span>
+            >{{ t('kullanicilar.veyaUrlGirin') }}</span>
             <InputText
               v-model="form.avatarUrl"
               placeholder="https://..."
@@ -167,38 +167,38 @@
         </div>
       </div>
       <div class="form-grup">
-        <label>Şirket Adı</label>
+        <label>{{ t('kullanicilar.sirketAdi') }}</label>
         <Dropdown
           v-model="form.companyName"
           :options="sirketListesi"
           option-label="ad"
           option-value="ad"
-          placeholder="Şirket Adı"
+          :placeholder="t('kullanicilar.sirketAdi')"
           editable
           class="w-full"
         />
       </div>
       <div class="form-grup">
-        <label>Yetkili Firmalar</label>
+        <label>{{ t('kullanicilar.yetkiliFirmalar') }}</label>
         <MultiSelect
           v-model="form.sirketIds"
           :options="sirketListesi"
           option-label="ad"
           option-value="id"
-          placeholder="Firma seçiniz"
+          :placeholder="t('kullanicilar.firmaSeciniz')"
           class="w-full"
           display="chip"
         />
       </div>
       <div class="form-row">
         <div class="form-grup">
-          <label>Rol</label>
+          <label>{{ t('kullanicilar.rol') }}</label>
           <Dropdown
             v-model="form.role"
             :options="[
-              { label: 'Admin', value: 'ADMIN' },
-              { label: 'Kullanıcı', value: 'USER' },
-              { label: 'Şoför', value: 'DRIVER' }
+              { label: t('kullanicilar.rolAdmin'), value: 'ADMIN' },
+              { label: t('kullanicilar.rolKullanici'), value: 'USER' },
+              { label: t('kullanicilar.rolSofor'), value: 'DRIVER' }
             ]"
             option-label="label"
             option-value="value"
@@ -209,12 +209,12 @@
           v-if="editingId"
           class="form-grup"
         >
-          <label>Durum</label>
+          <label>{{ t('common.status') }}</label>
           <Dropdown
             v-model="form.active"
             :options="[
-              { label: 'Aktif', value: true },
-              { label: 'Pasif', value: false }
+              { label: t('kullanicilar.aktif'), value: true },
+              { label: t('kullanicilar.pasif'), value: false }
             ]"
             option-label="label"
             option-value="value"
@@ -222,20 +222,20 @@
           />
         </div>
         <div class="form-grup saha-grup">
-          <label>Saha Kullanıcısı</label>
+          <label>{{ t('kullanicilar.sahaKullanicisi') }}</label>
           <ToggleSwitch v-model="form.sahaKullanici" />
-          <small class="saha-ipucu">Saha personeli yalnızca mobil portala erişir</small>
+          <small class="saha-ipucu">{{ t('kullanicilar.sahaIpucu') }}</small>
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="closeDialog"
         />
         <Button
-          :label="editingId ? 'Güncelle' : 'Kaydet'"
+          :label="editingId ? t('kullanicilar.guncelle') : t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="save"
@@ -247,12 +247,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
 import apiClient, { kullaniciAPI, sirketAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const authStore = useAuthStore()
@@ -300,7 +302,7 @@ onMounted(async () => {
     kullanicilar.value = r.data?.content || r.data || []
     sirketListesi.value = sR.data || []
   } catch {
-    toastBildirim.hata('Kullanıcılar veya şirketler yüklenemedi')
+    toastBildirim.hata(t('kullanicilar.yuklemeHatasi'))
   } finally {
     loading.value = false
   }
@@ -355,7 +357,7 @@ const avatarYukle = async () => {
     avatarDosya.value = null
     avatarDosyaAdi.value = ''
   } catch (e) {
-    toastBildirim.hata('Avatar yüklenemedi')
+    toastBildirim.hata(t('kullanicilar.avatarYuklemeHatasi'))
     throw e
   } finally {
     avatarYukleniyor.value = false
@@ -364,11 +366,11 @@ const avatarYukle = async () => {
 
 const save = async () => {
   if (!form.value.displayName.trim()) {
-    toastBildirim.uyari('Görünen ad giriniz')
+    toastBildirim.uyari(t('kullanicilar.gorunenAdGiriniz'))
     return
   }
   if (!editingId.value && !form.value.username.trim()) {
-    toastBildirim.uyari('Kullanıcı adı giriniz')
+    toastBildirim.uyari(t('kullanicilar.kullaniciAdiGiriniz'))
     return
   }
   saving.value = true
@@ -377,20 +379,20 @@ const save = async () => {
     if (editingId.value) {
       await kullaniciAPI.update(editingId.value, form.value)
       if (editingId.value === authStore?.kullanici?.id) await authStore?.kullaniciGuncelle()
-      toastBildirim.basarili('Kullanıcı güncellendi')
+      toastBildirim.basarili(t('kullanicilar.guncellendi'))
     } else {
       if (!form.value.password) {
-        toastBildirim.uyari('Şifre giriniz')
+        toastBildirim.uyari(t('kullanicilar.sifreGiriniz'))
         return
       }
       await kullaniciAPI.create(form.value)
-      toastBildirim.basarili('Kullanıcı oluşturuldu')
+      toastBildirim.basarili(t('kullanicilar.olusturuldu'))
     }
     closeDialog()
     const r = await kullaniciAPI.getAll()
     kullanicilar.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err.response?.data?.message || t('kullanicilar.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -398,16 +400,16 @@ const save = async () => {
 
 const confirmDel = (id) => {
   confirm.require({
-    message: 'Bu kullanıcıyı silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('kullanicilar.silmeOnayMesaji'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await kullaniciAPI.delete(id)
         kullanicilar.value = kullanicilar.value.filter((u) => u.id !== id)
-        toastBildirim.basarili('Kullanıcı silindi')
+        toastBildirim.basarili(t('kullanicilar.silindi'))
       } catch {
-        toastBildirim.hata('Silme başarısız')
+        toastBildirim.hata(t('kullanicilar.silmeBasarisiz'))
       }
     }
   })

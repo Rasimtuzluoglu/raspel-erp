@@ -2,10 +2,10 @@
   <div class="masraf-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Masraf Takibi
+        {{ t('masraflar.title') }}
       </h1>
       <Button
-        label="Yeni Masraf"
+        :label="t('masraflar.yeniMasraf')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,7 +18,7 @@
     >
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
         sortable
       >
         <template #body="{ data }">
@@ -27,16 +27,16 @@
       </Column>
       <Column
         field="kategori"
-        header="Kategori"
+        :header="t('masraflar.kategori')"
         sortable
       />
       <Column
         field="aciklama"
-        header="Açıklama"
+        :header="t('common.description')"
       />
       <Column
         field="tutar"
-        header="Tutar"
+        :header="t('common.amount')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.tutar) }}
@@ -44,10 +44,10 @@
       </Column>
       <Column
         field="belgeNo"
-        header="Belge No"
+        :header="t('masraflar.belgeNo')"
       />
       <Column
-        header="İşlem"
+        :header="t('common.actions')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -67,10 +67,10 @@
 
     <EmptyState
       v-if="!yukleniyor && list.length === 0"
-      message="Henüz masraf kaydı bulunamadı"
-      sub-message="İlk masraf kaydınızı eklemek için Yeni Masraf butonuna tıklayın"
+      :message="t('masraflar.empty')"
+      :sub-message="t('masraflar.emptyHint')"
       icon="pi pi-receipt"
-      action-label="Yeni Masraf"
+      :action-label="t('masraflar.yeniMasraf')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
@@ -83,27 +83,27 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Tarih *</label><DatePicker
+          <label>{{ t('masraflar.tarihZorunlu') }}</label><DatePicker
             v-model="form.tarih"
             date-format="dd/mm/yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Kategori</label><InputText
+          <label>{{ t('masraflar.kategori') }}</label><InputText
             v-model="form.kategori"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tutar *</label><InputNumber
+          <label>{{ t('masraflar.tutar') }}</label><InputNumber
             v-model="form.tutar"
             mode="currency"
             currency="TRY"
@@ -111,7 +111,7 @@
           />
         </div>
         <div class="field">
-          <label>Belge No</label><InputText
+          <label>{{ t('masraflar.belgeNo') }}</label><InputText
             v-model="form.belgeNo"
             class="w-full"
           />
@@ -119,13 +119,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -143,10 +143,12 @@ import { useConfirm } from 'primevue/useconfirm'
 import { masrafAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -154,12 +156,9 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ tarih: new Date(), kategori: '', aciklama: '', tutar: 0, belgeNo: '' })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Masraf Düzenle' : 'Yeni Masraf'))
+const dialogHeader = computed(() => (duzenleme.value ? t('masraflar.duzenle') : t('masraflar.yeniMasraf')))
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -167,7 +166,7 @@ onMounted(async () => {
     const r = await masrafAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Masraflar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('masraflar.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -186,34 +185,34 @@ const kaydet = async () => {
     const payload = { ...form.value, tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih }
     if (duzenleme.value) {
       await masrafAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Masraf güncellendi')
+      toastBildirim.basarili(t('masraflar.guncellendi'))
     } else {
       await masrafAPI.create(payload)
-      toastBildirim.basarili('Masraf oluşturuldu')
+      toastBildirim.basarili(t('masraflar.olusturuldu'))
     }
     dialog.value = false
     const r = await masrafAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('masraflar.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: `"${data.kategori || data.id}" masrafını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('masraflar.silOnayMesaj', { n: data.kategori || data.id }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await masrafAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Masraf silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('masraflar.silindi'), detail: t('masraflar.masrafSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('masraflar.silmeBasarisiz'))
       }
     }
   })

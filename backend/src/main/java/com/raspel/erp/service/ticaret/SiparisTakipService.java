@@ -45,6 +45,12 @@ public class SiparisTakipService {
                     ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null)
                     : null;
 
+            Teslimat t = teslimatlar.isEmpty() ? null : teslimatlar.get(0);
+            boolean teslimatGecikti = t != null && t.getBeklenenTeslimTarihi() != null
+                    && t.getBeklenenTeslimTarihi().isBefore(java.time.LocalDate.now())
+                    && !Teslimat.Durum.TESLIM_EDILDI.name().equals(t.getDurum())
+                    && !Teslimat.Durum.IPTAL.name().equals(t.getDurum());
+
             return SiparisTakipDTO.builder()
                     .siparisId(s.getId())
                     .siparisNo(s.getSiparisNo())
@@ -57,6 +63,8 @@ public class SiparisTakipService {
                     .sevkSayisi(irsaliyeler.size())
                     .teslimatDurum(teslimatlar.isEmpty() ? null : teslimatlar.get(0).getDurum())
                     .teslimatSayisi(teslimatlar.size())
+                    .beklenenTeslimTarihi(t != null ? t.getBeklenenTeslimTarihi() : null)
+                    .teslimatGecikti(teslimatGecikti)
                     .build();
         }).collect(Collectors.toList());
     }

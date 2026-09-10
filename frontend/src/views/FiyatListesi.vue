@@ -2,10 +2,10 @@
   <div class="fiyat-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Fiyat Listesi
+        {{ t('fiyatListesi.title') }}
       </h1>
       <Button
-        label="Yeni Fiyat"
+        :label="t('fiyatListesi.yeniFiyat')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,12 +18,12 @@
     >
       <Column
         field="stokAd"
-        header="Ürün"
+        :header="t('fiyatListesi.urun')"
         sortable
       />
       <Column
         field="alisFiyati"
-        header="Alış Fiyatı"
+        :header="t('fiyatListesi.alisFiyati')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.alisFiyati) }}
@@ -31,7 +31,7 @@
       </Column>
       <Column
         field="satisFiyati"
-        header="Satış Fiyatı"
+        :header="t('fiyatListesi.satisFiyati')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.satisFiyati) }}
@@ -39,7 +39,7 @@
       </Column>
       <Column
         field="gecerlilikBaslangic"
-        header="Başlangıç"
+        :header="t('fiyatListesi.baslangic')"
       >
         <template #body="{ data }">
           {{ formatDate(data.gecerlilikBaslangic) }}
@@ -47,14 +47,14 @@
       </Column>
       <Column
         field="gecerlilikBitis"
-        header="Bitiş"
+        :header="t('fiyatListesi.bitis')"
       >
         <template #body="{ data }">
           {{ formatDate(data.gecerlilikBitis) }}
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('fiyatListesi.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -80,19 +80,19 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Ürün *</label>
+          <label>{{ t('fiyatListesi.urunZorunlu') }}</label>
           <Dropdown
             v-model="form.stokId"
             :options="stokListesi"
             option-label="ad"
             option-value="id"
-            placeholder="Ürün Seç"
+            :placeholder="t('fiyatListesi.urunSec')"
             class="w-full"
             filter
           />
         </div>
         <div class="field">
-          <label>Alış Fiyatı</label><InputNumber
+          <label>{{ t('fiyatListesi.alisFiyati') }}</label><InputNumber
             v-model="form.alisFiyati"
             mode="currency"
             currency="TRY"
@@ -100,7 +100,7 @@
           />
         </div>
         <div class="field">
-          <label>Satış Fiyatı *</label><InputNumber
+          <label>{{ t('fiyatListesi.satisFiyatiZorunlu') }}</label><InputNumber
             v-model="form.satisFiyati"
             mode="currency"
             currency="TRY"
@@ -109,14 +109,14 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Geçerlilik Başlangıç</label><DatePicker
+            <label>{{ t('fiyatListesi.gecerlilikBaslangic') }}</label><DatePicker
               v-model="form.gecerlilikBaslangic"
               date-format="dd/mm/yy"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Geçerlilik Bitiş</label><DatePicker
+            <label>{{ t('fiyatListesi.gecerlilikBitis') }}</label><DatePicker
               v-model="form.gecerlilikBitis"
               date-format="dd/mm/yy"
               class="w-full"
@@ -124,7 +124,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
             class="w-full"
@@ -133,13 +133,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -156,10 +156,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { fiyatListesiAPI, stokAPI } from '../api/index.js'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const stokListesi = ref([])
 const yukleniyor = ref(false)
@@ -175,12 +177,9 @@ const form = ref({
   aciklama: ''
 })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Fiyat Düzenle' : 'Yeni Fiyat'))
+const dialogHeader = computed(() => (duzenleme.value ? t('fiyatListesi.duzenle') : t('fiyatListesi.yeniFiyat')))
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -189,7 +188,7 @@ onMounted(async () => {
     list.value = fR.data?.content || fR.data || []
     stokListesi.value = sR.data.content || sR.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('fiyatListesi.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -225,16 +224,16 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await fiyatListesiAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Fiyat güncellendi')
+      toastBildirim.basarili(t('fiyatListesi.guncellendi'))
     } else {
       await fiyatListesiAPI.create(payload)
-      toastBildirim.basarili('Fiyat oluşturuldu')
+      toastBildirim.basarili(t('fiyatListesi.olusturuldu'))
     }
     dialog.value = false
     const r = await fiyatListesiAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('fiyatListesi.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
@@ -242,18 +241,18 @@ const kaydet = async () => {
 const sil = (data) => {
   const urunAd = data.stokAd || data.id
   confirm.require({
-    message: `"${urunAd}" fiyat kaydını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('fiyatListesi.silOnayMesaj', { ad: urunAd }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await fiyatListesiAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Fiyat kaydı silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('fiyatListesi.silindi'), detail: t('fiyatListesi.fiyatSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('fiyatListesi.silmeBasarisiz'))
       }
     }
   })

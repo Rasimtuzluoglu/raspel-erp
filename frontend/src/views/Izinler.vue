@@ -2,7 +2,7 @@
   <div class="izinler-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        İzin Talepleri
+        {{ t('izinler.title') }}
       </h1>
       <div class="filtre-grup">
         <SelectButton
@@ -27,12 +27,12 @@
     >
       <Column
         field="personelAdi"
-        header="Personel"
+        :header="t('izinler.personel')"
         sortable
       />
       <Column
         field="izinTuru"
-        header="İzin Türü"
+        :header="t('izinler.izinTuru')"
         sortable
       >
         <template #body="{ data }">
@@ -41,7 +41,7 @@
       </Column>
       <Column
         field="baslangic"
-        header="Başlangıç"
+        :header="t('izinler.baslangic')"
         sortable
       >
         <template #body="{ data }">
@@ -50,7 +50,7 @@
       </Column>
       <Column
         field="bitis"
-        header="Bitiş"
+        :header="t('izinler.bitis')"
         sortable
       >
         <template #body="{ data }">
@@ -59,12 +59,12 @@
       </Column>
       <Column
         field="gunSayisi"
-        header="Gün"
+        :header="t('izinler.gun')"
         sortable
       />
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
         sortable
       >
         <template #body="{ data }">
@@ -76,14 +76,14 @@
       </Column>
       <Column
         field="aciklama"
-        header="Açıklama"
+        :header="t('common.description')"
       >
         <template #body="{ data }">
           {{ data.aciklama || '-' }}
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('common.actions')"
         style="width: 180px"
       >
         <template #body="{ data }">
@@ -91,21 +91,21 @@
             v-if="data.durum === 'BEKLEMEDE'"
             icon="pi pi-check"
             class="p-button-rounded p-button-sm p-button-success"
-            title="Onayla"
+            :title="t('izinler.onayla')"
             @click="onayla(data)"
           />
           <Button
             v-if="data.durum === 'BEKLEMEDE'"
             icon="pi pi-times"
             class="p-button-rounded p-button-sm p-button-danger"
-            title="Reddet"
+            :title="t('izinler.reddet')"
             @click="reddet(data)"
           />
           <Button
             v-if="authStore?.kullanici?.role === 'ADMIN'"
             icon="pi pi-trash"
             class="p-button-rounded p-button-sm p-button-text"
-            title="Sil"
+            :title="t('common.delete')"
             @click="sil(data)"
           />
         </template>
@@ -121,44 +121,43 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useAuthStore } from '../stores/authStore.js'
 import { personelIzinAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const yukleniyor = ref(false)
 const tumIzinler = ref([])
 const durumFiltre = ref('TUMU')
-const filtreSecenekleri = [
-  { label: 'Tümü', value: 'TUMU' },
-  { label: 'Beklemede', value: 'BEKLEMEDE' },
-  { label: 'Onaylandı', value: 'ONAYLANDI' },
-  { label: 'Reddedildi', value: 'REDDEDILDI' }
-]
+const filtreSecenekleri = computed(() => [
+  { label: t('izinler.tumu'), value: 'TUMU' },
+  { label: t('izinler.beklemede'), value: 'BEKLEMEDE' },
+  { label: t('izinler.onaylandi'), value: 'ONAYLANDI' },
+  { label: t('izinler.reddedildi'), value: 'REDDEDILDI' }
+])
 
 const filtrelenmisIzinler = computed(() => {
   if (durumFiltre.value === 'TUMU') return tumIzinler.value
   return tumIzinler.value.filter((i) => i.durum === durumFiltre.value)
 })
 
-const izinTuruLabel = (t) =>
+const izinTuruLabel = (tip) =>
   ({
-    YILLIK_IZIN: 'Yıllık İzin',
-    HASTA_IZNI: 'Hasta İzni',
-    MAZERET_IZNI: 'Mazeret İzni',
-    DOGUM_IZNI: 'Doğum İzni',
-    BABALIK_IZNI: 'Babalık İzni',
-    EVLILIK_IZNI: 'Evlilik İzni',
-    UCRETSIZ_IZIN: 'Ücretsiz İzin'
-  })[t] || t
+    YILLIK_IZIN: t('izinler.yillikIzin'),
+    HASTA_IZNI: t('izinler.hastaIzni'),
+    MAZERET_IZNI: t('izinler.mazeretIzni'),
+    DOGUM_IZNI: t('izinler.dogumIzni'),
+    BABALIK_IZNI: t('izinler.babalikIzni'),
+    EVLILIK_IZNI: t('izinler.evlilikIzni'),
+    UCRETSIZ_IZIN: t('izinler.ucretsizIzin')
+  })[tip] || tip
 
-const durumLabel = (d) => ({ BEKLEMEDE: 'Beklemede', ONAYLANDI: 'Onaylandı', REDDEDILDI: 'Reddedildi' })[d] || d
+const durumLabel = (d) => ({ BEKLEMEDE: t('izinler.beklemede'), ONAYLANDI: t('izinler.onaylandi'), REDDEDILDI: t('izinler.reddedildi') })[d] || d
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -166,26 +165,26 @@ onMounted(async () => {
     const r = await personelIzinAPI.getAll()
     tumIzinler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('izinler.hataYukleme'))
   }
   yukleniyor.value = false
 })
 
 const onayla = (data) => {
   confirm.require({
-    message: `${data.personelAdi} - ${izinTuruLabel(data.izinTuru)} iznini onaylamak istiyor musunuz?`,
-    header: 'İzin Onayı',
+    message: t('izinler.onayOnayMesaj', { personel: data.personelAdi, tur: izinTuruLabel(data.izinTuru) }),
+    header: t('izinler.izinOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Onayla',
-    rejectLabel: 'İptal',
+    acceptLabel: t('izinler.onayla'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
         const r = await personelIzinAPI.getAll()
         tumIzinler.value = r.data?.content || r.data || []
-        toastBildirim.basarili('İzin onaylandı')
+        toastBildirim.basarili(t('izinler.izinOnaylandi'))
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('izinler.islemBasarisiz'))
       }
     }
   })
@@ -193,19 +192,19 @@ const onayla = (data) => {
 
 const reddet = (data) => {
   confirm.require({
-    message: `${data.personelAdi} - ${izinTuruLabel(data.izinTuru)} iznini reddetmek istiyor musunuz?`,
-    header: 'İzin Reddi',
+    message: t('izinler.redOnayMesaj', { personel: data.personelAdi, tur: izinTuruLabel(data.izinTuru) }),
+    header: t('izinler.izinReddi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Reddet',
-    rejectLabel: 'İptal',
+    acceptLabel: t('izinler.reddet'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
         const r = await personelIzinAPI.getAll()
         tumIzinler.value = r.data?.content || r.data || []
-        toastBildirim.basarili('İzin reddedildi')
+        toastBildirim.basarili(t('izinler.izinReddedildi'))
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('izinler.islemBasarisiz'))
       }
     }
   })
@@ -215,18 +214,18 @@ const kullaniciAdi = computed(() => authStore?.kullanici?.displayName || authSto
 
 const sil = (data) => {
   confirm.require({
-    message: 'Bu izin kaydını silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('izinler.silOnayMesaj'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await personelIzinAPI.delete(data.id)
         tumIzinler.value = tumIzinler.value.filter((i) => i.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'İzin kaydı silindi', life: 5000 })
+        toast.add({ severity: 'success', summary: t('izinler.silindi'), detail: t('izinler.izinSilindi'), life: 5000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('izinler.silmeBasarisiz'))
       }
     }
   })

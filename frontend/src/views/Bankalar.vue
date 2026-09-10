@@ -1,11 +1,11 @@
 <template>
   <div class="bankalar-container">
-    <h1>Banka Hesap Yönetimi</h1>
+    <h1>{{ t('bankalar.title') }}</h1>
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Banka Hesabı"
+          :label="t('bankalar.yeniBanka')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -13,7 +13,7 @@
       </template>
       <template #end>
         <Button
-          label="Excel"
+          :label="t('bankalar.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
           @click="excelIndir"
@@ -44,12 +44,12 @@
       >
         <Column
           field="ad"
-          header="Banka Adı"
+          :header="t('bankalar.colBankaAdi')"
           style="width: 200px"
         />
         <Column
           field="hesapNo"
-          header="Hesap No"
+          :header="t('bankalar.colHesapNo')"
           style="width: 150px"
         >
           <template #body="s">
@@ -58,14 +58,14 @@
         </Column>
         <Column
           field="iban"
-          header="IBAN"
+          :header="t('bankalar.iban')"
           style="width: 230px"
         >
           <template #body="s">
             <span
               v-if="s.data.iban"
               class="kopyalanabilir"
-              @click="kopyala(s.data.iban, 'IBAN Kopyalandı')"
+              @click="kopyala(s.data.iban, t('bankalar.ibanKopyalandi'))"
             >
               {{ s.data.iban }} <i class="pi pi-copy kopyala-ikon" />
             </span>
@@ -74,7 +74,7 @@
         </Column>
         <Column
           field="bakiye"
-          header="Bakiye"
+          :header="t('bankalar.colBakiye')"
           style="width: 130px"
         >
           <template #body="s">
@@ -82,20 +82,20 @@
           </template>
         </Column>
         <Column
-          header="İşlemler"
+          :header="t('common.actions')"
           style="width: 140px"
         >
           <template #body="s">
             <Button
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
-              title="Düzenle"
+              :title="t('common.edit')"
               @click="editBanka(s.data)"
             />
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
-              title="Sil"
+              :title="t('common.delete')"
               @click="confirmDelete(s.data.id)"
             />
           </template>
@@ -103,10 +103,10 @@
       </DataTable>
       <EmptyState
         v-if="bankaStore.bankalar.length === 0"
-        message="Henüz banka hesabı bulunamadı"
-        sub-message="İlk banka hesabınızı eklemek için Yeni Banka Hesabı butonuna tıklayın"
+        :message="t('bankalar.empty')"
+        :sub-message="t('bankalar.emptyHint')"
         icon="pi pi-building"
-        action-label="Yeni Banka Hesabı"
+        :action-label="t('bankalar.yeniBanka')"
         action-icon="pi pi-plus"
         @action="openDialog"
       />
@@ -114,31 +114,31 @@
 
     <Dialog
       v-model:visible="showDialog"
-      :header="editingId ? 'Banka Hesabı Düzenle' : 'Yeni Banka Hesabı'"
+      :header="editingId ? t('bankalar.duzenle') : t('bankalar.yeniBanka')"
       :modal="true"
       style="width: 500px"
     >
       <div class="form-group">
-        <label>Banka Adı *</label>
+        <label>{{ t('bankalar.bankaAdi') }}</label>
         <InputText
           v-model="form.ad"
-          placeholder="Banka adını giriniz"
+          :placeholder="t('bankalar.bankaAdiPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Hesap No</label>
+        <label>{{ t('bankalar.hesapNo') }}</label>
         <InputText
           v-model="form.hesapNo"
-          placeholder="Hesap numarası"
+          :placeholder="t('bankalar.hesapNoPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>IBAN</label>
+        <label>{{ t('bankalar.iban') }}</label>
         <InputText
           v-model="form.iban"
-          placeholder="IBAN numarası"
+          :placeholder="t('bankalar.ibanPlaceholder')"
           class="w-full"
         />
       </div>
@@ -146,7 +146,7 @@
         v-if="!editingId"
         class="form-group"
       >
-        <label>Açılış Bakiyesi</label>
+        <label>{{ t('bankalar.acilisBakiyesi') }}</label>
         <InputNumber
           v-model="form.bakiye"
           :min="0"
@@ -157,13 +157,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="closeDialog"
         />
         <Button
-          :label="editingId ? 'Güncelle' : 'Kaydet'"
+          :label="editingId ? t('bankalar.guncelle') : t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="saveBanka"
@@ -189,8 +189,10 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const confirm = useConfirm()
 const bankaStore = useBankaStore()
 const { kopyala } = usePanoyaKopyala()
@@ -208,7 +210,7 @@ onMounted(async () => {
   try {
     await bankaStore.getAllBankalar()
   } catch {
-    toastBildirim.hata('Bankalar yüklenirken hata oluştu')
+    toastBildirim.hata(t('bankalar.hataYukleme'))
   } finally {
     loading.value = false
   }
@@ -234,7 +236,7 @@ const editBanka = (banka) => {
 
 const saveBanka = async () => {
   if (!form.value.ad.trim()) {
-    toastBildirim.uyari('Banka adı boş olamaz')
+    toastBildirim.uyari(t('bankalar.adBosOlamaz'))
     return
   }
   saving.value = true
@@ -245,15 +247,15 @@ const saveBanka = async () => {
         hesapNo: form.value.hesapNo,
         iban: form.value.iban
       })
-      toastBildirim.basarili('Banka hesabı güncellendi')
+      toastBildirim.basarili(t('bankalar.guncellendi'))
     } else {
       await bankaStore.addBanka(form.value)
-      toastBildirim.basarili('Banka hesabı oluşturuldu')
+      toastBildirim.basarili(t('bankalar.olusturuldu'))
     }
     formTemizle()
     closeDialog()
   } catch {
-    toastBildirim.hata('İşlem başarısız')
+    toastBildirim.hata(t('bankalar.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -261,15 +263,15 @@ const saveBanka = async () => {
 
 const confirmDelete = (id) => {
   confirm.require({
-    message: 'Bu banka hesabını silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('bankalar.silOnayMesaj'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await bankaStore.deleteBanka(id)
-        toastBildirim.basarili('Banka hesabı silindi')
+        toastBildirim.basarili(t('bankalar.silindi'))
       } catch {
-        toastBildirim.hata('Silme başarısız')
+        toastBildirim.hata(t('bankalar.silmeBasarisiz'))
       }
     }
   })

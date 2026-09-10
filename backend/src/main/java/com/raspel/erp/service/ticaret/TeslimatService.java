@@ -161,6 +161,22 @@ public class TeslimatService {
         return toDTO(t, driverAd);
     }
 
+    /**
+     * Sipariş faturaya dönüşünce sipariş bazlı teslimatı faturaya bağlar
+     * (böylece daha önce atanmış şoför Teslimatlar'a fatura numarasıyla yansır).
+     */
+    @Transactional
+    public void siparisFaturaBagla(Long siparisId, Long faturaId, String faturaNumarasi, Long sirketId) {
+        List<Teslimat> mevcut = teslimatRepository.findBySirketIdAndSiparisId(sirketId, siparisId);
+        if (mevcut.isEmpty()) return;
+        Teslimat t = mevcut.get(0);
+        t.setFaturaId(faturaId);
+        if (faturaNumarasi != null && !faturaNumarasi.isBlank()) {
+            t.setFaturaNumarasi(faturaNumarasi);
+        }
+        teslimatRepository.save(t);
+    }
+
     @Transactional
     public TeslimatDTO fotoYukle(Long id, MultipartFile file, Long sirketId, Long kullaniciId) {
         Teslimat t = teslimatRepository.findById(id)

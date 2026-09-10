@@ -1,12 +1,12 @@
 <template>
   <div class="notlar-page">
     <PageHeader
-      title="Notlar"
-      subtitle="Hızlı not al, düzenle, yönet. Artık başka uygulamaya gerek yok."
+      :title="t('notlar.title')"
+      :subtitle="t('notlar.subtitle')"
     >
       <template #actions>
         <Button
-          label="Yeni Not"
+          :label="t('notlar.yeniNot')"
           icon="pi pi-plus"
           class="p-button-primary"
           @click="dialogAc"
@@ -19,9 +19,9 @@
       class="geri-al-banner"
     >
       <i class="pi pi-history" />
-      <span>"{{ silinenSon?.baslik }}" silindi.</span>
+      <span>"{{ silinenSon?.baslik }}" {{ t('notlar.silindiBanner') }}</span>
       <Button
-        label="Geri Al"
+        :label="t('notlar.geriAl')"
         icon="pi pi-undo"
         size="small"
         @click="geriAl"
@@ -45,12 +45,12 @@
       class="empty-box"
     >
       <i class="pi pi-pen-to-square empty-icon" />
-      <h3>Henüz Not Yok</h3>
+      <h3>{{ t('notlar.emptyTitle') }}</h3>
       <p style="margin-bottom: 1rem">
-        İlk notunu eklemek için aşağıdaki butona tıkla.
+        {{ t('notlar.emptyHint') }}
       </p>
       <Button
-        label="Yeni Not Ekle"
+        :label="t('notlar.yeniNotEkle')"
         icon="pi pi-plus"
         class="p-button-primary"
         @click="dialogAc"
@@ -71,26 +71,26 @@
           <span
             class="onem-badge"
             :class="item.onemDerecesi?.toLowerCase()"
-          >{{ item.onemDerecesi || 'NORMAL' }}</span>
+          >{{ onemAdi(item.onemDerecesi || 'NORMAL') }}</span>
           <span class="not-tarih">{{ formatTarih(item.olusturmaTarihi) }}</span>
         </div>
         <h4 class="not-baslik">
           {{ item.baslik }}
         </h4>
         <p class="not-icerik">
-          {{ item.icerik || 'Açıklama yok' }}
+          {{ item.icerik || t('notlar.aciklamaYok') }}
         </p>
         <div class="not-card-actions">
           <Button
             icon="pi pi-pencil"
             class="p-button-rounded p-button-text p-button-sm"
-            title="Düzenle"
+            :title="t('common.edit')"
             @click="dialogDuzenle(item)"
           />
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-text p-button-danger p-button-sm"
-            title="Sil"
+            :title="t('common.delete')"
             @click="sil(item.id)"
           />
         </div>
@@ -104,36 +104,36 @@
       style="width: 500px"
     >
       <FormField
-        label="Başlık"
+        :label="t('notlar.baslik')"
         :required="true"
-        :error="gonderildi && !form.baslik?.trim() ? 'Başlık zorunludur' : ''"
+        :error="gonderildi && !form.baslik?.trim() ? t('notlar.baslikZorunlu') : ''"
       >
         <InputText
           v-model="form.baslik"
-          placeholder="Not başlığı"
+          :placeholder="t('notlar.baslikPlaceholder')"
           class="w-full"
           :class="{ 'p-invalid': gonderildi && !form.baslik?.trim() }"
         />
       </FormField>
-      <FormField label="İçerik">
+      <FormField :label="t('notlar.icerik')">
         <Textarea
           v-model="form.icerik"
-          placeholder="Not içeriği..."
+          :placeholder="t('notlar.icerikPlaceholder')"
           rows="5"
           class="w-full"
         />
       </FormField>
-      <FormField label="Önem Derecesi">
+      <FormField :label="t('notlar.onemDerecesi')">
         <Dropdown
           v-model="form.onemDerecesi"
           :options="onemSecenek"
           option-label="label"
           option-value="value"
-          placeholder="Seçiniz"
+          :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
       </FormField>
-      <FormField label="Renk">
+      <FormField :label="t('notlar.renk')">
         <div class="renk-secici">
           <button
             v-for="r in renkSecenekler"
@@ -149,13 +149,13 @@
       </FormField>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialogGoster = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -171,29 +171,34 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useNotStore } from '../stores/notStore.js'
 import FormField from '../components/FormField.vue'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const store = useNotStore()
+const { t } = useI18n()
 
 const onemSecenek = [
-  { label: 'Düşük', value: 'DUSUK' },
-  { label: 'Normal', value: 'NORMAL' },
-  { label: 'Yüksek', value: 'YUKSEK' },
-  { label: 'Kritik', value: 'KRITIK' }
+  { label: t('notlar.dusuk'), value: 'DUSUK' },
+  { label: t('notlar.normal'), value: 'NORMAL' },
+  { label: t('notlar.yuksek'), value: 'YUKSEK' },
+  { label: t('notlar.kritik'), value: 'KRITIK' }
 ]
 
 const renkSecenekler = [
-  { deger: 'MAVI', renk: '#3b82f6', etiket: 'Mavi' },
-  { deger: 'YESIL', renk: '#22c55e', etiket: 'Yeşil' },
-  { deger: 'SARI', renk: '#f59e0b', etiket: 'Sarı' },
-  { deger: 'KIRMIZI', renk: '#ef4444', etiket: 'Kırmızı' },
-  { deger: 'MOR', renk: '#8b5cf6', etiket: 'Mor' },
-  { deger: 'PEMBE', renk: '#ec4899', etiket: 'Pembe' },
-  { deger: 'GRİ', renk: '#64748b', etiket: 'Gri' }
+  { deger: 'MAVI', renk: '#3b82f6', etiket: t('notlar.mavi') },
+  { deger: 'YESIL', renk: '#22c55e', etiket: t('notlar.yesil') },
+  { deger: 'SARI', renk: '#f59e0b', etiket: t('notlar.sari') },
+  { deger: 'KIRMIZI', renk: '#ef4444', etiket: t('notlar.kirmizi') },
+  { deger: 'MOR', renk: '#8b5cf6', etiket: t('notlar.mor') },
+  { deger: 'PEMBE', renk: '#ec4899', etiket: t('notlar.pembe') },
+  { deger: 'GRİ', renk: '#64748b', etiket: t('notlar.gri') }
 ]
 
 const renkSinif = (r) => `renk-${(r || 'MAVI').toLowerCase()}`
+
+const onemAdi = (v) =>
+  ({ DUSUK: t('notlar.dusuk'), NORMAL: t('notlar.normal'), YUKSEK: t('notlar.yuksek'), KRITIK: t('notlar.kritik') })[v] || v
 
 const dialogGoster = ref(false)
 const duzenlemeModu = ref(false)
@@ -204,7 +209,7 @@ const geriAlGoster = ref(false)
 const silinenSon = ref(null)
 let geriAlZamanlayici = null
 
-const dialogBaslik = computed(() => (duzenlemeModu.value ? 'Notu Düzenle' : 'Yeni Not'))
+const dialogBaslik = computed(() => (duzenlemeModu.value ? t('notlar.duzenle') : t('notlar.yeniNot')))
 
 onMounted(() => store.getAllNotlar())
 
@@ -229,14 +234,14 @@ const kaydet = async () => {
   try {
     if (duzenlemeModu.value) {
       await store.updateNot(form.value.id, form.value)
-      toast.add({ severity: 'success', summary: 'Güncellendi', detail: 'Not başarıyla güncellendi.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('notlar.guncellendi'), detail: t('notlar.guncellemeBasarili'), life: 3000 })
     } else {
       await store.addNot(form.value)
-      toast.add({ severity: 'success', summary: 'Eklendi', detail: 'Not başarıyla eklendi.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('notlar.eklendi'), detail: t('notlar.eklemeBasarili'), life: 3000 })
     }
     dialogGoster.value = false
   } catch {
-    toastBildirim.hata('İşlem başarısız oldu.')
+    toastBildirim.hata(t('notlar.islemBasarisiz'))
   } finally {
     kaydediliyor.value = false
   }

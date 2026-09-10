@@ -1,6 +1,6 @@
 <template>
   <div class="toplu-stok-container">
-    <h1>Toplu Stok İşlemleri</h1>
+    <h1>{{ t('topluStok.title') }}</h1>
 
     <div class="islem-grid">
       <Card>
@@ -8,17 +8,17 @@
           <i
             class="pi pi-file-import"
             style="margin-right: 8px; color: #60a5fa"
-          />CSV ile Stok Aktar
+          />{{ t('topluStok.csvAktarBaslik') }}
         </template>
         <template #content>
           <div class="csv-aciklama">
-            <p>CSV dosyasından toplu stok girişi yapın. CSV formatı:</p>
+            <p>{{ t('topluStok.csvAciklama') }}</p>
             <pre>ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar;stokGrubu;rafNo</pre>
             <a
               href="#"
               style="color: #60a5fa; font-size: 13px"
               @click.prevent="ornekCsv"
-            >Örnek CSV indir</a>
+            >{{ t('topluStok.ornekCsvIndir') }}</a>
           </div>
           <div class="csv-upload">
             <input
@@ -29,7 +29,7 @@
               @change="csvSec"
             >
             <Button
-              label="CSV Seç"
+              :label="t('topluStok.csvSec')"
               icon="pi pi-upload"
               class="p-button-outlined"
               @click="$refs.fileInput.click()"
@@ -43,53 +43,53 @@
             v-if="csvVeri && csvVeri.length"
             class="csv-preview"
           >
-            <h3>Önizleme ({{ csvVeri ? csvVeri.length : 0 }} kayıt)</h3>
+            <h3>{{ t('topluStok.onizleme', { n: csvVeri ? csvVeri.length : 0 }) }}</h3>
             <DataTable
               :value="csvVeri.slice(0, 5)"
               size="small"
               striped-rows
             >
-              <Column header="Satır #">
+              <Column :header="t('topluStok.satir')">
                 <template #body="s">
                   {{ s.index + 1 }}
                 </template>
               </Column>
               <Column
                 field="stokKodu"
-                header="Kod"
+                :header="t('topluStok.kod')"
               />
               <Column
                 field="ad"
-                header="Ad"
+                :header="t('topluStok.ad')"
               />
               <Column
                 field="barkod"
-                header="Barkod"
+                :header="t('topluStok.barkod')"
               />
               <Column
                 field="birim"
-                header="Birim"
+                :header="t('topluStok.birim')"
               />
               <Column
                 field="fiyat"
-                header="Fiyat"
+                :header="t('topluStok.fiyat')"
               />
               <Column
                 field="miktar"
-                header="Miktar"
+                :header="t('topluStok.miktar')"
               />
             </DataTable>
-            <small v-if="csvVeri && csvVeri.length > 5">...ve {{ csvVeri.length - 5 }} kayıt daha</small>
+            <small v-if="csvVeri && csvVeri.length > 5">{{ t('topluStok.kayitDaha', { n: csvVeri.length - 5 }) }}</small>
             <div class="csv-actions">
               <Button
-                label="Tümünü Aktar"
+                :label="t('topluStok.tumunuAktar')"
                 icon="pi pi-check"
                 class="p-button-success"
                 :loading="aktariyor"
                 @click="csvAktar"
               />
               <Button
-                label="İptal"
+                :label="t('common.cancel')"
                 icon="pi pi-times"
                 class="p-button-text"
                 @click="csvIptal"
@@ -104,8 +104,8 @@
               :severity="sonuc.hata === 0 ? 'success' : 'warn'"
               :closable="false"
             >
-              <strong>{{ sonuc.basari }} başarılı</strong>
-              <span v-if="sonuc.hata > 0">, {{ sonuc.hata }} hatalı</span>
+              <strong>{{ t('topluStok.basarili', { n: sonuc.basari }) }}</strong>
+              <span v-if="sonuc.hata > 0">{{ t('topluStok.hatali', { n: sonuc.hata }) }}</span>
             </Message>
           </div>
         </template>
@@ -118,8 +118,10 @@
 import { ref } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { stokAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const fileInput = ref(null)
 const seciliDosya = ref('')
 const csvVeri = ref([])
@@ -161,7 +163,7 @@ const csvSec = (e) => {
     try {
       csvVeri.value = parseCSV(ev.target.result)
     } catch {
-      toastBildirim.hata('Dosya okunamadı')
+      toastBildirim.hata(t('topluStok.dosyaOkunamadi'))
     }
   }
   reader.readAsText(file, 'UTF-8')

@@ -2,7 +2,7 @@
   <div class="kritik-stok-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Kritik Stok & Akıllı Talep Tahmini
+        {{ t('kritikStok.title') }}
       </h1>
       <div class="header-actions">
         <SelectButton
@@ -14,7 +14,7 @@
         />
         <Button
           icon="pi pi-refresh"
-          label="Yenile"
+          :label="t('kritikStok.yenile')"
           class="p-button-text"
           :loading="yukleniyor"
           @click="yukle"
@@ -24,8 +24,8 @@
 
     <IlkZiyaretIpuclari
       anahtar="kritik-stok"
-      baslik="Kritik Stok & Akıllı Talep Tahmini"
-      metin="Kritik seviyedeki ürünleri listeleyin veya 'Akıllı Talep Tahmini' sekmesinden yapay zekanın tüketim trendlerine göre hesapladığı tahmini tükenme günlerini ve proaktif sipariş önerilerini inceleyin."
+      :baslik="t('kritikStok.title')"
+      :metin="t('kritikStok.ipucuMetin')"
     />
 
     <!-- 1. Akıllı Talep Tahmini Görünümü -->
@@ -37,22 +37,22 @@
         <div class="ozet-kart acil">
           <i class="pi pi-exclamation-circle" />
           <div>
-            <span>Acil Sipariş Gereken</span>
-            <strong>{{ tahminList.filter(t => t.durum === 'KRITIK').length }} Ürün</strong>
+            <span>{{ t('kritikStok.acilSiparis') }}</span>
+            <strong>{{ t('kritikStok.urunSayisi', { n: tahminList.filter(t => t.durum === 'KRITIK').length }) }}</strong>
           </div>
         </div>
         <div class="ozet-kart dikkat">
           <i class="pi pi-clock" />
           <div>
-            <span>15 Gün İçinde Bitecek</span>
-            <strong>{{ tahminList.filter(t => t.durum === 'DIKKAT').length }} Ürün</strong>
+            <span>{{ t('kritikStok.onbesGunIcin') }}</span>
+            <strong>{{ t('kritikStok.urunSayisi', { n: tahminList.filter(t => t.durum === 'DIKKAT').length }) }}</strong>
           </div>
         </div>
         <div class="ozet-kart guvenli">
           <i class="pi pi-check-circle" />
           <div>
-            <span>Güvenli Seviyede</span>
-            <strong>{{ tahminList.filter(t => t.durum === 'GUVENLI').length }} Ürün</strong>
+            <span>{{ t('kritikStok.guvenliSeviye') }}</span>
+            <strong>{{ t('kritikStok.urunSayisi', { n: tahminList.filter(t => t.durum === 'GUVENLI').length }) }}</strong>
           </div>
         </div>
       </div>
@@ -64,17 +64,17 @@
       >
         <Column
           field="stokKodu"
-          header="Stok Kodu"
+          :header="t('kritikStok.stokKodu')"
           style="width: 110px"
         />
         <Column
           field="ad"
-          header="Ürün"
+          :header="t('kritikStok.urun')"
           sortable
         />
         <Column
           field="mevcutMiktar"
-          header="Mevcut Stok"
+          :header="t('kritikStok.mevcutStok')"
           sortable
         >
           <template #body="{ data }">
@@ -83,28 +83,28 @@
         </Column>
         <Column
           field="gunlukOrtalamaTuketim"
-          header="Günlük Tüketim"
+          :header="t('kritikStok.gunlukTuketim')"
           sortable
         >
           <template #body="{ data }">
-            {{ data.gunlukOrtalamaTuketim }} {{ data.birim }}/gün
+            {{ t('kritikStok.gunlukTuketimDeger', { miktar: data.gunlukOrtalamaTuketim, birim: data.birim }) }}
           </template>
         </Column>
         <Column
           field="tahminiTukenmeGunu"
-          header="Tahmini Tükenme"
+          :header="t('kritikStok.tahminiTukenme')"
           sortable
         >
           <template #body="{ data }">
             <Tag
-              :value="data.tahminiTukenmeGunu >= 999 ? '999+ gün' : `${data.tahminiTukenmeGunu} gün`"
+              :value="data.tahminiTukenmeGunu >= 999 ? t('kritikStok.gunFazla') : t('kritikStok.gunSayisi', { n: data.tahminiTukenmeGunu })"
               :severity="data.durum === 'KRITIK' ? 'danger' : data.durum === 'DIKKAT' ? 'warn' : 'success'"
             />
           </template>
         </Column>
         <Column
           field="onerilenSiparisMiktari"
-          header="Önerilen Sipariş"
+          :header="t('kritikStok.onerilenSiparis')"
           sortable
         >
           <template #body="{ data }">
@@ -116,7 +116,7 @@
         </Column>
         <Column
           field="proaktifOneri"
-          header="Yapay Zeka Önerisi"
+          :header="t('kritikStok.aiOneri')"
         >
           <template #body="{ data }">
             <span :class="['ai-oneri', data.durum.toLowerCase()]">
@@ -125,14 +125,14 @@
           </template>
         </Column>
         <Column
-          header="İşlem"
+          :header="t('kritikStok.islem')"
           style="width: 100px"
         >
           <template #body="{ data }">
             <Button
               icon="pi pi-cart-plus"
               class="p-button-rounded p-button-text p-button-warning"
-              title="Tedarik Talebi Oluştur"
+              :title="t('kritikStok.tedarikTalebiOlustur')"
               @click="talepOlustur(data)"
             />
           </template>
@@ -147,7 +147,7 @@
         class="bos-durum"
       >
         <i class="pi pi-check-circle" />
-        <p>Kritik seviyede stok yok. Tüm ürünler güvenli seviyede.</p>
+        <p>{{ t('kritikStok.bosDurum') }}</p>
       </div>
 
       <div
@@ -155,7 +155,7 @@
         class="onem-uyari"
       >
         <i class="pi pi-exclamation-triangle" />
-        <strong>{{ list ? list.length : 0 }} ürün</strong> kritik seviyede — yeniden sipariş önerisi oluşturuldu.
+        {{ t('kritikStok.onemUyari', { n: list ? list.length : 0 }) }}
       </div>
 
       <DataTable
@@ -249,8 +249,10 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { stokAPI, satinalmaTalepAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const list = ref([])
 const tahminList = ref([])
 const yukleniyor = ref(false)

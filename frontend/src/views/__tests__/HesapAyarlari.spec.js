@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -36,7 +37,7 @@ describe('HesapAyarlari.vue', () => {
   it('renders settings page without errors', async () => {
     const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
     const wrapper = mount(HesapAyarlari, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.hesap-ayarlari').exists()).toBe(true)
@@ -45,7 +46,7 @@ describe('HesapAyarlari.vue', () => {
   it('renders AI Settings card and inputs', async () => {
     const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
     const wrapper = mount(HesapAyarlari, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.ai-ayar-kart').exists()).toBe(true)

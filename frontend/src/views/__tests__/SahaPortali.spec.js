@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -66,7 +67,7 @@ describe('SahaPortali.vue', () => {
   it('renders field portal and tabs correctly', async () => {
     const SahaPortali = (await import('../SahaPortali.vue')).default
     const wrapper = mount(SahaPortali, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.saha-portali-sayfasi').exists()).toBe(true)

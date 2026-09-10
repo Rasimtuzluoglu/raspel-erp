@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -76,7 +77,7 @@ describe('Onaylar.vue', () => {
   it('renders approval center with leave and expense requests', async () => {
     const Onaylar = (await import('../Onaylar.vue')).default
     const wrapper = mount(Onaylar, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.onaylar-sayfasi').exists()).toBe(true)

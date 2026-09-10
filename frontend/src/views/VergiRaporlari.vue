@@ -2,18 +2,18 @@
   <div class="vergi-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Vergi Raporları
+        {{ t('vergiRaporlari.title') }}
       </h1>
     </div>
 
     <IlkZiyaretIpuclari
       anahtar="vergi-raporlari"
-      baslik="KDV Beyanname & BA/BS"
-      metin="Dönem seçin: KDV beyannameye hazırlık (hesaplanan/indirilecek KDV) ve BA/BS bildirim formları için eşik üstü fatura listeleri üretilir."
+      :baslik="t('vergiRaporlari.ipucuBaslik')"
+      :metin="t('vergiRaporlari.ipucuMetin')"
     />
 
     <div class="donem-secim">
-      <label>Dönem (Ay)</label>
+      <label>{{ t('vergiRaporlari.donemAy') }}</label>
       <InputText
         v-model="donem"
         placeholder="YYYY-MM"
@@ -22,7 +22,7 @@
       />
       <Button
         icon="pi pi-search"
-        label="Getir"
+        :label="t('vergiRaporlari.getir')"
         @click="yukle"
       />
     </div>
@@ -32,20 +32,20 @@
       class="vergi-seksiyon"
     >
       <h2 class="seksiyon-baslik">
-        <i class="pi pi-file-edit" /> KDV Beyannamesi — {{ kdvBeyanname.donem }}
+        <i class="pi pi-file-edit" /> {{ t('vergiRaporlari.kdvBeyannamesi') }} — {{ kdvBeyanname.donem }}
       </h2>
       <div class="kdv-ozet">
         <div class="ozet-kutu">
-          <span>Hesaplanan KDV (Satış)</span><strong>{{ formatCurrency(kdvBeyanname.toplamHesaplananKdv) }}</strong>
+          <span>{{ t('vergiRaporlari.hesaplananKdv') }}</span><strong>{{ formatCurrency(kdvBeyanname.toplamHesaplananKdv) }}</strong>
         </div>
         <div class="ozet-kutu">
-          <span>İndirilecek KDV (Alış)</span><strong>{{ formatCurrency(kdvBeyanname.toplamIndirilecekKdv) }}</strong>
+          <span>{{ t('vergiRaporlari.indirilecekKdv') }}</span><strong>{{ formatCurrency(kdvBeyanname.toplamIndirilecekKdv) }}</strong>
         </div>
         <div
           class="ozet-kutu"
           :class="kdvBeyanname.odenecekKdv > 0 ? 'odenecek' : 'devreden'"
         >
-          <span>{{ kdvBeyanname.odenecekKdv > 0 ? 'Ödenecek KDV' : 'Devreden KDV' }}</span>
+          <span>{{ kdvBeyanname.odenecekKdv > 0 ? t('vergiRaporlari.odenecekKdv') : t('vergiRaporlari.devredenKdv') }}</span>
           <strong>{{
             formatCurrency(kdvBeyanname.odenecekKdv > 0 ? kdvBeyanname.odenecekKdv : kdvBeyanname.devredenKdv)
           }}</strong>
@@ -54,7 +54,7 @@
 
       <div class="kdv-tablolar">
         <div class="kdv-tablo">
-          <h3>1-2 no.lu Tablo (Hesaplanan KDV)</h3>
+          <h3>{{ t('vergiRaporlari.tablo12') }}</h3>
           <DataTable
             :value="kdvBeyanname.satislar"
             striped-rows
@@ -69,7 +69,7 @@
             </Column>
             <Column
               field="matrah"
-              header="Matrah"
+              :header="t('vergiRaporlari.matrah')"
             >
               <template #body="{ data }">
                 {{ formatCurrency(data.matrah) }}
@@ -77,7 +77,7 @@
             </Column>
             <Column
               field="kdv"
-              header="KDV"
+              :header="t('vergiRaporlari.kdv')"
             >
               <template #body="{ data }">
                 {{ formatCurrency(data.kdv) }}
@@ -86,7 +86,7 @@
           </DataTable>
         </div>
         <div class="kdv-tablo">
-          <h3>19-20 no.lu Tablo (İndirilecek KDV)</h3>
+          <h3>{{ t('vergiRaporlari.tablo1920') }}</h3>
           <DataTable
             :value="kdvBeyanname.alislar"
             striped-rows
@@ -101,7 +101,7 @@
             </Column>
             <Column
               field="matrah"
-              header="Matrah"
+              :header="t('vergiRaporlari.matrah')"
             >
               <template #body="{ data }">
                 {{ formatCurrency(data.matrah) }}
@@ -109,7 +109,7 @@
             </Column>
             <Column
               field="kdv"
-              header="KDV"
+              :header="t('vergiRaporlari.kdv')"
             >
               <template #body="{ data }">
                 {{ formatCurrency(data.kdv) }}
@@ -125,14 +125,14 @@
       class="vergi-seksiyon"
     >
       <h2 class="seksiyon-baslik">
-        <i class="pi pi-chart-bar" /> BA/BS Bildirim Formu (eşik: {{ formatCurrency(bsRapor?.esik || baRapor?.esik) }})
+        <i class="pi pi-chart-bar" /> {{ t('vergiRaporlari.baBsForm') }} ({{ t('vergiRaporlari.esik') }}: {{ formatCurrency(bsRapor?.esik || baRapor?.esik) }})
       </h2>
       <div class="ba-bs-secim">
         <SelectButton
           v-model="aktifBs"
           :options="[
-            { label: 'BS (Satış)', value: true },
-            { label: 'BA (Alış)', value: false }
+            { label: t('vergiRaporlari.bsSatis'), value: true },
+            { label: t('vergiRaporlari.baAlis'), value: false }
           ]"
           option-label="label"
           option-value="value"
@@ -144,11 +144,11 @@
       >
         <Column
           field="faturaNo"
-          header="Fatura No"
+          :header="t('vergiRaporlari.faturaNo')"
         />
         <Column
           field="tarih"
-          header="Tarih"
+          :header="t('common.date')"
         >
           <template #body="{ data }">
             {{ formatDate(data.tarih) }}
@@ -156,15 +156,15 @@
         </Column>
         <Column
           field="cariAd"
-          header="Cari"
+          :header="t('vergiRaporlari.cari')"
         />
         <Column
           field="cariVkn"
-          header="VKN/TCKN"
+          :header="t('vergiRaporlari.vknTckn')"
         />
         <Column
           field="matrah"
-          header="Matrah"
+          :header="t('vergiRaporlari.matrah')"
         >
           <template #body="{ data }">
             {{ formatCurrency(data.matrah) }}
@@ -172,7 +172,7 @@
         </Column>
         <Column
           field="kdv"
-          header="KDV"
+          :header="t('vergiRaporlari.kdv')"
         >
           <template #body="{ data }">
             {{ formatCurrency(data.kdv) }}
@@ -180,7 +180,7 @@
         </Column>
         <Column
           field="tutar"
-          header="Tutar"
+          :header="t('common.amount')"
         >
           <template #body="{ data }">
             <strong>{{ formatCurrency(data.tutar) }}</strong>
@@ -191,11 +191,11 @@
         v-if="aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length"
         class="ba-bs-toplam"
       >
-        Toplam Tutar: <strong>{{ formatCurrency(aktifBs ? bsRapor?.toplamTutar : baRapor?.toplamTutar) }}</strong>
+        {{ t('vergiRaporlari.toplamTutar') }} <strong>{{ formatCurrency(aktifBs ? bsRapor?.toplamTutar : baRapor?.toplamTutar) }}</strong>
       </div>
       <EmptyState
         v-if="!(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)"
-        message="Eşik üstü kayıt yok"
+        :message="t('vergiRaporlari.esikUstuKayitYok')"
       />
     </div>
   </div>
@@ -208,8 +208,10 @@ import { raporAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import SelectButton from 'primevue/selectbutton'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const donem = ref(new Date().toISOString().slice(0, 7))
 const kdvBeyanname = ref(null)
@@ -217,14 +219,13 @@ const bsRapor = ref(null)
 const baRapor = ref(null)
 const aktifBs = ref(true)
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(yukle)
 
 const yukle = async () => {
   if (!/^\d{4}-\d{2}$/.test(donem.value)) {
-    toastBildirim.uyari('Dönemi YYYY-MM formatında girin')
+    toastBildirim.uyari(t('vergiRaporlari.donemFormatUyari'))
     return
   }
   try {
@@ -237,7 +238,7 @@ const yukle = async () => {
     bsRapor.value = bs.data
     baRapor.value = ba.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Rapor alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('vergiRaporlari.hataRapor'))
   }
 }
 </script>

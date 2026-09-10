@@ -1,11 +1,11 @@
 <template>
   <div class="satis-container">
-    <h1>Satış İşlemleri</h1>
+    <h1>{{ t('satis.title') }}</h1>
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Satış"
+          :label="t('satis.yeniSatis')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openSatis"
@@ -20,7 +20,7 @@
           <i class="pi pi-search" />
           <InputText
             v-model="filtre"
-            placeholder="Fatura no veya cari ara..."
+            :placeholder="t('satis.aramaPlaceholder')"
           />
         </span>
       </template>
@@ -39,12 +39,12 @@
       >
         <Column
           field="faturaNumarasi"
-          header="Fatura No"
+          :header="t('satis.colFaturaNo')"
           style="width: 160px"
         />
         <Column
           field="tarih"
-          header="Tarih"
+          :header="t('common.date')"
           style="width: 110px"
         >
           <template #body="s">
@@ -53,7 +53,7 @@
         </Column>
         <Column
           field="cariHesapAd"
-          header="Müşteri"
+          :header="t('satis.colMusteri')"
           style="width: 200px"
         >
           <template #body="s">
@@ -62,7 +62,7 @@
         </Column>
         <Column
           field="genelToplam"
-          header="Tutar"
+          :header="t('common.amount')"
           style="width: 130px"
         >
           <template #body="s">
@@ -71,7 +71,7 @@
         </Column>
         <Column
           field="durum"
-          header="Durum"
+          :header="t('common.status')"
           style="width: 100px"
         >
           <template #body="s">
@@ -79,26 +79,26 @@
           </template>
         </Column>
         <Column
-          header="İşlemler"
+          :header="t('common.actions')"
           style="width: 180px"
         >
           <template #body="s">
             <Button
               icon="pi pi-eye"
               class="p-button-rounded p-button-sm p-button-info"
-              title="Görüntüle"
+              :title="t('satis.goruntule')"
               @click="$router.push(`/faturalar/${s.data.id}`)"
             />
             <Button
               icon="pi pi-print"
               class="p-button-rounded p-button-sm p-button-help"
-              title="A4 Fatura Yazdır"
+              :title="t('satis.a4Yazdir')"
               @click="printFatura(s.data.id)"
             />
             <Button
               icon="pi pi-receipt"
               class="p-button-rounded p-button-sm p-button-warning"
-              title="Termal Fiş Yazdır (80mm)"
+              :title="t('satis.termalYazdir')"
               @click="printTermalFis(s.data)"
             />
           </template>
@@ -107,7 +107,7 @@
       <Message
         v-if="filtrelenmisSatislar && filtrelenmisSatislar.length === 0"
         severity="info"
-        text="Satış bulunamadı."
+        :text="t('satis.satisBulunamadi')"
       />
     </div>
 
@@ -119,19 +119,19 @@
       :closable="false"
     >
       <div class="satis-modu">
-        <label style="color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-right: 12px">İşlem Modu</label>
+        <label style="color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-right: 12px">{{ t('satis.islemModu') }}</label>
         <div class="modu-radio-group">
           <div
             :class="['modu-option', { active: satisModu === 'SATIS' }]"
             @click="satisModu = 'SATIS'"
           >
-            <i class="pi pi-shopping-cart" /> Satış Yap
+            <i class="pi pi-shopping-cart" /> {{ t('satis.satisYap') }}
           </div>
           <div
             :class="['modu-option', { active: satisModu === 'TEKLIF' }]"
             @click="satisModu = 'TEKLIF'"
           >
-            <i class="pi pi-file" /> Teklif Oluştur
+            <i class="pi pi-file" /> {{ t('satis.teklifOlustur') }}
           </div>
         </div>
       </div>
@@ -140,13 +140,13 @@
           class="form-group"
           style="flex: 2"
         >
-          <label>Müşteri <span v-if="satisModu === 'SATIS'">*</span></label>
+          <label>{{ t('satis.musteri') }} <span v-if="satisModu === 'SATIS'">*</span></label>
           <Dropdown
             v-model="satisForm.cariHesapId"
             :options="cariHesapStore?.cariHesaplar || []"
             option-label="ad"
             option-value="id"
-            placeholder="Müşteri seçiniz"
+            :placeholder="t('satis.musteriSeciniz')"
             class="w-full"
           />
         </div>
@@ -154,7 +154,7 @@
           class="form-group"
           style="flex: 1"
         >
-          <label>Tarih *</label>
+          <label>{{ t('satis.tarihZorunlu') }}</label>
           <DatePicker
             v-model="satisForm.tarih"
             date-format="dd.mm.yy"
@@ -169,14 +169,14 @@
             class="form-group"
             style="flex: 3"
           >
-            <label>Ürün Seç</label>
+            <label>{{ t('satis.urunSec') }}</label>
             <Dropdown
               v-model="seciliUrun"
               :options="stokStore.stoklar"
               filter
               option-label="ad"
               option-value="id"
-              placeholder="Ürün ara ve seç..."
+              :placeholder="t('satis.urunAra')"
               class="w-full"
               @change="urunSecildi"
             >
@@ -187,7 +187,7 @@
               <template #option="slotProps">
                 <div class="urun-opsiyon">
                   <span class="urun-ad">{{ slotProps.option.ad }}</span>
-                  <span class="urun-stok">{{ slotProps.option.miktar }} {{ slotProps.option.birim || 'Adet' }}</span>
+                  <span class="urun-stok">{{ slotProps.option.miktar }} {{ slotProps.option.birim || t('satis.adetBirim') }}</span>
                   <span class="urun-fiyat">{{ formatCurrency(slotProps.option.fiyat) }}</span>
                 </div>
               </template>
@@ -197,7 +197,7 @@
             class="form-group"
             style="flex: 1"
           >
-            <label>Miktar *</label>
+            <label>{{ t('satis.miktar') }}</label>
             <InputNumber
               v-model="yeniUrunAdet"
               :min="1"
@@ -208,7 +208,7 @@
             class="form-group"
             style="flex: 1"
           >
-            <label>Birim Fiyat</label>
+            <label>{{ t('satis.birimFiyat') }}</label>
             <InputNumber
               v-model="yeniUrunFiyat"
               :min="0"
@@ -228,11 +228,11 @@
             />
           </div>
         </div>
-        <small style="color: #64748b">Ürün seçince fiyat otomatik gelir, değiştirebilirsiniz</small>
+        <small style="color: #64748b">{{ t('satis.fiyatOtomatik') }}</small>
       </div>
 
       <h3 style="margin: 18px 0 10px; color: #f1f5f9; font-size: 15px">
-        Satış Kalemleri
+        {{ t('satis.satisKalemleri') }}
       </h3>
       <DataTable
         :value="satisForm.kalemler"
@@ -246,13 +246,13 @@
             {{ s.index + 1 }}
           </template>
         </Column>
-        <Column header="Ürün">
+        <Column :header="t('satis.urun')">
           <template #body="s">
             {{ s.data.aciklama }}
           </template>
         </Column>
         <Column
-          header="Adet"
+          :header="t('satis.adet')"
           style="width: 80px"
         >
           <template #body="s">
@@ -260,7 +260,7 @@
           </template>
         </Column>
         <Column
-          header="Birim Fiyat"
+          :header="t('satis.birimFiyat')"
           style="width: 120px"
         >
           <template #body="s">
@@ -268,7 +268,7 @@
           </template>
         </Column>
         <Column
-          header="KDV"
+          :header="t('satis.kdv')"
           style="width: 60px"
         >
           <template #body="s">
@@ -276,7 +276,7 @@
           </template>
         </Column>
         <Column
-          header="Tutar"
+          :header="t('satis.tutar')"
           style="width: 120px"
         >
           <template #body="s">
@@ -299,18 +299,18 @@
 
       <div class="summary-box">
         <div class="summary-row">
-          <span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span>
+          <span>{{ t('satis.araToplam') }}</span><span>{{ formatCurrency(araToplam) }}</span>
         </div>
         <div class="summary-row">
-          <span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span>
+          <span>{{ t('satis.kdvToplam') }}</span><span>{{ formatCurrency(kdvToplam) }}</span>
         </div>
         <div class="summary-row total">
-          <span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span>
+          <span>{{ t('satis.genelToplam') }}</span><span>{{ formatCurrency(genelToplam) }}</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Açıklama</label>
+        <label>{{ t('common.description') }}</label>
         <Textarea
           v-model="satisForm.aciklama"
           rows="2"
@@ -320,13 +320,13 @@
 
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showSatisDialog = false"
         />
         <Button
-          :label="satisModu === 'TEKLIF' ? 'Teklifi Kaydet' : 'Satışı Tamamla'"
+          :label="satisModu === 'TEKLIF' ? t('satis.teklifiKaydet') : t('satis.satisiTamamla')"
           icon="pi pi-check"
           :loading="saving"
           :disabled="satisForm.kalemler.length === 0 || (satisModu === 'SATIS' && !satisForm.cariHesapId)"
@@ -347,8 +347,10 @@ import { useAuthStore } from '../stores/authStore.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const authStore = useAuthStore()
@@ -380,7 +382,7 @@ const satislariYukle = async () => {
     const r = await faturaAPI.getAll()
     satislar.value = (r.data?.content || r.data || []).filter((f) => f.tur === 'SATIS')
   } catch {
-    toastBildirim.hata('Satışlar yüklenemedi')
+    toastBildirim.hata(t('satis.satislarYuklenemedi'))
   }
 }
 
@@ -418,7 +420,7 @@ const urunEkle = () => {
   const u = stokStore.stoklar.find((s) => s.id === seciliUrun.value)
   if (!u) return
   if (u.miktar < yeniUrunAdet.value) {
-    toastBildirim.uyari(`Yetersiz stok! Mevcut: ${u.miktar} ${u.birim || 'Adet'}`)
+    toastBildirim.uyari(t('satis.yetersizStok', { miktar: u.miktar, birim: u.birim || t('satis.adetBirim') }))
     return
   }
   const brf = yeniUrunFiyat.value || u.fiyat
@@ -446,7 +448,7 @@ const kdvToplam = computed(() =>
 )
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
-const dialogBaslik = computed(() => (satisModu.value === 'TEKLIF' ? 'Yeni Teklif' : 'Yeni Satış'))
+const dialogBaslik = computed(() => (satisModu.value === 'TEKLIF' ? t('satis.yeniTeklif') : t('satis.yeniSatisDialog')))
 
 const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
@@ -459,11 +461,11 @@ const openSatis = () => {
 
 const satisiTamamla = async () => {
   if (satisModu.value === 'SATIS' && !satisForm.value.cariHesapId) {
-    toastBildirim.uyari('Müşteri seçiniz')
+    toastBildirim.uyari(t('satis.musteriSecinizUyari'))
     return
   }
   if (satisForm.value.kalemler.length === 0) {
-    toastBildirim.uyari('En az bir ürün ekleyin')
+    toastBildirim.uyari(t('satis.enAzBirUrun'))
     return
   }
   saving.value = true
@@ -484,12 +486,12 @@ const satisiTamamla = async () => {
       }))
     }
     await faturaAPI.create(payload)
-    const msg = durum === 'TEKLIF' ? 'Teklif kaydedildi' : 'Satış tamamlandı ve stok düşüldü'
+    const msg = durum === 'TEKLIF' ? t('satis.teklifKaydedildi') : t('satis.satisTamamlandi')
     toastBildirim.basarili(msg)
     showSatisDialog.value = false
     await satislariYukle()
   } catch (err) {
-    const msg = err.response?.data?.message || 'Satış başarısız'
+    const msg = err.response?.data?.message || t('satis.satisBasarisiz')
     toastBildirim.hata(msg)
   } finally {
     saving.value = false
@@ -497,13 +499,12 @@ const satisiTamamla = async () => {
 }
 
 const printFatura = (id) => window.open(`/faturalar/${id}?print=true`, '_blank')
-const durumLabel = (d) => ({ TASLAK: 'Taslak', TEKLIF: 'Teklif', KESILDI: 'Kesildi', IPTAL: 'İptal' })[d] || d
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+const durumLabel = (d) => ({ TASLAK: t('faturalar.durumTaslak'), TEKLIF: t('faturalar.durumTeklif'), KESILDI: t('faturalar.durumKesildi'), IPTAL: t('faturalar.durumIptal') })[d] || d
+import { formatTarih as formatDate } from '../utils/format.js'
 const printTermalFis = (satisData) => {
   const fisWindow = window.open('', '_blank', 'width=400,height=600')
   if (!fisWindow) {
-    toastBildirim.hata('Pencere açılamadı. Pop-up engelleyicinizi kontrol edin.')
+    toastBildirim.hata(t('satis.pencereAcılmadi'))
     return
   }
 
@@ -550,9 +551,9 @@ const printTermalFis = (satisData) => {
       <div class="header text-center">
         <h2>RASPEL ERP</h2>
         <p>SATIŞ FİŞİ</p>
-        <p>Fiş No: ${escapeHtml(satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now()))}</p>
-        <p>Tarih: ${formatDate(satisData.tarih || new Date())}</p>
-        <p>Müşteri: ${escapeHtml(satisData.cariHesapAd || 'Perakende Müşteri')}</p>
+        <p>${t('satis.fisNo')} ${escapeHtml(satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now()))}</p>
+        <p>${t('common.date')}: ${formatDate(satisData.tarih || new Date())}</p>
+        <p>${t('satis.musteriLabel')} ${escapeHtml(satisData.cariHesapAd || t('satis.perakendeMusteri'))}</p>
       </div>
       <div class="line"></div>
       <table>

@@ -1,12 +1,12 @@
 <template>
   <div class="yasal-page">
     <PageHeader
-      title="Kullanım Şartları"
-      subtitle="RasPel ERP platformunu kullanırken kabul ettiğiniz koşullar, haklar ve yükümlülükler."
+      :title="t('kullanimSartlari.title')"
+      :subtitle="t('kullanimSartlari.subtitle')"
     >
       <template #actions>
         <Button
-          label="Yazdır"
+          :label="t('kullanimSartlari.yazdir')"
           icon="pi pi-print"
           class="p-button-outlined p-button-secondary"
           @click="yazdir"
@@ -19,15 +19,15 @@
         <i class="pi pi-file-check" />
       </div>
       <div class="hero-text">
-        <h2>Kullanım Koşulları & Sözleşme Detayları</h2>
-        <p>Son Güncelleme: 01 Ağustos 2026 | Sürüm: v2.4.0</p>
+        <h2>{{ t('kullanimSartlari.heroBaslik') }}</h2>
+        <p>{{ t('kullanimSartlari.sonGuncelleme') }}</p>
       </div>
       <div class="search-box">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search" />
           <InputText
             v-model="aramaMetni"
-            placeholder="Şartlarda ara... (örn. yedekleme, veri, hesap)"
+            :placeholder="t('kullanimSartlari.aramaPlaceholder')"
             class="w-full search-input"
           />
         </span>
@@ -37,7 +37,7 @@
     <div class="layout-grid">
       <!-- Sol Taraf: İçindekiler Navigasyon Barı -->
       <div class="toc-card">
-        <h3><i class="pi pi-list" /> İçindekiler</h3>
+        <h3><i class="pi pi-list" /> {{ t('kullanimSartlari.icindekiler') }}</h3>
         <nav class="toc-nav">
           <a
             v-for="(s, idx) in filtrelenmisMadde"
@@ -60,9 +60,9 @@
           class="no-results"
         >
           <i class="pi pi-filter-slash" />
-          <h4>Aramanızla eşleşen şart maddesi bulunamadı.</h4>
+          <h4>{{ t('kullanimSartlari.bulunamadi') }}</h4>
           <Button
-            label="Filtreyi Temizle"
+            :label="t('kullanimSartlari.filtreTemizle')"
             icon="pi pi-refresh"
             class="p-button-text"
             @click="aramaMetni = ''"
@@ -106,94 +106,90 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const aramaMetni = ref('')
 const aktifSecim = ref(1)
 
-const maddeler = [
+const maddeler = computed(() => [
   {
     id: 1,
-    baslik: 'Hizmet Tanımı',
-    kategori: 'Genel Tanımlar',
+    baslik: t('kullanimSartlari.madde1Baslik'),
+    kategori: t('kullanimSartlari.madde1Kategori'),
     icon: 'pi pi-server',
     iconBg: 'rgba(59, 130, 246, 0.15)',
     iconColor: '#3b82f6',
-    icerik:
-      'RasPel ERP, kurumsal kaynak planlama (ERP) ve müşteri ilişkileri yönetimi (CRM) hizmetleri sunan bir yazılım platformudur. Bu platform; stok, cari hesap, fatura, sipariş, personel, puantaj, masraf ve detaylı raporlama modüllerini içerir.',
-    ipucu: 'Sistem bulut ortamında 7/24 kesintisiz hizmet vermek üzere tasarlanmıştır.'
+    icerik: t('kullanimSartlari.madde1Icerik'),
+    ipucu: t('kullanimSartlari.madde1Ipucu')
   },
   {
     id: 2,
-    baslik: 'Hesap Güvenliği ve Sorumluluk',
-    kategori: 'Kullanıcı Hesapları',
+    baslik: t('kullanimSartlari.madde2Baslik'),
+    kategori: t('kullanimSartlari.madde2Kategori'),
     icon: 'pi pi-user-edit',
     iconBg: 'rgba(16, 185, 129, 0.15)',
     iconColor: '#10b981',
-    icerik:
-      'Hesabınızın güvenliğinden ve şifrenizin gizliliğinden siz sorumlusunuz. Hesabınız üzerinden yapılan tüm işlemler doğrudan şirket yetkilisi olarak sizi bağlar. Başkalarıyla yetki paylaşımı yapılmamalıdır.',
-    ipucu: 'Güçlü bir şifre kullanmanız ve düzenli olarak değiştirmeniz tavsiye edilir.'
+    icerik: t('kullanimSartlari.madde2Icerik'),
+    ipucu: t('kullanimSartlari.madde2Ipucu')
   },
   {
     id: 3,
-    baslik: 'Veri Sorumluluğu & Mülkiyet',
-    kategori: 'Veri Yönetimi',
+    baslik: t('kullanimSartlari.madde3Baslik'),
+    kategori: t('kullanimSartlari.madde3Kategori'),
     icon: 'pi pi-database',
     iconBg: 'rgba(245, 158, 11, 0.15)',
     iconColor: '#f59e0b',
-    icerik:
-      'Platforma yüklediğiniz tüm verilerin (müşteri, stok, finansal bilgiler, belgeler) mülkiyeti tamamen şirketinize aittir. Verilerinizin yasalara uygun şekilde işlenmesinden ve saklanmasından şirketiniz sorumludur.',
-    ipucu: 'Kişisel Verilerin Korunması Kanunu (KVKK) yükümlülüklerinizi yerine getirmeniz gerekmektedir.'
+    icerik: t('kullanimSartlari.madde3Icerik'),
+    ipucu: t('kullanimSartlari.madde3Ipucu')
   },
   {
     id: 4,
-    baslik: 'Hizmet Kesintisi & Sorumluluk Sınırı',
-    kategori: 'Sistem Erişilebilirliği',
+    baslik: t('kullanimSartlari.madde4Baslik'),
+    kategori: t('kullanimSartlari.madde4Kategori'),
     icon: 'pi pi-exclamation-triangle',
     iconBg: 'rgba(239, 68, 68, 0.15)',
     iconColor: '#ef4444',
-    icerik:
-      'Platform bakım, güncelleme veya mücbir sebep durumlarında geçici olarak erişilemez olabilir. Planlı bakımlar önceden bildirilir. Bu durumlardan kaynaklanan olası doğrudan veya dolaylı zararlardan sağlayıcı sorumlu tutulamaz.',
-    ipucu: 'Kritik işlemler öncesinde sistem duyurularını takip etmeniz önerilir.'
+    icerik: t('kullanimSartlari.madde4Icerik'),
+    ipucu: t('kullanimSartlari.madde4Ipucu')
   },
   {
     id: 5,
-    baslik: 'Veri Yedekleme & Arşivleme',
-    kategori: 'Güvenlik',
+    baslik: t('kullanimSartlari.madde5Baslik'),
+    kategori: t('kullanimSartlari.madde5Kategori'),
     icon: 'pi pi-cloud-download',
     iconBg: 'rgba(139, 92, 246, 0.15)',
     iconColor: '#8b5cf6',
-    icerik:
-      'Sistem, düzenli aralıklarla otomatik veritabanı yedeklemesi yapmaktadır. Ancak verilerinizin anlık kopyalarını ve rapor çıktılarınızı düzenli aralıklarla dışa aktarıp arşivlemek kullanıcının sorumluluğundadır.',
-    ipucu: 'Yedekler modülünden dilediğiniz an manuel yedek oluşturup indirebilirsiniz.'
+    icerik: t('kullanimSartlari.madde5Icerik'),
+    ipucu: t('kullanimSartlari.madde5Ipucu')
   },
   {
     id: 6,
-    baslik: 'Fikri Mülkiyet Hakları',
-    kategori: 'Yasal Haklar',
+    baslik: t('kullanimSartlari.madde6Baslik'),
+    kategori: t('kullanimSartlari.madde6Kategori'),
     icon: 'pi pi-lock',
     iconBg: 'rgba(236, 72, 153, 0.15)',
     iconColor: '#ec4899',
-    icerik:
-      'Platformun kaynak kodları, veritabanı mimarisi, arayüz tasarımları ve ticari markası sağlayıcıya aittir. Yazılımın kopyalanması, tersine mühendislik yapılması veya izinsiz dağıtılması kesinlikle yasaktır.',
-    ipucu: 'Tüm fikri mülkiyet hakları uluslararası telif kanunları ile korunmaktadır.'
+    icerik: t('kullanimSartlari.madde6Icerik'),
+    ipucu: t('kullanimSartlari.madde6Ipucu')
   },
   {
     id: 7,
-    baslik: 'İletişim & Destek Kanalları',
-    kategori: 'Destek',
+    baslik: t('kullanimSartlari.madde7Baslik'),
+    kategori: t('kullanimSartlari.madde7Kategori'),
     icon: 'pi pi-headphones',
     iconBg: 'rgba(6, 182, 212, 0.15)',
     iconColor: '#06b6d4',
-    icerik:
-      'Sorularınız, teknik destek talepleriniz veya yetki değişiklikleriniz için sistem yöneticinizle veya platform içi e-posta destek hatlarıyla anında iletişime geçebilirsiniz.',
-    ipucu: 'Destek talepleriniz mesai saatleri içerisinde en kısa sürede yanıtlanır.'
+    icerik: t('kullanimSartlari.madde7Icerik'),
+    ipucu: t('kullanimSartlari.madde7Ipucu')
   }
-]
+])
 
 const filtrelenmisMadde = computed(() => {
-  if (!aramaMetni.value.trim()) return maddeler
+  if (!aramaMetni.value.trim()) return maddeler.value
   const query = aramaMetni.value.toLowerCase()
-  return maddeler.filter(
+  return maddeler.value.filter(
     (m) =>
       m.baslik.toLowerCase().includes(query) ||
       m.icerik.toLowerCase().includes(query) ||

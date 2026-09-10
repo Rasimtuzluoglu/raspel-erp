@@ -3,18 +3,34 @@ export const formatCurrency = (value) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value)
 }
 
+const parseDate = (value) => {
+  if (!value) return null
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? null : d
+}
+
 export const formatDate = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return ''
+  const d = parseDate(date)
+  if (!d) return ''
   return d.toLocaleDateString('tr-TR')
 }
 
 export const formatDateTime = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return ''
+  const d = parseDate(date)
+  if (!d) return ''
   return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+}
+
+export const formatTarih = (date) => formatDate(date) || '-'
+
+export const formatTarihSaat = (date) => {
+  const d = parseDate(date)
+  if (!d) return '-'
+  return d.toLocaleString('tr-TR')
 }
 
 export const durumLabel = (durum) => {

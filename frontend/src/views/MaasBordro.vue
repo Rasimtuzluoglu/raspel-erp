@@ -2,10 +2,10 @@
   <div class="maas-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Maaş Bordro
+        {{ t('maasBordro.title') }}
       </h1>
       <Button
-        label="Yeni Bordro"
+        :label="t('maasBordro.yeniBordro')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,22 +18,22 @@
     >
       <Column
         field="personelAd"
-        header="Personel"
+        :header="t('maasBordro.personel')"
         sortable
       />
       <Column
         field="yil"
-        header="Yıl"
+        :header="t('maasBordro.yil')"
         sortable
       />
       <Column
         field="ay"
-        header="Ay"
+        :header="t('maasBordro.ay')"
         sortable
       />
       <Column
         field="brutMaas"
-        header="Brüt"
+        :header="t('maasBordro.brut')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.brutMaas) }}
@@ -41,7 +41,7 @@
       </Column>
       <Column
         field="kesintiler"
-        header="Kesintiler"
+        :header="t('maasBordro.kesintiler')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.kesintiler) }}
@@ -49,7 +49,7 @@
       </Column>
       <Column
         field="netMaas"
-        header="Net"
+        :header="t('maasBordro.net')"
       >
         <template #body="{ data }">
           {{ formatCurrency(data.netMaas) }}
@@ -57,14 +57,14 @@
       </Column>
       <Column
         field="odemeTarihi"
-        header="Ödeme Tarihi"
+        :header="t('maasBordro.odemeTarihi')"
       >
         <template #body="{ data }">
           {{ formatDate(data.odemeTarihi) }}
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('maasBordro.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -90,20 +90,20 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Personel *</label>
+          <label>{{ t('maasBordro.personelZorunlu') }}</label>
           <Dropdown
             v-model="form.personelId"
             :options="personelListesi"
             option-label="displayName"
             option-value="id"
-            placeholder="Personel Seç"
+            :placeholder="t('maasBordro.personelSec')"
             class="w-full"
             filter
           />
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Yıl</label><InputNumber
+            <label>{{ t('maasBordro.yil') }}</label><InputNumber
               v-model="form.yil"
               class="w-full"
               :min="2000"
@@ -111,7 +111,7 @@
             />
           </div>
           <div class="field">
-            <label>Ay</label><InputNumber
+            <label>{{ t('maasBordro.ay') }}</label><InputNumber
               v-model="form.ay"
               class="w-full"
               :min="1"
@@ -120,7 +120,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Brüt Maaş *</label><InputNumber
+          <label>{{ t('maasBordro.brutMaasZorunlu') }}</label><InputNumber
             v-model="form.brutMaas"
             mode="currency"
             currency="TRY"
@@ -128,7 +128,7 @@
           />
         </div>
         <div class="field">
-          <label>Kesintiler</label><InputNumber
+          <label>{{ t('maasBordro.kesintiler') }}</label><InputNumber
             v-model="form.kesintiler"
             mode="currency"
             currency="TRY"
@@ -136,13 +136,13 @@
           />
         </div>
         <div class="field">
-          <label>Net Maaş (Hesaplanan)</label>
+          <label>{{ t('maasBordro.netMaasHesaplanan') }}</label>
           <span style="font-weight: 700; font-size: 18px; color: #4ade80">{{
             formatCurrency((form.brutMaas || 0) - (form.kesintiler || 0))
           }}</span>
         </div>
         <div class="field">
-          <label>Ödeme Tarihi</label><DatePicker
+          <label>{{ t('maasBordro.odemeTarihi') }}</label><DatePicker
             v-model="form.odemeTarihi"
             date-format="dd/mm/yy"
             class="w-full"
@@ -151,13 +151,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -174,10 +174,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { maasBordroAPI, personelAPI } from '../api/index.js'
 import { formatCurrency } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const personelListesi = ref([])
 const yukleniyor = ref(false)
@@ -193,12 +195,9 @@ const form = ref({
   odemeTarihi: new Date()
 })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Bordro Düzenle' : 'Yeni Bordro'))
+const dialogHeader = computed(() => (duzenleme.value ? t('maasBordro.bordroDuzenle') : t('maasBordro.yeniBordro')))
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -210,7 +209,7 @@ onMounted(async () => {
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
     }))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -241,16 +240,16 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await maasBordroAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Bordro güncellendi')
+      toastBildirim.basarili(t('maasBordro.guncellendi'))
     } else {
       await maasBordroAPI.create(payload)
-      toastBildirim.basarili('Bordro oluşturuldu')
+      toastBildirim.basarili(t('maasBordro.olusturuldu'))
     }
     dialog.value = false
     const r = await maasBordroAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
@@ -258,18 +257,18 @@ const kaydet = async () => {
 const sil = (data) => {
   const personelAd = data.personelAd || data.id
   confirm.require({
-    message: `"${personelAd}" bordrosunu silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('maasBordro.silOnayMesaj', { ad: personelAd }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await maasBordroAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Bordro silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('maasBordro.silindi'), detail: t('maasBordro.bordroSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('maasBordro.silmeBasarisiz'))
       }
     }
   })

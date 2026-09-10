@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import PrimeVue from 'primevue/config'
+import i18n from '../i18n.js'
 import CariHesaplar from '../views/CariHesaplar.vue'
 import Stoklar from '../views/Stoklar.vue'
 
@@ -46,7 +47,7 @@ const ortakStubs = {
 const calistir = (Bilesen, hataYakalandi) =>
   mount(Bilesen, {
     global: {
-      plugins: [createPinia(), PrimeVue, ToastService, ConfirmationService],
+      plugins: [createPinia(), PrimeVue, ToastService, ConfirmationService, i18n],
       stubs: ortakStubs,
       config: { errorHandler: (err) => hataYakalandi.push(String(err && err.message)) }
     }

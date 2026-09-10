@@ -2,10 +2,10 @@
   <div class="sirketler-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Şirketler
+        {{ t('sirketler.title') }}
       </h1>
       <Button
-        label="Yeni Şirket"
+        :label="t('sirketler.yeniSirket')"
         icon="pi pi-plus"
         @click="dialogAc"
       />
@@ -24,28 +24,28 @@
       />
       <Column
         field="ad"
-        header="Şirket Adı"
+        :header="t('sirketler.sirketAdi')"
         sortable
       />
       <Column
         field="vergiNo"
-        header="Vergi No"
+        :header="t('sirketler.vergiNo')"
       />
       <Column
         field="vergiDairesi"
-        header="Vergi Dairesi"
+        :header="t('sirketler.vergiDairesi')"
       />
       <Column
         field="telefon"
-        header="Telefon"
+        :header="t('sirketler.telefon')"
       />
       <Column
         field="email"
-        header="E-posta"
+        :header="t('sirketler.eposta')"
       />
       <Column
         field="tur"
-        header="Tür"
+        :header="t('sirketler.tur')"
       >
         <template #body="{ data }">
           <Tag
@@ -56,40 +56,40 @@
       </Column>
       <Column
         field="yil"
-        header="Yıl"
+        :header="t('sirketler.yil')"
       />
       <Column
         field="aktif"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
-            :value="data.aktif ? 'Aktif' : 'Pasif'"
+            :value="data.aktif ? t('sirketler.aktif') : t('sirketler.pasif')"
             :severity="data.aktif ? 'success' : 'danger'"
           />
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('sirketler.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
           <Button
             icon="pi pi-sitemap"
             class="p-button-rounded p-button-text p-button-info"
-            title="Grup Konsolide Özeti"
+            :title="t('sirketler.grupKonsolideOzeti')"
             @click="konsolideGoster(data)"
           />
           <Button
             icon="pi pi-pencil"
             class="p-button-rounded p-button-text"
-            title="Düzenle"
+            :title="t('common.edit')"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-text p-button-danger"
-            title="Sil"
+            :title="t('common.delete')"
             @click="sil(data)"
           />
         </template>
@@ -98,7 +98,7 @@
 
     <Dialog
       v-model:visible="dialog"
-      :header="duzenleme ? 'Şirket Düzenle' : 'Yeni Şirket'"
+      :header="duzenleme ? t('sirketler.sirketDuzenle') : t('sirketler.yeniSirket')"
       modal
       :style="{ width: '500px' }"
     >
@@ -114,7 +114,7 @@
       </Message>
       <div class="form-grid">
         <div class="field">
-          <label>Şirket Adı *</label>
+          <label>{{ t('sirketler.sirketAdiZorunlu') }}</label>
           <InputText
             v-model="form.ad"
             class="w-full"
@@ -129,13 +129,13 @@
             class="field"
             style="flex: 1;"
           >
-            <label>Şirket Türü</label>
+            <label>{{ t('sirketler.sirketTuru') }}</label>
             <Dropdown
               v-model="form.tur"
               :options="[
-                { label: 'Diğer', value: 'DIGER' },
-                { label: 'Resmi', value: 'RESMI' },
-                { label: 'Gayriresmi', value: 'GAYRIRESMI' }
+                { label: t('sirketler.diger'), value: 'DIGER' },
+                { label: t('sirketler.resmi'), value: 'RESMI' },
+                { label: t('sirketler.gayriresmi'), value: 'GAYRIRESMI' }
               ]"
               option-label="label"
               option-value="value"
@@ -146,7 +146,7 @@
             class="field"
             style="flex: 1;"
           >
-            <label>Mali Yıl</label>
+            <label>{{ t('sirketler.maliYil') }}</label>
             <InputNumber
               v-model="form.yil"
               :use-grouping="false"
@@ -156,60 +156,60 @@
         </div>
 
         <div class="field">
-          <label>Ana Şirket (Gruplama için)</label>
+          <label>{{ t('sirketler.anaSirket') }}</label>
           <Dropdown
             v-model="form.parentId"
             :options="sirketler.filter(s => s.id !== form.id)"
             option-label="ad"
             option-value="id"
             show-clear
-            placeholder="Ana şirket seçin"
+            :placeholder="t('sirketler.anaSirketSecin')"
             class="w-full"
           />
         </div>
 
         <div class="field">
-          <label>Vergi No</label>
+          <label>{{ t('sirketler.vergiNo') }}</label>
           <InputText
             v-model="form.vergiNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Vergi Dairesi</label>
+          <label>{{ t('sirketler.vergiDairesi') }}</label>
           <InputText
             v-model="form.vergiDairesi"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Telefon</label>
+          <label>{{ t('sirketler.telefon') }}</label>
           <InputText
             v-model="form.telefon"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>E-posta</label>
+          <label>{{ t('sirketler.eposta') }}</label>
           <InputText
             v-model="form.email"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Web Sitesi</label>
+          <label>{{ t('sirketler.webSitesi') }}</label>
           <InputText
             v-model="form.webSite"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Logo</label>
+          <label>{{ t('sirketler.logo') }}</label>
           <div class="logo-upload-row">
             <InputText
               v-model="form.logoUrl"
               class="w-full"
-              placeholder="URL girin veya dosya seçin"
+              :placeholder="t('sirketler.logoUrlPlaceholder')"
             />
             <Button
               icon="pi pi-upload"
@@ -229,11 +229,11 @@
             v-if="form.logoUrl"
             :src="form.logoUrl"
             class="logo-preview"
-            alt="Logo Önizleme"
+            :alt="t('sirketler.logoOnizleme')"
           >
         </div>
         <div class="field">
-          <label>Adres</label>
+          <label>{{ t('sirketler.adres') }}</label>
           <Textarea
             v-model="form.adres"
             rows="3"
@@ -241,23 +241,23 @@
           />
         </div>
         <div class="field">
-          <label>Aktif</label>
+          <label>{{ t('sirketler.aktif') }}</label>
           <InputSwitch v-model="form.aktif" />
         </div>
         <div class="field">
-          <label>Negatif Stok İzni (satışta yetersiz stokta satışa izin ver)</label>
+          <label>{{ t('sirketler.negatifStokIzni') }}</label>
           <InputSwitch v-model="form.negatifStokIzni" />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -268,7 +268,7 @@
     <!-- Grup Konsolidasyon Modal -->
     <Dialog
       v-model:visible="konsolideModal"
-      :header="konsolideVeri?.anaSirketAdi + ' - Grup Konsolide Özeti'"
+      :header="konsolideVeri?.anaSirketAdi + ' - ' + t('sirketler.grupKonsolideOzeti')"
       modal
       :style="{ width: '700px' }"
     >
@@ -284,21 +284,21 @@
       >
         <div class="grid grid-cols-3 gap-3">
           <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-100">
-            <span class="text-xs text-accent font-bold block">Toplam Stok Değeri</span>
+            <span class="text-xs text-accent font-bold block">{{ t('sirketler.toplamStokDegeri') }}</span>
             <span class="text-lg font-extrabold text-accent dark:text-blue-200">{{ formatPara(konsolideVeri.toplamStokDegeri) }}</span>
           </div>
           <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-100">
-            <span class="text-xs text-emerald-600 font-bold block">Toplam Alacak</span>
+            <span class="text-xs text-emerald-600 font-bold block">{{ t('sirketler.toplamAlacak') }}</span>
             <span class="text-lg font-extrabold text-emerald-800 dark:text-emerald-200">{{ formatPara(konsolideVeri.toplamAlacakBakiye) }}</span>
           </div>
           <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-100">
-            <span class="text-xs text-amber-600 font-bold block">Toplam Borç</span>
+            <span class="text-xs text-amber-600 font-bold block">{{ t('sirketler.toplamBorc') }}</span>
             <span class="text-lg font-extrabold text-amber-800 dark:text-amber-200">{{ formatPara(konsolideVeri.toplamBorcBakiye) }}</span>
           </div>
         </div>
 
         <h4 class="font-bold text-sm text-secondary dark:text-gray-200 mt-3">
-          Grup ve Yıllık Alt Şirketler ({{ konsolideVeri.sirketler?.length || 0 }})
+          {{ t('sirketler.grupAltSirketler') }} ({{ konsolideVeri.sirketler?.length || 0 }})
         </h4>
         <DataTable
           :value="konsolideVeri.sirketler"
@@ -307,29 +307,29 @@
         >
           <Column
             field="sirketAdi"
-            header="Şirket"
+            :header="t('sirketler.sirket')"
           />
           <Column
             field="tur"
-            header="Tür"
+            :header="t('sirketler.tur')"
             style="width: 100px"
           />
           <Column
             field="yil"
-            header="Yıl"
+            :header="t('sirketler.yil')"
             style="width: 80px"
           />
           <Column
             field="stokSayisi"
-            header="Stok Çeşidi"
+            :header="t('sirketler.stokCesidi')"
             style="width: 100px"
           />
-          <Column header="Stok Değeri">
+          <Column :header="t('sirketler.stokDegeri')">
             <template #body="{ data }">
               {{ formatPara(data.stokDegeri) }}
             </template>
           </Column>
-          <Column header="Cari Bakiye">
+          <Column :header="t('sirketler.cariBakiye')">
             <template #body="{ data }">
               <span :class="data.bakiye >= 0 ? 'text-emerald-600' : 'text-red-600'">
                 {{ formatPara(data.bakiye) }}
@@ -340,7 +340,7 @@
       </div>
       <template #footer>
         <Button
-          label="Kapat"
+          :label="t('stoklar.kapat')"
           class="p-button-text"
           @click="konsolideModal = false"
         />
@@ -354,7 +354,9 @@ import { ref, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { sirketAPI, uploadAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
@@ -395,7 +397,7 @@ const konsolideGoster = async (sirket) => {
     const res = await sirketAPI.getKonsolideOzet(sirket.id)
     konsolideVeri.value = res.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Konsolide veriler alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('sirketler.konsolideAlinamadi'))
   } finally {
     konsolideYukleniyor.value = false
   }
@@ -407,7 +409,7 @@ onMounted(async () => {
     const r = await sirketAPI.getAll()
     sirketler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirketler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('sirketler.yuklemeHatasi'))
   }
   yukleniyor.value = false
 })
@@ -440,7 +442,7 @@ const dialogAc = (data) => {
     const simdi = new Date()
     const fark = Math.ceil((son.getTime() + 30 * 24 * 60 * 60 * 1000 - simdi.getTime()) / (24 * 60 * 60 * 1000))
     if (fark > 0) {
-      uyariMesaji.value = `Şirket adı ${fark} gün içinde tekrar değiştirilemez. Son değişiklik: ${son.toLocaleDateString('tr-TR')}`
+      uyariMesaji.value = t('sirketler.adDegistirmeUyari', { fark, tarih: son.toLocaleDateString('tr-TR') })
     }
   }
   dialog.value = true
@@ -454,7 +456,7 @@ const logoSec = async (event) => {
     const res = await uploadAPI.uploadSirketLogo(file)
     form.value.logoUrl = res.data.url
   } catch (err) {
-    toastBildirim.hata('Logo yüklenemedi')
+    toastBildirim.hata(t('sirketler.logoYuklenemedi'))
   }
   logoYukleniyor.value = false
 }
@@ -462,8 +464,8 @@ const logoSec = async (event) => {
 const kaydet = async () => {
   if (duzenleme.value && form.value.ad !== eskiAd.value && uyariMesaji.value) {
     confirm.require({
-      message: `${uyariMesaji.value}\n\nDeğişiklik yapmak istediğinize emin misiniz?`,
-      header: '30 Gün Kuralı Uyarısı',
+      message: `${uyariMesaji.value}\n\n${t('sirketler.degisiklikOnayi')}`,
+      header: t('sirketler.otuzGunKurali'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => kaydetAction()
     })
@@ -477,16 +479,16 @@ const kaydetAction = async () => {
   try {
     if (duzenleme.value) {
       await sirketAPI.update(seciliId.value, form.value)
-      toastBildirim.basarili('Şirket güncellendi')
+      toastBildirim.basarili(t('sirketler.guncellendi'))
     } else {
       await sirketAPI.create(form.value)
-      toastBildirim.basarili('Şirket oluşturuldu')
+      toastBildirim.basarili(t('sirketler.olusturuldu'))
     }
     dialog.value = false
     const r = await sirketAPI.getAll()
     sirketler.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err.response?.data?.message || t('sirketler.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
@@ -496,7 +498,7 @@ const sil = async (data) => {
     await sirketAPI.delete(data.id)
     sirketler.value = sirketler.value.filter((s) => s.id !== data.id)
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Şirket silinirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('sirketler.silmeHatasi'))
   }
 }
 </script>

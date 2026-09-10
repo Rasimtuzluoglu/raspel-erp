@@ -2,6 +2,8 @@ package com.raspel.erp.dto.ticaret;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,4 +20,6 @@ public class SiparisTakipDTO {
     private long sevkSayisi;
     private String teslimatDurum;
     private long teslimatSayisi;
+    private LocalDate beklenenTeslimTarihi;
+    private boolean teslimatGecikti;
 }

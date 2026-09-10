@@ -126,8 +126,7 @@ defineProps({
 
 defineEmits(['update:visible'])
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>

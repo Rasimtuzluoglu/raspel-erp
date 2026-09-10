@@ -1,15 +1,15 @@
 <template>
   <div class="uretim-sayfasi">
     <div class="sayfa-baslik">
-      <h1><i class="pi pi-cog" /> Üretim</h1>
+      <h1><i class="pi pi-cog" /> {{ t('uretim.title') }}</h1>
     </div>
 
     <!-- Reçeteler -->
     <div class="bolum">
       <div class="bolum-baslik">
-        <h2>Reçeteler (Ürün Ağacı)</h2>
+        <h2>{{ t('uretim.receteler') }}</h2>
         <Button
-          label="Yeni Reçete"
+          :label="t('uretim.yeniRecete')"
           icon="pi pi-plus"
           class="p-button-sm"
           @click="receteDialogAc(null)"
@@ -19,7 +19,7 @@
         v-if="!receteler.length"
         class="bos"
       >
-        Henüz reçete yok.
+        {{ t('uretim.receteYok') }}
       </div>
       <div
         v-for="r in receteler"
@@ -28,8 +28,8 @@
       >
         <div class="satir-bilgi">
           <strong>{{ r.ad }}</strong>
-          <span class="muted">Mamul: {{ r.urunAd || '#' + r.urunId }}</span>
-          <span class="muted">Kalem: {{ (r.kalemler || []).length }}</span>
+          <span class="muted">{{ t('uretim.mamul') }}: {{ r.urunAd || '#' + r.urunId }}</span>
+          <span class="muted">{{ t('uretim.kalem') }}: {{ (r.kalemler || []).length }}</span>
         </div>
         <Button
           icon="pi pi-trash"
@@ -42,9 +42,9 @@
     <!-- Üretim Emirleri -->
     <div class="bolum">
       <div class="bolum-baslik">
-        <h2>Üretim Emirleri</h2>
+        <h2>{{ t('uretim.uretimEmirleri') }}</h2>
         <Button
-          label="Yeni Emir"
+          :label="t('uretim.yeniEmir')"
           icon="pi pi-plus"
           class="p-button-sm"
           @click="emirDialog = true"
@@ -54,7 +54,7 @@
         v-if="!emirler.length"
         class="bos"
       >
-        Henüz üretim emri yok.
+        {{ t('uretim.emirYok') }}
       </div>
       <div
         v-for="e in emirler"
@@ -63,7 +63,7 @@
       >
         <div class="satir-bilgi">
           <strong>{{ e.urunAd || '#' + e.urunId }}</strong>
-          <span class="muted">Miktar: {{ e.miktar }}</span>
+          <span class="muted">{{ t('uretim.miktar') }}: {{ e.miktar }}</span>
           <Tag
             :value="durumAdi(e.durum)"
             :severity="durumSeverity(e.durum)"
@@ -71,7 +71,7 @@
         </div>
         <Button
           v-if="e.durum !== 'TAMAMLANDI' && e.durum !== 'IPTAL'"
-          label="Tamamla"
+          :label="t('uretim.tamamla')"
           icon="pi pi-check"
           class="p-button-sm p-button-success"
           @click="emirTamamla(e)"
@@ -82,21 +82,21 @@
     <!-- Reçete Dialog -->
     <Dialog
       v-model:visible="receteDialog"
-      header="Reçete"
+      :header="t('uretim.recete')"
       :modal="true"
       :style="{ width: '520px' }"
     >
       <div class="form">
         <div class="field">
-          <label>Reçete Adı *</label>
+          <label>{{ t('uretim.receteAdiZorunlu') }}</label>
           <InputText
             v-model="receteForm.ad"
             class="w-full"
-            placeholder="Örn: Masa A Reçetesi"
+            :placeholder="t('uretim.receteAdiPlaceholder')"
           />
         </div>
         <div class="field">
-          <label>Üretilecek Ürün (Mamul) *</label>
+          <label>{{ t('uretim.mamulZorunlu') }}</label>
           <Dropdown
             v-model="receteForm.urunId"
             :options="stoklar"
@@ -104,11 +104,11 @@
             option-value="id"
             filter
             class="w-full"
-            placeholder="Mamul seçin"
+            :placeholder="t('uretim.mamulSecin')"
           />
         </div>
         <div class="field">
-          <label>Hammaddeler</label>
+          <label>{{ t('uretim.hammaddeler') }}</label>
           <div
             v-for="(k, i) in receteForm.kalemler"
             :key="i"
@@ -121,13 +121,13 @@
               option-value="id"
               filter
               class="w-full"
-              placeholder="Hammadde"
+              :placeholder="t('uretim.hammadde')"
             />
             <InputNumber
               v-model="k.miktar"
               :min="0"
               class="kalem-miktar"
-              placeholder="Miktar"
+              :placeholder="t('uretim.miktar')"
             />
             <Button
               icon="pi pi-trash"
@@ -136,7 +136,7 @@
             />
           </div>
           <Button
-            label="Kalem Ekle"
+            :label="t('uretim.kalemEkle')"
             icon="pi pi-plus"
             class="p-button-sm p-button-text"
             @click="receteForm.kalemler.push({ hammaddeId: null, miktar: 1 })"
@@ -145,12 +145,12 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="receteDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="receteKaydet"
@@ -161,13 +161,13 @@
     <!-- Emir Dialog -->
     <Dialog
       v-model:visible="emirDialog"
-      header="Yeni Üretim Emri"
+      :header="t('uretim.yeniUretimEmri')"
       :modal="true"
       :style="{ width: '420px' }"
     >
       <div class="form">
         <div class="field">
-          <label>Ürün *</label>
+          <label>{{ t('uretim.urunZorunlu') }}</label>
           <Dropdown
             v-model="emirForm.urunId"
             :options="stoklar"
@@ -175,11 +175,11 @@
             option-value="id"
             filter
             class="w-full"
-            placeholder="Ürün seçin"
+            :placeholder="t('uretim.urunSecin')"
           />
         </div>
         <div class="field">
-          <label>Miktar *</label>
+          <label>{{ t('uretim.miktarZorunlu') }}</label>
           <InputNumber
             v-model="emirForm.miktar"
             :min="0"
@@ -189,12 +189,12 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="emirDialog = false"
         />
         <Button
-          label="Oluştur"
+          :label="t('uretim.olustur')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="emirKaydet"
@@ -208,8 +208,10 @@
 import { ref, onMounted } from 'vue'
 import { uretimAPI, stokAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const receteler = ref([])
 const emirler = ref([])
@@ -221,7 +223,7 @@ const kaydediliyor = ref(false)
 const receteForm = ref({ ad: '', urunId: null, kalemler: [] })
 const emirForm = ref({ urunId: null, miktar: null })
 
-const durumAdi = (d) => ({ TASLAK: 'Taslak', URETIMDE: 'Üretimde', TAMAMLANDI: 'Tamamlandı', IPTAL: 'İptal' })[d] || d
+const durumAdi = (d) => ({ TASLAK: t('faturalar.durumTaslak'), URETIMDE: t('uretim.uretimde'), TAMAMLANDI: t('uretim.tamamlandi'), IPTAL: t('faturalar.durumIptal') })[d] || d
 const durumSeverity = (d) => ({ TASLAK: 'secondary', URETIMDE: 'info', TAMAMLANDI: 'success', IPTAL: 'danger' })[d] || 'secondary'
 
 const yukle = async () => {
@@ -231,7 +233,7 @@ const yukle = async () => {
     emirler.value = e.data || []
     stoklar.value = s.data?.content || s.data || []
   } catch (err) {
-    toastBildirim.hata('Üretim verileri yüklenemedi')
+    toastBildirim.hata(t('uretim.hataYukleme'))
   }
 }
 
@@ -242,7 +244,7 @@ const receteDialogAc = () => {
 
 const receteKaydet = async () => {
   if (!receteForm.value.ad?.trim() || !receteForm.value.urunId) {
-    toastBildirim.uyari('Reçete adı ve mamul zorunludur')
+    toastBildirim.uyari(t('uretim.receteZorunlu'))
     return
   }
   kaydediliyor.value = true
@@ -252,11 +254,11 @@ const receteKaydet = async () => {
       urunId: receteForm.value.urunId,
       kalemler: receteForm.value.kalemler.filter((k) => k.hammaddeId && k.miktar > 0)
     })
-    toastBildirim.basarili('Reçete kaydedildi')
+    toastBildirim.basarili(t('uretim.receteKaydedildi'))
     receteDialog.value = false
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Reçete kaydedilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.receteKaydedilemedi'))
   } finally {
     kaydediliyor.value = false
   }
@@ -265,27 +267,27 @@ const receteKaydet = async () => {
 const receteSil = async (r) => {
   try {
     await uretimAPI.receteSil(r.id)
-    toastBildirim.basarili('Reçete silindi')
+    toastBildirim.basarili(t('uretim.receteSilindi'))
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.silinemedi'))
   }
 }
 
 const emirKaydet = async () => {
   if (!emirForm.value.urunId || !emirForm.value.miktar) {
-    toastBildirim.uyari('Ürün ve miktar zorunludur')
+    toastBildirim.uyari(t('uretim.urunMiktarZorunlu'))
     return
   }
   kaydediliyor.value = true
   try {
     await uretimAPI.emirOlustur(emirForm.value)
-    toastBildirim.basarili('Üretim emri oluşturuldu')
+    toastBildirim.basarili(t('uretim.emirOlusturuldu'))
     emirDialog.value = false
     emirForm.value = { urunId: null, miktar: null }
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Emir oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.emirOlusturulamadi'))
   } finally {
     kaydediliyor.value = false
   }
@@ -294,10 +296,10 @@ const emirKaydet = async () => {
 const emirTamamla = async (e) => {
   try {
     await uretimAPI.emirTamamla(e.id)
-    toastBildirim.basarili('Üretim tamamlandı, stoklar güncellendi')
+    toastBildirim.basarili(t('uretim.uretimTamamlandi'))
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Üretim tamamlanamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.uretimTamamlanamadi'))
   }
 }
 

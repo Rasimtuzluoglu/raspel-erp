@@ -2,17 +2,17 @@
   <div class="muhasebe-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Genel Muhasebe
+        {{ t('muhasebe.title') }}
       </h1>
       <Button
         v-if="aktifSekme === 0"
-        label="Yeni Hesap"
+        :label="t('muhasebe.yeniHesap')"
         icon="pi pi-plus"
         @click="hesapDialogAc()"
       />
       <Button
         v-else-if="aktifSekme === 1"
-        label="Yeni Yevmiye Fişi"
+        :label="t('muhasebe.yeniYevmiyeFisi')"
         icon="pi pi-plus"
         @click="fisDialogAc()"
       />
@@ -20,8 +20,8 @@
 
     <IlkZiyaretIpuclari
       anahtar="muhasebe"
-      baslik="Genel Muhasebe"
-      metin="Hesap planını düzenleyin, dengeli yevmiye fişleri (borç = alacak) kaydedin ve Mizan ile Defter-i Kebir raporlarını görüntüleyin."
+      :baslik="t('muhasebe.title')"
+      :metin="t('muhasebe.ipucuMetin')"
     />
 
     <TabView
@@ -29,28 +29,28 @@
       class="muhasebe-tabs"
     >
       <!-- HESAP PLANI -->
-      <TabPanel header="Hesap Planı">
+      <TabPanel :header="t('muhasebe.hesapPlani')">
         <AppDataTable
           :value="hesaplar"
           :loading="yukleniyor"
           arama-aktif
-          arama-placeholder="Hesap ara..."
+          :arama-placeholder="t('muhasebe.aramaPlaceholder')"
           gorunum-anahtari="muhasebe_hesap_plani"
         >
           <Column
             field="kod"
-            header="Kod"
+            :header="t('muhasebe.kod')"
             sortable
             style="width: 110px"
           />
           <Column
             field="ad"
-            header="Hesap Adı"
+            :header="t('muhasebe.hesapAdi')"
             sortable
           />
           <Column
             field="tip"
-            header="Tip"
+            :header="t('muhasebe.tip')"
           >
             <template #body="{ data }">
               <Tag
@@ -61,10 +61,10 @@
           </Column>
           <Column
             field="grup"
-            header="Grup"
+            :header="t('muhasebe.grup')"
           />
           <Column
-            header="İşlem"
+            :header="t('muhasebe.islem')"
             style="width: 60px"
           >
             <template #body="{ data }">
@@ -80,21 +80,21 @@
       </TabPanel>
 
       <!-- YEVMIYE FİŞLERİ -->
-      <TabPanel header="Yevmiye Fişleri">
+      <TabPanel :header="t('muhasebe.yevmiyeFisleri')">
         <div class="filtre-bar">
           <DatePicker
             v-model="filtreBaslangic"
             date-format="dd/mm/yy"
-            placeholder="Başlangıç"
+            :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="filtreBitis"
             date-format="dd/mm/yy"
-            placeholder="Bitiş"
+            :placeholder="t('muhasebe.bitis')"
           />
           <Button
             icon="pi pi-refresh"
-            label="Yenile"
+            :label="t('muhasebe.yenile')"
             class="p-button-sm p-button-text"
             @click="fisleriYukle"
           />
@@ -106,13 +106,13 @@
         >
           <Column
             field="fisNo"
-            header="Fiş No"
+            :header="t('muhasebe.fisNo')"
             sortable
             style="width: 150px"
           />
           <Column
             field="tarih"
-            header="Tarih"
+            :header="t('common.date')"
             sortable
           >
             <template #body="{ data }">
@@ -121,11 +121,11 @@
           </Column>
           <Column
             field="aciklama"
-            header="Açıklama"
+            :header="t('common.description')"
           />
           <Column
             field="toplamBorc"
-            header="Borç"
+            :header="t('muhasebe.borc')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.toplamBorc) }}
@@ -133,7 +133,7 @@
           </Column>
           <Column
             field="toplamAlacak"
-            header="Alacak"
+            :header="t('muhasebe.alacak')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.toplamAlacak) }}
@@ -141,7 +141,7 @@
           </Column>
           <Column
             field="durum"
-            header="Durum"
+            :header="t('common.status')"
           >
             <template #body="{ data }">
               <Tag
@@ -151,21 +151,21 @@
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('muhasebe.islem')"
             style="width: 140px"
           >
             <template #body="{ data }">
               <Button
                 icon="pi pi-eye"
                 class="p-button-rounded p-button-text"
-                title="Görüntüle"
+                :title="t('muhasebe.goruntule')"
                 @click="fisDetayAc(data)"
               />
               <Button
                 v-if="data.durum !== 'IPTAL'"
                 icon="pi pi-ban"
                 class="p-button-rounded p-button-text p-button-danger"
-                title="İptal Et"
+                :title="t('muhasebe.iptalEt')"
                 @click="fisIptal(data)"
               />
             </template>
@@ -174,21 +174,21 @@
       </TabPanel>
 
       <!-- MİZAN -->
-      <TabPanel header="Mizan">
+      <TabPanel :header="t('muhasebe.mizan')">
         <div class="filtre-bar">
           <DatePicker
             v-model="mizanBaslangic"
             date-format="dd/mm/yy"
-            placeholder="Başlangıç"
+            :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="mizanBitis"
             date-format="dd/mm/yy"
-            placeholder="Bitiş"
+            :placeholder="t('muhasebe.bitis')"
           />
           <Button
             icon="pi pi-refresh"
-            label="Hesapla"
+            :label="t('muhasebe.hesapla')"
             class="p-button-sm"
             @click="mizanYukle"
           />
@@ -200,17 +200,17 @@
         >
           <Column
             field="hesapKodu"
-            header="Hesap Kodu"
+            :header="t('muhasebe.hesapKodu')"
             sortable
             style="width: 110px"
           />
           <Column
             field="hesapAdi"
-            header="Hesap Adı"
+            :header="t('muhasebe.hesapAdi')"
           />
           <Column
             field="borc"
-            header="Borç"
+            :header="t('muhasebe.borc')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.borc) }}
@@ -218,7 +218,7 @@
           </Column>
           <Column
             field="alacak"
-            header="Alacak"
+            :header="t('muhasebe.alacak')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.alacak) }}
@@ -226,7 +226,7 @@
           </Column>
           <Column
             field="borcBakiye"
-            header="Borç Bakiye"
+            :header="t('muhasebe.borcBakiye')"
           >
             <template #body="{ data }">
               <span class="pozitif">{{ formatCurrency(data.borcBakiye) }}</span>
@@ -234,7 +234,7 @@
           </Column>
           <Column
             field="alacakBakiye"
-            header="Alacak Bakiye"
+            :header="t('muhasebe.alacakBakiye')"
           >
             <template #body="{ data }">
               <span class="negatif">{{ formatCurrency(data.alacakBakiye) }}</span>
@@ -244,30 +244,30 @@
       </TabPanel>
 
       <!-- DEFTER-İ KEBİR -->
-      <TabPanel header="Defter-i Kebir">
+      <TabPanel :header="t('muhasebe.defteriKebir')">
         <div class="filtre-bar">
           <Select
             v-model="kebirHesap"
             :options="hesapSecenekleri"
             option-label="ad"
             option-value="kod"
-            placeholder="Hesap seçin"
+            :placeholder="t('muhasebe.hesapSecin')"
             class="kebir-select"
             show-clear
           />
           <DatePicker
             v-model="kebirBaslangic"
             date-format="dd/mm/yy"
-            placeholder="Başlangıç"
+            :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="kebirBitis"
             date-format="dd/mm/yy"
-            placeholder="Bitiş"
+            :placeholder="t('muhasebe.bitis')"
           />
           <Button
             icon="pi pi-refresh"
-            label="Listele"
+            :label="t('muhasebe.listele')"
             class="p-button-sm"
             @click="kebirYukle"
           />
@@ -279,7 +279,7 @@
         >
           <Column
             field="tarih"
-            header="Tarih"
+            :header="t('common.date')"
           >
             <template #body="{ data }">
               {{ formatDate(data.tarih) }}
@@ -287,15 +287,15 @@
           </Column>
           <Column
             field="fisNo"
-            header="Fiş No"
+            :header="t('muhasebe.fisNo')"
           />
           <Column
             field="aciklama"
-            header="Açıklama"
+            :header="t('common.description')"
           />
           <Column
             field="borc"
-            header="Borç"
+            :header="t('muhasebe.borc')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.borc) }}
@@ -303,7 +303,7 @@
           </Column>
           <Column
             field="alacak"
-            header="Alacak"
+            :header="t('muhasebe.alacak')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.alacak) }}
@@ -311,7 +311,7 @@
           </Column>
           <Column
             field="bakiye"
-            header="Bakiye"
+            :header="t('muhasebe.bakiye')"
           >
             <template #body="{ data }">
               {{ formatCurrency(data.bakiye) }}
@@ -321,17 +321,17 @@
       </TabPanel>
 
       <!-- BİLANÇO -->
-      <TabPanel header="Bilanço">
+      <TabPanel :header="t('muhasebe.bilanco')">
         <div class="filtre-bar">
           <Button
             icon="pi pi-refresh"
-            label="Yenile"
+            :label="t('muhasebe.yenile')"
             class="p-button-sm"
             @click="bilancoYukle"
           />
           <Button
             icon="pi pi-file-excel"
-            label="Excel"
+            :label="t('muhasebe.excel')"
             class="p-button-sm p-button-outlined"
             @click="bilancoExcelIndir"
           />
@@ -339,7 +339,7 @@
         <div class="finansal-grid">
           <div class="finansal-kolon">
             <h3 class="finansal-baslik">
-              Aktifler
+              {{ t('muhasebe.aktifler') }}
             </h3>
             <DataTable
               :value="bilanco.aktifler || []"
@@ -349,25 +349,25 @@
             >
               <Column
                 field="kod"
-                header="Kod"
+                :header="t('muhasebe.kod')"
               />
               <Column
                 field="ad"
-                header="Hesap"
+                :header="t('muhasebe.hesap')"
               />
-              <Column header="Tutar">
+              <Column :header="t('common.amount')">
                 <template #body="{ data }">
                   {{ formatCurrency(data.tutar) }}
                 </template>
               </Column>
             </DataTable>
             <div class="finansal-toplam">
-              Toplam Aktif: <strong>{{ formatCurrency(bilanco.aktifToplam) }}</strong>
+              {{ t('muhasebe.toplamAktif') }} <strong>{{ formatCurrency(bilanco.aktifToplam) }}</strong>
             </div>
           </div>
           <div class="finansal-kolon">
             <h3 class="finansal-baslik">
-              Pasifler
+              {{ t('muhasebe.pasifler') }}
             </h3>
             <DataTable
               :value="bilanco.pasifler || []"
@@ -377,20 +377,20 @@
             >
               <Column
                 field="kod"
-                header="Kod"
+                :header="t('muhasebe.kod')"
               />
               <Column
                 field="ad"
-                header="Hesap"
+                :header="t('muhasebe.hesap')"
               />
-              <Column header="Tutar">
+              <Column :header="t('common.amount')">
                 <template #body="{ data }">
                   {{ formatCurrency(data.tutar) }}
                 </template>
               </Column>
             </DataTable>
             <div class="finansal-toplam">
-              Toplam Pasif: <strong>{{ formatCurrency(bilanco.pasifToplam) }}</strong>
+              {{ t('muhasebe.toplamPasif') }} <strong>{{ formatCurrency(bilanco.pasifToplam) }}</strong>
             </div>
           </div>
         </div>
@@ -404,27 +404,27 @@
       </TabPanel>
 
       <!-- KÂR / ZARAR -->
-      <TabPanel header="Kâr/Zarar">
+      <TabPanel :header="t('muhasebe.karZarar')">
         <div class="filtre-bar">
           <DatePicker
             v-model="karZararBaslangic"
             date-format="dd/mm/yy"
-            placeholder="Başlangıç"
+            :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="karZararBitis"
             date-format="dd/mm/yy"
-            placeholder="Bitiş"
+            :placeholder="t('muhasebe.bitis')"
           />
           <Button
             icon="pi pi-refresh"
-            label="Hesapla"
+            :label="t('muhasebe.hesapla')"
             class="p-button-sm"
             @click="karZararYukle"
           />
           <Button
             icon="pi pi-file-excel"
-            label="Excel"
+            :label="t('muhasebe.excel')"
             class="p-button-sm p-button-outlined"
             @click="karZararExcelIndir"
           />
@@ -432,7 +432,7 @@
         <div class="finansal-grid">
           <div class="finansal-kolon">
             <h3 class="finansal-baslik">
-              Gelirler
+              {{ t('muhasebe.gelirler') }}
             </h3>
             <DataTable
               :value="karZarar.gelirler || []"
@@ -442,13 +442,13 @@
             >
               <Column
                 field="kod"
-                header="Kod"
+                :header="t('muhasebe.kod')"
               />
               <Column
                 field="ad"
-                header="Hesap"
+                :header="t('muhasebe.hesap')"
               />
-              <Column header="Tutar">
+              <Column :header="t('common.amount')">
                 <template #body="{ data }">
                   {{ formatCurrency(data.tutar) }}
                 </template>
@@ -457,7 +457,7 @@
           </div>
           <div class="finansal-kolon">
             <h3 class="finansal-baslik">
-              Giderler
+              {{ t('muhasebe.giderler') }}
             </h3>
             <DataTable
               :value="karZarar.giderler || []"
@@ -467,13 +467,13 @@
             >
               <Column
                 field="kod"
-                header="Kod"
+                :header="t('muhasebe.kod')"
               />
               <Column
                 field="ad"
-                header="Hesap"
+                :header="t('muhasebe.hesap')"
               />
-              <Column header="Tutar">
+              <Column :header="t('common.amount')">
                 <template #body="{ data }">
                   {{ formatCurrency(data.tutar) }}
                 </template>
@@ -482,7 +482,7 @@
           </div>
         </div>
         <div class="net-kar-kutusu">
-          Net {{ (karZarar.netKar || 0) >= 0 ? 'Kâr' : 'Zarar' }}:
+          {{ t('muhasebe.net') }} {{ (karZarar.netKar || 0) >= 0 ? t('muhasebe.kar') : t('muhasebe.zarar') }}:
           <strong :class="(karZarar.netKar || 0) >= 0 ? 'kar' : 'zarar'">
             {{ formatCurrency(Math.abs(karZarar.netKar || 0)) }}
           </strong>
@@ -506,20 +506,20 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label class="zorunlu">Hesap Kodu</label>
+          <label class="zorunlu">{{ t('muhasebe.hesapKodu') }}</label>
           <InputText
             v-model="hesapForm.kod"
             class="w-full"
-            placeholder="Ör: 100, 120, 320"
+            :placeholder="t('muhasebe.hesapKoduPlaceholder')"
             :class="{ 'p-invalid': hesapFormHatali.kod }"
           />
           <small
             v-if="hesapFormHatali.kod"
             class="hata-mesaj"
-          >Hesap kodu zorunludur</small>
+          >{{ t('muhasebe.hesapKoduZorunlu') }}</small>
         </div>
         <div class="field">
-          <label class="zorunlu">Hesap Adı</label>
+          <label class="zorunlu">{{ t('muhasebe.hesapAdi') }}</label>
           <InputText
             v-model="hesapForm.ad"
             class="w-full"
@@ -528,10 +528,10 @@
           <small
             v-if="hesapFormHatali.ad"
             class="hata-mesaj"
-          >Hesap adı zorunludur</small>
+          >{{ t('muhasebe.hesapAdiZorunlu') }}</small>
         </div>
         <div class="field">
-          <label>Tip *</label>
+          <label>{{ t('muhasebe.tipZorunlu') }}</label>
           <Select
             v-model="hesapForm.tip"
             :options="['AKTIF', 'PASIF', 'GELIR', 'GIDER']"
@@ -539,7 +539,7 @@
           />
         </div>
         <div class="field">
-          <label>Grup</label><InputText
+          <label>{{ t('muhasebe.grup') }}</label><InputText
             v-model="hesapForm.grup"
             class="w-full"
           />
@@ -547,13 +547,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="hesapDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="hesapKaydet"
@@ -564,20 +564,20 @@
     <!-- YEVMIYE FİŞİ DIALOG -->
     <Dialog
       v-model:visible="fisDialog"
-      header="Yeni Yevmiye Fişi"
+      :header="t('muhasebe.yeniYevmiyeFisi')"
       modal
       :style="{ width: '640px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Tarih *</label><DatePicker
+          <label>{{ t('muhasebe.tarihZorunlu') }}</label><DatePicker
             v-model="fisForm.tarih"
             date-format="dd/mm/yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><InputText
+          <label>{{ t('common.description') }}</label><InputText
             v-model="fisForm.aciklama"
             class="w-full"
           />
@@ -585,7 +585,7 @@
       </div>
       <div class="fis-kalemler">
         <div class="fis-kalem-baslik">
-          <span>Hesap</span><span>Borç</span><span>Alacak</span><span />
+          <span>{{ t('muhasebe.hesap') }}</span><span>{{ t('muhasebe.borc') }}</span><span>{{ t('muhasebe.alacak') }}</span><span />
         </div>
         <div
           v-for="(k, i) in fisForm.kalemler"
@@ -597,7 +597,7 @@
             :options="hesapSecenekleri"
             option-label="ad"
             option-value="kod"
-            placeholder="Hesap seçin"
+            :placeholder="t('muhasebe.hesapSecin')"
             class="kalem-hesap"
           />
           <InputNumber
@@ -619,25 +619,25 @@
           />
         </div>
         <Button
-          label="Kalem Ekle"
+          :label="t('muhasebe.kalemEkle')"
           icon="pi pi-plus"
           class="p-button-sm p-button-text"
           @click="kalemEkle"
         />
       </div>
       <div class="fis-toplam">
-        Toplam Borç: <strong>{{ formatCurrency(fisToplamBorc) }}</strong> &nbsp;|&nbsp; Toplam Alacak:
+        {{ t('muhasebe.toplamBorc') }} <strong>{{ formatCurrency(fisToplamBorc) }}</strong> &nbsp;|&nbsp; {{ t('muhasebe.toplamAlacak') }}
         <strong>{{ formatCurrency(fisToplamAlacak) }}</strong>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="fisDialog = false"
         />
         <Button
-          label="Fişi Kaydet"
+          :label="t('muhasebe.fisiKaydet')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="fisKaydet"
@@ -648,7 +648,7 @@
     <!-- FİŞ DETAY DIALOG -->
     <Dialog
       v-model:visible="fisDetayDialog"
-      header="Fiş Detayı"
+      :header="t('muhasebe.fisDetayi')"
       modal
       :style="{ width: '560px' }"
     >
@@ -671,16 +671,16 @@
       >
         <Column
           field="hesapKodu"
-          header="Hesap"
+          :header="t('muhasebe.hesap')"
           style="width: 90px"
         />
         <Column
           field="hesapAdi"
-          header="Hesap Adı"
+          :header="t('muhasebe.hesapAdi')"
         />
         <Column
           field="borc"
-          header="Borç"
+          :header="t('muhasebe.borc')"
         >
           <template #body="{ data }">
             {{ formatCurrency(data.borc) }}
@@ -688,7 +688,7 @@
         </Column>
         <Column
           field="alacak"
-          header="Alacak"
+          :header="t('muhasebe.alacak')"
         >
           <template #body="{ data }">
             {{ formatCurrency(data.alacak) }}
@@ -711,6 +711,7 @@ import { useGeriAl } from '../composables/useGeriAl.js'
 import { formatCurrency } from '../utils/format.js'
 import { Doughnut, Bar } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
+import { useI18n } from 'vue-i18n'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
@@ -718,6 +719,7 @@ const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { silVeGeriAl } = useGeriAl()
+const { t } = useI18n()
 
 const aktifSekme = ref(0)
 const yukleniyor = ref(false)
@@ -729,7 +731,7 @@ const hesapDialog = ref(false)
 const hesapDuzenleme = ref(false)
 const hesapForm = ref({ kod: '', ad: '', tip: 'AKTIF', grup: '' })
 const hesapFormHatali = ref({ kod: false, ad: false })
-const hesapDialogBaslik = computed(() => (hesapDuzenleme.value ? 'Hesap Düzenle' : 'Yeni Hesap'))
+const hesapDialogBaslik = computed(() => (hesapDuzenleme.value ? t('muhasebe.hesapDuzenle') : t('muhasebe.yeniHesap')))
 
 // Fişler
 const fisler = ref([])
@@ -769,7 +771,7 @@ const fisToplamBorc = computed(() => (fisForm.value.kalemler || []).reduce((t, k
 const fisToplamAlacak = computed(() => (fisForm.value.kalemler || []).reduce((t, k) => t + (Number(k.alacak) || 0), 0))
 
 const bilancoChartData = computed(() => ({
-  labels: ['Aktif', 'Pasif'],
+  labels: [t('muhasebe.aktif'), t('muhasebe.pasif')],
   datasets: [{
     data: [Number(bilanco.value.aktifToplam) || 0, Number(bilanco.value.pasifToplam) || 0],
     backgroundColor: ['#3b82f6', '#f59e0b']
@@ -777,9 +779,9 @@ const bilancoChartData = computed(() => ({
 }))
 
 const karZararChartData = computed(() => ({
-  labels: ['Gelir', 'Gider', 'Net Kâr'],
+  labels: [t('muhasebe.gelir'), t('muhasebe.gider'), t('muhasebe.netKar')],
   datasets: [{
-    label: 'Tutar',
+    label: t('muhasebe.tutar'),
     data: [
       Number(karZarar.value.gelirToplam) || 0,
       Number(karZarar.value.giderToplam) || 0,
@@ -789,11 +791,10 @@ const karZararChartData = computed(() => ({
   }]
 }))
 
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 
-const tipEtiketi = (t) => ({ AKTIF: 'Aktif', PASIF: 'Pasif', GELIR: 'Gelir', GIDER: 'Gider' })[t] || t
-const tipSeverity = (t) => ({ AKTIF: 'info', PASIF: 'warning', GELIR: 'success', GIDER: 'danger' })[t] || 'secondary'
+const tipEtiketi = (tip) => ({ AKTIF: t('muhasebe.tipAktif'), PASIF: t('muhasebe.tipPasif'), GELIR: t('muhasebe.tipGelir'), GIDER: t('muhasebe.tipGider') })[tip] || tip
+const tipSeverity = (tip) => ({ AKTIF: 'info', PASIF: 'warning', GELIR: 'success', GIDER: 'danger' })[tip] || 'secondary'
 
 const tarihParam = (d) => (d ? (d.toISOString?.().split('T')[0] ?? d) : null)
 
@@ -808,7 +809,7 @@ const hesaplariYukle = async () => {
     const r = await muhasebeAPI.getHesapPlani()
     hesaplar.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Hesap planı yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataHesapPlani'))
   }
   yukleniyor.value = false
 }
@@ -822,7 +823,7 @@ const hesapDialogAc = (data) => {
 
 const hesapCogalt = (data) => {
   hesapFormHatali.value = { kod: false, ad: false }
-  hesapForm.value = { ...data, id: null, kod: '', ad: data.ad + ' (Kopya)' }
+  hesapForm.value = { ...data, id: null, kod: '', ad: data.ad + ' ' + t('muhasebe.kopya') }
   hesapDuzenleme.value = false
   hesapDialog.value = true
 }
@@ -831,44 +832,44 @@ const hesapKaydet = async () => {
   const hatali = { kod: !hesapForm.value.kod?.trim(), ad: !hesapForm.value.ad?.trim() }
   hesapFormHatali.value = hatali
   if (hatali.kod || hatali.ad) {
-    toastBildirim.uyari('Kod ve ad zorunludur')
+    toastBildirim.uyari(t('muhasebe.kodAdZorunlu'))
     return
   }
   kaydediliyor.value = true
   try {
     if (hesapDuzenleme.value) await muhasebeAPI.hesapGuncelle(hesapForm.value.id, hesapForm.value)
     else await muhasebeAPI.hesapOlustur(hesapForm.value)
-    toastBildirim.basarili('Hesap kaydedildi')
+    toastBildirim.basarili(t('muhasebe.hesapKaydedildi'))
     hesapDialog.value = false
     hesaplariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const hesapSil = (data) => {
   confirm.require({
-    message: `"${data.kod} - ${data.ad}" hesabını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('muhasebe.hesapSilOnay', { hesap: `${data.kod} - ${data.ad}` }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await muhasebeAPI.hesapSil(data.id)
         hesaplar.value = hesaplar.value.filter((h) => h.id !== data.id)
         silVeGeriAl({
           veri: data,
-          metin: `"${data.kod}" hesabı silindi`,
+          metin: t('muhasebe.hesapKodSilindi', { kod: data.kod }),
           geriYukle: async (kayit) => {
             await muhasebeAPI.hesapOlustur({ kod: kayit.kod, ad: kayit.ad, tip: kayit.tip, grup: kayit.grup })
             hesaplariYukle()
           }
         })
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Hesap silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('muhasebe.silindi'), detail: t('muhasebe.hesapSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('muhasebe.silmeBasarisiz'))
       }
     }
   })
@@ -883,7 +884,7 @@ const fisleriYukle = async () => {
     const r = await muhasebeAPI.getFisler(params)
     fisler.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Fişler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataFisler'))
   }
   fisYukleniyor.value = false
 }
@@ -897,14 +898,14 @@ const fisDialogAc = () => {
 
 const fisKaydet = async () => {
   if (!fisForm.value.kalemler?.length) {
-    toastBildirim.uyari('En az bir kalem ekleyin')
+    toastBildirim.uyari(t('muhasebe.enAzBirKalem'))
     return
   }
   if (fisToplamBorc.value !== fisToplamAlacak.value) {
     toast.add({
       severity: 'error',
-      summary: 'Fiş denk değil',
-      detail: 'Toplam borç ile alacak eşit olmalı',
+      summary: t('muhasebe.fisDenkDegil'),
+      detail: t('muhasebe.fisDenkDegilDetay'),
       life: 5000
     })
     return
@@ -922,11 +923,11 @@ const fisKaydet = async () => {
       }))
     }
     await muhasebeAPI.fisOlustur(payload)
-    toastBildirim.basarili('Yevmiye fişi oluşturuldu')
+    toastBildirim.basarili(t('muhasebe.fisOlusturuldu'))
     fisDialog.value = false
     fisleriYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Fiş kaydedilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.fisKaydedilemedi'))
   }
   kaydediliyor.value = false
 }
@@ -937,24 +938,24 @@ const fisDetayAc = async (data) => {
     fisDetay.value = r.data
     fisDetayDialog.value = true
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Fiş detayı alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataFisDetay'))
   }
 }
 
 const fisIptal = (data) => {
   confirm.require({
-    message: `"${data.fisNo}" fişini iptal etmek istediğinize emin misiniz?`,
-    header: 'İptal Onayı',
+    message: t('muhasebe.fisIptalOnay', { fisNo: data.fisNo }),
+    header: t('muhasebe.iptalOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, İptal Et',
-    rejectLabel: 'Vazgeç',
+    acceptLabel: t('muhasebe.evetIptalEt'),
+    rejectLabel: t('muhasebe.vazgec'),
     accept: async () => {
       try {
         await muhasebeAPI.fisIptal(data.id)
-        toast.add({ severity: 'success', summary: 'İptal Edildi', detail: 'Fiş iptal edildi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('muhasebe.iptalEdildi'), detail: t('muhasebe.fisIptalEdildi'), life: 3000 })
         fisleriYukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'İptal başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('muhasebe.iptalBasarisiz'))
       }
     }
   })
@@ -969,7 +970,7 @@ const mizanYukle = async () => {
     const r = await muhasebeAPI.getMizan(params)
     mizan.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Mizan alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataMizan'))
   }
   mizanYukleniyor.value = false
 }
@@ -983,7 +984,7 @@ const kebirYukle = async () => {
     const r = await muhasebeAPI.getDefteriKebir(params)
     kebir.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Defter-i kebir alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataKebir'))
   }
   kebirYukleniyor.value = false
 }
@@ -994,7 +995,7 @@ const bilancoYukle = async () => {
     const r = await muhasebeAPI.getBilanco()
     bilanco.value = r.data || {}
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Bilanço alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataBilanco'))
   } finally {
     bilancoYukleniyor.value = false
   }
@@ -1009,7 +1010,7 @@ const karZararYukle = async () => {
     const r = await muhasebeAPI.getKarZarar(params)
     karZarar.value = r.data || {}
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Kâr/Zarar alınamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataKarZarar'))
   } finally {
     karZararYukleniyor.value = false
   }
@@ -1031,7 +1032,7 @@ const bilancoExcelIndir = async () => {
     const res = await excelAPI.bilanco()
     excelIndir(res, 'bilanco')
   } catch {
-    toastBildirim.hata('Bilanço Excel olarak indirilemedi')
+    toastBildirim.hata(t('muhasebe.hataBilancoExcel'))
   }
 }
 
@@ -1043,7 +1044,7 @@ const karZararExcelIndir = async () => {
     const res = await excelAPI.karZarar(params)
     excelIndir(res, 'kar-zarar')
   } catch {
-    toastBildirim.hata('Kâr/Zarar Excel olarak indirilemedi')
+    toastBildirim.hata(t('muhasebe.hataKarZararExcel'))
   }
 }
 </script>

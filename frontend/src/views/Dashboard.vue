@@ -1344,10 +1344,7 @@ onMounted(async () => {
   loading.value = false
 })
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 const whatsappLink = (f) => {
   const tel = (f.cariTelefon || '').replace(/\D/g, '')

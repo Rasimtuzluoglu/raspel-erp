@@ -2,7 +2,7 @@
   <div class="pos-container">
     <div class="pos-header">
       <div class="breadcrumb">
-        <i class="pi pi-home" /> Anasayfa / POS / Yeni Satış
+        <i class="pi pi-home" /> {{ t('hizliSatis.breadcrumb') }}
       </div>
       <div
         v-if="authStore?.kullanici"
@@ -20,7 +20,7 @@
             <InputText
               ref="barkodInputRef"
               v-model="globalBarkod"
-              placeholder="Barkod okutun (Enter)"
+              :placeholder="t('hizliSatis.barkodPlaceholder')"
               class="w-full"
               autofocus
               @keyup.enter="globalBarkodEkle"
@@ -30,7 +30,7 @@
             <i class="pi pi-search" />
             <InputText
               v-model="seriNoArama"
-              placeholder="Ürün / kod / seri ara..."
+              :placeholder="t('hizliSatis.aramaPlaceholder')"
               class="w-full"
             />
           </span>
@@ -38,20 +38,20 @@
             v-model="filtreKategori"
             :options="kategoriler"
             option-label="ad"
-            placeholder="Kategori"
+            :placeholder="t('hizliSatis.kategori')"
             class="arac-dropdown"
             show-clear
           />
           <Dropdown
             v-model="filtreArac"
             :options="aracListesi"
-            placeholder="Marka"
+            :placeholder="t('hizliSatis.marka')"
             class="arac-dropdown"
             show-clear
           />
           <Button
             icon="pi pi-camera"
-            label="Barkod"
+            :label="t('hizliSatis.barkod')"
             severity="secondary"
             outlined
             @click="scannerAcik = true"
@@ -63,7 +63,7 @@
           class="cok-satanlar-section"
         >
           <div class="product-header">
-            <h3><i class="pi pi-star-fill" /> Çok Satanlar</h3>
+            <h3><i class="pi pi-star-fill" /> {{ t('hizliSatis.cokSatanlar') }}</h3>
           </div>
           <div class="cok-satanlar-grid">
             <button
@@ -81,7 +81,7 @@
 
         <div class="product-section">
           <div class="product-header">
-            <h3>Mevcut Ürünler <span class="urun-sayaci">{{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }}</span></h3>
+            <h3>{{ t('hizliSatis.mevcutUrunler') }} <span class="urun-sayaci">{{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }}</span></h3>
           </div>
           <div class="product-grid">
             <div
@@ -93,14 +93,14 @@
               <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
               <span class="product-name">{{ u.ad }}</span>
               <Tag
-                :value="kritikStokMu(u) ? 'Son ' + Math.floor(u.miktar) : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
+                :value="kritikStokMu(u) ? t('hizliSatis.son', { n: Math.floor(u.miktar) }) : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
                 :severity="kritikStokMu(u) ? 'danger' : 'info'"
               />
               <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
               <span
                 v-if="cariFiyati(u.id)"
                 class="product-cari-fiyat"
-                :title="'Cari özel fiyat'"
+                :title="t('hizliSatis.cariOzelFiyat')"
               >
                 <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
               </span>
@@ -110,7 +110,7 @@
               class="empty-products"
             >
               <i class="pi pi-inbox" />
-              <p>Ürün bulunamadı</p>
+              <p>{{ t('hizliSatis.urunBulunamadi') }}</p>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@
           <template #content>
             <div class="pos-bolum">
               <div class="pos-bolum-baslik">
-                <i class="pi pi-user" /> Müşteri
+                <i class="pi pi-user" /> {{ t('hizliSatis.musteri') }}
               </div>
               <div class="customer-field">
                 <SelectButton
@@ -136,7 +136,7 @@
                     v-model="musteriGiris"
                     :suggestions="musteriOnerileri"
                     option-label="ad"
-                    placeholder="Müşteri ara (isim, vergi no, telefon)..."
+                    :placeholder="t('hizliSatis.musteriAra')"
                     class="w-full"
                     @complete="musteriAra($event)"
                     @option-select="musteriSec"
@@ -159,7 +159,7 @@
                     <button
                       type="button"
                       class="secili-musteri-sil"
-                      title="Müşteriyi Kaldır"
+                      :title="t('hizliSatis.musteriyiKaldir')"
                       @click="musteriTemizle"
                     >
                       <i class="pi pi-times" />
@@ -174,7 +174,7 @@
                     {{ musteriBakiyeUyarisi.mesaj }}
                   </div>
                   <Button
-                    label="+ Yeni"
+                    :label="t('hizliSatis.yeni')"
                     severity="secondary"
                     size="small"
                     @click="yeniMusteriDialog = true"
@@ -185,25 +185,25 @@
 
             <div class="pos-bolum sepet-bolum">
               <div class="pos-bolum-baslik sepet-baslik">
-                <span>Sipariş Özeti ({{ sepet ? sepet.length : 0 }})</span>
+                <span>{{ t('hizliSatis.siparisOzeti', { n: sepet ? sepet.length : 0 }) }}</span>
                 <div class="sepet-baslik-btnler">
                   <Button
                     v-if="sepet && sepet.length"
                     icon="pi pi-save"
                     class="p-button-rounded p-button-text p-button-sm"
-                    title="Sepeti Kaydet"
+                    :title="t('hizliSatis.sepetiKaydet')"
                     @click="sepetKaydet"
                   />
                   <Button
                     v-if="kayitliSepetVar && sepet.length === 0"
                     icon="pi pi-folder-open"
                     class="p-button-rounded p-button-text p-button-sm"
-                    title="Kayıtlı Sepeti Yükle"
+                    :title="t('hizliSatis.kayitliSepetiYukle')"
                     @click="sepetYukle"
                   />
                   <Button
                     v-if="sepet && sepet.length"
-                    label="Temizle"
+                    :label="t('hizliSatis.temizle')"
                     icon="pi pi-trash"
                     severity="danger"
                     size="small"
@@ -215,7 +215,7 @@
                 v-if="sepet && sepet.length === 0"
                 class="sepet-bos"
               >
-                Sepete ürün ekleyin
+                {{ t('hizliSatis.sepeteUrunEkle') }}
               </div>
               <div
                 v-for="(item, idx) in sepet"
@@ -232,7 +232,7 @@
                   <button
                     type="button"
                     class="sepet-sil"
-                    title="Kaldır"
+                    :title="t('hizliSatis.kaldir')"
                     @click="sepetSil(idx)"
                   >
                     <i class="pi pi-times" />
@@ -252,7 +252,7 @@
                       type="number"
                       min="1"
                       class="sepet-adet-input"
-                      title="Adet"
+                      :title="t('hizliSatis.adet')"
                     >
                     <button
                       type="button"
@@ -280,7 +280,7 @@
                     type="number"
                     step="0.01"
                     class="fiyat-giris-input"
-                    title="Birim Fiyatı"
+                    :title="t('hizliSatis.birimFiyati')"
                   >
                 </div>
                 <div
@@ -295,11 +295,11 @@
               </div>
               <hr class="ozet-ayrac">
               <div class="ozet-satir">
-                <span>Toplam Ft³</span>
+                <span>{{ t('hizliSatis.toplamFt3') }}</span>
                 <span>{{ toplamFt3.toFixed(2) }} ft³</span>
               </div>
               <div class="ozet-satir">
-                <span>İndirim</span>
+                <span>{{ t('hizliSatis.indirim') }}</span>
                 <div class="ozet-indirim">
                   <SelectButton
                     v-model="indirimTipi"
@@ -317,14 +317,14 @@
                 </div>
               </div>
               <div class="ozet-satir ozet-genel">
-                <span>Genel Toplam</span>
+                <span>{{ t('hizliSatis.genelToplam') }}</span>
                 <span class="genel-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
               </div>
             </div>
 
             <div class="pos-bolum">
               <div class="pos-bolum-baslik">
-                <i class="pi pi-wallet" /> Ödeme
+                <i class="pi pi-wallet" /> {{ t('hizliSatis.odeme') }}
               </div>
               <SelectButton
                 v-model="odemeDurumu"
@@ -337,7 +337,7 @@
                 v-if="odemeDurumu !== 'yok'"
                 class="odenen-satir"
               >
-                <label>Ödenen Tutar</label>
+                <label>{{ t('hizliSatis.odenenTutar') }}</label>
                 <InputNumber
                   v-model="odenenTutar"
                   :min="0"
@@ -353,7 +353,7 @@
                 v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
                 class="odenen-satir"
               >
-                <label>Alınan Nakit</label>
+                <label>{{ t('hizliSatis.alinanNakit') }}</label>
                 <InputNumber
                   v-model="alinanNakit"
                   :min="0"
@@ -366,7 +366,7 @@
                   v-if="paraUstu > 0"
                   class="para-ustu"
                 >
-                  <span>Para Üstü:</span>
+                  <span>{{ t('hizliSatis.paraUstu') }}:</span>
                   <strong>{{ formatCurrency(paraUstu) }}</strong>
                 </div>
               </div>
@@ -375,7 +375,7 @@
                 v-if="odemeDurumu !== 'yok'"
                 class="odenen-satir"
               >
-                <label>Ödeme Yöntemi</label>
+                <label>{{ t('hizliSatis.odemeYontemi') }}</label>
                 <div class="odeme-yontem-grid">
                   <button
                     v-for="y in odemeYontemleri"
@@ -396,15 +396,15 @@
                 class="taksit-panel"
               >
                 <div class="odenen-satir">
-                  <label>Taksit Çekilen Kurum</label>
+                  <label>{{ t('hizliSatis.taksitKurum') }}</label>
                   <InputText
                     v-model="taksitKurum"
-                    placeholder="Banka / finans kurumu"
+                    :placeholder="t('hizliSatis.taksitKurumPlaceholder')"
                     class="w-full"
                   />
                 </div>
                 <div class="odenen-satir">
-                  <label>Çekilen Taksit Tutarı</label>
+                  <label>{{ t('hizliSatis.taksitTutar') }}</label>
                   <InputNumber
                     v-model="taksitTutar"
                     :min="0"
@@ -418,13 +418,13 @@
               </div>
 
               <div class="odenen-satir">
-                <label>Kasa</label>
+                <label>{{ t('hizliSatis.kasa') }}</label>
                 <Dropdown
                   v-model="seciliKasa"
                   :options="kasalar"
                   option-label="ad"
                   option-value="id"
-                  placeholder="Kasa seçin"
+                  :placeholder="t('hizliSatis.kasaSecin')"
                   class="w-full"
                 />
               </div>
@@ -440,13 +440,13 @@
                 v-if="kalanTutar > 0"
                 class="odeme-kalan"
               >
-                <span>Kalan:</span>
+                <span>{{ t('hizliSatis.kalan') }}:</span>
                 <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
               </div>
             </div>
 
             <Button
-              label="Satışı Tamamla"
+              :label="t('hizliSatis.satisiTamamla')"
               icon="pi pi-check"
               class="p-button-success w-full satis-buton"
               :loading="kaydediliyor"
@@ -455,7 +455,7 @@
             />
             <Button
               v-if="sonSatis"
-              label="Son Satışı İptal Et"
+              :label="t('hizliSatis.sonSatisiIptal')"
               icon="pi pi-undo"
               class="p-button-outlined p-button-danger w-full"
               @click="sonSatisiIptalEt"
@@ -463,10 +463,10 @@
 
             <div class="pos-bolum">
               <div class="pos-bolum-baslik">
-                <i class="pi pi-truck" /> Teslimat
+                <i class="pi pi-truck" /> {{ t('hizliSatis.teslimat') }}
               </div>
               <div class="teslim-eden-alan">
-                <label for="hizli-teslim-eden">Teslim Eden</label>
+                <label for="hizli-teslim-eden">{{ t('hizliSatis.teslimEden') }}</label>
                 <Dropdown
                   id="hizli-teslim-eden"
                   v-model="teslimEden"
@@ -475,7 +475,7 @@
                   option-value="value"
                   filter
                   editable
-                  placeholder="Personel seçin veya yazın"
+                  :placeholder="t('hizliSatis.personelSecinYaz')"
                   class="w-full"
                   :show-clear="true"
                 >
@@ -489,7 +489,7 @@
               </div>
 
               <div class="teslim-eden-alan">
-                <label for="hizli-teslim-durum">Teslim Durumu</label>
+                <label for="hizli-teslim-durum">{{ t('hizliSatis.teslimDurumu') }}</label>
                 <Dropdown
                   id="hizli-teslim-durum"
                   v-model="teslimDurumu"
@@ -501,12 +501,12 @@
               </div>
 
               <div class="teslim-eden-alan">
-                <label for="hizli-teslim-not">Teslim Notu</label>
+                <label for="hizli-teslim-not">{{ t('hizliSatis.teslimNotu') }}</label>
                 <Textarea
                   id="hizli-teslim-not"
                   v-model="teslimNotu"
                   rows="2"
-                  placeholder="Teslimat notu (isteğe bağlı)"
+                  :placeholder="t('hizliSatis.teslimNotuPlaceholder')"
                   class="w-full"
                 />
               </div>
@@ -517,16 +517,16 @@
               class="pos-bolum"
             >
               <div class="pos-bolum-baslik fis-baslik-satir">
-                <span><i class="pi pi-print" /> Fiş Önizleme</span>
+                <span><i class="pi pi-print" /> {{ t('hizliSatis.fisOnizleme') }}</span>
                 <div class="fis-ayarlar">
                   <Button
-                    label="Yazdır (F9)"
+                    :label="t('hizliSatis.yazdirF9')"
                     icon="pi pi-print"
                     size="small"
                     @click="fisiYazdir"
                   />
                   <Button
-                    label="Termal"
+                    :label="t('hizliSatis.termal')"
                     icon="pi pi-send"
                     size="small"
                     severity="secondary"
@@ -548,14 +548,14 @@
                       {{ simdikiTarih }}
                     </div>
                     <div class="fis-fisno">
-                      Fiş No: {{ fisNo || '-------' }}
+                      {{ t('hizliSatis.fisNo') }} {{ fisNo || '-------' }}
                     </div>
                   </div>
                   <div
                     v-if="musteriAdi"
                     class="fis-musteri"
                   >
-                    <span>Müşteri: {{ musteriAdi }}</span>
+                    <span>{{ t('hizliSatis.fisMusteri') }} {{ musteriAdi }}</span>
                   </div>
                   <div class="fis-ayrac">
                     ---
@@ -582,18 +582,18 @@
                   </div>
                   <template v-if="fisFiyatli">
                     <div class="fis-toplam">
-                      <span>Ara Toplam</span>
+                      <span>{{ t('hizliSatis.araToplam') }}</span>
                       <span>{{ formatCurrency(toplam) }}</span>
                     </div>
                     <div
                       v-if="indirimDegeri > 0"
                       class="fis-indirim"
                     >
-                      <span>İndirim ({{ indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }})</span>
+                      <span>{{ t('hizliSatis.fisIndirim', { n: indirimTipi === 'yuzde' ? indirimDegeri + '%' : '' }) }}</span>
                       <span>-{{ formatCurrency(indirimTutari) }}</span>
                     </div>
                     <div class="fis-genel-toplam">
-                      <span>GENEL TOPLAM</span>
+                      <span>{{ t('hizliSatis.fisGenelToplam') }}</span>
                       <span class="fis-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
                     </div>
                     <div class="fis-ayrac">
@@ -605,22 +605,22 @@
                       v-if="fisFiyatli"
                       class="fis-odeme-satir"
                     >
-                      <span>Ödenen</span>
+                      <span>{{ t('hizliSatis.fisOdenen') }}</span>
                       <span>{{ formatCurrency(odenenTutar) }}</span>
                     </div>
                     <div
                       v-if="fisFiyatli && kalanTutar > 0"
                       class="fis-odeme-satir"
                     >
-                      <span>Kalan</span>
+                      <span>{{ t('hizliSatis.fisKalan') }}</span>
                       <span>{{ formatCurrency(kalanTutar) }}</span>
                     </div>
                     <div class="fis-odeme-satir fis-odeme-durum">
-                      <span>Toplam Ürün</span>
+                      <span>{{ t('hizliSatis.toplamUrun') }}</span>
                       <span>{{ sepet ? sepet.length : 0 }}</span>
                     </div>
                     <div class="fis-odeme-satir fis-odeme-durum">
-                      <span>Durum</span>
+                      <span>{{ t('common.status') }}</span>
                       <span>{{ odemeDurumText }}</span>
                     </div>
                   </div>
@@ -629,13 +629,13 @@
                       ---
                     </div>
                     <div class="fis-tesekkur">
-                      {{ fisAltNotu || 'Bizi tercih ettiginiz icin tesekkur ederiz!' }}
+                      {{ fisAltNotu || t('hizliSatis.fisAltNotFallback') }}
                     </div>
                     <div
                       v-if="authStore?.kullanici?.displayName"
                       class="fis-satici"
                     >
-                      Islem Yapan: {{ authStore?.kullanici?.displayName }}
+                      {{ t('hizliSatis.islemYapan') }} {{ authStore?.kullanici?.displayName }}
                     </div>
                   </div>
                 </div>
@@ -644,7 +644,7 @@
 
             <div class="pos-bolum">
               <div class="gunluk-baslik">
-                <span><i class="pi pi-clock" /> Bugünkü Satışlar ({{ gunlukSatislar.length }})</span>
+                <span><i class="pi pi-clock" /> {{ t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length }) }}</span>
                 <Button
                   icon="pi pi-refresh"
                   class="p-button-sm p-button-text"
@@ -655,7 +655,7 @@
                 v-if="gunlukSatislar.length === 0"
                 class="sepet-bos"
               >
-                Bugün henüz satış yapılmadı
+                {{ t('hizliSatis.bugunSatisYok') }}
               </div>
               <div
                 v-for="s in gunlukSatislar"
@@ -664,7 +664,7 @@
               >
                 <div class="gunluk-satis-bilgi">
                   <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
-                  <span class="gunluk-satis-cari">{{ s.cariHesapAd || 'Anlık' }}</span>
+                  <span class="gunluk-satis-cari">{{ s.cariHesapAd || t('hizliSatis.anlik') }}</span>
                 </div>
                 <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
               </div>
@@ -677,23 +677,23 @@
 
   <Dialog
     v-model:visible="yeniMusteriDialog"
-    header="Yeni Cari Hesap Ekle"
+    :header="t('hizliSatis.yeniCari')"
     :modal="true"
     :style="{ width: '520px' }"
     class="yeni-musteri-dialog"
   >
     <div class="ym-form-grid">
       <div class="field full-width">
-        <label for="ym-ad">Ad / Firma Adı <span class="required">*</span></label>
+        <label for="ym-ad">{{ t('hizliSatis.adFirma') }} <span class="required">*</span></label>
         <InputText
           id="ym-ad"
           v-model="yeniMusteri.ad"
-          placeholder="Örn: Ahmet Yılmaz veya Yılmaz A.Ş."
+          :placeholder="t('hizliSatis.adFirmaPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="field">
-        <label for="ym-telefon">Telefon</label>
+        <label for="ym-telefon">{{ t('hizliSatis.telefon') }}</label>
         <InputText
           id="ym-telefon"
           v-model="yeniMusteri.telefon"
@@ -702,7 +702,7 @@
         />
       </div>
       <div class="field">
-        <label for="ym-email">E-posta</label>
+        <label for="ym-email">{{ t('hizliSatis.eposta') }}</label>
         <InputText
           id="ym-email"
           v-model="yeniMusteri.email"
@@ -711,16 +711,16 @@
         />
       </div>
       <div class="field">
-        <label for="ym-vergi">Vergi / TC No</label>
+        <label for="ym-vergi">{{ t('hizliSatis.vergiNo') }}</label>
         <InputText
           id="ym-vergi"
           v-model="yeniMusteri.vergiNo"
-          placeholder="10 veya 11 haneli numara"
+          :placeholder="t('hizliSatis.vergiPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="field">
-        <label for="ym-tur">Cari Türü</label>
+        <label for="ym-tur">{{ t('hizliSatis.cariTuru') }}</label>
         <Dropdown
           id="ym-tur"
           v-model="yeniMusteri.tur"
@@ -730,12 +730,12 @@
         />
       </div>
       <div class="field full-width">
-        <label for="ym-adres">Adres</label>
+        <label for="ym-adres">{{ t('hizliSatis.adres') }}</label>
         <Textarea
           id="ym-adres"
           v-model="yeniMusteri.adres"
           rows="2"
-          placeholder="Fatura adresi..."
+          :placeholder="t('hizliSatis.adresPlaceholder')"
           class="w-full"
         />
       </div>
@@ -743,13 +743,13 @@
     <template #footer>
       <div class="dialog-footer-btns">
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="yeniMusteriDialog = false"
         />
         <Button
-          label="Kaydet & Seç"
+          :label="t('hizliSatis.kaydetSec')"
           icon="pi pi-check"
           class="p-button-primary"
           :loading="musteriKaydediliyor"
@@ -766,7 +766,7 @@
 
   <Dialog
     v-model:visible="satisOzetDialog"
-    header="Satış Tamamlandı"
+    :header="t('hizliSatis.satisTamamlandi')"
     :modal="true"
     style="width: 420px"
   >
@@ -776,38 +776,38 @@
     >
       <div class="satis-ozet-baslik">
         <i class="pi pi-check-circle" />
-        <span>İşlem Başarılı</span>
+        <span>{{ t('hizliSatis.islemBasarili') }}</span>
       </div>
       <div class="satis-ozet-satir">
-        <span>Fatura No</span>
+        <span>{{ t('hizliSatis.faturaNo') }}</span>
         <strong>{{ satisOzet.faturaNo }}</strong>
       </div>
       <div class="satis-ozet-satir">
-        <span>Toplam</span>
+        <span>{{ t('hizliSatis.toplam') }}</span>
         <strong>{{ formatCurrency(satisOzet.toplam) }}</strong>
       </div>
       <div class="satis-ozet-satir">
-        <span>Ödenen</span>
+        <span>{{ t('hizliSatis.fisOdenen') }}</span>
         <strong>{{ formatCurrency(satisOzet.odenen) }}</strong>
       </div>
       <div
         v-if="satisOzet.kalan > 0"
         class="satis-ozet-satir"
       >
-        <span>Kalan</span>
+        <span>{{ t('hizliSatis.fisKalan') }}</span>
         <strong class="borc">{{ formatCurrency(satisOzet.kalan) }}</strong>
       </div>
       <div
         v-if="satisOzet.paraUstu > 0"
         class="satis-ozet-satir"
       >
-        <span>Para Üstü</span>
+        <span>{{ t('hizliSatis.paraUstu') }}</span>
         <strong class="para">{{ formatCurrency(satisOzet.paraUstu) }}</strong>
       </div>
     </div>
     <template #footer>
       <Button
-        label="Kapat"
+        :label="t('hizliSatis.kapat')"
         icon="pi pi-check"
         class="p-button-primary"
         @click="satisOzetDialog = false"
@@ -823,6 +823,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI } from '../api/index.js'
@@ -840,6 +841,7 @@ const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const kategoriStore = useKategoriStore()
 const offlineKuyruk = useOfflineSatisKuyrugu()
+const { t } = useI18n()
 
 const offlineKuyruguSenkronizeEt = async () => {
   try {
@@ -944,9 +946,9 @@ const teslimDurumu = ref('BEKLIYOR')
 const teslimNotu = ref('')
 const personelListesi = ref([])
 const musteriModu = ref('musteri')
-const musteriModlari = ref([
-  { label: 'Perakende', value: 'perakende', icon: 'pi pi-shopping-cart' },
-  { label: 'Müşteri', value: 'musteri', icon: 'pi pi-users' }
+const musteriModlari = computed(() => [
+  { label: t('hizliSatis.perakende'), value: 'perakende', icon: 'pi pi-shopping-cart' },
+  { label: t('hizliSatis.musteri'), value: 'musteri', icon: 'pi pi-users' }
 ])
 const anlikMusteri = computed(() => musteriModu.value === 'perakende')
 
@@ -986,21 +988,21 @@ const indirimTipleri = ref([
 const indirimDegeri = ref(0)
 
 const odemeDurumu = ref('tam')
-const odemeTipleri = ref([
-  { label: 'Tam Ödeme', value: 'tam' },
-  { label: 'Yarım Ödeme', value: 'yarim' },
-  { label: 'Ödeme Yok', value: 'yok' }
+const odemeTipleri = computed(() => [
+  { label: t('hizliSatis.odemeTipTam'), value: 'tam' },
+  { label: t('hizliSatis.odemeTipYarim'), value: 'yarim' },
+  { label: t('hizliSatis.odemeTipYok'), value: 'yok' }
 ])
 const odenenTutar = ref(0)
 
 // Ödeme yöntemi (Nakit/Kart/Havale/Taksit)
 const odemeYontemi = ref('NAKIT')
-const odemeYontemleri = [
-  { label: 'Nakit', value: 'NAKIT', icon: 'pi pi-money-bill' },
-  { label: 'Kart', value: 'KART', icon: 'pi pi-credit-card' },
-  { label: 'Havale', value: 'HAVALE', icon: 'pi pi-send' },
-  { label: 'Taksit', value: 'TAKSIT', icon: 'pi pi-calendar' }
-]
+const odemeYontemleri = computed(() => [
+  { label: t('hizliSatis.nakit'), value: 'NAKIT', icon: 'pi pi-money-bill' },
+  { label: t('hizliSatis.kart'), value: 'KART', icon: 'pi pi-credit-card' },
+  { label: t('hizliSatis.havale'), value: 'HAVALE', icon: 'pi pi-send' },
+  { label: t('hizliSatis.taksit'), value: 'TAKSIT', icon: 'pi pi-calendar' }
+])
 
 // Taksit bilgisi
 const taksitKurum = ref('')
@@ -1166,9 +1168,9 @@ watch(genelToplam, () => {
 const kalanTutar = computed(() => Math.max(0, genelToplam.value - odenenTutar.value))
 
 const odemeDurumText = computed(() => {
-  if (odemeDurumu.value === 'yok' || odenenTutar.value === 0) return 'Ödenmedi'
-  if (odenenTutar.value >= genelToplam.value) return 'Tamamen Ödendi'
-  return 'Kısmi Ödendi'
+  if (odemeDurumu.value === 'yok' || odenenTutar.value === 0) return t('hizliSatis.odemedi')
+  if (odenenTutar.value >= genelToplam.value) return t('hizliSatis.tamamenOdendi')
+  return t('hizliSatis.kismiOdedi')
 })
 
 const odemeDurumEnum = computed(() => {
@@ -1184,7 +1186,7 @@ const odemeDurumSeverity = computed(() => {
 })
 
 const musteriAdi = computed(() => {
-  if (anlikMusteri.value) return 'Anlık Müşteri'
+  if (anlikMusteri.value) return t('hizliSatis.anlikMusteri')
   return seciliMusteri.value?.ad || ''
 })
 
@@ -1269,11 +1271,11 @@ const personelSecenekleri = computed(() =>
     .map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
 )
 
-const teslimDurumSecenekleri = [
-  { label: 'Bekliyor', value: 'BEKLIYOR' },
-  { label: 'Yolda', value: 'YOLDA' },
-  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' }
-]
+const teslimDurumSecenekleri = computed(() => [
+  { label: t('faturalar.durumBekliyor'), value: 'BEKLIYOR' },
+  { label: t('faturalar.durumYolda'), value: 'YOLDA' },
+  { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
+])
 
 const personelListesiniYukle = async () => {
   try {

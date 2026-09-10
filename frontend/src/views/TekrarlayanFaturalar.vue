@@ -402,7 +402,7 @@ const suretiUret = (k) => {
   })
 }
 
-const formatDate = (d) => (d ? new Date(d).toLocaleDateString('tr-TR') : '-')
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(() => {
   yukle()

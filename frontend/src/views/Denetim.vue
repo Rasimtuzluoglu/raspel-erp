@@ -1,12 +1,12 @@
 <template>
   <div class="denetim-page">
     <PageHeader
-      title="Denetim Log"
-      subtitle="Sistemdeki tüm işlem kayıtlarını görüntüleyin ve filtreleyin."
+      :title="t('denetim.title')"
+      :subtitle="t('denetim.subtitle')"
     >
       <template #actions>
         <Button
-          label="Excel"
+          :label="t('denetim.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
           :loading="excelYukleniyor"
@@ -19,11 +19,11 @@
       <template #content>
         <div class="filtre-grid">
           <div class="filtre-alan">
-            <label>İşlem Türü</label>
+            <label>{{ t('denetim.islemTuru') }}</label>
             <Select
               v-model="filtre.islem"
               :options="islemTipleri"
-              placeholder="Tümü"
+              :placeholder="t('denetim.tumu')"
               class="w-full"
               allow-clear
               clear-icon="pi pi-times"
@@ -31,11 +31,11 @@
             />
           </div>
           <div class="filtre-alan">
-            <label>Entity</label>
+            <label>{{ t('denetim.entity') }}</label>
             <Select
               v-model="filtre.entityAdi"
               :options="entityListesi"
-              placeholder="Tümü"
+              :placeholder="t('denetim.tumu')"
               class="w-full"
               allow-clear
               clear-icon="pi pi-times"
@@ -43,26 +43,26 @@
             />
           </div>
           <div class="filtre-alan">
-            <label>Tarih Aralığı</label>
+            <label>{{ t('denetim.tarihAraligi') }}</label>
             <TarihHizliSecim v-model="filtre.tarihAraligi" />
           </div>
           <div
             v-if="filtre.tarihAraligi?.length === 2"
             class="filtre-alan"
           >
-            <label>Özel Tarih Aralığı</label>
+            <label>{{ t('denetim.ozelTarihAraligi') }}</label>
             <DatePicker
               v-model="filtre.tarihAraligi"
               selection-mode="range"
               date-format="dd/mm/yy"
-              placeholder="Başlangıç - Bitiş"
+              :placeholder="t('denetim.baslangicBitis')"
               class="w-full"
               @date-select="filtrele"
             />
           </div>
           <div class="filtre-aksiyon">
             <Button
-              label="Filtre Kaydet"
+              :label="t('denetim.filtreKaydet')"
               icon="pi pi-bookmark"
               class="p-button-sm p-button-text"
               @click="kayitliFiltreDialog = true"
@@ -71,12 +71,12 @@
               v-model="seciliKayitliFiltre"
               :options="kayitliFiltreler"
               option-label="ad"
-              placeholder="Kayıtlı Filtreler"
+              :placeholder="t('denetim.kayitliFiltreler')"
               class="kayitli-filtre"
               @change="kayitliFiltreYukle"
             />
             <Button
-              label="Temizle"
+              :label="t('denetim.temizle')"
               icon="pi pi-filter-slash"
               class="p-button-sm p-button-text"
               @click="filtreTemizle"
@@ -88,29 +88,29 @@
 
     <Dialog
       v-model:visible="kayitliFiltreDialog"
-      header="Filtreyi Kaydet"
+      :header="t('denetim.filtreyiKaydet')"
       :modal="true"
       style="width: 380px"
     >
       <FormField
-        label="Filtre Adı"
+        :label="t('denetim.filtreAdi')"
         :required="true"
       >
         <InputText
           v-model="yeniFiltreAdi"
-          placeholder="Örn: Son 3 ay KESILDI faturalar"
+          :placeholder="t('denetim.filtreAdiPlaceholder')"
           class="w-full"
         />
       </FormField>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="kayitliFiltreDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :disabled="!yeniFiltreAdi?.trim()"
           @click="filtreKaydet"
@@ -136,7 +136,7 @@
         >
           <Column
             field="tarih"
-            header="Tarih"
+            :header="t('common.date')"
             style="width: 150px"
           >
             <template #body="s">
@@ -145,12 +145,12 @@
           </Column>
           <Column
             field="kullaniciId"
-            header="Kullanıcı ID"
+            :header="t('denetim.kullaniciId')"
             style="width: 100px"
           />
           <Column
             field="islem"
-            header="İşlem"
+            :header="t('denetim.islem')"
             style="width: 100px"
           >
             <template #body="s">
@@ -162,21 +162,21 @@
           </Column>
           <Column
             field="entityAdi"
-            header="Entity"
+            :header="t('denetim.entity')"
             style="width: 110px"
           />
           <Column
             field="entityId"
-            header="Entity ID"
+            :header="t('denetim.entityId')"
             style="width: 90px"
           />
           <Column
             field="aciklama"
-            header="Açıklama"
+            :header="t('common.description')"
           />
           <Column
             field="detay"
-            header="Detay"
+            :header="t('denetim.detay')"
           >
             <template #body="s">
               <span
@@ -191,7 +191,7 @@
           </Column>
           <Column
             field="ipAdresi"
-            header="IP"
+            :header="t('denetim.ip')"
             style="width: 120px"
           />
         </DataTable>
@@ -199,28 +199,28 @@
           v-if="(!logs || !logs.length) && !yukleniyor"
           class="empty-state"
         >
-          Henüz denetim kaydı bulunamadı.
+          {{ t('denetim.empty') }}
         </div>
       </template>
     </Card>
 
     <Dialog
       v-model:visible="detayDialogAcik"
-      header="İşlem Detayı"
+      :header="t('denetim.islemDetayi')"
       :modal="true"
       style="width: 560px"
     >
       <div class="detay-dialog-icerik">
         <div class="detay-dialog-satir">
-          <span class="detay-dialog-etiket">İşlem</span>
+          <span class="detay-dialog-etiket">{{ t('denetim.islem') }}</span>
           <strong>{{ seciliDetay?.islem }}</strong>
         </div>
         <div class="detay-dialog-satir">
-          <span class="detay-dialog-etiket">Entity</span>
+          <span class="detay-dialog-etiket">{{ t('denetim.entity') }}</span>
           <span>{{ seciliDetay?.entityAdi }} #{{ seciliDetay?.entityId }}</span>
         </div>
         <div class="detay-dialog-satir">
-          <span class="detay-dialog-etiket">Tarih</span>
+          <span class="detay-dialog-etiket">{{ t('common.date') }}</span>
           <span>{{ seciliDetay?.tarih ? formatDate(seciliDetay.tarih) : '-' }}</span>
         </div>
         <pre class="detay-json">{{ detayFormatli }}</pre>
@@ -236,9 +236,11 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { auditLogAPI, excelAPI } from '../api/index.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import FormField from '../components/FormField.vue'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 const logs = ref([])
 const yukleniyor = ref(false)
 const sayfa = ref(0)
@@ -273,14 +275,14 @@ const filtreKaydet = () => {
   localStorage.setItem(KAYITLI_ANAHTAR, JSON.stringify(kayitliFiltreler.value))
   kayitliFiltreDialog.value = false
   yeniFiltreAdi.value = ''
-  toast.add({ severity: 'success', summary: 'Kaydedildi', detail: 'Filtre kaydedildi.', life: 3000 })
+  toast.add({ severity: 'success', summary: t('denetim.kaydedildi'), detail: t('denetim.filtreKaydedildi'), life: 3000 })
 }
 
 const kayitliFiltreYukle = () => {
   if (!seciliKayitliFiltre.value) return
   filtre.value = JSON.parse(JSON.stringify(seciliKayitliFiltre.value.filtre))
   filtrele()
-  toast.add({ severity: 'info', summary: 'Filtre Uygulandı', detail: seciliKayitliFiltre.value.ad, life: 3000 })
+  toast.add({ severity: 'info', summary: t('denetim.filtreUygulandi'), detail: seciliKayitliFiltre.value.ad, life: 3000 })
 }
 
 const yukle = async (page = 0) => {
@@ -297,7 +299,7 @@ const yukle = async (page = 0) => {
     logs.value = r.data?.content || r.data || []
     toplamKayit.value = r.data?.totalElements || logs.value.length
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Denetim kayıtları yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('denetim.hataYukleme'))
   } finally {
     yukleniyor.value = false
   }
@@ -330,7 +332,7 @@ const excelIndir = async () => {
     link.remove()
     window.URL.revokeObjectURL(url)
   } catch {
-    toastBildirim.hata('Excel indirilemedi')
+    toastBildirim.hata(t('denetim.hataExcel'))
   } finally {
     excelYukleniyor.value = false
   }
@@ -344,10 +346,7 @@ const sayfaDegisti = (e) => {
   yukle(e.page)
 }
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString('tr-TR')
-}
+import { formatTarihSaat as formatDate } from '../utils/format.js'
 const formatISODate = (d) => {
   if (!d) return null
   const dt = new Date(d)

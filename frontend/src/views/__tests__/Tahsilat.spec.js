@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -104,7 +105,7 @@ describe('Tahsilat.vue', () => {
   it('renders collections summary and cari list', async () => {
     const Tahsilat = (await import('../Tahsilat.vue')).default
     const wrapper = mount(Tahsilat, {
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.tahsilat-container').exists()).toBe(true)

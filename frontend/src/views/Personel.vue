@@ -2,15 +2,15 @@
   <div class="personel-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        İnsan Kaynakları
+        {{ t('personel.title') }}
       </h1>
       <IlkZiyaretIpuclari
         anahtar="personel"
-        baslik="Personel Yönetimi"
-        metin="Çalışan kayıtlarını oluşturun, izin taleplerini onaylayın, puantaj ve maaş bordrosunu takip edin. TC kimlik doğrulaması kayıt sırasında otomatik yapılır."
+        :baslik="t('personel.ipucuBaslik')"
+        :metin="t('personel.ipucuMetin')"
       />
       <Button
-        label="Yeni Personel"
+        :label="t('personel.yeniPersonel')"
         icon="pi pi-plus"
         @click="personelDialogAc()"
       />
@@ -28,7 +28,7 @@
     </Toolbar>
 
     <TabView>
-      <TabPanel header="Personel Listesi">
+      <TabPanel :header="t('personel.personelListesi')">
         <DataTable
           :value="personeller"
           striped-rows
@@ -36,43 +36,43 @@
         >
           <Column
             field="ad"
-            header="Ad"
+            :header="t('personel.ad')"
             sortable
           />
           <Column
             field="soyad"
-            header="Soyad"
+            :header="t('personel.soyad')"
             sortable
           />
           <Column
             field="departman"
-            header="Departman"
+            :header="t('personel.departman')"
           />
           <Column
             field="pozisyon"
-            header="Pozisyon"
+            :header="t('personel.pozisyon')"
           />
           <Column
             field="telefon"
-            header="Telefon"
+            :header="t('personel.telefon')"
           />
           <Column
             field="email"
-            header="E-posta"
+            :header="t('personel.eposta')"
           />
           <Column
             field="aktif"
-            header="Durum"
+            :header="t('common.status')"
           >
             <template #body="{ data }">
               <Tag
-                :value="data.aktif ? 'Aktif' : 'Pasif'"
+                :value="data.aktif ? t('personel.aktif') : t('personel.pasif')"
                 :severity="data.aktif ? 'success' : 'danger'"
               />
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('personel.islem')"
             style="width: 140px"
           >
             <template #body="{ data }">
@@ -84,7 +84,7 @@
               <Button
                 icon="pi pi-calendar-plus"
                 class="p-button-rounded p-button-text p-button-info"
-                title="İzin Ekle"
+                :title="t('personel.izinEkle')"
                 @click="izinDialogAc(data)"
               />
               <Button
@@ -97,43 +97,43 @@
         </DataTable>
         <EmptyState
           v-if="!yukleniyor && personeller.length === 0"
-          message="Henüz personel bulunamadı"
-          sub-message="İlk personel kaydınızı eklemek için Yeni Personel butonuna tıklayın"
+          :message="t('personel.empty')"
+          :sub-message="t('personel.emptyHint')"
           icon="pi pi-users"
-          action-label="Yeni Personel"
+          :action-label="t('personel.yeniPersonel')"
           action-icon="pi pi-plus"
           @action="personelDialogAc()"
         />
       </TabPanel>
 
-      <TabPanel header="İzin Talepleri">
+      <TabPanel :header="t('personel.izinTalepleri')">
         <DataTable
           :value="tumIzinler"
           striped-rows
         >
           <Column
             field="personelAdi"
-            header="Personel"
+            :header="t('personel.personel')"
           />
           <Column
             field="izinTuru"
-            header="İzin Türü"
+            :header="t('personel.izinTuru')"
           />
           <Column
             field="baslangic"
-            header="Başlangıç"
+            :header="t('personel.baslangic')"
           />
           <Column
             field="bitis"
-            header="Bitiş"
+            :header="t('personel.bitis')"
           />
           <Column
             field="gunSayisi"
-            header="Gün"
+            :header="t('personel.gun')"
           />
           <Column
             field="durum"
-            header="Durum"
+            :header="t('common.status')"
           >
             <template #body="{ data }">
               <Tag
@@ -148,20 +148,20 @@
 
     <Dialog
       v-model:visible="personelDialog"
-      :header="duzenleme ? 'Personel Düzenle' : 'Yeni Personel'"
+      :header="duzenleme ? t('personel.personelDuzenle') : t('personel.yeniPersonel')"
       modal
       :style="{ width: '600px' }"
     >
       <div class="form-grid">
         <div class="field-row">
           <div class="field">
-            <label>Ad *</label><InputText
+            <label>{{ t('personel.adZorunlu') }}</label><InputText
               v-model="personelForm.ad"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Soyad *</label><InputText
+            <label>{{ t('personel.soyadZorunlu') }}</label><InputText
               v-model="personelForm.soyad"
               class="w-full"
             />
@@ -169,7 +169,7 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>TC Kimlik</label><InputText
+            <label>{{ t('personel.tcKimlik') }}</label><InputText
               v-model="personelForm.tcKimlik"
               class="w-full"
             />
@@ -177,11 +177,11 @@
               v-if="(personelForm.tcKimlik || '').replace(/\D/g, '').length === 11"
               :style="{ color: tcGecerli ? '#22c55e' : '#ef4444', fontSize: '12px' }"
             >
-              {{ tcGecerli ? '✓ Geçerli TC' : '✗ Geçersiz TC' }}
+              {{ tcGecerli ? t('personel.gecerliTC') : t('personel.gecersizTC') }}
             </span>
           </div>
           <div class="field">
-            <label>Doğum Tarihi</label><DatePicker
+            <label>{{ t('personel.dogumTarihi') }}</label><DatePicker
               v-model="personelForm.dogumTarihi"
               date-format="dd/mm/yy"
               class="w-full"
@@ -190,13 +190,13 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Departman</label><InputText
+            <label>{{ t('personel.departman') }}</label><InputText
               v-model="personelForm.departman"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Pozisyon</label><InputText
+            <label>{{ t('personel.pozisyon') }}</label><InputText
               v-model="personelForm.pozisyon"
               class="w-full"
             />
@@ -204,7 +204,7 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Maaş</label><InputNumber
+            <label>{{ t('personel.maas') }}</label><InputNumber
               v-model="personelForm.maas"
               mode="currency"
               currency="TRY"
@@ -212,7 +212,7 @@
             />
           </div>
           <div class="field">
-            <label>İşe Giriş</label><DatePicker
+            <label>{{ t('personel.iseGiris') }}</label><DatePicker
               v-model="personelForm.iseGirisTarihi"
               date-format="dd/mm/yy"
               class="w-full"
@@ -221,38 +221,38 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Telefon</label><InputText
+            <label>{{ t('personel.telefon') }}</label><InputText
               v-model="personelForm.telefon"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>E-posta</label><InputText
+            <label>{{ t('personel.eposta') }}</label><InputText
               v-model="personelForm.email"
               class="w-full"
             />
           </div>
         </div>
         <div class="field">
-          <label>Adres</label><Textarea
+          <label>{{ t('personel.adres') }}</label><Textarea
             v-model="personelForm.adres"
             rows="2"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Aktif</label><InputSwitch v-model="personelForm.aktif" />
+          <label>{{ t('personel.aktif') }}</label><InputSwitch v-model="personelForm.aktif" />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="personelDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="personelKaydet"
@@ -262,37 +262,37 @@
 
     <Dialog
       v-model:visible="izinDialog"
-      header="İzin Ekle"
+      :header="t('personel.izinEkle')"
       modal
       :style="{ width: '450px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Personel</label><InputText
+          <label>{{ t('personel.personel') }}</label><InputText
             :value="izinPersonelAdi"
             disabled
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>İzin Türü *</label>
+          <label>{{ t('personel.izinTuruZorunlu') }}</label>
           <Dropdown
             v-model="izinForm.izinTuru"
             :options="izinTurleri"
-            placeholder="Seçin"
+            :placeholder="t('common.select')"
             class="w-full"
           />
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Başlangıç</label><DatePicker
+            <label>{{ t('personel.baslangic') }}</label><DatePicker
               v-model="izinForm.baslangic"
               date-format="dd/mm/yy"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Bitiş</label><DatePicker
+            <label>{{ t('personel.bitis') }}</label><DatePicker
               v-model="izinForm.bitis"
               date-format="dd/mm/yy"
               class="w-full"
@@ -300,7 +300,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="izinForm.aciklama"
             rows="2"
             class="w-full"
@@ -309,13 +309,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="izinDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="izinKaydet"
@@ -333,8 +333,10 @@ import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const personeller = ref([])
 const tumIzinler = ref([])
@@ -393,7 +395,7 @@ onMounted(async () => {
     personeller.value = pR.data?.content || pR.data || []
     tumIzinler.value = iR.data?.content || iR.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel verileri yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -442,24 +444,24 @@ const personelKaydet = async () => {
     const r2 = await personelAPI.getAll()
     personeller.value = r2.data?.content || r2.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.hataKaydet'))
   }
   kaydediliyor.value = false
 }
 
 const personelSil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await personelAPI.delete(data.id)
         personeller.value = personeller.value.filter((p) => p.id !== data.id)
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'Personel silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.hataSil'))
       }
     },
     reject: () => {}
@@ -489,7 +491,7 @@ const izinKaydet = async () => {
     const r3 = await personelIzinAPI.getAll()
     tumIzinler.value = r3.data?.content || r3.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İzin kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.izinHataKaydet'))
   }
   kaydediliyor.value = false
 }

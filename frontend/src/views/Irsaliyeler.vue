@@ -2,10 +2,10 @@
   <div class="irsaliye-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        İrsaliyeler
+        {{ t('irsaliyeler.title') }}
       </h1>
       <Button
-        label="Yeni İrsaliye"
+        :label="t('irsaliyeler.yeniIrsaliye')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,24 +18,24 @@
     >
       <Column
         field="irsaliyeNo"
-        header="İrsaliye No"
+        :header="t('irsaliyeler.irsaliyeNo')"
         sortable
       />
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
       />
       <Column
         field="cariHesapAdi"
-        header="Cari Hesap"
+        :header="t('irsaliyeler.cariHesap')"
       />
       <Column
         field="tur"
-        header="Tür"
+        :header="t('irsaliyeler.tur')"
       />
       <Column
         field="durum"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
@@ -45,7 +45,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('irsaliyeler.islem')"
         style="width: 140px"
       >
         <template #body="{ data }">
@@ -53,14 +53,14 @@
             v-if="data.durum === 'TASLAK'"
             icon="pi pi-check"
             class="p-button-rounded p-button-text p-button-success"
-            title="Kes"
+            :title="t('irsaliyeler.kes')"
             @click="durumGuncelle(data, 'KESILDI')"
           />
           <Button
             v-if="data.durum !== 'IPTAL'"
             icon="pi pi-times"
             class="p-button-rounded p-button-text p-button-danger"
-            title="İptal"
+            :title="t('common.cancel')"
             @click="durumGuncelle(data, 'IPTAL')"
           />
           <Button
@@ -74,47 +74,47 @@
 
     <EmptyState
       v-if="!yukleniyor && list.length === 0"
-      message="Henüz irsaliye bulunamadı"
-      sub-message="İlk irsaliyenizi eklemek için Yeni İrsaliye butonuna tıklayın"
+      :message="t('irsaliyeler.empty')"
+      :sub-message="t('irsaliyeler.emptyHint')"
       icon="pi pi-truck"
-      action-label="Yeni İrsaliye"
+      :action-label="t('irsaliyeler.yeniIrsaliye')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
 
     <Dialog
       v-model:visible="dialog"
-      header="Yeni İrsaliye"
+      :header="t('irsaliyeler.yeniIrsaliye')"
       modal
       :style="{ width: '500px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>İrsaliye No *</label><InputText
+          <label>{{ t('irsaliyeler.irsaliyeNoZorunlu') }}</label><InputText
             v-model="form.irsaliyeNo"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tarih</label><DatePicker
+          <label>{{ t('common.date') }}</label><DatePicker
             v-model="form.tarih"
             date-format="dd/mm/yy"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Cari Hesap *</label>
+          <label>{{ t('irsaliyeler.cariHesapZorunlu') }}</label>
           <Dropdown
             v-model="form.cariHesapId"
             :options="cariler"
             option-label="ad"
             option-value="id"
-            placeholder="Seçin"
+            :placeholder="t('common.select')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Tür</label>
+          <label>{{ t('irsaliyeler.tur') }}</label>
           <Dropdown
             v-model="form.tur"
             :options="['SATIS', 'ALIS']"
@@ -122,30 +122,30 @@
           />
         </div>
         <div class="field">
-          <label>Açıklama</label><Textarea
+          <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Sipariş (opsiyonel)</label>
+          <label>{{ t('irsaliyeler.siparisOpsiyonel') }}</label>
           <Dropdown
             v-model="form.siparisId"
             :options="siparisler"
             option-label="siparisNo"
             option-value="id"
             filter
-            placeholder="Siparişe bağla"
+            :placeholder="t('irsaliyeler.siparisBagla')"
             class="w-full"
           />
         </div>
         <div class="field">
           <div class="kalem-baslik">
-            <label>Kalemler</label>
+            <label>{{ t('irsaliyeler.kalemler') }}</label>
             <Button
               icon="pi pi-camera"
-              label="Barkod"
+              :label="t('irsaliyeler.barkod')"
               class="p-button-sm p-button-outlined"
               @click="barkodAcik = true"
             />
@@ -162,13 +162,13 @@
               option-value="id"
               filter
               class="w-full"
-              placeholder="Ürün"
+              :placeholder="t('irsaliyeler.urun')"
             />
             <InputNumber
               v-model="k.miktar"
               :min="0"
               class="kalem-miktar"
-              placeholder="Miktar"
+              :placeholder="t('irsaliyeler.miktar')"
             />
             <Button
               icon="pi pi-trash"
@@ -177,7 +177,7 @@
             />
           </div>
           <Button
-            label="Kalem Ekle"
+            :label="t('irsaliyeler.kalemEkle')"
             icon="pi pi-plus"
             class="p-button-sm p-button-text"
             @click="form.kalemler.push({ stokId: null, miktar: 1, aciklama: '', birim: 'Adet' })"
@@ -186,13 +186,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -214,8 +214,10 @@ import { useConfirm } from 'primevue/useconfirm'
 import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
+import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const list = ref([])
 const cariler = ref([])
@@ -241,7 +243,7 @@ onMounted(async () => {
     stoklar.value = s.data?.content || s.data || []
     siparisler.value = sp.data?.content || sp.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliyeler yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -254,11 +256,11 @@ const dialogAc = () => {
 const barkodOkundu = (kod) => {
   const stok = stoklar.value.find((s) => s.barkod === kod || s.stokKodu === kod)
   if (!stok) {
-    toastBildirim.uyari('Barkod bulunamadı: ' + kod)
+    toastBildirim.uyari(t('irsaliyeler.barkodBulunamadi', { kod }))
     return
   }
   form.value.kalemler.push({ stokId: stok.id, miktar: 1, aciklama: stok.ad, birim: stok.birim || 'Adet' })
-  toastBildirim.basarili(stok.ad + ' eklendi')
+  toastBildirim.basarili(t('irsaliyeler.eklendi', { ad: stok.ad }))
 }
 
 const kaydet = async () => {
@@ -273,7 +275,7 @@ const kaydet = async () => {
     const r = await irsaliyeAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliye kaydedilirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataKaydet'))
   }
   kaydediliyor.value = false
 }
@@ -283,22 +285,22 @@ const durumGuncelle = async (data, durum) => {
     const r = await irsaliyeAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Durum güncellenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataDurum'))
   }
 }
 const sil = (data) => {
   confirm.require({
-    message: 'Bu kaydı silmek istediğinize emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('common.confirmDelete'),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await irsaliyeAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || err?.message || 'İrsaliye silinirken hata oluştu')
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataSil'))
       }
     },
     reject: () => {}

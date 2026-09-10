@@ -2,25 +2,25 @@
   <div class="mutabakat-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Banka Mutabakatı
+        {{ t('bankaMutabakat.title') }}
       </h1>
     </div>
 
     <IlkZiyaretIpuclari
       anahtar="banka-mutabakat"
-      baslik="Banka Mutabakatı"
-      metin="Bankanızdan indirdiğiniz hesap özetini (CSV/Excel) yükleyin; sistem hareketleri faturalarla otomatik eşleştirir. Eşleşmeyenleri elle bağlayabilirsiniz."
+      :baslik="t('bankaMutabakat.ipucuBaslik')"
+      :metin="t('bankaMutabakat.ipucuMetin')"
     />
 
     <div class="mutabakat-ust">
       <div class="banka-secim">
-        <label>Banka</label>
+        <label>{{ t('bankaMutabakat.banka') }}</label>
         <Select
           v-model="seciliBanka"
           :options="bankalar"
           option-label="ad"
           option-value="id"
-          placeholder="Banka seçin"
+          :placeholder="t('bankaMutabakat.bankaSecin')"
           class="w-full"
           filter
           show-clear
@@ -36,14 +36,14 @@
           @change="dosyaSecildi"
         >
         <Button
-          label="Hesap Özeti Yükle"
+          :label="t('bankaMutabakat.hesapOzetiYukle')"
           icon="pi pi-upload"
           :disabled="!seciliBanka"
           :loading="yukleniyor"
           @click="dosyaInput.click()"
         />
         <Button
-          label="Otomatik Eşleştir"
+          :label="t('bankaMutabakat.otomatikEslestir')"
           icon="pi pi-link"
           severity="secondary"
           outlined
@@ -58,16 +58,16 @@
       class="mutabakat-ozet"
     >
       <div class="ozet-kutu">
-        <span>Toplam Hareket</span><strong>{{ hareketler ? hareketler.length : 0 }}</strong>
+        <span>{{ t('bankaMutabakat.toplamHareket') }}</span><strong>{{ hareketler ? hareketler.length : 0 }}</strong>
       </div>
       <div class="ozet-kutu">
-        <span>Eşleşen</span><strong class="pozitif">{{ eslesenSayisi }}</strong>
+        <span>{{ t('bankaMutabakat.eslesen') }}</span><strong class="pozitif">{{ eslesenSayisi }}</strong>
       </div>
       <div class="ozet-kutu">
-        <span>Eşleşmeyen</span><strong class="negatif">{{ eslesmeyenSayisi }}</strong>
+        <span>{{ t('bankaMutabakat.eslesmeyen') }}</span><strong class="negatif">{{ eslesmeyenSayisi }}</strong>
       </div>
       <div class="ozet-kutu">
-        <span>Eşleşme Oranı</span><strong>{{ eslesmeOrani }}</strong>
+        <span>{{ t('bankaMutabakat.eslesmeOrani') }}</span><strong>{{ eslesmeOrani }}</strong>
       </div>
     </div>
 
@@ -75,13 +75,13 @@
       :value="hareketler"
       :loading="yukleniyor"
       arama-aktif
-      arama-placeholder="Hareketlerde ara..."
+      :arama-placeholder="t('bankaMutabakat.aramaPlaceholder')"
       gorunum-anahtari="banka_mutabakat"
-      empty-message="Hesap özeti yüklenmedi"
+      :empty-message="t('bankaMutabakat.empty')"
     >
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
         sortable
       >
         <template #body="{ data }">
@@ -90,11 +90,11 @@
       </Column>
       <Column
         field="aciklama"
-        header="Açıklama"
+        :header="t('common.description')"
       />
       <Column
         field="borc"
-        header="Borç"
+        :header="t('bankaMutabakat.borc')"
       >
         <template #body="{ data }">
           <span class="negatif">{{ formatCurrency(data.borc) }}</span>
@@ -102,7 +102,7 @@
       </Column>
       <Column
         field="alacak"
-        header="Alacak"
+        :header="t('bankaMutabakat.alacak')"
       >
         <template #body="{ data }">
           <span class="pozitif">{{ formatCurrency(data.alacak) }}</span>
@@ -110,7 +110,7 @@
       </Column>
       <Column
         field="bakiye"
-        header="Bakiye"
+        :header="t('bankaMutabakat.bakiye')"
       >
         <template #body="{ data }">
           {{ data.bakiye != null ? formatCurrency(data.bakiye) : '-' }}
@@ -118,12 +118,12 @@
       </Column>
       <Column
         field="eslestirildi"
-        header="Eşleşme"
+        :header="t('bankaMutabakat.eslesme')"
         sortable
       >
         <template #body="{ data }">
           <Tag
-            :value="data.eslestirildi ? 'Eşleşti' : 'Eşleşmedi'"
+            :value="data.eslestirildi ? t('bankaMutabakat.eslesti') : t('bankaMutabakat.eslesmedi')"
             :severity="data.eslestirildi ? 'success' : 'danger'"
           />
           <div
@@ -137,7 +137,7 @@
             class="oneri-fatura"
           >
             <i class="pi pi-lightbulb" />
-            <span>Öneri: #{{ data.onerilenFaturaNo }}</span>
+            <span>{{ t('bankaMutabakat.oneri') }} #{{ data.onerilenFaturaNo }}</span>
             <span
               class="guven-skoru"
               :class="skorSinifi(data.guvenSkoru)"
@@ -146,7 +146,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('bankaMutabakat.islem')"
         style="width: 200px"
       >
         <template #body="{ data }">
@@ -156,7 +156,7 @@
           >
             <Button
               v-if="data.onerilenFaturaId"
-              label="Onayla"
+              :label="t('bankaMutabakat.onayla')"
               icon="pi pi-check"
               class="p-button-sm p-button-success p-button-outlined"
               @click="oneriOnayla(data)"
@@ -166,7 +166,7 @@
               :options="faturalar"
               option-label="etiket"
               option-value="id"
-              placeholder="Fatura bağla"
+              :placeholder="t('bankaMutabakat.faturaBagla')"
               filter
               class="fatura-bagla"
               @change="manuelEslestir(data)"
@@ -176,7 +176,7 @@
             v-else
             icon="pi pi-times"
             class="p-button-rounded p-button-text"
-            title="Eşleştirmeyi kaldır"
+            :title="t('bankaMutabakat.eslestirmeyiKaldir')"
             @click="eslestirmeyiKaldir(data)"
           />
         </template>
@@ -192,10 +192,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { bankaAPI, bankaMutabakatAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 
 const bankalar = ref([])
 const faturalar = ref([])
@@ -215,8 +217,7 @@ const formatCurrency = (v) =>
   v == null || Number(v) === 0
     ? '0,00 ₺'
     : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-const formatDate = (d) =>
-  d ? new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d)) : '-'
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   try {
@@ -245,7 +246,7 @@ const yukle = async () => {
     const r = await bankaMutabakatAPI.listele(seciliBanka.value)
     hareketler.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Hareketler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('bankaMutabakat.hataYukleme'))
   }
   yukleniyor.value = false
 }
@@ -256,10 +257,10 @@ const dosyaSecildi = async (e) => {
   yukleniyor.value = true
   try {
     await bankaMutabakatAPI.yukle(seciliBanka.value, file)
-    toast.add({ severity: 'success', summary: 'Yüklendi', detail: 'Hesap özeti yüklendi ve eşleştirildi', life: 3000 })
+    toast.add({ severity: 'success', summary: t('bankaMutabakat.yuklendi'), detail: t('bankaMutabakat.yuklendiDetay'), life: 3000 })
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Yükleme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('bankaMutabakat.yuklemeBasarisiz'))
   }
   yukleniyor.value = false
   e.target.value = ''
@@ -269,10 +270,10 @@ const otomatikEslestir = async () => {
   yukleniyor.value = true
   try {
     await bankaMutabakatAPI.otomatikEslestir(seciliBanka.value)
-    toast.add({ severity: 'success', summary: 'Eşleştirildi', detail: 'Otomatik eşleştirme tamamlandı', life: 3000 })
+    toast.add({ severity: 'success', summary: t('bankaMutabakat.eslestirildi'), detail: t('bankaMutabakat.eslestirildiDetay'), life: 3000 })
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Eşleştirme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('bankaMutabakat.eslestirmeBasarisiz'))
   }
   yukleniyor.value = false
 }
@@ -281,10 +282,10 @@ const manuelEslestir = async (hareket) => {
   if (!hareket.eslesenFaturaId) return
   try {
     await bankaMutabakatAPI.eslestir(seciliBanka.value, hareket.id, hareket.eslesenFaturaId)
-    toast.add({ severity: 'success', summary: 'Eşleşti', detail: 'Hareket fatura ile eşleştirildi', life: 3000 })
+    toast.add({ severity: 'success', summary: t('bankaMutabakat.eslesti'), detail: t('bankaMutabakat.eslestiDetay'), life: 3000 })
     await yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Eşleştirme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('bankaMutabakat.eslestirmeBasarisiz'))
   }
 }
 
@@ -303,18 +304,18 @@ const oneriOnayla = async (hareket) => {
 
 const eslestirmeyiKaldir = (hareket) => {
   confirm.require({
-    message: 'Bu eşleştirmeyi kaldırmak istediğinize emin misiniz?',
-    header: 'Onay',
+    message: t('bankaMutabakat.kaldirOnayMesaj'),
+    header: t('kasa.onay'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet',
-    rejectLabel: 'İptal',
+    acceptLabel: t('bankaMutabakat.evet'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await bankaMutabakatAPI.eslestirmeyiKaldir(seciliBanka.value, hareket.id)
-        toast.add({ severity: 'success', summary: 'Kaldırıldı', detail: 'Eşleştirme kaldırıldı', life: 3000 })
+        toast.add({ severity: 'success', summary: t('bankaMutabakat.kaldirildi'), detail: t('bankaMutabakat.kaldirildiDetay'), life: 3000 })
         await yukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('bankaMutabakat.islemBasarisiz'))
       }
     }
   })

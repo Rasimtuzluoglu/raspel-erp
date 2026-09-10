@@ -9,16 +9,16 @@
           </div>
           <div>
             <h2 class="user-name">
-              {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username || 'Saha Personeli' }}
+              {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username || t('sahaPortali.sahaPersoneli') }}
             </h2>
             <span class="user-badge">
-              <i class="pi pi-compass" /> Saha & Personel Mobil Portalı
+              <i class="pi pi-compass" /> {{ t('sahaPortali.portalBaslik') }}
             </span>
           </div>
         </div>
         <div class="header-actions">
           <Button
-            label="Hızlı Sipariş Al"
+            :label="t('sahaPortali.hizliSiparis')"
             icon="pi pi-plus"
             class="p-button-warning p-button-sm font-semibold"
             @click="yeniSiparisModal = true"
@@ -39,7 +39,7 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-shopping-bag" />
-            Sipariş & Teslimat
+            {{ t('sahaPortali.siparisTeslimat') }}
             <span
               v-if="bekleyenSiparisSayisi > 0"
               class="tab-badge"
@@ -59,44 +59,44 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-map-marker" />
-            Ziyaret Kaydı
+            {{ t('sahaPortali.ziyaretKaydi') }}
           </span>
         </template>
 
         <div class="fade-in-section">
           <div class="form-container-card">
             <div class="form-header">
-              <h3><i class="pi pi-map-marker text-red-500 mr-2" />Müşteri Ziyaret & Görüşme Kaydı</h3>
-              <p>Ziyaret ettiğiniz müşteriyi seçip görüşme özetini merkeze bildirin.</p>
+              <h3><i class="pi pi-map-marker text-red-500 mr-2" />{{ t('sahaPortali.ziyaretBaslik') }}</h3>
+              <p>{{ t('sahaPortali.ziyaretAciklama') }}</p>
             </div>
 
             <div class="form-body">
               <div class="form-field">
-                <label>Ziyaret Edilen Müşteri *</label>
+                <label>{{ t('sahaPortali.ziyaretMusteriZorunlu') }}</label>
                 <Dropdown
                   v-model="ziyaretForm.cariHesapId"
                   :options="cariHesaplar"
                   option-label="ad"
                   option-value="id"
-                  placeholder="Müşteri Seçin..."
+                  :placeholder="t('sahaPortali.musteriSecin')"
                   filter
                   class="w-full"
                 />
               </div>
               <div class="form-field">
-                <label>Ziyaret Amacı</label>
+                <label>{{ t('sahaPortali.ziyaretAmaci') }}</label>
                 <Dropdown
                   v-model="ziyaretForm.amac"
-                  :options="['Satış & Tanıtım', 'Sipariş & Teklif Takibi', 'Tahsilat', 'Rutin Ziyaret', 'Destek / İade']"
+                  :options="[t('sahaPortali.amacSatisTanitim'), t('sahaPortali.amacSiparisTeklif'), t('sahaPortali.amacTahsilat'), t('sahaPortali.amacRutin'), t('sahaPortali.amacDestek')]"
                   class="w-full"
                 />
               </div>
               <div class="form-field">
-                <label>Görüşme Notları & Sonuç *</label>
+                <label>{{ t('sahaPortali.gorusmeNotlariZorunlu') }}</label>
                 <Textarea
                   v-model="ziyaretForm.notlar"
                   rows="4"
-                  placeholder="Görüşülen yetkili, talep edilenler, sonraki adımlar..."
+                  :placeholder="t('sahaPortali.notlarPlaceholder')"
                   class="w-full"
                 />
               </div>
@@ -104,11 +104,11 @@
                 <div class="flex items-center gap-2">
                   <i class="pi pi-map-marker text-red-500 text-lg" />
                   <span class="text-sm text-secondary dark:text-gray-200">
-                    {{ ziyaretKonum || 'Konum alınmadı' }}
+                    {{ ziyaretKonum || t('sahaPortali.konumAlinmadi') }}
                   </span>
                 </div>
                 <Button
-                  label="Konum Al"
+                  :label="t('sahaPortali.konumAl')"
                   icon="pi pi-compass"
                   class="p-button-outlined p-button-sm p-button-secondary"
                   :loading="konumAliniyor"
@@ -116,7 +116,7 @@
                 />
               </div>
               <Button
-                label="Ziyaret Notunu Merkeze İlet"
+                :label="t('sahaPortali.ziyaretIlet')"
                 icon="pi pi-send"
                 class="p-button-primary w-full mt-2 font-bold"
                 :loading="ziyaretKaydediliyor"
@@ -131,15 +131,15 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-wallet" />
-            Masraf & Avans
+            {{ t('sahaPortali.masrafAvans') }}
           </span>
         </template>
 
         <div class="fade-in-section">
           <div class="section-title-row">
-            <h3><i class="pi pi-receipt text-primary mr-2" />Masraf & Avans Taleplerim</h3>
+            <h3><i class="pi pi-receipt text-primary mr-2" />{{ t('sahaPortali.masrafAvansTaleplerim') }}</h3>
             <Button
-              label="Yeni Masraf / Avans"
+              :label="t('sahaPortali.yeniMasrafAvans')"
               icon="pi pi-plus"
               class="p-button-primary p-button-sm"
               @click="yeniMasrafModal = true"
@@ -157,7 +157,7 @@
             >
               <div class="expense-left">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="expense-type-badge">{{ m.tur === 'AVANS' ? 'Avans Talebi' : m.kategori }}</span>
+                  <span class="expense-type-badge">{{ m.tur === 'AVANS' ? t('sahaPortali.avansTalebi') : m.kategori }}</span>
                   <Tag
                     :value="m.durum"
                     :severity="talepDurumSeverity(m.durum)"
@@ -180,7 +180,7 @@
             class="empty-box"
           >
             <i class="pi pi-wallet empty-icon" />
-            <p>Henüz masraf veya avans talebiniz yok.</p>
+            <p>{{ t('sahaPortali.masrafBos') }}</p>
           </div>
         </div>
       </TabPanel>
@@ -189,15 +189,15 @@
         <template #header>
           <span class="flex items-center gap-1.5">
             <i class="pi pi-calendar" />
-            İzin Talebi
+            {{ t('sahaPortali.izinTalebi') }}
           </span>
         </template>
 
         <div class="fade-in-section">
           <div class="section-title-row">
-            <h3><i class="pi pi-calendar-plus text-primary mr-2" />İzin Taleplerim</h3>
+            <h3><i class="pi pi-calendar-plus text-primary mr-2" />{{ t('sahaPortali.izinTaleplerim') }}</h3>
             <Button
-              label="Yeni İzin Talebi"
+              :label="t('sahaPortali.yeniIzinTalebi')"
               icon="pi pi-plus"
               class="p-button-primary p-button-sm"
               @click="yeniIzinModal = true"
@@ -225,7 +225,7 @@
                 <p class="expense-desc">
                   <i class="pi pi-calendar mr-1" />
                   {{ formatTarih(i.baslangic) }} → {{ formatTarih(i.bitis) }}
-                  <span class="font-bold text-primary ml-1">({{ i.gunSayisi }} Gün)</span>
+                  <span class="font-bold text-primary ml-1">({{ i.gunSayisi }} {{ t('sahaPortali.gun') }})</span>
                 </p>
                 <small
                   v-if="i.aciklama"
@@ -240,7 +240,7 @@
             class="empty-box"
           >
             <i class="pi pi-calendar empty-icon" />
-            <p>Henüz kayıtlı izin talebiniz bulunmuyor.</p>
+            <p>{{ t('sahaPortali.izinBos') }}</p>
           </div>
         </div>
       </TabPanel>
@@ -250,29 +250,29 @@
     <Dialog
       v-model:visible="yeniSiparisModal"
       :modal="true"
-      header="Sahada Hızlı Sipariş Al"
+      :header="t('sahaPortali.sahadaHizliSiparis')"
       :style="{ width: '90%', maxWidth: '520px' }"
     >
       <div class="modal-form-content">
         <div class="form-field">
-          <label>Müşteri *</label>
+          <label>{{ t('sahaPortali.musteriZorunlu') }}</label>
           <Dropdown
             v-model="yeniSiparisForm.cariHesapId"
             :options="cariHesaplar"
             option-label="ad"
             option-value="id"
-            placeholder="Müşteri Seçin"
+            :placeholder="t('sahaPortali.musteriSecin')"
             filter
             class="w-full"
           />
         </div>
         <div class="form-field">
-          <label>Barkod ile Hızlı Bul</label>
+          <label>{{ t('sahaPortali.barkodIleBul') }}</label>
           <div class="p-inputgroup">
             <span class="p-inputgroup-addon"><i class="pi pi-qrcode" /></span>
             <InputText
               v-model="barkodArama"
-              placeholder="Barkod okutun veya girin..."
+              :placeholder="t('sahaPortali.barkodPlaceholder')"
               @keyup.enter="barkodlaUrunBul"
             />
             <Button
@@ -283,13 +283,13 @@
           </div>
         </div>
         <div class="form-field">
-          <label>Ürün / Stok *</label>
+          <label>{{ t('sahaPortali.urunStokZorunlu') }}</label>
           <Dropdown
             v-model="yeniSiparisForm.stokId"
             :options="stoklar"
             option-label="ad"
             option-value="id"
-            placeholder="Ürün Seçin"
+            :placeholder="t('sahaPortali.urunSecin')"
             filter
             class="w-full"
             @change="hizliSiparisStokSecildi"
@@ -297,7 +297,7 @@
         </div>
         <div class="form-row-2">
           <div class="form-field">
-            <label>Miktar</label>
+            <label>{{ t('sahaPortali.miktar') }}</label>
             <input
               v-model.number="yeniSiparisForm.miktar"
               type="number"
@@ -306,7 +306,7 @@
             >
           </div>
           <div class="form-field">
-            <label>Birim Fiyat (₺)</label>
+            <label>{{ t('sahaPortali.birimFiyat') }}</label>
             <input
               v-model.number="yeniSiparisForm.birimFiyat"
               type="number"
@@ -317,22 +317,22 @@
           </div>
         </div>
         <div class="form-field">
-          <label>Teslimat Adresi / Notu</label>
+          <label>{{ t('sahaPortali.teslimatAdresi') }}</label>
           <InputText
             v-model="yeniSiparisForm.adres"
-            placeholder="Müşteri teslim adresi"
+            :placeholder="t('sahaPortali.teslimAdresiPlaceholder')"
             class="w-full"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="yeniSiparisModal = false"
         />
         <Button
-          label="Siparişi Merkeze Gönder"
+          :label="t('sahaPortali.siparisiGonder')"
           icon="pi pi-check"
           class="p-button-success font-bold"
           :loading="siparisKaydediliyor"
@@ -345,35 +345,35 @@
     <Dialog
       v-model:visible="imzaModal"
       :modal="true"
-      header="✍️ Teslimat İmzası Al"
+      :header="t('sahaPortali.teslimatImzasi')"
       :style="{ width: '90%', maxWidth: '460px' }"
     >
       <div class="modal-form-content">
         <div class="form-field">
-          <label>Teslim Alan Kişi (Ad Soyad) *</label>
+          <label>{{ t('sahaPortali.teslimAlanZorunlu') }}</label>
           <InputText
             v-model="imzaForm.teslimAlan"
-            placeholder="Örn: Ahmet Yılmaz"
+            :placeholder="t('sahaPortali.teslimAlanPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="form-field">
-          <label>Teslimat Notu</label>
+          <label>{{ t('sahaPortali.teslimatNotu') }}</label>
           <InputText
             v-model="imzaForm.notlar"
-            placeholder="Eksiksiz ve hasarsız teslim edildi"
+            :placeholder="t('sahaPortali.teslimatNotuPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="form-field">
           <div class="flex justify-between items-center mb-1">
-            <label>Dijital İmza</label>
+            <label>{{ t('sahaPortali.dijitalImza') }}</label>
             <button
               type="button"
               class="text-xs text-red-500 hover:underline"
               @click="imzayiTemizle"
             >
-              İmzayı Temizle
+              {{ t('sahaPortali.imzayiTemizle') }}
             </button>
           </div>
           <canvas
@@ -390,12 +390,12 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="imzaModal = false"
         />
         <Button
-          label="Teslimatı Onayla"
+          :label="t('sahaPortali.teslimatiOnayla')"
           icon="pi pi-check"
           class="p-button-success font-bold"
           :loading="teslimEdiliyor"
@@ -408,21 +408,21 @@
     <Dialog
       v-model:visible="yeniIzinModal"
       :modal="true"
-      header="Yeni İzin Talebi Aç"
+      :header="t('sahaPortali.yeniIzinTalebiAc')"
       :style="{ width: '90%', maxWidth: '420px' }"
     >
       <div class="modal-form-content">
         <div class="form-field">
-          <label>İzin Türü</label>
+          <label>{{ t('sahaPortali.izinTuru') }}</label>
           <Dropdown
             v-model="izinForm.izinTuru"
-            :options="['Yıllık İzin', 'Mazeret İzni', 'Sağlık Raporu', 'Evlilik İzni', 'Ücretsiz İzin']"
+            :options="[t('sahaPortali.izinYillik'), t('sahaPortali.izinMazeret'), t('sahaPortali.izinSaglik'), t('sahaPortali.izinEvlilik'), t('sahaPortali.izinUcretsiz')]"
             class="w-full"
           />
         </div>
         <div class="form-row-2">
           <div class="form-field">
-            <label>Başlangıç</label>
+            <label>{{ t('sahaPortali.baslangic') }}</label>
             <InputText
               v-model="izinForm.baslangic"
               type="date"
@@ -430,7 +430,7 @@
             />
           </div>
           <div class="form-field">
-            <label>Bitiş</label>
+            <label>{{ t('sahaPortali.bitis') }}</label>
             <InputText
               v-model="izinForm.bitis"
               type="date"
@@ -439,23 +439,23 @@
           </div>
         </div>
         <div class="form-field">
-          <label>Açıklama</label>
+          <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="izinForm.aciklama"
             rows="2"
-            placeholder="İzin gerekçesi..."
+            :placeholder="t('sahaPortali.izinGerekcesi')"
             class="w-full"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="yeniIzinModal = false"
         />
         <Button
-          label="Talebi Gönder"
+          :label="t('sahaPortali.talebiGonder')"
           icon="pi pi-send"
           class="p-button-primary font-bold"
           :loading="izinGonderiliyor"
@@ -468,7 +468,7 @@
     <Dialog
       v-model:visible="yeniMasrafModal"
       :modal="true"
-      header="Yeni Masraf / Avans Talebi"
+      :header="t('sahaPortali.yeniMasrafAvansTalebi')"
       :style="{ width: '90%', maxWidth: '420px' }"
     >
       <div class="modal-form-content">
@@ -478,14 +478,14 @@
             :class="['pill-btn', { active: masrafForm.tur === 'MASRAF' }]"
             @click="masrafForm.tur = 'MASRAF'"
           >
-            Harcama / Masraf
+            {{ t('sahaPortali.harcamaMasraf') }}
           </button>
           <button
             type="button"
             :class="['pill-btn', { active: masrafForm.tur === 'AVANS' }]"
             @click="masrafForm.tur = 'AVANS'"
           >
-            Avans Talebi
+            {{ t('sahaPortali.avansTalebi') }}
           </button>
         </div>
 
@@ -493,7 +493,7 @@
           v-if="masrafForm.tur === 'MASRAF'"
           class="form-field"
         >
-          <label>Harcama Kategorisi</label>
+          <label>{{ t('sahaPortali.harcamaKategorisi') }}</label>
           <Dropdown
             v-model="masrafForm.kategori"
             :options="['YAKIT', 'YEMEK', 'KONAKLAMA', 'ULASIM', 'MALZEME', 'DIGER']"
@@ -502,7 +502,7 @@
         </div>
 
         <div class="form-field">
-          <label>Tutar (₺) *</label>
+          <label>{{ t('sahaPortali.tutarZorunlu') }}</label>
           <input
             v-model.number="masrafForm.tutar"
             type="number"
@@ -514,22 +514,22 @@
         </div>
 
         <div class="form-field">
-          <label>Açıklama *</label>
+          <label>{{ t('sahaPortali.aciklamaZorunlu') }}</label>
           <InputText
             v-model="masrafForm.aciklama"
-            placeholder="Örn: Müşteri ziyareti yakıt fişi"
+            :placeholder="t('sahaPortali.masrafAciklamaPlaceholder')"
             class="w-full"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="yeniMasrafModal = false"
         />
         <Button
-          label="Talebi Gönder"
+          :label="t('sahaPortali.talebiGonder')"
           icon="pi pi-send"
           class="p-button-primary font-bold"
           :loading="masrafGonderiliyor"
@@ -541,29 +541,29 @@
     <Dialog
       v-model:visible="durumSecModal"
       :modal="true"
-      header="Sipariş Durumunu Güncelle"
+      :header="t('sahaPortali.durumGuncelle')"
       :style="{ width: '90%', maxWidth: '400px' }"
     >
       <div class="modal-form-content">
         <div class="form-group">
-          <label>Durum</label>
+          <label>{{ t('common.status') }}</label>
           <Dropdown
             v-model="seciliYeniDurum"
             :options="durumSecenekleri"
             class="w-full"
-            placeholder="Durum seçin"
+            :placeholder="t('sahaPortali.durumSecin')"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="durumSecModal = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           class="p-button-primary"
           :loading="durumKaydediliyor"
@@ -580,7 +580,9 @@ import { useAuthStore } from '../stores/authStore.js'
 import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const toast = useToast()
 
@@ -608,7 +610,7 @@ const siparisKaydediliyor = ref(false)
 // Formlar
 const imzaForm = ref({ teslimAlan: '', notlar: '' })
 const izinForm = ref({
-  izinTuru: 'Yıllık İzin',
+  izinTuru: t('sahaPortali.izinYillik'),
   baslangic: new Date().toISOString().substring(0, 10),
   bitis: new Date().toISOString().substring(0, 10),
   aciklama: ''
@@ -621,7 +623,7 @@ const masrafForm = ref({
 })
 const ziyaretForm = ref({
   cariHesapId: null,
-  amac: 'Satış & Tanıtım',
+  amac: t('sahaPortali.amacSatisTanitim'),
   notlar: ''
 })
 const barkodArama = ref('')
@@ -709,17 +711,17 @@ const imzayiTemizle = () => { if (ctx && imzaCanvas.value) ctx.clearRect(0, 0, i
 
 const teslimatOnayla = async () => {
   if (!imzaForm.value.teslimAlan) {
-    toast.add({ severity: 'warn', summary: 'Eksik Bilgi', detail: 'Teslim alan kişi adını giriniz.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.teslimAlanGiriniz'), life: 3000 })
     return
   }
   teslimEdiliyor.value = true
   try {
     if (seciliSiparis.value) seciliSiparis.value.durum = 'TESLIM_EDILDI'
-    toast.add({ severity: 'success', summary: 'Teslim Edildi', detail: 'Sipariş başarıyla teslim edildi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.teslimEdildi'), detail: t('sahaPortali.siparisTeslimEdildi'), life: 3000 })
     imzaModal.value = false
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
     teslimEdiliyor.value = false
   }
@@ -743,10 +745,10 @@ const durumKaydet = async () => {
     await siparisAPI.durumGuncelle(seciliSiparis.value.id, seciliYeniDurum.value)
     seciliSiparis.value.durum = seciliYeniDurum.value
     durumSecModal.value = false
-    toast.add({ severity: 'success', summary: 'Güncellendi', detail: 'Sipariş durumu güncellendi.', life: 2500 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.guncellendi'), detail: t('sahaPortali.siparisDurumGuncellendi'), life: 2500 })
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.response?.data?.message || err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
     durumKaydediliyor.value = false
   }
@@ -766,11 +768,11 @@ const izinTalepGonder = async () => {
       gunSayisi,
       aciklama: izinForm.value.aciklama
     })
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'İzin talebiniz iletildi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.izinIletildi'), life: 3000 })
     yeniIzinModal.value = false
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
     izinGonderiliyor.value = false
   }
@@ -778,7 +780,7 @@ const izinTalepGonder = async () => {
 
 const masrafTalepGonder = async () => {
   if (!masrafForm.value.tutar || masrafForm.value.tutar <= 0) {
-    toast.add({ severity: 'warn', summary: 'Eksik', detail: 'Geçerli bir tutar girin.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksik'), detail: t('sahaPortali.gecerliTutar'), life: 3000 })
     return
   }
   masrafGonderiliyor.value = true
@@ -790,11 +792,11 @@ const masrafTalepGonder = async () => {
       aciklama: masrafForm.value.aciklama,
       tarih: new Date().toISOString().substring(0, 10)
     })
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Talebiniz iletildi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.talepIletildi'), life: 3000 })
     yeniMasrafModal.value = false
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
     masrafGonderiliyor.value = false
   }
@@ -802,7 +804,7 @@ const masrafTalepGonder = async () => {
 
 const gpsKonumAl = () => {
   if (!navigator.geolocation) {
-    toast.add({ severity: 'warn', summary: 'Desteklenmiyor', detail: 'Tarayıcınız konum servisini desteklemiyor.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('sahaPortali.desteklenmiyor'), detail: t('sahaPortali.konumDesteklenmiyor'), life: 3000 })
     return
   }
   konumAliniyor.value = true
@@ -811,17 +813,18 @@ const gpsKonumAl = () => {
       konumAliniyor.value = false
       const lat = pos.coords.latitude.toFixed(5)
       const lng = pos.coords.longitude.toFixed(5)
-      ziyaretKonum.value = `Enlem: ${lat}, Boylam: ${lng}`
+      ziyaretKonum.value = t('sahaPortali.konum', { enlem: lat, boylam: lng })
+      const konumNotu = t('sahaPortali.konumEtiketi', { enlem: lat, boylam: lng })
       if (ziyaretForm.value.notlar) {
-        ziyaretForm.value.notlar += `\n[📍 Konum: ${lat}, ${lng}]`
+        ziyaretForm.value.notlar += `\n[📍 ${konumNotu}]`
       } else {
-        ziyaretForm.value.notlar = `[📍 Konum: ${lat}, ${lng}] `
+        ziyaretForm.value.notlar = `[📍 ${konumNotu}] `
       }
-      toast.add({ severity: 'success', summary: 'Konum Alındı', detail: 'Coğrafi konum başarıyla eklendi.', life: 2500 })
+      toast.add({ severity: 'success', summary: t('sahaPortali.konumAlindi'), detail: t('sahaPortali.konumEklendi'), life: 2500 })
     },
     (err) => {
       konumAliniyor.value = false
-      toast.add({ severity: 'error', summary: 'Konum Hatası', detail: 'Konum bilgisi alınamadı: ' + err.message, life: 3000 })
+      toast.add({ severity: 'error', summary: t('sahaPortali.konumHatasi'), detail: t('sahaPortali.konumAlinamadiHata') + err.message, life: 3000 })
     },
     { enableHighAccuracy: true, timeout: 10000 }
   )
@@ -837,39 +840,39 @@ const barkodlaUrunBul = () => {
   if (bulunan) {
     yeniSiparisForm.value.stokId = bulunan.id
     hizliSiparisStokSecildi()
-    toast.add({ severity: 'success', summary: 'Ürün Bulundu', detail: bulunan.ad, life: 2000 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.urunBulundu'), detail: bulunan.ad, life: 2000 })
   } else {
-    toast.add({ severity: 'warn', summary: 'Bulunamadı', detail: 'Bu barkoda ait ürün bulunamadı.', life: 2500 })
+    toast.add({ severity: 'warn', summary: t('sahaPortali.bulunamadi'), detail: t('sahaPortali.barkodBulunamadi'), life: 2500 })
   }
 }
 
 const whatsappSiparisPaylas = (s) => {
-  const musteri = s.cariHesapAdi || s.musteriAdi || 'Müşterimiz'
+  const musteri = s.cariHesapAdi || s.musteriAdi || t('sahaPortali.musterimiz')
   const kod = s.siparisNo || s.id
   const tutar = formatPara(s.toplamTutar || s.genelToplam || 0)
-  const mesaj = `Sayın ${musteri}, #${kod} numaralı ${tutar} tutarındaki siparişiniz hazırlanmaktadır. RasPel ERP Saha Ekibi.`
+  const mesaj = t('sahaPortali.whatsappMesaj', { musteri, kod, tutar })
   const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
   window.open(url, '_blank')
 }
 
 const ziyaretKaydet = async () => {
   if (!ziyaretForm.value.cariHesapId || !ziyaretForm.value.notlar) {
-    toast.add({ severity: 'warn', summary: 'Eksik Bilgi', detail: 'Müşteri ve notlar zorunludur.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.musteriNotlarZorunlu'), life: 3000 })
     return
   }
   ziyaretKaydediliyor.value = true
   try {
     const cari = cariHesaplar.value.find(c => c?.id === ziyaretForm.value.cariHesapId)
     await notAPI.create({
-      baslik: `Saha Ziyareti: ${cari?.ad || 'Müşteri'} (${ziyaretForm.value.amac})`,
+      baslik: t('sahaPortali.sahaZiyareti', { musteri: cari?.ad || t('sahaPortali.musteri'), amac: ziyaretForm.value.amac }),
       icerik: ziyaretForm.value.notlar,
       kategori: 'SAHA_ZIYARET'
     })
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Ziyaret notu kaydedildi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.ziyaretKaydedildi'), life: 3000 })
     ziyaretForm.value.notlar = ''
     ziyaretForm.value.cariHesapId = null
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
     ziyaretKaydediliyor.value = false
   }
@@ -886,7 +889,7 @@ const hizliSiparisStokSecildi = () => {
 
 const hizliSiparisKaydet = async () => {
   if (!yeniSiparisForm.value?.cariHesapId || !yeniSiparisForm.value?.stokId) {
-    toast.add({ severity: 'warn', summary: 'Eksik Bilgi', detail: 'Müşteri ve ürün seçimi zorunludur.', life: 3000 })
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.musteriUrunZorunlu'), life: 3000 })
     return
   }
   siparisKaydediliyor.value = true
@@ -897,7 +900,7 @@ const hizliSiparisKaydet = async () => {
       cariHesapId: yeniSiparisForm.value.cariHesapId,
       tarih: new Date().toISOString().substring(0, 10),
       durum: 'BEKLIYOR',
-      aciklama: 'Saha Siparişi',
+      aciklama: t('sahaPortali.sahaSiparisi'),
       teslimatAdresi: yeniSiparisForm.value.adres || '',
       kalemler: [
         {
@@ -908,11 +911,11 @@ const hizliSiparisKaydet = async () => {
         }
       ]
     })
-    toast.add({ severity: 'success', summary: 'Başarılı', detail: 'Sipariş merkeze gönderildi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.siparisGonderildi'), life: 3000 })
     yeniSiparisModal.value = false
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
     siparisKaydediliyor.value = false
   }

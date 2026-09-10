@@ -2,10 +2,10 @@
   <div class="vardiya-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Vardiya Yönetimi
+        {{ t('vardiyalar.title') }}
       </h1>
       <Button
-        label="Yeni Vardiya"
+        :label="t('vardiyalar.yeniVardiya')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,12 +18,12 @@
     >
       <Column
         field="personelAd"
-        header="Personel"
+        :header="t('vardiyalar.personel')"
         sortable
       />
       <Column
         field="tarih"
-        header="Tarih"
+        :header="t('common.date')"
         sortable
       >
         <template #body="{ data }">
@@ -32,7 +32,7 @@
       </Column>
       <Column
         field="baslangic"
-        header="Başlangıç"
+        :header="t('vardiyalar.baslangic')"
       >
         <template #body="{ data }">
           {{ data.baslangic }}
@@ -40,7 +40,7 @@
       </Column>
       <Column
         field="bitis"
-        header="Bitiş"
+        :header="t('vardiyalar.bitis')"
       >
         <template #body="{ data }">
           {{ data.bitis }}
@@ -48,7 +48,7 @@
       </Column>
       <Column
         field="tur"
-        header="Tür"
+        :header="t('vardiyalar.tur')"
       >
         <template #body="{ data }">
           <Tag
@@ -58,7 +58,7 @@
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('vardiyalar.islem')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -79,19 +79,19 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Personel *</label>
+          <label>{{ t('vardiyalar.personelZorunlu') }}</label>
           <Dropdown
             v-model="form.personelId"
             :options="personelListesi"
             option-label="displayName"
             option-value="id"
-            placeholder="Personel Seç"
+            :placeholder="t('vardiyalar.personelSec')"
             class="w-full"
             filter
           />
         </div>
         <div class="field">
-          <label>Tarih *</label><DatePicker
+          <label>{{ t('vardiyalar.tarihZorunlu') }}</label><DatePicker
             v-model="form.tarih"
             date-format="dd/mm/yy"
             class="w-full"
@@ -99,14 +99,14 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label>Başlangıç *</label><InputText
+            <label>{{ t('vardiyalar.baslangicZorunlu') }}</label><InputText
               v-model="form.baslangic"
               placeholder="08:00"
               class="w-full"
             />
           </div>
           <div class="field">
-            <label>Bitiş *</label><InputText
+            <label>{{ t('vardiyalar.bitisZorunlu') }}</label><InputText
               v-model="form.bitis"
               placeholder="16:00"
               class="w-full"
@@ -114,24 +114,24 @@
           </div>
         </div>
         <div class="field">
-          <label>Tür *</label>
+          <label>{{ t('vardiyalar.turZorunlu') }}</label>
           <Dropdown
             v-model="form.tur"
             :options="turSecenekleri"
-            placeholder="Seçin"
+            :placeholder="t('common.select')"
             class="w-full"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -147,10 +147,12 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { vardiyaAPI, personelAPI } from '../api/index.js'
+import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const { t } = useI18n()
 const list = ref([])
 const personelListesi = ref([])
 const yukleniyor = ref(false)
@@ -160,12 +162,9 @@ const duzenleme = ref(false)
 const form = ref({ personelId: null, tarih: new Date(), baslangic: '08:00', bitis: '16:00', tur: 'SABAH' })
 const turSecenekleri = ['SABAH', 'AKSAM', 'GECE']
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Vardiya Düzenle' : 'Yeni Vardiya'))
+const dialogHeader = computed(() => (duzenleme.value ? t('vardiyalar.duzenle') : t('vardiyalar.yeniVardiya')))
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Intl.DateTimeFormat('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d))
-}
+import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -177,7 +176,7 @@ onMounted(async () => {
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
     }))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('vardiyalar.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -199,16 +198,16 @@ const kaydet = async () => {
     }
     if (duzenleme.value) {
       await vardiyaAPI.update(form.value.id, payload)
-      toastBildirim.basarili('Vardiya güncellendi')
+      toastBildirim.basarili(t('vardiyalar.guncellendi'))
     } else {
       await vardiyaAPI.create(payload)
-      toastBildirim.basarili('Vardiya oluşturuldu')
+      toastBildirim.basarili(t('vardiyalar.olusturuldu'))
     }
     dialog.value = false
     const r = await vardiyaAPI.getAll()
     list.value = r.data?.content || r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('vardiyalar.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
@@ -216,18 +215,18 @@ const kaydet = async () => {
 const sil = (data) => {
   const personelAd = data.personelAd || data.id
   confirm.require({
-    message: `"${personelAd}" vardiyasını silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('vardiyalar.silOnayMesaj', { ad: personelAd }),
+    header: t('masraflar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('masraflar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await vardiyaAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Vardiya silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('vardiyalar.silindi'), detail: t('vardiyalar.vardiyaSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('vardiyalar.silmeBasarisiz'))
       }
     }
   })

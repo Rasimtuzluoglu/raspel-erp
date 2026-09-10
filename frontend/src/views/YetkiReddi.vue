@@ -2,22 +2,28 @@
   <div class="yetki-reddi">
     <div class="hata-kart">
       <i class="pi pi-lock hata-icon" />
-      <h1>Yetkiniz Yok</h1>
-      <p>Bu sayfaya erişmek için gerekli yetkiye sahip değilsiniz.</p>
+      <h1>{{ t('yetkiReddi.title') }}</h1>
+      <p>{{ t('yetkiReddi.description') }}</p>
       <p class="ipucu">
-        Yöneticinizle iletişime geçerek yetki talep edebilirsiniz.
+        {{ t('yetkiReddi.hint') }}
       </p>
       <div class="hata-aksiyon">
         <router-link
           to="/"
           class="p-button p-button-primary"
         >
-          <i class="pi pi-home" /> Ana Sayfaya Dön
+          <i class="pi pi-home" /> {{ t('yetkiReddi.goHome') }}
         </router-link>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
 
 <style scoped>
 .yetki-reddi {
