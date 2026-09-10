@@ -56,8 +56,14 @@ public class DepoService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public DepoDTO olustur(DepoDTO dto) {
+        if (dto.getAd() == null || dto.getAd().isBlank()) {
+            throw new BusinessException("Depo adı boş olamaz");
+        }
+        if (depoRepository.existsBySirketIdAndAdIgnoreCase(dto.getSirketId(), dto.getAd().trim())) {
+            throw new BusinessException("Bu isimde bir depo zaten mevcut: " + dto.getAd());
+        }
         Depo d = Depo.builder()
-                .ad(dto.getAd()).adres(dto.getAdres())
+                .ad(dto.getAd().trim()).adres(dto.getAdres())
                 .yetkili(dto.getYetkili()).subeId(dto.getSubeId())
                 .sirketId(dto.getSirketId()).build();
         tenantChecker.checkSirketId(dto.getSirketId(), "Depo");

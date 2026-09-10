@@ -12,4 +12,5 @@ public interface DepoRepository extends JpaRepository<Depo, Long> {
     Page<Depo> findBySirketIdOrderByAdAsc(Long sirketId, Pageable pageable);
     List<Depo> findBySubeId(Long subeId);
     List<Depo> findBySirketIdAndAktifTrue(Long sirketId);
+    boolean existsBySirketIdAndAdIgnoreCase(Long sirketId, String ad);
 }

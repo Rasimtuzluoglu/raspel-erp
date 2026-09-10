@@ -173,7 +173,22 @@ public class TahsilatService {
         }
 
         if (kalan.compareTo(BigDecimal.ZERO) > 0) {
-            throw new BusinessException("Girilen tutar açık faturaların toplam kalanından büyük");
+            // Fazla ödeme: açık faturalardan fazla gelen tutar cariye alacak olarak kaydedilir.
+            hareketService.hareketOlustur(HareketDTO.builder()
+                    .cariHesapId(cariId)
+                    .tur("TAHSILAT")
+                    .tutar(kalan)
+                    .hareketTarihi(hareketTarihi != null ? hareketTarihi : LocalDate.now())
+                    .aciklama("Fazla ödeme (alacak)")
+                    .odemeYontemi(odemeYontemi)
+                    .taksitKurum(taksitKurum)
+                    .taksitTutar(taksitTutar)
+                    .posTerminaliId(posTerminaliId)
+                    .posAd(posAd)
+                    .komisyonTutar(komisyonTutar)
+                    .valorTarihi(valorTarihi)
+                    .faturaId(null)
+                    .build(), sirketId);
         }
 
         log.info("Tahsilat kaydedildi -> Cari: {}, Tutar: {}, Yöntem: {}, Fatura sayısı: {}",
@@ -185,6 +200,7 @@ public class TahsilatService {
         sonuc.put("tutar", tutar);
         sonuc.put("odemeYontemi", odemeYontemi);
         sonuc.put("uygulananFaturalar", uygulananFaturalar);
+        sonuc.put("fazlaOdeme", kalan.compareTo(BigDecimal.ZERO) > 0 ? kalan : BigDecimal.ZERO);
         return sonuc;
     }
 

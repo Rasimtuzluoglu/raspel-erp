@@ -1,6 +1,7 @@
 package com.raspel.erp.dto.finans;
 
 import lombok.*;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import com.raspel.erp.entity.sube.Sube;
 @Builder
 public class CekSenetDTO {
     private Long id;
+    @NotBlank(message = "Çek/senet türü seçilmelidir")
     private String tur;
     private Long cariHesapId;
     private String cariHesapAdi;
@@ -19,8 +21,11 @@ public class CekSenetDTO {
     private String sube;
     private String cekNo;
     private String hesapNo;
+    @NotNull(message = "Vade tarihi girilmelidir")
     private LocalDate vadeTarihi;
     private LocalDate kesinmeTarihi;
+    @NotNull(message = "Tutar girilmelidir")
+    @DecimalMin(value = "0.01", message = "Tutar 0'dan büyük olmalıdır")
     private BigDecimal tutar;
     private String durum;
     private String aciklama;

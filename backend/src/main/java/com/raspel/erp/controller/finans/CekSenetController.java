@@ -40,7 +40,8 @@ public class CekSenetController {
 
     @PostMapping
     @Operation(summary = "Yeni çek/senet oluştur", description = "Yeni bir çek veya senet oluşturur")
-    public ResponseEntity<CekSenetDTO> olustur(@Valid @RequestBody CekSenetDTO dto) {
+    public ResponseEntity<CekSenetDTO> olustur(@Valid @RequestBody CekSenetDTO dto, jakarta.servlet.http.HttpServletRequest request) {
+        dto.setSirketId((Long) request.getAttribute("sirketId"));
         return ResponseEntity.status(HttpStatus.CREATED).body(cekSenetService.olustur(dto));
     }
 

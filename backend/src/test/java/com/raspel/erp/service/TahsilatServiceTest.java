@@ -147,4 +147,19 @@ class TahsilatServiceTest {
         assertEquals("Halkbank POS", captor.getValue().getPosAd());
         assertEquals(new BigDecimal("250"), captor.getValue().getKomisyonTutar());
     }
+
+    @Test
+    void tahsilatGir_fazlaOdemeAlacakOlusturur() {
+        CariHesap c1 = cari(1L, "A Ltd", null);
+        Fatura f = fatura(1L, c1, LocalDate.now().minusDays(5), "1000");
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(c1));
+        when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), anyList())).thenReturn(List.of(f));
+        when(hareketService.hareketOlustur(any(), eq(1L))).thenReturn(null);
+
+        tahsilatService.tahsilatGir(1L, new BigDecimal("1500"), "NAKIT", null, null, null,
+                LocalDate.now(), 1L, null, null, null);
+
+        // 1 fatura tahsisi + 1 fazla ödeme (alacak) hareketi
+        verify(hareketService, times(2)).hareketOlustur(any(), eq(1L));
+    }
 }
