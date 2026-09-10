@@ -174,6 +174,12 @@ export const posAPI = {
   musteriler(id) {
     return apiClient.get(`/pos-terminalleri/${id}/musteriler`)
   },
+  gunSonu() {
+    return apiClient.post('/pos-terminalleri/gun-sonu')
+  },
+  gunSonuRapor() {
+    return apiClient.get('/pos-terminalleri/gun-sonu/rapor')
+  },
   olustur(data) {
     return apiClient.post('/pos-terminalleri', data)
   },

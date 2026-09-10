@@ -2,6 +2,8 @@ package com.raspel.erp.controller.finans;
 
 import com.raspel.erp.dto.finans.PosOzetDTO;
 import com.raspel.erp.dto.finans.PosTerminaliDTO;
+import com.raspel.erp.entity.finans.PosGunSonu;
+import com.raspel.erp.service.finans.PosGunSonuService;
 import com.raspel.erp.service.finans.PosTerminaliService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +24,7 @@ import java.util.List;
 public class PosTerminaliController {
 
     private final PosTerminaliService posService;
+    private final PosGunSonuService gunSonuService;
 
     @GetMapping
     @Operation(summary = "POS terminallerini listele")
@@ -49,6 +52,20 @@ public class PosTerminaliController {
     public ResponseEntity<List<java.util.Map<String, Object>>> musteriler(@PathVariable Long id, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(posService.musteriDetay(sirketId, id));
+    }
+
+    @PostMapping("/gun-sonu")
+    @Operation(summary = "POS gün sonu", description = "Gün içinde POS'tan çekilen tutarları ilgili banka hesabına aktarır")
+    public ResponseEntity<List<java.util.Map<String, Object>>> gunSonu(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(gunSonuService.gunSonuIsle(sirketId));
+    }
+
+    @GetMapping("/gun-sonu/rapor")
+    @Operation(summary = "POS gün sonu raporu", description = "POS gün sonu aktarım geçmişini getirir")
+    public ResponseEntity<List<PosGunSonu>> gunSonuRapor(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(gunSonuService.rapor(sirketId));
     }
 
     @PostMapping

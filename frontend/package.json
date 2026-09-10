@@ -25,6 +25,7 @@
     "axios": "^1.6.0",
     "axios-retry": "^4.5.0",
     "chart.js": "^4.5.1",
+    "jsbarcode": "^3.12.3",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.0",
     "primeicons": "^8.0.0",

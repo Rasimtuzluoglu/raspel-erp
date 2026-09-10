@@ -90,32 +90,20 @@
               class="product-card"
               @click="sepeteEkle(u)"
             >
-              <div class="product-ust">
-                <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
-                <Tag
-                  :value="kritikStokMu(u) ? 'Son ' + Math.floor(u.miktar) : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
-                  :severity="kritikStokMu(u) ? 'danger' : 'info'"
-                />
-              </div>
-              <div class="product-name">
-                {{ u.ad }}
-              </div>              <div class="product-alt-bilgi">
-                <span class="product-flow">⚠ {{ u.birimHacim || '-' }} ft³</span>
-                <span
-                  v-if="urunFiyatlari[u.id]?.length > 1"
-                  class="product-coklu-fiyat"
-                >{{ urunFiyatlari[u.id].length }} fiyat</span>
-              </div>
-              <div class="product-fiyat-satiri">
-                <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
-                <span
-                  v-if="cariFiyati(u.id)"
-                  class="product-cari-fiyat"
-                  :title="'Cari özel fiyat'"
-                >
-                  <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
-                </span>
-              </div>
+              <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
+              <span class="product-name">{{ u.ad }}</span>
+              <Tag
+                :value="kritikStokMu(u) ? 'Son ' + Math.floor(u.miktar) : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
+                :severity="kritikStokMu(u) ? 'danger' : 'info'"
+              />
+              <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
+              <span
+                v-if="cariFiyati(u.id)"
+                class="product-cari-fiyat"
+                :title="'Cari özel fiyat'"
+              >
+                <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
+              </span>
             </div>
             <div
               v-if="filtrelenmisUrunler && filtrelenmisUrunler.length === 0"
@@ -1883,9 +1871,9 @@ const sepetiTemizle = () => {
   border-radius: 10px;
 }
 .product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
   padding-bottom: 8px;
@@ -1896,71 +1884,46 @@ const sepetiTemizle = () => {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 12px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 .product-card:hover {
   border-color: var(--accent);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
-.product-ust {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
 .product-kod {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
+  min-width: 90px;
+  font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.stock-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-}
-.product-details {
-  width: 100%;
-}
 .product-name {
-  display: block;
+  flex: 1;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
-}
-.product-serial {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
 }
 .product-price {
   display: inline-block;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--accent);
-  margin-top: 4px;
   padding: 2px 10px;
   background: rgba(59, 130, 246, 0.1);
   border-radius: 12px;
-}
-.product-fiyat-satiri {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  white-space: nowrap;
 }
 .product-cari-fiyat {
   display: inline-flex;
@@ -1972,34 +1935,12 @@ const sepetiTemizle = () => {
   background: rgba(16, 185, 129, 0.12);
   padding: 2px 8px;
   border-radius: 12px;
-  margin-top: 4px;
+  white-space: nowrap;
 }
 .product-cari-fiyat i {
   font-size: 11px;
 }
-.product-alt-bilgi {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  width: 100%;
-  margin: 2px 0;
-}
-.product-flow {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-.product-coklu-fiyat {
-  font-size: 9.5px;
-  font-weight: 700;
-  color: var(--accent);
-  background: rgba(59, 130, 246, 0.1);
-  padding: 1px 6px;
-  border-radius: 10px;
-  white-space: nowrap;
-}
 .empty-products {
-  grid-column: 1 / -1;
   text-align: center;
   padding: 40px;
   color: var(--text-muted);

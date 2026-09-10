@@ -797,6 +797,11 @@
         <div class="etiket-kod">
           {{ etiketStok?.stokKodu || etiketStok?.barkod }}
         </div>
+        <svg
+          v-if="etiketStok?.barkod"
+          ref="barkodSvgRef"
+          class="etiket-barkod"
+        />
         <img
           v-if="etiketStok?.barkod"
           :src="etiketQr(etiketStok.barkod)"
@@ -826,7 +831,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -887,11 +892,30 @@ const gosterim = ref('tablo')
 
 const etiketDialog = ref(false)
 const etiketStok = ref(null)
+const barkodSvgRef = ref(null)
 
 const barkodEtiket = (stok) => {
   etiketStok.value = stok
   etiketDialog.value = true
 }
+
+watch(etiketDialog, async (acik) => {
+  if (acik && etiketStok.value?.barkod) {
+    await nextTick()
+    try {
+      const { default: JsBarcode } = await import('jsbarcode')
+      JsBarcode(barkodSvgRef.value, etiketStok.value.barkod, {
+        format: 'CODE128',
+        width: 2,
+        height: 60,
+        displayValue: false,
+        margin: 0
+      })
+    } catch {
+      /* jsbarcode yüklenemedi */
+    }
+  }
+})
 
 const etiketQr = (deger) => `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(deger)}&size=160x160`
 
@@ -1364,6 +1388,10 @@ const formatDate = (d) =>
 .etiket-qr {
   width: 160px;
   height: 160px;
+}
+.etiket-barkod {
+  width: 220px;
+  height: 70px;
 }
 .etiket-fiyat {
   font-size: 1.2rem;

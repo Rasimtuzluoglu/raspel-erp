@@ -2,12 +2,21 @@
   <div class="pos-sayfasi">
     <div class="pos-baslik">
       <h1><i class="pi pi-credit-card" /> POS Terminalleri</h1>
-      <Button
-        label="Yeni POS"
-        icon="pi pi-plus"
-        class="p-button-sm"
-        @click="dialogAc(null)"
-      />
+      <div class="pos-baslik-aksiyon">
+        <Button
+          label="Gün Sonu İşle"
+          icon="pi pi-calendar"
+          class="p-button-sm p-button-outlined"
+          :loading="gunSonuYukleniyor"
+          @click="gunSonuIsle"
+        />
+        <Button
+          label="Yeni POS"
+          icon="pi pi-plus"
+          class="p-button-sm"
+          @click="dialogAc(null)"
+        />
+      </div>
     </div>
 
     <!-- POS Özeti -->
@@ -172,6 +181,7 @@ const duzenlenenId = ref(null)
 const musteriDialog = ref(false)
 const seciliPos = ref(null)
 const musteriler = ref([])
+const gunSonuYukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const yukleniyor = ref(false)
 
@@ -252,6 +262,24 @@ const musteriDetayAc = async (p) => {
   }
 }
 
+const gunSonuIsle = async () => {
+  gunSonuYukleniyor.value = true
+  try {
+    const r = await posAPI.gunSonu()
+    const islenen = r.data || []
+    if (islenen.length) {
+      toastBildirim.basarili(`${islenen.length} POS için gün sonu aktarımı yapıldı`)
+    } else {
+      toastBildirim.bilgi('Bugün için aktarılacak POS tutarı yok')
+    }
+    yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || 'Gün sonu işlemi başarısız')
+  } finally {
+    gunSonuYukleniyor.value = false
+  }
+}
+
 onMounted(() => {
   yukle()
   bankalariYukle()
@@ -268,6 +296,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.pos-baslik-aksiyon {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 .pos-baslik h1 {
   margin: 0;
