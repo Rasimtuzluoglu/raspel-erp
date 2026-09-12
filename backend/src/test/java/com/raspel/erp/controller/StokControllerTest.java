@@ -24,6 +24,9 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.dto.envanter.AlisOzetDTO;
+import com.raspel.erp.dto.envanter.KarlilikDTO;
+import com.raspel.erp.service.envanter.StokAnalizService;
 import com.raspel.erp.controller.envanter.StokController;
 
 @WebMvcTest(StokController.class)
@@ -42,6 +45,15 @@ class StokControllerTest {
     @MockBean
     private StokService stokService;
 
+    @MockBean
+    private StokAnalizService stokAnalizService;
+
+    @MockBean
+    private com.raspel.erp.service.sistem.QRService qrService;
+
+    @MockBean
+    private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
+
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(StokDTO.builder().id(1L).ad("Kalem").stokKodu("KLM001").fiyat(BigDecimal.valueOf(10)).build());
@@ -50,6 +62,36 @@ class StokControllerTest {
         mockMvc.perform(get("/api/stoklar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].ad").value("Kalem"));
+    }
+
+    @Test
+    void shouldGetByBarkod() throws Exception {
+        StokDTO dto = StokDTO.builder().id(5L).ad("Kalem").barkod("BAR123").build();
+        when(stokService.barkodIleBul("BAR123", 1L)).thenReturn(dto);
+
+        mockMvc.perform(get("/api/stoklar/barkod/BAR123").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.barkod").value("BAR123"));
+    }
+
+    @Test
+    void shouldGetByBarkodNotFound() throws Exception {
+        when(stokService.barkodIleBul("YOK", 1L)).thenReturn(null);
+
+        mockMvc.perform(get("/api/stoklar/barkod/YOK").requestAttr("sirketId", 1L))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldGetEtiketPdf() throws Exception {
+        Stok stok = Stok.builder().id(5L).ad("Kalem").barkod("BAR123").build();
+        when(stokService.entityGetir(5L)).thenReturn(stok);
+        when(qrService.qrPng(anyString(), anyInt())).thenReturn(new byte[] {1, 2, 3});
+        when(pdfRaporService.stokEtiketi(any(Stok.class), any())).thenReturn(new byte[] {0x25, 0x50, 0x44, 0x46});
+
+        mockMvc.perform(get("/api/stoklar/5/etiket"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PDF));
     }
 
     @Test
@@ -167,6 +209,31 @@ class StokControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ad").value("MDF Panel"))
                 .andExpect(jsonPath("$[0].durum").value("DIKKAT"));
+    }
+
+    @Test
+    void shouldGetAlisOzet() throws Exception {
+        var dto = AlisOzetDTO.builder().stokId(1L)
+                .toplamAlisMiktar(BigDecimal.valueOf(30))
+                .ortalamaBirimFiyat(BigDecimal.valueOf(133.33)).build();
+        when(stokAnalizService.alisOzet(eq(1L), eq(1L), any(), any())).thenReturn(dto);
+
+        mockMvc.perform(get("/api/stoklar/1/alis-ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplamAlisMiktar").value(30))
+                .andExpect(jsonPath("$.ortalamaBirimFiyat").value(133.33));
+    }
+
+    @Test
+    void shouldGetKarlilik() throws Exception {
+        var dto = KarlilikDTO.builder().stokId(1L)
+                .toplamBrutKar(BigDecimal.valueOf(100)).brutKarMarji(BigDecimal.valueOf(33.33)).build();
+        when(stokAnalizService.karlilik(eq(1L), eq(1L), any(), any())).thenReturn(dto);
+
+        mockMvc.perform(get("/api/stoklar/1/karlilik").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplamBrutKar").value(100))
+                .andExpect(jsonPath("$.brutKarMarji").value(33.33));
     }
 }
 

@@ -4,11 +4,46 @@
       <h1 class="page-title">
         {{ t('stokSayim.title') }}
       </h1>
-      <Button
-        :label="t('stokSayim.yeniSayim')"
-        icon="pi pi-plus"
-        @click="dialogAc()"
-      />
+      <div class="header-actions">
+        <div class="tarama-adet">
+          <label>{{ t('stokSayim.taramaAdet') }}</label>
+          <InputNumber
+            v-model="taramaAdet"
+            :min="1"
+            class="adet-input"
+          />
+        </div>
+        <Button
+          :label="t('stokSayim.hizliSayim')"
+          icon="pi pi-camera"
+          class="p-button-outlined"
+          @click="taramaModu = true"
+        />
+        <Button
+          :label="t('stokSayim.yeniSayim')"
+          icon="pi pi-plus"
+          @click="dialogAc()"
+        />
+      </div>
+    </div>
+
+    <div
+      v-if="sonTaramalar.length"
+      class="tarama-paneli"
+    >
+      <div class="tarama-paneli-baslik">
+        <i class="pi pi-check-circle" />
+        <span>{{ t('stokSayim.tarananEklendi', { stok: sonTaramalar[0].ad, adet: sonTaramalar[0].adet, toplam: sonTaramalar[0].toplam }) }}</span>
+      </div>
+      <div class="tarama-chips">
+        <Tag
+          v-for="(tarama, i) in sonTaramalar"
+          :key="i"
+          :value="`${tarama.ad}: ${tarama.toplam}`"
+          severity="success"
+          class="tarama-chip"
+        />
+      </div>
     </div>
 
     <DataTable
@@ -26,7 +61,7 @@
         </template>
       </Column>
       <Column
-        field="stokAd"
+        field="stokAdi"
         :header="t('stokSayim.urun')"
         sortable
       />
@@ -165,6 +200,10 @@
         />
       </template>
     </Dialog>
+    <BarcodeScannerModal
+      v-model:visible="taramaModu"
+      @scan="barkodOkundu"
+    />
   </div>
 </template>
 
@@ -175,6 +214,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { stokSayimAPI, stokAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
+import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -186,6 +226,9 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
+const taramaModu = ref(false)
+const taramaAdet = ref(1)
+const sonTaramalar = ref([])
 const form = ref({ tarih: new Date(), stokId: null, beklenenMiktar: 0, sayilanMiktar: 0 })
 
 const dialogHeader = computed(() => (duzenleme.value ? t('stokSayim.sayimDuzenle') : t('stokSayim.yeniSayim')))
@@ -207,6 +250,20 @@ onMounted(async () => {
   }
   yukleniyor.value = false
 })
+
+const barkodOkundu = async (kod) => {
+  try {
+    const res = await stokSayimAPI.tara({ barkod: kod, adet: taramaAdet.value })
+    const sayim = res.data
+    sonTaramalar.value.unshift({ ad: sayim.stokAdi || kod, adet: taramaAdet.value, toplam: sayim.sayilanMiktar })
+    if (sonTaramalar.value.length > 6) sonTaramalar.value.length = 6
+    toastBildirim.basarili(t('stokSayim.tarananEklendi', { stok: sayim.stokAdi || kod, adet: taramaAdet.value, toplam: sayim.sayilanMiktar }))
+    const r = await stokSayimAPI.getAll()
+    list.value = r.data?.content || r.data || []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('stokSayim.barkodBulunamadi'))
+  }
+}
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
@@ -286,6 +343,51 @@ const sil = (data) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tarama-adet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.adet-input {
+  width: 90px;
+}
+.tarama-paneli {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  border-radius: 8px;
+}
+.tarama-paneli-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4ade80;
+}
+.tarama-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tarama-chip {
+  margin: 0;
 }
 .form-grid {
   display: flex;

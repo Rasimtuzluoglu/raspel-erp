@@ -43,6 +43,7 @@ public class TahsilatService {
     private final HareketService hareketService;
     private final HareketRepository hareketRepository;
     private final PosTerminaliRepository posTerminaliRepository;
+    private final TaksitService taksitService;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
     private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
@@ -107,6 +108,20 @@ public class TahsilatService {
                                            String taksitKurum, BigDecimal taksitTutar, String aciklama,
                                            LocalDate hareketTarihi, Long sirketId,
                                            Long posTerminaliId, BigDecimal komisyonTutar, LocalDate valorTarihi) {
+        return tahsilatGir(cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, aciklama,
+                hareketTarihi, sirketId, posTerminaliId, komisyonTutar, valorTarihi, null);
+    }
+
+    /**
+     * Tahsilat girişi (taksit kalem atamalı): {@code taksitId} verilirse, tahsilat kaydedildikten
+     * sonra ilgili taksit plan kalemi "ödendi" olarak işaretlenir.
+     */
+    @Transactional
+    public Map<String, Object> tahsilatGir(Long cariId, BigDecimal tutar, String odemeYontemi,
+                                           String taksitKurum, BigDecimal taksitTutar, String aciklama,
+                                           LocalDate hareketTarihi, Long sirketId,
+                                           Long posTerminaliId, BigDecimal komisyonTutar, LocalDate valorTarihi,
+                                           Long taksitId) {
         if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Tahsilat tutarı 0'dan büyük olmalıdır");
         }
@@ -201,6 +216,14 @@ public class TahsilatService {
         sonuc.put("odemeYontemi", odemeYontemi);
         sonuc.put("uygulananFaturalar", uygulananFaturalar);
         sonuc.put("fazlaOdeme", kalan.compareTo(BigDecimal.ZERO) > 0 ? kalan : BigDecimal.ZERO);
+
+        if (taksitId != null) {
+            taksitService.ode(taksitId, com.raspel.erp.dto.finans.TaksitOdeDTO.builder()
+                    .odemeTarihi(hareketTarihi != null ? hareketTarihi : LocalDate.now())
+                    .aciklama("Tahsilat ile odendi")
+                    .build(), sirketId);
+            sonuc.put("taksitId", taksitId);
+        }
         return sonuc;
     }
 

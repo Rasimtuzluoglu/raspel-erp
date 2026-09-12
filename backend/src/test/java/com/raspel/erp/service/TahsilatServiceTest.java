@@ -41,6 +41,8 @@ class TahsilatServiceTest {
     private HareketService hareketService;
     @Mock
     private PosTerminaliRepository posTerminaliRepository;
+    @Mock
+    private com.raspel.erp.service.finans.TaksitService taksitService;
     @InjectMocks
     private TahsilatService tahsilatService;
 
@@ -161,5 +163,19 @@ class TahsilatServiceTest {
 
         // 1 fatura tahsisi + 1 fazla ödeme (alacak) hareketi
         verify(hareketService, times(2)).hareketOlustur(any(), eq(1L));
+    }
+
+    @Test
+    void tahsilatGir_taksitKaleminiOder() {
+        CariHesap c1 = cari(1L, "A Ltd", null);
+        Fatura f = fatura(1L, c1, LocalDate.now().minusDays(5), "1000");
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(c1));
+        when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), anyList())).thenReturn(List.of(f));
+        when(hareketService.hareketOlustur(any(), eq(1L))).thenReturn(null);
+
+        tahsilatService.tahsilatGir(1L, new BigDecimal("1000"), "TAKSIT", "Banka",
+                new BigDecimal("1000"), null, LocalDate.now(), 1L, null, null, null, 55L);
+
+        verify(taksitService).ode(eq(55L), any(com.raspel.erp.dto.finans.TaksitOdeDTO.class), eq(1L));
     }
 }

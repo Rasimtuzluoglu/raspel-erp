@@ -35,6 +35,7 @@ import com.raspel.erp.entity.finans.CariHesap;
 public class CariHesapController {
     
     private final CariHesapService cariHesapService;
+    private final com.raspel.erp.service.finans.CariKartService cariKartService;
     
     @GetMapping
     @Operation(summary = "Tüm cari hesapları getir (sayfalı)", description = "Şirkete ait tüm cari hesapları sayfalı olarak listeler")
@@ -114,6 +115,14 @@ public class CariHesapController {
         log.info("GET /api/cari-hesaplar/{} - Cari hesap getiriliyor", id);
         CariHesapDTO cariHesap = cariHesapService.cariHesapGetir(id);
         return ResponseEntity.ok(cariHesap);
+    }
+
+    @GetMapping("/{id}/kart")
+    @Operation(summary = "Müşteri 360 kartı", description = "Cari bilgisi, kredi durumu, ticari özet, son fatura/sipariş/iade, fırsat, not ve özel fiyatları getirir")
+    public ResponseEntity<com.raspel.erp.dto.finans.CariKartDTO> cariKart(
+            @PathVariable Long id, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariKartService.kartGetir(id, sirketId));
     }
 
     @PostMapping

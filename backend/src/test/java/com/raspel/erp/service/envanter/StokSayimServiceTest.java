@@ -1,6 +1,7 @@
 package com.raspel.erp.service.envanter;
 
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.envanter.StokSayimDTO;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokSayim;
@@ -9,6 +10,7 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.envanter.StokSayimRepository;
+import com.raspel.erp.service.sistem.BildirimService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +37,10 @@ class StokSayimServiceTest {
     private StokHareketRepository stokHareketRepository;
     @Mock
     private TenantChecker tenantChecker;
+    @Mock
+    private CacheYardimci cacheYardimci;
+    @Mock
+    private BildirimService bildirimService;
 
     @InjectMocks
     private StokSayimService stokSayimService;
@@ -118,5 +124,48 @@ class StokSayimServiceTest {
     void sil_bulunamazsaHataFirlatir() {
         when(stokSayimRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> stokSayimService.sil(99L));
+    }
+
+    @Test
+    void tara_bosBarkodHataFirlatir() {
+        assertThrows(BusinessException.class, () -> stokSayimService.tara("", BigDecimal.ONE, 1L));
+    }
+
+    @Test
+    void tara_stokBulunamazsaHataFirlatir() {
+        when(stokRepository.findBySirketIdAndBarkod(1L, "YOK")).thenReturn(java.util.List.of());
+        when(stokRepository.findBySirketIdAndStokKodu(1L, "YOK")).thenReturn(Optional.empty());
+        assertThrows(BusinessException.class, () -> stokSayimService.tara("YOK", BigDecimal.ONE, 1L));
+    }
+
+    @Test
+    void tara_mevcutTaslakSayilaniArtirir() {
+        Stok stok = Stok.builder().id(10L).ad("Ürün").sirketId(1L).miktar(new BigDecimal("100")).build();
+        StokSayim sayim = sayim(1L, new BigDecimal("100"), new BigDecimal("3"));
+        when(stokRepository.findBySirketIdAndBarkod(1L, "BAR")).thenReturn(java.util.List.of(stok));
+        when(stokSayimRepository.findFirstBySirketIdAndStokIdAndDurumOrderByOlusturmaTarihiDesc(1L, 10L, "TASLAK"))
+                .thenReturn(Optional.of(sayim));
+        when(stokSayimRepository.save(any(StokSayim.class))).thenReturn(sayim);
+
+        StokSayimDTO sonuc = stokSayimService.tara("BAR", new BigDecimal("2"), 1L);
+
+        assertEquals(0, new BigDecimal("5").compareTo(sonuc.getSayilanMiktar()));
+    }
+
+    @Test
+    void tara_taslakYoksaYeniSayimBaslatir() {
+        Stok stok = Stok.builder().id(10L).ad("Ürün").sirketId(1L).miktar(new BigDecimal("100")).build();
+        when(stokRepository.findBySirketIdAndBarkod(1L, "BAR")).thenReturn(java.util.List.of(stok));
+        when(stokSayimRepository.findFirstBySirketIdAndStokIdAndDurumOrderByOlusturmaTarihiDesc(1L, 10L, "TASLAK"))
+                .thenReturn(Optional.empty());
+        when(stokSayimRepository.saveAndFlush(any(StokSayim.class))).thenAnswer(i -> i.getArgument(0));
+        StokSayim sayim = sayim(2L, BigDecimal.ZERO, BigDecimal.ZERO);
+        when(stokSayimRepository.save(any(StokSayim.class))).thenReturn(sayim);
+
+        StokSayimDTO sonuc = stokSayimService.tara("BAR", null, 1L);
+
+        assertNotNull(sonuc);
+        assertEquals("TASLAK", sonuc.getDurum());
+        verify(stokSayimRepository).saveAndFlush(any(StokSayim.class));
     }
 }

@@ -97,4 +97,15 @@ class StokSayimControllerTest {
         mockMvc.perform(delete("/api/stok-sayim/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldTarama() throws Exception {
+        when(stokSayimService.tara(eq("BAR123"), any(), eq(1L))).thenReturn(ornek());
+        mockMvc.perform(post("/api/stok-sayim/tarama")
+                        .requestAttr("sirketId", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"barkod\":\"BAR123\",\"adet\":2}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.durum").value("TASLAK"));
+    }
 }

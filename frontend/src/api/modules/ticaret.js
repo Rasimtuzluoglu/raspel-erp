@@ -33,6 +33,9 @@ export const cariHesapAPI = {
   },
   fiyatSil(fiyatId) {
     return apiClient.delete(`/cari-hesaplar/fiyatlar/${fiyatId}`)
+  },
+  kart(id) {
+    return apiClient.get(`/cari-hesaplar/${id}/kart`)
   }
 }
 

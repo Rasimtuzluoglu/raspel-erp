@@ -69,7 +69,8 @@ public class TahsilatController {
                 dto.getCariId(), dto.getTutar(), dto.getOdemeYontemi(),
                 dto.getTaksitKurum(), dto.getTaksitTutar(), dto.getAciklama(),
                 dto.getHareketTarihi(), sirketId,
-                dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi());
+                dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi(),
+                dto.getTaksitId());
         return ResponseEntity.status(HttpStatus.CREATED).body(sonuc);
     }
 
@@ -89,6 +90,8 @@ public class TahsilatController {
         private String taksitKurum;
         /** Taksit olarak çekilen tutar */
         private java.math.BigDecimal taksitTutar;
+        /** Odemenin atanacagi taksit plan kalemi (opsiyonel) */
+        private Long taksitId;
         /** POS terminali ID (kart tek çekim) */
         private Long posTerminaliId;
         /** Kart komisyon tutarı */

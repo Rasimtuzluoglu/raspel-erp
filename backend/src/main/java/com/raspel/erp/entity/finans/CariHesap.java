@@ -89,6 +89,14 @@ public class CariHesap {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /** Satis temsilcisi kullanici ID */
+    @Column(name = "temsilci_id")
+    private Long temsilciId;
+
+    /** Satis temsilcisi adi (denormalize) */
+    @Column(name = "temsilci_ad", length = 255)
+    private String temsilciAd;
+
     /** Oluşturma tarihi */
     @Column(nullable = false, updatable = false)
     private LocalDateTime olusturmaTarihi;

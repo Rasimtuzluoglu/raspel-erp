@@ -167,6 +167,17 @@ public class StokService {
                 .map(s -> entityToDTO(s, tekTedarikciAdi(s))).orElse(null);
     }
 
+    /**
+     * Tenant kontrolü yapılmış ham Stok entity'si döner (etiket/QR üretimi için).
+     */
+    @Transactional(readOnly = true)
+    public Stok entityGetir(Long id) {
+        Stok stok = stokRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        return stok;
+    }
+
     @Transactional(readOnly = true)
     @Cacheable(value = "stoklar", key = "T(com.raspel.erp.config.TenantChecker).tenantKey(#id)")
     public StokDTO getir(Long id) {

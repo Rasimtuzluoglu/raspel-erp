@@ -86,6 +86,51 @@
               @click="masaustuIzinVer"
             />
           </div>
+          <div class="tercih-baslik">
+            Push Bildirimleri
+          </div>
+          <div
+            v-if="!pushDestek"
+            class="tercih-satir"
+          >
+            <i
+              class="pi pi-times-circle"
+              style="color: #94a3b8"
+            />
+            <span>Bu tarayıcı push bildirimini desteklemiyor</span>
+          </div>
+          <div
+            v-else-if="pushAktif"
+            class="tercih-satir"
+          >
+            <i
+              class="pi pi-check-circle"
+              style="color: #4ade80"
+            />
+            <span>Push bildirimleri açık</span>
+            <Button
+              label="Kapat"
+              size="small"
+              class="p-button-sm p-button-outlined"
+              @click="pushKapat"
+            />
+          </div>
+          <div
+            v-else
+            class="tercih-satir"
+          >
+            <i
+              class="pi pi-mobile"
+              style="color: #fbbf24"
+            />
+            <span>Push bildirimleri kapalı</span>
+            <Button
+              label="Aç"
+              size="small"
+              class="p-button-sm p-button-outlined"
+              @click="pushAc"
+            />
+          </div>
         </div>
         <div
           v-if="filtrelenmisBildirimler && filtrelenmisBildirimler.length === 0 && !tercihPaneli"
@@ -133,7 +178,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
-import { bildirimAPI } from '../api/index.js'
+import { usePushBildirim } from '../composables/usePushBildirim.js'
+import { bildirimAPI, kullaniciAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { formatGunSaat as formatTarih } from '../utils/format.js'
 
@@ -146,6 +192,15 @@ const ziliRef = ref(null)
 
 const { sonBildirim } = useWebSocket()
 const masaustu = useMasaustuBildirim()
+const {
+  destek: pushDestek,
+  aktif: pushAktif,
+  izinIste: pushIzinIste,
+  aboneKaldir: pushKapat,
+  durumYenile: pushDurumYenile
+} = usePushBildirim()
+
+const pushAc = () => pushIzinIste()
 
 const yukle = async () => {
   try {
@@ -167,6 +222,8 @@ const disariTiklamaHandler = (e) => {
 onMounted(() => {
   document.addEventListener('click', disariTiklamaHandler)
   yukle()
+  tercihleriYukle()
+  pushDurumYenile()
 })
 
 onUnmounted(() => {
@@ -181,19 +238,40 @@ const TERCIH_ANAHTAR = 'raspel_bildirim_tercihleri'
 const tercihListesi = [
   { tur: 'STOK', etiket: 'Stok Uyarıları' },
   { tur: 'SIPARIS', etiket: 'Siparişler' },
+  { tur: 'TEKLIF', etiket: 'Teklifler' },
+  { tur: 'TESLIMAT', etiket: 'Teslimatlar' },
   { tur: 'FATURA', etiket: 'Faturalar' },
-  { tur: 'ODEME', etiket: 'Ödemeler' },
+  { tur: 'VADE', etiket: 'Vade Hatırlatmaları' },
   { tur: 'TAKSILAT', etiket: 'Tahsilatlar' },
-  { tur: 'UYARI', etiket: 'Uyarılar' },
-  { tur: 'INFO', etiket: 'Bilgilendirme' }
+  { tur: 'ODEME', etiket: 'Ödemeler' },
+  { tur: 'MASRAF_TALEBI', etiket: 'Masraf Talepleri' }
 ]
 const tercihler = ref(safeGet(TERCIH_ANAHTAR, {}))
 
 const filtrelenmisBildirimler = computed(() => bildirimler.value.filter((b) => tercihler.value[b.tur] !== false))
 
+const tercihleriYukle = async () => {
+  try {
+    const r = await kullaniciAPI.bildirimTercihleriGetir()
+    const secili = r.data || []
+    if (secili.length) {
+      const yeni = {}
+      tercihListesi.forEach((t) => { yeni[t.tur] = secili.includes(t.tur) })
+      tercihler.value = yeni
+    } else {
+      tercihler.value = {}
+    }
+    safeSet(TERCIH_ANAHTAR, tercihler.value)
+  } catch {
+    tercihler.value = safeGet(TERCIH_ANAHTAR, {})
+  }
+}
+
 const tercihDegistir = (tur, val) => {
   tercihler.value[tur] = val
   safeSet(TERCIH_ANAHTAR, tercihler.value)
+  const secili = tercihListesi.filter((t) => tercihler.value[t.tur] !== false).map((t) => t.tur)
+  kullaniciAPI.bildirimTercihleriGuncelle(secili).catch(() => {})
 }
 
 watch(sonBildirim, (yeni) => {

@@ -912,10 +912,15 @@ const oturumSonlandir = async (oturum) => {
 }
 
 const bildirimTipleri = ref([
-  { label: 'Fatura Bildirimleri', value: 'FATURA', secili: true },
-  { label: 'Sistem Hata Uyarıları', value: 'HATA', secili: true },
-  { label: 'Anomali Tespitleri', value: 'ANOMALI', secili: true },
-  { label: 'Hatırlatıcılar', value: 'HATIRLATMA', secili: true }
+  { label: 'Stok Uyarıları', value: 'STOK', secili: true },
+  { label: 'Siparişler', value: 'SIPARIS', secili: true },
+  { label: 'Teklifler', value: 'TEKLIF', secili: true },
+  { label: 'Teslimatlar', value: 'TESLIMAT', secili: true },
+  { label: 'Faturalar', value: 'FATURA', secili: true },
+  { label: 'Vade Hatırlatmaları', value: 'VADE', secili: true },
+  { label: 'Tahsilatlar', value: 'TAKSILAT', secili: true },
+  { label: 'Ödemeler', value: 'ODEME', secili: true },
+  { label: 'Masraf Talepleri', value: 'MASRAF_TALEBI', secili: true }
 ])
 const tercihKaydediliyor = ref(false)
 
@@ -923,7 +928,9 @@ const tercihleriYukle = async () => {
   try {
     const r = await kullaniciAPI.bildirimTercihleriGetir()
     const secili = r.data || []
-    bildirimTipleri.value.forEach((t) => { t.secili = secili.includes(t.value) })
+    if (secili.length) {
+      bildirimTipleri.value.forEach((t) => { t.secili = secili.includes(t.value) })
+    }
   } catch {
     /* empty */
   }

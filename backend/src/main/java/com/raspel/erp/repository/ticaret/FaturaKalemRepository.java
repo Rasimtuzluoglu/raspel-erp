@@ -97,4 +97,23 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
     List<Object[]> kategoriSatislari(@Param("sirketId") Long sirketId,
                                      @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
                                      @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
+
+    /**
+     * Bir stogun tarih aralığındaki kesilmiş (ALIS/SATIS) fatura kalemlerini
+     * ürün maliyet-kârlılık analizi için düz satır olarak döndürür.
+     */
+    @Query("SELECT f.tarih AS faturaTarihi, f.faturaNumarasi AS faturaNumarasi, " +
+           "f.cariHesap.id AS cariHesapId, f.cariHesap.ad AS cariHesapAd, " +
+           "k.adet AS adet, k.birimFiyat AS birimFiyat, k.iskontoOrani AS iskontoOrani " +
+           "FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE k.stokId = :stokId AND f.sirketId = :sirketId " +
+           "AND f.tur = :tur AND f.durum = :durum " +
+           "AND f.tarih BETWEEN :baslangic AND :bitis " +
+           "ORDER BY f.tarih ASC")
+    List<FaturaAnalizSatirProjeksiyon> analizSatirlari(@Param("stokId") Long stokId,
+                                                       @Param("sirketId") Long sirketId,
+                                                       @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                                       @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
+                                                       @Param("baslangic") java.time.LocalDate baslangic,
+                                                       @Param("bitis") java.time.LocalDate bitis);
 }

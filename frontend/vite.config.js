@@ -14,9 +14,15 @@ export default defineConfig({
       directives: true
     }),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       injectRegister: 'script-defer',
       devOptions: { enabled: false },
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+      },
       manifest: {
         name: 'RasPel ERP',
         short_name: 'RasPel',
@@ -37,49 +43,6 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
-          }
-        ]
-      },
-      workbox: {
-        navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            urlPattern: /\/api\//,
-            method: 'GET',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-read',
-              networkTimeoutSeconds: 4,
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 7
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|woff2?|ttf|eot)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'static-assets',
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'google-fonts',
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              }
-            }
           }
         ]
       }

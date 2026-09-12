@@ -19,10 +19,13 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "app.rabbitmq.enabled", havingValue = "true", matchIfMissing = true)
 public class BildirimKuyrukConsumer {
 
+    private final WebPushService webPushService;
+
     @RabbitListener(queues = RabbitMQConfig.BILDIRIM_QUEUE)
     public void isle(NotificationMessage message) {
         try {
             log.info("Bildirim kuyruğundan işlendi -> sirketId={}, tur={}, baslik={}", message.sirketId(), message.tur(), message.baslik());
+            webPushService.gonder(message.sirketId(), message.tur(), message.baslik(), message.mesaj(), "/");
         } catch (Exception e) {
             // İşlenemeyen mesaj retry (3 deneme) sonrası DLQ'ya düşer; sonsuz döngü oluşmaz
             log.error("Bildirim işlenirken hata -> baslik={}", message != null ? message.baslik() : null, e);

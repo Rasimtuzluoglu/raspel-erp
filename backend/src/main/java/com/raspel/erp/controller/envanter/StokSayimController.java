@@ -33,6 +33,13 @@ public class StokSayimController {
         return ResponseEntity.ok(stokSayimService.tumunuGetir(sirketId, pageable));
     }
 
+    @PostMapping("/tarama")
+    @Operation(summary = "Barkod taraması", description = "Barkod ile TASLAK sayımın sayılan miktarını artırır; yoksa yeni sayım başlatır")
+    public ResponseEntity<StokSayimDTO> tara(@RequestBody com.raspel.erp.dto.envanter.BarkodTaramaDTO body, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokSayimService.tara(body.getBarkod(), body.getAdet(), sirketId));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre stok sayım getir", description = "Stok sayım ID'sine göre detayları getirir")
     public ResponseEntity<StokSayimDTO> getir(@PathVariable Long id) {

@@ -373,6 +373,7 @@ const tumMenuler = [
   { path: '/banka-mutabakat', label: 'Banka Mutabakatı', icon: 'pi pi-link', grup: 'Finans', gelismis: true },
   { path: '/cek-senet', label: 'Çek/Senet', icon: 'pi pi-money-bill', grup: 'Finans', gelismis: true },
   { path: '/tahsilat', label: 'Tahsilat', icon: 'pi pi-dollar', grup: 'Finans' },
+  { path: '/taksit-takvimi', label: 'Taksit Takvimi', icon: 'pi pi-calendar', grup: 'Finans' },
   { path: '/pos-terminalleri', label: 'POS Terminalleri', icon: 'pi pi-credit-card', grup: 'Finans', gelismis: true },
   { path: '/butceler', label: 'Bütçe', icon: 'pi pi-chart-bar', grup: 'Finans', admin: true, gelismis: true },
   { path: '/masraflar', label: 'Masraf', icon: 'pi pi-money-bill', grup: 'Finans', gelismis: true },

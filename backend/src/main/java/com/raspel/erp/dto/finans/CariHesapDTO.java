@@ -44,6 +44,8 @@ public class CariHesapDTO {
     private BigDecimal krediLimiti;
     private Integer odemeVadesi;
     private BigDecimal bakiye;
+    private Long temsilciId;
+    private String temsilciAd;
     private LocalDateTime olusturmaTarihi;
     private LocalDateTime guncellemeTarihi;
 }

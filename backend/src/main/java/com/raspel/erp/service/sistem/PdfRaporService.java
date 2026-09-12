@@ -3,14 +3,14 @@ package com.raspel.erp.service.sistem;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +34,7 @@ import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.entity.envanter.Stok;
 
 @Service
 @RequiredArgsConstructor
@@ -49,11 +50,34 @@ public class PdfRaporService {
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
 
-    private static final PDType1Font BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-    private static final PDType1Font REGULAR = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-    private static final PDType1Font BOLD_OBLIQUE = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD_OBLIQUE);
     private static final float MARGIN = 50;
     private static final float PAGE_WIDTH = PDRectangle.A4.getWidth() - 2 * MARGIN;
+
+    /** Türkçe karakterleri destekleyen gömülü Unicode font çifti (DejaVuSans, OFL). */
+    private static final class FontSet {
+        final PDType0Font regular;
+        final PDType0Font bold;
+
+        FontSet(PDType0Font regular, PDType0Font bold) {
+            this.regular = regular;
+            this.bold = bold;
+        }
+    }
+
+    private FontSet fontlar(PDDocument doc) throws IOException {
+        try (InputStream regular = fontStream("DejaVuSans.ttf");
+             InputStream bold = fontStream("DejaVuSans-Bold.ttf")) {
+            return new FontSet(PDType0Font.load(doc, regular), PDType0Font.load(doc, bold));
+        }
+    }
+
+    private static InputStream fontStream(String ad) {
+        InputStream is = PdfRaporService.class.getResourceAsStream("/fonts/" + ad);
+        if (is == null) {
+            throw new IllegalStateException("PDF fontu bulunamadı: /fonts/" + ad);
+        }
+        return is;
+    }
 
     public byte[] faturaRaporu(Long faturaId) {
         Fatura f = faturaRepository.findById(faturaId)
@@ -76,31 +100,32 @@ public class PdfRaporService {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
+            FontSet font = fontlar(doc);
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
 
-                y = header(cs, y, baslik);
+                y = header(cs, y, baslik, font);
                 y -= 10;
-                y = infoSatiri(cs, y, "Fatura No:", "#" + (f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())));
-                y = infoSatiri(cs, y, "Tarih:", f.getOlusturmaTarihi() != null ? f.getOlusturmaTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
-                y = infoSatiri(cs, y, "Durum:", f.getDurum() != null ? f.getDurum().name() : "-");
-                y = infoSatiri(cs, y, cariLabel, cariAd);
-                y = infoSatiri(cs, y, "Cari Hesap ID:", cariId);
-                y = infoSatiri(cs, y, "İşlemi Yapan:", f.getOlusturanKullaniciAdi() != null ? f.getOlusturanKullaniciAdi() : "-");
+                y = infoSatiri(cs, y, "Fatura No:", "#" + (f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())), font);
+                y = infoSatiri(cs, y, "Tarih:", f.getOlusturmaTarihi() != null ? f.getOlusturmaTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-", font);
+                y = infoSatiri(cs, y, "Durum:", f.getDurum() != null ? f.getDurum().name() : "-", font);
+                y = infoSatiri(cs, y, cariLabel, cariAd, font);
+                y = infoSatiri(cs, y, "Cari Hesap ID:", cariId, font);
+                y = infoSatiri(cs, y, "İşlemi Yapan:", f.getOlusturanKullaniciAdi() != null ? f.getOlusturanKullaniciAdi() : "-", font);
                 if (alis && f.getDepoId() != null) {
-                    y = infoSatiri(cs, y, "Depo ID:", String.valueOf(f.getDepoId()));
+                    y = infoSatiri(cs, y, "Depo ID:", String.valueOf(f.getDepoId()), font);
                 }
-                y = infoSatiri(cs, y, "Teslim Eden:", f.getTeslimEden() != null && !f.getTeslimEden().isBlank() ? f.getTeslimEden() : "-");
-                y = infoSatiri(cs, y, "Teslim Durumu:", f.getTeslimDurumu() != null ? f.getTeslimDurumu() : "-");
+                y = infoSatiri(cs, y, "Teslim Eden:", f.getTeslimEden() != null && !f.getTeslimEden().isBlank() ? f.getTeslimEden() : "-", font);
+                y = infoSatiri(cs, y, "Teslim Durumu:", f.getTeslimDurumu() != null ? f.getTeslimDurumu() : "-", font);
                 if (f.getTeslimNotu() != null && !f.getTeslimNotu().isBlank()) {
-                    y = infoSatiri(cs, y, "Teslim Notu:", f.getTeslimNotu());
+                    y = infoSatiri(cs, y, "Teslim Notu:", f.getTeslimNotu(), font);
                 }
                 y -= 20;
 
                 y = cizgi(cs, y);
                 y -= 8;
 
-                y = siraBasligi(cs, y, "Sıra", "Ürün / Hizmet", "Miktar", "Birim Fiyat", "Tutar");
+                y = siraBasligi(cs, y, font, "Sıra", "Ürün / Hizmet", "Miktar", "Birim Fiyat", "Tutar");
                 y -= 4;
                 y = cizgi(cs, y);
                 y -= 6;
@@ -111,7 +136,7 @@ public class PdfRaporService {
                     String miktar = k.getAdet() != null ? k.getAdet().toString() : "0";
                     String birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat().toString() : "0";
                     String tutar = k.getTutar() != null ? k.getTutar().toString() : "0";
-                    y = siraSatiri(cs, y, String.valueOf(sira++), aciklama, miktar, birimFiyat, tutar);
+                    y = siraSatiri(cs, y, font, String.valueOf(sira++), aciklama, miktar, birimFiyat, tutar);
                     if (y < 100) { y = yeniSayfa(doc, cs, y); }
                 }
 
@@ -120,7 +145,7 @@ public class PdfRaporService {
                 y -= 8;
 
                 String genelToplam = f.getGenelToplam() != null ? f.getGenelToplam().toString() : "0";
-                cs.setFont(BOLD, 12);
+                cs.setFont(font.bold, 12);
                 cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 120 + MARGIN, y); cs.showText("Genel Toplam:"); cs.endText();
                 cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 40 + MARGIN, y); cs.showText(genelToplam + " TL"); cs.endText();
                 y -= 20;
@@ -135,7 +160,7 @@ public class PdfRaporService {
                 }
                 y -= 20;
 
-                cs.setFont(BOLD_OBLIQUE, 9);
+                cs.setFont(font.bold, 9);
                 cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RasPel ERP - Otomatik Oluşturulmuştur"); cs.endText();
             }
             doc.save(baos);
@@ -169,8 +194,8 @@ public class PdfRaporService {
                 ).toList());
     }
 
-    private float header(PDPageContentStream cs, float y, String title) throws IOException {
-        cs.setFont(BOLD, 22);
+    private float header(PDPageContentStream cs, float y, String title, FontSet font) throws IOException {
+        cs.setFont(font.bold, 22);
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RasPel ERP"); cs.endText();
 
         PDImageXObject logo = sirketLogosuBul();
@@ -183,7 +208,7 @@ public class PdfRaporService {
         }
 
         y -= 28;
-        cs.setFont(BOLD, 16);
+        cs.setFont(font.bold, 16);
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(title); cs.endText();
         y -= 30;
         return y;
@@ -203,8 +228,8 @@ public class PdfRaporService {
         }
     }
 
-    private float infoSatiri(PDPageContentStream cs, float y, String label, String value) throws IOException {
-        cs.setFont(REGULAR, 11);
+    private float infoSatiri(PDPageContentStream cs, float y, String label, String value, FontSet font) throws IOException {
+        cs.setFont(font.regular, 11);
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(label + " " + value); cs.endText();
         return y - 18;
     }
@@ -215,8 +240,8 @@ public class PdfRaporService {
         return y;
     }
 
-    private float siraBasligi(PDPageContentStream cs, float y, String... cols) throws IOException {
-        cs.setFont(BOLD, 10);
+    private float siraBasligi(PDPageContentStream cs, float y, FontSet font, String... cols) throws IOException {
+        cs.setFont(font.bold, 10);
         float[] widths = {30, 250, 60, 80, 80};
         float x = MARGIN;
         for (int i = 0; i < cols.length; i++) {
@@ -226,8 +251,8 @@ public class PdfRaporService {
         return y - 16;
     }
 
-    private float siraSatiri(PDPageContentStream cs, float y, String... cols) throws IOException {
-        cs.setFont(REGULAR, 10);
+    private float siraSatiri(PDPageContentStream cs, float y, FontSet font, String... cols) throws IOException {
+        cs.setFont(font.regular, 10);
         float[] widths = {30, 250, 60, 80, 80};
         float x = MARGIN;
         boolean alternate = Integer.parseInt(cols[0]) % 2 == 0;
@@ -255,18 +280,19 @@ public class PdfRaporService {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
+            FontSet font = fontlar(doc);
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
-                y = header(cs, y, title);
-                y = infoSatiri(cs, y, "", line1);
-                y = infoSatiri(cs, y, "", line2);
-                y = infoSatiri(cs, y, "", line3);
-                y = infoSatiri(cs, y, "", line4);
+                y = header(cs, y, title, font);
+                y = infoSatiri(cs, y, "", line1, font);
+                y = infoSatiri(cs, y, "", line2, font);
+                y = infoSatiri(cs, y, "", line3, font);
+                y = infoSatiri(cs, y, "", line4, font);
                 y -= 20;
-                cs.setFont(BOLD, 13);
+                cs.setFont(font.bold, 13);
                 cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Kalemler:"); cs.endText();
                 y -= 20;
-                cs.setFont(REGULAR, 11);
+                cs.setFont(font.regular, 11);
                 for (String item : items) {
                     cs.beginText(); cs.newLineAtOffset(MARGIN + 10, y); cs.showText("- " + item); cs.endText();
                     y -= 18;
@@ -287,13 +313,14 @@ public class PdfRaporService {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
+            FontSet font = fontlar(doc);
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
-                y = header(cs, y, baslik);
+                y = header(cs, y, baslik, font);
                 y -= 10;
 
                 float[] genislikler = esitGenislikler(kolonlar.length);
-                y = tabloBaslikSatiri(cs, y, genislikler, kolonlar);
+                y = tabloBaslikSatiri(cs, y, genislikler, kolonlar, font);
                 y -= 4;
                 y = cizgi(cs, y);
                 y -= 6;
@@ -301,10 +328,10 @@ public class PdfRaporService {
                 int sira = 0;
                 for (String[] satir : satirlar) {
                     boolean alternate = sira % 2 == 0;
-                    y = tabloVeriSatiri(cs, y, genislikler, satir, alternate);
+                    y = tabloVeriSatiri(cs, y, genislikler, satir, alternate, font);
                     if (y < 100) {
                         y = yeniSayfa(doc, cs, y);
-                        y = tabloBaslikSatiri(cs, y, genislikler, kolonlar);
+                        y = tabloBaslikSatiri(cs, y, genislikler, kolonlar, font);
                         y -= 4;
                         y = cizgi(cs, y);
                         y -= 6;
@@ -319,8 +346,70 @@ public class PdfRaporService {
         }
     }
 
-    private float tabloBaslikSatiri(PDPageContentStream cs, float y, float[] genislikler, String[] kolonlar) throws IOException {
-        cs.setFont(BOLD, 10);
+    /**
+     * Raf etiketi PDF'i: ürün adı, kod, barkod, QR (ZXing PNG), raf no ve fiyatı içerir.
+     * Yazdırma ön izlemesi için yeterli, sabit yerleşimli tek etiket sayfası üretir.
+     */
+    public byte[] stokEtiketi(Stok stok, byte[] qrPng) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            doc.addPage(page);
+            FontSet font = fontlar(doc);
+            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+                float y = PDRectangle.A4.getHeight() - MARGIN;
+                y = header(cs, y, "RAF ETİKETİ", font);
+                y -= 10;
+                y = cizgi(cs, y);
+                y -= 20;
+
+                String ad = stok.getAd() != null ? stok.getAd() : "-";
+                String kod = stok.getStokKodu() != null ? stok.getStokKodu() : "-";
+                String barkod = stok.getBarkod() != null ? stok.getBarkod() : "-";
+                String raf = stok.getRafNo() != null ? stok.getRafNo() : "-";
+                String fiyat = stok.getSatisFiyati() != null ? stok.getSatisFiyati().toString() + " TL" : "-";
+
+                cs.setFont(font.bold, 20);
+                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(ad); cs.endText();
+                y -= 26;
+
+                cs.setFont(font.regular, 14);
+                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Kod: " + kod); cs.endText();
+                y -= 20;
+                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod); cs.endText();
+                y -= 20;
+                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Raf No: " + raf); cs.endText();
+                y -= 20;
+                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Fiyat: " + fiyat); cs.endText();
+                y -= 30;
+
+                if (qrPng != null && qrPng.length > 0) {
+                    PDImageXObject qr = PDImageXObject.createFromByteArray(doc, qrPng, "qr");
+                    float qrBoyut = 140;
+                    cs.drawImage(qr, PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut, qrBoyut, qrBoyut);
+                    cs.setFont(font.regular, 9);
+                    cs.beginText();
+                    cs.newLineAtOffset(PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut - 12);
+                    cs.showText("Karekod ile tarayıp say");
+                    cs.endText();
+                }
+
+                y -= 40;
+                y = cizgi(cs, y);
+                y -= 12;
+                cs.setFont(font.regular, 9);
+                cs.beginText(); cs.newLineAtOffset(MARGIN, y);
+                cs.showText("RasPel ERP - Otomatik Oluşturulmuştur");
+                cs.endText();
+            }
+            doc.save(baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("PDF oluşturulamadı", e);
+        }
+    }
+
+    private float tabloBaslikSatiri(PDPageContentStream cs, float y, float[] genislikler, String[] kolonlar, FontSet font) throws IOException {
+        cs.setFont(font.bold, 10);
         float x = MARGIN;
         for (int i = 0; i < kolonlar.length; i++) {
             cs.beginText(); cs.newLineAtOffset(x + 2, y); cs.showText(kolonlar[i]); cs.endText();
@@ -329,8 +418,8 @@ public class PdfRaporService {
         return y - 16;
     }
 
-    private float tabloVeriSatiri(PDPageContentStream cs, float y, float[] genislikler, String[] kolonlar, boolean alternate) throws IOException {
-        cs.setFont(REGULAR, 10);
+    private float tabloVeriSatiri(PDPageContentStream cs, float y, float[] genislikler, String[] kolonlar, boolean alternate, FontSet font) throws IOException {
+        cs.setFont(font.regular, 10);
         if (alternate) {
             cs.setNonStrokingColor(0.95f, 0.95f, 0.95f);
             cs.addRect(MARGIN, y - 2, PAGE_WIDTH, 16);

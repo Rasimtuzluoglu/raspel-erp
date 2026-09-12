@@ -9,4 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StokSayimRepository extends JpaRepository<StokSayim, Long> {
     Page<StokSayim> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
+
+    java.util.Optional<StokSayim> findFirstBySirketIdAndStokIdAndDurumOrderByOlusturmaTarihiDesc(
+            Long sirketId, Long stokId, String durum);
 }

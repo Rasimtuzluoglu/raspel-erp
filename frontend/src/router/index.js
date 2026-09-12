@@ -190,6 +190,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/taksit-takvimi',
+    name: 'TaksitTakvimi',
+    component: () => import('../views/TaksitTakvimi.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/pos-terminalleri',
     name: 'PosTerminalleri',
     component: () => import('../views/PosTerminalleri.vue'),

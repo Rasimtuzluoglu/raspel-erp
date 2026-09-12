@@ -10,6 +10,7 @@ export {
   cekSenetAPI,
   dovizAPI,
   tahsilatAPI,
+  taksitAPI,
   posAPI,
   muhasebeAPI
 } from './modules/finans.js'
@@ -61,4 +62,6 @@ export {
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 
 export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './modules/dosya.js'
+
+export { pushAPI } from './modules/push.js'
 

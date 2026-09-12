@@ -7,6 +7,15 @@ export const stokAPI = {
   ara(q) {
     return apiClient.get('/stoklar/ara', { params: { q } })
   },
+  barkodIleBul(kod) {
+    return apiClient.get(`/stoklar/barkod/${encodeURIComponent(kod)}`)
+  },
+  etiketQr(id) {
+    return apiClient.get(`/stoklar/${id}/etiket-qr`, { responseType: 'blob' })
+  },
+  etiketPdf(id) {
+    return apiClient.get(`/stoklar/${id}/etiket`, { responseType: 'blob' })
+  },
   filtreli(params) {
     return apiClient.get('/stoklar/filtreli', { params })
   },
@@ -18,6 +27,33 @@ export const stokAPI = {
   },
   talepTahmini() {
     return apiClient.get('/stoklar/talep-tahmini')
+  },
+  analiz(id, params) {
+    return apiClient.get(`/stoklar/${id}/analiz`, { params })
+  },
+  alisOzet(id, params) {
+    return apiClient.get(`/stoklar/${id}/alis-ozet`, { params })
+  },
+  satisOzet(id, params) {
+    return apiClient.get(`/stoklar/${id}/satis-ozet`, { params })
+  },
+  karlilik(id, params) {
+    return apiClient.get(`/stoklar/${id}/karlilik`, { params })
+  },
+  tedarikciAnaliz(id, params) {
+    return apiClient.get(`/stoklar/${id}/tedarikci-analiz`, { params })
+  },
+  musteriAnaliz(id, params) {
+    return apiClient.get(`/stoklar/${id}/musteri-analiz`, { params })
+  },
+  islemGecmisi(id, params) {
+    return apiClient.get(`/stoklar/${id}/islem-gecmisi`, { params })
+  },
+  islemGecmisiSayfali(id, params) {
+    return apiClient.get(`/stoklar/${id}/islem-gecmisi-sayfali`, { params })
+  },
+  aylikFiyat(id, params) {
+    return apiClient.get(`/stoklar/${id}/aylik-fiyat`, { params })
   },
   getById(id) {
     return apiClient.get(`/stoklar/${id}`)
@@ -186,6 +222,9 @@ export const stokSayimAPI = {
   },
   durumGuncelle(id, durum) {
     return apiClient.put(`/stok-sayim/${id}/durum`, { durum })
+  },
+  tara(data) {
+    return apiClient.post('/stok-sayim/tarama', data)
   },
   delete(id) {
     return apiClient.delete(`/stok-sayim/${id}`)

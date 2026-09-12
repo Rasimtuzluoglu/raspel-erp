@@ -41,6 +41,23 @@ class CariHesapControllerTest {
     @MockBean
     private CariHesapService cariHesapService;
 
+    @MockBean
+    private com.raspel.erp.service.finans.CariKartService cariKartService;
+
+    @Test
+    void shouldGetKart() throws Exception {
+        var kart = com.raspel.erp.dto.finans.CariKartDTO.builder()
+                .cariId(1L).cariAd("ABC Müşteri")
+                .ozet(com.raspel.erp.dto.finans.CariKartDTO.Ozet.builder().faturaSayisi(2).build())
+                .build();
+        when(cariKartService.kartGetir(eq(1L), eq(1L))).thenReturn(kart);
+
+        mockMvc.perform(get("/api/cari-hesaplar/1/kart").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cariAd").value("ABC Müşteri"))
+                .andExpect(jsonPath("$.ozet.faturaSayisi").value(2));
+    }
+
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(CariHesapDTO.builder().id(1L).ad("ABC Müşteri").bakiye(BigDecimal.valueOf(5000)).build());

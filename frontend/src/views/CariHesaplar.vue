@@ -271,6 +271,12 @@
               @click="viewHareketler(slotProps.data)"
             />
             <Button
+              icon="pi pi-id-card"
+              class="p-button-rounded p-button-help p-button-sm"
+              :title="t('cariKart.baslik')"
+              @click="kartAc(slotProps.data)"
+            />
+            <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
               :title="t('common.delete')"
@@ -956,6 +962,11 @@
       severity="error"
       :text="cariHesapStore.error"
     />
+
+    <CariKart360Dialog
+      v-model:visible="kartDialogAcik"
+      :cari-id="kartCariId"
+    />
   </div>
 </template>
 
@@ -973,6 +984,7 @@ import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
+import CariKart360Dialog from '../components/CariKart360Dialog.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
@@ -1005,6 +1017,8 @@ useKisayollar({
 
 const showDialog = ref(false)
 const showHareketlerDialog = ref(false)
+const kartDialogAcik = ref(false)
+const kartCariId = ref(null)
 const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
@@ -1312,6 +1326,11 @@ const tahsilatAc = async (cariHesap) => {
 const tahsilatSonrasiYenile = async () => {
   tahsilatHedefCari.value = null
   await cariHesapStore.getAllCariHesaplar()
+}
+
+const kartAc = (cariHesap) => {
+  kartCariId.value = cariHesap.id
+  kartDialogAcik.value = true
 }
 
 const viewHareketler = async (cariHesap) => {  selectedCariHesap.value = cariHesap

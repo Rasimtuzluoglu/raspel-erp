@@ -174,6 +174,8 @@ public class CariHesapService {
                 .odemeVadesi(dto.getOdemeVadesi())
                 .bakiye(BigDecimal.ZERO)
                 .sirketId(sirketId)
+                .temsilciId(dto.getTemsilciId())
+                .temsilciAd(dto.getTemsilciAd())
                 .build();
         
         CariHesap kaydedilenCariHesap = cariHesapRepository.save(cariHesap);
@@ -210,6 +212,8 @@ public class CariHesapService {
         if (dto.getAktif() != null) cariHesap.setAktif(dto.getAktif());
         if (dto.getKrediLimiti() != null) cariHesap.setKrediLimiti(dto.getKrediLimiti());
         if (dto.getOdemeVadesi() != null) cariHesap.setOdemeVadesi(dto.getOdemeVadesi());
+        if (dto.getTemsilciId() != null) cariHesap.setTemsilciId(dto.getTemsilciId());
+        if (dto.getTemsilciAd() != null) cariHesap.setTemsilciAd(dto.getTemsilciAd());
         
         CariHesap guncellenenCariHesap = cariHesapRepository.save(cariHesap);
         log.info("Cari hesap başarıyla güncellendi - ID: {}", id);
@@ -328,6 +332,8 @@ public class CariHesapService {
                 .krediLimiti(cariHesap.getKrediLimiti())
                 .odemeVadesi(cariHesap.getOdemeVadesi())
                 .bakiye(cariHesap.getBakiye())
+                .temsilciId(cariHesap.getTemsilciId())
+                .temsilciAd(cariHesap.getTemsilciAd())
                 .olusturmaTarihi(cariHesap.getOlusturmaTarihi())
                 .guncellemeTarihi(cariHesap.getGuncellemeTarihi())
                 .build();

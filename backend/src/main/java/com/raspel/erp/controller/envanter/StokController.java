@@ -4,18 +4,25 @@ import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.dto.envanter.KritikStokDTO;
 import com.raspel.erp.service.envanter.StokService;
+import com.raspel.erp.service.envanter.StokAnalizService;
+import com.raspel.erp.service.sistem.QRService;
+import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import com.raspel.erp.entity.envanter.Stok;
@@ -28,6 +35,9 @@ import com.raspel.erp.entity.envanter.Stok;
 public class StokController {
 
     private final StokService stokService;
+    private final StokAnalizService stokAnalizService;
+    private final QRService qrService;
+    private final PdfRaporService pdfRaporService;
 
     @GetMapping
     @Operation(summary = "Tüm stokları getir (sayfalı)", description = "Tüm stokları sayfalı olarak listeler")
@@ -36,6 +46,45 @@ public class StokController {
             @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(stokService.tumunuGetir(sirketId, pageable));
+    }
+
+    @GetMapping("/barkod/{kod}")
+    @Operation(summary = "Barkod ile stok bul", description = "Barkoda göre eşleşen ilk stoğu döndürür (tarama akışları için)")
+    public ResponseEntity<StokDTO> barkodIleBul(@PathVariable String kod, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        StokDTO dto = stokService.barkodIleBul(kod, sirketId);
+        if (dto == null) {
+            throw new ResourceNotFoundException("Barkod eşleşen stok bulunamadı: " + kod);
+        }
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}/etiket-qr")
+    @Operation(summary = "Stok QR kodu (PNG)", description = "Stoğun barkod/kod bilgisini içeren QR kodu görüntüsü üretir")
+    public ResponseEntity<byte[]> etiketQr(@PathVariable Long id) {
+        Stok stok = stokService.entityGetir(id);
+        String icerik = qrIcerik(stok);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(qrService.qrPng(icerik, 220));
+    }
+
+    @GetMapping("/{id}/etiket")
+    @Operation(summary = "Raf etiketi (PDF)", description = "Ürün adı, kod, barkod, QR, raf no ve fiyat içeren etiket PDF'i üretir")
+    public ResponseEntity<byte[]> etiketPdf(@PathVariable Long id) {
+        Stok stok = stokService.entityGetir(id);
+        byte[] qr = qrService.qrPng(qrIcerik(stok), 200);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etiket-" + stok.getId() + ".pdf")
+                .body(pdfRaporService.stokEtiketi(stok, qr));
+    }
+
+    private String qrIcerik(Stok stok) {
+        if (stok.getBarkod() != null && !stok.getBarkod().isBlank()) return stok.getBarkod();
+        if (stok.getStokKodu() != null && !stok.getStokKodu().isBlank()) return stok.getStokKodu();
+        return "STK" + stok.getId();
     }
 
     @GetMapping("/filtreli")
@@ -180,5 +229,110 @@ public class StokController {
     public ResponseEntity<Void> hareketSil(@PathVariable Long hareketId) {
         stokService.hareketSil(hareketId);
         return ResponseEntity.noContent().build();
+    }
+
+    // ---------- ÜRÜN ANALİZİ (maliyet / alış-satış / kârlılık) ----------
+
+    @GetMapping("/{id}/analiz")
+    @Operation(summary = "Stok analiz özeti", description = "Alış-satış özeti ve kârlılık bilgisini tek yanıtta döndürür (tarih aralıklı)")
+    public ResponseEntity<com.raspel.erp.dto.envanter.StokAnalizDTO> analiz(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.analiz(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    @GetMapping("/{id}/alis-ozet")
+    @Operation(summary = "Alış özeti", description = "Tartılır ortalama, son, min/max alış fiyatları ve toplam alış miktarı/tutarı")
+    public ResponseEntity<com.raspel.erp.dto.envanter.AlisOzetDTO> alisOzet(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.alisOzet(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    @GetMapping("/{id}/satis-ozet")
+    @Operation(summary = "Satış özeti", description = "Tartılır ortalama, son, min/max satış fiyatları ve toplam satış miktarı/tutarı")
+    public ResponseEntity<com.raspel.erp.dto.envanter.SatisOzetDTO> satisOzet(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.satisOzet(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    @GetMapping("/{id}/karlilik")
+    @Operation(summary = "Kârlılık", description = "Brüt kâr, kâr marjı ve stok maliyeti (gerçek hareketlerden)")
+    public ResponseEntity<com.raspel.erp.dto.envanter.KarlilikDTO> karlilik(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.karlilik(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    @GetMapping("/{id}/tedarikci-analiz")
+    @Operation(summary = "Tedarikçi analizi", description = "Ürünün tedarikçi bazlı alış özeti")
+    public ResponseEntity<List<com.raspel.erp.dto.envanter.TedarikciAnalizDTO>> tedarikciAnaliz(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.tedarikciAnaliz(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    @GetMapping("/{id}/musteri-analiz")
+    @Operation(summary = "Müşteri analizi", description = "Ürünün müşteri bazlı satış özeti")
+    public ResponseEntity<List<com.raspel.erp.dto.envanter.MusteriAnalizDTO>> musteriAnaliz(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.musteriAnaliz(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    @GetMapping("/{id}/islem-gecmisi")
+    @Operation(summary = "İşlem geçmişi", description = "Ürünün fatura ve iadelerden oluşan tüm hareket geçmişi (tarih sıralı)")
+    public ResponseEntity<List<com.raspel.erp.dto.envanter.IslemSatirDTO>> islemGecmisi(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis,
+            @RequestParam(defaultValue = "false") boolean artan,
+            @RequestParam(required = false) Integer limit) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.islemGecmisi(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis), artan, limit));
+    }
+
+    @GetMapping("/{id}/islem-gecmisi-sayfali")
+    @Operation(summary = "İşlem geçmişi (sayfalı)", description = "Toplam kayıt sayısıyla birlikte sayfalı işlem geçmişi döndürür (tarih sıralı)")
+    public ResponseEntity<com.raspel.erp.dto.envanter.IslemGecmisiSayfaliDTO> islemGecmisiSayfali(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis,
+            @RequestParam(defaultValue = "false") boolean artan,
+            @RequestParam(required = false) Integer sayfa,
+            @RequestParam(required = false) Integer boyut) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.islemGecmisiSayfali(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis), artan, sayfa, boyut));
+    }
+
+    @GetMapping("/{id}/aylik-fiyat")
+    @Operation(summary = "Aylık fiyat geçmişi", description = "Ay bazında tartılır ortalama alış/satış fiyatları (grafik için)")
+    public ResponseEntity<List<com.raspel.erp.dto.envanter.AylikFiyatDTO>> aylikFiyat(
+            @PathVariable Long id, HttpServletRequest request,
+            @RequestParam(required = false) LocalDate baslangic,
+            @RequestParam(required = false) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokAnalizService.aylikFiyatGecmisi(sirketId, id, veyaVarsayilanBaslangic(baslangic), veyaVarsayilanBitis(bitis)));
+    }
+
+    private LocalDate veyaVarsayilanBaslangic(LocalDate baslangic) {
+        return baslangic != null ? baslangic : LocalDate.of(2000, 1, 1);
+    }
+
+    private LocalDate veyaVarsayilanBitis(LocalDate bitis) {
+        return bitis != null ? bitis : LocalDate.now();
     }
 }

@@ -85,4 +85,21 @@ class PdfRaporServiceTest {
         when(irsaliyeRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> pdfRaporService.irsaliyeRaporu(99L));
     }
+
+    @Test
+    void stokEtiketi_turkceKarakterlerlePdfUretir() {
+        com.raspel.erp.entity.envanter.Stok stok = new com.raspel.erp.entity.envanter.Stok();
+        stok.setId(1L);
+        stok.setAd("Şişe Çeşmesi Ürünü ĞİÖÇÜ");
+        stok.setStokKodu("STK-ŞĞÜ");
+        stok.setBarkod("8690001");
+        stok.setRafNo("A-12");
+        stok.setSatisFiyati(BigDecimal.valueOf(99.90));
+
+        var result = pdfRaporService.stokEtiketi(stok, null);
+
+        assertNotNull(result);
+        assertTrue(result.length > 0);
+        assertEquals('%', result[0]);
+    }
 }

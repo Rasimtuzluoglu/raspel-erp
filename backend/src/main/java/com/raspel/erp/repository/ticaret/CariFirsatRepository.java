@@ -10,4 +10,5 @@ import java.util.List;
 public interface CariFirsatRepository extends JpaRepository<CariFirsat, Long> {
     List<CariFirsat> findBySirketIdOrderByOlusturmaTarihiDesc(Long sirketId);
     List<CariFirsat> findBySirketIdAndDurum(Long sirketId, String durum);
+    List<CariFirsat> findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(Long sirketId, Long cariHesapId);
 }

@@ -156,8 +156,36 @@ export const tahsilatAPI = {
     return apiClient.get('/tahsilat/gecmis', { params })
   },
   gir(data) {
-    // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, posTerminaliId, komisyonTutar, valorTarihi, aciklama, hareketTarihi }
+    // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, taksitId, posTerminaliId, komisyonTutar, valorTarihi, aciklama, hareketTarihi }
     return apiClient.post('/tahsilat', data)
+  }
+}
+
+export const taksitAPI = {
+  listele(params) {
+    return apiClient.get('/taksitler', { params })
+  },
+  yaklasan(gun = 30) {
+    return apiClient.get('/taksitler/yaklasan', { params: { gun } })
+  },
+  takvim(yil, ay) {
+    return apiClient.get('/taksitler/takvim', { params: { yil, ay } })
+  },
+  ozet() {
+    return apiClient.get('/taksitler/ozet')
+  },
+  planOlustur(data) {
+    // data: { cariId, toplamTutar, taksitSayisi, baslangicTarihi, periyotAy, kurum, faturaId, aciklama }
+    return apiClient.post('/taksitler/plan', data)
+  },
+  ode(id, data) {
+    return apiClient.post(`/taksitler/${id}/ode`, data || {})
+  },
+  sil(id) {
+    return apiClient.delete(`/taksitler/${id}`)
+  },
+  planSil(planNo) {
+    return apiClient.delete(`/taksitler/plan/${planNo}`)
   }
 }
 
