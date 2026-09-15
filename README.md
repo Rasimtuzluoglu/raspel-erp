@@ -116,7 +116,7 @@ mvn -B test -q          # 965 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test           # 634 Test (0 Hata)
+npm run test           # 640 Test (0 Hata)
 
 # Kod Standartları & Linting
 cd frontend
@@ -144,9 +144,9 @@ raspel-erp/
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4 + Tailwind CSS
 │   └── src/
 │       ├── views/           # 69 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti vb.)
-│       ├── components/      # 48 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, HesapMakinesi vb.)
+│       ├── components/      # 50 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, HesapMakinesi vb.)
 │       ├── stores/          # 12 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
-│       ├── composables/     # 16 Composable Hook (Tema, Yetki, Oturum, Kısayol)
+│       ├── composables/     # 17 Composable Hook (Tema, Yetki, Oturum, Kısayol)
 │       └── api/             # Modüler Axios İstemcisi
 │
 ├── config/                  # Traefik Reverse Proxy, Prometheus, Grafana

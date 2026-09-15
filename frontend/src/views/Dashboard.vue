@@ -13,6 +13,17 @@
             <i class="pi pi-building" /> {{ authStore?.sirketAdi }}
           </span>
         </p>
+        <div class="dashboard-canli">
+          <span class="canli-rozet">
+            <span class="canli-nokta" />{{ t('dashboard.canli') }}
+          </span>
+          <span
+            v-if="sonGuncellemeZamani"
+            class="canli-zaman"
+          >
+            {{ t('dashboard.sonGuncelleme', { zaman: sonGuncellemeZamani }) }}
+          </span>
+        </div>
       </div>
       <div class="header-sag">
         <div class="doviz-ticker-compact">
@@ -163,85 +174,63 @@
         v-if="widgets.istatistikler.gorunur"
         class="stats-grid"
       >
-        <div class="stat-card cari">
-          <div class="stat-icon cari">
-            <i class="pi pi-users" />
-          </div>
-          <div class="stat-content">
-            <p class="stat-label">
-              {{ t('dashboard.toplamCari') }}
-            </p>
-            <p class="stat-value">
-              {{ dashboardStore?.toplamCariSayisi || 0 }}
-            </p>
-            <p class="stat-sub">
-              {{ t('dashboard.bakiye') }} <strong>{{ formatCurrency(dashboardStore?.toplamBakiye || 0) }}</strong>
-            </p>
-          </div>
-        </div>
-        <div class="stat-card finans">
-          <div class="stat-icon finans">
-            <i class="pi pi-wallet" />
-          </div>
-          <div class="stat-content">
-            <p class="stat-label">
-              {{ t('dashboard.toplamLikiditeKart') }}
-            </p>
-            <p
-              class="stat-value"
-              :class="toplamLikidite >= 0 ? 'positive' : 'negative'"
-            >
-              {{ formatCurrency(toplamLikidite) }}
-            </p>
-            <p class="stat-sub">
-              {{ t('dashboard.kasaLabel') }} {{ formatCurrency(toplamKasaBakiye) }} · {{ t('dashboard.bankaLabel') }} {{ formatCurrency(toplamBankaBakiye) }}
-            </p>
-          </div>
-        </div>
-        <div class="stat-card fatura">
-          <div class="stat-icon fatura">
-            <i class="pi pi-file" />
-          </div>
-          <div class="stat-content">
-            <p class="stat-label">
-              {{ t('dashboard.faturaDurumu') }}
-            </p>
-            <p class="stat-value">
-              {{ kesilenFatura }} / {{ toplamFatura }}
-            </p>
-            <p class="stat-sub">
-              {{ t('dashboard.bugunkuTahsilat') }} <strong>{{ formatCurrency(dashboardStore?.bugunkuTahsilat || 0) }}</strong>
-            </p>
-          </div>
-        </div>
-        <div class="stat-card stok">
-          <div class="stat-icon stok">
-            <i class="pi pi-box" />
-          </div>
-          <div class="stat-content">
-            <p class="stat-label">
-              {{ t('dashboard.stokCesidi') }}
-            </p>
-            <p class="stat-value">
-              {{ toplamStok }} <small>{{ t('dashboard.urun') }}</small>
-            </p>
-            <p class="stat-sub">
-              {{ t('dashboard.stokDegeri') }} <strong>{{ formatCurrency(dashboardStore?.toplamStokDegeri || 0) }}</strong>
-            </p>
-            <p
+        <KpiKart
+          :baslik="t('dashboard.toplamCari')"
+          :deger="dashboardStore?.toplamCariSayisi || 0"
+          :para-birimi="false"
+          icon="pi pi-users"
+          renk="#3b82f6"
+        >
+          <template #alt>
+            {{ t('dashboard.bakiye') }} <strong>{{ formatCurrency(dashboardStore?.toplamBakiye || 0) }}</strong>
+          </template>
+        </KpiKart>
+        <KpiKart
+          :baslik="t('dashboard.toplamLikiditeKart')"
+          :deger="toplamLikidite"
+          icon="pi pi-wallet"
+          renk="#10b981"
+          :trend="nakitTrend"
+          :sparkline="sparkNet"
+        >
+          <template #alt>
+            {{ t('dashboard.kasaLabel') }} {{ formatCurrency(toplamKasaBakiye) }} · {{ t('dashboard.bankaLabel') }} {{ formatCurrency(toplamBankaBakiye) }}
+          </template>
+        </KpiKart>
+        <KpiKart
+          :baslik="t('dashboard.faturaDurumu')"
+          :deger="toplamFatura"
+          :para-birimi="false"
+          icon="pi pi-file"
+          renk="#f59e0b"
+          :trend="tahsilatTrend"
+          :sparkline="sparkGelir"
+        >
+          <template #alt>
+            {{ t('dashboard.kesilen') }} <strong>{{ kesilenFatura }}</strong> · {{ t('dashboard.bugunkuTahsilat') }} <strong>{{ formatCurrency(dashboardStore?.bugunkuTahsilat || 0) }}</strong>
+          </template>
+        </KpiKart>
+        <KpiKart
+          :baslik="t('dashboard.stokCesidi')"
+          :deger="toplamStok"
+          :para-birimi="false"
+          icon="pi pi-box"
+          renk="#8b5cf6"
+        >
+          <template #alt>
+            {{ t('dashboard.stokDegeri') }} <strong>{{ formatCurrency(dashboardStore?.toplamStokDegeri || 0) }}</strong>
+            <span
               v-if="dusukStokAdet > 0"
               class="critical-hint"
             >
               <i class="pi pi-exclamation-triangle" /> {{ t('dashboard.kritikStokSayisi', { n: dusukStokAdet }) }}
-            </p>
-            <p
+            </span>
+            <span
               v-else
-              class="stat-sub text-emerald-600"
-            >
-              {{ t('dashboard.stokSeviyeleriYeterli') }}
-            </p>
-          </div>
-        </div>
+              class="text-emerald-600"
+            >{{ t('dashboard.stokSeviyeleriYeterli') }}</span>
+          </template>
+        </KpiKart>
       </div>
 
       <!-- 1a. BUGÜNÜN ÖZETİ + HEDEF İLERLEMESİ -->
@@ -727,6 +716,75 @@
             </div>
           </template>
         </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-chart-line"
+              style="margin-right: 8px"
+            />{{ t('dashboard.nakitProjeksiyon') }}
+          </template>
+          <template #content>
+            <div class="chart-wrapper full">
+              <Line
+                :data="nakitProjeksiyonVerisi"
+                :options="projeksiyonOptions"
+              />
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-flag"
+              style="margin-right: 8px"
+            />{{ t('dashboard.ciroHedef') }}
+          </template>
+          <template #content>
+            <div
+              v-if="ciroHedefVerisi.labels.length"
+              class="chart-wrapper full"
+            >
+              <Bar
+                :data="ciroHedefVerisi"
+                :options="ciroHedefOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              {{ t('dashboard.gelirGiderVerisiYok') }}
+            </div>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>
+            <i
+              class="pi pi-chart-bar"
+              style="margin-right: 8px"
+            />{{ t('dashboard.kategoriPareto') }}
+          </template>
+          <template #content>
+            <div
+              v-if="kategoriParetoVerisi.labels.length"
+              class="chart-wrapper full"
+            >
+              <Bar
+                :data="kategoriParetoVerisi"
+                :options="paretoOptions"
+              />
+            </div>
+            <div
+              v-else
+              class="chart-empty"
+            >
+              {{ t('dashboard.kategoriVerisiYok') }}
+            </div>
+          </template>
+        </Card>
       </div>
 
       <!-- 3b. SON 7 GÜN NAKİT AKIŞI -->
@@ -933,6 +991,7 @@ import { useAuthStore } from '../stores/authStore.js'
 import { Doughnut, Bar, Line } from 'vue-chartjs'
 import Onboarding from '../components/Onboarding.vue'
 import SaatGostergesi from '../components/SaatGostergesi.vue'
+import KpiKart from '../components/KpiKart.vue'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -1001,6 +1060,7 @@ const refresh = async () => {
       dovizStore?.kurlariYukle ? dovizStore.kurlariYukle() : Promise.resolve()
     ])
     grafikleriHesapla()
+    guncellemeZamaniAyarla()
   } catch (error) {
     console.error('Dashboard yenilenirken hata:', error)
   }
@@ -1070,6 +1130,160 @@ const nakitAkisiOptions = {
   scales: {
     x: { ticks: { color: '#94a3b8' } },
     y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+  }
+}
+
+// --- Faz A: premium trend/sparkline ve yeni grafikler (mevcut veriyle) ---
+const sonGuncellemeZamani = ref('')
+const guncellemeZamaniAyarla = () => {
+  sonGuncellemeZamani.value = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+}
+
+const _gunlukNakit = computed(() => dashboardStore.gunlukNakitAkisi || [])
+const sparkGelir = computed(() => _gunlukNakit.value.map((g) => Number(g.gelir) || 0))
+const sparkNet = computed(() => {
+  let toplam = 0
+  return _gunlukNakit.value.map((g) => {
+    toplam += (Number(g.gelir) || 0) - (Number(g.gider) || 0)
+    return toplam
+  })
+})
+
+const _trend = (arr) => {
+  if (!arr || arr.length < 2) return null
+  const onceki = arr[arr.length - 2]
+  const son = arr[arr.length - 1]
+  if (!onceki) return null
+  return ((son - onceki) / Math.abs(onceki)) * 100
+}
+const tahsilatTrend = computed(() => _trend(sparkGelir.value))
+const nakitTrend = computed(() => _trend(sparkNet.value))
+
+const nakitProjeksiyonVerisi = computed(() => {
+  const likidite = toplamLikidite.value || 0
+  const alacak = dashboardStore.pozitifBakiye || 0
+  const borc = Math.abs(dashboardStore.negatifBakiye || 0)
+  const gun30 = likidite + alacak * 0.45 - borc * 0.4
+  const gun60 = gun30 + alacak * 0.35 - borc * 0.35
+  const gun90 = gun60 + alacak * 0.2 - borc * 0.25
+  return {
+    labels: [
+      t('dashboard.mevcutKasaLabel'),
+      t('dashboard.gun30Tahmin'),
+      t('dashboard.gun60Tahmin'),
+      t('dashboard.gun90Tahmin')
+    ],
+    datasets: [
+      {
+        label: t('dashboard.nakitProjeksiyon'),
+        data: [likidite, Math.round(gun30), Math.round(gun60), Math.round(gun90)],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: '#10b981'
+      }
+    ]
+  }
+})
+
+const projeksiyonOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#94a3b8' } },
+    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+  }
+}
+
+const ciroHedefVerisi = computed(() => {
+  const veri = dashboardStore.aylikGelirGider || []
+  const hedef = dashboardStore.hedefCiro || 0
+  return {
+    labels: veri.map((v) => v.ay),
+    datasets: [
+      {
+        label: t('dashboard.etiketGelir'),
+        data: veri.map((v) => v.gelir || 0),
+        backgroundColor: '#3b82f6',
+        borderRadius: 6,
+        order: 2
+      },
+      {
+        type: 'line',
+        label: t('dashboard.hedefCizgi'),
+        data: veri.map(() => hedef),
+        borderColor: '#f59e0b',
+        borderDash: [6, 4],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        order: 1
+      }
+    ]
+  }
+})
+
+const ciroHedefOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } },
+  scales: {
+    x: { ticks: { color: '#94a3b8' } },
+    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+  }
+}
+
+const kategoriParetoVerisi = computed(() => {
+  const liste = [...(dashboardStore.kategoriSatislari || [])]
+    .map((k) => ({ kategori: k.kategori, tutar: Number(k.tutar) || 0 }))
+    .sort((a, b) => b.tutar - a.tutar)
+  const toplam = liste.reduce((s, k) => s + k.tutar, 0)
+  let kumulatif = 0
+  const yuzdeler = liste.map((k) => {
+    kumulatif += k.tutar
+    return toplam > 0 ? Math.round((kumulatif / toplam) * 1000) / 10 : 0
+  })
+  return {
+    labels: liste.map((k) => k.kategori),
+    datasets: [
+      {
+        label: t('dashboard.toplam'),
+        data: liste.map((k) => k.tutar),
+        backgroundColor: '#8b5cf6',
+        borderRadius: 6,
+        yAxisID: 'y'
+      },
+      {
+        type: 'line',
+        label: t('dashboard.kumulatif'),
+        data: yuzdeler,
+        borderColor: '#f59e0b',
+        backgroundColor: '#f59e0b',
+        pointRadius: 3,
+        tension: 0.3,
+        yAxisID: 'y1'
+      }
+    ]
+  }
+})
+
+const paretoOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } },
+  scales: {
+    x: { ticks: { color: '#94a3b8' } },
+    y: { position: 'left', ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
+    y1: {
+      position: 'right',
+      min: 0,
+      max: 100,
+      grid: { drawOnChartArea: false },
+      ticks: { color: '#f59e0b', callback: (v) => `${v}%` }
+    }
   }
 }
 
@@ -1340,6 +1554,7 @@ onMounted(async () => {
       dovizStore?.kurlariYukle ? dovizStore.kurlariYukle() : Promise.resolve()
     ])
     grafikleriHesapla()
+    guncellemeZamaniAyarla()
   } catch (error) {
     console.error('Dashboard yüklenirken hata:', error)
   }
@@ -1407,6 +1622,53 @@ const whatsappLink = (f) => {
   color: #60a5fa;
   font-size: 12px;
   font-weight: 600;
+}
+.dashboard-canli {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.canli-rozet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.canli-nokta {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  animation: canli-nabiz 1.8s infinite;
+}
+@keyframes canli-nabiz {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+.canli-zaman {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .canli-nokta {
+    animation: none;
+  }
 }
 .header-sag {
   display: flex;
