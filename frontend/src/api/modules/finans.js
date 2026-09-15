@@ -74,6 +74,9 @@ export const kasaAPI = {
   bankayaAktar(data) {
     return apiClient.post('/kasalar/bankaya-aktar', data)
   },
+  bankadanAktar(data) {
+    return apiClient.post('/kasalar/bankadan-aktar', data)
+  },
   getAllKasalar() {
     return apiClient.get('/kasalar', { params: { size: 500 } })
   }

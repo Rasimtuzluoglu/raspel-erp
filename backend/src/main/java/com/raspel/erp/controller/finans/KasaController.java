@@ -95,6 +95,17 @@ public class KasaController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/bankadan-aktar")
+    @Operation(summary = "Bankadan kasaya aktarım", description = "Banka hesabından kasaya para aktarır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<Void> bankadanAktar(
+            @RequestBody BankaKasayaAktarRequest request,
+            HttpServletRequest httpRequest) {
+        Long sirketId = (Long) httpRequest.getAttribute("sirketId");
+        kasaService.bankaKasayaAktar(request.bankaId(), request.kasaId(), request.tutar(), request.aciklama(), sirketId);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/hareketler/{hareketId}")
     @Operation(summary = "Kasa hareketi sil", description = "Kasa hareketini siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -105,4 +116,5 @@ public class KasaController {
 
     record KasaAktarRequest(Long kaynakKasaId, Long hedefKasaId, java.math.BigDecimal tutar, String aciklama) {}
     record KasaBankayaAktarRequest(Long kasaId, Long bankaId, java.math.BigDecimal tutar, String aciklama) {}
+    record BankaKasayaAktarRequest(Long bankaId, Long kasaId, java.math.BigDecimal tutar, String aciklama) {}
 }

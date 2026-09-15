@@ -19,10 +19,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.raspel.erp.entity.sistem.GelirGiderKategori;
 import com.raspel.erp.entity.finans.Banka;
+import com.raspel.erp.entity.finans.BankaHareketi;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.finans.Kasa;
 import com.raspel.erp.entity.finans.KasaHareket;
 import com.raspel.erp.repository.finans.BankaRepository;
+import com.raspel.erp.repository.finans.BankaHareketiRepository;
 import com.raspel.erp.repository.finans.KasaHareketRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.repository.sistem.KategoriRepository;
@@ -36,6 +38,7 @@ public class KasaService {
     private final KasaRepository kasaRepository;
     private final KasaHareketRepository kasaHareketRepository;
     private final BankaRepository bankaRepository;
+    private final BankaHareketiRepository bankaHareketiRepository;
     private final KategoriRepository kategoriRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
@@ -186,7 +189,7 @@ public class KasaService {
         Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
-        Banka banka = bankaRepository.findById(bankaId)
+        Banka banka = bankaRepository.findByIdForUpdate(bankaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
         tenantChecker.check(banka.getSirketId(), "Banka");
 
@@ -197,18 +200,75 @@ public class KasaService {
         kasa.setBakiye(kasa.getBakiye().subtract(tutar));
         banka.setBakiye(banka.getBakiye() != null ? banka.getBakiye().add(tutar) : tutar);
 
-        String not = aciklama != null && !aciklama.isBlank() ? aciklama : "Kasa → Banka aktarımı";
         java.time.LocalDate bugun = java.time.LocalDate.now();
+        String ek = aciklama != null && !aciklama.isBlank() ? " (" + aciklama + ")" : "";
 
         kasaRepository.save(kasa);
         bankaRepository.save(banka);
         kasaHareketRepository.save(KasaHareket.builder()
                 .kasa(kasa).tur("GIDER").tutar(tutar)
-                .hareketTarihi(bugun).aciklama(not + " → " + banka.getAd())
+                .hareketTarihi(bugun).aciklama("Kasadan bankaya aktarıldı → " + banka.getAd() + ek)
+                .build());
+        // Kaynak izi: banka tarafina da hareket yaz (banka ekstresi/mutabakat gorunsun).
+        bankaHareketiRepository.save(BankaHareketi.builder()
+                .bankaId(banka.getId())
+                .tarih(bugun)
+                .aciklama("Kasadan aktarıldı: " + kasa.getAd() + ek)
+                .borc(BigDecimal.ZERO)
+                .alacak(tutar)
+                .bakiye(banka.getBakiye())
+                .eslestirildi(false)
+                .sirketId(kasa.getSirketId())
                 .build());
 
         cacheYardimci.temizle("dashboard");
         log.info("Kasa → Banka aktarımı: {} → {} ({} ₺)", kasa.getAd(), banka.getAd(), tutar);
+    }
+
+    /**
+     * Banka hesabından kasaya para aktarımı. Bankadan düşer, kasa bakiyesine ekler.
+     */
+    public void bankaKasayaAktar(Long bankaId, Long kasaId, BigDecimal tutar, String aciklama, Long sirketId) {
+        if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Aktarılacak tutar sıfırdan büyük olmalıdır");
+        }
+        Banka banka = bankaRepository.findByIdForUpdate(bankaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
+        tenantChecker.check(banka.getSirketId(), "Banka");
+        Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
+
+        BigDecimal bankaBakiye = banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO;
+        if (bankaBakiye.compareTo(tutar) < 0) {
+            throw new BusinessException("Bankada yetersiz bakiye. Mevcut: " + bankaBakiye + " ₺");
+        }
+
+        banka.setBakiye(bankaBakiye.subtract(tutar));
+        kasa.setBakiye(kasa.getBakiye() != null ? kasa.getBakiye().add(tutar) : tutar);
+
+        java.time.LocalDate bugun = java.time.LocalDate.now();
+        String ek = aciklama != null && !aciklama.isBlank() ? " (" + aciklama + ")" : "";
+
+        bankaRepository.save(banka);
+        kasaRepository.save(kasa);
+        bankaHareketiRepository.save(BankaHareketi.builder()
+                .bankaId(banka.getId())
+                .tarih(bugun)
+                .aciklama("Bankadan kasaya aktarıldı: " + kasa.getAd() + ek)
+                .borc(tutar)
+                .alacak(BigDecimal.ZERO)
+                .bakiye(banka.getBakiye())
+                .eslestirildi(false)
+                .sirketId(kasa.getSirketId())
+                .build());
+        kasaHareketRepository.save(KasaHareket.builder()
+                .kasa(kasa).tur("GELIR").tutar(tutar)
+                .hareketTarihi(bugun).aciklama("Bankadan aktarıldı ← " + banka.getAd() + ek)
+                .build());
+
+        cacheYardimci.temizle("dashboard");
+        log.info("Banka → Kasa aktarımı: {} → {} ({} ₺)", banka.getAd(), kasa.getAd(), tutar);
     }
 
     private KasaDTO entityToDTO(Kasa k) {

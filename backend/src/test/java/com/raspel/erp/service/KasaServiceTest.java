@@ -35,6 +35,7 @@ class KasaServiceTest {
     @Mock private KasaRepository kasaRepository;
     @Mock private KasaHareketRepository kasaHareketRepository;
     @Mock private BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private KategoriRepository kategoriRepository;
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
@@ -214,13 +215,15 @@ class KasaServiceTest {
         kasa.setBakiye(BigDecimal.valueOf(5000));
         Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.valueOf(1000)).sirketId(1L).build();
         when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
-        when(bankaRepository.findById(3L)).thenReturn(Optional.of(banka));
+        when(bankaRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(banka));
 
         kasaService.kasaBankayaAktar(1L, 3L, BigDecimal.valueOf(2000), "Gün sonu", 1L);
 
         assertEquals(BigDecimal.valueOf(3000), kasa.getBakiye());
         assertEquals(BigDecimal.valueOf(3000), banka.getBakiye());
         verify(kasaHareketRepository).save(any(KasaHareket.class));
+        // Banka tarafina da hareket yazilmali (kaynak izi).
+        verify(bankaHareketiRepository).save(any(com.raspel.erp.entity.finans.BankaHareketi.class));
     }
 
     @Test
@@ -229,9 +232,36 @@ class KasaServiceTest {
         kasa.setBakiye(BigDecimal.valueOf(100));
         when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
         Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.ZERO).sirketId(1L).build();
-        when(bankaRepository.findById(3L)).thenReturn(Optional.of(banka));
+        when(bankaRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(banka));
 
         assertThrows(RuntimeException.class, () ->
                 kasaService.kasaBankayaAktar(1L, 3L, BigDecimal.valueOf(500), null, 1L));
+    }
+
+    @Test
+    void bankaKasayaAktar_basariliAktarim() {
+        Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.valueOf(5000)).sirketId(1L).build();
+        Kasa kasa = createKasa(1L);
+        kasa.setBakiye(BigDecimal.valueOf(1000));
+        when(bankaRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(banka));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+
+        kasaService.bankaKasayaAktar(3L, 1L, BigDecimal.valueOf(2000), "Para çekme", 1L);
+
+        assertEquals(BigDecimal.valueOf(3000), banka.getBakiye());
+        assertEquals(BigDecimal.valueOf(3000), kasa.getBakiye());
+        verify(bankaHareketiRepository).save(any(com.raspel.erp.entity.finans.BankaHareketi.class));
+        verify(kasaHareketRepository).save(any(KasaHareket.class));
+    }
+
+    @Test
+    void bankaKasayaAktar_yetersizBakiyeHataFirlatir() {
+        Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.valueOf(50)).sirketId(1L).build();
+        Kasa kasa = createKasa(1L);
+        when(bankaRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(banka));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+
+        assertThrows(RuntimeException.class, () ->
+                kasaService.bankaKasayaAktar(3L, 1L, BigDecimal.valueOf(500), null, 1L));
     }
 }

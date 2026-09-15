@@ -15,6 +15,12 @@
       </template>
       <template #end>
         <Button
+          :label="t('kasa.bankadanAktar')"
+          icon="pi pi-building-columns"
+          class="p-button-sm p-button-outlined mr-2"
+          @click="openBankadanAktarDialog"
+        />
+        <Button
           :label="t('kasa.bankayaAktar')"
           icon="pi pi-building"
           class="p-button-sm p-button-outlined mr-2"
@@ -422,6 +428,69 @@
     </Dialog>
 
     <Dialog
+      v-model:visible="showBankadanAktarDialog"
+      :header="t('kasa.bankadanKasaya')"
+      :modal="true"
+      style="width: 480px"
+    >
+      <div class="form-group">
+        <label>{{ t('kasa.kaynakBanka') }}</label>
+        <Dropdown
+          v-model="bankadanAktarForm.bankaId"
+          :options="bankalar"
+          option-label="ad"
+          option-value="id"
+          filter
+          :placeholder="t('faturalar.seciniz')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>{{ t('kasa.hedefKasa') }}</label>
+        <Dropdown
+          v-model="bankadanAktarForm.kasaId"
+          :options="kasaStore.kasalar"
+          option-label="ad"
+          option-value="id"
+          :placeholder="t('faturalar.seciniz')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>{{ t('kasa.tutar') }}</label>
+        <InputNumber
+          v-model="bankadanAktarForm.tutar"
+          :min="0.01"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+        />
+      </div>
+      <div class="form-group">
+        <label>{{ t('common.description') }}</label>
+        <InputText
+          v-model="bankadanAktarForm.aciklama"
+          :placeholder="t('kasa.ornekGunSonu')"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showBankadanAktarDialog = false"
+        />
+        <Button
+          :label="t('kasa.aktar')"
+          icon="pi pi-check"
+          :loading="saving"
+          @click="saveBankadanAktar"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
       v-model:visible="gunSonuDialog"
       :header="t('kasa.gunSonuBaslik')"
       :modal="true"
@@ -516,7 +585,20 @@ const aktarForm = ref({ kaynakKasaId: null, hedefKasaId: null, tutar: null, acik
 
 const showBankaAktarDialog = ref(false)
 const bankaAktarForm = ref({ kasaId: null, bankaId: null, tutar: null, aciklama: '' })
+const showBankadanAktarDialog = ref(false)
+const bankadanAktarForm = ref({ bankaId: null, kasaId: null, tutar: null, aciklama: '' })
 const bankalar = ref([])
+
+// Aktarim sonrasi secili kasanin bakiyesini ve hareket listesini tazele.
+const hareketleriTazele = async () => {
+  await kasaStore.getAllKasalar()
+  const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
+  if (guncel) seciliKasa.value = guncel
+  if (seciliKasaId.value) {
+    const r = await kasaAPI.getHareketler(seciliKasaId.value)
+    kasaHareketler.value = r.data
+  }
+}
 
 const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? t('kasa.gelirEkleBaslik') : t('kasa.giderEkleBaslik')))
 
@@ -655,6 +737,33 @@ const openBankaAktarDialog = () => {
   showBankaAktarDialog.value = true
 }
 
+const openBankadanAktarDialog = () => {
+  bankadanAktarForm.value = { bankaId: null, kasaId: null, tutar: null, aciklama: '' }
+  showBankadanAktarDialog.value = true
+}
+
+const saveBankadanAktar = async () => {
+  if (!bankadanAktarForm.value.bankaId || !bankadanAktarForm.value.kasaId) {
+    toastBildirim.uyari(t('kasa.kaynakHedefSecin'))
+    return
+  }
+  if (!bankadanAktarForm.value.tutar || bankadanAktarForm.value.tutar <= 0) {
+    toastBildirim.uyari(t('kasa.gecerliTutarGiriniz'))
+    return
+  }
+  saving.value = true
+  try {
+    await kasaAPI.bankadanAktar(bankadanAktarForm.value)
+    showBankadanAktarDialog.value = false
+    toastBildirim.basarili(t('kasa.bankadanAktarildi'))
+    await hareketleriTazele()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.aktarimBasarisiz'))
+  } finally {
+    saving.value = false
+  }
+}
+
 const saveBankaAktar = async () => {
   if (!bankaAktarForm.value.kasaId || !bankaAktarForm.value.bankaId) {
     toastBildirim.uyari(t('kasa.kaynakHedefSecin'))
@@ -669,7 +778,7 @@ const saveBankaAktar = async () => {
     await kasaAPI.bankayaAktar(bankaAktarForm.value)
     showBankaAktarDialog.value = false
     toastBildirim.basarili(t('kasa.bankayaAktarildi'))
-    await kasaStore.getAllKasalar()
+    await hareketleriTazele()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.aktarimBasarisiz'))
   } finally {
@@ -718,7 +827,7 @@ const saveAktar = async () => {
   try {
     await kasaAPI.aktar(aktarForm.value)
     showAktarDialog.value = false
-    await kasaStore.getAllKasalar()
+    await hareketleriTazele()
     toastBildirim.basarili(t('kasa.kasaAktarildi'))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.aktarimBasarisiz'))
