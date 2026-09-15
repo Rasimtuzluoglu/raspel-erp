@@ -29,10 +29,12 @@
 
     <TabView>
       <TabPanel :header="t('personel.personelListesi')">
-        <DataTable
+        <AppDataTable
           :value="personeller"
           striped-rows
           :loading="yukleniyor"
+          :paginator="false"
+          :empty-message="t('personel.empty')"
         >
           <Column
             field="ad"
@@ -94,22 +96,25 @@
               />
             </template>
           </Column>
-        </DataTable>
-        <EmptyState
-          v-if="!yukleniyor && personeller.length === 0"
-          :message="t('personel.empty')"
-          :sub-message="t('personel.emptyHint')"
-          icon="pi pi-users"
-          :action-label="t('personel.yeniPersonel')"
-          action-icon="pi pi-plus"
-          @action="personelDialogAc()"
-        />
+          <template #empty>
+            <EmptyState
+              v-if="!yukleniyor && personeller.length === 0"
+              :message="t('personel.empty')"
+              :sub-message="t('personel.emptyHint')"
+              icon="pi pi-users"
+              :action-label="t('personel.yeniPersonel')"
+              action-icon="pi pi-plus"
+              @action="personelDialogAc()"
+            />
+          </template>
+        </AppDataTable>
       </TabPanel>
 
       <TabPanel :header="t('personel.izinTalepleri')">
-        <DataTable
+        <AppDataTable
           :value="tumIzinler"
           striped-rows
+          :paginator="false"
         >
           <Column
             field="personelAdi"
@@ -142,7 +147,7 @@
               />
             </template>
           </Column>
-        </DataTable>
+        </AppDataTable>
       </TabPanel>
     </TabView>
 

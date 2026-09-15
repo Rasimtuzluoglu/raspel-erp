@@ -123,7 +123,7 @@
     </div>
 
     <template v-if="!stokStore.loading && gosterim === 'tablo'">
-      <DataTable
+      <AppDataTable
         v-model:selection="seciliStoklar"
         :value="stokStore.stoklar"
         :paginator="true"
@@ -140,6 +140,7 @@
         :sort-order="1"
         class="p-datatable-sm"
         :global-filter-fields="['ad', 'stokKodu', 'birim']"
+        gorunum-anahtari="stoklar"
         @page="stokSayfaDegisti"
         @row-click="stokSec($event.data)"
       >
@@ -265,7 +266,7 @@
             </div>
           </template>
         </Column>
-      </DataTable>
+      </AppDataTable>
     </template>
 
     <div

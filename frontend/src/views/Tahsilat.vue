@@ -84,11 +84,12 @@
 
       <div class="table-container">
         <!-- eslint-disable vue/attribute-hyphenation -->
-        <DataTable
+        <AppDataTable
           v-model:expandedRows="genisletilenler"
           :value="ozet?.cariler || []"
           data-key="cariId"
           striped-rows
+          :paginator="false"
         >
           <Column
             expander
@@ -188,16 +189,17 @@
               </div>
             </div>
           </template>
-        </DataTable>
+          <template #empty>
+            <EmptyState
+              v-if="!(ozet?.cariler || []).length"
+              icon="pi pi-check-circle"
+              :message="t('tahsilat.acikAlacakYok')"
+              :sub-message="t('tahsilat.acikAlacakYokHint')"
+            />
+          </template>
+        </AppDataTable>
         <!-- eslint-enable vue/attribute-hyphenation -->
       </div>
-
-      <EmptyState
-        v-if="!(ozet?.cariler || []).length"
-        icon="pi pi-check-circle"
-        :message="t('tahsilat.acikAlacakYok')"
-        :sub-message="t('tahsilat.acikAlacakYokHint')"
-      />
     </template>
 
     <div class="gecmis-bolum">
@@ -211,13 +213,14 @@
         />
       </div>
       <div class="table-container">
-        <DataTable
+        <AppDataTable
           :value="gecmis"
           :loading="gecmisYukleniyor"
           striped-rows
           :paginator="true"
           :rows="10"
           paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+          gorunum-anahtari="tahsilat-gecmis"
         >
           <Column :header="t('common.date')">
             <template #body="s">
@@ -281,13 +284,15 @@
               <span class="text-muted">{{ s.data.aciklama || '-' }}</span>
             </template>
           </Column>
-        </DataTable>
-        <EmptyState
-          v-if="!gecmisYukleniyor && !gecmis.length"
-          icon="pi pi-history"
-          :message="t('tahsilat.gecmisYok')"
-          :sub-message="t('tahsilat.gecmisYokHint')"
-        />
+          <template #empty>
+            <EmptyState
+              v-if="!gecmisYukleniyor && !gecmis.length"
+              icon="pi pi-history"
+              :message="t('tahsilat.gecmisYok')"
+              :sub-message="t('tahsilat.gecmisYokHint')"
+            />
+          </template>
+        </AppDataTable>
       </div>
     </div>
 

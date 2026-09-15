@@ -55,6 +55,27 @@
       @sort="$emit('sort', $event)"
       @update:rows="rowsDegisti"
     >
+      <template
+        v-if="$slots.header"
+        #header
+      >
+        <slot name="header" />
+      </template>
+      <template
+        v-if="$slots.expansion"
+        #expansion="slotProps"
+      >
+        <slot
+          name="expansion"
+          v-bind="slotProps"
+        />
+      </template>
+      <template
+        v-if="$slots.loading"
+        #loading
+      >
+        <slot name="loading" />
+      </template>
       <template #empty>
         <slot name="empty">
           <EmptyState
@@ -62,6 +83,12 @@
             :message="emptyMessage"
           />
         </slot>
+      </template>
+      <template
+        v-if="$slots.footer"
+        #footer
+      >
+        <slot name="footer" />
       </template>
       <slot />
     </DataTable>
@@ -90,6 +117,8 @@ const props = defineProps({
 })
 
 defineEmits(['page', 'sort', 'update:selection'])
+
+defineOptions({ inheritAttrs: false })
 
 const ROWS_KEY = 'raspel_tablo_rows'
 const aktifRows = ref(props.rows)
