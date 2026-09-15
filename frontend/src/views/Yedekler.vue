@@ -3,6 +3,28 @@
     <div class="page-header">
       <h1><i class="pi pi-save" /> {{ t('yedekler.title') }}</h1>
       <div class="header-islem">
+        <Tag
+          v-if="klasorAdi"
+          :value="klasorAdi"
+          icon="pi pi-folder"
+          severity="info"
+          class="klasor-etiket"
+        />
+        <Button
+          v-if="destekleniyor"
+          :label="klasorAdi ? t('yedekler.klasorDegistir') : t('yedekler.klasorSec')"
+          icon="pi pi-folder-open"
+          class="p-button-sm p-button-outlined"
+          @click="klasorSecHandler"
+        />
+        <Button
+          v-if="klasorAdi"
+          icon="pi pi-times"
+          class="p-button-sm p-button-outlined p-button-secondary"
+          :title="t('yedekler.klasoruUnut')"
+          :aria-label="t('yedekler.klasoruUnut')"
+          @click="klasoruUnut"
+        />
         <Select
           v-model="yedekTipi"
           :options="tipler"
@@ -19,6 +41,32 @@
         />
       </div>
     </div>
+
+    <div
+      v-if="destekleniyor"
+      class="klasor-satir"
+    >
+      <div
+        v-if="klasorAdi"
+        class="klasor-tercih"
+      >
+        <Checkbox
+          v-model="manuelSonraKlasore"
+          binary
+          input-id="manuelSonraKlasore"
+        />
+        <label for="manuelSonraKlasore">{{ t('yedekler.manuelSonraKlasore') }}</label>
+      </div>
+      <small class="klasor-not">{{ t('yedekler.klasorNotu') }}</small>
+    </div>
+
+    <Message
+      v-if="!destekleniyor"
+      severity="info"
+      :closable="false"
+    >
+      {{ t('yedekler.klasorDesteklenmiyor') }}
+    </Message>
 
     <ConfirmDialog />
 
@@ -295,6 +343,12 @@
                 >
                   <template #body="s">
                     <Button
+                      icon="pi pi-folder-open"
+                      class="p-button-sm p-button-text p-button-info"
+                      :title="klasorAdi ? t('yedekler.klasoreKaydet') : t('yedekler.bilgisayaraKaydet')"
+                      @click="bilgisayaraKaydet(s.data.filename)"
+                    />
+                    <Button
                       icon="pi pi-download"
                       class="p-button-sm p-button-text"
                       :title="t('yedekler.indir')"
@@ -333,11 +387,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { backupAPI } from '../api/index.js'
+import { useYedekKlasoru } from '../composables/useYedekKlasoru.js'
 import { useI18n } from 'vue-i18n'
 import { formatTarihSaat as formatDate } from '../utils/format.js'
 
 const confirm = useConfirm()
 const { t } = useI18n()
+const { destekleniyor, klasorAdi, klasorSec, klasoruYukle, klasoruUnut, yaz } = useYedekKlasoru()
+const manuelSonraKlasore = ref(true)
 
 const tipler = computed(() => [
   { value: 'DAILY', label: t('yedekler.gunluk') },
@@ -399,7 +456,19 @@ const manuelYedek = async () => {
   basari.value = ''
   try {
     const res = await backupAPI.manual(yedekTipi.value)
-    basari.value = res.data.message || t('yedekler.yedekAlindi')
+    const dosyaAdi = res.data.filename
+    if (klasorAdi.value && manuelSonraKlasore.value && dosyaAdi) {
+      try {
+        const blob = await backupAPI.download(dosyaAdi)
+        await yaz(dosyaAdi, new Blob([blob.data]))
+        basari.value = t('yedekler.yedekAlindiVeKlasore', { klasor: klasorAdi.value })
+      } catch (errYaz) {
+        basari.value = res.data.message || t('yedekler.yedekAlindi')
+        hata.value = errYaz?.message === 'IZIN_YOK' ? t('yedekler.izinYok') : t('yedekler.klasoreYazilamadi')
+      }
+    } else {
+      basari.value = res.data.message || t('yedekler.yedekAlindi')
+    }
     await yukle()
   } catch (err) {
     hata.value = err.response?.data?.message || t('yedekler.yedeklemeBasarisiz')
@@ -408,22 +477,58 @@ const manuelYedek = async () => {
   }
 }
 
-const indir = (filename) => {
-  backupAPI
-    .download(filename)
-    .then((res) => {
-      const url = window.URL.createObjectURL(new Blob([res.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', filename)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
-    })
-    .catch(() => {
-      hata.value = t('yedekler.dosyaIndirilemedi')
-    })
+const klasorSecHandler = async () => {
+  try {
+    await klasorSec()
+    basari.value = t('yedekler.klasorSecildi', { klasor: klasorAdi.value })
+  } catch (err) {
+    if (err?.name === 'AbortError') return
+    hata.value = err?.message === 'DESTEKLENMIYOR' ? t('yedekler.klasorDesteklenmiyor') : t('yedekler.klasoreYazilamadi')
+  }
+}
+
+const klasikIndir = (filename, blob) => {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+const bilgisayaraKaydet = async (filename) => {
+  try {
+    const res = await backupAPI.download(filename)
+    const blob = new Blob([res.data])
+    if (klasorAdi.value) {
+      await yaz(filename, blob)
+      basari.value = t('yedekler.klasoreKaydedildi', { ad: filename, klasor: klasorAdi.value })
+      return
+    }
+    if (typeof window.showSaveFilePicker === 'function') {
+      const handle = await window.showSaveFilePicker({ suggestedName: filename })
+      const writable = await handle.createWritable()
+      await writable.write(blob)
+      await writable.close()
+      basari.value = t('yedekler.kaydedildi')
+      return
+    }
+    klasikIndir(filename, blob)
+  } catch (err) {
+    if (err?.name === 'AbortError') return
+    hata.value = err?.message === 'IZIN_YOK' ? t('yedekler.izinYok') : t('yedekler.dosyaIndirilemedi')
+  }
+}
+
+const indir = async (filename) => {
+  try {
+    const res = await backupAPI.download(filename)
+    klasikIndir(filename, new Blob([res.data]))
+  } catch {
+    hata.value = t('yedekler.dosyaIndirilemedi')
+  }
 }
 
 const sil = (filename) => {
@@ -522,6 +627,7 @@ onMounted(() => {
   yukle()
   bulutAyarlariYukle()
   dogrulamaYukle()
+  klasoruYukle()
 })
 </script>
 
@@ -626,6 +732,30 @@ onMounted(() => {
 }
 .tip-select :deep(.p-select) {
   min-height: 40px;
+}
+
+.klasor-etiket {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.klasor-satir {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: -8px 0 20px;
+}
+.klasor-tercih {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.klasor-not {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .ozet-grid {
