@@ -20,6 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -207,6 +209,34 @@ public class DosyaDepolamaService {
             log.warn("Dosya silinemedi ({}): {}", filename, e.getMessage());
         }
     }
+
+    /**
+     * MinIO'da bir klasör altındaki nesneleri (ad, boyut, değiştirme zamanı) listeler.
+     * Yerel modda boş liste döner.
+     */
+    public List<NesneBilgi> listele(String klasor) {
+        List<NesneBilgi> sonuc = new ArrayList<>();
+        if (!minioAktif()) return sonuc;
+        try {
+            bucketOlustur();
+            Iterable<io.minio.Result<io.minio.messages.Item>> items = minioClient.listObjects(
+                    io.minio.ListObjectsArgs.builder().bucket(bucket).prefix(klasor + "/").recursive(true).build());
+            for (io.minio.Result<io.minio.messages.Item> res : items) {
+                io.minio.messages.Item item = res.get();
+                String ad = item.objectName();
+                if (ad.startsWith(klasor + "/")) {
+                    ad = ad.substring(klasor.length() + 1);
+                }
+                java.time.ZonedDateTime sonDeg = item.lastModified();
+                sonuc.add(new NesneBilgi(ad, item.size(), sonDeg == null ? 0L : sonDeg.toInstant().toEpochMilli()));
+            }
+        } catch (Exception e) {
+            log.warn("MinIO nesneleri listelenemedi ({}): {}", klasor, e.getMessage());
+        }
+        return sonuc;
+    }
+
+    public record NesneBilgi(String ad, long boyut, long sonDegistirme) {}
 
     private void bucketOlustur() {
         try {

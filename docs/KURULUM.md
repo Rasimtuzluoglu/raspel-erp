@@ -83,8 +83,10 @@ Traefik yapılandırması hazırdır; HTTPS otomatik etkinleşir:
 ## 3. Yedekleme
 
 ### Otomatik Yedekleme
-- Her gece 03:00'te DAILY yedek (30 gün saklama)
+- Her gece 03:00'te DAILY yedek (30 gün saklama — `APP_BACKUP_RETENTION_DAYS` ile değiştirilebilir)
 - Haftalık (180 gün), Aylık (365 gün), Yıllık (sınırsız)
+- Zamanlama: `APP_BACKUP_AUTO_CRON` (compose varsayılanı `0 0 3 * * ?`)
+- Bulut (MinIO) kopyaları otomatik senkronizasyon (`autoSync`) açıksa çekilir; şifreleme açıksa AES-256-GCM ile `.enc` olarak saklanır
 - UI: **Yedekler** sayfası → yedek al/indir/sil
 
 ### Manuel Yedek
@@ -94,12 +96,15 @@ docker exec raspel-backend curl -X POST "http://localhost:8081/api/backups/manua
 ```
 
 ### Geri Yükleme (Felaket Kurtarma)
+Yedek dosyaları backend container'ının `/app/backups` dizininde tutulur (`backup_data` volume).
+Backend imajında `pg_dump`/`psql`/`gzip` mevcuttur; postgres alpine imajında `gunzip` güvenilir değildir ve `/app/backups` postgres container'ında yoktur. Bu yüzden geri yükleme **backend container** üzerinden yapılır:
+
 ```bash
-# Yedek dosyasını bulun (backend container'ında)
+# Yedek dosyasını listeleyin (backend container'ında)
 docker exec raspel-backend ls /app/backups
 
-# Yedeği postgres'e geri yükleyin
-docker exec raspel-postgres sh -c "gunzip -c /app/backups/raspelerp-DAILY-<tarih>.sql.gz | psql -U postgres -d raspelerp"
+# Yedeği geri yükleyin
+docker exec raspel-backend sh -c "gunzip -c /app/backups/raspelerp_DAILY_<tarih>.sql.gz | psql -h postgres -U postgres -d raspelerp --set ON_ERROR_STOP=1"
 ```
 
 Felaket kurtarma testi: `powershell -File scripts/disaster-recovery-test.ps1`

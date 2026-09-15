@@ -46,15 +46,17 @@ docker exec $ContainerName psql -U $DbUser -c "SELECT pg_terminate_backend(pid) 
 docker exec $ContainerName psql -U $DbUser -c "DROP DATABASE IF EXISTS $DbName;" 2>&1 | Out-Null
 docker exec $ContainerName psql -U $DbUser -c "CREATE DATABASE $DbName;" 2>&1 | Out-Null
 
-# Handle compressed files
+# Handle compressed files (kanonik format: raspelerp_{TYPE}_{yyyyMMdd}_{HHmmss}.sql.gz)
 $inputFile = $BackupFile
 if ($BackupFile -match '\.gz$') {
-    if (Get-Command gzip -ErrorAction SilentlyContinue) {
-        $inputFile = [System.IO.Path]::GetTempFileName()
-        gzip -d -c $BackupFile > $inputFile
-    } else {
-        Write-Host "gzip not found, cannot decompress." -ForegroundColor Red
-        exit 1
+    $inputFile = [System.IO.Path]::GetTempFileName() + ".sql"
+    $in = [System.IO.File]::OpenRead($BackupFile)
+    $out = [System.IO.File]::Create($inputFile)
+    $gz = New-Object System.IO.Compression.GZipStream($in, [System.IO.Compression.CompressionMode]::Decompress)
+    try {
+        $gz.CopyTo($out)
+    } finally {
+        $gz.Dispose(); $out.Dispose(); $in.Dispose()
     }
 } elseif ($BackupFile -match '\.zip$') {
     $tempDir = [System.IO.Path]::GetTempPath()

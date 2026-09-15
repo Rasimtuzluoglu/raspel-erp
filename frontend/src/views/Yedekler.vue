@@ -171,9 +171,7 @@
                   <Select
                     v-model="cloudConfig.provider"
                     :options="[
-                      { label: 'Amazon AWS S3', value: 'AWS_S3' },
-                      { label: 'Google Drive', value: 'GOOGLE_DRIVE' },
-                      { label: 'Dropbox Business', value: 'DROPBOX' }
+                      { label: 'MinIO (S3 uyumlu)', value: 'MINIO' }
                     ]"
                     option-label="label"
                     option-value="value"
@@ -195,6 +193,16 @@
                     :placeholder="t('yedekler.bolgePlaceholder')"
                     class="w-full"
                   />
+                </div>
+                <div class="field">
+                  <label>{{ t('yedekler.otomatikSenkron') }}</label>
+                  <Switch v-model="cloudConfig.autoSync" />
+                  <small class="alan-aciklama">{{ t('yedekler.otomatikSenkronAciklama') }}</small>
+                </div>
+                <div class="field">
+                  <label>{{ t('yedekler.sifrele') }}</label>
+                  <Switch v-model="cloudConfig.encryptionEnabled" />
+                  <small class="alan-aciklama">{{ t('yedekler.sifreleAciklama') }}</small>
                 </div>
                 <div class="bulut-aksiyonlar">
                   <Button
@@ -468,11 +476,11 @@ const formatSize = (bytes) => {
 }
 
 const cloudConfig = ref({
-  provider: 'AWS_S3',
-  bucketName: 's3://raspel-erp-backups',
-  region: 'eu-central-1',
-  autoSync: true,
-  encryptionEnabled: true
+  provider: 'MINIO',
+  bucketName: '',
+  region: '',
+  autoSync: false,
+  encryptionEnabled: false
 })
 const cloudKaydediliyor = ref(false)
 const cloudSenkronizeEdiliyor = ref(false)
@@ -584,6 +592,11 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
+}
+.alan-aciklama {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
 }
 .w-full {
   width: 100%;

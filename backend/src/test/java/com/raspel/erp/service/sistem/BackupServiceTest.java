@@ -4,8 +4,8 @@ import com.raspel.erp.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
 import java.nio.file.Files;
@@ -22,19 +22,20 @@ class BackupServiceTest {
     Path tempDir;
 
     private BackupService backupService;
-    private DosyaDepolamaService dosyaDepolama;
 
     @BeforeEach
     void setUp() {
         DataSource dataSource = mock(DataSource.class);
-        RestTemplate restTemplate = mock(RestTemplate.class);
-        dosyaDepolama = mock(DosyaDepolamaService.class);
-        backupService = new BackupService(dataSource, restTemplate, dosyaDepolama);
+        DosyaDepolamaService dosyaDepolama = mock(DosyaDepolamaService.class);
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        backupService = new BackupService(dataSource, dosyaDepolama, jdbcTemplate);
         ReflectionTestUtils.setField(backupService, "backupDir", tempDir.toString());
         ReflectionTestUtils.setField(backupService, "dbHost", "localhost");
         ReflectionTestUtils.setField(backupService, "dbPort", "5432");
         ReflectionTestUtils.setField(backupService, "dbName", "raspelerp");
         ReflectionTestUtils.setField(backupService, "dbPasswordProperty", "");
+        ReflectionTestUtils.setField(backupService, "retentionDays", 30);
+        ReflectionTestUtils.setField(backupService, "autoCron", "0 0 3 * * ?");
         backupService.init();
     }
 
@@ -46,16 +47,18 @@ class BackupServiceTest {
 
     @Test
     void parseType_dogruTurleriCozumler() {
-        String daily = "raspelerp-DAILY-20260816-030000.sql.gz";
-        String weekly = "raspelerp-WEEKLY-20260816-030000.sql.gz";
+        String daily = "raspelerp_DAILY_20260816_030000.sql.gz";
+        String weekly = "raspelerp_WEEKLY_20260816_030000.sql.gz";
+        String legacy = "raspelerp-DAILY-20260816-030000.sql.gz";
         assertEquals("DAILY", ReflectionTestUtils.invokeMethod(backupService, "parseType", daily));
         assertEquals("WEEKLY", ReflectionTestUtils.invokeMethod(backupService, "parseType", weekly));
+        assertEquals("DAILY", ReflectionTestUtils.invokeMethod(backupService, "parseType", legacy));
         assertEquals("DAILY", ReflectionTestUtils.invokeMethod(backupService, "parseType", "bilinmeyen.sql.gz"));
     }
 
     @Test
     void downloadBackup_olmayanDosyaIcinHataFirlatir() {
-        assertThrows(RuntimeException.class, () -> backupService.downloadBackup("raspelerp-DAILY-yok.sql.gz"));
+        assertThrows(RuntimeException.class, () -> backupService.downloadBackup("raspelerp_DAILY_yok.sql.gz"));
     }
 
     @Test
@@ -70,29 +73,28 @@ class BackupServiceTest {
 
     @Test
     void restoreBackup_olmayanDosyaIcinHataFirlatir() {
-        assertThrows(RuntimeException.class, () -> backupService.restoreBackup("raspelerp-DAILY-yok.sql.gz"));
+        assertThrows(RuntimeException.class, () -> backupService.restoreBackup("raspelerp_DAILY_yok.sql.gz"));
     }
 
     @Test
     void deleteBackup_olmayanDosyaIcinHataFirlatir() {
-        assertThrows(RuntimeException.class, () -> backupService.deleteBackup("raspelerp-DAILY-yok.sql.gz"));
+        assertThrows(RuntimeException.class, () -> backupService.deleteBackup("raspelerp_DAILY_yok.sql.gz"));
     }
 
     @Test
     void deleteBackup_mevcutDosyayiSiler() throws Exception {
-        Path dosya = tempDir.resolve("raspelerp-DAILY-20260816-030000.sql.gz");
+        Path dosya = tempDir.resolve("raspelerp_DAILY_20260816_030000.sql.gz");
         Files.writeString(dosya, "test");
 
-        backupService.deleteBackup("raspelerp-DAILY-20260816-030000.sql.gz");
+        backupService.deleteBackup("raspelerp_DAILY_20260816_030000.sql.gz");
 
         assertFalse(Files.exists(dosya));
     }
 
     @Test
-    void syncToCloud_yapilandirilmamiskenHataFirlatir() {
+    void syncToCloud_bulutAktifDegilkenHataFirlatir() {
         ReflectionTestUtils.setField(backupService, "cloudEnabled", false);
-        ReflectionTestUtils.setField(backupService, "cloudEndpoint", "");
-        assertThrows(BusinessException.class, () -> backupService.syncToCloud("raspelerp-DAILY-x.sql.gz"));
+        assertThrows(BusinessException.class, () -> backupService.syncToCloud("raspelerp_DAILY_x.sql.gz"));
     }
 
     @Test
