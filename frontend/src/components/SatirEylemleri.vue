@@ -81,7 +81,7 @@ const emit = defineEmits(['duzenle', 'cogalt', 'sil', 'eylem'])
 const btnRef = ref(null)
 const rootEl = ref(null)
 const menuRef = ref(null)
-const menuStil = ref({})
+const menuStil = ref({ position: 'fixed', left: '-9999px', top: '0', visibility: 'hidden' })
 const acik = ref(false)
 
 const odaklanIlk = () => {
@@ -114,18 +114,22 @@ const menuKeydown = (e) => {
 const acToggle = async (e) => {
   acik.value = !acik.value
   if (!acik.value) return
+  // Menu olculene kadar ekran disinda ve gizli tut (body'ye teleport edildigi
+  // icin varsayilan konum sol ust olurdu - "en solda aciliyor" bug'i).
+  menuStil.value = { position: 'fixed', left: '-9999px', top: '0', visibility: 'hidden' }
   await nextTick()
-  // Tıklanan butonu esas al (ref bazı durumlarda 0 rect döndürebilir)
-  const el = e?.currentTarget || btnRef.value?.$el || btnRef.value
+
+  // Tiklanan elemani esas al; bilesen cagrilarinda currentTarget null olabilir.
+  const el = e?.currentTarget || e?.target || btnRef.value?.$el || btnRef.value
+  const bosluk = 8
 
   const hesapla = () => {
     const r = el?.getBoundingClientRect?.()
-    // Eleman henüz yerleşmediyse (0 rect) hesaplamayı ertele
-    if (!r || (!r.width && !r.height && !r.top && !r.left && !r.right)) return false
+    // Eleman henuz yerlesmediyse (0 rect) hesaplamayi ertele
+    if (!r || (!r.width && !r.height)) return false
     const mw = menuRef.value?.offsetWidth || 176
     const mh = menuRef.value?.offsetHeight || 160
-    const bosluk = 8
-    // Sağ kenara hizala; taşarsa sola kaydır, ekran dışına çıkarma
+    // Sag kenara hizala; tasarsa sola kaydir, ekran disina cikarma
     let left = r.right - mw
     if (left < bosluk) left = r.left
     if (left + mw > window.innerWidth - bosluk) left = window.innerWidth - mw - bosluk
@@ -136,15 +140,15 @@ const acToggle = async (e) => {
       position: 'fixed',
       left: `${left}px`,
       top: `${top}px`,
+      visibility: 'visible',
       maxHeight: `${Math.min(320, window.innerHeight - 2 * bosluk)}px`,
       maxWidth: `calc(100vw - ${2 * bosluk}px)`
     }
     return true
   }
 
-  if (!hesapla()) {
+  for (let deneme = 0; deneme < 3 && !hesapla(); deneme++) {
     await new Promise((resolve) => requestAnimationFrame(() => resolve()))
-    hesapla()
   }
   await nextTick()
   odaklanIlk()

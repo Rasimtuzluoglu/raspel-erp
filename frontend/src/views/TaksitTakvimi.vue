@@ -498,7 +498,8 @@ onMounted(yukle)
   gap: 4px;
   padding: 16px 20px;
   border-radius: 12px;
-  background: var(--surface-card, #1e293b);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-left: 4px solid #3b82f6;
 }
 
@@ -529,7 +530,8 @@ onMounted(yukle)
 .liste-kart {
   padding: 16px 20px;
   border-radius: 12px;
-  background: var(--surface-card, #1e293b);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   margin-bottom: 20px;
 }
 
@@ -562,7 +564,7 @@ onMounted(yukle)
 
 .gun-hucre {
   min-height: 84px;
-  border: 1px solid var(--surface-border, #334155);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 4px;
   display: flex;

@@ -215,7 +215,7 @@
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 100px"
+          style="width: 150px"
         >
           <template #body="slotProps">
             <div class="satir-islemler">
@@ -1826,6 +1826,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: nowrap;
 }
 
 .loading {

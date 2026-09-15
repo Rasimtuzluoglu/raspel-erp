@@ -92,13 +92,22 @@
       </TabPanel>
 
       <TabPanel
-        :header="seciliDepo ? seciliDepo.ad + ' - ' + t('depolar.stok') : t('depolar.depoStoklari')"
+        :header="t('depolar.depoStoklari')"
         :disabled="!seciliDepo"
       >
         <div
           v-if="seciliDepo"
           class="stok-islemleri"
         >
+          <div class="depo-basligi">
+            <i class="pi pi-warehouse" />
+            <span>{{ seciliDepo.ad }}</span>
+            <Tag
+              v-if="seciliDepo.subeAdi"
+              :value="seciliDepo.subeAdi"
+              severity="secondary"
+            />
+          </div>
           <div class="stok-ekle-form">
             <h3>{{ t('depolar.stokEkleCikar') }}</h3>
             <div class="form-row">
@@ -546,6 +555,16 @@ const talepReddet = async (t) => {
 .depolar-container {
   padding: 0;
 }
+.depolar-container :deep(.p-tabview-tablist) {
+  overflow-x: visible;
+  scrollbar-width: none;
+}
+.depolar-container :deep(.p-tabview-tablist::-webkit-scrollbar) {
+  display: none;
+}
+.depolar-container :deep(.p-tabview-nav-link) {
+  white-space: nowrap;
+}
 .sayfa-baslik {
   display: flex;
   justify-content: space-between;
@@ -586,6 +605,16 @@ const talepReddet = async (t) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.depo-basligi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.depo-basligi i {
+  color: var(--accent);
 }
 .stok-ekle-form {
   background: var(--bg-secondary);

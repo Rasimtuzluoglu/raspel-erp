@@ -153,7 +153,7 @@ const items = computed(() => {
 }
 .breadcrumb-link:hover {
   color: var(--primary-color, #3b82f6);
-  background: var(--surface-hover, #f1f5f9);
+  background: rgba(148, 163, 184, 0.14);
 }
 .breadcrumb-home {
   font-size: 13px;

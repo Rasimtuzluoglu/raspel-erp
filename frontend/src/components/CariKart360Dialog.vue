@@ -408,7 +408,8 @@ watch(
 .kredi-kart {
   padding: 14px 18px;
   border-radius: 12px;
-  background: var(--surface-ground, #0f172a);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   margin-bottom: 16px;
   display: flex;
   justify-content: space-between;

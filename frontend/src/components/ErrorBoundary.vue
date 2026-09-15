@@ -61,8 +61,8 @@ const goHome = () => {
 }
 
 .error-card {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--surface-border, #e2e8f0);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 2.5rem;
   text-align: center;
@@ -80,11 +80,11 @@ const goHome = () => {
 .error-card h2 {
   margin: 0 0 0.5rem 0;
   font-size: 1.5rem;
-  color: var(--text-color, #1e293b);
+  color: var(--text-primary);
 }
 
 .error-message {
-  color: var(--text-color-secondary, #64748b);
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
   word-break: break-word;
@@ -120,11 +120,11 @@ const goHome = () => {
 }
 
 .home-btn {
-  background: var(--surface-ground, #f1f5f9);
-  color: var(--text-color, #334155);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .home-btn:hover {
-  background: #e2e8f0;
+  background: rgba(148, 163, 184, 0.18);
 }
 </style>

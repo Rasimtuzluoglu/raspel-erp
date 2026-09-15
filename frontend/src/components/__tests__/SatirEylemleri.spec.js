@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import SatirEylemleri from '../SatirEylemleri.vue'
 import i18n from '../../i18n.js'
 
@@ -76,6 +76,23 @@ describe('SatirEylemleri', () => {
     expect(stil).toContain('position: fixed')
     const left = Number((stil.match(/left:\s*([\d.]+)px/) || [])[1])
     expect(left).toBeGreaterThanOrEqual(8)
+    vi.restoreAllMocks()
+  })
+
+  it('olculemeyen (0 rect) butonda menuyu sol ustte acmaz', async () => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      right: 0, left: 0, top: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON() {}
+    })
+    const wrapper = kur()
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    await new Promise((r) => setTimeout(r, 40))
+    await flushPromises()
+    const menu = wrapper.find('.eylem-menu')
+    expect(menu.exists()).toBe(true)
+    const stil = menu.attributes('style') || ''
+    expect(stil).toContain('visibility: hidden')
+    expect(stil).toContain('left: -9999px')
     vi.restoreAllMocks()
   })
 })
