@@ -199,7 +199,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { cekSenetAPI, cariHesapAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -248,7 +248,7 @@ const dialogAc = () => {
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    await cekSenetAPI.create({ ...form.value, vadeTarihi: form.value.vadeTarihi?.toISOString().split('T')[0] })
+    await cekSenetAPI.create({ ...form.value, vadeTarihi: getLocalDateString(form.value.vadeTarihi) })
     dialog.value = false
     const r = await cekSenetAPI.getAll()
     list.value = r.data?.content || r.data || []

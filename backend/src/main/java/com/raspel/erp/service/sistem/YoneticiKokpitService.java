@@ -97,17 +97,17 @@ public class YoneticiKokpitService {
         // 4. Kâr & Marj Hesaplamaları
         BigDecimal gerceklesenKar = gerceklesenCiro.subtract(toplamAlisMaliyeti).subtract(toplamMasraflar);
 
-        double ciroIlerlemeYuzdesi = (hedefCiro.compareTo(BigDecimal.ZERO) > 0)
-                ? gerceklesenCiro.multiply(BigDecimal.valueOf(100)).divide(hedefCiro, 1, RoundingMode.HALF_UP).doubleValue()
-                : 0.0;
+        BigDecimal ciroIlerlemeYuzdesi = (hedefCiro.compareTo(BigDecimal.ZERO) > 0)
+                ? gerceklesenCiro.multiply(BigDecimal.valueOf(100)).divide(hedefCiro, 1, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
 
-        double karIlerlemeYuzdesi = (hedefKar.compareTo(BigDecimal.ZERO) > 0)
-                ? gerceklesenKar.multiply(BigDecimal.valueOf(100)).divide(hedefKar, 1, RoundingMode.HALF_UP).doubleValue()
-                : 0.0;
+        BigDecimal karIlerlemeYuzdesi = (hedefKar.compareTo(BigDecimal.ZERO) > 0)
+                ? gerceklesenKar.multiply(BigDecimal.valueOf(100)).divide(hedefKar, 1, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
 
-        double netKarMarji = (gerceklesenCiro.compareTo(BigDecimal.ZERO) > 0)
-                ? gerceklesenKar.multiply(BigDecimal.valueOf(100)).divide(gerceklesenCiro, 1, RoundingMode.HALF_UP).doubleValue()
-                : 0.0;
+        BigDecimal netKarMarji = (gerceklesenCiro.compareTo(BigDecimal.ZERO) > 0)
+                ? gerceklesenKar.multiply(BigDecimal.valueOf(100)).divide(gerceklesenCiro, 1, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
 
         BigDecimal kalanCiro = hedefCiro.subtract(gerceklesenCiro);
         if (kalanCiro.compareTo(BigDecimal.ZERO) < 0) kalanCiro = BigDecimal.ZERO;

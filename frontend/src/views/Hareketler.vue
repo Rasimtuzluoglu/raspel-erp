@@ -331,7 +331,7 @@ import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, faturaAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -501,7 +501,7 @@ const saveHareket = async () => {
       tur: form.value.tur,
       odemeSekli: form.value.odemeSekli || null,
       tutar: form.value.tutar,
-      hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().split('T')[0] : null,
+      hareketTarihi: form.value.hareketTarihi ? getLocalDateString(form.value.hareketTarihi) : null,
       aciklama: form.value.aciklama,
       faturaId: form.value.faturaId || null
     }
@@ -546,8 +546,8 @@ const deleteHareket = async (id) => {
 const filtrele = async () => {
   try {
     const params = {}
-    if (filtreBaslangic.value) params.baslangic = filtreBaslangic.value.toISOString().split('T')[0]
-    if (filtreBitis.value) params.bitis = filtreBitis.value.toISOString().split('T')[0]
+    if (filtreBaslangic.value) params.baslangic = getLocalDateString(filtreBaslangic.value)
+    if (filtreBitis.value) params.bitis = getLocalDateString(filtreBitis.value)
     const response = await hareketAPI.filtrele(params)
     tümHareketler.value = response.data?.content || response.data || []
   } catch (err) {

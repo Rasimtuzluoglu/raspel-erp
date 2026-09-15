@@ -1098,9 +1098,7 @@ watch(tarihAraligi, (v) => {
 
 const formatDateForApi = (d) => {
   if (!d) return ''
-  if (d instanceof Date) return d.toISOString().split('T')[0]
-  if (typeof d === 'string') return d.split('T')[0]
-  return String(d)
+  return getLocalDateString(d)
 }
 
 onMounted(async () => {
@@ -1220,7 +1218,7 @@ const formatCurrency = (v) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(deger)
 }
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 </script>
 
 <style scoped>

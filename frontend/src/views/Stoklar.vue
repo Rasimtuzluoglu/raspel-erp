@@ -678,7 +678,7 @@ import BarkodEtiketDialog from '../components/BarkodEtiketDialog.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -1051,7 +1051,7 @@ const batchCsvExport = () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.setAttribute('download', `stoklar-${new Date().toISOString().split('T')[0]}.csv`)
+  link.setAttribute('download', `stoklar-${getLocalDateString()}.csv`)
   document.body.appendChild(link)
   link.click()
   link.remove()
@@ -1068,7 +1068,7 @@ const saveHareket = async () => {
     await stokAPI.addHareket(seciliStokId.value, {
       tur: hareketTur.value,
       miktar: hareketForm.value.miktar,
-      hareketTarihi: hareketForm.value.hareketTarihi.toISOString().split('T')[0],
+      hareketTarihi: getLocalDateString(hareketForm.value.hareketTarihi),
       cariHesapId: hareketForm.value.cariHesapId,
       aciklama: hareketForm.value.aciklama
     })

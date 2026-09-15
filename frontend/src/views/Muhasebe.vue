@@ -708,7 +708,7 @@ import { muhasebeAPI, excelAPI } from '../api/index.js'
 import SatirEylemleri from '../components/SatirEylemleri.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useGeriAl } from '../composables/useGeriAl.js'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { Doughnut, Bar } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
 import { useI18n } from 'vue-i18n'
@@ -1020,7 +1020,7 @@ const excelIndir = (res, dosyaAdi) => {
   const url = window.URL.createObjectURL(new Blob([res.data]))
   const link = document.createElement('a')
   link.href = url
-  link.setAttribute('download', `${dosyaAdi}-${new Date().toISOString().split('T')[0]}.xlsx`)
+  link.setAttribute('download', `${dosyaAdi}-${getLocalDateString()}.xlsx`)
   document.body.appendChild(link)
   link.click()
   link.remove()

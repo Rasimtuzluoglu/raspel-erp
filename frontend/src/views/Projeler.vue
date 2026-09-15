@@ -275,6 +275,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { projeAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
+import { getLocalDateString } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -313,8 +314,8 @@ const kaydet = async () => {
   try {
     await projeAPI.create({
       ...form.value,
-      baslangic: form.value.baslangic?.toISOString().split('T')[0],
-      bitis: form.value.bitis?.toISOString().split('T')[0]
+      baslangic: getLocalDateString(form.value.baslangic),
+      bitis: getLocalDateString(form.value.bitis)
     })
     dialog.value = false
     const r = await projeAPI.getAll()
@@ -365,8 +366,8 @@ const gorevKaydet = async () => {
   try {
     const g = {
       ...gorevForm.value,
-      baslangic: gorevForm.value.baslangic?.toISOString().split('T')[0],
-      bitis: gorevForm.value.bitis?.toISOString().split('T')[0]
+      baslangic: getLocalDateString(gorevForm.value.baslangic),
+      bitis: getLocalDateString(gorevForm.value.bitis)
     }
     await projeAPI.gorevEkle(seciliProje.value.id, g)
     gorevDialog.value = false

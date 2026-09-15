@@ -74,7 +74,8 @@ public class TeklifService {
                 BigDecimal brut = miktar.multiply(birimFiyat);
                 BigDecimal iskontoTutar = brut.multiply(iskontoOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
                 BigDecimal net = brut.subtract(iskontoTutar);
-                BigDecimal kalemKdv = net.multiply(kdvOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                // Teklifte satır iskontosu yalnız netten düşer; KDV brüt üzerinden hesaplanır.
+                BigDecimal kalemKdv = brut.multiply(kdvOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
 
                 k.setTutar(net);
                 araToplam = araToplam.add(net);
@@ -173,7 +174,7 @@ public class TeklifService {
                 BigDecimal brut = miktar.multiply(birimFiyat);
                 BigDecimal iskontoTutar = brut.multiply(iskontoOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
                 BigDecimal net = brut.subtract(iskontoTutar);
-                BigDecimal kalemKdv = net.multiply(kdvOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                BigDecimal kalemKdv = brut.multiply(kdvOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
 
                 k.setTutar(net);
                 araToplam = araToplam.add(net);

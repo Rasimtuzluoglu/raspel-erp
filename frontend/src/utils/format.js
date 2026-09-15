@@ -27,6 +27,21 @@ export const formatDateTime = (date, bos = '') => {
 
 export const formatTarih = (date) => formatDate(date) || '-'
 
+// Yerel (TR) saat dilimine göre YYYY-MM-DD üretir. toISOString() UTC kullandığı için
+// gece 00:00-02:59 arası bir önceki güne kayma hatasını önler.
+export const getLocalDateString = (date = new Date()) => {
+  if (date === null || date === undefined) return ''
+  if (typeof date === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date
+    date = new Date(date)
+  }
+  if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+  const yil = date.getFullYear()
+  const ay = String(date.getMonth() + 1).padStart(2, '0')
+  const gun = String(date.getDate()).padStart(2, '0')
+  return `${yil}-${ay}-${gun}`
+}
+
 export const formatTarihSaat = (date, bos = '-') => {
   const d = parseDate(date)
   if (!d) return bos

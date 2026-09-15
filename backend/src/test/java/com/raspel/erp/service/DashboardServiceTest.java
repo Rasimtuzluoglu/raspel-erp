@@ -24,6 +24,9 @@ import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.ticaret.IadeRepository;
+import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.ticaret.Iade;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
@@ -39,6 +42,7 @@ class DashboardServiceTest {
     @Mock private FaturaRepository faturaRepository;
     @Mock private FaturaKalemRepository faturaKalemRepository;
     @Mock private CariHesapRepository cariHesapRepository;
+    @Mock private IadeRepository iadeRepository;
     @InjectMocks private DashboardService dashboardService;
 
     @Test
@@ -82,5 +86,29 @@ class DashboardServiceTest {
         when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
         var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(0, result.getToplamStokDegeri().compareTo(BigDecimal.valueOf(500)));
+    }
+
+    @Test
+    void dashboard_iadeOraniniCiroIleHesaplar() {
+        Fatura satis = Fatura.builder()
+                .tur(Fatura.FaturaTur.SATIS)
+                .durum(Fatura.FaturaDurum.KESILDI)
+                .genelToplam(BigDecimal.valueOf(10000))
+                .build();
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of(satis));
+
+        Iade iade = Iade.builder()
+                .tur("SATIS")
+                .durum("TAMAMLANDI")
+                .tutar(BigDecimal.valueOf(500))
+                .build();
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(eq(1L), eq("SATIS"), eq("TAMAMLANDI"), any(), any()))
+                .thenReturn(List.of(iade));
+
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+
+        var result = dashboardService.dashboardVerileriGetir(1L);
+        assertEquals(0, result.getIadeOrani().compareTo(BigDecimal.valueOf(5.0)));
     }
 }

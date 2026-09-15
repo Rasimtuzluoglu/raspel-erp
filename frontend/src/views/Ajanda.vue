@@ -265,7 +265,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ajandaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { formatGunAy as formatTarih } from '../utils/format.js'
+import { formatGunAy as formatTarih, getLocalDateString } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const olaylar = ref([])
@@ -349,7 +349,7 @@ const yukle = async () => {
   const ay = aktifAy.value.getMonth()
   const baslangic = new Date(yil, ay, 1)
   const bitis = new Date(yil, ay + 1, 0)
-  const fmt = (d) => d.toISOString().split('T')[0]
+  const fmt = (d) => getLocalDateString(d)
   try {
     const r = await ajandaAPI.olaylar({ baslangic: fmt(baslangic), bitis: fmt(bitis) })
     olaylar.value = r.data || []

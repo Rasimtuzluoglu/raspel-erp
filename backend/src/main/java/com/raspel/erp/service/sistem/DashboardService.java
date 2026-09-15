@@ -30,6 +30,7 @@ import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.repository.finans.MasrafRepository;
 import com.raspel.erp.repository.sistem.SirketHedefRepository;
+import com.raspel.erp.repository.ticaret.IadeRepository;
 import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.entity.sistem.SirketHedef;
 
@@ -52,6 +53,7 @@ public class DashboardService {
     private final BankaRepository bankaRepository;
     private final KasaRepository kasaRepository;
     private final MasrafRepository masrafRepository;
+    private final IadeRepository iadeRepository;
     private final SirketHedefRepository sirketHedefRepository;
 
     @Transactional(readOnly = true)
@@ -71,7 +73,6 @@ public class DashboardService {
 
         Long bugunkuSiparis = safeGet(() -> siparisRepository.countBySirketIdAndTarih(sirketId, LocalDate.now()), 0L);
         Long bekleyenTeslimat = safeGet(() -> siparisRepository.countBySirketIdAndDurumNot(sirketId, "TAMAMLANDI"), 0L);
-        BigDecimal iadeOrani = BigDecimal.ZERO;
 
         long toplamStok = safeGet(() -> stokRepository.countBySirketId(sirketId), 0L);
         long toplamCikis = safeGet(() -> stokHareketRepository.countByStokSirketIdAndTur(sirketId, "CIKIS"), 0L);
@@ -170,6 +171,18 @@ public class DashboardService {
         }, BigDecimal.ZERO);
 
         BigDecimal gerceklesenKar = gerceklesenCiro.subtract(toplamAlisMaliyeti).subtract(toplamMasraflar);
+
+        // İade oranı: bu dönemde satış iadesi tutarının satış cirosuna oranı (yüzde)
+        BigDecimal iadeOrani = safeGet(() -> {
+            BigDecimal iadeTutar = iadeRepository
+                    .findBySirketIdAndTurAndDurumAndTarihBetween(sirketId, "SATIS", "TAMAMLANDI", ayBas, aySon)
+                    .stream()
+                    .map(i -> i.getTutar() != null ? i.getTutar() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            return gerceklesenCiro.compareTo(BigDecimal.ZERO) > 0
+                    ? iadeTutar.multiply(BigDecimal.valueOf(100)).divide(gerceklesenCiro, 1, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+        }, BigDecimal.ZERO);
         BigDecimal ciroIlerlemeYuzdesi = hedefCiro.compareTo(BigDecimal.ZERO) > 0
                 ? gerceklesenCiro.multiply(BigDecimal.valueOf(100)).divide(hedefCiro, 1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;

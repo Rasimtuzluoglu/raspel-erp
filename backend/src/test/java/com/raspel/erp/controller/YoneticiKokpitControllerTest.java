@@ -47,7 +47,7 @@ class YoneticiKokpitControllerTest {
                 .ay(8)
                 .gerceklesenCiro(BigDecimal.valueOf(75000))
                 .hedefCiro(BigDecimal.valueOf(100000))
-                .ciroIlerlemeYuzdesi(75.0)
+                .ciroIlerlemeYuzdesi(BigDecimal.valueOf(75.0))
                 .build();
 
         when(kokpitService.getKokpitVerileri(eq(1L), eq(2026), eq(8))).thenReturn(dto);

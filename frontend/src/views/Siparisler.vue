@@ -249,7 +249,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -345,7 +345,7 @@ const dialogAc = () => {
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    await siparisAPI.create({ ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] })
+    await siparisAPI.create({ ...form.value, tarih: getLocalDateString(form.value.tarih) })
     dialog.value = false
     const r = await siparisAPI.getAll()
     siparisler.value = r.data?.content || r.data || []

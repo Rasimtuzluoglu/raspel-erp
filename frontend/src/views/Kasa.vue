@@ -480,7 +480,7 @@ import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import { kasaAPI, excelAPI, faturaAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -605,7 +605,7 @@ const saveHareket = async () => {
     await kasaAPI.addHareket(seciliKasaId.value, {
       tur: hareketTur.value,
       tutar: hareketForm.value.tutar,
-      hareketTarihi: hareketForm.value.hareketTarihi.toISOString().split('T')[0],
+      hareketTarihi: getLocalDateString(hareketForm.value.hareketTarihi),
       kategoriId: hareketForm.value.kategoriId,
       aciklama: hareketForm.value.aciklama
     })
@@ -674,7 +674,7 @@ const gunSonuVerisi = ref(null)
 const gunSonuAc = async () => {
   gunSonuDialog.value = true
   try {
-    const bugun = new Date().toISOString().split('T')[0]
+    const bugun = getLocalDateString()
     const r = await faturaAPI.getAll({ size: 200, sort: 'tarih,desc' })
     const faturalar = r.data?.content || r.data || []
     const bugunSatislar = faturalar.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)

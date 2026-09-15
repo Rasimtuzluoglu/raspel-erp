@@ -783,6 +783,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
+import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 
@@ -923,21 +924,17 @@ const durumSeverity = (durum) => {
   return map[durum] || 'info'
 }
 
-// Hesaplamalar
+// Hesaplamalar (ortak faturaHesapla.js'e bağlı: KDV brüt üzerinden, iskonto KDV'yi etkilemez)
 const hesaplananAraToplam = computed(() => {
-  return form.value.kalemler.reduce((sum, k) => sum + (k.tutar || 0), 0)
+  return teklifOzet(form.value.kalemler, form.value.iskontoOrani).araToplam
 })
 
 const hesaplananKdv = computed(() => {
-  return form.value.kalemler.reduce((sum, k) => {
-    const kdv = ((k.tutar || 0) * (k.kdvOrani || 0)) / 100
-    return sum + kdv
-  }, 0)
+  return teklifOzet(form.value.kalemler, form.value.iskontoOrani).kdv
 })
 
 const hesaplananGenelToplam = computed(() => {
-  const iskontoTutari = (hesaplananAraToplam.value * (form.value.iskontoOrani || 0)) / 100
-  return (hesaplananAraToplam.value - iskontoTutari) + hesaplananKdv.value
+  return teklifOzet(form.value.kalemler, form.value.iskontoOrani).genelToplam
 })
 
 const stokSecildi = (kalem) => {
@@ -946,7 +943,7 @@ const stokSecildi = (kalem) => {
     kalem.aciklama = s.ad
     kalem.birimFiyat = s.fiyat || s.satisFiyati || 0
     kalem.birim = s.birim || 'Adet'
-    kalem.kdvOrani = s.kdvOrani || 20
+    kalem.kdvOrani = kdvOrani(s)
     kalemHesapla(kalem)
   }
 }
