@@ -2,10 +2,10 @@
   <div class="subeler-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Şubeler
+        {{ t('subeler.title') }}
       </h1>
       <Button
-        label="Yeni Şube"
+        :label="t('subeler.yeniSube')"
         icon="pi pi-plus"
         @click="dialogAc()"
       />
@@ -18,34 +18,34 @@
     >
       <Column
         field="ad"
-        header="Şube Adı"
+        :header="t('subeler.subeAdi')"
         sortable
       />
       <Column
         field="yetkili"
-        header="Yetkili"
+        :header="t('subeler.yetkili')"
       />
       <Column
         field="telefon"
-        header="Telefon"
+        :header="t('subeler.telefon')"
       />
       <Column
         field="adres"
-        header="Adres"
+        :header="t('subeler.adres')"
       />
       <Column
         field="aktif"
-        header="Durum"
+        :header="t('common.status')"
       >
         <template #body="{ data }">
           <Tag
-            :value="data.aktif ? 'Aktif' : 'Pasif'"
+            :value="data.aktif ? t('status.active') : t('status.passive')"
             :severity="data.aktif ? 'success' : 'danger'"
           />
         </template>
       </Column>
       <Column
-        header="İşlem"
+        :header="t('common.actions')"
         style="width: 120px"
       >
         <template #body="{ data }">
@@ -65,10 +65,10 @@
 
     <EmptyState
       v-if="!yukleniyor && list.length === 0"
-      message="Henüz şube bulunamadı"
-      sub-message="İlk şubenizi eklemek için Yeni Şube butonuna tıklayın"
+      :message="t('subeler.empty')"
+      :sub-message="t('subeler.emptyHint')"
       icon="pi pi-map-marker"
-      action-label="Yeni Şube"
+      :action-label="t('subeler.yeniSube')"
       action-icon="pi pi-plus"
       @action="dialogAc()"
     />
@@ -81,25 +81,25 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Şube Adı *</label><InputText
+          <label>{{ t('subeler.subeAdiZorunlu') }}</label><InputText
             v-model="form.ad"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Yetkili</label><InputText
+          <label>{{ t('subeler.yetkili') }}</label><InputText
             v-model="form.yetkili"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Telefon</label><InputText
+          <label>{{ t('subeler.telefon') }}</label><InputText
             v-model="form.telefon"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Adres</label><Textarea
+          <label>{{ t('subeler.adres') }}</label><Textarea
             v-model="form.adres"
             rows="3"
             class="w-full"
@@ -109,18 +109,18 @@
           v-if="duzenleme"
           class="field"
         >
-          <label>Aktif</label><InputSwitch v-model="form.aktif" />
+          <label>{{ t('status.active') }}</label><InputSwitch v-model="form.aktif" />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -132,6 +132,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -139,6 +140,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { subeAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 
+const { t } = useI18n()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -149,7 +151,7 @@ const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ ad: '', yetkili: '', telefon: '', adres: '', aktif: true })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Şube Düzenle' : 'Yeni Şube'))
+const dialogHeader = computed(() => (duzenleme.value ? t('subeler.subeDuzenle') : t('subeler.yeniSube')))
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -157,7 +159,7 @@ onMounted(async () => {
     const r = await subeAPI.getAll()
     list.value = unwrapList(r)
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Şubeler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('subeler.hataYukleme'))
   }
   yukleniyor.value = false
 })
@@ -173,34 +175,34 @@ const kaydet = async () => {
   try {
     if (duzenleme.value) {
       await subeAPI.update(form.value.id, form.value)
-      toastBildirim.basarili('Şube güncellendi')
+      toastBildirim.basarili(t('subeler.guncellendi'))
     } else {
       await subeAPI.create(form.value)
-      toastBildirim.basarili('Şube oluşturuldu')
+      toastBildirim.basarili(t('subeler.olusturuldu'))
     }
     dialog.value = false
     const r = await subeAPI.getAll()
     list.value = unwrapList(r)
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('subeler.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: `${data.ad} şubesini silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('subeler.silOnayMesaj', { ad: data.ad }),
+    header: t('subeler.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('subeler.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await subeAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Şube silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('subeler.silindi'), detail: t('subeler.subeSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('subeler.silmeBasarisiz'))
       }
     }
   })

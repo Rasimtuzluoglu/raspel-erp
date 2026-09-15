@@ -1,13 +1,13 @@
 <template>
   <div class="kategori-container">
     <h1 class="page-title">
-      Gelir/Gider Kategorileri
+      {{ t('kategoriler.title') }}
     </h1>
 
     <Toolbar class="toolbar">
       <template #start>
         <Button
-          label="Yeni Kategori"
+          :label="t('kategoriler.yeniKategori')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openDialog"
@@ -23,16 +23,16 @@
       >
         <Column
           field="ad"
-          header="Kategori Adı"
+          :header="t('kategoriler.kategoriAdi')"
         />
         <Column
           field="tur"
-          header="Tür"
+          :header="t('kategoriler.tur')"
           style="width: 100px"
         >
           <template #body="s">
             <span :class="['badge', s.data.tur === 'GELIR' ? 'gelir' : 'gider']">
-              {{ s.data.tur === 'GELIR' ? 'Gelir' : 'Gider' }}
+              {{ s.data.tur === 'GELIR' ? t('kategoriler.gelir') : t('kategoriler.gider') }}
             </span>
           </template>
         </Column>
@@ -51,10 +51,10 @@
       </DataTable>
       <EmptyState
         v-if="kategoriStore.kategoriler.length === 0"
-        message="Henüz kategori bulunamadı"
-        sub-message="İlk kategorinizi eklemek için Yeni Kategori butonuna tıklayın"
+        :message="t('kategoriler.empty')"
+        :sub-message="t('kategoriler.emptyHint')"
         icon="pi pi-tags"
-        action-label="Yeni Kategori"
+        :action-label="t('kategoriler.yeniKategori')"
         action-icon="pi pi-plus"
         @action="openDialog"
       />
@@ -62,39 +62,39 @@
 
     <Dialog
       v-model:visible="showDialog"
-      header="Yeni Kategori"
+      :header="t('kategoriler.yeniKategori')"
       :modal="true"
       style="width: 400px"
     >
       <div class="form-group">
-        <label>Kategori Adı *</label>
+        <label>{{ t('kategoriler.kategoriAdiZorunlu') }}</label>
         <InputText
           v-model="form.ad"
-          placeholder="Kategori adı"
+          :placeholder="t('kategoriler.kategoriAdiPlaceholder')"
           class="w-full"
         />
       </div>
       <div class="form-group">
-        <label>Tür *</label>
+        <label>{{ t('kategoriler.turZorunlu') }}</label>
         <Dropdown
           v-model="form.tur"
           :options="[
-            { label: 'Gelir', value: 'GELIR' },
-            { label: 'Gider', value: 'GIDER' }
+            { label: t('kategoriler.gelir'), value: 'GELIR' },
+            { label: t('kategoriler.gider'), value: 'GIDER' }
           ]"
-          placeholder="Seçiniz"
+          :placeholder="t('common.select')"
           class="w-full"
         />
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="showDialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="saving"
           @click="save"
@@ -106,11 +106,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKategoriStore } from '../stores/kategoriStore.js'
 import EmptyState from '../components/EmptyState.vue'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const kategoriStore = useKategoriStore()
@@ -128,16 +130,16 @@ const openDialog = () => {
 
 const save = async () => {
   if (!form.value.ad.trim() || !form.value.tur) {
-    toastBildirim.uyari('Tüm alanları doldurun')
+    toastBildirim.uyari(t('kategoriler.tumAlanlar'))
     return
   }
   saving.value = true
   try {
     await kategoriStore.addKategori(form.value)
     showDialog.value = false
-    toastBildirim.basarili('Kategori eklendi')
+    toastBildirim.basarili(t('kategoriler.kategoriEklendi'))
   } catch {
-    toastBildirim.hata('İşlem başarısız')
+    toastBildirim.hata(t('kategoriler.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -145,15 +147,15 @@ const save = async () => {
 
 const confirmDel = (id) => {
   confirm.require({
-    message: 'Bu kategoriyi silmek istediğinizden emin misiniz?',
-    header: 'Onay',
+    message: t('kategoriler.silOnayMesaj'),
+    header: t('kategoriler.onay'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await kategoriStore.deleteKategori(id)
-        toastBildirim.basarili('Kategori silindi')
+        toastBildirim.basarili(t('kategoriler.kategoriSilindi'))
       } catch {
-        toastBildirim.hata('Silme başarısız')
+        toastBildirim.hata(t('kategoriler.silmeBasarisiz'))
       }
     }
   })
