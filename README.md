@@ -116,7 +116,7 @@ mvn -B test -q          # 965 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test           # 631 Test (0 Hata)
+npm run test           # 633 Test (0 Hata)
 
 # Kod Standartları & Linting
 cd frontend

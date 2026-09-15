@@ -11,7 +11,7 @@
       :aria-label="$t('common.actions')"
       aria-haspopup="true"
       :aria-expanded="acik"
-      @click="acToggle"
+      @click="acToggle($event)"
     />
 
     <!-- body'ye teleport: tablo scroll konteyneri icinde kirpilmayi onler -->
@@ -111,21 +111,40 @@ const menuKeydown = (e) => {
   }
 }
 
-const acToggle = async () => {
+const acToggle = async (e) => {
   acik.value = !acik.value
   if (!acik.value) return
   await nextTick()
-  const el = btnRef.value?.$el || btnRef.value
-  const r = el?.getBoundingClientRect?.()
-  if (!r) return
-  const mw = menuRef.value?.offsetWidth || 176
-  const mh = menuRef.value?.offsetHeight || 160
-  const left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8))
-  const top = r.bottom + mh + 8 > window.innerHeight ? Math.max(8, r.top - mh - 4) : r.bottom + 4
-  menuStil.value = {
-    position: 'fixed',
-    left: `${left}px`,
-    top: `${top}px`
+  // Tıklanan butonu esas al (ref bazı durumlarda 0 rect döndürebilir)
+  const el = e?.currentTarget || btnRef.value?.$el || btnRef.value
+
+  const hesapla = () => {
+    const r = el?.getBoundingClientRect?.()
+    // Eleman henüz yerleşmediyse (0 rect) hesaplamayı ertele
+    if (!r || (!r.width && !r.height && !r.top && !r.left && !r.right)) return false
+    const mw = menuRef.value?.offsetWidth || 176
+    const mh = menuRef.value?.offsetHeight || 160
+    const bosluk = 8
+    // Sağ kenara hizala; taşarsa sola kaydır, ekran dışına çıkarma
+    let left = r.right - mw
+    if (left < bosluk) left = r.left
+    if (left + mw > window.innerWidth - bosluk) left = window.innerWidth - mw - bosluk
+    left = Math.max(bosluk, left)
+    const alttaYerVar = r.bottom + mh + bosluk <= window.innerHeight
+    const top = alttaYerVar ? r.bottom + 4 : Math.max(bosluk, r.top - mh - 4)
+    menuStil.value = {
+      position: 'fixed',
+      left: `${left}px`,
+      top: `${top}px`,
+      maxHeight: `${Math.min(320, window.innerHeight - 2 * bosluk)}px`,
+      maxWidth: `calc(100vw - ${2 * bosluk}px)`
+    }
+    return true
+  }
+
+  if (!hesapla()) {
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()))
+    hesapla()
   }
   await nextTick()
   odaklanIlk()

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SatirEylemleri from '../SatirEylemleri.vue'
 import i18n from '../../i18n.js'
@@ -62,5 +62,20 @@ describe('SatirEylemleri', () => {
     expect(wrapper.find('.eylem-menu').exists()).toBe(true)
     await wrapper.find('.eylem-menu').trigger('keydown', { key: 'Escape' })
     expect(wrapper.find('.eylem-menu').exists()).toBe(false)
+  })
+
+  it('menuyu sabit konumda ve ekran disina tasmadan konumlandirir', async () => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      right: 1200, left: 1170, top: 100, bottom: 130, width: 30, height: 30, x: 1170, y: 100, toJSON() {}
+    })
+    const wrapper = kur()
+    await wrapper.find('button').trigger('click')
+    const menu = wrapper.find('.eylem-menu')
+    expect(menu.exists()).toBe(true)
+    const stil = menu.attributes('style') || ''
+    expect(stil).toContain('position: fixed')
+    const left = Number((stil.match(/left:\s*([\d.]+)px/) || [])[1])
+    expect(left).toBeGreaterThanOrEqual(8)
+    vi.restoreAllMocks()
   })
 })
