@@ -221,16 +221,16 @@
         >
           <div class="ozet-kartlar">
             <div class="ozet-kart gelir">
-              <span>Toplam Gelir</span><strong>{{ formatCurrency(ggData.toplamGelir) }}</strong>
+              <span>{{ $t('raporlar.toplamGelir') }}</span><strong>{{ formatCurrency(ggData.toplamGelir) }}</strong>
             </div>
             <div class="ozet-kart gider">
-              <span>Toplam Gider</span><strong>{{ formatCurrency(ggData.toplamGider) }}</strong>
+              <span>{{ $t('raporlar.toplamGider') }}</span><strong>{{ formatCurrency(ggData.toplamGider) }}</strong>
             </div>
             <div
               class="ozet-kart"
               :class="ggData.netKarZarar >= 0 ? 'kar' : 'zarar'"
             >
-              <span>Net Kar/Zarar</span><strong>{{ formatCurrency(ggData.netKarZarar) }}</strong>
+              <span>{{ $t('raporlar.netKarZarar') }}</span><strong>{{ formatCurrency(ggData.netKarZarar) }}</strong>
             </div>
             <div class="rapor-aksiyonlar">
               <Button
@@ -243,13 +243,13 @@
                 icon="pi pi-envelope"
                 :label="t('raporlar.epostaGonder')"
                 class="p-button-sm p-button-outlined"
-                @click="epostaGonder('Gelir/Gider Özeti', 'Gelir/Gider Raporu')"
+                @click="epostaGonder(t('raporlar.gelirGiderOzeti'), t('raporlar.gelirGiderRaporu'))"
               />
             </div>
           </div>
 
           <h3 style="margin-top: 25px">
-            Aylık Dağılım
+            {{ $t('raporlar.aylikDagilim') }}
           </h3>
           <DataTable
             :value="ggData.aylikDagilim"
@@ -257,11 +257,11 @@
           >
             <Column
               field="ay"
-              header="Ay"
+              :header="$t('raporlar.ay')"
             />
             <Column
               field="net"
-              header="Net Tutar"
+              :header="$t('raporlar.netTutar')"
             >
               <template #body="s">
                 <span :class="s.data.net >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.net) }}</span>
@@ -316,16 +316,16 @@
         >
           <div class="ozet-kartlar">
             <div class="ozet-kart gelir">
-              <span>Çıkış KDV (Satış)</span><strong>{{ formatCurrency(kdvData.toplamKdvCikis) }}</strong>
+              <span>{{ $t('raporlar.cikisKdvSatis') }}</span><strong>{{ formatCurrency(kdvData.toplamKdvCikis) }}</strong>
             </div>
             <div class="ozet-kart gider">
-              <span>Giriş KDV (Alış)</span><strong>{{ formatCurrency(kdvData.toplamKdvGiris) }}</strong>
+              <span>{{ $t('raporlar.girisKdvAlis') }}</span><strong>{{ formatCurrency(kdvData.toplamKdvGiris) }}</strong>
             </div>
             <div
               class="ozet-kart"
               :class="kdvData.kdvFarki >= 0 ? 'kar' : 'zarar'"
             >
-              <span>KDV Farkı</span><strong>{{ formatCurrency(kdvData.kdvFarki) }}</strong>
+              <span>{{ $t('raporlar.kdvFarki') }}</span><strong>{{ formatCurrency(kdvData.kdvFarki) }}</strong>
             </div>
           </div>
         </div>
@@ -344,7 +344,7 @@
         </template>
         <div class="rapor-filtre">
           <Button
-            label="Rapor Getir"
+            :label="t('raporlar.raporGetir')"
             icon="pi pi-search"
             :loading="yasLoading"
             @click="getYaslandirma"
@@ -363,11 +363,11 @@
           >
             <Column
               field="cariAd"
-              header="Cari Hesap"
+              :header="$t('raporlar.cariHesap')"
             />
             <Column
               field="bakiye"
-              header="Alacak Bakiyesi"
+              :header="$t('raporlar.alacakBakiyesi')"
               style="width: 140px"
             >
               <template #body="s">
@@ -376,12 +376,12 @@
             </Column>
             <Column
               field="gun"
-              header="Gün"
+              :header="$t('raporlar.gun')"
               style="width: 80px"
             />
             <Column
               field="aralik"
-              header="Vade Aralığı"
+              :header="$t('raporlar.vadeAraligi')"
               style="width: 130px"
             >
               <template #body="s">
@@ -392,7 +392,7 @@
           <Message
             v-if="yasData && yasData.length === 0"
             severity="info"
-            text="Alacaklı cari hesap bulunmamaktadır."
+            :text="$t('raporlar.alacakliCariYok')"
           />
         </div>
       </TabPanel>
@@ -443,16 +443,16 @@
         >
           <div class="ozet-kartlar">
             <div class="ozet-kart gelir">
-              <span>Toplam Satış</span><strong>{{ formatCurrency(ckData.toplamSatis) }}</strong>
+              <span>{{ $t('raporlar.toplamSatis') }}</span><strong>{{ formatCurrency(ckData.toplamSatis) }}</strong>
             </div>
             <div class="ozet-kart gider">
-              <span>Toplam Maliyet</span><strong>{{ formatCurrency(ckData.toplamMaliyet) }}</strong>
+              <span>{{ $t('raporlar.toplamMaliyet') }}</span><strong>{{ formatCurrency(ckData.toplamMaliyet) }}</strong>
             </div>
             <div
               class="ozet-kart"
               :class="ckData.toplamKar >= 0 ? 'kar' : 'zarar'"
             >
-              <span>Toplam Kâr</span><strong>{{ formatCurrency(ckData.toplamKar) }}</strong>
+              <span>{{ $t('raporlar.toplamKar') }}</span><strong>{{ formatCurrency(ckData.toplamKar) }}</strong>
             </div>
             <div class="rapor-aksiyonlar">
               <Button
@@ -473,16 +473,16 @@
           >
             <Column
               field="cariAd"
-              header="Cari Hesap"
+              :header="$t('raporlar.cariHesap')"
             />
             <Column
               field="faturaSayisi"
-              header="Fatura"
+              :header="$t('raporlar.fatura')"
               style="width: 90px"
             />
             <Column
               field="toplamSatis"
-              header="Satış"
+              :header="$t('raporlar.satis')"
               style="width: 140px"
             >
               <template #body="s">
@@ -491,7 +491,7 @@
             </Column>
             <Column
               field="toplamMaliyet"
-              header="Maliyet"
+              :header="$t('raporlar.maliyet')"
               style="width: 140px"
             >
               <template #body="s">
@@ -500,7 +500,7 @@
             </Column>
             <Column
               field="kar"
-              header="Kâr"
+              :header="$t('raporlar.kar')"
               style="width: 140px"
             >
               <template #body="s">
@@ -512,7 +512,7 @@
             </Column>
             <Column
               field="karMarji"
-              header="Kâr Marjı"
+              :header="$t('raporlar.karMarji')"
               style="width: 110px"
             >
               <template #body="s">
@@ -526,7 +526,7 @@
           <Message
             v-if="!ckData.satirlar.length"
             severity="info"
-            text="Bu dönemde satış bulunmamaktadır."
+            :text="$t('raporlar.donemdeSatisYok')"
           />
         </div>
       </TabPanel>
@@ -544,11 +544,11 @@
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
-            <label>Tedarikçi Filtresi</label>
+            <label>{{ $t('raporlar.tedarikciFiltresi') }}</label>
             <Dropdown
               v-model="tuFiltre"
               :options="tuTedarikciler"
-              placeholder="Tüm Tedarikçiler"
+              :placeholder="$t('raporlar.tumTedarikciler')"
               class="w-full"
               :show-clear="true"
             />
@@ -571,26 +571,26 @@
           group-rows-by="cariHesapAd"
         >
           <template #groupheader="{ group }">
-            <span class="tedarikci-grup"><i class="pi pi-building" /> {{ group.value }} (Tedarikçi)</span>
+            <span class="tedarikci-grup"><i class="pi pi-building" /> {{ group.value }} ({{ $t('raporlar.tedarikci') }})</span>
           </template>
           <Column
             field="stokKodu"
-            header="Stok Kodu"
+            :header="$t('raporlar.stokKodu')"
           />
           <Column
             field="stokAd"
-            header="Ürün"
+            :header="$t('raporlar.urun')"
           />
           <Column
             field="toplamMiktar"
-            header="Toplam Miktar"
+            :header="$t('raporlar.toplamMiktar')"
           />
-          <Column header="Son Birim Fiyat">
+          <Column :header="$t('raporlar.sonBirimFiyat')">
             <template #body="s">
               {{ formatCurrency(s.data.sonBirimFiyat) }}
             </template>
           </Column>
-          <Column header="Son Alış Tarihi">
+          <Column :header="$t('raporlar.sonAlisTarihi')">
             <template #body="s">
               {{ s.data.sonTarih }}
             </template>
@@ -599,7 +599,7 @@
         <Message
           v-if="(!tuData || !tuData.length)"
           severity="info"
-          text="Henüz alış faturası girilmemiş."
+          :text="$t('raporlar.henuzAlisFaturasiYok')"
         />
       </TabPanel>
 
@@ -632,23 +632,23 @@
         >
           <Column
             field="stokKodu"
-            header="Stok Kodu"
+            :header="$t('raporlar.stokKodu')"
           />
           <Column
             field="stokAd"
-            header="Ürün"
+            :header="$t('raporlar.urun')"
           />
-          <Column header="Alış Maliyeti">
+          <Column :header="$t('raporlar.alisMaliyeti')">
             <template #body="s">
               <span class="gizli-veri">{{ formatCurrency(s.data.alisFiyat) }}</span>
             </template>
           </Column>
-          <Column header="Satış Fiyatı">
+          <Column :header="$t('raporlar.satisFiyati')">
             <template #body="s">
               {{ formatCurrency(s.data.satisFiyati) }}
             </template>
           </Column>
-          <Column header="Kâr">
+          <Column :header="$t('raporlar.kar')">
             <template #body="s">
               <span
                 class="gizli-veri"
@@ -656,7 +656,7 @@
               >{{ formatCurrency(s.data.kar) }}</span>
             </template>
           </Column>
-          <Column header="Kâr Marjı">
+          <Column :header="$t('raporlar.karMarji')">
             <template #body="s">
               <span
                 class="gizli-veri"
@@ -668,7 +668,7 @@
         <Message
           v-if="(!ukData || !ukData.length)"
           severity="info"
-          text="Henüz ürün bulunmamaktadır."
+          :text="$t('raporlar.henuzUrunYok')"
         />
       </TabPanel>
 
@@ -686,13 +686,13 @@
         </template>
         <div class="rapor-filtre">
           <div class="form-group">
-            <label>Projeksiyon Süresi</label>
+            <label>{{ $t('raporlar.projeksiyonSuresi') }}</label>
             <Dropdown
               v-model="nakitGun"
               :options="[
-                { label: '30 Günlük Projeksiyon', value: 30 },
-                { label: '60 Günlük Projeksiyon', value: 60 },
-                { label: '90 Günlük Projeksiyon', value: 90 }
+                { label: $t('raporlar.projeksiyonGun', { n: 30 }), value: 30 },
+                { label: $t('raporlar.projeksiyonGun', { n: 60 }), value: 60 },
+                { label: $t('raporlar.projeksiyonGun', { n: 90 }), value: 90 }
               ]"
               option-label="label"
               option-value="value"
@@ -717,28 +717,28 @@
         >
           <div class="ozet-kartlar">
             <div class="ozet-kart">
-              <span>Mevcut Likidite (Kasa+Banka)</span>
+              <span>{{ $t('raporlar.mevcutLikidite') }}</span>
               <strong>{{ formatCurrency(nakitData.baslangicBakiyesi) }}</strong>
             </div>
             <div class="ozet-kart gelir">
-              <span>Beklenen Tahsilatlar (Giriş)</span>
+              <span>{{ $t('raporlar.beklenenTahsilatlar') }}</span>
               <strong class="positive">+{{ formatCurrency(nakitData.toplamBeklenenGiris) }}</strong>
             </div>
             <div class="ozet-kart gider">
-              <span>Beklenen Ödemeler (Çıkış)</span>
+              <span>{{ $t('raporlar.beklenenOdemeler') }}</span>
               <strong class="negative">-{{ formatCurrency(nakitData.toplamBeklenenCikis) }}</strong>
             </div>
             <div
               class="ozet-kart"
               :class="nakitData.tahminiBitisBakiyesi >= 0 ? 'kar' : 'zarar'"
             >
-              <span>{{ nakitGun }} Gün Sonraki Tahmini Kasa</span>
+              <span>{{ $t('raporlar.gunSonrakiTahminiKasa', { n: nakitGun }) }}</span>
               <strong>{{ formatCurrency(nakitData.tahminiBitisBakiyesi) }}</strong>
             </div>
           </div>
 
           <h3 style="margin-top: 25px">
-            Günlük Nakit Akışı Detayı
+            {{ $t('raporlar.gunlukNakitAkisiDetayi') }}
           </h3>
           <DataTable
             :value="nakitData.gunlukAkis"
@@ -759,7 +759,7 @@
             </Column>
             <Column
               field="beklenenGiris"
-              header="Giriş (Tahsilat)"
+              :header="$t('raporlar.girisTahsilat')"
               style="width: 140px"
             >
               <template #body="s">
@@ -768,7 +768,7 @@
             </Column>
             <Column
               field="beklenenCikis"
-              header="Çıkış (Ödeme)"
+              :header="$t('raporlar.cikisOdeme')"
               style="width: 140px"
             >
               <template #body="s">
@@ -777,7 +777,7 @@
             </Column>
             <Column
               field="netAkis"
-              header="Net Günlük Akış"
+              :header="$t('raporlar.netGunlukAkis')"
               style="width: 140px"
             >
               <template #body="s">
@@ -786,7 +786,7 @@
             </Column>
             <Column
               field="kumulatifBakiye"
-              header="Tahmini Kasa Bakiyesi"
+              :header="$t('raporlar.tahminiKasaBakiyesi')"
               style="width: 170px"
             >
               <template #body="s">
@@ -801,11 +801,11 @@
         </div>
       </TabPanel>
 
-      <TabPanel header="Pivot Tablo">
+      <TabPanel :header="$t('raporlar.pivotTablo')">
         <div class="rapor-icerik">
           <div class="pivot-kontroller">
             <div class="pivot-alan">
-              <label>Satır</label>
+              <label>{{ $t('raporlar.satir') }}</label>
               <Dropdown
                 v-model="pivotSatir"
                 :options="pivotBoyutlar"
@@ -814,7 +814,7 @@
               />
             </div>
             <div class="pivot-alan">
-              <label>Sütun</label>
+              <label>{{ $t('raporlar.sutun') }}</label>
               <Dropdown
                 v-model="pivotSutun"
                 :options="pivotBoyutlar"
@@ -823,7 +823,7 @@
               />
             </div>
             <div class="pivot-alan">
-              <label>Değer</label>
+              <label>{{ $t('raporlar.deger') }}</label>
               <Dropdown
                 v-model="pivotDeger"
                 :options="pivotMetrikler"
@@ -832,11 +832,11 @@
               />
             </div>
             <div class="pivot-alan">
-              <label>Tarih Aralığı</label>
+              <label>{{ $t('raporlar.tarihAraligi') }}</label>
               <TarihHizliSecim v-model="pivotTarih" />
             </div>
             <Button
-              label="Uygula"
+              :label="$t('raporlar.uygula')"
               icon="pi pi-search"
               class="p-button-sm"
               @click="pivotYukle"
@@ -847,7 +847,7 @@
             v-if="pivotYukleniyor"
             class="loading"
           >
-            <i class="pi pi-spin pi-spinner" /> Hesaplanıyor...
+            <i class="pi pi-spin pi-spinner" /> {{ $t('raporlar.hesaplaniyor') }}
           </div>
 
           <div
@@ -881,7 +881,7 @@
                 </template>
               </Column>
               <Column
-                header="Toplam"
+                :header="$t('raporlar.toplam')"
                 style="min-width: 110px; text-align: right"
               >
                 <template #body="{ data }">
@@ -890,7 +890,7 @@
               </Column>
             </DataTable>
             <div class="pivot-genel">
-              Genel Toplam:
+              {{ $t('raporlar.genelToplamEtiketi') }}
               <strong>{{ pivotDeger === 'adet' ? pivotVerisi.genelToplam : formatCurrency(pivotVerisi.genelToplam) }}</strong>
             </div>
           </div>
@@ -930,18 +930,18 @@ const pivotDeger = ref('tutar')
 const pivotTarih = ref(null)
 const pivotVerisi = ref(null)
 const pivotYukleniyor = ref(false)
-const pivotBoyutlar = [
-  { label: 'Cari', value: 'cari' },
-  { label: 'Ürün', value: 'stok' },
-  { label: 'Kategori', value: 'kategori' },
-  { label: 'Tür', value: 'tur' },
-  { label: 'Ödeme Durumu', value: 'odeme' },
-  { label: 'Ay', value: 'ay' }
-]
-const pivotMetrikler = [
-  { label: 'Tutar (₺)', value: 'tutar' },
-  { label: 'Adet', value: 'adet' }
-]
+const pivotBoyutlar = computed(() => [
+  { label: t('raporlar.pivotCari'), value: 'cari' },
+  { label: t('raporlar.pivotUrun'), value: 'stok' },
+  { label: t('raporlar.pivotKategori'), value: 'kategori' },
+  { label: t('raporlar.pivotTur'), value: 'tur' },
+  { label: t('raporlar.pivotOdemeDurumu'), value: 'odeme' },
+  { label: t('raporlar.ay'), value: 'ay' }
+])
+const pivotMetrikler = computed(() => [
+  { label: t('raporlar.metrikTutar'), value: 'tutar' },
+  { label: t('raporlar.metrikAdet'), value: 'adet' }
+])
 
 const pivotSatirlar = computed(() => pivotVerisi.value?.satirlar || [])
 const pivotHucre = (satir, sutun) => pivotVerisi.value?.hucreler?.[satir]?.[sutun] ?? 0
@@ -988,10 +988,10 @@ const yazdir = (hedef) => {
   const icerik = hedef.value?.outerHTML || ''
   const win = window.open('', '_blank', 'width=900,height=700')
   if (!win) {
-    toastBildirim.hata('Pencere engellendi')
+    toastBildirim.hata(t('raporlar.pencereEngellendi'))
     return
   }
-  win.document.write(`<html><head><title>Rapor</title><style>
+  win.document.write(`<html><head><title>${t('raporlar.rapor')}</title><style>
     body { font-family: Arial, sans-serif; padding: 24px; color: #1e293b; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; }
     th { background: #1976d2; color: white; padding: 8px; text-align: left; font-size: 12px; }
@@ -1012,7 +1012,7 @@ const yazdir = (hedef) => {
 }
 
 const epostaGonder = (baslik, raporAdi) => {
-  toast.add({ severity: 'info', summary: 'Paylaşım', detail: `${raporAdi} e-posta ile paylaşılacak.`, life: 4000 })
+  toast.add({ severity: 'info', summary: t('raporlar.paylasim'), detail: t('raporlar.epostaPaylasilacak', { rapor: raporAdi }), life: 4000 })
 }
 
 const ekstreCariId = ref(null)
@@ -1060,7 +1060,7 @@ const getTedarikciUrunler = async () => {
     const r = await raporAPI.tedarikciUrunler()
     tuData.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Tedarikçi raporu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.tedarikciRaporuHata'))
   }
   tuLoading.value = false
 }
@@ -1074,7 +1074,7 @@ const getUrunKarlilik = async () => {
     const r = await raporAPI.urunKarlilik()
     ukData.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Ürün kârlılık raporu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.urunKarlilikHata'))
   }
   ukLoading.value = false
 }
@@ -1089,7 +1089,7 @@ const getNakitAkisi = async () => {
     const r = await raporAPI.nakitAkisiProjeksiyonu(nakitGun.value)
     nakitData.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Nakit akışı projeksiyonu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.nakitAkisiHata'))
   }
   nakitLoading.value = false
 }
@@ -1135,7 +1135,7 @@ watch(aktifSekme, (idx) => sekmeYukle(idx))
 
 const getCariEkstre = async () => {
   if (!ekstreCariId.value) {
-    toastBildirim.uyari('Lütfen bir Cari Hesap seçiniz.')
+    toastBildirim.uyari(t('raporlar.cariHesapSeciniz'))
     return
   }
   ekstreLoading.value = true
@@ -1147,7 +1147,7 @@ const getCariEkstre = async () => {
     })
     ekstreData.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari ekstre yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.cariEkstreHata'))
     ekstreData.value = null
   } finally {
     ekstreLoading.value = false
@@ -1163,7 +1163,7 @@ const getGelirGider = async () => {
     })
     ggData.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Gelir/gider raporu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.gelirGiderHata'))
     ggData.value = null
   } finally {
     ggLoading.value = false
@@ -1179,7 +1179,7 @@ const getKdv = async () => {
     })
     kdvData.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'KDV raporu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.kdvHata'))
     kdvData.value = null
   } finally {
     kdvLoading.value = false
@@ -1192,7 +1192,7 @@ const getYaslandirma = async () => {
     const r = await raporAPI.yaslandirma()
     yasData.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Yaşlandırma raporu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.yaslandirmaHata'))
     yasData.value = null
   } finally {
     yasLoading.value = false
@@ -1208,7 +1208,7 @@ const getCariKarlilik = async () => {
     })
     ckData.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || 'Cari karlılık raporu yüklenirken hata oluştu')
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.cariKarlilikHata'))
     ckData.value = null
   } finally {
     ckLoading.value = false

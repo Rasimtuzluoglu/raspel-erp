@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import FaturaTasarimModal from '../FaturaTasarimModal.vue'
+import i18n from '../../i18n.js'
 
 describe('FaturaTasarimModal.vue', () => {
   beforeEach(() => {
@@ -48,7 +49,7 @@ describe('FaturaTasarimModal.vue', () => {
         }
       },
       global: {
-        plugins: [PrimeVue, ToastService],
+        plugins: [PrimeVue, ToastService, i18n],
         stubs: commonStubs
       }
     })
@@ -65,7 +66,7 @@ describe('FaturaTasarimModal.vue', () => {
         visible: true
       },
       global: {
-        plugins: [PrimeVue, ToastService],
+        plugins: [PrimeVue, ToastService, i18n],
         stubs: commonStubs
       }
     })
@@ -96,7 +97,7 @@ describe('FaturaTasarimModal.vue', () => {
         visible: true
       },
       global: {
-        plugins: [PrimeVue, ToastService],
+        plugins: [PrimeVue, ToastService, i18n],
         stubs: commonStubs
       }
     })
@@ -115,7 +116,7 @@ describe('FaturaTasarimModal.vue', () => {
         visible: true
       },
       global: {
-        plugins: [PrimeVue, ToastService],
+        plugins: [PrimeVue, ToastService, i18n],
         stubs: commonStubs
       }
     })

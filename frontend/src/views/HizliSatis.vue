@@ -26,17 +26,17 @@
       v-if="ipucuAcik"
       class="pos-ipucu"
     >
-      <span><kbd>F1</kbd> Barkod</span>
-      <span><kbd>F2</kbd> Temizle</span>
-      <span><kbd>F3</kbd> Ürün ara</span>
-      <span><kbd>F4</kbd> Müşteri</span>
-      <span><kbd>F5</kbd> Yeni müşteri</span>
-      <span><kbd>F6</kbd> Kamera</span>
-      <span><kbd>F9</kbd>/<kbd>F10</kbd> Ödeme</span>
-      <span><kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd> Yöntem</span>
-      <span><kbd>↑</kbd>/<kbd>↓</kbd> Satır</span>
-      <span><kbd>Alt+↑/↓</kbd> Miktar</span>
-      <span><kbd>Del</kbd> Sil</span>
+      <span><kbd>F1</kbd> {{ $t('hizliSatis.barkod') }}</span>
+      <span><kbd>F2</kbd> {{ $t('hizliSatis.temizle') }}</span>
+      <span><kbd>F3</kbd> {{ $t('hizliSatis.ipucuUrunAra') }}</span>
+      <span><kbd>F4</kbd> {{ $t('hizliSatis.musteri') }}</span>
+      <span><kbd>F5</kbd> {{ $t('hizliSatis.ipucuYeniMusteri') }}</span>
+      <span><kbd>F6</kbd> {{ $t('hizliSatis.ipucuKamera') }}</span>
+      <span><kbd>F9</kbd>/<kbd>F10</kbd> {{ $t('hizliSatis.odeme') }}</span>
+      <span><kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd> {{ $t('hizliSatis.ipucuYontem') }}</span>
+      <span><kbd>↑</kbd>/<kbd>↓</kbd> {{ $t('hizliSatis.ipucuSatir') }}</span>
+      <span><kbd>Alt+↑/↓</kbd> {{ $t('hizliSatis.miktar') }}</span>
+      <span><kbd>Del</kbd> {{ $t('hizliSatis.ipucuSil') }}</span>
       <button
         type="button"
         class="pos-ipucu-kapat"
@@ -329,9 +329,9 @@
                   class="sepet-son-alis"
                 >
                   <i class="pi pi-history" />
-                  {{ seciliMusteri?.ad || 'Müşteri' }} bu ürünü en son
+                  {{ seciliMusteri?.ad || $t('hizliSatis.musteri') }} {{ $t('hizliSatis.sonAlisOncesi') }}
                   <strong>{{ formatCurrency(item.sonAldigiFiyat) }}</strong>
-                  {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} aldı
+                  {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} {{ $t('hizliSatis.sonAlisSonrasi') }}
                 </div>
               </div>
               <hr class="ozet-ayrac">
@@ -766,7 +766,7 @@
           id="ym-tur"
           v-model="yeniMusteri.tur"
           :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
-          placeholder="MÜŞTERİ"
+          :placeholder="$t('hizliSatis.musteriPlaceholder')"
           class="w-full"
         />
       </div>
@@ -945,7 +945,7 @@ const offlineKuyruguSenkronizeEt = async () => {
   try {
     const gonderilen = await offlineKuyruk.senkronizeEt((s) => faturaAPI.create(s))
     if (gonderilen > 0) {
-      toast.add({ severity: 'success', summary: 'Senkronize edildi', detail: `${gonderilen} satış gönderildi`, life: 3000 })
+      toast.add({ severity: 'success', summary: t('hizliSatis.senkronizeEdildi'), detail: t('hizliSatis.satisGonderildi', { n: gonderilen }), life: 3000 })
     }
   } catch {
     /* empty */
@@ -1108,7 +1108,7 @@ const barkodTarandi = async (barkod) => {
   let urun = stokStore.stoklar.find((s) => s.barkod === barkod || s.seriNo === barkod)
   if (urun) {
     sepeteEkle(urun)
-    toast.add({ severity: 'success', summary: 'Ürün Eklendi', detail: urun.ad, life: 2000 })
+    toast.add({ severity: 'success', summary: t('hizliSatis.urunEklendi'), detail: urun.ad, life: 2000 })
   } else {
     // Sunucuda ara (büyük envanterde tümü yüklenmemiş olabilir)
     try {
@@ -1116,13 +1116,13 @@ const barkodTarandi = async (barkod) => {
       const bulunan = (r.data || []).find((s) => s.barkod === barkod || s.seriNo === barkod)
       if (bulunan) {
         sepeteEkle(bulunan)
-        toast.add({ severity: 'success', summary: 'Ürün Eklendi', detail: bulunan.ad, life: 2000 })
+        toast.add({ severity: 'success', summary: t('hizliSatis.urunEklendi'), detail: bulunan.ad, life: 2000 })
         return
       }
     } catch {
       /* sunucu araması başarısız olabilir */
     }
-    toast.add({ severity: 'warn', summary: 'Bulunamadı', detail: `"${barkod}" barkodlu ürün bulunamadı`, life: 3000 })
+    toast.add({ severity: 'warn', summary: t('hizliSatis.bulunamadi'), detail: t('hizliSatis.barkodluUrunBulunamadi', { barkod }), life: 3000 })
     hizliUrun.value = { barkod, ad: '', fiyat: 0, miktar: 1 }
     hizliUrunDialog.value = true
   }
@@ -1159,7 +1159,7 @@ const sepet = ref([])
 const kaydediliyor = ref(false)
 const fisNo = ref('')
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
-const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
+const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || t('hizliSatis.fisAltNotVarsayilan'))
 
 // Sekmeler arası canlı senkron: Ayarlar'da değişince POS'a anında yansır
 const dinleyici = (e) => {
@@ -1262,7 +1262,7 @@ const urunFiyatlariniYukle = async (urunler) => {
       const r = await stokAPI.getFiyatlar(u.id)
       const liste = r.data || []
       if (liste.length) {
-        yeni[u.id] = liste.map((f) => ({ ad: f.ad || f.fiyatTipi || f.tip || 'Fiyat', fiyat: Number(f.fiyat) }))
+        yeni[u.id] = liste.map((f) => ({ ad: f.ad || f.fiyatTipi || f.tip || t('hizliSatis.fiyat'), fiyat: Number(f.fiyat) }))
       }
     } catch {
       /* fiyat listesi alınamadı */
@@ -1306,7 +1306,7 @@ const sepetKaydet = () => {
   if (!sepet.value.length) return
   localStorage.setItem(SEPET_KEY, JSON.stringify(sepet.value))
   kayitliSepetVar.value = true
-  toast.add({ severity: 'success', summary: 'Sepet Kaydedildi', detail: 'Kayıtlı sepete istediğinizde dönebilirsiniz.', life: 3000 })
+  toast.add({ severity: 'success', summary: t('hizliSatis.sepetKaydedildi'), detail: t('hizliSatis.sepetKaydedildiDetay'), life: 3000 })
 }
 
 const sepetYukle = () => {
@@ -1315,7 +1315,7 @@ const sepetYukle = () => {
     sepet.value = kayit
     kayitliSepetVar.value = false
     localStorage.removeItem(SEPET_KEY)
-    toast.add({ severity: 'info', summary: 'Sepet Yüklendi', detail: 'Kayıtlı sepet geri yüklendi.', life: 3000 })
+    toast.add({ severity: 'info', summary: t('hizliSatis.sepetYuklendi'), detail: t('hizliSatis.sepetYuklendiDetay'), life: 3000 })
   } catch {
     /* empty */
   }
@@ -1387,13 +1387,13 @@ const musteriBakiyeUyarisi = computed(() => {
   const bakiye = seciliMusteri.value.bakiye
   const krediLimiti = seciliMusteri.value.krediLimiti
   if (krediLimiti != null && bakiye != null && bakiye < 0 && Math.abs(bakiye) >= krediLimiti) {
-    return { seviye: 'danger', mesaj: `Kredi limiti aşıldı! Borç: ${formatCurrency(Math.abs(bakiye))}` }
+    return { seviye: 'danger', mesaj: t('hizliSatis.krediLimitiAsildi', { tutar: formatCurrency(Math.abs(bakiye)) }) }
   }
   if (bakiye != null && bakiye < 0) {
-    return { seviye: 'warn', mesaj: `Borç: ${formatCurrency(Math.abs(bakiye))}` }
+    return { seviye: 'warn', mesaj: t('hizliSatis.borc', { tutar: formatCurrency(Math.abs(bakiye)) }) }
   }
   if (bakiye != null && bakiye > 0) {
-    return { seviye: 'info', mesaj: `Alacak: ${formatCurrency(bakiye)}` }
+    return { seviye: 'info', mesaj: t('hizliSatis.alacak', { tutar: formatCurrency(bakiye) }) }
   }
   return null
 })
@@ -1521,7 +1521,7 @@ const cariOzelFiyatlariYukle = async () => {
 
 const musteriKaydet = async () => {
   if (!yeniMusteri.value.ad) {
-    toastBildirim.uyari('Ad / Firma adı zorunludur')
+    toastBildirim.uyari(t('hizliSatis.adFirmaZorunlu'))
     return
   }
   musteriKaydediliyor.value = true
@@ -1531,9 +1531,9 @@ const musteriKaydet = async () => {
     musteriGiris.value = ''
     yeniMusteriDialog.value = false
     yeniMusteri.value = { ad: '', telefon: '', email: '', adres: '', vergiNo: '', tur: 'Musteri' }
-    toastBildirim.basarili('Cari hesap oluşturuldu')
+    toastBildirim.basarili(t('hizliSatis.cariHesapOlusturuldu'))
   } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || 'Kayıt başarısız')
+    toastBildirim.hata(e?.response?.data?.message || t('hizliSatis.kayitBasarisiz'))
   }
   musteriKaydediliyor.value = false
 }
@@ -1552,9 +1552,9 @@ const sepeteEkle = async (u) => {
   if (!fiyatlar) {
     const tckilen = await urunFiyatlariniYukleTek(u)
     fiyatlar = (tckilen && tckilen.length > 0) ? tckilen : [
-      { ad: 'Perakende', fiyat: stdFiyat },
-      { ad: 'Toptan', fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
-      { ad: 'Özel', fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
+      { ad: t('hizliSatis.fiyatPerakende'), fiyat: stdFiyat },
+      { ad: t('hizliSatis.fiyatToptan'), fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
+      { ad: t('hizliSatis.fiyatOzel'), fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
     ]
   }
 
@@ -1566,7 +1566,7 @@ const sepeteEkle = async (u) => {
     miktar: 1,
     fiyat: fiyatlar[0]?.fiyat ?? stdFiyat,
     fiyatlar,
-    fiyatTipi: fiyatlar[0]?.ad ?? 'Perakende',
+    fiyatTipi: fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende'),
     birim: u.birim || 'adet',
     birimHacim: u.birimHacim || 1,
     sonAldigiFiyat: null,
@@ -1586,10 +1586,10 @@ const sepeteEkle = async (u) => {
         yeniItem.sonAldigiTarih = enSon?.tarih || null
         // Müşteri daha önce almışsa son aldığı fiyat ile öner, fiyatlara da ekle
         yeniItem.fiyat = data.sonFiyat
-        if (!fiyatlar.some((f) => f.ad === 'Son Aldığı')) {
-          fiyatlar.unshift({ ad: 'Son Aldığı', fiyat: data.sonFiyat })
+        if (!fiyatlar.some((f) => f.ad === t('hizliSatis.fiyatSonAldigi'))) {
+          fiyatlar.unshift({ ad: t('hizliSatis.fiyatSonAldigi'), fiyat: data.sonFiyat })
         }
-        yeniItem.fiyatTipi = fiyatlar[0]?.ad ?? 'Perakende'
+        yeniItem.fiyatTipi = fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende')
       }
     } catch {
       /* cari fiyat geçmişi alınamadı */
@@ -1618,10 +1618,10 @@ const sepeteCariFiyatUygula = async () => {
         const enSon = (data.gecmis || [])[0]
         item.sonAldigiTarih = enSon?.tarih || null
         item.fiyat = data.sonFiyat
-        if (!item.fiyatlar.some((f) => f.ad === 'Son Aldığı')) {
-          item.fiyatlar.unshift({ ad: 'Son Aldığı', fiyat: data.sonFiyat })
+        if (!item.fiyatlar.some((f) => f.ad === t('hizliSatis.fiyatSonAldigi'))) {
+          item.fiyatlar.unshift({ ad: t('hizliSatis.fiyatSonAldigi'), fiyat: data.sonFiyat })
         }
-        item.fiyatTipi = 'Son Aldığı'
+        item.fiyatTipi = t('hizliSatis.fiyatSonAldigi')
       }
     } catch {
       /* cari fiyat geçmişi alınamadı */
@@ -1654,22 +1654,22 @@ const fisiYazdir = () => {
   const ozetHtml = fiyatli
     ? `
     <div class="ayrac">- - - - - - - - - - - - - -</div>
-    <div class="satir"><span class="ad">Ara Toplam</span><span class="tutar">${formatCurrency(toplam.value)}</span></div>
-    ${indirimDegeri.value > 0 ? `<div class="satir"><span class="ad">İndirim${indirimTipi.value === 'yuzde' ? ' (' + indirimDegeri.value + '%)' : ''}</span><span class="tutar">-${formatCurrency(indirimTutari.value)}</span></div>` : ''}
-    <div class="satir genel"><span class="ad">GENEL TOPLAM</span><span class="tutar">${formatCurrency(genelToplam.value)}</span></div>
+    <div class="satir"><span class="ad">${t('hizliSatis.araToplam')}</span><span class="tutar">${formatCurrency(toplam.value)}</span></div>
+    ${indirimDegeri.value > 0 ? `<div class="satir"><span class="ad">${t('hizliSatis.indirim')}${indirimTipi.value === 'yuzde' ? ' (' + indirimDegeri.value + '%)' : ''}</span><span class="tutar">-${formatCurrency(indirimTutari.value)}</span></div>` : ''}
+    <div class="satir genel"><span class="ad">${t('hizliSatis.fisGenelToplam')}</span><span class="tutar">${formatCurrency(genelToplam.value)}</span></div>
     <div class="ayrac">- - - - - - - - - - - - - -</div>
-    <div class="satir"><span class="ad">Ödenen</span><span class="tutar">${formatCurrency(odenenTutar.value)}</span></div>
-    ${kalanTutar.value > 0 ? `<div class="satir"><span class="ad">Kalan</span><span class="tutar">${formatCurrency(kalanTutar.value)}</span></div>` : ''}
+    <div class="satir"><span class="ad">${t('hizliSatis.fisOdenen')}</span><span class="tutar">${formatCurrency(odenenTutar.value)}</span></div>
+    ${kalanTutar.value > 0 ? `<div class="satir"><span class="ad">${t('hizliSatis.fisKalan')}</span><span class="tutar">${formatCurrency(kalanTutar.value)}</span></div>` : ''}
   `
     : ''
 
-  const musteriHtml = musteriAdi.value ? `<div class="musteri">Müşteri: ${escapeHtml(musteriAdi.value)}</div>` : ''
+  const musteriHtml = musteriAdi.value ? `<div class="musteri">${t('hizliSatis.fisMusteri')} ${escapeHtml(musteriAdi.value)}</div>` : ''
 
   const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Fiş Önizleme</title>
+<title>${t('hizliSatis.fisOnizleme')}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Courier New', monospace; width: 80mm; margin: 0 auto; color: #000; font-size: 12px; }
@@ -1702,32 +1702,32 @@ const fisiYazdir = () => {
 </head>
 <body>
   <div class="aracubuk">
-    <button onclick="window.print()">Yazdır</button>
-    <button class="iptal" onclick="window.close()">Kapat</button>
+    <button onclick="window.print()">${t('hizliSatis.yazdir')}</button>
+    <button class="iptal" onclick="window.close()">${t('hizliSatis.kapat')}</button>
   </div>
   <div class="fis">
     <div class="baslik">${escapeHtml(sirketAdi.value || 'RASPEL ERP')}</div>
     <div class="tarih">${simdikiTarih.value}</div>
-    <div class="fisno">Fiş No: ${fisNo.value}</div>
+    <div class="fisno">${t('hizliSatis.fisNo')} ${fisNo.value}</div>
     ${musteriHtml}
-    ${teslimEden.value ? `<div class="musteri">Teslim Eden: ${escapeHtml(teslimEden.value)}</div>` : ''}
-    ${teslimDurumu.value && teslimDurumu.value !== 'BEKLIYOR' ? `<div class="musteri">Teslim: ${teslimDurumEtiketi(teslimDurumu.value)}</div>` : ''}
-    ${teslimNotu.value ? `<div class="musteri">Not: ${escapeHtml(teslimNotu.value)}</div>` : ''}
+    ${teslimEden.value ? `<div class="musteri">${t('hizliSatis.teslimEden')}: ${escapeHtml(teslimEden.value)}</div>` : ''}
+    ${teslimDurumu.value && teslimDurumu.value !== 'BEKLIYOR' ? `<div class="musteri">${t('hizliSatis.teslimEtiketi')}: ${teslimDurumEtiketi(teslimDurumu.value)}</div>` : ''}
+    ${teslimNotu.value ? `<div class="musteri">${t('hizliSatis.not')}: ${escapeHtml(teslimNotu.value)}</div>` : ''}
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     ${kalemHtml}
     ${ozetHtml}
-    <div class="satir"><span class="ad">Toplam Ürün</span><span class="tutar">${sepet.value.length}</span></div>
-    <div class="satir"><span class="ad">Durum</span><span class="tutar">${odemeDurumText.value}</span></div>
+    <div class="satir"><span class="ad">${t('hizliSatis.toplamUrun')}</span><span class="tutar">${sepet.value.length}</span></div>
+    <div class="satir"><span class="ad">${t('common.status')}</span><span class="tutar">${odemeDurumText.value}</span></div>
     <div class="ayrac">- - - - - - - - - - - - - -</div>
-    <div class="tesekkur">Islem Yapan: ${escapeHtml(authStore?.kullanici?.displayName || '-')}</div>
-    <div class="tesekkur">Iyi gunler dileriz</div>
+    <div class="tesekkur">${t('hizliSatis.islemYapan')} ${escapeHtml(authStore?.kullanici?.displayName || '-')}</div>
+    <div class="tesekkur">${t('hizliSatis.iyiGunlerDileriz')}</div>
   </div>
 </body>
 </html>`
 
   const win = window.open('', '_blank', 'width=400,height=600')
   if (!win) {
-    toastBildirim.hata('Pencere engellendi. Pop-up engelleyiciyi kapatın.')
+    toastBildirim.hata(t('hizliSatis.pencereEngellendi'))
     return
   }
   win.document.open()
@@ -1760,7 +1760,7 @@ const termalYazdir = async () => {
       fisiYazdir()
     }
   } catch {
-    toastBildirim.hata('Termal yazıcıya gönderilemedi')
+    toastBildirim.hata(t('hizliSatis.termalGonderilemedi'))
   }
 }
 
@@ -1773,12 +1773,12 @@ const escapeHtml = (metin) => {
     .replace(/'/g, '&#39;')
 }
 
-const teslimDurumEtiketi = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLIM_EDILDI: 'Teslim Edildi' })[d] || d
+const teslimDurumEtiketi = (d) => ({ BEKLIYOR: t('faturalar.durumBekliyor'), YOLDA: t('faturalar.durumYolda'), TESLIM_EDILDI: t('faturalar.durumTeslimEdildi') })[d] || d
 
 const hizliUrunKaydet = async () => {
   const u = hizliUrun.value
   if (!u.ad || !u.ad.trim()) {
-    toast.add({ severity: 'warn', summary: 'Eksik bilgi', detail: 'Ürün adı zorunludur', life: 2500 })
+    toast.add({ severity: 'warn', summary: t('hizliSatis.eksikBilgi'), detail: t('hizliSatis.urunAdiZorunlu'), life: 2500 })
     return
   }
   hizliUrunKaydediliyor.value = true
@@ -1793,7 +1793,7 @@ const hizliUrunKaydet = async () => {
     })
     const olusan = r.data || { ...u }
     hizliUrunDialog.value = false
-    toast.add({ severity: 'success', summary: 'Ürün eklendi', detail: u.ad, life: 2500 })
+    toast.add({ severity: 'success', summary: t('hizliSatis.urunEklendi'), detail: u.ad, life: 2500 })
     await sepeteEkle(olusan)
     if (Number(u.miktar) > 1 && olusan?.id) {
       const item = sepet.value.find((i) => i.id === olusan.id)
@@ -1802,8 +1802,8 @@ const hizliUrunKaydet = async () => {
   } catch (e) {
     toast.add({
       severity: 'error',
-      summary: 'Kaydedilemedi',
-      detail: e?.response?.data?.message || 'Ürün oluşturulamadı',
+      summary: t('hizliSatis.kaydedilemedi'),
+      detail: e?.response?.data?.message || t('hizliSatis.urunOlusturulamadi'),
       life: 3000
     })
   } finally {
@@ -1815,18 +1815,18 @@ const satisiTamamla = async () => {
   if (!anlikMusteri.value && !seciliMusteri.value) {
     toast.add({
       severity: 'warn',
-      summary: 'Müşteri gerekli',
-      detail: 'Müşteri seçin veya Perakende moduna geçin',
+      summary: t('hizliSatis.musteriGerekli'),
+      detail: t('hizliSatis.musteriSecin'),
       life: 3000
     })
     return
   }
   if (sepet.value.length === 0) {
-    toast.add({ severity: 'warn', summary: 'Sepet boş', detail: 'Önce ürün ekleyin', life: 2500 })
+    toast.add({ severity: 'warn', summary: t('hizliSatis.sepetBos'), detail: t('hizliSatis.onceUrunEkleyin'), life: 2500 })
     return
   }
   if (odemeYontemi.value === 'TAKSIT' && (!taksitKurum.value.trim() || !taksitTutar.value || taksitTutar.value <= 0)) {
-    toastBildirim.uyari('Taksit seçildiğinde kurum ve çekilen tutar girilmelidir')
+    toastBildirim.uyari(t('hizliSatis.taksitZorunlu'))
     return
   }
   kaydediliyor.value = true
@@ -1869,7 +1869,7 @@ const satisiTamamla = async () => {
       yontem: odemeYontemi.value,
       paraUstu: paraUstu.value
     }
-    toastBildirim.basarili(`Satış tamamlandı - ${formatCurrency(genelToplam.value)}`)
+    toastBildirim.basarili(t('hizliSatis.satisTamamlandi') + ' - ' + formatCurrency(genelToplam.value))
     try {
       fisiYazdir()
     } catch {
@@ -1886,8 +1886,8 @@ const satisiTamamla = async () => {
       offlineKuyruk.ekle(satisVerisi)
       toast.add({
         severity: 'warn',
-        summary: 'Çevrimdışı satış kuyruğa alındı',
-        detail: 'Bağlantı gelince otomatik gönderilecek',
+        summary: t('hizliSatis.cevrimdisiKuyruk'),
+        detail: t('hizliSatis.baglantiGelince'),
         life: 4000
       })
       try {
@@ -1897,7 +1897,7 @@ const satisiTamamla = async () => {
       }
       sepetiTemizle()
     } else {
-      toastBildirim.hata(e?.response?.data?.message || 'Satış başarısız')
+      toastBildirim.hata(e?.response?.data?.message || t('hizliSatis.satisBasarisiz'))
     }
   }
   kaydediliyor.value = false
@@ -1906,18 +1906,18 @@ const satisiTamamla = async () => {
 // Son satışı iptal et (stok geri alınır)
 const sonSatisiIptalEt = async () => {
   if (!sonSatis.value?.id) {
-    toastBildirim.uyari('Geri alınacak son satış yok')
+    toastBildirim.uyari(t('hizliSatis.geriAlinacakSatisYok'))
     return
   }
   try {
     await faturaAPI.updateDurum(sonSatis.value.id, 'IPTAL')
-    toastBildirim.basarili('Son satış iptal edildi, stok geri alındı')
+    toastBildirim.basarili(t('hizliSatis.sonSatisIptalEdildi'))
     sonSatis.value = null
     gunlukSatislariYukle()
     stokStore.getAll()
     kasalariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İptal başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('hizliSatis.iptalBasarisiz'))
   }
 }
 

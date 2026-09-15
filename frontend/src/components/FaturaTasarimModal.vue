@@ -4,7 +4,7 @@
     :modal="true"
     :closable="true"
     :maximizable="true"
-    header="Fatura Yazdırma & Şablon Tasarımcısı"
+    :header="$t('faturaTasarim.title')"
     class="fatura-tasarim-dialog"
     :style="{ width: '96vw', maxWidth: '1400px', height: '92vh' }"
     @update:visible="$emit('update:visible', $event)"
@@ -13,16 +13,16 @@
       <!-- SOL PANEL: Tasarım & Görünüm Ayarları -->
       <div class="tasarim-sidebar no-print">
         <div class="sidebar-header">
-          <h3><i class="pi pi-sliders-h" /> Şablon Ayarları</h3>
+          <h3><i class="pi pi-sliders-h" /> {{ $t('faturaTasarim.sablonAyarlari') }}</h3>
           <p class="sidebar-sub">
-            Yazdırılacak faturanın görünümünü ve kolonlarını dilediğiniz gibi özelleştirin.
+            {{ $t('faturaTasarim.sablonAyarlariAlt') }}
           </p>
         </div>
 
         <div class="ayar-gruplari">
           <!-- 1. Hazır Şablon Modeli -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-palette" /> Şablon Teması</label>
+            <label class="ayar-baslik"><i class="pi pi-palette" /> {{ $t('faturaTasarim.sablonTemasi') }}</label>
             <div class="sablon-secici">
               <button
                 v-for="s in sablonSecenekleri"
@@ -39,9 +39,9 @@
 
           <!-- 2. Kağıt Boyutu & Sayfa Düzeni -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-file" /> Kağıt Boyutu & Düzen</label>
+            <label class="ayar-baslik"><i class="pi pi-file" /> {{ $t('faturaTasarim.kagitBoyutuDuzen') }}</label>
             <div class="form-satir">
-              <label class="alt-etiket">Sayfa Formatı</label>
+              <label class="alt-etiket">{{ $t('faturaTasarim.sayfaFormati') }}</label>
               <Dropdown
                 v-model="ayarlar.kagitBoyutu"
                 :options="kagitBoyutSecenekleri"
@@ -55,7 +55,7 @@
               v-if="!ayarlar.kagitBoyutu.startsWith('termal')"
               class="form-satir mt-2"
             >
-              <label class="alt-etiket">Sayfa Yönü</label>
+              <label class="alt-etiket">{{ $t('faturaTasarim.sayfaYonu') }}</label>
               <SelectButton
                 v-model="ayarlar.sayfaYonu"
                 :options="sayfaYonuSecenekleri"
@@ -67,7 +67,7 @@
             </div>
 
             <div class="form-satir mt-2">
-              <label class="alt-etiket">Kenar Boşluğu</label>
+              <label class="alt-etiket">{{ $t('faturaTasarim.kenarBoslugu') }}</label>
               <SelectButton
                 v-model="ayarlar.kenarBoslugu"
                 :options="kenarBoslukSecenekleri"
@@ -81,7 +81,7 @@
 
           <!-- 3. Vurgu Rengi & Yazı Tipi -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-sparkles" /> Vurgu Rengi</label>
+            <label class="ayar-baslik"><i class="pi pi-sparkles" /> {{ $t('faturaTasarim.vurguRengi') }}</label>
             <div class="renk-paleti">
               <button
                 v-for="r in renkSecenekleri"
@@ -95,14 +95,14 @@
                 <input
                   v-model="ayarlar.renk"
                   type="color"
-                  title="Özel Renk Seç"
+                  :title="$t('faturaTasarim.ozelRenkSec')"
                   class="ozel-renk-input"
                 >
               </div>
             </div>
 
             <div class="font-secici mt-3">
-              <label class="alt-etiket">Yazı Tipi</label>
+              <label class="alt-etiket">{{ $t('faturaTasarim.yaziTipi') }}</label>
               <Dropdown
                 v-model="ayarlar.fontFamily"
                 :options="fontSecenekleri"
@@ -115,26 +115,26 @@
 
           <!-- 3. Başlık & Logo Ayarları -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-id-card" /> Belge & Başlık</label>
+            <label class="ayar-baslik"><i class="pi pi-id-card" /> {{ $t('faturaTasarim.belgeBaslik') }}</label>
             <div class="form-satir">
-              <label class="alt-etiket">Fatura Başlığı</label>
+              <label class="alt-etiket">{{ $t('faturaTasarim.faturaBasligi') }}</label>
               <InputText
                 v-model="ayarlar.faturaBasligi"
-                placeholder="Örn: SATIŞ FATURASI"
+                :placeholder="$t('faturaTasarim.faturaBasligiPlaceholder')"
                 class="w-full"
               />
             </div>
             <div class="form-satir mt-2">
-              <label class="alt-etiket">Alt Başlık / Slogan</label>
+              <label class="alt-etiket">{{ $t('faturaTasarim.altBaslikSlogan') }}</label>
               <InputText
                 v-model="ayarlar.altBaslik"
-                placeholder="Örn: Resmi Fatura Sureti"
+                :placeholder="$t('faturaTasarim.altBaslikPlaceholder')"
                 class="w-full"
               />
             </div>
 
             <div class="toggle-satir mt-3">
-              <span>Şirket Logosu Göster</span>
+              <span>{{ $t('faturaTasarim.sirketLogosuGoster') }}</span>
               <InputSwitch v-model="ayarlar.logoGoster" />
             </div>
             <div
@@ -142,7 +142,7 @@
               class="logo-ayarlari mt-2"
             >
               <div class="form-satir">
-                <label class="alt-etiket">Logo Boyutu</label>
+                <label class="alt-etiket">{{ $t('faturaTasarim.logoBoyutu') }}</label>
                 <SelectButton
                   v-model="ayarlar.logoBoyutu"
                   :options="logoBoyutSecenekleri"
@@ -152,7 +152,7 @@
                 />
               </div>
               <div class="form-satir mt-2">
-                <label class="alt-etiket">Logo Konumu</label>
+                <label class="alt-etiket">{{ $t('faturaTasarim.logoKonumu') }}</label>
                 <SelectButton
                   v-model="ayarlar.logoKonumu"
                   :options="logoKonumSecenekleri"
@@ -166,22 +166,22 @@
 
           <!-- 4. Şirket & Cari Bilgi Alanları -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-building" /> Firma & Müşteri Bilgileri</label>
+            <label class="ayar-baslik"><i class="pi pi-building" /> {{ $t('faturaTasarim.firmaMusteriBilgileri') }}</label>
             <div class="toggle-listesi">
               <div class="toggle-satir">
-                <span>Firma Vergi No / Dairesi</span>
+                <span>{{ $t('faturaTasarim.firmaVergiNoDairesi') }}</span>
                 <InputSwitch v-model="ayarlar.firmaVergiBilgileri" />
               </div>
               <div class="toggle-satir">
-                <span>Firma Adresi & İletişim</span>
+                <span>{{ $t('faturaTasarim.firmaAdresiIletisim') }}</span>
                 <InputSwitch v-model="ayarlar.firmaAdresBilgileri" />
               </div>
               <div class="toggle-satir">
-                <span>Mersis / Ticaret Sicil No</span>
+                <span>{{ $t('faturaTasarim.mersisTicaretSicil') }}</span>
                 <InputSwitch v-model="ayarlar.firmaMersisGoster" />
               </div>
               <div class="toggle-satir">
-                <span>Müşteri / Cari Detayları</span>
+                <span>{{ $t('faturaTasarim.musteriCariDetaylari') }}</span>
                 <InputSwitch v-model="ayarlar.cariDetayGoster" />
               </div>
             </div>
@@ -189,26 +189,26 @@
 
           <!-- 5. Tablo Kolonları -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-table" /> Fatura Kalem Kolonları</label>
+            <label class="ayar-baslik"><i class="pi pi-table" /> {{ $t('faturaTasarim.faturaKalemKolonlari') }}</label>
             <div class="toggle-listesi">
               <div class="toggle-satir">
-                <span>Sıra No (#)</span>
+                <span>{{ $t('faturaTasarim.siraNo') }}</span>
                 <InputSwitch v-model="ayarlar.kolonSiraNo" />
               </div>
               <div class="toggle-satir">
-                <span>Stok / Ürün Kodu</span>
+                <span>{{ $t('faturaTasarim.stokUrunKodu') }}</span>
                 <InputSwitch v-model="ayarlar.kolonStokKodu" />
               </div>
               <div class="toggle-satir">
-                <span>İskonto Sütunu</span>
+                <span>{{ $t('faturaTasarim.iskontoSutunu') }}</span>
                 <InputSwitch v-model="ayarlar.kolonIskonto" />
               </div>
               <div class="toggle-satir">
-                <span>KDV Oranı Sütunu</span>
+                <span>{{ $t('faturaTasarim.kdvOraniSutunu') }}</span>
                 <InputSwitch v-model="ayarlar.kolonKdvOrani" />
               </div>
               <div class="toggle-satir">
-                <span>Fiyat ve Tutarlar</span>
+                <span>{{ $t('faturaTasarim.fiyatVeTutarlar') }}</span>
                 <InputSwitch v-model="ayarlar.fiyatGoster" />
               </div>
             </div>
@@ -216,10 +216,10 @@
 
           <!-- 6. Banka & İmza & Karekod -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-credit-card" /> Banka, İmza & Ekstra</label>
+            <label class="ayar-baslik"><i class="pi pi-credit-card" /> {{ $t('faturaTasarim.bankaImzaEkstra') }}</label>
             <div class="toggle-listesi">
               <div class="toggle-satir">
-                <span>Banka & IBAN Bilgisi</span>
+                <span>{{ $t('faturaTasarim.bankaIbanBilgisi') }}</span>
                 <InputSwitch v-model="ayarlar.bankaGoster" />
               </div>
               <div
@@ -228,33 +228,33 @@
               >
                 <InputText
                   v-model="ayarlar.bankaAdi"
-                  placeholder="Banka Adı (Örn: Garanti BBVA)"
+                  :placeholder="$t('faturaTasarim.bankaAdiPlaceholder')"
                   class="w-full mb-1"
                 />
                 <InputText
                   v-model="ayarlar.ibanNo"
-                  placeholder="IBAN (TR...)"
+                  :placeholder="$t('faturaTasarim.ibanPlaceholder')"
                   class="w-full mb-1"
                 />
                 <InputText
                   v-model="ayarlar.hesapSahibi"
-                  placeholder="Hesap Sahibi"
+                  :placeholder="$t('faturaTasarim.hesapSahibiPlaceholder')"
                   class="w-full"
                 />
               </div>
 
               <div class="toggle-satir mt-2">
-                <span>Karekod (QR Kod) Alanı</span>
+                <span>{{ $t('faturaTasarim.karekodAlani') }}</span>
                 <InputSwitch v-model="ayarlar.qrKodGoster" />
               </div>
 
               <div class="toggle-satir mt-2">
-                <span>Teslim Eden / Alan İmza Kutusu</span>
+                <span>{{ $t('faturaTasarim.imzaKutusuAlani') }}</span>
                 <InputSwitch v-model="ayarlar.imzaKutusuGoster" />
               </div>
 
               <div class="toggle-satir mt-2">
-                <span>Ödeme Durumu Rozeti</span>
+                <span>{{ $t('faturaTasarim.odemeDurumuRozeti') }}</span>
                 <InputSwitch v-model="ayarlar.odemeDurumuGoster" />
               </div>
             </div>
@@ -262,9 +262,9 @@
 
           <!-- 7. Dipnot & Hukuki Şartlar -->
           <div class="ayar-kutu">
-            <label class="ayar-baslik"><i class="pi pi-align-left" /> Dipnot & Hukuki Açıklama</label>
+            <label class="ayar-baslik"><i class="pi pi-align-left" /> {{ $t('faturaTasarim.dipnotHukuki') }}</label>
             <div class="toggle-satir mb-2">
-              <span>Dipnot Alanını Göster</span>
+              <span>{{ $t('faturaTasarim.dipnotAlaniniGoster') }}</span>
               <InputSwitch v-model="ayarlar.dipnotGoster" />
             </div>
             <div v-if="ayarlar.dipnotGoster">
@@ -272,7 +272,7 @@
                 v-model="ayarlar.dipnotMetni"
                 rows="3"
                 class="w-full"
-                placeholder="Fatura altı dipnot metni..."
+                :placeholder="$t('faturaTasarim.dipnotPlaceholder')"
               />
             </div>
           </div>
@@ -288,7 +288,7 @@
             <i
               class="pi pi-save"
               style="margin-right: 6px"
-            /> Varsayılan Olarak Kaydet
+            /> {{ $t('faturaTasarim.varsayilanOlarakKaydet') }}
           </button>
           <button
             type="button"
@@ -298,7 +298,7 @@
             <i
               class="pi pi-refresh"
               style="margin-right: 6px"
-            /> Varsayılana Sıfırla
+            /> {{ $t('faturaTasarim.varsayilanaSifirla') }}
           </button>
         </div>
       </div>
@@ -334,7 +334,7 @@
               <i
                 class="pi pi-print"
                 style="margin-right: 6px"
-              /> Hemen Yazdır / PDF
+              /> {{ $t('faturaTasarim.hemenYazdirPdf') }}
             </button>
           </div>
         </div>
@@ -384,14 +384,14 @@
                 </div>
                 <div class="firma-detaylari">
                   <h2 class="firma-unvani">
-                    {{ sirket?.ad || authStore.sirketAdi || 'RasPel ERP A.Ş.' }}
+                    {{ sirket?.ad || authStore.sirketAdi || $t('faturaTasarim.firmaAdiFallback') }}
                   </h2>
                   <div
                     v-if="ayarlar.firmaVergiBilgileri"
                     class="firma-alt-bilgi"
                   >
-                    <span v-if="sirket?.vergiDairesi"><strong>V.D.:</strong> {{ sirket.vergiDairesi }}</span>
-                    <span v-if="sirket?.vergiNo"><strong>V.No:</strong> {{ sirket.vergiNo }}</span>
+                    <span v-if="sirket?.vergiDairesi"><strong>{{ $t('faturaTasarim.vdKisa') }}</strong> {{ sirket.vergiDairesi }}</span>
+                    <span v-if="sirket?.vergiNo"><strong>{{ $t('faturaTasarim.vNoKisa') }}</strong> {{ sirket.vergiNo }}</span>
                   </div>
                   <div
                     v-if="ayarlar.firmaAdresBilgileri"
@@ -403,15 +403,15 @@
                     >
                       {{ sirket.adres }}
                     </p>
-                    <span v-if="sirket?.telefon"><strong>Tel:</strong> {{ sirket.telefon }}</span>
-                    <span v-if="sirket?.email"><strong>E-posta:</strong> {{ sirket.email }}</span>
-                    <span v-if="sirket?.webSite"><strong>Web:</strong> {{ sirket.webSite }}</span>
+                    <span v-if="sirket?.telefon"><strong>{{ $t('faturaTasarim.telEtiket') }}</strong> {{ sirket.telefon }}</span>
+                    <span v-if="sirket?.email"><strong>{{ $t('faturaTasarim.epostaEtiket') }}</strong> {{ sirket.email }}</span>
+                    <span v-if="sirket?.webSite"><strong>{{ $t('faturaTasarim.webEtiket') }}</strong> {{ sirket.webSite }}</span>
                   </div>
                   <div
                     v-if="ayarlar.firmaMersisGoster"
                     class="firma-alt-bilgi"
                   >
-                    <span><strong>Mersis / Tic. Sicil:</strong> 012345678900001</span>
+                    <span><strong>{{ $t('faturaTasarim.mersisTicSicilEtiket') }}</strong> 012345678900001</span>
                   </div>
                 </div>
               </div>
@@ -419,7 +419,7 @@
               <!-- Sağ: Fatura Belge Bilgileri -->
               <div class="header-sag">
                 <div class="fatura-ana-baslik-band">
-                  <h1>{{ ayarlar.faturaBasligi || (aktifFatura?.tur === 'ALIS' ? 'ALIŞ FATURASI' : 'SATIŞ FATURASI') }}</h1>
+                  <h1>{{ ayarlar.faturaBasligi || (aktifFatura?.tur === 'ALIS' ? $t('faturaTasarim.alisFaturasi') : $t('faturaTasarim.satisFaturasi')) }}</h1>
                   <p
                     v-if="ayarlar.altBaslik"
                     class="fatura-alt-slogan"
@@ -429,25 +429,25 @@
                 </div>
                 <div class="belge-meta-tablo">
                   <div class="meta-satir">
-                    <span class="meta-label">Fatura No:</span>
+                    <span class="meta-label">{{ $t('faturaTasarim.faturaNoEtiket') }}</span>
                     <span class="meta-deger">{{ aktifFatura?.faturaNumarasi || 'FTR-2026-0001' }}</span>
                   </div>
                   <div class="meta-satir">
-                    <span class="meta-label">Düzenleme Tarihi:</span>
+                    <span class="meta-label">{{ $t('faturaTasarim.duzenlemeTarihi') }}</span>
                     <span class="meta-deger">{{ formatDate(aktifFatura?.tarih) }}</span>
                   </div>
                   <div
                     v-if="aktifFatura?.vadeTarihi"
                     class="meta-satir"
                   >
-                    <span class="meta-label">Vade Tarihi:</span>
+                    <span class="meta-label">{{ $t('faturaTasarim.vadeTarihi') }}</span>
                     <span class="meta-deger">{{ formatDate(aktifFatura?.vadeTarihi) }}</span>
                   </div>
                   <div
                     v-if="ayarlar.odemeDurumuGoster && aktifFatura?.odemeDurumu"
                     class="meta-satir"
                   >
-                    <span class="meta-label">Ödeme Durumu:</span>
+                    <span class="meta-label">{{ $t('faturaTasarim.odemeDurumuEtiket') }}</span>
                     <span class="meta-deger durum-etiket">{{ odemeDurumLabel(aktifFatura.odemeDurumu) }}</span>
                   </div>
                 </div>
@@ -460,7 +460,7 @@
               class="fatura-cari-kutusu"
             >
               <div class="cari-kutu-baslik">
-                <span>SAYIN (MÜŞTERİ / ALICI)</span>
+                <span>{{ $t('faturaTasarim.sayinMusteriAlici') }}</span>
               </div>
               <div class="cari-kutu-icerik">
                 <div class="cari-sol">
@@ -473,16 +473,16 @@
                 </div>
                 <div class="cari-sag">
                   <div class="cari-meta-satir">
-                    <span><strong>Vergi Dairesi:</strong> {{ aktifFatura?.cariVergiDairesi || 'Kadıköy' }}</span>
+                    <span><strong>{{ $t('faturaTasarim.vergiDairesiEtiket') }}</strong> {{ aktifFatura?.cariVergiDairesi || 'Kadıköy' }}</span>
                   </div>
                   <div class="cari-meta-satir">
-                    <span><strong>Vergi / TC No:</strong> {{ aktifFatura?.cariVergiNo || '1234567890' }}</span>
+                    <span><strong>{{ $t('faturaTasarim.vergiTcNoEtiket') }}</strong> {{ aktifFatura?.cariVergiNo || '1234567890' }}</span>
                   </div>
                   <div
                     v-if="aktifFatura?.cariTelefon"
                     class="cari-meta-satir"
                   >
-                    <span><strong>Telefon:</strong> {{ aktifFatura.cariTelefon }}</span>
+                    <span><strong>{{ $t('faturaTasarim.telefonEtiket') }}</strong> {{ aktifFatura.cariTelefon }}</span>
                   </div>
                 </div>
               </div>
@@ -502,38 +502,38 @@
                     v-if="ayarlar.kolonStokKodu"
                     style="width: 100px"
                   >
-                    Ürün Kodu
+                    {{ $t('faturaTasarim.urunKodu') }}
                   </th>
-                  <th>Mal / Hizmet Açıklaması</th>
+                  <th>{{ $t('faturaTasarim.malHizmetAciklamasi') }}</th>
                   <th style="width: 65px; text-align: center">
-                    Miktar
+                    {{ $t('faturaTasarim.miktar') }}
                   </th>
                   <th style="width: 55px; text-align: center">
-                    Birim
+                    {{ $t('faturaTasarim.birim') }}
                   </th>
                   <th
                     v-if="ayarlar.fiyatGoster"
                     style="width: 95px; text-align: right"
                   >
-                    Birim Fiyat
+                    {{ $t('faturaTasarim.birimFiyat') }}
                   </th>
                   <th
                     v-if="ayarlar.kolonIskonto && ayarlar.fiyatGoster"
                     style="width: 65px; text-align: center"
                   >
-                    İsk.%
+                    {{ $t('faturaTasarim.iskontoKisa') }}
                   </th>
                   <th
                     v-if="ayarlar.kolonKdvOrani && ayarlar.fiyatGoster"
                     style="width: 60px; text-align: center"
                   >
-                    KDV%
+                    {{ $t('faturaTasarim.kdvKisa') }}
                   </th>
                   <th
                     v-if="ayarlar.fiyatGoster"
                     style="width: 110px; text-align: right"
                   >
-                    Tutar
+                    {{ $t('faturaTasarim.tutar') }}
                   </th>
                 </tr>
               </thead>
@@ -561,7 +561,7 @@
                     {{ k.adet }}
                   </td>
                   <td class="text-center">
-                    {{ k.birim || 'Adet' }}
+                    {{ k.birim || $t('faturaTasarim.adet') }}
                   </td>
                   <td
                     v-if="ayarlar.fiyatGoster"
@@ -601,13 +601,13 @@
                   class="banka-bilgi-karti"
                 >
                   <div class="banka-kart-baslik">
-                    <i class="pi pi-credit-card" /> <span>Ödeme & Banka Bilgileri</span>
+                    <i class="pi pi-credit-card" /> <span>{{ $t('faturaTasarim.odemeBankaBilgileri') }}</span>
                   </div>
                   <div class="banka-kart-govde">
-                    <p><strong>Banka:</strong> {{ ayarlar.bankaAdi || 'Ziraat Bankası - Ticari Şube' }}</p>
+                    <p><strong>{{ $t('faturaTasarim.bankaEtiket') }}</strong> {{ ayarlar.bankaAdi || 'Ziraat Bankası - Ticari Şube' }}</p>
                     <p><strong>IBAN:</strong> <span class="iban-metin">{{ ayarlar.ibanNo || 'TR12 0001 0090 1234 5678 5001' }}</span></p>
                     <p v-if="ayarlar.hesapSahibi">
-                      <strong>Hesap Sahibi:</strong> {{ ayarlar.hesapSahibi }}
+                      <strong>{{ $t('faturaTasarim.hesapSahibiEtiket') }}</strong> {{ ayarlar.hesapSahibi }}
                     </p>
                   </div>
                 </div>
@@ -617,7 +617,7 @@
                   v-if="ayarlar.fiyatGoster"
                   class="yaziyla-tutar-kutusu"
                 >
-                  <span><strong>Yalnız:</strong> {{ yaziylaTutar }}</span>
+                  <span><strong>{{ $t('faturaTasarim.yalniz') }}</strong> {{ yaziylaTutar }}</span>
                 </div>
 
                 <!-- Fatura Açıklaması -->
@@ -625,7 +625,7 @@
                   v-if="aktifFatura?.aciklama"
                   class="fatura-not-kutusu"
                 >
-                  <strong>Açıklama:</strong> {{ aktifFatura.aciklama }}
+                  <strong>{{ $t('faturaTasarim.aciklamaEtiket') }}</strong> {{ aktifFatura.aciklama }}
                 </div>
               </div>
 
@@ -636,22 +636,22 @@
               >
                 <div class="toplamlar-tablosu">
                   <div class="toplam-satir">
-                    <span>Mal/Hizmet Ara Toplam:</span>
+                    <span>{{ $t('faturaTasarim.malHizmetAraToplam') }}</span>
                     <span>{{ formatCurrency(hesaplananAraToplam) }}</span>
                   </div>
                   <div
                     v-if="hesaplananIskonto > 0"
                     class="toplam-satir iskonto"
                   >
-                    <span>Toplam İskonto:</span>
+                    <span>{{ $t('faturaTasarim.toplamIskonto') }}</span>
                     <span>-{{ formatCurrency(hesaplananIskonto) }}</span>
                   </div>
                   <div class="toplam-satir">
-                    <span>Hesaplanan KDV:</span>
+                    <span>{{ $t('faturaTasarim.hesaplananKdv') }}</span>
                     <span>{{ formatCurrency(hesaplananKdv) }}</span>
                   </div>
                   <div class="toplam-satir genel-toplam">
-                    <span>ÖDENECEK TOPLAM:</span>
+                    <span>{{ $t('faturaTasarim.odenecekToplam') }}</span>
                     <span>{{ formatCurrency(hesaplananGenelToplam) }}</span>
                   </div>
                 </div>
@@ -663,7 +663,7 @@
                 >
                   <div class="qr-placeholder">
                     <i class="pi pi-qrcode" />
-                    <span>e-Belge Doğrulama</span>
+                    <span>{{ $t('faturaTasarim.eBelgeDogrulama') }}</span>
                   </div>
                 </div>
               </div>
@@ -675,15 +675,15 @@
               class="imza-alani-grid"
             >
               <div class="imza-kutusu">
-                <span class="imza-baslik">Teslim Eden (Düzenleyen)</span>
+                <span class="imza-baslik">{{ $t('faturaTasarim.teslimEdenDuzenleyen') }}</span>
                 <p class="imza-alt-not">
-                  Kaşe / İmza
+                  {{ $t('faturaTasarim.kaseImza') }}
                 </p>
               </div>
               <div class="imza-kutusu">
-                <span class="imza-baslik">Teslim Alan (Alıcı)</span>
+                <span class="imza-baslik">{{ $t('faturaTasarim.teslimAlanAlici') }}</span>
                 <p class="imza-alt-not">
-                  İsim / Kaşe / İmza
+                  {{ $t('faturaTasarim.isimKaseImza') }}
                 </p>
               </div>
             </div>
@@ -693,7 +693,7 @@
               v-if="ayarlar.dipnotGoster"
               class="fatura-dipnot-alani"
             >
-              <p>{{ ayarlar.dipnotMetni || 'İşbu fatura muhteviyatına 7 gün içerisinde itiraz edilmediği takdirde aynen kabul edilmiş sayılır.' }}</p>
+              <p>{{ ayarlar.dipnotMetni || $t('faturaTasarim.dipnotVarsayilan') }}</p>
             </div>
           </div>
         </div>
@@ -709,6 +709,7 @@ import { faturaAPI, sirketAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import { kdvOrani } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -719,6 +720,7 @@ const props = defineProps({
 defineEmits(['update:visible'])
 const authStore = useAuthStore()
 const toast = useToast()
+const { t } = useI18n()
 
 const zoomOrani = ref(0.9)
 const sirket = ref(null)
@@ -733,8 +735,8 @@ const varsayilanAyarlar = {
   kenarBoslugu: '8mm', // 5mm, 8mm, 12mm
   renk: '#1e40af', // lacivert
   fontFamily: 'sans', // sans, roboto, serif, mono
-  faturaBasligi: 'SATIŞ FATURASI',
-  altBaslik: 'Resmi Fatura Sureti',
+  faturaBasligi: t('faturaTasarim.satisFaturasi'),
+  altBaslik: t('faturaTasarim.resmiFaturaSureti'),
   logoGoster: true,
   logoBoyutu: 'orta',
   logoKonumu: 'sol',
@@ -755,30 +757,30 @@ const varsayilanAyarlar = {
   imzaKutusuGoster: true,
   odemeDurumuGoster: true,
   dipnotGoster: true,
-  dipnotMetni: 'İşbu fatura muhteviyatına 7 gün içerisinde itiraz edilmediği takdirde aynen kabul edilmiş sayılır. Ödemeler belirtilen şirket banka hesabına yapılmalıdır.'
+  dipnotMetni: t('faturaTasarim.dipnotVarsayilanUzun')
 }
 
 const ayarlar = ref({ ...varsayilanAyarlar })
 
 // Kağıt Boyutu ve Düzen Seçenekleri
-const kagitBoyutSecenekleri = [
-  { label: 'A4 Standart (210×297 mm)', value: 'a4' },
-  { label: 'A5 Yarım Sayfa (148×210 mm)', value: 'a5' },
-  { label: 'Termal 80mm (POS / Kasa Rulosu)', value: 'termal80' },
-  { label: 'Termal 58mm (Mobil / El Terminali)', value: 'termal58' },
-  { label: 'Letter Standart (216×279 mm)', value: 'letter' }
-]
+const kagitBoyutSecenekleri = computed(() => [
+  { label: t('faturaTasarim.kagitA4'), value: 'a4' },
+  { label: t('faturaTasarim.kagitA5'), value: 'a5' },
+  { label: t('faturaTasarim.kagitTermal80'), value: 'termal80' },
+  { label: t('faturaTasarim.kagitTermal58'), value: 'termal58' },
+  { label: t('faturaTasarim.kagitLetter'), value: 'letter' }
+])
 
-const sayfaYonuSecenekleri = [
-  { label: 'Dikey (Portrait)', value: 'portrait' },
-  { label: 'Yatay (Landscape)', value: 'landscape' }
-]
+const sayfaYonuSecenekleri = computed(() => [
+  { label: t('faturaTasarim.dikeyPortrait'), value: 'portrait' },
+  { label: t('faturaTasarim.yatayLandscape'), value: 'landscape' }
+])
 
-const kenarBoslukSecenekleri = [
-  { label: 'Dar (5mm)', value: '5mm' },
-  { label: 'Normal (8mm)', value: '8mm' },
-  { label: 'Geniş (12mm)', value: '12mm' }
-]
+const kenarBoslukSecenekleri = computed(() => [
+  { label: t('faturaTasarim.dar5mm'), value: '5mm' },
+  { label: t('faturaTasarim.normal8mm'), value: '8mm' },
+  { label: t('faturaTasarim.genis12mm'), value: '12mm' }
+])
 
 const printPageSize = computed(() => {
   if (ayarlar.value.kagitBoyutu === 'a4') {
@@ -800,35 +802,35 @@ const printPageSize = computed(() => {
 })
 
 // Şablon Seçenekleri
-const sablonSecenekleri = [
-  { id: 'modern', ad: 'Modern Kurumsal', icon: 'pi pi-star' },
-  { id: 'klasik', ad: 'Klasik Resmi', icon: 'pi pi-file' },
-  { id: 'minimal', ad: 'Minimal & Sade', icon: 'pi pi-minus' },
-  { id: 'kompakt', ad: 'Kompakt Fiş', icon: 'pi pi-receipt' }
-]
+const sablonSecenekleri = computed(() => [
+  { id: 'modern', ad: t('faturaTasarim.sablonModern'), icon: 'pi pi-star' },
+  { id: 'klasik', ad: t('faturaTasarim.sablonKlasik'), icon: 'pi pi-file' },
+  { id: 'minimal', ad: t('faturaTasarim.sablonMinimal'), icon: 'pi pi-minus' },
+  { id: 'kompakt', ad: t('faturaTasarim.sablonKompakt'), icon: 'pi pi-receipt' }
+])
 
 // Renk Seçenekleri
 const renkSecenekleri = ['#1e40af', '#059669', '#991b1b', '#1e293b', '#7c3aed', '#b45309']
 
 // Font Seçenekleri
-const fontSecenekleri = [
-  { label: 'Modern Sans (Inter)', value: 'sans' },
-  { label: 'Kurumsal (Roboto)', value: 'roboto' },
-  { label: 'Klasik Serif (Georgia)', value: 'serif' },
-  { label: 'Teknik Mono', value: 'mono' }
-]
+const fontSecenekleri = computed(() => [
+  { label: t('faturaTasarim.fontSans'), value: 'sans' },
+  { label: t('faturaTasarim.fontRoboto'), value: 'roboto' },
+  { label: t('faturaTasarim.fontSerif'), value: 'serif' },
+  { label: t('faturaTasarim.fontMono'), value: 'mono' }
+])
 
-const logoBoyutSecenekleri = [
-  { label: 'Küçük', value: 'kucuk' },
-  { label: 'Orta', value: 'orta' },
-  { label: 'Büyük', value: 'buyuk' }
-]
+const logoBoyutSecenekleri = computed(() => [
+  { label: t('faturaTasarim.kucuk'), value: 'kucuk' },
+  { label: t('faturaTasarim.orta'), value: 'orta' },
+  { label: t('faturaTasarim.buyuk'), value: 'buyuk' }
+])
 
-const logoKonumSecenekleri = [
-  { label: 'Sol', value: 'sol' },
-  { label: 'Orta', value: 'orta' },
-  { label: 'Sağ', value: 'sag' }
-]
+const logoKonumSecenekleri = computed(() => [
+  { label: t('faturaTasarim.sol'), value: 'sol' },
+  { label: t('faturaTasarim.orta'), value: 'orta' },
+  { label: t('faturaTasarim.sag'), value: 'sag' }
+])
 
 onMounted(async () => {
   sablonuYukle()
@@ -872,7 +874,7 @@ const faturaYukle = async () => {
       const res = await faturaAPI.getById(props.faturaId)
       aktifFatura.value = res.data
     } catch {
-      toast.add({ severity: 'error', summary: 'Hata', detail: 'Fatura bilgileri yüklenemedi', life: 3000 })
+      toast.add({ severity: 'error', summary: t('faturaTasarim.hata'), detail: t('faturaTasarim.faturaBilgileriYuklenemedi'), life: 3000 })
     }
   }
 }
@@ -894,8 +896,8 @@ const sablonuKaydet = () => {
   localStorage.setItem(key, JSON.stringify(ayarlar.value))
   toast.add({
     severity: 'success',
-    summary: 'Kaydedildi',
-    detail: 'Fatura yazdırma şablonu varsayılan olarak kaydedildi.',
+    summary: t('faturaTasarim.kaydedildi'),
+    detail: t('faturaTasarim.sablonKaydedildiDetay'),
     life: 3500
   })
 }
@@ -918,8 +920,8 @@ const sablonuSifirla = () => {
   localStorage.removeItem(key)
   toast.add({
     severity: 'info',
-    summary: 'Sıfırlandı',
-    detail: 'Şablon varsayılan ayarlara döndürüldü.',
+    summary: t('faturaTasarim.sifirlandi'),
+    detail: t('faturaTasarim.sablonSifirlandiDetay'),
     life: 3000
   })
 }
@@ -963,12 +965,12 @@ const yaziylaTutar = computed(() => {
 
 const odemeDurumLabel = (durum) => {
   const map = {
-    ODENDI: 'ÖDENDİ',
-    ODENMEDI: 'ÖDENMEDİ',
-    BEKLIYOR: 'BEKLİYOR',
-    KISMI_ODENDI: 'KISMİ ÖDENDİ'
+    ODENDI: t('faturaTasarim.odendi'),
+    ODENMEDI: t('faturaTasarim.odenmedi'),
+    BEKLIYOR: t('faturaTasarim.bekliyor'),
+    KISMI_ODENDI: t('faturaTasarim.kismiOdendi')
   }
-  return map[durum] || durum || 'ÖDENMEDİ'
+  return map[durum] || durum || t('faturaTasarim.odenmedi')
 }
 
 // Tarayıcı Yazdırma
