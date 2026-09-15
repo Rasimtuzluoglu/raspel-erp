@@ -51,4 +51,16 @@ describe('HesapAyarlari.vue', () => {
     await flushPromises()
     expect(wrapper.find('.ai-ayar-kart').exists()).toBe(true)
   })
+
+  it('dikey ayar menusu 7 bolum render eder ve secim degistirir', async () => {
+    const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
+    const wrapper = mount(HesapAyarlari, {
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+    })
+    await flushPromises()
+    const butonlar = wrapper.findAll('.ayar-menu-btn')
+    expect(butonlar.length).toBe(7)
+    await butonlar[1].trigger('click')
+    expect(wrapper.findAll('.ayar-menu-btn')[1].classes()).toContain('aktif')
+  })
 })
