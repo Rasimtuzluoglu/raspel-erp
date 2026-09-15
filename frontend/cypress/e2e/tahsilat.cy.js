@@ -110,14 +110,16 @@ describe('Tahsilat Merkezi', () => {
     }).as('hatirlat')
     cy.visit('/tahsilat')
     cy.wait('@tahsilatOzet')
-    cy.get('[title="E-posta ile hatırlat"]').first().click()
+    cy.contains('Acme Ltd. Şti.').closest('tr').find('.satir-eylemler button').first().click()
+    cy.get('.eylem-item').contains('E-posta ile hatırlat').click()
     cy.wait('@hatirlat')
   })
 
-  it('e-posta tanımlı değilse hatırlatma butonu pasif olur', () => {
+  it('e-posta tanımlı değilse hatırlatma seçeneği gösterilmez', () => {
     cy.visit('/tahsilat')
     cy.wait('@tahsilatOzet')
     cy.contains('Beta Ticaret').should('be.visible')
-    cy.get('[title="E-posta tanımlı değil"]').should('exist')
+    cy.contains('Beta Ticaret').closest('tr').find('.satir-eylemler button').first().click()
+    cy.get('.eylem-item').contains('E-posta ile hatırlat').should('not.exist')
   })
 })

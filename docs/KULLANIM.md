@@ -46,11 +46,12 @@
 | `F4` | Stoklar'a git (POS sayfasında: müşteri seçimi) |
 | `Esc` | Dialog kapat / iptal |
 | `G` + harf | Hızlı gezinme (g+c cari, g+f fatura, g+h POS) |
+| `Ctrl+Shift+H` | Sunum (Müşteri) modunu aç/kapat |
 | `?` | Klavye kısayolları rehberini aç |
 
 **Hızlı Satış (POS) sayfasında:** `F1` barkod alanına odak, `F3` ürün arama, `F5` yeni müşteri, `F6` kamera tarayıcı, `F9` tam ödeme + tamamla, `F10` kısmi ödeme + tamamla, `N`/`K`/`H` ödeme yöntemi (Nakit/Kart/Havale), `Alt+↑`/`Alt+↓` aktif satır miktarı, `Del` aktif satırı sil.
 
-**Sunum (Müşteri) Modu:** Kenar çubuğundaki göz simgesiyle tek tıkla açılır. Açıkken maliyet/alış, kâr/marj, cari bakiye, ciro/hedef, banka/kasa bakiyesi, tedarikçi, maaş/bordro ve muhasebe/bütçe/vergi tutarları bulanıklaştırılır. Oturum bazlıdır; sayfa yenilenince kapanır.
+**Sunum (Müşteri) Modu:** Kenar çubuğundaki göz simgesiyle veya `Ctrl+Shift+H` ile tek tıkla açılır; açıkken ekranın üstünde bir bilgilendirme şeridi görünür. Maliyet/alış, kâr/marj, cari bakiye, ciro/hedef, banka/kasa bakiyesi, tedarikçi, maaş/bordro ve muhasebe/bütçe/vergi tutarları gizlenir. Şeritten **Bulanık** veya **Gizle** maskeleme stili seçilebilir. Oturum bazlıdır; sayfa yenilenince kapanır. (Fatura/fiş çıktıları ve satış fiyatları gizlenmez.)
 
 ## Kullanıcı Dostu Özellikler
 

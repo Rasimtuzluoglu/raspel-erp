@@ -31,6 +31,9 @@
         <kbd>G</kbd> + harf<span>Hızlı gezinme (g+c cari, g+f fatura, g+h POS)</span>
       </div>
       <div class="kisayol-satir">
+        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd><span>Sunum (Müşteri) modu</span>
+      </div>
+      <div class="kisayol-satir">
         <kbd>?</kbd><span>Bu rehberi aç</span>
       </div>
 

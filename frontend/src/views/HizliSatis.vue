@@ -4,12 +4,46 @@
       <div class="breadcrumb">
         <i class="pi pi-home" /> {{ t('hizliSatis.breadcrumb') }}
       </div>
-      <div
-        v-if="authStore?.kullanici"
-        class="user-info"
-      >
-        <i class="pi pi-user" /> {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username }}
+      <div class="pos-header-sag">
+        <div
+          v-if="authStore?.kullanici"
+          class="user-info"
+        >
+          <i class="pi pi-user" /> {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username }}
+        </div>
+        <button
+          type="button"
+          class="pos-ipucu-btn"
+          :title="t('hizliSatis.kisayolIpucu')"
+          @click="ipucuToggle"
+        >
+          <i class="pi pi-question-circle" />
+        </button>
       </div>
+    </div>
+
+    <div
+      v-if="ipucuAcik"
+      class="pos-ipucu"
+    >
+      <span><kbd>F1</kbd> Barkod</span>
+      <span><kbd>F2</kbd> Temizle</span>
+      <span><kbd>F3</kbd> Ürün ara</span>
+      <span><kbd>F4</kbd> Müşteri</span>
+      <span><kbd>F5</kbd> Yeni müşteri</span>
+      <span><kbd>F6</kbd> Kamera</span>
+      <span><kbd>F9</kbd>/<kbd>F10</kbd> Ödeme</span>
+      <span><kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd> Yöntem</span>
+      <span><kbd>↑</kbd>/<kbd>↓</kbd> Satır</span>
+      <span><kbd>Alt+↑/↓</kbd> Miktar</span>
+      <span><kbd>Del</kbd> Sil</span>
+      <button
+        type="button"
+        class="pos-ipucu-kapat"
+        @click="ipucuKapat"
+      >
+        <i class="pi pi-times" />
+      </button>
     </div>
 
     <div class="pos-body">
@@ -185,7 +219,10 @@
               </div>
             </div>
 
-            <div class="pos-bolum sepet-bolum">
+            <div
+              ref="sepetListeRef"
+              class="pos-bolum sepet-bolum"
+            >
               <div class="pos-bolum-baslik sepet-baslik">
                 <span>{{ t('hizliSatis.siparisOzeti', { n: sepet ? sepet.length : 0 }) }}</span>
                 <div class="sepet-baslik-btnler">
@@ -818,6 +855,62 @@
       />
     </template>
   </Dialog>
+
+  <Dialog
+    v-model:visible="hizliUrunDialog"
+    :header="t('hizliSatis.hizliUrunBaslik')"
+    :modal="true"
+    style="width: 420px"
+  >
+    <div class="form-grup">
+      <label>{{ t('stoklar.barkod') }}</label>
+      <InputText
+        v-model="hizliUrun.barkod"
+        class="w-full"
+      />
+    </div>
+    <div class="form-grup">
+      <label>{{ t('hizliSatis.urunAdi') }}</label>
+      <InputText
+        v-model="hizliUrun.ad"
+        class="w-full"
+        autofocus
+      />
+    </div>
+    <div class="kurulum-iki-kolon">
+      <div class="form-grup">
+        <label>{{ t('stoklar.satisFiyati') }}</label>
+        <InputNumber
+          v-model="hizliUrun.fiyat"
+          mode="currency"
+          currency="TRY"
+          locale="tr-TR"
+          class="w-full"
+        />
+      </div>
+      <div class="form-grup">
+        <label>{{ t('hizliSatis.miktar') }}</label>
+        <InputNumber
+          v-model="hizliUrun.miktar"
+          :min="0"
+          class="w-full"
+        />
+      </div>
+    </div>
+    <template #footer>
+      <Button
+        :label="t('common.cancel')"
+        class="p-button-text"
+        @click="hizliUrunDialog = false"
+      />
+      <Button
+        :label="t('hizliSatis.kaydetSec')"
+        icon="pi pi-check"
+        :loading="hizliUrunKaydediliyor"
+        @click="hizliUrunKaydet"
+      />
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
@@ -911,7 +1004,7 @@ const handlePosKeys = (e) => {
   if (e.key === 'F9' || e.key === 'F10') {
     e.preventDefault()
     odemeDurumu.value = e.key === 'F9' ? 'tam' : 'yarim'
-    if (sepet.value.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
+    if (sepet.value.length) satisiTamamla()
     return
   }
   if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
@@ -919,6 +1012,26 @@ const handlePosKeys = (e) => {
       e.preventDefault()
       if (e.key === 'ArrowUp') sepet.value[aktifSatir.value].miktar++
       else miktarAzalt(aktifSatir.value)
+    }
+    return
+  }
+
+  // Sepette satirlar arasi gezinme (yazarken degil)
+  if (!girdideMi(e) && sepet.value.length && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    e.preventDefault()
+    const yon = e.key === 'ArrowDown' ? 1 : -1
+    let idx = aktifSatir.value
+    if (idx < 0) idx = yon > 0 ? 0 : sepet.value.length - 1
+    else idx = Math.min(sepet.value.length - 1, Math.max(0, idx + yon))
+    aktifSatir.value = idx
+    return
+  }
+
+  // Aktif satirin miktar alanina odaklan
+  if (!girdideMi(e) && e.key === 'Enter') {
+    if (aktifSatir.value >= 0 && sepet.value[aktifSatir.value]) {
+      e.preventDefault()
+      odaklaAktifAdet()
     }
     return
   }
@@ -938,6 +1051,21 @@ const handlePosKeys = (e) => {
   } else if (k === 'h') {
     e.preventDefault(); odemeYontemi.value = 'HAVALE'
   }
+}
+
+const odaklaAktifAdet = () => {
+  const el = sepetListeRef.value?.querySelector?.('.sepet-item.aktif-satir .sepet-adet-input')
+  el?.focus?.()
+  el?.select?.()
+}
+
+const ipucuToggle = () => {
+  ipucuAcik.value = !ipucuAcik.value
+}
+
+const ipucuKapat = () => {
+  ipucuAcik.value = false
+  localStorage.setItem('raspel_pos_ipucu_kapali', 'true')
 }
 
 onMounted(() => {
@@ -960,6 +1088,11 @@ const barkodInputRef = ref(null)
 const aramaInputRef = ref(null)
 const musteriAutoRef = ref(null)
 const aktifSatir = ref(-1)
+const sepetListeRef = ref(null)
+const ipucuAcik = ref(localStorage.getItem('raspel_pos_ipucu_kapali') !== 'true')
+const hizliUrunDialog = ref(false)
+const hizliUrun = ref({ barkod: '', ad: '', fiyat: 0, miktar: 1 })
+const hizliUrunKaydediliyor = ref(false)
 
 const globalBarkodEkle = () => {
   const barkod = globalBarkod.value.trim()
@@ -990,6 +1123,8 @@ const barkodTarandi = async (barkod) => {
       /* sunucu araması başarısız olabilir */
     }
     toast.add({ severity: 'warn', summary: 'Bulunamadı', detail: `"${barkod}" barkodlu ürün bulunamadı`, life: 3000 })
+    hizliUrun.value = { barkod, ad: '', fiyat: 0, miktar: 1 }
+    hizliUrunDialog.value = true
   }
 }
 
@@ -1640,9 +1775,56 @@ const escapeHtml = (metin) => {
 
 const teslimDurumEtiketi = (d) => ({ BEKLIYOR: 'Bekliyor', YOLDA: 'Yolda', TESLIM_EDILDI: 'Teslim Edildi' })[d] || d
 
+const hizliUrunKaydet = async () => {
+  const u = hizliUrun.value
+  if (!u.ad || !u.ad.trim()) {
+    toast.add({ severity: 'warn', summary: 'Eksik bilgi', detail: 'Ürün adı zorunludur', life: 2500 })
+    return
+  }
+  hizliUrunKaydediliyor.value = true
+  try {
+    const r = await stokAPI.create({
+      ad: u.ad.trim(),
+      barkod: u.barkod || null,
+      fiyat: Number(u.fiyat) || 0,
+      satisFiyati: Number(u.fiyat) || 0,
+      miktar: Number(u.miktar) || 0,
+      birim: 'Adet'
+    })
+    const olusan = r.data || { ...u }
+    hizliUrunDialog.value = false
+    toast.add({ severity: 'success', summary: 'Ürün eklendi', detail: u.ad, life: 2500 })
+    await sepeteEkle(olusan)
+    if (Number(u.miktar) > 1 && olusan?.id) {
+      const item = sepet.value.find((i) => i.id === olusan.id)
+      if (item) item.miktar = Number(u.miktar)
+    }
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Kaydedilemedi',
+      detail: e?.response?.data?.message || 'Ürün oluşturulamadı',
+      life: 3000
+    })
+  } finally {
+    hizliUrunKaydediliyor.value = false
+  }
+}
+
 const satisiTamamla = async () => {
-  if (!anlikMusteri.value && !seciliMusteri.value) return
-  if (sepet.value.length === 0) return
+  if (!anlikMusteri.value && !seciliMusteri.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Müşteri gerekli',
+      detail: 'Müşteri seçin veya Perakende moduna geçin',
+      life: 3000
+    })
+    return
+  }
+  if (sepet.value.length === 0) {
+    toast.add({ severity: 'warn', summary: 'Sepet boş', detail: 'Önce ürün ekleyin', life: 2500 })
+    return
+  }
   if (odemeYontemi.value === 'TAKSIT' && (!taksitKurum.value.trim() || !taksitTutar.value || taksitTutar.value <= 0)) {
     toastBildirim.uyari('Taksit seçildiğinde kurum ve çekilen tutar girilmelidir')
     return
@@ -1780,6 +1962,91 @@ const sepetiTemizle = () => {
 }
 .user-info i {
   margin-right: 4px;
+}
+.pos-header-sag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pos-ipucu-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pos-ipucu-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.pos-ipucu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+.pos-ipucu span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.pos-ipucu kbd {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+.pos-ipucu-kapat {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.pos-ipucu-kapat:hover {
+  color: var(--text-primary);
+}
+.form-grup {
+  margin-bottom: 14px;
+}
+.form-grup label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.kurulum-iki-kolon {
+  display: flex;
+  gap: 12px;
+}
+.kurulum-iki-kolon .form-grup {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .kurulum-iki-kolon {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 
 .pos-body {

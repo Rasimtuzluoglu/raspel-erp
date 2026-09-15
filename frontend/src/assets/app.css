@@ -1785,14 +1785,9 @@ h3 {
   color: var(--text-secondary);
 }
 
-/* Sunum modu: hassas verileri bulaniklastir (musteriye gosterirken) */
-[data-sunum='on'] .gizli-veri {
-  filter: blur(8px);
-  user-select: none;
-  pointer-events: none;
-  transition: filter 0.15s ease;
-}
-/* Modul bazli hassas alanlar */
+/* Sunum modu: hassas verileri gizle (musteriye gosterirken).
+   Varsayilan "bulanik"; "gizle" modunda alan tamamen kaldirilir. */
+[data-sunum='on'] .gizli-veri,
 [data-sunum='on'] .stat-card.cari .stat-value,
 [data-sunum='on'] .stat-card.finans .stat-value,
 [data-sunum='on'] .stat-card.banka .stat-value,
@@ -1805,6 +1800,89 @@ h3 {
   filter: blur(8px);
   user-select: none;
   pointer-events: none;
+  transition: filter 0.15s ease;
+}
+
+[data-sunum='on'][data-sunum-maske='gizle'] .gizli-veri,
+[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.cari .stat-value,
+[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.finans .stat-value,
+[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.banka .stat-value,
+[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.kasa .stat-value,
+[data-sunum='on'][data-sunum-maske='gizle'] .hedef-grid,
+[data-sunum='on'][data-sunum-maske='gizle'] .bugun-ozet-grid,
+[data-sunum='on'][data-sunum-maske='gizle'] .cari-ozet-grid,
+[data-sunum='on'][data-sunum-maske='gizle'] .kpi-card-value,
+[data-sunum='on'][data-sunum-maske='gizle'] .ozet-kart {
+  display: none !important;
+}
+
+/* Sunum modu bilgilendirme seridi */
+.sunum-banner {
+  position: sticky;
+  top: 0;
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(124, 58, 237, 0.16);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sunum-banner > i {
+  color: #a78bfa;
+  font-size: 15px;
+}
+.sunum-banner .sunum-banner-metin {
+  flex: 1;
+  min-width: 0;
+}
+.sunum-banner .sunum-banner-maske {
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 3px;
+}
+.sunum-banner .sunum-banner-maske button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.sunum-banner .sunum-banner-maske button.aktif {
+  background: #7c3aed;
+  color: #fff;
+}
+.sunum-banner .sunum-banner-kapat {
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sunum-banner .sunum-banner-kapat:hover {
+  background: rgba(124, 58, 237, 0.2);
+}
+@media (max-width: 900px) {
+  .sunum-banner {
+    top: 56px;
+  }
 }
 .p-datatable .p-datatable-thead > tr > th {
   white-space: nowrap;

@@ -516,6 +516,10 @@
     "siparisOzeti": "Order Summary ({n})",
     "sepetiKaydet": "Save Cart",
     "sepetTemizlendi": "Cart cleared",
+    "kisayolIpucu": "Keyboard shortcuts",
+    "hizliUrunBaslik": "Create New Product",
+    "urunAdi": "Product Name",
+    "miktar": "Quantity",
     "kayitliSepetiYukle": "Load Saved Cart",
     "temizle": "Clear",
     "sepeteUrunEkle": "Add products to cart",
@@ -2895,6 +2899,9 @@
     "ac": "Turn on presentation mode",
     "kapat": "Turn off presentation mode",
     "aktif": "Presentation mode on",
-    "ipucu": "Sensitive information is blurred"
+    "ipucu": "Sensitive information hidden",
+    "serit": "Presentation mode is on — sensitive information is hidden",
+    "bulanik": "Blur",
+    "gizle": "Hide"
   }
 }

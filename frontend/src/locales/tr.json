@@ -516,6 +516,10 @@
     "siparisOzeti": "Sipariş Özeti ({n})",
     "sepetiKaydet": "Sepeti Kaydet",
     "sepetTemizlendi": "Sepet temizlendi",
+    "kisayolIpucu": "Klavye kısayolları",
+    "hizliUrunBaslik": "Yeni Ürün Oluştur",
+    "urunAdi": "Ürün Adı",
+    "miktar": "Miktar",
     "kayitliSepetiYukle": "Kayıtlı Sepeti Yükle",
     "temizle": "Temizle",
     "sepeteUrunEkle": "Sepete ürün ekleyin",
@@ -2895,6 +2899,9 @@
     "ac": "Sunum modunu aç",
     "kapat": "Sunum modunu kapat",
     "aktif": "Sunum modu açık",
-    "ipucu": "Hassas bilgiler bulanıklaştırıldı"
+    "ipucu": "Hassas bilgiler gizlendi",
+    "serit": "Sunum modu açık — hassas bilgiler gizleniyor",
+    "bulanik": "Bulanık",
+    "gizle": "Gizle"
   }
 }

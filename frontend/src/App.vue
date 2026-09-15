@@ -35,6 +35,38 @@
           </button>
         </div>
       </transition>
+      <transition name="slide-down">
+        <div
+          v-if="authStore.isLoggedIn && sunumAktif"
+          class="sunum-banner"
+        >
+          <i class="pi pi-eye-slash" />
+          <span class="sunum-banner-metin">{{ $t('sunumModu.serit') }}</span>
+          <span class="sunum-banner-maske">
+            <button
+              type="button"
+              :class="{ aktif: sunumMaske === 'bulanik' }"
+              @click="sunumMaskeAyarla('bulanik')"
+            >
+              {{ $t('sunumModu.bulanik') }}
+            </button>
+            <button
+              type="button"
+              :class="{ aktif: sunumMaske === 'gizle' }"
+              @click="sunumMaskeAyarla('gizle')"
+            >
+              {{ $t('sunumModu.gizle') }}
+            </button>
+          </span>
+          <button
+            type="button"
+            class="sunum-banner-kapat"
+            @click="sunumDegistir()"
+          >
+            <i class="pi pi-times" /> {{ $t('sunumModu.kapat') }}
+          </button>
+        </div>
+      </transition>
       <AppBreadcrumb v-if="authStore.isLoggedIn" />
       <ErrorBoundary>
         <router-view v-slot="{ Component }">
@@ -135,6 +167,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
+import { useSunumModu } from './composables/useSunumModu.js'
 import { useToast } from 'primevue/usetoast'
 import { useMagicKeys } from '@vueuse/core'
 
@@ -159,6 +192,7 @@ import KisayolRehberi from './components/KisayolRehberi.vue'
 const authStore = useAuthStore()
 const router = useRouter()
 const toast = useToast()
+const { aktif: sunumAktif, maske: sunumMaske, degistir: sunumDegistir, maskeAyarla: sunumMaskeAyarla } = useSunumModu()
 const { ctrl_k, cmd_k, escape } = useMagicKeys()
 
 const quickSearchVisible = ref(false)
@@ -206,6 +240,12 @@ const handleApiError = (e) => {
 
 const handleGlobalShortcuts = (e) => {
   if (!authStore.isLoggedIn) return
+  // Sunum (musteri) modu: Ctrl/⌘ + Shift + H
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
+    e.preventDefault()
+    sunumDegistir()
+    return
+  }
   // Sayfa ozel kisayol (useKisayollar) islediyse global fallback'i tetikleme
   if (e.defaultPrevented) return
   if (e.key === 'F2') {
