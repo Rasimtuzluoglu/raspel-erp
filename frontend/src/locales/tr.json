@@ -156,7 +156,11 @@
     "previewCapDashboard": "Ciro, nakit akışı ve hedefler tek ekranda.",
     "previewCapInvoice": "GİB uyumlu e-fatura, tek tıkla PDF ve e-posta.",
     "previewCapStock": "Kritik stok uyarıları ve gerçek zamanlı miktarlar.",
-    "previewCapAi": "Doğal dille sorun, anlık finansal analiz alın."
+    "previewCapAi": "Doğal dille sorun, anlık finansal analiz alın.",
+    "bagimsizFirmalar": "Bağımsız Firmalar",
+    "firmalar": "Firmalar",
+    "sifreyiGizle": "Şifreyi Gizle",
+    "sifreyiGoster": "Şifreyi Göster"
   },
   "kurulum": {
     "welcome": "Hoş Geldiniz!",

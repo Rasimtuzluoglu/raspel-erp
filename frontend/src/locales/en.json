@@ -156,7 +156,11 @@
     "previewCapDashboard": "Revenue, cash flow and targets on a single screen.",
     "previewCapInvoice": "GIB-compliant e-invoice, one-click PDF and e-mail.",
     "previewCapStock": "Critical stock alerts and real-time quantities.",
-    "previewCapAi": "Ask in natural language, get instant financial insight."
+    "previewCapAi": "Ask in natural language, get instant financial insight.",
+    "bagimsizFirmalar": "Independent Companies",
+    "firmalar": "Companies",
+    "sifreyiGizle": "Hide password",
+    "sifreyiGoster": "Show password"
   },
   "kurulum": {
     "welcome": "Welcome!",

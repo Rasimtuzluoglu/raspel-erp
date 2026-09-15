@@ -295,7 +295,7 @@
                     type="button"
                     class="sifre-toggle"
                     tabindex="-1"
-                    :aria-label="sifreGorunur ? 'Şifreyi Gizle' : 'Şifreyi Göster'"
+                    :aria-label="sifreGorunur ? $t('giris.sifreyiGizle') : $t('giris.sifreyiGoster')"
                     @click="sifreGorunur = !sifreGorunur"
                   >
                     <i :class="sifreGorunur ? 'pi pi-eye-slash' : 'pi pi-eye'" />
@@ -453,13 +453,13 @@ useIntervalFn(() => {
 const gruplanmisSirketler = computed(() => {
   const gruplar = {}
   sirketler.value.forEach(s => {
-    let grupAdi = 'Bağımsız Firmalar'
+    let grupAdi = t('giris.bagimsizFirmalar')
     if (s.parentId) {
       const parent = sirketler.value.find(p => p.id === s.parentId)
       grupAdi = parent ? parent.ad : `Grup ${s.parentId}`
     } else {
       const hasChildren = sirketler.value.some(c => c.parentId === s.id)
-      grupAdi = hasChildren ? s.ad : 'Bağımsız Firmalar'
+      grupAdi = hasChildren ? s.ad : t('giris.bagimsizFirmalar')
     }
     if (!gruplar[grupAdi]) {
       gruplar[grupAdi] = []
@@ -467,9 +467,9 @@ const gruplanmisSirketler = computed(() => {
     gruplar[grupAdi].push(s)
   })
   
-  if (Object.keys(gruplar).length === 1 && gruplar['Bağımsız Firmalar']) {
-    gruplar['Firmalar'] = gruplar['Bağımsız Firmalar']
-    delete gruplar['Bağımsız Firmalar']
+  if (Object.keys(gruplar).length === 1 && gruplar[t('giris.bagimsizFirmalar')]) {
+    gruplar[t('giris.firmalar')] = gruplar[t('giris.bagimsizFirmalar')]
+    delete gruplar[t('giris.bagimsizFirmalar')]
   }
   return gruplar
 })
