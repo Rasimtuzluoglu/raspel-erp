@@ -267,7 +267,7 @@ const sil = async (id) => {
       }, 8000)
     }
   } catch {
-    toastBildirim.hata('Silme başarısız.')
+    toastBildirim.hata(t('notlar.silmeBasarisiz'))
   }
 }
 
@@ -280,9 +280,9 @@ const geriAl = async () => {
       onemDerecesi: silinenSon.value.onemDerecesi,
       renk: silinenSon.value.renk
     })
-    toast.add({ severity: 'success', summary: 'Geri Alındı', detail: 'Not geri yüklendi.', life: 3000 })
+      toast.add({ severity: 'success', summary: t('notlar.geriAlindi'), detail: t('notlar.notGeriYuklendi'), life: 3000 })
   } catch {
-    toastBildirim.hata('Geri alma başarısız.')
+    toastBildirim.hata(t('notlar.geriAlmaBasarisiz'))
   } finally {
     geriAlGoster.value = false
     silinenSon.value = null

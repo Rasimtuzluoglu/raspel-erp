@@ -656,17 +656,17 @@ const guncellemeKontrol = async () => {
     const r = await sistemDurumAPI.guncelleme()
     guncellemeBilgi.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Güncelleme kontrolü yapılamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.guncellemeKontrolHatasi'))
   }
   guncellemeYukleniyor.value = false
 }
 
 // Fiş yazdırma ayarları (POS ile ortak localStorage)
-const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || 'Bizi tercih ettiğiniz için teşekkür ederiz!')
+const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || t('hesapAyarlari.fisVarsayilanNot'))
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
 const fisSecenekleri = [
-  { label: 'Fiyatlı', value: true },
-  { label: 'Fiyatsız', value: false }
+  { label: t('hesapAyarlari.fiyatli'), value: true },
+  { label: t('hesapAyarlari.fiyatsiz'), value: false }
 ]
 
 watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
@@ -688,10 +688,10 @@ const authStore = useAuthStore()
 const { isDark, accentColor, applyMode, applyColor, initTheme } = useTheme()
 
 const renkler = [
-  { name: 'Okyanus Mavisi', value: '#3b82f6' },
-  { name: 'Zümrüt Yeşil', value: '#10b981' },
-  { name: 'Asil Mor', value: '#8b5cf6' },
-  { name: 'Sıcak Amber', value: '#f59e0b' }
+  { name: t('hesapAyarlari.renkOkyanus'), value: '#3b82f6' },
+  { name: t('hesapAyarlari.renkZumrut'), value: '#10b981' },
+  { name: t('hesapAyarlari.renkAsilMor'), value: '#8b5cf6' },
+  { name: t('hesapAyarlari.renkAmber'), value: '#f59e0b' }
 ]
 
 const kullanici = computed(() => authStore?.kullanici)
@@ -714,19 +714,19 @@ const aiSaglayicilar = [
 
 const aiModeller = {
   OPENAI: [
-    { name: 'GPT-4o (En Yetenekli)', value: 'gpt-4o' },
-    { name: 'GPT-4o Mini (Hızlı & Ekonomik)', value: 'gpt-4o-mini' },
-    { name: 'GPT-4 Turbo', value: 'gpt-4-turbo' }
+    { name: t('hesapAyarlari.modelGpt4o'), value: 'gpt-4o' },
+    { name: t('hesapAyarlari.modelGpt4oMini'), value: 'gpt-4o-mini' },
+    { name: t('hesapAyarlari.modelGpt4Turbo'), value: 'gpt-4-turbo' }
   ],
   GOOGLE: [
-    { name: 'Gemini 2.5 Flash (Önerilen)', value: 'gemini-2.5-flash' },
-    { name: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro' },
-    { name: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' }
+    { name: t('hesapAyarlari.modelGeminiFlash'), value: 'gemini-2.5-flash' },
+    { name: t('hesapAyarlari.modelGeminiPro'), value: 'gemini-1.5-pro' },
+    { name: t('hesapAyarlari.modelGemini15Flash'), value: 'gemini-1.5-flash' }
   ],
   ANTHROPIC: [
-    { name: 'Claude 3.5 Sonnet (Gelişmiş Analiz)', value: 'claude-3-5-sonnet-20241022' },
-    { name: 'Claude 3.5 Haiku (Süper Hızlı)', value: 'claude-3-5-haiku-20241022' },
-    { name: 'Claude 3 Opus', value: 'claude-3-opus-20240229' }
+    { name: t('hesapAyarlari.modelClaudeSonnet'), value: 'claude-3-5-sonnet-20241022' },
+    { name: t('hesapAyarlari.modelClaudeHaiku'), value: 'claude-3-5-haiku-20241022' },
+    { name: t('hesapAyarlari.modelClaudeOpus'), value: 'claude-3-opus-20240229' }
   ]
 }
 
@@ -754,7 +754,7 @@ const tokenOlustur = async () => {
     yeniToken.value = r.data?.token || ''
     tokenlariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Token oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.tokenOlusturulamadi'))
   }
 }
 
@@ -797,7 +797,7 @@ const aiConfigGetir = async () => {
 
 const aiConfigKaydet = async () => {
   if (!aiForm.value.apiKey && !aiMevcutMaskeliKey.value) {
-    toastBildirim.uyari('Lütfen geçerli bir API anahtarı girin')
+    toastBildirim.uyari(t('hesapAyarlari.gecerliApiAnahtari'))
     return
   }
   aiKaydediliyor.value = true
@@ -814,7 +814,7 @@ const aiConfigKaydet = async () => {
       aiMevcutMaskeliKey.value = res.data.apiKey || ''
       aiForm.value.apiKey = ''
     }
-    toastBildirim.basarili('Yapay Zeka API ayarları kaydedildi')
+    toastBildirim.basarili(t('hesapAyarlari.aiAyarlariKaydedildi'))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Ayarlar kaydedilemedi')
   } finally {
@@ -829,20 +829,20 @@ const aiBaglantiTestEt = async () => {
     if (res.data && res.data.status === 'SUCCESS') {
       toast.add({
         severity: 'success',
-        summary: 'Bağlantı Başarılı',
-        detail: res.data.message || 'AI API bağlantısı başarıyla doğrulandı.',
+      summary: t('hesapAyarlari.baglantiBasarili'),
+      detail: res.data.message || t('hesapAyarlari.aiBaglantiDogrulandi'),
         life: 3000
       })
     } else {
       toast.add({
         severity: 'warn',
-        summary: 'Bağlantı Uyarısı',
-        detail: res.data?.message || 'Bağlantı kurulamadı',
+      summary: t('hesapAyarlari.baglantiUyarisi'),
+      detail: res.data?.message || t('hesapAyarlari.baglantiKurulamadi'),
         life: 4000
       })
     }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'API anahtarı doğrulanamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.apiAnahtariDogrulanamadi'))
   } finally {
     aiTestEdiliyor.value = false
   }
@@ -855,9 +855,9 @@ const aiConfigSil = async () => {
     aiDurum.value = 'YAPILANDIRILMADI'
     aiMevcutMaskeliKey.value = ''
     aiForm.value = { provider: 'OPENAI', apiKey: '', model: 'gpt-4o' }
-    toastBildirim.basarili('AI yapılandırması kaldırıldı')
+    toastBildirim.basarili(t('hesapAyarlari.aiYapilandirmasiKaldirildi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Yapılandırma silinemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.yapilandirmaSilinemedi'))
   } finally {
     aiKaydediliyor.value = false
   }
@@ -904,23 +904,23 @@ const oturumlariYukle = async () => {
 const oturumSonlandir = async (oturum) => {
   try {
     await kullaniciAPI.oturumIptal(oturum.jti)
-    toastBildirim.basarili('Oturum sonlandırıldı')
+    toastBildirim.basarili(t('hesapAyarlari.oturumSonlandirildi'))
     oturumlariYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Oturum sonlandırılamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.oturumSonlandirilamadi'))
   }
 }
 
 const bildirimTipleri = ref([
-  { label: 'Stok Uyarıları', value: 'STOK', secili: true },
-  { label: 'Siparişler', value: 'SIPARIS', secili: true },
-  { label: 'Teklifler', value: 'TEKLIF', secili: true },
-  { label: 'Teslimatlar', value: 'TESLIMAT', secili: true },
-  { label: 'Faturalar', value: 'FATURA', secili: true },
-  { label: 'Vade Hatırlatmaları', value: 'VADE', secili: true },
-  { label: 'Tahsilatlar', value: 'TAKSILAT', secili: true },
-  { label: 'Ödemeler', value: 'ODEME', secili: true },
-  { label: 'Masraf Talepleri', value: 'MASRAF_TALEBI', secili: true }
+  { label: t('hesapAyarlari.bildirimStok'), value: 'STOK', secili: true },
+  { label: t('hesapAyarlari.bildirimSiparis'), value: 'SIPARIS', secili: true },
+  { label: t('hesapAyarlari.bildirimTeklif'), value: 'TEKLIF', secili: true },
+  { label: t('hesapAyarlari.bildirimTeslimat'), value: 'TESLIMAT', secili: true },
+  { label: t('hesapAyarlari.bildirimFatura'), value: 'FATURA', secili: true },
+  { label: t('hesapAyarlari.bildirimVade'), value: 'VADE', secili: true },
+  { label: t('hesapAyarlari.bildirimTahsilat'), value: 'TAKSILAT', secili: true },
+  { label: t('hesapAyarlari.bildirimOdeme'), value: 'ODEME', secili: true },
+  { label: t('hesapAyarlari.bildirimMasraf'), value: 'MASRAF_TALEBI', secili: true }
 ])
 const tercihKaydediliyor = ref(false)
 
@@ -941,9 +941,9 @@ const tercihleriKaydet = async () => {
   try {
     const secili = bildirimTipleri.value.filter((t) => t.secili).map((t) => t.value)
     await kullaniciAPI.bildirimTercihleriGuncelle(secili)
-    toastBildirim.basarili('Bildirim tercihleri güncellendi')
+    toastBildirim.basarili(t('hesapAyarlari.tercihlerGuncellendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Tercihler kaydedilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.tercihlerKaydedilemedi'))
   } finally {
     tercihKaydediliyor.value = false
   }
@@ -954,29 +954,29 @@ const profilKaydet = async () => {
   try {
     await kullaniciAPI.beniGuncelle(profilForm.value)
     await authStore.kullaniciGuncelle()
-    toastBildirim.basarili('Profil güncellendi')
+    toastBildirim.basarili(t('hesapAyarlari.profilGuncellendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Profil güncellenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.profilGuncellenemedi'))
   }
   kaydediliyor.value = false
 }
 
 const sifreKaydet = async () => {
   if (!sifreForm.value.mevcutSifre || !sifreForm.value.yeniSifre) {
-    toastBildirim.uyari('Tüm alanları doldurun')
+    toastBildirim.uyari(t('hesapAyarlari.tumAlanlarDoldurun'))
     return
   }
   if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
-    toastBildirim.hata('Yeni şifreler eşleşmiyor')
+    toastBildirim.hata(t('hesapAyarlari.sifrelerEslesmiyor'))
     return
   }
   kaydediliyor.value = true
   try {
     await kullaniciAPI.sifreDegistir({ mevcutSifre: sifreForm.value.mevcutSifre, yeniSifre: sifreForm.value.yeniSifre })
-    toastBildirim.basarili('Şifre güncellendi')
+    toastBildirim.basarili(t('hesapAyarlari.sifreGuncellendi'))
     sifreForm.value = { mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' }
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Şifre değiştirilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.sifreDegistirilemedi'))
   }
   kaydediliyor.value = false
 }
@@ -988,14 +988,14 @@ const kurulumBaslat = async () => {
     kurulumData.value = r.data
     twoFactorDurum.value = 'KURULUM'
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || '2FA kurulumu başlatılamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.ikiFaKurulumBaslatilamadi'))
   }
   kaydediliyor.value = false
 }
 
 const ikiFakAktifEt = async () => {
   if (!dogrulamaKodu.value) {
-    toastBildirim.uyari('Doğrulama kodunu girin')
+    toastBildirim.uyari(t('hesapAyarlari.dogrulamaKoduGirin'))
     return
   }
   kaydediliyor.value = true
@@ -1006,14 +1006,14 @@ const ikiFakAktifEt = async () => {
     dogrulamaKodu.value = ''
     toastBildirim.basarili('2FA aktif edildi')
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Kod geçersiz')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.kodGecersiz'))
   }
   kaydediliyor.value = false
 }
 
 const ikiFakapat = async () => {
   if (!kapatmaKodu.value) {
-    toastBildirim.uyari('Doğrulama kodunu girin')
+    toastBildirim.uyari(t('hesapAyarlari.dogrulamaKoduGirin'))
     return
   }
   kaydediliyor.value = true
@@ -1021,9 +1021,9 @@ const ikiFakapat = async () => {
     await kullaniciAPI.disable2fa({ code: kapatmaKodu.value })
     twoFactorDurum.value = 'KAPALI'
     kapatmaKodu.value = ''
-    toastBildirim.basarili('2FA kapatıldı')
+    toastBildirim.basarili(t('hesapAyarlari.ikiFaKapatildi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Kod geçersiz')
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.kodGecersiz'))
   }
   kaydediliyor.value = false
 }
@@ -1031,7 +1031,7 @@ const ikiFakapat = async () => {
 const kopyala = async (text) => {
   try {
     await navigator.clipboard.writeText(text)
-    toast.add({ severity: 'success', summary: 'Kopyalandı', detail: 'Gizli anahtar panoya kopyalandı', life: 2000 })
+    toast.add({ severity: 'success', summary: t('hesapAyarlari.kopyalandi'), detail: t('hesapAyarlari.gizliAnahtarKopyalandi'), life: 2000 })
   } catch {
     /* empty */
   }

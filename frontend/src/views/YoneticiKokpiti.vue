@@ -6,10 +6,10 @@
         <div>
           <h1 class="page-title">
             <i class="pi pi-bolt text-amber-400 mr-2" />
-            Yönetici & Finansal Nabız Kokpiti
+            {{ t('yoneticiKokpiti.title') }}
           </h1>
           <p class="page-subtitle">
-            Aylık ciro & kâr hedefleri, nakit likiditesi, gelir-gider dağılımı ve riskli alacak analizi.
+            {{ t('yoneticiKokpiti.subtitle') }}
           </p>
         </div>
 
@@ -29,13 +29,13 @@
             @change="verileriYukle"
           />
           <Button
-            label="Hedef Belirle"
+            :label="t('yoneticiKokpiti.hedefBelirle')"
             icon="pi pi-bullseye"
             class="p-button-warning p-button-sm font-semibold"
             @click="hedefModalAc"
           />
           <Button
-            label="Rapor Al"
+            :label="t('yoneticiKokpiti.raporAl')"
             icon="pi pi-print"
             class="p-button-outlined p-button-sm"
             @click="raporYazdir"
@@ -59,9 +59,9 @@
         <div>
           <div class="ai-insight-baslik">
             <h4 class="ai-insight-title">
-              Yapay Zeka Finansal Değerlendirmesi
+              {{ t('yoneticiKokpiti.aiBaslik') }}
             </h4>
-            <span class="ai-insight-rozet">Otomatik Analiz</span>
+            <span class="ai-insight-rozet">{{ t('yoneticiKokpiti.aiRozet') }}</span>
           </div>
           <p class="ai-insight-yorum">
             {{ aiYorum }}
@@ -71,7 +71,7 @@
       <Button
         icon="pi pi-sync"
         class="p-button-rounded p-button-text ai-insight-btn p-button-sm flex-shrink-0"
-        title="Yeniden Değerlendir"
+        :title="t('yoneticiKokpiti.yenidenDegerlendir')"
         @click="aiYorumOlustur"
       />
     </div>
@@ -81,7 +81,7 @@
       <!-- Ciro & Hedef -->
       <div class="kpi-card">
         <div class="kpi-card-header">
-          <span class="kpi-card-title">Aylık Ciro Gerçekleşme</span>
+          <span class="kpi-card-title">{{ t('yoneticiKokpiti.aylikCiroGerceklesme') }}</span>
           <span
             class="badge-pill"
             :style="{ backgroundColor: progressRenk + '20', color: progressRenk }"
@@ -99,32 +99,32 @@
           />
         </div>
         <div class="kpi-card-footer">
-          <span>Hedef: {{ formatPara(kokpit?.hedefCiro || 0) }}</span>
-          <span class="font-medium text-muted">{{ kokpit?.kalanGun || 0 }} gün kaldı</span>
+          <span>{{ t('yoneticiKokpiti.hedef') }} {{ formatPara(kokpit?.hedefCiro || 0) }}</span>
+          <span class="font-medium text-muted">{{ t('yoneticiKokpiti.gunKaldi', { n: kokpit?.kalanGun || 0 }) }}</span>
         </div>
       </div>
 
       <!-- Net Kâr -->
       <div class="kpi-card">
         <div class="kpi-card-header">
-          <span class="kpi-card-title">Dönem Net Kârı</span>
+          <span class="kpi-card-title">{{ t('yoneticiKokpiti.donemNetKari') }}</span>
           <span class="badge-pill bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
-            %{{ (kokpit?.netKarMarji || 0).toFixed(1) }} Marj
+            %{{ (kokpit?.netKarMarji || 0).toFixed(1) }} {{ t('yoneticiKokpiti.marj') }}
           </span>
         </div>
         <div class="kpi-card-value text-emerald-600 dark:text-emerald-400">
           {{ formatPara(kokpit?.gerceklesenKar || 0) }}
         </div>
         <div class="kpi-card-footer mt-4 pt-2 border-t">
-          <span>Maliyet: {{ formatPara(kokpit?.toplamAlisMaliyeti || 0) }}</span>
-          <span>Gider: {{ formatPara(kokpit?.toplamMasraflar || 0) }}</span>
+          <span>{{ t('yoneticiKokpiti.maliyet') }} {{ formatPara(kokpit?.toplamAlisMaliyeti || 0) }}</span>
+          <span>{{ t('yoneticiKokpiti.gider') }} {{ formatPara(kokpit?.toplamMasraflar || 0) }}</span>
         </div>
       </div>
 
       <!-- Likidite -->
       <div class="kpi-card">
         <div class="kpi-card-header">
-          <span class="kpi-card-title">Kasa & Banka Likidite</span>
+          <span class="kpi-card-title">{{ t('yoneticiKokpiti.kasaBankaLikidite') }}</span>
           <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-accent">
             <i class="pi pi-wallet" />
           </div>
@@ -133,7 +133,7 @@
           {{ formatPara(kokpit?.kasaBankaToplam || 0) }}
         </div>
         <div class="kpi-card-footer mt-4 pt-2 border-t">
-          <span>Piyasa Alacağı:</span>
+          <span>{{ t('yoneticiKokpiti.piyasaAlacagi') }}</span>
           <strong class="text-accent">{{ formatPara(kokpit?.toplamAlacak || 0) }}</strong>
         </div>
       </div>
@@ -141,16 +141,16 @@
       <!-- Riskli Alacaklar -->
       <div class="kpi-card">
         <div class="kpi-card-header">
-          <span class="kpi-card-title text-red-600 dark:text-red-400">Geciken Riskli Alacak</span>
+          <span class="kpi-card-title text-red-600 dark:text-red-400">{{ t('yoneticiKokpiti.gecikenRiskliAlacak') }}</span>
           <span class="badge-pill bg-red-50 text-red-600 dark:bg-red-950/40">
-            {{ kokpit?.kritikAlacaklar?.length || 0 }} Fatura
+            {{ t('yoneticiKokpiti.faturaAdet', { n: kokpit?.kritikAlacaklar?.length || 0 }) }}
           </span>
         </div>
         <div class="kpi-card-value text-red-600">
           {{ formatPara(kokpit?.vadesiGecenAlacak || 0) }}
         </div>
         <div class="kpi-card-footer mt-4 pt-2 border-t">
-          <span>Tedarikçi Borcu:</span>
+          <span>{{ t('yoneticiKokpiti.tedarikciBorcu') }}</span>
           <span>{{ formatPara(kokpit?.toplamBorc || 0) }}</span>
         </div>
       </div>
@@ -164,14 +164,14 @@
           <div>
             <h3 class="section-card-title">
               <i class="pi pi-chart-bar text-primary mr-2" />
-              Günlük Ciro Gerçekleşme Trendi
+              {{ t('yoneticiKokpiti.gunlukCiroTrendi') }}
             </h3>
             <p class="text-xs text-muted">
-              Seçilen ay içerisindeki günlük satış dağılımı
+              {{ t('yoneticiKokpiti.gunlukSatisDagilimi') }}
             </p>
           </div>
           <span class="badge-pill bg-primary/10 text-primary font-bold">
-            Toplam: {{ formatPara(kokpit?.gerceklesenCiro || 0) }}
+            {{ t('yoneticiKokpiti.toplam') }} {{ formatPara(kokpit?.gerceklesenCiro || 0) }}
           </span>
         </div>
         <div
@@ -188,7 +188,7 @@
             class="empty-chart"
           >
             <i class="pi pi-chart-bar text-3xl text-gray-300 mb-2 block" />
-            <span>Bu ay için henüz satış hareketi bulunamadı.</span>
+            <span>{{ t('yoneticiKokpiti.satisHareketiYok') }}</span>
           </div>
         </div>
       </div>
@@ -199,10 +199,10 @@
           <div>
             <h3 class="section-card-title">
               <i class="pi pi-chart-pie text-emerald-500 mr-2" />
-              Finansal Dağılım
+              {{ t('yoneticiKokpiti.finansalDagilim') }}
             </h3>
             <p class="text-xs text-muted">
-              Ciro, Maliyet ve Gider Oranları
+              {{ t('yoneticiKokpiti.ciroMaliyetGiderOranlari') }}
             </p>
           </div>
         </div>
@@ -220,7 +220,7 @@
             class="empty-chart"
           >
             <i class="pi pi-chart-pie text-3xl text-gray-300 mb-2 block" />
-            <span>Finansal dağılım verisi henüz oluşmadı.</span>
+            <span>{{ t('yoneticiKokpiti.dagilimVerisiYok') }}</span>
           </div>
         </div>
       </div>
@@ -232,15 +232,15 @@
         <div>
           <h3 class="section-card-title">
             <i class="pi pi-chart-line text-emerald-500 mr-2" />
-            30 - 60 - 90 Günlük Nakit Akışı Projeksiyonu
+            {{ t('yoneticiKokpiti.nakitAkisiProjeksiyonu') }}
           </h3>
           <p class="text-xs text-muted">
-            Vadesi gelen alacaklar, tedarikçi ödemeleri ve mevcut likiditeye göre tahmini kasa pozisyonu
+            {{ t('yoneticiKokpiti.nakitAkisiAciklama') }}
           </p>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-            <i class="pi pi-circle-fill text-[8px]" /> Tahmini Net Likidite
+            <i class="pi pi-circle-fill text-[8px]" /> {{ t('yoneticiKokpiti.tahminiNetLikidite') }}
           </span>
         </div>
       </div>
@@ -263,10 +263,10 @@
           <div>
             <h3 class="section-card-title">
               <i class="pi pi-trophy text-amber-500 mr-2" />
-              En Çok Ciro Sağlayan 5 Müşteri
+              {{ t('yoneticiKokpiti.enCokCiro5') }}
             </h3>
             <p class="text-xs text-muted">
-              Bu ay en yüksek hacimli satış yapılan cari hesaplar
+              {{ t('yoneticiKokpiti.enYuksekHacimli') }}
             </p>
           </div>
         </div>
@@ -282,8 +282,8 @@
             <div class="flex items-center gap-3">
               <span class="rank-badge">{{ idx + 1 }}</span>
               <div>
-                <strong class="text-sm text-primary dark:text-gray-100 block">{{ m?.cariAdi || m?.unvan || 'Müşteri' }}</strong>
-                <span class="text-xs text-muted">{{ m?.faturaSayisi || 0 }} Fatura</span>
+                <strong class="text-sm text-primary dark:text-gray-100 block">{{ m?.cariAdi || m?.unvan || t('yoneticiKokpiti.musteri') }}</strong>
+                <span class="text-xs text-muted">{{ t('yoneticiKokpiti.faturaAdet', { n: m?.faturaSayisi || 0 }) }}</span>
               </div>
             </div>
             <div class="text-right font-bold text-sm text-primary">
@@ -296,7 +296,7 @@
           class="empty-list"
         >
           <i class="pi pi-users text-3xl text-gray-300 mb-2 block" />
-          <span>Henüz müşteri satış verisi bulunmuyor.</span>
+          <span>{{ t('yoneticiKokpiti.musteriVerisiYok') }}</span>
         </div>
       </div>
 
@@ -306,14 +306,14 @@
           <div>
             <h3 class="section-card-title text-red-600 dark:text-red-400">
               <i class="pi pi-exclamation-circle mr-2" />
-              Vadesi Geçen Kritik Alacaklar
+              {{ t('yoneticiKokpiti.vadesiGecenKritik') }}
             </h3>
             <p class="text-xs text-muted">
-              Ödemesi geciken ve tahsilat takibi gereken müşteriler
+              {{ t('yoneticiKokpiti.tahsilatTakibi') }}
             </p>
           </div>
           <span class="badge-pill bg-red-50 text-red-600 font-bold">
-            {{ kokpit?.kritikAlacaklar?.length || 0 }} Fatura
+            {{ t('yoneticiKokpiti.faturaAdet', { n: kokpit?.kritikAlacaklar?.length || 0 }) }}
           </span>
         </div>
         <div
@@ -326,10 +326,10 @@
             class="risk-row"
           >
             <div>
-              <strong class="text-sm text-primary dark:text-gray-100 block">{{ a?.cariAdi || a?.unvan || 'Cari Hesap' }}</strong>
+              <strong class="text-sm text-primary dark:text-gray-100 block">{{ a?.cariAdi || a?.unvan || t('yoneticiKokpiti.cariHesap') }}</strong>
               <div class="text-xs text-muted flex items-center gap-2 mt-0.5">
-                <span>Vade: {{ a?.vadeTarihi || '-' }}</span>
-                <span class="text-red-600 font-bold">({{ a?.gecikmeGunu || 0 }} gün gecikti)</span>
+                <span>{{ t('yoneticiKokpiti.vade') }} {{ a?.vadeTarihi || '-' }}</span>
+                <span class="text-red-600 font-bold">({{ t('yoneticiKokpiti.gunGecikti', { n: a?.gecikmeGunu || 0 }) }})</span>
               </div>
             </div>
             <div class="flex items-center gap-3">
@@ -338,7 +338,7 @@
                 v-if="a?.telefon"
                 icon="pi pi-whatsapp"
                 class="p-button-rounded p-button-success p-button-sm"
-                title="WhatsApp Hatırlatması Gönder"
+                :title="t('yoneticiKokpiti.whatsappHatirlatma')"
                 @click="hatirlatWhatsApp(a)"
               />
             </div>
@@ -349,7 +349,7 @@
           class="empty-list text-emerald-600"
         >
           <i class="pi pi-check-circle text-3xl text-emerald-400 mb-2 block" />
-          <span>Vadesi geçmiş riskli alacak kaydı bulunmuyor.</span>
+          <span>{{ t('yoneticiKokpiti.riskliAlacakYok') }}</span>
         </div>
       </div>
     </div>
@@ -358,80 +358,80 @@
     <Dialog
       v-model:visible="hedefModal"
       :modal="true"
-      header="Aylık Şirket Hedeflerini Belirle"
+      :header="t('yoneticiKokpiti.hedefModalBaslik')"
       :style="{ width: '90%', maxWidth: '480px' }"
     >
       <div class="space-y-4 pt-2">
         <div class="period-indicator">
-          <span class="text-xs text-muted block">Hedef Dönemi</span>
+          <span class="text-xs text-muted block">{{ t('yoneticiKokpiti.hedefDonemi') }}</span>
           <strong class="text-base text-primary">{{ seciliYil }} - {{ ayAdi(seciliAy) }}</strong>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Aylık Ciro Hedefi (₺) *</label>
+          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">{{ t('yoneticiKokpiti.aylikCiroHedefi') }}</label>
           <input
             v-model.number="hedefForm.hedefCiro"
             type="number"
             min="0"
             step="1000"
             class="p-inputtext w-full"
-            placeholder="Örn: 1000000"
+            :placeholder="t('yoneticiKokpiti.ornekCiroPlaceholder')"
           >
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Aylık Net Kâr Hedefi (₺)</label>
+          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">{{ t('yoneticiKokpiti.aylikNetKarHedefi') }}</label>
           <input
             v-model.number="hedefForm.hedefKar"
             type="number"
             min="0"
             step="1000"
             class="p-inputtext w-full"
-            placeholder="Örn: 250000"
+            :placeholder="t('yoneticiKokpiti.ornekKarPlaceholder')"
           >
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Yeni Müşteri Hedefi</label>
+            <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">{{ t('yoneticiKokpiti.yeniMusteriHedefi') }}</label>
             <input
               v-model.number="hedefForm.hedefYeniMusteri"
               type="number"
               min="0"
               class="p-inputtext w-full"
-              placeholder="Örn: 10"
+              :placeholder="t('yoneticiKokpiti.ornekMusteriPlaceholder')"
             >
           </div>
           <div>
-            <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Satış Adedi Hedefi</label>
+            <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">{{ t('yoneticiKokpiti.satisAdediHedefi') }}</label>
             <input
               v-model.number="hedefForm.hedefSatisAdedi"
               type="number"
               min="0"
               class="p-inputtext w-full"
-              placeholder="Örn: 150"
+              :placeholder="t('yoneticiKokpiti.ornekSatisPlaceholder')"
             >
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">Aylık Strateji / Odak Notu</label>
+          <label class="block text-sm font-semibold mb-1 text-secondary dark:text-gray-300">{{ t('yoneticiKokpiti.aylikStratejiNotu') }}</label>
           <Textarea
             v-model="hedefForm.notlar"
             rows="3"
-            placeholder="Bu ayki stratejik hedefler ve odak noktaları..."
+            :placeholder="t('yoneticiKokpiti.stratejiPlaceholder')"
             class="w-full"
           />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="hedefModal = false"
         />
         <Button
-          label="Hedefleri Kaydet"
+          :label="t('yoneticiKokpiti.hedefleriKaydet')"
           icon="pi pi-check"
           class="p-button-primary font-bold"
           :loading="hedefKaydediliyor"
@@ -444,6 +444,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { yoneticiKokpitAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
@@ -463,6 +464,8 @@ import {
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement)
 
 const toast = useToast()
+const { t, locale } = useI18n()
+const intlLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'tr-TR'))
 
 const kokpit = ref(null)
 const yukleniyor = ref(false)
@@ -478,12 +481,13 @@ const yilSecenekleri = Array.from(
   { length: (bugun.getFullYear() + 5) - 2024 + 1 },
   (_, i) => 2024 + i
 )
-const aySecenekleri = [
-  { ad: 'Ocak', deger: 1 }, { ad: 'Şubat', deger: 2 }, { ad: 'Mart', deger: 3 },
-  { ad: 'Nisan', deger: 4 }, { ad: 'Mayıs', deger: 5 }, { ad: 'Haziran', deger: 6 },
-  { ad: 'Temmuz', deger: 7 }, { ad: 'Ağustos', deger: 8 }, { ad: 'Eylül', deger: 9 },
-  { ad: 'Ekim', deger: 10 }, { ad: 'Kasım', deger: 11 }, { ad: 'Aralık', deger: 12 }
-]
+const aySecenekleri = computed(() => {
+  const fmt = new Intl.DateTimeFormat(intlLocale.value, { month: 'long' })
+  return Array.from({ length: 12 }, (_, i) => {
+    const ad = fmt.format(new Date(2024, i, 1))
+    return { ad: ad.charAt(0).toUpperCase() + ad.slice(1), deger: i + 1 }
+  })
+})
 
 const hedefForm = ref({
   hedefCiro: 0,
@@ -496,7 +500,7 @@ const hedefForm = ref({
 // Güvenli formatlayıcılar
 const formatPara = (v) => {
   if (v == null || isNaN(v)) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
+  return new Intl.NumberFormat(intlLocale.value, { style: 'currency', currency: 'TRY' }).format(v)
 }
 
 onMounted(async () => {
@@ -512,14 +516,14 @@ const verileriYukle = async () => {
     })
     kokpit.value = res?.data || null
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: 'Kokpit verileri alınamadı: ' + (err?.message || ''), life: 3000 })
+    toast.add({ severity: 'error', summary: t('yoneticiKokpiti.hata'), detail: t('yoneticiKokpiti.kokpitVerileriAlinamadi') + (err?.message || ''), life: 3000 })
   } finally {
     yukleniyor.value = false
   }
 }
 
 const ayAdi = (ay) => {
-  return aySecenekleri.find(a => a.deger === ay)?.ad || ay
+  return aySecenekleri.value.find(a => a.deger === ay)?.ad || ay
 }
 
 const progressRenk = computed(() => {
@@ -537,7 +541,7 @@ const trendVerisi = computed(() => {
     labels: trend.map(t => t?.tarih || ''),
     datasets: [
       {
-        label: 'Günlük Ciro (₺)',
+        label: t('yoneticiKokpiti.gunlukCiroLabel'),
         backgroundColor: '#3b82f6',
         borderRadius: 4,
         data: trend.map(t => t?.ciro || 0)
@@ -578,7 +582,7 @@ const dagilimVerisi = computed(() => {
   const netKar = kokpit.value?.gerceklesenKar || 0
 
   return {
-    labels: ['Net Kâr', 'Alış Maliyeti', 'Genel Giderler'],
+    labels: [t('yoneticiKokpiti.netKar'), t('yoneticiKokpiti.alisMaliyeti'), t('yoneticiKokpiti.genelGiderler')],
     datasets: [
       {
         data: [Math.max(0, netKar), maliyet, masraflar],
@@ -617,10 +621,15 @@ const nakitAkisVerisi = computed(() => {
   const gun90 = gun60 + (alacak * 0.20) - (borc * 0.25)
 
   return {
-    labels: ['Mevcut Kasa', '+30 Gün (Tahmin)', '+60 Gün (Tahmin)', '+90 Gün (Tahmin)'],
+    labels: [
+      t('yoneticiKokpiti.mevcutKasa'),
+      t('yoneticiKokpiti.gun30Tahmin'),
+      t('yoneticiKokpiti.gun60Tahmin'),
+      t('yoneticiKokpiti.gun90Tahmin')
+    ],
     datasets: [
       {
-        label: 'Net Nakit Pozisyonu (₺)',
+        label: t('yoneticiKokpiti.netNakitPozisyonu'),
         borderColor: '#10b981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         fill: true,
@@ -640,7 +649,7 @@ const lineChartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx) => ` Tahmini Likidite: ${formatPara(ctx.raw || 0)}`
+        label: (ctx) => ` ${t('yoneticiKokpiti.tahminiLikidite')} ${formatPara(ctx.raw || 0)}`
       }
     }
   },
@@ -665,13 +674,13 @@ const aiYorumOlustur = () => {
   const risk = kokpit.value?.vadesiGecenAlacak || 0
   const likidite = kokpit.value?.kasaBankaToplam || 0
 
-  let metin = `Bu ay ciro hedefinizin %${yuzde.toFixed(1)}'ine ulaşıldı. Net kâr marjınız %${marj.toFixed(1)} seviyesinde sağlıklı ilerliyor. `
+  let metin = t('yoneticiKokpiti.aiOzet1', { yuzde: yuzde.toFixed(1), marj: marj.toFixed(1) })
   if (risk > 0) {
-    metin += `Dikkat: ${formatPara(risk)} tutarında vadesi gecikmiş alacak bulunmaktadır, nakit akışını güçlendirmek için tahsilata odaklanılması önerilir.`
+    metin += t('yoneticiKokpiti.aiOzetRisk', { tutar: formatPara(risk) })
   } else if (likidite > 0) {
-    metin += `Kasa ve banka likiditeniz (${formatPara(likidite)}) operasyonel giderleri karşılamak için güçlü pozisyondadır.`
+    metin += t('yoneticiKokpiti.aiOzetLikidite', { tutar: formatPara(likidite) })
   } else {
-    metin += 'Aylık finansal operasyonlar genel hedeflerle uyumlu seyrediyor.'
+    metin += t('yoneticiKokpiti.aiOzetDengeli')
   }
   aiYorum.value = metin
 }
@@ -703,11 +712,11 @@ const hedefKaydet = async () => {
       ay: seciliAy.value,
       ...hedefForm.value
     })
-    toast.add({ severity: 'success', summary: 'Hedef Kaydedildi', detail: 'Aylık hedefler başarıyla güncellendi.', life: 3000 })
+    toast.add({ severity: 'success', summary: t('yoneticiKokpiti.hedefKaydedildi'), detail: t('yoneticiKokpiti.hedeflerGuncellendi'), life: 3000 })
     hedefModal.value = false
     await verileriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: 'Hata', detail: err?.message || 'Hedef kaydedilemedi.', life: 3000 })
+    toast.add({ severity: 'error', summary: t('yoneticiKokpiti.hata'), detail: err?.message || t('yoneticiKokpiti.hedefKaydedilemedi'), life: 3000 })
   } finally {
     hedefKaydediliyor.value = false
   }
@@ -715,7 +724,10 @@ const hedefKaydet = async () => {
 
 const hatirlatWhatsApp = (cari) => {
   if (!cari) return
-  const metin = `Sayın ${cari.unvan || cari.cariAdi},\n\nVadesi geçen ${formatPara(cari.bakiye || cari.kalanTutar)} tutarındaki ödemenizi hatırlatır, iyi çalışmalar dileriz.`
+  const metin = t('yoneticiKokpiti.whatsappMesaj', {
+    ad: cari.unvan || cari.cariAdi,
+    tutar: formatPara(cari.bakiye || cari.kalanTutar)
+  })
   window.open(`https://wa.me/${(cari.telefon || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(metin)}`, '_blank')
 }
 </script>
