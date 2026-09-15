@@ -1772,7 +1772,20 @@
     "onemUyari": "{n} stock items at critical level — reorder suggestion created.",
     "ipucuMetin": "List products at critical level or, from the 'Smart Demand Forecast' tab, review the estimated depletion days and proactive order suggestions calculated by AI based on consumption trends.",
     "urunSayisi": "{n} Products",
-    "gunlukTuketimDeger": "{miktar} {birim}/day"
+    "gunlukTuketimDeger": "{miktar} {birim}/day",
+    "tedarikci": "Supplier",
+    "akilliTalepTahmini": "Smart Demand Forecast (AI)",
+    "veriYuklenemedi": "Could not load stock data",
+    "talepOlusturulamadi": "Could not create supply request",
+    "talepAciklama": "Automatic request - {ad} ({kod}): current {mevcut}, recommended order: {miktar} {birim}. Supplier: {tedarikci}.",
+    "kritikSeviye": "Critical Level",
+    "marka": "Brand",
+    "stoklaraGit": "Go to Stock",
+    "kritikSeviyedekiStoklar": "Stock at Critical Level",
+    "talepEden": "System (AI Forecast)",
+    "belirtilmemis": "Not specified",
+    "varsayilanBirim": "pcs",
+    "talepOlusturuldu": "Supply request created for {ad}."
   },
   "kullanicilar": {
     "title": "User Management",
@@ -3514,5 +3527,27 @@
   "bildirim": {
     "izinVer": "Allow",
     "ac": "Open"
+  },
+  "onboarding": {
+    "demoYukle": "Load Demo Data",
+    "adim1Baslik": "Company Information",
+    "adim1Aciklama": "Edit your company name, tax number and contact information.",
+    "adim1Buton": "Go to Company",
+    "adim2Baslik": "Add Your First Account",
+    "adim2Aciklama": "Add your customers and suppliers to the system.",
+    "adim3Baslik": "Define Your Products",
+    "adim3Aciklama": "Add your stock products, prices and units.",
+    "adim4Baslik": "Issue Your First Invoice",
+    "adim4Aciklama": "Create your sales or purchase invoice.",
+    "demoYuklendi": "Demo Data Loaded",
+    "demoYuklendiDetay": "Sample accounts, stock and categories have been added.",
+    "demoHata": "An error occurred while loading demo data.",
+    "hosGeldiniz": "Welcome to RasPel ERP!",
+    "bosSistem": "Your system looks empty right now. A few steps to get started:",
+    "demoDoldur": "Fill with demo data",
+    "atla": "Skip, I will set it up myself",
+    "adim2Buton": "Add Account",
+    "adim3Buton": "Add Stock",
+    "adim4Buton": "Issue Invoice"
   }
 }

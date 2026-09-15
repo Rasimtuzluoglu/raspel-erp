@@ -165,17 +165,17 @@
       >
         <Column
           field="stokKodu"
-          header="Stok Kodu"
+          :header="t('kritikStok.stokKodu')"
           style="width: 110px"
         />
         <Column
           field="ad"
-          header="Ürün"
+          :header="t('kritikStok.urun')"
           sortable
         />
         <Column
           field="miktar"
-          header="Mevcut Stok"
+          :header="t('kritikStok.mevcutStok')"
           sortable
         >
           <template #body="{ data }">
@@ -184,7 +184,7 @@
         </Column>
         <Column
           field="minMiktar"
-          header="Kritik Seviye"
+          :header="t('kritikStok.kritikSeviye')"
         >
           <template #body="{ data }">
             {{ data.minMiktar }} {{ data.birim }}
@@ -192,7 +192,7 @@
         </Column>
         <Column
           field="onerilenSiparisMiktari"
-          header="Önerilen Sipariş"
+          :header="t('kritikStok.onerilenSiparis')"
           sortable
         >
           <template #body="{ data }">
@@ -204,25 +204,25 @@
         </Column>
         <Column
           field="marka"
-          header="Marka"
+          :header="t('kritikStok.marka')"
         />
         <Column
           field="tedarikciAd"
-          header="Tedarikçi"
+          :header="t('kritikStok.tedarikci')"
         >
           <template #body="{ data }">
             <span class="gizli-veri">{{ data.tedarikciAd || '-' }}</span>
           </template>
         </Column>
         <Column
-          header="İşlem"
+          :header="t('common.actions')"
           style="width: 150px"
         >
           <template #body="{ data }">
             <Button
               icon="pi pi-cart-plus"
               class="p-button-rounded p-button-text p-button-warning"
-              title="Tedarik Talebi Oluştur"
+              :title="t('kritikStok.tedarikTalebiOlustur')"
               @click="talepOlustur(data)"
             />
             <router-link
@@ -233,7 +233,7 @@
               <Button
                 icon="pi pi-box"
                 class="p-button-rounded p-button-text"
-                title="Stoklara Git"
+                :title="t('kritikStok.stoklaraGit')"
                 @click="navigate"
               />
             </router-link>
@@ -260,8 +260,8 @@ const yukleniyor = ref(false)
 
 const gorunumTipi = ref('tahmin')
 const gorunumSecenekleri = [
-  { label: 'Akıllı Talep Tahmini (AI)', value: 'tahmin' },
-  { label: 'Kritik Seviyedeki Stoklar', value: 'kritik' }
+  { label: t('kritikStok.akilliTalepTahmini'), value: 'tahmin' },
+  { label: t('kritikStok.kritikSeviyedekiStoklar'), value: 'kritik' }
 ]
 
 onMounted(yukle)
@@ -276,7 +276,7 @@ async function yukle() {
     list.value = kritikRes.data || []
     tahminList.value = tahminRes.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Stok verileri yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('kritikStok.veriYuklenemedi'))
   }
   yukleniyor.value = false
 }
@@ -287,13 +287,20 @@ const talepOlustur = async (data) => {
     await satinalmaTalepAPI.create({
       talepNo: 'TAL-' + Date.now(),
       tarih: getLocalDateString(),
-      talepEden: 'Sistem (AI Tahmin)',
-      departman: 'Stok Yönetimi',
-      aciklama: `Otomatik talep - ${data.ad} (${data.stokKodu || '-'}): mevcut ${data.mevcutMiktar || data.miktar}, önerilen sipariş: ${miktar} ${data.birim || 'Adet'}. Tedarikçi: ${data.tedarikciAd || 'Belirtilmemiş'}.`
+      talepEden: t('kritikStok.talepEden'),
+      departman: t('nav.stok'),
+      aciklama: t('kritikStok.talepAciklama', {
+        ad: data.ad,
+        kod: data.stokKodu || '-',
+        mevcut: data.mevcutMiktar || data.miktar,
+        miktar,
+        birim: data.birim || t('kritikStok.varsayilanBirim'),
+        tedarikci: data.tedarikciAd || t('kritikStok.belirtilmemis')
+      })
     })
-    toastBildirim.basarili(`${data.ad} için tedarik talebi oluşturuldu.`)
+    toastBildirim.basarili(t('kritikStok.talepOlusturuldu', { ad: data.ad }))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Tedarik talebi oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('kritikStok.talepOlusturulamadi'))
   }
 }
 </script>

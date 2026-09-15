@@ -1772,7 +1772,20 @@
     "onemUyari": "{n} stok kritik seviyede — yeniden sipariş önerisi oluşturuldu.",
     "ipucuMetin": "Kritik seviyedeki ürünleri listeleyin veya 'Akıllı Talep Tahmini' sekmesinden yapay zekanın tüketim trendlerine göre hesapladığı tahmini tükenme günlerini ve proaktif sipariş önerilerini inceleyin.",
     "urunSayisi": "{n} Ürün",
-    "gunlukTuketimDeger": "{miktar} {birim}/gün"
+    "gunlukTuketimDeger": "{miktar} {birim}/gün",
+    "tedarikci": "Tedarikçi",
+    "akilliTalepTahmini": "Akıllı Talep Tahmini (AI)",
+    "veriYuklenemedi": "Stok verileri yüklenemedi",
+    "talepOlusturulamadi": "Tedarik talebi oluşturulamadı",
+    "talepAciklama": "Otomatik talep - {ad} ({kod}): mevcut {mevcut}, önerilen sipariş: {miktar} {birim}. Tedarikçi: {tedarikci}.",
+    "kritikSeviye": "Kritik Seviye",
+    "marka": "Marka",
+    "stoklaraGit": "Stoklara Git",
+    "kritikSeviyedekiStoklar": "Kritik Seviyedeki Stoklar",
+    "talepEden": "Sistem (AI Tahmin)",
+    "belirtilmemis": "Belirtilmemiş",
+    "varsayilanBirim": "Adet",
+    "talepOlusturuldu": "{ad} için tedarik talebi oluşturuldu."
   },
   "kullanicilar": {
     "title": "Kullanıcı Yönetimi",
@@ -3514,5 +3527,27 @@
   "bildirim": {
     "izinVer": "İzin Ver",
     "ac": "Aç"
+  },
+  "onboarding": {
+    "demoYukle": "Demo Veriyi Yükle",
+    "adim1Baslik": "Şirket Bilgileri",
+    "adim1Aciklama": "Şirket adı, vergi no ve iletişim bilgilerinizi düzenleyin.",
+    "adim1Buton": "Şirkete Git",
+    "adim2Baslik": "İlk Cari Hesabını Ekleyin",
+    "adim2Aciklama": "Müşteri ve tedarikçilerinizi sisteme ekleyin.",
+    "adim3Baslik": "Ürünlerinizi Tanımlayın",
+    "adim3Aciklama": "Stok ürünlerinizi, fiyatları ve birimlerini ekleyin.",
+    "adim4Baslik": "İlk Faturanızı Kesin",
+    "adim4Aciklama": "Satış veya alış faturanızı oluşturun.",
+    "demoYuklendi": "Demo Veri Yüklendi",
+    "demoYuklendiDetay": "Örnek cari, stok ve kategoriler eklendi.",
+    "demoHata": "Demo veri yüklenirken hata oluştu.",
+    "hosGeldiniz": "RasPel ERP'ye Hoş Geldiniz!",
+    "bosSistem": "Sisteminiz şu anda boş görünüyor. Başlamak için birkaç adım:",
+    "demoDoldur": "Demo verileriyle doldurulsun",
+    "atla": "Atla, kendim kuracağım",
+    "adim2Buton": "Cari Ekle",
+    "adim3Buton": "Stok Ekle",
+    "adim4Buton": "Fatura Kes"
   }
 }

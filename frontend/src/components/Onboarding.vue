@@ -3,8 +3,8 @@
     <div class="onboard-kart">
       <div class="onboard-ust">
         <i class="pi pi-rocket onboard-ikon" />
-        <h2>RasPel ERP'ye Hoş Geldiniz!</h2>
-        <p>Sisteminiz şu anda boş görünüyor. Başlamak için birkaç adım:</p>
+        <h2>{{ $t('onboarding.hosGeldiniz') }}</h2>
+        <p>{{ $t('onboarding.bosSistem') }}</p>
       </div>
 
       <div class="onboard-adimlar">
@@ -40,10 +40,10 @@
       <div class="onboard-alt">
         <div class="demo-secim">
           <InputSwitch v-model="demoVeriIsteniyor" />
-          <span>Demo verileriyle doldurulsun</span>
+          <span>{{ $t('onboarding.demoDoldur') }}</span>
         </div>
         <Button
-          label="Demo Veriyi Yükle"
+          :label="$t('onboarding.demoYukle')"
           icon="pi pi-download"
           class="p-button-success p-button-lg"
           :loading="demoYukleniyor"
@@ -52,7 +52,7 @@
         <a
           class="onboard-atla"
           @click="atla"
-        >Atla, kendim kuracağım</a>
+        >{{ $t('onboarding.atla') }}</a>
       </div>
     </div>
   </div>
@@ -61,11 +61,13 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { cariHesapAPI, stokAPI, kategoriAPI } from '../api/index.js'
 
 const router = useRouter()
+const { t } = useI18n()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const demoVeriIsteniyor = ref(true)
@@ -74,33 +76,33 @@ const emit = defineEmits(['demo-loaded', 'atla'])
 
 const adimlar = reactive([
   {
-    baslik: 'Şirket Bilgileri',
-    aciklama: 'Şirket adı, vergi no ve iletişim bilgilerinizi düzenleyin.',
-    buton: 'Şirkete Git',
+    baslik: t('onboarding.adim1Baslik'),
+    aciklama: t('onboarding.adim1Aciklama'),
+    buton: t('onboarding.adim1Buton'),
     ikon: 'pi pi-building',
     tamam: false,
     path: '/sirketler'
   },
   {
-    baslik: 'İlk Cari Hesabını Ekleyin',
-    aciklama: 'Müşteri ve tedarikçilerinizi sisteme ekleyin.',
-    buton: 'Cari Ekle',
+    baslik: t('onboarding.adim2Baslik'),
+    aciklama: t('onboarding.adim2Aciklama'),
+    buton: t('onboarding.adim2Buton'),
     ikon: 'pi pi-users',
     tamam: false,
     path: '/cari-hesaplar'
   },
   {
-    baslik: 'Ürünlerinizi Tanımlayın',
-    aciklama: 'Stok ürünlerinizi, fiyatlarını ve birimlerini ekleyin.',
-    buton: 'Stok Ekle',
+    baslik: t('onboarding.adim3Baslik'),
+    aciklama: t('onboarding.adim3Aciklama'),
+    buton: t('onboarding.adim3Buton'),
     ikon: 'pi pi-box',
     tamam: false,
     path: '/stoklar'
   },
   {
-    baslik: 'İlk Faturanızı Kesin',
-    aciklama: 'Satış veya alış faturanızı oluşturun.',
-    buton: 'Fatura Kes',
+    baslik: t('onboarding.adim4Baslik'),
+    aciklama: t('onboarding.adim4Aciklama'),
+    buton: t('onboarding.adim4Buton'),
     ikon: 'pi pi-file',
     tamam: false,
     path: '/faturalar'
@@ -182,8 +184,8 @@ const demoYukle = async () => {
 
     toast.add({
       severity: 'success',
-      summary: 'Demo Veri Yüklendi',
-      detail: 'Örnek cari, stok ve kategoriler eklendi.',
+      summary: t('onboarding.demoYuklendi'),
+      detail: t('onboarding.demoYuklendiDetay'),
       life: 5000
     })
     adimlar.forEach((a) => {
@@ -191,7 +193,7 @@ const demoYukle = async () => {
     })
     emit('demo-loaded')
   } catch (e) {
-    toastBildirim.hata('Demo veri yüklenirken hata oluştu.')
+    toastBildirim.hata(t('onboarding.demoHata'))
   } finally {
     demoYukleniyor.value = false
   }
