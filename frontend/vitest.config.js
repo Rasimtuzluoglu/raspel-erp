@@ -7,6 +7,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     root: '.',
+    // Kapsam buyudukce paralel calismada bazi mount testleri 5sn'yi asiyor.
+    testTimeout: 15000,
+    hookTimeout: 15000,
     setupFiles: ['./src/test-setup.js'],
     coverage: {
       provider: 'v8',

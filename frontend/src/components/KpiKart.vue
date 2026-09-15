@@ -10,7 +10,7 @@
       <span class="kpi-baslik">{{ baslik }}</span>
       <span
         v-if="trend !== null && trend !== undefined"
-        class="kpi-trend"
+        class="kpi-trend gizli-veri"
         :class="trend >= 0 ? 'yukselis' : 'dusus'"
         :title="$t('dashboard.gecenAyaGore')"
       >
@@ -19,7 +19,7 @@
       </span>
     </div>
 
-    <div class="kpi-deger">
+    <div class="kpi-deger gizli-veri">
       {{ bicimliDeger }}
     </div>
 
@@ -27,7 +27,7 @@
       v-if="sparkline && sparkline.length > 1"
       :veriler="sparkline"
       :renk="renk"
-      class="kpi-sparkline"
+      class="kpi-sparkline gizli-veri"
     />
 
     <div class="kpi-alt">

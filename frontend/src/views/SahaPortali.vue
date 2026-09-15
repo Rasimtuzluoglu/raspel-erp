@@ -578,7 +578,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI } from '../api/index.js'
+import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
 import { useI18n } from 'vue-i18n'
@@ -666,7 +666,7 @@ const tumunuYukle = async () => {
     ])
     if (sipRes.status === 'fulfilled') siparisler.value = unwrapList(sipRes.value)
     if (izinRes.status === 'fulfilled') izinler.value = unwrapList(izinRes.value)
-    if (masrafRes.status === 'fulfilled') masraflar.value = masrafRes.value.data || []
+    if (masrafRes.status === 'fulfilled') masraflar.value = unwrapList(masrafRes.value)
     if (cariRes.status === 'fulfilled') cariHesaplar.value = unwrapList(cariRes.value)
     if (stokRes.status === 'fulfilled') stoklar.value = unwrapList(stokRes.value)
   } finally {
@@ -699,30 +699,52 @@ const imzaModalAc = (siparis) => {
   })
 }
 
-const imzaBaslat = (e) => { cizimYapiliyor = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY) }
-const imzaCiz = (e) => { if (cizimYapiliyor) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke() } }
+const imzaBaslat = (e) => { if (!ctx) return; cizimYapiliyor = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY) }
+const imzaCiz = (e) => { if (cizimYapiliyor && ctx) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke() } }
 const imzaBitir = () => { cizimYapiliyor = false }
-const imzaBaslatTouch = (e) => { e.preventDefault(); cizimYapiliyor = true; const r = imzaCanvas.value.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top) }
-const imzaCizTouch = (e) => { e.preventDefault(); if (cizimYapiliyor) { const r = imzaCanvas.value.getBoundingClientRect(); ctx.lineTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top); ctx.stroke() } }
+const imzaBaslatTouch = (e) => { if (!ctx) return; e.preventDefault(); cizimYapiliyor = true; const r = imzaCanvas.value.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top) }
+const imzaCizTouch = (e) => { if (!ctx) return; e.preventDefault(); if (cizimYapiliyor) { const r = imzaCanvas.value.getBoundingClientRect(); ctx.lineTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top); ctx.stroke() } }
 const imzayiTemizle = () => { if (ctx && imzaCanvas.value) ctx.clearRect(0, 0, imzaCanvas.value.width, imzaCanvas.value.height) }
+
+const imzaBlobUret = () =>
+  new Promise((resolve) => {
+    if (!imzaCanvas.value || typeof imzaCanvas.value.toBlob !== 'function') return resolve(null)
+    imzaCanvas.value.toBlob((b) => resolve(b), 'image/png')
+  })
 
 const teslimatOnayla = async () => {
   if (!imzaForm.value.teslimAlan) {
     toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.teslimAlanGiriniz'), life: 3000 })
     return
   }
+  if (!seciliSiparis.value?.id) return
   teslimEdiliyor.value = true
   try {
-    if (seciliSiparis.value) seciliSiparis.value.durum = 'TESLIM_EDILDI'
+    // Teslim durumunu sunucuya yaz (bagli teslimat da otomatik senkronlanir).
+    await siparisAPI.durumGuncelle(seciliSiparis.value.id, 'TESLIM_EDILDI')
+    // Imzayi siparise belge olarak ekle (opsiyonel; hata olsa bile teslimi engellemez).
+    try {
+      const blob = await imzaBlobUret()
+      if (blob) {
+        const dosya = new File([blob], `teslimat-imza-${seciliSiparis.value.id}.png`, { type: 'image/png' })
+        await belgeAPI.yukle('Siparis', seciliSiparis.value.id, dosya)
+      }
+    } catch {
+      /* imza eklenemedi */
+    }
+    seciliSiparis.value.durum = 'TESLIM_EDILDI'
     toast.add({ severity: 'success', summary: t('sahaPortali.teslimEdildi'), detail: t('sahaPortali.siparisTeslimEdildi'), life: 3000 })
     imzaModal.value = false
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
     teslimEdiliyor.value = false
   }
 }
+
+const durumSecModal = ref(false)
+const seciliYeniDurum = ref('BEKLIYOR')
 
 const durumSecModalAc = (siparis) => {
   seciliSiparis.value = siparis
@@ -730,8 +752,6 @@ const durumSecModalAc = (siparis) => {
   durumSecModal.value = true
 }
 
-const durumSecModal = ref(false)
-const seciliYeniDurum = ref('BEKLIYOR')
 const durumKaydediliyor = ref(false)
 const durumSecenekleri = ['BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'TESLIM_EDILDI', 'IPTAL']
 
@@ -752,13 +772,18 @@ const durumKaydet = async () => {
 }
 
 const izinTalepGonder = async () => {
+  const personelId = authStore?.kullanici?.personelId
+  if (!personelId) {
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.personelKaydiYok'), life: 3000 })
+    return
+  }
   izinGonderiliyor.value = true
   try {
     const bas = new Date(izinForm.value.baslangic)
     const bit = new Date(izinForm.value.bitis)
     const gunSayisi = Math.max(1, Math.round((bit - bas) / (1000 * 60 * 60 * 24)) + 1)
     await personelIzinAPI.create({
-      personelId: authStore?.kullanici?.personelId || 1,
+      personelId,
       izinTuru: izinForm.value.izinTuru,
       baslangic: izinForm.value.baslangic,
       bitis: izinForm.value.bitis,
@@ -769,7 +794,7 @@ const izinTalepGonder = async () => {
     yeniIzinModal.value = false
     await tumunuYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
     izinGonderiliyor.value = false
   }

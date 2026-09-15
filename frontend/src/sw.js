@@ -32,6 +32,21 @@ registerRoute(
   })
 )
 
+// Mutasyon (POST/PUT/PATCH/DELETE) sonrasi okuma onbellegini gecersiz kil.
+// Aksi halde silme/guncelleme sonrasi ayni GET URL'si eski (stale) yaniti
+// dondurebiliyor (or. taksit silindikten sonra listede gorunmeye devam eder).
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  if (!request.url.includes('/api/')) return
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return
+  event.waitUntil(
+    caches
+      .open('api-read')
+      .then((cache) => cache.keys().then((keys) => Promise.all(keys.map((k) => cache.delete(k)))))
+      .catch(() => undefined)
+  )
+})
+
 registerRoute(
   ({ request }) => ['image', 'font', 'style', 'script'].includes(request.destination),
   new CacheFirst({

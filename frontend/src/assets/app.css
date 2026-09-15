@@ -1824,10 +1824,6 @@ h3 {
 /* Sunum modu: hassas verileri gizle (musteriye gosterirken).
    Varsayilan "bulanik"; "gizle" modunda alan tamamen kaldirilir. */
 [data-sunum='on'] .gizli-veri,
-[data-sunum='on'] .stat-card.cari .stat-value,
-[data-sunum='on'] .stat-card.finans .stat-value,
-[data-sunum='on'] .stat-card.banka .stat-value,
-[data-sunum='on'] .stat-card.kasa .stat-value,
 [data-sunum='on'] .hedef-grid,
 [data-sunum='on'] .bugun-ozet-grid,
 [data-sunum='on'] .cari-ozet-grid,
@@ -1840,10 +1836,6 @@ h3 {
 }
 
 [data-sunum='on'][data-sunum-maske='gizle'] .gizli-veri,
-[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.cari .stat-value,
-[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.finans .stat-value,
-[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.banka .stat-value,
-[data-sunum='on'][data-sunum-maske='gizle'] .stat-card.kasa .stat-value,
 [data-sunum='on'][data-sunum-maske='gizle'] .hedef-grid,
 [data-sunum='on'][data-sunum-maske='gizle'] .bugun-ozet-grid,
 [data-sunum='on'][data-sunum-maske='gizle'] .cari-ozet-grid,
@@ -2054,5 +2046,24 @@ h3 {
   }
   .roles-sidebar {
     width: 100% !important;
+  }
+}
+
+/* Yazdirma sirasinda uygulama iskeletini (PWA alt menu, sidebar, banner,
+   bildirim/toast) gizle; sadece yazdirilacak icerik kalsin. */
+@media print {
+  .mobile-hidden,
+  .sidebar,
+  .sidebar-spacer,
+  .mobil-alt-menu,
+  .sunum-banner,
+  .offline-banner,
+  .bildirim-zili-kapsayici,
+  .p-toast {
+    display: none !important;
+  }
+  .main-content {
+    padding: 0 !important;
+    overflow: visible !important;
   }
 }

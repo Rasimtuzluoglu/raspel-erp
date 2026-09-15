@@ -33,7 +33,7 @@
             class="ticker-chip"
           >
             <span class="chip-kod">{{ k.kod || k.dovizKodu }}:</span>
-            <span class="chip-fiyat">{{ dovizStore?.formatPara ? dovizStore.formatPara(k.satisFiyati || k.satisKuru, 'TRY') : '' }}</span>
+            <span class="chip-fiyat gizli-veri">{{ dovizStore?.formatPara ? dovizStore.formatPara(k.satisFiyati || k.satisKuru, 'TRY') : '' }}</span>
           </div>
           <button
             class="chip-refresh-btn"
@@ -319,7 +319,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.bugunkuSiparis') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.bugunkuSiparis || 0 }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.bugunkuSiparis || 0 }}</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -328,7 +328,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.bekleyenTeslimat') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.bekleyenTeslimat || 0 }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.bekleyenTeslimat || 0 }}</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -337,7 +337,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.iadeOrani') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.iadeOrani || 0 }}%</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.iadeOrani || 0 }}%</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -346,7 +346,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.stokDevirHizi') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.stokDevirHizi || 0 }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.stokDevirHizi || 0 }}</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -355,7 +355,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.aktifCalisan') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.aktifCalisan || 0 }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.aktifCalisan || 0 }}</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -364,7 +364,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.bugunIzinli') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.bugunIzinli || 0 }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.bugunIzinli || 0 }}</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -373,7 +373,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.bekleyenIzin') }}</span>
-            <strong class="mini-stat-deger">{{ dashboardStore?.bekleyenIzinSayisi || 0 }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.bekleyenIzinSayisi || 0 }}</strong>
           </div>
         </div>
         <div class="mini-stat">
@@ -382,7 +382,7 @@
           </div>
           <div class="mini-stat-icerik">
             <span class="mini-stat-etiket">{{ t('dashboard.bugunkuOdemeKart') }}</span>
-            <strong class="mini-stat-deger">{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
+            <strong class="mini-stat-deger gizli-veri">{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
           </div>
         </div>
       </div>
@@ -522,14 +522,14 @@
           <template #content>
             <div
               v-if="bakiyeChart.datasets.length"
-              class="chart-wrapper"
+              class="chart-wrapper gizli-veri"
             >
               <Doughnut
                 :data="bakiyeChart"
                 :options="pieOptions"
               />
             </div>
-            <div class="chart-summary">
+            <div class="chart-summary gizli-veri">
               <span class="dot pos" /> {{ t('dashboard.alacakLabel') }} {{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}
               <span class="dot neg" /> {{ t('dashboard.borcLabel') }} {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}
             </div>
@@ -546,7 +546,7 @@
           <template #content>
             <div
               v-if="aylikKarsilastirmaChart.datasets.length"
-              class="chart-wrapper"
+              class="chart-wrapper gizli-veri"
             >
               <Bar
                 :data="aylikKarsilastirmaChart"
@@ -572,7 +572,7 @@
           <template #content>
             <div
               v-if="enCokSatanlarChart.datasets.length"
-              class="chart-wrapper full"
+              class="chart-wrapper full gizli-veri"
             >
               <Bar
                 :data="enCokSatanlarChart"
@@ -598,7 +598,7 @@
           <template #content>
             <div
               v-if="enCokBorcCarilerChart.datasets.length"
-              class="chart-wrapper full"
+              class="chart-wrapper full gizli-veri"
             >
               <Bar
                 :data="enCokBorcCarilerChart"
@@ -624,7 +624,7 @@
           <template #content>
             <div
               v-if="kategoriSatislariChart.datasets.length"
-              class="chart-wrapper"
+              class="chart-wrapper gizli-veri"
             >
               <Doughnut
                 :data="kategoriSatislariChart"
@@ -650,7 +650,7 @@
           <template #content>
             <div
               v-if="enCokAlacakCarilerChart.datasets.length"
-              class="chart-wrapper full"
+              class="chart-wrapper full gizli-veri"
             >
               <Bar
                 :data="enCokAlacakCarilerChart"
@@ -676,14 +676,14 @@
           <template #content>
             <div
               v-if="kasaBankaChart.datasets.length"
-              class="chart-wrapper"
+              class="chart-wrapper gizli-veri"
             >
               <Doughnut
                 :data="kasaBankaChart"
                 :options="pieOptions"
               />
             </div>
-            <div class="chart-summary">
+            <div class="chart-summary gizli-veri">
               <span class="dot kasa" /> {{ t('dashboard.kasaLabel') }} {{ formatCurrency(dashboardStore?.toplamKasaBakiye || 0) }}
               <span class="dot banka" /> {{ t('dashboard.bankaLabel') }} {{ formatCurrency(dashboardStore?.toplamBankaBakiye || 0) }}
             </div>
@@ -700,7 +700,7 @@
           <template #content>
             <div
               v-if="alacakYaslandirmaChart.datasets.length"
-              class="chart-wrapper full"
+              class="chart-wrapper full gizli-veri"
             >
               <Bar
                 :data="alacakYaslandirmaChart"
@@ -724,7 +724,7 @@
             />{{ t('dashboard.nakitProjeksiyon') }}
           </template>
           <template #content>
-            <div class="chart-wrapper full">
+            <div class="chart-wrapper full gizli-veri">
               <Line
                 :data="nakitProjeksiyonVerisi"
                 :options="projeksiyonOptions"
@@ -743,7 +743,7 @@
           <template #content>
             <div
               v-if="ciroHedefVerisi.labels.length"
-              class="chart-wrapper full"
+              class="chart-wrapper full gizli-veri"
             >
               <Bar
                 :data="ciroHedefVerisi"
@@ -769,7 +769,7 @@
           <template #content>
             <div
               v-if="kategoriParetoVerisi.labels.length"
-              class="chart-wrapper full"
+              class="chart-wrapper full gizli-veri"
             >
               <Bar
                 :data="kategoriParetoVerisi"
@@ -801,7 +801,7 @@
           <template #content>
             <div
               v-if="nakitAkisiChart.datasets.length"
-              class="nakit-akisi-wrapper"
+              class="nakit-akisi-wrapper gizli-veri"
             >
               <Line
                 :data="nakitAkisiChart"
@@ -835,7 +835,7 @@
             <div class="ks-ad">
               {{ s.ad }}
             </div>
-            <div class="ks-miktar">
+            <div class="ks-miktar gizli-veri">
               <span class="ks-deger">{{ s.miktar || 0 }} {{ s.birim || '' }}</span>
               <span class="ks-min">{{ t('dashboard.minEtiketi') }} {{ s.minMiktar || 0 }}</span>
             </div>
@@ -884,7 +884,10 @@
               style="width: 130px; text-align: right"
             >
               <template #body="s">
-                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
+                <span
+                  class="gizli-veri"
+                  :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'"
+                >
                   {{ formatCurrency(s.data.tutar) }}
                 </span>
               </template>
@@ -924,7 +927,7 @@
                 class="reminder-item"
               >
                 <span class="reminder-ad">#{{ f.faturaNumarasi }} <small>{{ f.cariHesapAd }}</small></span>
-                <span class="reminder-tutar negative">{{ formatCurrency(f.kalanTutar) }}</span>
+                <span class="reminder-tutar negative gizli-veri">{{ formatCurrency(f.kalanTutar) }}</span>
               </div>
               <router-link
                 v-if="(dashboardStore?.vadesiGecenFaturalar || []).length"
@@ -956,7 +959,7 @@
               >
                 <span class="reminder-ad">#{{ f.faturaNumarasi }} <small>{{ f.cariHesapAd }}</small></span>
                 <div class="reminder-aksiyon">
-                  <span class="reminder-tutar">{{ formatCurrency(f.kalanTutar) }}</span>
+                  <span class="reminder-tutar gizli-veri">{{ formatCurrency(f.kalanTutar) }}</span>
                   <a
                     v-if="f.cariTelefon"
                     class="whatsapp-buton"

@@ -138,7 +138,7 @@
     />
     <ConfirmDialog />
 
-    <MobilAltMenu v-if="authStore.isLoggedIn" />
+    <MobilAltMenu v-if="altMenuGoster" />
 
     <Dialog
       v-model:visible="oturum.goster"
@@ -176,7 +176,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
@@ -206,6 +206,10 @@ const PasswordChangeModal = defineAsyncComponent(() => import('./components/Pass
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+// POS/hizli satis tam ekran calisma alanidir; sabit alt menü fiş önizleme ve
+// yazdırma butonlarinin uzerine biniyor. Bu route'ta alt menüyü gostermeyiz.
+const altMenuGoster = computed(() => authStore.isLoggedIn && !route.path.startsWith('/hizli-satis'))
 const toast = useToast()
 const { aktif: sunumAktif, maske: sunumMaske, degistir: sunumDegistir, maskeAyarla: sunumMaskeAyarla } = useSunumModu()
 const { ctrl_k, cmd_k, escape } = useMagicKeys()
@@ -293,6 +297,8 @@ const sirketRenkPaletleri = [
 
 const sirketTemasiniUygula = (sirketId) => {
   if (sirketId == null) return
+  // Kullanıcı kendi vurgu rengini seçtiyse şirket paleti onu ezmesin.
+  if (localStorage.getItem('raspel_primary_color')) return
   const palet = sirketRenkPaletleri[Number(sirketId) % sirketRenkPaletleri.length]
   const root = document.documentElement
   root.style.setProperty('--accent', palet.accent)

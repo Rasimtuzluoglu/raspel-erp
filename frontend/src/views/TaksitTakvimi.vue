@@ -7,6 +7,7 @@
     >
       <template #actions>
         <Button
+          v-if="yonetimYetkisi"
           :label="t('taksitTakvimi.yeniPlan')"
           icon="pi pi-plus"
           @click="planDialogAc"
@@ -142,7 +143,7 @@
         <Column :header="t('common.actions')">
           <template #body="{ data }">
             <Button
-              v-if="data.odemeDurumu !== 'ODENDI'"
+              v-if="data.odemeDurumu !== 'ODENDI' && yonetimYetkisi"
               icon="pi pi-check"
               text
               rounded
@@ -150,6 +151,7 @@
               @click="ode(data)"
             />
             <Button
+              v-if="yonetimYetkisi"
               icon="pi pi-trash"
               text
               rounded
@@ -263,11 +265,16 @@ import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { taksitAPI, cariHesapAPI } from '../api/index.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { formatCurrency, formatTarih as formatDate } from '../utils/format.js'
 
 const { t, locale } = useI18n()
 const confirm = useConfirm()
 const toastBildirim = useToastBildirim()
+const authStore = useAuthStore()
+// Taksit ode/sil endpoint'leri ADMIN/MUHASEBE gerektirir; yetkisizde butonu
+// gizle ki 403 -> /yetki-reddi yonlendirmesi olmasin.
+const yonetimYetkisi = computed(() => ['ADMIN', 'MUHASEBE'].includes(authStore?.kullanici?.role))
 
 const bugun = new Date()
 const seciliYil = ref(bugun.getFullYear())
@@ -434,7 +441,7 @@ const formatYyyyMmDd = (d) => {
 }
 
 const kalemDetay = (k) => {
-  if (k.odemeDurumu !== 'ODENDI') {
+  if (k.odemeDurumu !== 'ODENDI' && yonetimYetkisi.value) {
     ode(k)
   }
 }
