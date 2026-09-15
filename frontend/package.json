@@ -1,6 +1,6 @@
 {
   "name": "raspel-erp",
-  "version": "1.8.0",
+  "version": "1.15.0",
   "description": "RasPel ERP - Kurumsal Kaynak Planlama Sistemi Vue 3 Frontend",
   "type": "module",
   "scripts": {
@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "i18n:check": "node ../scripts/check-i18n.mjs",
+    "docs:sync": "node ../scripts/docs-sync.mjs",
+    "docs:check": "node ../scripts/docs-sync.mjs --check",
     "lint": "eslint src --ext .js,.vue",
     "format": "prettier --write \"src/**/*.{js,vue,css}\"",
     "cypress:open": "cypress open",

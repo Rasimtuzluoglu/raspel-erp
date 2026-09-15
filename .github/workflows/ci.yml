@@ -51,6 +51,9 @@ jobs:
       - name: i18n integrity check
         run: npm run i18n:check
         working-directory: ./frontend
+      - name: Docs sync check (structure counts)
+        run: npm run docs:check
+        working-directory: ./frontend
       - name: Test with Coverage
         run: npm run test -- --coverage
         working-directory: ./frontend

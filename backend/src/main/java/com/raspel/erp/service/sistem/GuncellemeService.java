@@ -22,7 +22,7 @@ public class GuncellemeService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${app.version:1.8.0}")
+    @Value("${app.version:1.15.0}")
     private String surum;
 
     @Value("${app.github.repo:Rasimtuzluoglu/raspel-erp}")

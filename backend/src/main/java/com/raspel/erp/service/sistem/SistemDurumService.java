@@ -37,7 +37,7 @@ public class SistemDurumService {
     private final BackupService backupService;
     private final DosyaDepolamaService dosyaDepolama;
 
-    @Value("${app.version:1.8.0}")
+    @Value("${app.version:1.15.0}")
     private String surum;
 
     @Value("${app.hata-log.retention-days:30}")
