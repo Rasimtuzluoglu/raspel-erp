@@ -2,23 +2,23 @@
   <div class="depolar-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
-        Depolar & Stok Yönetimi
+        {{ t('depolar.title') }}
       </h1>
       <div class="toolbar-end">
         <Button
-          label="Depolar Arası Transfer"
+          :label="t('depolar.depolarArasiTransfer')"
           icon="pi pi-exchange"
           class="p-button-info p-button-outlined"
           @click="transferDialog = true"
         />
         <Button
-          label="Transfer Talepleri"
+          :label="t('depolar.transferTalepleri')"
           icon="pi pi-list"
           class="p-button-warning p-button-outlined"
           @click="talepDialogAc"
         />
         <Button
-          label="Yeni Depo"
+          :label="t('depolar.yeniDepo')"
           icon="pi pi-plus"
           @click="dialogAc()"
         />
@@ -26,7 +26,7 @@
     </div>
 
     <TabView>
-      <TabPanel header="Depolar">
+      <TabPanel :header="t('depolar.depolar')">
         <DataTable
           :value="list"
           striped-rows
@@ -34,37 +34,37 @@
         >
           <Column
             field="ad"
-            header="Depo Adı"
+            :header="t('depolar.depoAdi')"
             sortable
           />
           <Column
             field="subeAdi"
-            header="Bağlı Şube"
+            :header="t('depolar.bagliSube')"
           />
           <Column
             field="yetkili"
-            header="Sorumlu"
+            :header="t('depolar.sorumlu')"
           />
           <Column
             field="aktif"
-            header="Durum"
+            :header="t('common.status')"
           >
             <template #body="{ data }">
               <Tag
-                :value="data.aktif ? 'Aktif' : 'Pasif'"
+                :value="data.aktif ? t('status.active') : t('status.passive')"
                 :severity="data.aktif ? 'success' : 'danger'"
               />
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('common.actions')"
             style="width: 160px"
           >
             <template #body="{ data }">
               <Button
                 icon="pi pi-box"
                 class="p-button-rounded p-button-text"
-                title="Stokları Gör"
+                :title="t('depolar.stoklariGor')"
                 @click="stokGoruntule(data)"
               />
               <Button
@@ -82,17 +82,17 @@
         </DataTable>
         <EmptyState
           v-if="!yukleniyor && list.length === 0"
-          message="Henüz depo bulunamadı"
-          sub-message="İlk deponuzu eklemek için Yeni Depo butonuna tıklayın"
+          :message="t('depolar.empty')"
+          :sub-message="t('depolar.emptyHint')"
           icon="pi pi-warehouse"
-          action-label="Yeni Depo"
+          :action-label="t('depolar.yeniDepo')"
           action-icon="pi pi-plus"
           @action="dialogAc()"
         />
       </TabPanel>
 
       <TabPanel
-        :header="seciliDepo ? seciliDepo.ad + ' - Stoklar' : 'Depo Stokları'"
+        :header="seciliDepo ? seciliDepo.ad + ' - ' + t('depolar.stok') : t('depolar.depoStoklari')"
         :disabled="!seciliDepo"
       >
         <div
@@ -100,31 +100,31 @@
           class="stok-islemleri"
         >
           <div class="stok-ekle-form">
-            <h3>Stok Ekle/Çıkar</h3>
+            <h3>{{ t('depolar.stokEkleCikar') }}</h3>
             <div class="form-row">
               <Dropdown
                 v-model="stokForm.stokId"
                 :options="stokListesi"
                 option-label="ad"
                 option-value="id"
-                placeholder="Ürün Seç"
+                :placeholder="t('depolar.urunSec')"
                 class="w-full"
                 filter
               />
               <InputNumber
                 v-model="stokForm.miktar"
-                placeholder="Miktar"
+                :placeholder="t('depolar.miktar')"
                 :min="0"
               />
               <Button
-                label="Ekle"
+                :label="t('depolar.ekle')"
                 icon="pi pi-plus"
                 class="p-button-success"
                 :loading="stokLoading"
                 @click="stokEkle"
               />
               <Button
-                label="Çıkar"
+                :label="t('depolar.cikar')"
                 icon="pi pi-minus"
                 class="p-button-warning"
                 :loading="stokLoading"
@@ -139,19 +139,19 @@
           >
             <Column
               field="stokKodu"
-              header="Stok Kodu"
+              :header="t('depolar.stokKodu')"
             />
             <Column
               field="stokAd"
-              header="Ürün Adı"
+              :header="t('depolar.urunAdi')"
             />
             <Column
               field="birim"
-              header="Birim"
+              :header="t('depolar.birim')"
             />
             <Column
               field="miktar"
-              header="Miktar"
+              :header="t('depolar.miktar')"
               sortable
             >
               <template #body="{ data }">
@@ -171,29 +171,29 @@
     >
       <div class="form-grid">
         <div class="field">
-          <label>Depo Adı *</label><InputText
+          <label>{{ t('depolar.depoAdiZorunlu') }}</label><InputText
             v-model="form.ad"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Bağlı Şube *</label><Dropdown
+          <label>{{ t('depolar.bagliSubeZorunlu') }}</label><Dropdown
             v-model="form.subeId"
             :options="subeListesi"
             option-label="ad"
             option-value="id"
-            placeholder="Şube Seç"
+            :placeholder="t('depolar.subeSec')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Sorumlu</label><InputText
+          <label>{{ t('depolar.sorumlu') }}</label><InputText
             v-model="form.yetkili"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Adres</label><Textarea
+          <label>{{ t('depolar.adres') }}</label><Textarea
             v-model="form.adres"
             rows="2"
             class="w-full"
@@ -203,18 +203,18 @@
           v-if="duzenleme"
           class="field"
         >
-          <label>Aktif</label><InputSwitch v-model="form.aktif" />
+          <label>{{ t('status.active') }}</label><InputSwitch v-model="form.aktif" />
         </div>
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialog = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="kaydet"
@@ -224,44 +224,44 @@
 
     <Dialog
       v-model:visible="transferDialog"
-      header="Depolar Arası Transfer"
+      :header="t('depolar.depolarArasiTransfer')"
       modal
       :style="{ width: '500px' }"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Kaynak Depo *</label><Dropdown
+          <label>{{ t('depolar.kaynakDepoZorunlu') }}</label><Dropdown
             v-model="transferForm.kaynakDepoId"
             :options="list"
             option-label="ad"
             option-value="id"
-            placeholder="Kaynak Depo"
+            :placeholder="t('depolar.kaynakDepo')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Hedef Depo *</label><Dropdown
+          <label>{{ t('depolar.hedefDepoZorunlu') }}</label><Dropdown
             v-model="transferForm.hedefDepoId"
             :options="list"
             option-label="ad"
             option-value="id"
-            placeholder="Hedef Depo"
+            :placeholder="t('depolar.hedefDepo')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Ürün *</label><Dropdown
+          <label>{{ t('depolar.urunZorunlu') }}</label><Dropdown
             v-model="transferForm.stokId"
             :options="stokListesi"
             option-label="ad"
             option-value="id"
-            placeholder="Ürün Seç"
+            :placeholder="t('depolar.urunSec')"
             class="w-full"
             filter
           />
         </div>
         <div class="field">
-          <label>Miktar *</label><InputNumber
+          <label>{{ t('depolar.miktarZorunlu') }}</label><InputNumber
             v-model="transferForm.miktar"
             :min="0"
             class="w-full"
@@ -270,13 +270,13 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="transferDialog = false"
         />
         <Button
-          label="Transfer Et"
+          :label="t('depolar.transferEt')"
           icon="pi pi-send"
           :loading="transferLoading"
           @click="transferYap"
@@ -286,7 +286,7 @@
 
     <Dialog
       v-model:visible="talepDialog"
-      header="Transfer Talepleri"
+      :header="t('depolar.transferTalepleri')"
       :modal="true"
       style="width: 720px"
     >
@@ -296,27 +296,27 @@
         size="small"
         :loading="talepYukleniyor"
       >
-        <Column header="Kaynak Depo">
+        <Column :header="t('depolar.kaynakDepo')">
           <template #body="{ data }">
             {{ data.kaynakDepoAd || data.kaynakDepoId }}
           </template>
         </Column>
-        <Column header="Hedef Depo">
+        <Column :header="t('depolar.hedefDepo')">
           <template #body="{ data }">
             {{ data.hedefDepoAd || data.hedefDepoId }}
           </template>
         </Column>
-        <Column header="Stok">
+        <Column :header="t('depolar.stok')">
           <template #body="{ data }">
             {{ data.stokAd || data.stokId }}
           </template>
         </Column>
-        <Column header="Miktar">
+        <Column :header="t('depolar.miktar')">
           <template #body="{ data }">
             {{ data.miktar }}
           </template>
         </Column>
-        <Column header="Durum">
+        <Column :header="t('common.status')">
           <template #body="{ data }">
             <Tag
               :value="data.durum"
@@ -351,6 +351,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -358,6 +359,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { depoAPI, subeAPI, stokAPI, depoTransferAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 
+const { t } = useI18n()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -377,7 +379,7 @@ const form = ref({ ad: '', subeId: null, yetkili: '', adres: '', aktif: true })
 const stokForm = ref({ stokId: null, miktar: 0 })
 const transferForm = ref({ kaynakDepoId: null, hedefDepoId: null, stokId: null, miktar: 0 })
 
-const dialogHeader = computed(() => (duzenleme.value ? 'Depo Düzenle' : 'Yeni Depo'))
+const dialogHeader = computed(() => (duzenleme.value ? t('depolar.depoDuzenle') : t('depolar.yeniDepo')))
 
 const formatCurrency = (v) => {
   if (v === null || v === undefined) return '0,00'
@@ -392,7 +394,7 @@ onMounted(async () => {
     subeListesi.value = subeRes.data
     stokListesi.value = stokRes.data.content || stokRes.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Veriler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.hataVeri'))
   }
   yukleniyor.value = false
 })
@@ -408,34 +410,34 @@ const kaydet = async () => {
   try {
     if (duzenleme.value) {
       await depoAPI.update(form.value.id, form.value)
-      toastBildirim.basarili('Depo güncellendi')
+      toastBildirim.basarili(t('depolar.guncellendi'))
     } else {
       await depoAPI.create(form.value)
-      toastBildirim.basarili('Depo oluşturuldu')
+      toastBildirim.basarili(t('depolar.olusturuldu'))
     }
     dialog.value = false
     const r = await depoAPI.getAll()
     list.value = unwrapList(r)
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.islemBasarisiz'))
   }
   kaydediliyor.value = false
 }
 
 const sil = (data) => {
   confirm.require({
-    message: `${data.ad} deposunu silmek istediğinize emin misiniz?`,
-    header: 'Silme Onayı',
+    message: t('depolar.silOnayMesaj', { ad: data.ad }),
+    header: t('depolar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Evet, Sil',
-    rejectLabel: 'İptal',
+    acceptLabel: t('depolar.evetSil'),
+    rejectLabel: t('common.cancel'),
     accept: async () => {
       try {
         await depoAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
-        toast.add({ severity: 'success', summary: 'Silindi', detail: 'Depo silindi', life: 3000 })
+        toast.add({ severity: 'success', summary: t('depolar.silindi'), detail: t('depolar.depoSilindi'), life: 3000 })
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silme başarısız')
+        toastBildirim.hata(err?.response?.data?.message || t('depolar.silmeBasarisiz'))
       }
     }
   })
@@ -447,7 +449,7 @@ const stokGoruntule = async (depo) => {
     const r = await depoAPI.getStoklar(depo.id)
     depoStoklari.value = r.data
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Stoklar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.stoklarYuklenemedi'))
   }
 }
 
@@ -458,9 +460,9 @@ const stokEkle = async () => {
     await depoAPI.stokEkle(seciliDepo.value.id, { stokId: stokForm.value.stokId, miktar: stokForm.value.miktar })
     const r = await depoAPI.getStoklar(seciliDepo.value.id)
     depoStoklari.value = r.data
-    toastBildirim.basarili('Stok eklendi')
+    toastBildirim.basarili(t('depolar.stokEklendi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Stok ekleme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.stokEklemeBasarisiz'))
   }
   stokLoading.value = false
 }
@@ -472,9 +474,9 @@ const stokCikar = async () => {
     await depoAPI.stokCikar(seciliDepo.value.id, { stokId: stokForm.value.stokId, miktar: stokForm.value.miktar })
     const r = await depoAPI.getStoklar(seciliDepo.value.id)
     depoStoklari.value = r.data
-    toastBildirim.basarili('Stok çıkarıldı')
+    toastBildirim.basarili(t('depolar.stokCikarildi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Stok çıkarma başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.stokCikarmaBasarisiz'))
   }
   stokLoading.value = false
 }
@@ -491,9 +493,9 @@ const transferYap = async () => {
   try {
     await depoAPI.transfer(transferForm.value)
     transferDialog.value = false
-    toastBildirim.basarili('Transfer tamamlandı')
+    toastBildirim.basarili(t('depolar.transferTamamlandi'))
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Transfer başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.transferBasarisiz'))
   }
   transferLoading.value = false
 }
@@ -513,7 +515,7 @@ const talepYukle = async () => {
     const r = await depoTransferAPI.getAll()
     transferTalepleri.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Talepler yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.taleplerYuklenemedi'))
   } finally {
     talepYukleniyor.value = false
   }
@@ -522,20 +524,20 @@ const talepYukle = async () => {
 const talepOnayla = async (t) => {
   try {
     await depoTransferAPI.onayla(t.id)
-    toastBildirim.basarili('Transfer onaylandı')
+    toastBildirim.basarili(t('depolar.transferOnaylandi'))
     talepYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Onaylama başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.onaylamaBasarisiz'))
   }
 }
 
 const talepReddet = async (t) => {
   try {
     await depoTransferAPI.reddet(t.id)
-    toastBildirim.basarili('Transfer reddedildi')
+    toastBildirim.basarili(t('depolar.transferReddedildi'))
     talepYukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Reddetme başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.reddetmeBasarisiz'))
   }
 }
 </script>

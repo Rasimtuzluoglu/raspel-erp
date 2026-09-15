@@ -1,12 +1,12 @@
 <template>
   <div class="tf-page">
     <PageHeader
-      title="Tekrarlayan Faturalar"
-      subtitle="Abonelik, kira ve düzenli faturalandırmayı otomatikleştirin. Vadesi gelen tanımlar her gün otomatik fatura keser."
+      :title="t('tekrarlayanFaturalar.title')"
+      :subtitle="t('tekrarlayanFaturalar.subtitle')"
     >
       <template #actions>
         <Button
-          label="Yeni Tekrarlayan Fatura"
+          :label="t('tekrarlayanFaturalar.yeniFatura')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="yeniKayit"
@@ -24,7 +24,7 @@
         >
           <Column
             field="cariHesapAd"
-            header="Cari"
+            :header="t('tekrarlayanFaturalar.cari')"
           >
             <template #body="s">
               {{ s.data.cariHesapAd || '-' }}
@@ -32,50 +32,50 @@
           </Column>
           <Column
             field="tur"
-            header="Tür"
+            :header="t('tekrarlayanFaturalar.tur')"
             style="width: 90px"
           >
             <template #body="s">
               <Tag
-                :value="s.data.tur === 'ALIS' ? 'Alış' : 'Satış'"
+                :value="s.data.tur === 'ALIS' ? t('tekrarlayanFaturalar.alis') : t('tekrarlayanFaturalar.satis')"
                 :severity="s.data.tur === 'ALIS' ? 'warning' : 'success'"
               />
             </template>
           </Column>
           <Column
             field="periyot"
-            header="Periyot"
+            :header="t('tekrarlayanFaturalar.periyot')"
             style="width: 100px"
           />
-          <Column header="Başlangıç">
+          <Column :header="t('tekrarlayanFaturalar.baslangic')">
             <template #body="s">
               {{ formatDate(s.data.baslangicTarihi) }}
             </template>
           </Column>
-          <Column header="Bitiş">
+          <Column :header="t('tekrarlayanFaturalar.bitis')">
             <template #body="s">
               {{ s.data.bitisTarihi ? formatDate(s.data.bitisTarihi) : '-' }}
             </template>
           </Column>
-          <Column header="Sonraki Çalıştırma">
+          <Column :header="t('tekrarlayanFaturalar.sonrakiCalistirma')">
             <template #body="s">
               {{ s.data.sonrakiCalistirma ? formatDate(s.data.sonrakiCalistirma) : '-' }}
             </template>
           </Column>
           <Column
             field="aktif"
-            header="Durum"
+            :header="t('common.status')"
             style="width: 90px"
           >
             <template #body="s">
               <Tag
-                :value="s.data.aktif ? 'Aktif' : 'Pasif'"
+                :value="s.data.aktif ? t('status.active') : t('status.passive')"
                 :severity="s.data.aktif ? 'success' : 'secondary'"
               />
             </template>
           </Column>
           <Column
-            header="İşlem"
+            :header="t('common.actions')"
             style="width: 180px"
           >
             <template #body="s">
@@ -87,7 +87,7 @@
               <Button
                 icon="pi pi-file"
                 class="p-button-sm p-button-text"
-                title="Şimdi fatura üret"
+                :title="t('tekrarlayanFaturalar.simdiUret')"
                 @click="suretiUret(s.data)"
               />
               <Button
@@ -102,44 +102,44 @@
           v-if="(!kayitlar || !kayitlar.length) && !yukleniyor"
           class="empty-state"
         >
-          Henüz tekrarlayan fatura tanımı bulunmuyor.
+          {{ t('tekrarlayanFaturalar.empty') }}
         </div>
       </template>
     </Card>
 
     <Dialog
       v-model:visible="dialogAcik"
-      :header="duzenlemeId ? 'Tekrarlayan Fatura Düzenle' : 'Yeni Tekrarlayan Fatura'"
+      :header="duzenlemeId ? t('tekrarlayanFaturalar.duzenle') : t('tekrarlayanFaturalar.yeniFatura')"
       :modal="true"
       style="width: 680px"
       :maximizable="true"
     >
       <div class="form-grid">
         <div class="field">
-          <label>Cari Hesap</label>
+          <label>{{ t('tekrarlayanFaturalar.cariHesap') }}</label>
           <Select
             v-model="form.cariHesapId"
             :options="cariSecenekleri"
             option-label="ad"
             option-value="id"
-            placeholder="Cari seçin"
+            :placeholder="t('tekrarlayanFaturalar.cariSecin')"
             class="w-full"
             show-clear
             filter
           />
         </div>
         <div class="field">
-          <label>Tür</label>
+          <label>{{ t('tekrarlayanFaturalar.tur') }}</label>
           <Select
             v-model="form.tur"
-            :options="[{ label: 'Satış', value: 'SATIS' }, { label: 'Alış', value: 'ALIS' }]"
+            :options="[{ label: t('tekrarlayanFaturalar.satis'), value: 'SATIS' }, { label: t('tekrarlayanFaturalar.alis'), value: 'ALIS' }]"
             option-label="label"
             option-value="value"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Periyot</label>
+          <label>{{ t('tekrarlayanFaturalar.periyot') }}</label>
           <Select
             v-model="form.periyot"
             :options="periyotlar"
@@ -149,7 +149,7 @@
           />
         </div>
         <div class="field">
-          <label>Başlangıç Tarihi</label>
+          <label>{{ t('tekrarlayanFaturalar.baslangicTarihi') }}</label>
           <DatePicker
             v-model="form.baslangicTarihi"
             date-format="dd/mm/yy"
@@ -157,7 +157,7 @@
           />
         </div>
         <div class="field">
-          <label>Bitiş Tarihi (opsiyonel)</label>
+          <label>{{ t('tekrarlayanFaturalar.bitisTarihiOpsiyonel') }}</label>
           <DatePicker
             v-model="form.bitisTarihi"
             date-format="dd/mm/yy"
@@ -165,25 +165,25 @@
           />
         </div>
         <div class="field">
-          <label>Açıklama</label>
+          <label>{{ t('tekrarlayanFaturalar.aciklama') }}</label>
           <InputText
             v-model="form.aciklama"
             class="w-full"
-            placeholder="Örn: Aylık bakım ücreti"
+            :placeholder="t('tekrarlayanFaturalar.aciklamaPlaceholder')"
           />
         </div>
         <div class="field">
-          <label>Aktif</label>
+          <label>{{ t('status.active') }}</label>
           <ToggleSwitch v-model="form.aktif" />
         </div>
       </div>
 
       <div class="kalem-baslik">
-        <span>Kalemler</span>
+        <span>{{ t('tekrarlayanFaturalar.kalemler') }}</span>
         <Button
           icon="pi pi-plus"
           class="p-button-sm p-button-outlined"
-          label="Kalem Ekle"
+          :label="t('tekrarlayanFaturalar.kalemEkle')"
           @click="kalemEkle"
         />
       </div>
@@ -194,25 +194,25 @@
       >
         <InputText
           v-model="k.aciklama"
-          placeholder="Açıklama"
+          :placeholder="t('tekrarlayanFaturalar.aciklama')"
           class="kalem-aciklama"
         />
         <InputNumber
           v-model="k.adet"
-          placeholder="Adet"
+          :placeholder="t('tekrarlayanFaturalar.adet')"
           class="kalem-adet"
           :min="1"
         />
         <InputNumber
           v-model="k.birimFiyat"
-          placeholder="Birim Fiyat"
+          :placeholder="t('tekrarlayanFaturalar.birimFiyat')"
           class="kalem-fiyat"
           mode="currency"
           currency="TRY"
         />
         <InputNumber
           v-model="k.kdvOrani"
-          placeholder="KDV %"
+          :placeholder="t('tekrarlayanFaturalar.kdvYuzde')"
           class="kalem-kdv"
           :min="0"
           :max="100"
@@ -226,13 +226,13 @@
 
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           icon="pi pi-times"
           class="p-button-text"
           @click="dialogAcik = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           class="p-button-primary"
           :loading="kaydediliyor"
@@ -245,12 +245,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { tekrarlayanFaturaAPI, cariHesapAPI } from '../api/index.js'
 import PageHeader from '../components/PageHeader.vue'
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 
@@ -263,10 +265,10 @@ const duzenlemeId = ref(null)
 const cariSecenekleri = ref([])
 
 const periyotlar = [
-  { label: 'Günlük', value: 'GUNLUK' },
-  { label: 'Haftalık', value: 'HAFTALIK' },
-  { label: 'Aylık', value: 'AYLIK' },
-  { label: 'Yıllık', value: 'YILLIK' }
+  { label: t('tekrarlayanFaturalar.gunluk'), value: 'GUNLUK' },
+  { label: t('tekrarlayanFaturalar.haftalik'), value: 'HAFTALIK' },
+  { label: t('tekrarlayanFaturalar.aylik'), value: 'AYLIK' },
+  { label: t('tekrarlayanFaturalar.yillik'), value: 'YILLIK' }
 ]
 
 const bosForm = () => ({
@@ -288,7 +290,7 @@ const yukle = async () => {
     const r = await tekrarlayanFaturaAPI.getAll()
     kayitlar.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Tekrarlayan faturalar yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('tekrarlayanFaturalar.hataYukleme'))
   } finally {
     yukleniyor.value = false
   }
@@ -334,11 +336,11 @@ const tarihParam = (d) => (d ? (d.toISOString?.().split('T')[0] ?? d) : null)
 
 const kaydet = async () => {
   if (!form.value.cariHesapId) {
-    toastBildirim.uyari('Cari hesap seçin')
+    toastBildirim.uyari(t('tekrarlayanFaturalar.cariSecinUyari'))
     return
   }
   if (!form.value.kalemler.length || form.value.kalemler.some((k) => !k.aciklama)) {
-    toastBildirim.uyari('Kalemler eksik veya açıklamasız')
+    toastBildirim.uyari(t('tekrarlayanFaturalar.kalemlerEksik'))
     return
   }
   kaydediliyor.value = true
@@ -355,15 +357,15 @@ const kaydet = async () => {
   try {
     if (duzenlemeId.value) {
       await tekrarlayanFaturaAPI.update(duzenlemeId.value, gonderilecek)
-      toastBildirim.basarili('Tekrarlayan fatura güncellendi')
+      toastBildirim.basarili(t('tekrarlayanFaturalar.guncellendi'))
     } else {
       await tekrarlayanFaturaAPI.create(gonderilecek)
-      toastBildirim.basarili('Tekrarlayan fatura oluşturuldu')
+      toastBildirim.basarili(t('tekrarlayanFaturalar.olusturuldu'))
     }
     dialogAcik.value = false
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Kaydedilemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('tekrarlayanFaturalar.kaydedilemedi'))
   } finally {
     kaydediliyor.value = false
   }
@@ -371,16 +373,16 @@ const kaydet = async () => {
 
 const sil = (k) => {
   confirm.require({
-    message: 'Bu tekrarlayan fatura tanımı silinecek. Emin misiniz?',
-    header: 'Silme Onayı',
+    message: t('tekrarlayanFaturalar.silOnayMesaj'),
+    header: t('tekrarlayanFaturalar.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await tekrarlayanFaturaAPI.delete(k.id)
-        toastBildirim.basarili('Silindi')
+        toastBildirim.basarili(t('tekrarlayanFaturalar.silindi'))
         yukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+        toastBildirim.hata(err?.response?.data?.message || t('tekrarlayanFaturalar.silinemedi'))
       }
     }
   })
@@ -388,16 +390,16 @@ const sil = (k) => {
 
 const suretiUret = (k) => {
   confirm.require({
-    message: 'Bu tanımdan şimdi bir fatura üretilecek. Emin misiniz?',
-    header: 'Fatura Üret',
+    message: t('tekrarlayanFaturalar.uretOnayMesaj'),
+    header: t('tekrarlayanFaturalar.faturaUret'),
     icon: 'pi pi-file',
     accept: async () => {
       try {
         await tekrarlayanFaturaAPI.uret(k.id)
-        toastBildirim.basarili('Fatura üretildi')
+        toastBildirim.basarili(t('tekrarlayanFaturalar.faturaUretildi'))
         yukle()
       } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || 'Fatura üretilemedi')
+        toastBildirim.hata(err?.response?.data?.message || t('tekrarlayanFaturalar.faturaUretilemedi'))
       }
     }
   })

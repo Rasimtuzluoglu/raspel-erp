@@ -5,7 +5,7 @@
         <i
           class="pi pi-calendar"
           style="margin-right: 8px"
-        />Ajanda
+        />{{ t('ajanda.title') }}
       </h1>
       <div class="ay-gezinme">
         <Button
@@ -20,18 +20,18 @@
           @click="ayDegistir(1)"
         />
         <Button
-          label="Bugün"
+          :label="t('ajanda.bugun')"
           class="p-button-sm p-button-outlined"
           @click="buguneGit"
         />
         <Button
-          label="Görev Ekle"
+          :label="t('ajanda.gorevEkle')"
           icon="pi pi-plus"
           class="p-button-sm p-button-success"
           @click="gorevDialogAc = true"
         />
         <Button
-          label="Hatırlatıcı"
+          :label="t('ajanda.hatirlatici')"
           icon="pi pi-bell"
           class="p-button-sm p-button-outlined"
           @click="hatirlaticiDialogAc = true"
@@ -44,7 +44,7 @@
       class="gorev-ozet"
     >
       <div class="gorev-ozet-baslik">
-        <i class="pi pi-check-square" /> Görevlerim ({{ gorevler.length }})
+        <i class="pi pi-check-square" /> {{ t('ajanda.gorevlerim') }} ({{ gorevler.length }})
       </div>
       <div
         v-for="g in gorevler"
@@ -72,7 +72,7 @@
         >{{ formatTarih(g.bitisTarihi) }}</span>
         <button
           class="gorev-sil"
-          title="Sil"
+          :title="t('ajanda.sil')"
           @click="gorevSil(g)"
         >
           <i class="pi pi-trash" />
@@ -88,7 +88,7 @@
         <span class="gorev-tarih">{{ formatZaman(h.hatirlatmaZamani) }}</span>
         <button
           class="gorev-sil"
-          title="Sil"
+          :title="t('ajanda.sil')"
           @click="hatirlaticiSil(h)"
         >
           <i class="pi pi-trash" />
@@ -132,13 +132,13 @@
 
     <div class="gun-detay">
       <h3 v-if="seciliGun">
-        {{ seciliGun.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+        {{ seciliGun.toLocaleDateString(intlLocale, { weekday: 'long', day: 'numeric', month: 'long' }) }}
       </h3>
       <div
         v-if="(!seciliOlaylar || !seciliOlaylar.length)"
         class="bos"
       >
-        Bu günde olay yok.
+        {{ t('ajanda.buGundeOlayYok') }}
       </div>
       <div
         v-for="o in seciliOlaylar"
@@ -160,21 +160,21 @@
     <!-- Görev Ekle Dialog -->
     <Dialog
       v-model:visible="gorevDialogAc"
-      header="Görev Ekle"
+      :header="t('ajanda.gorevEkle')"
       :modal="true"
       :style="{ width: '460px' }"
     >
       <div class="ajanda-form">
         <div class="field">
-          <label>Başlık *</label>
+          <label>{{ t('ajanda.baslikZorunlu') }}</label>
           <InputText
             v-model="gorevForm.baslik"
-            placeholder="Görev başlığı"
+            :placeholder="t('ajanda.gorevBasligiPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Bitiş Tarihi</label>
+          <label>{{ t('ajanda.bitisTarihi') }}</label>
           <DatePicker
             v-model="gorevForm.bitisTarihi"
             show-icon
@@ -183,7 +183,7 @@
           />
         </div>
         <div class="field">
-          <label>Öncelik</label>
+          <label>{{ t('ajanda.oncelik') }}</label>
           <Dropdown
             v-model="gorevForm.oncelik"
             :options="oncelikSecenekleri"
@@ -193,7 +193,7 @@
           />
         </div>
         <div class="field">
-          <label>Açıklama</label>
+          <label>{{ t('ajanda.aciklama') }}</label>
           <Textarea
             v-model="gorevForm.aciklama"
             rows="2"
@@ -203,12 +203,12 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="gorevDialogAc = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="gorevKaydet"
@@ -219,21 +219,21 @@
     <!-- Hatırlatıcı Ekle Dialog -->
     <Dialog
       v-model:visible="hatirlaticiDialogAc"
-      header="Hatırlatıcı Ekle"
+      :header="t('ajanda.hatirlaticiEkle')"
       :modal="true"
       :style="{ width: '460px' }"
     >
       <div class="ajanda-form">
         <div class="field">
-          <label>Başlık *</label>
+          <label>{{ t('ajanda.baslikZorunlu') }}</label>
           <InputText
             v-model="hatirlaticiForm.baslik"
-            placeholder="Hatırlatıcı başlığı"
+            :placeholder="t('ajanda.hatirlaticiBasligiPlaceholder')"
             class="w-full"
           />
         </div>
         <div class="field">
-          <label>Hatırlatma Zamanı *</label>
+          <label>{{ t('ajanda.hatirlatmaZamani') }}</label>
           <DatePicker
             v-model="hatirlaticiForm.hatirlatmaZamani"
             show-time
@@ -246,12 +246,12 @@
       </div>
       <template #footer>
         <Button
-          label="İptal"
+          :label="t('common.cancel')"
           class="p-button-text"
           @click="hatirlaticiDialogAc = false"
         />
         <Button
-          label="Kaydet"
+          :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
           @click="hatirlaticiKaydet"
@@ -263,10 +263,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ajandaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatGunAy as formatTarih, getLocalDateString } from '../utils/format.js'
 
+const { t, locale } = useI18n()
+const intlLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'tr-TR'))
 const toastBildirim = useToastBildirim()
 const olaylar = ref([])
 const gorevler = ref([])
@@ -281,15 +284,23 @@ const kaydediliyor = ref(false)
 const gorevForm = ref({ baslik: '', bitisTarihi: null, oncelik: 'ORTA', aciklama: '' })
 const hatirlaticiForm = ref({ baslik: '', hatirlatmaZamani: null })
 
-const oncelikSecenekleri = [
-  { label: 'Düşük', value: 'DUSUK' },
-  { label: 'Orta', value: 'ORTA' },
-  { label: 'Yüksek', value: 'YUKSEK' }
-]
+const oncelikSecenekleri = computed(() => [
+  { label: t('ajanda.dusuk'), value: 'DUSUK' },
+  { label: t('ajanda.orta'), value: 'ORTA' },
+  { label: t('ajanda.yuksek'), value: 'YUKSEK' }
+])
 
-const gunBasliklari = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+const gunBasliklari = computed(() => [
+  t('ajanda.pzt'),
+  t('ajanda.sal'),
+  t('ajanda.car'),
+  t('ajanda.per'),
+  t('ajanda.cum'),
+  t('ajanda.cmt'),
+  t('ajanda.paz')
+])
 
-const ayEtiket = computed(() => aktifAy.value.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }))
+const ayEtiket = computed(() => aktifAy.value.toLocaleDateString(intlLocale.value, { month: 'long', year: 'numeric' }))
 
 const gunler = computed(() => {
   const yil = aktifAy.value.getFullYear()
@@ -325,7 +336,7 @@ const gunOlaylari = (gun) => olaylar.value.filter((o) => ayniGun(new Date(o.tari
 
 const seciliOlaylar = computed(() => (seciliGun.value ? gunOlaylari(seciliGun.value) : []))
 
-const oncelikAdi = (o) => oncelikSecenekleri.find((x) => x.value === o)?.label || 'Orta'
+const oncelikAdi = (o) => oncelikSecenekleri.value.find((x) => x.value === o)?.label || t('ajanda.orta')
 const oncelikSeverity = (o) => (o === 'YUKSEK' ? 'danger' : o === 'DUSUK' ? 'secondary' : 'warn')
 
 const olayIkon = (tip) => {
@@ -333,7 +344,12 @@ const olayIkon = (tip) => {
   return map[tip] || 'pi pi-info-circle gorev-ikon'
 }
 const olayTipAdi = (tip) => {
-  const map = { VADE: 'Vade', GOREV: 'Görev', KISISEL_GOREV: 'Görevim', HATIRLATICI: 'Hatırlatıcı' }
+  const map = {
+    VADE: t('ajanda.olayTipVade'),
+    GOREV: t('ajanda.olayTipGorev'),
+    KISISEL_GOREV: t('ajanda.olayTipGorevim'),
+    HATIRLATICI: t('ajanda.olayTipHatirlatici')
+  }
   return map[tip] || tip
 }
 const olayTipSeverity = (tip) => {
@@ -342,7 +358,7 @@ const olayTipSeverity = (tip) => {
 }
 
 
-const formatZaman = (t) => (t ? new Date(t).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '')
+const formatZaman = (z) => (z ? new Date(z).toLocaleString(intlLocale.value, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '')
 
 const yukle = async () => {
   const yil = aktifAy.value.getFullYear()
@@ -354,7 +370,7 @@ const yukle = async () => {
     const r = await ajandaAPI.olaylar({ baslangic: fmt(baslangic), bitis: fmt(bitis) })
     olaylar.value = r.data || []
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Ajanda yüklenemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('ajanda.hataAjanda'))
   }
 }
 
@@ -378,7 +394,7 @@ const hatirlaticilariYukle = async () => {
 
 const gorevKaydet = async () => {
   if (!gorevForm.value.baslik.trim()) {
-    toastBildirim.uyari('Görev başlığı zorunludur')
+    toastBildirim.uyari(t('ajanda.gorevBasligiZorunlu'))
     return
   }
   kaydediliyor.value = true
@@ -387,13 +403,13 @@ const gorevKaydet = async () => {
       ...gorevForm.value,
       bitisTarihi: gorevForm.value.bitisTarihi ? gorevForm.value.bitisTarihi.toISOString().slice(0, 10) : null
     })
-    toastBildirim.basarili('Görev oluşturuldu')
+    toastBildirim.basarili(t('ajanda.gorevOlusturuldu'))
     gorevDialogAc.value = false
     gorevForm.value = { baslik: '', bitisTarihi: null, oncelik: 'ORTA', aciklama: '' }
     gorevleriYukle()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Görev oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('ajanda.gorevOlusturulamadi'))
   } finally {
     kaydediliyor.value = false
   }
@@ -401,7 +417,7 @@ const gorevKaydet = async () => {
 
 const hatirlaticiKaydet = async () => {
   if (!hatirlaticiForm.value.baslik.trim() || !hatirlaticiForm.value.hatirlatmaZamani) {
-    toastBildirim.uyari('Başlık ve zaman zorunludur')
+    toastBildirim.uyari(t('ajanda.baslikZamanZorunlu'))
     return
   }
   kaydediliyor.value = true
@@ -410,13 +426,13 @@ const hatirlaticiKaydet = async () => {
       baslik: hatirlaticiForm.value.baslik,
       hatirlatmaZamani: hatirlaticiForm.value.hatirlatmaZamani.toISOString()
     })
-    toastBildirim.basarili('Hatırlatıcı oluşturuldu')
+    toastBildirim.basarili(t('ajanda.hatirlaticiOlusturuldu'))
     hatirlaticiDialogAc.value = false
     hatirlaticiForm.value = { baslik: '', hatirlatmaZamani: null }
     hatirlaticilariYukle()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Hatırlatıcı oluşturulamadı')
+    toastBildirim.hata(err?.response?.data?.message || t('ajanda.hatirlaticiOlusturulamadi'))
   } finally {
     kaydediliyor.value = false
   }
@@ -432,7 +448,7 @@ const gorevDurumDegistir = async (g) => {
     gorevleriYukle()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
+    toastBildirim.hata(err?.response?.data?.message || t('ajanda.islemBasarisiz'))
   }
 }
 
@@ -442,7 +458,7 @@ const gorevSil = async (g) => {
     gorevleriYukle()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('ajanda.silinemedi'))
   }
 }
 
@@ -452,7 +468,7 @@ const hatirlaticiSil = async (h) => {
     hatirlaticilariYukle()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || 'Silinemedi')
+    toastBildirim.hata(err?.response?.data?.message || t('ajanda.silinemedi'))
   }
 }
 
