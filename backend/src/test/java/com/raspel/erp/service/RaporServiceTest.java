@@ -2,6 +2,7 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.dto.sistem.RaporDTO;
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.ticaret.FaturaKalem;
@@ -43,6 +44,7 @@ class RaporServiceTest {
     @Mock private com.raspel.erp.repository.finans.ButceRepository butceRepository;
     @Mock private com.raspel.erp.repository.finans.MasrafRepository masrafRepository;
     @Mock private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
+    @Mock private TenantChecker tenantChecker;
     @InjectMocks private RaporService raporService;
 
     private CariHesap createCariHesap() {

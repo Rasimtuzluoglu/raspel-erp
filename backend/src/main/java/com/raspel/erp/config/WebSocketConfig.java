@@ -27,10 +27,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${spring.rabbitmq.host:localhost}")
     private String relayHost;
 
-    @Value("${spring.rabbitmq.username:guest}")
+    @Value("${spring.rabbitmq.username:}")
     private String relayUser;
 
-    @Value("${spring.rabbitmq.password:guest}")
+    @Value("${spring.rabbitmq.password:}")
     private String relayPassword;
 
     @Value("${app.websocket.relay-port:61613}")

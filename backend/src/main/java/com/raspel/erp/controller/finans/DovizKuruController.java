@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping({"/api/doviz-kurlari", "/api/doviz"})
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class DovizKuruController {
 
     private final DovizKuruService dovizKuruService;
@@ -44,6 +44,7 @@ public class DovizKuruController {
 
     @PostMapping("/guncelle")
     @Operation(summary = "TCMB kurlarını yenile", description = "TCMB servisinden anlık kurları yeniden çeker")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<List<DovizKuru>> guncelle() {
         tcmbKurService.tcmbKurlariniGuncelle();
         return ResponseEntity.ok(tcmbKurService.tumKurlariGetir());
@@ -66,7 +67,7 @@ public class DovizKuruController {
 
     @PostMapping
     @Operation(summary = "Döviz kuru ekle veya güncelle", description = "Belirtilen tarihe ait döviz kurunu kaydeder (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<DovizKuruDTO> kurKaydet(@Valid @RequestBody DovizKuruDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(dovizKuruService.kurEkleVeyaGuncelle(dto));
     }

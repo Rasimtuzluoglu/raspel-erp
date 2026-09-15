@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/tekrarlayan-faturalar")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class TekrarlayanFaturaController {
 
     private final TekrarlayanFaturaService tekrarlayanFaturaService;
@@ -38,6 +38,7 @@ public class TekrarlayanFaturaController {
 
     @PostMapping
     @Operation(summary = "Tekrarlayan fatura oluştur", description = "Yeni periyodik fatura tanımı oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<TekrarlayanFaturaDTO> olustur(@Valid @RequestBody TekrarlayanFaturaDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(tekrarlayanFaturaService.olustur(dto, sirketId));
@@ -45,12 +46,14 @@ public class TekrarlayanFaturaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Tekrarlayan fatura güncelle", description = "Periyodik fatura tanımını günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<TekrarlayanFaturaDTO> guncelle(@PathVariable Long id, @Valid @RequestBody TekrarlayanFaturaDTO dto) {
         return ResponseEntity.ok(tekrarlayanFaturaService.guncelle(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Tekrarlayan fatura sil", description = "Periyodik fatura tanımını siler")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         tekrarlayanFaturaService.sil(id);
         return ResponseEntity.noContent().build();

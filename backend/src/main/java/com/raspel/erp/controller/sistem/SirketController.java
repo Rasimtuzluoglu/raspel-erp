@@ -25,21 +25,22 @@ public class SirketController {
     private final SirketService sirketService;
 
     @GetMapping
-    @Operation(summary = "Tüm şirketleri getir", description = "Tüm şirket kayıtlarını listeler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Tüm şirketleri getir", description = "Tüm şirket kayıtlarını listeler (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<SirketDTO>> tumu(@PageableDefault(size = 50) Pageable pageable) {
         return ResponseEntity.ok(sirketService.tumunuGetir(pageable));
     }
 
     @GetMapping("/aktif")
-    @Operation(summary = "Aktif şirketleri getir", description = "Aktif durumdaki şirketleri listeler")
+    @Operation(summary = "Aktif şirketleri getir", description = "Oturum açmış kullanıcının erişebildiği aktif şirketleri listeler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<List<SirketDTO>> aktifOlanlar() {
         return ResponseEntity.ok(sirketService.aktifOlanlariGetir());
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "ID'ye göre şirket getir", description = "Şirket ID'sine göre detayları getirir")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "ID'ye göre şirket getir", description = "Şirket ID'sine göre detayları getirir (kullanıcı yalnızca erişebildiği şirketi görür)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<SirketDTO> getir(@PathVariable Long id) {
         return ResponseEntity.ok(sirketService.getir(id));
     }

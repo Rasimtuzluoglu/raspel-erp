@@ -32,6 +32,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final KurulumGuardFilter kurulumGuardFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:*}")
     private String allowedOrigins;
@@ -67,7 +68,8 @@ public class SecurityConfig {
             .exceptionHandling(e -> e
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(kurulumGuardFilter, JwtAuthFilter.class);
 
         if (!httpsOnly) {
             // HTTPS yokken (dev) HSTS'yi gecici tut, tarayici kirmasin

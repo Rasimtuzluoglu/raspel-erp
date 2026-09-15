@@ -34,7 +34,7 @@ public class MuhasebeController {
 
     @GetMapping("/hesap-plani")
     @Operation(summary = "Hesap planını getir", description = "Şirketin hesap planını listeler (boşsa varsayılan plan oluşturur)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<List<HesapPlaniDTO>> hesapPlani(HttpServletRequest request) {
         return ResponseEntity.ok(muhasebeService.hesapPlaniniGetir(sirketId(request)));
     }
@@ -65,7 +65,7 @@ public class MuhasebeController {
 
     @GetMapping("/fisler")
     @Operation(summary = "Yevmiye fişlerini getir", description = "Tarih aralığına göre muhasebe fişlerini listeler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<List<MuhasebeFisiDTO>> fisler(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
@@ -75,14 +75,14 @@ public class MuhasebeController {
 
     @GetMapping("/fisler/{id}")
     @Operation(summary = "Fiş detayını getir", description = "Muhasebe fişini kalemleriyle birlikte getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<MuhasebeFisiDTO> fisGetir(@PathVariable Long id) {
         return ResponseEntity.ok(muhasebeService.fisGetir(id));
     }
 
     @PostMapping("/fisler")
     @Operation(summary = "Yeni fiş oluştur", description = "Borç/alacak dengeli muhasebe fişi (yevmiye kaydı) oluşturur")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<MuhasebeFisiDTO> fisOlustur(@Valid @RequestBody MuhasebeFisiDTO dto, HttpServletRequest request) {
         if (dto.getSirketId() == null) dto.setSirketId(sirketId(request));
         dto.setKullaniciId((Long) request.getAttribute("kullaniciId"));
@@ -91,7 +91,7 @@ public class MuhasebeController {
 
     @PostMapping("/fisler/{id}/iptal")
     @Operation(summary = "Fişi iptal et", description = "Kayıtlı fişi iptal eder")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<Void> fisIptal(@PathVariable Long id) {
         muhasebeService.fisIptalEt(id);
         return ResponseEntity.ok().build();
@@ -109,7 +109,7 @@ public class MuhasebeController {
 
     @GetMapping("/mizan")
     @Operation(summary = "Mizan getir", description = "Hesap bazında borç/alacak ve bakiye mizanını getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<List<MizanSatiriDTO>> mizan(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
@@ -121,7 +121,7 @@ public class MuhasebeController {
 
     @GetMapping("/defteri-kebir")
     @Operation(summary = "Defteri kebir getir", description = "Hesap bazında yevmiye hareket dökümü getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<List<DefteriKebirSatiriDTO>> defteriKebir(
             HttpServletRequest request,
             @RequestParam(required = false) String hesapKodu,
@@ -134,14 +134,14 @@ public class MuhasebeController {
 
     @GetMapping("/bilanco")
     @Operation(summary = "Bilanço getir", description = "Aktif ve pasif kalemlerin özetini (bilanço) getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<BilancoDTO> bilanco(HttpServletRequest request) {
         return ResponseEntity.ok(muhasebeService.bilancoGetir(sirketId(request)));
     }
 
     @GetMapping("/kar-zarar")
     @Operation(summary = "Kâr/Zarar getir", description = "Dönemsel gelir, gider ve net kâr/zarar (gelir tablosu) özetini getirir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<KarZararDTO> karZarar(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,

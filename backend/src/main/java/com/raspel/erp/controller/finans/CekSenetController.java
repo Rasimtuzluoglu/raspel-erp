@@ -20,7 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/cek-senet")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class CekSenetController {
 
     private final CekSenetService cekSenetService;
@@ -40,6 +40,7 @@ public class CekSenetController {
 
     @PostMapping
     @Operation(summary = "Yeni çek/senet oluştur", description = "Yeni bir çek veya senet oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<CekSenetDTO> olustur(@Valid @RequestBody CekSenetDTO dto, jakarta.servlet.http.HttpServletRequest request) {
         dto.setSirketId((Long) request.getAttribute("sirketId"));
         return ResponseEntity.status(HttpStatus.CREATED).body(cekSenetService.olustur(dto));
@@ -47,12 +48,14 @@ public class CekSenetController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Çek/senet güncelle", description = "Çek/senet bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<CekSenetDTO> guncelle(@PathVariable Long id, @Valid @RequestBody CekSenetDTO dto) {
         return ResponseEntity.ok(cekSenetService.guncelle(id, dto));
     }
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Çek/senet durum güncelle", description = "Çek/senet durumunu günceller (tahsil/tahsil edildi/karşılıksız vb.)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<CekSenetDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(cekSenetService.durumGuncelle(id, body.getDurum()));
     }

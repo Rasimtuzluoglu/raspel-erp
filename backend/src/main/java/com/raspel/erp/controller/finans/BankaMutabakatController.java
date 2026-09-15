@@ -19,7 +19,7 @@ import com.raspel.erp.entity.ticaret.Fatura;
 @RestController
 @RequestMapping("/api/bankalar/{bankaId}/mutabakat")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class BankaMutabakatController {
 
     private final BankaMutabakatService bankaMutabakatService;
@@ -32,6 +32,7 @@ public class BankaMutabakatController {
 
     @PostMapping("/yukle")
     @Operation(summary = "Hesap özeti yükle", description = "CSV/Excel/OFX hesap özetini yükler ve faturalarla otomatik eşleştirir (tarih;aciklama;borc;alacak;bakiye)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<List<BankaHareketiDTO>> yukle(@PathVariable Long bankaId,
                                                         @RequestParam("dosya") MultipartFile dosya,
                                                         HttpServletRequest request) {
@@ -42,6 +43,7 @@ public class BankaMutabakatController {
 
     @PostMapping("/otomatik-eslestir")
     @Operation(summary = "Otomatik eşleştir", description = "Eşleşmemiş hareketleri tutar ve tarih benzerliğine göre faturalarla eşleştirir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<List<BankaHareketiDTO>> otomatikEslestir(@PathVariable Long bankaId, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(bankaMutabakatService.otomatikEslestir(bankaId, sirketId));
@@ -49,12 +51,14 @@ public class BankaMutabakatController {
 
     @PostMapping("/{hareketId}/eslestir/{faturaId}")
     @Operation(summary = "Manuel eşleştir", description = "Bir banka hareketini elle bir fatura ile eşleştirir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<BankaHareketiDTO> eslestir(@PathVariable Long hareketId, @PathVariable Long faturaId) {
         return ResponseEntity.ok(bankaMutabakatService.eslestir(hareketId, faturaId));
     }
 
     @PostMapping("/{hareketId}/eslestirmeyi-kaldir")
     @Operation(summary = "Eşleştirmeyi kaldır", description = "Banka hareketinin fatura eşleşmesini kaldırır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<BankaHareketiDTO> eslestirmeyiKaldir(@PathVariable Long hareketId) {
         return ResponseEntity.ok(bankaMutabakatService.eslestirmeyiKaldir(hareketId));
     }

@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pos-terminalleri")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class PosTerminaliController {
 
     private final PosTerminaliService posService;
@@ -56,6 +56,7 @@ public class PosTerminaliController {
 
     @PostMapping("/gun-sonu")
     @Operation(summary = "POS gün sonu", description = "Gün içinde POS'tan çekilen tutarları ilgili banka hesabına aktarır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<List<java.util.Map<String, Object>>> gunSonu(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(gunSonuService.gunSonuIsle(sirketId));
@@ -70,6 +71,7 @@ public class PosTerminaliController {
 
     @PostMapping
     @Operation(summary = "POS terminali oluştur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<PosTerminaliDTO> olustur(@RequestBody PosTerminaliDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(posService.olustur(dto, sirketId));
@@ -77,6 +79,7 @@ public class PosTerminaliController {
 
     @PutMapping("/{id}")
     @Operation(summary = "POS terminalini güncelle")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<PosTerminaliDTO> guncelle(@PathVariable Long id, @RequestBody PosTerminaliDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(posService.guncelle(id, dto, sirketId));
@@ -84,6 +87,7 @@ public class PosTerminaliController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "POS terminalini sil")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         posService.sil(id, sirketId);

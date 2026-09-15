@@ -23,6 +23,24 @@ public class ProdGuvenlikKontrolu {
     @Value("${app.jwt.secret:}")
     private String jwtSecret;
 
+    @Value("${ai.encryption.key:}")
+    private String aiEncryptionKey;
+
+    @Value("${app.storage.type:local}")
+    private String storageType;
+
+    @Value("${MINIO_ROOT_USER:}")
+    private String minioAccessKey;
+
+    @Value("${MINIO_ROOT_PASSWORD:}")
+    private String minioSecretKey;
+
+    @Value("${app.websocket.relay-enabled:false}")
+    private boolean relayEnabled;
+
+    @Value("${spring.rabbitmq.password:}")
+    private String rabbitmqPassword;
+
     @PostConstruct
     public void kontrol() {
         boolean prodAktif = Arrays.asList(environment.getActiveProfiles()).contains("prod");
@@ -32,6 +50,20 @@ public class ProdGuvenlikKontrolu {
             throw new IllegalStateException(
                     "prod profilinde JWT_SECRET guclu bir degerle (en az 32 karakter) ayarlanmalidir.");
         }
-        log.info("Prod guvenlik kontrolu tamam: JWT_SECRET guclu.");
+        if (aiEncryptionKey == null || aiEncryptionKey.isBlank() || aiEncryptionKey.length() < 16) {
+            throw new IllegalStateException(
+                    "prod profilinde AI_ENCRYPTION_KEY zorunludur (en az 16 karakter). Varsayilan dev anahtari kullanilamaz.");
+        }
+        if ("minio".equalsIgnoreCase(storageType)) {
+            if (minioAccessKey == null || minioAccessKey.isBlank() || minioSecretKey == null || minioSecretKey.isBlank()) {
+                throw new IllegalStateException(
+                        "prod profilinde MINIO_ROOT_USER ve MINIO_ROOT_PASSWORD zorunludur.");
+            }
+        }
+        if (relayEnabled && (rabbitmqPassword == null || rabbitmqPassword.isBlank())) {
+            throw new IllegalStateException(
+                    "prod profilinde WebSocket relay aktifken RABBITMQ_PASSWORD zorunludur.");
+        }
+        log.info("Prod guvenlik kontrolu tamam: JWT_SECRET, AI_ENCRYPTION_KEY ve depolama kredileri guclu.");
     }
 }

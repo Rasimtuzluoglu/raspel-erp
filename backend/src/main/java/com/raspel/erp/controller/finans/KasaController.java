@@ -23,7 +23,7 @@ import com.raspel.erp.entity.finans.Kasa;
 @RestController
 @RequestMapping("/api/kasalar")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class KasaController {
 
     private final KasaService kasaService;
@@ -41,6 +41,7 @@ public class KasaController {
 
     @PostMapping
     @Operation(summary = "Yeni kasa oluştur", description = "Yeni bir kasa oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<KasaDTO> olustur(@RequestBody @jakarta.validation.Valid KasaDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(kasaService.kasaOlustur(dto, sirketId));
@@ -48,6 +49,7 @@ public class KasaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Kasa güncelle", description = "Kasa bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<KasaDTO> guncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid KasaDTO dto) {
         return ResponseEntity.ok(kasaService.kasaGuncelle(id, dto));
     }
@@ -65,6 +67,7 @@ public class KasaController {
 
     @PostMapping("/{id}/hareketler")
     @Operation(summary = "Kasa hareketi ekle", description = "Kasaya yeni bir hareket (giriş/çıkış) ekler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<KasaHareketDTO> hareketEkle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid KasaHareketDTO dto) {
         dto.setKasaId(id);
         return ResponseEntity.status(HttpStatus.CREATED).body(kasaService.hareketEkle(dto));
@@ -72,6 +75,7 @@ public class KasaController {
 
     @PostMapping("/aktar")
     @Operation(summary = "Kasalar arası aktarım", description = "Bir kasadan diğer kasaya para aktarır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<Void> aktar(
             @RequestBody KasaAktarRequest request,
             HttpServletRequest httpRequest) {
@@ -82,6 +86,7 @@ public class KasaController {
 
     @PostMapping("/bankaya-aktar")
     @Operation(summary = "Kasadan bankaya aktarım", description = "Kasadan banka hesabına para aktarır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<Void> bankayaAktar(
             @RequestBody KasaBankayaAktarRequest request,
             HttpServletRequest httpRequest) {

@@ -20,7 +20,7 @@ import org.springframework.data.web.PageableDefault;
 @RestController
 @RequestMapping("/api/butceler")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class ButceController {
 
     private final ButceService butceService;
@@ -40,6 +40,7 @@ public class ButceController {
 
     @PostMapping
     @Operation(summary = "Yeni bütçe oluştur", description = "Yeni bir bütçe kaydı oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<ButceDTO> olustur(@Valid @RequestBody ButceDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(butceService.olustur(dto, sirketId));
@@ -47,6 +48,7 @@ public class ButceController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Bütçe güncelle", description = "Bütçe bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<ButceDTO> guncelle(@PathVariable Long id, @Valid @RequestBody ButceDTO dto) {
         return ResponseEntity.ok(butceService.guncelle(id, dto));
     }

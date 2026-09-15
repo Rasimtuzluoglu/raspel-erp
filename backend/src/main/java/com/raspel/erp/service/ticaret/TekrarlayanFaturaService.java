@@ -1,5 +1,6 @@
 package com.raspel.erp.service.ticaret;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.TekrarlayanFaturaDTO;
@@ -32,6 +33,7 @@ public class TekrarlayanFaturaService {
     private final TekrarlayanFaturaRepository repository;
     private final FaturaService faturaService;
     private final CariHesapRepository cariHesapRepository;
+    private final TenantChecker tenantChecker;
 
     @Lazy
     @Autowired
@@ -47,8 +49,10 @@ public class TekrarlayanFaturaService {
 
     @Transactional(readOnly = true)
     public TekrarlayanFaturaDTO getir(Long id) {
-        return entityToDTO(repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tekrarlayan fatura", id)));
+        TekrarlayanFatura tf = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tekrarlayan fatura", id));
+        tenantChecker.check(tf.getSirketId(), "Tekrarlayan fatura");
+        return entityToDTO(tf);
     }
 
     @Transactional

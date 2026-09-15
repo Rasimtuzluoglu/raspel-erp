@@ -31,7 +31,7 @@ import com.raspel.erp.entity.finans.CariHesap;
 @RequestMapping("/api/cari-hesaplar")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class CariHesapController {
     
     private final CariHesapService cariHesapService;
@@ -127,6 +127,7 @@ public class CariHesapController {
 
     @PostMapping
     @Operation(summary = "Yeni cari hesap oluştur", description = "Yeni bir cari hesap oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<CariHesapDTO> cariHesapOlustur(@RequestBody @jakarta.validation.Valid CariHesapDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("POST /api/cari-hesaplar - Yeni cari hesap oluşturuluyor: {}, sirketId: {}", dto.getAd(), sirketId);
@@ -136,6 +137,7 @@ public class CariHesapController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Cari hesap güncelle", description = "Cari hesap bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<CariHesapDTO> cariHesapGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid CariHesapDTO dto) {
         log.info("PUT /api/cari-hesaplar/{} - Cari hesap güncelleniyor", id);
         CariHesapDTO guncellenenCariHesap = cariHesapService.cariHesapGuncelle(id, dto);
@@ -161,6 +163,7 @@ public class CariHesapController {
 
     @PostMapping("/{id}/fiyatlar")
     @Operation(summary = "Cariye özel fiyat ekle", description = "Cariye özel ürün fiyatı ekler/günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<com.raspel.erp.dto.finans.CariFiyatDTO> cariFiyatKaydet(
             @PathVariable Long id,
             @RequestBody com.raspel.erp.dto.finans.CariFiyatDTO dto,

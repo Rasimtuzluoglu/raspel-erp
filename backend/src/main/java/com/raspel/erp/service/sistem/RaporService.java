@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.service.finans.CariHesapService;
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.entity.sistem.Donem;
 import com.raspel.erp.entity.ticaret.FaturaKalem;
 import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
@@ -50,10 +51,12 @@ public class RaporService {
     private final ButceRepository butceRepository;
     private final MasrafRepository masrafRepository;
     private final PdfRaporService pdfRaporService;
+    private final TenantChecker tenantChecker;
 
     public RaporDTO.CariEkstreDTO cariEkstreGetir(Long cariHesapId, LocalDate baslangic, LocalDate bitis) {
         CariHesap cari = cariHesapRepository.findById(cariHesapId)
                 .orElseThrow(() -> new RuntimeException("Cari hesap bulunamadı"));
+        tenantChecker.check(cari.getSirketId(), "Cari hesap");
 
         List<HareketDTO> hareketler = hareketRepository
                 .findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(cariHesapId, baslangic, bitis)

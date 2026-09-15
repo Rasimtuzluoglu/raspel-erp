@@ -26,7 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/taksitler")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class TaksitController {
 
     private final TaksitService taksitService;
@@ -72,6 +72,7 @@ public class TaksitController {
 
     @PostMapping("/plan")
     @Operation(summary = "Taksit plani olustur", description = "Toplam tutari verilen taksit sayisina gore vade bazli bolerek plan olusturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<List<TaksitDTO>> planOlustur(
             @RequestBody @Valid TaksitPlanDTO dto,
             HttpServletRequest request) {
@@ -81,6 +82,7 @@ public class TaksitController {
 
     @PostMapping("/{id}/ode")
     @Operation(summary = "Taksit ode", description = "Taksit kalemini odendi olarak isaretler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<TaksitDTO> ode(
             @PathVariable Long id,
             @RequestBody(required = false) TaksitOdeDTO dto,
@@ -91,6 +93,7 @@ public class TaksitController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Taksit sil", description = "Tek bir taksit kalemini siler")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sil(@PathVariable Long id, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         taksitService.sil(id, sirketId);
@@ -99,6 +102,7 @@ public class TaksitController {
 
     @DeleteMapping("/plan/{planNo}")
     @Operation(summary = "Taksit plani sil", description = "Bir plana ait tum taksit kalemlerini siler")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> planSil(@PathVariable String planNo, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         taksitService.planSil(planNo, sirketId);

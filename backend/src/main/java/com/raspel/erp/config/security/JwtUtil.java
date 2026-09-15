@@ -22,24 +22,28 @@ public class JwtUtil {
     private final long expirationMs;
 
     public JwtUtil(
-            @Value("${app.jwt.secret}") String jwtSecret,
+            @Value("${app.jwt.secret:}") String jwtSecret,
             @Value("${app.jwt.expiration-ms}") long expirationMs,
             Environment env) {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        if (keyBytes.length < 32) {
-            throw new IllegalStateException("app.jwt.secret en az 32 bayt (256-bit) olmalidir");
+        boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("prod");
+        byte[] keyBytes;
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            if (isProd) {
+                throw new IllegalStateException(
+                    "JWT_SECRET ortam degiskeni tanimli degil! Uretim ortaminda JWT_SECRET zorunludur.");
+            }
+            // Dev/test: kodda secret bulunmaz; restart'ta oturumlari gecersiz kilan gecici anahtar.
+            log.warn("JWT_SECRET tanimli degil; gelistirme icin gecici (ephemeral) imza anahtari uretildi. " +
+                    "Restart sonrasi mevcut oturumlar gecersiz olur. Uretimde mutlaka JWT_SECRET ayarlayin.");
+            keyBytes = new java.security.SecureRandom().generateSeed(32);
+        } else {
+            keyBytes = Decoders.BASE64.decode(jwtSecret);
+            if (keyBytes.length < 32) {
+                throw new IllegalStateException("app.jwt.secret en az 32 bayt (256-bit) olmalidir");
+            }
         }
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.expirationMs = expirationMs;
-        boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("prod");
-        if (System.getenv("JWT_SECRET") == null && isProd) {
-            throw new IllegalStateException(
-                "JWT_SECRET ortam degiskeni tanimli degil! Uretim ortaminda JWT_SECRET zorunludur. " +
-                "application.properties'teki varsayilan deger sadece gelistirme icindir.");
-        }
-        if (System.getenv("JWT_SECRET") == null) {
-            log.warn("JWT_SECRET ortam degiskeni tanimli degil! Uretim ortaminda mutlaka guclu bir JWT_SECRET ayarlayin.");
-        }
     }
 
     public String generateToken(Kullanici kullanici, Long sirketId, String sirketAdi) {

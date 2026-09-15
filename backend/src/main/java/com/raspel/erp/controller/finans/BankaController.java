@@ -22,7 +22,7 @@ import com.raspel.erp.entity.finans.Banka;
 @RequestMapping("/api/bankalar")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class BankaController {
 
     private final BankaService bankaService;
@@ -42,6 +42,7 @@ public class BankaController {
 
     @PostMapping
     @Operation(summary = "Yeni banka oluştur", description = "Yeni bir banka hesabı oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<BankaDTO> bankaOlustur(@RequestBody @jakarta.validation.Valid BankaDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(bankaService.bankaOlustur(dto, sirketId));
@@ -49,6 +50,7 @@ public class BankaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Banka güncelle", description = "Banka bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<BankaDTO> bankaGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid BankaDTO dto) {
         return ResponseEntity.ok(bankaService.bankaGuncelle(id, dto));
     }

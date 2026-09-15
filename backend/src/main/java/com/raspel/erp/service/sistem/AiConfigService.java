@@ -27,13 +27,45 @@ public class AiConfigService {
     private final AiConfigRepository aiConfigRepository;
     private final LlmClientService llmClientService;
 
-    @Value("${ai.encryption.key:DefaultDevKey12345678901234567890}")
+    @Value("${ai.encryption.key:}")
     private String encryptionKey;
+
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    private volatile byte[] ephemeralKey;
 
     private static final String ALGORITHM = "AES";
     private static final String CIPHER_TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 128;
+
+    /**
+     * Şifreleme anahtarını env'den döndürür. Env tanımlı değilse (yalnızca dev/test)
+     * JVM ömrü boyunca sabit kalan geçici (ephemeral) bir anahtar üretir. Prod'da
+     * AI_ENCRYPTION_KEY zorunludur (ProdGuvenlikKontrolu fail-fast).
+     */
+    private byte[] resolveKeyBytes() {
+        String key = encryptionKey;
+        byte[] keyBytes;
+        if (key == null || key.isBlank()) {
+            if (ephemeralKey == null) {
+                synchronized (this) {
+                    if (ephemeralKey == null) {
+                        ephemeralKey = secureRandom.generateSeed(16);
+                    }
+                }
+            }
+            keyBytes = ephemeralKey;
+        } else {
+            keyBytes = key.getBytes(StandardCharsets.UTF_8);
+        }
+        if (keyBytes.length > 32) {
+            byte[] temp = new byte[32];
+            System.arraycopy(keyBytes, 0, temp, 0, 32);
+            keyBytes = temp;
+        }
+        return keyBytes;
+    }
 
     @Transactional(readOnly = true)
     public AiConfigDTO getConfig(Long sirketId) {
@@ -123,12 +155,7 @@ public class AiConfigService {
             Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
             GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
             
-            byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
-            if (keyBytes.length > 32) {
-                byte[] temp = new byte[32];
-                System.arraycopy(keyBytes, 0, temp, 0, 32);
-                keyBytes = temp;
-            }
+            byte[] keyBytes = resolveKeyBytes();
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, ALGORITHM);
             
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, parameterSpec);
@@ -158,12 +185,7 @@ public class AiConfigService {
             Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
             GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
             
-            byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
-            if (keyBytes.length > 32) {
-                byte[] temp = new byte[32];
-                System.arraycopy(keyBytes, 0, temp, 0, 32);
-                keyBytes = temp;
-            }
+            byte[] keyBytes = resolveKeyBytes();
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, ALGORITHM);
             
             cipher.init(Cipher.DECRYPT_MODE, keySpec, parameterSpec);

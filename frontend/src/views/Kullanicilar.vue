@@ -198,6 +198,7 @@
             :options="[
               { label: t('kullanicilar.rolAdmin'), value: 'ADMIN' },
               { label: t('kullanicilar.rolKullanici'), value: 'USER' },
+              { label: t('kullanicilar.rolMuhasebe'), value: 'MUHASEBE' },
               { label: t('kullanicilar.rolSofor'), value: 'DRIVER' }
             ]"
             option-label="label"
@@ -520,6 +521,10 @@ h1 {
 .rol-badge.driver {
   background: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
+}
+.rol-badge.muhasebe {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
 }
 .kart-alt {
   display: flex;

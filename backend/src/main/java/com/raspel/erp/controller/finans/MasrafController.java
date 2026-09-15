@@ -21,7 +21,7 @@ import com.raspel.erp.entity.finans.Masraf;
 @RestController
 @RequestMapping("/api/masraflar")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class MasrafController {
 
     private final MasrafService masrafService;
@@ -41,6 +41,7 @@ public class MasrafController {
 
     @PostMapping
     @Operation(summary = "Yeni masraf oluştur", description = "Yeni bir masraf kaydı oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<MasrafDTO> olustur(@Valid @RequestBody MasrafDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(masrafService.olustur(dto, sirketId));
@@ -48,6 +49,7 @@ public class MasrafController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Masraf güncelle", description = "Masraf bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<MasrafDTO> guncelle(@PathVariable Long id, @Valid @RequestBody MasrafDTO dto) {
         return ResponseEntity.ok(masrafService.guncelle(id, dto));
     }

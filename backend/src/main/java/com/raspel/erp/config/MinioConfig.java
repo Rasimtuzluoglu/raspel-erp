@@ -11,10 +11,10 @@ public class MinioConfig {
     @Value("${app.storage.minio.endpoint:http://localhost:9000}")
     private String endpoint;
 
-    @Value("${app.storage.minio.access-key:minioadmin}")
+    @Value("${app.storage.minio.access-key:${MINIO_ROOT_USER:}}")
     private String accessKey;
 
-    @Value("${app.storage.minio.secret-key:minioadmin123}")
+    @Value("${app.storage.minio.secret-key:${MINIO_ROOT_PASSWORD:}}")
     private String secretKey;
 
     @Bean

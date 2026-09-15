@@ -1,20 +1,27 @@
 package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.dto.sistem.SirketDTO;
+import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +30,7 @@ import java.util.stream.Collectors;
 public class SirketService {
 
     private final SirketRepository sirketRepository;
+    private final KullaniciRepository kullaniciRepository;
     private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
     private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
 
@@ -30,15 +38,27 @@ public class SirketService {
         return sirketRepository.findAll(pageable).map(this::entityToDTO);
     }
 
-    @Cacheable(value = "lookup", key = "'sirketlerAktif'")
+    /**
+     * Oturum açmış kullanıcının erişebildiği aktif şirketleri döndürür.
+     * ADMIN tüm aktif şirketleri görür; USER/MUHASEBE yalnızca üye olduğu şirketleri.
+     * Req konteksti yoksa (test/dahili çağrı) geriye dönük: tüm aktif şirketler.
+     */
     public List<SirketDTO> aktifOlanlariGetir() {
+        Long kullaniciId = mevcutKullaniciId();
+        if (kullaniciId != null) {
+            Kullanici k = kullaniciRepository.findById(kullaniciId).orElse(null);
+            if (k != null) {
+                return kullanicininSirketleri(k);
+            }
+        }
         return sirketRepository.findByAktifTrue().stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
-    @Cacheable(value = "lookup", key = "'sirket:' + #id")
     public SirketDTO getir(Long id) {
-        return entityToDTO(sirketRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Şirket", id)));
+        Sirket s = sirketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", id));
+        erisimKontrol(s);
+        return entityToDTO(s);
     }
 
     @CacheEvict(value = "lookup", allEntries = true)
@@ -156,6 +176,40 @@ public class SirketService {
                 .toplamCiro(java.math.BigDecimal.ZERO)
                 .sirketler(sirketOzetleri)
                 .build();
+    }
+
+    private List<SirketDTO> kullanicininSirketleri(Kullanici k) {
+        if ("ADMIN".equals(k.getRole())) {
+            return sirketRepository.findByAktifTrue().stream().map(this::entityToDTO).collect(Collectors.toList());
+        }
+        Set<Sirket> uye = new LinkedHashSet<>(k.getSirketler() != null ? k.getSirketler() : Set.of());
+        if (k.getSirketId() != null) {
+            sirketRepository.findById(k.getSirketId()).ifPresent(uye::add);
+        }
+        return uye.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getAktif()))
+                .map(this::entityToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private void erisimKontrol(Sirket s) {
+        Long kullaniciId = mevcutKullaniciId();
+        if (kullaniciId == null) return; // dahili çağrı / test, request konteksti yok
+        Kullanici k = kullaniciRepository.findById(kullaniciId).orElse(null);
+        if (k == null || "ADMIN".equals(k.getRole())) return;
+        boolean uye = k.getSirketler() != null && k.getSirketler().stream().anyMatch(x -> x.getId().equals(s.getId()));
+        if (uye) return;
+        if (k.getSirketId() != null && k.getSirketId().equals(s.getId())) return;
+        throw new ResourceNotFoundException("Şirket", s.getId());
+    }
+
+    private Long mevcutKullaniciId() {
+        try {
+            HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+            return (Long) req.getAttribute("kullaniciId");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private SirketDTO entityToDTO(Sirket s) {

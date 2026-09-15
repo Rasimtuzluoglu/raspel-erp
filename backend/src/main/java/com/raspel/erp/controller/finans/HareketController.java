@@ -31,7 +31,7 @@ import com.raspel.erp.entity.finans.Hareket;
 @RequestMapping("/api/hareketler")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class HareketController {
     
     private final HareketService hareketService;
@@ -108,6 +108,7 @@ public class HareketController {
 
     @PostMapping
     @Operation(summary = "Yeni hareket oluştur", description = "Cari hesaba yeni bir hareket (tahsilat/ödeme) oluşturur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<HareketDTO> hareketOlustur(@RequestBody @jakarta.validation.Valid HareketDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("POST /api/hareketler - Yeni hareket oluşturuluyor, sirketId: {}", sirketId);
@@ -117,6 +118,7 @@ public class HareketController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Hareket güncelle", description = "Hareket bilgilerini günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<HareketDTO> hareketGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid HareketDTO dto) {
         log.info("PUT /api/hareketler/{} - Hareket güncelleniyor", id);
         HareketDTO guncellenen = hareketService.hareketGuncelle(id, dto);
