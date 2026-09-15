@@ -152,8 +152,7 @@
       >
         <template #title>
           <i
-            class="pi pi-sparkles"
-            style="margin-right: 8px; color: #8b5cf6"
+            class="pi pi-sparkles ozet-ikon"
           />{{ t('dashboard.gununOzeti') }}
         </template>
         <template #content>
@@ -909,8 +908,7 @@
           <Card class="vade-card vadesi-gecen mb-3">
             <template #title>
               <i
-                class="pi pi-exclamation-triangle"
-                style="color: #f87171; margin-right: 8px"
+                class="pi pi-exclamation-triangle vade-ikon vade-ikon-gecen"
               />{{ t('dashboard.vadesiGecenFaturalar') }}
             </template>
             <template #content>
@@ -941,8 +939,7 @@
           <Card class="vade-card vadesi-yaklasan">
             <template #title>
               <i
-                class="pi pi-clock"
-                style="color: #fbbf24; margin-right: 8px"
+                class="pi pi-clock vade-ikon vade-ikon-yaklasan"
               />{{ t('dashboard.vadesiYaklasan') }}
             </template>
             <template #content>
@@ -1005,11 +1002,34 @@ import {
   Filler
 } from 'chart.js'
 import { formatCurrency } from '../utils/format.js'
+import { useChartTema } from '../composables/useChartTema.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
 const router = useRouter()
 const { t } = useI18n()
+const { palet, lejant } = useChartTema()
+const paraTick = (v) => formatCurrency(v)
+
+// Bar/line veri setleri icin dikey/yatay degrade yardimcilari
+const dikeyGradyan = (ctx, ust, alt) => {
+  const { chart } = ctx
+  const { ctx: c, chartArea } = chart
+  if (!chartArea) return ust
+  const g = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top)
+  g.addColorStop(0, alt)
+  g.addColorStop(1, ust)
+  return g
+}
+const yatayGradyan = (ctx, sol, sag) => {
+  const { chart } = ctx
+  const { ctx: c, chartArea } = chart
+  if (!chartArea) return sol
+  const g = c.createLinearGradient(chartArea.left, 0, chartArea.right, 0)
+  g.addColorStop(0, sol)
+  g.addColorStop(1, sag)
+  return g
+}
 const dovizStore = useDovizStore()
 const karsilamaMetni = computed(() => {
   const saat = new Date().getHours()
@@ -1077,61 +1097,68 @@ const kategoriSatislariChart = ref({ labels: [], datasets: [] })
 const kasaBankaChart = ref({ labels: [], datasets: [] })
 const alacakYaslandirmaChart = ref({ labels: [], datasets: [] })
 
-const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom' } } }
-const aylikKarsilastirmaOptions = {
+const pieOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { position: 'bottom' } },
-  scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } } }
-}
-const enCokSatanlarOptions = {
+  plugins: { legend: lejant() }
+}))
+const aylikKarsilastirmaOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: lejant() },
+  scales: {
+    x: { ticks: { color: palet.value.metin }, grid: { color: palet.value.izgara } },
+    y: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } }
+  }
+}))
+const enCokSatanlarOptions = computed(() => ({
   indexAxis: 'y',
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8' } },
-    y: { ticks: { color: '#94a3b8' } }
+    x: { ticks: { color: palet.value.metin }, grid: { color: palet.value.izgara } },
+    y: { ticks: { color: palet.value.metin }, grid: { display: false } }
   }
-}
-const enCokBorcCarilerOptions = {
+}))
+const enCokBorcCarilerOptions = computed(() => ({
   indexAxis: 'y',
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
-    y: { ticks: { color: '#94a3b8' } }
+    x: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } },
+    y: { ticks: { color: palet.value.metin }, grid: { display: false } }
   }
-}
-const enCokAlacakCarilerOptions = {
+}))
+const enCokAlacakCarilerOptions = computed(() => ({
   indexAxis: 'y',
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
-    y: { ticks: { color: '#94a3b8' } }
+    x: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } },
+    y: { ticks: { color: palet.value.metin }, grid: { display: false } }
   }
-}
-const alacakYaslandirmaOptions = {
+}))
+const alacakYaslandirmaOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8' } },
-    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+    x: { ticks: { color: palet.value.metin }, grid: { display: false } },
+    y: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } }
   }
-}
-const nakitAkisiOptions = {
+}))
+const nakitAkisiOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { position: 'bottom' } },
+  plugins: { legend: lejant() },
   scales: {
-    x: { ticks: { color: '#94a3b8' } },
-    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+    x: { ticks: { color: palet.value.metin }, grid: { display: false } },
+    y: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } }
   }
-}
+}))
 
 // --- Faz A: premium trend/sparkline ve yeni grafikler (mevcut veriyle) ---
 const sonGuncellemeZamani = ref('')
@@ -1178,25 +1205,28 @@ const nakitProjeksiyonVerisi = computed(() => {
         label: t('dashboard.nakitProjeksiyon'),
         data: [likidite, Math.round(gun30), Math.round(gun60), Math.round(gun90)],
         borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+        backgroundColor: (ctx) => dikeyGradyan(ctx, 'rgba(16, 185, 129, 0.35)', 'rgba(16, 185, 129, 0)'),
         fill: true,
         tension: 0.35,
+        borderWidth: 2.5,
         pointRadius: 4,
-        pointBackgroundColor: '#10b981'
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#10b981',
+        pointBorderColor: 'transparent'
       }
     ]
   }
 })
 
-const projeksiyonOptions = {
+const projeksiyonOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: '#94a3b8' } },
-    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+    x: { ticks: { color: palet.value.metin }, grid: { display: false } },
+    y: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } }
   }
-}
+}))
 
 const ciroHedefVerisi = computed(() => {
   const veri = dashboardStore.aylikGelirGider || []
@@ -1207,8 +1237,10 @@ const ciroHedefVerisi = computed(() => {
       {
         label: t('dashboard.etiketGelir'),
         data: veri.map((v) => v.gelir || 0),
-        backgroundColor: '#3b82f6',
-        borderRadius: 6,
+        backgroundColor: (ctx) => dikeyGradyan(ctx, '#60a5fa', 'rgba(59, 130, 246, 0.25)'),
+        hoverBackgroundColor: '#93c5fd',
+        borderRadius: 8,
+        maxBarThickness: 34,
         order: 2
       },
       {
@@ -1226,15 +1258,15 @@ const ciroHedefVerisi = computed(() => {
   }
 })
 
-const ciroHedefOptions = {
+const ciroHedefOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { position: 'bottom' } },
+  plugins: { legend: lejant() },
   scales: {
-    x: { ticks: { color: '#94a3b8' } },
-    y: { ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } }
+    x: { ticks: { color: palet.value.metin }, grid: { display: false } },
+    y: { ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } }
   }
-}
+}))
 
 const kategoriParetoVerisi = computed(() => {
   const liste = [...(dashboardStore.kategoriSatislari || [])]
@@ -1252,8 +1284,10 @@ const kategoriParetoVerisi = computed(() => {
       {
         label: t('dashboard.toplam'),
         data: liste.map((k) => k.tutar),
-        backgroundColor: '#8b5cf6',
-        borderRadius: 6,
+        backgroundColor: (ctx) => dikeyGradyan(ctx, '#a78bfa', 'rgba(139, 92, 246, 0.25)'),
+        hoverBackgroundColor: '#c4b5fd',
+        borderRadius: 8,
+        maxBarThickness: 34,
         yAxisID: 'y'
       },
       {
@@ -1270,13 +1304,13 @@ const kategoriParetoVerisi = computed(() => {
   }
 })
 
-const paretoOptions = {
+const paretoOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { position: 'bottom' } },
+  plugins: { legend: lejant() },
   scales: {
-    x: { ticks: { color: '#94a3b8' } },
-    y: { position: 'left', ticks: { color: '#94a3b8', callback: (v) => formatCurrency(v) } },
+    x: { ticks: { color: palet.value.metin }, grid: { display: false } },
+    y: { position: 'left', ticks: { color: palet.value.metin, callback: paraTick }, grid: { color: palet.value.izgara } },
     y1: {
       position: 'right',
       min: 0,
@@ -1285,7 +1319,7 @@ const paretoOptions = {
       ticks: { color: '#f59e0b', callback: (v) => `${v}%` }
     }
   }
-}
+}))
 
 const bosSistem = computed(
   () =>
@@ -1334,8 +1368,10 @@ const grafikleriHesapla = () => {
     datasets: [
       {
         data: [dashboardStore.pozitifBakiye || 0, Math.abs(dashboardStore.negatifBakiye) || 0],
-        backgroundColor: ['#4caf50', '#f44336'],
-        hoverBackgroundColor: ['#66bb6a', '#ef5350']
+        backgroundColor: ['#10b981', '#f43f5e'],
+        hoverBackgroundColor: ['#34d399', '#fb7185'],
+        borderWidth: 0,
+        hoverOffset: 8
       }
     ]
   }
@@ -1363,8 +1399,12 @@ const enCokSatanlariHesapla = () => {
       {
         label: t('dashboard.satisMiktari'),
         data: urunler.map((u) => u.satisMiktari),
-        backgroundColor: urunler.map((_, i) => renkler[i % renkler.length]),
-        borderRadius: 4
+        backgroundColor: (ctx) => {
+          const r = renkler[ctx.dataIndex % renkler.length]
+          return yatayGradyan(ctx, r, r + '55')
+        },
+        borderRadius: 8,
+        maxBarThickness: 22
       }
     ]
   }
@@ -1382,18 +1422,24 @@ const nakitAkisiniHesapla = () => {
       {
         label: t('dashboard.etiketGelir'),
         data: gunler.map((g) => g.gelir),
-        borderColor: '#4caf50',
-        backgroundColor: '#4caf50',
-        tension: 0.3,
-        pointRadius: 3
+        borderColor: '#10b981',
+        backgroundColor: (ctx) => dikeyGradyan(ctx, 'rgba(16, 185, 129, 0.3)', 'rgba(16, 185, 129, 0)'),
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 5
       },
       {
         label: t('dashboard.etiketGider'),
         data: gunler.map((g) => g.gider),
-        borderColor: '#f44336',
-        backgroundColor: '#f44336',
-        tension: 0.3,
-        pointRadius: 3
+        borderColor: '#f43f5e',
+        backgroundColor: (ctx) => dikeyGradyan(ctx, 'rgba(244, 63, 94, 0.28)', 'rgba(244, 63, 94, 0)'),
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 5
       }
     ]
   }
@@ -1411,8 +1457,9 @@ const enCokBorcCarileriHesapla = () => {
       {
         label: t('dashboard.borcTL'),
         data: cariler.map((c) => c.tutar),
-        backgroundColor: '#ef4444',
-        borderRadius: 4
+        backgroundColor: (ctx) => yatayGradyan(ctx, '#fb7185', 'rgba(244, 63, 94, 0.3)'),
+        borderRadius: 8,
+        maxBarThickness: 22
       }
     ]
   }
@@ -1430,8 +1477,9 @@ const enCokAlacakCarileriHesapla = () => {
       {
         label: t('dashboard.alacakTL'),
         data: cariler.map((c) => c.tutar),
-        backgroundColor: '#10b981',
-        borderRadius: 4
+        backgroundColor: (ctx) => yatayGradyan(ctx, '#34d399', 'rgba(16, 185, 129, 0.3)'),
+        borderRadius: 8,
+        maxBarThickness: 22
       }
     ]
   }
@@ -1450,7 +1498,9 @@ const kasaBankayiHesapla = () => {
       {
         data: [kasa, banka],
         backgroundColor: ['#f59e0b', '#3b82f6'],
-        hoverBackgroundColor: ['#fbbf24', '#60a5fa']
+        hoverBackgroundColor: ['#fbbf24', '#60a5fa'],
+        borderWidth: 0,
+        hoverOffset: 8
       }
     ]
   }
@@ -1468,7 +1518,9 @@ const kategoriSatislariniHesapla = () => {
     datasets: [
       {
         data: kategoriler.map((k) => k.tutar),
-        backgroundColor: kategoriler.map((_, i) => renkler[i % renkler.length])
+        backgroundColor: kategoriler.map((_, i) => renkler[i % renkler.length]),
+        borderWidth: 0,
+        hoverOffset: 8
       }
     ]
   }
@@ -1486,8 +1538,9 @@ const alacakYaslandirmayiHesapla = () => {
       {
         label: t('dashboard.kalanTutarTL'),
         data: yaslar.map((y) => y.tutar),
-        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'],
-        borderRadius: 4
+        backgroundColor: ['#fb7185', '#fbbf24', '#60a5fa', '#a78bfa'],
+        borderRadius: 8,
+        maxBarThickness: 46
       }
     ]
   }
@@ -1506,23 +1559,29 @@ const aylikKarsilastirmayiHesapla = () => {
       {
         label: t('dashboard.etiketGelir'),
         data: aylikVeri.map((v) => v.gelir),
-        backgroundColor: '#4caf50',
-        borderRadius: 4
+        backgroundColor: (ctx) => dikeyGradyan(ctx, '#34d399', 'rgba(16, 185, 129, 0.25)'),
+        hoverBackgroundColor: '#6ee7b7',
+        borderRadius: 8,
+        maxBarThickness: 28
       },
       {
         label: t('dashboard.etiketGider'),
         data: aylikVeri.map((v) => v.gider),
-        backgroundColor: '#f44336',
-        borderRadius: 4
+        backgroundColor: (ctx) => dikeyGradyan(ctx, '#fb7185', 'rgba(244, 63, 94, 0.25)'),
+        hoverBackgroundColor: '#fda4af',
+        borderRadius: 8,
+        maxBarThickness: 28
       },
       {
         label: t('dashboard.net'),
         type: 'line',
         data: aylikVeri.map((v) => (v.gelir || 0) - (v.gider || 0)),
-        borderColor: '#8b5cf6',
-        backgroundColor: '#8b5cf6',
+        borderColor: '#a78bfa',
+        backgroundColor: '#a78bfa',
+        borderWidth: 2.5,
         pointRadius: 3,
-        tension: 0.3
+        pointHoverRadius: 5,
+        tension: 0.35
       }
     ]
   }
@@ -1579,19 +1638,22 @@ const whatsappLink = (f) => {
   padding: 0;
 }
 .dashboard-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 16px 20px;
-  border-radius: 16px;
+  padding: 18px 22px;
+  border-radius: 18px;
   background:
-    linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08) 55%, rgba(16, 185, 129, 0.06)),
+    radial-gradient(900px 200px at 0% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(700px 220px at 100% 0%, rgba(139, 92, 246, 0.14), transparent 60%),
     var(--bg-card);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 .dashboard-header h1 {
   margin: 0;
@@ -1701,6 +1763,29 @@ const whatsappLink = (f) => {
   border-radius: 14px;
   overflow: hidden;
 }
+.skeleton-grid :deep(.p-skeleton) {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.12) 25%,
+    rgba(148, 163, 184, 0.24) 37%,
+    rgba(148, 163, 184, 0.12) 63%
+  );
+  background-size: 400% 100%;
+  animation: iskelet-parlama 1.4s ease infinite;
+}
+@keyframes iskelet-parlama {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-grid :deep(.p-skeleton) {
+    animation: none;
+  }
+}
 
 .widget-ayarlari {
   margin-bottom: 24px;
@@ -1719,6 +1804,19 @@ const whatsappLink = (f) => {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-primary);
+}
+.ozet-ikon {
+  margin-right: 8px;
+  color: var(--accent);
+}
+.vade-ikon {
+  margin-right: 8px;
+}
+.vade-ikon-gecen {
+  color: #ef4444;
+}
+.vade-ikon-yaklasan {
+  color: #f59e0b;
 }
 .widget-toggle {
   display: flex;
@@ -1906,6 +2004,7 @@ const whatsappLink = (f) => {
   border-radius: 12px;
   padding: 12px 14px;
   transition: all 0.2s;
+  box-shadow: var(--shadow);
 }
 .mini-stat:hover {
   border-color: rgba(59, 130, 246, 0.3);
@@ -1978,7 +2077,7 @@ const whatsappLink = (f) => {
   padding: 14px 16px;
   border-radius: 12px;
   color: white;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow);
 }
 .bugun-kart i {
   font-size: 22px;
@@ -2021,7 +2120,7 @@ const whatsappLink = (f) => {
   border-radius: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow);
 }
 .cari-ozet-kart i {
   width: 42px;
@@ -2075,7 +2174,7 @@ const whatsappLink = (f) => {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow);
 }
 .hedef-baslik {
   display: flex;
@@ -2152,7 +2251,7 @@ const whatsappLink = (f) => {
   border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 12px;
   padding: 12px 14px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow);
 }
 .ks-kod {
   font-size: 11px;
@@ -2185,9 +2284,73 @@ const whatsappLink = (f) => {
 
 .charts-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
   margin-bottom: 16px;
+}
+.charts-row > :deep(.p-card) {
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(148, 163, 184, 0.05), rgba(148, 163, 184, 0) 55%),
+    var(--bg-card);
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+.charts-row > :deep(.p-card):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.charts-row > :deep(.p-card) .p-card-title {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+.charts-row > :deep(.p-card):nth-child(1) {
+  grid-column: span 4;
+}
+.charts-row > :deep(.p-card):nth-child(2) {
+  grid-column: span 8;
+}
+.charts-row > :deep(.p-card):nth-child(3) {
+  grid-column: span 7;
+}
+.charts-row > :deep(.p-card):nth-child(4) {
+  grid-column: span 5;
+}
+.charts-row > :deep(.p-card):nth-child(5) {
+  grid-column: span 4;
+}
+.charts-row > :deep(.p-card):nth-child(6) {
+  grid-column: span 8;
+}
+.charts-row > :deep(.p-card):nth-child(7) {
+  grid-column: span 4;
+}
+.charts-row > :deep(.p-card):nth-child(8) {
+  grid-column: span 8;
+}
+.charts-row > :deep(.p-card):nth-child(9) {
+  grid-column: span 12;
+}
+.charts-row > :deep(.p-card):nth-child(10) {
+  grid-column: span 6;
+}
+.charts-row > :deep(.p-card):nth-child(11) {
+  grid-column: span 6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .charts-row > :deep(.p-card),
+  .charts-row > :deep(.p-card):hover {
+    transition: none;
+    transform: none;
+  }
 }
 .chart-wrapper {
   width: 100%;
@@ -2229,7 +2392,7 @@ const whatsappLink = (f) => {
   text-align: center;
   margin-top: 12px;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -2237,7 +2400,7 @@ const whatsappLink = (f) => {
 .chart-empty {
   text-align: center;
   padding: 30px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 .dot {
   display: inline-block;
@@ -2283,11 +2446,6 @@ const whatsappLink = (f) => {
 }
 .vade-uyarilari {
   margin-bottom: 24px;
-}
-.vade-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-  gap: 18px;
 }
 .vade-card .p-card-title {
   font-size: 14px !important;
@@ -2375,101 +2533,52 @@ const whatsappLink = (f) => {
 }
 
 .section-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 20px 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 24px 0 14px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   letter-spacing: -0.01em;
 }
 .section-title i {
   color: var(--accent);
-  font-size: 16px;
+  font-size: 15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.14);
+  flex-shrink: 0;
 }
 .section-title::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border);
+  background: linear-gradient(90deg, var(--border), transparent);
   margin-left: 4px;
 }
-.nakit-akisi {
-  margin-bottom: 24px;
-}
-.nakit-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
-  gap: 14px;
-}
-.nakit-kart .p-card-title {
-  font-size: 13px !important;
-}
-.nakit-kart .p-card-content {
-  padding-top: 0 !important;
-}
-.nakit-deger {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-}
-.nakit-alt {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin: 4px 0 0;
-}
-.nakit-toplam {
-  border-color: rgba(245, 158, 11, 0.3) !important;
-}
-.son-goruntulenenler {
-  margin-bottom: 24px;
-}
-.sg-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
-  gap: 10px;
-}
-.sg-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.sg-item:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  transform: translateY(-2px);
-}
-.sg-item i {
-  font-size: 18px;
-}
-.sg-bilgi {
-  flex: 1;
-  min-width: 0;
-}
-.sg-bilgi strong {
-  display: block;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sg-bilgi small {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-@media (max-width: 900px) {
-  .charts-row,
+@media (max-width: 1100px) {
+  .charts-row > :deep(.p-card) {
+    grid-column: span 6 !important;
+  }
+  .charts-row > :deep(.p-card):nth-child(9),
+  .charts-row > :deep(.p-card):nth-child(2),
+  .charts-row > :deep(.p-card):nth-child(3) {
+    grid-column: span 12 !important;
+  }
+}
+@media (max-width: 760px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+  .charts-row > :deep(.p-card) {
+    grid-column: auto !important;
+  }
   .bottom-grid {
     grid-template-columns: 1fr;
   }
@@ -2580,14 +2689,14 @@ const whatsappLink = (f) => {
   flex-wrap: wrap;
   padding: 12px 20px;
   margin-bottom: 20px;
-  background: var(--yellow-50, #fefce8);
-  border: 1px solid var(--yellow-200, #fef08a);
-  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
   font-size: 14px;
-  color: var(--yellow-800, #854d0e);
+  color: var(--text-primary);
 }
 .backup-reminder a {
-  color: var(--blue-600, #2563eb);
+  color: var(--accent);
   font-weight: 600;
 }
 .reminder-close {
@@ -2596,7 +2705,7 @@ const whatsappLink = (f) => {
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: var(--yellow-600);
+  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
