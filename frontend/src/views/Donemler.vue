@@ -145,6 +145,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { donemAPI, sirketAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
+import { getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -206,8 +207,8 @@ const kaydet = async () => {
     const payload = {
       ...form.value,
       sirketId: seciliSirketId.value,
-      baslangic: form.value.baslangic?.toISOString().split('T')[0],
-      bitis: form.value.bitis?.toISOString().split('T')[0]
+      baslangic: getLocalDateString(form.value.baslangic),
+      bitis: getLocalDateString(form.value.bitis)
     }
     if (duzenleme.value) {
       await donemAPI.update(seciliId.value, payload)

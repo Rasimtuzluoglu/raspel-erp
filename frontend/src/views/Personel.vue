@@ -334,6 +334,7 @@ import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useI18n } from 'vue-i18n'
+import { getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -434,8 +435,8 @@ const personelKaydet = async () => {
   try {
     const p = {
       ...personelForm.value,
-      dogumTarihi: personelForm.value.dogumTarihi?.toISOString().split('T')[0],
-      iseGirisTarihi: personelForm.value.iseGirisTarihi?.toISOString().split('T')[0]
+      dogumTarihi: getLocalDateString(personelForm.value.dogumTarihi),
+      iseGirisTarihi: getLocalDateString(personelForm.value.iseGirisTarihi)
     }
     if (duzenleme.value) await personelAPI.update(personelForm.value.id, p)
     else await personelAPI.create(p)
@@ -482,8 +483,8 @@ const izinKaydet = async () => {
     await personelIzinAPI.create({
       personelId: izinPersonelId.value,
       izinTuru: izinForm.value.izinTuru,
-      baslangic: izinForm.value.baslangic?.toISOString().split('T')[0],
-      bitis: izinForm.value.bitis?.toISOString().split('T')[0],
+      baslangic: getLocalDateString(izinForm.value.baslangic),
+      bitis: getLocalDateString(izinForm.value.bitis),
       gunSayisi,
       aciklama: izinForm.value.aciklama
     })

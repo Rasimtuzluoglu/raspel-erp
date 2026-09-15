@@ -295,7 +295,7 @@ import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI } from '../api/index.js'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -355,7 +355,7 @@ const talepDialogAc = () => {
 const talepKaydet = async () => {
   kaydediliyor.value = true
   try {
-    await satinalmaTalepAPI.create({ ...talepForm.value, tarih: talepForm.value.tarih?.toISOString().split('T')[0] })
+    await satinalmaTalepAPI.create({ ...talepForm.value, tarih: getLocalDateString(talepForm.value.tarih) })
     talepDialog.value = false
     await talepleriYukle()
   } catch (err) {
@@ -402,7 +402,7 @@ const siparisKaydet = async () => {
   try {
     await satinalmaSiparisAPI.create({
       ...siparisForm.value,
-      tarih: siparisForm.value.tarih?.toISOString().split('T')[0]
+      tarih: getLocalDateString(siparisForm.value.tarih)
     })
     siparisDialog.value = false
     await siparisleriYukle()

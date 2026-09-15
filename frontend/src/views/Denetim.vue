@@ -326,7 +326,7 @@ const excelIndir = async () => {
     )
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `denetim-log-${new Date().toISOString().split('T')[0]}.xlsx`)
+    link.setAttribute('download', `denetim-log-${getLocalDateString()}.xlsx`)
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -346,11 +346,10 @@ const sayfaDegisti = (e) => {
   yukle(e.page)
 }
 
-import { formatTarihSaat as formatDate } from '../utils/format.js'
+import { formatTarihSaat as formatDate, getLocalDateString } from '../utils/format.js'
 const formatISODate = (d) => {
   if (!d) return null
-  const dt = new Date(d)
-  return dt.toISOString().split('T')[0]
+  return getLocalDateString(d)
 }
 const islemSeverity = (islem) => {
   if (islem === 'SIL') return 'danger'

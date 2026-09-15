@@ -188,8 +188,8 @@ const loadData = async () => {
   if (!seciliPersonelId.value) return
   yukleniyor.value = true
   try {
-    const bas = filtreBaslangic.value?.toISOString().split('T')[0]
-    const bit = filtreBitis.value?.toISOString().split('T')[0]
+    const bas = getLocalDateString(filtreBaslangic.value)
+    const bit = getLocalDateString(filtreBitis.value)
     const r = await puantajAPI.getByPersonel(seciliPersonelId.value, bas, bit)
     list.value = r.data || []
   } catch {
@@ -198,7 +198,7 @@ const loadData = async () => {
   yukleniyor.value = false
 }
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 const dialogAc = (data) => {
   duzenleme.value = !!data
@@ -220,7 +220,7 @@ const kaydet = async () => {
   }
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, tarih: form.value.tarih?.toISOString().split('T')[0] }
+    const payload = { ...form.value, tarih: getLocalDateString(form.value.tarih) }
     if (duzenleme.value) {
       await puantajAPI.update(form.value.id, payload)
       toastBildirim.basarili(t('puantaj.guncellendi'))

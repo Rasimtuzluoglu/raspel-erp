@@ -346,7 +346,8 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
+import { kdvOrani, kalemNetTutar, kalemBrutKdv } from '../utils/faturaHesapla.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -438,13 +439,10 @@ const urunEkle = () => {
 }
 
 const araToplam = computed(() =>
-  satisForm.value.kalemler.reduce((t, k) => t + Number(k.birimFiyat) * Number(k.adet), 0)
+  satisForm.value.kalemler.reduce((t, k) => t + kalemNetTutar(k), 0)
 )
 const kdvToplam = computed(() =>
-  satisForm.value.kalemler.reduce(
-    (t, k) => t + (Number(k.birimFiyat) * Number(k.adet) * (Number(k.kdvOrani) || 20)) / 100,
-    0
-  )
+  satisForm.value.kalemler.reduce((t, k) => t + kalemBrutKdv(k), 0)
 )
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
@@ -475,13 +473,13 @@ const satisiTamamla = async () => {
       cariHesapId: satisForm.value.cariHesapId,
       tur: 'SATIS',
       durum,
-      tarih: satisForm.value.tarih?.toISOString().split('T')[0],
+      tarih: getLocalDateString(satisForm.value.tarih),
       aciklama: satisForm.value.aciklama,
       kalemler: satisForm.value.kalemler.map((k) => ({
         aciklama: k.aciklama,
         adet: k.adet,
         birimFiyat: k.birimFiyat,
-        kdvOrani: k.kdvOrani || 20,
+        kdvOrani: kdvOrani(k),
         stokId: k.stokId
       }))
     }

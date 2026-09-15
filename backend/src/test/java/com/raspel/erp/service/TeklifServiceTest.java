@@ -111,6 +111,60 @@ class TeklifServiceTest {
     }
 
     @Test
+    void shouldKeepKdvOnGrossWhenGeneralDiscountApplied() {
+        when(seriNoServisi.teklifNoUret(1L)).thenReturn("TKL-2026-0002");
+        when(teklifRepository.save(any(Teklif.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        TeklifKalemDTO kDto = TeklifKalemDTO.builder()
+                .aciklama("Ürün")
+                .miktar(BigDecimal.ONE)
+                .birimFiyat(BigDecimal.valueOf(10000))
+                .iskontoOrani(BigDecimal.ZERO)
+                .kdvOrani(BigDecimal.valueOf(20))
+                .build();
+
+        TeklifDTO dto = TeklifDTO.builder()
+                .cariHesapId(1L)
+                .tarih(LocalDate.now())
+                .iskontoOrani(BigDecimal.TEN)
+                .kalemler(List.of(kDto))
+                .build();
+
+        TeklifDTO result = teklifService.olustur(dto, 1L);
+        assertEquals(0, result.getAraToplam().compareTo(BigDecimal.valueOf(10000)));
+        assertEquals(0, result.getKdv().compareTo(BigDecimal.valueOf(2000)));
+        assertEquals(0, result.getIskontoTutari().compareTo(BigDecimal.valueOf(1000)));
+        assertEquals(0, result.getGenelToplam().compareTo(BigDecimal.valueOf(11000)));
+    }
+
+    @Test
+    void shouldKeepKdvOnGrossWhenLineDiscountApplied() {
+        when(seriNoServisi.teklifNoUret(1L)).thenReturn("TKL-2026-0003");
+        when(teklifRepository.save(any(Teklif.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        TeklifKalemDTO kDto = TeklifKalemDTO.builder()
+                .aciklama("Ürün")
+                .miktar(BigDecimal.ONE)
+                .birimFiyat(BigDecimal.valueOf(10000))
+                .iskontoOrani(BigDecimal.TEN)
+                .kdvOrani(BigDecimal.valueOf(20))
+                .build();
+
+        TeklifDTO dto = TeklifDTO.builder()
+                .cariHesapId(1L)
+                .tarih(LocalDate.now())
+                .iskontoOrani(BigDecimal.ZERO)
+                .kalemler(List.of(kDto))
+                .build();
+
+        TeklifDTO result = teklifService.olustur(dto, 1L);
+        // 10.000 brüt, %10 satır iskontosu → net 9.000; KDV yine brütten 2.000; toplam 11.000
+        assertEquals(0, result.getAraToplam().compareTo(BigDecimal.valueOf(9000)));
+        assertEquals(0, result.getKdv().compareTo(BigDecimal.valueOf(2000)));
+        assertEquals(0, result.getGenelToplam().compareTo(BigDecimal.valueOf(11000)));
+    }
+
+    @Test
     void shouldCreateRevision() {
         Teklif eski = createTeklif(1L);
         when(teklifRepository.findById(1L)).thenReturn(Optional.of(eski));

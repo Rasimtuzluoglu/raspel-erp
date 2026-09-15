@@ -585,8 +585,8 @@ import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import FaturaFiyatGecmisi from '../components/FaturaFiyatGecmisi.vue'
 import FaturaSonUrunler from '../components/FaturaSonUrunler.vue'
-import { formatCurrency } from '../utils/format.js'
-import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
+import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -902,7 +902,7 @@ const sonFaturayiKopyala = async () => {
       adet: k.adet || 1,
       birimFiyat: k.birimFiyat || 0,
       iskontoOrani: k.iskontoOrani || 0,
-      kdvOrani: k.kdvOrani || 20,
+      kdvOrani: kdvOrani(k),
       stokId: k.stokId || null
     }))
     if (form.value.kalemler.length === 0) {
@@ -1042,7 +1042,7 @@ const saveFatura = async () => {
   const payload = {
     cariHesapId: form.value.cariHesapId,
     tur: form.value.tur,
-    tarih: form.value.tarih ? form.value.tarih.toISOString().split('T')[0] : null,
+    tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null,
     teslimEden: form.value.teslimEden || null,
     teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
     teslimNotu: form.value.teslimNotu || null,
@@ -1058,7 +1058,7 @@ const saveFatura = async () => {
       adet: k.adet,
       birimFiyat: k.birimFiyat,
       iskontoOrani: k.iskontoOrani || 0,
-      kdvOrani: k.kdvOrani || 0,
+      kdvOrani: kdvOrani(k),
       stokId: k.stokId || null
     }))
   }
@@ -1077,9 +1077,7 @@ const saveFatura = async () => {
             faturaId: yeni.id,
             driverId: form.value.driverId,
             teslimatAdresi: form.value.teslimatAdresi,
-            beklenenTeslimTarihi: form.value.beklenenTeslimTarihi
-              ? form.value.beklenenTeslimTarihi.toISOString().split('T')[0]
-              : null,
+            beklenenTeslimTarihi: form.value.beklenenTeslimTarihi ? getLocalDateString(form.value.beklenenTeslimTarihi) : null,
             notlar: form.value.teslimatNotu || null
           })
         } catch (teslimatHata) {

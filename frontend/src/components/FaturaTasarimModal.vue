@@ -579,7 +579,7 @@
                     v-if="ayarlar.kolonKdvOrani && ayarlar.fiyatGoster"
                     class="text-center"
                   >
-                    %{{ k.kdvOrani || 20 }}
+                    %{{ kdvOrani(k) }}
                   </td>
                   <td
                     v-if="ayarlar.fiyatGoster"
@@ -707,6 +707,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '../stores/authStore.js'
 import { faturaAPI, sirketAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
+import { kdvOrani } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
 
 const props = defineProps({

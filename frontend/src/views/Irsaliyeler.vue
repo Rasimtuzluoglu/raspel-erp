@@ -215,6 +215,7 @@ import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useI18n } from 'vue-i18n'
+import { getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -268,7 +269,7 @@ const kaydet = async () => {
   try {
     await irsaliyeAPI.create({
       ...form.value,
-      tarih: form.value.tarih?.toISOString().split('T')[0],
+      tarih: getLocalDateString(form.value.tarih),
       kalemler: form.value.kalemler.filter((k) => k.stokId && k.miktar > 0)
     })
     dialog.value = false

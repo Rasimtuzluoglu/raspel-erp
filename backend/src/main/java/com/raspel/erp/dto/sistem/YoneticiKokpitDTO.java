@@ -20,7 +20,7 @@ public class YoneticiKokpitDTO {
     // Ciro ve Hedefler
     private BigDecimal gerceklesenCiro;
     private BigDecimal hedefCiro;
-    private Double ciroIlerlemeYuzdesi;
+    private BigDecimal ciroIlerlemeYuzdesi;
     private BigDecimal kalanCiro;
     private BigDecimal gunlukOrtalamaCiro;
 
@@ -29,8 +29,8 @@ public class YoneticiKokpitDTO {
     private BigDecimal toplamMasraflar;
     private BigDecimal gerceklesenKar;
     private BigDecimal hedefKar;
-    private Double karIlerlemeYuzdesi;
-    private Double netKarMarji;
+    private BigDecimal karIlerlemeYuzdesi;
+    private BigDecimal netKarMarji;
 
     // Adet ve Müşteri
     private Integer toplamSatisAdedi;

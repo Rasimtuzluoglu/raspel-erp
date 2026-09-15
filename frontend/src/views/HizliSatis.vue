@@ -831,7 +831,7 @@ import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
-import { formatCurrency, formatDate } from '../utils/format.js'
+import { formatCurrency, formatDate, getLocalDateString } from '../utils/format.js'
 import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
 
 const toast = useToast()
@@ -1041,7 +1041,7 @@ const kasalariYukle = async () => {
 
 const gunlukSatislariYukle = async () => {
   try {
-    const bugun = new Date().toISOString().split('T')[0]
+    const bugun = getLocalDateString()
     const r = await faturaAPI.getAll({ size: 50, sort: 'tarih,desc' })
     const list = r.data?.content || r.data || []
     gunlukSatislar.value = list.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
@@ -1599,7 +1599,7 @@ const satisiTamamla = async () => {
     cariHesapAdi: anlikMusteri.value ? 'Anlik Musteri' : seciliMusteri.value.ad,
     tur: 'SATIS',
     durum: 'KESILDI',
-    tarih: new Date().toISOString().split('T')[0],
+    tarih: getLocalDateString(),
     teslimEden: teslimEden.value || null,
     teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
     teslimNotu: teslimNotu.value || null,

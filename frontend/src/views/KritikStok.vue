@@ -250,6 +250,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { stokAPI, satinalmaTalepAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useI18n } from 'vue-i18n'
+import { getLocalDateString } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const { t } = useI18n()
@@ -285,7 +286,7 @@ const talepOlustur = async (data) => {
     const miktar = data.onerilenSiparisMiktari || 100
     await satinalmaTalepAPI.create({
       talepNo: 'TAL-' + Date.now(),
-      tarih: new Date().toISOString().split('T')[0],
+      tarih: getLocalDateString(),
       talepEden: 'Sistem (AI Tahmin)',
       departman: 'Stok Yönetimi',
       aciklama: `Otomatik talep - ${data.ad} (${data.stokKodu || '-'}): mevcut ${data.mevcutMiktar || data.miktar}, önerilen sipariş: ${miktar} ${data.birim || 'Adet'}. Tedarikçi: ${data.tedarikciAd || 'Belirtilmemiş'}.`
