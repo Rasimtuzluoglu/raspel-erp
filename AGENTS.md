@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**RasPel ERP** is a full-stack enterprise resource planning system. Turkish-language-first; the UI is currently Turkish-only (English translations are incomplete and the language switcher is disabled).
+**RasPel ERP** is a full-stack enterprise resource planning system. Turkish-language-first; Turkish and English are both available (language switcher in the appearance/theme menu). English translations are complete for the core modules; some niche strings may still fall back to Turkish.
 
 ## Quick Commands
 

@@ -56,7 +56,7 @@
 ## Kullanıcı Dostu Özellikler
 
 - **Karanlık/Açık tema** — Sol alttan geçiş
-- **Arayüz dili** — Şu anda yalnızca Türkçe. İngilizce çeviriler henüz tamamlanmadığı için dil seçici devre dışıdır (TR/EN geçişi ileride eklenecek).
+- **Arayüz dili** — Türkçe ve İngilizce. Görünüm (tema) menüsündeki **Dil** bölümünden TR/EN geçişi yapılır; seçim tarayıcıda saklanır ve PrimeVue bileşenleri (takvim, tablo filtreleri) de seçilen dile uyar. Çekirdek modüllerin İngilizce çevirileri tamamlanmıştır.
 - **Sık kullanılan menüler** — Menüdeki yıldız ile favorilere ekleme
 - **Son görüntülenenler** — Dashboard'da son bakılan kayıtlar
 - **Taslak koruma** — Fatura formu yazarken otomatik kaydedilir, sayfa yenilenirse "Taslak Geri Yüklendi"
