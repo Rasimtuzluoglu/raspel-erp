@@ -6,6 +6,9 @@
     <button
       class="theme-toggle-btn"
       :title="`Tema & Renk Ayarları (${isDark ? 'Koyu' : 'Açık'})`"
+      :aria-label="`Tema ve renk ayarları (${isDark ? 'koyu' : 'açık'})`"
+      aria-haspopup="true"
+      :aria-expanded="menuAcik"
       @click="menuAc"
     >
       <i
@@ -69,6 +72,7 @@
               :class="{ active: accentColor === c.value }"
               :style="{ background: c.value }"
               :title="c.name"
+              :aria-label="c.name"
               @click="applyColor(c.value)"
             />
           </div>

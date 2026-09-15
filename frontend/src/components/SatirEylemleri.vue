@@ -8,7 +8,9 @@
       icon="pi pi-ellipsis-v"
       class="p-button-rounded p-button-text"
       title="İşlemler"
+      aria-label="İşlemler"
       aria-haspopup="true"
+      :aria-expanded="acik"
       @click="acToggle"
     />
 
@@ -19,8 +21,11 @@
           v-if="acik"
           ref="menuRef"
           class="eylem-menu"
+          role="menu"
+          aria-label="İşlemler"
           :style="menuStil"
           @click.stop
+          @keydown="menuKeydown"
         >
           <button
             v-if="gorunur.duzenle"
@@ -79,6 +84,33 @@ const menuRef = ref(null)
 const menuStil = ref({})
 const acik = ref(false)
 
+const odaklanIlk = () => {
+  menuRef.value?.querySelector?.('.eylem-item')?.focus?.()
+}
+
+const menuKeydown = (e) => {
+  const ogeler = [...(menuRef.value?.querySelectorAll('.eylem-item') || [])]
+  if (!ogeler.length) return
+  const aktifIdx = ogeler.indexOf(document.activeElement)
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    ogeler[(aktifIdx + 1 + ogeler.length) % ogeler.length].focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    ogeler[(aktifIdx - 1 + ogeler.length) % ogeler.length].focus()
+  } else if (e.key === 'Home') {
+    e.preventDefault()
+    ogeler[0].focus()
+  } else if (e.key === 'End') {
+    e.preventDefault()
+    ogeler[ogeler.length - 1].focus()
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    acik.value = false
+    ;(btnRef.value?.$el || btnRef.value)?.focus?.()
+  }
+}
+
 const acToggle = async () => {
   acik.value = !acik.value
   if (!acik.value) return
@@ -95,6 +127,8 @@ const acToggle = async () => {
     left: `${left}px`,
     top: `${top}px`
   }
+  await nextTick()
+  odaklanIlk()
 }
 
 const calistir = (eylem) => {

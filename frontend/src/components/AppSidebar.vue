@@ -156,6 +156,7 @@
           <button
             class="icon-action-btn logout-icon-btn"
             :title="$t('auth.logout')"
+            :aria-label="$t('auth.logout')"
             @click="cikis"
           >
             <i class="pi pi-sign-out" />
@@ -169,6 +170,8 @@
             class="icon-action-btn"
             :class="{ 'sunum-acik': sunumAktif }"
             :title="sunumAktif ? $t('sunumModu.kapat') : $t('sunumModu.ac')"
+            :aria-label="sunumAktif ? $t('sunumModu.kapat') : $t('sunumModu.ac')"
+            :aria-pressed="sunumAktif"
             @click="sunumDegistir()"
           >
             <i :class="sunumAktif ? 'pi pi-eye-slash' : 'pi pi-eye'" />
@@ -183,6 +186,7 @@
           <button
             class="icon-action-btn"
             title="Sifre Degistir"
+            aria-label="Şifre Değiştir"
             @click="$emit('open-password-modal')"
           >
             <i class="pi pi-lock" />
@@ -190,6 +194,7 @@
           <button
             class="icon-action-btn"
             title="Hesap Makinesi"
+            aria-label="Hesap Makinesi"
             @click="$emit('open-calculator')"
           >
             <i class="pi pi-calculator" />
@@ -197,6 +202,7 @@
           <button
             class="icon-action-btn"
             title="Doviz"
+            aria-label="Döviz Çevirici"
             @click="$emit('open-currency')"
           >
             <i class="pi pi-money-bill" />
@@ -204,6 +210,8 @@
           <button
             class="icon-action-btn"
             title="Araclar"
+            aria-label="Araçlar"
+            :aria-expanded="aracAcik"
             @click="aracAcik = !aracAcik"
           >
             <i class="pi pi-ellipsis-h" />

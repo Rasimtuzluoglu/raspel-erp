@@ -159,6 +159,7 @@
     "favorites": "Favorites",
     "selectedRecords": "{n} record(s) selected",
     "clearSelection": "Clear Selection",
+    "skipToContent": "Skip to content",
     "searchPlaceholder": "Search...",
     "duplicate": "Duplicate",
     "editRow": "Edit",

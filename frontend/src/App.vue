@@ -1,5 +1,9 @@
 <template>
   <div class="app-container">
+    <a
+      href="#main"
+      class="skip-link"
+    >{{ $t('common.skipToContent') }}</a>
     <template v-if="authStore.isLoggedIn">
       <AppSidebar
         @open-search="quickSearchVisible = true"
@@ -16,6 +20,7 @@
     </template>
 
     <main
+      id="main"
       class="main-content"
       :class="{ 'giris-sayfasi': !authStore.isLoggedIn }"
     >
@@ -85,6 +90,7 @@
       @update:visible="quickSearchVisible = $event"
     />
     <PasswordChangeModal
+      v-if="sifreDialog"
       :visible="sifreDialog"
       @update:visible="sifreDialog = $event"
     />
@@ -92,30 +98,37 @@
     <GeriAlToast />
     <KisayolRehberi />
     <HesapMakinesi
+      v-if="hesapMakinesiAcik"
       :visible="hesapMakinesiAcik"
       @update:visible="hesapMakinesiAcik = $event"
     />
     <DovizCevirici
+      v-if="dovizCeviriciAcik"
       :visible="dovizCeviriciAcik"
       @update:visible="dovizCeviriciAcik = $event"
     />
     <KdvHesaplayici
+      v-if="kdvAcik"
       :visible="kdvAcik"
       @update:visible="kdvAcik = $event"
     />
     <TaksitHesaplayici
+      v-if="taksitAcik"
       :visible="taksitAcik"
       @update:visible="taksitAcik = $event"
     />
     <KarMarjiHesaplayici
+      v-if="marjAcik"
       :visible="marjAcik"
       @update:visible="marjAcik = $event"
     />
     <IbanDogrulayici
+      v-if="ibanAcik"
       :visible="ibanAcik"
       @update:visible="ibanAcik = $event"
     />
     <TcKimlikDogrulayici
+      v-if="tcAcik"
       :visible="tcAcik"
       @update:visible="tcAcik = $event"
     />
@@ -162,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
@@ -178,16 +191,18 @@ import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
 import AppBreadcrumb from './components/AppBreadcrumb.vue'
 import MobilAltMenu from './components/MobilAltMenu.vue'
-
-import HesapMakinesi from './components/HesapMakinesi.vue'
-import DovizCevirici from './components/DovizCevirici.vue'
-import KdvHesaplayici from './components/KdvHesaplayici.vue'
-import TaksitHesaplayici from './components/TaksitHesaplayici.vue'
-import KarMarjiHesaplayici from './components/KarMarjiHesaplayici.vue'
-import IbanDogrulayici from './components/IbanDogrulayici.vue'
-import TcKimlikDogrulayici from './components/TcKimlikDogrulayici.vue'
-import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import KisayolRehberi from './components/KisayolRehberi.vue'
+
+// Nadiren kullanilan araclar/modallar: yalnizca acildiklarinda yuklenir
+// (entry chunk kuculur, ilk yukleme hizlanir).
+const HesapMakinesi = defineAsyncComponent(() => import('./components/HesapMakinesi.vue'))
+const DovizCevirici = defineAsyncComponent(() => import('./components/DovizCevirici.vue'))
+const KdvHesaplayici = defineAsyncComponent(() => import('./components/KdvHesaplayici.vue'))
+const TaksitHesaplayici = defineAsyncComponent(() => import('./components/TaksitHesaplayici.vue'))
+const KarMarjiHesaplayici = defineAsyncComponent(() => import('./components/KarMarjiHesaplayici.vue'))
+const IbanDogrulayici = defineAsyncComponent(() => import('./components/IbanDogrulayici.vue'))
+const TcKimlikDogrulayici = defineAsyncComponent(() => import('./components/TcKimlikDogrulayici.vue'))
+const PasswordChangeModal = defineAsyncComponent(() => import('./components/PasswordChangeModal.vue'))
 
 const authStore = useAuthStore()
 const router = useRouter()

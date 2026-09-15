@@ -54,4 +54,12 @@ describe('SatirEylemleri', () => {
     expect(cagrildi).toBe(true)
     expect(wrapper.emitted('eylem')).toBeTruthy()
   })
+
+  it('Escape tusu menuyu kapatir', async () => {
+    const wrapper = kur()
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('.eylem-menu').exists()).toBe(true)
+    await wrapper.find('.eylem-menu').trigger('keydown', { key: 'Escape' })
+    expect(wrapper.find('.eylem-menu').exists()).toBe(false)
+  })
 })

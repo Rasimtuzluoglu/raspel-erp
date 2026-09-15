@@ -166,6 +166,42 @@ img {
   max-width: 100%;
 }
 
+/* ===== Erisilebilirlik ===== */
+/* Klavye odak gorunurlugu (fare tiklamasinda cikmaz) */
+:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* "Icerige atla" baglantisi: yalnizca odaklaninca gorunur */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100000;
+  background: var(--accent, #3b82f6);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 8px 0;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+/* Hareket azaltma tercihi: tum animasyon/gecisleri etkisiz kil */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .app-container {
   display: flex;
   min-height: 100vh;

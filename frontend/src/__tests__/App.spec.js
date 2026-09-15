@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../i18n.js'
 
 describe('App.vue', () => {
   beforeEach(() => {
@@ -34,7 +35,7 @@ describe('App.vue', () => {
     const wrapper = mount(App, {
       global: {
         stubs: commonStubs,
-        plugins: [createPinia(), ToastService]
+        plugins: [createPinia(), ToastService, i18n]
       }
     })
     expect(wrapper.exists()).toBe(true)
@@ -47,7 +48,7 @@ describe('App.vue', () => {
     const wrapper = mount(App, {
       global: {
         stubs: commonStubs,
-        plugins: [createPinia(), ToastService]
+        plugins: [createPinia(), ToastService, i18n]
       }
     })
     expect(wrapper.find('.sidebar').exists()).toBe(false)
