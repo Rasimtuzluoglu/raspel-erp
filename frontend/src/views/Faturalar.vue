@@ -55,41 +55,17 @@
       v-if="!loading"
       class="table-container"
     >
-      <div
-        v-if="selectedItems && selectedItems.length > 0"
-        class="batch-action-bar"
-      >
-        <div class="batch-info">
-          <i class="pi pi-check-square" />
-          <span><strong>{{ selectedItems ? selectedItems.length : 0 }}</strong> {{ t('faturalar.kayitSecildi') }}</span>
-        </div>
-        <div class="batch-buttons">
-          <Button
-            :label="t('faturalar.secilenleriSil')"
-            icon="pi pi-trash"
-            class="p-button-danger p-button-sm"
-            :loading="topluSiliniyor"
-            @click="topluSil()"
-          />
-          <Button
-            :label="t('common.clearSelection')"
-            icon="pi pi-times"
-            class="p-button-text p-button-sm"
-            @click="selectedItems = []"
-          />
-        </div>
-      </div>
-      <DataTable
+      <AppDataTable
         v-model:selection="selectedItems"
         selection-mode="multiple"
         :value="filtrelenmisFaturalar"
-        responsive-layout="scroll"
         striped-rows
         :rows="10"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        gorunum-anahtari="faturalar"
       >
         <Column
           field="faturaNumarasi"
@@ -196,16 +172,27 @@
             </div>
           </template>
         </Column>
-      </DataTable>
-      <EmptyState
-        v-if="filtrelenmisFaturalar && filtrelenmisFaturalar.length === 0"
-        :message="t('faturalar.empty')"
-        :sub-message="t('faturalar.emptyHint')"
-        icon="pi pi-file"
-        :action-label="t('faturalar.emptyAction')"
-        action-icon="pi pi-plus"
-        @action="openCreateDialog"
-      />
+        <template #batch-actions>
+          <Button
+            :label="t('faturalar.secilenleriSil')"
+            icon="pi pi-trash"
+            class="p-button-danger p-button-sm"
+            :loading="topluSiliniyor"
+            @click="topluSil()"
+          />
+        </template>
+        <template #empty>
+          <EmptyState
+            v-if="filtrelenmisFaturalar && filtrelenmisFaturalar.length === 0"
+            :message="t('faturalar.empty')"
+            :sub-message="t('faturalar.emptyHint')"
+            icon="pi pi-file"
+            :action-label="t('faturalar.emptyAction')"
+            action-icon="pi pi-plus"
+            @action="openCreateDialog"
+          />
+        </template>
+      </AppDataTable>
     </div>
 
     <Dialog
@@ -1342,28 +1329,5 @@ h1 {
 }
 .w-full {
   width: 100% !important;
-}
-.batch-action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--blue-50, #eff6ff);
-  border: 1px solid var(--blue-200, #bfdbfe);
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-.batch-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--blue-700, #1d4ed8);
-}
-.batch-buttons {
-  display: flex;
-  gap: 8px;
 }
 </style>

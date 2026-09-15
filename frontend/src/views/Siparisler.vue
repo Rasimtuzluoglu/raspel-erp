@@ -11,10 +11,12 @@
       />
     </div>
 
-    <DataTable
+    <AppDataTable
       :value="siparisler"
       striped-rows
       :loading="yukleniyor"
+      :paginator="false"
+      :empty-message="t('siparisler.empty')"
     >
       <Column
         field="siparisNo"
@@ -91,17 +93,18 @@
           </div>
         </template>
       </Column>
-    </DataTable>
-
-    <EmptyState
-      v-if="!yukleniyor && siparisler.length === 0"
-      :message="t('siparisler.empty')"
-      :sub-message="t('siparisler.emptyHint')"
-      icon="pi pi-shopping-cart"
-      :action-label="t('siparisler.newTeklif')"
-      action-icon="pi pi-plus"
-      @action="dialogAc()"
-    />
+      <template #empty>
+        <EmptyState
+          v-if="!yukleniyor && siparisler.length === 0"
+          :message="t('siparisler.empty')"
+          :sub-message="t('siparisler.emptyHint')"
+          icon="pi pi-shopping-cart"
+          :action-label="t('siparisler.newTeklif')"
+          action-icon="pi pi-plus"
+          @action="dialogAc()"
+        />
+      </template>
+    </AppDataTable>
 
     <Dialog
       v-model:visible="dialog"

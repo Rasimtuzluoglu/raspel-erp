@@ -158,13 +158,14 @@
       </div>
 
       <div class="table-container">
-        <DataTable
+        <AppDataTable
           :value="kasaHareketler"
           striped-rows
           :rows="10"
           :paginator="true"
           paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
           current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+          gorunum-anahtari="kasa-hareketler"
         >
           <Column
             field="tarih"
@@ -225,12 +226,14 @@
               />
             </template>
           </Column>
-        </DataTable>
-        <Message
-          v-if="kasaHareketler && kasaHareketler.length === 0"
-          severity="info"
-          :text="t('kasa.hareketYok')"
-        />
+          <template #empty>
+            <Message
+              v-if="kasaHareketler && kasaHareketler.length === 0"
+              severity="info"
+              :text="t('kasa.hareketYok')"
+            />
+          </template>
+        </AppDataTable>
       </div>
     </div>
 
