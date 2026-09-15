@@ -73,7 +73,7 @@
           sub-message="Bu ürüne ait stok hareketi bulunmamaktadır."
           icon="pi pi-list"
         />
-        <DataTable
+        <AppDataTable
           v-else
           :value="hareketler"
           size="small"
@@ -112,7 +112,7 @@
               {{ s.data.aciklama || '-' }}
             </template>
           </Column>
-        </DataTable>
+        </AppDataTable>
       </TabPanel>
       <TabPanel :header="t('stoklar.analiz.urunAnalizi')">
         <div class="analiz-filtre">
@@ -167,7 +167,7 @@
           <div class="form-section-title">
             {{ t('stoklar.analiz.islemGecmisi') }}
           </div>
-          <DataTable
+          <AppDataTable
             v-if="islemler.length"
             :value="islemler"
             size="small"
@@ -225,7 +225,7 @@
                 {{ formatCurrency(s.data.tutar) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
           <EmptyState
             v-else
             :message="t('stoklar.analiz.veriYok')"
@@ -237,11 +237,12 @@
               <div class="form-section-title">
                 {{ t('stoklar.analiz.musteriBazli') }}
               </div>
-              <DataTable
+              <AppDataTable
                 v-if="musteriler.length"
                 :value="musteriler"
                 size="small"
                 striped-rows
+                :paginator="false"
               >
                 <Column :header="t('stoklar.analiz.cariHesap')">
                   <template #body="s">
@@ -272,7 +273,7 @@
                     {{ s.data.islemSayisi }}
                   </template>
                 </Column>
-              </DataTable>
+              </AppDataTable>
               <EmptyState
                 v-else
                 :message="t('stoklar.analiz.veriYok')"
@@ -283,11 +284,12 @@
               <div class="form-section-title">
                 {{ t('stoklar.analiz.tedarikciBazli') }}
               </div>
-              <DataTable
+              <AppDataTable
                 v-if="tedarikciler.length"
                 :value="tedarikciler"
                 size="small"
                 striped-rows
+                :paginator="false"
               >
                 <Column :header="t('stoklar.analiz.cariHesap')">
                   <template #body="s">
@@ -318,7 +320,7 @@
                     {{ s.data.islemSayisi }}
                   </template>
                 </Column>
-              </DataTable>
+              </AppDataTable>
               <EmptyState
                 v-else
                 :message="t('stoklar.analiz.veriYok')"
@@ -340,11 +342,12 @@
               :options="fiyatSerisiOptions"
             />
           </div>
-          <DataTable
+          <AppDataTable
             v-if="aylik.length"
             :value="aylik"
             size="small"
             striped-rows
+            :paginator="false"
           >
             <Column
               :header="t('stoklar.analiz.ay')"
@@ -386,7 +389,7 @@
                 {{ s.data.toplamSatisMiktar }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
           <EmptyState
             v-else
             :message="t('stoklar.analiz.veriYok')"

@@ -18,30 +18,6 @@
           class="p-button-success"
           @click="openDialog"
         />
-        <div
-          v-if="selectedCariHesaplar && selectedCariHesaplar.length > 0"
-          class="batch-actions"
-        >
-          <span class="batch-count">{{ t('cariHesaplar.nSecili', { n: selectedCariHesaplar ? selectedCariHesaplar.length : 0 }) }}</span>
-          <Button
-            :label="t('cariHesaplar.topluEposta')"
-            icon="pi pi-envelope"
-            class="p-button-sm p-button-info"
-            @click="topluEmailDialog = true"
-          />
-          <Button
-            :label="t('cariHesaplar.topluSil')"
-            icon="pi pi-trash"
-            class="p-button-sm p-button-danger"
-            @click="batchSil"
-          />
-          <Button
-            :label="t('cariHesaplar.csvAktar')"
-            icon="pi pi-download"
-            class="p-button-sm p-button-outlined"
-            @click="batchCsvExport"
-          />
-        </div>
       </template>
       <template #end>
         <TabloAyarlari
@@ -135,12 +111,11 @@
       v-if="!loading"
       class="table-container"
     >
-      <DataTable
+      <AppDataTable
         v-model:selection="selectedCariHesaplar"
         :value="cariHesapStore?.cariHesaplar || []"
         selection-mode="multiple"
         data-key="id"
-        responsive-layout="scroll"
         striped-rows
         :size="tabloYogunluk === 'compact' ? 'small' : 'normal'"
         :lazy="true"
@@ -150,6 +125,7 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        gorunum-anahtari="cari-hesaplar"
         @page="cariSayfaDegisti"
       >
         <Column
@@ -262,17 +238,38 @@
             </div>
           </template>
         </Column>
-      </DataTable>
-
-      <EmptyState
-        v-if="cariHesapStore?.cariHesaplar?.length === 0"
-        :message="t('cariHesaplar.empty')"
-        :sub-message="t('cariHesaplar.emptyHint')"
-        icon="pi pi-users"
-        :action-label="t('cariHesaplar.emptyAction')"
-        action-icon="pi pi-plus"
-        @action="openDialog"
-      />
+        <template #batch-actions>
+          <Button
+            :label="t('cariHesaplar.topluEposta')"
+            icon="pi pi-envelope"
+            class="p-button-sm p-button-info"
+            @click="topluEmailDialog = true"
+          />
+          <Button
+            :label="t('cariHesaplar.topluSil')"
+            icon="pi pi-trash"
+            class="p-button-sm p-button-danger"
+            @click="batchSil"
+          />
+          <Button
+            :label="t('cariHesaplar.csvAktar')"
+            icon="pi pi-download"
+            class="p-button-sm p-button-outlined"
+            @click="batchCsvExport"
+          />
+        </template>
+        <template #empty>
+          <EmptyState
+            v-if="cariHesapStore?.cariHesaplar?.length === 0"
+            :message="t('cariHesaplar.empty')"
+            :sub-message="t('cariHesaplar.emptyHint')"
+            icon="pi pi-users"
+            :action-label="t('cariHesaplar.emptyAction')"
+            action-icon="pi pi-plus"
+            @action="openDialog"
+          />
+        </template>
+      </AppDataTable>
     </div>
 
     <!-- Cari Hesap Dialog -->
@@ -536,10 +533,8 @@
         v-else
         class="table-container"
       >
-        <DataTable
-          v-if="cariHareketler && cariHareketler.length > 0"
+        <AppDataTable
           :value="cariHareketler"
-          responsive-layout="scroll"
           striped-rows
           :rows="10"
           :paginator="true"
@@ -580,13 +575,14 @@
             field="aciklama"
             :header="t('common.description')"
           />
-        </DataTable>
-
-        <EmptyState
-          v-if="cariHareketler && cariHareketler.length === 0"
-          :message="t('cariHesaplar.hareketYok')"
-          icon="pi pi-list"
-        />
+          <template #empty>
+            <EmptyState
+              v-if="cariHareketler && cariHareketler.length === 0"
+              :message="t('cariHesaplar.hareketYok')"
+              icon="pi pi-list"
+            />
+          </template>
+        </AppDataTable>
 
         <div
           v-if="cariFaturalar && cariFaturalar.length > 0"
@@ -600,7 +596,7 @@
               />{{ t('cariHesaplar.gecmisFaturalar', { n: cariFaturalar.length }) }}
             </h4>
           </div>
-          <DataTable
+          <AppDataTable
             :value="cariFaturalar"
             size="small"
             striped-rows
@@ -637,7 +633,7 @@
                 </span>
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </div>
 
         <div class="cari-ozel-fiyatlar">
@@ -887,10 +883,11 @@
         >
           {{ t('cariHesaplar.cari') }}: {{ seciliFatura.cariHesapAd }}
         </div>
-        <DataTable
+        <AppDataTable
           :value="seciliFatura.kalemler || []"
           size="small"
           striped-rows
+          :paginator="false"
         >
           <Column :header="t('common.description')">
             <template #body="{ data }">
@@ -912,7 +909,7 @@
               {{ formatCurrency(data.tutar) }}
             </template>
           </Column>
-        </DataTable>
+        </AppDataTable>
         <div class="fatura-detay-ozet">
           <div class="ozet-satir">
             <span>{{ t('cariHesaplar.araToplam') }}</span><span>{{ formatCurrency(seciliFatura.araToplam) }}</span>
@@ -1970,19 +1967,6 @@ h3 {
   width: 100% !important;
 }
 
-.batch-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 12px;
-  padding-left: 12px;
-  border-left: 1px solid var(--border);
-}
-.batch-count {
-  font-size: 12px;
-  color: #60a5fa;
-  font-weight: 600;
-}
 .kopyalanabilir {
   cursor: pointer;
   display: inline-flex;

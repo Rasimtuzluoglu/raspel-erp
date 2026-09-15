@@ -55,9 +55,9 @@
 
       <TabView>
         <TabPanel :header="t('cariKart.ozet')">
-          <DataTable
+          <AppDataTable
             :value="ozetSatirlari"
-            responsive-layout="scroll"
+            :paginator="false"
           >
             <Column
               field="etiket"
@@ -67,13 +67,13 @@
               field="deger"
               :header="t('cariKart.deger')"
             />
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.faturalar')">
-          <DataTable
+          <AppDataTable
             :value="kart.sonFaturalar"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -108,13 +108,13 @@
                 {{ formatCurrency(data.kalanTutar) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.siparisler')">
-          <DataTable
+          <AppDataTable
             :value="kart.sonSiparisler"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -141,13 +141,13 @@
                 {{ formatCurrency(data.genelToplam) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.iadeler')">
-          <DataTable
+          <AppDataTable
             :value="kart.sonIadeler"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -174,13 +174,13 @@
                 {{ formatCurrency(data.tutar) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.firsatlar')">
-          <DataTable
+          <AppDataTable
             :value="kart.firsatlar"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -211,13 +211,13 @@
                 {{ formatDate(data.tahminiKapanis) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.notlar')">
-          <DataTable
+          <AppDataTable
             :value="kart.notlar"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -236,13 +236,13 @@
                 {{ formatDateTime(data.olusturmaTarihi) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.ozelFiyatlar')">
-          <DataTable
+          <AppDataTable
             :value="kart.ozelFiyatlar"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -261,13 +261,13 @@
                 {{ formatCurrency(data.fiyat) }}
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
 
         <TabPanel :header="t('cariKart.taksitler')">
-          <DataTable
+          <AppDataTable
             :value="kart.taksitler"
-            responsive-layout="scroll"
+            :paginator="false"
             :empty-message="t('cariKart.kayitYok')"
           >
             <Column
@@ -309,7 +309,7 @@
                 />
               </template>
             </Column>
-          </DataTable>
+          </AppDataTable>
         </TabPanel>
       </TabView>
     </div>

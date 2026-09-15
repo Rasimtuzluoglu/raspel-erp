@@ -37,6 +37,7 @@ const stubs = {
   TabPanel: { template: '<div class="tabpanel"><slot /></div>' },
   DatePicker: { template: '<div class="datepicker"><slot /></div>' },
   DataTable: DataTableStub,
+  AppDataTable: DataTableStub,
   Column: { template: '<div class="column"><slot /></div>' },
   EmptyState: {
     props: ['message'],
