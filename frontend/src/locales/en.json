@@ -3046,7 +3046,20 @@
     "durumBeklemede": "Pending",
     "durumYolda": "On the way",
     "durumTeslimEdildi": "Delivered",
-    "hataSoforYukleme": "Could not load drivers"
+    "hataSoforYukleme": "Could not load drivers",
+    "nasilCalisir": "How it works?",
+    "nasil1Baslik": "1) Delivery is created from an invoice",
+    "nasil1Metin": "If you select a driver and delivery address while creating a sales invoice, a delivery record is created automatically.",
+    "nasil2Baslik": "2) Can also be created from an order",
+    "nasil2Metin": "When you assign a driver to an order, the related delivery is created or updated automatically.",
+    "nasil3Baslik": "3) The driver updates the status",
+    "nasil3Metin": "Pending → On the way → Delivered. A photo can be attached on delivery.",
+    "nasil4Baslik": "4) Delay notification",
+    "nasil4Metin": "For deliveries past their expected date, an in-app notification is generated every morning.",
+    "gecmis": "Status History",
+    "gecmisYok": "No history records",
+    "siparisEtiketi": "Order",
+    "hizliIslem": "Quick Action"
   },
   "topluStok": {
     "title": "Bulk Stock Operations",

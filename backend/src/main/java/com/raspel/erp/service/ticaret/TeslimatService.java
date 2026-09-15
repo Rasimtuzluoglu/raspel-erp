@@ -177,6 +177,28 @@ public class TeslimatService {
         teslimatRepository.save(t);
     }
 
+    /**
+     * Sipariş teslim edildi olarak işaretlenince, o siparişe bağlı teslimatı da
+     * TESLIM_EDILDI yapar (idempotent). Durum logu da yazılır.
+     */
+    @Transactional
+    public void siparisTeslimEdildi(Long siparisId, Long sirketId) {
+        List<Teslimat> mevcut = teslimatRepository.findBySirketIdAndSiparisId(sirketId, siparisId);
+        if (mevcut.isEmpty()) return;
+        Teslimat t = mevcut.get(0);
+        if (Teslimat.Durum.TESLIM_EDILDI.name().equals(t.getDurum())) return;
+        String oncekiDurum = t.getDurum();
+        t.setDurum(Teslimat.Durum.TESLIM_EDILDI.name());
+        t.setTeslimTarihi(LocalDateTime.now());
+        teslimatRepository.save(t);
+        durumLogRepository.save(TeslimatDurumLog.builder()
+                .teslimatId(t.getId())
+                .oncekiDurum(oncekiDurum)
+                .yeniDurum(Teslimat.Durum.TESLIM_EDILDI.name())
+                .kullaniciId(null)
+                .build());
+    }
+
     @Transactional
     public TeslimatDTO fotoYukle(Long id, MultipartFile file, Long sirketId, Long kullaniciId) {
         Teslimat t = teslimatRepository.findById(id)

@@ -63,6 +63,7 @@
       </router-link>
 
       <router-link
+        v-if="!authStore.isDriver"
         to="/"
         :class="{ active: $route.path === '/' }"
         :title="$t('nav.dashboard')"
@@ -461,6 +462,11 @@ const gorunenMenuler = computed(() => {
   return tumMenuler.filter((m) => {
     if (m.path === '/') return false
     
+    if (authStore.isDriver) {
+      const driverErisilebilir = ['/teslimatlar', '/hesap-ayarlari']
+      if (!driverErisilebilir.includes(m.path)) return false
+    }
+
     if (authStore.isSaha) {
       const sahaErisilebilir = [
         '/saha-portali',

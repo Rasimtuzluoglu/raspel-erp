@@ -344,6 +344,9 @@ export const teslimatAPI = {
     const form = new FormData()
     form.append('file', file)
     return apiClient.post(`/deliveries/${id}/foto`, form)
+  },
+  gecmis(id) {
+    return apiClient.get(`/deliveries/${id}/gecmis`)
   }
 }
 

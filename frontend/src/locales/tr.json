@@ -3046,7 +3046,20 @@
     "durumBeklemede": "Beklemede",
     "durumYolda": "Yolda",
     "durumTeslimEdildi": "Teslim Edildi",
-    "hataSoforYukleme": "Şoförler yüklenemedi"
+    "hataSoforYukleme": "Şoförler yüklenemedi",
+    "nasilCalisir": "Nasıl çalışır?",
+    "nasil1Baslik": "1) Teslimat faturadan doğar",
+    "nasil1Metin": "Satış faturası oluştururken şoför ve teslimat adresi seçerseniz teslimat kaydı otomatik açılır.",
+    "nasil2Baslik": "2) Siparişten de açılabilir",
+    "nasil2Metin": "Siparişe şoför atadığınızda ilgili teslimat otomatik oluşturulur veya güncellenir.",
+    "nasil3Baslik": "3) Şoför durumu günceller",
+    "nasil3Metin": "Beklemede → Yolda → Teslim Edildi. Teslimde fotoğraf eklenebilir.",
+    "nasil4Baslik": "4) Gecikme bildirimi",
+    "nasil4Metin": "Beklenen tarihi geçen teslimatlar için her sabah uygulama içi bildirim üretilir.",
+    "gecmis": "Durum Geçmişi",
+    "gecmisYok": "Geçmiş kaydı yok",
+    "siparisEtiketi": "Sipariş",
+    "hizliIslem": "Hızlı İşlem"
   },
   "topluStok": {
     "title": "Toplu Stok İşlemleri",

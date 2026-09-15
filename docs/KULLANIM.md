@@ -13,6 +13,7 @@
 - **Hızlı Satış (POS)** — Barkod/ürün arama, sepet, indirim, ödeme. **Termal fiş yazdırma** (fiyatlı/fiyatsız önizleme + yazdır). Kısayollar: `Ctrl+S` satışı tamamla, `F2` sepeti temizle, `Ctrl+P` fiş.
 - **Satış / Satın Alma / Sipariş** — Sipariş akışı, otomatik sipariş no (`SIP-2026-000001`).
 - **İrsaliye / İade / Fiyat Listesi** — Sevk ve iade süreçleri.
+- **Teslimatlar** — Teslimat kaydı **Satış faturası** oluştururken şoför + teslimat adresi girilince otomatik açılır; **Sipariş**'e şoför atandığında da ilgili teslimat otomatik oluşturulur/güncellenir. Şoför (DRIVER rolü) kendi teslimatlarını görür ve durumu **Beklemede → Yolda → Teslim Edildi** olarak günceller; teslimde **fotoğraf** eklenebilir. Teslimatlar sayfasında şoför seçimi, Tümü/Bugün/Geciken filtresi, yol tarifi ve **durum geçmişi** bulunur. Beklenen tarihi geçen teslimatlar için her sabah **gecikme bildirimi** üretilir. Durum değişiklikleri loglanır; sipariş "Teslim Edildi" yapıldığında bağlı teslimat da otomatik teslim edildi olur.
 
 ### Envanter
 - **Stoklar** — Ürün yönetimi, kritik stok uyarıları, tablo/kart görünümü, toplu fiyat güncelleme, CSV aktarım.

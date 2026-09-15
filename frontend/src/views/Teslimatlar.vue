@@ -15,6 +15,39 @@
       />
     </div>
 
+    <div class="nasil-kart">
+      <button
+        type="button"
+        class="nasil-baslik"
+        @click="rehberAcik = !rehberAcik"
+      >
+        <i class="pi pi-question-circle" />
+        <span>{{ t('teslimatlar.nasilCalisir') }}</span>
+        <i :class="rehberAcik ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+      </button>
+      <div
+        v-if="rehberAcik"
+        class="nasil-icerik"
+      >
+        <div class="nasil-adim">
+          <strong>{{ t('teslimatlar.nasil1Baslik') }}</strong>
+          <span>{{ t('teslimatlar.nasil1Metin') }}</span>
+        </div>
+        <div class="nasil-adim">
+          <strong>{{ t('teslimatlar.nasil2Baslik') }}</strong>
+          <span>{{ t('teslimatlar.nasil2Metin') }}</span>
+        </div>
+        <div class="nasil-adim">
+          <strong>{{ t('teslimatlar.nasil3Baslik') }}</strong>
+          <span>{{ t('teslimatlar.nasil3Metin') }}</span>
+        </div>
+        <div class="nasil-adim">
+          <strong>{{ t('teslimatlar.nasil4Baslik') }}</strong>
+          <span>{{ t('teslimatlar.nasil4Metin') }}</span>
+        </div>
+      </div>
+    </div>
+
     <div class="teslimat-duzen">
       <!-- Şoför Listesi -->
       <div class="surucu-listesi">
@@ -149,6 +182,39 @@
             >
               <i class="pi pi-comment" /> {{ teslim.notlar }}
             </div>
+            <div
+              v-if="teslim.siparisId"
+              class="beklenen"
+            >
+              <i class="pi pi-receipt" /> {{ t('teslimatlar.siparisEtiketi') }} #{{ teslim.siparisId }}
+            </div>
+            <button
+              type="button"
+              class="gecmis-toggle"
+              @click="gecmisToggle(teslim)"
+            >
+              <i class="pi pi-history" /> {{ t('teslimatlar.gecmis') }}
+            </button>
+            <div
+              v-if="gecmisAcik[teslim.id]"
+              class="gecmis-liste"
+            >
+              <div
+                v-if="!(gecmisler[teslim.id] || []).length"
+                class="gecmis-bos"
+              >
+                {{ t('teslimatlar.gecmisYok') }}
+              </div>
+              <div
+                v-for="(g, i) in gecmisler[teslim.id]"
+                :key="i"
+                class="gecmis-satir"
+              >
+                <span class="g-nokta" />
+                <span class="g-durum">{{ durumAdi(g.yeniDurum) }}</span>
+                <span class="g-tarih">{{ formatTarih(g.olusturmaTarihi) }}</span>
+              </div>
+            </div>
             <div class="teslimat-aksiyonlar">
               <div class="foto-alan">
                 <img
@@ -183,6 +249,24 @@
                 class="durum-dropdown"
                 @update:model-value="(d) => durumGuncelle(teslim, d)"
               />
+              <div class="hizli-durum">
+                <button
+                  v-if="teslim.durum !== 'YOLDA' && teslim.durum !== 'TESLIM_EDILDI'"
+                  type="button"
+                  class="durum-btn yolda"
+                  @click="durumGuncelle(teslim, 'YOLDA')"
+                >
+                  <i class="pi pi-truck" /> {{ t('teslimatlar.durumYolda') }}
+                </button>
+                <button
+                  v-if="teslim.durum !== 'TESLIM_EDILDI'"
+                  type="button"
+                  class="durum-btn teslim"
+                  @click="durumGuncelle(teslim, 'TESLIM_EDILDI')"
+                >
+                  <i class="pi pi-check" /> {{ t('teslimatlar.durumTeslimEdildi') }}
+                </button>
+              </div>
             </div>
           </div>
         </template>
@@ -207,6 +291,24 @@ const seciliSurucu = ref(null)
 const yukleniyor = ref(false)
 const teslimatYukleniyor = ref(false)
 const filtre = ref('TUMU')
+const rehberAcik = ref(false)
+const gecmisAcik = ref({})
+const gecmisler = ref({})
+
+const gecmisYukle = async (teslim) => {
+  try {
+    const r = await teslimatAPI.gecmis(teslim.id)
+    gecmisler.value = { ...gecmisler.value, [teslim.id]: r.data || [] }
+  } catch {
+    gecmisler.value = { ...gecmisler.value, [teslim.id]: [] }
+  }
+}
+
+const gecmisToggle = async (teslim) => {
+  const acik = !gecmisAcik.value[teslim.id]
+  gecmisAcik.value = { ...gecmisAcik.value, [teslim.id]: acik }
+  if (acik && !gecmisler.value[teslim.id]) await gecmisYukle(teslim)
+}
 
 const bugunStr = () => {
   const bugun = new Date()
@@ -562,6 +664,121 @@ onMounted(() => {
   margin-bottom: 12px;
   color: var(--text-muted);
 }
+.nasil-kart {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.nasil-baslik {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.nasil-baslik i:last-child {
+  margin-left: auto;
+}
+.nasil-icerik {
+  padding: 0 16px 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.nasil-adim {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.nasil-adim strong {
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+.gecmis-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gecmis-toggle:hover {
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
+}
+.gecmis-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 0;
+}
+.gecmis-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.g-nokta {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #3b82f6);
+  flex-shrink: 0;
+}
+.g-durum {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.g-tarih {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+.gecmis-bos {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.hizli-durum {
+  display: flex;
+  gap: 8px;
+}
+.durum-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+.durum-btn.yolda {
+  background: #3b82f6;
+}
+.durum-btn.teslim {
+  background: #10b981;
+}
+.durum-btn:hover {
+  filter: brightness(1.08);
+}
 @media (max-width: 900px) {
   .teslimat-duzen {
     flex-direction: column;
@@ -575,6 +792,15 @@ onMounted(() => {
     width: auto;
     flex: 1;
     min-width: 140px;
+  }
+  .hizli-durum {
+    width: 100%;
+  }
+  .durum-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 12px;
+    font-size: 14px;
   }
 }
 </style>

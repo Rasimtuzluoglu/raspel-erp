@@ -201,6 +201,13 @@ public class SiparisService {
 
         s.setDurum(durum);
         SiparisDTO sonuc = entityToDTO(siparisRepository.save(s));
+        if ("TESLIM_EDILDI".equals(durum)) {
+            try {
+                teslimatService.siparisTeslimEdildi(s.getId(), s.getSirketId());
+            } catch (Exception e) {
+                log.warn("Sipariş teslimatı güncellenemedi ({}): {}", s.getSiparisNo(), e.getMessage());
+            }
+        }
         try {
             if (s.getCariHesapId() != null) {
                 cariHesapRepository.findById(s.getCariHesapId())
