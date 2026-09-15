@@ -231,6 +231,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { auditLogAPI, excelAPI } from '../api/index.js'
@@ -296,7 +297,7 @@ const yukle = async (page = 0) => {
       params.bitisTarih = formatISODate(filtre.value.tarihAraligi[1])
     }
     const r = await auditLogAPI.getAll(params)
-    logs.value = r.data?.content || r.data || []
+    logs.value = unwrapList(r)
     toplamKayit.value = r.data?.totalElements || logs.value.length
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('denetim.hataYukleme'))

@@ -351,6 +351,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { sirketAPI, uploadAPI } from '../api/index.js'
@@ -407,7 +408,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const r = await sirketAPI.getAll()
-    sirketler.value = r.data?.content || r.data || []
+    sirketler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('sirketler.yuklemeHatasi'))
   }
@@ -486,7 +487,7 @@ const kaydetAction = async () => {
     }
     dialog.value = false
     const r = await sirketAPI.getAll()
-    sirketler.value = r.data?.content || r.data || []
+    sirketler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err.response?.data?.message || t('sirketler.islemBasarisiz'))
   }

@@ -474,6 +474,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
@@ -517,7 +518,7 @@ onMounted(async () => {
   await Promise.all([kasaStore.getAllKasalar(), kategoriStore.getAllKategoriler()])
   try {
     const r = await bankaAPI.getAll({ size: 500 })
-    bankalar.value = r.data?.content || r.data || []
+    bankalar.value = unwrapList(r)
   } catch {
     bankalar.value = []
   }
@@ -676,7 +677,7 @@ const gunSonuAc = async () => {
   try {
     const bugun = getLocalDateString()
     const r = await faturaAPI.getAll({ size: 200, sort: 'tarih,desc' })
-    const faturalar = r.data?.content || r.data || []
+    const faturalar = unwrapList(r)
     const bugunSatislar = faturalar.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
     const toplamSatis = bugunSatislar.reduce((t, f) => t + (f.genelToplam || 0), 0)
     const nakitSatis = bugunSatislar.filter((f) => f.odemeYontemi === 'NAKIT').reduce((t, f) => t + (f.odenenTutar || 0), 0)

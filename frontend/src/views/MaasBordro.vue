@@ -169,6 +169,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -203,7 +204,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [mR, pR] = await Promise.all([maasBordroAPI.getAll(), personelAPI.getAll()])
-    list.value = mR.data?.content || mR.data || []
+    list.value = unwrapList(mR)
     personelListesi.value = pR.data.map((p) => ({
       ...p,
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
@@ -247,7 +248,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await maasBordroAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
   }

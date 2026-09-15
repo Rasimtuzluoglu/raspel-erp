@@ -269,6 +269,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -298,7 +299,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const r = await projeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (e) {
     hataGoster(e)
   }
@@ -319,7 +320,7 @@ const kaydet = async () => {
     })
     dialog.value = false
     const r = await projeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
     toastBildirim.basarili(t('projeler.olusturuldu'))
   } catch (e) {
     hataGoster(e)
@@ -330,7 +331,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await projeAPI.durumGuncelle(data.id, durum)
     const r = await projeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
     toastBildirim.basarili(t('projeler.durumGuncellendi'))
   } catch (e) {
     hataGoster(e)
@@ -372,7 +373,7 @@ const gorevKaydet = async () => {
     await projeAPI.gorevEkle(seciliProje.value.id, g)
     gorevDialog.value = false
     const r = await projeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
     toastBildirim.basarili(t('projeler.gorevEklendi'))
   } catch (e) {
     hataGoster(e)
@@ -383,7 +384,7 @@ const gorevTamamla = async (g) => {
   try {
     await projeAPI.gorevDurumGuncelle(g.id, 'TAMAMLANDI')
     const r = await projeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
     toastBildirim.basarili(t('projeler.gorevTamamlandi'))
   } catch (e) {
     hataGoster(e)

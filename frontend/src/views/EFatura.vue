@@ -172,6 +172,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { eFaturaAPI, faturaAPI } from '../api/index.js'
@@ -204,7 +205,7 @@ const yukle = async () => {
   yukleniyor.value = true
   try {
     const r = await eFaturaAPI.getTumu()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('efatura.hataYukleme'))
   }
@@ -214,7 +215,7 @@ const yukle = async () => {
 const faturalariYukle = async () => {
   try {
     const r = await faturaAPI.getAll()
-    const data = r.data?.content || r.data || []
+    const data = unwrapList(r)
     faturalar.value = data.map((f) => ({
       ...f,
       etiket: `${f.faturaNumarasi} - ${f.cariHesapAd || ''} (${formatCurrency(f.genelToplam)})`

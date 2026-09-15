@@ -209,6 +209,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI } from '../api/index.js'
@@ -239,10 +240,10 @@ onMounted(async () => {
       stokAPI.getAll({ size: 500 }),
       siparisAPI.getAll({ size: 500 })
     ])
-    list.value = r.data?.content || r.data || []
-    cariler.value = c.data?.content || c.data || []
-    stoklar.value = s.data?.content || s.data || []
-    siparisler.value = sp.data?.content || sp.data || []
+    list.value = unwrapList(r)
+    cariler.value = unwrapList(c)
+    stoklar.value = unwrapList(s)
+    siparisler.value = unwrapList(sp)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataYukleme'))
   }
@@ -274,7 +275,7 @@ const kaydet = async () => {
     })
     dialog.value = false
     const r = await irsaliyeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataKaydet'))
   }
@@ -284,7 +285,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await irsaliyeAPI.durumGuncelle(data.id, durum)
     const r = await irsaliyeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataDurum'))
   }

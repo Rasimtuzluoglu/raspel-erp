@@ -339,6 +339,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -400,7 +401,7 @@ onMounted(async () => {
   churnYukle()
   try {
     const r = await cariHesapAPI.getAll()
-    cariler.value = r.data?.content || r.data || []
+    cariler.value = unwrapList(r)
   } catch {
     /* empty */
   }

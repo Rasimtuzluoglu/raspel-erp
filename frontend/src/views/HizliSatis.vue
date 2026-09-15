@@ -818,6 +818,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -831,7 +832,7 @@ import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
-import { formatCurrency, formatDate, getLocalDateString } from '../utils/format.js'
+import { formatCurrency, formatDate, formatDateTime, getLocalDateString } from '../utils/format.js'
 import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
 
 const toast = useToast()
@@ -1030,7 +1031,7 @@ const sonSatis = ref(null)
 const kasalariYukle = async () => {
   try {
     const r = await kasaAPI.getAllKasalar()
-    kasalar.value = r.data?.content || r.data || []
+    kasalar.value = unwrapList(r)
     if (kasalar.value.length > 0 && !seciliKasa.value) {
       seciliKasa.value = kasalar.value[0].id
     }
@@ -1043,7 +1044,7 @@ const gunlukSatislariYukle = async () => {
   try {
     const bugun = getLocalDateString()
     const r = await faturaAPI.getAll({ size: 50, sort: 'tarih,desc' })
-    const list = r.data?.content || r.data || []
+    const list = unwrapList(r)
     gunlukSatislar.value = list.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
   } catch {
     gunlukSatislar.value = []
@@ -1242,10 +1243,7 @@ const kritikStokMu = (u) => {
   return u.miktar <= 10
 }
 
-const simdikiTarih = computed(() => {
-  const d = new Date()
-  return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-})
+const simdikiTarih = computed(() => formatDateTime(new Date()))
 
 
 onMounted(async () => {
@@ -1280,7 +1278,7 @@ const teslimDurumSecenekleri = computed(() => [
 const personelListesiniYukle = async () => {
   try {
     const r = await personelAPI.getAll({ size: 500 })
-    personelListesi.value = r.data?.content || r.data || []
+    personelListesi.value = unwrapList(r)
   } catch {
     personelListesi.value = []
   }

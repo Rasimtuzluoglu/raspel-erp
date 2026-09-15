@@ -199,6 +199,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { tahsilatAPI, bankaAPI, posAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
@@ -289,7 +290,7 @@ watch(
       if (!kurumlar.value.length) {
         try {
           const r = await bankaAPI.getAll()
-          kurumlar.value = (r.data?.content || r.data || []).map((b) => ({
+          kurumlar.value = (unwrapList(r)).map((b) => ({
             ad: b.ad || b.adi || b.bankaAdi || String(b.id)
           }))
         } catch {

@@ -168,6 +168,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { posAPI, bankaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useI18n } from 'vue-i18n'
@@ -206,7 +207,7 @@ const yukle = async () => {
 const bankalariYukle = async () => {
   try {
     const r = await bankaAPI.getAll()
-    bankalar.value = r.data?.content || r.data || []
+    bankalar.value = unwrapList(r)
   } catch {
     bankalar.value = []
   }

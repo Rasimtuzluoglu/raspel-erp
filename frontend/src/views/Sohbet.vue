@@ -436,6 +436,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { sohbetAPI, sohbetOdaAPI, aiConfigAPI, kullaniciAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -712,7 +713,7 @@ const odalariYukle = async () => {
 const kullanicilariYukle = async () => {
   try {
     const r = await kullaniciAPI.getAll()
-    const tumu = r.data?.content || r.data || []
+    const tumu = unwrapList(r)
     kullanicilar.value = tumu.filter((k) => k.sirketId === authStore.sirketId)
   } catch {
     kullanicilar.value = []

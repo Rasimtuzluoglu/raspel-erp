@@ -244,6 +244,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
@@ -265,7 +266,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [sR, cR] = await Promise.all([siparisAPI.getAll(), cariHesapAPI.getAll()])
-    siparisler.value = sR.data?.content || sR.data || []
+    siparisler.value = unwrapList(sR)
     cariler.value = cR.data
     personelleriYukle()
     suruculeriYukle()
@@ -307,7 +308,7 @@ const soforAta = async (siparis, driverId) => {
 const personelleriYukle = async () => {
   try {
     const r = await personelAPI.getAll({ size: 500 })
-    const list = r.data?.content || r.data || []
+    const list = unwrapList(r)
     personeller.value = list.map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: p.id }))
   } catch {
     personeller.value = []
@@ -348,7 +349,7 @@ const kaydet = async () => {
     await siparisAPI.create({ ...form.value, tarih: getLocalDateString(form.value.tarih) })
     dialog.value = false
     const r = await siparisAPI.getAll()
-    siparisler.value = r.data?.content || r.data || []
+    siparisler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataKaydet'))
   }
@@ -359,7 +360,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await siparisAPI.durumGuncelle(data.id, durum)
     const r = await siparisAPI.getAll()
-    siparisler.value = r.data?.content || r.data || []
+    siparisler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataDurum'))
   }

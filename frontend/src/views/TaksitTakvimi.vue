@@ -258,6 +258,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -391,7 +392,7 @@ const planDialogAc = async () => {
   if (!cariler.value.length) {
     try {
       const r = await cariHesapAPI.getAll({ size: 500 })
-      cariler.value = r.data?.content || r.data || []
+      cariler.value = unwrapList(r)
     } catch (err) {
       toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
     }

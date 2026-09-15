@@ -209,6 +209,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -243,7 +244,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [sR, stR] = await Promise.all([stokSayimAPI.getAll(), stokAPI.getAll()])
-    list.value = sR.data?.content || sR.data || []
+    list.value = unwrapList(sR)
     stokListesi.value = stR.data.content || stR.data
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokSayim.hataYukleme'))
@@ -259,7 +260,7 @@ const barkodOkundu = async (kod) => {
     if (sonTaramalar.value.length > 6) sonTaramalar.value.length = 6
     toastBildirim.basarili(t('stokSayim.tarananEklendi', { stok: sayim.stokAdi || kod, adet: taramaAdet.value, toplam: sayim.sayilanMiktar }))
     const r = await stokSayimAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokSayim.barkodBulunamadi'))
   }
@@ -296,7 +297,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await stokSayimAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokSayim.islemBasarisiz'))
   }
@@ -307,7 +308,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await stokSayimAPI.durumGuncelle(data.id, durum)
     const r = await stokSayimAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
     toastBildirim.basarili(t('stokSayim.durumGuncellendi', { durum }))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokSayim.durumHata'))

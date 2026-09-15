@@ -319,6 +319,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { tahsilatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
@@ -359,7 +360,7 @@ const gecmisYukle = async () => {
   gecmisYukleniyor.value = true
   try {
     const r = await tahsilatAPI.gecmis({ size: 50 })
-    gecmis.value = r.data?.content || r.data || []
+    gecmis.value = unwrapList(r)
   } catch {
     gecmis.value = []
   } finally {

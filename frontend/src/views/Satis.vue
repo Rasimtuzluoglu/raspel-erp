@@ -339,6 +339,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -381,7 +382,7 @@ onMounted(async () => {
 const satislariYukle = async () => {
   try {
     const r = await faturaAPI.getAll()
-    satislar.value = (r.data?.content || r.data || []).filter((f) => f.tur === 'SATIS')
+    satislar.value = (unwrapList(r)).filter((f) => f.tur === 'SATIS')
   } catch {
     toastBildirim.hata(t('satis.satislarYuklenemedi'))
   }

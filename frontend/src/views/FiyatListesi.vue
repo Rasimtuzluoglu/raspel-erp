@@ -151,6 +151,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -185,7 +186,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [fR, sR] = await Promise.all([fiyatListesiAPI.getAll(), stokAPI.getAll()])
-    list.value = fR.data?.content || fR.data || []
+    list.value = unwrapList(fR)
     stokListesi.value = sR.data.content || sR.data
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('fiyatListesi.hataYukleme'))
@@ -231,7 +232,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await fiyatListesiAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('fiyatListesi.islemBasarisiz'))
   }

@@ -1,91 +1,30 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { createCrudStore } from './createCrudStore.js'
 import { faturaAPI } from '../api/index.js'
 
-export const useFaturaStore = defineStore('fatura', () => {
-  const faturalar = ref([])
-  const loading = ref(false)
-  const error = ref(null)
-
-  const getAllFaturalar = async (search) => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await faturaAPI.getAll(search ? { search } : undefined)
-      faturalar.value = response.data?.content || response.data || []
-      return faturalar.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
+export const useFaturaStore = createCrudStore('fatura', faturaAPI, {
+  stateKey: 'faturalar',
+  addPosition: 'unshift',
+  actions: { getAll: 'getAllFaturalar', add: 'addFatura', update: 'updateFatura', remove: 'deleteFatura' },
+  extraActions: ({ liste, error, api }) => ({
+    getFaturaById: async (id) => {
+      try {
+        const r = await api.getById(id)
+        return r.data
+      } catch (err) {
+        error.value = err.message
+        throw err
+      }
+    },
+    updateDurum: async (id, durum) => {
+      try {
+        const r = await api.updateDurum(id, durum)
+        const idx = liste.value.findIndex((f) => f.id === id)
+        if (idx !== -1) liste.value[idx] = r.data
+        return r.data
+      } catch (err) {
+        error.value = err.message
+        throw err
+      }
     }
-  }
-
-  const getFaturaById = async (id) => {
-    try {
-      const response = await faturaAPI.getById(id)
-      return response.data
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  const addFatura = async (fatura) => {
-    try {
-      const response = await faturaAPI.create(fatura)
-      faturalar.value.unshift(response.data)
-      return response.data
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  const updateDurum = async (id, durum) => {
-    try {
-      const response = await faturaAPI.updateDurum(id, durum)
-      const index = faturalar.value.findIndex((f) => f.id === id)
-      if (index !== -1) faturalar.value[index] = response.data
-      return response.data
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  const updateFatura = async (id, data) => {
-    try {
-      const response = await faturaAPI.update(id, data)
-      const index = faturalar.value.findIndex((f) => f.id === id)
-      if (index !== -1) faturalar.value[index] = response.data
-      return response.data
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  const deleteFatura = async (id) => {
-    try {
-      await faturaAPI.delete(id)
-      faturalar.value = faturalar.value.filter((f) => f.id !== id)
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  return {
-    faturalar,
-    loading,
-    error,
-    getAllFaturalar,
-    getFaturaById,
-    addFatura,
-    updateFatura,
-    updateDurum,
-    deleteFatura
-  }
+  })
 })

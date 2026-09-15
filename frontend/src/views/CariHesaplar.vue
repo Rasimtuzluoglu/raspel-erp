@@ -815,7 +815,7 @@
                 </span>
               </div>
               <p>{{ n.icerik }}</p>
-              <small>{{ n.olusturmaTarihi ? new Date(n.olusturmaTarihi).toLocaleString('tr-TR') : '' }}</small>
+              <small>{{ formatTarihSaat(n.olusturmaTarihi, '') }}</small>
             </div>
             <Button
               icon="pi pi-trash"
@@ -972,6 +972,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -1110,7 +1111,7 @@ onMounted(async () => {
   cariOzetYukle()
   try {
     const r = await stokAPI.getAll({ size: 1000 })
-    stokSecenekleri.value = r.data?.content || r.data || []
+    stokSecenekleri.value = unwrapList(r)
   } catch {
     stokSecenekleri.value = []
   }
@@ -1306,7 +1307,7 @@ const tahsilatAc = async (cariHesap) => {
   tahsilatDialog.value = true
   try {
     const r = await faturaAPI.cariFaturalari(cariHesap.id, { size: 200 })
-    const faturalar = r.data?.content || r.data || []
+    const faturalar = unwrapList(r)
     tahsilatHedefCari.value = {
       ...cariHesap,
       acikFaturalar: faturalar
@@ -1403,7 +1404,7 @@ const cariFaturalar = ref([])
 const cariFaturalariYukle = async (cariId) => {
   try {
     const r = await faturaAPI.cariFaturalari(cariId, { size: 100 })
-    cariFaturalar.value = r.data?.content || r.data || []
+    cariFaturalar.value = unwrapList(r)
   } catch {
     cariFaturalar.value = []
   }
@@ -1512,7 +1513,7 @@ const excelIndir = async () => {
 }
 
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
 </script>
 
 <style scoped>

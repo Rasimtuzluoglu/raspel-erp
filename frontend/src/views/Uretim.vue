@@ -206,6 +206,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { uretimAPI, stokAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useI18n } from 'vue-i18n'
@@ -231,7 +232,7 @@ const yukle = async () => {
     const [r, e, s] = await Promise.all([uretimAPI.receteler(), uretimAPI.emirler(), stokAPI.getAll({ size: 500 })])
     receteler.value = r.data || []
     emirler.value = e.data || []
-    stoklar.value = s.data?.content || s.data || []
+    stoklar.value = unwrapList(s)
   } catch (err) {
     toastBildirim.hata(t('uretim.hataYukleme'))
   }

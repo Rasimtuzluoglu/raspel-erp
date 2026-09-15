@@ -276,6 +276,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
@@ -479,7 +480,7 @@ watch(
 
 const cikis = () => {
   authStore.cikisYap()
-  window.location.replace('/giris')
+  router.push({ name: 'Giris' })
 }
 
 onMounted(() => {
@@ -496,9 +497,9 @@ const onaySayisiniYukle = async () => {
       satinalmaTalepAPI.getAll(),
       siparisAPI.getAll({ size: 100 })
     ])
-    const izinler = iRes.data?.content || iRes.data || []
-    const talepler = tRes.data?.content || tRes.data || []
-    const siparisler = sRes.data?.content || sRes.data || []
+    const izinler = unwrapList(iRes)
+    const talepler = unwrapList(tRes)
+    const siparisler = unwrapList(sRes)
     onaySayisi.value =
       izinler.filter((i) => i.durum === 'BEKLEMEDE').length +
       talepler.filter((t) => t.durum === 'TASLAK').length +

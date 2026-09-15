@@ -563,7 +563,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -734,7 +735,7 @@ const personelListesi = ref([])
 const depolarıYukle = async () => {
   try {
     const r = await depoAPI.getAll({ size: 500 })
-    depolar.value = r.data?.content || r.data || []
+    depolar.value = unwrapList(r)
   } catch {
     depolar.value = []
   }
@@ -758,7 +759,7 @@ const personelSecenekleri = computed(() =>
 const personelListesiniYukle = async () => {
   try {
     const r = await personelAPI.getAll({ size: 500 })
-    personelListesi.value = r.data?.content || r.data || []
+    personelListesi.value = unwrapList(r)
   } catch {
     personelListesi.value = []
   }
@@ -847,6 +848,11 @@ const cariSecildi = (event) => {
 const cariSonUrunler = ref([])
 const cariSonUrunlerGizle = ref(false)
 let cariSonUrunlerZamanlayici = null
+
+onUnmounted(() => {
+  if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
+  if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
+})
 
 watch(
   () => form.value.cariHesapId,

@@ -324,6 +324,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
@@ -549,7 +550,7 @@ const filtrele = async () => {
     if (filtreBaslangic.value) params.baslangic = getLocalDateString(filtreBaslangic.value)
     if (filtreBitis.value) params.bitis = getLocalDateString(filtreBitis.value)
     const response = await hareketAPI.filtrele(params)
-    tümHareketler.value = response.data?.content || response.data || []
+    tümHareketler.value = unwrapList(response)
   } catch (err) {
     toastBildirim.hata(t('hareketler.filtrelemeBasarisiz'))
   }

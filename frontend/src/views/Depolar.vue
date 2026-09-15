@@ -351,6 +351,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -387,7 +388,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [depoRes, subeRes, stokRes] = await Promise.all([depoAPI.getAll(), subeAPI.getAll(), stokAPI.getAll()])
-    list.value = depoRes.data?.content || depoRes.data || []
+    list.value = unwrapList(depoRes)
     subeListesi.value = subeRes.data
     stokListesi.value = stokRes.data.content || stokRes.data
   } catch (err) {
@@ -414,7 +415,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await depoAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'İşlem başarısız')
   }

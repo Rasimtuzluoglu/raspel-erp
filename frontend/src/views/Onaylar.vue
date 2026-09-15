@@ -366,6 +366,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useI18n } from 'vue-i18n'
 import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI, siparisAPI, onayAyariAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -392,18 +393,18 @@ const yukle = async () => {
       siparisAPI.getAll({ size: 100 })
     ])
     if (iRes.status === 'fulfilled') {
-      const allIzin = iRes.value.data?.content || iRes.value.data || []
+      const allIzin = unwrapList(iRes.value)
       bekleyenIzinler.value = allIzin.filter((i) => i.durum === 'BEKLEMEDE')
     }
     if (mRes.status === 'fulfilled') {
       bekleyenMasraflar.value = mRes.value.data || []
     }
     if (tRes.status === 'fulfilled') {
-      const allTalep = tRes.value.data?.content || tRes.value.data || []
+      const allTalep = unwrapList(tRes.value)
       bekleyenTalepler.value = allTalep.filter((t) => t.durum === 'TASLAK')
     }
     if (sRes.status === 'fulfilled') {
-      const allSiparis = sRes.value.data?.content || sRes.value.data || []
+      const allSiparis = unwrapList(sRes.value)
       bekleyenSiparisler.value = allSiparis.filter((s) => s.durum === 'BEKLIYOR')
     }
   } catch (err) {

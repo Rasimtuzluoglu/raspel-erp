@@ -7,6 +7,7 @@ const mode = ref(localStorage.getItem(MODE_KEY) || 'dark')
 const accentColor = ref(localStorage.getItem(COLOR_KEY) || '#3b82f6')
 
 let systemMedia = null
+let mediaHandler = null
 
 function systemTercihiKaranlik() {
   try {
@@ -45,10 +46,11 @@ function initTheme() {
   try {
     if (window.matchMedia) {
       systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
-      if (systemMedia && systemMedia.addEventListener) {
-        systemMedia.addEventListener('change', () => {
+      if (systemMedia && systemMedia.addEventListener && !mediaHandler) {
+        mediaHandler = () => {
           if (mode.value === 'system') applyMode('system')
-        })
+        }
+        systemMedia.addEventListener('change', mediaHandler)
       }
     }
   } catch {
@@ -58,11 +60,27 @@ function initTheme() {
   applyColor(accentColor.value)
 }
 
+/**
+ * matchMedia 'change' listener'ini kaldirir (component unmount temizligi).
+ * Birden fazla component initTheme cagirsa da tek listener eklenir; dispose
+ * sonrasi yeniden initTheme cagrilirsa listener tekrar eklenir.
+ */
+function disposeTheme() {
+  try {
+    if (systemMedia && mediaHandler && systemMedia.removeEventListener) {
+      systemMedia.removeEventListener('change', mediaHandler)
+    }
+  } catch {
+    /* matchMedia desteklenmiyor */
+  }
+  mediaHandler = null
+}
+
 const isDark = computed(() => {
   if (mode.value === 'system') return systemTercihiKaranlik()
   return mode.value === 'dark'
 })
 
 export function useTheme() {
-  return { mode, isDark, accentColor, applyMode, applyColor, initTheme }
+  return { mode, isDark, accentColor, applyMode, applyColor, initTheme, disposeTheme }
 }

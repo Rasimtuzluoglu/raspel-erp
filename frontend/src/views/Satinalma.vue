@@ -292,6 +292,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI } from '../api/index.js'
@@ -320,7 +321,7 @@ const talepleriYukle = async () => {
   taleplerYukleniyor.value = true
   try {
     const r = await satinalmaTalepAPI.getAll()
-    talepler.value = r.data?.content || r.data || []
+    talepler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataTalepYukleme'))
   }
@@ -331,7 +332,7 @@ const siparisleriYukle = async () => {
   siparislerYukleniyor.value = true
   try {
     const r = await satinalmaSiparisAPI.getAll()
-    siparisler.value = r.data?.content || r.data || []
+    siparisler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataSiparisYukleme'))
   }
@@ -341,7 +342,7 @@ const siparisleriYukle = async () => {
 const carieleriYukle = async () => {
   try {
     const r = await cariHesapAPI.getAll()
-    cariler.value = r.data?.content || r.data || []
+    cariler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataCariYukleme'))
   }

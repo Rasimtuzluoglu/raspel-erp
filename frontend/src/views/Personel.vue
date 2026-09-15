@@ -327,6 +327,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -393,8 +394,8 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [pR, iR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll()])
-    personeller.value = pR.data?.content || pR.data || []
-    tumIzinler.value = iR.data?.content || iR.data || []
+    personeller.value = unwrapList(pR)
+    tumIzinler.value = unwrapList(iR)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.hataYukleme'))
   }
@@ -443,7 +444,7 @@ const personelKaydet = async () => {
     formTemizle()
     personelDialog.value = false
     const r2 = await personelAPI.getAll()
-    personeller.value = r2.data?.content || r2.data || []
+    personeller.value = unwrapList(r2)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.hataKaydet'))
   }
@@ -490,7 +491,7 @@ const izinKaydet = async () => {
     })
     izinDialog.value = false
     const r3 = await personelIzinAPI.getAll()
-    tumIzinler.value = r3.data?.content || r3.data || []
+    tumIzinler.value = unwrapList(r3)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.izinHataKaydet'))
   }

@@ -131,6 +131,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
@@ -156,6 +157,7 @@ import PasswordChangeModal from './components/PasswordChangeModal.vue'
 import KisayolRehberi from './components/KisayolRehberi.vue'
 
 const authStore = useAuthStore()
+const router = useRouter()
 const toast = useToast()
 const { ctrl_k, cmd_k, escape } = useMagicKeys()
 
@@ -204,12 +206,14 @@ const handleApiError = (e) => {
 
 const handleGlobalShortcuts = (e) => {
   if (!authStore.isLoggedIn) return
+  // Sayfa ozel kisayol (useKisayollar) islediyse global fallback'i tetikleme
+  if (e.defaultPrevented) return
   if (e.key === 'F2') {
     e.preventDefault()
-    window.location.hash = '#/hizli-satis'
+    router.push({ name: 'HizliSatis' })
   } else if (e.key === 'F4') {
     e.preventDefault()
-    window.location.hash = '#/stoklar'
+    router.push({ name: 'Stoklar' })
   }
 }
 

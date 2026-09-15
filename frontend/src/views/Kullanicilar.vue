@@ -248,6 +248,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -300,7 +301,7 @@ onMounted(async () => {
   loading.value = true
   try {
     const [r, sR] = await Promise.all([kullaniciAPI.getAll(), sirketAPI.getAktif()])
-    kullanicilar.value = r.data?.content || r.data || []
+    kullanicilar.value = unwrapList(r)
     sirketListesi.value = sR.data || []
   } catch {
     toastBildirim.hata(t('kullanicilar.yuklemeHatasi'))
@@ -391,7 +392,7 @@ const save = async () => {
     }
     closeDialog()
     const r = await kullaniciAPI.getAll()
-    kullanicilar.value = r.data?.content || r.data || []
+    kullanicilar.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err.response?.data?.message || t('kullanicilar.islemBasarisiz'))
   } finally {

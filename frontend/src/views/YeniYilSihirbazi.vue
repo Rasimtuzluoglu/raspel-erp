@@ -269,8 +269,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useRouter } from 'vue-router'
-import { sirketAPI, apiClient } from '../api/index.js'
+import { sirketAPI, veriAktarimAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useI18n } from 'vue-i18n'
@@ -329,7 +330,7 @@ const ileriGidebilir = computed(() => {
 onMounted(async () => {
   try {
     const res = await sirketAPI.getAll()
-    sirketler.value = res.data?.content || res.data || []
+    sirketler.value = unwrapList(res)
     
     if (authStore.sirketId) {
       aktarim.value.kaynakSirketId = authStore.sirketId
@@ -363,7 +364,7 @@ const tamamla = async () => {
         fiyatlariKoru: aktarim.value.fiyatlariKoru
       }
       
-      const aktarimRes = await apiClient.post('/veri-aktarim/sirketler-arasi', payload)
+      const aktarimRes = await veriAktarimAPI.sirketlerArasi(payload)
       const sonuc = aktarimRes.data
       
       toast.basarili(t('yeniYilSihirbazi.aktarimBasarili', { stok: sonuc.aktarilanStokSayisi, cari: sonuc.aktarilanCariSayisi }))

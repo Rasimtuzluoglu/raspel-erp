@@ -245,6 +245,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { tekrarlayanFaturaAPI, cariHesapAPI } from '../api/index.js'
@@ -297,7 +298,7 @@ const carileriYukle = async () => {
   try {
     const r = await cariHesapAPI.getAll()
     kayitlar.value
-    cariSecenekleri.value = r.data?.content || r.data || []
+    cariSecenekleri.value = unwrapList(r)
   } catch {
     cariSecenekleri.value = []
   }

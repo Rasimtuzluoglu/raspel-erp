@@ -576,6 +576,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
@@ -663,11 +664,11 @@ const tumunuYukle = async () => {
       cariHesapAPI.getAll({ size: 500 }),
       stokAPI.getAll({ size: 500 })
     ])
-    if (sipRes.status === 'fulfilled') siparisler.value = sipRes.value.data?.content || sipRes.value.data || []
-    if (izinRes.status === 'fulfilled') izinler.value = izinRes.value.data?.content || izinRes.value.data || []
+    if (sipRes.status === 'fulfilled') siparisler.value = unwrapList(sipRes.value)
+    if (izinRes.status === 'fulfilled') izinler.value = unwrapList(izinRes.value)
     if (masrafRes.status === 'fulfilled') masraflar.value = masrafRes.value.data || []
-    if (cariRes.status === 'fulfilled') cariHesaplar.value = cariRes.value.data?.content || cariRes.value.data || []
-    if (stokRes.status === 'fulfilled') stoklar.value = stokRes.value.data?.content || stokRes.value.data || []
+    if (cariRes.status === 'fulfilled') cariHesaplar.value = unwrapList(cariRes.value)
+    if (stokRes.status === 'fulfilled') stoklar.value = unwrapList(stokRes.value)
   } finally {
     yukleniyor.value = false
   }

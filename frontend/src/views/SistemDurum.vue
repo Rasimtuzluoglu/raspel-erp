@@ -107,7 +107,7 @@
           </div>
           <div>
             <span>{{ t('sistemDurum.sonYedek') }}</span><strong class="kucuk">{{
-              durum?.yedekleme?.lastBackup ? new Date(durum.yedekleme.lastBackup).toLocaleString('tr-TR') : '-'
+              durum?.yedekleme?.lastBackup ? formatTarihSaat(durum.yedekleme.lastBackup, '-') : '-'
             }}</strong>
           </div>
           <Button
@@ -147,7 +147,7 @@
             <strong>{{ h.tur }}</strong>
             <p>{{ h.mesaj }}</p>
             <small>{{ h.endpoint }} ·
-              {{ h.olusturmaTarihi ? new Date(h.olusturmaTarihi).toLocaleString('tr-TR') : '' }}</small>
+              {{ formatTarihSaat(h.olusturmaTarihi, '') }}</small>
           </div>
         </div>
       </div>
@@ -161,6 +161,7 @@ import { useI18n } from 'vue-i18n'
 import { sistemDurumAPI, backupAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { formatTarihSaat } from '../utils/format.js'
 
 const { t } = useI18n()
 const toastBildirim = useToastBildirim()

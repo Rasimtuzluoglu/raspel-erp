@@ -174,11 +174,6 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('raspel_erp_auth')
   }
 
-  const kullanicilariGetir = async () => {
-    const res = await kullaniciAPI.getAll()
-    return res.data
-  }
-
   const kullaniciGuncelle = async () => {
     if (!kullanici.value?.id) return
     try {
@@ -227,7 +222,6 @@ export const useAuthStore = defineStore('auth', () => {
     sirketDegistir,
     sirketlerim,
     cikisYap,
-    kullanicilariGetir,
     kullaniciGuncelle,
     yetkileriYukle,
     init

@@ -63,5 +63,7 @@ export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 
 export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './modules/dosya.js'
 
+export { veriAktarimAPI } from './modules/veriAktarim.js'
+
 export { pushAPI } from './modules/push.js'
 

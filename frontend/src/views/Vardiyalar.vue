@@ -143,6 +143,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -170,7 +171,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [vR, pR] = await Promise.all([vardiyaAPI.getAll(), personelAPI.getAll()])
-    list.value = vR.data?.content || vR.data || []
+    list.value = unwrapList(vR)
     personelListesi.value = pR.data.map((p) => ({
       ...p,
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
@@ -205,7 +206,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await vardiyaAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('vardiyalar.islemBasarisiz'))
   }

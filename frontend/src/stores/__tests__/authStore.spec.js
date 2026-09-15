@@ -118,11 +118,4 @@ describe('authStore', () => {
     expect(store.isLoggedIn).toBe(false)
     expect(localStorage.getItem('raspel_erp_auth')).toBeNull()
   })
-
-  it('kullanicilariGetir returns users', async () => {
-    const users = [{ id: 1, username: 'admin' }]
-    kullaniciAPI.getAll.mockResolvedValue({ data: users })
-    const result = await store.kullanicilariGetir()
-    expect(result).toEqual(users)
-  })
 })

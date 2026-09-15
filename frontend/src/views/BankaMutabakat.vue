@@ -187,6 +187,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -228,7 +229,7 @@ onMounted(async () => {
   }
   try {
     const rf = await faturaAPI.getAll()
-    const data = rf.data?.content || rf.data || []
+    const data = unwrapList(rf)
     faturalar.value = data.map((f) => ({ ...f, etiket: `${f.faturaNumarasi} (${formatCurrency(f.genelToplam)})` }))
   } catch {
     /* empty */

@@ -781,6 +781,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
@@ -845,7 +846,7 @@ const teklifleriGetir = async () => {
   yukleniyor.value = true
   try {
     const res = await teklifAPI.getAll({ size: 100 })
-    teklifler.value = res.data?.content || res.data || []
+    teklifler.value = unwrapList(res)
   } catch (err) {
     toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: t('teklifler.tekliflerYuklenemedi') + err.message, life: 3000 })
   } finally {
@@ -856,7 +857,7 @@ const teklifleriGetir = async () => {
 const cariHesaplariGetir = async () => {
   try {
     const res = await cariHesapAPI.getAll({ size: 500 })
-    cariHesaplar.value = res.data?.content || res.data || []
+    cariHesaplar.value = unwrapList(res)
   } catch {
     /* empty */
   }
@@ -865,7 +866,7 @@ const cariHesaplariGetir = async () => {
 const stoklariGetir = async () => {
   try {
     const res = await stokAPI.getAll({ size: 500 })
-    stoklar.value = res.data?.content || res.data || []
+    stoklar.value = unwrapList(res)
   } catch {
     /* empty */
   }

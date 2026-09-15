@@ -140,6 +140,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useRouter } from 'vue-router'
 import {
   cariHesapAPI,
@@ -449,7 +450,7 @@ watch(query, (val) => {
         faturaAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((f) => icindeAra(f.faturaNumarasi, q) || icindeAra(f.cariHesapAd, q))
               .slice(0, 5)
               .map((d) => ({
@@ -464,7 +465,7 @@ watch(query, (val) => {
         personelAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((p) => icindeAra(p.ad, q) || icindeAra(p.soyad, q) || icindeAra(p.pozisyon, q))
               .slice(0, 5)
               .map((d) => ({
@@ -479,7 +480,7 @@ watch(query, (val) => {
         projeAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((p) => icindeAra(p.ad, q) || icindeAra(p.kod, q))
               .slice(0, 5)
               .map((d) => ({
@@ -494,7 +495,7 @@ watch(query, (val) => {
         siparisAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((s) => icindeAra(s.siparisNo, q) || icindeAra(s.durum, q))
               .slice(0, 5)
               .map((d) => ({
@@ -509,7 +510,7 @@ watch(query, (val) => {
         notAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((n) => icindeAra(n.baslik, q))
               .slice(0, 3)
               .map((d) => ({
@@ -524,7 +525,7 @@ watch(query, (val) => {
         bankaAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((b) => icindeAra(b.ad, q) || icindeAra(b.iban, q))
               .slice(0, 3)
               .map((d) => ({
@@ -539,7 +540,7 @@ watch(query, (val) => {
         kasaAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((k) => icindeAra(k.ad, q))
               .slice(0, 3)
               .map((d) => ({
@@ -554,7 +555,7 @@ watch(query, (val) => {
         depoAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((d) => icindeAra(d.ad, q))
               .slice(0, 3)
               .map((d) => ({ ...d, type: 'depo', ...typeConfig.depo, title: d.ad, subtitle: `Depo` }))
@@ -563,7 +564,7 @@ watch(query, (val) => {
         subeAPI
           .getAll()
           .then((r) =>
-            (r.data?.content || r.data || [])
+            (unwrapList(r))
               .filter((s) => icindeAra(s.ad, q))
               .slice(0, 3)
               .map((d) => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: `Şube` }))

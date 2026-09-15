@@ -83,7 +83,7 @@ const menuAcik = ref(false)
 const wrapperRef = ref(null)
 const menuRef = ref(null)
 const menuStil = ref({})
-const { isDark, mode, accentColor, applyMode, applyColor, initTheme } = useTheme()
+const { isDark, mode, accentColor, applyMode, applyColor, initTheme, disposeTheme } = useTheme()
 
 const colors = [
   { name: 'Okyanus Mavisi', value: '#3b82f6' },
@@ -123,6 +123,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('click', disTiklaKapat)
+  disposeTheme()
 })
 </script>
 

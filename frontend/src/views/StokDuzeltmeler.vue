@@ -65,7 +65,7 @@
             v-if="d.neden"
             class="muted"
           >{{ d.neden }}</span>
-          <span class="muted">{{ d.olusturmaTarihi ? new Date(d.olusturmaTarihi).toLocaleString('tr-TR') : '' }}</span>
+          <span class="muted">{{ formatTarihSaat(d.olusturmaTarihi, '') }}</span>
         </div>
       </div>
     </div>
@@ -74,8 +74,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { stokDuzeltmeAPI, stokAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { formatTarihSaat } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -90,7 +92,7 @@ const yukle = async () => {
   try {
     const [g, s] = await Promise.all([stokDuzeltmeAPI.gecmis(), stokAPI.getAll({ size: 500 })])
     gecmis.value = g.data || []
-    stoklar.value = s.data?.content || s.data || []
+    stoklar.value = unwrapList(s)
   } catch (err) {
     toastBildirim.hata(t('stokDuzeltmeler.hataYukleme'))
   }

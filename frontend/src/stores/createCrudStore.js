@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 
 /**
  * Standart CRUD Pinia store'u ureten fabrika.
@@ -11,9 +12,15 @@ import { ref } from 'vue'
  * Mevcut view'lari kirmamak icin state/action adlari ozellestirilebilir:
  *   createCrudStore('kasa', kasaAPI, {
  *     stateKey: 'kasalar',
- *     prefix: 'Kasa',
  *     actions: { getAll: 'getAllKasalar', add: 'addKasa', update: 'updateKasa', remove: 'deleteKasa' }
  *   })
+ *
+ * Desteklenen ek secenekler:
+ *   addPosition: 'push' | 'unshift'   -> yeni kaydin listeye eklenme yonu (varsayilan push)
+ *   totalKey: 'toplamKayit'           -> getAll sonrasi data.totalElements bu state'e yazilir
+ *   extraState: { toplamKayit: () => ref(0) }  -> ek state'ler
+ *   extraActions: (ctx) => ({ ara, filtreli }) -> ek action'lar (liste/loading/error/durumlar erisimi)
+ *   afterAdd / afterRemove            -> ek sayac/hook islemleri
  */
 export function createCrudStore(name, api, opts = {}) {
   const stateKey = opts.stateKey || 'liste'
@@ -23,18 +30,27 @@ export function createCrudStore(name, api, opts = {}) {
     update: opts.actions?.update || 'update',
     remove: opts.actions?.remove || 'remove'
   }
+  const addPosition = opts.addPosition || 'push'
 
   return defineStore(name, () => {
     const liste = ref([])
     const loading = ref(false)
     const error = ref(null)
 
-    const getAll = async () => {
+    const durumlar = {}
+    for (const [k, factory] of Object.entries(opts.extraState || {})) {
+      durumlar[k] = factory()
+    }
+
+    const getAll = async (...args) => {
       loading.value = true
       error.value = null
       try {
-        const r = await api.getAll()
-        liste.value = r.data?.content || r.data || []
+        const r = await api.getAll(...args)
+        liste.value = unwrapList(r)
+        if (opts.totalKey && durumlar[opts.totalKey]) {
+          durumlar[opts.totalKey].value = r.data?.totalElements ?? liste.value.length
+        }
         return liste.value
       } catch (err) {
         error.value = err.response?.data?.message || err.message
@@ -47,7 +63,9 @@ export function createCrudStore(name, api, opts = {}) {
     const add = async (data) => {
       try {
         const r = await api.create(data)
-        liste.value.push(r.data)
+        if (addPosition === 'unshift') liste.value.unshift(r.data)
+        else liste.value.push(r.data)
+        if (opts.afterAdd) opts.afterAdd(r.data, { liste, durumlar })
         return r.data
       } catch (err) {
         error.value = err.response?.data?.message || err.message
@@ -71,13 +89,14 @@ export function createCrudStore(name, api, opts = {}) {
       try {
         await api.delete(id)
         liste.value = liste.value.filter((x) => x.id !== id)
+        if (opts.afterRemove) opts.afterRemove(id, { liste, durumlar })
       } catch (err) {
         error.value = err.response?.data?.message || err.message
         throw err
       }
     }
 
-    const expose = {}
+    const expose = { ...durumlar }
     expose[stateKey] = liste
     expose.loading = loading
     expose.error = error
@@ -90,6 +109,13 @@ export function createCrudStore(name, api, opts = {}) {
     if (!expose.add) expose.add = add
     if (!expose.update) expose.update = update
     if (!expose.remove) expose.remove = remove
+
+    if (opts.extraActions) {
+      Object.assign(
+        expose,
+        opts.extraActions({ liste, loading, error, durumlar, getAll, add, update, remove, api, unwrapList })
+      )
+    }
 
     return expose
   })

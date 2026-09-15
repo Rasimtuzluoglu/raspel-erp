@@ -26,7 +26,6 @@ describe('hareketStore', () => {
 
   it('initializes with default state', () => {
     expect(store.hareketler).toEqual([])
-    expect(store.sonHareketler).toEqual([])
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
   })
@@ -39,14 +38,6 @@ describe('hareketStore', () => {
     expect(result).toEqual([mockHareket])
   })
 
-  it('getSonHareketler fetches recent', async () => {
-    hareketAPI.getSon.mockResolvedValue({ data: [mockHareket] })
-    const result = await store.getSonHareketler(5)
-    expect(store.sonHareketler).toHaveLength(1)
-    expect(store.loading).toBe(false)
-    expect(result).toEqual([mockHareket])
-  })
-
   it('getAllHareketler fetches all', async () => {
     hareketAPI.getAll.mockResolvedValue({ data: [mockHareket] })
     const result = await store.getAllHareketler()
@@ -54,30 +45,25 @@ describe('hareketStore', () => {
     expect(result).toEqual([mockHareket])
   })
 
-  it('addHareket pushes and refreshes recent', async () => {
+  it('addHareket pushes', async () => {
     hareketAPI.create.mockResolvedValue({ data: mockHareket })
-    hareketAPI.getSon.mockResolvedValue({ data: [mockHareket] })
     await store.addHareket(mockHareket)
     expect(store.hareketler).toContainEqual(mockHareket)
-    expect(hareketAPI.getSon).toHaveBeenCalledWith(5)
   })
 
-  it('updateHareket updates and refreshes recent', async () => {
+  it('updateHareket updates', async () => {
     store.hareketler = [{ id: 1, aciklama: 'Eski' }]
     const updated = { id: 1, aciklama: 'Yeni' }
     hareketAPI.update.mockResolvedValue({ data: updated })
-    hareketAPI.getSon.mockResolvedValue({ data: [updated] })
     await store.updateHareket(1, updated)
     expect(store.hareketler[0].aciklama).toBe('Yeni')
   })
 
-  it('deleteHareket removes from both lists', async () => {
+  it('deleteHareket removes from list', async () => {
     store.hareketler = [mockHareket, { id: 2 }]
-    store.sonHareketler = [mockHareket, { id: 3 }]
     hareketAPI.delete.mockResolvedValue({})
     await store.deleteHareket(1)
     expect(store.hareketler).toHaveLength(1)
-    expect(store.sonHareketler).toHaveLength(1)
   })
 
   it('handles error in getHareketlerByCariHesap', async () => {

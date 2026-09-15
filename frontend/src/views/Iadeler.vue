@@ -230,6 +230,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -276,9 +277,9 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [r, stokRes, cariRes] = await Promise.all([iadeAPI.getAll(), stokAPI.getAll(), cariHesapAPI.getAll()])
-    list.value = r.data?.content || r.data || []
-    stokList.value = stokRes.data?.content || stokRes.data || []
-    cariList.value = cariRes.data?.content || cariRes.data || []
+    list.value = unwrapList(r)
+    stokList.value = unwrapList(stokRes)
+    cariList.value = unwrapList(cariRes)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('iadeler.hataYukleme'))
   }
@@ -325,7 +326,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await iadeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('iadeler.islemBasarisiz'))
   }
@@ -336,7 +337,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await iadeAPI.durumGuncelle(data.id, durum)
     const r = await iadeAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
     toastBildirim.basarili(t('iadeler.durumGuncellendi', { durum }))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('iadeler.hataDurum'))

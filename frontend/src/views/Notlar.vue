@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useNotStore } from '../stores/notStore.js'
@@ -213,6 +213,10 @@ let geriAlZamanlayici = null
 const dialogBaslik = computed(() => (duzenlemeModu.value ? t('notlar.duzenle') : t('notlar.yeniNot')))
 
 onMounted(() => store.getAllNotlar())
+
+onUnmounted(() => {
+  if (geriAlZamanlayici) clearTimeout(geriAlZamanlayici)
+})
 
 const dialogAc = () => {
   duzenlemeModu.value = false

@@ -48,7 +48,7 @@
 ## Kullanıcı Dostu Özellikler
 
 - **Karanlık/Açık tema** — Sol alttan geçiş
-- **Dil değiştirici** — TR/EN
+- **Arayüz dili** — Şu anda yalnızca Türkçe. İngilizce çeviriler henüz tamamlanmadığı için dil seçici devre dışıdır (TR/EN geçişi ileride eklenecek).
 - **Sık kullanılan menüler** — Menüdeki yıldız ile favorilere ekleme
 - **Son görüntülenenler** — Dashboard'da son bakılan kayıtlar
 - **Taslak koruma** — Fatura formu yazarken otomatik kaydedilir, sayfa yenilenirse "Taslak Geri Yüklendi"

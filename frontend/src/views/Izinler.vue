@@ -116,6 +116,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -163,7 +164,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const r = await personelIzinAPI.getAll()
-    tumIzinler.value = r.data?.content || r.data || []
+    tumIzinler.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('izinler.hataYukleme'))
   }
@@ -181,7 +182,7 @@ const onayla = (data) => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
         const r = await personelIzinAPI.getAll()
-        tumIzinler.value = r.data?.content || r.data || []
+        tumIzinler.value = unwrapList(r)
         toastBildirim.basarili(t('izinler.izinOnaylandi'))
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || t('izinler.islemBasarisiz'))
@@ -201,7 +202,7 @@ const reddet = (data) => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
         const r = await personelIzinAPI.getAll()
-        tumIzinler.value = r.data?.content || r.data || []
+        tumIzinler.value = unwrapList(r)
         toastBildirim.basarili(t('izinler.izinReddedildi'))
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || t('izinler.islemBasarisiz'))

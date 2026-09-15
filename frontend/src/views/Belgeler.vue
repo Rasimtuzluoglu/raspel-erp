@@ -39,7 +39,7 @@
         :header="t('common.date')"
       >
         <template #body="{ data }">
-          {{ data.olusturmaTarihi ? new Date(data.olusturmaTarihi).toLocaleString('tr-TR') : '-' }}
+          {{ formatTarihSaat(data.olusturmaTarihi, '-') }}
         </template>
       </Column>
       <Column
@@ -158,6 +158,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { belgeAPI } from '../api/index.js'
+import { formatTarihSaat } from '../utils/format.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'

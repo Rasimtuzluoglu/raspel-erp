@@ -231,7 +231,7 @@
                   </Column>
                   <Column :header="t('hesapAyarlari.girisZamani')">
                     <template #body="s">
-                      {{ s.data.girisZamani ? new Date(s.data.girisZamani).toLocaleString('tr-TR') : '-' }}
+                      {{ formatTarihSaat(s.data.girisZamani, '-') }}
                     </template>
                   </Column>
                   <Column
@@ -641,7 +641,7 @@ import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
-import { formatTarihKisa as formatTarih } from '../utils/format.js'
+import { formatTarihKisa as formatTarih, formatTarihSaat } from '../utils/format.js'
 
 const { t } = useI18n()
 const faturaTasarimModalAcik = ref(false)

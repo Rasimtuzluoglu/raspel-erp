@@ -195,6 +195,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { cekSenetAPI, cariHesapAPI } from '../api/index.js'
@@ -224,8 +225,8 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [r, c] = await Promise.all([cekSenetAPI.getAll(), cariHesapAPI.getAll()])
-    list.value = r.data?.content || r.data || []
-    cariler.value = c.data?.content || c.data || []
+    list.value = unwrapList(r)
+    cariler.value = unwrapList(c)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataYukleme'))
   }
@@ -251,7 +252,7 @@ const kaydet = async () => {
     await cekSenetAPI.create({ ...form.value, vadeTarihi: getLocalDateString(form.value.vadeTarihi) })
     dialog.value = false
     const r = await cekSenetAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataKaydet'))
   }
@@ -262,7 +263,7 @@ const durumGuncelle = async (data, durum) => {
   try {
     await cekSenetAPI.durumGuncelle(data.id, durum)
     const r = await cekSenetAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('cekSenet.hataDurum'))
   }

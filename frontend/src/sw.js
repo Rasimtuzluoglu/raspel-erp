@@ -18,6 +18,8 @@ registerRoute(
   })
 )
 
+// Finansal API yanitlari NetworkFirst ile tazelenir; cache yalnizca kisa sureli
+// cevrimdisi tampon olarak tutulur (finansal veri guncelligi + gizlilik).
 registerRoute(
   ({ url, request }) => request.method === 'GET' && url.pathname.startsWith('/api/'),
   new NetworkFirst({
@@ -25,7 +27,7 @@ registerRoute(
     networkTimeoutSeconds: 4,
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 })
+      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 5 * 60 })
     ]
   })
 )

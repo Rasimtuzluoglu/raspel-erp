@@ -99,7 +99,10 @@ function handler(e) {
   }
 }
 
-window.addEventListener('keydown', handler)
+// Capture fazinda dinle: sayfa ozel kisayollari (orn. F2 = yeni kayit)
+// App.vue'nun global fallback kisayollarindan once calisir ve isledigi tuslarda
+// preventDefault() cagirir (App.vue defaultPrevented kontrolu ile atlar).
+window.addEventListener('keydown', handler, true)
 
 export function useKisayollar({ kaydet, iptal, yeni, yazdir, ara } = {}) {
   onMounted(() => {

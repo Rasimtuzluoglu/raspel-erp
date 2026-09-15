@@ -126,6 +126,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -153,7 +154,7 @@ onMounted(async () => {
   yukleniyor.value = true
   try {
     const [sR, stR] = await Promise.all([stokSeriAPI.getAll(), stokAPI.getAll()])
-    list.value = sR.data?.content || sR.data || []
+    list.value = unwrapList(sR)
     stokListesi.value = stR.data.content || stR.data
     try {
       const sk = await stokSeriAPI.sonKullanma(30)
@@ -188,7 +189,7 @@ const kaydet = async () => {
     }
     dialog.value = false
     const r = await stokSeriAPI.getAll()
-    list.value = r.data?.content || r.data || []
+    list.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokSeriler.islemBasarisiz'))
   }

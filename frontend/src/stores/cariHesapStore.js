@@ -1,124 +1,45 @@
-import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { createCrudStore } from './createCrudStore.js'
 import { cariHesapAPI } from '../api/index.js'
 
 /**
  * Cari Hesap Store
  * Cari hesaplara ait state ve actionları yönetir.
  */
-export const useCariHesapStore = defineStore('cariHesap', () => {
-  const cariHesaplar = ref([])
-  const loading = ref(false)
-  const error = ref(null)
-  const toplamKayit = ref(0)
-
-  /**
-   * Tüm cari hesapları getir (sayfalı)
-   */
-  const getAllCariHesaplar = async (params = {}) => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await cariHesapAPI.getAll(params)
-      const icerik = response.data?.content || response.data || []
-      cariHesaplar.value = Array.isArray(icerik) ? icerik : []
-      toplamKayit.value = response.data?.totalElements ?? cariHesaplar.value.length
-      return cariHesaplar.value
-    } catch (err) {
-      error.value = err.message
-      console.error('Cari hesaplar yüklenirken hata:', err)
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
-   * Yeni cari hesap ekle
-   */
-  const addCariHesap = async (cariHesap) => {
-    try {
-      const response = await cariHesapAPI.create(cariHesap)
-      cariHesaplar.value.push(response.data)
-      return response.data
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  /**
-   * Cari hesap güncelle
-   */
-  const updateCariHesap = async (id, cariHesap) => {
-    try {
-      const response = await cariHesapAPI.update(id, cariHesap)
-      const index = cariHesaplar.value.findIndex((c) => c.id === id)
-      if (index !== -1) {
-        cariHesaplar.value[index] = response.data
+export const useCariHesapStore = createCrudStore('cariHesap', cariHesapAPI, {
+  stateKey: 'cariHesaplar',
+  totalKey: 'toplamKayit',
+  extraState: { toplamKayit: () => ref(0) },
+  actions: { getAll: 'getAllCariHesaplar', add: 'addCariHesap', update: 'updateCariHesap', remove: 'deleteCariHesap' },
+  extraActions: ({ liste, durumlar, loading, error, api, unwrapList }) => ({
+    ara: async (query) => {
+      loading.value = true
+      error.value = null
+      try {
+        const r = await api.search(query)
+        liste.value = unwrapList(r)
+        return liste.value
+      } catch (err) {
+        error.value = err.message
+        throw err
+      } finally {
+        loading.value = false
       }
-      return response.data
-    } catch (err) {
-      error.value = err.message
-      throw err
+    },
+    filtreliCari: async (params = {}) => {
+      loading.value = true
+      error.value = null
+      try {
+        const r = await api.filtreli(params)
+        liste.value = unwrapList(r)
+        durumlar.toplamKayit.value = r.data?.totalElements ?? liste.value.length
+        return liste.value
+      } catch (err) {
+        error.value = err.message
+        throw err
+      } finally {
+        loading.value = false
+      }
     }
-  }
-
-  /**
-   * Cari hesap sil
-   */
-  const deleteCariHesap = async (id) => {
-    try {
-      await cariHesapAPI.delete(id)
-      cariHesaplar.value = cariHesaplar.value.filter((c) => c.id !== id)
-    } catch (err) {
-      error.value = err.message
-      throw err
-    }
-  }
-
-  const ara = async (query) => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await cariHesapAPI.search(query)
-      cariHesaplar.value = response.data?.content || response.data || []
-      return cariHesaplar.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const filtreliCari = async (params = {}) => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await cariHesapAPI.filtreli(params)
-      const icerik = response.data?.content || response.data || []
-      cariHesaplar.value = Array.isArray(icerik) ? icerik : []
-      toplamKayit.value = response.data?.totalElements ?? cariHesaplar.value.length
-      return cariHesaplar.value
-    } catch (err) {
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return {
-    cariHesaplar,
-    loading,
-    error,
-    toplamKayit,
-    getAllCariHesaplar,
-    ara,
-    filtreliCari,
-    addCariHesap,
-    updateCariHesap,
-    deleteCariHesap
-  }
+  })
 })

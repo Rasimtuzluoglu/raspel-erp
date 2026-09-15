@@ -56,6 +56,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { auditLogAPI } from '../api/index.js'
 import { formatDateTime as formatTarih } from '../utils/format.js'
 
@@ -93,7 +94,7 @@ const yukle = async () => {
         entityAdi: props.entityTipi,
         entityId: props.entityId
       })
-      loglar.value = res.data?.content || res.data || []
+      loglar.value = unwrapList(res)
     }
   } catch {
     loglar.value = []
