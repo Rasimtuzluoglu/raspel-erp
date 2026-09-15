@@ -28,7 +28,7 @@
 - **Şirket, Dönem, Kullanıcı, Yetkiler** — Çoklu şirket ve rol yönetimi.
 - **Kategoriler, Notlar** — Notlar renkli etiket + önem derecesi destekler.
 - **Veri Aktar** — CSV ile toplu stok/cari aktarımı (sürükle-bırak).
-- **Yedekler** — Yedek alma/indirme/silme, saklama politikaları.
+- **Yedekler** — Yedek alma/indirme/silme, saklama politikaları. **Yedek Klasörü**: "Yedek Klasörü Seç" ile bilgisayarınızda bir klasör seçin; manuel yedekler doğrudan o klasöre yazılır (satır başına "Bilgisayara Kaydet" ile de kaydedilir). Tarayıcı desteği gerekir (Chrome/Edge); desteklenmiyorsa normal indirmeye düşer. Otomatik (zamanlanmış) yedekler güvenlik nedeniyle tarayıcıdan bilgisayarınıza yazılamaz, sunucu/bulut'ta kalır.
 - **Kullanım Şartları / Gizlilik Politikası**
 
 ### Rapor
