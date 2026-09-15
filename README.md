@@ -61,6 +61,7 @@
 - **Stok Kartları & Barkod**: Kritik seviye alarmı, akıllı AI talep tahmini, hareket geçmişi.
 - **Çoklu Depo & Şube**: Şubeler arası transfer, seri/lot/SKT takibi ve periyodik stok sayım modülü.
 - **Kritik Stok Dashboard'da**: Dashboard'da kritik stok uyarısı olarak listelenir.
+- **Üretim (Reçete & Emir)**: Ürün ağacı (reçete) tanımı, Taslak→Üretimde→Tamamlandı/İptal akışı, kısmi üretim ve fire, otomatik hammadde düşümü + mamul girişi, hammadde/işçilik/toplam maliyet. Planlama sekmesinde hammadde ihtiyaç analizi, eksikler için satınalma talebi ve siparişten otomatik üretim emri.
 
 ### İnsan Kaynakları (İK)
 - **Personel Kartları**: TC Kimlik doğrulama, departman/pozisyon atamaları, acil durum bilgileri.
@@ -112,11 +113,11 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 965 Test (0 Hata)
+mvn -B test -q          # 969 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test           # 640 Test (0 Hata)
+npm run test           # 651 Test (0 Hata)
 
 # Kod Standartları & Linting
 cd frontend

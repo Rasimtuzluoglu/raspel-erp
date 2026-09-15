@@ -19,6 +19,7 @@
 - **Stoklar** — Ürün yönetimi, kritik stok uyarıları, tablo/kart görünümü, toplu fiyat güncelleme, CSV aktarım. **Etiket** üretimi: satır menüsünden tek ürün, seçili ürünlerden toplu; **Barkod / QR / Her İkisi** seçilebilir, son tercih hatırlanır; yazdır veya PDF indir.
 - **Depolar** — Depo bazlı stok, transfer, stok ekle/çıkar.
 - **Seri/Lot, Stok Sayımı** — Seri takibi ve sayım süreçleri.
+- **Üretim** — Reçete (ürün ağacı) ve üretim emri yönetimi. Emirler **Taslak → Üretimde → Tamamlandı / İptal** akışını izler; tamamlarken **kısmi üretim ve fire** girilebilir, hammaddeler otomatik stoktan düşülür, mamul stoğa eklenir ve **hammadde/işçilik/toplam maliyet** hesaplanır. **Planlama** sekmesinde ürün + miktar için hammadde **ihtiyaç analizi** (gerekli/mevcut/eksik + maliyet) yapılır; eksik kalemler için tek tıkla **satınalma talebi** oluşturulur. Siparişten otomatik üretim emri açılabilir. Emir detayında **durum geçmişi**, **Rapor** sekmesinde durum dağılımı ve fire/ortalama süre KPI'ları bulunur.
 
 ### İnsan Kaynakları
 - **Personel, İzin, Puantaj, Maaş Bordro, Vardiya** — Personel ve İK süreçleri.

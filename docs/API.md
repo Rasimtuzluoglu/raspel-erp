@@ -50,6 +50,25 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | GET | `/api/stoklar/ara?q=` | Stok ara |
 | GET | `/api/depolar`, `/api/irsaliyeler`, `/api/iadeler` | Depo/irsaliye/iade |
 
+### Üretim
+| Metot | Yol | Açıklama |
+|---|---|---|
+| GET | `/api/uretim/receteler` | Reçete listesi |
+| POST | `/api/uretim/receteler` | Reçete oluştur |
+| PUT | `/api/uretim/receteler/{id}` | Reçete güncelle (revizyon artar) |
+| DELETE | `/api/uretim/receteler/{id}` | Reçete sil |
+| GET | `/api/uretim/emirler` | Üretim emirleri |
+| POST | `/api/uretim/emirler` | Üretim emri oluştur |
+| POST | `/api/uretim/emirler/{id}/baslat` | Emri başlat (Taslak → Üretimde) |
+| POST | `/api/uretim/emirler/{id}/tamamla` | Tamamla (kısmi üretim + fire + işçilik) |
+| POST | `/api/uretim/emirler/{id}/iptal` | Emri iptal et |
+| GET | `/api/uretim/emirler/{id}/gecmis` | Durum geçmişi |
+| POST | `/api/uretim/emirler/{id}/satinalma-talebi` | Eksik hammaddeler için satınalma talebi |
+| POST | `/api/uretim/emirler/siparisten/{siparisId}` | Siparişten üretim emri oluştur |
+| GET | `/api/uretim/ihtiyac?urunId=&miktar=` | Hammadde ihtiyaç analizi |
+| GET | `/api/uretim/ozet` | Üretim KPI özeti |
+
+
 ### Rapor & Denetim
 | Metot | Yol | Açıklama |
 |---|---|---|

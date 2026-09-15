@@ -8,12 +8,13 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReceteKalemDTO {
-    private Long id;
-    private Long receteId;
+public class UretimIhtiyacKalemDTO {
     private Long hammaddeId;
     private String hammaddeAd;
-    private BigDecimal miktar;
     private String birim;
-    private BigDecimal fireOrani;
+    private BigDecimal gerekli;
+    private BigDecimal mevcut;
+    private BigDecimal eksik;
+    private BigDecimal birimFiyat;
+    private BigDecimal tutar;
 }

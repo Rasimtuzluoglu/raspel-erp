@@ -2,6 +2,7 @@ package com.raspel.erp.dto.envanter;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -15,5 +16,9 @@ public class ReceteDTO {
     private Long urunId;
     private String urunAd;
     private String aciklama;
+    private Boolean aktif;
+    private Integer revizyon;
+    private BigDecimal fireOrani;
+    private String notlar;
     private List<ReceteKalemDTO> kalemler;
 }

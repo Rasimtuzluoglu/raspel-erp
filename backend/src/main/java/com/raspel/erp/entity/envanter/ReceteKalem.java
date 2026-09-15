@@ -25,4 +25,11 @@ public class ReceteKalem {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal miktar;
+
+    @Column(length = 20)
+    private String birim;
+
+    @Column(name = "fire_orani", precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal fireOrani = BigDecimal.ZERO;
 }

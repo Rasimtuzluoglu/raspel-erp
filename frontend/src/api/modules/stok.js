@@ -190,6 +190,9 @@ export const uretimAPI = {
   receteOlustur(data) {
     return apiClient.post('/uretim/receteler', data)
   },
+  receteGuncelle(id, data) {
+    return apiClient.put(`/uretim/receteler/${id}`, data)
+  },
   receteSil(id) {
     return apiClient.delete(`/uretim/receteler/${id}`)
   },
@@ -199,8 +202,29 @@ export const uretimAPI = {
   emirOlustur(data) {
     return apiClient.post('/uretim/emirler', data)
   },
-  emirTamamla(id) {
-    return apiClient.post(`/uretim/emirler/${id}/tamamla`)
+  emirBaslat(id) {
+    return apiClient.post(`/uretim/emirler/${id}/baslat`)
+  },
+  emirTamamla(id, data) {
+    return apiClient.post(`/uretim/emirler/${id}/tamamla`, data || {})
+  },
+  emirIptal(id, aciklama) {
+    return apiClient.post(`/uretim/emirler/${id}/iptal`, { aciklama })
+  },
+  emirGecmis(id) {
+    return apiClient.get(`/uretim/emirler/${id}/gecmis`)
+  },
+  satinalmaTalebi(id) {
+    return apiClient.post(`/uretim/emirler/${id}/satinalma-talebi`)
+  },
+  siparistenEmir(siparisId) {
+    return apiClient.post(`/uretim/emirler/siparisten/${siparisId}`)
+  },
+  ihtiyac(urunId, miktar) {
+    return apiClient.get('/uretim/ihtiyac', { params: { urunId, miktar } })
+  },
+  ozet() {
+    return apiClient.get('/uretim/ozet')
   }
 }
 

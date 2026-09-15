@@ -3,6 +3,7 @@ package com.raspel.erp.entity.envanter;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,6 +29,21 @@ public class Recete {
 
     @Column(length = 500)
     private String aciklama;
+
+    @Column
+    @Builder.Default
+    private Boolean aktif = true;
+
+    @Column
+    @Builder.Default
+    private Integer revizyon = 1;
+
+    @Column(name = "fire_orani", precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal fireOrani = BigDecimal.ZERO;
+
+    @Column(columnDefinition = "TEXT")
+    private String notlar;
 
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
