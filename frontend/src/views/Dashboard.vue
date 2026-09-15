@@ -27,7 +27,7 @@
           <button
             class="chip-refresh-btn"
             :disabled="dovizStore?.loading || false"
-            title="Kurları Yenile"
+            :title="t('dashboard.kurlariYenile')"
             @click="dovizStore?.kurlariGuncelle"
           >
             <i :class="dovizStore?.loading ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" />
@@ -40,13 +40,13 @@
           icon="pi pi-refresh"
           class="p-button-rounded p-button-text"
           :loading="loading"
-          title="Yenile"
+          :title="t('dashboard.yenile')"
           @click="refresh"
         />
         <Button
           icon="pi pi-cog"
           class="p-button-rounded p-button-text"
-          title="Widget Ayarları"
+          :title="t('dashboard.widgetAyarlari')"
           @click="widgetAyarlariGoster = true"
         />
       </div>
@@ -60,7 +60,7 @@
         <i
           class="pi pi-sliders-h"
           style="margin-right: 8px"
-        />Gösterilecek Widget'lar
+        />{{ t('dashboard.gosterilecekWidgetlar') }}
       </template>
       <template #content>
         <div class="widget-togglar">
@@ -75,13 +75,13 @@
         </div>
         <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end">
           <Button
-            label="Uygula"
+            :label="t('dashboard.uygula')"
             icon="pi pi-check"
             class="p-button-sm"
             @click="kaydetWidget"
           />
           <Button
-            label="İptal"
+            :label="t('common.cancel')"
             icon="pi pi-times"
             class="p-button-sm p-button-text"
             @click="iptalWidget"
@@ -143,7 +143,7 @@
           <i
             class="pi pi-sparkles"
             style="margin-right: 8px; color: #8b5cf6"
-          />Günün Özeti
+          />{{ t('dashboard.gununOzeti') }}
         </template>
         <template #content>
           <p class="ozet-metin">
@@ -157,7 +157,7 @@
         v-if="widgets.istatistikler.gorunur"
         class="section-title"
       >
-        <i class="pi pi-chart-pie" /> Finansal Özet
+        <i class="pi pi-chart-pie" /> {{ t('dashboard.finansalOzet') }}
       </h2>
       <div
         v-if="widgets.istatistikler.gorunur"
@@ -169,13 +169,13 @@
           </div>
           <div class="stat-content">
             <p class="stat-label">
-              Toplam Cari
+              {{ t('dashboard.toplamCari') }}
             </p>
             <p class="stat-value">
               {{ dashboardStore?.toplamCariSayisi || 0 }}
             </p>
             <p class="stat-sub">
-              Bakiye: <strong>{{ formatCurrency(dashboardStore?.toplamBakiye || 0) }}</strong>
+              {{ t('dashboard.bakiye') }} <strong>{{ formatCurrency(dashboardStore?.toplamBakiye || 0) }}</strong>
             </p>
           </div>
         </div>
@@ -185,7 +185,7 @@
           </div>
           <div class="stat-content">
             <p class="stat-label">
-              Toplam Likidite
+              {{ t('dashboard.toplamLikiditeKart') }}
             </p>
             <p
               class="stat-value"
@@ -194,7 +194,7 @@
               {{ formatCurrency(toplamLikidite) }}
             </p>
             <p class="stat-sub">
-              Kasa: {{ formatCurrency(toplamKasaBakiye) }} · Banka: {{ formatCurrency(toplamBankaBakiye) }}
+              {{ t('dashboard.kasaLabel') }} {{ formatCurrency(toplamKasaBakiye) }} · {{ t('dashboard.bankaLabel') }} {{ formatCurrency(toplamBankaBakiye) }}
             </p>
           </div>
         </div>
@@ -204,13 +204,13 @@
           </div>
           <div class="stat-content">
             <p class="stat-label">
-              Fatura Durumu
+              {{ t('dashboard.faturaDurumu') }}
             </p>
             <p class="stat-value">
               {{ kesilenFatura }} / {{ toplamFatura }}
             </p>
             <p class="stat-sub">
-              Bugünkü Tahsilat: <strong>{{ formatCurrency(dashboardStore?.bugunkuTahsilat || 0) }}</strong>
+              {{ t('dashboard.bugunkuTahsilat') }} <strong>{{ formatCurrency(dashboardStore?.bugunkuTahsilat || 0) }}</strong>
             </p>
           </div>
         </div>
@@ -220,25 +220,25 @@
           </div>
           <div class="stat-content">
             <p class="stat-label">
-              Stok Çeşidi
+              {{ t('dashboard.stokCesidi') }}
             </p>
             <p class="stat-value">
-              {{ toplamStok }} <small>ürün</small>
+              {{ toplamStok }} <small>{{ t('dashboard.urun') }}</small>
             </p>
             <p class="stat-sub">
-              Stok Değeri: <strong>{{ formatCurrency(dashboardStore?.toplamStokDegeri || 0) }}</strong>
+              {{ t('dashboard.stokDegeri') }} <strong>{{ formatCurrency(dashboardStore?.toplamStokDegeri || 0) }}</strong>
             </p>
             <p
               v-if="dusukStokAdet > 0"
               class="critical-hint"
             >
-              <i class="pi pi-exclamation-triangle" /> {{ dusukStokAdet }} kritik stok
+              <i class="pi pi-exclamation-triangle" /> {{ t('dashboard.kritikStokSayisi', { n: dusukStokAdet }) }}
             </p>
             <p
               v-else
               class="stat-sub text-emerald-600"
             >
-              Stok seviyeleri yeterli
+              {{ t('dashboard.stokSeviyeleriYeterli') }}
             </p>
           </div>
         </div>
@@ -247,34 +247,34 @@
       <!-- 1a. BUGÜNÜN ÖZETİ + HEDEF İLERLEMESİ -->
       <template v-if="widgets.bugunOzet.gorunur">
         <h2 class="section-title">
-          <i class="pi pi-sun" /> Bugünün Özeti & Hedefler
+          <i class="pi pi-sun" /> {{ t('dashboard.bugununOzetiHedefler') }}
         </h2>
         <div class="bugun-ozet-grid">
           <div class="bugun-kart tahsilat">
             <i class="pi pi-arrow-down-left" />
             <div>
-              <span>Bugünkü Tahsilat</span>
+              <span>{{ t('dashboard.bugunkuTahsilatKart') }}</span>
               <strong>{{ formatCurrency(dashboardStore?.bugunkuTahsilat || 0) }}</strong>
             </div>
           </div>
           <div class="bugun-kart odeme">
             <i class="pi pi-arrow-up-right" />
             <div>
-              <span>Bugünkü Ödeme</span>
+              <span>{{ t('dashboard.bugunkuOdemeKart') }}</span>
               <strong>{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
             </div>
           </div>
           <div class="bugun-kart siparis">
             <i class="pi pi-shopping-cart" />
             <div>
-              <span>Bugünkü Sipariş</span>
+              <span>{{ t('dashboard.bugunkuSiparis') }}</span>
               <strong>{{ dashboardStore?.bugunkuSiparis || 0 }}</strong>
             </div>
           </div>
           <div class="bugun-kart teslimat">
             <i class="pi pi-truck" />
             <div>
-              <span>Bekleyen Teslimat</span>
+              <span>{{ t('dashboard.bekleyenTeslimat') }}</span>
               <strong>{{ dashboardStore?.bekleyenTeslimat || 0 }}</strong>
             </div>
           </div>
@@ -283,7 +283,7 @@
         <div class="hedef-grid">
           <div class="hedef-kart">
             <div class="hedef-baslik">
-              <span><i class="pi pi-bullseye" /> Aylık Ciro Hedefi</span>
+              <span><i class="pi pi-bullseye" /> {{ t('dashboard.aylikCiroHedefi') }}</span>
               <strong>{{ formatCurrency(dashboardStore?.gerceklesenCiro || 0) }} / {{ formatCurrency(dashboardStore?.hedefCiro || 0) }}</strong>
             </div>
             <div class="hedef-track">
@@ -296,17 +296,17 @@
           </div>
           <div class="hedef-kart">
             <div class="hedef-baslik">
-              <span><i class="pi pi-chart-line" /> Net Kâr (Bu Ay)</span>
+              <span><i class="pi pi-chart-line" /> {{ t('dashboard.netKarBuAy') }}</span>
               <strong :class="(dashboardStore?.gerceklesenKar || 0) >= 0 ? 'positive' : 'negative'">{{ formatCurrency(dashboardStore?.gerceklesenKar || 0) }}</strong>
             </div>
             <div class="alacak-borc-satir">
-              <span class="alacak">Alacak: {{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}</span>
-              <span class="borc">Borç: {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}</span>
+              <span class="alacak">{{ t('dashboard.alacakLabel') }} {{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}</span>
+              <span class="borc">{{ t('dashboard.borcLabel') }} {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}</span>
             </div>
           </div>
           <div class="hedef-kart">
             <div class="hedef-baslik">
-              <span><i class="pi pi-trophy" /> Kâr Hedefi</span>
+              <span><i class="pi pi-trophy" /> {{ t('dashboard.karHedefi') }}</span>
               <strong>{{ formatCurrency(dashboardStore?.gerceklesenKar || 0) }} / {{ formatCurrency(dashboardStore?.hedefKar || 0) }}</strong>
             </div>
             <div class="hedef-track">
@@ -330,7 +330,7 @@
             <i class="pi pi-shopping-cart" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Bugünkü Sipariş</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.bugunkuSiparis') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.bugunkuSiparis || 0 }}</strong>
           </div>
         </div>
@@ -339,7 +339,7 @@
             <i class="pi pi-truck" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Bekleyen Teslimat</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.bekleyenTeslimat') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.bekleyenTeslimat || 0 }}</strong>
           </div>
         </div>
@@ -348,7 +348,7 @@
             <i class="pi pi-replay" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">İade Oranı</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.iadeOrani') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.iadeOrani || 0 }}%</strong>
           </div>
         </div>
@@ -357,7 +357,7 @@
             <i class="pi pi-sync" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Stok Devir Hızı</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.stokDevirHizi') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.stokDevirHizi || 0 }}</strong>
           </div>
         </div>
@@ -366,7 +366,7 @@
             <i class="pi pi-id-card" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Aktif Çalışan</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.aktifCalisan') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.aktifCalisan || 0 }}</strong>
           </div>
         </div>
@@ -375,7 +375,7 @@
             <i class="pi pi-calendar" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Bugün İzinli</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.bugunIzinli') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.bugunIzinli || 0 }}</strong>
           </div>
         </div>
@@ -384,7 +384,7 @@
             <i class="pi pi-hourglass" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Bekleyen İzin</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.bekleyenIzin') }}</span>
             <strong class="mini-stat-deger">{{ dashboardStore?.bekleyenIzinSayisi || 0 }}</strong>
           </div>
         </div>
@@ -393,7 +393,7 @@
             <i class="pi pi-money-bill" />
           </div>
           <div class="mini-stat-icerik">
-            <span class="mini-stat-etiket">Bugünkü Ödeme</span>
+            <span class="mini-stat-etiket">{{ t('dashboard.bugunkuOdemeKart') }}</span>
             <strong class="mini-stat-deger">{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
           </div>
         </div>
@@ -402,27 +402,27 @@
       <!-- 1c. CARİ ÖZET & TAHSİLAT TAKİBİ -->
       <template v-if="widgets.cariOzet.gorunur">
         <h2 class="section-title">
-          <i class="pi pi-handshake" /> Cari Özet & Tahsilat Takibi
+          <i class="pi pi-handshake" /> {{ t('dashboard.cariOzetTahsilat') }}
         </h2>
         <div class="cari-ozet-grid">
           <div class="cari-ozet-kart alacak">
             <i class="pi pi-arrow-down-left" />
             <div>
-              <span>Toplam Alacak</span>
+              <span>{{ t('dashboard.toplamAlacak') }}</span>
               <strong>{{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}</strong>
             </div>
           </div>
           <div class="cari-ozet-kart borc">
             <i class="pi pi-arrow-up-right" />
             <div>
-              <span>Toplam Borç</span>
+              <span>{{ t('dashboard.toplamBorc') }}</span>
               <strong>{{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}</strong>
             </div>
           </div>
           <div class="cari-ozet-kart enborc">
             <i class="pi pi-user-minus" />
             <div>
-              <span>En Borçlu Cari</span>
+              <span>{{ t('dashboard.enBorcluCari') }}</span>
               <strong>{{ (dashboardStore?.enCokBorcCariler || [])[0]?.cariAd || '—' }}</strong>
               <small v-if="(dashboardStore?.enCokBorcCariler || [])[0]">{{ formatCurrency(dashboardStore.enCokBorcCariler[0].tutar) }}</small>
             </div>
@@ -435,7 +435,7 @@
         v-if="widgets.istatistikler.gorunur"
         class="section-title"
       >
-        <i class="pi pi-bolt" /> Hızlı İşlemler
+        <i class="pi pi-bolt" /> {{ t('dashboard.hizliIslemler') }}
       </h2>
       <div
         v-if="widgets.istatistikler.gorunur"
@@ -446,55 +446,55 @@
           to="/yonetici-kokpiti"
           class="action-card kokpit"
         >
-          <i class="pi pi-bolt" /><span>Yönetici Kokpiti</span>
+          <i class="pi pi-bolt" /><span>{{ t('dashboard.yoneticiKokpiti') }}</span>
         </router-link>
         <router-link
           to="/teklifler"
           class="action-card teklif"
         >
-          <i class="pi pi-file-edit" /><span>Satış Teklifleri</span>
+          <i class="pi pi-file-edit" /><span>{{ t('dashboard.satisTeklifleri') }}</span>
         </router-link>
         <router-link
           to="/saha-portali"
           class="action-card saha"
         >
-          <i class="pi pi-compass" /><span>Saha Portalı</span>
+          <i class="pi pi-compass" /><span>{{ t('dashboard.sahaPortali') }}</span>
         </router-link>
         <router-link
           to="/faturalar"
           class="action-card fatura"
         >
-          <i class="pi pi-file" /><span>Yeni Fatura</span>
+          <i class="pi pi-file" /><span>{{ t('dashboard.yeniFatura') }}</span>
         </router-link>
         <router-link
           to="/hizli-satis"
           class="action-card satis"
         >
-          <i class="pi pi-shopping-bag" /><span>Hızlı Satış</span>
+          <i class="pi pi-shopping-bag" /><span>{{ t('dashboard.hizliSatis') }}</span>
         </router-link>
         <router-link
           to="/cari-hesaplar"
           class="action-card cari"
         >
-          <i class="pi pi-user-plus" /><span>Yeni Cari</span>
+          <i class="pi pi-user-plus" /><span>{{ t('dashboard.yeniCari') }}</span>
         </router-link>
         <router-link
           to="/hareketler"
           class="action-card tahsilat"
         >
-          <i class="pi pi-money-bill" /><span>Tahsilat/Ödeme</span>
+          <i class="pi pi-money-bill" /><span>{{ t('dashboard.tahsilatOdeme') }}</span>
         </router-link>
         <router-link
           to="/kasa"
           class="action-card kasa"
         >
-          <i class="pi pi-wallet" /><span>Kasa</span>
+          <i class="pi pi-wallet" /><span>{{ t('dashboard.kasa') }}</span>
         </router-link>
         <router-link
           to="/stoklar"
           class="action-card stok"
         >
-          <i class="pi pi-box" /><span>Stoklar</span>
+          <i class="pi pi-box" /><span>{{ t('dashboard.stoklar') }}</span>
         </router-link>
       </div>
 
@@ -503,8 +503,8 @@
         class="backup-reminder"
       >
         <i class="pi pi-save" />
-        <span>Son yedekleme 7 günden eski. Verilerinizi güvence altına almak için
-          <router-link to="/yedekler">yedek alın</router-link></span>
+        <span>{{ t('dashboard.yedekUyari') }}
+          <router-link to="/yedekler">{{ t('dashboard.yedekAlin') }}</router-link></span>
         <button
           class="reminder-close"
           @click="yedekUyarisiGoster = false"
@@ -518,7 +518,7 @@
         v-if="widgets.grafikler.gorunur"
         class="section-title"
       >
-        <i class="pi pi-chart-line" /> Grafikler & Analiz
+        <i class="pi pi-chart-line" /> {{ t('dashboard.grafiklerAnaliz') }}
       </h2>
       <div
         v-if="widgets.grafikler.gorunur"
@@ -529,7 +529,7 @@
             <i
               class="pi pi-chart-pie"
               style="margin-right: 8px"
-            />Cari Bakiye Dağılımı
+            />{{ t('dashboard.cariBakiyeDagilimi') }}
           </template>
           <template #content>
             <div
@@ -542,8 +542,8 @@
               />
             </div>
             <div class="chart-summary">
-              <span class="dot pos" /> Alacak: {{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}
-              <span class="dot neg" /> Borç: {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}
+              <span class="dot pos" /> {{ t('dashboard.alacakLabel') }} {{ formatCurrency(dashboardStore?.pozitifBakiye || 0) }}
+              <span class="dot neg" /> {{ t('dashboard.borcLabel') }} {{ formatCurrency(Math.abs(dashboardStore?.negatifBakiye || 0)) }}
             </div>
           </template>
         </Card>
@@ -553,7 +553,7 @@
             <i
               class="pi pi-chart-bar"
               style="margin-right: 8px"
-            />Aylık Gelir / Gider Trendi (Son 12 Ay)
+            />{{ t('dashboard.aylikGelirGiderTrendi') }}
           </template>
           <template #content>
             <div
@@ -569,7 +569,7 @@
               v-else
               class="chart-empty"
             >
-              Henüz gelir/gider verisi bulunmuyor
+              {{ t('dashboard.gelirGiderVerisiYok') }}
             </div>
           </template>
         </Card>
@@ -579,7 +579,7 @@
             <i
               class="pi pi-trophy"
               style="margin-right: 8px"
-            />En Çok Satan Ürünler
+            />{{ t('dashboard.enCokSatanUrunler') }}
           </template>
           <template #content>
             <div
@@ -595,7 +595,7 @@
               v-else
               class="chart-empty"
             >
-              Henüz satış verisi bulunmuyor
+              {{ t('dashboard.satisVerisiYok') }}
             </div>
           </template>
         </Card>
@@ -605,7 +605,7 @@
             <i
               class="pi pi-user-minus"
               style="margin-right: 8px"
-            />En Çok Borçlu Cariler
+            />{{ t('dashboard.enCokBorcluCariler') }}
           </template>
           <template #content>
             <div
@@ -621,7 +621,7 @@
               v-else
               class="chart-empty"
             >
-              Borçlu cari bulunmuyor
+              {{ t('dashboard.borcluCariYok') }}
             </div>
           </template>
         </Card>
@@ -631,7 +631,7 @@
             <i
               class="pi pi-tags"
               style="margin-right: 8px"
-            />Kategori Satış Dağılımı
+            />{{ t('dashboard.kategoriSatisDagilimi') }}
           </template>
           <template #content>
             <div
@@ -647,7 +647,7 @@
               v-else
               class="chart-empty"
             >
-              Henüz kategori verisi bulunmuyor
+              {{ t('dashboard.kategoriVerisiYok') }}
             </div>
           </template>
         </Card>
@@ -657,7 +657,7 @@
             <i
               class="pi pi-user-plus"
               style="margin-right: 8px"
-            />En Çok Alacaklı Cariler
+            />{{ t('dashboard.enCokAlacakliCariler') }}
           </template>
           <template #content>
             <div
@@ -673,7 +673,7 @@
               v-else
               class="chart-empty"
             >
-              Alacaklı cari bulunmuyor
+              {{ t('dashboard.alacakliCariYok') }}
             </div>
           </template>
         </Card>
@@ -683,7 +683,7 @@
             <i
               class="pi pi-wallet"
               style="margin-right: 8px"
-            />Kasa / Banka Dağılımı
+            />{{ t('dashboard.kasaBankaDagilimi') }}
           </template>
           <template #content>
             <div
@@ -696,8 +696,8 @@
               />
             </div>
             <div class="chart-summary">
-              <span class="dot kasa" /> Kasa: {{ formatCurrency(dashboardStore?.toplamKasaBakiye || 0) }}
-              <span class="dot banka" /> Banka: {{ formatCurrency(dashboardStore?.toplamBankaBakiye || 0) }}
+              <span class="dot kasa" /> {{ t('dashboard.kasaLabel') }} {{ formatCurrency(dashboardStore?.toplamKasaBakiye || 0) }}
+              <span class="dot banka" /> {{ t('dashboard.bankaLabel') }} {{ formatCurrency(dashboardStore?.toplamBankaBakiye || 0) }}
             </div>
           </template>
         </Card>
@@ -707,7 +707,7 @@
             <i
               class="pi pi-history"
               style="margin-right: 8px"
-            />Alacak Yaşlandırma
+            />{{ t('dashboard.alacakYaslandirma') }}
           </template>
           <template #content>
             <div
@@ -723,7 +723,7 @@
               v-else
               class="chart-empty"
             >
-              Henüz alacak verisi bulunmuyor
+              {{ t('dashboard.alacakVerisiYok') }}
             </div>
           </template>
         </Card>
@@ -739,7 +739,7 @@
             <i
               class="pi pi-chart-line"
               style="margin-right: 8px"
-            />Son 7 Gün Nakit Akışı (Gelir / Gider)
+            />{{ t('dashboard.son7GunNakitAkisi') }}
           </template>
           <template #content>
             <div
@@ -755,7 +755,7 @@
               v-else
               class="chart-empty"
             >
-              Henüz nakit akışı verisi bulunmuyor
+              {{ t('dashboard.nakitAkisiVerisiYok') }}
             </div>
           </template>
         </Card>
@@ -764,7 +764,7 @@
       <!-- 3c. KRİTİK STOK -->
       <template v-if="widgets.kritikStok.gorunur && (dashboardStore?.kritikStoklar || []).length">
         <h2 class="section-title">
-          <i class="pi pi-exclamation-triangle" /> Kritik Stok Uyarıları
+          <i class="pi pi-exclamation-triangle" /> {{ t('dashboard.kritikStokUyarilari') }}
         </h2>
         <div class="kritik-stok-grid">
           <div
@@ -780,7 +780,7 @@
             </div>
             <div class="ks-miktar">
               <span class="ks-deger">{{ s.miktar || 0 }} {{ s.birim || '' }}</span>
-              <span class="ks-min">Min: {{ s.minMiktar || 0 }}</span>
+              <span class="ks-min">{{ t('dashboard.minEtiketi') }} {{ s.minMiktar || 0 }}</span>
             </div>
           </div>
         </div>
@@ -788,14 +788,14 @@
 
       <!-- 4. ALT BÖLÜM: SON HAREKETLER VE ÖDEME VADELERİ -->
       <h2 class="section-title">
-        <i class="pi pi-list" /> Son İşlemler & Vade Takibi
+        <i class="pi pi-list" /> {{ t('dashboard.sonIslemlerVade') }}
       </h2>
       <div class="bottom-grid">
         <div
           v-if="widgets.sonHareketler.gorunur"
           class="recent-transactions"
         >
-          <h2>Son Finansal Hareketler</h2>
+          <h2>{{ t('dashboard.sonFinansalHareketler') }}</h2>
           <DataTable
             :value="dashboardStore?.sonHareketler || []"
             :rows="5"
@@ -804,7 +804,7 @@
           >
             <Column
               field="cariHesapAd"
-              header="Cari Hesap"
+              :header="t('dashboard.cariHesap')"
             >
               <template #body="s">
                 <strong>{{ s.data.cariHesapAd }}</strong>
@@ -812,7 +812,7 @@
             </Column>
             <Column
               field="tur"
-              header="Tür"
+              :header="t('dashboard.tur')"
               style="width: 100px"
             >
               <template #body="s">
@@ -823,7 +823,7 @@
             </Column>
             <Column
               field="tutar"
-              header="Tutar"
+              :header="t('dashboard.tutar')"
               style="width: 130px; text-align: right"
             >
               <template #body="s">
@@ -834,7 +834,7 @@
             </Column>
             <Column
               field="hareketTarihi"
-              header="Tarih"
+              :header="t('dashboard.tarih')"
               style="width: 110px"
             >
               <template #body="s">
@@ -853,14 +853,14 @@
               <i
                 class="pi pi-exclamation-triangle"
                 style="color: #f87171; margin-right: 8px"
-              />Vadesi Geçen Faturalar
+              />{{ t('dashboard.vadesiGecenFaturalar') }}
             </template>
             <template #content>
               <div
                 v-if="!dashboardStore?.vadesiGecenFaturalar?.length"
                 class="reminder-empty text-xs text-muted"
               >
-                <i class="pi pi-check-circle text-emerald-500 mr-1" /> Vadesi geçen fatura yok
+                <i class="pi pi-check-circle text-emerald-500 mr-1" /> {{ t('dashboard.vadesiGecenFaturaYok') }}
               </div>
               <div
                 v-for="f in (dashboardStore?.vadesiGecenFaturalar || []).slice(0, 4)"
@@ -875,7 +875,7 @@
                 to="/tahsilat"
                 class="tumu-gor"
               >
-                Tümünü gör <i class="pi pi-arrow-right" />
+                {{ t('dashboard.tumunuGor') }} <i class="pi pi-arrow-right" />
               </router-link>
             </template>
           </Card>
@@ -885,14 +885,14 @@
               <i
                 class="pi pi-clock"
                 style="color: #fbbf24; margin-right: 8px"
-              />Vadesi Yaklaşan (7 gün)
+              />{{ t('dashboard.vadesiYaklasan') }}
             </template>
             <template #content>
               <div
                 v-if="!dashboardStore?.vadesiYaklasanFaturalar?.length"
                 class="reminder-empty text-xs text-muted"
               >
-                <i class="pi pi-check-circle text-emerald-500 mr-1" /> Yaklaşan vade yok
+                <i class="pi pi-check-circle text-emerald-500 mr-1" /> {{ t('dashboard.yaklasanVadeYok') }}
               </div>
               <div
                 v-for="f in (dashboardStore?.vadesiYaklasanFaturalar || []).slice(0, 4)"
@@ -908,7 +908,7 @@
                     :href="whatsappLink(f)"
                     target="_blank"
                     rel="noopener"
-                    title="WhatsApp ile hatırlat"
+                    :title="t('dashboard.whatsappIleHatirlat')"
                   >
                     <i class="pi pi-whatsapp" />
                   </a>
@@ -925,6 +925,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import Skeleton from 'primevue/skeleton'
 import { useDashboardStore } from '../stores/dashboardStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
@@ -949,23 +950,24 @@ import { formatCurrency } from '../utils/format.js'
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
 const router = useRouter()
+const { t } = useI18n()
 const dovizStore = useDovizStore()
 const karsilamaMetni = computed(() => {
   const saat = new Date().getHours()
-  if (saat < 6) return 'İyi geceler'
-  if (saat < 12) return 'Günaydın'
-  if (saat < 18) return 'İyi günler'
-  return 'İyi akşamlar'
+  if (saat < 6) return t('dashboard.iyiGeceler')
+  if (saat < 12) return t('dashboard.gunaydin')
+  if (saat < 18) return t('dashboard.iyiGunler')
+  return t('dashboard.iyiAksamlar')
 })
 
 const widgetVarsayilan = () => ({
-  bugunOzet: { gorunur: true, etiket: 'Bugünün Özeti & Hedefler' },
-  istatistikler: { gorunur: true, etiket: 'İstatistik Kartları' },
-  cariOzet: { gorunur: true, etiket: 'Cari Özet & Tahsilat Takibi' },
-  kritikStok: { gorunur: true, etiket: 'Kritik Stok Uyarıları' },
-  grafikler: { gorunur: true, etiket: 'Grafikler' },
-  sonHareketler: { gorunur: true, etiket: 'Son Hareketler' },
-  odemeVadeleri: { gorunur: true, etiket: 'Ödeme Vadeleri' }
+  bugunOzet: { gorunur: true, etiket: t('dashboard.widgetBugunOzet') },
+  istatistikler: { gorunur: true, etiket: t('dashboard.widgetIstatistikler') },
+  cariOzet: { gorunur: true, etiket: t('dashboard.widgetCariOzet') },
+  kritikStok: { gorunur: true, etiket: t('dashboard.widgetKritikStok') },
+  grafikler: { gorunur: true, etiket: t('dashboard.widgetGrafikler') },
+  sonHareketler: { gorunur: true, etiket: t('dashboard.widgetSonHareketler') },
+  odemeVadeleri: { gorunur: true, etiket: t('dashboard.widgetOdemeVadeleri') }
 })
 
 const widgetListesi = ref(Object.entries(widgetVarsayilan()).map(([k, v]) => ({ key: k, ...v })))
@@ -1114,7 +1116,7 @@ const karIlerleme = computed(() => {
 
 const grafikleriHesapla = () => {
   bakiyeChart.value = {
-    labels: ['Alacak', 'Borç'],
+    labels: [t('dashboard.etiketAlacak'), t('dashboard.etiketBorc')],
     datasets: [
       {
         data: [dashboardStore.pozitifBakiye || 0, Math.abs(dashboardStore.negatifBakiye) || 0],
@@ -1145,7 +1147,7 @@ const enCokSatanlariHesapla = () => {
     labels: urunler.map((u) => u.stokAd),
     datasets: [
       {
-        label: 'Satış Miktarı',
+        label: t('dashboard.satisMiktari'),
         data: urunler.map((u) => u.satisMiktari),
         backgroundColor: urunler.map((_, i) => renkler[i % renkler.length]),
         borderRadius: 4
@@ -1164,7 +1166,7 @@ const nakitAkisiniHesapla = () => {
     labels: gunler.map((g) => g.gun.slice(5)),
     datasets: [
       {
-        label: 'Gelir',
+        label: t('dashboard.etiketGelir'),
         data: gunler.map((g) => g.gelir),
         borderColor: '#4caf50',
         backgroundColor: '#4caf50',
@@ -1172,7 +1174,7 @@ const nakitAkisiniHesapla = () => {
         pointRadius: 3
       },
       {
-        label: 'Gider',
+        label: t('dashboard.etiketGider'),
         data: gunler.map((g) => g.gider),
         borderColor: '#f44336',
         backgroundColor: '#f44336',
@@ -1193,7 +1195,7 @@ const enCokBorcCarileriHesapla = () => {
     labels: cariler.map((c) => c.cariAd),
     datasets: [
       {
-        label: 'Borç (TL)',
+        label: t('dashboard.borcTL'),
         data: cariler.map((c) => c.tutar),
         backgroundColor: '#ef4444',
         borderRadius: 4
@@ -1212,7 +1214,7 @@ const enCokAlacakCarileriHesapla = () => {
     labels: cariler.map((c) => c.cariAd),
     datasets: [
       {
-        label: 'Alacak (TL)',
+        label: t('dashboard.alacakTL'),
         data: cariler.map((c) => c.tutar),
         backgroundColor: '#10b981',
         borderRadius: 4
@@ -1229,7 +1231,7 @@ const kasaBankayiHesapla = () => {
     return
   }
   kasaBankaChart.value = {
-    labels: ['Kasa', 'Banka'],
+    labels: [t('dashboard.kasa'), t('dashboard.etiketBanka')],
     datasets: [
       {
         data: [kasa, banka],
@@ -1268,7 +1270,7 @@ const alacakYaslandirmayiHesapla = () => {
     labels: yaslar.map((y) => y.aralik),
     datasets: [
       {
-        label: 'Kalan Tutar (TL)',
+        label: t('dashboard.kalanTutarTL'),
         data: yaslar.map((y) => y.tutar),
         backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'],
         borderRadius: 4
@@ -1288,19 +1290,19 @@ const aylikKarsilastirmayiHesapla = () => {
     labels: aylikVeri.map((v) => v.ay),
     datasets: [
       {
-        label: 'Gelir',
+        label: t('dashboard.etiketGelir'),
         data: aylikVeri.map((v) => v.gelir),
         backgroundColor: '#4caf50',
         borderRadius: 4
       },
       {
-        label: 'Gider',
+        label: t('dashboard.etiketGider'),
         data: aylikVeri.map((v) => v.gider),
         backgroundColor: '#f44336',
         borderRadius: 4
       },
       {
-        label: 'Net',
+        label: t('dashboard.net'),
         type: 'line',
         data: aylikVeri.map((v) => (v.gelir || 0) - (v.gider || 0)),
         borderColor: '#8b5cf6',
@@ -1348,7 +1350,11 @@ import { formatTarih as formatDate } from '../utils/format.js'
 
 const whatsappLink = (f) => {
   const tel = (f.cariTelefon || '').replace(/\D/g, '')
-  const mesaj = `Sayın ${f.cariHesapAd || ''}, ${f.faturaNumarasi || ''} numaralı faturanızın ${formatCurrency(f.kalanTutar)} tutarında kalan ödemesi bulunmaktadır. Bilginize sunarız.`
+  const mesaj = t('dashboard.whatsappMesaj', {
+    ad: f.cariHesapAd || '',
+    no: f.faturaNumarasi || '',
+    tutar: formatCurrency(f.kalanTutar)
+  })
   return `https://wa.me/${tel}?text=${encodeURIComponent(mesaj)}`
 }
 </script>
