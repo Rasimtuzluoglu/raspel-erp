@@ -55,6 +55,14 @@
           :value="t('siparisTakip.soforEtiket', { ad: s.driverAd })"
           severity="info"
         />
+        <Button
+          v-if="!s.uretimDurum && s.siparisDurum !== 'IPTAL'"
+          :label="t('uretim.siparistenEmir')"
+          icon="pi pi-cog"
+          class="p-button-sm p-button-outlined uretim-buton"
+          :loading="emirOlusturuluyor === s.siparisId"
+          @click="uretimEmriOlustur(s)"
+        />
       </div>
       <div class="adimlar">
         <div
@@ -144,7 +152,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { siparisTakipAPI } from '../api/index.js'
+import { siparisTakipAPI, uretimAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useI18n } from 'vue-i18n'
 import { formatTarih } from '../utils/format.js'
@@ -154,6 +162,7 @@ const { t } = useI18n()
 const zincir = ref([])
 const yukleniyor = ref(false)
 const secilenSofor = ref(null)
+const emirOlusturuluyor = ref(null)
 
 const soforSecenekleri = computed(() => {
   const kume = new Set(zincir.value.map((s) => s.driverAd).filter(Boolean))
@@ -173,6 +182,20 @@ const durumSeverity = (d) => {
   if (['TAMAMLANDI', 'KESILDI', 'TESLIM_EDILDI', 'ONAYLANDI'].includes(d)) return 'success'
   if (['URETIMDE', 'BEKLEMEDE', 'YOLDA'].includes(d)) return 'info'
   return 'warn'
+}
+
+const uretimEmriOlustur = async (s) => {
+  emirOlusturuluyor.value = s.siparisId
+  try {
+    const r = await uretimAPI.siparistenEmir(s.siparisId)
+    const adet = (r.data || []).length
+    toastBildirim.basarili(t('uretim.emirOlusturulduN', { n: adet }))
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.emirOlusturulamadi'))
+  } finally {
+    emirOlusturuluyor.value = null
+  }
 }
 
 const yukle = async () => {
@@ -213,6 +236,9 @@ onMounted(yukle)
 }
 .sofor-filtre {
   min-width: 180px;
+}
+.uretim-buton {
+  margin-left: auto;
 }
 .beklenen-tarih {
   font-size: 11px;

@@ -218,7 +218,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
-import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI } from '../api/index.js'
+import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI, uretimAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
@@ -341,8 +341,31 @@ const siparisEylemleri = (d) => {
     items.push({ etiket: t('siparisler.iptalEt'), ikon: 'pi pi-times-circle', islem: () => durumGuncelle(d, 'IPTAL') })
   }
   items.push({ etiket: t('siparisler.isEmriOlustur'), ikon: 'pi pi-briefcase', islem: () => isEmriAc(d) })
+  if (d.durum !== 'IPTAL') {
+    items.push({ etiket: t('uretim.siparistenEmir'), ikon: 'pi pi-cog', islem: () => uretimEmriOlustur(d) })
+  }
   items.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => sil(d) })
   return items
+}
+
+const uretimEmriOlustur = (siparis) => {
+  confirm.require({
+    message: t('uretim.siparistenEmirOnay'),
+    header: t('uretim.title'),
+    icon: 'pi pi-cog',
+    acceptLabel: t('uretim.olustur'),
+    rejectLabel: t('common.cancel'),
+    accept: async () => {
+      try {
+        const r = await uretimAPI.siparistenEmir(siparis.id)
+        const adet = (r.data || []).length
+        toastBildirim.basarili(t('uretim.emirOlusturulduN', { n: adet }))
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('uretim.emirOlusturulamadi'))
+      }
+    },
+    reject: () => {}
+  })
 }
 
 const durumGuncelle = async (data, durum) => {
