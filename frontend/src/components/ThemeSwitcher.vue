@@ -14,64 +14,67 @@
       />
     </button>
 
-    <div
-      v-if="menuAcik"
-      ref="menuRef"
-      class="theme-menu"
-      :style="menuStil"
-      @click.stop
-    >
-      <div class="menu-header">
-        <span>{{ $t('theme.settings') }}</span>
-        <i
-          class="pi pi-times close-btn"
-          @click="menuAcik = false"
-        />
-      </div>
-
-      <div class="menu-section">
-        <label class="section-label">{{ $t('theme.mode') }}</label>
-        <div class="mode-toggle-group">
-          <button
-            class="mode-btn"
-            :class="{ active: !isDark && mode !== 'system' }"
-            @click="applyMode('light')"
-          >
-            <i class="pi pi-sun" /> {{ $t('theme.lightShort') }}
-          </button>
-          <button
-            class="mode-btn"
-            :class="{ active: isDark && mode !== 'system' }"
-            @click="applyMode('dark')"
-          >
-            <i class="pi pi-moon" /> {{ $t('theme.darkShort') }}
-          </button>
-          <button
-            class="mode-btn"
-            :class="{ active: mode === 'system' }"
-            title="Sistem tercihine göre otomatik"
-            @click="applyMode('system')"
-          >
-            <i class="pi pi-desktop" /> {{ $t('theme.systemShort') }}
-          </button>
-        </div>
-      </div>
-
-      <div class="menu-section">
-        <label class="section-label">{{ $t('theme.accent') }}</label>
-        <div class="color-options">
-          <button
-            v-for="c in colors"
-            :key="c.name"
-            class="color-dot"
-            :class="{ active: accentColor === c.value }"
-            :style="{ background: c.value }"
-            :title="c.name"
-            @click="applyColor(c.value)"
+    <!-- body'ye teleport: fixed konumlama, transform/backdrop-filter'li atalardan etkilenmez -->
+    <Teleport to="body">
+      <div
+        v-if="menuAcik"
+        ref="menuRef"
+        class="theme-menu"
+        :style="menuStil"
+        @click.stop
+      >
+        <div class="menu-header">
+          <span>{{ $t('theme.settings') }}</span>
+          <i
+            class="pi pi-times close-btn"
+            @click="menuAcik = false"
           />
         </div>
+
+        <div class="menu-section">
+          <label class="section-label">{{ $t('theme.mode') }}</label>
+          <div class="mode-toggle-group">
+            <button
+              class="mode-btn"
+              :class="{ active: !isDark && mode !== 'system' }"
+              @click="applyMode('light')"
+            >
+              <i class="pi pi-sun" /> {{ $t('theme.lightShort') }}
+            </button>
+            <button
+              class="mode-btn"
+              :class="{ active: isDark && mode !== 'system' }"
+              @click="applyMode('dark')"
+            >
+              <i class="pi pi-moon" /> {{ $t('theme.darkShort') }}
+            </button>
+            <button
+              class="mode-btn"
+              :class="{ active: mode === 'system' }"
+              title="Sistem tercihine göre otomatik"
+              @click="applyMode('system')"
+            >
+              <i class="pi pi-desktop" /> {{ $t('theme.systemShort') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <label class="section-label">{{ $t('theme.accent') }}</label>
+          <div class="color-options">
+            <button
+              v-for="c in colors"
+              :key="c.name"
+              class="color-dot"
+              :class="{ active: accentColor === c.value }"
+              :style="{ background: c.value }"
+              :title="c.name"
+              @click="applyColor(c.value)"
+            />
+          </div>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 

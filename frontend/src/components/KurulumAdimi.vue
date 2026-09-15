@@ -156,6 +156,17 @@ const adminPassword = defineModel('adminPassword', { type: String, default: '' }
   justify-content: center;
   background: linear-gradient(135deg, #8b5cf6, #6d28d9);
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+  animation: kurulum-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes kurulum-pop {
+  from {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .kurulum-ikon i {
   font-size: 24px;
@@ -269,5 +280,18 @@ const adminPassword = defineModel('adminPassword', { type: String, default: '' }
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(59, 130, 246, 0.4);
+}
+
+/* Hareket azaltma tercihi */
+@media (prefers-reduced-motion: reduce) {
+  .kurulum-ikon {
+    animation: none;
+  }
+  .giris-buton {
+    transition: none;
+  }
+  .giris-buton:hover {
+    transform: none;
+  }
 }
 </style>

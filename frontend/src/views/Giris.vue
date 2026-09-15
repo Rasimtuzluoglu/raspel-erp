@@ -1,5 +1,8 @@
 <template>
-  <div class="giris-sayfasi">
+  <div
+    class="giris-sayfasi"
+    :style="parallax"
+  >
     <!-- Ambient Aurora Glow Orbs -->
     <div class="aurora-orb aurora-1" />
     <div class="aurora-orb aurora-2" />
@@ -21,51 +24,32 @@
         <h1 class="hero-title">
           {{ $t('giris.heroTitle') }}
         </h1>
+        <div class="hero-rotate">
+          <transition
+            name="rotate-fade"
+            mode="out-in"
+          >
+            <span
+              :key="rotateIndex"
+              class="hero-rotate-item"
+            >{{ rotateItems[rotateIndex] }}</span>
+          </transition>
+        </div>
         <p class="hero-desc">
           {{ $t('giris.heroSubtitle') }}
         </p>
 
-        <!-- Vitrin Özellik Kartları -->
-        <div class="hero-features-grid">
-          <div class="feature-card">
-            <div class="feature-icon ai-glow">
-              <i class="pi pi-sparkles" />
-            </div>
-            <div class="feature-info">
-              <h4>Yapay Zeka Destekli Finans</h4>
-              <p>LLM entegre akıllı finans danışmanı ve anlık nakit tahminleme.</p>
-            </div>
-          </div>
+        <!-- Canli urun vitrini -->
+        <div class="hero-preview-wrap">
+          <LoginPreview />
+        </div>
 
-          <div class="feature-card">
-            <div class="feature-icon stock-glow">
-              <i class="pi pi-box" />
-            </div>
-            <div class="feature-info">
-              <h4>Gerçek Zamanlı POS & Stok</h4>
-              <p>Barkod/seri no okuma, kritik stok alarmları ve hızlı satış.</p>
-            </div>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon invoice-glow">
-              <i class="pi pi-file-check" />
-            </div>
-            <div class="feature-info">
-              <h4>GİB Uyumlu e-Dönüşüm</h4>
-              <p>e-Fatura, e-İrsaliye, e-Arşiv ve anlık muhasebe fiş entegrasyonu.</p>
-            </div>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon sec-glow">
-              <i class="pi pi-shield" />
-            </div>
-            <div class="feature-info">
-              <h4>Uçtan Uca Şifreli Güvenlik</h4>
-              <p>AES-256 GCM şifreleme, TOTP 2FA ve otomatik bulut yedekleme.</p>
-            </div>
-          </div>
+        <!-- Vitrin ozellik cipleri -->
+        <div class="hero-feature-chips">
+          <span class="hero-chip"><i class="pi pi-sparkles" /> {{ $t('giris.featureAi') }}</span>
+          <span class="hero-chip"><i class="pi pi-box" /> {{ $t('giris.featurePos') }}</span>
+          <span class="hero-chip"><i class="pi pi-file-check" /> {{ $t('giris.featureEInvoice') }}</span>
+          <span class="hero-chip"><i class="pi pi-shield" /> {{ $t('giris.featureSecurity') }}</span>
         </div>
 
         <!-- Güvenlik & Standart Rozetleri (Sol Alt) -->
@@ -92,6 +76,26 @@
       <!-- SAĞ BÖLÜM: Odaklanmış Cam Efektli Giriş Formu -->
       <div class="giris-form-alani">
         <div class="giris-kutu">
+          <!-- Mobil kompakt hero (<960px) -->
+          <div class="giris-mobil-hero">
+            <div class="mobil-mark">
+              <i class="pi pi-bolt" />
+            </div>
+            <div class="mobil-metin">
+              <h1 class="mobil-title">
+                RasPel ERP
+              </h1>
+              <p class="mobil-tagline">
+                {{ $t('giris.mobileTagline') }}
+              </p>
+            </div>
+            <div class="mobil-chips">
+              <span><i class="pi pi-shield" /> {{ $t('giris.miniSecuritySsl') }}</span>
+              <span><i class="pi pi-lock" /> {{ $t('giris.miniSecurity2fa') }}</span>
+              <span><i class="pi pi-cloud" /> {{ $t('giris.miniSecurityCloud') }}</span>
+            </div>
+          </div>
+
           <div class="giris-logo">
             <div class="logo-icon">
               <img
@@ -110,6 +114,13 @@
               {{ $t('giris.subtitle') }}
             </p>
           </div>
+
+          <p class="giris-selam">
+            {{ selamlama }}<span
+              v-if="sonSirketAd"
+              class="son-sirket"
+            > · {{ $t('giris.lastCompany') }}: <strong>{{ sonSirketAd }}</strong></span>
+          </p>
 
           <div class="giris-form">
             <transition name="shake">
@@ -311,7 +322,7 @@
 
               <!-- Hızlı Demo Rolleri -->
               <div class="hizli-roller">
-                <span class="hizli-rol-etiket">Hızlı Doldur:</span>
+                <span class="hizli-rol-etiket">{{ $t('giris.quickFill') }}:</span>
                 <button
                   type="button"
                   class="rol-chip"
@@ -349,14 +360,14 @@
 
           <!-- Kart Altı Güvenlik Mikro Rozetleri (Mobil & Genel) -->
           <div class="form-guvenlik-rozetleri">
-            <span><i class="pi pi-shield" /> 256-Bit SSL</span>
-            <span><i class="pi pi-lock" /> 2FA Uyumlu</span>
-            <span><i class="pi pi-database" /> Bulut Yedekli</span>
+            <span><i class="pi pi-shield" /> {{ $t('giris.miniSecuritySsl') }}</span>
+            <span><i class="pi pi-lock" /> {{ $t('giris.miniSecurity2fa') }}</span>
+            <span><i class="pi pi-database" /> {{ $t('giris.miniSecurityCloud') }}</span>
           </div>
 
           <div class="giris-footer">
             <ThemeSwitcher />
-            <span>&copy; 2026 RasPel ERP. Tüm hakları saklıdır.</span>
+            <span>{{ $t('giris.copyright') }}</span>
           </div>
         </div>
       </div>
@@ -368,10 +379,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useMouse, usePreferredReducedMotion, useIntervalFn } from '@vueuse/core'
 import { useAuthStore } from '../stores/authStore.js'
 import { kurulumAPI } from '../api/index.js'
 import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 import KurulumAdimi from '../components/KurulumAdimi.vue'
+import LoginPreview from '../components/LoginPreview.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -395,6 +408,47 @@ const ikiFaktorKod = ref('')
 const girisToken = ref('')
 
 const sonSecilenSirketId = ref(Number(localStorage.getItem('raspel_erp_son_sirket')) || null)
+const sonSirketAd = ref(localStorage.getItem('raspel_erp_son_sirket_ad') || '')
+
+// Hareket azaltma tercihi ve fare parallax (yalnizca transform/opacity)
+const azHareket = usePreferredReducedMotion()
+const hareketAzalt = computed(() => azHareket.value === 'reduce')
+const { x: fareX, y: fareY } = useMouse()
+
+const parallax = computed(() => {
+  if (hareketAzalt.value || typeof window === 'undefined') return {}
+  const w = window.innerWidth || 1
+  const h = window.innerHeight || 1
+  const dx = (fareX.value - w / 2) / (w / 2)
+  const dy = (fareY.value - h / 2) / (h / 2)
+  return {
+    '--px': `${(dx * 7).toFixed(2)}px`,
+    '--py': `${(dy * 7).toFixed(2)}px`,
+    '--pxs': `${(dx * 16).toFixed(2)}px`,
+    '--pys': `${(dy * 16).toFixed(2)}px`
+  }
+})
+
+// Saate gore selamlama
+const selamlama = computed(() => {
+  const saat = new Date().getHours()
+  if (saat < 12) return t('giris.greetingMorning')
+  if (saat < 18) return t('giris.greetingAfternoon')
+  return t('giris.greetingEvening')
+})
+
+// Hero basligi altinda donen deger onerileri
+const rotateIndex = ref(0)
+const rotateItems = computed(() => [
+  t('giris.heroRotate1'),
+  t('giris.heroRotate2'),
+  t('giris.heroRotate3'),
+  t('giris.heroRotate4')
+])
+useIntervalFn(() => {
+  if (hareketAzalt.value) return
+  rotateIndex.value = (rotateIndex.value + 1) % rotateItems.value.length
+}, 2800)
 
 const gruplanmisSirketler = computed(() => {
   const gruplar = {}
@@ -541,6 +595,7 @@ const sirketSecVeGirisYap = async (sirket) => {
   try {
     await authStore.girisSirket(girisToken.value, sirket.id)
     localStorage.setItem('raspel_erp_son_sirket', sirket.id)
+    if (sirket.ad) localStorage.setItem('raspel_erp_son_sirket_ad', sirket.ad)
     router.push('/')
   } catch (err) {
     hata.value = err.response?.data?.message || t('giris.companySelectFailed')
@@ -725,10 +780,11 @@ const tumAdimlariSifirla = () => {
 /* SOL: Hero & Vitrin */
 .giris-hero-alani {
   flex: 1.15;
-  padding: 48px;
+  padding: 38px 44px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 14px;
+  justify-content: center;
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -787,64 +843,74 @@ const tumAdimlariSifirla = () => {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.5;
-  margin: 0 0 28px;
+  margin: 0 0 6px;
 }
 
-/* Feature Cards Grid */
-.hero-features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 32px;
+/* Hero donen baslik */
+.hero-rotate {
+  min-height: 24px;
+  margin: 2px 0 12px;
 }
-.feature-card {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  transition: all 0.25s ease;
-}
-[data-theme='light'] .feature-card {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(203, 213, 225, 0.5);
-}
-.feature-card:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.feature-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.feature-icon i {
-  font-size: 16px;
-}
-.ai-glow { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
-.stock-glow { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-.invoice-glow { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-.sec-glow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-
-.feature-info h4 {
-  font-size: 13px;
+.hero-rotate-item {
+  font-size: 15.5px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 4px;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-.feature-info p {
+.rotate-fade-enter-active,
+.rotate-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.rotate-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.rotate-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Canli urun vitrini */
+.hero-preview-wrap {
+  margin: 2px 0;
+  transform: translate3d(var(--pxs, 0), var(--pys, 0), 0);
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+
+/* Ozellik cipleri */
+.hero-feature-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
   font-size: 11.5px;
+  font-weight: 600;
   color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.4;
+  transition: all 0.2s ease;
+}
+[data-theme='light'] .hero-chip {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(203, 213, 225, 0.6);
+}
+.hero-chip:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.hero-chip i {
+  color: #60a5fa;
+  font-size: 12px;
 }
 
 /* Security Badges (Hero Footer) */
@@ -1315,10 +1381,105 @@ const tumAdimlariSifirla = () => {
   line-height: 1.4;
 }
 
+/* Mobil kompakt hero */
+.giris-mobil-hero {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.mobil-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+.mobil-metin {
+  flex: 1;
+  min-width: 0;
+}
+.mobil-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.mobil-tagline {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.mobil-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.mobil-chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  padding: 4px 9px;
+}
+.mobil-chips i {
+  color: #10b981;
+  font-size: 10px;
+}
+
+/* Selamlama + son firma */
+.giris-selam {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: -8px 0 14px;
+}
+.son-sirket {
+  color: var(--text-secondary);
+}
+.son-sirket strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Hareket azaltma tercihi (erisilebilirlik) */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-orb {
+    animation: none;
+  }
+  .caps-lock-uyari {
+    animation: none;
+  }
+  .hero-preview-wrap {
+    transform: none;
+    transition: none;
+  }
+  .rotate-fade-enter-active,
+  .rotate-fade-leave-active {
+    transition: none;
+  }
+}
+
 /* Responsive Düzen */
 @media (max-width: 960px) {
   .giris-hero-alani {
     display: none;
+  }
+  .giris-mobil-hero {
+    display: flex;
   }
   .giris-split-wrapper {
     max-width: 480px;
@@ -1339,9 +1500,6 @@ const tumAdimlariSifirla = () => {
   .kurulum-iki-kolon {
     flex-direction: column;
     gap: 0;
-  }
-  .hero-features-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>
