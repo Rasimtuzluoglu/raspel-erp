@@ -5,8 +5,8 @@
   >
     <button
       class="theme-toggle-btn"
-      :title="`Tema & Renk Ayarları (${isDark ? 'Koyu' : 'Açık'})`"
-      :aria-label="`Tema ve renk ayarları (${isDark ? 'koyu' : 'açık'})`"
+      :title="$t('theme.settings')"
+      :aria-label="$t('theme.settings')"
       aria-haspopup="true"
       :aria-expanded="menuAcik"
       @click="menuAc"
@@ -54,7 +54,7 @@
             <button
               class="mode-btn"
               :class="{ active: mode === 'system' }"
-              title="Sistem tercihine göre otomatik"
+              :title="$t('theme.systemHint')"
               @click="applyMode('system')"
             >
               <i class="pi pi-desktop" /> {{ $t('theme.systemShort') }}
@@ -77,6 +77,26 @@
             />
           </div>
         </div>
+
+        <div class="menu-section">
+          <label class="section-label">{{ $t('theme.language') }}</label>
+          <div class="mode-toggle-group">
+            <button
+              class="mode-btn"
+              :class="{ active: aktifDil === 'tr' }"
+              @click="dilDegistir('tr')"
+            >
+              Türkçe
+            </button>
+            <button
+              class="mode-btn"
+              :class="{ active: aktifDil === 'en' }"
+              @click="dilDegistir('en')"
+            >
+              English
+            </button>
+          </div>
+        </div>
       </div>
     </Teleport>
   </div>
@@ -85,12 +105,14 @@
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useTheme } from '../composables/useTheme.js'
+import { useLocale } from '../composables/useLocale.js'
 
 const menuAcik = ref(false)
 const wrapperRef = ref(null)
 const menuRef = ref(null)
 const menuStil = ref({})
 const { isDark, mode, accentColor, applyMode, applyColor, initTheme, disposeTheme } = useTheme()
+const { aktifDil, dilDegistir } = useLocale()
 
 const colors = [
   { name: 'Okyanus Mavisi', value: '#3b82f6' },

@@ -26,6 +26,7 @@ import './assets/tailwind.css'
 import './assets/app.css'
 import { useTheme } from './composables/useTheme.js'
 import { formatCurrency, formatDate, formatDateTime } from './utils/format.js'
+import { pvTr } from './utils/primevueLocales.js'
 
 const { initTheme } = useTheme()
 initTheme()
@@ -43,43 +44,7 @@ app.use(PrimeVue, {
     preset: Lara,
     options: { darkModeSelector: false }
   },
-  locale: {
-    startsWith: 'Başlayan',
-    contains: 'İçeren',
-    notContains: 'İçermeyen',
-    endsWith: 'Biten',
-    equals: 'Eşit',
-    notEquals: 'Eşit Değil',
-    noFilter: 'Filtre Yok',
-    accept: 'Evet',
-    reject: 'Hayır',
-    choose: 'Seç',
-    upload: 'Yükle',
-    cancel: 'İptal',
-    dayNames: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
-    dayNamesShort: ['Pzr', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
-    dayNamesMin: ['Pz', 'Pt', 'Sa', 'Çş', 'Pş', 'Cu', 'Ct'],
-    monthNames: [
-      'Ocak',
-      'Şubat',
-      'Mart',
-      'Nisan',
-      'Mayıs',
-      'Haziran',
-      'Temmuz',
-      'Ağustos',
-      'Eylül',
-      'Ekim',
-      'Kasım',
-      'Aralık'
-    ],
-    monthNamesShort: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
-    today: 'Bugün',
-    clear: 'Temizle',
-    weekHeader: 'Hf',
-    firstDayOfWeek: 1,
-    dateFormat: 'dd.mm.yy'
-  }
+  locale: pvTr
 })
 app.use(ToastService)
 app.use(ConfirmationService)

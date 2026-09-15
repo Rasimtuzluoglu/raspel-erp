@@ -187,6 +187,7 @@
     "lightShort": "Açık",
     "darkShort": "Koyu",
     "systemShort": "Oto",
+    "systemHint": "Sistem tercihine göre otomatik",
     "language": "Dil"
   },
   "shortcuts": {

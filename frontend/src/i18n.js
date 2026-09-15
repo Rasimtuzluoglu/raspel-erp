@@ -2,11 +2,13 @@ import { createI18n } from 'vue-i18n'
 import tr from './locales/tr.json'
 import en from './locales/en.json'
 
-// İngilizce çeviriler tamamlanana kadar arayüz zorunlu olarak Türkçe kalır.
-// (Dil seçici ThemeSwitcher'dan kaldırıldı; localStorage'daki eski 'lang' değerleri yok sayılır.)
+// Dil seçimi localStorage'da saklanır (useLocale/LANG_KEY).
+// Kayıtlı değer yoksa veya desteklenmiyorsa arayüz Türkçe açılır.
+const kayitliDil = typeof localStorage !== 'undefined' && localStorage.getItem('lang') === 'en' ? 'en' : 'tr'
+
 export default createI18n({
   legacy: false,
-  locale: 'tr',
+  locale: kayitliDil,
   fallbackLocale: 'tr',
   messages: { tr, en }
 })
