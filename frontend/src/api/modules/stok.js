@@ -13,8 +13,11 @@ export const stokAPI = {
   etiketQr(id) {
     return apiClient.get(`/stoklar/${id}/etiket-qr`, { responseType: 'blob' })
   },
-  etiketPdf(id) {
-    return apiClient.get(`/stoklar/${id}/etiket`, { responseType: 'blob' })
+  etiketPdf(id, tip) {
+    return apiClient.get(`/stoklar/${id}/etiket`, { params: { tip }, responseType: 'blob' })
+  },
+  topluEtiket(payload) {
+    return apiClient.post('/stoklar/etiketler', payload, { responseType: 'blob' })
   },
   filtreli(params) {
     return apiClient.get('/stoklar/filtreli', { params })

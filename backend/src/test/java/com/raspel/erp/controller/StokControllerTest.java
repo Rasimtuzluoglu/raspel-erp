@@ -54,6 +54,9 @@ class StokControllerTest {
     @MockBean
     private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
 
+    @MockBean
+    private com.raspel.erp.service.sistem.BarkodService barkodService;
+
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(StokDTO.builder().id(1L).ad("Kalem").stokKodu("KLM001").fiyat(BigDecimal.valueOf(10)).build());
@@ -87,7 +90,8 @@ class StokControllerTest {
         Stok stok = Stok.builder().id(5L).ad("Kalem").barkod("BAR123").build();
         when(stokService.entityGetir(5L)).thenReturn(stok);
         when(qrService.qrPng(anyString(), anyInt())).thenReturn(new byte[] {1, 2, 3});
-        when(pdfRaporService.stokEtiketi(any(Stok.class), any())).thenReturn(new byte[] {0x25, 0x50, 0x44, 0x46});
+        when(barkodService.barkodPng(anyString(), anyInt(), anyInt())).thenReturn(new byte[] {1, 2, 3});
+        when(pdfRaporService.stokEtiketi(any(Stok.class), any(), any(), anyString())).thenReturn(new byte[] {0x25, 0x50, 0x44, 0x46});
 
         mockMvc.perform(get("/api/stoklar/5/etiket"))
                 .andExpect(status().isOk())

@@ -38,6 +38,12 @@
             class="p-button-sm p-button-outlined"
             @click="batchCsvExport"
           />
+          <Button
+            :label="t('stoklar.topluEtiket')"
+            icon="pi pi-tags"
+            class="p-button-sm p-button-outlined"
+            @click="topluEtiketDialog = true"
+          />
         </div>
       </template>
       <template #end>
@@ -653,6 +659,51 @@
       v-model:visible="etiketDialog"
       :stok="etiketStok"
     />
+
+    <Dialog
+      v-model:visible="topluEtiketDialog"
+      :header="t('stoklar.topluEtiketBaslik')"
+      :modal="true"
+      style="width: 420px"
+    >
+      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 0">
+        {{ t('stoklar.topluEtiketAciklama') }}
+      </p>
+      <div class="form-grup">
+        <label>{{ t('stoklar.etiketTipi') }}</label>
+        <SelectButton
+          v-model="topluEtiketTip"
+          :options="etiketTipSecenekleri"
+          option-label="etiket"
+          option-value="value"
+          :allow-empty="false"
+          class="w-full"
+        />
+      </div>
+      <div class="form-grup">
+        <label>{{ t('stoklar.adetEtiket') }}</label>
+        <InputNumber
+          v-model="topluEtiketAdet"
+          :min="1"
+          :max="100"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="topluEtiketDialog = false"
+        />
+        <Button
+          :label="t('stoklar.etiketIndir')"
+          icon="pi pi-file-pdf"
+          :loading="topluEtiketYukleniyor"
+          @click="topluEtiketIndir"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -727,6 +778,41 @@ const etiketStok = ref(null)
 const barkodEtiket = (stok) => {
   etiketStok.value = stok
   etiketDialog.value = true
+}
+
+// Faz 5: toplu etiket (seçili ürünler, adetli, tip seçimli)
+const topluEtiketDialog = ref(false)
+const topluEtiketTip = ref('BARKOD')
+const topluEtiketAdet = ref(1)
+const topluEtiketYukleniyor = ref(false)
+const etiketTipSecenekleri = computed(() => [
+  { etiket: t('stoklar.etiketBarkod'), value: 'BARKOD' },
+  { etiket: t('stoklar.etiketQr'), value: 'QR' },
+  { etiket: t('stoklar.etiketIkisi'), value: 'IKISI' }
+])
+
+const topluEtiketIndir = async () => {
+  const secili = seciliStoklar.value || []
+  if (!secili.length) return
+  topluEtiketYukleniyor.value = true
+  try {
+    const payload = {
+      tip: topluEtiketTip.value,
+      kalemler: secili.map((s) => ({ stokId: s.id, adet: topluEtiketAdet.value }))
+    }
+    const { data } = await stokAPI.topluEtiket(payload)
+    const url = URL.createObjectURL(data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `etiketler-${Date.now()}.pdf`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+    topluEtiketDialog.value = false
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('stoklar.islemBasarisiz'))
+  } finally {
+    topluEtiketYukleniyor.value = false
+  }
 }
 
 const showDialog = ref(false)

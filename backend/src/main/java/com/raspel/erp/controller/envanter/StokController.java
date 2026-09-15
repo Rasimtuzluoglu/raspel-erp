@@ -6,7 +6,9 @@ import com.raspel.erp.dto.envanter.KritikStokDTO;
 import com.raspel.erp.service.envanter.StokService;
 import com.raspel.erp.service.envanter.StokAnalizService;
 import com.raspel.erp.service.sistem.QRService;
+import com.raspel.erp.service.sistem.BarkodService;
 import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class StokController {
     private final StokService stokService;
     private final StokAnalizService stokAnalizService;
     private final QRService qrService;
+    private final BarkodService barkodService;
     private final PdfRaporService pdfRaporService;
 
     @GetMapping
@@ -72,19 +75,64 @@ public class StokController {
 
     @GetMapping("/{id}/etiket")
     @Operation(summary = "Raf etiketi (PDF)", description = "Ürün adı, kod, barkod, QR, raf no ve fiyat içeren etiket PDF'i üretir")
-    public ResponseEntity<byte[]> etiketPdf(@PathVariable Long id) {
+    public ResponseEntity<byte[]> etiketPdf(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "IKISI") String tip) {
         Stok stok = stokService.entityGetir(id);
         byte[] qr = qrService.qrPng(qrIcerik(stok), 200);
+        byte[] barkod = barkodService.barkodPng(barkodIcerik(stok), 300, 90);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etiket-" + stok.getId() + ".pdf")
-                .body(pdfRaporService.stokEtiketi(stok, qr));
+                .body(pdfRaporService.stokEtiketi(stok, qr, barkod, tip));
     }
+
+    @PostMapping("/etiketler")
+    @Operation(summary = "Toplu raf etiketi (PDF)", description = "Seçilen stoklar için adetli çok sayfalı etiket PDF'i üretir. tip: BARKOD | QR | IKISI")
+    public ResponseEntity<byte[]> etiketler(@RequestBody EtiketIstek istek, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        int limit = 500;
+        List<PdfRaporService.EtiketVeri> veriler = new java.util.ArrayList<>();
+        String tip = istek != null && istek.tip() != null ? istek.tip() : "IKISI";
+        if (istek != null && istek.kalemler() != null) {
+            for (EtiketKalem k : istek.kalemler()) {
+                if (k == null || k.stokId() == null || veriler.size() >= limit) continue;
+                Stok stok = stokService.entityGetir(k.stokId());
+                if (sirketId != null && !sirketId.equals(stok.getSirketId())) continue;
+                int adet = k.adet() != null ? Math.max(1, Math.min(k.adet(), 100)) : 1;
+                byte[] qr = qrService.qrPng(qrIcerik(stok), 200);
+                byte[] barkod = barkodService.barkodPng(barkodIcerik(stok), 300, 90);
+                for (int i = 0; i < adet && veriler.size() < limit; i++) {
+                    veriler.add(new PdfRaporService.EtiketVeri(stok, qr, barkod, tip));
+                }
+            }
+        }
+        if (veriler.isEmpty()) {
+            throw new BusinessException("Etiket üretilecek stok seçilmedi");
+        }
+        byte[] pdf = pdfRaporService.stokEtiketleri(veriler);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etiketler.pdf")
+                .body(pdf);
+    }
+
+    record EtiketKalem(Long stokId, Integer adet) {}
+    record EtiketIstek(String tip, List<EtiketKalem> kalemler) {}
 
     private String qrIcerik(Stok stok) {
         if (stok.getBarkod() != null && !stok.getBarkod().isBlank()) return stok.getBarkod();
         if (stok.getStokKodu() != null && !stok.getStokKodu().isBlank()) return stok.getStokKodu();
         return "STK" + stok.getId();
+    }
+
+    /** CODE128 yalnızca ASCII destekler; barkod/kod ASCII değilse güvenli bir değere düşer. */
+    private String barkodIcerik(Stok stok) {
+        String ham = (stok.getBarkod() != null && !stok.getBarkod().isBlank()) ? stok.getBarkod()
+                : (stok.getStokKodu() != null && !stok.getStokKodu().isBlank()) ? stok.getStokKodu()
+                : ("STK" + stok.getId());
+        String ascii = ham.replaceAll("[^\\x20-\\x7E]", "");
+        return ascii.isBlank() ? ("STK" + stok.getId()) : ascii;
     }
 
     @GetMapping("/filtreli")

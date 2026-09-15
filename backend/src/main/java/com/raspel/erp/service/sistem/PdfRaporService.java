@@ -347,64 +347,93 @@ public class PdfRaporService {
     }
 
     /**
-     * Raf etiketi PDF'i: ürün adı, kod, barkod, QR (ZXing PNG), raf no ve fiyatı içerir.
-     * Yazdırma ön izlemesi için yeterli, sabit yerleşimli tek etiket sayfası üretir.
+     * Raf etiketi PDF'i: ürün adı, kod, raf no, fiyat ve (tip'e göre) barkod/QR içerir.
+     * Geriye dönük uyumluluk için tek parametreli çağrı "IKISI" davranışı gösterir.
      */
     public byte[] stokEtiketi(Stok stok, byte[] qrPng) {
+        return stokEtiketi(stok, qrPng, null, "IKISI");
+    }
+
+    /** Etiket türü: BARKOD, QR, IKISI. */
+    public byte[] stokEtiketi(Stok stok, byte[] qrPng, byte[] barkodPng, String tip) {
+        return stokEtiketleri(java.util.List.of(new EtiketVeri(stok, qrPng, barkodPng, tip)));
+    }
+
+    public record EtiketVeri(Stok stok, byte[] qrPng, byte[] barkodPng, String tip) {}
+
+    /** Çoklu etiket (her kayıt ayrı A4 sayfası). */
+    public byte[] stokEtiketleri(java.util.List<EtiketVeri> etiketler) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
-            PDPage page = new PDPage(PDRectangle.A4);
-            doc.addPage(page);
             FontSet font = fontlar(doc);
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
-                float y = PDRectangle.A4.getHeight() - MARGIN;
-                y = header(cs, y, "RAF ETİKETİ", font);
-                y -= 10;
-                y = cizgi(cs, y);
-                y -= 20;
-
-                String ad = stok.getAd() != null ? stok.getAd() : "-";
-                String kod = stok.getStokKodu() != null ? stok.getStokKodu() : "-";
-                String barkod = stok.getBarkod() != null ? stok.getBarkod() : "-";
-                String raf = stok.getRafNo() != null ? stok.getRafNo() : "-";
-                String fiyat = stok.getSatisFiyati() != null ? stok.getSatisFiyati().toString() + " TL" : "-";
-
-                cs.setFont(font.bold, 20);
-                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(ad); cs.endText();
-                y -= 26;
-
-                cs.setFont(font.regular, 14);
-                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Kod: " + kod); cs.endText();
-                y -= 20;
-                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod); cs.endText();
-                y -= 20;
-                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Raf No: " + raf); cs.endText();
-                y -= 20;
-                cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Fiyat: " + fiyat); cs.endText();
-                y -= 30;
-
-                if (qrPng != null && qrPng.length > 0) {
-                    PDImageXObject qr = PDImageXObject.createFromByteArray(doc, qrPng, "qr");
-                    float qrBoyut = 140;
-                    cs.drawImage(qr, PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut, qrBoyut, qrBoyut);
-                    cs.setFont(font.regular, 9);
-                    cs.beginText();
-                    cs.newLineAtOffset(PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut - 12);
-                    cs.showText("Karekod ile tarayıp say");
-                    cs.endText();
-                }
-
-                y -= 40;
-                y = cizgi(cs, y);
-                y -= 12;
-                cs.setFont(font.regular, 9);
-                cs.beginText(); cs.newLineAtOffset(MARGIN, y);
-                cs.showText("RasPel ERP - Otomatik Oluşturulmuştur");
-                cs.endText();
+            for (EtiketVeri v : etiketler) {
+                etiketSayfasi(doc, v, font);
             }
             doc.save(baos);
             return baos.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("PDF oluşturulamadı", e);
+        }
+    }
+
+    private void etiketSayfasi(PDDocument doc, EtiketVeri v, FontSet font) throws IOException {
+        Stok stok = v.stok();
+        boolean barkodGoster = v.barkodPng() != null && v.barkodPng().length > 0 && !"QR".equalsIgnoreCase(v.tip());
+        boolean qrGoster = v.qrPng() != null && v.qrPng().length > 0 && !"BARKOD".equalsIgnoreCase(v.tip());
+        PDPage page = new PDPage(PDRectangle.A4);
+        doc.addPage(page);
+        try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            float y = PDRectangle.A4.getHeight() - MARGIN;
+            y = header(cs, y, "RAF ETİKETİ", font);
+            y -= 10;
+            y = cizgi(cs, y);
+            y -= 20;
+
+            String ad = stok.getAd() != null ? stok.getAd() : "-";
+            String kod = stok.getStokKodu() != null ? stok.getStokKodu() : "-";
+            String barkod = stok.getBarkod() != null ? stok.getBarkod() : "-";
+            String raf = stok.getRafNo() != null ? stok.getRafNo() : "-";
+            String fiyat = stok.getSatisFiyati() != null ? stok.getSatisFiyati().toString() + " TL" : "-";
+
+            cs.setFont(font.bold, 20);
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(ad); cs.endText();
+            y -= 26;
+
+            cs.setFont(font.regular, 14);
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Kod: " + kod); cs.endText();
+            y -= 20;
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod); cs.endText();
+            y -= 20;
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Raf No: " + raf); cs.endText();
+            y -= 20;
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Fiyat: " + fiyat); cs.endText();
+            y -= 30;
+
+            if (barkodGoster) {
+                PDImageXObject b = PDImageXObject.createFromByteArray(doc, v.barkodPng(), "barkod");
+                float bGenislik = 240;
+                float bYukseklik = 80;
+                cs.drawImage(b, MARGIN, y - bYukseklik, bGenislik, bYukseklik);
+                y -= (bYukseklik + 18);
+            }
+
+            if (qrGoster) {
+                PDImageXObject qr = PDImageXObject.createFromByteArray(doc, v.qrPng(), "qr");
+                float qrBoyut = 140;
+                cs.drawImage(qr, PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut, qrBoyut, qrBoyut);
+                cs.setFont(font.regular, 9);
+                cs.beginText();
+                cs.newLineAtOffset(PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut - 12);
+                cs.showText("Karekod ile tarayıp say");
+                cs.endText();
+            }
+
+            y -= 40;
+            y = cizgi(cs, y);
+            y -= 12;
+            cs.setFont(font.regular, 9);
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y);
+            cs.showText("RasPel ERP - Otomatik Oluşturulmuştur");
+            cs.endText();
         }
     }
 

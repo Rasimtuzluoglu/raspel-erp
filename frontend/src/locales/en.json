@@ -579,7 +579,17 @@
     "kolonAyarlari": "Column Settings",
     "urunAdiGiriniz": "Enter a product name",
     "gecerliMiktar": "Enter a valid quantity",
-    "gecerliOran": "Please enter a valid rate greater than 0."
+    "gecerliOran": "Please enter a valid rate greater than 0.",
+    "etiketTipi": "Label Type",
+    "etiketBarkod": "Barcode",
+    "etiketQr": "QR Code",
+    "etiketIkisi": "Both",
+    "barkodYok": "No barcode",
+    "topluEtiket": "Labels",
+    "topluEtiketBaslik": "Bulk Labels",
+    "topluEtiketAciklama": "A multi-copy label PDF is generated for the selected products.",
+    "etiketIndir": "Download Labels",
+    "adetEtiket": "Copies"
   },
   "hizliSatis": {
     "breadcrumb": "Home / POS / New Sale",

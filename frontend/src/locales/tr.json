@@ -579,7 +579,17 @@
     "kolonAyarlari": "Sütun Ayarları",
     "urunAdiGiriniz": "Ürün adı giriniz",
     "gecerliMiktar": "Geçerli miktar giriniz",
-    "gecerliOran": "Lütfen 0'dan büyük geçerli bir oran girin."
+    "gecerliOran": "Lütfen 0'dan büyük geçerli bir oran girin.",
+    "etiketTipi": "Etiket Türü",
+    "etiketBarkod": "Barkod",
+    "etiketQr": "QR Kod",
+    "etiketIkisi": "Her İkisi",
+    "barkodYok": "Barkod yok",
+    "topluEtiket": "Etiket",
+    "topluEtiketBaslik": "Toplu Etiket",
+    "topluEtiketAciklama": "Seçili ürünler için adetli etiket PDF'i üretilir.",
+    "etiketIndir": "Etiketleri İndir",
+    "adetEtiket": "Adet"
   },
   "hizliSatis": {
     "breadcrumb": "Anasayfa / POS / Yeni Satış",
