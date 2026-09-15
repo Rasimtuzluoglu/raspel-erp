@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sistem;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,10 +34,12 @@ import com.raspel.erp.service.envanter.StokService;
 @RestController
 @RequestMapping("/api/exports")
 @RequiredArgsConstructor
+@Slf4j
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class ExcelExportController {
 
     private static final int MAX_EXPORT_ROWS = 10000;
+    private static final Pageable MAX_EXPORT_PAGE = PageRequest.of(0, MAX_EXPORT_ROWS);
 
     private final ExcelExportService excelService;
     private final CariHesapService cariHesapService;
@@ -53,7 +56,7 @@ public class ExcelExportController {
     @Operation(summary = "Cari hesapları Excel dışa aktar", description = "Cari hesapları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> cariHesaplar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = cariHesapService.tumCariHesaplariGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = cariHesapService.tumCariHesaplariGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(c -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", c.getId()); m.put("Ad", c.getAd()); m.put("Vergi No", c.getVergiNumarasi());
@@ -67,7 +70,7 @@ public class ExcelExportController {
     @Operation(summary = "Faturaları Excel dışa aktar", description = "Faturaları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> faturalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = faturaService.tumFaturalariGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = faturaService.tumFaturalariGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(f -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", f.getId()); m.put("Fatura No", f.getFaturaNumarasi()); m.put("Tarih", f.getTarih());
@@ -81,7 +84,7 @@ public class ExcelExportController {
     @Operation(summary = "Hareketleri Excel dışa aktar", description = "Hareketleri Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> hareketler(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = hareketService.tumHareketleriGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = hareketService.tumHareketleriGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(h -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", h.getId()); m.put("Cari", h.getCariHesapAd()); m.put("Tür", h.getTur());
@@ -95,7 +98,7 @@ public class ExcelExportController {
     @Operation(summary = "Stokları Excel dışa aktar", description = "Stokları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> stoklar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = stokService.tumunuGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = stokService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(s -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", s.getId()); m.put("Ad", s.getAd()); m.put("Barkod", s.getBarkod());
@@ -110,7 +113,7 @@ public class ExcelExportController {
     @Operation(summary = "Personeli Excel dışa aktar", description = "Personel kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> personel(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = personelService.tumunuGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = personelService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(p -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", p.getId()); m.put("Ad", p.getAd()); m.put("Soyad", p.getSoyad());
@@ -125,7 +128,7 @@ public class ExcelExportController {
     @Operation(summary = "Bankaları Excel dışa aktar", description = "Bankaları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> bankalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = bankaService.tumBankalariGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = bankaService.tumBankalariGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(b -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", b.getId()); m.put("Ad", b.getAd());
@@ -139,7 +142,7 @@ public class ExcelExportController {
     @Operation(summary = "Kasaları Excel dışa aktar", description = "Kasaları Excel (.xlsx) dosyası olarak dışa aktarır")
     public ResponseEntity<byte[]> kasalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = kasaService.tumKasalarGetir(sirketId, Pageable.unpaged()).getContent();
+        var list = kasaService.tumKasalarGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(k -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", k.getId()); m.put("Ad", k.getAd()); m.put("Bakiye", k.getBakiye());
@@ -158,7 +161,7 @@ public class ExcelExportController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangicTarih,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitisTarih) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        var list = auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, Pageable.unpaged()).getContent();
+        var list = auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(l -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", l.getId()); m.put("Tarih", l.getTarih()); m.put("Kullanıcı ID", l.getKullaniciId());
@@ -220,6 +223,9 @@ public class ExcelExportController {
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {
+        if (rows.size() >= MAX_EXPORT_ROWS) {
+            log.warn("Excel dışa aktarım satır limitine ulaşıldı ({}); çıktı kesilmiş olabilir. Dosya: {}", MAX_EXPORT_ROWS, name);
+        }
         byte[] data = excelService.export(name, cols, rows);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "-" + java.time.LocalDate.now() + ".xlsx\"")

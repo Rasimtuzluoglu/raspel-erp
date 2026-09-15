@@ -61,8 +61,10 @@ public class KurulumService {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kurulum kilidi alınamadı: {}", e.getMessage());
-            return kurulumYapKilitli(dto);
+            // Kilid olmadan kuruluma devam etmek iki eşzamanlı istekte çift kuruluma
+            // (TOCTOU) yol açar; bu yüzden açık hata ile istek reddedilir.
+            log.error("Kurulum sırasında beklenmeyen hata (kilitsiz devam edilmedi): {}", e.getMessage());
+            throw new BusinessException("Kurulum sırasında beklenmeyen bir hata oluştu, lütfen tekrar deneyin");
         }
     }
 

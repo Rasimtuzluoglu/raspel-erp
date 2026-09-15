@@ -362,12 +362,17 @@ public class FaturaService {
             }
         }
 
+        // E-posta gönderim durumu fatura yanıtında bildirilir:
+        // "fatura kesildi ama e-posta iletilemedi" bilgisi kaybolmasın.
+        String emailGonderimDurumu = null;
         try {
             if (sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
                 emailService.faturaBildirimiGonder(cariHesap.getEmail(), faturaNo, genelToplam.toString());
+                emailGonderimDurumu = "GONDERILDI";
             }
         } catch (Exception e) {
-            log.warn("Fatura bildirim e-postası gönderilemedi: {}", e.getMessage());
+            emailGonderimDurumu = "GONDERILEMEDI";
+            log.warn("Fatura bildirim e-postası gönderilemedi (fatura {} kesildi ama e-posta iletilemedi): {}", faturaNo, e.getMessage());
         }
 
         log.info("Fatura oluşturuldu - No: {}, ID: {}", faturaNo, kaydedilen.getId());
@@ -386,7 +391,9 @@ public class FaturaService {
         if (kaydedilen.getKasaId() != null && odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
             kasaGirisi(kaydedilen, odenenTutar);
         }
-        return entityDTOyeCevir(kaydedilen);
+        FaturaDTO sonuc = entityDTOyeCevir(kaydedilen);
+        sonuc.setEmailGonderimDurumu(emailGonderimDurumu);
+        return sonuc;
     }
 
     /** Tahsil edilen tutarı seçili kasaya giriş olarak işler. */

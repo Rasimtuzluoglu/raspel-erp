@@ -17,6 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +33,7 @@ class KurulumServiceTest {
     @Mock private SirketRepository sirketRepository;
     @Mock private KullaniciRepository kullaniciRepository;
     @Mock private KullaniciService kullaniciService;
+    @Mock private DataSource dataSource;
     @InjectMocks private KurulumService kurulumService;
 
     private KurulumDTO ornekDTO() {
@@ -54,7 +59,17 @@ class KurulumServiceTest {
     }
 
     @Test
-    void kurulumYap_createsCompanyAndAdmin() {
+    void kurulumYap_createsCompanyAndAdmin() throws Exception {
+        // PostgreSQL advisory lock başarıyla alınıyor
+        Connection conn = mock(Connection.class);
+        Statement st = mock(Statement.class);
+        ResultSet rs = mock(ResultSet.class);
+        when(dataSource.getConnection()).thenReturn(conn);
+        when(conn.createStatement()).thenReturn(st);
+        when(st.executeQuery(anyString())).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getBoolean(1)).thenReturn(true);
+
         when(sirketRepository.count()).thenReturn(0L);
         when(sirketRepository.save(any(Sirket.class))).thenAnswer(inv -> {
             Sirket s = inv.getArgument(0);
@@ -77,7 +92,44 @@ class KurulumServiceTest {
     }
 
     @Test
-    void kurulumYap_whenAlreadySetup_throws() {
+    void kurulumYap_lockAlinamazsaKilitsizCalistirmaz() throws Exception {
+        Connection conn = mock(Connection.class);
+        Statement st = mock(Statement.class);
+        ResultSet rs = mock(ResultSet.class);
+        when(dataSource.getConnection()).thenReturn(conn);
+        when(conn.createStatement()).thenReturn(st);
+        when(st.executeQuery(anyString())).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getBoolean(1)).thenReturn(false);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> kurulumService.kurulumYap(ornekDTO()));
+        assertTrue(ex.getMessage().toLowerCase().contains("başka bir istek"));
+        // Kilitsiz kurulum yürütülmemeli
+        verify(sirketRepository, never()).save(any(Sirket.class));
+    }
+
+    @Test
+    void kurulumYap_beklenmeyenHataKilitsizDevamEtmez() throws Exception {
+        when(dataSource.getConnection()).thenThrow(new RuntimeException("DB bağlantı hatası"));
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> kurulumService.kurulumYap(ornekDTO()));
+        assertTrue(ex.getMessage().toLowerCase().contains("tekrar deneyin"));
+        verify(sirketRepository, never()).save(any(Sirket.class));
+        verify(kullaniciService, never()).olustur(any(KullaniciDTO.class));
+    }
+
+    @Test
+    void kurulumYap_whenAlreadySetup_throws() throws Exception {
+        // Advisory lock başarıyla alınır, ardından firma zaten var olduğu için hata döner
+        Connection conn = mock(Connection.class);
+        Statement st = mock(Statement.class);
+        ResultSet rs = mock(ResultSet.class);
+        when(dataSource.getConnection()).thenReturn(conn);
+        when(conn.createStatement()).thenReturn(st);
+        when(st.executeQuery(anyString())).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getBoolean(1)).thenReturn(true);
+
         when(sirketRepository.count()).thenReturn(1L);
         assertThrows(BusinessException.class, () -> kurulumService.kurulumYap(ornekDTO()));
     }

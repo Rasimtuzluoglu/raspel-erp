@@ -134,6 +134,61 @@ class FaturaServiceTest {
     }
 
     @Test
+    void faturaOlustur_emailBasarsaDurumuYanitaEkler() {
+        CariHesap cari = createCariHesap();
+        cari.setEmail("cari@example.com");
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+
+        var result = faturaService.faturaOlustur(dto, 1L, null, null);
+
+        assertEquals("GONDERILDI", result.getEmailGonderimDurumu());
+        verify(emailService).faturaBildirimiGonder(eq("cari@example.com"), any(), any());
+    }
+
+    @Test
+    void faturaOlustur_emailBasarisizsaDurumuYanitaEklerVeFaturaYineOlusur() {
+        CariHesap cari = createCariHesap();
+        cari.setEmail("cari@example.com");
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+        doThrow(new RuntimeException("smtp down"))
+                .when(emailService).faturaBildirimiGonder(eq("cari@example.com"), any(), any());
+
+        var result = faturaService.faturaOlustur(dto, 1L, null, null);
+
+        assertNotNull(result);
+        assertEquals("GONDERILEMEDI", result.getEmailGonderimDurumu());
+    }
+
+    @Test
+    void faturaOlustur_emailYoksaDurumNullKalir() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+
+        var result = faturaService.faturaOlustur(dto, 1L, null, null);
+
+        assertNull(result.getEmailGonderimDurumu());
+        verify(emailService, never()).faturaBildirimiGonder(anyString(), anyString(), anyString());
+    }
+
+    @Test
     void faturaOlustur_throwsWhenInvalidTur() {
         FaturaDTO dto = FaturaDTO.builder().tur("INVALID").tarih(LocalDate.now()).kalemler(List.of()).build();
         assertThrows(RuntimeException.class, () -> faturaService.faturaOlustur(dto, 1L, null, null));

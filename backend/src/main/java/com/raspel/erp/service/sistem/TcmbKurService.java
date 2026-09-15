@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -110,13 +111,11 @@ public class TcmbKurService {
     }
 
     public List<DovizKuru> tumKurlariGetir() {
-        List<DovizKuru> list = dovizKuruRepository.findAll();
-        boolean guncelDegil = list.isEmpty() || list.stream().anyMatch(k -> k.getTarih() == null || !k.getTarih().equals(java.time.LocalDate.now()));
-        if (guncelDegil) {
+        // Bugünün kuru yoksa TCMB'den tazelenir; liste yalnızca bir kez çekilir.
+        if (dovizKuruRepository.countByTarih(LocalDate.now()) == 0) {
             tcmbKurlariniGuncelle();
-            list = dovizKuruRepository.findAll();
         }
-        return list;
+        return dovizKuruRepository.findAll();
     }
 
     public BigDecimal cevir(BigDecimal tutar, String kaynakKod, String hedefKod) {

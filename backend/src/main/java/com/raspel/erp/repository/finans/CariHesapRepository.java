@@ -43,6 +43,12 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
 
     List<CariHesap> findBySirketIdOrderByAdAsc(Long sirketId);
 
+    /** En yüksek borçlu 5 cari (bakiye en negatiften başlayarak). */
+    List<CariHesap> findTop5BySirketIdAndBakiyeLessThanOrderByBakiyeAsc(Long sirketId, BigDecimal bakiye);
+
+    /** En yüksek alacaklı 5 cari (bakiye en yüksekten başlayarak). */
+    List<CariHesap> findTop5BySirketIdAndBakiyeGreaterThanOrderByBakiyeDesc(Long sirketId, BigDecimal bakiye);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CariHesap c WHERE c.id = :id")
     Optional<CariHesap> findByIdForUpdate(@Param("id") Long id);

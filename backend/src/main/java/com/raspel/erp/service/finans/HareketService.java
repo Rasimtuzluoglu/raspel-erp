@@ -231,9 +231,6 @@ public class HareketService {
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
-        if (dto.getCariHesapId() != null && !dto.getCariHesapId().equals(hareket.getCariHesap().getId())) {
-            tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
-        }
 
         if (dto.getFaturaId() != null) {
             Fatura yeniFatura = faturaRepository.findById(dto.getFaturaId())

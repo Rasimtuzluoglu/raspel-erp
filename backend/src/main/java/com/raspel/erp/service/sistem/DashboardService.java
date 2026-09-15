@@ -150,19 +150,18 @@ public class DashboardService {
         BigDecimal hedefCiro = hedefOpt.map(SirketHedef::getHedefCiro).orElse(BigDecimal.ZERO);
         BigDecimal hedefKar = hedefOpt.map(SirketHedef::getHedefKar).orElse(BigDecimal.ZERO);
 
-        BigDecimal gerceklesenCiro = safeGet(() -> {
-            return faturaRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
-                    .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                    .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-        }, BigDecimal.ZERO);
-
-        BigDecimal toplamAlisMaliyeti = safeGet(() -> {
-            return faturaRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
-                    .filter(f -> f.getTur() == Fatura.FaturaTur.ALIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                    .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-        }, BigDecimal.ZERO);
+        // Ayın faturaları tek sorguyla çekilir; ciro ve alış maliyeti aynı listeden hesaplanır.
+        final List<Fatura> ayFaturalari = safeGetList(
+                () -> faturaRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon),
+                Collections.emptyList());
+        BigDecimal gerceklesenCiro = ayFaturalari.stream()
+                .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal toplamAlisMaliyeti = ayFaturalari.stream()
+                .filter(f -> f.getTur() == Fatura.FaturaTur.ALIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal toplamMasraflar = safeGet(() -> {
             return masrafRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
@@ -187,21 +186,15 @@ public class DashboardService {
                 ? gerceklesenCiro.multiply(BigDecimal.valueOf(100)).divide(hedefCiro, 1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        // En çok borçlu ve alacaklı cariler
+        // En çok borçlu ve alacaklı cariler (filtre + limit DB'de uygulanır)
         List<DashboardDTO.CariOzetDTO> enCokBorcCariler = safeGetList(
-                () -> cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                        .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) < 0)
-                        .sorted((a, b) -> a.getBakiye().compareTo(b.getBakiye()))
-                        .limit(5)
+                () -> cariHesapRepository.findTop5BySirketIdAndBakiyeLessThanOrderByBakiyeAsc(sirketId, BigDecimal.ZERO).stream()
                         .map(c -> DashboardDTO.CariOzetDTO.builder().cariAd(c.getAd()).tutar(c.getBakiye().abs()).build())
                         .collect(Collectors.toList()),
                 Collections.emptyList());
 
         List<DashboardDTO.CariOzetDTO> enCokAlacakCariler = safeGetList(
-                () -> cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                        .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) > 0)
-                        .sorted((a, b) -> b.getBakiye().compareTo(a.getBakiye()))
-                        .limit(5)
+                () -> cariHesapRepository.findTop5BySirketIdAndBakiyeGreaterThanOrderByBakiyeDesc(sirketId, BigDecimal.ZERO).stream()
                         .map(c -> DashboardDTO.CariOzetDTO.builder().cariAd(c.getAd()).tutar(c.getBakiye()).build())
                         .collect(Collectors.toList()),
                 Collections.emptyList());

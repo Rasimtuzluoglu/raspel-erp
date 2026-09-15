@@ -14,7 +14,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TcmbKurServiceTest {
@@ -27,6 +28,8 @@ class TcmbKurServiceTest {
     @BeforeEach
     void setUp() {
         tcmbKurService = new TcmbKurService(dovizKuruRepository);
+        // cevir_* testleri findAll üzerinden çalışır; bugünün kuru var sayılır (ağ çağrısı tetiklenmez)
+        lenient().when(dovizKuruRepository.countByTarih(any())).thenReturn(1L);
     }
 
     private DovizKuru kur(String kod, String satis) {
@@ -78,6 +81,18 @@ class TcmbKurServiceTest {
         when(dovizKuruRepository.findAll()).thenReturn(List.of(kur("USD", "34.50")));
         BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "XXX", "TRY");
         assertEquals(0, new BigDecimal("100.0000").compareTo(sonuc));
+    }
+
+    @Test
+    void tumKurlariGetir_bugunKuruVarsaTekFindAllIleDoner() {
+        when(dovizKuruRepository.findAll()).thenReturn(List.of(kur("USD", "34.50")));
+
+        var liste = tcmbKurService.tumKurlariGetir();
+
+        assertEquals(1, liste.size());
+        // Güncel kullanılabilir durumdayken TCMB'ye ağ çağrısı yapılmaz, findAll tek kez çalışır
+        verify(dovizKuruRepository, times(1)).findAll();
+        verify(dovizKuruRepository, never()).save(any());
     }
 
     @Test

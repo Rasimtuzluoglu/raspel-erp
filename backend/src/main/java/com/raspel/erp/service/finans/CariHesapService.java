@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
-import com.raspel.erp.entity.finans.Hareket;
-import com.raspel.erp.entity.sistem.Sirket;
 
 /**
  * Cari Hesap Service

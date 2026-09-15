@@ -35,6 +35,7 @@ import com.raspel.erp.repository.ticaret.PivotSatirProjeksiyon;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class RaporService {

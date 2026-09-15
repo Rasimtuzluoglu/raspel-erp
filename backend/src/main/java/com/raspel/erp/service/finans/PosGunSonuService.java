@@ -4,6 +4,7 @@ import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.entity.finans.PosGunSonu;
 import com.raspel.erp.entity.finans.PosTerminali;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.repository.finans.PosGunSonuRepository;
@@ -56,10 +57,14 @@ public class PosGunSonuService {
                     .map(Hareket::getKomisyonTutar)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            bankaRepository.findById(p.getBankaId()).ifPresent(banka -> {
-                banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).add(tutar));
-                bankaRepository.save(banka);
-            });
+            // Banka tanımlı olmayan POS atlanır; banka tanımlı ama kayıt yoksa işlem açıkça reddedilir
+            // (sessizce "başarılı" görünüp bankaya aktarılmaması finansal tutarsızlığa yol açar).
+            Banka banka = bankaRepository.findById(p.getBankaId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Talep edilen POS'un bankası bulunamadı (POS: " + p.getAd()
+                                    + ", bankaId: " + p.getBankaId() + "). Gün sonu işlemi durduruldu."));
+            banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).add(tutar));
+            bankaRepository.save(banka);
 
             gunSonuRepository.save(PosGunSonu.builder()
                     .posId(p.getId()).sirketId(sirketId)

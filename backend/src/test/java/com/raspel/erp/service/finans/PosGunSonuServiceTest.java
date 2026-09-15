@@ -63,4 +63,20 @@ class PosGunSonuServiceTest {
         assertTrue(sonuc.isEmpty());
         verify(bankaRepository, never()).findById(anyLong());
     }
+
+    @Test
+    void gunSonuIsle_bankaBulunamazsaHataFirlatirVeKayitYapmaz() {
+        PosTerminali p = PosTerminali.builder().id(1L).sirketId(1L).ad("Halkbank POS").bankaId(3L).aktif(true).build();
+        when(posRepository.findBySirketIdAndAktifTrueOrderByAd(1L)).thenReturn(List.of(p));
+        when(gunSonuRepository.existsByPosIdAndTarih(1L, LocalDate.now())).thenReturn(false);
+        when(hareketRepository.findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(1L, 1L))
+                .thenReturn(List.of(Hareket.builder().tutar(new BigDecimal("1000")).hareketTarihi(LocalDate.now()).build()));
+        when(bankaRepository.findById(3L)).thenReturn(java.util.Optional.empty());
+
+        com.raspel.erp.exception.BusinessException ex = assertThrows(
+                com.raspel.erp.exception.BusinessException.class, () -> gunSonuService.gunSonuIsle(1L));
+
+        assertTrue(ex.getMessage().toLowerCase().contains("banka"));
+        verify(gunSonuRepository, never()).save(any());
+    }
 }

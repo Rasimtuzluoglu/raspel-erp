@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.scheduling.annotation.Scheduled;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import com.raspel.erp.entity.ticaret.Fatura;
@@ -34,6 +35,7 @@ public class FaturaController {
     private final FaturaService faturaService;
     private final java.util.concurrent.ConcurrentHashMap<String, IdempotencyKaydi> idempotencyCache = new java.util.concurrent.ConcurrentHashMap<>();
     private static final long IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
+    private static final long IDEMPOTENCY_TEMIZLIK_MS = 5 * 60 * 1000;
 
     @GetMapping
     @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler. search ile fatura no/cari adı araması yapılır.")
@@ -117,13 +119,19 @@ public class FaturaController {
             if (mevcut != null && !mevcut.suresiDoldu()) {
                 return ResponseEntity.ok(mevcut.fatura);
             }
+            // TTL süresi dolmuş kayıt map'te kaldığında putIfAbsent yeni kaydı engeller
+            // ve mükerrer fatura oluşur; bu yüzden süresi dolan giriş temizlenir.
+            if (mevcut != null) {
+                idempotencyCache.remove(idempotencyKey, mevcut);
+            }
             Long sirketId = (Long) request.getAttribute("sirketId");
             Long kullaniciId = (Long) request.getAttribute("kullaniciId");
             String displayName = (String) request.getAttribute("displayName");
             FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
             IdempotencyKaydi yeni = new IdempotencyKaydi(olusturulan);
             IdempotencyKaydi onceki = idempotencyCache.putIfAbsent(idempotencyKey, yeni);
-            if (onceki != null && !onceki.suresiDoldu()) {
+            if (onceki != null) {
+                // Eşzamanlı istek aynı anahtarla kaydetti; o kayıt esas alınır.
                 return ResponseEntity.ok(onceki.fatura);
             }
             return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
@@ -133,6 +141,17 @@ public class FaturaController {
         String displayName = (String) request.getAttribute("displayName");
         FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
         return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
+    }
+
+    /** TTL süresi dolan idempotency kayıtlarını periyodik olarak temizler (unbounded büyümeyi engeller). */
+    @Scheduled(fixedDelay = IDEMPOTENCY_TEMIZLIK_MS)
+    public void idempotencyCacheTemizle() {
+        int oncekiBoyut = idempotencyCache.size();
+        idempotencyCache.entrySet().removeIf(e -> e.getValue().suresiDoldu());
+        int temizlenen = oncekiBoyut - idempotencyCache.size();
+        if (temizlenen > 0) {
+            log.info("Idempotency cache temizlendi: {} kayıt silindi", temizlenen);
+        }
     }
 
     @PutMapping("/{id}")

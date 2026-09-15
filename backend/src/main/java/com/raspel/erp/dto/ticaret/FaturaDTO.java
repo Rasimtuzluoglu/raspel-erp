@@ -62,4 +62,7 @@ public class FaturaDTO {
     private BigDecimal taksitTutar;
     private Long kasaId;
     private String kasaAd;
+
+    /** Fatura kesilirken e-posta bildiriminin durumu: GONDERILDI / GONDERILEMEDI / null (gönderilmedi). */
+    private String emailGonderimDurumu;
 }
