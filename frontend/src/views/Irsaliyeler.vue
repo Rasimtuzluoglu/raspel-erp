@@ -11,10 +11,12 @@
       />
     </div>
 
-    <DataTable
+    <AppDataTable
       :value="list"
       striped-rows
       :loading="yukleniyor"
+      :paginator="false"
+      :empty-message="t('irsaliyeler.empty')"
     >
       <Column
         field="irsaliyeNo"
@@ -70,17 +72,18 @@
           />
         </template>
       </Column>
-    </DataTable>
-
-    <EmptyState
-      v-if="!yukleniyor && list.length === 0"
-      :message="t('irsaliyeler.empty')"
-      :sub-message="t('irsaliyeler.emptyHint')"
-      icon="pi pi-truck"
-      :action-label="t('irsaliyeler.yeniIrsaliye')"
-      action-icon="pi pi-plus"
-      @action="dialogAc()"
-    />
+      <template #empty>
+        <EmptyState
+          v-if="!yukleniyor && list.length === 0"
+          :message="t('irsaliyeler.empty')"
+          :sub-message="t('irsaliyeler.emptyHint')"
+          icon="pi pi-truck"
+          :action-label="t('irsaliyeler.yeniIrsaliye')"
+          action-icon="pi pi-plus"
+          @action="dialogAc()"
+        />
+      </template>
+    </AppDataTable>
 
     <Dialog
       v-model:visible="dialog"

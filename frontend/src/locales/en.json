@@ -1372,6 +1372,7 @@
   },
   "fiyatListesi": {
     "title": "Fiyat Listesi",
+    "empty": "No price records found",
     "yeniFiyat": "Yeni Fiyat",
     "urun": "Ürün",
     "alisFiyati": "Alış Fiyatı",

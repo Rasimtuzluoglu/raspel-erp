@@ -56,10 +56,12 @@
       @update:rows="rowsDegisti"
     >
       <template #empty>
-        <EmptyState
-          v-if="!loading"
-          :message="emptyMessage"
-        />
+        <slot name="empty">
+          <EmptyState
+            v-if="!loading"
+            :message="emptyMessage"
+          />
+        </slot>
       </template>
       <slot />
     </DataTable>

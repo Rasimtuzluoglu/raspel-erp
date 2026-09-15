@@ -11,10 +11,12 @@
       />
     </div>
 
-    <DataTable
+    <AppDataTable
       :value="list"
       striped-rows
       :loading="yukleniyor"
+      :paginator="false"
+      :empty-message="t('masraflar.empty')"
     >
       <Column
         field="tarih"
@@ -63,17 +65,18 @@
           />
         </template>
       </Column>
-    </DataTable>
-
-    <EmptyState
-      v-if="!yukleniyor && list.length === 0"
-      :message="t('masraflar.empty')"
-      :sub-message="t('masraflar.emptyHint')"
-      icon="pi pi-receipt"
-      :action-label="t('masraflar.yeniMasraf')"
-      action-icon="pi pi-plus"
-      @action="dialogAc()"
-    />
+      <template #empty>
+        <EmptyState
+          v-if="!yukleniyor && list.length === 0"
+          :message="t('masraflar.empty')"
+          :sub-message="t('masraflar.emptyHint')"
+          icon="pi pi-receipt"
+          :action-label="t('masraflar.yeniMasraf')"
+          action-icon="pi pi-plus"
+          @action="dialogAc()"
+        />
+      </template>
+    </AppDataTable>
 
     <Dialog
       v-model:visible="dialog"

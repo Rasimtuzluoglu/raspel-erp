@@ -11,10 +11,12 @@
       />
     </div>
 
-    <DataTable
+    <AppDataTable
       :value="list"
       striped-rows
       :loading="yukleniyor"
+      :paginator="false"
+      :empty-message="t('fiyatListesi.empty')"
     >
       <Column
         field="stokAd"
@@ -70,7 +72,7 @@
           />
         </template>
       </Column>
-    </DataTable>
+    </AppDataTable>
 
     <Dialog
       v-model:visible="dialog"

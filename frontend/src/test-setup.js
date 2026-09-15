@@ -1,4 +1,13 @@
 import { vi } from 'vitest'
+import { config } from '@vue/test-utils'
+
+// AppDataTable global olarak kayitli (main.js). Testlerde de passthrough
+// olarak tanimliyoruz; boylece altindaki DataTable stub'i ile satirlar/
+// slotlar render edilebilir.
+config.global.components.AppDataTable = {
+  name: 'AppDataTable',
+  template: '<div><slot /><slot name="empty" /></div>'
+}
 
 const localStorageMock = (() => {
   let store = {}

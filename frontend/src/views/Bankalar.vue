@@ -34,15 +34,15 @@
       v-if="!loading"
       class="table-container"
     >
-      <DataTable
+      <AppDataTable
         :value="bankaStore.bankalar"
-        responsive-layout="scroll"
         striped-rows
         :rows="10"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        gorunum-anahtari="bankalar"
       >
         <Column
           field="ad"
@@ -105,16 +105,18 @@
             />
           </template>
         </Column>
-      </DataTable>
-      <EmptyState
-        v-if="bankaStore.bankalar.length === 0"
-        :message="t('bankalar.empty')"
-        :sub-message="t('bankalar.emptyHint')"
-        icon="pi pi-building"
-        :action-label="t('bankalar.yeniBanka')"
-        action-icon="pi pi-plus"
-        @action="openDialog"
-      />
+        <template #empty>
+          <EmptyState
+            v-if="bankaStore.bankalar.length === 0"
+            :message="t('bankalar.empty')"
+            :sub-message="t('bankalar.emptyHint')"
+            icon="pi pi-building"
+            :action-label="t('bankalar.yeniBanka')"
+            action-icon="pi pi-plus"
+            @action="openDialog"
+          />
+        </template>
+      </AppDataTable>
     </div>
 
     <Dialog

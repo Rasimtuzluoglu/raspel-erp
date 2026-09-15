@@ -11,10 +11,12 @@
       />
     </div>
 
-    <DataTable
+    <AppDataTable
       :value="list"
       striped-rows
       :loading="yukleniyor"
+      :paginator="false"
+      :empty-message="t('cekSenet.empty')"
     >
       <Column
         field="tur"
@@ -96,17 +98,18 @@
           />
         </template>
       </Column>
-    </DataTable>
-
-    <EmptyState
-      v-if="!yukleniyor && list.length === 0"
-      :message="t('cekSenet.empty')"
-      :sub-message="t('cekSenet.emptyHint')"
-      icon="pi pi-credit-card"
-      :action-label="t('cekSenet.yeniCekSenet')"
-      action-icon="pi pi-plus"
-      @action="dialogAc()"
-    />
+      <template #empty>
+        <EmptyState
+          v-if="!yukleniyor && list.length === 0"
+          :message="t('cekSenet.empty')"
+          :sub-message="t('cekSenet.emptyHint')"
+          icon="pi pi-credit-card"
+          :action-label="t('cekSenet.yeniCekSenet')"
+          action-icon="pi pi-plus"
+          @action="dialogAc()"
+        />
+      </template>
+    </AppDataTable>
 
     <Dialog
       v-model:visible="dialog"
