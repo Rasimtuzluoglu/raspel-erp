@@ -1,7 +1,7 @@
 <template>
   <Dialog
     v-model:visible="acik"
-    header="Klavye Kısayolları"
+    :header="$t('common.keyboardShortcuts')"
     :modal="false"
     :style="{ width: '520px' }"
   >

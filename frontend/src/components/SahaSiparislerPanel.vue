@@ -24,7 +24,7 @@
         </div>
 
         <h4 class="customer-title">
-          {{ s.cariHesapAdi || s.musteriAdi || 'Müşteri' }}
+          {{ s.cariHesapAdi || s.musteriAdi || $t('sahaPortali.musteri') }}
         </h4>
 
         <div
@@ -83,7 +83,7 @@
             @click="$emit('durum-sec', s)"
           />
           <Button
-            label="İmza & Teslim Et"
+            :label="$t('sahaPortali.imzaTeslimEt')"
             icon="pi pi-check"
             class="p-button-success p-button-sm flex-1 font-bold"
             @click="$emit('imza-ac', s)"

@@ -6,7 +6,7 @@
     style="width: 500px"
   >
     <div class="form-grup">
-      <label>Miktar *</label>
+      <label>{{ $t('common.quantity') }} *</label>
       <InputNumber
         v-model="miktar"
         :min="0.01"
@@ -15,7 +15,7 @@
       />
     </div>
     <div class="form-grup">
-      <label>Tarih *</label>
+      <label>{{ $t('common.date') }} *</label>
       <DatePicker
         v-model="hareketTarihi"
         date-format="dd.mm.yy"
@@ -23,18 +23,18 @@
       />
     </div>
     <div class="form-grup">
-      <label>Cari Hesap</label>
+      <label>{{ $t('nav.cari') }}</label>
       <Dropdown
         v-model="cariHesapId"
         :options="cariHesaplar"
         option-label="ad"
         option-value="id"
-        placeholder="İsteğe bağlı"
+        :placeholder="$t('common.optional')"
         class="w-full"
       />
     </div>
     <div class="form-grup">
-      <label>Açıklama</label>
+      <label>{{ $t('common.description') }}</label>
       <Textarea
         v-model="aciklama"
         rows="2"
@@ -43,13 +43,13 @@
     </div>
     <template #footer>
       <Button
-        label="İptal"
+        :label="$t('common.cancel')"
         icon="pi pi-times"
         class="p-button-text"
         @click="visible = false"
       />
       <Button
-        label="Kaydet"
+        :label="$t('common.save')"
         icon="pi pi-check"
         :loading="loading"
         @click="$emit('kaydet')"

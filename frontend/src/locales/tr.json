@@ -98,7 +98,9 @@
     "username": "Kullanıcı Adı",
     "password": "Şifre",
     "sirket": "Şirket Seçiniz",
-    "welcome": "RasPel ERP'ye Hoş Geldiniz"
+    "welcome": "RasPel ERP'ye Hoş Geldiniz",
+    "sessionExpiring": "Oturum Süresi Dolmak Üzere",
+    "extendSession": "Oturumu Uzat"
   },
   "giris": {
     "subtitle": "KOBİ'nin Tek Panosu",
@@ -205,7 +207,23 @@
     "density": "Yoğunluk",
     "compact": "Kompakt",
     "comfortable": "Rahat",
-    "showAll": "Hepsini Göster"
+    "showAll": "Hepsini Göster",
+    "export": "Dışa Aktar",
+    "downloadExcel": "Excel İndir",
+    "downloadCsv": "CSV İndir",
+    "print": "Yazdır",
+    "optional": "İsteğe bağlı",
+    "recordsWord": "kayıt",
+    "unexpectedError": "Beklenmeyen bir sayfa hatası meydana geldi.",
+    "keyboardShortcuts": "Klavye Kısayolları",
+    "today": "Bugün",
+    "thisWeek": "Bu Hafta",
+    "thisMonth": "Bu Ay",
+    "thisYear": "Bu Yıl",
+    "quantity": "Miktar",
+    "apply": "Uygula",
+    "hide": "Gizle",
+    "last3Months": "Son 3 Ay"
   },
   "status": {
     "active": "Aktif",
@@ -381,7 +399,10 @@
     "guncelSatisFiyati": "Güncel Satış Fiyatı",
     "trendYukseliyor": "Yükseliyor",
     "trendDusuyor": "Düşüyor",
-    "trendSabit": "Sabit"
+    "trendSabit": "Sabit",
+    "kalemAciklamaZorunlu": "Açıklama *",
+    "kalemAciklamaPlaceholder": "Kalem açıklaması",
+    "iskontoYuzde": "İskonto %"
   },
   "stoklar": {
     "title": "Stok Yönetimi",
@@ -540,7 +561,15 @@
       "satis": "Satış",
       "alisIade": "Alış İade",
       "satisIade": "Satış İade"
-    }
+    },
+    "islemYonu": "İşlem Yönü",
+    "oranYuzde": "Oran (%)",
+    "kategoriFiltreOps": "Kategori Filtre (opsiyonel)",
+    "stokGrubuFiltreOps": "Stok Grubu Filtre (opsiyonel)",
+    "kolonAyarlari": "Sütun Ayarları",
+    "urunAdiGiriniz": "Ürün adı giriniz",
+    "gecerliMiktar": "Geçerli miktar giriniz",
+    "gecerliOran": "Lütfen 0'dan büyük geçerli bir oran girin."
   },
   "hizliSatis": {
     "breadcrumb": "Anasayfa / POS / Yeni Satış",
@@ -2283,7 +2312,8 @@
     "ziyaretKaydedildi": "Ziyaret notu kaydedildi.",
     "musteriUrunZorunlu": "Müşteri ve ürün seçimi zorunludur.",
     "siparisGonderildi": "Sipariş merkeze gönderildi.",
-    "musteri": "Müşteri"
+    "musteri": "Müşteri",
+    "imzaTeslimEt": "İmza & Teslim Et"
   },
   "satinalma": {
     "title": "Satın Alma",
@@ -2488,7 +2518,8 @@
     "uyeCikarilamadi": "Üye çıkarılamadı",
     "dosyaYuklenemedi": "Dosya yüklenemedi",
     "odaYok": "Henüz oda yok. \"+\" ile oluşturun.",
-    "uyeSayisi": "{n} üye"
+    "uyeSayisi": "{n} üye",
+    "akisYok": "akış yok"
   },
   "stokDuzeltmeler": {
     "title": "Stok Düzeltmeleri",
@@ -2833,7 +2864,8 @@
     "tablo1920": "19-20 no.lu Tablo (İndirilecek KDV)",
     "baBsForm": "BA/BS Bildirim Formu",
     "esik": "eşik",
-    "toplamTutar": "Toplam Tutar:"
+    "toplamTutar": "Toplam Tutar:",
+    "kdvOrani": "KDV Oranı"
   },
   "veriImport": {
     "title": "Veri İçe Aktar",
@@ -3395,5 +3427,46 @@
     "depo": "Depo",
     "sube": "Şube",
     "bagli": "Bağlı: {ad}"
+  },
+  "cmp": {
+    "dzHeader": "Döviz Çevirici",
+    "dzSwap": "Para birimlerini değiştir",
+    "dzTry": "TRY - Türk Lirası",
+    "dzAmount": "Tutar",
+    "kdvHeader": "KDV Hesaplayıcı",
+    "kdvHarictan": "KDV Hariçten",
+    "kdvDahilden": "KDV Dahilden",
+    "kdvHaricTutar": "KDV Hariç Tutar",
+    "kdvDahilTutar": "KDV Dahil Tutar",
+    "kdvOrani": "KDV Oranı (%)",
+    "kdvDahilToplam": "KDV Dahil Toplam",
+    "kdvTutari": "KDV Tutarı",
+    "kdvHaric": "KDV Hariç",
+    "kdvDahil": "KDV Dahil",
+    "barkodOkuyucu": "Kameralı Barkod Okuyucu",
+    "kameraHata": "Kameraya erişilemedi veya kamera izni verilmedi. Manuel barkod girişini kullanabilirsiniz.",
+    "urun": "Ürün",
+    "topluFiyatHeader": "Toplu Fiyat Güncelleme",
+    "tumKategoriler": "Tüm kategoriler",
+    "tumGruplar": "Tüm gruplar",
+    "manuelOkuma": "Açıksa her okumada ekran kapanmaz, art arda okuma yapılır."
+  },
+  "faturaKalemleri": {
+    "aciklamaZorunlu": "Açıklama *",
+    "adetZorunlu": "Adet *",
+    "birimFiyatZorunlu": "Birim Fiyat *",
+    "iskonto": "İskonto %",
+    "kdv": "KDV %",
+    "tutar": "Tutar",
+    "kalemEkle": "Kalem Ekle",
+    "araToplam": "Ara Toplam:",
+    "genelToplam": "Genel Toplam:",
+    "sonUrunlerBaslik": "Bu cari son olarak şunları aldı",
+    "gizle": "Gizle",
+    "adet": "{n} adet",
+    "urun": "Ürün",
+    "urunNo": "Ürün #{id}",
+    "aciklamaPlaceholder": "Kalem açıklaması",
+    "kdvLabel": "KDV:"
   }
 }

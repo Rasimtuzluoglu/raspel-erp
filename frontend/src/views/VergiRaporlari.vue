@@ -59,7 +59,7 @@
           >
             <Column
               field="kdvOrani"
-              header="KDV Oranı"
+              :header="$t('vergiRaporlari.kdvOrani')"
             >
               <template #body="{ data }">
                 %{{ data.kdvOrani }}
@@ -91,7 +91,7 @@
           >
             <Column
               field="kdvOrani"
-              header="KDV Oranı"
+              :header="$t('vergiRaporlari.kdvOrani')"
             >
               <template #body="{ data }">
                 %{{ data.kdvOrani }}

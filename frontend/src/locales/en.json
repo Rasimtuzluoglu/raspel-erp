@@ -98,7 +98,9 @@
     "username": "Username",
     "password": "Password",
     "sirket": "Select Company",
-    "welcome": "Welcome to RasPel ERP"
+    "welcome": "Welcome to RasPel ERP",
+    "sessionExpiring": "Session Expiring Soon",
+    "extendSession": "Extend Session"
   },
   "giris": {
     "subtitle": "The SME's Single Dashboard",
@@ -205,7 +207,23 @@
     "density": "Density",
     "compact": "Compact",
     "comfortable": "Comfortable",
-    "showAll": "Show All"
+    "showAll": "Show All",
+    "export": "Export",
+    "downloadExcel": "Download Excel",
+    "downloadCsv": "Download CSV",
+    "print": "Print",
+    "optional": "Optional",
+    "recordsWord": "records",
+    "unexpectedError": "An unexpected page error occurred.",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year",
+    "quantity": "Quantity",
+    "apply": "Apply",
+    "hide": "Hide",
+    "last3Months": "Last 3 Months"
   },
   "status": {
     "active": "Active",
@@ -381,7 +399,10 @@
     "guncelSatisFiyati": "Current Sale Price",
     "trendYukseliyor": "Rising",
     "trendDusuyor": "Falling",
-    "trendSabit": "Stable"
+    "trendSabit": "Stable",
+    "kalemAciklamaZorunlu": "Description *",
+    "kalemAciklamaPlaceholder": "Item description",
+    "iskontoYuzde": "Discount %"
   },
   "stoklar": {
     "title": "Stock Management",
@@ -540,7 +561,15 @@
       "satis": "Sale",
       "alisIade": "Purchase Return",
       "satisIade": "Sales Return"
-    }
+    },
+    "islemYonu": "Operation Direction",
+    "oranYuzde": "Rate (%)",
+    "kategoriFiltreOps": "Category Filter (optional)",
+    "stokGrubuFiltreOps": "Stock Group Filter (optional)",
+    "kolonAyarlari": "Column Settings",
+    "urunAdiGiriniz": "Enter a product name",
+    "gecerliMiktar": "Enter a valid quantity",
+    "gecerliOran": "Please enter a valid rate greater than 0."
   },
   "hizliSatis": {
     "breadcrumb": "Home / POS / New Sale",
@@ -2283,7 +2312,8 @@
     "ziyaretKaydedildi": "Visit note saved.",
     "musteriUrunZorunlu": "Customer and product selection are required.",
     "siparisGonderildi": "Order sent to the center.",
-    "musteri": "Customer"
+    "musteri": "Customer",
+    "imzaTeslimEt": "Sign & Deliver"
   },
   "satinalma": {
     "title": "Purchasing",
@@ -2488,7 +2518,8 @@
     "uyeCikarilamadi": "Could not remove member",
     "dosyaYuklenemedi": "Could not upload file",
     "odaYok": "No rooms yet. Create one with \"+\".",
-    "uyeSayisi": "{n} members"
+    "uyeSayisi": "{n} members",
+    "akisYok": "no stream"
   },
   "stokDuzeltmeler": {
     "title": "Stock Adjustments",
@@ -2833,7 +2864,8 @@
     "tablo1920": "Table No. 19-20 (Deductible VAT)",
     "baBsForm": "BA/BS Declaration Form",
     "esik": "threshold",
-    "toplamTutar": "Total Amount:"
+    "toplamTutar": "Total Amount:",
+    "kdvOrani": "VAT Rate"
   },
   "veriImport": {
     "title": "Import Data",
@@ -3395,5 +3427,46 @@
     "depo": "Warehouse",
     "sube": "Branch",
     "bagli": "Linked: {ad}"
+  },
+  "cmp": {
+    "dzHeader": "Currency Converter",
+    "dzSwap": "Swap currencies",
+    "dzTry": "TRY - Turkish Lira",
+    "dzAmount": "Amount",
+    "kdvHeader": "VAT Calculator",
+    "kdvHarictan": "VAT excluded",
+    "kdvDahilden": "VAT included",
+    "kdvHaricTutar": "Amount excl. VAT",
+    "kdvDahilTutar": "Amount incl. VAT",
+    "kdvOrani": "VAT Rate (%)",
+    "kdvDahilToplam": "Total incl. VAT",
+    "kdvTutari": "VAT Amount",
+    "kdvHaric": "Excl. VAT",
+    "kdvDahil": "Incl. VAT",
+    "barkodOkuyucu": "Camera Barcode Scanner",
+    "kameraHata": "Camera could not be accessed or permission was denied. You can use manual barcode entry.",
+    "urun": "Product",
+    "topluFiyatHeader": "Bulk Price Update",
+    "tumKategoriler": "All categories",
+    "tumGruplar": "All groups",
+    "manuelOkuma": "When on, the screen does not close on each scan; consecutive scanning is enabled."
+  },
+  "faturaKalemleri": {
+    "aciklamaZorunlu": "Description *",
+    "adetZorunlu": "Quantity *",
+    "birimFiyatZorunlu": "Unit Price *",
+    "iskonto": "Discount %",
+    "kdv": "VAT %",
+    "tutar": "Amount",
+    "kalemEkle": "Add Item",
+    "araToplam": "Subtotal:",
+    "genelToplam": "Grand Total:",
+    "sonUrunlerBaslik": "This account last purchased",
+    "gizle": "Hide",
+    "adet": "{n} pcs",
+    "urun": "Product",
+    "urunNo": "Product #{id}",
+    "aciklamaPlaceholder": "Item description",
+    "kdvLabel": "VAT:"
   }
 }

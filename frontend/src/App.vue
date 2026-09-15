@@ -142,7 +142,7 @@
 
     <Dialog
       v-model:visible="oturum.goster"
-      header="Oturum Süresi Dolmak Üzere"
+      :header="$t('auth.sessionExpiring')"
       :modal="true"
       :closable="false"
       style="width: 400px"
@@ -158,13 +158,13 @@
       </div>
       <template #footer>
         <Button
-          label="Çıkış Yap"
+          :label="$t('auth.logout')"
           icon="pi pi-sign-out"
           class="p-button-text"
           @click="oturum.cikis"
         />
         <Button
-          label="Oturumu Uzat"
+          :label="$t('auth.extendSession')"
           icon="pi pi-refresh"
           class="p-button-primary"
           @click="oturum.devamEt"

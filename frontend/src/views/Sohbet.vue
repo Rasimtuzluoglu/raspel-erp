@@ -569,7 +569,7 @@ const aiStreamGonder = async (metin) => {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       credentials: 'include'
     })
-    if (!res.ok || !res.body) throw new Error('akış yok')
+    if (!res.ok || !res.body) throw new Error(t('sohbet.akisYok'))
 
     const okuyucu = res.body.getReader()
     const decoder = new TextDecoder()

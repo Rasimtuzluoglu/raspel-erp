@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="Kameralı Barkod Okuyucu"
+    :header="$t('cmp.barkodOkuyucu')"
     modal
     :style="{ width: '500px' }"
     @update:visible="$emit('update:visible', $event)"
@@ -53,12 +53,12 @@
         <InputSwitch
           v-model="continuousMode"
         />
-        <span class="hint">Açıksa her okumada ekran kapanmaz, art arda okuma yapılır.</span>
+        <span class="hint">{{ $t('cmp.manuelOkuma') }}</span>
       </div>
     </div>
     <template #footer>
       <Button
-        label="Kapat"
+        :label="$t('common.close')"
         icon="pi pi-times"
         class="p-button-text"
         @click="closeModal"
@@ -69,12 +69,14 @@
 
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   visible: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:visible', 'scan'])
+const { t } = useI18n()
 
 const videoRef = ref(null)
 const manualBarcode = ref('')
@@ -96,7 +98,7 @@ const startCamera = async () => {
       detectBarcode()
     }
   } catch (err) {
-    cameraError.value = 'Kameraya erişilemedi veya kamera izni verilmedi. Manuel barkod girişini kullanabilirsiniz.'
+    cameraError.value = t('cmp.kameraHata')
   }
 }
 

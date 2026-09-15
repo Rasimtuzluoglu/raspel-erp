@@ -132,7 +132,7 @@
         :lazy="true"
         :total-records="stokStore.toplamKayit"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
-        current-page-report-template="{totalRecords} kayıttan {first}-{last}"
+        :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
         selection-mode="multiple"
         data-key="id"
         striped-rows
@@ -936,7 +936,7 @@ const fiyatSil = async (f) => {
 
 const saveStok = async () => {
   if (!form.value.ad.trim()) {
-    toastBildirim.uyari('Ürün adı giriniz')
+    toastBildirim.uyari(t('stoklar.urunAdiGiriniz'))
     return
   }
   saving.value = true
@@ -1063,7 +1063,7 @@ const batchCsvExport = () => {
 
 const saveHareket = async () => {
   if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) {
-    toastBildirim.uyari('Geçerli miktar giriniz')
+    toastBildirim.uyari(t('stoklar.gecerliMiktar'))
     return
   }
   saving.value = true
@@ -1105,7 +1105,7 @@ const batchFiyatForm = ref({ oran: 0, yon: 'ARTIR', kategori: '', stokGrubu: '' 
 
 const batchFiyatUygula = async () => {
   if (!batchFiyatForm.value.oran || batchFiyatForm.value.oran <= 0) {
-    toastBildirim.uyari('Lütfen 0\'dan büyük geçerli bir oran girin.')
+    toastBildirim.uyari(t('stoklar.gecerliOran'))
     return
   }
   batchLoading.value = true

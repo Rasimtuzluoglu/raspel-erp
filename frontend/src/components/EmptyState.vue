@@ -8,7 +8,7 @@
       />
     </div>
     <p class="empty-state-text">
-      {{ message }}
+      {{ message || $t('common.noData') }}
     </p>
     <p
       v-if="subMessage"
@@ -28,7 +28,7 @@
 
 <script setup>
 defineProps({
-  message: { type: String, default: 'Henüz kayıt bulunamadı' },
+  message: { type: String, default: '' },
   subMessage: { type: String, default: '' },
   icon: { type: String, default: 'pi pi-inbox' },
   actionLabel: { type: String, default: '' },

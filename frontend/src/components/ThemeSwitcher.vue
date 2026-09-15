@@ -103,10 +103,12 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTheme } from '../composables/useTheme.js'
 import { useLocale } from '../composables/useLocale.js'
 
+const { t } = useI18n()
 const menuAcik = ref(false)
 const wrapperRef = ref(null)
 const menuRef = ref(null)
@@ -114,12 +116,12 @@ const menuStil = ref({})
 const { isDark, mode, accentColor, applyMode, applyColor, initTheme, disposeTheme } = useTheme()
 const { aktifDil, dilDegistir } = useLocale()
 
-const colors = [
-  { name: 'Okyanus Mavisi', value: '#3b82f6' },
-  { name: 'Zümrüt Yeşil', value: '#10b981' },
-  { name: 'Asil Mor', value: '#8b5cf6' },
-  { name: 'Sıcak Amber', value: '#f59e0b' }
-]
+const colors = computed(() => [
+  { name: t('hesapAyarlari.renkOkyanus'), value: '#3b82f6' },
+  { name: t('hesapAyarlari.renkZumrut'), value: '#10b981' },
+  { name: t('hesapAyarlari.renkAsilMor'), value: '#8b5cf6' },
+  { name: t('hesapAyarlari.renkAmber'), value: '#f59e0b' }
+])
 
 const menuAc = () => {
   menuAcik.value = !menuAcik.value

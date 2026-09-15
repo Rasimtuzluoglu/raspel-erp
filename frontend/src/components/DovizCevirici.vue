@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="Döviz Çevirici"
+    :header="$t('cmp.dzHeader')"
     :modal="false"
     :style="{ width: '360px' }"
     :draggable="true"
@@ -12,7 +12,7 @@
       <div class="satir">
         <InputNumber
           v-model="tutar"
-          placeholder="Tutar"
+          :placeholder="$t('cmp.dzAmount')"
           :min="0"
           class="tutar-input"
           :input-id="'doviz-tutar'"
@@ -31,7 +31,7 @@
         <Button
           icon="pi pi-arrow-up-arrow-down"
           class="p-button-rounded p-button-text p-button-sm takas-btn"
-          title="Para birimlerini değiştir"
+          :title="$t('cmp.dzSwap')"
           @click="takas"
         />
       </div>
@@ -66,16 +66,19 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { dovizAPI } from '../api/index.js'
 
 defineProps({ visible: Boolean })
 defineEmits(['update:visible'])
 
+const { t } = useI18n()
+
 const tutar = ref(1)
 const kaynak = ref('TRY')
 const hedef = ref('USD')
 const sonuc = ref('0')
-const kurlar = ref([{ label: 'TRY - Türk Lirası', kod: 'TRY' }])
+const kurlar = ref([{ label: t('cmp.dzTry'), kod: 'TRY' }])
 const kurMap = ref({})
 const kurTarihi = ref('')
 
@@ -84,7 +87,7 @@ onMounted(async () => {
     const r = await dovizAPI.getKurlar()
     const data = r.data || []
     const map = { TRY: 1 }
-    const liste = [{ label: 'TRY - Türk Lirası', kod: 'TRY' }]
+    const liste = [{ label: t('cmp.dzTry'), kod: 'TRY' }]
     data.forEach((k) => {
       const kod = k.dovizKodu || k.kod
       const kur = Number(k.satisKuru) || 0

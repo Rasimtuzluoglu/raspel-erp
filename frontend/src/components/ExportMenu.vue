@@ -3,7 +3,7 @@
     <Button
       type="button"
       icon="pi pi-download"
-      label="Dışa Aktar"
+      :label="$t('common.export')"
       class="p-button-outlined p-button-sm"
       aria-haspopup="true"
       aria-controls="export_menu"
@@ -19,7 +19,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
@@ -27,21 +28,22 @@ const props = defineProps({
   columns: { type: Array, default: () => [] } // [{ field: 'ad', header: 'İsim' }]
 })
 
+const { t } = useI18n()
 const menuRef = ref(null)
 
-const items = ref([
+const items = computed(() => [
   {
-    label: 'Excel İndir',
+    label: t('common.downloadExcel'),
     icon: 'pi pi-file-excel',
     command: () => exportExcel()
   },
   {
-    label: 'CSV İndir',
+    label: t('common.downloadCsv'),
     icon: 'pi pi-file',
     command: () => exportCSV()
   },
   {
-    label: 'Yazdır',
+    label: t('common.print'),
     icon: 'pi pi-print',
     command: () => window.print()
   }

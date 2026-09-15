@@ -12,17 +12,17 @@
           {{ s.index + 1 }}
         </template>
       </Column>
-      <Column header="Açıklama *">
+      <Column :header="$t('faturaKalemleri.aciklamaZorunlu')">
         <template #body="s">
           <InputText
             v-model="s.data.aciklama"
-            placeholder="Kalem açıklaması"
+            :placeholder="$t('faturaKalemleri.aciklamaPlaceholder')"
             class="w-full"
           />
         </template>
       </Column>
       <Column
-        header="Adet *"
+        :header="$t('faturaKalemleri.adetZorunlu')"
         style="width: 110px"
       >
         <template #body="s">
@@ -34,7 +34,7 @@
         </template>
       </Column>
       <Column
-        header="Birim Fiyat *"
+        :header="$t('faturaKalemleri.birimFiyatZorunlu')"
         style="width: 140px"
       >
         <template #body="s">
@@ -48,7 +48,7 @@
         </template>
       </Column>
       <Column
-        header="İskonto %"
+        :header="$t('faturaKalemleri.iskonto')"
         style="width: 100px"
       >
         <template #body="s">
@@ -62,7 +62,7 @@
         </template>
       </Column>
       <Column
-        header="KDV %"
+        :header="$t('faturaKalemleri.kdv')"
         style="width: 80px"
       >
         <template #body="s">
@@ -74,7 +74,7 @@
         </template>
       </Column>
       <Column
-        header="Tutar"
+        :header="$t('faturaKalemleri.tutar')"
         style="width: 130px"
       >
         <template #body="s">
@@ -96,7 +96,7 @@
     </DataTable>
     <div style="margin-top: 10px">
       <Button
-        label="+ Kalem Ekle"
+        :label="'+ ' + $t('faturaKalemleri.kalemEkle')"
         icon="pi pi-plus"
         class="p-button-sm p-button-outlined"
         @click="$emit('add')"
@@ -105,13 +105,13 @@
 
     <div class="summary-box">
       <div class="summary-row">
-        <span>Ara Toplam:</span><span>{{ formatCurrency(araToplam) }}</span>
+        <span>{{ $t('faturaKalemleri.araToplam') }}</span><span>{{ formatCurrency(araToplam) }}</span>
       </div>
       <div class="summary-row">
-        <span>KDV:</span><span>{{ formatCurrency(kdvToplam) }}</span>
+        <span>{{ $t('faturaKalemleri.kdvLabel') }}</span><span>{{ formatCurrency(kdvToplam) }}</span>
       </div>
       <div class="summary-row total">
-        <span>Genel Toplam:</span><span>{{ formatCurrency(genelToplam) }}</span>
+        <span>{{ $t('faturaKalemleri.genelToplam') }}</span><span>{{ formatCurrency(genelToplam) }}</span>
       </div>
     </div>
   </div>

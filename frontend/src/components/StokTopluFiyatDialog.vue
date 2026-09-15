@@ -1,12 +1,12 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    header="Toplu Fiyat Güncelleme"
+    :header="$t('cmp.topluFiyatHeader')"
     :modal="true"
     style="width: 480px"
   >
     <div class="form-grup">
-      <label>İşlem Yönü</label>
+      <label>{{ $t('stoklar.islemYonu') }}</label>
       <Dropdown
         v-model="yon"
         :options="['ARTIR', 'AZALT']"
@@ -14,7 +14,7 @@
       />
     </div>
     <div class="form-grup">
-      <label>Oran (%)</label>
+      <label>{{ $t('stoklar.oranYuzde') }}</label>
       <InputNumber
         v-model="oran"
         :min="0"
@@ -24,30 +24,30 @@
       />
     </div>
     <div class="form-grup">
-      <label>Kategori Filtre (opsiyonel)</label>
+      <label>{{ $t('stoklar.kategoriFiltreOps') }}</label>
       <InputText
         v-model="kategori"
-        placeholder="Tüm kategoriler"
+        :placeholder="$t('cmp.tumKategoriler')"
         class="w-full"
       />
     </div>
     <div class="form-grup">
-      <label>Stok Grubu Filtre (opsiyonel)</label>
+      <label>{{ $t('stoklar.stokGrubuFiltreOps') }}</label>
       <InputText
         v-model="stokGrubu"
-        placeholder="Tüm gruplar"
+        :placeholder="$t('cmp.tumGruplar')"
         class="w-full"
       />
     </div>
     <template #footer>
       <Button
-        label="İptal"
+        :label="$t('common.cancel')"
         icon="pi pi-times"
         class="p-button-text"
         @click="visible = false"
       />
       <Button
-        label="Uygula"
+        :label="$t('common.apply')"
         icon="pi pi-check"
         :loading="loading"
         @click="$emit('uygula')"

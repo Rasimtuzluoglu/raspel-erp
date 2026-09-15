@@ -164,7 +164,7 @@
           :rows="10"
           :paginator="true"
           paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-          current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+          :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
           gorunum-anahtari="kasa-hareketler"
         >
           <Column

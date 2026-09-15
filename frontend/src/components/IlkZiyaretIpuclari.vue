@@ -6,12 +6,12 @@
     >
       <i class="pi pi-lightbulb ipucu-ikon" />
       <div class="ipucu-icerik">
-        <strong>{{ baslik }}</strong>
+        <strong>{{ baslik || $t('common.tip') }}</strong>
         <p>{{ metin }}</p>
       </div>
       <button
         class="ipucu-kapat"
-        title="Kapat"
+        :title="$t('common.close')"
         @click="kapat"
       >
         <i class="pi pi-times" />
@@ -25,7 +25,7 @@ import { ref, onMounted } from 'vue'
 
 const props = defineProps({
   anahtar: { type: String, required: true },
-  baslik: { type: String, default: 'İpucu' },
+  baslik: { type: String, default: '' },
   metin: { type: String, default: '' }
 })
 

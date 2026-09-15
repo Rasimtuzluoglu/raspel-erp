@@ -124,7 +124,7 @@
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
-        current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
         gorunum-anahtari="cari-hesaplar"
         @page="cariSayfaDegisti"
       >

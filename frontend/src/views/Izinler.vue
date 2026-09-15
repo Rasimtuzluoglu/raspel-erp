@@ -21,7 +21,7 @@
       :paginator="true"
       :rows="20"
       paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-      current-page-report-template="{totalRecords} kayıttan {first}-{last}"
+      :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
       sort-field="baslangic"
       :sort-order="-1"
     >

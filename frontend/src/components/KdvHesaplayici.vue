@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="KDV Hesaplayıcı"
+    :header="$t('cmp.kdvHeader')"
     :modal="false"
     :style="{ width: '340px' }"
     :draggable="true"
@@ -15,19 +15,19 @@
           :class="{ aktif: yon === 'haric' }"
           @click="yon = 'haric'"
         >
-          KDV Hariçten
+          {{ $t('cmp.kdvHarictan') }}
         </button>
         <button
           class="yon-btn"
           :class="{ aktif: yon === 'dahil' }"
           @click="yon = 'dahil'"
         >
-          KDV Dahilden
+          {{ $t('cmp.kdvDahilden') }}
         </button>
       </div>
 
       <div class="form-satir">
-        <label>{{ yon === 'haric' ? 'KDV Hariç Tutar' : 'KDV Dahil Tutar' }}</label>
+        <label>{{ yon === 'haric' ? $t('cmp.kdvHaricTutar') : $t('cmp.kdvDahilTutar') }}</label>
         <InputNumber
           v-model="tutar"
           :min="0"
@@ -36,7 +36,7 @@
       </div>
 
       <div class="form-satir">
-        <label>KDV Oranı (%)</label>
+        <label>{{ $t('cmp.kdvOrani') }}</label>
         <Select
           v-model="oran"
           :options="oranlar"
@@ -46,15 +46,15 @@
 
       <div class="kdv-sonuc">
         <div class="sonuc-satir ana">
-          <span>{{ yon === 'haric' ? 'KDV Dahil Toplam' : 'KDV Hariç Tutar' }}</span>
+          <span>{{ yon === 'haric' ? $t('cmp.kdvDahilToplam') : $t('cmp.kdvHaricTutar') }}</span>
           <strong>{{ format(anaSonuc) }}</strong>
         </div>
         <div class="sonuc-satir">
-          <span>KDV Tutarı</span>
+          <span>{{ $t('cmp.kdvTutari') }}</span>
           <strong>{{ format(kdvTutari) }}</strong>
         </div>
         <div class="sonuc-satir">
-          <span>{{ yon === 'haric' ? 'KDV Hariç' : 'KDV Dahil' }}</span>
+          <span>{{ yon === 'haric' ? $t('cmp.kdvHaric') : $t('cmp.kdvDahil') }}</span>
           <strong>{{ format(tutar || 0) }}</strong>
         </div>
       </div>

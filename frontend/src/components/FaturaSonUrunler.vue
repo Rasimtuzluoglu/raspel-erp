@@ -2,11 +2,11 @@
   <div class="son-urunler-panel">
     <div class="son-urunler-ust">
       <i class="pi pi-history" />
-      <span>Bu cari son olarak şunları aldı</span>
+      <span>{{ $t('faturaKalemleri.sonUrunlerBaslik') }}</span>
       <button
         type="button"
         class="son-urunler-kapat"
-        title="Gizle"
+        :title="$t('faturaKalemleri.gizle')"
         @click="$emit('gizle')"
       >
         <i class="pi pi-times" />
@@ -20,8 +20,8 @@
         class="son-urun-item"
         @click="$emit('ekle', u)"
       >
-        <span class="son-urun-ad">{{ u?.stokAd || (u?.stokId ? 'Ürün #' + u.stokId : 'Ürün') }}</span>
-        <span class="son-urun-bilgi">{{ u?.sonAlisTarihi || '' }} · {{ u?.adet || 1 }} adet</span>
+        <span class="son-urun-ad">{{ u?.stokAd || (u?.stokId ? $t('faturaKalemleri.urunNo', { id: u.stokId }) : $t('faturaKalemleri.urun')) }}</span>
+        <span class="son-urun-bilgi">{{ u?.sonAlisTarihi || '' }} · {{ $t('faturaKalemleri.adet', { n: u?.adet || 1 }) }}</span>
         <span class="son-urun-fiyat">{{ formatCurrency(u?.sonBirimFiyat || 0) }}</span>
         <i class="pi pi-plus son-urun-ekle" />
       </button>

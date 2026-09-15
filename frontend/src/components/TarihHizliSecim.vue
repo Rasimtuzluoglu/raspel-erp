@@ -13,17 +13,20 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({ modelValue: { type: [Array, Object], default: () => [] } })
 const emit = defineEmits(['update:modelValue'])
 
+const { t } = useI18n()
+
 const secili = ref(null)
 
-const presetler = [
+const presetler = computed(() => [
   {
     id: 'bugun',
-    label: 'Bugün',
+    label: t('common.today'),
     hesapla: () => {
       const b = new Date()
       return [b, b]
@@ -31,7 +34,7 @@ const presetler = [
   },
   {
     id: 'hafta',
-    label: 'Bu Hafta',
+    label: t('common.thisWeek'),
     hesapla: () => {
       const b = new Date()
       const gun = b.getDay() || 7
@@ -42,7 +45,7 @@ const presetler = [
   },
   {
     id: 'ay',
-    label: 'Bu Ay',
+    label: t('common.thisMonth'),
     hesapla: () => {
       const b = new Date()
       const bas = new Date(b.getFullYear(), b.getMonth(), 1)
@@ -51,7 +54,7 @@ const presetler = [
   },
   {
     id: '3ay',
-    label: 'Son 3 Ay',
+    label: t('common.last3Months'),
     hesapla: () => {
       const b = new Date()
       const bas = new Date(b)
@@ -61,14 +64,14 @@ const presetler = [
   },
   {
     id: 'yil',
-    label: 'Bu Yıl',
+    label: t('common.thisYear'),
     hesapla: () => {
       const b = new Date()
       const bas = new Date(b.getFullYear(), 0, 1)
       return [bas, b]
     }
   }
-]
+])
 
 const sec = (p) => {
   secili.value = secili.value === p.id ? null : p.id

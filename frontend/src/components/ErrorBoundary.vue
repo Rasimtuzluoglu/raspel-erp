@@ -7,7 +7,7 @@
       <i class="pi pi-exclamation-triangle error-icon" />
       <h2>Bir Hata Oluştu</h2>
       <p class="error-message">
-        {{ error.message || 'Beklenmeyen bir sayfa hatası meydana geldi.' }}
+        {{ error.message || $t('common.unexpectedError') }}
       </p>
       <div class="error-actions">
         <button
