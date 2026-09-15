@@ -1,14 +1,14 @@
 <template>
   <Dialog
     :visible="visible"
-    header="Şifre Değiştir"
+    :header="$t('sifre.title')"
     modal
     :style="{ width: '400px' }"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="form-grid">
       <div class="field">
-        <label>Mevcut Şifre</label>
+        <label>{{ $t('sifre.mevcut') }}</label>
         <InputText
           v-model="sifreForm.mevcutSifre"
           type="password"
@@ -16,7 +16,7 @@
         />
       </div>
       <div class="field">
-        <label>Yeni Şifre</label>
+        <label>{{ $t('sifre.yeni') }}</label>
         <InputText
           v-model="sifreForm.yeniSifre"
           type="password"
@@ -40,7 +40,7 @@
         </div>
       </div>
       <div class="field">
-        <label>Yeni Şifre Tekrar</label>
+        <label>{{ $t('sifre.yeniTekrar') }}</label>
         <InputText
           v-model="sifreForm.yeniSifreTekrar"
           type="password"
@@ -50,13 +50,13 @@
     </div>
     <template #footer>
       <Button
-        label="İptal"
+        :label="$t('common.cancel')"
         icon="pi pi-times"
         class="p-button-text"
         @click="$emit('update:visible', false)"
       />
       <Button
-        label="Değiştir"
+        :label="$t('sifre.degistir')"
         icon="pi pi-check"
         :loading="sifreDegistiriliyor"
         @click="sifreDegistir"
@@ -67,6 +67,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { kullaniciAPI } from '../api/index.js'
 
@@ -79,6 +80,7 @@ defineProps({
 
 const emit = defineEmits(['update:visible'])
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const sifreDegistiriliyor = ref(false)
 const sifreForm = ref({ mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' })
@@ -108,29 +110,29 @@ const gucSinif = computed(() => {
 const gucEtiket = computed(() => {
   const p = gucYuzde.value
   if (!sifreForm.value.yeniSifre) return ''
-  if (p < 25) return 'Zayıf'
-  if (p < 50) return 'Orta'
-  if (p < 80) return 'İyi'
-  return 'Güçlü'
+  if (p < 25) return t('sifre.zayif')
+  if (p < 50) return t('sifre.orta')
+  if (p < 80) return t('sifre.iyi')
+  return t('sifre.guclu')
 })
 
 const sifreDegistir = async () => {
   if (!sifreForm.value.yeniSifre || sifreForm.value.yeniSifre.length < 3) {
-    toastBildirim.uyari('Yeni şifre en az 3 karakter olmalıdır')
+    toastBildirim.uyari(t('sifre.minUzunluk'))
     return
   }
   if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
-    toastBildirim.uyari('Yeni şifreler eşleşmiyor')
+    toastBildirim.uyari(t('sifre.eslesmiyor'))
     return
   }
   sifreDegistiriliyor.value = true
   try {
     await kullaniciAPI.sifreDegistir(sifreForm.value)
-    toastBildirim.basarili('Şifreniz değiştirildi')
+    toastBildirim.basarili(t('sifre.degistirildi'))
     sifreForm.value = { mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' }
     emit('update:visible', false)
   } catch (e) {
-    toastBildirim.hata(e.response?.data?.message || 'Şifre değiştirilemedi')
+    toastBildirim.hata(e.response?.data?.message || t('sifre.degistirilemedi'))
   } finally {
     sifreDegistiriliyor.value = false
   }

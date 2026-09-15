@@ -45,15 +45,15 @@
           class="tercih-paneli"
         >
           <div class="tercih-baslik">
-            Bildirim Türleri
+            {{ $t('hesapAyarlari.bildirimTercihleri') }}
           </div>
           <label
-            v-for="t in tercihListesi"
-            :key="t.tur"
+            v-for="ter in tercihListesi"
+            :key="ter.tur"
             class="tercih-satir"
           >
             <Checkbox
-              :model-value="tercihler[t.tur] !== false"
+              :model-value="tercihler[ter.tur] !== false"
               :binary="true"
               @update:model-value="tercihDegistir(t.tur, $event)"
             />
@@ -83,7 +83,7 @@
             />
             <span>Tarayıcı izni gerekli</span>
             <Button
-              label="İzin Ver"
+              :label="$t('bildirim.izinVer')"
               size="small"
               class="p-button-sm p-button-outlined"
               @click="masaustuIzinVer"
@@ -128,7 +128,7 @@
             />
             <span>Push bildirimleri kapalı</span>
             <Button
-              label="Aç"
+              :label="$t('bildirim.ac')"
               size="small"
               class="p-button-sm p-button-outlined"
               @click="pushAc"
@@ -178,6 +178,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
@@ -187,6 +188,7 @@ import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { formatGunSaat as formatTarih } from '../utils/format.js'
 
 const router = useRouter()
+const { t } = useI18n()
 const panelAcik = ref(false)
 const tercihPaneli = ref(false)
 const bildirimler = ref([])
@@ -238,17 +240,17 @@ const masaustuIzinVer = () => {
 }
 
 const TERCIH_ANAHTAR = 'raspel_bildirim_tercihleri'
-const tercihListesi = [
-  { tur: 'STOK', etiket: 'Stok Uyarıları' },
-  { tur: 'SIPARIS', etiket: 'Siparişler' },
-  { tur: 'TEKLIF', etiket: 'Teklifler' },
-  { tur: 'TESLIMAT', etiket: 'Teslimatlar' },
-  { tur: 'FATURA', etiket: 'Faturalar' },
-  { tur: 'VADE', etiket: 'Vade Hatırlatmaları' },
-  { tur: 'TAKSILAT', etiket: 'Tahsilatlar' },
-  { tur: 'ODEME', etiket: 'Ödemeler' },
-  { tur: 'MASRAF_TALEBI', etiket: 'Masraf Talepleri' }
-]
+const tercihListesi = computed(() => [
+  { tur: 'STOK', etiket: t('hesapAyarlari.bildirimStok') },
+  { tur: 'SIPARIS', etiket: t('hesapAyarlari.bildirimSiparis') },
+  { tur: 'TEKLIF', etiket: t('hesapAyarlari.bildirimTeklif') },
+  { tur: 'TESLIMAT', etiket: t('hesapAyarlari.bildirimTeslimat') },
+  { tur: 'FATURA', etiket: t('hesapAyarlari.bildirimFatura') },
+  { tur: 'VADE', etiket: t('hesapAyarlari.bildirimVade') },
+  { tur: 'TAKSILAT', etiket: t('hesapAyarlari.bildirimTahsilat') },
+  { tur: 'ODEME', etiket: t('hesapAyarlari.bildirimOdeme') },
+  { tur: 'MASRAF_TALEBI', etiket: t('hesapAyarlari.bildirimMasraf') }
+])
 const tercihler = ref(safeGet(TERCIH_ANAHTAR, {}))
 
 const filtrelenmisBildirimler = computed(() => bildirimler.value.filter((b) => tercihler.value[b.tur] !== false))
@@ -259,7 +261,7 @@ const tercihleriYukle = async () => {
     const secili = r.data || []
     if (secili.length) {
       const yeni = {}
-      tercihListesi.forEach((t) => { yeni[t.tur] = secili.includes(t.tur) })
+      tercihListesi.value.forEach((t) => { yeni[t.tur] = secili.includes(t.tur) })
       tercihler.value = yeni
     } else {
       tercihler.value = {}
@@ -273,7 +275,7 @@ const tercihleriYukle = async () => {
 const tercihDegistir = (tur, val) => {
   tercihler.value[tur] = val
   safeSet(TERCIH_ANAHTAR, tercihler.value)
-  const secili = tercihListesi.filter((t) => tercihler.value[t.tur] !== false).map((t) => t.tur)
+  const secili = tercihListesi.value.filter((t) => tercihler.value[t.tur] !== false).map((t) => t.tur)
   kullaniciAPI.bildirimTercihleriGuncelle(secili).catch(() => {})
 }
 

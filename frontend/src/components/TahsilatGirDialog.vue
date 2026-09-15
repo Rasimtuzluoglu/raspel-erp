@@ -2,7 +2,7 @@
   <Dialog
     :visible="visible"
     modal
-    header="Tahsilat Gir"
+    :header="$t('tahsilat.tahsilatGir')"
     :style="{ width: '520px', maxWidth: 'calc(100vw - 24px)' }"
     :dismissable-mask="false"
     @update:visible="$emit('update:visible', $event)"
@@ -10,9 +10,9 @@
     <div class="tahsilat-form">
       <div class="form-panel">
         <div class="form-section-title">
-          <i class="pi pi-user" /> Cari Hesap
+          <i class="pi pi-user" /> {{ $t('tahsilat.cariHesap') }}
         </div>
-        <FormField label="Cari Hesap">
+        <FormField :label="$t('tahsilat.cariHesap')">
           <Select
             v-model="form.cariId"
             :options="efektifCariler"
@@ -20,7 +20,7 @@
             option-value="cariId"
             :filter="true"
             :disabled="!!props.cari"
-            placeholder="Cari seçin"
+            :placeholder="$t('tahsilat.cariSecin')"
             class="w-full"
             @change="cariDegisti"
           />
@@ -29,21 +29,21 @@
 
       <div class="form-panel">
         <div class="form-section-title">
-          <i class="pi pi-wallet" /> Ödeme
+          <i class="pi pi-wallet" /> {{ $t('tahsilat.odeme') }}
         </div>
         <div class="form-grid-2">
-          <FormField label="Ödenecek Tutar (₺)">
+          <FormField :label="$t('tahsilat.odenecekTutar')">
             <InputNumber
               v-model="form.tutar"
               :min="0"
               :min-fraction-digits="2"
               :max-fraction-digits="2"
               :disabled="!form.cariId"
-              placeholder="Tutar"
+              :placeholder="$t('common.amount')"
               class="w-full"
             />
           </FormField>
-          <FormField label="Tahsilat Tarihi">
+          <FormField :label="$t('tahsilat.tahsilatTarihi')">
             <DatePicker
               v-model="form.hareketTarihi"
               show-icon
@@ -53,7 +53,7 @@
           </FormField>
         </div>
 
-        <FormField label="Ödeme Yöntemi">
+        <FormField :label="$t('tahsilat.odemeYontemi')">
           <div class="yontem-btns">
             <button
               v-for="y in yontemler"
@@ -74,25 +74,25 @@
           class="taksit-panel"
         >
           <div class="form-grid-2">
-            <FormField label="Taksit Çekilen Kurum">
+            <FormField :label="$t('tahsilat.taksitKurum')">
               <Select
                 v-model="form.taksitKurum"
                 :options="kurumlar"
                 :filter="true"
                 editable
-                placeholder="Banka / finans kurumu"
+                :placeholder="$t('tahsilat.kurumPlaceholder')"
                 option-label="ad"
                 option-value="ad"
                 class="w-full"
               />
             </FormField>
-            <FormField label="Çekilen Taksit Tutarı (₺)">
+            <FormField :label="$t('tahsilat.taksitTutari')">
               <InputNumber
                 v-model="form.taksitTutar"
                 :min="0"
                 :min-fraction-digits="2"
                 :max-fraction-digits="2"
-                placeholder="Taksit tutarı"
+                :placeholder="$t('tahsilat.taksitTutariPlaceholder')"
                 class="w-full"
               />
             </FormField>
@@ -104,30 +104,30 @@
           class="taksit-panel"
         >
           <div class="form-grid-2">
-            <FormField label="POS Terminali">
+            <FormField :label="$t('tahsilat.posTerminali')">
               <Select
                 v-model="form.posTerminaliId"
                 :options="posSecenekleri"
                 option-label="ad"
                 option-value="id"
                 :filter="true"
-                placeholder="POS seçin"
+                :placeholder="$t('tahsilat.posSecin')"
                 class="w-full"
                 @change="posSecildi"
               />
             </FormField>
-            <FormField label="Komisyon Tutarı (₺)">
+            <FormField :label="$t('tahsilat.komisyonTutar')">
               <InputNumber
                 v-model="form.komisyonTutar"
                 :min="0"
                 :min-fraction-digits="2"
                 :max-fraction-digits="2"
-                placeholder="Komisyon"
+                :placeholder="$t('tahsilat.komisyonPlaceholder')"
                 class="w-full"
               />
             </FormField>
           </div>
-          <FormField label="Valör Tarihi (Bankaya Geçiş)">
+          <FormField :label="$t('tahsilat.valorTarihi')">
             <DatePicker
               v-model="form.valorTarihi"
               show-icon
@@ -137,11 +137,11 @@
           </FormField>
         </div>
 
-        <FormField label="Açıklama">
+        <FormField :label="$t('common.description')">
           <Textarea
             v-model="form.aciklama"
             rows="2"
-            placeholder="İsteğe bağlı not"
+            :placeholder="$t('tahsilat.notPlaceholder')"
             class="w-full"
           />
         </FormField>
@@ -152,7 +152,7 @@
         class="acik-faturalar"
       >
         <div class="form-section-title">
-          <i class="pi pi-file" /> Açık Faturalar
+          <i class="pi pi-file" /> {{ $t('tahsilat.acikFaturalar') }}
         </div>
         <div class="acik-listesi">
           <div
@@ -162,7 +162,7 @@
           >
             <div class="acik-bilgi">
               <strong>{{ f.faturaNumarasi }}</strong>
-              <span>Vade: {{ formatDate(f.vadeTarihi) }}</span>
+              <span>{{ $t('tahsilat.vade') }}: {{ formatDate(f.vadeTarihi) }}</span>
             </div>
             <div class="acik-tutar">
               {{ formatCurrency(f.kalanTutar) }}
@@ -172,7 +172,7 @@
             v-if="!seciliCari.faturalar?.length"
             class="acik-bos"
           >
-            Açık fatura yok.
+            {{ $t('tahsilat.acikFaturaYok') }}
           </div>
         </div>
       </div>
@@ -180,13 +180,13 @@
 
     <template #footer>
       <Button
-        label="Vazgeç"
+        :label="$t('tahsilat.vazgec')"
         icon="pi pi-times"
         class="p-button-text"
         @click="$emit('update:visible', false)"
       />
       <Button
-        label="Tahsilatı Kaydet"
+        :label="$t('tahsilat.kaydet')"
         icon="pi pi-check"
         class="p-button-success"
         :loading="kaydediliyor"
@@ -199,6 +199,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { tahsilatAPI, bankaAPI, posAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -229,14 +230,15 @@ const efektifCariler = computed(() => {
 
 const emit = defineEmits(['update:visible', 'kaydedildi'])
 
+const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 
-const yontemler = [
-  { value: 'NAKIT', label: 'Nakit', icon: 'pi pi-money-bill' },
-  { value: 'KART', label: 'Kart', icon: 'pi pi-credit-card' },
-  { value: 'TAKSIT', label: 'Taksit', icon: 'pi pi-calendar' },
-  { value: 'HAVALE', label: 'Havale', icon: 'pi pi-send' }
-]
+const yontemler = computed(() => [
+  { value: 'NAKIT', label: t('tahsilat.nakit'), icon: 'pi pi-money-bill' },
+  { value: 'KART', label: t('tahsilat.kart'), icon: 'pi pi-credit-card' },
+  { value: 'TAKSIT', label: t('tahsilat.taksit'), icon: 'pi pi-calendar' },
+  { value: 'HAVALE', label: t('tahsilat.havale'), icon: 'pi pi-send' }
+])
 
 const kurumlar = ref([])
 const posSecenekleri = ref([])

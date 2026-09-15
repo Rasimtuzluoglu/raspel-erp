@@ -2630,7 +2630,25 @@
     "gunGecikti": "{n} gün gecikti",
     "gunKaldi": "{n} gün kaldı",
     "kom": "Kom",
-    "valor": "Valör"
+    "valor": "Valör",
+    "cariSecin": "Cari seçin",
+    "odenecekTutar": "Ödenecek Tutar (₺)",
+    "taksitKurum": "Taksit Çekilen Kurum",
+    "taksitTutari": "Çekilen Taksit Tutarı (₺)",
+    "taksitTutariPlaceholder": "Taksit tutarı",
+    "posSecin": "POS seçin",
+    "komisyonTutar": "Komisyon Tutarı (₺)",
+    "valorTarihi": "Valör Tarihi (Bankaya Geçiş)",
+    "notPlaceholder": "İsteğe bağlı not",
+    "vazgec": "Vazgeç",
+    "kaydet": "Tahsilatı Kaydet",
+    "tahsilatTarihi": "Tahsilat Tarihi",
+    "posTerminali": "POS Terminali",
+    "komisyonPlaceholder": "Komisyon",
+    "kurumPlaceholder": "Banka / finans kurumu",
+    "acikFaturalar": "Açık Faturalar",
+    "acikFaturaYok": "Açık fatura yok.",
+    "odeme": "Ödeme"
   },
   "taksitTakvimi": {
     "baslik": "Taksit Takvimi",
@@ -3468,5 +3486,33 @@
     "urunNo": "Ürün #{id}",
     "aciklamaPlaceholder": "Kalem açıklaması",
     "kdvLabel": "KDV:"
+  },
+  "sifre": {
+    "title": "Şifre Değiştir",
+    "mevcut": "Mevcut Şifre",
+    "yeni": "Yeni Şifre",
+    "yeniTekrar": "Yeni Şifre Tekrar",
+    "degistir": "Değiştir",
+    "zayif": "Zayıf",
+    "orta": "Orta",
+    "iyi": "İyi",
+    "guclu": "Güçlü",
+    "minUzunluk": "Yeni şifre en az 3 karakter olmalıdır",
+    "eslesmiyor": "Yeni şifreler eşleşmiyor",
+    "degistirildi": "Şifreniz değiştirildi",
+    "degistirilemedi": "Şifre değiştirilemedi"
+  },
+  "stokDetay": {
+    "urunDetayi": "Ürün Detayı",
+    "hareketBulunamadi": "Hareket bulunamadı",
+    "hareketYok": "Bu ürüne ait stok hareketi bulunmamaktadır.",
+    "tur": "Tür",
+    "giris": "Giriş",
+    "cikis": "Çıkış",
+    "aciklama": "Açıklama"
+  },
+  "bildirim": {
+    "izinVer": "İzin Ver",
+    "ac": "Aç"
   }
 }

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -34,7 +35,7 @@ describe('TahsilatGirDialog.vue', () => {
     const TahsilatGirDialog = (await import('../../components/TahsilatGirDialog.vue')).default
     const wrapper = mount(TahsilatGirDialog, {
       props: { visible: true, cariler: [] },
-      global: { stubs, plugins: [createPinia(), ToastService] }
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
     })
     await flushPromises()
     const text = wrapper.text()

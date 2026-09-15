@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    :header="stok?.ad || 'Ürün Detayı'"
+    :header="stok?.ad || $t('stokDetay.urunDetayi')"
     :modal="true"
     style="width: 920px"
     @update:visible="$emit('update:visible', $event)"
@@ -69,8 +69,8 @@
         </div>
         <EmptyState
           v-else-if="hareketler.length === 0"
-          message="Hareket bulunamadı"
-          sub-message="Bu ürüne ait stok hareketi bulunmamaktadır."
+          :message="$t('stokDetay.hareketBulunamadi')"
+          :sub-message="$t('stokDetay.hareketYok')"
           icon="pi pi-list"
         />
         <AppDataTable
@@ -90,12 +90,12 @@
             </template>
           </Column>
           <Column
-            header="Tür"
+            :header="$t('stokDetay.tur')"
             style="width: 90px"
           >
             <template #body="s">
               <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
-                {{ s.data.tur === 'GIRIS' ? 'Giriş' : 'Çıkış' }}
+                {{ s.data.tur === 'GIRIS' ? $t('stokDetay.giris') : $t('stokDetay.cikis') }}
               </span>
             </template>
           </Column>
@@ -107,7 +107,7 @@
               <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
             </template>
           </Column>
-          <Column header="Açıklama">
+          <Column :header="$t('stokDetay.aciklama')">
             <template #body="s">
               {{ s.data.aciklama || '-' }}
             </template>
