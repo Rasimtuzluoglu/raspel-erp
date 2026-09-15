@@ -10,7 +10,7 @@
 # Backend (Java 21 + Spring Boot 3.2 + Maven)
 cd backend
 mvn -B compile -q          # Compile
-mvn -B test -q             # Run 969 tests (H2 in-memory)
+mvn -B test -q             # Run 974 tests (H2 in-memory)
 mvn -B clean verify        # Full build with tests + JaCoCo gate
 mvn spring-boot:run        # Run dev server on :8081
 
@@ -20,7 +20,7 @@ npm ci                      # Install deps
 npm run dev                 # Dev server :5173
 npm run build               # Production build
 npm run build:analyze       # Bundle analiz raporu (dist/stats.html, dev-only)
-npm run test                # Run 662 tests (Vitest) + coverage gate
+npm run test                # Run 670 tests (Vitest) + coverage gate
 npm run lint                # ESLint
 npm run i18n:check          # i18n bütünlük kontrolü (scripts/check-i18n.mjs)
 npm run cypress:run         # E2E tests (dev server :5173 üzerinde)
@@ -42,7 +42,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (969) + Vitest (662) + Cypress (9 E2E spec) |
+| Tests | JUnit 5 (974) + Vitest (670) + Cypress (9 E2E spec) |
 
 ## Project Structure
 
@@ -75,7 +75,7 @@ raspel-erp/
 │   ├── stores/               # 12 Pinia stores (auth, banka, cari, fatura, stok, etc.)
 │   ├── views/                # 69 views (lazy-loaded)
 │   ├── components/            # 50 shared components
-│   ├── composables/           # 19 composables
+│   ├── composables/           # 20 composables
 │   ├── router/               # Vue Router with auth guards
 │   ├── locales/              # i18n (tr.json, en.json)
 │   └── assets/
@@ -112,8 +112,8 @@ raspel-erp/
 
 ## Code Quality
 
-- Backend: 969 tests (JUnit 5, H2, Mockito) + JaCoCo coverage gate, must pass before commit
-- Frontend: 662 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
+- Backend: 974 tests (JUnit 5, H2, Mockito) + JaCoCo coverage gate, must pass before commit
+- Frontend: 670 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
 - CI runs on push/PR to main: backend (compile+test+coverage), frontend (lint+i18n+test+build), e2e (Cypress, dev-server), security (Trivy, Gitleaks)
 
 ## Dev Setup (Minimal)
