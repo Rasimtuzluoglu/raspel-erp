@@ -34,6 +34,9 @@ class RaporControllerTest {
     @MockBean
     private RaporService raporService;
 
+    @MockBean
+    private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
+
     @Test
     void shouldGetCariEkstre() throws Exception {
         var dto = RaporDTO.CariEkstreDTO.builder().cariAd("ABC Müşteri").donemBasBakiye(BigDecimal.ZERO).donemSonBakiye(BigDecimal.valueOf(5000)).build();
@@ -101,6 +104,52 @@ class RaporControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.baslangicBakiyesi").value(50000))
                 .andExpect(jsonPath("$.tahminiBitisBakiyesi").value(55000));
+    }
+
+    @Test
+    void shouldGetCariEkstrePdf() throws Exception {
+        var dto = RaporDTO.CariEkstreDTO.builder().cariAd("ABC Müşteri").hareketler(List.of()).build();
+        when(raporService.cariEkstreGetir(anyLong(), any(LocalDate.class), any(LocalDate.class))).thenReturn(dto);
+        when(pdfRaporService.tabloRaporu(anyString(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/raporlar/cari-ekstre/pdf")
+                        .param("cariHesapId", "1")
+                        .param("baslangic", "2024-01-01")
+                        .param("bitis", "2024-12-31"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"));
+    }
+
+    @Test
+    void shouldGetGelirGiderPdf() throws Exception {
+        var dto = RaporDTO.GelirGiderOzetDTO.builder()
+                .toplamGelir(BigDecimal.TEN).toplamGider(BigDecimal.ONE)
+                .netKarZarar(BigDecimal.valueOf(9)).aylikDagilim(List.of()).build();
+        when(raporService.gelirGiderOzeti(any(LocalDate.class), any(LocalDate.class), any())).thenReturn(dto);
+        when(pdfRaporService.tabloRaporu(anyString(), any(), any())).thenReturn(new byte[]{1});
+
+        mockMvc.perform(get("/api/raporlar/gelir-gider/pdf")
+                        .param("baslangic", "2024-01-01")
+                        .param("bitis", "2024-12-31")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"));
+    }
+
+    @Test
+    void shouldGetCariKarlilikPdf() throws Exception {
+        var dto = RaporDTO.CariKarlilikDTO.builder()
+                .toplamSatis(BigDecimal.TEN).toplamMaliyet(BigDecimal.ONE)
+                .toplamKar(BigDecimal.valueOf(9)).satirlar(List.of()).build();
+        when(raporService.cariKarlilikRaporu(any(LocalDate.class), any(LocalDate.class), any())).thenReturn(dto);
+        when(pdfRaporService.tabloRaporu(anyString(), any(), any())).thenReturn(new byte[]{1});
+
+        mockMvc.perform(get("/api/raporlar/cari-karlilik/pdf")
+                        .param("baslangic", "2024-01-01")
+                        .param("bitis", "2024-12-31")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"));
     }
 }
 

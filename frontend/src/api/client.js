@@ -78,13 +78,23 @@ apiClient.interceptors.response.use(
     handleNProgress(false)
     return response
   },
-  (error) => {
+  async (error) => {
     handleNProgress(false)
     if (!error.response) {
       networkStatus.showBanner = true
       return Promise.reject(error)
     }
-    const { status, data } = error.response
+    let { status, data } = error.response
+    // responseType: 'blob' isteklerinde hata gövdesi Blob olur; JSON'a çevir.
+    if (typeof Blob !== 'undefined' && data instanceof Blob) {
+      try {
+        const text = await data.text()
+        data = JSON.parse(text)
+        error.response.data = data
+      } catch {
+        data = null
+      }
+    }
 
     // Global Toast Trigger
     if (status >= 400 && status !== 401) {

@@ -218,7 +218,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
-import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI, uretimAPI } from '../api/index.js'
+import { siparisAPI, cariHesapAPI, personelAPI, teslimatAPI, uretimAPI, pdfAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
@@ -341,6 +341,7 @@ const siparisEylemleri = (d) => {
     items.push({ etiket: t('siparisler.iptalEt'), ikon: 'pi pi-times-circle', islem: () => durumGuncelle(d, 'IPTAL') })
   }
   items.push({ etiket: t('siparisler.isEmriOlustur'), ikon: 'pi pi-briefcase', islem: () => isEmriAc(d) })
+  items.push({ etiket: t('siparisler.pdf'), ikon: 'pi pi-file-pdf', islem: () => pdfIndir(d) })
   if (d.durum !== 'IPTAL') {
     items.push({ etiket: t('uretim.siparistenEmir'), ikon: 'pi pi-cog', islem: () => uretimEmriOlustur(d) })
   }
@@ -366,6 +367,22 @@ const uretimEmriOlustur = (siparis) => {
     },
     reject: () => {}
   })
+}
+
+const pdfIndir = async (data) => {
+  try {
+    const res = await pdfAPI.siparis(data.id)
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `siparis_${data.siparisNo || data.id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('siparisler.pdfIndirilemedi'))
+  }
 }
 
 const durumGuncelle = async (data, durum) => {

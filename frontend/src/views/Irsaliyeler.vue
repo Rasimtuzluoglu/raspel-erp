@@ -48,7 +48,7 @@
       </Column>
       <Column
         :header="t('irsaliyeler.islem')"
-        style="width: 140px"
+        style="width: 170px"
       >
         <template #body="{ data }">
           <Button
@@ -64,6 +64,12 @@
             class="p-button-rounded p-button-text p-button-danger"
             :title="t('common.cancel')"
             @click="durumGuncelle(data, 'IPTAL')"
+          />
+          <Button
+            icon="pi pi-file-pdf"
+            class="p-button-rounded p-button-text p-button-help"
+            :title="t('irsaliyeler.pdf')"
+            @click="pdfIndir(data)"
           />
           <Button
             icon="pi pi-trash"
@@ -215,7 +221,7 @@ import { ref, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI } from '../api/index.js'
+import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI, pdfAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useI18n } from 'vue-i18n'
@@ -293,6 +299,22 @@ const durumGuncelle = async (data, durum) => {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataDurum'))
   }
 }
+const pdfIndir = async (data) => {
+  try {
+    const res = await pdfAPI.irsaliye(data.id)
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `irsaliye_${data.irsaliyeNo || data.id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('irsaliyeler.pdfIndirilemedi'))
+  }
+}
+
 const sil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),

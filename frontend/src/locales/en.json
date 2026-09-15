@@ -272,6 +272,8 @@
   },
   "siparisler": {
     "title": "Orders & Quotes",
+    "pdf": "PDF",
+    "pdfIndirilemedi": "Could not download PDF",
     "newTeklif": "New Quote",
     "colNo": "No",
     "colMusteri": "Customer",
@@ -1026,6 +1028,11 @@
     "title": "Cash Desk Management",
     "yeniKasa": "New Cash Desk",
     "bankayaAktar": "Transfer to Bank",
+    "bankadanAktar": "Transfer from Bank to Cash Desk",
+    "bankadanKasaya": "Transfer from Bank to Cash Desk",
+    "kaynakBanka": "Source Bank *",
+    "hedefKasa": "Target Cash Desk *",
+    "bankadanAktarildi": "Transferred from bank to cash desk",
     "kasaAktar": "Transfer Between Desks",
     "gunSonu": "End of Day",
     "excel": "Excel",
@@ -1047,7 +1054,6 @@
     "tutar": "Amount *",
     "tarihZorunlu": "Date *",
     "kaynakKasa": "Source Cash Desk *",
-    "hedefKasa": "Target Cash Desk *",
     "ornekSubeDevir": "e.g. Branch transfer",
     "aktar": "Transfer",
     "kasadanBankaya": "Transfer from Cash Desk to Bank",
@@ -1929,6 +1935,8 @@
   },
   "irsaliyeler": {
     "title": "Delivery Notes",
+    "pdf": "PDF",
+    "pdfIndirilemedi": "Could not download PDF",
     "yeniIrsaliye": "New Delivery Note",
     "irsaliyeNo": "Delivery Note No",
     "cariHesap": "Account",
@@ -2413,6 +2421,7 @@
     "pdf": "PDF",
     "epostaGonder": "Send Email",
     "cariEkstreRaporu": "Account Statement Report",
+    "pdfIndirilemedi": "Could not download PDF",
     "tur": "Type",
     "tahsilat": "Collection",
     "odeme": "Payment",
@@ -2569,6 +2578,7 @@
     "durumSecin": "Select status",
     "eksikBilgi": "Missing Information",
     "teslimAlanGiriniz": "Enter the name of the receiving person.",
+    "personelKaydiYok": "No employee record is linked to your account.",
     "teslimEdildi": "Delivered",
     "siparisTeslimEdildi": "Order delivered successfully.",
     "hata": "Error",
@@ -3959,11 +3969,15 @@
     "adim4Buton": "Issue Invoice"
   },
   "cariFiyat": {
-    "baslik": "This customer's last price",
+    "baslik": "Prices available for this customer",
     "sonFiyat": "Last price",
     "fatura": "Invoice",
     "uygula": "Apply to Price",
     "kayitYok": "No price history found for this customer",
-    "tarihYok": "-"
+    "tarihYok": "-",
+    "kaynakSonSatis": "Last Sale",
+    "kaynakOzel": "Customer Special",
+    "kaynakSeviye": "Price",
+    "kaynakListe": "List"
   }
 }

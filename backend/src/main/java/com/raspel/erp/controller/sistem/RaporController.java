@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.dto.sistem.RaporDTO;
 import com.raspel.erp.service.sistem.RaporService;
+import com.raspel.erp.service.sistem.PdfRaporService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import com.raspel.erp.entity.sistem.Donem;
 
 @Tag(name = "Raporlar", description = "Raporlama API")
@@ -24,6 +26,7 @@ import com.raspel.erp.entity.sistem.Donem;
 public class RaporController {
 
     private final RaporService raporService;
+    private final PdfRaporService pdfRaporService;
 
     @GetMapping("/cari-ekstre")
     @Operation(summary = "Cari ekstre getir", description = "Belirli bir cari hesabın belirtilen tarih aralığındaki ekstresini getirir")
@@ -158,6 +161,90 @@ public class RaporController {
         headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
         headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment()
                 .filename("butce-gerceklesen-" + yil + (ay != null ? "-" + ay : "") + ".pdf").build());
+        return ResponseEntity.ok().headers(headers).body(pdf);
+    }
+
+    @GetMapping("/cari-ekstre/pdf")
+    @Operation(summary = "Cari ekstre PDF", description = "Cari ekstreyi PDF olarak dışa aktarır")
+    public ResponseEntity<byte[]> cariEkstrePdf(
+            @RequestParam Long cariHesapId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        RaporDTO.CariEkstreDTO ekstre = raporService.cariEkstreGetir(cariHesapId, baslangic, bitis);
+        String[] kolonlar = {"Tarih", "Tur", "Aciklama", "Tutar"};
+        List<String[]> satirlar = ekstre.getHareketler() == null ? List.of()
+                : ekstre.getHareketler().stream()
+                        .map(h -> new String[]{
+                                h.getHareketTarihi() != null ? h.getHareketTarihi().toString() : "-",
+                                h.getTur() != null ? h.getTur() : "-",
+                                h.getAciklama() != null ? h.getAciklama() : "-",
+                                h.getTutar() != null ? h.getTutar().toPlainString() : "0"
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+        byte[] pdf = pdfRaporService.tabloRaporu(
+                "CARI EKSTRE - " + (ekstre.getCariAd() != null ? ekstre.getCariAd() : ""), kolonlar, satirlar);
+        return pdfResponse("cari-ekstre-" + cariHesapId + ".pdf", pdf);
+    }
+
+    @GetMapping("/gelir-gider/pdf")
+    @Operation(summary = "Gelir/Gider PDF", description = "Gelir/gider raporunu PDF olarak dışa aktarır")
+    public ResponseEntity<byte[]> gelirGiderPdf(
+            HttpServletRequest request,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        RaporDTO.GelirGiderOzetDTO ozet = raporService.gelirGiderOzeti(baslangic, bitis, sirketId);
+        String[] kolonlar = {"Ay / Kalem", "Tutar"};
+        List<String[]> satirlar = new java.util.ArrayList<>();
+        if (ozet.getAylikDagilim() != null) {
+            for (Map<String, Object> m : ozet.getAylikDagilim()) {
+                satirlar.add(new String[]{String.valueOf(m.get("ay")), String.valueOf(m.get("net"))});
+            }
+        }
+        satirlar.add(new String[]{"Toplam Gelir", ozet.getToplamGelir() != null ? ozet.getToplamGelir().toPlainString() : "0"});
+        satirlar.add(new String[]{"Toplam Gider", ozet.getToplamGider() != null ? ozet.getToplamGider().toPlainString() : "0"});
+        satirlar.add(new String[]{"Net Kar/Zarar", ozet.getNetKarZarar() != null ? ozet.getNetKarZarar().toPlainString() : "0"});
+        byte[] pdf = pdfRaporService.tabloRaporu("GELIR/GIDER RAPORU (" + baslangic + " - " + bitis + ")", kolonlar, satirlar);
+        return pdfResponse("gelir-gider.pdf", pdf);
+    }
+
+    @GetMapping("/cari-karlilik/pdf")
+    @Operation(summary = "Cari karlilik PDF", description = "Cari karlilik raporunu PDF olarak dışa aktarır")
+    public ResponseEntity<byte[]> cariKarlilikPdf(
+            HttpServletRequest request,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        RaporDTO.CariKarlilikDTO rapor = raporService.cariKarlilikRaporu(baslangic, bitis, sirketId);
+        String[] kolonlar = {"Cari", "Satis", "Maliyet", "Kar", "Marj %", "Fatura"};
+        List<String[]> satirlar = new java.util.ArrayList<>();
+        if (rapor.getSatirlar() != null) {
+            for (RaporDTO.CariKarlilikSatiriDTO s : rapor.getSatirlar()) {
+                satirlar.add(new String[]{
+                        s.getCariAd(),
+                        s.getToplamSatis() != null ? s.getToplamSatis().toPlainString() : "0",
+                        s.getToplamMaliyet() != null ? s.getToplamMaliyet().toPlainString() : "0",
+                        s.getKar() != null ? s.getKar().toPlainString() : "0",
+                        s.getKarMarji() != null ? s.getKarMarji().toPlainString() : "-",
+                        String.valueOf(s.getFaturaSayisi())
+                });
+            }
+        }
+        satirlar.add(new String[]{
+                "TOPLAM",
+                rapor.getToplamSatis() != null ? rapor.getToplamSatis().toPlainString() : "0",
+                rapor.getToplamMaliyet() != null ? rapor.getToplamMaliyet().toPlainString() : "0",
+                rapor.getToplamKar() != null ? rapor.getToplamKar().toPlainString() : "0",
+                "", ""
+        });
+        byte[] pdf = pdfRaporService.tabloRaporu("CARI KARLILIK RAPORU (" + baslangic + " - " + bitis + ")", kolonlar, satirlar);
+        return pdfResponse("cari-karlilik.pdf", pdf);
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(String dosyaAdi, byte[] pdf) {
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(dosyaAdi).build());
         return ResponseEntity.ok().headers(headers).body(pdf);
     }
 }

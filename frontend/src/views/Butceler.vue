@@ -300,10 +300,12 @@ const raporPdfIndir = async () => {
     const a = document.createElement('a')
     a.href = url
     a.download = `butce-gerceklesen-${raporYil.value}${raporAy.value ? '-' + raporAy.value : ''}.pdf`
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
   } catch (err) {
-    toastBildirim.hata(t('butceler.hataPdf'))
+    toastBildirim.hata(err?.response?.data?.message || t('butceler.hataPdf'))
   }
 }
 

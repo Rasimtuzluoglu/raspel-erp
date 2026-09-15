@@ -101,7 +101,8 @@ public class PdfRaporService {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
             FontSet font = fontlar(doc);
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            PDPageContentStream cs = new PDPageContentStream(doc, page);
+            try {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
 
                 y = header(cs, y, baslik, font);
@@ -137,7 +138,20 @@ public class PdfRaporService {
                     String birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat().toString() : "0";
                     String tutar = k.getTutar() != null ? k.getTutar().toString() : "0";
                     y = siraSatiri(cs, y, font, String.valueOf(sira++), aciklama, miktar, birimFiyat, tutar);
-                    if (y < 100) { y = yeniSayfa(doc, cs, y); }
+                    // Sayfa tasarsa yeni sayfa ac ve tablo basligini yeniden ciz.
+                    if (y < 100) {
+                        cs.close();
+                        page = new PDPage(PDRectangle.A4);
+                        doc.addPage(page);
+                        cs = new PDPageContentStream(doc, page);
+                        y = PDRectangle.A4.getHeight() - MARGIN;
+                        y = header(cs, y, baslik + " (devam)", font);
+                        y -= 8;
+                        y = siraBasligi(cs, y, font, "Sıra", "Ürün / Hizmet", "Miktar", "Birim Fiyat", "Tutar");
+                        y -= 4;
+                        y = cizgi(cs, y);
+                        y -= 6;
+                    }
                 }
 
                 y -= 10;
@@ -162,6 +176,8 @@ public class PdfRaporService {
 
                 cs.setFont(font.bold, 9);
                 cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RasPel ERP - Otomatik Oluşturulmuştur"); cs.endText();
+            } finally {
+                cs.close();
             }
             doc.save(baos);
             return baos.toByteArray();
@@ -242,7 +258,7 @@ public class PdfRaporService {
 
     private float siraBasligi(PDPageContentStream cs, float y, FontSet font, String... cols) throws IOException {
         cs.setFont(font.bold, 10);
-        float[] widths = {30, 250, 60, 80, 80};
+        float[] widths = {30, 240, 60, 80, 80};
         float x = MARGIN;
         for (int i = 0; i < cols.length; i++) {
             cs.beginText(); cs.newLineAtOffset(x + 2, y); cs.showText(cols[i]); cs.endText();
@@ -253,7 +269,7 @@ public class PdfRaporService {
 
     private float siraSatiri(PDPageContentStream cs, float y, FontSet font, String... cols) throws IOException {
         cs.setFont(font.regular, 10);
-        float[] widths = {30, 250, 60, 80, 80};
+        float[] widths = {30, 240, 60, 80, 80};
         float x = MARGIN;
         boolean alternate = Integer.parseInt(cols[0]) % 2 == 0;
         cs.setNonStrokingColor(alternate ? 0.95f : 1.0f, 0.95f, 0.95f);
@@ -267,21 +283,13 @@ public class PdfRaporService {
         return y - 16;
     }
 
-    private float yeniSayfa(PDDocument doc, PDPageContentStream cs, float y) throws IOException {
-        cs.close();
-        PDPage page = new PDPage(PDRectangle.A4);
-        doc.addPage(page);
-        PDPageContentStream newCs = new PDPageContentStream(doc, page);
-        cs = newCs;
-        return PDRectangle.A4.getHeight() - 80;
-    }
-
     private byte[] generatePdf(String title, String line1, String line2, String line3, String line4, List<String> items) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
             FontSet font = fontlar(doc);
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            PDPageContentStream cs = new PDPageContentStream(doc, page);
+            try {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
                 y = header(cs, y, title, font);
                 y = infoSatiri(cs, y, "", line1, font);
@@ -294,9 +302,21 @@ public class PdfRaporService {
                 y -= 20;
                 cs.setFont(font.regular, 11);
                 for (String item : items) {
+                    if (y < 80) {
+                        cs.close();
+                        page = new PDPage(PDRectangle.A4);
+                        doc.addPage(page);
+                        cs = new PDPageContentStream(doc, page);
+                        y = PDRectangle.A4.getHeight() - MARGIN;
+                        y = header(cs, y, title + " (devam)", font);
+                        y -= 20;
+                        cs.setFont(font.regular, 11);
+                    }
                     cs.beginText(); cs.newLineAtOffset(MARGIN + 10, y); cs.showText("- " + item); cs.endText();
                     y -= 18;
                 }
+            } finally {
+                cs.close();
             }
             doc.save(baos);
             return baos.toByteArray();
@@ -314,7 +334,8 @@ public class PdfRaporService {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
             FontSet font = fontlar(doc);
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            PDPageContentStream cs = new PDPageContentStream(doc, page);
+            try {
                 float y = PDRectangle.A4.getHeight() - MARGIN;
                 y = header(cs, y, baslik, font);
                 y -= 10;
@@ -329,8 +350,15 @@ public class PdfRaporService {
                 for (String[] satir : satirlar) {
                     boolean alternate = sira % 2 == 0;
                     y = tabloVeriSatiri(cs, y, genislikler, satir, alternate, font);
+                    // Sayfa tasarsa yeni sayfa ac ve tablo basligini yeniden ciz.
                     if (y < 100) {
-                        y = yeniSayfa(doc, cs, y);
+                        cs.close();
+                        page = new PDPage(PDRectangle.A4);
+                        doc.addPage(page);
+                        cs = new PDPageContentStream(doc, page);
+                        y = PDRectangle.A4.getHeight() - MARGIN;
+                        y = header(cs, y, baslik + " (devam)", font);
+                        y -= 10;
                         y = tabloBaslikSatiri(cs, y, genislikler, kolonlar, font);
                         y -= 4;
                         y = cizgi(cs, y);
@@ -338,6 +366,8 @@ public class PdfRaporService {
                     }
                     sira++;
                 }
+            } finally {
+                cs.close();
             }
             doc.save(baos);
             return baos.toByteArray();

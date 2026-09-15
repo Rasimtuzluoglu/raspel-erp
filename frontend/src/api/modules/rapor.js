@@ -43,6 +43,15 @@ export const raporAPI = {
   butceGerceklesenPdf(params) {
     return apiClient.get('/raporlar/butce-gerceklesen/pdf', { params, responseType: 'blob' })
   },
+  cariEkstrePdf(params) {
+    return apiClient.get('/raporlar/cari-ekstre/pdf', { params, responseType: 'blob' })
+  },
+  gelirGiderPdf(params) {
+    return apiClient.get('/raporlar/gelir-gider/pdf', { params, responseType: 'blob' })
+  },
+  cariKarlilikPdf(params) {
+    return apiClient.get('/raporlar/cari-karlilik/pdf', { params, responseType: 'blob' })
+  },
   pivot(params) {
     return apiClient.get('/raporlar/pivot', { params })
   }

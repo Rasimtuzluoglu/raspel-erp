@@ -111,10 +111,10 @@
             </p>
             <div class="rapor-aksiyonlar">
               <Button
-                icon="pi pi-print"
+                icon="pi pi-file-pdf"
                 :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
-                @click="yazdir(ekstreKart)"
+                @click="ekstrePdfIndir"
               />
               <Button
                 icon="pi pi-envelope"
@@ -234,10 +234,10 @@
             </div>
             <div class="rapor-aksiyonlar">
               <Button
-                icon="pi pi-print"
+                icon="pi pi-file-pdf"
                 :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
-                @click="yazdir(ggKart)"
+                @click="ggPdfIndir"
               />
               <Button
                 icon="pi pi-envelope"
@@ -456,10 +456,10 @@
             </div>
             <div class="rapor-aksiyonlar">
               <Button
-                icon="pi pi-print"
+                icon="pi pi-file-pdf"
                 :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
-                @click="yazdir(ckKart)"
+                @click="ckPdfIndir"
               />
             </div>
           </div>
@@ -984,33 +984,6 @@ const favoriAc = (r) => {
 const ekstreKart = ref(null)
 const ggKart = ref(null)
 
-const yazdir = (hedef) => {
-  const icerik = hedef.value?.outerHTML || ''
-  const win = window.open('', '_blank', 'width=900,height=700')
-  if (!win) {
-    toastBildirim.hata(t('raporlar.pencereEngellendi'))
-    return
-  }
-  win.document.write(`<html><head><title>${t('raporlar.rapor')}</title><style>
-    body { font-family: Arial, sans-serif; padding: 24px; color: #1e293b; }
-    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-    th { background: #1976d2; color: white; padding: 8px; text-align: left; font-size: 12px; }
-    td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-    h3 { margin: 0 0 8px; }
-    .rapor-aksiyonlar, .p-button, .p-paginator, .p-dropdown, .p-inputtext { display: none !important; }
-    .positive { color: #16a34a; } .negative { color: #dc2626; }
-    .ozet-kartlar { display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
-    .ozet-kart { border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; }
-    .ozet-kart span { display: block; font-size: 11px; color: #64748b; }
-    .ozet-kart strong { font-size: 16px; }
-  </style></head><body>${icerik}</body></html>`)
-  win.document.close()
-  setTimeout(() => {
-    win.focus()
-    win.print()
-  }, 200)
-}
-
 const epostaGonder = (baslik, raporAdi) => {
   toast.add({ severity: 'info', summary: t('raporlar.paylasim'), detail: t('raporlar.epostaPaylasilacak', { rapor: raporAdi }), life: 4000 })
 }
@@ -1214,6 +1187,50 @@ const getCariKarlilik = async () => {
     ckLoading.value = false
   }
 }
+
+const pdfIndir = async (istek, dosyaAdi) => {
+  try {
+    const res = await istek
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = dosyaAdi
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('raporlar.pdfIndirilemedi'))
+  }
+}
+
+const ekstrePdfIndir = () =>
+  pdfIndir(
+    raporAPI.cariEkstrePdf({
+      cariHesapId: ekstreCariId.value,
+      baslangic: formatDateForApi(ekstreBas.value),
+      bitis: formatDateForApi(ekstreBit.value)
+    }),
+    'cari-ekstre.pdf'
+  )
+
+const ggPdfIndir = () =>
+  pdfIndir(
+    raporAPI.gelirGiderPdf({
+      baslangic: formatDateForApi(ggBas.value),
+      bitis: formatDateForApi(ggBit.value)
+    }),
+    'gelir-gider.pdf'
+  )
+
+const ckPdfIndir = () =>
+  pdfIndir(
+    raporAPI.cariKarlilikPdf({
+      baslangic: formatDateForApi(ckBas.value),
+      bitis: formatDateForApi(ckBit.value)
+    }),
+    'cari-karlilik.pdf'
+  )
 
 const vadeClass = (aralik) => {
   if (aralik.startsWith('0')) return 'risk-yok'

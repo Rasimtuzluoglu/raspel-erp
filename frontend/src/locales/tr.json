@@ -272,6 +272,8 @@
   },
   "siparisler": {
     "title": "Siparişler & Teklifler",
+    "pdf": "PDF",
+    "pdfIndirilemedi": "PDF indirilemedi",
     "newTeklif": "Yeni Teklif",
     "colNo": "No",
     "colMusteri": "Müşteri",
@@ -1026,6 +1028,11 @@
     "title": "Kasa Yönetimi",
     "yeniKasa": "Yeni Kasa",
     "bankayaAktar": "Bankaya Aktar",
+    "bankadanAktar": "Bankadan Kasaya Aktar",
+    "bankadanKasaya": "Bankadan Kasaya Aktar",
+    "kaynakBanka": "Kaynak Banka *",
+    "hedefKasa": "Hedef Kasa *",
+    "bankadanAktarildi": "Bankadan kasaya aktarım yapıldı",
     "kasaAktar": "Kasa Aktar",
     "gunSonu": "Gün Sonu",
     "excel": "Excel",
@@ -1047,7 +1054,6 @@
     "tutar": "Tutar *",
     "tarihZorunlu": "Tarih *",
     "kaynakKasa": "Kaynak Kasa *",
-    "hedefKasa": "Hedef Kasa *",
     "ornekSubeDevir": "Örn: Şube devir",
     "aktar": "Aktar",
     "kasadanBankaya": "Kasadan Bankaya Aktar",
@@ -1929,6 +1935,8 @@
   },
   "irsaliyeler": {
     "title": "İrsaliyeler",
+    "pdf": "PDF",
+    "pdfIndirilemedi": "PDF indirilemedi",
     "yeniIrsaliye": "Yeni İrsaliye",
     "irsaliyeNo": "İrsaliye No",
     "cariHesap": "Cari Hesap",
@@ -2413,6 +2421,7 @@
     "pdf": "PDF",
     "epostaGonder": "E-posta Gönder",
     "cariEkstreRaporu": "Cari Ekstre Raporu",
+    "pdfIndirilemedi": "PDF indirilemedi",
     "tur": "Tür",
     "tahsilat": "Tahsilat",
     "odeme": "Ödeme",
@@ -2569,6 +2578,7 @@
     "durumSecin": "Durum seçin",
     "eksikBilgi": "Eksik Bilgi",
     "teslimAlanGiriniz": "Teslim alan kişi adını giriniz.",
+    "personelKaydiYok": "Hesabınıza bağlı bir personel kaydı bulunamadı.",
     "teslimEdildi": "Teslim Edildi",
     "siparisTeslimEdildi": "Sipariş başarıyla teslim edildi.",
     "hata": "Hata",
@@ -3959,11 +3969,15 @@
     "adim4Buton": "Fatura Kes"
   },
   "cariFiyat": {
-    "baslik": "Bu cariye son fiyat",
+    "baslik": "Bu cariye uygulanabilir fiyatlar",
     "sonFiyat": "Son fiyat",
     "fatura": "Fatura",
     "uygula": "Fiyata Uygula",
     "kayitYok": "Bu cariye ait geçmiş fiyat bulunamadı",
-    "tarihYok": "-"
+    "tarihYok": "-",
+    "kaynakSonSatis": "Son Satış",
+    "kaynakOzel": "Cari Özel",
+    "kaynakSeviye": "Fiyat",
+    "kaynakListe": "Liste"
   }
 }
