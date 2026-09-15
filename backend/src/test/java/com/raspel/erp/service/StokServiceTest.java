@@ -134,6 +134,47 @@ class StokServiceTest {
     }
 
     @Test
+    void olustur_blankStokKoduIcinKodUretirVeBarkodNormalizeEder() {
+        StokDTO dto = StokDTO.builder().stokKodu("   ").ad("Kodsuz Urun").birim("Adet")
+                .fiyat(BigDecimal.valueOf(50)).barkod("  ").build();
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+        var result = stokService.olustur(dto, 1L);
+        assertNotNull(result.getStokKodu());
+        assertTrue(result.getStokKodu().startsWith("STK-"));
+        assertNull(result.getBarkod());
+    }
+
+    @Test
+    void olustur_stokKoduTrimlenir() {
+        StokDTO dto = StokDTO.builder().stokKodu("  ABC-1  ").ad("Trimli").birim("Adet")
+                .fiyat(BigDecimal.valueOf(50)).build();
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+        var result = stokService.olustur(dto, 1L);
+        assertEquals("ABC-1", result.getStokKodu());
+    }
+
+    @Test
+    void guncelle_blankStokKoduMevcutKoduKorur() {
+        Stok existing = createStok(1L);
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(existing));
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+        StokDTO dto = StokDTO.builder().stokKodu(null).ad("Guncel").birim("Adet")
+                .fiyat(BigDecimal.valueOf(150)).build();
+        var result = stokService.guncelle(1L, dto);
+        assertEquals("STK001", result.getStokKodu());
+    }
+
+    @Test
+    void barkodIleBul_mukerrerBarkodIlkKaydiDoner() {
+        Stok ilk = createStok(1L);
+        Stok ikinci = createStok(2L);
+        when(stokRepository.findBySirketIdAndBarkod(1L, "BAR001")).thenReturn(List.of(ilk, ikinci));
+        var result = stokService.barkodIleBul("BAR001", 1L);
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+    }
+
+    @Test
     void sil_deletes() {
         Stok s = createStok(1L);
         s.setMiktar(BigDecimal.ZERO);

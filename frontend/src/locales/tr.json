@@ -2774,7 +2774,11 @@
     "sinirsiz": "Sınırsız",
     "aesSifreli": "AES-256 ŞİFRELİ",
     "sifresiz": "ŞİFRESİZ",
-    "bolge": "Bölge (Region)"
+    "bolge": "Bölge (Region)",
+    "otomatikSenkron": "Otomatik Senkronizasyon",
+    "otomatikSenkronAciklama": "Yeni yedekleri otomatik olarak bulut deposuna aktarır",
+    "sifrele": "Şifreleme (AES-256-GCM)",
+    "sifreleAciklama": "Bulut kopyaları .enc olarak şifrelenir, yerel yedek düz kalır"
   },
   "yeniYilSihirbazi": {
     "title": "Yeni Yıl / Şirket Açılış Sihirbazı",

@@ -166,6 +166,7 @@ services:
       APP_BACKUP_RETENTION_DAYS: 30
       APP_BACKUP_DB_PASSWORD: ${POSTGRES_PASSWORD}
       APP_BACKUP_AUTO_CRON: 0 0 3 * * ?
+      APP_BACKUP_CLOUD_ENABLED: ${APP_BACKUP_CLOUD_ENABLED:-true}
       # Local HTTP erisim: Secure cookie HTTPS gerektirir; traefik yerelde HTTP sundugu icin kapatilir.
       APP_COOKIE_SECURE: "false"
       APP_SECURITY_HTTPS_ONLY: "false"

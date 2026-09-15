@@ -2772,9 +2772,13 @@
     "kontrolEdiliyor": "Kontrol ediliyor…",
     "sonYedek": "Son yedek",
     "sinirsiz": "Sınırsız",
-    "aesSifreli": "AES-256 ŞİFRELİ",
-    "sifresiz": "ŞİFRESİZ",
-    "bolge": "Bölge (Region)"
+    "aesSifreli": "AES-256 ENCRYPTED",
+    "sifresiz": "PLAIN",
+    "bolge": "Region",
+    "otomatikSenkron": "Auto Sync",
+    "otomatikSenkronAciklama": "Automatically push new backups to cloud storage",
+    "sifrele": "Encryption (AES-256-GCM)",
+    "sifreleAciklama": "Cloud copies are encrypted as .enc; local backup stays plain"
   },
   "yeniYilSihirbazi": {
     "title": "Yeni Yıl / Şirket Açılış Sihirbazı",

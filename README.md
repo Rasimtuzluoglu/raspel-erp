@@ -19,7 +19,7 @@
 | **Akıllı Stok & Talep Tahmini (Predictive AI)** | Son 90 günlük tüketim hızına göre ürünlerin tükenme süresini hesaplar, emniyet stoku ve tedarik süresini hesaba katarak proaktif satınalma önerileri üretir. |
 | **Eşzamanlı Çoklu Kullanıcı Koruması (Concurrency)** | Aynı anda yüzlerce çalışan işlem yaparken Pessimistic Locking (SELECT FOR UPDATE) ile stok ve kasa çakışmalarını, eksiye düşmeyi ve mükerrer fatura numaralandırmayı engeller. |
 | **Nakit Akışı Projeksiyonu** | Kasa/banka bakiyesi üzerine gelecek 30/60/90 gündeki tahsilat ve ödemeleri kümülatif ekleyerek finansal geleceği grafiklerle simüle eder. |
-| **Otomatik Bulut Yedekleme** | Veritabanı yedeklerini uçtan uca AES-256 ile şifreleyerek otomatik veya manuel olarak AWS S3, Google Drive veya Dropbox bulut depolarına senkronize eder. |
+| **Otomatik Bulut Yedekleme** | Veritabanı yedeklerini otomatik veya manuel olarak bulut deposuna (MinIO / S3 uyumlu) senkronize eder; bulut kopyaları istendiğinde AES-256-GCM ile şifrelenir (`.enc`). |
 | **BTC & Döviz Kurları** | USD, EUR, GBP, Altın ve Bitcoin kurları otomatik olarak TCMB ve Binance/CoinGecko API'lerinden canlı olarak çekilir, anlık çevirici ile para birimi dönüşümü. |
 
 ---
