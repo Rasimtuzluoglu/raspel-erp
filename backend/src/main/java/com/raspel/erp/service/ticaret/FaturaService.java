@@ -178,6 +178,15 @@ public class FaturaService {
                 : stokRepository.findAllById(stokIdler).stream()
                         .collect(Collectors.toMap(Stok::getId, s -> s));
 
+        // "Son fiyat": MAX(birimFiyat) yerine tarihe gore en yeni kalem fiyati.
+        Map<Long, java.math.BigDecimal> sonFiyatMap = faturaKalemRepository.cariSonUrunFiyatlari(
+                        cariId, sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI).stream()
+                .filter(p -> p.getStokId() != null)
+                .collect(Collectors.toMap(
+                        com.raspel.erp.repository.ticaret.CariUrunSonFiyatProjeksiyon::getStokId,
+                        com.raspel.erp.repository.ticaret.CariUrunSonFiyatProjeksiyon::getBirimFiyat,
+                        (a, b) -> a));
+
         return sinirli.stream().map(p -> {
             Stok stok = stokMap.get(p.getStokId());
             return CariSonUrunDTO.builder()
@@ -185,7 +194,7 @@ public class FaturaService {
                     .stokKodu(stok != null ? stok.getStokKodu() : null)
                     .stokAd(stok != null ? stok.getAd() : null)
                     .sonAlisTarihi(p.getSonAlisTarihi())
-                    .sonBirimFiyat(p.getSonBirimFiyat())
+                    .sonBirimFiyat(sonFiyatMap.getOrDefault(p.getStokId(), p.getSonBirimFiyat()))
                     .adet(p.getAdet())
                     .build();
         }).collect(Collectors.toList());

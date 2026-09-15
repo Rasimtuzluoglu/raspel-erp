@@ -28,6 +28,23 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
                                                 @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
 
     /**
+     * Bir cari icin her stogun EN SON (tarihe gore) satis fiyati. MAX(birimFiyat)
+     * yanlis olur; burada tarihe gore en yeni kalem secilir.
+     */
+    @Query("SELECT k.stokId AS stokId, k.birimFiyat AS birimFiyat " +
+           "FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE f.cariHesap.id = :cariId AND f.sirketId = :sirketId " +
+           "AND f.tur = :tur AND f.durum = :durum AND k.stokId IS NOT NULL " +
+           "AND f.tarih = (SELECT MAX(f2.tarih) FROM FaturaKalem k2 JOIN k2.fatura f2 " +
+           "    WHERE k2.stokId = k.stokId AND f2.cariHesap.id = :cariId AND f2.sirketId = :sirketId " +
+           "    AND f2.tur = :tur AND f2.durum = :durum) " +
+           "ORDER BY f.tarih DESC, f.id DESC")
+    List<CariUrunSonFiyatProjeksiyon> cariSonUrunFiyatlari(@Param("cariId") Long cariId,
+                                                           @Param("sirketId") Long sirketId,
+                                                           @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                                           @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum);
+
+    /**
      * Bir stogun son alis fiyatlarini (ALIS + KESILDI faturalardan) tarihe gore dondurur.
      */
     @Query("SELECT k.birimFiyat AS birimFiyat, f.tarih AS tarih, f.faturaNumarasi AS faturaNumarasi " +

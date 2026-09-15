@@ -413,8 +413,9 @@
           </div>
 
           <CariUrunFiyatPaneli
-            v-if="form.cariHesapId && cariUrunFiyati && cariUrunFiyati.sonFiyat != null"
+            v-if="sonSeciliKalem && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
             :fiyat-gecmisi="cariUrunFiyati"
+            :secenekler="fiyatSecenekleri"
             class="mb-3"
             @uygula="teklifCariFiyatUygula"
           />
@@ -795,6 +796,7 @@ import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
+import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 
 const toast = useToast()
 const { t } = useI18n()
@@ -966,14 +968,23 @@ const sonSeciliKalem = ref(null)
 const cariUrunFiyatiYukle = async (kalem) => {
   cariUrunFiyati.value = null
   const cariId = form.value.cariHesapId
-  if (!cariId || !kalem?.stokId) return
-  try {
-    const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, kalem.stokId)
-    cariUrunFiyati.value = r.data || null
-  } catch {
-    cariUrunFiyati.value = null
+  if (!kalem?.stokId) {
+    fiyatlariTemizle()
+    return
   }
+  const s = stoklar.value.find((item) => item.id === kalem.stokId)
+  if (cariId) {
+    try {
+      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, kalem.stokId)
+      cariUrunFiyati.value = r.data || null
+    } catch {
+      cariUrunFiyati.value = null
+    }
+  }
+  await fiyatlariYukle(cariId, kalem.stokId, s?.fiyat || s?.satisFiyati)
 }
+
+const { secenekler: fiyatSecenekleri, yukle: fiyatlariYukle, temizle: fiyatlariTemizle } = useUrunFiyatlari()
 
 const teklifCariFiyatUygula = (f) => {
   const kalem = sonSeciliKalem.value

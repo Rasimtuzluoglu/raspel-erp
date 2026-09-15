@@ -464,8 +464,9 @@
       />
 
       <CariUrunFiyatPaneli
-        v-if="form.cariHesapId && urunSecimi && cariUrunFiyati && cariUrunFiyati.sonFiyat != null"
+        v-if="urunSecimi && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
         :fiyat-gecmisi="cariUrunFiyati"
+        :secenekler="fiyatSecenekleri"
         @uygula="cariFiyatOverride = $event"
       />
 
@@ -542,6 +543,7 @@ import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import FaturaFiyatGecmisi from '../components/FaturaFiyatGecmisi.vue'
 import FaturaSonUrunler from '../components/FaturaSonUrunler.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
+import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 
@@ -756,20 +758,28 @@ const fiyatGecmisiYukle = async (stokId) => {
 // Faz 2: carinin bu urune gecmiste odedigi son fiyat
 const cariUrunFiyati = ref(null)
 const cariFiyatOverride = ref(null)
+const { secenekler: fiyatSecenekleri, yukle: fiyatlariYukle, temizle: fiyatlariTemizle } = useUrunFiyatlari()
 
 const cariUrunFiyatiYukle = async () => {
   const cariId = form.value.cariHesapId
   const stokId = urunSecimi.value
-  if (!cariId || !stokId) {
+  if (!stokId) {
     cariUrunFiyati.value = null
+    fiyatlariTemizle()
     return
   }
-  try {
-    const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, stokId)
-    cariUrunFiyati.value = r.data || null
-  } catch {
+  const stokFiyat = stokStore.stoklar.find((s) => s.id === stokId)?.fiyat
+  if (!cariId) {
     cariUrunFiyati.value = null
+  } else {
+    try {
+      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, stokId)
+      cariUrunFiyati.value = r.data || null
+    } catch {
+      cariUrunFiyati.value = null
+    }
   }
+  await fiyatlariYukle(cariId, stokId, stokFiyat)
 }
 
 const kritikStokMu = (stok) => {
@@ -794,6 +804,7 @@ const urunEkleKalem = () => {
   urunAdet.value = 1
   cariFiyatOverride.value = null
   cariUrunFiyati.value = null
+  fiyatlariTemizle()
 }
 
 const seciliCariNesnesi = ref(null)
@@ -1099,9 +1110,9 @@ const pdfIndir = async (fatura) => {
     document.body.appendChild(link)
     link.click()
     link.remove()
-    window.URL.revokeObjectURL(url)
-  } catch {
-    toastBildirim.hata(t('faturalar.pdfIndirilemedi'))
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('faturalar.pdfIndirilemedi'))
   }
 }
 

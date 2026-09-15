@@ -232,8 +232,9 @@
         </div>
         <small style="color: #64748b">{{ t('satis.fiyatOtomatik') }}</small>
         <CariUrunFiyatPaneli
-          v-if="satisForm.cariHesapId && seciliUrun && cariUrunFiyati && cariUrunFiyati.sonFiyat != null"
+          v-if="seciliUrun && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
           :fiyat-gecmisi="cariUrunFiyati"
+          :secenekler="fiyatSecenekleri"
           class="mt-2"
           @uygula="satisCariFiyatUygula"
         />
@@ -356,6 +357,7 @@ import { useAuthStore } from '../stores/authStore.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
+import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, kalemNetTutar, kalemBrutKdv } from '../utils/faturaHesapla.js'
 import { useI18n } from 'vue-i18n'
@@ -434,10 +436,12 @@ const urunSecildi = async () => {
       cariUrunFiyati.value = null
     }
   }
+  await fiyatlariYukle(cariId, seciliUrun.value, u?.fiyat)
 }
 
 // Faz 2: secilen cariye bu urunun son satis fiyati
 const cariUrunFiyati = ref(null)
+const { secenekler: fiyatSecenekleri, yukle: fiyatlariYukle, temizle: fiyatlariTemizle } = useUrunFiyatlari()
 const satisCariFiyatUygula = (f) => {
   yeniUrunFiyat.value = f
 }
@@ -462,6 +466,7 @@ const urunEkle = () => {
   seciliUrun.value = null
   yeniUrunAdet.value = 1
   yeniUrunFiyat.value = 0
+  fiyatlariTemizle()
 }
 
 const araToplam = computed(() =>
