@@ -6,5 +6,7 @@ coverage/
 .vscode/
 .git/
 .gitignore
+.env
+.env.*
 cypress/
 *.md

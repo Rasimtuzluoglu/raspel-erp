@@ -17,7 +17,9 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL:-admin@raspel.com}
+      # email DEGERI BURADA TANIMLANMAZ: Traefik statik config dosyasi ${VAR}
+      # interpolasyonu desteklemez. Email docker-compose.yml'deki traefik
+      # command (--certificatesresolvers.letsencrypt.acme.email) ile verilir.
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web

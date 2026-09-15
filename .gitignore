@@ -15,10 +15,10 @@ out/
 *.tar.gz
 *.rar
 
-# Environment files
+# Environment files (tum .env varyantlari; .env.example kasitli olarak takip edilir)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.local
 
 # Logs

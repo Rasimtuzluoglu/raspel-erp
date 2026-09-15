@@ -59,9 +59,12 @@ public class SecurityConfig {
                         "/api/kullanicilar/giris-2fa",
                         "/api/kullanicilar/giris-sirket").permitAll()
                 .requestMatchers("/api/kurulum/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/actuator/prometheus").permitAll()
-                .requestMatchers("/actuator/health/**").authenticated()
+                // Base health (aggregate UP/DOWN) ve prometheus metrikleri aciktir.
+                // show-details=when-authorized oldugu icin anonim istek detay gormez.
+                // Detayli health (/actuator/health/**, liveness/readiness) ve diger tum
+                // actuator endpoint'leri kimlik dogrulama gerektirir.
+                .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
+                .requestMatchers("/actuator/**").authenticated()
                 .requestMatchers("/ws/**", "/ws/info").authenticated()
                 .anyRequest().authenticated()
             )
