@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.entity.finans.CariHesap;
@@ -163,8 +164,28 @@ public class StokService {
     @Transactional(readOnly = true)
     public StokDTO barkodIleBul(String barkod, Long sirketId) {
         if (sirketId == null) return null;
-        return stokRepository.findBySirketIdAndBarkod(sirketId, barkod).stream().findFirst()
+        List<Stok> eslesenler = stokRepository.findBySirketIdAndBarkod(sirketId, barkod);
+        if (eslesenler.size() > 1) {
+            log.warn("Barkod '{}' sirket '{}' icin {} stok ile eslesiyor; ilki secildi (V88 unique kısıt sonrası bu durum olmamalı)",
+                    barkod, sirketId, eslesenler.size());
+        }
+        return eslesenler.stream().findFirst()
                 .map(s -> entityToDTO(s, tekTedarikciAdi(s))).orElse(null);
+    }
+
+    /** Boş/null stok kodunu trim eder; zorunlu olduğundan eksikse STK-<8hex> üretir. */
+    private String normalizeStokKodu(String kod) {
+        String k = kod == null ? null : kod.trim();
+        return (k == null || k.isEmpty())
+                ? "STK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()
+                : k;
+    }
+
+    /** Boş/null barkodu NULL'a indirir (barkod opsiyonel). */
+    private String normalizeBarkod(String barkod) {
+        if (barkod == null) return null;
+        String b = barkod.trim();
+        return b.isEmpty() ? null : b;
     }
 
     /**
@@ -189,11 +210,13 @@ public class StokService {
 
     @CacheEvict(value = "stoklar", allEntries = true)
     public StokDTO olustur(StokDTO dto, Long sirketId) {
-        Stok s = Stok.builder().stokKodu(dto.getStokKodu()).ad(dto.getAd())
+        String stokKodu = normalizeStokKodu(dto.getStokKodu());
+        String barkod = normalizeBarkod(dto.getBarkod());
+        Stok s = Stok.builder().stokKodu(stokKodu).ad(dto.getAd())
                 .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
                 .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
                 .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
-                .barkod(dto.getBarkod()).rafNo(dto.getRafNo()).marka(dto.getMarka())
+                .barkod(barkod).rafNo(dto.getRafNo()).marka(dto.getMarka())
                 .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
                 .aciklama(dto.getAciklama()).fotoUrl(dto.getFotoUrl()).birim2(dto.getBirim2())
                 .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
@@ -206,11 +229,11 @@ public class StokService {
     @CacheEvict(value = "stoklar", allEntries = true)
     public int topluOlustur(List<StokDTO> dtolar, Long sirketId) {
         List<Stok> stoklar = dtolar.stream()
-                .map(dto -> Stok.builder().stokKodu(dto.getStokKodu()).ad(dto.getAd())
+                .map(dto -> Stok.builder().stokKodu(normalizeStokKodu(dto.getStokKodu())).ad(dto.getAd())
                         .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
                         .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
                         .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
-                        .barkod(dto.getBarkod()).rafNo(dto.getRafNo()).marka(dto.getMarka())
+                        .barkod(normalizeBarkod(dto.getBarkod())).rafNo(dto.getRafNo()).marka(dto.getMarka())
                         .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
                         .aciklama(dto.getAciklama()).birim2(dto.getBirim2())
                         .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
@@ -226,10 +249,13 @@ public class StokService {
         Stok s = stokRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", id));
         tenantChecker.check(s.getSirketId(), "Stok");
-        s.setStokKodu(dto.getStokKodu()); s.setAd(dto.getAd()); s.setBirim(dto.getBirim());
+        if (dto.getStokKodu() != null && !dto.getStokKodu().trim().isEmpty()) {
+            s.setStokKodu(dto.getStokKodu().trim());
+        }
+        s.setAd(dto.getAd()); s.setBirim(dto.getBirim());
         s.setFiyat(dto.getFiyat()); s.setSatisFiyati(dto.getSatisFiyati());
         s.setMinMiktar(dto.getMinMiktar()); s.setKdvOrani(dto.getKdvOrani());
-        s.setStokGrubu(dto.getStokGrubu()); s.setBarkod(dto.getBarkod());
+        s.setStokGrubu(dto.getStokGrubu()); s.setBarkod(normalizeBarkod(dto.getBarkod()));
         s.setRafNo(dto.getRafNo()); s.setMarka(dto.getMarka());
         s.setAgirlik(dto.getAgirlik()); s.setKategori(dto.getKategori());
         s.setAciklama(dto.getAciklama());

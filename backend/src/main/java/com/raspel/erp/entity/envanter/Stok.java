@@ -17,7 +17,7 @@ public class Stok {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "stok_kodu", length = 50)
+    @Column(name = "stok_kodu", nullable = false, length = 50)
     private String stokKodu;
 
     @Column(nullable = false, length = 300)
