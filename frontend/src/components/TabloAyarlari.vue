@@ -5,7 +5,7 @@
       class="p-button-sm p-button-text"
       :badge="gizliKolonSayisi"
       badge-class="p-badge-warning"
-      title="Sütun Ayarları"
+      :title="$t('common.columnSettings')"
       @click="panelAcik = !panelAcik"
     />
     <transition name="panel">
@@ -14,7 +14,7 @@
         class="ayar-panel"
       >
         <div class="ayar-baslik">
-          Sütunlar
+          {{ $t('common.columns') }}
         </div>
         <label
           v-for="(k, i) in localKolonlar"
@@ -30,17 +30,17 @@
         </label>
         <div class="ayar-ayrac" />
         <div class="ayar-baslik">
-          Yoğunluk
+          {{ $t('common.density') }}
         </div>
         <div class="ayar-yogunluk">
           <Button
-            :label="'Kompakt'"
+            :label="$t('common.compact')"
             :class="{ 'p-button-sm': true, 'p-button-outlined': yogunluk !== 'compact' }"
             size="small"
             @click="yogunlukSec('compact')"
           />
           <Button
-            :label="'Rahat'"
+            :label="$t('common.comfortable')"
             :class="{ 'p-button-sm': true, 'p-button-outlined': yogunluk !== 'comfortable' }"
             size="small"
             @click="yogunlukSec('comfortable')"
@@ -48,7 +48,7 @@
         </div>
         <div class="ayar-ayrac" />
         <Button
-          label="Hepsini Göster"
+          :label="$t('common.showAll')"
           icon="pi pi-eye"
           size="small"
           class="p-button-sm w-full"

@@ -35,76 +35,77 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
+const { t } = useI18n()
 
-const labelMap = {
-  '/': 'Ana Sayfa',
-  '/cari-hesaplar': 'Cari Hesaplar',
-  '/faturalar': 'Faturalar',
-  '/bankalar': 'Bankalar',
-  '/kasa': 'Kasa',
-  '/muhasebe': 'Muhasebe',
-  '/stoklar': 'Stoklar',
-  '/personel': 'Personel',
-  '/hizli-satis': 'Hızlı Satış',
-  '/siparisler': 'Siparişler',
-  '/raporlar': 'Raporlar',
-  '/hareketler': 'Hareketler',
-  '/notlar': 'Notlar',
-  '/satislar': 'Satış',
-  '/satinalma': 'Satın Alma',
-  '/cek-senet': 'Çek/Senet',
-  '/irsaliyeler': 'İrsaliyeler',
-  '/projeler': 'Projeler',
-  '/denetim': 'Denetim',
-  '/yedekler': 'Yedekler',
-  '/subeler': 'Şubeler',
-  '/depolar': 'Depolar',
-  '/butceler': 'Bütçeler',
-  '/masraflar': 'Masraflar',
-  '/fiyat-listesi': 'Fiyat Listesi',
-  '/iadeler': 'İadeler',
-  '/stok-seriler': 'Stok Seriler',
-  '/stok-sayim': 'Stok Sayım',
-  '/maas-bordro': 'Maaş Bordro',
-  '/vardiyalar': 'Vardiyalar',
-  '/anomaliler': 'Anomaliler',
-  '/kategoriler': 'Kategoriler',
-  '/kullanicilar': 'Kullanıcılar',
-  '/toplu-stok': 'Toplu Stok',
-  '/sirketler': 'Şirketler',
-  '/donemler': 'Dönemler',
-  '/izinler': 'İzinler',
-  '/puantaj': 'Puantaj',
-  '/crm': 'CRM',
-  '/e-fatura': 'E-Fatura',
-  '/kritik-stok': 'Kritik Stok',
-  '/hesap-ayarlari': 'Hesap Ayarları',
-  '/banka-mutabakat': 'Banka Mutabakatı',
-  '/vergi-raporlari': 'Vergi Raporları',
-  '/veri-aktar': 'Veri Aktar',
-  '/kullanim-sartlari': 'Kullanım Şartları',
-  '/gizlilik-politikasi': 'Gizlilik Politikası',
-  '/yetki-yonetimi': 'Yetki Yönetimi'
+const labelKeyMap = {
+  '/': 'nav.dashboard',
+  '/cari-hesaplar': 'nav.cari',
+  '/faturalar': 'nav.faturalar',
+  '/bankalar': 'nav.banka',
+  '/kasa': 'nav.kasa',
+  '/muhasebe': 'nav.muhasebe',
+  '/stoklar': 'nav.stok',
+  '/personel': 'nav.personel',
+  '/hizli-satis': 'nav.hizliSatis',
+  '/siparisler': 'nav.siparis',
+  '/raporlar': 'nav.rapor',
+  '/hareketler': 'nav.hareket',
+  '/notlar': 'nav.notlar',
+  '/satislar': 'nav.satis',
+  '/satinalma': 'nav.satinalma',
+  '/cek-senet': 'nav.ceksenet',
+  '/irsaliyeler': 'nav.irsaliye',
+  '/projeler': 'nav.proje',
+  '/denetim': 'nav.denetim',
+  '/yedekler': 'nav.yedek',
+  '/subeler': 'nav.sube',
+  '/depolar': 'nav.depo',
+  '/butceler': 'nav.butce',
+  '/masraflar': 'nav.masraf',
+  '/fiyat-listesi': 'nav.fiyatListesi',
+  '/iadeler': 'nav.iade',
+  '/stok-seriler': 'nav.serilot',
+  '/stok-sayim': 'nav.stokSayim',
+  '/maas-bordro': 'nav.maasBordro',
+  '/vardiyalar': 'nav.vardiya',
+  '/anomaliler': 'nav.anomaliler',
+  '/kategoriler': 'nav.kategori',
+  '/kullanicilar': 'nav.kullanici',
+  '/toplu-stok': 'nav.topluStok',
+  '/sirketler': 'nav.sirket',
+  '/donemler': 'nav.donem',
+  '/izinler': 'nav.izin',
+  '/puantaj': 'nav.puantaj',
+  '/crm': 'nav.crm',
+  '/e-fatura': 'nav.eFatura',
+  '/kritik-stok': 'nav.kritikStok',
+  '/hesap-ayarlari': 'nav.hesapAyarlari',
+  '/banka-mutabakat': 'nav.bankaMutabakat',
+  '/vergi-raporlari': 'nav.vergiRaporlari',
+  '/veri-aktar': 'nav.veriAktar',
+  '/kullanim-sartlari': 'nav.kullanimSartlari',
+  '/gizlilik-politikasi': 'nav.gizlilik',
+  '/yetki-yonetimi': 'nav.yetkiler'
 }
 
 function pathLabel(path) {
-  return (
-    labelMap[path] ||
-    path
-      .replace(/^\//, '')
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR'))
-  )
+  const key = labelKeyMap[path]
+  if (key) return t(key)
+  return path
+    .replace(/^\//, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR'))
 }
 
 const items = computed(() => {
   const segments = route.path.split('/').filter(Boolean)
   if (segments.length === 0) {
-    return [{ path: '/', label: 'Ana Sayfa' }]
+    return [{ path: '/', label: t('nav.dashboard') }]
   }
-  const crumbs = [{ path: '/', label: 'Ana Sayfa' }]
+  const crumbs = [{ path: '/', label: t('nav.dashboard') }]
   let current = ''
   for (const seg of segments) {
     current += '/' + seg

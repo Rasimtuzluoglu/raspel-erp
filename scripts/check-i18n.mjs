@@ -146,6 +146,37 @@ findDuplicateKeys(trRaw, 'tr.json', trDups)
 findDuplicateKeys(enRaw, 'en.json', enDups)
 for (const d of trDups.concat(enDups)) report('ERROR', `YINELENEN ${d}`)
 
+// check 5: .vue icinde i18n'e baglanmamis Turkce metin taramasi
+// (uyari; --strict ile hata). console/import/style/comment ve t() satirlari haric.
+const STRICT = process.argv.includes('--strict')
+const TR_CHAR_RE = /[çşğıöüİĞŞÇÖÜ]/
+const LITERAL_RE = /(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g
+const SKIP_LINE_RE = /\$?t\(|console\.|import\s|from\s+['"]|require\(/
+const turkceBulunan = []
+for (const f of usedFiles) {
+  if (!f.endsWith('.vue')) continue
+  let code = fs.readFileSync(f, 'utf8').replace(/<style[\s\S]*?<\/style>/gi, '')
+  code = code.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  let bulundu = 0
+  for (const line of code.split('\n')) {
+    if (SKIP_LINE_RE.test(line)) continue
+    for (const m of line.matchAll(LITERAL_RE)) {
+      if (TR_CHAR_RE.test(m[2])) bulundu++
+    }
+  }
+  if (bulundu > 0) turkceBulunan.push([bulundu, path.relative(ROOT, f)])
+}
+if (turkceBulunan.length) {
+  turkceBulunan.sort((a, b) => b[0] - a[0])
+  const toplam = turkceBulunan.reduce((s, [c]) => s + c, 0)
+  for (const [c, f] of turkceBulunan.slice(0, 10)) {
+    report(STRICT ? 'ERROR' : 'WARN', `I18N'E BAGLANMAMIS TURKCE METIN  ${f} (x${c})`)
+  }
+  if (turkceBulunan.length > 10) console.log(`[WARN] ... ve ${turkceBulunan.length - 10} dosya daha`)
+  console.log(`[WARN] Toplam ${toplam} satirda i18n disi Turkce literal (${turkceBulunan.length} dosya)`)
+}
+
+
 console.log(`\ni18n ozeti: kullanilan ${usedKeys.size} | tr ${tr.length} | en ${en.length} | parametreli cagri ${paramCalls}`)
 if (failures > 0) {
   console.log(`\ni18n KONTROL BASARISIZ (${failures} hata)`)

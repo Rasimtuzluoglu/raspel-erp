@@ -32,7 +32,7 @@
       <div class="sidebar-top-actions">
         <button
           class="hamburger-btn"
-          :title="mobilMenuAcik ? 'Menüyü Kapat' : 'Menüyü Aç'"
+          :title="mobilMenuAcik ? $t('nav.menuKapat') : $t('nav.menuAc')"
           @click="mobilMenuAcik = !mobilMenuAcik"
         >
           <i :class="mobilMenuAcik ? 'pi pi-times' : 'pi pi-bars'" />
@@ -52,9 +52,9 @@
         :key="m.path"
         :to="m.path"
         :class="{ active: $route.path === m.path || ($route.path.startsWith(m.path) && m.path !== '/') }"
-        :title="m.label"
+        :title="$t(m.labelKey)"
       >
-        <i :class="m.icon" /><span>{{ m.label }}</span>
+        <i :class="m.icon" /><span>{{ $t(m.labelKey) }}</span>
         <i
           class="pi pi-star"
           :class="{ favori: isFav(m.path) }"
@@ -75,10 +75,10 @@
         @click="toggleGelismisMod"
       >
         <template v-if="gelismisMod">
-          Temel Mod <i class="pi pi-chevron-up" />
+          {{ $t('nav.temelMod') }} <i class="pi pi-chevron-up" />
         </template>
         <template v-else>
-          Gelişmiş Mod <i class="pi pi-chevron-down" />
+          {{ $t('nav.gelismisMod') }} <i class="pi pi-chevron-down" />
         </template>
       </div>
 
@@ -87,17 +87,17 @@
         :key="m.path"
       >
         <div
-          v-if="!i || m.grup !== gorunenMenuler[i - 1].grup"
+          v-if="!i || m.grupKey !== gorunenMenuler[i - 1].grupKey"
           class="menu-grup"
         >
-          {{ m.grup }}
+          {{ $t(m.grupKey) }}
         </div>
         <router-link
           :to="m.path"
           :class="{ active: $route.path === m.path || ($route.path.startsWith(m.path) && m.path !== '/') }"
-          :title="m.label"
+          :title="$t(m.labelKey)"
         >
-          <i :class="m.icon" /><span>{{ m.label }}</span>
+          <i :class="m.icon" /><span>{{ $t(m.labelKey) }}</span>
           <span
             v-if="m.path === '/onaylar' && onaySayisi"
             class="menu-sayac"
@@ -126,7 +126,7 @@
         <button
           v-if="authStore.sirketAdi || authStore.companyName"
           class="firma-secici"
-          :title="'Şirket değiştir'"
+          :title="$t('nav.sirketDegistirBaslik')"
           @click="sirketDegistirAc"
         >
           <i class="pi pi-building" />
@@ -149,7 +149,7 @@
           </div>
           <div class="admin-info">
             <span class="admin-name">{{
-              authStore?.kullanici?.displayName || authStore?.kullanici?.username || 'Kullanıcı'
+              authStore?.kullanici?.displayName || authStore?.kullanici?.username || $t('nav.user')
             }}</span>
             <span class="admin-role">{{ authStore?.kullanici?.role || 'USER' }}</span>
           </div>
@@ -185,32 +185,32 @@
           </span>
           <button
             class="icon-action-btn"
-            title="Sifre Degistir"
-            aria-label="Şifre Değiştir"
+            :title="$t('nav.sifreDegistir')"
+            :aria-label="$t('nav.sifreDegistir')"
             @click="$emit('open-password-modal')"
           >
             <i class="pi pi-lock" />
           </button>
           <button
             class="icon-action-btn"
-            title="Hesap Makinesi"
-            aria-label="Hesap Makinesi"
+            :title="$t('nav.hesapMakinesi')"
+            :aria-label="$t('nav.hesapMakinesi')"
             @click="$emit('open-calculator')"
           >
             <i class="pi pi-calculator" />
           </button>
           <button
             class="icon-action-btn"
-            title="Doviz"
-            aria-label="Döviz Çevirici"
+            :title="$t('nav.doviz')"
+            :aria-label="$t('nav.doviz')"
             @click="$emit('open-currency')"
           >
             <i class="pi pi-money-bill" />
           </button>
           <button
             class="icon-action-btn"
-            title="Araclar"
-            aria-label="Araçlar"
+            :title="$t('nav.araclar')"
+            :aria-label="$t('nav.araclar')"
             :aria-expanded="aracAcik"
             @click="aracAcik = !aracAcik"
           >
@@ -223,21 +223,21 @@
         >
           <button
             class="icon-action-btn"
-            title="KDV"
+            :title="$t('nav.kdv')"
             @click="$emit('open-kdv')"
           >
             <i class="pi pi-percentage" />
           </button>
           <button
             class="icon-action-btn"
-            title="Taksit"
+            :title="$t('nav.taksit')"
             @click="$emit('open-taksit')"
           >
             <i class="pi pi-calendar" />
           </button>
           <button
             class="icon-action-btn"
-            title="Kar Marj"
+            :title="$t('nav.karMarji')"
             @click="$emit('open-marj')"
           >
             <i class="pi pi-chart-line" />
@@ -254,7 +254,7 @@
 
     <Dialog
       v-model:visible="sirketDialogAcik"
-      header="Şirket Değiştir"
+      :header="$t('nav.sirketDegistir')"
       :modal="true"
       :style="{ width: '440px' }"
     >
@@ -263,7 +263,7 @@
         class="sirket-degistir-bos"
       >
         <i class="pi pi-building" />
-        <p>Şirket listesi yüklenemedi.</p>
+        <p>{{ $t('nav.sirketListesiYuklenemedi') }}</p>
       </div>
       <div class="sirket-degistir-liste">
         <button
@@ -280,7 +280,7 @@
               <span
                 v-if="s.vergiNo"
                 class="sirket-degistir-vkn"
-              >VKN: {{ s.vergiNo }}</span>
+              >{{ $t('nav.vkn') }}: {{ s.vergiNo }}</span>
             </div>
           </div>
           <i
@@ -384,77 +384,77 @@ const toggleFav = (path) => {
 const isFav = (path) => favoriler.value.includes(path)
 
 const tumMenuler = [
-  { path: '/', label: 'Ana Sayfa', icon: 'pi pi-home', grup: '' },
-  { path: '/sohbet', label: 'Sohbet', icon: 'pi pi-comments', grup: '' },
-  { path: '/ajanda', label: 'Ajanda', icon: 'pi pi-calendar', grup: '' },
-  { path: '/onaylar', label: 'Onaylar', icon: 'pi pi-check-circle', grup: '' },
-  { path: '/belgeler', label: 'Belgeler', icon: 'pi pi-folder-open', grup: '' },
-  { path: '/sistem-durum', label: 'Sistem Durumu', icon: 'pi pi-server', grup: '', admin: true },
-  { path: '/muhasebe', label: 'Muhasebe', icon: 'pi pi-book', grup: 'Finans', gelismis: true },
-  { path: '/cari-hesaplar', label: 'Cari', icon: 'pi pi-users', grup: 'Finans' },
-  { path: '/faturalar', label: 'Faturalar', icon: 'pi pi-file', grup: 'Finans' },
-  { path: '/tekrarlayan-faturalar', label: 'Tekrarlayan Faturalar', icon: 'pi pi-sync', grup: 'Finans' },
-  { path: '/bankalar', label: 'Banka', icon: 'pi pi-building', grup: 'Finans' },
-  { path: '/kasa', label: 'Kasa', icon: 'pi pi-wallet', grup: 'Finans' },
-  { path: '/banka-mutabakat', label: 'Banka Mutabakatı', icon: 'pi pi-link', grup: 'Finans', gelismis: true },
-  { path: '/cek-senet', label: 'Çek/Senet', icon: 'pi pi-money-bill', grup: 'Finans', gelismis: true },
-  { path: '/tahsilat', label: 'Tahsilat', icon: 'pi pi-dollar', grup: 'Finans' },
-  { path: '/taksit-takvimi', label: 'Taksit Takvimi', icon: 'pi pi-calendar', grup: 'Finans' },
-  { path: '/pos-terminalleri', label: 'POS Terminalleri', icon: 'pi pi-credit-card', grup: 'Finans', gelismis: true },
-  { path: '/butceler', label: 'Bütçe', icon: 'pi pi-chart-bar', grup: 'Finans', admin: true, gelismis: true },
-  { path: '/masraflar', label: 'Masraf', icon: 'pi pi-money-bill', grup: 'Finans', gelismis: true },
-  { path: '/satislar', label: 'Satış', icon: 'pi pi-shopping-cart', grup: 'Ticaret', gelismis: true },
-  { path: '/hizli-satis', label: 'Hızlı Satış', icon: 'pi pi-bolt', grup: 'Ticaret' },
-  { path: '/saha-portali', label: 'Saha Portalı', icon: 'pi pi-compass', grup: 'Ticaret' },
-  { path: '/teklifler', label: 'Teklifler', icon: 'pi pi-file-edit', grup: 'Ticaret' },
-  { path: '/crm', label: 'CRM', icon: 'pi pi-bullseye', grup: 'Ticaret', gelismis: true },
-  { path: '/e-fatura', label: 'E-Fatura', icon: 'pi pi-file-pdf', grup: 'Ticaret', gelismis: true },
-  { path: '/satinalma', label: 'Satın Alma', icon: 'pi pi-shopping-bag', grup: 'Ticaret', gelismis: true },
-  { path: '/siparisler', label: 'Sipariş', icon: 'pi pi-receipt', grup: 'Ticaret', gelismis: true },
-  { path: '/siparis-takip', label: 'Sipariş Takibi', icon: 'pi pi-sitemap', grup: 'Ticaret' },
-  { path: '/teslimatlar', label: 'Teslimatlar', icon: 'pi pi-truck', grup: 'Ticaret' },
-  { path: '/irsaliyeler', label: 'İrsaliye', icon: 'pi pi-truck', grup: 'Ticaret', gelismis: true },
-  { path: '/fiyat-listesi', label: 'Fiyat Listesi', icon: 'pi pi-tag', grup: 'Ticaret', gelismis: true },
-  { path: '/iadeler', label: 'İade', icon: 'pi pi-replay', grup: 'Ticaret', gelismis: true },
-  { path: '/stoklar', label: 'Stok', icon: 'pi pi-box', grup: 'Envanter' },
-  { path: '/kritik-stok', label: 'Kritik Stok', icon: 'pi pi-exclamation-triangle', grup: 'Envanter', gelismis: true },
-  { path: '/toplu-stok', label: 'Toplu Stok', icon: 'pi pi-database', grup: 'Envanter', gelismis: true },
-  { path: '/depolar', label: 'Depo', icon: 'pi pi-warehouse', grup: 'Envanter', gelismis: true },
-  { path: '/stok-seriler', label: 'Seri/Lot', icon: 'pi pi-qrcode', grup: 'Envanter', gelismis: true },
-  { path: '/stok-sayim', label: 'Stok Sayım', icon: 'pi pi-sort-alt', grup: 'Envanter', gelismis: true },
-  { path: '/stok-duzeltmeler', label: 'Stok Düzeltme', icon: 'pi pi-sliders-h', grup: 'Envanter', gelismis: true },
-  { path: '/uretim', label: 'Üretim', icon: 'pi pi-cog', grup: 'Envanter' },
-  { path: '/subeler', label: 'Şube', icon: 'pi pi-sitemap', grup: 'Yönetim', gelismis: true },
-  { path: '/personel', label: 'Personel', icon: 'pi pi-id-card', grup: 'Yönetim' },
-  { path: '/izinler', label: 'İzin', icon: 'pi pi-calendar', grup: 'Yönetim', gelismis: true },
-  { path: '/projeler', label: 'Proje', icon: 'pi pi-folder', grup: 'Yönetim', gelismis: true },
+  { path: '/', labelKey: 'nav.dashboard', icon: 'pi pi-home', grupKey: '' },
+  { path: '/sohbet', labelKey: 'nav.sohbet', icon: 'pi pi-comments', grupKey: '' },
+  { path: '/ajanda', labelKey: 'nav.ajanda', icon: 'pi pi-calendar', grupKey: '' },
+  { path: '/onaylar', labelKey: 'nav.onaylar', icon: 'pi pi-check-circle', grupKey: '' },
+  { path: '/belgeler', labelKey: 'nav.belgeler', icon: 'pi pi-folder-open', grupKey: '' },
+  { path: '/sistem-durum', labelKey: 'nav.sistemDurum', icon: 'pi pi-server', grupKey: '', admin: true },
+  { path: '/muhasebe', labelKey: 'nav.muhasebe', icon: 'pi pi-book', grupKey: 'nav.finans', gelismis: true },
+  { path: '/cari-hesaplar', labelKey: 'nav.cari', icon: 'pi pi-users', grupKey: 'nav.finans' },
+  { path: '/faturalar', labelKey: 'nav.faturalar', icon: 'pi pi-file', grupKey: 'nav.finans' },
+  { path: '/tekrarlayan-faturalar', labelKey: 'nav.tekrarlayanFaturalar', icon: 'pi pi-sync', grupKey: 'nav.finans' },
+  { path: '/bankalar', labelKey: 'nav.banka', icon: 'pi pi-building', grupKey: 'nav.finans' },
+  { path: '/kasa', labelKey: 'nav.kasa', icon: 'pi pi-wallet', grupKey: 'nav.finans' },
+  { path: '/banka-mutabakat', labelKey: 'nav.bankaMutabakat', icon: 'pi pi-link', grupKey: 'nav.finans', gelismis: true },
+  { path: '/cek-senet', labelKey: 'nav.ceksenet', icon: 'pi pi-money-bill', grupKey: 'nav.finans', gelismis: true },
+  { path: '/tahsilat', labelKey: 'nav.tahsilat', icon: 'pi pi-dollar', grupKey: 'nav.finans' },
+  { path: '/taksit-takvimi', labelKey: 'nav.taksitTakvimi', icon: 'pi pi-calendar', grupKey: 'nav.finans' },
+  { path: '/pos-terminalleri', labelKey: 'nav.posTerminalleri', icon: 'pi pi-credit-card', grupKey: 'nav.finans', gelismis: true },
+  { path: '/butceler', labelKey: 'nav.butce', icon: 'pi pi-chart-bar', grupKey: 'nav.finans', admin: true, gelismis: true },
+  { path: '/masraflar', labelKey: 'nav.masraf', icon: 'pi pi-money-bill', grupKey: 'nav.finans', gelismis: true },
+  { path: '/satislar', labelKey: 'nav.satis', icon: 'pi pi-shopping-cart', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/hizli-satis', labelKey: 'nav.hizliSatis', icon: 'pi pi-bolt', grupKey: 'nav.ticaret' },
+  { path: '/saha-portali', labelKey: 'nav.sahaPortali', icon: 'pi pi-compass', grupKey: 'nav.ticaret' },
+  { path: '/teklifler', labelKey: 'nav.teklifler', icon: 'pi pi-file-edit', grupKey: 'nav.ticaret' },
+  { path: '/crm', labelKey: 'nav.crm', icon: 'pi pi-bullseye', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/e-fatura', labelKey: 'nav.eFatura', icon: 'pi pi-file-pdf', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/satinalma', labelKey: 'nav.satinalma', icon: 'pi pi-shopping-bag', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/siparisler', labelKey: 'nav.siparis', icon: 'pi pi-receipt', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/siparis-takip', labelKey: 'nav.siparisTakip', icon: 'pi pi-sitemap', grupKey: 'nav.ticaret' },
+  { path: '/teslimatlar', labelKey: 'nav.teslimatlar', icon: 'pi pi-truck', grupKey: 'nav.ticaret' },
+  { path: '/irsaliyeler', labelKey: 'nav.irsaliye', icon: 'pi pi-truck', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/fiyat-listesi', labelKey: 'nav.fiyatListesi', icon: 'pi pi-tag', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/iadeler', labelKey: 'nav.iade', icon: 'pi pi-replay', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/stoklar', labelKey: 'nav.stok', icon: 'pi pi-box', grupKey: 'nav.envanter' },
+  { path: '/kritik-stok', labelKey: 'nav.kritikStok', icon: 'pi pi-exclamation-triangle', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/toplu-stok', labelKey: 'nav.topluStok', icon: 'pi pi-database', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/depolar', labelKey: 'nav.depo', icon: 'pi pi-warehouse', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/stok-seriler', labelKey: 'nav.serilot', icon: 'pi pi-qrcode', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/stok-sayim', labelKey: 'nav.stokSayim', icon: 'pi pi-sort-alt', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/stok-duzeltmeler', labelKey: 'nav.stokDuzeltmeler', icon: 'pi pi-sliders-h', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/uretim', labelKey: 'nav.uretim', icon: 'pi pi-cog', grupKey: 'nav.envanter' },
+  { path: '/subeler', labelKey: 'nav.sube', icon: 'pi pi-sitemap', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/personel', labelKey: 'nav.personel', icon: 'pi pi-id-card', grupKey: 'nav.yonetim' },
+  { path: '/izinler', labelKey: 'nav.izin', icon: 'pi pi-calendar', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/projeler', labelKey: 'nav.proje', icon: 'pi pi-folder', grupKey: 'nav.yonetim', gelismis: true },
   {
     path: '/maas-bordro',
-    label: 'Maaş Bordro',
+    labelKey: 'nav.maasBordro',
     icon: 'pi pi-credit-card',
-    grup: 'Yönetim',
+    grupKey: 'nav.yonetim',
     admin: true,
     gelismis: true
   },
-  { path: '/vardiyalar', label: 'Vardiya', icon: 'pi pi-clock', grup: 'Yönetim', gelismis: true },
-  { path: '/sirketler', label: 'Şirket', icon: 'pi pi-building', grup: 'Sistem', admin: true, gelismis: true },
-  { path: '/yeni-yil-sihirbazi', label: 'Yeni Yıl Aç', icon: 'pi pi-sparkles', grup: 'Sistem', admin: true, gelismis: true },
-  { path: '/donemler', label: 'Dönem', icon: 'pi pi-calendar', grup: 'Sistem', gelismis: true },
-  { path: '/kullanicilar', label: 'Kullanıcı', icon: 'pi pi-user', grup: 'Sistem', admin: true, gelismis: true },
-  { path: '/yetki-yonetimi', label: 'Yetkiler', icon: 'pi pi-key', grup: 'Sistem', admin: true, gelismis: true },
-  { path: '/kategoriler', label: 'Kategori', icon: 'pi pi-tags', grup: 'Sistem', gelismis: true },
-  { path: '/notlar', label: 'Notlar', icon: 'pi pi-pen-to-square', grup: 'Sistem' },
-  { path: '/veri-aktar', label: 'Veri Aktar', icon: 'pi pi-upload', grup: 'Sistem', gelismis: true },
-  { path: '/kullanim-sartlari', label: 'Kullanım Şartları', icon: 'pi pi-file', grup: 'Sistem', gelismis: true },
-  { path: '/gizlilik-politikasi', label: 'Gizlilik', icon: 'pi pi-shield', grup: 'Sistem', gelismis: true },
-  { path: '/hesap-ayarlari', label: 'Hesap Ayarları', icon: 'pi pi-cog', grup: 'Sistem', gelismis: true },
-  { path: '/yedekler', label: 'Yedek', icon: 'pi pi-save', grup: 'Sistem', admin: true, gelismis: true },
-  { path: '/yonetici-kokpiti', label: 'Yönetici Kokpiti', icon: 'pi pi-bolt', grup: 'Rapor', admin: true },
-  { path: '/raporlar', label: 'Rapor', icon: 'pi pi-chart-bar', grup: 'Rapor' },
-  { path: '/vergi-raporlari', label: 'KDV & BA/BS', icon: 'pi pi-file-edit', grup: 'Rapor', gelismis: true },
-  { path: '/anomaliler', label: 'Anomali', icon: 'pi pi-exclamation-triangle', grup: 'Rapor', gelismis: true },
-  { path: '/hareketler', label: 'Hareket', icon: 'pi pi-chart-line', grup: 'Rapor' },
-  { path: '/denetim', label: 'Denetim', icon: 'pi pi-shield', grup: 'Rapor', admin: true, gelismis: true }
+  { path: '/vardiyalar', labelKey: 'nav.vardiya', icon: 'pi pi-clock', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/sirketler', labelKey: 'nav.sirket', icon: 'pi pi-building', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/yeni-yil-sihirbazi', labelKey: 'nav.yeniYil', icon: 'pi pi-sparkles', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/donemler', labelKey: 'nav.donem', icon: 'pi pi-calendar', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/kullanicilar', labelKey: 'nav.kullanici', icon: 'pi pi-user', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/yetki-yonetimi', labelKey: 'nav.yetkiler', icon: 'pi pi-key', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/kategoriler', labelKey: 'nav.kategori', icon: 'pi pi-tags', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/notlar', labelKey: 'nav.notlar', icon: 'pi pi-pen-to-square', grupKey: 'nav.sistem' },
+  { path: '/veri-aktar', labelKey: 'nav.veriAktar', icon: 'pi pi-upload', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/kullanim-sartlari', labelKey: 'nav.kullanimSartlari', icon: 'pi pi-file', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/gizlilik-politikasi', labelKey: 'nav.gizlilik', icon: 'pi pi-shield', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/hesap-ayarlari', labelKey: 'nav.hesapAyarlari', icon: 'pi pi-cog', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/yedekler', labelKey: 'nav.yedek', icon: 'pi pi-save', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/yonetici-kokpiti', labelKey: 'nav.yoneticiKokpiti', icon: 'pi pi-bolt', grupKey: 'nav.rapor', admin: true },
+  { path: '/raporlar', labelKey: 'nav.rapor', icon: 'pi pi-chart-bar', grupKey: 'nav.rapor' },
+  { path: '/vergi-raporlari', labelKey: 'nav.vergiRaporlari', icon: 'pi pi-file-edit', grupKey: 'nav.rapor', gelismis: true },
+  { path: '/anomaliler', labelKey: 'nav.anomaliler', icon: 'pi pi-exclamation-triangle', grupKey: 'nav.rapor', gelismis: true },
+  { path: '/hareketler', labelKey: 'nav.hareket', icon: 'pi pi-chart-line', grupKey: 'nav.rapor' },
+  { path: '/denetim', labelKey: 'nav.denetim', icon: 'pi pi-shield', grupKey: 'nav.rapor', admin: true, gelismis: true }
 ]
 
 const gorunenMenuler = computed(() => {

@@ -12,7 +12,7 @@
           v-model="query"
           type="text"
           class="qs-input"
-          placeholder="Ara (cari, stok, fatura, personel, proje, depo, şube...)"
+          :placeholder="$t('quickSearch.placeholder')"
           autofocus
           @keydown="handleKeydown"
         >
@@ -20,7 +20,7 @@
           type="button"
           class="qs-mic-btn"
           :class="{ listening: isListening }"
-          :title="isListening ? 'Dinleniyor... Konuşun' : 'Sesli Arama (Mikrofon)'"
+          :title="isListening ? $t('quickSearch.dinleniyor') : $t('quickSearch.sesliArama')"
           @click="toggleVoiceRecognition"
         >
           <i :class="isListening ? 'pi pi-spin pi-spinner' : 'pi pi-microphone'" />
@@ -31,13 +31,13 @@
         v-if="!query"
         class="qs-hint"
       >
-        <p>Bir şey yazmaya başlayın...</p>
+        <p>{{ $t('quickSearch.baslayin') }}</p>
         <div
           v-if="sonAramalar && sonAramalar.length"
           class="qs-son-aramalar"
         >
           <div class="qs-son-baslik">
-            Son Aramalar
+            {{ $t('quickSearch.sonAramalar') }}
           </div>
           <div
             v-for="(a, i) in sonAramalar"
@@ -53,17 +53,17 @@
           </div>
         </div>
         <div class="qs-hint-items">
-          <span><kbd>c</kbd> Cari Hesaplar</span>
-          <span><kbd>s</kbd> Stoklar</span>
-          <span><kbd>f</kbd> Faturalar</span>
-          <span><kbd>p</kbd> Personel</span>
-          <span><kbd>r</kbd> Projeler</span>
-          <span><kbd>d</kbd> Depolar</span>
-          <span><kbd>u</kbd> Şubeler</span>
+          <span><kbd>c</kbd> {{ $t('nav.cari') }}</span>
+          <span><kbd>s</kbd> {{ $t('nav.stok') }}</span>
+          <span><kbd>f</kbd> {{ $t('nav.faturalar') }}</span>
+          <span><kbd>p</kbd> {{ $t('nav.personel') }}</span>
+          <span><kbd>r</kbd> {{ $t('nav.proje') }}</span>
+          <span><kbd>d</kbd> {{ $t('nav.depo') }}</span>
+          <span><kbd>u</kbd> {{ $t('nav.sube') }}</span>
         </div>
         <div class="qs-komutlar">
           <div class="qs-komut-baslik">
-            Hızlı Komutlar
+            {{ $t('quickSearch.hizliKomutlar') }}
           </div>
           <div class="qs-komut-grid">
             <button
@@ -81,7 +81,7 @@
         v-if="loading"
         class="qs-loading"
       >
-        <i class="pi pi-spin pi-spinner" /> Aranıyor...
+        <i class="pi pi-spin pi-spinner" /> {{ $t('quickSearch.araniyor') }}
       </div>
       <div
         v-if="error"
@@ -132,7 +132,7 @@
         class="qs-empty"
       >
         <i class="pi pi-search" />
-        <p>"{{ query }}" için sonuç bulunamadı</p>
+        <p>{{ $t('quickSearch.sonucYok', { q: query }) }}</p>
       </div>
     </div>
   </div>
@@ -157,10 +157,12 @@ import {
   belgeAPI
 } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({ visible: Boolean })
 const emit = defineEmits(['update:visible'])
 const router = useRouter()
+const { t } = useI18n()
 const query = ref('')
 const results = ref([])
 const selectedIndex = ref(0)
@@ -172,18 +174,18 @@ let recognition = null
 
 const grupEtiketi = (type) => {
   const etiketler = {
-    modul: 'Sayfalar',
-    cari: 'Cari Hesaplar',
-    stok: 'Stoklar',
-    fatura: 'Faturalar',
-    personel: 'Personel',
-    proje: 'Projeler',
-    siparis: 'Siparişler',
-    not: 'Notlar',
-    banka: 'Bankalar',
-    kasa: 'Kasalar',
-    depo: 'Depolar',
-    sube: 'Şubeler'
+    modul: t('quickSearch.grupModul'),
+    cari: t('nav.cari'),
+    stok: t('nav.stok'),
+    fatura: t('nav.faturalar'),
+    personel: t('nav.personel'),
+    proje: t('nav.proje'),
+    siparis: t('nav.siparis'),
+    not: t('nav.notlar'),
+    banka: t('nav.banka'),
+    kasa: t('nav.kasa'),
+    depo: t('nav.depo'),
+    sube: t('nav.sube')
   }
   return etiketler[type] || type
 }
@@ -221,7 +223,7 @@ const grupluSonuclar = computed(() => {
 const toggleVoiceRecognition = () => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SpeechRecognition) {
-    error.value = 'Tarayıcınız sesli aramayı desteklemiyor.'
+    error.value = t('quickSearch.sesDesteklenmiyor')
     return
   }
 
@@ -275,46 +277,46 @@ const typeConfig = {
   belge: { icon: 'pi pi-folder-open', severity: 'info', route: '/belgeler' }
 }
 
-const komutlar = [
-  { etiket: 'Yeni Fatura', icon: 'pi pi-file', route: '/faturalar' },
-  { etiket: 'Yeni Cari', icon: 'pi pi-user-plus', route: '/cari-hesaplar' },
-  { etiket: 'Yeni Stok', icon: 'pi pi-box', route: '/stoklar' },
-  { etiket: 'Hızlı Satış', icon: 'pi pi-bolt', route: '/hizli-satis' },
-  { etiket: 'Sohbet', icon: 'pi pi-comments', route: '/sohbet' },
-  { etiket: 'Ajanda', icon: 'pi pi-calendar', route: '/ajanda' },
-  { etiket: 'Onaylar', icon: 'pi pi-check-circle', route: '/onaylar' },
-  { etiket: 'Belgeler', icon: 'pi pi-folder-open', route: '/belgeler' }
-]
+const komutlar = computed(() => [
+  { etiket: t('quickSearch.yeniFatura'), icon: 'pi pi-file', route: '/faturalar' },
+  { etiket: t('quickSearch.yeniCari'), icon: 'pi pi-user-plus', route: '/cari-hesaplar' },
+  { etiket: t('quickSearch.yeniStok'), icon: 'pi pi-box', route: '/stoklar' },
+  { etiket: t('nav.hizliSatis'), icon: 'pi pi-bolt', route: '/hizli-satis' },
+  { etiket: t('nav.sohbet'), icon: 'pi pi-comments', route: '/sohbet' },
+  { etiket: t('nav.ajanda'), icon: 'pi pi-calendar', route: '/ajanda' },
+  { etiket: t('nav.onaylar'), icon: 'pi pi-check-circle', route: '/onaylar' },
+  { etiket: t('nav.belgeler'), icon: 'pi pi-folder-open', route: '/belgeler' }
+])
 
 const komutCalistir = (k) => {
   kapat()
   router.push(k.route)
 }
 
-const moduller = [
-  { etiket: 'Cari Hesaplar', anahtar: ['cari', 'cariler', 'müşteri', 'musteri'], icon: 'pi pi-users', route: '/cari-hesaplar' },
-  { etiket: 'Faturalar', anahtar: ['fatura', 'faturalar'], icon: 'pi pi-file', route: '/faturalar' },
-  { etiket: 'Stoklar', anahtar: ['stok', 'stoklar', 'ürün', 'urun'], icon: 'pi pi-box', route: '/stoklar' },
-  { etiket: 'Hızlı Satış', anahtar: ['pos', 'hızlı satış', 'hizli satis', 'satis', 'satış'], icon: 'pi pi-bolt', route: '/hizli-satis' },
-  { etiket: 'Siparişler', anahtar: ['sipariş', 'siparis', 'siparişler'], icon: 'pi pi-receipt', route: '/siparisler' },
-  { etiket: 'Teslimatlar', anahtar: ['teslimat', 'şoför', 'sofor'], icon: 'pi pi-truck', route: '/teslimatlar' },
-  { etiket: 'Üretim', anahtar: ['üretim', 'uretim'], icon: 'pi pi-cog', route: '/uretim' },
-  { etiket: 'Kasa', anahtar: ['kasa', 'kasalar'], icon: 'pi pi-wallet', route: '/kasa' },
-  { etiket: 'Bankalar', anahtar: ['banka', 'bankalar'], icon: 'pi pi-building', route: '/bankalar' },
-  { etiket: 'Personel', anahtar: ['personel'], icon: 'pi pi-id-card', route: '/personel' },
-  { etiket: 'Raporlar', anahtar: ['rapor', 'raporlar'], icon: 'pi pi-chart-bar', route: '/raporlar' },
-  { etiket: 'Ajanda', anahtar: ['ajanda', 'takvim'], icon: 'pi pi-calendar', route: '/ajanda' },
-  { etiket: 'Sohbet', anahtar: ['sohbet', 'chat', 'mesaj'], icon: 'pi pi-comments', route: '/sohbet' },
-  { etiket: 'Projeler', anahtar: ['proje', 'projeler'], icon: 'pi pi-folder', route: '/projeler' },
-  { etiket: 'Depolar', anahtar: ['depo', 'depolar'], icon: 'pi pi-warehouse', route: '/depolar' },
-  { etiket: 'Şubeler', anahtar: ['şube', 'sube', 'şubeler', 'subeler'], icon: 'pi pi-sitemap', route: '/subeler' },
-  { etiket: 'POS Terminalleri', anahtar: ['pos terminal', 'terminal'], icon: 'pi pi-credit-card', route: '/pos-terminalleri' },
-  { etiket: 'Tahsilat', anahtar: ['tahsilat'], icon: 'pi pi-dollar', route: '/tahsilat' },
-  { etiket: 'Sipariş Takibi', anahtar: ['sipariş takip', 'zincir'], icon: 'pi pi-sitemap', route: '/siparis-takip' }
-]
+const moduller = computed(() => [
+  { etiket: t('nav.cari'), anahtar: ['cari', 'cariler', 'müşteri', 'musteri'], icon: 'pi pi-users', route: '/cari-hesaplar' },
+  { etiket: t('nav.faturalar'), anahtar: ['fatura', 'faturalar'], icon: 'pi pi-file', route: '/faturalar' },
+  { etiket: t('nav.stok'), anahtar: ['stok', 'stoklar', 'ürün', 'urun'], icon: 'pi pi-box', route: '/stoklar' },
+  { etiket: t('nav.hizliSatis'), anahtar: ['pos', 'hızlı satış', 'hizli satis', 'satis', 'satış'], icon: 'pi pi-bolt', route: '/hizli-satis' },
+  { etiket: t('nav.siparis'), anahtar: ['sipariş', 'siparis', 'siparişler'], icon: 'pi pi-receipt', route: '/siparisler' },
+  { etiket: t('nav.teslimatlar'), anahtar: ['teslimat', 'şoför', 'sofor'], icon: 'pi pi-truck', route: '/teslimatlar' },
+  { etiket: t('nav.uretim'), anahtar: ['üretim', 'uretim'], icon: 'pi pi-cog', route: '/uretim' },
+  { etiket: t('nav.kasa'), anahtar: ['kasa', 'kasalar'], icon: 'pi pi-wallet', route: '/kasa' },
+  { etiket: t('nav.banka'), anahtar: ['banka', 'bankalar'], icon: 'pi pi-building', route: '/bankalar' },
+  { etiket: t('nav.personel'), anahtar: ['personel'], icon: 'pi pi-id-card', route: '/personel' },
+  { etiket: t('nav.rapor'), anahtar: ['rapor', 'raporlar'], icon: 'pi pi-chart-bar', route: '/raporlar' },
+  { etiket: t('nav.ajanda'), anahtar: ['ajanda', 'takvim'], icon: 'pi pi-calendar', route: '/ajanda' },
+  { etiket: t('nav.sohbet'), anahtar: ['sohbet', 'chat', 'mesaj'], icon: 'pi pi-comments', route: '/sohbet' },
+  { etiket: t('nav.proje'), anahtar: ['proje', 'projeler'], icon: 'pi pi-folder', route: '/projeler' },
+  { etiket: t('nav.depo'), anahtar: ['depo', 'depolar'], icon: 'pi pi-warehouse', route: '/depolar' },
+  { etiket: t('nav.sube'), anahtar: ['şube', 'sube', 'şubeler', 'subeler'], icon: 'pi pi-sitemap', route: '/subeler' },
+  { etiket: t('nav.posTerminalleri'), anahtar: ['pos terminal', 'terminal'], icon: 'pi pi-credit-card', route: '/pos-terminalleri' },
+  { etiket: t('nav.tahsilat'), anahtar: ['tahsilat'], icon: 'pi pi-dollar', route: '/tahsilat' },
+  { etiket: t('nav.siparisTakip'), anahtar: ['sipariş takip', 'zincir'], icon: 'pi pi-sitemap', route: '/siparis-takip' }
+])
 
 const modulAra = (q) =>
-  moduller
+  moduller.value
     .filter((m) => m.etiket.toLowerCase().includes(q) || (m.anahtar || []).some((a) => a.toLowerCase().includes(q)))
     .map((m) => ({
       type: 'modul',
@@ -322,7 +324,7 @@ const modulAra = (q) =>
       severity: 'info',
       route: m.route,
       title: m.etiket,
-      subtitle: 'Sayfaya git'
+      subtitle: t('quickSearch.sayfayaGit')
     }))
 
 watch(
@@ -431,7 +433,7 @@ watch(query, (val) => {
               type: 'cari',
               ...typeConfig.cari,
               title: d.ad,
-              subtitle: `Vergi: ${d.vergiNumarasi || '-'} | Bakiye: ${formatCur(d.bakiye)}`
+              subtitle: t('quickSearch.vergiBakiye', { vergi: d.vergiNumarasi || '-', bakiye: formatCur(d.bakiye) })
             }))
           )
           .catch(() => []),
@@ -443,7 +445,7 @@ watch(query, (val) => {
               type: 'stok',
               ...typeConfig.stok,
               title: d.ad,
-              subtitle: `Kod: ${d.stokKodu || '-'} | Miktar: ${d.miktar || 0} ${d.birim || ''}`
+              subtitle: t('quickSearch.kodMiktar', { kod: d.stokKodu || '-', miktar: d.miktar || 0, birim: d.birim || '' })
             }))
           )
           .catch(() => []),
@@ -488,7 +490,7 @@ watch(query, (val) => {
                 type: 'proje',
                 ...typeConfig.proje,
                 title: d.ad,
-                subtitle: `Durum: ${d.durum || '-'}`
+                subtitle: t('quickSearch.durum', { durum: d.durum || '-' })
               }))
           )
           .catch(() => []),
@@ -503,7 +505,7 @@ watch(query, (val) => {
                 type: 'siparis',
                 ...typeConfig.siparis,
                 title: `#${d.siparisNo || d.id}`,
-                subtitle: `Durum: ${d.durum || '-'}`
+                subtitle: t('quickSearch.durum', { durum: d.durum || '-' })
               }))
           )
           .catch(() => []),
@@ -518,7 +520,7 @@ watch(query, (val) => {
                 type: 'not',
                 ...typeConfig.not,
                 title: d.baslik,
-                subtitle: `Önem: ${d.onemDerecesi || 'NORMAL'}`
+                subtitle: t('quickSearch.onem', { onem: d.onemDerecesi || 'NORMAL' })
               }))
           )
           .catch(() => []),
@@ -533,7 +535,7 @@ watch(query, (val) => {
                 type: 'banka',
                 ...typeConfig.banka,
                 title: d.ad,
-                subtitle: `IBAN: ${d.iban || '-'}`
+                subtitle: t('quickSearch.iban', { iban: d.iban || '-' })
               }))
           )
           .catch(() => []),
@@ -548,7 +550,7 @@ watch(query, (val) => {
                 type: 'kasa',
                 ...typeConfig.kasa,
                 title: d.ad,
-                subtitle: `Bakiye: ${formatCur(d.bakiye)}`
+                subtitle: t('quickSearch.bakiye', { tutar: formatCur(d.bakiye) })
               }))
           )
           .catch(() => []),
@@ -558,7 +560,7 @@ watch(query, (val) => {
             (unwrapList(r))
               .filter((d) => icindeAra(d.ad, q))
               .slice(0, 3)
-              .map((d) => ({ ...d, type: 'depo', ...typeConfig.depo, title: d.ad, subtitle: `Depo` }))
+              .map((d) => ({ ...d, type: 'depo', ...typeConfig.depo, title: d.ad, subtitle: t('quickSearch.depo') }))
           )
           .catch(() => []),
         subeAPI
@@ -567,7 +569,7 @@ watch(query, (val) => {
             (unwrapList(r))
               .filter((s) => icindeAra(s.ad, q))
               .slice(0, 3)
-              .map((d) => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: `Şube` }))
+              .map((d) => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: t('quickSearch.sube') }))
           )
           .catch(() => []),
         belgeAPI
@@ -581,7 +583,7 @@ watch(query, (val) => {
                 type: 'belge',
                 ...typeConfig.belge,
                 title: d.dosyaAdi,
-                subtitle: `Bağlı: ${d.entityAdi || '-'}`
+                subtitle: t('quickSearch.bagli', { ad: d.entityAdi || '-' })
               }))
           )
           .catch(() => [])
@@ -606,7 +608,7 @@ watch(query, (val) => {
       const sirali = [...moduller2, ...baslayanlar, ...digerleri]
       results.value = sirali.slice(0, 15)
     } catch (e) {
-      error.value = 'Arama sırasında hata oluştu'
+      error.value = t('quickSearch.aramaHatasi')
     } finally {
       loading.value = false
     }

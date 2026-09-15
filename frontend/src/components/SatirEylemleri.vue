@@ -7,8 +7,8 @@
       ref="btnRef"
       icon="pi pi-ellipsis-v"
       class="p-button-rounded p-button-text"
-      title="İşlemler"
-      aria-label="İşlemler"
+      :title="$t('common.actions')"
+      :aria-label="$t('common.actions')"
       aria-haspopup="true"
       :aria-expanded="acik"
       @click="acToggle"
@@ -22,7 +22,7 @@
           ref="menuRef"
           class="eylem-menu"
           role="menu"
-          aria-label="İşlemler"
+          :aria-label="$t('common.actions')"
           :style="menuStil"
           @click.stop
           @keydown="menuKeydown"
@@ -32,14 +32,14 @@
             class="eylem-item"
             @click="calistir('duzenle')"
           >
-            <i class="pi pi-pencil" /> Düzenle
+            <i class="pi pi-pencil" /> {{ $t('common.edit') }}
           </button>
           <button
             v-if="gorunur.cogalt"
             class="eylem-item"
             @click="calistir('cogalt')"
           >
-            <i class="pi pi-copy" /> Çoğalt
+            <i class="pi pi-copy" /> {{ $t('common.duplicate') }}
           </button>
 
           <button
@@ -59,7 +59,7 @@
             class="eylem-item eylem-sil"
             @click="calistir('sil')"
           >
-            <i class="pi pi-trash" /> Sil
+            <i class="pi pi-trash" /> {{ $t('common.delete') }}
           </button>
         </div>
       </transition>

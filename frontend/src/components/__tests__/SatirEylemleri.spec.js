@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SatirEylemleri from '../SatirEylemleri.vue'
+import i18n from '../../i18n.js'
 
 const kur = (opts = {}) =>
   mount(SatirEylemleri, {
     ...opts,
-    global: { stubs: { teleport: true } }
+    global: { plugins: [i18n], stubs: { teleport: true } }
   })
 
 describe('SatirEylemleri', () => {

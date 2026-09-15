@@ -80,7 +80,7 @@
         <slot name="empty">
           <EmptyState
             v-if="!loading"
-            :message="emptyMessage"
+            :message="emptyMessage || $t('common.noData')"
           />
         </slot>
       </template>
@@ -103,7 +103,7 @@ const props = defineProps({
   value: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   paginator: { type: Boolean, default: true },
-  emptyMessage: { type: String, default: 'Kayıt bulunamadı' },
+  emptyMessage: { type: String, default: '' },
   rows: { type: Number, default: 25 },
   lazy: { type: Boolean, default: false },
   totalRecords: { type: Number, default: 0 },

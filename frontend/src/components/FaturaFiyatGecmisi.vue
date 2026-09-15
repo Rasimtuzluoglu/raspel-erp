@@ -2,7 +2,7 @@
   <div class="fiyat-gecmisi-panel">
     <div class="fiyat-gecmisi-ust">
       <i class="pi pi-chart-line" />
-      <span>Alış Fiyat Geçmişi</span>
+      <span>{{ $t('faturalar.alisFiyatGecmisi') }}</span>
       <span :class="['trend-rozet', (fiyatGecmisi.trend || '').toLowerCase()]">{{
         trendLabel(fiyatGecmisi.trend)
       }}</span>
@@ -22,12 +22,13 @@
       v-if="fiyatGecmisi.guncelFiyat"
       class="fiyat-gecmisi-guncel"
     >
-      Güncel Satış Fiyatı: <strong>{{ formatCurrency(fiyatGecmisi.guncelFiyat) }}</strong>
+      {{ $t('faturalar.guncelSatisFiyati') }}: <strong>{{ formatCurrency(fiyatGecmisi.guncelFiyat) }}</strong>
     </div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { formatCurrency } from '../utils/format.js'
 
 defineProps({
@@ -36,7 +37,14 @@ defineProps({
 
 import { formatTarih as formatDate } from '../utils/format.js'
 
-const trendLabel = (trend) => ({ ARTIS: 'Yükseliyor', AZALIS: 'Düşüyor', STABIL: 'Sabit' })[trend] || '-'
+const { t } = useI18n()
+
+const trendLabel = (trend) =>
+  ({
+    ARTIS: t('faturalar.trendYukseliyor'),
+    AZALIS: t('faturalar.trendDusuyor'),
+    STABIL: t('faturalar.trendSabit')
+  })[trend] || '-'
 </script>
 
 <style scoped>
