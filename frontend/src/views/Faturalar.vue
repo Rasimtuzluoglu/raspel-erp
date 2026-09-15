@@ -64,7 +64,7 @@
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
-        current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
+        :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
         gorunum-anahtari="faturalar"
       >
         <Column
@@ -463,6 +463,12 @@
         :fiyat-gecmisi="fiyatGecmisi"
       />
 
+      <CariUrunFiyatPaneli
+        v-if="form.cariHesapId && urunSecimi && cariUrunFiyati && cariUrunFiyati.sonFiyat != null"
+        :fiyat-gecmisi="cariUrunFiyati"
+        @uygula="cariFiyatOverride = $event"
+      />
+
       <FaturaSonUrunler
         v-if="form.cariHesapId && !cariSonUrunlerGizle && cariSonUrunler.length > 0"
         :urunler="cariSonUrunler"
@@ -535,6 +541,7 @@ import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import FaturaFiyatGecmisi from '../components/FaturaFiyatGecmisi.vue'
 import FaturaSonUrunler from '../components/FaturaSonUrunler.vue'
+import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 
@@ -723,6 +730,8 @@ const urunSecildi = () => {
   const u = stokStore.stoklar.find((s) => s.id === urunSecimi.value)
   if (u) urunAdet.value = 1
   fiyatGecmisiYukle(urunSecimi.value)
+  cariFiyatOverride.value = null
+  cariUrunFiyatiYukle()
 }
 
 const fiyatGecmisi = ref(null)
@@ -744,6 +753,25 @@ const fiyatGecmisiYukle = async (stokId) => {
   }
 }
 
+// Faz 2: carinin bu urune gecmiste odedigi son fiyat
+const cariUrunFiyati = ref(null)
+const cariFiyatOverride = ref(null)
+
+const cariUrunFiyatiYukle = async () => {
+  const cariId = form.value.cariHesapId
+  const stokId = urunSecimi.value
+  if (!cariId || !stokId) {
+    cariUrunFiyati.value = null
+    return
+  }
+  try {
+    const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, stokId)
+    cariUrunFiyati.value = r.data || null
+  } catch {
+    cariUrunFiyati.value = null
+  }
+}
+
 const kritikStokMu = (stok) => {
   if (!stok?.miktar) return false
   if (stok.minMiktar != null && stok.miktar <= stok.minMiktar) return true
@@ -757,13 +785,15 @@ const urunEkleKalem = () => {
   form.value.kalemler.push({
     aciklama: u.ad,
     adet: urunAdet.value,
-    birimFiyat: u.fiyat,
+    birimFiyat: cariFiyatOverride.value != null ? cariFiyatOverride.value : u.fiyat,
     iskontoOrani: 0,
     kdvOrani: 20,
     stokId: u.id
   })
   urunSecimi.value = null
   urunAdet.value = 1
+  cariFiyatOverride.value = null
+  cariUrunFiyati.value = null
 }
 
 const seciliCariNesnesi = ref(null)
@@ -810,8 +840,11 @@ watch(
     if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
     if (!yeniCariId) {
       cariSonUrunler.value = []
+      cariUrunFiyati.value = null
+      cariFiyatOverride.value = null
       return
     }
+    if (urunSecimi.value) cariUrunFiyatiYukle()
     // Debounce - kullanici cari secerken istek yagmasi
     cariSonUrunlerZamanlayici = setTimeout(async () => {
       try {
@@ -828,7 +861,7 @@ const sonUrunuEkle = (urun) => {
   if (!urun) return
   const u = urun.stokId ? stokStore.stoklar.find((s) => s.id === urun.stokId) : null
   form.value.kalemler.push({
-    aciklama: urun.stokAd || (u ? u.ad : 'Ürün'),
+    aciklama: urun.stokAd || (u ? u.ad : t('faturalar.urun')),
     adet: 1,
     birimFiyat: urun.sonBirimFiyat || (u ? u.fiyat : 0),
     iskontoOrani: 0,
@@ -846,7 +879,7 @@ const sonFaturayiKopyala = async () => {
   try {
     const r = await faturaAPI.cariSonFatura(form.value.cariHesapId)
     if (!r.data) {
-      toastBildirim.bilgi('Bu cariye ait daha önce fatura yok')
+      toastBildirim.bilgi(t('faturalar.dahaOnceFaturaYok'))
       return
     }
     const kaynak = r.data
@@ -886,11 +919,11 @@ const kdvToplam = computed(() => {
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
 const whatsappGonder = (fatura) => {
-  const cariAd = fatura.cariHesapAd || 'Müşterimiz'
+  const cariAd = fatura.cariHesapAd || t('faturalar.musterimiz')
   const tutar = fatura.genelToplam
     ? fatura.genelToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL'
     : ''
-  const mesaj = `Sayın ${cariAd},\n${fatura.faturaNumarasi || 'Fatura'} numaralı, ${tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP`
+  const mesaj = t('faturalar.whatsappMesaj', { ad: cariAd, no: fatura.faturaNumarasi || 'Fatura', tutar })
   const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
   window.open(url, '_blank')
 }
@@ -985,12 +1018,12 @@ const closeDialog = () => {
 
 const saveFatura = async () => {
   if (!form.value.tur) {
-    toastBildirim.uyari('Fatura türü seçiniz')
+    toastBildirim.uyari(t('faturalar.faturaTuruSeciniz'))
     return
   }
   const gecersiz = form.value.kalemler.some((k) => !k.aciklama.trim() || !k.adet || !k.birimFiyat)
   if (gecersiz) {
-    toastBildirim.uyari('Tüm kalemleri eksiksiz doldurun')
+    toastBildirim.uyari(t('faturalar.kalemleriDoldurun'))
     return
   }
 

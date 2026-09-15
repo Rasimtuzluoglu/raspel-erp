@@ -406,7 +406,13 @@
     "trendSabit": "Sabit",
     "kalemAciklamaZorunlu": "Açıklama *",
     "kalemAciklamaPlaceholder": "Kalem açıklaması",
-    "iskontoYuzde": "İskonto %"
+    "iskontoYuzde": "İskonto %",
+    "urun": "Ürün",
+    "dahaOnceFaturaYok": "Bu cariye ait daha önce fatura yok",
+    "musterimiz": "Müşterimiz",
+    "faturaTuruSeciniz": "Fatura türü seçiniz",
+    "kalemleriDoldurun": "Tüm kalemleri eksiksiz doldurun",
+    "whatsappMesaj": "Sayın {ad},\n{no} numaralı, {tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP"
   },
   "stoklar": {
     "title": "Stok Yönetimi",
@@ -955,7 +961,9 @@
     "silOnay": "\"{n}\" numaralı teklifi silmek istediğinize emin misiniz?",
     "revizyonOnay": "\"{n}\" için yeni bir revizyon (Rev.{r}) oluşturulsun mu?",
     "siparisOnay": "\"{n}\" numaralı teklif Satış Siparişine dönüştürülsün mü?",
-    "faturaOnay": "\"{n}\" numaralı teklif Satış Faturasına dönüştürülsün mü?"
+    "faturaOnay": "\"{n}\" numaralı teklif Satış Faturasına dönüştürülsün mü?",
+    "musterimiz": "Müşterimiz",
+    "whatsappMesaj": "Sayın {ad},\n\nSizin için hazırladığımız {no} numaralı Satış Teklifimizin toplam tutarı: {tutar} {birim}'dir.\n\nİyi çalışmalar dileriz."
   },
   "satis": {
     "title": "Satış İşlemleri",
@@ -1001,7 +1009,8 @@
     "perakendeMusteri": "Perakende Müşteri",
     "fisNo": "Fiş No:",
     "musteriLabel": "Müşteri:",
-    "adetBirim": "Adet"
+    "adetBirim": "Adet",
+    "fisBaslik": "SATIŞ"
   },
   "kasa": {
     "title": "Kasa Yönetimi",
@@ -3801,5 +3810,13 @@
     "adim2Buton": "Cari Ekle",
     "adim3Buton": "Stok Ekle",
     "adim4Buton": "Fatura Kes"
+  },
+  "cariFiyat": {
+    "baslik": "Bu cariye son fiyat",
+    "sonFiyat": "Son fiyat",
+    "fatura": "Fatura",
+    "uygula": "Fiyata Uygula",
+    "kayitYok": "Bu cariye ait geçmiş fiyat bulunamadı",
+    "tarihYok": "-"
   }
 }

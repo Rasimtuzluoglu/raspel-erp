@@ -34,7 +34,7 @@
         :paginator="true"
         :rows="15"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-        current-page-report-template="{totalRecords} kayıttan {first}-{last}"
+        :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
         striped-rows
         sort-field="tarih"
         :sort-order="-1"
@@ -231,6 +231,12 @@
           </div>
         </div>
         <small style="color: #64748b">{{ t('satis.fiyatOtomatik') }}</small>
+        <CariUrunFiyatPaneli
+          v-if="satisForm.cariHesapId && seciliUrun && cariUrunFiyati && cariUrunFiyati.sonFiyat != null"
+          :fiyat-gecmisi="cariUrunFiyati"
+          class="mt-2"
+          @uygula="satisCariFiyatUygula"
+        />
       </div>
 
       <h3 style="margin: 18px 0 10px; color: #f1f5f9; font-size: 15px">
@@ -349,6 +355,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, kalemNetTutar, kalemBrutKdv } from '../utils/faturaHesapla.js'
 import { useI18n } from 'vue-i18n'
@@ -413,10 +420,26 @@ const stokAdi = (id) => {
   return u ? `${u.ad} (${u.miktar} ${u.birim || 'Adet'}) - ${formatCurrency(u.fiyat)}` : ''
 }
 
-const urunSecildi = () => {
+const urunSecildi = async () => {
   if (!seciliUrun.value) return
   const u = stokStore.stoklar.find((s) => s.id === seciliUrun.value)
   if (u) yeniUrunFiyat.value = u.fiyat
+  cariUrunFiyati.value = null
+  const cariId = satisForm.value.cariHesapId
+  if (cariId && seciliUrun.value) {
+    try {
+      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, seciliUrun.value)
+      cariUrunFiyati.value = r.data || null
+    } catch {
+      cariUrunFiyati.value = null
+    }
+  }
+}
+
+// Faz 2: secilen cariye bu urunun son satis fiyati
+const cariUrunFiyati = ref(null)
+const satisCariFiyatUygula = (f) => {
+  yeniUrunFiyat.value = f
 }
 
 const urunEkle = () => {
@@ -513,7 +536,7 @@ const printTermalFis = (satisData) => {
     .map(
       (k) => `
     <tr>
-      <td style="text-align:left;">${escapeHtml(k.stokAd || k.ad || 'Ürün')} x${k.miktar || k.adet || 1}</td>
+      <td style="text-align:left;">${escapeHtml(k.stokAd || k.ad || t('faturalar.urun'))} x${k.miktar || k.adet || 1}</td>
       <td style="text-align:right;">${formatCurrency(k.toplamTutar || k.miktar * k.birimFiyat || k.adet * k.birimFiyat)}</td>
     </tr>
   `
@@ -525,7 +548,7 @@ const printTermalFis = (satisData) => {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Termal Fiş - ${escapeHtml(satisData.faturaNumarasi || 'SATIŞ')}</title>
+      <title>${t('satis.fisBaslik')} - ${escapeHtml(satisData.faturaNumarasi || '')}</title>
       <style>
         @page { size: 80mm auto; margin: 0; }
         body { font-family: 'Courier New', Courier, monospace; width: 72mm; margin: 0 auto; padding: 10px 0; font-size: 12px; color: #000; }

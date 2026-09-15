@@ -406,7 +406,13 @@
     "trendSabit": "Stable",
     "kalemAciklamaZorunlu": "Description *",
     "kalemAciklamaPlaceholder": "Item description",
-    "iskontoYuzde": "Discount %"
+    "iskontoYuzde": "Discount %",
+    "urun": "Product",
+    "dahaOnceFaturaYok": "No previous invoice for this customer",
+    "musterimiz": "Our Customer",
+    "faturaTuruSeciniz": "Select invoice type",
+    "kalemleriDoldurun": "Fill in all items completely",
+    "whatsappMesaj": "Dear {ad},\nYour invoice {no} with an amount of {tutar} has been issued. Kind regards.\nRaspel ERP"
   },
   "stoklar": {
     "title": "Stock Management",
@@ -955,7 +961,9 @@
     "silOnay": "Are you sure you want to delete quote \"{n}\"?",
     "revizyonOnay": "Create a new revision (Rev.{r}) for \"{n}\"?",
     "siparisOnay": "Convert quote \"{n}\" to a Sales Order?",
-    "faturaOnay": "Convert quote \"{n}\" to a Sales Invoice?"
+    "faturaOnay": "Convert quote \"{n}\" to a Sales Invoice?",
+    "musterimiz": "Our Customer",
+    "whatsappMesaj": "Dear {ad},\n\nThe total amount of our Sales Quote {no} prepared for you is {tutar} {birim}.\n\nBest regards."
   },
   "satis": {
     "title": "Sales Transactions",
@@ -1001,7 +1009,8 @@
     "perakendeMusteri": "Retail Customer",
     "fisNo": "Receipt No:",
     "musteriLabel": "Customer:",
-    "adetBirim": "pcs"
+    "adetBirim": "pcs",
+    "fisBaslik": "SALE"
   },
   "kasa": {
     "title": "Cash Desk Management",
@@ -3801,5 +3810,13 @@
     "adim2Buton": "Add Account",
     "adim3Buton": "Add Stock",
     "adim4Buton": "Issue Invoice"
+  },
+  "cariFiyat": {
+    "baslik": "This customer's last price",
+    "sonFiyat": "Last price",
+    "fatura": "Invoice",
+    "uygula": "Apply to Price",
+    "kayitYok": "No price history found for this customer",
+    "tarihYok": "-"
   }
 }

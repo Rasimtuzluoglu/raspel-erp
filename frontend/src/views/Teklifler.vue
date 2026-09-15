@@ -412,6 +412,13 @@
             />
           </div>
 
+          <CariUrunFiyatPaneli
+            v-if="form.cariHesapId && cariUrunFiyati && cariUrunFiyati.sonFiyat != null"
+            :fiyat-gecmisi="cariUrunFiyati"
+            class="mb-3"
+            @uygula="teklifCariFiyatUygula"
+          />
+
           <div class="flex flex-col gap-3">
             <div 
               v-for="(k, idx) in form.kalemler" 
@@ -782,11 +789,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
-import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI } from '../api/index.js'
+import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI, faturaAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
+import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 
 const toast = useToast()
 const { t } = useI18n()
@@ -947,6 +955,31 @@ const stokSecildi = (kalem) => {
     kalem.kdvOrani = kdvOrani(s)
     kalemHesapla(kalem)
   }
+  sonSeciliKalem.value = kalem
+  cariUrunFiyatiYukle(kalem)
+}
+
+// Faz 2: secilen cariye bu urunun son satis fiyati
+const cariUrunFiyati = ref(null)
+const sonSeciliKalem = ref(null)
+
+const cariUrunFiyatiYukle = async (kalem) => {
+  cariUrunFiyati.value = null
+  const cariId = form.value.cariHesapId
+  if (!cariId || !kalem?.stokId) return
+  try {
+    const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, kalem.stokId)
+    cariUrunFiyati.value = r.data || null
+  } catch {
+    cariUrunFiyati.value = null
+  }
+}
+
+const teklifCariFiyatUygula = (f) => {
+  const kalem = sonSeciliKalem.value
+  if (!kalem) return
+  kalem.birimFiyat = f
+  kalemHesapla(kalem)
 }
 
 const kalemHesapla = (kalem) => {
@@ -1090,8 +1123,13 @@ const yazdirTeklif = () => {
 
 const whatsAppPaylas = () => {
   if (!seciliTeklif.value) return
-  const t = seciliTeklif.value
-  const metin = `Sayın ${t.cariHesapAdi || 'Müşterimiz'},\n\nSizin için hazırladığımız ${t.teklifNo} numaralı Satış Teklifimizin toplam tutarı: ${formatCurrency(t.genelToplam)} ${t.paraBirimi || 'TRY'}'dir.\n\nİyi çalışmalar dileriz.`
+  const tek = seciliTeklif.value
+  const metin = t('teklifler.whatsappMesaj', {
+    ad: tek.cariHesapAdi || t('teklifler.musterimiz'),
+    no: tek.teklifNo,
+    tutar: formatCurrency(tek.genelToplam),
+    birim: tek.paraBirimi || 'TRY'
+  })
   window.open(`https://wa.me/?text=${encodeURIComponent(metin)}`, '_blank')
 }
 </script>
