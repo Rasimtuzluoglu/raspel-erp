@@ -1,7 +1,7 @@
 <template>
   <div class="belgeler-sayfasi">
     <div class="sayfa-baslik">
-      <h1>
+      <h1 class="page-title">
         <i
           class="pi pi-folder-open"
           style="margin-right: 8px"

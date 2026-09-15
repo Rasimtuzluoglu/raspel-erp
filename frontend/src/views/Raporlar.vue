@@ -1,7 +1,9 @@
 <template>
   <div class="raporlar-container">
     <div class="raporlar-header-bar">
-      <h1>{{ t('raporlar.title') }}</h1>
+      <h1 class="page-title">
+        {{ t('raporlar.title') }}
+      </h1>
       <TarihHizliSecim
         v-model="tarihAraligi"
         style="margin-right: 12px"
@@ -1319,6 +1321,7 @@ h1 {
 }
 .rapor-aksiyonlar {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
 }

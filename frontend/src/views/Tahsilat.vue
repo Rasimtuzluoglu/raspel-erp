@@ -137,7 +137,7 @@
           </Column>
           <Column
             :header="t('tahsilat.islem')"
-            style="width: 200px"
+            style="width: 90px"
           >
             <template #body="{ data }">
               <div class="islem-grup">
@@ -147,26 +147,9 @@
                   :title="t('tahsilat.tahsilatGir')"
                   @click="tahsilatGir(data)"
                 />
-                <Button
-                  icon="pi pi-envelope"
-                  class="p-button-rounded p-button-text p-button-primary"
-                  :title="data.email ? t('tahsilat.epostaIleHatirlat') : t('tahsilat.epostaTanimliDegil')"
-                  :disabled="!data.email"
-                  @click="hatirlat(data)"
-                />
-                <Button
-                  v-if="data.telefon"
-                  icon="pi pi-whatsapp"
-                  class="p-button-rounded p-button-text p-button-success"
-                  :title="t('tahsilat.whatsappAc')"
-                  @click="whatsappAc(data)"
-                />
-                <Button
-                  v-if="data.telefon"
-                  icon="pi pi-phone"
-                  class="p-button-rounded p-button-text p-button-info"
-                  :title="t('tahsilat.ara')"
-                  @click="ara(data)"
+                <SatirEylemleri
+                  :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                  :items="tahsilatEylemleri(data)"
                 />
               </div>
             </template>
@@ -336,6 +319,18 @@ const seciliCariId = ref(null)
 
 const gecmis = ref([])
 const gecmisYukleniyor = ref(false)
+
+const tahsilatEylemleri = (d) => {
+  const items = []
+  if (d.email) {
+    items.push({ etiket: t('tahsilat.epostaIleHatirlat'), ikon: 'pi pi-envelope', islem: () => hatirlat(d) })
+  }
+  if (d.telefon) {
+    items.push({ etiket: t('tahsilat.whatsappAc'), ikon: 'pi pi-whatsapp', islem: () => whatsappAc(d) })
+    items.push({ etiket: t('tahsilat.ara'), ikon: 'pi pi-phone', islem: () => ara(d) })
+  }
+  return items
+}
 
 const tahsilatGir = (cari) => {
   seciliCariId.value = cari?.cariId || null
@@ -547,6 +542,7 @@ onMounted(() => {
 }
 .islem-grup {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
 }
 .fatura-liste {

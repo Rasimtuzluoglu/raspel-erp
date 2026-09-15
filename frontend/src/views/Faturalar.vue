@@ -1,6 +1,8 @@
 <template>
   <div class="faturalar-container">
-    <h1>{{ t('faturalar.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('faturalar.title') }}
+    </h1>
 
     <IlkZiyaretIpuclari
       anahtar="faturalar"
@@ -177,61 +179,21 @@
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 310px"
+          style="width: 90px"
         >
           <template #body="s">
-            <Button
-              icon="pi pi-eye"
-              class="p-button-rounded p-button-sm p-button-info"
-              :title="t('faturalar.goruntule')"
-              @click="viewFatura(s.data.id)"
-            />
-            <Button
-              icon="pi pi-print"
-              class="p-button-rounded p-button-sm p-button-secondary"
-              :title="t('faturalar.yazdirTasarla')"
-              @click="tasarlaVeYazdir(s.data.id)"
-            />
-            <Button
-              icon="pi pi-download"
-              class="p-button-rounded p-button-sm p-button-help"
-              :title="t('faturalar.pdfIndir')"
-              @click="pdfIndir(s.data)"
-            />
-            <Button
-              icon="pi pi-whatsapp"
-              class="p-button-rounded p-button-sm p-button-success"
-              :title="t('faturalar.whatsapp')"
-              style="background: #25d366; border-color: #25d366"
-              @click="whatsappGonder(s.data)"
-            />
-            <Button
-              icon="pi pi-copy"
-              class="p-button-rounded p-button-sm p-button-secondary"
-              :title="t('common.duplicate')"
-              @click="cogalt(s.data)"
-            />
-            <Button
-              v-if="s.data.durum === 'TASLAK' || s.data.durum === 'KESILDI'"
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-sm p-button-warning"
-              :title="s.data.durum === 'KESILDI' ? t('faturalar.revize') : t('common.edit')"
-              @click="editFatura(s.data)"
-            />
-            <Button
-              v-if="s.data.durum === 'TASLAK'"
-              icon="pi pi-check"
-              class="p-button-rounded p-button-sm p-button-success"
-              :title="t('faturalar.kes')"
-              @click="confirmKes(s.data.id)"
-            />
-            <Button
-              v-if="s.data.durum !== 'IPTAL'"
-              icon="pi pi-ban"
-              class="p-button-rounded p-button-sm p-button-danger"
-              :title="t('common.cancel')"
-              @click="confirmIptal(s.data.id)"
-            />
+            <div class="satir-islemler">
+              <Button
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-sm p-button-info"
+                :title="t('faturalar.goruntule')"
+                @click="viewFatura(s.data.id)"
+              />
+              <SatirEylemleri
+                :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                :items="faturaEylemleri(s.data)"
+              />
+            </div>
           </template>
         </Column>
       </DataTable>
@@ -1155,6 +1117,29 @@ const confirmIptal = (id) => {
   })
 }
 
+const faturaEylemleri = (f) => {
+  const items = [
+    { etiket: t('faturalar.yazdirTasarla'), ikon: 'pi pi-print', islem: () => tasarlaVeYazdir(f.id) },
+    { etiket: t('faturalar.pdfIndir'), ikon: 'pi pi-download', islem: () => pdfIndir(f) },
+    { etiket: t('faturalar.whatsapp'), ikon: 'pi pi-whatsapp', islem: () => whatsappGonder(f) },
+    { etiket: t('common.duplicate'), ikon: 'pi pi-copy', islem: () => cogalt(f) }
+  ]
+  if (f.durum === 'TASLAK' || f.durum === 'KESILDI') {
+    items.push({
+      etiket: f.durum === 'KESILDI' ? t('faturalar.revize') : t('common.edit'),
+      ikon: 'pi pi-pencil',
+      islem: () => editFatura(f)
+    })
+  }
+  if (f.durum === 'TASLAK') {
+    items.push({ etiket: t('faturalar.kes'), ikon: 'pi pi-check', islem: () => confirmKes(f.id) })
+  }
+  if (f.durum !== 'IPTAL') {
+    items.push({ etiket: t('common.cancel'), ikon: 'pi pi-ban', sinif: 'eylem-sil', islem: () => confirmIptal(f.id) })
+  }
+  return items
+}
+
 const durumLabel = (d) => {
   const lbl = {
     TASLAK: t('faturalar.durumTaslak'),
@@ -1231,7 +1216,11 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  overflow-x: auto;
+}
+.satir-islemler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .loading {
   text-align: center;

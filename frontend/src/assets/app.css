@@ -181,6 +181,7 @@ img {
   left: 0;
   width: var(--sidebar-w);
   height: 100vh;
+  height: 100dvh;
   background: rgba(15, 23, 42, 0.98);
   border-right: 1px solid var(--border);
   display: flex;
@@ -1340,6 +1341,7 @@ img {
     bottom: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
@@ -1508,7 +1510,19 @@ img {
     padding: 6px 0 !important;
     font-size: 13px !important;
   }
-  .p-datatable .p-datatable-tbody > tr > td:first-child {
+  /* Kolon basligini hucre basina etiket olarak yaz */
+  .p-datatable .p-datatable-tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-secondary);
+    margin-right: 12px;
+  }
+  /* Secim/expander gibi basliksiz hucreler kart basligi gibi gorunmesin */
+  .p-datatable .p-datatable-tbody > tr > td[data-label-ilk] {
     font-weight: 700 !important;
     font-size: 15px !important;
     border-bottom: 1px solid var(--border) !important;
@@ -1705,6 +1719,45 @@ h3 {
   gap: 6px !important;
   justify-content: flex-end;
 }
+
+/* PrimeFlex `.grid` negatif margin'leri Tailwind grid ile cakisip yatay tasma
+   yapiyordu. Tailwind grid kullanildigi icin margin'ler notrlenir (mb-* korunur). */
+.grid {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+}
+
+/* Arac cubuklari her genislikte sarsin (yalniz <=900px'te degil) */
+.p-toolbar,
+.p-toolbar-start,
+.p-toolbar-end,
+.p-toolbar-group-start,
+.p-toolbar-group-end {
+  flex-wrap: wrap !important;
+}
+
+/* Baslik bir flex konteyner icindeyken alt bosluk yapmasin */
+.sayfa-baslik .page-title,
+.ajanda-baslik .page-title,
+.detay-header .page-title,
+.raporlar-header-bar .page-title {
+  margin-bottom: 0;
+}
+
+/* Tablo satiri aksiyon grubu (ortak) */
+.satir-islemler {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Standart yukleniyor durumu (ortak) */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
 .p-datatable .p-datatable-thead > tr > th {
   white-space: nowrap;
 }
@@ -1720,7 +1773,7 @@ h3 {
   max-width: calc(100vw - 24px) !important;
 }
 .p-dialog .p-dialog-content {
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 .p-overlaypanel,
 .p-dropdown-panel,

@@ -1,7 +1,9 @@
 <template>
   <div class="pos-sayfasi">
     <div class="pos-baslik">
-      <h1><i class="pi pi-credit-card" /> {{ t('posTerminalleri.title') }}</h1>
+      <h1 class="page-title">
+        <i class="pi pi-credit-card" /> {{ t('posTerminalleri.title') }}
+      </h1>
       <div class="pos-baslik-aksiyon">
         <Button
           :label="t('posTerminalleri.gunSonuIsle')"

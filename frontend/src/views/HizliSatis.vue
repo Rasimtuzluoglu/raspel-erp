@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div class="pos-body grid">
+    <div class="pos-body">
       <div class="pos-left">
         <div class="pos-arac-cubugu">
           <span class="p-input-icon-left arama-kutusu">
@@ -1875,6 +1875,7 @@ const sepetiTemizle = () => {
   flex-direction: column;
   gap: 8px;
   max-height: calc(100vh - 200px);
+  max-height: calc(100dvh - 200px);
   overflow-y: auto;
   padding-bottom: 8px;
 }
@@ -2182,6 +2183,18 @@ const sepetiTemizle = () => {
   border-radius: 6px;
   padding: 0 4px;
   outline: none;
+}
+/* Mobil: POS adet/fiyat kontrolleri dokunma hedefi >=40px */
+@media (max-width: 900px) {
+  .adet-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .sepet-adet-input,
+  .fiyat-giris-input {
+    height: 40px;
+    font-size: 14px;
+  }
 }
 .odeme-yontem-grid {
   display: flex;

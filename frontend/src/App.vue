@@ -302,6 +302,13 @@ watch(
 .offline-tekrar-dene:hover {
   background: #d97706;
 }
+@media (max-width: 900px) {
+  /* Mobilde ust bar sabit konumda; cevrimdisi banner onun altinda kalsin */
+  .offline-banner {
+    top: 56px;
+    z-index: 1001;
+  }
+}
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition: all 0.3s ease;

@@ -1,6 +1,8 @@
 <template>
   <div class="kasa-container">
-    <h1>{{ t('kasa.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('kasa.title') }}
+    </h1>
 
     <Toolbar class="toolbar">
       <template #start>
@@ -833,9 +835,6 @@ h2 {
   gap: 15px;
   margin-bottom: 20px;
   flex-wrap: wrap;
-}
-.table-container {
-  overflow-x: auto;
 }
 .form-group {
   margin-bottom: 20px;

@@ -80,48 +80,15 @@
       </Column>
       <Column
         :header="t('common.actions')"
-        style="width: 220px"
+        style="width: 70px"
       >
         <template #body="{ data }">
-          <Button
-            v-if="data.durum === 'TEKLIF'"
-            icon="pi pi-check-circle"
-            class="p-button-rounded p-button-text p-button-info"
-            :title="t('siparisler.sipariseCevir')"
-            @click="durumGuncelle(data, 'SIPARIS')"
-          />
-          <Button
-            v-if="data.durum === 'SIPARIS'"
-            icon="pi pi-file"
-            class="p-button-rounded p-button-text p-button-success"
-            :title="t('siparisler.faturalastir')"
-            @click="durumGuncelle(data, 'FATURA_KESILDI')"
-          />
-          <Button
-            v-if="data.durum === 'FATURA_KESILDI' || data.durum === 'IPTAL'"
-            icon="pi pi-undo"
-            class="p-button-rounded p-button-text p-button-help"
-            :title="t('siparisler.sipariseGeriAl')"
-            @click="durumGuncelle(data, 'SIPARIS')"
-          />
-          <Button
-            v-if="data.durum !== 'IPTAL' && data.durum !== 'FATURA_KESILDI'"
-            icon="pi pi-times-circle"
-            class="p-button-rounded p-button-text p-button-warning"
-            :title="t('siparisler.iptalEt')"
-            @click="durumGuncelle(data, 'IPTAL')"
-          />
-          <Button
-            icon="pi pi-briefcase"
-            class="p-button-rounded p-button-text p-button-info"
-            :title="t('siparisler.isEmriOlustur')"
-            @click="isEmriAc(data)"
-          />
-          <Button
-            icon="pi pi-trash"
-            class="p-button-rounded p-button-text p-button-danger"
-            @click="sil(data)"
-          />
+          <div class="satir-islemler">
+            <SatirEylemleri
+              :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+              :items="siparisEylemleri(data)"
+            />
+          </div>
         </template>
       </Column>
     </DataTable>
@@ -356,6 +323,25 @@ const kaydet = async () => {
   kaydediliyor.value = false
 }
 
+const siparisEylemleri = (d) => {
+  const items = []
+  if (d.durum === 'TEKLIF') {
+    items.push({ etiket: t('siparisler.sipariseCevir'), ikon: 'pi pi-check-circle', islem: () => durumGuncelle(d, 'SIPARIS') })
+  }
+  if (d.durum === 'SIPARIS') {
+    items.push({ etiket: t('siparisler.faturalastir'), ikon: 'pi pi-file', islem: () => durumGuncelle(d, 'FATURA_KESILDI') })
+  }
+  if (d.durum === 'FATURA_KESILDI' || d.durum === 'IPTAL') {
+    items.push({ etiket: t('siparisler.sipariseGeriAl'), ikon: 'pi pi-undo', islem: () => durumGuncelle(d, 'SIPARIS') })
+  }
+  if (d.durum !== 'IPTAL' && d.durum !== 'FATURA_KESILDI') {
+    items.push({ etiket: t('siparisler.iptalEt'), ikon: 'pi pi-times-circle', islem: () => durumGuncelle(d, 'IPTAL') })
+  }
+  items.push({ etiket: t('siparisler.isEmriOlustur'), ikon: 'pi pi-briefcase', islem: () => isEmriAc(d) })
+  items.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => sil(d) })
+  return items
+}
+
 const durumGuncelle = async (data, durum) => {
   try {
     await siparisAPI.durumGuncelle(data.id, durum)
@@ -389,6 +375,11 @@ const sil = (data) => {
 <style scoped>
 .siparisler-sayfasi {
   padding: 0;
+}
+.satir-islemler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .sayfa-baslik {
   display: flex;

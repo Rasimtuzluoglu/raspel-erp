@@ -1,6 +1,8 @@
 <template>
   <div class="kategori-container">
-    <h1>Gelir/Gider Kategorileri</h1>
+    <h1 class="page-title">
+      Gelir/Gider Kategorileri
+    </h1>
 
     <Toolbar class="toolbar">
       <template #start>

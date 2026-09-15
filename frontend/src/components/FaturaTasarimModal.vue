@@ -995,6 +995,17 @@ const yazdir = () => {
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
+
+/* Dar ekranlarda yan panel alt alta iner; ic yatay scroll olusmaz */
+@media (max-width: 1100px) {
+  .tasarim-container {
+    flex-direction: column;
+    height: auto;
+  }
+  .tasarim-sidebar {
+    width: 100%;
+  }
+}
 .sidebar-header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);

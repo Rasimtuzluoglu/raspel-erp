@@ -1,6 +1,8 @@
 <template>
   <div class="satis-container">
-    <h1>{{ t('satis.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('satis.title') }}
+    </h1>
 
     <Toolbar class="toolbar">
       <template #start>
@@ -628,7 +630,6 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  overflow-x: auto;
 }
 .form-row {
   display: flex;

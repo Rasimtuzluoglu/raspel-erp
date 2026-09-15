@@ -1,7 +1,7 @@
 <template>
   <div class="ajanda-sayfasi">
     <div class="ajanda-baslik">
-      <h1>
+      <h1 class="page-title">
         <i
           class="pi pi-calendar"
           style="margin-right: 8px"

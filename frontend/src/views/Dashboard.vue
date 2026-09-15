@@ -1411,7 +1411,7 @@ const whatsappLink = (f) => {
 }
 .dashboard-datetime {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .dashboard-datetime i {
@@ -1584,7 +1584,7 @@ const whatsappLink = (f) => {
 }
 .stat-label {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   margin: 0 0 6px;
 }
 .stat-value {
@@ -1597,7 +1597,7 @@ const whatsappLink = (f) => {
 }
 .stat-value small {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-weight: 400;
 }
 .stat-value.positive {
@@ -1605,6 +1605,12 @@ const whatsappLink = (f) => {
 }
 .stat-value.negative {
   color: #f87171;
+}
+[data-theme='light'] .stat-value.positive {
+  color: #059669 !important;
+}
+[data-theme='light'] .stat-value.negative {
+  color: #dc2626 !important;
 }
 .critical-hint {
   margin: 4px 0 0;

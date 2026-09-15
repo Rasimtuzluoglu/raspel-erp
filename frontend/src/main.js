@@ -15,8 +15,10 @@ import EmptyState from './components/EmptyState.vue'
 import SkeletonLoader from './components/SkeletonLoader.vue'
 import ExportMenu from './components/ExportMenu.vue'
 import GecmisZamanCizelgesi from './components/GecmisZamanCizelgesi.vue'
+import SatirEylemleri from './components/SatirEylemleri.vue'
 
 import permissionDirective from './directives/permission.js'
+import tabloEtiketDirective, { initTabloEtiketleri } from './directives/tabloEtiket.js'
 
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
@@ -89,7 +91,11 @@ app.component('EmptyState', EmptyState)
 app.component('SkeletonLoader', SkeletonLoader)
 app.component('ExportMenu', ExportMenu)
 app.component('GecmisZamanCizelgesi', GecmisZamanCizelgesi)
+app.component('SatirEylemleri', SatirEylemleri)
 
 app.directive('permission', permissionDirective)
+app.directive('tablo-etiket', tabloEtiketDirective)
 
 app.mount('#app')
+
+initTabloEtiketleri()

@@ -140,7 +140,6 @@ watch(
 <style scoped>
 .app-datatable-wrapper {
   width: 100%;
-  overflow-x: auto;
   position: relative;
 }
 
@@ -200,6 +199,7 @@ watch(
 .batch-buttons {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

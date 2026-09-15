@@ -1,6 +1,8 @@
 <template>
   <div class="bankalar-container">
-    <h1>{{ t('bankalar.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('bankalar.title') }}
+    </h1>
 
     <Toolbar class="toolbar">
       <template #start>
@@ -319,7 +321,6 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  overflow-x: auto;
 }
 .loading {
   text-align: center;

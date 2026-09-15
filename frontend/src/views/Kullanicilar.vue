@@ -1,6 +1,8 @@
 <template>
   <div class="kullanicilar-container">
-    <h1>{{ t('kullanicilar.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('kullanicilar.title') }}
+    </h1>
 
     <Toolbar class="toolbar">
       <template #start>

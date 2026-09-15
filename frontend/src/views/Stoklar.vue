@@ -245,27 +245,22 @@
           </template>
         </Column>
         <Column
-          header=""
-          style="width: 100px"
+          :header="t('common.actions')"
+          style="width: 90px"
         >
           <template #body="s">
-            <Button
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-info p-button-sm"
-              style="margin-right: 6px"
-              @click.stop="editStok(s.data)"
-            />
-            <Button
-              icon="pi pi-barcode"
-              class="p-button-rounded p-button-success p-button-sm"
-              style="margin-right: 6px"
-              @click.stop="barkodEtiket(s.data)"
-            />
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger p-button-sm"
-              @click.stop="confirmDel(s.data.id)"
-            />
+            <div class="satir-islemler">
+              <Button
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-info p-button-sm"
+                :title="t('common.edit')"
+                @click.stop="editStok(s.data)"
+              />
+              <SatirEylemleri
+                :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                :items="stokEylemleri(s.data)"
+              />
+            </div>
           </template>
         </Column>
       </DataTable>
@@ -883,6 +878,11 @@ const openDialog = () => {
   showDialog.value = true
 }
 
+const stokEylemleri = (s) => [
+  { etiket: t('stoklar.barkodEtiket'), ikon: 'pi pi-barcode', islem: () => barkodEtiket(s) },
+  { etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDel(s.id) }
+]
+
 const editStok = (s) => {
   editingId.value = s.id
   form.value = {
@@ -1220,6 +1220,11 @@ h2 {
   text-align: center;
   padding: 40px;
   color: var(--text-secondary);
+}
+.satir-islemler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .stok-kartlar {
   display: grid;

@@ -1,6 +1,8 @@
 <template>
   <div class="puantaj-container">
-    <h1>{{ t('puantaj.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('puantaj.title') }}
+    </h1>
     <Toolbar class="toolbar">
       <template #start>
         <Button

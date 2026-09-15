@@ -1,6 +1,8 @@
 <template>
   <div class="cari-hesaplar-container">
-    <h1>{{ t('cariHesaplar.title') }}</h1>
+    <h1 class="page-title">
+      {{ t('cariHesaplar.title') }}
+    </h1>
 
     <IlkZiyaretIpuclari
       anahtar="cari-hesaplar"
@@ -148,12 +150,6 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         current-page-report-template="{first} - {last} ({totalRecords} kayıt)"
-        :virtual-scroll="cariHesapStore.toplamKayit > 100 && !aramaMetni"
-        :virtual-scroll-options="{
-          itemSize: tabloYogunluk === 'compact' ? 38 : 46,
-          scrollHeight: '600px',
-          showLoader: true
-        }"
         @page="cariSayfaDegisti"
       >
         <Column
@@ -243,45 +239,27 @@
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 250px"
+          style="width: 100px"
         >
           <template #body="slotProps">
-            <Button
-              icon="pi pi-file-plus"
-              class="p-button-rounded p-button-success p-button-sm"
-              :title="t('cariHesaplar.yeniFatura')"
-              @click="yeniFatura(slotProps.data)"
-            />
-            <Button
-              icon="pi pi-money-bill"
-              class="p-button-rounded p-button-info p-button-sm"
-              :title="t('cariHesaplar.tahsilat')"
-              @click="tahsilatAc(slotProps.data)"
-            />
-            <Button
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-warning p-button-sm"
-              :title="t('common.edit')"
-              @click="editCariHesap(slotProps.data)"
-            />
-            <Button
-              icon="pi pi-list"
-              class="p-button-rounded p-button-secondary p-button-sm"
-              :title="t('cariHesaplar.hareketlerDetay')"
-              @click="viewHareketler(slotProps.data)"
-            />
-            <Button
-              icon="pi pi-id-card"
-              class="p-button-rounded p-button-help p-button-sm"
-              :title="t('cariKart.baslik')"
-              @click="kartAc(slotProps.data)"
-            />
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger p-button-sm"
-              :title="t('common.delete')"
-              @click="confirmDelete(slotProps.data.id)"
-            />
+            <div class="satir-islemler">
+              <Button
+                icon="pi pi-file-plus"
+                class="p-button-rounded p-button-success p-button-sm"
+                :title="t('cariHesaplar.yeniFatura')"
+                @click="yeniFatura(slotProps.data)"
+              />
+              <Button
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-warning p-button-sm"
+                :title="t('common.edit')"
+                @click="editCariHesap(slotProps.data)"
+              />
+              <SatirEylemleri
+                :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                :items="cariEylemleri(slotProps.data)"
+              />
+            </div>
           </template>
         </Column>
       </DataTable>
@@ -1179,6 +1157,13 @@ const closeDialog = () => {
   submitted.value = false
 }
 
+const cariEylemleri = (c) => [
+  { etiket: t('cariHesaplar.tahsilat'), ikon: 'pi pi-money-bill', islem: () => tahsilatAc(c) },
+  { etiket: t('cariHesaplar.hareketlerDetay'), ikon: 'pi pi-list', islem: () => viewHareketler(c) },
+  { etiket: t('cariKart.baslik'), ikon: 'pi pi-id-card', islem: () => kartAc(c) },
+  { etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDelete(c.id) }
+]
+
 const editCariHesap = (cariHesap) => {
   editingId.value = cariHesap.id
   form.value = {
@@ -1576,12 +1561,14 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
 }
 .cari-filtreler {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
   align-items: center;
 }
 .cari-istatistik {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -1837,7 +1824,11 @@ h3 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  overflow-x: auto;
+}
+.satir-islemler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .loading {
