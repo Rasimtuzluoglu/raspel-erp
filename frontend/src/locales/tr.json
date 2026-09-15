@@ -515,6 +515,7 @@
     "yeni": "+ Yeni",
     "siparisOzeti": "Sipariş Özeti ({n})",
     "sepetiKaydet": "Sepeti Kaydet",
+    "sepetTemizlendi": "Sepet temizlendi",
     "kayitliSepetiYukle": "Kayıtlı Sepeti Yükle",
     "temizle": "Temizle",
     "sepeteUrunEkle": "Sepete ürün ekleyin",
@@ -2889,5 +2890,11 @@
     "modulCari": "Cari Hesaplar",
     "modulStok": "Stok & Depo Yönetimi",
     "modulIK": "İnsan Kaynakları & Personel"
+  },
+  "sunumModu": {
+    "ac": "Sunum modunu aç",
+    "kapat": "Sunum modunu kapat",
+    "aktif": "Sunum modu açık",
+    "ipucu": "Hassas bilgiler bulanıklaştırıldı"
   }
 }

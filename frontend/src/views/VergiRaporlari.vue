@@ -36,19 +36,17 @@
       </h2>
       <div class="kdv-ozet">
         <div class="ozet-kutu">
-          <span>{{ t('vergiRaporlari.hesaplananKdv') }}</span><strong>{{ formatCurrency(kdvBeyanname.toplamHesaplananKdv) }}</strong>
+          <span>{{ t('vergiRaporlari.hesaplananKdv') }}</span><strong><span class="gizli-veri">{{ formatCurrency(kdvBeyanname.toplamHesaplananKdv) }}</span></strong>
         </div>
         <div class="ozet-kutu">
-          <span>{{ t('vergiRaporlari.indirilecekKdv') }}</span><strong>{{ formatCurrency(kdvBeyanname.toplamIndirilecekKdv) }}</strong>
+          <span>{{ t('vergiRaporlari.indirilecekKdv') }}</span><strong><span class="gizli-veri">{{ formatCurrency(kdvBeyanname.toplamIndirilecekKdv) }}</span></strong>
         </div>
         <div
           class="ozet-kutu"
           :class="kdvBeyanname.odenecekKdv > 0 ? 'odenecek' : 'devreden'"
         >
           <span>{{ kdvBeyanname.odenecekKdv > 0 ? t('vergiRaporlari.odenecekKdv') : t('vergiRaporlari.devredenKdv') }}</span>
-          <strong>{{
-            formatCurrency(kdvBeyanname.odenecekKdv > 0 ? kdvBeyanname.odenecekKdv : kdvBeyanname.devredenKdv)
-          }}</strong>
+          <strong><span class="gizli-veri">{{ formatCurrency(kdvBeyanname.odenecekKdv > 0 ? kdvBeyanname.odenecekKdv : kdvBeyanname.devredenKdv) }}</span></strong>
         </div>
       </div>
 
@@ -72,7 +70,7 @@
               :header="t('vergiRaporlari.matrah')"
             >
               <template #body="{ data }">
-                {{ formatCurrency(data.matrah) }}
+                <span class="gizli-veri">{{ formatCurrency(data.matrah) }}</span>
               </template>
             </Column>
             <Column
@@ -80,7 +78,7 @@
               :header="t('vergiRaporlari.kdv')"
             >
               <template #body="{ data }">
-                {{ formatCurrency(data.kdv) }}
+                <span class="gizli-veri">{{ formatCurrency(data.kdv) }}</span>
               </template>
             </Column>
           </DataTable>
@@ -104,7 +102,7 @@
               :header="t('vergiRaporlari.matrah')"
             >
               <template #body="{ data }">
-                {{ formatCurrency(data.matrah) }}
+                <span class="gizli-veri">{{ formatCurrency(data.matrah) }}</span>
               </template>
             </Column>
             <Column
@@ -112,7 +110,7 @@
               :header="t('vergiRaporlari.kdv')"
             >
               <template #body="{ data }">
-                {{ formatCurrency(data.kdv) }}
+                <span class="gizli-veri">{{ formatCurrency(data.kdv) }}</span>
               </template>
             </Column>
           </DataTable>
@@ -125,7 +123,7 @@
       class="vergi-seksiyon"
     >
       <h2 class="seksiyon-baslik">
-        <i class="pi pi-chart-bar" /> {{ t('vergiRaporlari.baBsForm') }} ({{ t('vergiRaporlari.esik') }}: {{ formatCurrency(bsRapor?.esik || baRapor?.esik) }})
+        <i class="pi pi-chart-bar" /> {{ t('vergiRaporlari.baBsForm') }} ({{ t('vergiRaporlari.esik') }}: <span class="gizli-veri">{{ formatCurrency(bsRapor?.esik || baRapor?.esik) }}</span>)
       </h2>
       <div class="ba-bs-secim">
         <SelectButton
@@ -167,7 +165,7 @@
           :header="t('vergiRaporlari.matrah')"
         >
           <template #body="{ data }">
-            {{ formatCurrency(data.matrah) }}
+            <span class="gizli-veri">{{ formatCurrency(data.matrah) }}</span>
           </template>
         </Column>
         <Column
@@ -175,7 +173,7 @@
           :header="t('vergiRaporlari.kdv')"
         >
           <template #body="{ data }">
-            {{ formatCurrency(data.kdv) }}
+            <span class="gizli-veri">{{ formatCurrency(data.kdv) }}</span>
           </template>
         </Column>
         <Column
@@ -183,7 +181,7 @@
           :header="t('common.amount')"
         >
           <template #body="{ data }">
-            <strong>{{ formatCurrency(data.tutar) }}</strong>
+            <strong><span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span></strong>
           </template>
         </Column>
       </DataTable>
@@ -191,7 +189,7 @@
         v-if="aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length"
         class="ba-bs-toplam"
       >
-        {{ t('vergiRaporlari.toplamTutar') }} <strong>{{ formatCurrency(aktifBs ? bsRapor?.toplamTutar : baRapor?.toplamTutar) }}</strong>
+        {{ t('vergiRaporlari.toplamTutar') }} <strong><span class="gizli-veri">{{ formatCurrency(aktifBs ? bsRapor?.toplamTutar : baRapor?.toplamTutar) }}</span></strong>
       </div>
       <EmptyState
         v-if="!(aktifBs ? bsRapor?.kayitlar?.length : baRapor?.kayitlar?.length)"

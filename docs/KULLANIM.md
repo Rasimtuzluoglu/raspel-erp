@@ -41,9 +41,16 @@
 |---|---|
 | `Ctrl+K` | Hızlı arama (9 modül + son aramalar) |
 | `Ctrl+S` | Form kaydet |
-| `F2` | Yeni kayıt |
 | `Ctrl+P` | Yazdır (fiş/fatura) |
-| `Esc` | Dialog kapat |
+| `F2` | Hızlı Satış'a git (POS sayfasında: sepeti temizle) |
+| `F4` | Stoklar'a git (POS sayfasında: müşteri seçimi) |
+| `Esc` | Dialog kapat / iptal |
+| `G` + harf | Hızlı gezinme (g+c cari, g+f fatura, g+h POS) |
+| `?` | Klavye kısayolları rehberini aç |
+
+**Hızlı Satış (POS) sayfasında:** `F1` barkod alanına odak, `F3` ürün arama, `F5` yeni müşteri, `F6` kamera tarayıcı, `F9` tam ödeme + tamamla, `F10` kısmi ödeme + tamamla, `N`/`K`/`H` ödeme yöntemi (Nakit/Kart/Havale), `Alt+↑`/`Alt+↓` aktif satır miktarı, `Del` aktif satırı sil.
+
+**Sunum (Müşteri) Modu:** Kenar çubuğundaki göz simgesiyle tek tıkla açılır. Açıkken maliyet/alış, kâr/marj, cari bakiye, ciro/hedef, banka/kasa bakiyesi, tedarikçi, maaş/bordro ve muhasebe/bütçe/vergi tutarları bulanıklaştırılır. Oturum bazlıdır; sayfa yenilenince kapanır.
 
 ## Kullanıcı Dostu Özellikler
 

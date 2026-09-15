@@ -515,6 +515,7 @@
     "yeni": "+ New",
     "siparisOzeti": "Order Summary ({n})",
     "sepetiKaydet": "Save Cart",
+    "sepetTemizlendi": "Cart cleared",
     "kayitliSepetiYukle": "Load Saved Cart",
     "temizle": "Clear",
     "sepeteUrunEkle": "Add products to cart",
@@ -2889,5 +2890,11 @@
     "modulCari": "Cari Hesaplar",
     "modulStok": "Stok & Depo Yönetimi",
     "modulIK": "İnsan Kaynakları & Personel"
+  },
+  "sunumModu": {
+    "ac": "Turn on presentation mode",
+    "kapat": "Turn off presentation mode",
+    "aktif": "Presentation mode on",
+    "ipucu": "Sensitive information is blurred"
   }
 }

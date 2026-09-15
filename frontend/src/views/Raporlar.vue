@@ -495,7 +495,7 @@
               style="width: 140px"
             >
               <template #body="s">
-                {{ formatCurrency(s.data.toplamMaliyet) }}
+                <span class="gizli-veri">{{ formatCurrency(s.data.toplamMaliyet) }}</span>
               </template>
             </Column>
             <Column
@@ -504,7 +504,10 @@
               style="width: 140px"
             >
               <template #body="s">
-                <span :class="s.data.kar >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kar) }}</span>
+                <span
+                  class="gizli-veri"
+                  :class="s.data.kar >= 0 ? 'positive' : 'negative'"
+                >{{ formatCurrency(s.data.kar) }}</span>
               </template>
             </Column>
             <Column
@@ -513,7 +516,10 @@
               style="width: 110px"
             >
               <template #body="s">
-                <span :class="s.data.karMarji >= 0 ? 'positive' : 'negative'">%{{ s.data.karMarji }}</span>
+                <span
+                  class="gizli-veri"
+                  :class="s.data.karMarji >= 0 ? 'positive' : 'negative'"
+                >%{{ s.data.karMarji }}</span>
               </template>
             </Column>
           </DataTable>
@@ -634,7 +640,7 @@
           />
           <Column header="Alış Maliyeti">
             <template #body="s">
-              {{ formatCurrency(s.data.alisFiyat) }}
+              <span class="gizli-veri">{{ formatCurrency(s.data.alisFiyat) }}</span>
             </template>
           </Column>
           <Column header="Satış Fiyatı">
@@ -644,12 +650,18 @@
           </Column>
           <Column header="Kâr">
             <template #body="s">
-              <span :class="s.data.kar >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kar) }}</span>
+              <span
+                class="gizli-veri"
+                :class="s.data.kar >= 0 ? 'positive' : 'negative'"
+              >{{ formatCurrency(s.data.kar) }}</span>
             </template>
           </Column>
           <Column header="Kâr Marjı">
             <template #body="s">
-              <span :class="s.data.karMarji >= 0 ? 'positive' : 'negative'">%{{ s.data.karMarji }}</span>
+              <span
+                class="gizli-veri"
+                :class="s.data.karMarji >= 0 ? 'positive' : 'negative'"
+              >%{{ s.data.karMarji }}</span>
             </template>
           </Column>
         </DataTable>

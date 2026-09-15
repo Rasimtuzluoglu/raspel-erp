@@ -47,7 +47,7 @@
         :header="t('common.amount')"
       >
         <template #body="{ data }">
-          {{ formatCurrency(data.tutar) }}
+          <span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span>
         </template>
       </Column>
       <Column
@@ -131,17 +131,17 @@
           />
           <Column :header="t('butceler.butce')">
             <template #body="{ data }">
-              {{ formatCurrency(data.butce) }}
+              <span class="gizli-veri">{{ formatCurrency(data.butce) }}</span>
             </template>
           </Column>
           <Column :header="t('butceler.gerceklesen')">
             <template #body="{ data }">
-              {{ formatCurrency(data.gerceklesen) }}
+              <span class="gizli-veri">{{ formatCurrency(data.gerceklesen) }}</span>
             </template>
           </Column>
           <Column :header="t('butceler.sapma')">
             <template #body="{ data }">
-              <span :class="(data.sapma || 0) > 0 ? 'negative' : 'positive'">{{ formatCurrency(data.sapma) }}</span>
+              <span :class="(data.sapma || 0) > 0 ? 'negative' : 'positive'"><span class="gizli-veri">{{ formatCurrency(data.sapma) }}</span></span>
             </template>
           </Column>
           <Column :header="t('butceler.kullanim')">

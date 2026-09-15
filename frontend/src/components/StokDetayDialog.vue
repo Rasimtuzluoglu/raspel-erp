@@ -35,7 +35,7 @@
           </div>
           <div class="detail-item">
             <span class="detail-label">Alış Fiyatı</span>
-            <span class="detail-value">{{ formatCurrency(stok.fiyat) }}</span>
+            <span class="detail-value gizli-veri">{{ formatCurrency(stok.fiyat) }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Satış Fiyatı</span>
@@ -82,11 +82,11 @@
           :rows="10"
         >
           <Column
-            header="Tarih"
-            style="width: 110px"
+            :header="t('stoklar.analiz.toplamTutar')"
+            style="width: 130px"
           >
             <template #body="s">
-              {{ formatDate(s.data.hareketTarihi || s.data.tarih) }}
+              <span class="gizli-veri">{{ formatCurrency(s.data.toplamTutar) }}</span>
             </template>
           </Column>
           <Column
@@ -157,7 +157,10 @@
               class="analiz-kart"
             >
               <span class="analiz-kart-label">{{ o.label }}</span>
-              <span class="analiz-kart-deger">{{ o.value }}</span>
+              <span
+                class="analiz-kart-deger"
+                :class="{ 'gizli-veri': o.gizli }"
+              >{{ o.value }}</span>
             </div>
           </div>
 
@@ -242,7 +245,7 @@
               >
                 <Column :header="t('stoklar.analiz.cariHesap')">
                   <template #body="s">
-                    {{ s.data.cariHesapAd }}
+                    <span class="gizli-veri">{{ s.data.cariHesapAd }}</span>
                   </template>
                 </Column>
                 <Column
@@ -258,7 +261,7 @@
                   style="width: 130px"
                 >
                   <template #body="s">
-                    {{ formatCurrency(s.data.toplamTutar) }}
+                    <span class="gizli-veri">{{ formatCurrency(s.data.toplamTutar) }}</span>
                   </template>
                 </Column>
                 <Column
@@ -288,7 +291,7 @@
               >
                 <Column :header="t('stoklar.analiz.cariHesap')">
                   <template #body="s">
-                    {{ s.data.cariHesapAd }}
+                    <span class="gizli-veri">{{ s.data.cariHesapAd }}</span>
                   </template>
                 </Column>
                 <Column
@@ -304,7 +307,7 @@
                   style="width: 130px"
                 >
                   <template #body="s">
-                    {{ formatCurrency(s.data.toplamTutar) }}
+                    <span class="gizli-veri">{{ formatCurrency(s.data.toplamTutar) }}</span>
                   </template>
                 </Column>
                 <Column
@@ -467,16 +470,16 @@ const ozetItems = computed(() => {
   const k = analiz.value?.karlilik || {}
   const birim = analiz.value?.birim || ''
   return [
-    { label: t('stoklar.analiz.toplamAlisTutari'), value: formatCurrency(alis.toplamAlisTutari) },
-    { label: t('stoklar.analiz.toplamSatisTutari'), value: formatCurrency(satis.toplamSatisTutari) },
+    { label: t('stoklar.analiz.toplamAlisTutari'), value: formatCurrency(alis.toplamAlisTutari), gizli: true },
+    { label: t('stoklar.analiz.toplamSatisTutari'), value: formatCurrency(satis.toplamSatisTutari), gizli: true },
     { label: t('stoklar.analiz.stokMiktari'), value: `${sayi(alis.stokMiktar)} ${birim}`.trim() },
-    { label: t('stoklar.analiz.stokMaliyeti'), value: formatCurrency(k.stokMaliyeti) },
-    { label: t('stoklar.analiz.ortMaliyet'), value: formatCurrency(k.ortalamaMaliyet) },
-    { label: t('stoklar.analiz.ortalamaSatis'), value: formatCurrency(k.ortalamaSatisFiyati) },
-    { label: t('stoklar.analiz.toplamBrutKar'), value: formatCurrency(k.toplamBrutKar) },
-    { label: t('stoklar.analiz.brutKarMarji'), value: k.brutKarMarji == null ? '-' : `${sayi(k.brutKarMarji)}%` },
+    { label: t('stoklar.analiz.stokMaliyeti'), value: formatCurrency(k.stokMaliyeti), gizli: true },
+    { label: t('stoklar.analiz.ortMaliyet'), value: formatCurrency(k.ortalamaMaliyet), gizli: true },
+    { label: t('stoklar.analiz.ortalamaSatis'), value: formatCurrency(k.ortalamaSatisFiyati), gizli: true },
+    { label: t('stoklar.analiz.toplamBrutKar'), value: formatCurrency(k.toplamBrutKar), gizli: true },
+    { label: t('stoklar.analiz.brutKarMarji'), value: k.brutKarMarji == null ? '-' : `${sayi(k.brutKarMarji)}%`, gizli: true },
     { label: t('stoklar.analiz.satilanMiktar'), value: `${sayi(k.satilanMiktar)} ${birim}`.trim() },
-    { label: t('stoklar.analiz.satisIadeTutari'), value: formatCurrency(k.satisIadeTutari) }
+    { label: t('stoklar.analiz.satisIadeTutari'), value: formatCurrency(k.satisIadeTutari), gizli: true }
   ]
 })
 

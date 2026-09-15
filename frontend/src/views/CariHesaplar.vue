@@ -229,7 +229,7 @@
         >
           <template #body="slotProps">
             <span
-              class="bakiye-rozet"
+              class="bakiye-rozet gizli-veri"
               :class="slotProps.data.bakiye >= 0 ? 'alacak' : 'borc'"
             >
               <i :class="slotProps.data.bakiye >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />

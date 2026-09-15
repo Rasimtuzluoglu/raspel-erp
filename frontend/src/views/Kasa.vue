@@ -64,7 +64,7 @@
           <h3>{{ kasa.ad }}</h3>
         </div>
         <p
-          class="kasa-bakiye"
+          class="kasa-bakiye gizli-veri"
           :class="kasa.bakiye >= 0 ? 'positive' : 'negative'"
         >
           {{ formatCurrency(kasa.bakiye) }}
@@ -192,7 +192,10 @@
             style="width: 120px"
           >
             <template #body="s">
-              <span :class="s.data.tur === 'GELIR' ? 'positive' : 'negative'">
+              <span
+                class="gizli-veri"
+                :class="s.data.tur === 'GELIR' ? 'positive' : 'negative'"
+              >
                 {{ formatCurrency(s.data.tutar) }}
               </span>
             </template>

@@ -97,7 +97,7 @@
         :header="t('bankaMutabakat.borc')"
       >
         <template #body="{ data }">
-          <span class="negatif">{{ formatCurrency(data.borc) }}</span>
+          <span class="negatif"><span class="gizli-veri">{{ formatCurrency(data.borc) }}</span></span>
         </template>
       </Column>
       <Column
@@ -105,7 +105,7 @@
         :header="t('bankaMutabakat.alacak')"
       >
         <template #body="{ data }">
-          <span class="pozitif">{{ formatCurrency(data.alacak) }}</span>
+          <span class="pozitif"><span class="gizli-veri">{{ formatCurrency(data.alacak) }}</span></span>
         </template>
       </Column>
       <Column

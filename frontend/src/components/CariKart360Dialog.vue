@@ -29,21 +29,21 @@
         <div class="kredi-satir">
           <div class="kredi-alan">
             <span>{{ t('cariKart.krediLimiti') }}</span>
-            <strong>{{ formatCurrency(kart.kredi?.krediLimiti) }}</strong>
+            <strong><span class="gizli-veri">{{ formatCurrency(kart.kredi?.krediLimiti) }}</span></strong>
           </div>
           <div class="kredi-alan">
             <span>{{ t('cariKart.bakiye') }}</span>
-            <strong>{{ formatCurrency(kart.kredi?.bakiye) }}</strong>
+            <strong><span class="gizli-veri">{{ formatCurrency(kart.kredi?.bakiye) }}</span></strong>
           </div>
           <div class="kredi-alan">
             <span>{{ t('cariKart.kullanilabilirKredi') }}</span>
             <strong :class="{ 'limit-asimi': kart.kredi?.limitAsimi }">
-              {{ formatCurrency(kart.kredi?.kullanilabilirKredi) }}
+              <span class="gizli-veri">{{ formatCurrency(kart.kredi?.kullanilabilirKredi) }}</span>
             </strong>
           </div>
           <div class="kredi-alan">
             <span>{{ t('cariKart.riskOrani') }}</span>
-            <strong>{{ kart.kredi?.riskOrani != null ? kart.kredi.riskOrani + '%' : '-' }}</strong>
+            <strong><span class="gizli-veri">{{ kart.kredi?.riskOrani != null ? kart.kredi.riskOrani + '%' : '-' }}</span></strong>
           </div>
         </div>
         <Tag

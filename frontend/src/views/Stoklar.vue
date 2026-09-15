@@ -203,7 +203,7 @@
           style="width: 130px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.fiyat) }}
+            <span class="gizli-veri">{{ formatCurrency(s.data.fiyat) }}</span>
           </template>
         </Column>
         <Column
@@ -213,14 +213,16 @@
           style="width: 150px"
         >
           <template #body="s">
-            <span v-if="s.data.tedarikciAd"><i
-              class="pi pi-building"
-              style="margin-right: 6px; color: #3b82f6"
-            />{{ s.data.tedarikciAd }}</span>
-            <span
-              v-else
-              class="text-muted"
-            >-</span>
+            <span class="gizli-veri">
+              <span v-if="s.data.tedarikciAd"><i
+                class="pi pi-building"
+                style="margin-right: 6px; color: #3b82f6"
+              />{{ s.data.tedarikciAd }}</span>
+              <span
+                v-else
+                class="text-muted"
+              >-</span>
+            </span>
           </template>
         </Column>
         <Column
@@ -229,7 +231,7 @@
           style="width: 130px"
         >
           <template #body="s">
-            {{ formatCurrency((s.data.miktar || 0) * (s.data.fiyat || 0)) }}
+            <span class="gizli-veri">{{ formatCurrency((s.data.miktar || 0) * (s.data.fiyat || 0)) }}</span>
           </template>
         </Column>
         <Column

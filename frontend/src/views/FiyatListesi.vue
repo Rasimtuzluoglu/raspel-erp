@@ -26,7 +26,7 @@
         :header="t('fiyatListesi.alisFiyati')"
       >
         <template #body="{ data }">
-          {{ formatCurrency(data.alisFiyati) }}
+          <span class="gizli-veri">{{ formatCurrency(data.alisFiyati) }}</span>
         </template>
       </Column>
       <Column

@@ -80,7 +80,10 @@
           style="width: 130px"
         >
           <template #body="s">
-            <span :class="s.data.bakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.bakiye) }}</span>
+            <span
+              class="gizli-veri"
+              :class="s.data.bakiye >= 0 ? 'positive' : 'negative'"
+            >{{ formatCurrency(s.data.bakiye) }}</span>
           </template>
         </Column>
         <Column

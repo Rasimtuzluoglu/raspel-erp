@@ -6,6 +6,9 @@
     :style="{ width: '520px' }"
   >
     <div class="kisayol-grid">
+      <div class="kisayol-baslik">
+        Genel
+      </div>
       <div class="kisayol-satir">
         <kbd>Ctrl</kbd> + <kbd>K</kbd><span>Hızlı Arama</span>
       </div>
@@ -19,19 +22,53 @@
         <kbd>Esc</kbd><span>Kapat / İptal</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>F2</kbd><span>Hızlı Satış</span>
+        <kbd>F2</kbd><span>Hızlı Satış'a git</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>F4</kbd><span>Stoklar</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F9</kbd><span>POS'ta Satışı Tamamla</span>
+        <kbd>F4</kbd><span>Stoklar'a git</span>
       </div>
       <div class="kisayol-satir">
         <kbd>G</kbd> + harf<span>Hızlı gezinme (g+c cari, g+f fatura, g+h POS)</span>
       </div>
       <div class="kisayol-satir">
         <kbd>?</kbd><span>Bu rehberi aç</span>
+      </div>
+
+      <div class="kisayol-baslik">
+        Hızlı Satış (POS) sayfasında
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F1</kbd><span>Barkod alanına odaklan</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F2</kbd><span>Sepeti temizle</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F3</kbd><span>Ürün arama alanına odaklan</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F4</kbd><span>Müşteri seçimi</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F5</kbd><span>Yeni müşteri ekle</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F6</kbd><span>Kamera tarayıcıyı aç</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F9</kbd><span>Tam ödeme + satışı tamamla</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>F10</kbd><span>Kısmi ödeme + satışı tamamla</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd><span>Ödeme yöntemi: Nakit / Kart / Havale</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>Alt</kbd> + <kbd>↑</kbd>/<kbd>↓</kbd><span>Aktif satır miktarını artır/azalt</span>
+      </div>
+      <div class="kisayol-satir">
+        <kbd>Del</kbd><span>Aktif satırı sil</span>
       </div>
     </div>
   </Dialog>
@@ -55,6 +92,17 @@ onUnmounted(() => window.removeEventListener('kisayol-rehberi-ac', acListener))
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.kisayol-baslik {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+.kisayol-baslik:first-child {
+  margin-top: 0;
 }
 .kisayol-satir {
   display: flex;

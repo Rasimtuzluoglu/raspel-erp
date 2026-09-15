@@ -36,7 +36,7 @@
         :header="t('maasBordro.brut')"
       >
         <template #body="{ data }">
-          {{ formatCurrency(data.brutMaas) }}
+          <span class="gizli-veri">{{ formatCurrency(data.brutMaas) }}</span>
         </template>
       </Column>
       <Column
@@ -44,7 +44,7 @@
         :header="t('maasBordro.kesintiler')"
       >
         <template #body="{ data }">
-          {{ formatCurrency(data.kesintiler) }}
+          <span class="gizli-veri">{{ formatCurrency(data.kesintiler) }}</span>
         </template>
       </Column>
       <Column
@@ -52,7 +52,7 @@
         :header="t('maasBordro.net')"
       >
         <template #body="{ data }">
-          {{ formatCurrency(data.netMaas) }}
+          <span class="gizli-veri">{{ formatCurrency(data.netMaas) }}</span>
         </template>
       </Column>
       <Column

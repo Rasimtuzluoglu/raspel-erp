@@ -211,7 +211,7 @@
           header="Tedarikçi"
         >
           <template #body="{ data }">
-            {{ data.tedarikciAd || '-' }}
+            <span class="gizli-veri">{{ data.tedarikciAd || '-' }}</span>
           </template>
         </Column>
         <Column

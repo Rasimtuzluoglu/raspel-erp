@@ -29,6 +29,7 @@
           <span class="p-input-icon-left arama-kutusu">
             <i class="pi pi-search" />
             <InputText
+              ref="aramaInputRef"
               v-model="seriNoArama"
               :placeholder="t('hizliSatis.aramaPlaceholder')"
               class="w-full"
@@ -133,6 +134,7 @@
                 />
                 <template v-if="musteriModu === 'musteri'">
                   <AutoComplete
+                    ref="musteriAutoRef"
                     v-model="musteriGiris"
                     :suggestions="musteriOnerileri"
                     option-label="ad"
@@ -221,6 +223,8 @@
                 v-for="(item, idx) in sepet"
                 :key="idx"
                 class="sepet-item"
+                :class="{ 'aktif-satir': aktifSatir === idx }"
+                @click="aktifSatir = idx"
               >
                 <div class="sepet-ust">
                   <span
@@ -817,7 +821,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -859,42 +863,91 @@ useKisayollar({
   kaydet: () => satisiTamamla(),
   iptal: () => {
     if (yeniMusteriDialog.value) yeniMusteriDialog.value = false
-  },
-  yeni: () => {
-    seriNoArama.value = ''
-    sepet.value = []
+    else if (scannerAcik.value) scannerAcik.value = false
+    else if (satisOzetDialog.value) satisOzetDialog.value = false
   },
   yazdir: () => fisiYazdir()
 })
 
+const girdideMi = (e) => {
+  const el = e.target
+  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)
+}
+
+const odakla = (r) => {
+  r.value?.$el?.focus?.() || r.value?.focus?.()
+}
+
+// Hizli Satis klavye kisayollari. Capture fazinda calisir; boylece global F2/F4
+// (App.vue) preventDefault sayesinde devreye girmez.
 const handlePosKeys = (e) => {
+  if (e.ctrlKey || e.metaKey) return
+
+  if (e.key === 'F1') {
+    e.preventDefault(); odakla(barkodInputRef); return
+  }
   if (e.key === 'F2') {
     e.preventDefault()
     sepet.value = []
-    toast.add({ severity: 'info', summary: 'Kısayol F2', detail: 'Sepet temizlendi', life: 2000 })
-  } else if (e.key === 'F4') {
+    aktifSatir.value = -1
+    toast.add({ severity: 'info', summary: 'F2', detail: t('hizliSatis.sepetTemizlendi'), life: 2000 })
+    return
+  }
+  if (e.key === 'F3') {
+    e.preventDefault(); odakla(aramaInputRef); return
+  }
+  if (e.key === 'F4') {
     e.preventDefault()
     musteriModu.value = 'musteri'
-    toast.add({ severity: 'info', summary: 'Kısayol F4', detail: 'Müşteri seçimi aktif', life: 2000 })
-  } else if (e.key === 'F9') {
+    nextTick(() => odakla(musteriAutoRef))
+    return
+  }
+  if (e.key === 'F5') {
+    e.preventDefault(); yeniMusteriDialog.value = true; return
+  }
+  if (e.key === 'F6') {
+    e.preventDefault(); scannerAcik.value = true; return
+  }
+  if (e.key === 'F9' || e.key === 'F10') {
     e.preventDefault()
-    odemeDurumu.value = 'tam'
+    odemeDurumu.value = e.key === 'F9' ? 'tam' : 'yarim'
     if (sepet.value.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
-  } else if (e.key === 'F10') {
-    e.preventDefault()
-    odemeDurumu.value = 'kismi'
-    if (sepet.value.length && (anlikMusteri.value || seciliMusteri.value)) satisiTamamla()
+    return
+  }
+  if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    if (aktifSatir.value >= 0 && sepet.value[aktifSatir.value]) {
+      e.preventDefault()
+      if (e.key === 'ArrowUp') sepet.value[aktifSatir.value].miktar++
+      else miktarAzalt(aktifSatir.value)
+    }
+    return
+  }
+
+  // Harf kisayollari yazarken tetiklenmesin
+  if (girdideMi(e)) return
+
+  if (e.key === 'Delete' && aktifSatir.value >= 0 && sepet.value[aktifSatir.value]) {
+    e.preventDefault(); sepetSil(aktifSatir.value); return
+  }
+
+  const k = e.key.toLowerCase()
+  if (k === 'n') {
+    e.preventDefault(); odemeYontemi.value = 'NAKIT'
+  } else if (k === 'k') {
+    e.preventDefault(); odemeYontemi.value = 'KART'
+  } else if (k === 'h') {
+    e.preventDefault(); odemeYontemi.value = 'HAVALE'
   }
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handlePosKeys)
+  window.addEventListener('keydown', handlePosKeys, true)
   window.addEventListener('online', offlineKuyruguSenkronizeEt)
   if (navigator.onLine) offlineKuyruguSenkronizeEt()
 })
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handlePosKeys)
+  window.removeEventListener('keydown', handlePosKeys, true)
   window.removeEventListener('online', offlineKuyruguSenkronizeEt)
 })
 
@@ -904,6 +957,9 @@ const seriNoArama = ref('')
 const globalBarkod = ref('')
 const scannerAcik = ref(false)
 const barkodInputRef = ref(null)
+const aramaInputRef = ref(null)
+const musteriAutoRef = ref(null)
+const aktifSatir = ref(-1)
 
 const globalBarkodEkle = () => {
   const barkod = globalBarkod.value.trim()
@@ -2089,6 +2145,11 @@ const sepetiTemizle = () => {
 .sepet-item {
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
+}
+.sepet-item.aktif-satir {
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 3px 0 0 var(--accent, #3b82f6);
+  border-radius: 8px;
 }
 .sepet-item:last-child {
   border-bottom: none;

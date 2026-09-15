@@ -29,7 +29,7 @@
           </div>
           <div>
             <span class="ozet-etiket">{{ t('tahsilat.toplamAlacak') }}</span>
-            <strong class="ozet-deger">{{ formatCurrency(ozet?.toplamAlacak || 0) }}</strong>
+            <strong class="ozet-deger"><span class="gizli-veri">{{ formatCurrency(ozet?.toplamAlacak || 0) }}</span></strong>
           </div>
         </div>
         <div class="ozet-kart">
@@ -38,7 +38,7 @@
           </div>
           <div>
             <span class="ozet-etiket">{{ t('tahsilat.vadesiGecmis') }}</span>
-            <strong class="ozet-deger text-red-600">{{ formatCurrency(ozet?.vadesiGecmisToplam || 0) }}</strong>
+            <strong class="ozet-deger text-red-600"><span class="gizli-veri">{{ formatCurrency(ozet?.vadesiGecmisToplam || 0) }}</span></strong>
           </div>
         </div>
         <div class="ozet-kart">
@@ -47,7 +47,7 @@
           </div>
           <div>
             <span class="ozet-etiket">{{ t('tahsilat.otuzGunIcinde') }}</span>
-            <strong class="ozet-deger text-amber-600">{{ formatCurrency(ozet?.vadesiYaklasanToplam || 0) }}</strong>
+            <strong class="ozet-deger text-amber-600"><span class="gizli-veri">{{ formatCurrency(ozet?.vadesiYaklasanToplam || 0) }}</span></strong>
           </div>
         </div>
         <div class="ozet-kart">
@@ -111,7 +111,7 @@
             sortable
           >
             <template #body="{ data }">
-              <strong class="text-primary dark:text-gray-100">{{ formatCurrency(data.toplamAlacak) }}</strong>
+              <strong class="text-primary dark:text-gray-100"><span class="gizli-veri">{{ formatCurrency(data.toplamAlacak) }}</span></strong>
             </template>
           </Column>
           <Column
@@ -121,7 +121,7 @@
             <template #body="{ data }">
               <span
                 :class="data.gecikmisAlacak > 0 ? 'text-red-600 font-bold' : 'text-muted'"
-              >{{ formatCurrency(data.gecikmisAlacak) }}</span>
+              ><span class="gizli-veri">{{ formatCurrency(data.gecikmisAlacak) }}</span></span>
             </template>
           </Column>
           <Column
@@ -177,7 +177,7 @@
                   >{{ t('tahsilat.gunKaldi', { n: Math.abs(f.gecikmeGunu) }) }}</span>
                 </div>
                 <div class="fatura-tutar">
-                  {{ formatCurrency(f.kalanTutar) }}
+                  <span class="gizli-veri">{{ formatCurrency(f.kalanTutar) }}</span>
                 </div>
               </div>
               <div
@@ -231,7 +231,7 @@
           />
           <Column :header="t('common.amount')">
             <template #body="s">
-              <strong class="text-green-500">{{ formatCurrency(s.data.tutar) }}</strong>
+              <strong class="text-green-500"><span class="gizli-veri">{{ formatCurrency(s.data.tutar) }}</span></strong>
             </template>
           </Column>
           <Column :header="t('tahsilat.odemeYontemi')">
@@ -254,7 +254,7 @@
                 <small
                   v-if="s.data.taksitTutar"
                   class="text-muted"
-                > ({{ formatCurrency(s.data.taksitTutar) }})</small>
+                > (<span class="gizli-veri">{{ formatCurrency(s.data.taksitTutar) }}</span>)</small>
               </span>
               <span
                 v-else-if="s.data.posAd"
@@ -264,7 +264,7 @@
                 <small
                   v-if="s.data.komisyonTutar"
                   class="text-muted"
-                > · {{ t('tahsilat.kom') }}: {{ formatCurrency(s.data.komisyonTutar) }}</small>
+                > · {{ t('tahsilat.kom') }}: <span class="gizli-veri">{{ formatCurrency(s.data.komisyonTutar) }}</span></small>
                 <small
                   v-if="s.data.valorTarihi"
                   class="text-muted"

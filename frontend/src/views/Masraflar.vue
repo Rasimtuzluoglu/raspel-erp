@@ -39,7 +39,7 @@
         :header="t('common.amount')"
       >
         <template #body="{ data }">
-          {{ formatCurrency(data.tutar) }}
+          <span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span>
         </template>
       </Column>
       <Column

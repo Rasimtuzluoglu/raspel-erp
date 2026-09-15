@@ -167,6 +167,21 @@
           <ThemeSwitcher />
           <button
             class="icon-action-btn"
+            :class="{ 'sunum-acik': sunumAktif }"
+            :title="sunumAktif ? $t('sunumModu.kapat') : $t('sunumModu.ac')"
+            @click="sunumDegistir()"
+          >
+            <i :class="sunumAktif ? 'pi pi-eye-slash' : 'pi pi-eye'" />
+          </button>
+          <span
+            v-if="sunumAktif"
+            class="sunum-rozet"
+            :title="$t('sunumModu.ipucu')"
+          >
+            <i class="pi pi-eye-slash" /> {{ $t('sunumModu.aktif') }}
+          </span>
+          <button
+            class="icon-action-btn"
             title="Sifre Degistir"
             @click="$emit('open-password-modal')"
           >
@@ -286,6 +301,7 @@ import ThemeSwitcher from './ThemeSwitcher.vue'
 import KisayolRehberi from './KisayolRehberi.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { useTheme } from '../composables/useTheme.js'
+import { useSunumModu } from '../composables/useSunumModu.js'
 
 defineEmits([
   'open-search',
@@ -301,6 +317,7 @@ defineEmits([
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { aktif: sunumAktif, degistir: sunumDegistir } = useSunumModu()
 
 const mobilMenuAcik = ref(false)
 const rehberGoster = ref(false)

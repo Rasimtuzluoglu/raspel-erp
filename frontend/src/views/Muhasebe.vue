@@ -128,7 +128,7 @@
             :header="t('muhasebe.borc')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.toplamBorc) }}
+              <span class="gizli-veri">{{ formatCurrency(data.toplamBorc) }}</span>
             </template>
           </Column>
           <Column
@@ -136,7 +136,7 @@
             :header="t('muhasebe.alacak')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.toplamAlacak) }}
+              <span class="gizli-veri">{{ formatCurrency(data.toplamAlacak) }}</span>
             </template>
           </Column>
           <Column
@@ -213,7 +213,7 @@
             :header="t('muhasebe.borc')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.borc) }}
+              <span class="gizli-veri">{{ formatCurrency(data.borc) }}</span>
             </template>
           </Column>
           <Column
@@ -221,7 +221,7 @@
             :header="t('muhasebe.alacak')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.alacak) }}
+              <span class="gizli-veri">{{ formatCurrency(data.alacak) }}</span>
             </template>
           </Column>
           <Column
@@ -229,7 +229,7 @@
             :header="t('muhasebe.borcBakiye')"
           >
             <template #body="{ data }">
-              <span class="pozitif">{{ formatCurrency(data.borcBakiye) }}</span>
+              <span class="pozitif"><span class="gizli-veri">{{ formatCurrency(data.borcBakiye) }}</span></span>
             </template>
           </Column>
           <Column
@@ -237,7 +237,7 @@
             :header="t('muhasebe.alacakBakiye')"
           >
             <template #body="{ data }">
-              <span class="negatif">{{ formatCurrency(data.alacakBakiye) }}</span>
+              <span class="negatif"><span class="gizli-veri">{{ formatCurrency(data.alacakBakiye) }}</span></span>
             </template>
           </Column>
         </DataTable>
@@ -298,7 +298,7 @@
             :header="t('muhasebe.borc')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.borc) }}
+              <span class="gizli-veri">{{ formatCurrency(data.borc) }}</span>
             </template>
           </Column>
           <Column
@@ -306,7 +306,7 @@
             :header="t('muhasebe.alacak')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.alacak) }}
+              <span class="gizli-veri">{{ formatCurrency(data.alacak) }}</span>
             </template>
           </Column>
           <Column
@@ -314,7 +314,7 @@
             :header="t('muhasebe.bakiye')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.bakiye) }}
+              <span class="gizli-veri">{{ formatCurrency(data.bakiye) }}</span>
             </template>
           </Column>
         </DataTable>
@@ -357,12 +357,12 @@
               />
               <Column :header="t('common.amount')">
                 <template #body="{ data }">
-                  {{ formatCurrency(data.tutar) }}
+                  <span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span>
                 </template>
               </Column>
             </DataTable>
             <div class="finansal-toplam">
-              {{ t('muhasebe.toplamAktif') }} <strong>{{ formatCurrency(bilanco.aktifToplam) }}</strong>
+              {{ t('muhasebe.toplamAktif') }} <strong><span class="gizli-veri">{{ formatCurrency(bilanco.aktifToplam) }}</span></strong>
             </div>
           </div>
           <div class="finansal-kolon">
@@ -385,12 +385,12 @@
               />
               <Column :header="t('common.amount')">
                 <template #body="{ data }">
-                  {{ formatCurrency(data.tutar) }}
+                  <span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span>
                 </template>
               </Column>
             </DataTable>
             <div class="finansal-toplam">
-              {{ t('muhasebe.toplamPasif') }} <strong>{{ formatCurrency(bilanco.pasifToplam) }}</strong>
+              {{ t('muhasebe.toplamPasif') }} <strong><span class="gizli-veri">{{ formatCurrency(bilanco.pasifToplam) }}</span></strong>
             </div>
           </div>
         </div>
@@ -450,7 +450,7 @@
               />
               <Column :header="t('common.amount')">
                 <template #body="{ data }">
-                  {{ formatCurrency(data.tutar) }}
+                  <span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span>
                 </template>
               </Column>
             </DataTable>
@@ -475,7 +475,7 @@
               />
               <Column :header="t('common.amount')">
                 <template #body="{ data }">
-                  {{ formatCurrency(data.tutar) }}
+                  <span class="gizli-veri">{{ formatCurrency(data.tutar) }}</span>
                 </template>
               </Column>
             </DataTable>
@@ -484,7 +484,7 @@
         <div class="net-kar-kutusu">
           {{ t('muhasebe.net') }} {{ (karZarar.netKar || 0) >= 0 ? t('muhasebe.kar') : t('muhasebe.zarar') }}:
           <strong :class="(karZarar.netKar || 0) >= 0 ? 'kar' : 'zarar'">
-            {{ formatCurrency(Math.abs(karZarar.netKar || 0)) }}
+            <span class="gizli-veri">{{ formatCurrency(Math.abs(karZarar.netKar || 0)) }}</span>
           </strong>
         </div>
         <div class="grafik-kutu">
@@ -626,8 +626,8 @@
         />
       </div>
       <div class="fis-toplam">
-        {{ t('muhasebe.toplamBorc') }} <strong>{{ formatCurrency(fisToplamBorc) }}</strong> &nbsp;|&nbsp; {{ t('muhasebe.toplamAlacak') }}
-        <strong>{{ formatCurrency(fisToplamAlacak) }}</strong>
+        {{ t('muhasebe.toplamBorc') }} <strong><span class="gizli-veri">{{ formatCurrency(fisToplamBorc) }}</span></strong> &nbsp;|&nbsp; {{ t('muhasebe.toplamAlacak') }}
+        <strong><span class="gizli-veri">{{ formatCurrency(fisToplamAlacak) }}</span></strong>
       </div>
       <template #footer>
         <Button
@@ -683,7 +683,7 @@
           :header="t('muhasebe.borc')"
         >
           <template #body="{ data }">
-            {{ formatCurrency(data.borc) }}
+            <span class="gizli-veri">{{ formatCurrency(data.borc) }}</span>
           </template>
         </Column>
         <Column
@@ -691,7 +691,7 @@
           :header="t('muhasebe.alacak')"
         >
           <template #body="{ data }">
-            {{ formatCurrency(data.alacak) }}
+            <span class="gizli-veri">{{ formatCurrency(data.alacak) }}</span>
           </template>
         </Column>
       </DataTable>

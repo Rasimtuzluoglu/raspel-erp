@@ -103,13 +103,17 @@
           <Column
             field="cariHesapAdi"
             :header="t('satinalma.tedarikci')"
-          />
+          >
+            <template #body="{ data }">
+              <span class="gizli-veri">{{ data.cariHesapAdi || '-' }}</span>
+            </template>
+          </Column>
           <Column
             field="genelToplam"
             :header="t('satinalma.toplam')"
           >
             <template #body="{ data }">
-              {{ formatCurrency(data.genelToplam) }}
+              <span class="gizli-veri">{{ formatCurrency(data.genelToplam) }}</span>
             </template>
           </Column>
           <Column
