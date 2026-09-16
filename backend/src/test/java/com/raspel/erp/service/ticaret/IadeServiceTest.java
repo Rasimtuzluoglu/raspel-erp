@@ -39,6 +39,8 @@ class IadeServiceTest {
     @Mock private StokHareketRepository stokHareketRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private CacheYardimci cacheYardimci;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.service.finans.CariHesapService cariHesapService;
     @InjectMocks private IadeService iadeService;
 
     private void hazirla() {
@@ -233,5 +235,26 @@ class IadeServiceTest {
         IadeDTO dto = IadeDTO.builder().durum("IPTAL").build();
         assertThrows(com.raspel.erp.exception.BusinessException.class, () -> iadeService.guncelle(1L, dto));
         verify(stokRepository, never()).save(any());
+    }
+
+    @Test
+    void durumGuncelle_tamamlandiCariBakiyeEtkisi() {
+        hazirla();
+        Iade iade = Iade.builder().id(1L).faturaId(1L).tur("SATIS")
+                .tutar(new BigDecimal("240")).durum("TASLAK").sirketId(1L).build();
+        com.raspel.erp.entity.finans.CariHesap cari = new com.raspel.erp.entity.finans.CariHesap();
+        cari.setId(5L);
+        com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
+        fatura.setCariHesap(cari);
+
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(iade));
+        when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of());
+        when(iadeRepository.save(any(Iade.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+
+        iadeService.durumGuncelle(1L, "TAMAMLANDI");
+
+        // Satis iadesi musteri borcunu 240 azaltir -> +240
+        verify(cariHesapService).bakiyeGuncelle(5L, new BigDecimal("240"));
     }
 }

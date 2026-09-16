@@ -8,12 +8,15 @@ import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.entity.ticaret.Iade;
 import com.raspel.erp.entity.ticaret.IadeKalem;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
+import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import com.raspel.erp.service.finans.CariHesapService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,8 @@ public class IadeService {
     private final IadeKalemRepository iadeKalemRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+    private final FaturaRepository faturaRepository;
+    private final CariHesapService cariHesapService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
 
@@ -212,6 +217,7 @@ public class IadeService {
                     .aciklama("İade #" + iade.getId())
                     .build());
         }
+        cariBakiyeUygula(iade, false);
     }
 
     private void stokHareketleriniTersineCevir(Iade iade) {
@@ -236,6 +242,26 @@ public class IadeService {
                     .aciklama("İade iptal #" + iade.getId())
                     .build());
         }
+        cariBakiyeUygula(iade, true);
+    }
+
+    /**
+     * Iade tamamlandiginda cari bakiyeye etki uygular; iptal edilince tersine cevirir.
+     * Satis iadesi musterinin borcunu azaltir (+), alis iadesi tedarikci alacagini azaltir (-).
+     * Yalnizca faturaya bagli iadelerde uygulanir.
+     */
+    private void cariBakiyeUygula(Iade iade, boolean ters) {
+        if (iade.getFaturaId() == null) return;
+        Fatura fatura = faturaRepository.findById(iade.getFaturaId()).orElse(null);
+        if (fatura == null || fatura.getCariHesap() == null) return;
+        BigDecimal tutar = iade.getTutar() != null ? iade.getTutar() : BigDecimal.ZERO;
+        if (!"SATIS".equals(iade.getTur())) {
+            tutar = tutar.negate();
+        }
+        if (ters) {
+            tutar = tutar.negate();
+        }
+        cariHesapService.bakiyeGuncelle(fatura.getCariHesap().getId(), tutar);
     }
 
     private IadeDTO entityToDTO(Iade i) {
