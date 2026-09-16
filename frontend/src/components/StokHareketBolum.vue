@@ -75,6 +75,30 @@
             {{ s.data.cariHesapAd || '-' }}
           </template>
         </Column>
+        <Column
+          :header="t('stoklar.hareketDepo')"
+          style="width: 130px"
+        >
+          <template #body="s">
+            {{ s.data.depoAd || '-' }}
+          </template>
+        </Column>
+        <Column
+          :header="t('stoklar.hareketSeri')"
+          style="width: 130px"
+        >
+          <template #body="s">
+            {{ s.data.seriNo || '-' }}
+          </template>
+        </Column>
+        <Column
+          :header="t('stoklar.hareketKaynak')"
+          style="width: 110px"
+        >
+          <template #body="s">
+            {{ s.data.kaynakTip || '-' }}
+          </template>
+        </Column>
         <Column :header="t('stoklar.hareketAciklama')" />
         <Column
           header=""

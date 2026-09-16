@@ -43,6 +43,8 @@ class StokServiceTest {
     @Mock private CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.repository.envanter.StokFiyatRepository stokFiyatRepository;
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
+    @Mock private com.raspel.erp.repository.sube.DepoRepository depoRepository;
+    @Mock private com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -211,6 +213,27 @@ class StokServiceTest {
         when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(h));
         var result = stokService.hareketler(1L);
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void hareketler_izBilgileriniDoldurur() {
+        Stok stok = createStok(1L);
+        StokHareket h = StokHareket.builder().id(1L).stok(stok).tur("CIKIS").miktar(BigDecimal.valueOf(2))
+                .hareketTarihi(LocalDate.now()).depoId(7L).seriId(9L)
+                .kaynakTip("FATURA").kaynakId(55L).build();
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(h));
+        when(depoRepository.findById(7L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sube.Depo.builder().id(7L).ad("Merkez Depo").build()));
+        when(stokSeriRepository.findById(9L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.envanter.StokSeri.builder().id(9L).seriNo("SN-9").build()));
+
+        var result = stokService.hareketler(1L);
+
+        assertEquals("Merkez Depo", result.get(0).getDepoAd());
+        assertEquals("SN-9", result.get(0).getSeriNo());
+        assertEquals("FATURA", result.get(0).getKaynakTip());
+        assertEquals(55L, result.get(0).getKaynakId());
     }
 
     @Test

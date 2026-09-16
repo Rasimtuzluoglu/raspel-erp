@@ -49,6 +49,8 @@ public class StokService {
     private final CacheYardimci cacheYardimci;
     private final StokFiyatRepository stokFiyatRepository;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.repository.sube.DepoRepository depoRepository;
+    private final com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
 
     // ---------- ÇOKLU FİYAT ----------
 
@@ -555,6 +557,14 @@ public class StokService {
                 .aciklama(h.getAciklama())
                 .cariHesapId(h.getCariHesap() != null ? h.getCariHesap().getId() : null)
                 .cariHesapAd(h.getCariHesap() != null ? h.getCariHesap().getAd() : null)
+                .depoId(h.getDepoId())
+                .depoAd(h.getDepoId() != null
+                        ? depoRepository.findById(h.getDepoId()).map(d -> d.getAd()).orElse(null) : null)
+                .seriId(h.getSeriId())
+                .seriNo(h.getSeriId() != null
+                        ? stokSeriRepository.findById(h.getSeriId()).map(s -> s.getSeriNo()).orElse(null) : null)
+                .kaynakTip(h.getKaynakTip())
+                .kaynakId(h.getKaynakId())
                 .agirlik(agirlik)
                 .olusturmaTarihi(h.getOlusturmaTarihi()).build();
     }
