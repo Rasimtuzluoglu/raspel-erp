@@ -50,7 +50,7 @@ class TekrarlayanFaturaServiceTest {
                 .build();
         tf.getKalemler().add(TekrarlayanFaturaKalem.builder()
                 .id(1L).tekrarlayanFatura(tf)
-                .aciklama("Bakim ucreti").adet(1).birimFiyat(BigDecimal.valueOf(1500))
+                .aciklama("Bakim ucreti").adet(java.math.BigDecimal.valueOf(1)).birimFiyat(BigDecimal.valueOf(1500))
                 .kdvOrani(BigDecimal.valueOf(20)).build());
         return tf;
     }
@@ -85,7 +85,7 @@ class TekrarlayanFaturaServiceTest {
     @Test
     void olustur_kalemleriIleKaydeder() {
         TekrarlayanFaturaDTO.TekrarlayanFaturaKalemDTO kalem = TekrarlayanFaturaDTO.TekrarlayanFaturaKalemDTO.builder()
-                .aciklama("Test").adet(1).birimFiyat(BigDecimal.valueOf(100)).build();
+                .aciklama("Test").adet(java.math.BigDecimal.valueOf(1)).birimFiyat(BigDecimal.valueOf(100)).build();
         TekrarlayanFaturaDTO dto = TekrarlayanFaturaDTO.builder()
                 .cariHesapId(3L).tur("SATIS").periyot("AYLIK")
                 .baslangicTarihi(LocalDate.of(2026, 9, 1))

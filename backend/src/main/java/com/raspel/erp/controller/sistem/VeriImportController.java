@@ -204,7 +204,7 @@ public class VeriImportController {
                     FaturaKalemDTO kalem = FaturaKalemDTO.builder()
                             .aciklama(kolonDeger(cols, kolonIndex, "aciklama", satirNo, null) != null
                                     ? kolonDeger(cols, kolonIndex, "aciklama", satirNo, null) : stok.getAd())
-                            .adet(adet)
+                            .adet(BigDecimal.valueOf(adet))
                             .birimFiyat(birimFiyat != null ? birimFiyat : BigDecimal.ZERO)
                             .kdvOrani(kdvOrani != null ? kdvOrani : new BigDecimal("20"))
                             .stokId(stok.getId())

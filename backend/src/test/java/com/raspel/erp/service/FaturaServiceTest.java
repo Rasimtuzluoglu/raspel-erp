@@ -122,7 +122,7 @@ class FaturaServiceTest {
     void faturaOlustur_creates() {
         CariHesap cari = createCariHesap();
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
@@ -138,7 +138,7 @@ class FaturaServiceTest {
         CariHesap cari = createCariHesap();
         cari.setEmail("cari@example.com");
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
@@ -156,7 +156,7 @@ class FaturaServiceTest {
         CariHesap cari = createCariHesap();
         cari.setEmail("cari@example.com");
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
@@ -175,7 +175,7 @@ class FaturaServiceTest {
     void faturaOlustur_emailYoksaDurumNullKalir() {
         CariHesap cari = createCariHesap();
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
@@ -198,7 +198,7 @@ class FaturaServiceTest {
     void faturaDurumGuncelle_updatesToKesildi() {
         Fatura fatura = createFatura(1L);
         Stok stok = createStok();
-        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
                 .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
         fatura.getKalemler().add(kalem);
@@ -214,7 +214,7 @@ class FaturaServiceTest {
         Fatura fatura = createFatura(1L);
         fatura.setTur(Fatura.FaturaTur.ALIS);
         Stok stok = createStok();
-        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
                 .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
         fatura.getKalemler().add(kalem);
@@ -238,7 +238,7 @@ class FaturaServiceTest {
     void faturaDurumGuncelle_satis_updatesCariBakiyeNegative() {
         Fatura fatura = createFatura(1L);
         Stok stok = createStok();
-        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
                 .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
         fatura.getKalemler().add(kalem);
@@ -256,7 +256,7 @@ class FaturaServiceTest {
         fatura.setDurum(Fatura.FaturaDurum.KESILDI);
         Stok stok = createStok();
         stok.setMiktar(BigDecimal.valueOf(98)); // satis kesilince dusulmus varsayimi
-        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
                 .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
         fatura.getKalemler().add(kalem);
@@ -283,7 +283,7 @@ class FaturaServiceTest {
         when(depoStokRepository.save(any(com.raspel.erp.entity.sube.DepoStok.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(2)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
         FaturaDTO dto = FaturaDTO.builder().tur("ALIS").durum("KESILDI").tarih(LocalDate.now())
                 .cariHesapId(1L).depoId(5L).kalemler(List.of(kalem)).build();
@@ -319,7 +319,7 @@ class FaturaServiceTest {
         when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
         CariHesap cari = createCariHesap();
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Yeni Kalem").adet(1)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Yeni Kalem").adet(java.math.BigDecimal.valueOf(1))
                 .birimFiyat(BigDecimal.valueOf(200)).kdvOrani(BigDecimal.valueOf(20)).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
@@ -340,7 +340,7 @@ class FaturaServiceTest {
     void faturaGuncelle_kesilmisRevize_stokFarkiniIsler() {
         Fatura fatura = createFatura(1L);
         fatura.setDurum(Fatura.FaturaDurum.KESILDI);
-        FaturaKalem eskiKalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+        FaturaKalem eskiKalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
                 .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
         fatura.getKalemler().add(eskiKalem);
@@ -350,7 +350,7 @@ class FaturaServiceTest {
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
 
-        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(5)
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(java.math.BigDecimal.valueOf(5))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
         FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();

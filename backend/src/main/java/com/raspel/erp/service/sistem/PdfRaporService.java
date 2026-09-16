@@ -165,7 +165,7 @@ public class PdfRaporService {
                 y -= 20;
 
                 BigDecimal toplamAgirlik = kalemler.stream()
-                        .map(k -> k.getAgirlik() != null ? k.getAgirlik().multiply(BigDecimal.valueOf(k.getAdet())) : BigDecimal.ZERO)
+                        .map(k -> k.getAgirlik() != null && k.getAdet() != null ? k.getAgirlik().multiply(k.getAdet()) : BigDecimal.ZERO)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 if (toplamAgirlik.compareTo(BigDecimal.ZERO) > 0) {
                     cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 120 + MARGIN, y); cs.showText("Toplam Ağırlık:"); cs.endText();

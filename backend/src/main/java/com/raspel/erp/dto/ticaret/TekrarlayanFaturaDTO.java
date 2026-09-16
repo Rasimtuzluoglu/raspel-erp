@@ -47,7 +47,7 @@ public class TekrarlayanFaturaDTO {
         private String aciklama;
 
         @NotNull(message = "Adet girilmelidir")
-        private Integer adet;
+        private BigDecimal adet;
 
         @NotNull(message = "Birim fiyat girilmelidir")
         private BigDecimal birimFiyat;

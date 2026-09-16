@@ -329,7 +329,7 @@ public class TeklifService {
         List<FaturaKalemDTO> faturaKalemleri = kalemler.stream().map(k -> FaturaKalemDTO.builder()
                 .stokId(k.getStokId())
                 .aciklama(k.getAciklama())
-                .adet(k.getMiktar() != null ? k.getMiktar().intValue() : 1)
+                .adet(k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE)
                 .birimFiyat(k.getBirimFiyat())
                 .iskontoOrani(k.getIskontoOrani())
                 .kdvOrani(k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.valueOf(20))

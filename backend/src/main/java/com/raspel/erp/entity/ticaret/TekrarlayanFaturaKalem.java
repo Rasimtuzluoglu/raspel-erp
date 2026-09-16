@@ -24,8 +24,8 @@ public class TekrarlayanFaturaKalem {
     @Column(nullable = false, length = 300)
     private String aciklama;
 
-    @Column(nullable = false)
-    private Integer adet;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal adet;
 
     @Column(name = "birim_fiyat", nullable = false, precision = 19, scale = 2)
     private BigDecimal birimFiyat;

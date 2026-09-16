@@ -125,7 +125,7 @@ class PostgresEntegrasyonTest {
                 .araToplam(BigDecimal.valueOf(1000)).kdv(BigDecimal.valueOf(200))
                 .genelToplam(BigDecimal.valueOf(1200)).sirketId(sirket).build();
         alis.getKalemler().add(FaturaKalem.builder().fatura(alis)
-                .aciklama("Alış kalemi").adet(10)
+                .aciklama("Alış kalemi").adet(java.math.BigDecimal.valueOf(10))
                 .birimFiyat(BigDecimal.valueOf(100))
                 .kdvOrani(BigDecimal.valueOf(20)).iskontoOrani(BigDecimal.TEN)
                 .tutar(BigDecimal.valueOf(990)).stokId(stok.getId())
@@ -139,7 +139,7 @@ class PostgresEntegrasyonTest {
                 .araToplam(BigDecimal.valueOf(1500)).kdv(BigDecimal.valueOf(300))
                 .genelToplam(BigDecimal.valueOf(1800)).sirketId(sirket).build();
         satis.getKalemler().add(FaturaKalem.builder().fatura(satis)
-                .aciklama("Satış kalemi").adet(5)
+                .aciklama("Satış kalemi").adet(java.math.BigDecimal.valueOf(5))
                 .birimFiyat(BigDecimal.valueOf(300))
                 .kdvOrani(BigDecimal.valueOf(20)).iskontoOrani(BigDecimal.ZERO)
                 .tutar(BigDecimal.valueOf(1800)).stokId(stok.getId())

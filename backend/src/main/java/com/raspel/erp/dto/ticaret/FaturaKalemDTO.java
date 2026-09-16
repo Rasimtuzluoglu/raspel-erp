@@ -16,8 +16,8 @@ public class FaturaKalemDTO {
     private String aciklama;
 
     @NotNull(message = "Adet girilmelidir")
-    @Min(value = 1, message = "Adet en az 1 olmalıdır")
-    private Integer adet;
+    @DecimalMin(value = "0.01", message = "Adet 0'dan büyük olmalıdır")
+    private BigDecimal adet;
 
     @NotNull(message = "Birim fiyat girilmelidir")
     @DecimalMin(value = "0.01", message = "Birim fiyat 0'dan büyük olmalıdır")

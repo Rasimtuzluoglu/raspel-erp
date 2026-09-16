@@ -176,7 +176,7 @@ public class YoneticiKokpitService {
                     String stokAdi = stok != null && stok.getAd() != null ? stok.getAd() : kalemler.get(0).getAciklama();
 
                     BigDecimal toplamMiktar = kalemler.stream()
-                            .map(k -> k.getAdet() != null ? BigDecimal.valueOf(k.getAdet()) : BigDecimal.ZERO)
+                            .map(k -> k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal toplamTutar = kalemler.stream()
                             .map(k -> k.getTutar() != null ? k.getTutar() : BigDecimal.ZERO)

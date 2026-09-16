@@ -138,7 +138,8 @@ public class SatinalmaSiparisService {
         }
 
         List<FaturaKalemDTO> faturaKalemleri = kalemler.stream().map(k -> {
-            int adet = k.getMiktar() != null ? Math.max(1, k.getMiktar().intValue()) : 1;
+            BigDecimal adet = k.getMiktar() != null && k.getMiktar().compareTo(BigDecimal.ZERO) > 0
+                    ? k.getMiktar() : BigDecimal.ONE;
             String aciklama = k.getAciklama() != null && !k.getAciklama().isBlank()
                     ? k.getAciklama() : stokAdi(k.getStokId());
             return FaturaKalemDTO.builder()

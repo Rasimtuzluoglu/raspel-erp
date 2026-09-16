@@ -167,7 +167,7 @@ public class SiparisService {
             for (SiparisKalem k : kalemler) {
                 faturaKalemler.add(FaturaKalemDTO.builder()
                         .aciklama(k.getAciklama() != null ? k.getAciklama() : "")
-                        .adet(k.getMiktar() != null ? k.getMiktar().intValue() : 1)
+                        .adet(k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE)
                         .birimFiyat(k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO)
                         .kdvOrani(k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani)
                         .tutar(k.getTutar() != null ? k.getTutar() : BigDecimal.ZERO)

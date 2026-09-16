@@ -74,7 +74,7 @@ class FaturaControllerTest {
 
     @Test
     void shouldCreate() throws Exception {
-        var kalem = FaturaKalemDTO.builder().aciklama("Ürün").adet(2).birimFiyat(BigDecimal.valueOf(100)).build();
+        var kalem = FaturaKalemDTO.builder().aciklama("Ürün").adet(java.math.BigDecimal.valueOf(2)).birimFiyat(BigDecimal.valueOf(100)).build();
         var dto = FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tarih(LocalDate.now()).tur("SATIS").kalemler(List.of(kalem)).build();
         when(faturaService.faturaOlustur(any(FaturaDTO.class), anyLong(), any(), any())).thenReturn(dto);
 
@@ -88,7 +88,7 @@ class FaturaControllerTest {
 
     @Test
     void shouldUpdate() throws Exception {
-        var kalem = FaturaKalemDTO.builder().aciklama("Guncel Kalem").adet(1).birimFiyat(BigDecimal.valueOf(200)).build();
+        var kalem = FaturaKalemDTO.builder().aciklama("Guncel Kalem").adet(java.math.BigDecimal.valueOf(1)).birimFiyat(BigDecimal.valueOf(200)).build();
         var dto = FaturaDTO.builder().id(1L).tur("SATIS").tarih(LocalDate.now()).kalemler(List.of(kalem)).build();
         when(faturaService.faturaGuncelle(eq(1L), any(FaturaDTO.class))).thenReturn(dto);
 

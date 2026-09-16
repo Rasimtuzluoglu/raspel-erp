@@ -272,7 +272,7 @@ public class FaturaService {
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
-            BigDecimal brütTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+            BigDecimal brütTutar = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
             BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
             BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -292,7 +292,7 @@ public class FaturaService {
 
         BigDecimal araToplam = kalemler.stream()
                 .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
                     BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                     return brüt.subtract(iskonto);
                 })
@@ -300,7 +300,7 @@ public class FaturaService {
 
         BigDecimal kdv = kalemler.stream()
                 .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
                     BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                     BigDecimal net = brüt.subtract(iskonto);
                     return net.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -521,7 +521,7 @@ public class FaturaService {
         if (kesilmisti) {
             for (FaturaKalem k : fatura.getKalemler()) {
                 if (k.getStokId() == null) continue;
-                eskiMiktarlar.merge(k.getStokId(), BigDecimal.valueOf(k.getAdet()), BigDecimal::add);
+                eskiMiktarlar.merge(k.getStokId(), (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO), BigDecimal::add);
             }
         }
 
@@ -551,7 +551,7 @@ public class FaturaService {
         List<FaturaKalem> yeniKalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
-            BigDecimal brütTutar = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+            BigDecimal brütTutar = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
             BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
             BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -570,7 +570,7 @@ public class FaturaService {
 
         BigDecimal araToplam = yeniKalemler.stream()
                 .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
                     BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                     return brüt.subtract(iskonto);
                 })
@@ -578,7 +578,7 @@ public class FaturaService {
 
         BigDecimal kdv = yeniKalemler.stream()
                 .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply(BigDecimal.valueOf(k.getAdet()));
+                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
                     BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                     BigDecimal net = brüt.subtract(iskonto);
                     return net.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -625,7 +625,7 @@ public class FaturaService {
             Map<Long, BigDecimal> yeniMiktarlar = new HashMap<>();
             for (FaturaKalem k : yeniKalemler) {
                 if (k.getStokId() == null) continue;
-                yeniMiktarlar.merge(k.getStokId(), BigDecimal.valueOf(k.getAdet()), BigDecimal::add);
+                yeniMiktarlar.merge(k.getStokId(), (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO), BigDecimal::add);
             }
             stokFarkiIsle(fatura, eskiMiktarlar, yeniMiktarlar, tur);
 
@@ -785,7 +785,7 @@ public class FaturaService {
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
             if ("CIKIS".equals(tur)) {
-                BigDecimal adet = BigDecimal.valueOf(k.getAdet());
+                BigDecimal adet = (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);
                 if (stok.getMiktar().compareTo(adet) < 0) {
                     if (negatifStokIzinli(fatura.getSirketId())) {
                         log.warn("Negatif stok izni açık; stok eksiye düşüyor. Ürün: {} - Mevcut: {}, İstenen: {}",
@@ -798,7 +798,7 @@ public class FaturaService {
                 stok.setMiktar(stok.getMiktar().subtract(adet));
             } else {
                 BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
-                BigDecimal yeniMiktar = BigDecimal.valueOf(k.getAdet());
+                BigDecimal yeniMiktar = (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);
                 BigDecimal yeniBirimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
                 yeniBirimFiyat = tlKarsiliginaCevir(fatura, yeniBirimFiyat);
                 BigDecimal eskiFiyat = stok.getFiyat() != null ? stok.getFiyat() : BigDecimal.ZERO;
@@ -830,7 +830,7 @@ public class FaturaService {
 
             hareketler.add(StokHareket.builder()
                     .stok(stok).tur(tur)
-                    .miktar(BigDecimal.valueOf(k.getAdet()))
+                    .miktar((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO))
                     .hareketTarihi(LocalDate.now())
                     .aciklama(aciklama)
                     .cariHesap(fatura.getCariHesap())
@@ -916,7 +916,7 @@ public class FaturaService {
 
         BigDecimal toplamAgirlik = fatura.getKalemler().stream()
                 .map(k -> k.getAgirlik() != null
-                        ? k.getAgirlik().multiply(BigDecimal.valueOf(k.getAdet()))
+                        ? k.getAgirlik().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO))
                         : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
