@@ -45,6 +45,7 @@ public class IadeService {
     private final FaturaRepository faturaRepository;
     private final CariHesapService cariHesapService;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
 
@@ -208,8 +209,11 @@ public class IadeService {
                 if (stok.getMiktar().compareTo(k.getMiktar()) < 0)
                     throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd() + ", Mevcut: " + stok.getMiktar());
                 stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
+                maliyetService.cikisIsle(stok, k.getMiktar(), stok.getMiktar(), iade.getSirketId(), "IADE", iade.getId());
             } else {
+                BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
+                maliyetService.girisIsle(stok, eskiMiktar, k.getMiktar(), null, iade.getSirketId(), "IADE", iade.getId());
             }
             stokRepository.save(stok);
             stokHareketRepository.save(StokHareket.builder()
@@ -244,11 +248,14 @@ public class IadeService {
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
             if (alisIadesi) {
+                BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 stok.setMiktar(stok.getMiktar().add(k.getMiktar()));
+                maliyetService.girisIsle(stok, eskiMiktar, k.getMiktar(), null, iade.getSirketId(), "IADE", iade.getId());
             } else {
                 if (stok.getMiktar().compareTo(k.getMiktar()) < 0)
                     throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd() + ", Mevcut: " + stok.getMiktar());
                 stok.setMiktar(stok.getMiktar().subtract(k.getMiktar()));
+                maliyetService.cikisIsle(stok, k.getMiktar(), stok.getMiktar(), iade.getSirketId(), "IADE", iade.getId());
             }
             stokRepository.save(stok);
             stokHareketRepository.save(StokHareket.builder()

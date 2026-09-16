@@ -45,6 +45,7 @@ public class RaporService {
     private final FaturaRepository faturaRepository;
     private final com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final CariHesapService cariHesapService;
@@ -299,7 +300,9 @@ public class RaporService {
 
             BigDecimal faturaMaliyet = BigDecimal.ZERO;
             for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
-                BigDecimal birimMaliyet = k.getStokId() != null ? stokMaliyet.getOrDefault(k.getStokId(), BigDecimal.ZERO) : BigDecimal.ZERO;
+                BigDecimal birimMaliyet = k.getBirimMaliyet() != null
+                        ? k.getBirimMaliyet()
+                        : (k.getStokId() != null ? stokMaliyet.getOrDefault(k.getStokId(), BigDecimal.ZERO) : BigDecimal.ZERO);
                 faturaMaliyet = faturaMaliyet.add(birimMaliyet.multiply(k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
             }
 
@@ -343,7 +346,13 @@ public class RaporService {
 
     private BigDecimal stokMaliyetGetir(Long stokId) {
         return stokRepository.findById(stokId)
-                .map(s -> s.getTedarikciFiyat() != null ? s.getTedarikciFiyat() : s.getFiyat())
+                .map(s -> {
+                    BigDecimal m = maliyetService.ortalamaMaliyet(s);
+                    if (m == null || m.signum() == 0) {
+                        m = s.getTedarikciFiyat() != null ? s.getTedarikciFiyat() : s.getFiyat();
+                    }
+                    return m != null ? m : BigDecimal.ZERO;
+                })
                 .orElse(BigDecimal.ZERO);
     }
 

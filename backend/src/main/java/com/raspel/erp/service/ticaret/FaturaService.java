@@ -86,6 +86,7 @@ public class FaturaService {
     private final KasaRepository kasaRepository;
     private final KasaHareketRepository kasaHareketRepository;
     private final FaturaGecmisService faturaGecmisService;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -751,8 +752,16 @@ public class FaturaService {
                             + ", Mevcut: " + stok.getMiktar() + ", Revize sonrası: " + yeniMiktar);
                 }
             }
+            BigDecimal oncekiMiktar = yeniMiktar.subtract(stokDegisim);
             stok.setMiktar(yeniMiktar);
             stokRepository.save(stok);
+            if (stokDegisim.signum() > 0) {
+                maliyetService.girisIsle(stok, oncekiMiktar, stokDegisim, null,
+                        fatura.getSirketId(), "FATURA", fatura.getId());
+            } else {
+                maliyetService.cikisIsle(stok, stokDegisim.abs(), yeniMiktar,
+                        fatura.getSirketId(), "FATURA", fatura.getId());
+            }
 
             String hareketTuru = stokDegisim.compareTo(BigDecimal.ZERO) >= 0 ? "GIRIS" : "CIKIS";
             hareketler.add(StokHareket.builder()
@@ -811,6 +820,13 @@ public class FaturaService {
                 // FEFO seri/lot tüketimi (seri takibi varsa)
                 var tuketilenSeriler = stokSeriService.fefoTuket(k.getStokId(), depoId, adet);
                 if (tuketilenSeriler.size() == 1) seriId = tuketilenSeriler.get(0);
+                // COGS anlık görüntüsü: satış anındaki ağırlıklı ortalama birim maliyet
+                BigDecimal birimMaliyet = maliyetService.cikisIsle(stok, adet, stok.getMiktar(),
+                        fatura.getSirketId(), "FATURA", fatura.getId());
+                if (birimMaliyet == null) birimMaliyet = BigDecimal.ZERO;
+                k.setBirimMaliyet(birimMaliyet);
+                k.setMaliyetTutar(birimMaliyet.multiply(adet).setScale(2, RoundingMode.HALF_UP));
+                faturaKalemRepository.save(k);
             } else {
                 BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 BigDecimal yeniMiktar = (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);
@@ -834,6 +850,11 @@ public class FaturaService {
                 if (fatura.getCariHesap() != null) {
                     stok.setTedarikciId(fatura.getCariHesap().getId());
                 }
+                // Ağırlıklı ortalama maliyet motoru. İade/geri alma girişlerinde orijinal
+                // kalem maliyeti varsa o kullanılır; normal alışta alış birim fiyatı kullanılır.
+                BigDecimal girisBirimMaliyet = k.getBirimMaliyet() != null ? k.getBirimMaliyet() : yeniBirimFiyat;
+                maliyetService.girisIsle(stok, eskiMiktar, yeniMiktar, girisBirimMaliyet,
+                        fatura.getSirketId(), "FATURA", fatura.getId());
             }
             stokRepository.save(stok);
             // Depo stok senkronu (giris/çikis)

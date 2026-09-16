@@ -34,6 +34,7 @@ public class StokSayimService {
     private final CacheYardimci cacheYardimci;
     private final BildirimService bildirimService;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     @Transactional(readOnly = true)
     public Page<StokSayimDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -103,8 +104,14 @@ public class StokSayimService {
             if (fark.compareTo(BigDecimal.ZERO) != 0) {
                 Stok stok = stokRepository.findByIdForUpdate(sayim.getStok().getId())
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", sayim.getStok().getId()));
+                BigDecimal sayimEskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 stok.setMiktar(stok.getMiktar().add(fark));
                 stokRepository.save(stok);
+                if (fark.signum() > 0) {
+                    maliyetService.girisIsle(stok, sayimEskiMiktar, fark, null, sayim.getSirketId(), "SAYIM", sayim.getId());
+                } else {
+                    maliyetService.cikisIsle(stok, fark.abs(), stok.getMiktar(), sayim.getSirketId(), "SAYIM", sayim.getId());
+                }
                 Long depoId = depoStokService.coz(null, sayim.getSirketId());
                 stokHareketRepository.save(StokHareket.builder()
                         .stok(stok)

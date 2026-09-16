@@ -43,6 +43,8 @@ class StokSayimServiceTest {
     private BildirimService bildirimService;
     @Mock
     private com.raspel.erp.service.sube.DepoStokService depoStokService;
+    @Mock
+    private com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     @InjectMocks
     private StokSayimService stokSayimService;

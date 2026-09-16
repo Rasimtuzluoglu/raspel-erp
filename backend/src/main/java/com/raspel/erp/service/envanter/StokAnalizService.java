@@ -52,6 +52,7 @@ public class StokAnalizService {
 
     private final StokRepository stokRepository;
     private final FaturaKalemRepository faturaKalemRepository;
+    private final MaliyetService maliyetService;
     private final IadeKalemRepository iadeKalemRepository;
 
     private static final String IADE_ALIS = "ALIS";
@@ -347,11 +348,12 @@ public class StokAnalizService {
     }
 
     private BigDecimal ortalamaMaliyet(Stok stok) {
-        BigDecimal fiyat = stok.getFiyat() == null ? BigDecimal.ZERO : stok.getFiyat();
-        if (fiyat.signum() == 0 && stok.getTedarikciFiyat() != null) {
-            return stok.getTedarikciFiyat().setScale(PARA_OLCEGI, RoundingMode.HALF_UP);
+        BigDecimal m = maliyetService.ortalamaMaliyet(stok);
+        if (m == null || m.signum() == 0) {
+            m = stok.getTedarikciFiyat() != null ? stok.getTedarikciFiyat()
+                    : (stok.getFiyat() != null ? stok.getFiyat() : BigDecimal.ZERO);
         }
-        return fiyat.setScale(PARA_OLCEGI, RoundingMode.HALF_UP);
+        return m.setScale(PARA_OLCEGI, RoundingMode.HALF_UP);
     }
 
     /**

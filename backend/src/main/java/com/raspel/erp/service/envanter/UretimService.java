@@ -52,6 +52,7 @@ public class UretimService {
     private final SatinalmaTalepService satinalmaTalepService;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     private static final BigDecimal YUZ = BigDecimal.valueOf(100);
 
@@ -248,14 +249,22 @@ public class UretimService {
                     .kaynakTip("URETIM").kaynakId(e.getId())
                     .build());
             depoStokService.guncelle(depoId, hammadde.getId(), gereken.negate());
-            BigDecimal fiyat = hammadde.getFiyat() != null ? hammadde.getFiyat() : BigDecimal.ZERO;
-            hammaddeMaliyet = hammaddeMaliyet.add(gereken.multiply(fiyat));
+            BigDecimal hammaddeBirim = maliyetService.cikisIsle(hammadde, gereken, mevcut.subtract(gereken),
+                    e.getSirketId(), "URETIM", e.getId());
+            if (hammaddeBirim == null) hammaddeBirim = BigDecimal.ZERO;
+            hammaddeMaliyet = hammaddeMaliyet.add(gereken.multiply(hammaddeBirim));
         }
 
         Stok mamul = stokRepository.findByIdForUpdate(e.getUrunId())
                 .orElseThrow(() -> new ResourceNotFoundException("Ürün", e.getUrunId()));
-        mamul.setMiktar((mamul.getMiktar() != null ? mamul.getMiktar() : BigDecimal.ZERO).add(uretilen));
+        BigDecimal eskiMamulMiktar = mamul.getMiktar() != null ? mamul.getMiktar() : BigDecimal.ZERO;
+        mamul.setMiktar(eskiMamulMiktar.add(uretilen));
         stokRepository.save(mamul);
+        // Mamul birim maliyeti: tüketilen hammaddelerin toplam maliyeti / üretilen miktar (roll-up).
+        BigDecimal mamulBirimMaliyet = uretilen.signum() > 0
+                ? hammaddeMaliyet.divide(uretilen, 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        maliyetService.girisIsle(mamul, eskiMamulMiktar, uretilen, mamulBirimMaliyet,
+                e.getSirketId(), "URETIM", e.getId());
         stokHareketRepository.save(StokHareket.builder()
                 .stok(mamul).tur("GIRIS").miktar(uretilen)
                 .hareketTarihi(LocalDate.now()).aciklama("Üretim: " + recete.getAd())

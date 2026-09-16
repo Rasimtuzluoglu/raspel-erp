@@ -28,6 +28,7 @@ public class StokDuzeltmeService {
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     @Transactional
     public StokDuzeltmeDTO duzelt(StokDuzeltmeDTO dto, Long sirketId, Long kullaniciId) {
@@ -56,6 +57,11 @@ public class StokDuzeltmeService {
                 .build());
 
         if (fark.compareTo(BigDecimal.ZERO) != 0) {
+            if (fark.signum() > 0) {
+                maliyetService.girisIsle(stok, eski, fark, null, sirketId, "DUZELTME", d.getId());
+            } else {
+                maliyetService.cikisIsle(stok, fark.abs(), dto.getYeniMiktar(), sirketId, "DUZELTME", d.getId());
+            }
             Long depoId = depoStokService.coz(null, sirketId);
             stokHareketRepository.save(StokHareket.builder()
                     .stok(stok)

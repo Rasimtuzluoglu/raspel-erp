@@ -44,6 +44,8 @@ class StokAnalizServiceTest {
     private FaturaKalemRepository faturaKalemRepository;
     @Mock
     private IadeKalemRepository iadeKalemRepository;
+    @Mock
+    private MaliyetService maliyetService;
 
     @InjectMocks
     private StokAnalizService service;

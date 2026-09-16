@@ -46,6 +46,14 @@ public class FaturaKalem {
     @Column(precision = 10, scale = 2)
     private BigDecimal agirlik;
 
+    /** Satış anındaki birim maliyet (COGS anlık görüntüsü). */
+    @Column(name = "birim_maliyet", precision = 19, scale = 4)
+    private BigDecimal birimMaliyet;
+
+    /** Satış anındaki toplam maliyet (birim_maliyet * adet). */
+    @Column(name = "maliyet_tutar", precision = 19, scale = 2)
+    private BigDecimal maliyetTutar;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

@@ -80,6 +80,10 @@ public class Stok {
     @Column(name = "tedarikci_fiyat", precision = 19, scale = 2)
     private BigDecimal tedarikciFiyat;
 
+    /** Ağırlıklı ortalama birim maliyet (COGS motoru). */
+    @Column(name = "ortalama_maliyet", precision = 19, scale = 4)
+    private BigDecimal ortalamaMaliyet;
+
     @Column(name = "maliyet_yontemi", length = 20)
     private String maliyetYontemi;
 
@@ -143,6 +147,8 @@ public class Stok {
     public void setTedarikciStokKodu(String tedarikciStokKodu) { this.tedarikciStokKodu = tedarikciStokKodu; }
     public BigDecimal getTedarikciFiyat() { return tedarikciFiyat; }
     public void setTedarikciFiyat(BigDecimal tedarikciFiyat) { this.tedarikciFiyat = tedarikciFiyat; }
+    public BigDecimal getOrtalamaMaliyet() { return ortalamaMaliyet; }
+    public void setOrtalamaMaliyet(BigDecimal ortalamaMaliyet) { this.ortalamaMaliyet = ortalamaMaliyet; }
     public String getMaliyetYontemi() { return maliyetYontemi; }
     public void setMaliyetYontemi(String maliyetYontemi) { this.maliyetYontemi = maliyetYontemi; }
     public Integer getVersion() { return version; }

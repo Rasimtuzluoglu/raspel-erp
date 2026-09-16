@@ -51,6 +51,7 @@ public class StokService {
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.repository.sube.DepoRepository depoRepository;
     private final com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     // ---------- ÇOKLU FİYAT ----------
 
@@ -285,7 +286,13 @@ public class StokService {
                     .aciklama("Manuel stok düzeltmesi (stok kartı): " + s.getMiktar() + " -> " + dto.getMiktar())
                     .kaynakTip("DUZELTME")
                     .build());
+            BigDecimal eskiMiktar = s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO;
             s.setMiktar(yeniMiktar);
+            if (fark.signum() > 0) {
+                maliyetService.girisIsle(s, eskiMiktar, fark, null, s.getSirketId(), "DUZELTME", null);
+            } else {
+                maliyetService.cikisIsle(s, fark.abs(), yeniMiktar, s.getSirketId(), "DUZELTME", null);
+            }
             cacheYardimci.temizle("stoklar", "dashboard");
         }
 
@@ -355,12 +362,15 @@ public class StokService {
         tenantChecker.check(stok.getSirketId(), "Stok");
 
         BigDecimal miktar = dto.getMiktar();
+        BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
         if ("CIKIS".equals(dto.getTur())) {
             if (stok.getMiktar().compareTo(miktar) < 0)
                 throw new BusinessException("Yetersiz stok! Mevcut: " + stok.getMiktar() + ", Çıkış: " + miktar);
             stok.setMiktar(stok.getMiktar().subtract(miktar));
+            maliyetService.cikisIsle(stok, miktar, stok.getMiktar(), stok.getSirketId(), "MANUEL", null);
         } else {
             stok.setMiktar(stok.getMiktar().add(miktar));
+            maliyetService.girisIsle(stok, eskiMiktar, miktar, null, stok.getSirketId(), "MANUEL", null);
         }
 
         CariHesap cari = null;
@@ -423,9 +433,12 @@ public class StokService {
         Stok stok = h.getStok();
         tenantChecker.check(stok.getSirketId(), "Stok");
         if ("CIKIS".equals(h.getTur())) {
+            BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
             stok.setMiktar(stok.getMiktar().add(h.getMiktar()));
+            maliyetService.girisIsle(stok, eskiMiktar, h.getMiktar(), null, stok.getSirketId(), "MANUEL", null);
         } else {
             stok.setMiktar(stok.getMiktar().subtract(h.getMiktar()));
+            maliyetService.cikisIsle(stok, h.getMiktar(), stok.getMiktar(), stok.getSirketId(), "MANUEL", null);
         }
         stokRepository.save(stok);
         stokHareketRepository.deleteById(hareketId);

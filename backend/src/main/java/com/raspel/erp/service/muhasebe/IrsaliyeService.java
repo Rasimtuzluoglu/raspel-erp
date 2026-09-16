@@ -45,6 +45,7 @@ public class IrsaliyeService {
     private final CacheYardimci cacheYardimci;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
+    private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -122,8 +123,11 @@ public class IrsaliyeService {
                 }
                 if ("SATIS".equals(i.getTur())) {
                     stok.setMiktar(stok.getMiktar().subtract(adet));
+                    maliyetService.cikisIsle(stok, adet, stok.getMiktar(), i.getSirketId(), "IRSALIYE", i.getId());
                 } else {
+                    BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                     stok.setMiktar(stok.getMiktar().add(adet));
+                    maliyetService.girisIsle(stok, eskiMiktar, adet, null, i.getSirketId(), "IRSALIYE", i.getId());
                 }
                 stokRepository.save(stok);
                 Long seriId = null;
@@ -155,9 +159,12 @@ public class IrsaliyeService {
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
                 BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur())) {
+                    BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                     stok.setMiktar(stok.getMiktar().add(miktar));
+                    maliyetService.girisIsle(stok, eskiMiktar, miktar, null, i.getSirketId(), "IRSALIYE", i.getId());
                 } else {
                     stok.setMiktar(stok.getMiktar().subtract(miktar));
+                    maliyetService.cikisIsle(stok, miktar, stok.getMiktar(), i.getSirketId(), "IRSALIYE", i.getId());
                 }
                 stokRepository.save(stok);
                 stokHareketRepository.save(StokHareket.builder()

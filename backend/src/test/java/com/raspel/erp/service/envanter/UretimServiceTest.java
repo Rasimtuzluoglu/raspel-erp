@@ -42,6 +42,7 @@ class UretimServiceTest {
     @Mock private com.raspel.erp.service.ticaret.SatinalmaTalepService satinalmaTalepService;
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @Mock private com.raspel.erp.service.envanter.StokSeriService stokSeriService;
+    @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @InjectMocks private UretimService uretimService;
 
     private Stok stok(Long id, String ad, String miktar) {

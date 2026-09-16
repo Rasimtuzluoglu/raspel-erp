@@ -45,6 +45,7 @@ class StokServiceTest {
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @Mock private com.raspel.erp.repository.sube.DepoRepository depoRepository;
     @Mock private com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
+    @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
