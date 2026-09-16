@@ -22,6 +22,7 @@ import com.raspel.erp.entity.finans.Hareket;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class StokSeriService {
 
     private final StokSeriRepository stokSeriRepository;
@@ -62,11 +63,17 @@ public class StokSeriService {
     public StokSeriDTO olustur(StokSeriDTO dto) {
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        java.math.BigDecimal miktar = dto.getMiktar() != null ? dto.getMiktar() : java.math.BigDecimal.ONE;
         StokSeri seri = StokSeri.builder()
                 .stok(stok)
                 .seriNo(dto.getSeriNo())
                 .lotNo(dto.getLotNo())
                 .sonKullanmaTarihi(dto.getSonKullanmaTarihi())
+                .depoId(dto.getDepoId())
+                .miktar(miktar)
+                .kalanMiktar(miktar)
+                .durum("STOKTA")
+                .girisTarihi(dto.getGirisTarihi() != null ? dto.getGirisTarihi() : java.time.LocalDate.now())
                 .build();
         if (dto.getStokHareketId() != null) {
             StokHareket hareket = stokHareketRepository.findById(dto.getStokHareketId())
@@ -74,6 +81,37 @@ public class StokSeriService {
             seri.setStokHareket(hareket);
         }
         return entityToDTO(stokSeriRepository.save(seri));
+    }
+
+    /**
+     * FEFO tuketim: SKT en yakin (yoksa en eski giris) seriden baslayarak istenen
+     * miktari dusurur. Tuketilen seri id'lerini doner. Seri takibi yetersizse
+     * kalan serisiz dusulur ve uyari loglanir (is akisini bloklamaz).
+     */
+    public java.util.List<Long> fefoTuket(Long stokId, Long depoId, java.math.BigDecimal miktar) {
+        java.util.List<Long> tuketilen = new java.util.ArrayList<>();
+        if (stokId == null || miktar == null || miktar.signum() <= 0) return tuketilen;
+        java.math.BigDecimal kalan = miktar;
+        for (StokSeri s : stokSeriRepository.fefoUygun(stokId, depoId)) {
+            if (kalan.signum() <= 0) break;
+            java.math.BigDecimal sKalan = s.getKalanMiktar() != null ? s.getKalanMiktar() : java.math.BigDecimal.ZERO;
+            if (sKalan.signum() <= 0) continue;
+            java.math.BigDecimal al = kalan.min(sKalan);
+            java.math.BigDecimal yeni = sKalan.subtract(al);
+            s.setKalanMiktar(yeni);
+            if (yeni.signum() == 0) s.setDurum("TUKETILDI");
+            stokSeriRepository.save(s);
+            tuketilen.add(s.getId());
+            kalan = kalan.subtract(al);
+            if (s.getSonKullanmaTarihi() != null && s.getSonKullanmaTarihi().isBefore(java.time.LocalDate.now())) {
+                log.warn("SKT gecmis seri tuketildi: {} (SKT: {})", s.getSeriNo(), s.getSonKullanmaTarihi());
+            }
+        }
+        if (kalan.signum() > 0) {
+            log.warn("Seri/lot takibi yetersiz (stok: {}, depo: {}, eksik: {}) - kalan serisiz dusuldu",
+                    stokId, depoId, kalan);
+        }
+        return tuketilen;
     }
 
     public StokSeriDTO guncelle(Long id, StokSeriDTO dto) {
@@ -111,6 +149,11 @@ public class StokSeriService {
                 .seriNo(s.getSeriNo())
                 .lotNo(s.getLotNo())
                 .sonKullanmaTarihi(s.getSonKullanmaTarihi())
+                .depoId(s.getDepoId())
+                .miktar(s.getMiktar())
+                .kalanMiktar(s.getKalanMiktar())
+                .durum(s.getDurum())
+                .girisTarihi(s.getGirisTarihi())
                 .stokHareketId(s.getStokHareket() != null ? s.getStokHareket().getId() : null)
                 .olusturmaTarihi(s.getOlusturmaTarihi())
                 .build();

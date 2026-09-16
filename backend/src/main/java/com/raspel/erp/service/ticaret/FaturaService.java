@@ -74,6 +74,7 @@ public class FaturaService {
     private final StokHareketRepository stokHareketRepository;
     private final DepoRepository depoRepository;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
     private final EmailService emailService;
@@ -775,6 +776,7 @@ public class FaturaService {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            Long seriId = null;
             if ("CIKIS".equals(tur)) {
                 BigDecimal adet = (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);
                 if (stok.getMiktar().compareTo(adet) < 0) {
@@ -787,6 +789,9 @@ public class FaturaService {
                     }
                 }
                 stok.setMiktar(stok.getMiktar().subtract(adet));
+                // FEFO seri/lot tüketimi (seri takibi varsa)
+                var tuketilenSeriler = stokSeriService.fefoTuket(k.getStokId(), depoId, adet);
+                if (tuketilenSeriler.size() == 1) seriId = tuketilenSeriler.get(0);
             } else {
                 BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 BigDecimal yeniMiktar = (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);
@@ -830,6 +835,7 @@ public class FaturaService {
                     .aciklama(aciklama)
                     .cariHesap(fatura.getCariHesap())
                     .depoId(depoId)
+                    .seriId(seriId)
                     .kaynakTip("FATURA").kaynakId(fatura.getId())
                     .build());
         }

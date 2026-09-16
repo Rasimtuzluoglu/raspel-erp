@@ -51,6 +51,7 @@ public class UretimService {
     private final SiparisKalemRepository siparisKalemRepository;
     private final SatinalmaTalepService satinalmaTalepService;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
 
     private static final BigDecimal YUZ = BigDecimal.valueOf(100);
 
@@ -237,10 +238,13 @@ public class UretimService {
             }
             hammadde.setMiktar(mevcut.subtract(gereken));
             stokRepository.save(hammadde);
+            var uretimSerileri = stokSeriService.fefoTuket(hammadde.getId(), depoId, gereken);
+            Long uretimSeriId = uretimSerileri.size() == 1 ? uretimSerileri.get(0) : null;
             stokHareketRepository.save(StokHareket.builder()
                     .stok(hammadde).tur("CIKIS").miktar(gereken)
                     .hareketTarihi(LocalDate.now()).aciklama("Üretim: " + recete.getAd())
                     .depoId(depoId)
+                    .seriId(uretimSeriId)
                     .kaynakTip("URETIM").kaynakId(e.getId())
                     .build());
             depoStokService.guncelle(depoId, hammadde.getId(), gereken.negate());

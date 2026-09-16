@@ -32,6 +32,22 @@ public class StokSeri {
     @Column(name = "son_kullanma_tarihi")
     private LocalDate sonKullanmaTarihi;
 
+    @Column(name = "depo_id")
+    private Long depoId;
+
+    @Column(precision = 19, scale = 2)
+    private java.math.BigDecimal miktar;
+
+    @Column(name = "kalan_miktar", precision = 19, scale = 2)
+    private java.math.BigDecimal kalanMiktar;
+
+    /** STOKTA | TUKETILDI */
+    @Column(length = 20)
+    private String durum;
+
+    @Column(name = "giris_tarihi")
+    private LocalDate girisTarihi;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stok_hareket_id")
     private StokHareket stokHareket;

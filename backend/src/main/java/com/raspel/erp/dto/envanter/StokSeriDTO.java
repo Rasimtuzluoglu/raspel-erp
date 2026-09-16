@@ -15,6 +15,11 @@ public class StokSeriDTO {
     private String seriNo;
     private String lotNo;
     private LocalDate sonKullanmaTarihi;
+    private Long depoId;
+    private java.math.BigDecimal miktar;
+    private java.math.BigDecimal kalanMiktar;
+    private String durum;
+    private LocalDate girisTarihi;
     private Long stokHareketId;
     private LocalDateTime olusturmaTarihi;
 }

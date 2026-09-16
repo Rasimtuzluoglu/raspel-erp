@@ -115,4 +115,23 @@ class StokSeriServiceTest {
 
         assertEquals("SN-GUNCELLE", sonuc.getSeriNo());
     }
+
+    @Test
+    void fefoTuket_sktYakinOnceTukenir() {
+        StokSeri yakin = StokSeri.builder().id(1L).seriNo("A")
+                .sonKullanmaTarihi(java.time.LocalDate.now().plusDays(5))
+                .kalanMiktar(new java.math.BigDecimal("3")).durum("STOKTA").build();
+        StokSeri uzak = StokSeri.builder().id(2L).seriNo("B")
+                .sonKullanmaTarihi(java.time.LocalDate.now().plusDays(30))
+                .kalanMiktar(new java.math.BigDecimal("10")).durum("STOKTA").build();
+        when(stokSeriRepository.fefoUygun(10L, 5L)).thenReturn(java.util.List.of(yakin, uzak));
+        when(stokSeriRepository.save(any(StokSeri.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var tuketilen = stokSeriService.fefoTuket(10L, 5L, new java.math.BigDecimal("5"));
+
+        assertEquals(0, yakin.getKalanMiktar().compareTo(java.math.BigDecimal.ZERO));
+        assertEquals("TUKETILDI", yakin.getDurum());
+        assertEquals(0, uzak.getKalanMiktar().compareTo(new java.math.BigDecimal("8")));
+        assertEquals(2, tuketilen.size());
+    }
 }

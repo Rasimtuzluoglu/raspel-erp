@@ -44,6 +44,7 @@ public class IrsaliyeService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+    private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -125,6 +126,11 @@ public class IrsaliyeService {
                     stok.setMiktar(stok.getMiktar().add(adet));
                 }
                 stokRepository.save(stok);
+                Long seriId = null;
+                if ("SATIS".equals(i.getTur())) {
+                    var seriler = stokSeriService.fefoTuket(stok.getId(), depoId, adet);
+                    if (seriler.size() == 1) seriId = seriler.get(0);
+                }
                 stokHareketRepository.save(StokHareket.builder()
                         .stok(stok)
                         .tur("SATIS".equals(i.getTur()) ? "CIKIS" : "GIRIS")
@@ -132,6 +138,7 @@ public class IrsaliyeService {
                         .hareketTarihi(LocalDate.now())
                         .aciklama("İrsaliye #" + i.getIrsaliyeNo())
                         .depoId(depoId)
+                        .seriId(seriId)
                         .kaynakTip("IRSALIYE").kaynakId(i.getId())
                         .build());
                 depoStokService.guncelle(depoId, stok.getId(),

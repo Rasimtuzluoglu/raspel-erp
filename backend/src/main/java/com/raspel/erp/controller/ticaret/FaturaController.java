@@ -144,6 +144,7 @@ public class FaturaController {
     }
 
     /** TTL süresi dolan idempotency kayıtlarını periyodik olarak temizler (unbounded büyümeyi engeller). */
+    @PreAuthorize("permitAll()")
     @Scheduled(fixedDelay = IDEMPOTENCY_TEMIZLIK_MS)
     public void idempotencyCacheTemizle() {
         int oncekiBoyut = idempotencyCache.size();
