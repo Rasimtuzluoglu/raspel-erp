@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sube;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sube.DepoTransferDTO;
 import com.raspel.erp.entity.sube.DepoTransfer;
 import com.raspel.erp.exception.BusinessException;
@@ -29,6 +30,7 @@ public class DepoTransferService {
     private final DepoService depoService;
     private final DepoRepository depoRepository;
     private final StokRepository stokRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public List<DepoTransferDTO> listele(Long sirketId) {
@@ -64,6 +66,7 @@ public class DepoTransferService {
     public DepoTransferDTO onayla(Long id) {
         DepoTransfer t = transferRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transfer", id));
+        tenantChecker.check(t.getSirketId(), "Transfer");
         if (!"BEKLIYOR".equals(t.getDurum())) {
             throw new BusinessException("Bu transfer zaten işlendi. Durum: " + t.getDurum());
         }
@@ -78,6 +81,7 @@ public class DepoTransferService {
     public DepoTransferDTO reddet(Long id) {
         DepoTransfer t = transferRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transfer", id));
+        tenantChecker.check(t.getSirketId(), "Transfer");
         if (!"BEKLIYOR".equals(t.getDurum())) {
             throw new BusinessException("Bu transfer zaten işlendi. Durum: " + t.getDurum());
         }

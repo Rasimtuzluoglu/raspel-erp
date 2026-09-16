@@ -33,6 +33,9 @@ class TekrarlayanFaturaServiceTest {
     @Mock
     private CariHesapRepository cariHesapRepository;
 
+    @Mock
+    private com.raspel.erp.config.TenantChecker tenantChecker;
+
     @InjectMocks
     private TekrarlayanFaturaService tekrarlayanFaturaService;
 

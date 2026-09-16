@@ -51,7 +51,7 @@ class KullaniciControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(KullaniciDTO.builder().id(1L).username("admin").displayName("Admin").build());
-        when(kullaniciService.tumunuGetir(any(Pageable.class))).thenReturn(new PageImpl<>(list));
+        when(kullaniciService.tumunuGetir(any(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/kullanicilar"))
                 .andExpect(status().isOk())

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -23,6 +24,7 @@ import com.raspel.erp.service.sistem.KategoriService;
 class KategoriServiceTest {
 
     @Mock private KategoriRepository kategoriRepository;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private KategoriService kategoriService;
 
     private GelirGiderKategori createKategori(Long id) {
@@ -60,7 +62,9 @@ class KategoriServiceTest {
 
     @Test
     void sil_deletes() {
+        GelirGiderKategori k = GelirGiderKategori.builder().id(1L).ad("Kategori").tur("GELIR").sirketId(1L).build();
+        when(kategoriRepository.findById(1L)).thenReturn(Optional.of(k));
         kategoriService.sil(1L);
-        verify(kategoriRepository).deleteById(1L);
+        verify(kategoriRepository).delete(k);
     }
 }

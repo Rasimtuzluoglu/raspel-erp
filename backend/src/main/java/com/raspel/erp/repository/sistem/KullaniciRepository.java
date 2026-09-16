@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface KullaniciRepository extends JpaRepository<Kullanici, Long> {
     Optional<Kullanici> findByUsername(String username);
     List<Kullanici> findBySirketIdAndRole(Long sirketId, String role);
+    org.springframework.data.domain.Page<Kullanici> findBySirketId(Long sirketId, org.springframework.data.domain.Pageable pageable);
 }

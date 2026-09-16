@@ -50,7 +50,10 @@ public class KullaniciController {
     @GetMapping
     @Operation(summary = "Tüm kullanıcıları getir", description = "Tüm kullanıcıları listeler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<KullaniciDTO>> tumu(@PageableDefault(size = 50) Pageable pageable) { return ResponseEntity.ok(kullaniciService.tumunuGetir(pageable)); }
+    public ResponseEntity<Page<KullaniciDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(kullaniciService.tumunuGetir(sirketId, pageable));
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre kullanıcı getir", description = "Kullanıcı ID'sine göre detayları getirir (yalnızca ADMIN)")

@@ -38,6 +38,9 @@ class DepoTransferServiceTest {
     @Mock
     private StokRepository stokRepository;
 
+    @Mock
+    private com.raspel.erp.config.TenantChecker tenantChecker;
+
     @InjectMocks
     private DepoTransferService depoTransferService;
 

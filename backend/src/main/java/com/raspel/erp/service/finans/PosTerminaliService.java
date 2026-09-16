@@ -30,6 +30,7 @@ public class PosTerminaliService {
     private final PosTerminaliRepository posRepository;
     private final BankaRepository bankaRepository;
     private final HareketRepository hareketRepository;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public List<PosTerminaliDTO> liste(Long sirketId) {
@@ -62,6 +63,7 @@ public class PosTerminaliService {
     public PosTerminaliDTO guncelle(Long id, PosTerminaliDTO dto, Long sirketId) {
         PosTerminali p = posRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("POS Terminali", id));
+        tenantChecker.check(p.getSirketId(), "POS Terminali");
         if (dto.getAd() != null && !dto.getAd().isBlank()) p.setAd(dto.getAd().trim());
         if (dto.getBankaId() != null) p.setBankaId(dto.getBankaId());
         if (dto.getKomisyonOrani() != null) p.setKomisyonOrani(dto.getKomisyonOrani());
@@ -73,6 +75,7 @@ public class PosTerminaliService {
     public void sil(Long id, Long sirketId) {
         PosTerminali p = posRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("POS Terminali", id));
+        tenantChecker.check(p.getSirketId(), "POS Terminali");
         posRepository.delete(p);
     }
 

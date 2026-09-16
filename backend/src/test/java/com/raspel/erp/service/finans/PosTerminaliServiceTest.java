@@ -30,6 +30,7 @@ class PosTerminaliServiceTest {
     @Mock private PosTerminaliRepository posRepository;
     @Mock private BankaRepository bankaRepository;
     @Mock private HareketRepository hareketRepository;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private PosTerminaliService posService;
 
     @Test

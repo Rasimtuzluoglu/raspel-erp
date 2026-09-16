@@ -76,6 +76,7 @@ public class TekrarlayanFaturaService {
     public TekrarlayanFaturaDTO guncelle(Long id, TekrarlayanFaturaDTO dto) {
         TekrarlayanFatura tf = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tekrarlayan fatura", id));
+        tenantChecker.check(tf.getSirketId(), "Tekrarlayan fatura");
         tf.setCariHesapId(dto.getCariHesapId());
         tf.setTur(dto.getTur() != null ? dto.getTur().toUpperCase() : tf.getTur());
         tf.setAciklama(dto.getAciklama());
@@ -93,8 +94,10 @@ public class TekrarlayanFaturaService {
 
     @Transactional
     public void sil(Long id) {
-        if (!repository.existsById(id)) throw new ResourceNotFoundException("Tekrarlayan fatura", id);
-        repository.deleteById(id);
+        TekrarlayanFatura tf = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tekrarlayan fatura", id));
+        tenantChecker.check(tf.getSirketId(), "Tekrarlayan fatura");
+        repository.delete(tf);
     }
 
     // ---------- OTOMATİK İŞLEME ----------
@@ -117,6 +120,8 @@ public class TekrarlayanFaturaService {
     public void faturaUret(Long id) {
         TekrarlayanFatura tf = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tekrarlayan fatura", id));
+        // Zamanlanmis cagrida request context yoktur; kontrol no-op olur.
+        tenantChecker.check(tf.getSirketId(), "Tekrarlayan fatura");
         if (tf.getBitisTarihi() != null && tf.getSonrakiCalistirma() != null
                 && tf.getSonrakiCalistirma().isAfter(tf.getBitisTarihi())) {
             tf.setAktif(false);

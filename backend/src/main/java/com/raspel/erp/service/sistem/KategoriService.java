@@ -1,5 +1,6 @@
 package com.raspel.erp.service.sistem;
 
+import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sistem.KategoriDTO;
 import com.raspel.erp.entity.sistem.GelirGiderKategori;
 import com.raspel.erp.repository.sistem.KategoriRepository;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class KategoriService {
 
     private final KategoriRepository kategoriRepository;
+    private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<KategoriDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -43,6 +45,7 @@ public class KategoriService {
     public KategoriDTO guncelle(Long id, KategoriDTO dto) {
         GelirGiderKategori k = kategoriRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kategori", id));
+        tenantChecker.check(k.getSirketId(), "Kategori");
         k.setAd(dto.getAd());
         k.setTur(dto.getTur());
         return entityToDTO(kategoriRepository.save(k));
@@ -50,7 +53,10 @@ public class KategoriService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
-        kategoriRepository.deleteById(id);
+        GelirGiderKategori k = kategoriRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kategori", id));
+        tenantChecker.check(k.getSirketId(), "Kategori");
+        kategoriRepository.delete(k);
     }
 
     private KategoriDTO entityToDTO(GelirGiderKategori k) {

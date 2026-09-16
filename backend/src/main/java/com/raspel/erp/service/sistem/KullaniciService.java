@@ -51,6 +51,7 @@ public class KullaniciService {
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
     private final AktifOturumService aktifOturumService;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
@@ -100,13 +101,18 @@ public class KullaniciService {
         bekleyenGirislerBellek.remove(token);
     }
 
-    public Page<KullaniciDTO> tumunuGetir(Pageable pageable) {
-        return kullaniciRepository.findAll(pageable).map(this::entityToDTO);
+    public Page<KullaniciDTO> tumunuGetir(Long sirketId, Pageable pageable) {
+        if (sirketId == null) {
+            return kullaniciRepository.findAll(pageable).map(this::entityToDTO);
+        }
+        return kullaniciRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
     public KullaniciDTO getir(Long id) {
-        return entityToDTO(kullaniciRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id)));
+        Kullanici k = kullaniciRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
+        tenantChecker.check(k.getSirketId(), "Kullanıcı");
+        return entityToDTO(k);
     }
 
     public List<String> bildirimTercihleriGetir(Long kullaniciId) {
@@ -161,6 +167,7 @@ public class KullaniciService {
     public KullaniciDTO guncelle(Long id, KullaniciDTO dto) {
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
+        tenantChecker.check(k.getSirketId(), "Kullanıcı");
         if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
@@ -187,8 +194,10 @@ public class KullaniciService {
     }
 
     public void sil(Long id) {
-        if (!kullaniciRepository.existsById(id)) throw new ResourceNotFoundException("Kullanıcı", id);
-        kullaniciRepository.deleteById(id);
+        Kullanici k = kullaniciRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
+        tenantChecker.check(k.getSirketId(), "Kullanıcı");
+        kullaniciRepository.delete(k);
     }
 
     public void sifreDegistir(Long id, SifreDegistirRequest req) {

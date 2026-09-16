@@ -43,6 +43,8 @@ class KullaniciServiceTest {
     private StringRedisTemplate redisTemplate;
     @Mock
     private AktifOturumService aktifOturumService;
+    @Mock
+    private com.raspel.erp.config.TenantChecker tenantChecker;
 
     @InjectMocks
     private KullaniciService kullaniciService;
@@ -62,7 +64,7 @@ class KullaniciServiceTest {
     @Test
     void tumunuGetir_returnsAllUsers() {
         when(kullaniciRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createKullanici(1L), createKullanici(2L))));
-        Page<KullaniciDTO> result = kullaniciService.tumunuGetir(Pageable.unpaged());
+        Page<KullaniciDTO> result = kullaniciService.tumunuGetir(null, Pageable.unpaged());
         assertEquals(2, result.getContent().size());
     }
 
@@ -116,14 +118,14 @@ class KullaniciServiceTest {
 
     @Test
     void sil_deletesUser() {
-        when(kullaniciRepository.existsById(1L)).thenReturn(true);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(createKullanici(1L)));
         kullaniciService.sil(1L);
-        verify(kullaniciRepository).deleteById(1L);
+        verify(kullaniciRepository).delete(any(Kullanici.class));
     }
 
     @Test
     void sil_throwsWhenNotFound() {
-        when(kullaniciRepository.existsById(99L)).thenReturn(false);
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> kullaniciService.sil(99L));
     }
 
