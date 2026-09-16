@@ -72,7 +72,7 @@ public class TahsilatController {
                 dto.getTaksitKurum(), dto.getTaksitTutar(), dto.getAciklama(),
                 dto.getHareketTarihi(), sirketId,
                 dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi(),
-                dto.getTaksitId());
+                dto.getTaksitId(), dto.getKasaId(), dto.getBankaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(sonuc);
     }
 
@@ -105,5 +105,9 @@ public class TahsilatController {
         private String aciklama;
         /** Tahsilat tarihi (opsiyonel, boşsa bugün) */
         private java.time.LocalDate hareketTarihi;
+        /** Tahsilatın giriş yapılacağı kasa (NAKIT için) */
+        private Long kasaId;
+        /** Tahsilatın giriş yapılacağı banka hesabı (HAVALE/KART için) */
+        private Long bankaId;
     }
 }

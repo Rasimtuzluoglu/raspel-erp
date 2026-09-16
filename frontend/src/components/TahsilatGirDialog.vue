@@ -100,6 +100,40 @@
         </div>
 
         <div
+          v-if="form.odemeYontemi === 'NAKIT'"
+          class="taksit-panel"
+        >
+          <FormField :label="$t('tahsilat.kasa')">
+            <Select
+              v-model="form.kasaId"
+              :options="kasaSecenekleri"
+              option-label="ad"
+              option-value="id"
+              :filter="true"
+              :placeholder="$t('tahsilat.kasaSecin')"
+              class="w-full"
+            />
+          </FormField>
+        </div>
+
+        <div
+          v-if="form.odemeYontemi === 'HAVALE'"
+          class="taksit-panel"
+        >
+          <FormField :label="$t('tahsilat.banka')">
+            <Select
+              v-model="form.bankaId"
+              :options="bankaSecenekleri"
+              option-label="ad"
+              option-value="id"
+              :filter="true"
+              :placeholder="$t('tahsilat.bankaSecin')"
+              class="w-full"
+            />
+          </FormField>
+        </div>
+
+        <div
           v-if="form.odemeYontemi === 'KART'"
           class="taksit-panel"
         >
@@ -201,7 +235,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
-import { tahsilatAPI, bankaAPI, posAPI } from '../api/index.js'
+import { tahsilatAPI, bankaAPI, posAPI, kasaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import FormField from './FormField.vue'
@@ -242,6 +276,8 @@ const yontemler = computed(() => [
 
 const kurumlar = ref([])
 const posSecenekleri = ref([])
+const kasaSecenekleri = ref([])
+const bankaSecenekleri = ref([])
 const kaydediliyor = ref(false)
 
 const form = ref({
@@ -254,6 +290,8 @@ const form = ref({
   posTerminaliId: null,
   komisyonTutar: null,
   valorTarihi: null,
+  kasaId: null,
+  bankaId: null,
   aciklama: ''
 })
 
@@ -307,6 +345,22 @@ watch(
           posSecenekleri.value = []
         }
       }
+      if (!kasaSecenekleri.value.length) {
+        try {
+          const r = await kasaAPI.getAll()
+          kasaSecenekleri.value = unwrapList(r)
+        } catch {
+          kasaSecenekleri.value = []
+        }
+      }
+      if (!bankaSecenekleri.value.length) {
+        try {
+          const r = await bankaAPI.getAll()
+          bankaSecenekleri.value = unwrapList(r)
+        } catch {
+          bankaSecenekleri.value = []
+        }
+      }
     } else {
       form.value = {
         cariId: props.cari?.id || props.baslangicCariId,
@@ -318,6 +372,8 @@ watch(
         posTerminaliId: null,
         komisyonTutar: null,
         valorTarihi: null,
+        kasaId: null,
+        bankaId: null,
         aciklama: ''
       }
     }
@@ -362,6 +418,8 @@ const kaydet = async () => {
       komisyonTutar: form.value.odemeYontemi === 'KART' ? form.value.komisyonTutar : null,
       valorTarihi: form.value.odemeYontemi === 'KART' && form.value.valorTarihi
         ? form.value.valorTarihi.toISOString().slice(0, 10) : null,
+      kasaId: form.value.odemeYontemi === 'NAKIT' ? form.value.kasaId : null,
+      bankaId: form.value.odemeYontemi === 'HAVALE' ? form.value.bankaId : null,
       aciklama: form.value.aciklama || null,
       hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().slice(0, 10) : null
     })

@@ -44,6 +44,11 @@ public class TahsilatService {
     private final HareketRepository hareketRepository;
     private final PosTerminaliRepository posTerminaliRepository;
     private final TaksitService taksitService;
+    private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
     private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
@@ -109,7 +114,7 @@ public class TahsilatService {
                                            LocalDate hareketTarihi, Long sirketId,
                                            Long posTerminaliId, BigDecimal komisyonTutar, LocalDate valorTarihi) {
         return tahsilatGir(cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, aciklama,
-                hareketTarihi, sirketId, posTerminaliId, komisyonTutar, valorTarihi, null);
+                hareketTarihi, sirketId, posTerminaliId, komisyonTutar, valorTarihi, null, null, null);
     }
 
     /**
@@ -122,6 +127,20 @@ public class TahsilatService {
                                            LocalDate hareketTarihi, Long sirketId,
                                            Long posTerminaliId, BigDecimal komisyonTutar, LocalDate valorTarihi,
                                            Long taksitId) {
+        return tahsilatGir(cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, aciklama,
+                hareketTarihi, sirketId, posTerminaliId, komisyonTutar, valorTarihi, taksitId, null, null);
+    }
+
+    /**
+     * Tahsilat girişi (kasa/banka hesabına işlemeli). {@code kasaId} verilirse tahsilat kasaya,
+     * {@code bankaId} verilirse banka hesabına giriş olarak da yansıtılır.
+     */
+    @Transactional
+    public Map<String, Object> tahsilatGir(Long cariId, BigDecimal tutar, String odemeYontemi,
+                                           String taksitKurum, BigDecimal taksitTutar, String aciklama,
+                                           LocalDate hareketTarihi, Long sirketId,
+                                           Long posTerminaliId, BigDecimal komisyonTutar, LocalDate valorTarihi,
+                                           Long taksitId, Long kasaId, Long bankaId) {
         if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Tahsilat tutarı 0'dan büyük olmalıdır");
         }
@@ -206,6 +225,13 @@ public class TahsilatService {
                     .build(), sirketId);
         }
 
+        // Kasa/banka hesabina giris (secildiyse)
+        if (kasaId != null) {
+            kasaGirisiIsle(kasaId, tutar, cari, hareketTarihi, sirketId);
+        } else if (bankaId != null) {
+            bankaGirisiIsle(bankaId, tutar, cari, hareketTarihi, sirketId);
+        }
+
         log.info("Tahsilat kaydedildi -> Cari: {}, Tutar: {}, Yöntem: {}, Fatura sayısı: {}",
                 cari.getAd(), tutar, odemeYontemi, uygulananFaturalar.size());
 
@@ -216,6 +242,8 @@ public class TahsilatService {
         sonuc.put("odemeYontemi", odemeYontemi);
         sonuc.put("uygulananFaturalar", uygulananFaturalar);
         sonuc.put("fazlaOdeme", kalan.compareTo(BigDecimal.ZERO) > 0 ? kalan : BigDecimal.ZERO);
+        if (kasaId != null) sonuc.put("kasaId", kasaId);
+        if (bankaId != null) sonuc.put("bankaId", bankaId);
 
         if (taksitId != null) {
             taksitService.ode(taksitId, com.raspel.erp.dto.finans.TaksitOdeDTO.builder()
@@ -333,5 +361,38 @@ public class TahsilatService {
         if (gun <= 60) return "31-60 Gün";
         if (gun <= 90) return "61-90 Gün";
         return "90+ Gün";
+    }
+
+    /** Tahsilat tutarini secili kasaya GELIR hareketi olarak isler. */
+    private void kasaGirisiIsle(Long kasaId, BigDecimal tutar, CariHesap cari, LocalDate tarih, Long sirketId) {
+        com.raspel.erp.entity.finans.Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
+        kasa.setBakiye(kasa.getBakiye() != null ? kasa.getBakiye().add(tutar) : tutar);
+        kasaRepository.save(kasa);
+        kasaHareketRepository.save(com.raspel.erp.entity.finans.KasaHareket.builder()
+                .kasa(kasa).tur("GELIR").tutar(tutar)
+                .hareketTarihi(tarih != null ? tarih : LocalDate.now())
+                .aciklama("Tahsilat: " + (cari != null ? cari.getAd() : ""))
+                .build());
+    }
+
+    /** Tahsilat tutarini secili banka hesabina alacak hareketi olarak isler. */
+    private void bankaGirisiIsle(Long bankaId, BigDecimal tutar, CariHesap cari, LocalDate tarih, Long sirketId) {
+        com.raspel.erp.entity.finans.Banka banka = bankaRepository.findByIdForUpdate(bankaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
+        tenantChecker.check(banka.getSirketId(), "Banka");
+        banka.setBakiye(banka.getBakiye() != null ? banka.getBakiye().add(tutar) : tutar);
+        bankaRepository.save(banka);
+        bankaHareketiRepository.save(com.raspel.erp.entity.finans.BankaHareketi.builder()
+                .bankaId(banka.getId())
+                .tarih(tarih != null ? tarih : LocalDate.now())
+                .aciklama("Tahsilat: " + (cari != null ? cari.getAd() : ""))
+                .borc(BigDecimal.ZERO)
+                .alacak(tutar)
+                .bakiye(banka.getBakiye())
+                .eslestirildi(false)
+                .sirketId(sirketId)
+                .build());
     }
 }
