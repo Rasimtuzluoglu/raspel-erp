@@ -59,19 +59,44 @@ public class RaporService {
                 .orElseThrow(() -> new RuntimeException("Cari hesap bulunamadı"));
         tenantChecker.check(cari.getSirketId(), "Cari hesap");
 
-        List<HareketDTO> hareketler = hareketRepository
+        List<HareketDTO> hareketler = new java.util.ArrayList<>(hareketRepository
                 .findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(cariHesapId, baslangic, bitis)
-                .stream().map(hareketService::entityDTOyeCevir).collect(Collectors.toList());
+                .stream().map(hareketService::entityDTOyeCevir).collect(Collectors.toList()));
 
-        BigDecimal donemBasi = cari.getBakiye();
-        BigDecimal donemSonu = donemBasi;
-        for (HareketDTO h : hareketler) {
-            if ("TAHSILAT".equals(h.getTur())) donemSonu = donemSonu.subtract(h.getTutar());
-            else donemSonu = donemSonu.add(h.getTutar());
+        // Kesilmis faturalar da ekstreye dahil edilir. Cari bakiye cariHesapService
+        // tarafindan guncellenir; burada gorunum icin sentetik hareket satirlari uretilir.
+        for (Fatura f : faturaRepository.findByCariHesapIdAndDurumAndTarihBetweenOrderByTarihAscIdAsc(
+                cariHesapId, Fatura.FaturaDurum.KESILDI, baslangic, bitis)) {
+            boolean satis = f.getTur() == Fatura.FaturaTur.SATIS;
+            hareketler.add(HareketDTO.builder()
+                    .id(f.getId() != null ? -f.getId() : null)
+                    .cariHesapId(cariHesapId)
+                    .cariHesapAd(cari.getAd())
+                    .tur(satis ? "SATIS_FATURA" : "ALIS_FATURA")
+                    .tutar(f.getGenelToplam())
+                    .hareketTarihi(f.getTarih())
+                    .faturaId(f.getId())
+                    .aciklama("Fatura #" + f.getFaturaNumarasi()
+                            + (f.getAciklama() != null && !f.getAciklama().isBlank() ? " - " + f.getAciklama() : ""))
+                    .build());
         }
+        hareketler.sort(java.util.Comparator.comparing(HareketDTO::getHareketTarihi,
+                java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
+
+        BigDecimal donemSonu = cari.getBakiye() != null ? cari.getBakiye() : BigDecimal.ZERO;
+        BigDecimal etki = BigDecimal.ZERO;
+        for (HareketDTO h : hareketler) {
+            if (h.getTutar() == null) continue;
+            switch (h.getTur()) {
+                case "TAHSILAT", "ALIS_FATURA" -> etki = etki.add(h.getTutar());
+                case "ODEME", "SATIS_FATURA" -> etki = etki.subtract(h.getTutar());
+                default -> { /* diger turler bakiyeyi etkilemez */ }
+            }
+        }
+        BigDecimal donemBasi = donemSonu.subtract(etki);
 
         return RaporDTO.CariEkstreDTO.builder()
-                .cariAd(cari.getAd()).donemBasBakiye(cari.getBakiye())
+                .cariAd(cari.getAd()).donemBasBakiye(donemBasi)
                 .donemSonBakiye(donemSonu).hareketler(hareketler).build();
     }
 
@@ -275,7 +300,7 @@ public class RaporService {
             BigDecimal faturaMaliyet = BigDecimal.ZERO;
             for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
                 BigDecimal birimMaliyet = k.getStokId() != null ? stokMaliyet.getOrDefault(k.getStokId(), BigDecimal.ZERO) : BigDecimal.ZERO;
-                faturaMaliyet = faturaMaliyet.add(birimMaliyet.multiply(BigDecimal.valueOf(k.getAdet())));
+                faturaMaliyet = faturaMaliyet.add(birimMaliyet.multiply(k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
             }
 
             RaporDTO.CariKarlilikSatiriDTO satir = satirMap.get(cariId);

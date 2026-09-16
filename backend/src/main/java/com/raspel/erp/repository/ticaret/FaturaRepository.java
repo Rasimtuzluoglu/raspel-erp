@@ -45,6 +45,11 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     Page<Fatura> findByCariHesapIdAndSirketIdOrderByTarihDesc(Long cariHesapId, Long sirketId, Pageable pageable);
 
+    /** Cari ekstre icin: kesilmis faturalar (tarih araliginda). */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findByCariHesapIdAndDurumAndTarihBetweenOrderByTarihAscIdAsc(
+            Long cariHesapId, Fatura.FaturaDurum durum, java.time.LocalDate baslangic, java.time.LocalDate bitis);
+
     @Query("SELECT f.faturaNumarasi FROM Fatura f WHERE f.faturaNumarasi LIKE :prefix% AND f.sirketId = :sirketId")
     List<String> findFaturaNumarasiByPrefix(@Param("prefix") String prefix, @Param("sirketId") Long sirketId);
 

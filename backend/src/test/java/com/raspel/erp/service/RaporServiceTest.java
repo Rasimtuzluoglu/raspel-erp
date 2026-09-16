@@ -89,6 +89,29 @@ class RaporServiceTest {
     }
 
     @Test
+    void cariEkstreGetir_faturalariDaEkler() {
+        CariHesap cari = createCariHesap();
+        cari.setBakiye(new BigDecimal("-500"));
+        when(cariHesapRepository.findById(1L)).thenReturn(java.util.Optional.of(cari));
+        when(hareketRepository.findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(any(), any(), any()))
+                .thenReturn(List.of());
+        com.raspel.erp.entity.ticaret.Fatura f = com.raspel.erp.entity.ticaret.Fatura.builder()
+                .id(7L).tur(com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS)
+                .genelToplam(new BigDecimal("500")).tarih(LocalDate.of(2026, 6, 1))
+                .faturaNumarasi("F-1").cariHesap(cari).build();
+        when(faturaRepository.findByCariHesapIdAndDurumAndTarihBetweenOrderByTarihAscIdAsc(any(), any(), any(), any()))
+                .thenReturn(List.of(f));
+
+        var result = raporService.cariEkstreGetir(1L, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        assertEquals(1, result.getHareketler().size());
+        assertEquals("SATIS_FATURA", result.getHareketler().get(0).getTur());
+        // Guncel bakiye -500, donem etkisi -500 => donem basi 0
+        assertEquals(0, result.getDonemBasBakiye().compareTo(BigDecimal.ZERO));
+        assertEquals(0, result.getDonemSonBakiye().compareTo(new BigDecimal("-500")));
+    }
+
+    @Test
     void gelirGiderOzeti_returnsOzet() {
         Hareket tahsilat = createHareket();
         Hareket odeme = createHareket();

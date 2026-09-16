@@ -146,8 +146,8 @@
               style="width: 90px"
             >
               <template #body="s">
-                <span :class="['badge', s.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
-                  {{ s.data.tur === 'TAHSILAT' ? t('raporlar.tahsilat') : t('raporlar.odeme') }}
+                <span :class="['badge', ekstreTurSinif(s.data.tur)]">
+                  {{ ekstreTurLabel(s.data.tur) }}
                 </span>
               </template>
             </Column>
@@ -157,7 +157,7 @@
               style="width: 120px"
             >
               <template #body="s">
-                <span :class="s.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">{{
+                <span :class="ekstreTurSinif(s.data.tur) === 'tahsilat' ? 'positive' : 'negative'">{{
                   formatCurrency(s.data.tutar)
                 }}</span>
               </template>
@@ -1248,6 +1248,17 @@ const formatCurrency = (v) => {
   }
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(deger)
 }
+
+const ekstreTurLabel = (tur) =>
+  ({
+    TAHSILAT: t('raporlar.tahsilat'),
+    ODEME: t('raporlar.odeme'),
+    SATIS_FATURA: t('raporlar.satisFatura'),
+    ALIS_FATURA: t('raporlar.alimFatura')
+  })[tur] || tur
+
+const ekstreTurSinif = (tur) =>
+  ({ TAHSILAT: 'tahsilat', ALIS_FATURA: 'tahsilat', ODEME: 'odeme', SATIS_FATURA: 'odeme' })[tur] || 'odeme'
 
 import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 </script>
