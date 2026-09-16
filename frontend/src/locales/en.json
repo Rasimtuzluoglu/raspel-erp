@@ -1938,6 +1938,8 @@
     "pdf": "PDF",
     "pdfIndirilemedi": "Could not download PDF",
     "yeniIrsaliye": "New Delivery Note",
+    "depo": "Warehouse",
+    "depoSecin": "Select warehouse (defaults if empty)",
     "irsaliyeNo": "Delivery Note No",
     "cariHesap": "Account",
     "tur": "Type",

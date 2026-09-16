@@ -131,6 +131,19 @@
           />
         </div>
         <div class="field">
+          <label>{{ t('irsaliyeler.depo') }}</label>
+          <Dropdown
+            v-model="form.depoId"
+            :options="depolar"
+            option-label="ad"
+            option-value="id"
+            filter
+            show-clear
+            :placeholder="t('irsaliyeler.depoSecin')"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
           <label>{{ t('common.description') }}</label><Textarea
             v-model="form.aciklama"
             rows="2"
@@ -221,7 +234,7 @@ import { ref, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI, pdfAPI } from '../api/index.js'
+import { irsaliyeAPI, cariHesapAPI, stokAPI, siparisAPI, pdfAPI, depoAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useI18n } from 'vue-i18n'
@@ -234,25 +247,28 @@ const list = ref([])
 const cariler = ref([])
 const stoklar = ref([])
 const siparisler = ref([])
+const depolar = ref([])
 const barkodAcik = ref(false)
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
-const form = ref({ irsaliyeNo: '', tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '', siparisId: null, kalemler: [] })
+const form = ref({ irsaliyeNo: '', tarih: new Date(), cariHesapId: null, tur: 'SATIS', depoId: null, aciklama: '', siparisId: null, kalemler: [] })
 
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [r, c, s, sp] = await Promise.all([
+    const [r, c, s, sp, d] = await Promise.all([
       irsaliyeAPI.getAll(),
       cariHesapAPI.getAll(),
       stokAPI.getAll({ size: 500 }),
-      siparisAPI.getAll({ size: 500 })
+      siparisAPI.getAll({ size: 500 }),
+      depoAPI.getAll()
     ])
     list.value = unwrapList(r)
     cariler.value = unwrapList(c)
     stoklar.value = unwrapList(s)
     siparisler.value = unwrapList(sp)
+    depolar.value = unwrapList(d)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataYukleme'))
   }
@@ -260,7 +276,7 @@ onMounted(async () => {
 })
 
 const dialogAc = () => {
-  form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', aciklama: '', siparisId: null, kalemler: [] }
+  form.value = { irsaliyeNo: 'IRS-' + Date.now(), tarih: new Date(), cariHesapId: null, tur: 'SATIS', depoId: null, aciklama: '', siparisId: null, kalemler: [] }
   dialog.value = true
 }
 

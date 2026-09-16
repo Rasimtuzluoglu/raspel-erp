@@ -1938,6 +1938,8 @@
     "pdf": "PDF",
     "pdfIndirilemedi": "PDF indirilemedi",
     "yeniIrsaliye": "Yeni İrsaliye",
+    "depo": "Depo",
+    "depoSecin": "Depo seçin (boşsa varsayılan depo)",
     "irsaliyeNo": "İrsaliye No",
     "cariHesap": "Cari Hesap",
     "tur": "Tür",
