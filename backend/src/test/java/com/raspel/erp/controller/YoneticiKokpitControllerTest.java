@@ -39,6 +39,8 @@ class YoneticiKokpitControllerTest {
 
     @MockBean
     private YoneticiKokpitService kokpitService;
+    @MockBean
+    private com.raspel.erp.service.sistem.KarlilikService karlilikService;
 
     @Test
     void shouldGetKokpitVerileri() throws Exception {

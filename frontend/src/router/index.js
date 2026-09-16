@@ -70,6 +70,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/raporlar/karlilik-analizi',
+    name: 'KarlilikAnalizi',
+    component: () => import('../views/KarlilikAnalizi.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/kategoriler',
     name: 'Kategoriler',
     component: () => import('../views/Kategoriler.vue'),

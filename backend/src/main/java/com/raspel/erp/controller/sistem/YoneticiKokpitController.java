@@ -3,6 +3,7 @@ package com.raspel.erp.controller.sistem;
 import com.raspel.erp.dto.sistem.SirketHedefDTO;
 import com.raspel.erp.dto.sistem.YoneticiKokpitDTO;
 import com.raspel.erp.service.sistem.YoneticiKokpitService;
+import com.raspel.erp.service.sistem.KarlilikService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,21 @@ import org.springframework.web.bind.annotation.*;
 public class YoneticiKokpitController {
 
     private final YoneticiKokpitService kokpitService;
+    private final KarlilikService karlilikService;
+
+    @GetMapping("/karlilik-analizi")
+    @Operation(summary = "Kokpit kârlılık analizi",
+            description = "Ciro/COGS/brüt kâr; aylık trend ve kategori/ürün/cari kırılımı (yönetici)")
+    public ResponseEntity<com.raspel.erp.dto.sistem.KarlilikAnalizDTO> karlilikAnalizi(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false, defaultValue = "KATEGORI") String grup,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(karlilikService.karlilikAnalizi(sirketId, baslangic, bitis, grup));
+    }
 
     @GetMapping
     @Operation(summary = "Yönetici kokpiti finansal nabız ve hedef verilerini getir")

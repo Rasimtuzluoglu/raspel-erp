@@ -3,6 +3,7 @@ package com.raspel.erp.controller.sistem;
 import com.raspel.erp.dto.sistem.RaporDTO;
 import com.raspel.erp.service.sistem.RaporService;
 import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.service.sistem.KarlilikService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,6 +28,19 @@ public class RaporController {
 
     private final RaporService raporService;
     private final PdfRaporService pdfRaporService;
+    private final KarlilikService karlilikService;
+
+    @GetMapping("/karlilik-analizi")
+    @Operation(summary = "Gelişmiş kârlılık analizi",
+            description = "Satış faturalarından ciro/COGS/brüt kâr; aylık trend ve grup (ürün/kategori/cari) kırılımı")
+    public ResponseEntity<com.raspel.erp.dto.sistem.KarlilikAnalizDTO> karlilikAnalizi(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false, defaultValue = "KATEGORI") String grup) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(karlilikService.karlilikAnalizi(sirketId, baslangic, bitis, grup));
+    }
 
     @GetMapping("/cari-ekstre")
     @Operation(summary = "Cari ekstre getir", description = "Belirli bir cari hesabın belirtilen tarih aralığındaki ekstresini getirir")

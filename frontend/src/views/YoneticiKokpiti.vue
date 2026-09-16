@@ -439,6 +439,51 @@
         />
       </template>
     </Dialog>
+
+    <Card class="mt-4 karlilik-kart">
+      <template #title>
+        <div class="flex items-center justify-between">
+          <span>{{ t('yoneticiKokpiti.karlilikAnalizi') }}</span>
+          <Button
+            :label="t('yoneticiKokpiti.detayGor')"
+            icon="pi pi-arrow-right"
+            icon-pos="right"
+            class="p-button-text p-button-sm"
+            @click="$router.push('/raporlar/karlilik-analizi')"
+          />
+        </div>
+      </template>
+      <div
+        v-if="karlilik && karlilik.ozet"
+        class="karlilik-mini-grid"
+      >
+        <div class="ko-mini">
+          <span>{{ t('karlilik.ciro') }}</span>
+          <strong>{{ formatPara(karlilik.ozet.ciro) }}</strong>
+        </div>
+        <div class="ko-mini">
+          <span>{{ t('karlilik.brutKar') }}</span>
+          <strong :class="karlilik.ozet.brutKar < 0 ? 'text-red-500' : 'text-green-500'">{{ formatPara(karlilik.ozet.brutKar) }}</strong>
+        </div>
+        <div class="ko-mini">
+          <span>{{ t('karlilik.brutKarMarji') }}</span>
+          <strong>%{{ karlilik.ozet.brutKarMarji }}</strong>
+        </div>
+        <div class="ko-mini">
+          <span>{{ t('karlilik.negatifMarj') }}</span>
+          <strong>{{ karlilik.ozet.negatifMarjliAdet }}</strong>
+        </div>
+      </div>
+      <div
+        v-if="karlilik && karlilik.aylikTrend && karlilik.aylikTrend.length"
+        style="height: 240px"
+      >
+        <Line
+          :data="karlilikTrend"
+          :options="karlilikLineOptions"
+        />
+      </div>
+    </Card>
   </div>
 </template>
 
@@ -468,6 +513,7 @@ const { t, locale } = useI18n()
 const intlLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'tr-TR'))
 
 const kokpit = ref(null)
+const karlilik = ref(null)
 const yukleniyor = ref(false)
 const hedefModal = ref(false)
 const hedefKaydediliyor = ref(false)
@@ -505,7 +551,39 @@ const formatPara = (v) => {
 
 onMounted(async () => {
   await verileriYukle()
+  await karlilikYukle()
 })
+
+const karlilikYukle = async () => {
+  try {
+    const yil = seciliYil.value || new Date().getFullYear()
+    const res = await yoneticiKokpitAPI.karlilikAnalizi({
+      baslangic: `${yil}-01-01`,
+      bitis: `${yil}-12-31`,
+      grup: 'KATEGORI'
+    })
+    karlilik.value = res?.data || null
+  } catch {
+    karlilik.value = null
+  }
+}
+
+const karlilikTrend = computed(() => {
+  const tr = karlilik.value?.aylikTrend || []
+  return {
+    labels: tr.map((x) => x.ay),
+    datasets: [
+      { label: t('karlilik.brutKar'), data: tr.map((x) => x.brutKar), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.15)', fill: true, tension: 0.3 }
+    ]
+  }
+})
+
+const karlilikLineOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: { y: { ticks: { callback: (v) => formatPara(v) } } }
+}
 
 const verileriYukle = async () => {
   yukleniyor.value = true
@@ -977,5 +1055,30 @@ const hatirlatWhatsApp = (cari) => {
   background: var(--bg-muted, rgba(0,0,0,0.03));
   padding: 0.75rem;
   border-radius: 0.5rem;
+}
+.karlilik-kart :deep(.p-card-body) {
+  min-height: 300px;
+}
+.karlilik-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ko-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-muted, rgba(0, 0, 0, 0.03));
+}
+.ko-mini span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.ko-mini strong {
+  font-size: 1.05rem;
+  color: var(--text-primary);
 }
 </style>

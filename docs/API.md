@@ -77,6 +77,7 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | GET | `/api/dashboard` | Dashboard özeti (2 dk cache) |
 | GET | `/api/raporlar/cari-ekstre` | Cari ekstre |
 | GET | `/api/raporlar/gelir-gider` | Gelir/gider raporu |
+| GET | `/api/raporlar/karlilik-analizi` | Gelişmiş kârlılık analizi (ciro/COGS/brüt kâr, aylık trend, grup kırılımı) |
 | GET | `/api/rapor/fatura/{id}` | Fatura PDF |
 | GET | `/api/rapor/siparis/{id}` | Sipariş PDF |
 | GET | `/api/audit-log` | Denetim logları (filtreli) |

@@ -54,6 +54,9 @@ export const raporAPI = {
   },
   pivot(params) {
     return apiClient.get('/raporlar/pivot', { params })
+  },
+  karlilikAnalizi(params) {
+    return apiClient.get('/raporlar/karlilik-analizi', { params })
   }
 }
 
@@ -63,6 +66,9 @@ export const yoneticiKokpitAPI = {
   },
   hedefKaydet(data) {
     return apiClient.post('/yonetici-kokpit/hedef', data)
+  },
+  karlilikAnalizi(params) {
+    return apiClient.get('/yonetici-kokpit/karlilik-analizi', { params })
   }
 }
 
