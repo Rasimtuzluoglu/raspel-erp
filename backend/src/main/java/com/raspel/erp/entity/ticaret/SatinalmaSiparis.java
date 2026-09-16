@@ -18,7 +18,7 @@ public class SatinalmaSiparis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "siparis_no", nullable = false, unique = true, length = 50)
+    @Column(name = "siparis_no", nullable = false, length = 50)
     private String siparisNo;
 
     @Column(name = "tarih", nullable = false)

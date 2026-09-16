@@ -24,7 +24,7 @@ public class Fatura {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "fatura_numarasi", nullable = false, unique = true)
+    @Column(name = "fatura_numarasi", nullable = false)
     private String faturaNumarasi;
 
     @Column(nullable = false)

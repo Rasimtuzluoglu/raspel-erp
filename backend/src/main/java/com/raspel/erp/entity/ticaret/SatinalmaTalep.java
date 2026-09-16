@@ -17,7 +17,7 @@ public class SatinalmaTalep {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "talep_no", nullable = false, unique = true, length = 50)
+    @Column(name = "talep_no", nullable = false, length = 50)
     private String talepNo;
 
     @Column(name = "tarih", nullable = false)
