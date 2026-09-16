@@ -99,6 +99,12 @@ export const faturaAPI = {
   },
   stokFiyatGecmisi(stokId) {
     return apiClient.get(`/faturalar/stok/${stokId}/fiyat-gecmisi`)
+  },
+  gecmis(id) {
+    return apiClient.get(`/faturalar/${id}/gecmis`)
+  },
+  yazdirmaKaydet(id, data) {
+    return apiClient.post(`/faturalar/${id}/yazdirma`, data || {})
   }
 }
 

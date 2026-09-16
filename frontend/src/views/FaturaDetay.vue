@@ -26,6 +26,12 @@
           @click="gonderEmail"
         />
         <Button
+          :label="t('faturaGecmis.title')"
+          icon="pi pi-history"
+          class="p-button-text"
+          @click="gecmisAcik = true"
+        />
+        <Button
           :label="t('faturaDetay.sablonTasarlaYazdir')"
           icon="pi pi-palette"
           class="p-button-primary"
@@ -37,6 +43,11 @@
     <FaturaTasarimModal
       v-model:visible="tasarimModalAcik"
       :fatura-data="fatura"
+    />
+
+    <FaturaGecmisDialog
+      v-model:visible="gecmisAcik"
+      :fatura="fatura"
     />
 
     <div
@@ -308,6 +319,7 @@ const loading = ref(true)
 const error = ref(null)
 const printMode = ref(route.query.print === 'true')
 const tasarimModalAcik = ref(false)
+const gecmisAcik = ref(false)
 
 const escListener = (e) => {
   if (e.key === 'Escape') router.push('/faturalar')
@@ -426,6 +438,7 @@ onMounted(async () => {
       try {
         win.focus()
         win.print()
+        if (fatura.value?.id) faturaAPI.yazdirmaKaydet(fatura.value.id, { format: 'A4' }).catch(() => {})
       } catch (e) {
         console.error('Yazdırma hatası:', e)
       }

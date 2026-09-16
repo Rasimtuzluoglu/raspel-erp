@@ -44,6 +44,9 @@ class FaturaControllerTest {
     @MockBean
     private FaturaService faturaService;
 
+    @MockBean
+    private com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
+
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tur("SATIS").build());

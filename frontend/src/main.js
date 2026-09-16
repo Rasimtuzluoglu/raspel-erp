@@ -15,6 +15,7 @@ import EmptyState from './components/EmptyState.vue'
 import SkeletonLoader from './components/SkeletonLoader.vue'
 import ExportMenu from './components/ExportMenu.vue'
 import GecmisZamanCizelgesi from './components/GecmisZamanCizelgesi.vue'
+import FaturaGecmisDialog from './components/FaturaGecmisDialog.vue'
 import SatirEylemleri from './components/SatirEylemleri.vue'
 
 import permissionDirective from './directives/permission.js'
@@ -56,6 +57,7 @@ app.component('EmptyState', EmptyState)
 app.component('SkeletonLoader', SkeletonLoader)
 app.component('ExportMenu', ExportMenu)
 app.component('GecmisZamanCizelgesi', GecmisZamanCizelgesi)
+app.component('FaturaGecmisDialog', FaturaGecmisDialog)
 app.component('SatirEylemleri', SatirEylemleri)
 
 app.directive('permission', permissionDirective)

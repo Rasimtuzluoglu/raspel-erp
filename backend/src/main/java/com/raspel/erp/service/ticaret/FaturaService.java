@@ -85,6 +85,7 @@ public class FaturaService {
     private final TcmbKurService tcmbKurService;
     private final KasaRepository kasaRepository;
     private final KasaHareketRepository kasaHareketRepository;
+    private final FaturaGecmisService faturaGecmisService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -362,6 +363,10 @@ public class FaturaService {
 
         Fatura kaydedilen = faturaRepository.save(fatura);
 
+        faturaGecmisService.kaydet(kaydedilen, FaturaGecmisService.OLUSTUR,
+                "Fatura oluşturuldu (" + kaydedilen.getDurum() + ")",
+                null, faturaGecmisService.snapshot(kaydedilen));
+
         if (faturaDurum == Fatura.FaturaDurum.KESILDI) {
             List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(tur), "Fatura #" + fatura.getFaturaNumarasi());
             cariBakiyeGuncelle(fatura, false);
@@ -462,6 +467,9 @@ public class FaturaService {
             throw new BusinessException("Geçersiz durum: " + yeniDurum);
         }
 
+        String eskiDurum = fatura.getDurum() != null ? fatura.getDurum().name() : null;
+        String durumOncekiSnapshot = faturaGecmisService.snapshot(fatura);
+
         if (fatura.getDurum() == Fatura.FaturaDurum.IPTAL) {
             throw new BusinessException("İptal edilmiş fatura güncellenemez");
         }
@@ -491,6 +499,9 @@ public class FaturaService {
         fatura.setDurum(durum);
         Fatura guncellenen = faturaRepository.save(fatura);
         log.info("Fatura durumu güncellendi - ID: {}, Durum: {}", id, durum);
+        faturaGecmisService.kaydet(guncellenen, FaturaGecmisService.DURUM,
+                "Durum: " + eskiDurum + " → " + durum,
+                durumOncekiSnapshot, faturaGecmisService.snapshot(guncellenen));
         return entityDTOyeCevir(guncellenen);
     }
 
@@ -511,6 +522,8 @@ public class FaturaService {
                 && fatura.getOdenenTutar().compareTo(BigDecimal.ZERO) > 0) {
             throw new BusinessException("Ödeme yapılmış fatura revize edilemez. Önce tahsilat/ödeme hareketlerini silin.");
         }
+
+        String duzenlemeOncekiSnapshot = faturaGecmisService.snapshot(fatura);
 
         // Kesilmiş faturanın eski durumu (stok + bakiye geri alma için)
         Map<Long, BigDecimal> eskiMiktarlar = new HashMap<>();
@@ -635,6 +648,10 @@ public class FaturaService {
 
         Fatura guncellenen = faturaRepository.save(fatura);
         log.info("Fatura düzenlendi - ID: {}, No: {}", id, guncellenen.getFaturaNumarasi());
+        String duzenlemeYeniSnapshot = faturaGecmisService.snapshot(guncellenen);
+        faturaGecmisService.kaydet(guncellenen, FaturaGecmisService.GUNCELLE,
+                faturaGecmisService.diffOzet(duzenlemeOncekiSnapshot, duzenlemeYeniSnapshot),
+                duzenlemeOncekiSnapshot, duzenlemeYeniSnapshot);
         return entityDTOyeCevir(guncellenen);
     }
 
@@ -646,7 +663,9 @@ public class FaturaService {
         if (fatura.getDurum() == Fatura.FaturaDurum.KESILDI) {
             throw new BusinessException("Kesilmiş fatura silinemez");
         }
+        String silmeOncesiSnapshot = faturaGecmisService.snapshot(fatura);
         faturaRepository.deleteById(id);
+        faturaGecmisService.kaydet(fatura, FaturaGecmisService.SIL, "Fatura silindi", silmeOncesiSnapshot, null);
     }
 
     private String stokYonu(Fatura.FaturaTur tur) {

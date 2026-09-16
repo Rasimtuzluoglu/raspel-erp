@@ -974,7 +974,15 @@ const odemeDurumLabel = (durum) => {
 }
 
 // Tarayıcı Yazdırma
-const yazdir = () => {
+const yazdir = async () => {
+  const id = aktifFatura.value?.id || props.faturaId
+  if (id) {
+    try {
+      await faturaAPI.yazdirmaKaydet(id, { format: (ayarlar.value.kagitBoyutu || 'a4').toUpperCase() })
+    } catch {
+      /* yazdırma kaydı başarısız olsa da yazdırma engellenmez */
+    }
+  }
   window.print()
 }
 </script>

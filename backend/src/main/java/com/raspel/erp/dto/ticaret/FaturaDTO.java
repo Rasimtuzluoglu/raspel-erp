@@ -65,4 +65,10 @@ public class FaturaDTO {
 
     /** Fatura kesilirken e-posta bildiriminin durumu: GONDERILDI / GONDERILEMEDI / null (gönderilmedi). */
     private String emailGonderimDurumu;
+
+    /** Yazdırma izi (liste için): kaç kez ve en son hangi biçimde yazdırıldı. */
+    private Long yazdirmaSayisi;
+    private LocalDateTime sonYazdirmaTarihi;
+    private String sonYazdirmaFormat;
+    private String sonYazdirmaYazici;
 }

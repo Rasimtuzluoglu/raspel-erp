@@ -1641,6 +1641,7 @@ const sepetSil = (idx) => {
 const fisiYazdir = () => {
   if (!sepet.value.length) return
   fisNo.value = 'F-' + Date.now().toString(36).toUpperCase()
+  yazdirmaKaydet('TERMAL80')
 
   const fiyatli = fisFiyatli.value
   const kalemHtml = sepet.value
@@ -1758,10 +1759,19 @@ const termalYazdir = async () => {
     if (!gonderildi) {
       // WebUSB desteklenmiyorsa browser print fallback
       fisiYazdir()
+    } else {
+      yazdirmaKaydet('TERMAL', gonderildi)
     }
   } catch {
     toastBildirim.hata(t('hizliSatis.termalGonderilemedi'))
   }
+}
+
+/** Son oluşturulan faturaya yazdırma izi kaydeder (fatura id yoksa sessizce atlanır). */
+const yazdirmaKaydet = (format, yaziciAdi) => {
+  const id = sonSatis.value?.id
+  if (!id) return
+  faturaAPI.yazdirmaKaydet(id, { format, yaziciAdi }).catch(() => {})
 }
 
 const escapeHtml = (metin) => {

@@ -36,8 +36,10 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | POST | `/api/cari-hesaplar` | Cari oluştur |
 | GET | `/api/cari-hesaplar/search?q=` | Cari ara |
 | GET/PUT/DELETE | `/api/cari-hesaplar/{id}` | Detay / güncelle / sil |
-| GET | `/api/faturalar` | Fatura listesi |
+| GET | `/api/faturalar` | Fatura listesi (yazdırma özeti dahil) |
 | POST | `/api/faturalar` | Fatura oluştur (no otomatik) |
+| GET | `/api/faturalar/{id}/gecmis` | Fatura işlem geçmişi (oluştur/düzenle/durum/sil/yazdır) |
+| POST | `/api/faturalar/{id}/yazdirma` | Yazdırma izi kaydet (`{format, yaziciAdi}`) |
 | GET | `/api/bankalar`, `/api/kasalar` | Banka/kasa listeleri |
 | GET | `/api/butceler`, `/api/masraflar` | Bütçe/masraf |
 

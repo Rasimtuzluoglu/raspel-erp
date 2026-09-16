@@ -122,6 +122,26 @@
           </template>
         </Column>
         <Column
+          field="yazdirmaSayisi"
+          :header="t('faturalar.colYazdirma')"
+          style="width: 110px"
+        >
+          <template #body="s">
+            <span
+              v-if="s.data.yazdirmaSayisi"
+              class="yazdirma-rozet"
+              :title="yazdirmaBaslik(s.data)"
+            >
+              <i class="pi pi-print" /> {{ s.data.yazdirmaSayisi }}×
+              <small v-if="s.data.sonYazdirmaFormat">{{ s.data.sonYazdirmaFormat }}</small>
+            </span>
+            <span
+              v-else
+              class="islem-yapan-bos"
+            >-</span>
+          </template>
+        </Column>
+        <Column
           field="olusturanKullaniciAdi"
           :header="t('faturalar.colIslemiYapan')"
           style="width: 140px"
@@ -515,6 +535,11 @@
       v-model:visible="tasarimModalAcik"
       :fatura-id="seciliFaturaId"
     />
+
+    <FaturaGecmisDialog
+      v-model:visible="gecmisAcik"
+      :fatura="gecmisFatura"
+    />
   </div>
 </template>
 
@@ -557,6 +582,13 @@ const faturaStore = useFaturaStore()
 
 const tasarimModalAcik = ref(false)
 const seciliFaturaId = ref(null)
+
+const gecmisAcik = ref(false)
+const gecmisFatura = ref(null)
+const gecmisAc = (f) => {
+  gecmisFatura.value = f
+  gecmisAcik.value = true
+}
 
 const tasarlaVeYazdir = (id) => {
   seciliFaturaId.value = id
@@ -1148,12 +1180,17 @@ const confirmIptal = (id) => {
   })
 }
 
-const faturaEylemleri = (f) => {
-  const items = [
+const yazdirmaBaslik = (f) => {
+  const tarih = f.sonYazdirmaTarihi ? new Date(f.sonYazdirmaTarihi).toLocaleString('tr-TR') : ''
+  return [f.sonYazdirmaFormat, tarih, f.sonYazdirmaYazici].filter(Boolean).join(' • ')
+}
+
+const faturaEylemleri = (f) => {  const items = [
     { etiket: t('faturalar.yazdirTasarla'), ikon: 'pi pi-print', islem: () => tasarlaVeYazdir(f.id) },
     { etiket: t('faturalar.pdfIndir'), ikon: 'pi pi-download', islem: () => pdfIndir(f) },
     { etiket: t('faturalar.whatsapp'), ikon: 'pi pi-whatsapp', islem: () => whatsappGonder(f) },
-    { etiket: t('common.duplicate'), ikon: 'pi pi-copy', islem: () => cogalt(f) }
+    { etiket: t('common.duplicate'), ikon: 'pi pi-copy', islem: () => cogalt(f) },
+    { etiket: t('faturaGecmis.title'), ikon: 'pi pi-history', islem: () => gecmisAc(f) }
   ]
   if (f.durum === 'TASLAK' || f.durum === 'KESILDI') {
     items.push({
@@ -1359,6 +1396,22 @@ h1 {
 .islem-yapan-bos {
   font-size: 12px;
   color: var(--text-muted);
+}
+.yazdirma-rozet {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+  cursor: default;
+}
+.yazdirma-rozet small {
+  font-weight: 500;
+  opacity: 0.8;
 }
 .teslim-eden-list {
   font-size: 12px;

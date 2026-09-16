@@ -320,6 +320,7 @@
     "colCari": "Cari Hesap",
     "colToplam": "Toplam",
     "colIslemiYapan": "İşlemi Yapan",
+    "colYazdirma": "Yazdırma",
     "colTeslimEden": "Teslim Eden",
     "satis": "Satış",
     "alis": "Alış",
@@ -1592,6 +1593,50 @@
     "durumGonderildi": "GİB'e Gönderildi",
     "durumOnaylandi": "Onaylandı",
     "durumReddedildi": "Reddedildi"
+  },
+  "faturaGecmis": {
+    "title": "İşlem Geçmişi",
+    "yukleniyor": "Geçmiş yükleniyor...",
+    "bos": "Bu fatura için henüz işlem geçmişi kaydı yok.",
+    "sistem": "Sistem",
+    "kopyaNo": "Kopya {n}",
+    "olay": {
+      "olustur": "Oluşturuldu",
+      "guncelle": "Düzenlendi",
+      "durumDegisikligi": "Durum Değişti",
+      "sil": "Silindi",
+      "yazdir": "Yazdırıldı",
+      "diger": "İşlem"
+    },
+    "format": {
+      "a4": "A4 Fatura",
+      "a5": "A5 Fatura",
+      "letter": "Letter",
+      "termal80": "Termal 80mm",
+      "termal58": "Termal 58mm",
+      "termal": "Termal Yazıcı"
+    },
+    "alan": {
+      "genelToplam": "Genel Toplam",
+      "durum": "Durum",
+      "vadeTarihi": "Vade Tarihi",
+      "araToplam": "Ara Toplam",
+      "kdv": "KDV",
+      "odemeDurumu": "Ödeme Durumu",
+      "odenenTutar": "Ödenen Tutar",
+      "kalanTutar": "Kalan Tutar",
+      "aciklama": "Açıklama",
+      "tarih": "Tarih",
+      "kalemSayisi": "Kalem Sayısı",
+      "toplamAdet": "Toplam Adet",
+      "cariHesap": "Cari Hesap",
+      "genelIskontoTutari": "Genel İskonto",
+      "taksitKurum": "Taksit Kurumu",
+      "taksitTutar": "Taksit Tutarı",
+      "odemeYontemi": "Ödeme Yöntemi",
+      "depoId": "Depo",
+      "paraBirimi": "Para Birimi"
+    }
   },
   "faturaDetay": {
     "geri": "Geri",

@@ -39,8 +39,8 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B clean verify` -> 983 test, JaCoCo gate dahil)
-- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (670 test, coverage gate dahil)
+- [ ] Backend testleri gecti (`mvn -B clean verify` -> 994 test, JaCoCo gate dahil)
+- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (672 test, coverage gate dahil)
 - [ ] Cypress E2E suite CI'da gecti (9 spec)
 - [ ] `npm run i18n:check` temiz (eksik/cop anahtar yok)
 - [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)

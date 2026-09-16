@@ -527,10 +527,14 @@ const satisiTamamla = async () => {
   }
 }
 
-const printFatura = (id) => window.open(`/faturalar/${id}?print=true`, '_blank')
+const printFatura = (id) => {
+  if (id) faturaAPI.yazdirmaKaydet(id, { format: 'A4' }).catch(() => {})
+  window.open(`/faturalar/${id}?print=true`, '_blank')
+}
 const durumLabel = (d) => ({ TASLAK: t('faturalar.durumTaslak'), TEKLIF: t('faturalar.durumTeklif'), KESILDI: t('faturalar.durumKesildi'), IPTAL: t('faturalar.durumIptal') })[d] || d
 import { formatTarih as formatDate } from '../utils/format.js'
 const printTermalFis = (satisData) => {
+  if (satisData?.id) faturaAPI.yazdirmaKaydet(satisData.id, { format: 'TERMAL80' }).catch(() => {})
   const fisWindow = window.open('', '_blank', 'width=400,height=600')
   if (!fisWindow) {
     toastBildirim.hata(t('satis.pencereAcılmadi'))

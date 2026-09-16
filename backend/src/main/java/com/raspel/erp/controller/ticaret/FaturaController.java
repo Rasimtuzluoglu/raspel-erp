@@ -33,6 +33,7 @@ import com.raspel.erp.entity.ticaret.Fatura;
 public class FaturaController {
 
     private final FaturaService faturaService;
+    private final com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
     private final java.util.concurrent.ConcurrentHashMap<String, IdempotencyKaydi> idempotencyCache = new java.util.concurrent.ConcurrentHashMap<>();
     private static final long IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
     private static final long IDEMPOTENCY_TEMIZLIK_MS = 5 * 60 * 1000;
@@ -45,9 +46,26 @@ public class FaturaController {
             @RequestParam(value = "search", required = false) String search) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         if (search != null && !search.isBlank()) {
-            return ResponseEntity.ok(faturaService.ara(sirketId, search, pageable));
+            return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.ara(sirketId, search, pageable)));
         }
-        return ResponseEntity.ok(faturaService.tumFaturalariGetir(sirketId, pageable));
+        return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.tumFaturalariGetir(sirketId, pageable)));
+    }
+
+    private Page<FaturaDTO> yazdirmaOzetiEkle(Page<FaturaDTO> sayfa) {
+        java.util.List<Long> ids = sayfa.getContent().stream().map(FaturaDTO::getId).toList();
+        java.util.Map<Long, com.raspel.erp.dto.ticaret.FaturaYazdirmaOzetDTO> ozet =
+                faturaGecmisService.yazdirmaOzetleri(ids);
+        if (ozet == null) return sayfa;
+        for (FaturaDTO f : sayfa.getContent()) {
+            com.raspel.erp.dto.ticaret.FaturaYazdirmaOzetDTO o = ozet.get(f.getId());
+            if (o != null) {
+                f.setYazdirmaSayisi(o.getAdet());
+                f.setSonYazdirmaTarihi(o.getSonTarih());
+                f.setSonYazdirmaFormat(o.getSonFormat());
+                f.setSonYazdirmaYazici(o.getSonYazici());
+            }
+        }
+        return sayfa;
     }
 
     @GetMapping("/{id}")
@@ -182,6 +200,24 @@ public class FaturaController {
         faturaService.gonderEmail(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}/gecmis")
+    @Operation(summary = "Fatura işlem geçmişi", description = "Oluşturma/düzenleme/durum/silme/yazdırma olaylarını zaman çizelgesi olarak döndürür")
+    public ResponseEntity<List<com.raspel.erp.dto.ticaret.FaturaGecmisDTO>> faturaGecmis(@PathVariable Long id) {
+        return ResponseEntity.ok(faturaGecmisService.gecmis(id));
+    }
+
+    @PostMapping("/{id}/yazdirma")
+    @Operation(summary = "Fatura yazdırma kaydı", description = "Faturanın yazdırıldığını kaydeder (biçim ve varsa yazıcı adı ile)")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaGecmisDTO> yazdirmaKaydet(
+            @PathVariable Long id,
+            @RequestBody(required = false) YazdirmaRequest body) {
+        String format = body != null ? body.format() : null;
+        String yazici = body != null ? body.yaziciAdi() : null;
+        return ResponseEntity.ok(faturaGecmisService.yazdirmaKaydet(id, format, yazici));
+    }
+
+    record YazdirmaRequest(String format, String yaziciAdi) {}
 
     @GetMapping("/export/csv")
     @Operation(summary = "Faturaları CSV dışa aktar", description = "Faturaları CSV dosyası olarak dışa aktarır")

@@ -320,6 +320,7 @@
     "colCari": "Account",
     "colToplam": "Total",
     "colIslemiYapan": "Created By",
+    "colYazdirma": "Prints",
     "colTeslimEden": "Delivered By",
     "satis": "Sale",
     "alis": "Purchase",
@@ -1592,6 +1593,50 @@
     "durumGonderildi": "Submitted to GİB",
     "durumOnaylandi": "Approved",
     "durumReddedildi": "Rejected"
+  },
+  "faturaGecmis": {
+    "title": "Activity History",
+    "yukleniyor": "Loading history...",
+    "bos": "No activity history for this invoice yet.",
+    "sistem": "System",
+    "kopyaNo": "Copy {n}",
+    "olay": {
+      "olustur": "Created",
+      "guncelle": "Edited",
+      "durumDegisikligi": "Status Changed",
+      "sil": "Deleted",
+      "yazdir": "Printed",
+      "diger": "Activity"
+    },
+    "format": {
+      "a4": "A4 Invoice",
+      "a5": "A5 Invoice",
+      "letter": "Letter",
+      "termal80": "Thermal 80mm",
+      "termal58": "Thermal 58mm",
+      "termal": "Thermal Printer"
+    },
+    "alan": {
+      "genelToplam": "Grand Total",
+      "durum": "Status",
+      "vadeTarihi": "Due Date",
+      "araToplam": "Subtotal",
+      "kdv": "VAT",
+      "odemeDurumu": "Payment Status",
+      "odenenTutar": "Paid Amount",
+      "kalanTutar": "Remaining",
+      "aciklama": "Description",
+      "tarih": "Date",
+      "kalemSayisi": "Line Count",
+      "toplamAdet": "Total Quantity",
+      "cariHesap": "Account",
+      "genelIskontoTutari": "Global Discount",
+      "taksitKurum": "Installment Bank",
+      "taksitTutar": "Installment Amount",
+      "odemeYontemi": "Payment Method",
+      "depoId": "Warehouse",
+      "paraBirimi": "Currency"
+    }
   },
   "faturaDetay": {
     "geri": "Back",

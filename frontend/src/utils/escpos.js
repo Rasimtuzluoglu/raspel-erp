@@ -79,10 +79,11 @@ export function escPosFisiUret(veri) {
 
 /**
  * ESC/POS byte dizisini bağlı bir termal yazıcıya göndermeye çalışır (WebUSB).
- * Desteklenmiyorsa null döner.
+ * Başarılıysa yazıcı adını (productName), aksi halde null döner.
+ * @returns {Promise<string|null>}
  */
 export async function escPosYazdir(bytes) {
-  if (!('usb' in navigator)) return false
+  if (!('usb' in navigator)) return null
   try {
     const cihaz = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0416 }] })
     await cihaz.open()
@@ -90,8 +91,8 @@ export async function escPosYazdir(bytes) {
     await cihaz.claimInterface(0)
     await cihaz.transferOut(1, bytes)
     await cihaz.close()
-    return true
+    return cihaz.productName || 'Termal Yazıcı'
   } catch {
-    return false
+    return null
   }
 }
