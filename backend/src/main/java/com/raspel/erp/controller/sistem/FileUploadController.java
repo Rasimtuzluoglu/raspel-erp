@@ -120,12 +120,38 @@ public class FileUploadController {
             return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya uzantısı. Yalnızca resim yükleyebilirsiniz (JPG, PNG, WEBP, GIF)."));
         }
 
+        // Magic-byte doğrulaması: istemcinin beyan ettiği MIME/uzantıya güvenmek yerine
+        // içerik imzasını kontrol et (depolanmış XSS/polyglot dosya engeli).
+        try {
+            byte[] bas = file.getInputStream().readNBytes(12);
+            if (!magicByteGecerli(bas)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Dosya içeriği geçerli bir resim değil."));
+            }
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Dosya okunamadı."));
+        }
+
         try {
             String filename = dosyaDepolama.kaydet(klasor, file);
             return ResponseEntity.ok(Map.of("url", urlPrefix + filename));
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi: " + e.getMessage()));
         }
+    }
+
+    /** JPEG/PNG/GIF/WEBP içerik imzası kontrolü. */
+    private static boolean magicByteGecerli(byte[] b) {
+        if (b == null || b.length < 12) return false;
+        // JPEG: FF D8 FF
+        if ((b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8 && (b[2] & 0xFF) == 0xFF) return true;
+        // PNG: 89 50 4E 47 0D 0A 1A 0A
+        if ((b[0] & 0xFF) == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47) return true;
+        // GIF: "GIF8"
+        if (b[0] == 0x47 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x38) return true;
+        // WEBP: "RIFF" .... "WEBP"
+        if (b[0] == 0x52 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x46
+                && b[8] == 0x57 && b[9] == 0x45 && b[10] == 0x42 && b[11] == 0x50) return true;
+        return false;
     }
 
     private ResponseEntity<byte[]> dosyaGetir(String filename, String klasor) {

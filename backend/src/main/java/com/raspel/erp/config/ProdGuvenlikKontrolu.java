@@ -41,6 +41,12 @@ public class ProdGuvenlikKontrolu {
     @Value("${spring.rabbitmq.password:}")
     private String rabbitmqPassword;
 
+    @Value("${spring.datasource.password:}")
+    private String dbPassword;
+
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
+
     @PostConstruct
     public void kontrol() {
         boolean prodAktif = Arrays.asList(environment.getActiveProfiles()).contains("prod");
@@ -63,6 +69,16 @@ public class ProdGuvenlikKontrolu {
         if (relayEnabled && (rabbitmqPassword == null || rabbitmqPassword.isBlank())) {
             throw new IllegalStateException(
                     "prod profilinde WebSocket relay aktifken RABBITMQ_PASSWORD zorunludur.");
+        }
+        // Veritabani/cache varsayilan veya bos sifreyle prod'a cikmasin.
+        if (dbPassword == null || dbPassword.isBlank()) {
+            throw new IllegalStateException("prod profilinde DB_PASSWORD (POSTGRES_PASSWORD) zorunludur.");
+        }
+        if (redisPassword == null || redisPassword.isBlank()) {
+            throw new IllegalStateException("prod profilinde REDIS_PASSWORD zorunludur.");
+        }
+        if (rabbitmqPassword == null || rabbitmqPassword.isBlank()) {
+            throw new IllegalStateException("prod profilinde RABBITMQ_PASSWORD zorunludur.");
         }
         log.info("Prod guvenlik kontrolu tamam: JWT_SECRET, AI_ENCRYPTION_KEY ve depolama kredileri guclu.");
     }

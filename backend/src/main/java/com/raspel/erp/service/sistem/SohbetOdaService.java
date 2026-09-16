@@ -175,6 +175,15 @@ public class SohbetOdaService {
         if (file == null || file.isEmpty()) {
             throw new BusinessException("Dosya boş");
         }
+        // Dosya tipi whitelist'i: script/executable/svg/html gibi riskli turler reddedilir.
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains(".")) {
+            ext = originalName.substring(originalName.lastIndexOf(".")).toLowerCase();
+        }
+        if (!IZINLI_SOHBET_UZANTILARI.contains(ext)) {
+            throw new BusinessException("Bu dosya tipi desteklenmiyor: " + (ext.isBlank() ? "(uzantısız)" : ext));
+        }
         try {
             String filename = dosyaDepolama.kaydet(DOSYA_KLASOR, file);
             return "/api/uploads/sohbet/" + filename;
@@ -182,6 +191,10 @@ public class SohbetOdaService {
             throw new BusinessException("Dosya yüklenemedi: " + e.getMessage());
         }
     }
+
+    private static final java.util.Set<String> IZINLI_SOHBET_UZANTILARI = java.util.Set.of(
+            ".pdf", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".txt", ".csv",
+            ".doc", ".docx", ".xls", ".xlsx", ".zip");
 
     private SohbetOda odaBul(Long odaId, Long sirketId) {
         SohbetOda oda = odaRepository.findById(odaId)
