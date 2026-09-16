@@ -36,7 +36,7 @@ http:
     # APP_DOMAIN degeri compose uzerinden traefik konteynerine env olarak verilir;
     # {{ env "APP_DOMAIN" }} file provider Go templating ile cozulur.
     web-redirect:
-      rule: "PathPrefix(`/`) && !Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/`) && !Host(`{{ env "APP_DOMAIN" }}`)'
       entryPoints:
         - web
       middlewares:
@@ -44,7 +44,7 @@ http:
       priority: 100
 
     dashboard-http:
-      rule: "PathPrefix(`/dashboard`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: api@internal
       entryPoints:
         - web
@@ -53,7 +53,7 @@ http:
       priority: 10
 
     frontend-http:
-      rule: "PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: frontend
       entryPoints:
         - web
@@ -62,7 +62,7 @@ http:
       priority: 1
 
     api-http:
-      rule: "PathPrefix(`/api`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/api`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: backend
       entryPoints:
         - web
@@ -72,7 +72,7 @@ http:
       priority: 2
 
     adminer-http:
-      rule: "PathPrefix(`/adminer`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/adminer`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: adminer
       entryPoints:
         - web
@@ -82,7 +82,7 @@ http:
 
     # HTTPS (port 443) — yalnizca APP_DOMAIN icin gecerli
     dashboard:
-      rule: "PathPrefix(`/dashboard`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: api@internal
       entryPoints:
         - websecure
@@ -93,7 +93,7 @@ http:
       priority: 10
 
     frontend:
-      rule: "PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: frontend
       entryPoints:
         - websecure
@@ -104,7 +104,7 @@ http:
       priority: 1
 
     api:
-      rule: "PathPrefix(`/api`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/api`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: backend
       entryPoints:
         - websecure
@@ -117,7 +117,7 @@ http:
 
     # Adminer: Yalnizca dev/debug profilinde calisir, production'da devre disidir
     adminer:
-      rule: "PathPrefix(`/adminer`) && Host(`{{ env \"APP_DOMAIN\" }}`)"
+      rule: 'PathPrefix(`/adminer`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: adminer
       entryPoints:
         - websecure
