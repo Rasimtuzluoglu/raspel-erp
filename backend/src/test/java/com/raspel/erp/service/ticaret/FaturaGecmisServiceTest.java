@@ -159,4 +159,33 @@ class FaturaGecmisServiceTest {
 
         assertDoesNotThrow(() -> service.kaydet(f, FaturaGecmisService.OLUSTUR, "x", null, "{}"));
     }
+
+    @Test
+    void rapor_faturaBilgileriyleDoner() {
+        when(faturaGecmisRepository.filtreli(1L, null, null, null, null)).thenReturn(List.of(
+                FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("YAZDIR")
+                        .yazdirmaFormat("A4").build()));
+        when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
+                Fatura.builder().id(5L).faturaNumarasi("FTR-5")
+                        .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI).build()));
+
+        var r = service.rapor(1L, null, null, null, null, null, null);
+
+        assertEquals(1, r.size());
+        assertEquals("FTR-5", r.get(0).getFaturaNumarasi());
+        assertEquals("SATIS", r.get(0).getFaturaTur());
+    }
+
+    @Test
+    void rapor_turFiltresiUygulanir() {
+        when(faturaGecmisRepository.filtreli(1L, null, null, null, null)).thenReturn(List.of(
+                FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("OLUSTUR").build()));
+        when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
+                Fatura.builder().id(5L).faturaNumarasi("FTR-5")
+                        .tur(Fatura.FaturaTur.ALIS).durum(Fatura.FaturaDurum.TASLAK).build()));
+
+        var r = service.rapor(1L, null, null, null, null, "SATIS", null);
+
+        assertTrue(r.isEmpty());
+    }
 }

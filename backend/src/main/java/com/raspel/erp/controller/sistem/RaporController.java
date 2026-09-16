@@ -29,6 +29,8 @@ public class RaporController {
     private final RaporService raporService;
     private final PdfRaporService pdfRaporService;
     private final KarlilikService karlilikService;
+    private final com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
+    private final com.raspel.erp.service.sistem.ExcelExportService excelExportService;
 
     @GetMapping("/karlilik-analizi")
     @Operation(summary = "Gelişmiş kârlılık analizi",
@@ -253,6 +255,89 @@ public class RaporController {
         });
         byte[] pdf = pdfRaporService.tabloRaporu("CARI KARLILIK RAPORU (" + baslangic + " - " + bitis + ")", kolonlar, satirlar);
         return pdfResponse("cari-karlilik.pdf", pdf);
+    }
+
+    private static final String[] FG_KOLONLAR = {
+            "Tarih", "Fatura No", "Tür", "Cari", "Olay", "Kullanıcı", "Biçim", "Yazıcı", "Kopya", "Açıklama"
+    };
+
+    @GetMapping("/fatura-gecmis")
+    @Operation(summary = "Fatura işlem/yazdırma geçmişi",
+            description = "Oluşturma/düzenleme/durum/silme/yazdırma olaylarını filtreli olarak listeler")
+    public ResponseEntity<java.util.List<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO>> faturaGecmis(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String olay,
+            @RequestParam(required = false) Long kullaniciId,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaGecmisService.rapor(sirketId, baslangic, bitis, olay, kullaniciId, tur, q));
+    }
+
+    @GetMapping("/fatura-gecmis/pdf")
+    @Operation(summary = "Fatura geçmişi PDF")
+    public ResponseEntity<byte[]> faturaGecmisPdf(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String olay,
+            @RequestParam(required = false) Long kullaniciId,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var kayitlar = faturaGecmisService.rapor(sirketId, baslangic, bitis, olay, kullaniciId, tur, q);
+        List<String[]> satirlar = new java.util.ArrayList<>();
+        for (var k : kayitlar) satirlar.add(fgSatir(k));
+        byte[] pdf = pdfRaporService.tabloRaporu("FATURA ISLEM/YAZDIRMA GECMISI", FG_KOLONLAR, satirlar);
+        return pdfResponse("fatura-gecmis.pdf", pdf);
+    }
+
+    @GetMapping("/fatura-gecmis/excel")
+    @Operation(summary = "Fatura geçmişi Excel")
+    public ResponseEntity<byte[]> faturaGecmisExcel(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String olay,
+            @RequestParam(required = false) Long kullaniciId,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var kayitlar = faturaGecmisService.rapor(sirketId, baslangic, bitis, olay, kullaniciId, tur, q);
+        List<java.util.Map<String, Object>> rows = new java.util.ArrayList<>();
+        for (var k : kayitlar) {
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            String[] s = fgSatir(k);
+            for (int i = 0; i < FG_KOLONLAR.length; i++) m.put(FG_KOLONLAR[i], s[i]);
+            rows.add(m);
+        }
+        byte[] xlsx = excelExportService.export("Fatura Geçmişi", FG_KOLONLAR, rows);
+        return xlsxResponse("fatura-gecmis.xlsx", xlsx);
+    }
+
+    private String[] fgSatir(com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO k) {
+        return new String[]{
+                k.getTarih() != null ? k.getTarih().toString() : "",
+                k.getFaturaNumarasi() != null ? k.getFaturaNumarasi() : "",
+                k.getFaturaTur() != null ? k.getFaturaTur() : "",
+                k.getCariHesapAd() != null ? k.getCariHesapAd() : "",
+                k.getOlay() != null ? k.getOlay() : "",
+                k.getKullaniciAdi() != null ? k.getKullaniciAdi() : "",
+                k.getYazdirmaFormat() != null ? k.getYazdirmaFormat() : "",
+                k.getYaziciAdi() != null ? k.getYaziciAdi() : "",
+                k.getKopyaNo() != null ? String.valueOf(k.getKopyaNo()) : "",
+                k.getAciklama() != null ? k.getAciklama() : ""
+        };
+    }
+
+    private ResponseEntity<byte[]> xlsxResponse(String dosyaAdi, byte[] xlsx) {
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.parseMediaType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(dosyaAdi).build());
+        return ResponseEntity.ok().headers(headers).body(xlsx);
     }
 
     private ResponseEntity<byte[]> pdfResponse(String dosyaAdi, byte[] pdf) {

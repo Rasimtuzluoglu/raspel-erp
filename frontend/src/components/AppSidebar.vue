@@ -453,6 +453,7 @@ const tumMenuler = [
   { path: '/yonetici-kokpiti', labelKey: 'nav.yoneticiKokpiti', icon: 'pi pi-bolt', grupKey: 'nav.rapor', admin: true },
     { path: '/raporlar', labelKey: 'nav.rapor', icon: 'pi pi-chart-bar', grupKey: 'nav.rapor' },
     { path: '/raporlar/karlilik-analizi', labelKey: 'nav.karlilikAnalizi', icon: 'pi pi-chart-pie', grupKey: 'nav.rapor' },
+    { path: '/raporlar/fatura-gecmis', labelKey: 'nav.faturaGecmisRaporu', icon: 'pi pi-history', grupKey: 'nav.rapor' },
   { path: '/vergi-raporlari', labelKey: 'nav.vergiRaporlari', icon: 'pi pi-file-edit', grupKey: 'nav.rapor', gelismis: true },
   { path: '/anomaliler', labelKey: 'nav.anomaliler', icon: 'pi pi-exclamation-triangle', grupKey: 'nav.rapor', gelismis: true },
   { path: '/hareketler', labelKey: 'nav.hareket', icon: 'pi pi-chart-line', grupKey: 'nav.rapor' },

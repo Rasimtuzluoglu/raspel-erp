@@ -57,6 +57,15 @@ export const raporAPI = {
   },
   karlilikAnalizi(params) {
     return apiClient.get('/raporlar/karlilik-analizi', { params })
+  },
+  faturaGecmis(params) {
+    return apiClient.get('/raporlar/fatura-gecmis', { params })
+  },
+  faturaGecmisPdf(params) {
+    return apiClient.get('/raporlar/fatura-gecmis/pdf', { params, responseType: 'blob' })
+  },
+  faturaGecmisExcel(params) {
+    return apiClient.get('/raporlar/fatura-gecmis/excel', { params, responseType: 'blob' })
   }
 }
 

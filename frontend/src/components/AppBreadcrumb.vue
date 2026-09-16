@@ -53,6 +53,7 @@ const labelKeyMap = {
   '/siparisler': 'nav.siparis',
   '/raporlar': 'nav.rapor',
   '/raporlar/karlilik-analizi': 'nav.karlilikAnalizi',
+  '/raporlar/fatura-gecmis': 'nav.faturaGecmisRaporu',
   '/hareketler': 'nav.hareket',
   '/notlar': 'nav.notlar',
   '/satislar': 'nav.satis',

@@ -164,6 +164,48 @@ public class FaturaGecmisService {
                 .map(this::dto).collect(Collectors.toList());
     }
 
+    /** Rapor: filtrelenmiş işlem/yazdırma geçmişi (fatura bilgileriyle). */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO> rapor(Long sirketId, LocalDate baslangic,
+                                                                       LocalDate bitis, String olay,
+                                                                       Long kullaniciId, String tur, String q) {
+        if (sirketId == null) return List.of();
+        java.time.LocalDateTime bas = baslangic != null ? baslangic.atStartOfDay() : null;
+        java.time.LocalDateTime bit = bitis != null ? bitis.atTime(java.time.LocalTime.MAX) : null;
+        List<FaturaGecmis> kayitlar = faturaGecmisRepository.filtreli(sirketId, olay, kullaniciId, bas, bit);
+        if (kayitlar.isEmpty()) return List.of();
+        List<Long> faturaIds = kayitlar.stream().map(FaturaGecmis::getFaturaId).distinct().toList();
+        Map<Long, Fatura> faturaMap = faturaRepository.findAllById(faturaIds).stream()
+                .collect(Collectors.toMap(Fatura::getId, f -> f));
+        String turFiltre = tur != null && !tur.isBlank() ? tur.trim().toUpperCase() : null;
+        String arama = q != null && !q.isBlank() ? q.trim().toLowerCase() : null;
+        List<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO> sonuc = new java.util.ArrayList<>();
+        for (FaturaGecmis g : kayitlar) {
+            Fatura f = faturaMap.get(g.getFaturaId());
+            String faturaTur = f != null && f.getTur() != null ? f.getTur().name() : null;
+            if (turFiltre != null && !turFiltre.equals(faturaTur)) continue;
+            com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO dto = com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO.builder()
+                    .id(g.getId()).faturaId(g.getFaturaId())
+                    .faturaNumarasi(f != null ? f.getFaturaNumarasi() : null)
+                    .faturaTur(faturaTur)
+                    .faturaDurum(f != null && f.getDurum() != null ? f.getDurum().name() : null)
+                    .cariHesapAd(f != null && f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
+                    .olay(g.getOlay()).aciklama(g.getAciklama())
+                    .kullaniciAdi(g.getKullaniciAdi()).ipAdresi(g.getIpAdresi())
+                    .yazdirmaFormat(g.getYazdirmaFormat()).yaziciAdi(g.getYaziciAdi()).kopyaNo(g.getKopyaNo())
+                    .tarih(g.getTarih()).build();
+            if (arama != null) {
+                String havuz = ((dto.getFaturaNumarasi() != null ? dto.getFaturaNumarasi() : "") + " "
+                        + (dto.getCariHesapAd() != null ? dto.getCariHesapAd() : "") + " "
+                        + (dto.getKullaniciAdi() != null ? dto.getKullaniciAdi() : "") + " "
+                        + (dto.getAciklama() != null ? dto.getAciklama() : "")).toLowerCase();
+                if (!havuz.contains(arama)) continue;
+            }
+            sonuc.add(dto);
+        }
+        return sonuc;
+    }
+
     /** Liste için: her fatura id'sine karşılık yazdırma sayısı + son yazdırma bilgisi. */
     @Transactional(readOnly = true)
     public Map<Long, com.raspel.erp.dto.ticaret.FaturaYazdirmaOzetDTO> yazdirmaOzetleri(List<Long> faturaIds) {

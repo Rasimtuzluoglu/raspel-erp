@@ -76,6 +76,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/raporlar/fatura-gecmis',
+    name: 'FaturaGecmisRaporu',
+    component: () => import('../views/FaturaGecmisRaporu.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/kategoriler',
     name: 'Kategoriler',
     component: () => import('../views/Kategoriler.vue'),
