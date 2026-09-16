@@ -20,7 +20,7 @@ npm ci                      # Install deps
 npm run dev                 # Dev server :5173
 npm run build               # Production build
 npm run build:analyze       # Bundle analiz raporu (dist/stats.html, dev-only)
-npm run test                # Run 677 tests (Vitest) + coverage gate
+npm run test                # Run 678 tests (Vitest) + coverage gate
 npm run lint                # ESLint
 npm run i18n:check          # i18n bütünlük kontrolü (scripts/check-i18n.mjs)
 npm run cypress:run         # E2E tests (dev server :5173 üzerinde)
@@ -42,7 +42,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Auth | JWT + BCrypt + TOTP 2FA |
 | Container | Docker Compose (9 services) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (1015) + Vitest (677) + Cypress (9 E2E spec) |
+| Tests | JUnit 5 (1015) + Vitest (678) + Cypress (9 E2E spec) |
 
 ## Project Structure
 
@@ -113,7 +113,7 @@ raspel-erp/
 ## Code Quality
 
 - Backend: 1015 tests (JUnit 5, H2, Mockito) + JaCoCo coverage gate, must pass before commit
-- Frontend: 677 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
+- Frontend: 678 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
 - CI runs on push/PR to main: backend (compile+test+coverage), frontend (lint+i18n+test+build), e2e (Cypress, dev-server), security (Trivy, Gitleaks)
 
 ## Dev Setup (Minimal)

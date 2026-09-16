@@ -31,6 +31,36 @@ public class RaporController {
     private final KarlilikService karlilikService;
     private final com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.sistem.ExcelExportService excelExportService;
+    private final com.raspel.erp.service.sistem.EmailService emailService;
+
+    @PostMapping(value = "/eposta", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Rapor PDF'ini e-posta ile gönder",
+            description = "Yüklenen PDF ekini belirtilen adrese gönderir (rapor paylaşımı)")
+    public ResponseEntity<java.util.Map<String, String>> raporEpostaGonder(
+            @RequestParam("dosya") org.springframework.web.multipart.MultipartFile dosya,
+            @RequestParam String alici,
+            @RequestParam(required = false) String baslik,
+            @RequestParam(required = false) String dosyaAdi) {
+        if (alici == null || !alici.contains("@")) {
+            throw new com.raspel.erp.exception.BusinessException("Geçerli bir e-posta adresi giriniz");
+        }
+        if (dosya == null || dosya.isEmpty()) {
+            throw new com.raspel.erp.exception.BusinessException("Gönderilecek rapor dosyası boş");
+        }
+        byte[] bytes;
+        try {
+            bytes = dosya.getBytes();
+        } catch (java.io.IOException e) {
+            throw new com.raspel.erp.exception.BusinessException("Rapor dosyası okunamadı");
+        }
+        if (bytes.length < 4 || bytes[0] != 0x25 || bytes[1] != 0x50 || bytes[2] != 0x44 || bytes[3] != 0x46) {
+            throw new com.raspel.erp.exception.BusinessException("Yalnızca PDF dosyaları e-posta ile gönderilebilir");
+        }
+        String raporAdi = baslik != null && !baslik.isBlank() ? baslik : "Rapor";
+        String ek = dosyaAdi != null && !dosyaAdi.isBlank() ? dosyaAdi : "rapor.pdf";
+        emailService.raporPdfGonder(alici, raporAdi, bytes, ek);
+        return ResponseEntity.ok(java.util.Map.of("durum", "GONDERILDI"));
+    }
 
     @GetMapping("/karlilik-analizi")
     @Operation(summary = "Gelişmiş kârlılık analizi",

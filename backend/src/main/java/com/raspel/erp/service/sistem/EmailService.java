@@ -146,6 +146,34 @@ public class EmailService {
     }
 
     @Async
+    public void raporPdfGonder(String to, String raporAdi, byte[] pdfBytes, String dosyaAdi) {
+        String subject = raporAdi + " — RasPel ERP";
+        String html = sablonUst("Rapor Ekinde") + """
+            <p>Sayın ilgili,</p>
+            <p><strong>%s</strong> raporu PDF olarak ektedir.</p>
+            <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
+            """.formatted(raporAdi) + sablonAlt();
+        try {
+            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setFrom(fromEmail);
+                helper.setTo(to);
+                helper.setSubject(subject);
+                helper.setText(html, true);
+                helper.addAttachment(dosyaAdi != null && !dosyaAdi.isBlank() ? dosyaAdi : "rapor.pdf",
+                        new org.springframework.core.io.ByteArrayResource(pdfBytes));
+                mailSender.send(message);
+                log.info("Rapor PDF e-postası gönderildi -> To: {}, Rapor: {}", to, raporAdi);
+            } else {
+                log.info("[E-POSTA MOCK] Rapor PDF e-postası loga yazıldı -> To: {}, Rapor: {}", to, raporAdi);
+            }
+        } catch (Exception e) {
+            log.error("Rapor PDF e-postası gönderilirken hata -> To: {}, Error: {}", to, e.getMessage());
+        }
+    }
+
+    @Async
     public void odemeHatimlaticiGonder(String to, String faturaNo, String tutar, String kalanTutar, String vade, String cariAdi) {
         String subject = "Hatırlatma: Fatura #" + faturaNo + " ödemesi bekleniyor";
         String html = sablonUst("Ödeme Hatırlatması") + """

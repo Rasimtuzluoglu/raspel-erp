@@ -2563,7 +2563,13 @@
     "gelirGiderHata": "An error occurred while loading the income/expense report",
     "kdvHata": "An error occurred while loading the VAT report",
     "yaslandirmaHata": "An error occurred while loading the aging report",
-    "cariKarlilikHata": "An error occurred while loading the account profitability report"
+    "cariKarlilikHata": "An error occurred while loading the account profitability report",
+    "raporAra": "Search reports...",
+    "gecersizEposta": "Enter a valid e-mail address",
+    "epostaGonderildi": "Report sent by e-mail",
+    "epostaHata": "Could not send report by e-mail",
+    "aliciEposta": "Recipient e-mail",
+    "epostaYerTutucu": "name@company.com"
   },
   "sahaPortali": {
     "sahaPersoneli": "Field Staff",

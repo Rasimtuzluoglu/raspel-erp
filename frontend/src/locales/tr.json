@@ -2563,7 +2563,13 @@
     "gelirGiderHata": "Gelir/gider raporu yüklenirken hata oluştu",
     "kdvHata": "KDV raporu yüklenirken hata oluştu",
     "yaslandirmaHata": "Yaşlandırma raporu yüklenirken hata oluştu",
-    "cariKarlilikHata": "Cari karlılık raporu yüklenirken hata oluştu"
+    "cariKarlilikHata": "Cari karlılık raporu yüklenirken hata oluştu",
+    "raporAra": "Rapor ara...",
+    "gecersizEposta": "Geçerli bir e-posta adresi giriniz",
+    "epostaGonderildi": "Rapor e-posta ile gönderildi",
+    "epostaHata": "Rapor e-posta ile gönderilemedi",
+    "aliciEposta": "Alıcı e-posta",
+    "epostaYerTutucu": "ornek@firma.com"
   },
   "sahaPortali": {
     "sahaPersoneli": "Saha Personeli",

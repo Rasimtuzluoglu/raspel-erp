@@ -66,6 +66,16 @@ export const raporAPI = {
   },
   faturaGecmisExcel(params) {
     return apiClient.get('/raporlar/fatura-gecmis/excel', { params, responseType: 'blob' })
+  },
+  epostaGonderPdf(pdfBlob, alici, baslik, dosyaAdi) {
+    const fd = new FormData()
+    const parca = pdfBlob instanceof Blob ? pdfBlob : new Blob([pdfBlob != null ? pdfBlob : ''])
+    const ad = typeof dosyaAdi === 'string' && dosyaAdi ? dosyaAdi : 'rapor.pdf'
+    fd.append('dosya', parca, ad)
+    fd.append('alici', alici != null ? String(alici) : '')
+    if (typeof baslik === 'string' && baslik) fd.append('baslik', baslik)
+    if (typeof dosyaAdi === 'string' && dosyaAdi) fd.append('dosyaAdi', dosyaAdi)
+    return apiClient.post('/raporlar/eposta', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   }
 }
 

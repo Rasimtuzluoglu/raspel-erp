@@ -46,6 +46,9 @@ class RaporControllerTest {
     @MockBean
     private com.raspel.erp.service.sistem.ExcelExportService excelExportService;
 
+    @MockBean
+    private com.raspel.erp.service.sistem.EmailService emailService;
+
     @Test
     void shouldGetCariEkstre() throws Exception {
         var dto = RaporDTO.CariEkstreDTO.builder().cariAd("ABC Müşteri").donemBasBakiye(BigDecimal.ZERO).donemSonBakiye(BigDecimal.valueOf(5000)).build();
