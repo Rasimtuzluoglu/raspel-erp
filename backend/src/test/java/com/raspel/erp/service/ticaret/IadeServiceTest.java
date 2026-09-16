@@ -41,6 +41,7 @@ class IadeServiceTest {
     @Mock private CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     @Mock private com.raspel.erp.service.finans.CariHesapService cariHesapService;
+    @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @InjectMocks private IadeService iadeService;
 
     private void hazirla() {

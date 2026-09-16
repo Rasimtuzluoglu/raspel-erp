@@ -50,6 +50,7 @@ public class UretimService {
     private final SiparisRepository siparisRepository;
     private final SiparisKalemRepository siparisKalemRepository;
     private final SatinalmaTalepService satinalmaTalepService;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
 
     private static final BigDecimal YUZ = BigDecimal.valueOf(100);
 
@@ -215,6 +216,7 @@ public class UretimService {
         Recete recete = receteRepository.findFirstBySirketIdAndUrunId(sirketId, e.getUrunId())
                 .orElseThrow(() -> new BusinessException("Bu ürün için tanımlı reçete bulunamadı"));
         List<ReceteKalem> kalemler = receteKalemRepository.findByReceteId(recete.getId());
+        Long depoId = depoStokService.coz(e.getDepoId(), e.getSirketId());
 
         BigDecimal receteFire = recete.getFireOrani() != null ? recete.getFireOrani() : BigDecimal.ZERO;
         BigDecimal toplamTuketim = uretilen.add(fire).multiply(BigDecimal.ONE.add(receteFire.divide(YUZ, 6, RoundingMode.HALF_UP)));
@@ -238,9 +240,10 @@ public class UretimService {
             stokHareketRepository.save(StokHareket.builder()
                     .stok(hammadde).tur("CIKIS").miktar(gereken)
                     .hareketTarihi(LocalDate.now()).aciklama("Üretim: " + recete.getAd())
-                    .depoId(e.getDepoId())
+                    .depoId(depoId)
                     .kaynakTip("URETIM").kaynakId(e.getId())
                     .build());
+            depoStokService.guncelle(depoId, hammadde.getId(), gereken.negate());
             BigDecimal fiyat = hammadde.getFiyat() != null ? hammadde.getFiyat() : BigDecimal.ZERO;
             hammaddeMaliyet = hammaddeMaliyet.add(gereken.multiply(fiyat));
         }
@@ -252,9 +255,10 @@ public class UretimService {
         stokHareketRepository.save(StokHareket.builder()
                 .stok(mamul).tur("GIRIS").miktar(uretilen)
                 .hareketTarihi(LocalDate.now()).aciklama("Üretim: " + recete.getAd())
-                .depoId(e.getDepoId())
+                .depoId(depoId)
                 .kaynakTip("URETIM").kaynakId(e.getId())
                 .build());
+        depoStokService.guncelle(depoId, mamul.getId(), uretilen);
 
         BigDecimal iscilik = istek != null && istek.getIscilikMaliyeti() != null ? istek.getIscilikMaliyeti() : BigDecimal.ZERO;
         BigDecimal toplamMaliyet = hammaddeMaliyet.add(iscilik).setScale(2, RoundingMode.HALF_UP);

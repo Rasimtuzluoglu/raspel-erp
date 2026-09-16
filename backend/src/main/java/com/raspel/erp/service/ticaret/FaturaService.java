@@ -52,10 +52,8 @@ import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
-import com.raspel.erp.entity.sube.DepoStok;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
-import com.raspel.erp.repository.sube.DepoStokRepository;
 import com.raspel.erp.repository.sube.DepoRepository;
 import com.raspel.erp.entity.finans.Kasa;
 import com.raspel.erp.entity.finans.KasaHareket;
@@ -74,8 +72,8 @@ public class FaturaService {
     private final CariHesapService cariHesapService;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
-    private final DepoStokRepository depoStokRepository;
     private final DepoRepository depoRepository;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
     private final EmailService emailService;
@@ -754,17 +752,6 @@ public class FaturaService {
     }
 
     /**
-     * Fatura depo seçilmişse (alış faturası), ürünü ilgili deponun stoğuna ekler.
-     */
-    private void depoStokGuncelle(Long depoId, Long stokId, BigDecimal miktar) {
-        if (depoId == null || stokId == null) return;
-        DepoStok ds = depoStokRepository.findByDepoIdAndStokId(depoId, stokId)
-                .orElse(DepoStok.builder().depoId(depoId).stokId(stokId).miktar(BigDecimal.ZERO).build());
-        ds.setMiktar(ds.getMiktar().add(miktar));
-        depoStokRepository.save(ds);
-    }
-
-    /**
      * Fatura para birimi TRY değilse birim fiyatı TL karşılığına çevirir (stok maliyeti TL tutulur).
      * Kur servisi başarısız olursa ham fiyat korunur.
      */
@@ -782,6 +769,8 @@ public class FaturaService {
     private List<Long> stokHareketleriIsle(Fatura fatura, String tur, String aciklama) {
         List<Long> kritikStokIds = new ArrayList<>();
         List<StokHareket> hareketler = new ArrayList<>();
+        // Depo bazli senkron: faturada depo secilmisse o, yoksa varsayilan aktif depo.
+        Long depoId = depoStokService.coz(fatura.getDepoId(), fatura.getSirketId());
         for (FaturaKalem k : fatura.getKalemler()) {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
@@ -821,9 +810,13 @@ public class FaturaService {
                 if (fatura.getCariHesap() != null) {
                     stok.setTedarikciId(fatura.getCariHesap().getId());
                 }
-                depoStokGuncelle(fatura.getDepoId(), k.getStokId(), yeniMiktar);
             }
             stokRepository.save(stok);
+            // Depo stok senkronu (giris/çikis)
+            BigDecimal depoDelta = "CIKIS".equals(tur)
+                    ? (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO).negate()
+                    : (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);
+            depoStokService.guncelle(depoId, k.getStokId(), depoDelta);
 
             if (stok.getMinMiktar() != null && stok.getMiktar().compareTo(stok.getMinMiktar()) < 0) {
                 log.warn("Kritik stok seviyesi! {} - Mevcut: {}, Minimum: {}", stok.getAd(), stok.getMiktar(), stok.getMinMiktar());
@@ -836,7 +829,7 @@ public class FaturaService {
                     .hareketTarihi(LocalDate.now())
                     .aciklama(aciklama)
                     .cariHesap(fatura.getCariHesap())
-                    .depoId(fatura.getDepoId())
+                    .depoId(depoId)
                     .kaynakTip("FATURA").kaynakId(fatura.getId())
                     .build());
         }

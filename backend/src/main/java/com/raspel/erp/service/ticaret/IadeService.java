@@ -44,6 +44,7 @@ public class IadeService {
     private final StokHareketRepository stokHareketRepository;
     private final FaturaRepository faturaRepository;
     private final CariHesapService cariHesapService;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
 
@@ -198,6 +199,7 @@ public class IadeService {
     private void stokHareketleriIsle(Iade iade) {
         boolean alisIadesi = "ALIS".equals(iade.getTur());
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
+        Long depoId = depoIdBul(iade);
         for (IadeKalem k : kalemler) {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
@@ -215,15 +217,28 @@ public class IadeService {
                     .miktar(k.getMiktar())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("İade #" + iade.getId())
+                    .depoId(depoId)
                     .kaynakTip("IADE").kaynakId(iade.getId())
                     .build());
+            depoStokService.guncelle(depoId, stok.getId(),
+                    alisIadesi ? k.getMiktar().negate() : k.getMiktar());
         }
         cariBakiyeUygula(iade, false);
+    }
+
+    /** Iadeye bagli faturanin deposu; yoksa varsayilan aktif depo. */
+    private Long depoIdBul(Iade iade) {
+        Long depoId = null;
+        if (iade.getFaturaId() != null) {
+            depoId = faturaRepository.findById(iade.getFaturaId()).map(Fatura::getDepoId).orElse(null);
+        }
+        return depoStokService.coz(depoId, iade.getSirketId());
     }
 
     private void stokHareketleriniTersineCevir(Iade iade) {
         boolean alisIadesi = "ALIS".equals(iade.getTur());
         List<IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
+        Long depoId = depoIdBul(iade);
         for (IadeKalem k : kalemler) {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
@@ -241,8 +256,11 @@ public class IadeService {
                     .miktar(k.getMiktar())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("İade iptal #" + iade.getId())
+                    .depoId(depoId)
                     .kaynakTip("IADE").kaynakId(iade.getId())
                     .build());
+            depoStokService.guncelle(depoId, stok.getId(),
+                    alisIadesi ? k.getMiktar() : k.getMiktar().negate());
         }
         cariBakiyeUygula(iade, true);
     }

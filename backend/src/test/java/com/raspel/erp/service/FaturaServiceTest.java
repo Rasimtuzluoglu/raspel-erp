@@ -45,8 +45,8 @@ class FaturaServiceTest {
     @Mock private FaturaRepository faturaRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private CariHesapService cariHesapService;
-    @Mock private com.raspel.erp.repository.sube.DepoStokRepository depoStokRepository;
     @Mock private com.raspel.erp.repository.sube.DepoRepository depoRepository;
+    @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @Mock private com.raspel.erp.service.sistem.TcmbKurService tcmbKurService;
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
@@ -279,9 +279,7 @@ class FaturaServiceTest {
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
         Stok stok = createStok();
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
-        when(depoStokRepository.findByDepoIdAndStokId(5L, 1L)).thenReturn(Optional.empty());
-        when(depoStokRepository.save(any(com.raspel.erp.entity.sube.DepoStok.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(depoStokService.coz(any(), any())).thenReturn(5L);
 
         FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
@@ -295,7 +293,7 @@ class FaturaServiceTest {
 
         faturaService.faturaOlustur(dto, 1L, null, null);
 
-        verify(depoStokRepository).save(any(com.raspel.erp.entity.sube.DepoStok.class));
+        verify(depoStokService).guncelle(any(), any(), any());
     }
 
     @Test

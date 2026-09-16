@@ -26,6 +26,7 @@ class StokDuzeltmeServiceTest {
     @Mock private StokDuzeltmeRepository duzeltmeRepository;
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
+    @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @InjectMocks private StokDuzeltmeService duzeltmeService;
 
     @Test

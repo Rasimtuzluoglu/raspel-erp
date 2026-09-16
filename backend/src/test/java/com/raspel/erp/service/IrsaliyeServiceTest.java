@@ -36,6 +36,7 @@ class IrsaliyeServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private CacheYardimci cacheYardimci;
+    @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {

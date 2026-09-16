@@ -44,6 +44,9 @@ public class Irsaliye {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    @Column(name = "depo_id")
+    private Long depoId;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

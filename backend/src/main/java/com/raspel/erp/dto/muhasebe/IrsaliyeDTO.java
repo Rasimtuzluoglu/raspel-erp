@@ -21,6 +21,7 @@ public class IrsaliyeDTO {
     private String tur;
     private String aciklama;
     private Long sirketId;
+    private Long depoId;
     private LocalDateTime olusturmaTarihi;
     private List<IrsaliyeKalemDTO> kalemler;
 }

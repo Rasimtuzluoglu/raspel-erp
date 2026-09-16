@@ -48,6 +48,7 @@ public class StokService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final StokFiyatRepository stokFiyatRepository;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
 
     // ---------- ÇOKLU FİYAT ----------
 
@@ -364,12 +365,17 @@ public class StokService {
         if (dto.getCariHesapId() != null)
             cari = cariHesapRepository.findById(dto.getCariHesapId()).orElse(null);
 
+        Long depoId = depoStokService.coz(dto.getDepoId(), stok.getSirketId());
+
         StokHareket h = StokHareket.builder().stok(stok).tur(dto.getTur())
                 .miktar(dto.getMiktar()).hareketTarihi(dto.getHareketTarihi())
                 .aciklama(dto.getAciklama()).cariHesap(cari)
+                .depoId(depoId)
                 .kaynakTip("MANUEL").build();
 
         stokRepository.save(stok);
+        depoStokService.guncelle(depoId, stok.getId(),
+                "CIKIS".equals(dto.getTur()) ? miktar.negate() : miktar);
         StokHareketDTO sonuc = hareketToDTO(stokHareketRepository.save(h));
         kritikStokBildirimiGonder(stok);
         cacheYardimci.temizle("stoklar", "dashboard");

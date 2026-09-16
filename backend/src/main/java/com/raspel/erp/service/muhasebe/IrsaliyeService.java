@@ -43,6 +43,7 @@ public class IrsaliyeService {
     private final StokHareketRepository stokHareketRepository;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -63,7 +64,7 @@ public class IrsaliyeService {
                 .cariHesapId(dto.getCariHesapId()).faturaId(dto.getFaturaId())
                 .siparisId(dto.getSiparisId())
                 .durum("TASLAK").tur(dto.getTur() != null ? dto.getTur() : "SATIS")
-                .aciklama(dto.getAciklama()).sirketId(sirketId).build();
+                .aciklama(dto.getAciklama()).sirketId(sirketId).depoId(dto.getDepoId()).build();
         i = irsaliyeRepository.save(i);
         if (dto.getKalemler() != null) {
             for (IrsaliyeKalemDTO k : dto.getKalemler()) {
@@ -86,6 +87,7 @@ public class IrsaliyeService {
         i.setFaturaId(dto.getFaturaId());
         if (dto.getDurum() != null) i.setDurum(dto.getDurum());
         if (dto.getTur() != null) i.setTur(dto.getTur());
+        if (dto.getDepoId() != null) i.setDepoId(dto.getDepoId());
         i.setAciklama(dto.getAciklama());
         i = irsaliyeRepository.save(i);
         if (dto.getKalemler() != null) {
@@ -107,6 +109,7 @@ public class IrsaliyeService {
 
         if ("KESILDI".equals(durum) && !"KESILDI".equals(i.getDurum())) {
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
+            Long depoId = depoStokService.coz(i.getDepoId(), i.getSirketId());
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
                 Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
@@ -128,13 +131,17 @@ public class IrsaliyeService {
                         .miktar(adet)
                         .hareketTarihi(LocalDate.now())
                         .aciklama("İrsaliye #" + i.getIrsaliyeNo())
+                        .depoId(depoId)
                         .kaynakTip("IRSALIYE").kaynakId(i.getId())
                         .build());
+                depoStokService.guncelle(depoId, stok.getId(),
+                        "SATIS".equals(i.getTur()) ? adet.negate() : adet);
             }
         } else if (("IPTAL".equals(durum) || "TASLAK".equals(durum)) && "KESILDI".equals(i.getDurum())) {
             // Kesilmis irsaliyeden geri donus (TASLAK/IPTAL): stok etkisi geri alinir.
             String sebep = "IPTAL".equals(durum) ? "İrsaliye iptal" : "İrsaliye geri alındı";
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
+            Long depoId = depoStokService.coz(i.getDepoId(), i.getSirketId());
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
                 Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
@@ -152,8 +159,11 @@ public class IrsaliyeService {
                         .miktar(miktar)
                         .hareketTarihi(LocalDate.now())
                         .aciklama(sebep + " #" + i.getIrsaliyeNo())
+                        .depoId(depoId)
                         .kaynakTip("IRSALIYE").kaynakId(i.getId())
                         .build());
+                depoStokService.guncelle(depoId, stok.getId(),
+                        "SATIS".equals(i.getTur()) ? miktar : miktar.negate());
             }
         }
 
@@ -202,7 +212,7 @@ public class IrsaliyeService {
                 .cariHesapId(i.getCariHesapId())
                 .cariHesapAdi(cariAdi)
                 .faturaId(i.getFaturaId()).durum(i.getDurum()).tur(i.getTur())
-                .aciklama(i.getAciklama()).sirketId(i.getSirketId())
+                .aciklama(i.getAciklama()).sirketId(i.getSirketId()).depoId(i.getDepoId())
                 .olusturmaTarihi(i.getOlusturmaTarihi()).kalemler(kalemler).build();
     }
 }

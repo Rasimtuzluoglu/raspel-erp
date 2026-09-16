@@ -27,6 +27,7 @@ public class StokDuzeltmeService {
     private final StokDuzeltmeRepository duzeltmeRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
 
     @Transactional
     public StokDuzeltmeDTO duzelt(StokDuzeltmeDTO dto, Long sirketId, Long kullaniciId) {
@@ -55,15 +56,18 @@ public class StokDuzeltmeService {
                 .build());
 
         if (fark.compareTo(BigDecimal.ZERO) != 0) {
+            Long depoId = depoStokService.coz(null, sirketId);
             stokHareketRepository.save(StokHareket.builder()
                     .stok(stok)
                     .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
                     .miktar(fark.abs())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("Stok düzeltme: " + (dto.getNeden() != null ? dto.getNeden() : "-"))
+                    .depoId(depoId)
                     .kaynakTip("DUZELTME")
                     .kaynakId(d.getId())
                     .build());
+            depoStokService.guncelle(depoId, stok.getId(), fark);
         }
         log.info("Stok düzeltildi - Stok: {}, {} -> {}", stok.getAd(), eski, dto.getYeniMiktar());
         return toDTO(d);

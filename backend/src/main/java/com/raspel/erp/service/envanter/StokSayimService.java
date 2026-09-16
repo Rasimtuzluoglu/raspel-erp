@@ -33,6 +33,7 @@ public class StokSayimService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final BildirimService bildirimService;
+    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
 
     @Transactional(readOnly = true)
     public Page<StokSayimDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -104,15 +105,18 @@ public class StokSayimService {
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", sayim.getStok().getId()));
                 stok.setMiktar(stok.getMiktar().add(fark));
                 stokRepository.save(stok);
+                Long depoId = depoStokService.coz(null, sayim.getSirketId());
                 stokHareketRepository.save(StokHareket.builder()
                         .stok(stok)
                         .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
                         .miktar(fark.abs())
                     .hareketTarihi(java.time.LocalDate.now())
                     .aciklama("Stok sayımı #" + sayim.getId() + " farkı")
+                    .depoId(depoId)
                     .kaynakTip("SAYIM")
                     .kaynakId(sayim.getId())
                     .build());
+                depoStokService.guncelle(depoId, stok.getId(), fark);
                 kritikStokBildirimiGonder(stok);
                 cacheYardimci.temizle("stoklar", "dashboard");
             }
