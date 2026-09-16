@@ -22,6 +22,12 @@ public class StokHareketDTO {
     private String aciklama;
     private Long cariHesapId;
     private String cariHesapAd;
+    private Long depoId;
+    private String depoAd;
+    private String kaynakTip;
+    private Long kaynakId;
+    private Long seriId;
+    private String seriNo;
     private BigDecimal agirlik;
     private LocalDateTime olusturmaTarihi;
 }

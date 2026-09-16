@@ -128,6 +128,7 @@ public class IrsaliyeService {
                         .miktar(adet)
                         .hareketTarihi(LocalDate.now())
                         .aciklama("İrsaliye #" + i.getIrsaliyeNo())
+                        .kaynakTip("IRSALIYE").kaynakId(i.getId())
                         .build());
             }
         } else if (("IPTAL".equals(durum) || "TASLAK".equals(durum)) && "KESILDI".equals(i.getDurum())) {
@@ -151,6 +152,7 @@ public class IrsaliyeService {
                         .miktar(miktar)
                         .hareketTarihi(LocalDate.now())
                         .aciklama(sebep + " #" + i.getIrsaliyeNo())
+                        .kaynakTip("IRSALIYE").kaynakId(i.getId())
                         .build());
             }
         }

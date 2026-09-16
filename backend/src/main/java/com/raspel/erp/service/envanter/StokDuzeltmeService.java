@@ -43,15 +43,6 @@ public class StokDuzeltmeService {
         stokRepository.save(stok);
 
         BigDecimal fark = dto.getYeniMiktar().subtract(eski);
-        if (fark.compareTo(BigDecimal.ZERO) != 0) {
-            stokHareketRepository.save(StokHareket.builder()
-                    .stok(stok)
-                    .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
-                    .miktar(fark.abs())
-                    .hareketTarihi(LocalDate.now())
-                    .aciklama("Stok düzeltme: " + (dto.getNeden() != null ? dto.getNeden() : "-"))
-                    .build());
-        }
 
         StokDuzeltme d = duzeltmeRepository.save(StokDuzeltme.builder()
                 .sirketId(sirketId)
@@ -62,6 +53,18 @@ public class StokDuzeltmeService {
                 .neden(dto.getNeden())
                 .kullaniciId(kullaniciId)
                 .build());
+
+        if (fark.compareTo(BigDecimal.ZERO) != 0) {
+            stokHareketRepository.save(StokHareket.builder()
+                    .stok(stok)
+                    .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
+                    .miktar(fark.abs())
+                    .hareketTarihi(LocalDate.now())
+                    .aciklama("Stok düzeltme: " + (dto.getNeden() != null ? dto.getNeden() : "-"))
+                    .kaynakTip("DUZELTME")
+                    .kaynakId(d.getId())
+                    .build());
+        }
         log.info("Stok düzeltildi - Stok: {}, {} -> {}", stok.getAd(), eski, dto.getYeniMiktar());
         return toDTO(d);
     }

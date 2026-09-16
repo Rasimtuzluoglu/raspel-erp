@@ -238,6 +238,8 @@ public class UretimService {
             stokHareketRepository.save(StokHareket.builder()
                     .stok(hammadde).tur("CIKIS").miktar(gereken)
                     .hareketTarihi(LocalDate.now()).aciklama("Üretim: " + recete.getAd())
+                    .depoId(e.getDepoId())
+                    .kaynakTip("URETIM").kaynakId(e.getId())
                     .build());
             BigDecimal fiyat = hammadde.getFiyat() != null ? hammadde.getFiyat() : BigDecimal.ZERO;
             hammaddeMaliyet = hammaddeMaliyet.add(gereken.multiply(fiyat));
@@ -250,6 +252,8 @@ public class UretimService {
         stokHareketRepository.save(StokHareket.builder()
                 .stok(mamul).tur("GIRIS").miktar(uretilen)
                 .hareketTarihi(LocalDate.now()).aciklama("Üretim: " + recete.getAd())
+                .depoId(e.getDepoId())
+                .kaynakTip("URETIM").kaynakId(e.getId())
                 .build());
 
         BigDecimal iscilik = istek != null && istek.getIscilikMaliyeti() != null ? istek.getIscilikMaliyeti() : BigDecimal.ZERO;

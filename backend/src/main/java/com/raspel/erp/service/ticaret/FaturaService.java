@@ -743,6 +743,8 @@ public class FaturaService {
                     .hareketTarihi(LocalDate.now())
                     .aciklama("Fatura revize #" + fatura.getFaturaNumarasi())
                     .cariHesap(fatura.getCariHesap())
+                    .depoId(fatura.getDepoId())
+                    .kaynakTip("FATURA").kaynakId(fatura.getId())
                     .build());
         }
         if (!hareketler.isEmpty()) {
@@ -834,6 +836,8 @@ public class FaturaService {
                     .hareketTarihi(LocalDate.now())
                     .aciklama(aciklama)
                     .cariHesap(fatura.getCariHesap())
+                    .depoId(fatura.getDepoId())
+                    .kaynakTip("FATURA").kaynakId(fatura.getId())
                     .build());
         }
         // Hareketleri tek batch'te kaydet (kalem başına ayrı INSERT yerine)

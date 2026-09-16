@@ -108,9 +108,11 @@ public class StokSayimService {
                         .stok(stok)
                         .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
                         .miktar(fark.abs())
-                        .hareketTarihi(java.time.LocalDate.now())
-                        .aciklama("Stok sayımı #" + sayim.getId() + " farkı")
-                        .build());
+                    .hareketTarihi(java.time.LocalDate.now())
+                    .aciklama("Stok sayımı #" + sayim.getId() + " farkı")
+                    .kaynakTip("SAYIM")
+                    .kaynakId(sayim.getId())
+                    .build());
                 kritikStokBildirimiGonder(stok);
                 cacheYardimci.temizle("stoklar", "dashboard");
             }

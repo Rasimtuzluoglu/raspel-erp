@@ -215,6 +215,7 @@ public class IadeService {
                     .miktar(k.getMiktar())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("İade #" + iade.getId())
+                    .kaynakTip("IADE").kaynakId(iade.getId())
                     .build());
         }
         cariBakiyeUygula(iade, false);
@@ -240,6 +241,7 @@ public class IadeService {
                     .miktar(k.getMiktar())
                     .hareketTarihi(LocalDate.now())
                     .aciklama("İade iptal #" + iade.getId())
+                    .kaynakTip("IADE").kaynakId(iade.getId())
                     .build());
         }
         cariBakiyeUygula(iade, true);

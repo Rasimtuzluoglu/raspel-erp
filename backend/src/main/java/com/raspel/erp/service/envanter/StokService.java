@@ -280,6 +280,7 @@ public class StokService {
                     .miktar(fark.abs())
                     .hareketTarihi(java.time.LocalDate.now())
                     .aciklama("Manuel stok düzeltmesi (stok kartı): " + s.getMiktar() + " -> " + dto.getMiktar())
+                    .kaynakTip("DUZELTME")
                     .build());
             s.setMiktar(yeniMiktar);
             cacheYardimci.temizle("stoklar", "dashboard");
@@ -365,7 +366,8 @@ public class StokService {
 
         StokHareket h = StokHareket.builder().stok(stok).tur(dto.getTur())
                 .miktar(dto.getMiktar()).hareketTarihi(dto.getHareketTarihi())
-                .aciklama(dto.getAciklama()).cariHesap(cari).build();
+                .aciklama(dto.getAciklama()).cariHesap(cari)
+                .kaynakTip("MANUEL").build();
 
         stokRepository.save(stok);
         StokHareketDTO sonuc = hareketToDTO(stokHareketRepository.save(h));

@@ -39,6 +39,22 @@ public class StokHareket {
     @JoinColumn(name = "cari_hesap_id", nullable = true)
     private CariHesap cariHesap;
 
+    /** Hareketin deposu (biliniyorsa). */
+    @Column(name = "depo_id")
+    private Long depoId;
+
+    /** Kaynak belge tipi: FATURA, IRSALIYE, URETIM, SAYIM, DUZELTME, IADE, TRANSFER, MANUEL. */
+    @Column(name = "kaynak_tip", length = 30)
+    private String kaynakTip;
+
+    /** Kaynak belge kimliği. */
+    @Column(name = "kaynak_id")
+    private Long kaynakId;
+
+    /** Seri/lot kaydı (seri takibi yapılan ürünlerde). */
+    @Column(name = "seri_id")
+    private Long seriId;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
