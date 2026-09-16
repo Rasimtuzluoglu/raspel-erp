@@ -128,6 +128,8 @@ public class MuhasebeService {
                 .durum("KAYITLI")
                 .sirketId(dto.getSirketId())
                 .kullaniciId(dto.getKullaniciId())
+                .kaynakTip(dto.getKaynakTip())
+                .kaynakId(dto.getKaynakId())
                 .build();
         MuhasebeFisi saved = muhasebeFisiRepository.save(fis);
 
@@ -393,6 +395,7 @@ public class MuhasebeService {
                 .id(f.getId()).fisNo(f.getFisNo()).tarih(f.getTarih())
                 .aciklama(f.getAciklama()).durum(f.getDurum())
                 .sirketId(f.getSirketId()).kullaniciId(f.getKullaniciId())
+                .kaynakTip(f.getKaynakTip()).kaynakId(f.getKaynakId())
                 .olusturmaTarihi(f.getOlusturmaTarihi())
                 .toplamBorc(borc).toplamAlacak(alacak)
                 .kalemler(kalemlerDahil ? kalemler.stream().map(this::kalemEntityToDTO).collect(Collectors.toList()) : null)

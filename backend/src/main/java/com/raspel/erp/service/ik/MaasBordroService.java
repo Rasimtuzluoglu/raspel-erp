@@ -6,6 +6,7 @@ import com.raspel.erp.entity.ik.MaasBordro;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ik.MaasBordroRepository;
+import com.raspel.erp.service.muhasebe.OtomatikMuhasebeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ public class MaasBordroService {
 
     private final MaasBordroRepository maasBordroRepository;
     private final PersonelRepository personelRepository;
+    private final OtomatikMuhasebeService otomatikMuhasebeService;
 
     @Transactional(readOnly = true)
     public Page<MaasBordroDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -45,7 +47,10 @@ public class MaasBordroService {
                 .sirketId(sirketId)
                 .aciklama(dto.getAciklama())
                 .build();
-        return entityToDTO(maasBordroRepository.save(bordro));
+        MaasBordro kaydedilen = maasBordroRepository.save(bordro);
+        // Otomatik yevmiye fişi (bloklamayan).
+        otomatikMuhasebeService.bordroIsle(kaydedilen);
+        return entityToDTO(kaydedilen);
     }
 
     public MaasBordroDTO guncelle(Long id, MaasBordroDTO dto) {
@@ -63,13 +68,18 @@ public class MaasBordroService {
                     .orElseThrow(() -> new ResourceNotFoundException("Personel", dto.getPersonelId()));
             bordro.setPersonel(personel);
         }
-        return entityToDTO(maasBordroRepository.save(bordro));
+        MaasBordro kaydedilen = maasBordroRepository.save(bordro);
+        // Tutarlar değişmiş olabilir: eski fişi iptal edip yenisini üret.
+        otomatikMuhasebeService.bordroIptal(kaydedilen.getId(), kaydedilen.getSirketId());
+        otomatikMuhasebeService.bordroIsle(kaydedilen);
+        return entityToDTO(kaydedilen);
     }
 
     public void sil(Long id) {
-        if (!maasBordroRepository.existsById(id))
-            throw new ResourceNotFoundException("MaasBordro", id);
-        maasBordroRepository.deleteById(id);
+        MaasBordro bordro = maasBordroRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id));
+        otomatikMuhasebeService.bordroIptal(bordro.getId(), bordro.getSirketId());
+        maasBordroRepository.delete(bordro);
     }
 
     private MaasBordroDTO entityToDTO(MaasBordro m) {

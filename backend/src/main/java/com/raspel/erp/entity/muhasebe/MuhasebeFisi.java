@@ -36,6 +36,14 @@ public class MuhasebeFisi {
     @Column(name = "kullanici_id")
     private Long kullaniciId;
 
+    /** Otomatik fiş kaynağı (ör. BORDRO). Manuel fişlerde null. */
+    @Column(name = "kaynak_tip", length = 30)
+    private String kaynakTip;
+
+    /** Otomatik fiş kaynağının kimliği (ör. bordro id). */
+    @Column(name = "kaynak_id")
+    private Long kaynakId;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

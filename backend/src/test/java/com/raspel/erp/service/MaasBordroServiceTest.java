@@ -27,6 +27,7 @@ class MaasBordroServiceTest {
 
     @Mock private MaasBordroRepository maasBordroRepository;
     @Mock private PersonelRepository personelRepository;
+    @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private MaasBordroService maasBordroService;
 
     private Personel createPersonel() {
@@ -85,8 +86,8 @@ class MaasBordroServiceTest {
 
     @Test
     void sil_deletes() {
-        when(maasBordroRepository.existsById(1L)).thenReturn(true);
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(createBordro(1L)));
         maasBordroService.sil(1L);
-        verify(maasBordroRepository).deleteById(1L);
+        verify(maasBordroRepository).delete(any(MaasBordro.class));
     }
 }

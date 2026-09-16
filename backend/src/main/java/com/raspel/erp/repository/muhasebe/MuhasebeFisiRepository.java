@@ -13,4 +13,7 @@ public interface MuhasebeFisiRepository extends JpaRepository<MuhasebeFisi, Long
     List<MuhasebeFisi> findBySirketIdOrderByTarihDesc(Long sirketId);
     List<MuhasebeFisi> findBySirketIdAndTarihBetweenOrderByTarihAsc(Long sirketId, LocalDate baslangic, LocalDate bitis);
     Optional<MuhasebeFisi> findTopBySirketIdOrderByFisNoDesc(Long sirketId);
+
+    Optional<MuhasebeFisi> findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(
+            Long sirketId, String kaynakTip, Long kaynakId, String durum);
 }

@@ -25,6 +25,9 @@ public class MuhasebeFisiDTO {
     private Long kullaniciId;
     private LocalDateTime olusturmaTarihi;
 
+    private String kaynakTip;
+    private Long kaynakId;
+
     private BigDecimal toplamBorc;
     private BigDecimal toplamAlacak;
 
