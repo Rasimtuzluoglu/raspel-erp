@@ -32,7 +32,7 @@
       :loading="yukleniyor"
     >
       <Column
-        field="stokAd"
+        field="stokAdi"
         :header="t('stokSeriler.urun')"
         sortable
       />
@@ -46,11 +46,35 @@
         :header="t('stokSeriler.lotNo')"
       />
       <Column
-        field="skt"
+        field="miktar"
+        :header="t('stokSeriler.miktar')"
+      />
+      <Column
+        field="kalanMiktar"
+        :header="t('stokSeriler.kalanMiktar')"
+      />
+      <Column
+        :header="t('stokSeriler.depo')"
+      >
+        <template #body="{ data }">
+          {{ depoAdi(data.depoId) }}
+        </template>
+      </Column>
+      <Column
+        field="sonKullanmaTarihi"
         :header="t('stokSeriler.skt')"
       >
         <template #body="{ data }">
-          {{ formatDate(data.skt) }}
+          {{ formatDate(data.sonKullanmaTarihi) }}
+        </template>
+      </Column>
+      <Column
+        :header="t('stokSeriler.durum')"
+      >
+        <template #body="{ data }">
+          <span :class="['durum-badge', data.durum === 'TUKETILDI' ? 'tuketildi' : 'stokta']">
+            {{ data.durum === 'TUKETILDI' ? t('stokSeriler.durumTuketildi') : t('stokSeriler.durumStokta') }}
+          </span>
         </template>
       </Column>
       <Column
@@ -100,8 +124,29 @@
         </div>
         <div class="field">
           <label>{{ t('stokSeriler.sonKullanmaTarihi') }}</label><DatePicker
-            v-model="form.skt"
+            v-model="form.sonKullanmaTarihi"
             date-format="dd/mm/yy"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('stokSeriler.depo') }}</label>
+          <Dropdown
+            v-model="form.depoId"
+            :options="depoListesi"
+            option-label="ad"
+            option-value="id"
+            :placeholder="t('stokSeriler.depoSec')"
+            class="w-full"
+            :show-clear="true"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('stokSeriler.miktar') }}</label><InputNumber
+            v-model="form.miktar"
+            :min="0"
+            :min-fraction-digits="0"
+            :max-fraction-digits="3"
             class="w-full"
           />
         </div>
@@ -130,7 +175,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { stokSeriAPI, stokAPI } from '../api/index.js'
+import { stokSeriAPI, stokAPI, depoAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
@@ -139,26 +184,36 @@ const confirm = useConfirm()
 const { t } = useI18n()
 const list = ref([])
 const stokListesi = ref([])
+const depoListesi = ref([])
 const sonKullanma = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ stokId: null, seriNo: '', lotNo: '', skt: null })
+const form = ref({ stokId: null, seriNo: '', lotNo: '', sonKullanmaTarihi: null, depoId: null, miktar: 1 })
 
 const dialogHeader = computed(() => (duzenleme.value ? t('stokSeriler.seriLotDuzenle') : t('stokSeriler.yeniSeriLot')))
+
+function depoAdi(id) {
+  return depoListesi.value.find((d) => d.id === id)?.ad || '-'
+}
 
 import { formatTarih as formatDate } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [sR, stR] = await Promise.all([stokSeriAPI.getAll(), stokAPI.getAll()])
+    const [sR, stR, dR] = await Promise.all([
+      stokSeriAPI.getAll(),
+      stokAPI.getAll(),
+      depoAPI.getAll().catch(() => ({ data: [] }))
+    ])
     list.value = unwrapList(sR)
     stokListesi.value = stR.data.content || stR.data
+    depoListesi.value = dR.data.content || dR.data || []
     try {
       const sk = await stokSeriAPI.sonKullanma(30)
-      sonKullanma.value = sk.data || []
+      sonKullanma.value = (sk.data || []).filter((x) => x.durum !== 'TUKETILDI')
     } catch {
       sonKullanma.value = []
     }
@@ -171,15 +226,20 @@ onMounted(async () => {
 const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
-    ? { ...data, skt: data.skt ? new Date(data.skt) : null }
-    : { stokId: null, seriNo: '', lotNo: '', skt: null }
+    ? { ...data, sonKullanmaTarihi: data.sonKullanmaTarihi ? new Date(data.sonKullanmaTarihi) : null }
+    : { stokId: null, seriNo: '', lotNo: '', sonKullanmaTarihi: null, depoId: null, miktar: 1 }
   dialog.value = true
 }
 
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, skt: form.value.skt?.toISOString?.().split('T')[0] ?? form.value.skt }
+    const s = form.value.sonKullanmaTarihi
+    const payload = {
+      ...form.value,
+      sonKullanmaTarihi: s ? (s.toISOString?.().split('T')[0] ?? s) : null,
+      miktar: form.value.miktar ?? 1
+    }
     if (duzenleme.value) {
       await stokSeriAPI.update(form.value.id, payload)
       toastBildirim.basarili(t('stokSeriler.guncellendi'))
@@ -260,6 +320,20 @@ const sil = (data) => {
 .skt-satir {
   padding: 2px 0 2px 22px;
   font-size: 12px;
+  color: var(--text-secondary);
+}
+.durum-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.durum-badge.stokta {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+.durum-badge.tuketildi {
+  background: rgba(148, 163, 184, 0.2);
   color: var(--text-secondary);
 }
 </style>

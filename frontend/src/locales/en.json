@@ -2891,7 +2891,14 @@
     "silindi": "Deleted",
     "seriLotSilindi": "Serial/Lot deleted",
     "silmeBasarisiz": "Delete failed",
-    "seriLotDuzenle": "Edit Serial/Lot"
+    "seriLotDuzenle": "Edit Serial/Lot",
+    "miktar": "Quantity",
+    "kalanMiktar": "Remaining",
+    "depo": "Warehouse",
+    "depoSec": "Select Warehouse",
+    "durum": "Status",
+    "durumStokta": "In Stock",
+    "durumTuketildi": "Consumed"
   },
   "tahsilat": {
     "title": "Collection Center",

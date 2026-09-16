@@ -2891,7 +2891,14 @@
     "silindi": "Silindi",
     "seriLotSilindi": "Seri/Lot silindi",
     "silmeBasarisiz": "Silme başarısız",
-    "seriLotDuzenle": "Seri/Lot Düzenle"
+    "seriLotDuzenle": "Seri/Lot Düzenle",
+    "miktar": "Miktar",
+    "kalanMiktar": "Kalan Miktar",
+    "depo": "Depo",
+    "depoSec": "Depo Seç",
+    "durum": "Durum",
+    "durumStokta": "Stokta",
+    "durumTuketildi": "Tüketildi"
   },
   "tahsilat": {
     "title": "Tahsilat Merkezi",
