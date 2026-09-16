@@ -2,7 +2,7 @@
 
 > Fatura, stok, cari, saha operasyonları, finans ve personel yönetimi... Hepsi tek ekranda. İnternet kesilse de çalışan PWA desteği, yapay zeka ile talep tahmini, eşzamanlı çoklu kullanıcı güvenliği ve gelişmiş yetkilendirme.
 
-**Java 21 · Spring Boot 3.2 · Vue 3 · PrimeVue 4 · Tailwind CSS · PostgreSQL 16 · Redis · RabbitMQ · Docker · Yapay Zeka (AI)**
+**Java 21 · Spring Boot 3.2 · Vue 3 · PrimeVue 4 · Tailwind CSS · Chart.js · SheetJS · PostgreSQL 16 · Redis · RabbitMQ · Docker · Yapay Zeka (AI)**
 
 ---
 
@@ -15,6 +15,8 @@
 | **Saha Personeli Portalı** | Saha çalışanları için özel mobil uyumlu arayüz. Sipariş teslimatı, dijital müşteri imzası (Canvas), masraf fişi yükleme ve anlık izin talebi oluşturma. |
 | **Onay Merkezi (İzin, Masraf, Satınalma, Saha Sipariş)** | Saha ve ofis personellerinden gelen izin, masraf, satınalma ve saha sipariş taleplerinin yöneticiler tarafından tek tıkla incelenip onaylanmasını sağlayan merkezi iş akışı. |
 | **Yönetici Kokpiti (Admin Cockpit)** | Sadece yöneticilere özel ciro, net kâr, bütçe hedefleri ve şirket likidite analizlerini gösteren sadeleştirilmiş üst yönetim panosu. |
+| **Gelişmiş Kârlılık Analizi** | Ağırlıklı ortalama maliyet (COGS) motoru üzerinden aylık trend, kategori/ürün/cari kırılımı, negatif marj uyarıları ve iade düzeltmeli net kâr. Yönetici kokpitinde ve rapor ekranında grafiklerle sunulur. |
+| **Fatura İşlem Geçmişi & Yazdırma İzi** | Her fatura için oluşturma/düzenleme/durum/silme ve yazdırma (A4/termal, yazıcı adı, kopya no) olayları; alan bazlı önce/sonra değişiklikleriyle zaman çizelgesinde. |
 | **Yapay Zeka Destekli ERP Asistanı** | OpenAI, Google Gemini ve Anthropic Claude API anahtarlarını AES-256 ile şifreleyerek entegre eden, doğal dilde şirket verilerini sorgulayan akıllı sohbet asistanı. |
 | **Akıllı Stok & Talep Tahmini (Predictive AI)** | Son 90 günlük tüketim hızına göre ürünlerin tükenme süresini hesaplar, emniyet stoku ve tedarik süresini hesaba katarak proaktif satınalma önerileri üretir. |
 | **Eşzamanlı Çoklu Kullanıcı Koruması (Concurrency)** | Aynı anda yüzlerce çalışan işlem yaparken Pessimistic Locking (SELECT FOR UPDATE) ile stok ve kasa çakışmalarını, eksiye düşmeyi ve mükerrer fatura numaralandırmayı engeller. |
@@ -44,7 +46,7 @@
 
 ### Finans & Muhasebe
 - **Cari Hesaplar**: Müşteri, tedarikçi, bakiye, kredi limiti, vade takibi, IBAN doğrulama, toplu Excel aktarımı ve ekstre. Cariye özel geçmiş ürünler ve ürün bazlı fiyat geçmişi.
-- **Fatura Yönetimi**: Alış/Satış faturası, otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi ve çoğaltma.
+- **Fatura Yönetimi**: Alış/Satış faturası, otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi ve çoğaltma. İşlem geçmişi (oluşturma/düzenleme/durum/silme diff'i) ve yazdırma izi (biçim, yazıcı, kopya sayısı).
 - **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, CSV/Excel/OFX hesap özeti yükleme, otomatik mutabakat ve kasalar arası para aktarımı.
 - **Çek/Senet, Bütçe & Masraflar**: Portföy takibi, departman bütçeleri, masraf fişleri ve nakit akışı projeksiyonu.
 - **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir, bilanço ve kâr/zarar.
@@ -58,10 +60,15 @@
 - **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri. Müşteri kayıp (churn) riski skorlama.
 
 ### Stok & Envanter
-- **Stok Kartları & Barkod**: Kritik seviye alarmı, akıllı AI talep tahmini, hareket geçmişi.
+- **Stok Kartları & Barkod**: Kritik seviye alarmı, akıllı AI talep tahmini, hareket geçmişi. Ağırlıklı ortalama maliyet (COGS) motoru ile güncel birim maliyet ve satış anı maliyet anlık görüntüsü.
 - **Çoklu Depo & Şube**: Şubeler arası transfer, seri/lot/SKT takibi ve periyodik stok sayım modülü.
 - **Kritik Stok Dashboard'da**: Dashboard'da kritik stok uyarısı olarak listelenir.
 - **Üretim (Reçete & Emir)**: Ürün ağacı (reçete) tanımı, Taslak→Üretimde→Tamamlandı/İptal akışı, kısmi üretim ve fire, otomatik hammadde düşümü + mamul girişi, hammadde/işçilik/toplam maliyet. Planlama sekmesinde hammadde ihtiyaç analizi, eksikler için satınalma talebi ve siparişten otomatik üretim emri.
+
+### Raporlama & Analitik
+- **Rapor Merkezi**: Cari ekstre, gelir/gider, KDV, yaşlandırma, cari & ürün kârlılığı, nakit akışı projeksiyonu ve pivot tablo; grafiklerle zenginleştirilmiş sekmeler, PDF/Excel dışa aktarım ve e-posta ile paylaşım.
+- **Fatura İşlem & Yazdırma Geçmişi Raporu**: Tarih/tür/olay/kullanıcı filtreli, olay grafiği ve PDF/Excel çıktısı.
+- **Merkezi Rapor Arama & Favoriler**: Tüm raporlar arasında tek arama, sık kullanılan raporları yıldızlayıp hızlı erişim.
 
 ### İnsan Kaynakları (İK)
 - **Personel Kartları**: TC Kimlik doğrulama, departman/pozisyon atamaları, acil durum bilgileri.
@@ -144,8 +151,8 @@ raspel-erp/
 │
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4 + Tailwind CSS
 │   └── src/
-│       ├── views/           # 69 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti vb.)
-│       ├── components/      # 50 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, HesapMakinesi vb.)
+│       ├── views/           # 71 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti, KarlilikAnalizi vb.)
+│       ├── components/      # 51 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, FaturaGecmisDialog vb.)
 │       ├── stores/          # 12 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
 │       ├── composables/     # 20 Composable Hook (Tema, Yetki, Oturum, Kısayol)
 │       └── api/             # Modüler Axios İstemcisi
