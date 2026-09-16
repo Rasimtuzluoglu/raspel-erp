@@ -467,11 +467,15 @@ public class FaturaService {
             throw new BusinessException("İptal edilmiş fatura güncellenemez");
         }
 
-        // Ödeme yapılmış fatura iptal edilemez (bakiye/tahsilat tutarsızlığı önlenir)
-        if (durum == Fatura.FaturaDurum.IPTAL
+        // Kesilmiş faturadan geri donus (TASLAK/IPTAL): stok ve cari etkisi geri alinir.
+        boolean geriAliniyor = fatura.getDurum() == Fatura.FaturaDurum.KESILDI
+                && (durum == Fatura.FaturaDurum.TASLAK || durum == Fatura.FaturaDurum.IPTAL);
+
+        // Ödeme yapılmış fatura geri alınamaz/iptal edilemez (bakiye/tahsilat tutarsızlığı önlenir)
+        if (geriAliniyor
                 && fatura.getOdenenTutar() != null
                 && fatura.getOdenenTutar().compareTo(BigDecimal.ZERO) > 0) {
-            throw new BusinessException("Ödeme yapılmış fatura iptal edilemez. Önce tahsilat/ödeme hareketlerini silin.");
+            throw new BusinessException("Ödeme yapılmış fatura geri alınamaz/iptal edilemez. Önce tahsilat/ödeme hareketlerini silin.");
         }
 
         if (durum == Fatura.FaturaDurum.KESILDI && fatura.getDurum() != Fatura.FaturaDurum.KESILDI) {
@@ -480,8 +484,8 @@ public class FaturaService {
             if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
                 kritikStokUyarisiGonder(kritik, fatura.getSirketId());
             }
-        } else if (durum == Fatura.FaturaDurum.IPTAL && fatura.getDurum() == Fatura.FaturaDurum.KESILDI) {
-            stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura iptal #" + fatura.getFaturaNumarasi());
+        } else if (geriAliniyor) {
+            stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura geri alındı #" + fatura.getFaturaNumarasi());
             cariBakiyeGuncelle(fatura, true);
         }
 

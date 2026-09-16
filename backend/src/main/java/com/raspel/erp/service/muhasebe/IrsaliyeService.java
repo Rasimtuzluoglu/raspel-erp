@@ -130,7 +130,9 @@ public class IrsaliyeService {
                         .aciklama("İrsaliye #" + i.getIrsaliyeNo())
                         .build());
             }
-        } else if ("IPTAL".equals(durum) && "KESILDI".equals(i.getDurum())) {
+        } else if (("IPTAL".equals(durum) || "TASLAK".equals(durum)) && "KESILDI".equals(i.getDurum())) {
+            // Kesilmis irsaliyeden geri donus (TASLAK/IPTAL): stok etkisi geri alinir.
+            String sebep = "IPTAL".equals(durum) ? "İrsaliye iptal" : "İrsaliye geri alındı";
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
@@ -148,7 +150,7 @@ public class IrsaliyeService {
                         .tur("SATIS".equals(i.getTur()) ? "GIRIS" : "CIKIS")
                         .miktar(miktar)
                         .hareketTarihi(LocalDate.now())
-                        .aciklama("İrsaliye iptal #" + i.getIrsaliyeNo())
+                        .aciklama(sebep + " #" + i.getIrsaliyeNo())
                         .build());
             }
         }

@@ -180,6 +180,18 @@ class TeklifServiceTest {
     }
 
     @Test
+    void revizyonOlustur_varOlanRevizyonHataVerir() {
+        Teklif eski = createTeklif(1L);
+        when(teklifRepository.findById(1L)).thenReturn(Optional.of(eski));
+        when(kalemRepository.findByTeklifId(1L)).thenReturn(List.of());
+        when(teklifRepository.existsBySirketIdAndTeklifNoAndRevizyonNo(
+                any(), any(), any())).thenReturn(true);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> teklifService.revizyonOlustur(1L));
+    }
+
+    @Test
     void shouldConvertToSiparis() {
         Teklif t = createTeklif(1L);
         when(teklifRepository.findById(1L)).thenReturn(Optional.of(t));

@@ -251,6 +251,29 @@ class FaturaServiceTest {
     }
 
     @Test
+    void faturaDurumGuncelle_kesildidenTaslakGeriAlinir() {
+        Fatura fatura = createFatura(1L);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        Stok stok = createStok();
+        stok.setMiktar(BigDecimal.valueOf(98)); // satis kesilince dusulmus varsayimi
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K").adet(2)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20))
+                .tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(kalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+
+        var result = faturaService.faturaDurumGuncelle(1L, "TASLAK");
+
+        assertEquals("TASLAK", result.getDurum());
+        // Stok geri eklendi (98 + 2)
+        assertEquals(0, stok.getMiktar().compareTo(BigDecimal.valueOf(100)));
+        // Cari borcu geri alindi (ters kayit +120)
+        verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("120"));
+    }
+
+    @Test
     void faturaOlustur_alis_withDepo_updatesDepoStok() {
         CariHesap cari = createCariHesap();
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));

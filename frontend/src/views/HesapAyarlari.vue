@@ -813,10 +813,10 @@ const tokenOlustur = async () => {
   }
 }
 
-const tokenSil = async (t) => {
+const tokenSil = async (token) => {
   try {
-    await apiTokenAPI.sil(t.id)
-    tokenlar.value = tokenlar.value.filter((x) => x.id !== t.id)
+    await apiTokenAPI.sil(token.id)
+    tokenlar.value = tokenlar.value.filter((x) => x.id !== token.id)
     toast.add({ severity: 'success', summary: t('hesapAyarlari.tokenSilindi'), detail: t('hesapAyarlari.tokenSilindi'), life: 3000 })
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.tokenSilinemedi'))

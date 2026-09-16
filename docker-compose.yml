@@ -252,6 +252,7 @@ services:
       - "127.0.0.1:9090:9090"
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
       - prometheus_data:/prometheus
     restart: unless-stopped
     depends_on:

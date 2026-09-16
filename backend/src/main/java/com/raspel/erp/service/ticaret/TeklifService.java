@@ -236,9 +236,15 @@ public class TeklifService {
 
         List<TeklifKalem> eskiKalemler = kalemRepository.findByTeklifId(id);
 
+        int yeniRevizyon = (eski.getRevizyonNo() != null ? eski.getRevizyonNo() : 0) + 1;
+        if (teklifRepository.existsBySirketIdAndTeklifNoAndRevizyonNo(
+                eski.getSirketId(), eski.getTeklifNo(), yeniRevizyon)) {
+            throw new BusinessException("Bu teklifin " + yeniRevizyon + ". revizyonu zaten mevcut");
+        }
+
         Teklif yeni = Teklif.builder()
                 .teklifNo(eski.getTeklifNo())
-                .revizyonNo(eski.getRevizyonNo() + 1)
+                .revizyonNo(yeniRevizyon)
                 .tarih(LocalDate.now())
                 .gecerlilikTarihi(eski.getGecerlilikTarihi())
                 .cariHesapId(eski.getCariHesapId())
