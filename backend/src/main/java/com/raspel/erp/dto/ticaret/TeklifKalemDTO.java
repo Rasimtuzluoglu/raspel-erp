@@ -1,6 +1,7 @@
 package com.raspel.erp.dto.ticaret;
 
 import lombok.*;
+import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 
 @Data
@@ -12,6 +13,7 @@ public class TeklifKalemDTO {
     private Long teklifId;
     private Long stokId;
     private String stokKodu;
+    @NotBlank(message = "Kalem açıklaması boş olamaz")
     private String aciklama;
     private BigDecimal miktar;
     private String birim;

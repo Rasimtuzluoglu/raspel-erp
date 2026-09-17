@@ -1,8 +1,8 @@
 import { apiClient } from '../client.js'
 
 export const stokAPI = {
-  getAll() {
-    return apiClient.get('/stoklar')
+  getAll(params) {
+    return apiClient.get('/stoklar', { params })
   },
   ara(q) {
     return apiClient.get('/stoklar/ara', { params: { q } })
@@ -100,8 +100,8 @@ export const stokAPI = {
 }
 
 export const depoAPI = {
-  getAll() {
-    return apiClient.get('/depolar')
+  getAll(params) {
+    return apiClient.get('/depolar', { params })
   },
   getById(id) {
     return apiClient.get(`/depolar/${id}`)

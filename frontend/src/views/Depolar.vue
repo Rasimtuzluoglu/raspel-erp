@@ -400,8 +400,8 @@ onMounted(async () => {
   try {
     const [depoRes, subeRes, stokRes] = await Promise.all([depoAPI.getAll(), subeAPI.getAll(), stokAPI.getAll()])
     list.value = unwrapList(depoRes)
-    subeListesi.value = subeRes.data
-    stokListesi.value = stokRes.data.content || stokRes.data
+    subeListesi.value = unwrapList(subeRes)
+    stokListesi.value = unwrapList(stokRes)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('depolar.hataVeri'))
   }
@@ -415,6 +415,14 @@ const dialogAc = (data) => {
 }
 
 const kaydet = async () => {
+  if (!form.value.ad || !form.value.ad.trim()) {
+    toastBildirim.uyari(t('depolar.adZorunlu'))
+    return
+  }
+  if (!form.value.subeId) {
+    toastBildirim.uyari(t('depolar.subeZorunlu'))
+    return
+  }
   kaydediliyor.value = true
   try {
     if (duzenleme.value) {

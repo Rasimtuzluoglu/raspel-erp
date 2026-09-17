@@ -2,6 +2,7 @@ package com.raspel.erp.dto.sube;
 
 import lombok.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,6 +15,7 @@ public class DepoDTO {
     private String ad;
     private String adres;
     private String yetkili;
+    @NotNull(message = "Bağlı şube seçilmelidir")
     private Long subeId;
     private String subeAdi;
     private Long sirketId;

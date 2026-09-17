@@ -57,6 +57,20 @@ public class TeklifService {
     }
 
     public TeklifDTO olustur(TeklifDTO dto, Long sirketId) {
+        if (dto.getCariHesapId() == null) {
+            throw new BusinessException("Cari hesap seçilmelidir");
+        }
+        CariHesap cari = cariHesapRepository.findById(dto.getCariHesapId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cari hesap", dto.getCariHesapId()));
+        tenantChecker.check(cari.getSirketId(), "CariHesap");
+        if (dto.getKalemler() == null || dto.getKalemler().isEmpty()) {
+            throw new BusinessException("En az bir kalem eklenmelidir");
+        }
+        for (TeklifKalemDTO k : dto.getKalemler()) {
+            if (k.getAciklama() == null || k.getAciklama().isBlank()) {
+                throw new BusinessException("Kalem açıklaması boş olamaz");
+            }
+        }
         String teklifNo = dto.getTeklifNo() != null && !dto.getTeklifNo().isBlank()
                 ? dto.getTeklifNo()
                 : seriNoServisi.teklifNoUret(sirketId);
@@ -149,7 +163,7 @@ public class TeklifService {
             throw new BusinessException("Siparişe veya faturaya dönüştürülmüş teklifler güncellenemez.");
         }
 
-        t.setTarih(dto.getTarih());
+        t.setTarih(dto.getTarih() != null ? dto.getTarih() : t.getTarih());
         t.setGecerlilikTarihi(dto.getGecerlilikTarihi());
         t.setCariHesapId(dto.getCariHesapId());
         if (dto.getDurum() != null) t.setDurum(dto.getDurum());
@@ -166,6 +180,9 @@ public class TeklifService {
 
         if (dto.getKalemler() != null) {
             for (TeklifKalemDTO k : dto.getKalemler()) {
+                if (k.getAciklama() == null || k.getAciklama().isBlank()) {
+                    throw new BusinessException("Kalem açıklaması boş olamaz");
+                }
                 BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE;
                 BigDecimal birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
                 BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;

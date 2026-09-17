@@ -1,6 +1,8 @@
 package com.raspel.erp.dto.ticaret;
 
 import lombok.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ public class TeklifDTO {
     private Integer revizyonNo;
     private LocalDate tarih;
     private LocalDate gecerlilikTarihi;
+    @NotNull(message = "Cari hesap seçilmelidir")
     private Long cariHesapId;
     private String cariHesapAdi;
     private String cariVergiNo;
@@ -37,6 +40,7 @@ public class TeklifDTO {
     private String notlar;
     private Long sirketId;
     private LocalDateTime olusturmaTarihi;
+    @Valid
     private List<TeklifKalemDTO> kalemler;
 
     public Long getId() { return id; }

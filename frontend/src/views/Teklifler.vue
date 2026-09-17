@@ -64,7 +64,7 @@
     <!-- Teklifler Listesi Tablosu -->
     <div class="kart-kutu">
       <DataTable
-        :value="teklifler"
+        :value="filtrelenmisTeklifler"
         :loading="yukleniyor"
         paginator
         :rows="10"
@@ -810,6 +810,15 @@ const kaydediliyor = ref(false)
 const aramaMetni = ref('')
 const seciliDurumFiltre = ref('HEPSI')
 
+const filtrelenmisTeklifler = computed(() => {
+  const q = (aramaMetni.value || '').trim().toLowerCase()
+  return teklifler.value.filter((x) => {
+    if (seciliDurumFiltre.value && seciliDurumFiltre.value !== 'HEPSI' && x.durum !== seciliDurumFiltre.value) return false
+    if (!q) return true
+    return [x.teklifNo, x.cariHesapAdi, x.durum].some((v) => String(v || '').toLowerCase().includes(q))
+  })
+})
+
 const formDialog = ref(false)
 const duzenlemeModu = ref(false)
 const onizlemeDialog = ref(false)
@@ -1052,7 +1061,11 @@ const teklifKaydet = async () => {
     toast.add({ severity: 'warn', summary: t('teklifler.eksikBilgi'), detail: t('teklifler.musteriSecinUyari'), life: 3000 })
     return
   }
-  if (!form.value.kalemler || form.value.kalemler.length === 0 || !form.value.kalemler[0].aciklama) {
+  if (!form.value.kalemler || form.value.kalemler.length === 0) {
+    toast.add({ severity: 'warn', summary: t('teklifler.eksikBilgi'), detail: t('teklifler.kalemAciklamaUyari'), life: 3000 })
+    return
+  }
+  if (form.value.kalemler.some((k) => !k.aciklama || !String(k.aciklama).trim())) {
     toast.add({ severity: 'warn', summary: t('teklifler.eksikBilgi'), detail: t('teklifler.kalemAciklamaUyari'), life: 3000 })
     return
   }

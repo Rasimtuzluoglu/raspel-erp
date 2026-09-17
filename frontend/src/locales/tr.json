@@ -3721,7 +3721,9 @@
     "transferOnaylandi": "Transfer onaylandı",
     "onaylamaBasarisiz": "Onaylama başarısız",
     "transferReddedildi": "Transfer reddedildi",
-    "reddetmeBasarisiz": "Reddetme başarısız"
+    "reddetmeBasarisiz": "Reddetme başarısız",
+    "adZorunlu": "Depo adı giriniz",
+    "subeZorunlu": "Bağlı şube seçiniz"
   },
   "tekrarlayanFaturalar": {
     "title": "Tekrarlayan Faturalar",

@@ -13,6 +13,7 @@ import com.raspel.erp.service.sistem.SeriNoServisi;
 import com.raspel.erp.service.ticaret.FaturaService;
 import com.raspel.erp.service.ticaret.SiparisService;
 import com.raspel.erp.service.ticaret.TeklifService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,14 @@ class TeklifServiceTest {
     @Mock private BildirimService bildirimService;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private TeklifService teklifService;
+
+    @BeforeEach
+    void cariHazirla() {
+        com.raspel.erp.entity.finans.CariHesap cari = new com.raspel.erp.entity.finans.CariHesap();
+        cari.setId(1L);
+        cari.setSirketId(1L);
+        lenient().when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+    }
 
     private Teklif createTeklif(Long id) {
         Teklif t = new Teklif();

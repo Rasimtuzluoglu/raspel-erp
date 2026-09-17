@@ -3721,7 +3721,9 @@
     "transferOnaylandi": "Transfer approved",
     "onaylamaBasarisiz": "Approval failed",
     "transferReddedildi": "Transfer rejected",
-    "reddetmeBasarisiz": "Rejection failed"
+    "reddetmeBasarisiz": "Rejection failed",
+    "adZorunlu": "Enter a warehouse name",
+    "subeZorunlu": "Select a branch"
   },
   "tekrarlayanFaturalar": {
     "title": "Recurring Invoices",

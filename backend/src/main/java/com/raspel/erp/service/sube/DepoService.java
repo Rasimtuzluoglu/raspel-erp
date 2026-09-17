@@ -59,6 +59,9 @@ public class DepoService {
         if (dto.getAd() == null || dto.getAd().isBlank()) {
             throw new BusinessException("Depo adı boş olamaz");
         }
+        if (dto.getSubeId() == null) {
+            throw new BusinessException("Bağlı şube seçilmelidir");
+        }
         if (depoRepository.existsBySirketIdAndAdIgnoreCase(dto.getSirketId(), dto.getAd().trim())) {
             throw new BusinessException("Bu isimde bir depo zaten mevcut: " + dto.getAd());
         }

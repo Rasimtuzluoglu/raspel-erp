@@ -44,14 +44,14 @@ public class TeklifController {
 
     @PostMapping
     @Operation(summary = "Yeni teklif oluştur")
-    public ResponseEntity<TeklifDTO> olustur(@RequestBody TeklifDTO dto, HttpServletRequest request) {
+    public ResponseEntity<TeklifDTO> olustur(@jakarta.validation.Valid @RequestBody TeklifDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(teklifService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Teklif güncelle")
-    public ResponseEntity<TeklifDTO> guncelle(@PathVariable Long id, @RequestBody TeklifDTO dto) {
+    public ResponseEntity<TeklifDTO> guncelle(@PathVariable Long id, @jakarta.validation.Valid @RequestBody TeklifDTO dto) {
         return ResponseEntity.ok(teklifService.guncelle(id, dto));
     }
 
