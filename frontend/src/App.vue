@@ -72,10 +72,7 @@
           </button>
         </div>
       </transition>
-      <AppTopbar
-        v-if="authStore.isLoggedIn"
-        @open-search="quickSearchVisible = true"
-      />
+      <AppTopbar v-if="authStore.isLoggedIn" />
       <ErrorBoundary>
         <router-view v-slot="{ Component }">
           <transition
