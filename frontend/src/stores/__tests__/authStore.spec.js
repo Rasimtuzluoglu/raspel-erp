@@ -9,7 +9,8 @@ vi.mock('../../api/index.js', () => ({
     girisSirket: vi.fn(),
     giris2fa: vi.fn(),
     getAll: vi.fn(),
-    getById: vi.fn()
+    getById: vi.fn(),
+    cikis: vi.fn()
   }
 }))
 
@@ -31,6 +32,7 @@ describe('authStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+    sessionStorage.clear()
     store = useAuthStore()
   })
 
@@ -58,14 +60,15 @@ describe('authStore', () => {
     expect(store.isLoggedIn).toBe(true)
   })
 
-  it('oturumKur tokeni localStoragea yazmaz', async () => {
+  it('oturumKur tokeni depoya yazmaz (beni hatirla yoksa sessionStorage)', async () => {
     kullaniciAPI.girisSirket.mockResolvedValue({ data: { ...mockUser, tokenExpiresAt: 1234567890123 } })
     await store.girisSirket('pending-token', 1)
     expect(store.isLoggedIn).toBe(true)
     expect(store.token).toBe('abc123')
-    const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth'))
+    const kayitli = JSON.parse(sessionStorage.getItem('raspel_erp_auth'))
     expect(kayitli.token).toBeUndefined()
     expect(kayitli.tokenExpiresAt).toBe(1234567890123)
+    expect(localStorage.getItem('raspel_erp_auth')).toBeNull()
   })
 
   it('girisYap returns user without setting session (sirket secimi beklenir)', async () => {

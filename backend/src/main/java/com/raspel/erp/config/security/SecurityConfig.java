@@ -56,7 +56,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/kullanicilar/giris",
                         "/api/kullanicilar/giris-2fa",
-                        "/api/kullanicilar/giris-sirket").permitAll()
+                        "/api/kullanicilar/giris-sirket",
+                        "/api/kullanicilar/cikis").permitAll()
                 .requestMatchers("/api/kurulum/**").permitAll()
                 // Base health (aggregate UP/DOWN) ve prometheus metrikleri aciktir.
                 // show-details=when-authorized oldugu icin anonim istek detay gormez.

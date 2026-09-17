@@ -961,7 +961,13 @@ const kdvToplam = computed(() => {
 
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
-const whatsappGonder = (fatura) => {
+const whatsappGonder = async (fatura) => {
+  // WhatsApp dosya ekleyemediği için PDF'i indirip mesajla birlikte elle eklenebilir hale getir.
+  try {
+    await pdfIndir(fatura)
+  } catch {
+    /* indirme başarısız olsa da WhatsApp açılır */
+  }
   const cariAd = fatura.cariHesapAd || t('faturalar.musterimiz')
   const tutar = fatura.genelToplam
     ? fatura.genelToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL'
@@ -969,6 +975,17 @@ const whatsappGonder = (fatura) => {
   const mesaj = t('faturalar.whatsappMesaj', { ad: cariAd, no: fatura.faturaNumarasi || 'Fatura', tutar })
   const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
   window.open(url, '_blank')
+}
+
+const onizle = async (fatura) => {
+  try {
+    const res = await pdfAPI.faturaOnizleme(fatura.id)
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    window.open(url, '_blank')
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('faturalar.pdfIndirilemedi'))
+  }
 }
 
 const openCreateDialog = () => {
@@ -1188,6 +1205,7 @@ const yazdirmaBaslik = (f) => {
 const faturaEylemleri = (f) => {  const items = [
     { etiket: t('faturalar.yazdirTasarla'), ikon: 'pi pi-print', islem: () => tasarlaVeYazdir(f.id) },
     { etiket: t('faturalar.pdfIndir'), ikon: 'pi pi-download', islem: () => pdfIndir(f) },
+    { etiket: t('faturalar.onizle'), ikon: 'pi pi-eye', islem: () => onizle(f) },
     { etiket: t('faturalar.whatsapp'), ikon: 'pi pi-whatsapp', islem: () => whatsappGonder(f) },
     { etiket: t('common.duplicate'), ikon: 'pi pi-copy', islem: () => cogalt(f) },
     { etiket: t('faturaGecmis.title'), ikon: 'pi pi-history', islem: () => gecmisAc(f) }

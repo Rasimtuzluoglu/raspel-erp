@@ -83,6 +83,7 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | GET | `/api/raporlar/karlilik-analizi` | Gelişmiş kârlılık analizi (ciro/COGS/brüt kâr, aylık trend, grup kırılımı) |
 | GET | `/api/raporlar/fatura-gecmis` | Fatura işlem/yazdırma geçmişi (filtreli; `/pdf` ve `/excel` dışa aktarım) |
 | GET | `/api/rapor/fatura/{id}` | Fatura PDF |
+| GET | `/api/rapor/fatura/{id}/onizleme` | Fatura PDF önizleme (inline, görsel) |
 | GET | `/api/rapor/siparis/{id}` | Sipariş PDF |
 | GET | `/api/audit-log` | Denetim logları (filtreli) |
 | GET | `/api/anomaliler` | Anomali taraması |
@@ -94,6 +95,13 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | POST | `/api/sohbet/dosya` | Genel sohbete dosya/görsel yükle (multipart) |
 | POST | `/api/sohbet/odalar/{id}/dosya` | Odaya dosya/görsel yükle |
 | POST | `/api/sohbet/ai-sorgu` | Doğal dil AI sorgusu (grafik/tablo yanıtı) |
+
+### Sistem & Oturum
+| Metot | Yol | Açıklama |
+|---|---|---|
+| POST | `/api/kullanicilar/cikis` | Çıkış (cookie temizlenir, oturum iptal edilir) |
+| GET/POST/PUT/DELETE | `/api/donemler` | Dönem CRUD |
+| PUT | `/api/donemler/{id}/aktif` | Dönemi aktif yap (diğerleri pasifleşir) |
 
 ### Dosya & Belge
 | Metot | Yol | Açıklama |

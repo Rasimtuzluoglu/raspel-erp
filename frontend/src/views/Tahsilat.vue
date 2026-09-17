@@ -298,7 +298,7 @@
 
     <TahsilatGirDialog
       v-model:visible="tahsilatDialogAcik"
-      :cariler="ozet?.cariler || []"
+      :cariler="dialogCariler"
       :baslangic-cari-id="seciliCariId"
       @kaydedildi="kaydetSonrasi"
     />
@@ -308,7 +308,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
-import { tahsilatAPI } from '../api/index.js'
+import { tahsilatAPI, cariHesapAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
@@ -321,6 +321,17 @@ const ozet = ref(null)
 const genisletilenler = ref([])
 const tahsilatDialogAcik = ref(false)
 const seciliCariId = ref(null)
+const tumCariler = ref([])
+
+// Faturası olmayan cariler için de (avans/genel tahsilat) seçim listesi.
+const dialogCariler = computed(() => {
+  const mevcut = (ozet.value?.cariler || []).map((c) => ({ ...c, cariId: c.cariId || c.id }))
+  const idler = new Set(mevcut.map((c) => c.cariId))
+  const ek = tumCariler.value
+    .filter((c) => !idler.has(c.id))
+    .map((c) => ({ cariId: c.id, ad: c.ad, faturalar: [], toplamAlacak: 0 }))
+  return [...mevcut, ...ek]
+})
 
 const gecmis = ref([])
 const gecmisYukleniyor = ref(false)
@@ -430,9 +441,15 @@ const ara = (cari) => {
   window.location.href = `tel:${cari.telefon}`
 }
 
-onMounted(() => {
+onMounted(async () => {
   yukle()
   gecmisYukle()
+  try {
+    const r = await cariHesapAPI.getAll({ size: 1000 })
+    tumCariler.value = unwrapList(r)
+  } catch {
+    tumCariler.value = []
+  }
 })
 </script>
 

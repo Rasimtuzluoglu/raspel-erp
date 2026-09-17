@@ -78,6 +78,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (token != null && jwtUtil.validateToken(token)) {
             // İptal edilmiş (sonlandırılmış) oturumların token'ı geçersizdir.
+            request.setAttribute("jti", jwtUtil.getJtiFromToken(token));
             if (aktifOturumService.iptalEdilmis(jwtUtil.getJtiFromToken(token))) {
                 filterChain.doFilter(request, response);
                 return;

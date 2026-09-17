@@ -31,6 +31,9 @@ export const kullaniciAPI = {
   ben() {
     return apiClient.get('/kullanicilar/ben')
   },
+  cikis() {
+    return apiClient.post('/kullanicilar/cikis')
+  },
   beniGuncelle(data) {
     return apiClient.put('/kullanicilar/ben', data)
   },
@@ -283,6 +286,9 @@ export const donemAPI = {
   },
   update(id, data) {
     return apiClient.put(`/donemler/${id}`, data)
+  },
+  aktifYap(id) {
+    return apiClient.put(`/donemler/${id}/aktif`)
   },
   delete(id) {
     return apiClient.delete(`/donemler/${id}`)

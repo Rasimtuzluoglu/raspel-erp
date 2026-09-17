@@ -19,6 +19,12 @@
           size="small"
         />
         <Button
+          :label="t('faturalar.onizle')"
+          icon="pi pi-eye"
+          class="p-button-outlined"
+          @click="onizle"
+        />
+        <Button
           :label="t('faturaDetay.epostaGonder')"
           icon="pi pi-envelope"
           :loading="emailGonderiliyor"
@@ -300,7 +306,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
 import { useYakinZamanda } from '../composables/useYakinZamanda.js'
-import { belgeAPI, faturaAPI, sirketAPI } from '../api/index.js'
+import { belgeAPI, faturaAPI, sirketAPI, pdfAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import { formatCurrency } from '../utils/format.js'
@@ -320,6 +326,18 @@ const error = ref(null)
 const printMode = ref(route.query.print === 'true')
 const tasarimModalAcik = ref(false)
 const gecmisAcik = ref(false)
+
+const onizle = async () => {
+  if (!fatura.value?.id) return
+  try {
+    const r = await pdfAPI.faturaOnizleme(fatura.value.id)
+    const url = window.URL.createObjectURL(new Blob([r.data], { type: 'application/pdf' }))
+    window.open(url, '_blank')
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('faturalar.pdfIndirilemedi'))
+  }
+}
 
 const escListener = (e) => {
   if (e.key === 'Escape') router.push('/faturalar')

@@ -571,7 +571,7 @@ const girisYap = async () => {
   }
   try {
     localStorage.setItem('raspel_erp_beni_hatirla', beniHatirla.value ? 'true' : 'false')
-    const sonuc = await authStore.girisYap(username.value, password.value)
+    const sonuc = await authStore.girisYap(username.value, password.value, beniHatirla.value)
     if (sonuc?.twoFactorGerekli) {
       girisToken.value = sonuc.girisToken
       ikiFaktorAdimi.value = true
@@ -593,7 +593,7 @@ const sirketSecVeGirisYap = async (sirket) => {
   hata.value = ''
   sirketLogo.value = sirket.logoUrl || ''
   try {
-    await authStore.girisSirket(girisToken.value, sirket.id)
+    await authStore.girisSirket(girisToken.value, sirket.id, beniHatirla.value)
     localStorage.setItem('raspel_erp_son_sirket', sirket.id)
     if (sirket.ad) localStorage.setItem('raspel_erp_son_sirket_ad', sirket.ad)
     router.push('/')
@@ -609,7 +609,7 @@ const ikiFaktorDogrula = async () => {
     return
   }
   try {
-    const sonuc = await authStore.giris2fa(girisToken.value, ikiFaktorKod.value.trim())
+    const sonuc = await authStore.giris2fa(girisToken.value, ikiFaktorKod.value.trim(), beniHatirla.value)
     girisToken.value = sonuc.girisToken
     sirketler.value = sonuc.sirketler || []
     ikiFaktorAdimi.value = false

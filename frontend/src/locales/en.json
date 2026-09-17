@@ -418,7 +418,8 @@
     "musterimiz": "Our Customer",
     "faturaTuruSeciniz": "Select invoice type",
     "kalemleriDoldurun": "Fill in all items completely",
-    "whatsappMesaj": "Dear {ad},\nYour invoice {no} with an amount of {tutar} has been issued. Kind regards.\nRaspel ERP"
+    "whatsappMesaj": "Dear {ad},\nYour invoice {no} with an amount of {tutar} has been issued. Kind regards.\nRaspel ERP",
+    "onizle": "Preview"
   },
   "stoklar": {
     "title": "Stock Management",
@@ -1557,7 +1558,10 @@
     "hataYukleme": "Failed to load periods",
     "hataKaydet": "Failed to save period",
     "hataSil": "Failed to delete period",
-    "donemDuzenle": "Edit Period"
+    "donemDuzenle": "Edit Period",
+    "aktifYap": "Set Active",
+    "aktifYapildi": "Period activated",
+    "islemBasarisiz": "Operation failed"
   },
   "efatura": {
     "title": "E-Invoice",

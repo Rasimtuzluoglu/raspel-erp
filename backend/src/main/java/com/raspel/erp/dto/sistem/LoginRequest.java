@@ -17,4 +17,7 @@ public class LoginRequest {
     private String companyName;
 
     private Long sirketId;
+
+    /** true ise kalıcı cookie (beni hatırla), aksi halde oturum cookie'si. */
+    private Boolean rememberMe;
 }

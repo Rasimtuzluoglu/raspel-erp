@@ -41,6 +41,16 @@ public class PdfRaporController {
                 .body(pdf);
     }
 
+    @GetMapping("/fatura/{id}/onizleme")
+    @Operation(summary = "Fatura önizleme (görsel)", description = "Fatura PDF'ini tarayıcıda görüntülenmek üzere (inline) döndürür")
+    public ResponseEntity<byte[]> faturaOnizleme(@PathVariable Long id) {
+        byte[] pdf = pdfRaporService.faturaRaporu(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=fatura_" + id + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @GetMapping("/irsaliye/{id}")
     @Operation(summary = "İrsaliye raporu PDF", description = "İrsaliye detaylarını PDF olarak indirir")
     public ResponseEntity<byte[]> irsaliyeRaporu(@PathVariable Long id) {

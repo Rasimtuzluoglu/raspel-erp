@@ -173,10 +173,6 @@ public class TahsilatService {
                 .sorted(Comparator.comparing(this::vade, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
 
-        if (acikFaturalar.isEmpty()) {
-            throw new BusinessException("Bu cari için ödenmemiş satış faturası bulunmuyor");
-        }
-
         BigDecimal kalan = tutar;
         List<Long> uygulananFaturalar = new ArrayList<>();
         for (Fatura f : acikFaturalar) {
@@ -207,13 +203,16 @@ public class TahsilatService {
         }
 
         if (kalan.compareTo(BigDecimal.ZERO) > 0) {
-            // Fazla ödeme: açık faturalardan fazla gelen tutar cariye alacak olarak kaydedilir.
+            // Fazla ödeme veya faturasız (avans) tahsilat: cariye alacak olarak kaydedilir.
+            boolean faturasiz = uygulananFaturalar.isEmpty();
             hareketService.hareketOlustur(HareketDTO.builder()
                     .cariHesapId(cariId)
                     .tur("TAHSILAT")
                     .tutar(kalan)
                     .hareketTarihi(hareketTarihi != null ? hareketTarihi : LocalDate.now())
-                    .aciklama("Fazla ödeme (alacak)")
+                    .aciklama(faturasiz
+                            ? (aciklama != null && !aciklama.isBlank() ? aciklama : "Avans tahsilat (faturasız)")
+                            : "Fazla ödeme (alacak)")
                     .odemeYontemi(odemeYontemi)
                     .taksitKurum(taksitKurum)
                     .taksitTutar(taksitTutar)

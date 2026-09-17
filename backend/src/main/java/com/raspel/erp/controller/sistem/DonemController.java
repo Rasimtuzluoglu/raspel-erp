@@ -60,9 +60,17 @@ public class DonemController {
     }
 
     @PostMapping
-    @Operation(summary = "Yeni dönem oluştur", description = "Yeni bir dönem oluşturur")
-    public ResponseEntity<DonemDTO> olustur(@Valid @RequestBody DonemDTO dto) {
+    @Operation(summary = "Yeni dönem oluştur", description = "Yeni bir dönem oluşturur (aktif ise diğerleri pasifleşir)")
+    public ResponseEntity<DonemDTO> olustur(@Valid @RequestBody DonemDTO dto, jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        if (sirketId != null) dto.setSirketId(sirketId);
         return ResponseEntity.status(HttpStatus.CREATED).body(donemService.olustur(dto));
+    }
+
+    @PutMapping("/{id}/aktif")
+    @Operation(summary = "Dönemi aktif yap", description = "Dönemi aktif yapar ve aynı şirketteki diğer dönemleri pasifleştirir")
+    public ResponseEntity<DonemDTO> aktifYap(@PathVariable Long id) {
+        return ResponseEntity.ok(donemService.aktifYap(id));
     }
 
     @PutMapping("/{id}")

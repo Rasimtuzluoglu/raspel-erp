@@ -16,4 +16,5 @@ public class TwoFactorGirisRequest {
 
     private String companyName;
     private Long sirketId;
+    private Boolean rememberMe;
 }

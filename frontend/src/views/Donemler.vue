@@ -72,6 +72,13 @@
       >
         <template #body="{ data }">
           <Button
+            v-if="!data.aktif"
+            icon="pi pi-check-circle"
+            class="p-button-rounded p-button-text p-button-success"
+            :title="t('donemler.aktifYap')"
+            @click="aktifYap(data)"
+          />
+          <Button
             icon="pi pi-pencil"
             class="p-button-rounded p-button-text"
             @click="dialogAc(data)"
@@ -188,8 +195,17 @@ const donemleriYukle = async () => {
   yukleniyor.value = false
 }
 
-const dialogAc = (data) => {
-  duzenleme.value = !!data
+const aktifYap = async (data) => {
+  try {
+    await donemAPI.aktifYap(data.id)
+    toastBildirim.basarili(t('donemler.aktifYapildi'))
+    await donemleriYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.islemBasarisiz'))
+  }
+}
+
+const dialogAc = (data) => {  duzenleme.value = !!data
   seciliId.value = data?.id || null
   form.value = data
     ? {

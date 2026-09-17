@@ -418,7 +418,8 @@
     "musterimiz": "Müşterimiz",
     "faturaTuruSeciniz": "Fatura türü seçiniz",
     "kalemleriDoldurun": "Tüm kalemleri eksiksiz doldurun",
-    "whatsappMesaj": "Sayın {ad},\n{no} numaralı, {tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP"
+    "whatsappMesaj": "Sayın {ad},\n{no} numaralı, {tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP",
+    "onizle": "Önizle"
   },
   "stoklar": {
     "title": "Stok Yönetimi",
@@ -1557,7 +1558,10 @@
     "hataYukleme": "Dönemler yüklenirken hata oluştu",
     "hataKaydet": "Dönem kaydedilirken hata oluştu",
     "hataSil": "Dönem silinirken hata oluştu",
-    "donemDuzenle": "Dönem Düzenle"
+    "donemDuzenle": "Dönem Düzenle",
+    "aktifYap": "Aktif Yap",
+    "aktifYapildi": "Dönem aktif yapıldı",
+    "islemBasarisiz": "İşlem başarısız"
   },
   "efatura": {
     "title": "E-Fatura",

@@ -143,7 +143,7 @@ public class KullaniciController {
     public ResponseEntity<LoginResponse> giris2fa(@RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.TwoFactorGirisRequest req,
                                                   HttpServletResponse response) {
         LoginResponse loginResponse = kullaniciService.giris2faTamamla(req);
-        jwtCookieEkle(response, loginResponse.getToken());
+        jwtCookieEkle(response, loginResponse.getToken(), Boolean.TRUE.equals(req.getRememberMe()));
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -153,8 +153,9 @@ public class KullaniciController {
                                                       HttpServletResponse response) {
         String girisToken = (String) req.get("girisToken");
         Long sirketId = req.get("sirketId") != null ? Long.valueOf(req.get("sirketId").toString()) : null;
+        boolean rememberMe = Boolean.TRUE.equals(req.get("rememberMe"));
         LoginResponse loginResponse = kullaniciService.girisSirket(girisToken, sirketId);
-        jwtCookieEkle(response, loginResponse.getToken());
+        jwtCookieEkle(response, loginResponse.getToken(), rememberMe);
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -163,8 +164,25 @@ public class KullaniciController {
     public ResponseEntity<LoginResponse> giris(@RequestBody @jakarta.validation.Valid LoginRequest req,
                                                 HttpServletResponse response) {
         LoginResponse loginResponse = kullaniciService.giris(req);
-        jwtCookieEkle(response, loginResponse.getToken());
+        jwtCookieEkle(response, loginResponse.getToken(), Boolean.TRUE.equals(req.getRememberMe()));
         return ResponseEntity.ok(loginResponse);
+    }
+
+    @PostMapping("/cikis")
+    @Operation(summary = "Çıkış", description = "JWT cookie'sini temizler ve mevcut oturumu iptal eder")
+    public ResponseEntity<Void> cikis(HttpServletRequest request, HttpServletResponse response) {
+        Object jti = request.getAttribute("jti");
+        if (jti instanceof String s && !s.isBlank()) {
+            try {
+                aktifOturumService.oturumIptal(s);
+            } catch (Exception ignored) {
+                // oturum kaydı yoksa yoksay
+            }
+        }
+        ResponseCookie temiz = ResponseCookie.from("jwt", "")
+                .httpOnly(true).secure(cookieSecure).sameSite("Strict").path("/").maxAge(0).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, temiz.toString());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/aktif-oturumlar")
@@ -229,14 +247,23 @@ public class KullaniciController {
     }
 
     private void jwtCookieEkle(HttpServletResponse response, String token) {
+        jwtCookieEkle(response, token, false);
+    }
+
+    /**
+     * JWT cookie'sini ekler. rememberMe false ise oturum cookie'si (sekme kapanınca silinir),
+     * true ise kalıcı cookie (Max-Age) yazılır.
+     */
+    private void jwtCookieEkle(HttpServletResponse response, String token, boolean rememberMe) {
         if (token == null || token.isBlank()) return;
-        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Strict")
-                .path("/")
-                .maxAge(jwtExpirationMs / 1000)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+                .path("/");
+        if (rememberMe) {
+            builder.maxAge(jwtExpirationMs / 1000);
+        }
+        response.addHeader(HttpHeaders.SET_COOKIE, builder.build().toString());
     }
 }
