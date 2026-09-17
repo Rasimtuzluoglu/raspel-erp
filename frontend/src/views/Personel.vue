@@ -55,6 +55,19 @@
             :header="t('personel.pozisyon')"
           />
           <Column
+            field="rol"
+            :header="t('personel.rol')"
+            style="width: 110px"
+          >
+            <template #body="s">
+              <span
+                v-if="s.data.rol"
+                class="rol-badge"
+              >{{ rolEtiket(s.data.rol) }}</span>
+              <span v-else>-</span>
+            </template>
+          </Column>
+          <Column
             field="telefon"
             :header="t('personel.telefon')"
           />
@@ -209,6 +222,32 @@
         </div>
         <div class="field-row">
           <div class="field">
+            <label>{{ t('personel.rol') }}</label>
+            <Dropdown
+              v-model="personelForm.rol"
+              :options="rolSecenekleri"
+              option-label="label"
+              option-value="value"
+              show-clear
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>{{ t('personel.kullaniciHesabi') }}</label>
+            <Dropdown
+              v-model="personelForm.kullaniciId"
+              :options="kullanicilar"
+              option-label="displayName"
+              option-value="id"
+              show-clear
+              filter
+              :placeholder="personelForm.rol === 'SOFOR' ? t('personel.kullaniciSec') : t('personel.kullaniciOpsiyonel')"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
             <label>{{ t('personel.maas') }}</label><InputNumber
               v-model="personelForm.maas"
               mode="currency"
@@ -336,7 +375,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
-import { personelAPI, personelIzinAPI, excelAPI } from '../api/index.js'
+import { personelAPI, personelIzinAPI, excelAPI, kullaniciAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { useI18n } from 'vue-i18n'
@@ -355,6 +394,13 @@ const duzenleme = ref(false)
 const izinPersonelId = ref(null)
 const izinPersonelAdi = ref('')
 const personelForm = ref(defaultForm())
+const kullanicilar = ref([])
+const rolSecenekleri = computed(() => [
+  { label: t('personel.rolSofor'), value: 'SOFOR' },
+  { label: t('personel.rolDepocu'), value: 'DEPOCU' },
+  { label: t('personel.rolDiger'), value: 'DIGER' }
+])
+const rolEtiket = (rol) => ({ SOFOR: t('personel.rolSofor'), DEPOCU: t('personel.rolDepocu'), DIGER: t('personel.rolDiger') }[rol] || rol)
 const { temizle: formTemizle } = useFormKorumasi(personelForm)
 const izinForm = ref({ izinTuru: '', baslangic: null, bitis: null, aciklama: '' })
 const tcGecerli = computed(() => {
@@ -387,6 +433,8 @@ function defaultForm() {
     iseGirisTarihi: new Date(),
     departman: '',
     pozisyon: '',
+    rol: '',
+    kullaniciId: null,
     maas: null,
     telefon: '',
     email: '',
@@ -398,9 +446,10 @@ function defaultForm() {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [pR, iR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll()])
+    const [pR, iR, kR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll(), kullaniciAPI.getAll().catch(() => ({ data: [] }))])
     personeller.value = unwrapList(pR)
     tumIzinler.value = unwrapList(iR)
+    kullanicilar.value = unwrapList(kR)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('personel.hataYukleme'))
   }
@@ -541,5 +590,13 @@ const izinKaydet = async () => {
 }
 .w-full {
   width: 100%;
+}
+.rol-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
 }
 </style>

@@ -2379,7 +2379,14 @@
     "hataKaydet": "Failed to save employee",
     "hataSil": "Failed to delete employee",
     "izinHataKaydet": "Failed to save leave",
-    "personelDuzenle": "Edit Employee"
+    "personelDuzenle": "Edit Employee",
+    "rol": "Duty",
+    "rolSofor": "Driver",
+    "rolDepocu": "Warehouse Staff",
+    "rolDiger": "Other",
+    "kullaniciHesabi": "User Account",
+    "kullaniciSec": "Select driver user account",
+    "kullaniciOpsiyonel": "User account (optional)"
   },
   "posTerminalleri": {
     "title": "POS Terminals",

@@ -2379,7 +2379,14 @@
     "hataKaydet": "Personel kaydedilirken hata oluştu",
     "hataSil": "Personel silinirken hata oluştu",
     "izinHataKaydet": "İzin kaydedilirken hata oluştu",
-    "personelDuzenle": "Personel Düzenle"
+    "personelDuzenle": "Personel Düzenle",
+    "rol": "Görev",
+    "rolSofor": "Şoför",
+    "rolDepocu": "Depocu",
+    "rolDiger": "Diğer",
+    "kullaniciHesabi": "Kullanıcı Hesabı",
+    "kullaniciSec": "Şoför kullanıcı hesabı seçin",
+    "kullaniciOpsiyonel": "Kullanıcı hesabı (opsiyonel)"
   },
   "posTerminalleri": {
     "title": "POS Terminalleri",

@@ -42,6 +42,14 @@ public class Personel {
     @Column(length = 100)
     private String pozisyon;
 
+    /** Görev/rol: SOFOR | DEPOCU | DIGER (boş ise tanımsız). */
+    @Column(length = 20)
+    private String rol;
+
+    /** Şoför personelin bağlı olduğu kullanıcı hesabı (teslimat şoför seçimi için). */
+    @Column(name = "kullanici_id")
+    private Long kullaniciId;
+
     @Column(precision = 19, scale = 2)
     private BigDecimal maas;
 

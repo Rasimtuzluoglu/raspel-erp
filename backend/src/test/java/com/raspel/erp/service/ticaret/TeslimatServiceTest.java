@@ -36,6 +36,7 @@ class TeslimatServiceTest {
     @Mock private DosyaDepolamaService dosyaDepolama;
     @Mock private BildirimService bildirimService;
     @Mock private TeslimatDurumLogRepository durumLogRepository;
+    @Mock private com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     @InjectMocks private TeslimatService teslimatService;
 
     @Test
@@ -43,6 +44,7 @@ class TeslimatServiceTest {
         Kullanici s1 = Kullanici.builder().id(1L).displayName("Ali").role("DRIVER").build();
         Kullanici s2 = Kullanici.builder().id(2L).displayName("Veli").role("DRIVER").build();
         when(kullaniciRepository.findBySirketIdAndRole(1L, "DRIVER")).thenReturn(List.of(s1, s2));
+        when(personelRepository.findBySirketIdAndRolAndAktifTrue(1L, "SOFOR")).thenReturn(List.of());
         when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
         when(teslimatRepository.countBySirketIdAndDriverIdAndDurumIn(eq(1L), eq(1L), anyList())).thenReturn(2L);
         when(teslimatRepository.countBySirketIdAndDriverIdAndDurumIn(eq(1L), eq(2L), anyList())).thenReturn(0L);
@@ -57,6 +59,7 @@ class TeslimatServiceTest {
     void suruculer_driverKendiDisindakiSurucuyuGoremez() {
         Kullanici s1 = Kullanici.builder().id(1L).displayName("Ali").role("DRIVER").build();
         when(kullaniciRepository.findBySirketIdAndRole(1L, "DRIVER")).thenReturn(List.of(s1));
+        when(personelRepository.findBySirketIdAndRolAndAktifTrue(1L, "SOFOR")).thenReturn(List.of());
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(Kullanici.builder().id(1L).role("DRIVER").build()));
         when(teslimatRepository.countBySirketIdAndDriverIdAndDurumIn(1L, 1L, List.of("BEKLEMEDE", "YOLDA"))).thenReturn(1L);
 

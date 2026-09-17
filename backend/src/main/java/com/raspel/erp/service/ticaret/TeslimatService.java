@@ -38,15 +38,32 @@ public class TeslimatService {
     private final DosyaDepolamaService dosyaDepolama;
     private final BildirimService bildirimService;
     private final TeslimatDurumLogRepository durumLogRepository;
+    private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
 
     private static final List<String> BEKLEYEN_DURUMLAR = List.of("BEKLEMEDE", "YOLDA");
     private static final String FOTO_KLASOR = "teslimat-fotolari";
 
     @Transactional(readOnly = true)
     public List<SurucuDTO> suruculer(Long sirketId, Long kullaniciId) {
-        List<Kullanici> suruculer = kullaniciRepository.findBySirketIdAndRole(sirketId, "DRIVER");
         boolean driverMi = driverMi(kullaniciId);
-        return suruculer.stream()
+
+        // Şoför listesi: rol=SOFOR personelin bağlı kullanıcı hesabı + geriye uyum için
+        // personele bağlı olmayan DRIVER rolü kullanıcılar.
+        java.util.LinkedHashMap<Long, Kullanici> birlesik = new java.util.LinkedHashMap<>();
+        java.util.Set<Long> bagliKullaniciIdleri = new java.util.HashSet<>();
+        for (com.raspel.erp.entity.ik.Personel p
+                : personelRepository.findBySirketIdAndRolAndAktifTrue(sirketId, "SOFOR")) {
+            if (p.getKullaniciId() == null) continue;
+            bagliKullaniciIdleri.add(p.getKullaniciId());
+            kullaniciRepository.findById(p.getKullaniciId()).ifPresent(k -> birlesik.put(k.getId(), k));
+        }
+        for (Kullanici k : kullaniciRepository.findBySirketIdAndRole(sirketId, "DRIVER")) {
+            if (!bagliKullaniciIdleri.contains(k.getId())) {
+                birlesik.put(k.getId(), k);
+            }
+        }
+
+        return birlesik.values().stream()
                 .filter(s -> !driverMi || s.getId().equals(kullaniciId))
                 .map(s -> SurucuDTO.builder()
                         .id(s.getId())

@@ -49,6 +49,7 @@ public class PersonelService {
                 .tcKimlik(dto.getTcKimlik()).dogumTarihi(dto.getDogumTarihi())
                 .iseGirisTarihi(dto.getIseGirisTarihi())
                 .departman(dto.getDepartman()).pozisyon(dto.getPozisyon())
+                .rol(dto.getRol()).kullaniciId(dto.getKullaniciId())
                 .maas(dto.getMaas()).telefon(dto.getTelefon())
                 .email(dto.getEmail()).adres(dto.getAdres())
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
@@ -68,6 +69,8 @@ public class PersonelService {
         if (dto.getTcKimlik() != null) p.setTcKimlik(dto.getTcKimlik());
         if (dto.getDepartman() != null) p.setDepartman(dto.getDepartman());
         if (dto.getPozisyon() != null) p.setPozisyon(dto.getPozisyon());
+        if (dto.getRol() != null) p.setRol(dto.getRol());
+        if (dto.getKullaniciId() != null) p.setKullaniciId(dto.getKullaniciId());
         if (dto.getMaas() != null) p.setMaas(dto.getMaas());
         if (dto.getTelefon() != null) p.setTelefon(dto.getTelefon());
         if (dto.getEmail() != null) p.setEmail(dto.getEmail());
@@ -87,12 +90,20 @@ public class PersonelService {
         cacheYardimci.temizle("dashboard");
     }
 
+    @Transactional(readOnly = true)
+    public List<PersonelDTO> roleGoreGetir(Long sirketId, String rol) {
+        if (sirketId == null || rol == null || rol.isBlank()) return List.of();
+        return personelRepository.findBySirketIdAndRolOrderByAdAsc(sirketId, rol.trim().toUpperCase())
+                .stream().map(this::entityToDTO).collect(Collectors.toList());
+    }
+
     private PersonelDTO entityToDTO(Personel p) {
         return PersonelDTO.builder()
                 .id(p.getId()).ad(p.getAd()).soyad(p.getSoyad())
                 .tcKimlik(p.getTcKimlik()).dogumTarihi(p.getDogumTarihi())
                 .iseGirisTarihi(p.getIseGirisTarihi()).cikisTarihi(p.getCikisTarihi())
                 .departman(p.getDepartman()).pozisyon(p.getPozisyon())
+                .rol(p.getRol()).kullaniciId(p.getKullaniciId())
                 .maas(p.getMaas()).telefon(p.getTelefon())
                 .email(p.getEmail()).adres(p.getAdres())
                 .aktif(p.getAktif()).sirketId(p.getSirketId())

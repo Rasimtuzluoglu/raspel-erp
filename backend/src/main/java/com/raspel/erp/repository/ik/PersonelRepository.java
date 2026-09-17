@@ -13,6 +13,8 @@ import java.util.List;
 public interface PersonelRepository extends JpaRepository<Personel, Long> {
     Page<Personel> findBySirketIdOrderByAdAsc(Long sirketId, Pageable pageable);
     List<Personel> findByAktifTrueAndSirketId(Long sirketId);
+    List<Personel> findBySirketIdAndRolOrderByAdAsc(Long sirketId, String rol);
+    List<Personel> findBySirketIdAndRolAndAktifTrue(Long sirketId, String rol);
     long countByAktifTrue();
     long countByAktifTrueAndSirketId(Long sirketId);
     long countByIseGirisTarihiBetween(LocalDate baslangic, LocalDate bitis);

@@ -36,6 +36,14 @@ public class PersonelController {
         return ResponseEntity.ok(personelService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/rol/{rol}")
+    @Operation(summary = "Göreve göre personel", description = "Belirtilen görevdeki (SOFOR/DEPOCU/DIGER) personelleri listeler")
+    public ResponseEntity<java.util.List<PersonelDTO>> roleGore(
+            @PathVariable String rol, jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(personelService.roleGoreGetir(sirketId, rol));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre personel getir", description = "Personel ID'sine göre detayları getirir")
     public ResponseEntity<PersonelDTO> getir(@PathVariable Long id) {

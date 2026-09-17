@@ -19,6 +19,8 @@ public class PersonelDTO {
     private LocalDate cikisTarihi;
     private String departman;
     private String pozisyon;
+    private String rol;
+    private Long kullaniciId;
     private BigDecimal maas;
     private String telefon;
     private String email;
