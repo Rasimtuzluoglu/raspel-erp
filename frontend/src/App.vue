@@ -72,7 +72,7 @@
           </button>
         </div>
       </transition>
-      <AppTopbar v-if="authStore.isLoggedIn" />
+      <AppBreadcrumb v-if="authStore.isLoggedIn" />
       <ErrorBoundary>
         <router-view v-slot="{ Component }">
           <transition
@@ -189,7 +189,7 @@ import ErrorBoundary from './components/ErrorBoundary.vue'
 import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
-import AppTopbar from './components/AppTopbar.vue'
+import AppBreadcrumb from './components/AppBreadcrumb.vue'
 import MobilAltMenu from './components/MobilAltMenu.vue'
 import KisayolRehberi from './components/KisayolRehberi.vue'
 
