@@ -16,25 +16,27 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore.js'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const menu = computed(() => {
   if (authStore.isSaha) {
     return [
-      { path: '/saha-portali', label: 'Portal', icon: 'pi pi-compass' },
-      { path: '/stoklar', label: 'Stok', icon: 'pi pi-box' },
-      { path: '/sohbet', label: 'Sohbet', icon: 'pi pi-comments' },
-      { path: '/hesap-ayarlari', label: 'Hesap', icon: 'pi pi-cog' }
+      { path: '/saha-portali', label: t('mobilMenu.portal'), icon: 'pi pi-compass' },
+      { path: '/stoklar', label: t('mobilMenu.stok'), icon: 'pi pi-box' },
+      { path: '/sohbet', label: t('mobilMenu.sohbet'), icon: 'pi pi-comments' },
+      { path: '/hesap-ayarlari', label: t('mobilMenu.hesap'), icon: 'pi pi-cog' }
     ]
   }
   return [
-    { path: '/', label: 'Panel', icon: 'pi pi-home' },
-    { path: '/stoklar', label: 'Stok', icon: 'pi pi-box' },
-    { path: '/faturalar', label: 'Fatura', icon: 'pi pi-file' },
-    { path: '/hesap-ayarlari', label: 'Hesap', icon: 'pi pi-cog' }
+    { path: '/', label: t('mobilMenu.panel'), icon: 'pi pi-home' },
+    { path: '/stoklar', label: t('mobilMenu.stok'), icon: 'pi pi-box' },
+    { path: '/faturalar', label: t('mobilMenu.fatura'), icon: 'pi pi-file' },
+    { path: '/hesap-ayarlari', label: t('mobilMenu.hesap'), icon: 'pi pi-cog' }
   ]
 })
 
@@ -58,13 +60,14 @@ const aktif = (path) => {
     padding-bottom: env(safe-area-inset-bottom);
     display: flex;
     align-items: stretch;
-    background: var(--bg-card, #0f172a);
+    background: var(--bg-card, #141109);
     border-top: 1px solid var(--border);
     z-index: 900;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
   }
 }
 .mam-item {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -77,8 +80,9 @@ const aktif = (path) => {
   font-weight: 600;
   min-height: 48px;
   min-width: 0;
-  transition: color 0.15s;
+  transition: color var(--dur-fast, 0.15s);
   overflow: hidden;
+  touch-action: manipulation;
 }
 .mam-item span {
   max-width: 100%;
@@ -90,7 +94,18 @@ const aktif = (path) => {
   font-size: 20px;
 }
 .mam-item.aktif {
-  color: var(--primary-color, #3b82f6);
+  color: var(--accent);
+}
+.mam-item.aktif::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
 }
 .mam-item:active {
   transform: scale(0.95);

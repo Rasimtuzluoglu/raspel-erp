@@ -4169,5 +4169,13 @@
     "kaynakOzel": "Customer Special",
     "kaynakSeviye": "Price",
     "kaynakListe": "List"
+  },
+  "mobilMenu": {
+    "panel": "Home",
+    "stok": "Stock",
+    "fatura": "Invoice",
+    "hesap": "Account",
+    "portal": "Portal",
+    "sohbet": "Chat"
   }
 }

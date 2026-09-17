@@ -5,7 +5,7 @@ import Dashboard from '../views/Dashboard.vue'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
-NProgress.configure({ showSpinner: false })
+NProgress.configure({ showSpinner: false, minimum: 0.12, trickleSpeed: 200 })
 
 const routes = [
   {
@@ -448,7 +448,11 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    return { top: 0 }
+  }
 })
 
 router.beforeEach((to, from, next) => {
@@ -485,8 +489,12 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-router.afterEach(() => {
+router.afterEach((to) => {
   NProgress.done()
+  // Sekme basligi: route meta basligi veya son yol parcasi
+  const son = to.path.split('/').filter(Boolean).pop()
+  const baslik = to.meta?.title || (son ? son.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR')) : 'Panel')
+  document.title = `${baslik} · RasPel ERP`
 })
 
 export default router

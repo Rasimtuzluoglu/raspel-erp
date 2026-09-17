@@ -4169,5 +4169,13 @@
     "kaynakOzel": "Cari Özel",
     "kaynakSeviye": "Fiyat",
     "kaynakListe": "Liste"
+  },
+  "mobilMenu": {
+    "panel": "Panel",
+    "stok": "Stok",
+    "fatura": "Fatura",
+    "hesap": "Hesap",
+    "portal": "Portal",
+    "sohbet": "Sohbet"
   }
 }
