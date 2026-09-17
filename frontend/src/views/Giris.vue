@@ -14,18 +14,17 @@
       <div class="sahne-parilti p2" />
     </div>
 
-    <!-- Yuzen dekoratif cam kartlar (parallax, transform-only) -->
+    <!-- Yuzen dekoratif cam kartlar (panel kenarina hizali, parallax) -->
     <div
-      class="yuzen-kart yk-1"
+      class="sahne-yuzen"
       aria-hidden="true"
     >
-      <i class="pi pi-chart-line" /><span>+24%</span>
-    </div>
-    <div
-      class="yuzen-kart yk-2"
-      aria-hidden="true"
-    >
-      <i class="pi pi-shield" /><span>SSL</span>
+      <div class="yuzen-kart yk-1">
+        <i class="pi pi-chart-line" /><span>+24%</span>
+      </div>
+      <div class="yuzen-kart yk-2">
+        <i class="pi pi-shield" /><span>SSL</span>
+      </div>
     </div>
 
     <div class="giris-split-wrapper">
@@ -731,9 +730,15 @@ const tumAdimlariSifirla = () => {
   background: radial-gradient(circle at 50% 0%, #1c160a 0%, #0b0a08 62%);
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 30px 20px;
+  padding:
+    calc(30px + env(safe-area-inset-top))
+    calc(20px + env(safe-area-inset-right))
+    calc(30px + env(safe-area-inset-bottom))
+    calc(20px + env(safe-area-inset-left));
   width: 100%;
   max-width: 100%;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Aksan rengi dinamik (kullanici/sirket secimi) ise renk tonlarini color-mix ile turet. */
@@ -908,14 +913,23 @@ const tumAdimlariSifirla = () => {
 .yuzen-kart i {
   color: var(--giris-aksan-parlak);
 }
+/* Yuzen kartlar panel genisligine hizali konumlanir (simetrik, tasma yok) */
+.sahne-yuzen {
+  position: absolute;
+  inset: 0;
+  max-width: min(1180px, 100%);
+  margin: 0 auto;
+  pointer-events: none;
+  z-index: 0;
+}
 .yk-1 {
-  top: 15%;
-  left: 5%;
+  top: 14%;
+  left: -108px;
   animation: yuz 8s ease-in-out infinite alternate;
 }
 .yk-2 {
-  bottom: 15%;
-  right: 6%;
+  bottom: 14%;
+  right: -108px;
   animation: yuz 10s ease-in-out infinite alternate -3s;
 }
 @keyframes yuz {
@@ -1364,6 +1378,16 @@ const tumAdimlariSifirla = () => {
   box-shadow: 0 6px 22px var(--giris-tint-40);
 }
 
+/* Dokunmatik: 300ms gecikme ve cift-dokunma zoom'unu engelle */
+.giris-buton,
+.rol-chip,
+.sirket-secim-kart,
+.sifre-toggle,
+.geri-satir a,
+.giris-alt-linkler a {
+  touch-action: manipulation;
+}
+
 /* Hızlı Roller */
 .hizli-roller {
   display: flex;
@@ -1718,7 +1742,7 @@ const tumAdimlariSifirla = () => {
 }
 
 /* Responsive Düzen */
-@media (max-width: 1280px) {
+@media (max-width: 1400px) {
   .yuzen-kart {
     display: none;
   }
@@ -1745,11 +1769,19 @@ const tumAdimlariSifirla = () => {
   .giris-form-alani {
     padding: 32px 24px;
   }
+  /* iOS: odaklaninca otomatik zoom'u engelle (16px alti zoom tetikler) */
+  .input-wrapper :deep(.p-inputtext) {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
   .giris-sayfasi {
-    padding: 16px 12px;
+    padding:
+      calc(16px + env(safe-area-inset-top))
+      calc(12px + env(safe-area-inset-right))
+      calc(16px + env(safe-area-inset-bottom))
+      calc(12px + env(safe-area-inset-left));
   }
   .giris-form {
     padding: 18px;

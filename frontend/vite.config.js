@@ -25,12 +25,19 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
       },
       manifest: {
+        id: '/',
         name: 'RasPel ERP',
         short_name: 'RasPel',
         description: 'RasPel ERP — KOBİ yönetim sistemi',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#0b0a08',
+        background_color: '#0b0a08',
         lang: 'tr',
+        dir: 'ltr',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        display_override: ['standalone', 'minimal-ui'],
+        orientation: 'any',
         categories: ['business', 'finance', 'productivity'],
         icons: [
           {

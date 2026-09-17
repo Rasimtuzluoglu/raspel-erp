@@ -707,6 +707,7 @@ const sec = (id) => {
   cursor: pointer;
   transition: all 0.18s ease;
   white-space: nowrap;
+  touch-action: manipulation;
 }
 .preview-tab i {
   font-size: 11px;
