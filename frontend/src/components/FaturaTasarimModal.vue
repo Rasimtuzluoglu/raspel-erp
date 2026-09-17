@@ -1101,7 +1101,7 @@ const yazdir = async () => {
 }
 .sablon-btn.aktif {
   border-color: var(--primary-color);
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
   color: var(--primary-color);
 }
 .sablon-btn i {

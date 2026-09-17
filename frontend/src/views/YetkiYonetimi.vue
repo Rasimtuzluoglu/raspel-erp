@@ -367,11 +367,11 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 .role-tab-btn:hover {
-  border-color: var(--primary-color, #3b82f6);
+  border-color: var(--primary-color, var(--accent));
 }
 .role-tab-btn.aktif {
-  background: var(--primary-color, #3b82f6);
-  border-color: var(--primary-color, #3b82f6);
+  background: var(--primary-color, var(--accent));
+  border-color: var(--primary-color, var(--accent));
   color: #ffffff;
 }
 .role-tab-btn.aktif .text-muted {
@@ -415,7 +415,7 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: var(--accent);
 }
 .yetki-cb.danger {
   accent-color: #ef4444;

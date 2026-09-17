@@ -290,8 +290,8 @@ onUnmounted(() => {
 })
 
 const sirketRenkPaletleri = [
-  { accent: '#3b82f6', accentHover: '#2563eb' },
   { accent: '#10b981', accentHover: '#059669' },
+  { accent: '#3b82f6', accentHover: '#2563eb' },
   { accent: '#8b5cf6', accentHover: '#7c3aed' },
   { accent: '#f59e0b', accentHover: '#d97706' },
   { accent: '#ec4899', accentHover: '#db2777' },

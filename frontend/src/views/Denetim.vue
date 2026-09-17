@@ -450,7 +450,7 @@ onMounted(() => {
   display: inline-block;
 }
 .detay-metin:hover {
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, var(--accent));
   text-decoration: underline;
 }
 .detay-dialog-icerik {

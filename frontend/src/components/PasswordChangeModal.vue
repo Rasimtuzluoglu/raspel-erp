@@ -179,7 +179,7 @@ const sifreDegistir = async () => {
   background: #f59e0b;
 }
 .guc-dolgu.iyi {
-  background: #3b82f6;
+  background: var(--accent);
 }
 .guc-dolgu.guclu {
   background: #22c55e;
@@ -196,7 +196,7 @@ const sifreDegistir = async () => {
   color: #f59e0b;
 }
 .guc-etiket.iyi {
-  color: #60a5fa;
+  color: var(--accent);
 }
 .guc-etiket.guclu {
   color: #4ade80;

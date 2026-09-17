@@ -179,8 +179,8 @@ onUnmounted(() => {
 }
 
 .theme-toggle-btn:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: #3b82f6;
+  background: var(--accent-soft-strong);
+  border-color: var(--accent);
 }
 
 .theme-icon {
@@ -260,7 +260,7 @@ onUnmounted(() => {
 }
 
 .mode-btn.active {
-  background: var(--accent, #3b82f6);
+  background: var(--accent, var(--accent));
   color: #ffffff;
 }
 

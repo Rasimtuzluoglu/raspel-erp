@@ -903,7 +903,7 @@ h2 {
 .kasa-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: rgba(59, 130, 246, 0.25);
+  border-color: var(--accent-soft-strong);
 }
 .kasa-card.active {
   border-color: var(--accent);

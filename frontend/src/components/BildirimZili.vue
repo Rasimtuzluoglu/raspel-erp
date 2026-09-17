@@ -478,8 +478,8 @@ const temizle = async () => {
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  background: var(--accent-soft-strong);
 }
 .item-ikon.pi-exclamation-triangle {
   color: #fbbf24;

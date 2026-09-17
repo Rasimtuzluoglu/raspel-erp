@@ -1154,7 +1154,7 @@ const kopyala = async (text) => {
   color: var(--text-primary);
 }
 .ayar-menu-btn.aktif {
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--accent-soft-strong);
   color: var(--accent);
 }
 .ayar-icerik {
@@ -1352,7 +1352,7 @@ const kopyala = async (text) => {
 }
 .renk-dot.aktif {
   border-color: var(--text-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 0 3px var(--accent-border);
 }
 .empty-state {
   text-align: center;
@@ -1373,7 +1373,7 @@ const kopyala = async (text) => {
   gap: 6px;
   padding: 12px;
   margin-bottom: 12px;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--accent-soft);
   border: 1px solid var(--accent);
   border-radius: 8px;
   font-size: 0.85rem;

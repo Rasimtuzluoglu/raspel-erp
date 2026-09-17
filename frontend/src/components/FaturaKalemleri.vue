@@ -149,7 +149,7 @@ defineEmits(['add', 'remove'])
 .summary-row.total {
   font-weight: 700;
   font-size: 18px;
-  border-top: 2px solid #3b82f6;
+  border-top: 2px solid var(--accent);
   margin-top: 5px;
   padding-top: 10px;
   color: var(--text-primary);

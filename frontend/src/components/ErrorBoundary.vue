@@ -111,12 +111,12 @@ const goHome = () => {
 }
 
 .retry-btn {
-  background: var(--primary-color, #3b82f6);
+  background: var(--primary-color, var(--accent));
   color: #ffffff;
 }
 
 .retry-btn:hover {
-  background: #2563eb;
+  background: var(--accent-hover);
 }
 
 .home-btn {

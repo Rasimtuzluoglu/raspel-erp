@@ -635,7 +635,7 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   border-radius: 6px;
 }
 .belge-ikon {
-  color: #60a5fa;
+  color: var(--accent);
   font-size: 16px;
 }
 .belge-ad {
@@ -679,7 +679,7 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
 }
 .teslim-badge.yolda {
   background: rgba(96, 165, 250, 0.15);
-  color: #60a5fa;
+  color: var(--accent);
 }
 .teslim-badge.teslim_edildi {
   background: rgba(34, 197, 94, 0.15);

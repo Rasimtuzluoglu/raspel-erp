@@ -471,8 +471,8 @@ onMounted(() => {
   background: var(--bg-primary);
 }
 .surucu-kart.aktif {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--accent, #3b82f6);
+  background: var(--accent-soft);
+  color: var(--accent, var(--accent));
   font-weight: 600;
 }
 .surucu-ad {
@@ -531,13 +531,13 @@ onMounted(() => {
   cursor: pointer;
 }
 .filtre-sekme:hover {
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .filtre-sekme.aktif {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  background: var(--accent-soft);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .teslimat-kart {
   background: var(--bg-card);
@@ -557,7 +557,7 @@ onMounted(() => {
 .fatura-no {
   font-weight: 700;
   font-size: 13px;
-  color: var(--accent, #3b82f6);
+  color: var(--accent, var(--accent));
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -601,8 +601,8 @@ onMounted(() => {
   gap: 6px;
   padding: 6px 12px;
   border-radius: 8px;
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--accent, #3b82f6);
+  background: var(--accent-soft);
+  color: var(--accent, var(--accent));
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -646,8 +646,8 @@ onMounted(() => {
   cursor: pointer;
 }
 .foto-yukle:hover {
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .bos {
   text-align: center;
@@ -719,8 +719,8 @@ onMounted(() => {
   cursor: pointer;
 }
 .gecmis-toggle:hover {
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .gecmis-liste {
   display: flex;
@@ -739,7 +739,7 @@ onMounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent, #3b82f6);
+  background: var(--accent, var(--accent));
   flex-shrink: 0;
 }
 .g-durum {
@@ -771,7 +771,7 @@ onMounted(() => {
   color: #fff;
 }
 .durum-btn.yolda {
-  background: #3b82f6;
+  background: var(--accent);
 }
 .durum-btn.teslim {
   background: #10b981;

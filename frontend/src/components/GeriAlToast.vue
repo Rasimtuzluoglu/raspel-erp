@@ -46,7 +46,7 @@ const { durum, geriAl, gizle } = useGeriAl()
   color: var(--text-primary);
 }
 .geri-al-bar > i {
-  color: #3b82f6;
+  color: var(--accent);
 }
 .undo-enter-active,
 .undo-leave-active {

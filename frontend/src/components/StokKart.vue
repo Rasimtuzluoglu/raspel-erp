@@ -70,7 +70,7 @@ const { t } = useI18n()
 .stok-kart:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: rgba(59, 130, 246, 0.25);
+  border-color: var(--accent-soft-strong);
 }
 .stok-kart.dusuk-stok {
   border-color: rgba(239, 68, 68, 0.3);

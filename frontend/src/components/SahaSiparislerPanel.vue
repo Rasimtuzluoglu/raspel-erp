@@ -166,7 +166,7 @@ const siparisDurumSeverity = (durum) => {
 .saha-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-color, #3b82f6);
+  border-color: var(--primary-color, var(--accent));
 }
 .card-top {
   display: flex;
@@ -177,7 +177,7 @@ const siparisDurumSeverity = (durum) => {
 .order-code {
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, var(--accent));
 }
 .customer-title {
   font-size: 1.05rem;
@@ -252,12 +252,12 @@ const siparisDurumSeverity = (durum) => {
   background: rgba(37, 211, 102, 0.2);
 }
 .map-btn {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
 }
 .map-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: var(--accent-soft-strong);
 }
 .delivery-actions {
   display: flex;

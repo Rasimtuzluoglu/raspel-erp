@@ -507,7 +507,7 @@ onMounted(yukle)
   border-radius: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--accent);
 }
 
 .ozet-kart.gecikmis {
@@ -585,8 +585,8 @@ onMounted(yukle)
 }
 
 .gun-hucre.bugun {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6 inset;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
 .gun-no {

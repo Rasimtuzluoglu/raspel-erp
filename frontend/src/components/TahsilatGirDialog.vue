@@ -498,7 +498,7 @@ const kaydet = async () => {
   color: var(--text-primary);
 }
 .yontem-btn.aktif {
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--accent);
 }

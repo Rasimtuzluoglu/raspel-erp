@@ -664,7 +664,7 @@ const sil = (data) => {
 }
 .kanban-kart:hover {
   transform: translateY(-2px);
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent, var(--accent));
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .kanban-kart:active {

@@ -235,13 +235,13 @@ const etiketPdfIndir = async () => {
   cursor: pointer;
 }
 .etiket-tip-secim button:hover:not(:disabled) {
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .etiket-tip-secim button.aktif {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  background: var(--accent-soft);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .etiket-tip-secim button:disabled {
   opacity: 0.45;

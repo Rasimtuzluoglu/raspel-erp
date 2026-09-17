@@ -1461,7 +1461,7 @@ onMounted(yukle)
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--accent);
   margin-top: 5px;
   flex-shrink: 0;
 }

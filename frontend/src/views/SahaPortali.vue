@@ -950,7 +950,7 @@ const hizliSiparisKaydet = async () => {
 }
 
 .saha-header-card {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #1e40af 0%, var(--accent) 100%);
   color: white;
   padding: 1.25rem 1.5rem;
   border-radius: 1rem;
@@ -1062,7 +1062,7 @@ const hizliSiparisKaydet = async () => {
 .order-code {
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, var(--accent));
 }
 
 .customer-title {
@@ -1147,9 +1147,9 @@ const hizliSiparisKaydet = async () => {
 }
 
 .map-btn {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
 }
 
 .delivery-actions {
@@ -1238,8 +1238,8 @@ const hizliSiparisKaydet = async () => {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 6px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .expense-desc {
@@ -1256,7 +1256,7 @@ const hizliSiparisKaydet = async () => {
 .expense-amount {
   font-size: 1.2rem;
   font-weight: 800;
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, var(--accent));
 }
 
 .tab-pill-group {
@@ -1279,7 +1279,7 @@ const hizliSiparisKaydet = async () => {
 }
 
 .pill-btn.active {
-  background: var(--primary-color, #3b82f6);
+  background: var(--primary-color, var(--accent));
   color: white;
 }
 

@@ -703,8 +703,8 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .qs-mic-btn:hover {
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 .qs-mic-btn.listening {
   color: #ef4444;
@@ -823,11 +823,11 @@ onUnmounted(() => {
   text-align: left;
 }
 .qs-komut:hover {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: #3b82f6;
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 .qs-komut i {
-  color: #60a5fa;
+  color: var(--accent);
 }
 .qs-loading,
 .qs-empty,
@@ -885,7 +885,7 @@ onUnmounted(() => {
 }
 .qs-item.active,
 .qs-item:hover {
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
 }
 .qs-item-icon {
   font-size: 16px;

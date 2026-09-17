@@ -541,7 +541,7 @@ onMounted(() => {
   background: rgba(59, 130, 246, 0.08);
 }
 .gun-hucre.secili {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--accent);
 }
 .gun-no {
   font-size: 13px;
@@ -561,7 +561,7 @@ onMounted(() => {
   background: #f59e0b;
 }
 .olay-nokta.gorev {
-  background: #3b82f6;
+  background: var(--accent);
 }
 .gun-detay {
   margin-top: 16px;
@@ -595,7 +595,7 @@ onMounted(() => {
   color: #f59e0b;
 }
 .gorev-ikon {
-  color: #3b82f6;
+  color: var(--accent);
 }
 .hatirlatici-ikon {
   color: #ef4444;

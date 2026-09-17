@@ -16,12 +16,12 @@
   --text-muted: #94a3b8;
 
   /* Aksan (tek otorite) */
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-contrast: #1a1206;
-  --accent-soft: rgba(245, 158, 11, 0.15);
-  --accent-soft-strong: rgba(245, 158, 11, 0.22);
-  --accent-border: rgba(245, 158, 11, 0.32);
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(16, 185, 129, 0.15);
+  --accent-soft-strong: rgba(16, 185, 129, 0.22);
+  --accent-border: rgba(16, 185, 129, 0.32);
   --primary-color: var(--accent);
   --primary-color-hover: var(--accent-hover);
 
@@ -104,8 +104,8 @@
   --text-primary: #1a1206;
   --text-secondary: #57534e;
   --text-muted: #94a3b8;
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
+  --accent: #10b981;
+  --accent-hover: #059669;
   --border: rgba(148, 163, 184, 0.24);
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   --elev-1: 0 2px 10px rgba(15, 23, 42, 0.06);

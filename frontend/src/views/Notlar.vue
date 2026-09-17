@@ -340,7 +340,7 @@ const geriAl = async () => {
   flex-direction: column;
 }
 .not-card:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: var(--accent-border);
 }
 .not-card.yuksek {
   border-left: 4px solid #f59e0b;
@@ -349,7 +349,7 @@ const geriAl = async () => {
   border-left: 4px solid #ef4444;
 }
 .not-card.dusuk {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--accent);
 }
 .not-card.normal {
   border-left: 4px solid #64748b;
@@ -371,8 +371,8 @@ const geriAl = async () => {
   text-transform: uppercase;
 }
 .onem-badge.dusuk {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .onem-badge.normal {
   background: rgba(100, 116, 139, 0.2);
@@ -387,7 +387,7 @@ const geriAl = async () => {
   color: #f87171;
 }
 .not-card.renk-mavi {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--accent);
 }
 .not-card.renk-yesil {
   border-left: 4px solid #22c55e;
@@ -425,7 +425,7 @@ const geriAl = async () => {
 }
 .renk-nokta.secili {
   border-color: var(--text-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 3px var(--accent-border);
 }
 .not-tarih {
   font-size: 0.75rem;

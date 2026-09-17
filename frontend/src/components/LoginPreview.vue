@@ -67,12 +67,12 @@
                   >
                     <stop
                       offset="0%"
-                      stop-color="var(--giris-aksan, #f59e0b)"
+                      stop-color="var(--giris-aksan, #10b981)"
                       stop-opacity="0.35"
                     />
                     <stop
                       offset="100%"
-                      stop-color="var(--giris-aksan, #f59e0b)"
+                      stop-color="var(--giris-aksan, #10b981)"
                       stop-opacity="0"
                     />
                   </linearGradient>
@@ -85,7 +85,7 @@
                   class="mock-chart-line"
                   d="M0,72 C40,52 62,60 92,40 C122,20 152,46 182,30 C212,14 244,36 300,12"
                   fill="none"
-                  stroke="var(--giris-aksan, #f59e0b)"
+                  stroke="var(--giris-aksan, #10b981)"
                   stroke-width="2.5"
                   stroke-linecap="round"
                 />
@@ -448,7 +448,7 @@ const sec = (id) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--giris-aksan, #f59e0b), var(--giris-aksan-koyu, #d97706));
+  background: linear-gradient(135deg, var(--giris-aksan, #10b981), var(--giris-aksan-koyu, #059669));
   color: #fff;
   font-size: 12px;
   margin-bottom: 6px;
@@ -465,8 +465,8 @@ const sec = (id) => {
   background: rgba(148, 163, 184, 0.08);
 }
 .side-item.aktif {
-  background: var(--giris-tint-18, rgba(245,158,11,0.18));
-  color: var(--giris-aksan-parlak, #fbbf24);
+  background: var(--giris-tint-18, rgba(16, 185, 129,0.18));
+  color: var(--giris-aksan-parlak, #34d399);
 }
 
 .preview-main {
@@ -508,8 +508,8 @@ const sec = (id) => {
 .w65 { width: 65%; }
 .w70 { width: 70%; }
 .w85 { width: 85%; }
-.accent { background: var(--giris-tint-55, rgba(245,158,11,0.55)); }
-.low { background: rgba(245, 158, 11, 0.75) !important; }
+.accent { background: var(--giris-tint-55, rgba(16, 185, 129,0.55)); }
+.low { background: rgba(16, 185, 129, 0.75) !important; }
 
 /* Panel */
 .mock-kpi-row {
@@ -527,7 +527,7 @@ const sec = (id) => {
   gap: 6px;
 }
 .kpi-label { width: 60%; background: rgba(148, 163, 184, 0.18); }
-.kpi-value { width: 85%; height: 11px; background: var(--giris-tint-50, rgba(245,158,11,0.5)); }
+.kpi-value { width: 85%; height: 11px; background: var(--giris-tint-50, rgba(16, 185, 129,0.5)); }
 .mock-chart {
   width: 100%;
   height: 62px;
@@ -562,7 +562,7 @@ const sec = (id) => {
   width: 34px;
   height: 12px;
   border-radius: 8px;
-  background: var(--giris-tint-30, rgba(245,158,11,0.3));
+  background: var(--giris-tint-30, rgba(16, 185, 129,0.3));
   margin-left: auto;
 }
 
@@ -578,7 +578,7 @@ const sec = (id) => {
   width: 46px;
   height: 14px;
   border-radius: 8px;
-  background: var(--giris-tint-28, rgba(245,158,11,0.28));
+  background: var(--giris-tint-28, rgba(16, 185, 129,0.28));
 }
 .mock-inv-rows {
   display: flex;
@@ -629,7 +629,7 @@ const sec = (id) => {
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--giris-aksan, #f59e0b), var(--giris-aksan-parlak, #fbbf24));
+  background: linear-gradient(90deg, var(--giris-aksan, #10b981), var(--giris-aksan-parlak, #34d399));
 }
 .mock-qty {
   font-size: 11px;
@@ -657,8 +657,8 @@ const sec = (id) => {
 .mock-bubble.user {
   align-self: flex-end;
   width: 72%;
-  background: var(--giris-tint-16, rgba(245,158,11,0.16));
-  border: 1px solid var(--giris-tint-25, rgba(245,158,11,0.25));
+  background: var(--giris-tint-16, rgba(16, 185, 129,0.16));
+  border: 1px solid var(--giris-tint-25, rgba(16, 185, 129,0.25));
 }
 .mock-bubble.bot {
   align-self: flex-start;
@@ -672,11 +672,11 @@ const sec = (id) => {
   gap: 8px;
   padding: 9px 11px;
   border-radius: 11px;
-  background: var(--giris-tint-14, rgba(245,158,11,0.14));
-  border: 1px solid var(--giris-tint-28, rgba(245,158,11,0.28));
+  background: var(--giris-tint-14, rgba(16, 185, 129,0.14));
+  border: 1px solid var(--giris-tint-28, rgba(16, 185, 129,0.28));
 }
 .mock-insight i {
-  color: var(--giris-aksan-parlak, #fbbf24);
+  color: var(--giris-aksan-parlak, #34d399);
   font-size: 13px;
 }
 .mock-insight .mock-line {
@@ -713,13 +713,13 @@ const sec = (id) => {
   font-size: 11px;
 }
 .preview-tab:hover {
-  border-color: var(--giris-tint-40, rgba(245,158,11,0.4));
+  border-color: var(--giris-tint-40, rgba(16, 185, 129,0.4));
   color: var(--text-primary, #f1f5f9);
 }
 .preview-tab.aktif {
-  background: var(--giris-tint-16, rgba(245,158,11,0.16));
-  border-color: var(--giris-tint-50, rgba(245,158,11,0.5));
-  color: var(--giris-aksan-parlak, #fbbf24);
+  background: var(--giris-tint-16, rgba(16, 185, 129,0.16));
+  border-color: var(--giris-tint-50, rgba(16, 185, 129,0.5));
+  color: var(--giris-aksan-parlak, #34d399);
 }
 
 .preview-caption {
@@ -764,8 +764,8 @@ const sec = (id) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--giris-tint-16, rgba(245,158,11,0.16));
-  color: var(--giris-aksan-parlak, #fbbf24);
+  background: var(--giris-tint-16, rgba(16, 185, 129,0.16));
+  color: var(--giris-aksan-parlak, #34d399);
   font-size: 12px;
 }
 .mock-prod-info {
@@ -794,7 +794,7 @@ const sec = (id) => {
   flex: 1;
   min-height: 10px;
   border-radius: 6px 6px 0 0;
-  background: linear-gradient(180deg, var(--giris-aksan-parlak, #fbbf24), var(--giris-tint-25, rgba(245,158,11,0.25)));
+  background: linear-gradient(180deg, var(--giris-aksan-parlak, #34d399), var(--giris-tint-25, rgba(16, 185, 129,0.25)));
   transform-origin: bottom;
   animation: barYuksekligi 0.6s ease;
 }
@@ -815,7 +815,7 @@ const sec = (id) => {
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--giris-aksan, #f59e0b), var(--giris-aksan-parlak, #fbbf24));
+  background: linear-gradient(90deg, var(--giris-aksan, #10b981), var(--giris-aksan-parlak, #34d399));
   transition: width 0.4s ease;
 }
 

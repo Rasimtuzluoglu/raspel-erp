@@ -837,7 +837,7 @@ const hatirlatWhatsApp = (cari) => {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.5rem;
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--accent-soft-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -862,7 +862,7 @@ const hatirlatWhatsApp = (cari) => {
 }
 .ai-insight-rozet {
   font-size: 0.625rem;
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--accent-soft-strong);
   color: var(--accent);
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
@@ -1032,7 +1032,7 @@ const hatirlatWhatsApp = (cari) => {
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.75rem;
   font-weight: 800;

@@ -154,7 +154,7 @@ const items = computed(() => {
     background 0.15s;
 }
 .breadcrumb-link:hover {
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, var(--accent));
   background: rgba(148, 163, 184, 0.14);
 }
 .breadcrumb-home {

@@ -67,7 +67,7 @@ const headerDesc = computed(() => props.description || props.subtitle || null)
 }
 .page-header-icon {
   font-size: 24px;
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, var(--accent));
 }
 .page-header-heading {
   font-size: 24px;

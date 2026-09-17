@@ -689,32 +689,32 @@ const tumAdimlariSifirla = () => {
 
 <style scoped>
 .giris-sayfasi {
-  --giris-aksan: var(--accent, #f59e0b);
-  --giris-aksan-koyu: #d97706;
-  --giris-aksan-parlak: #fbbf24;
-  --giris-tint-05: rgba(245, 158, 11, 0.05);
-  --giris-tint-08: rgba(245, 158, 11, 0.08);
-  --giris-tint-14: rgba(245, 158, 11, 0.14);
-  --giris-tint-15: rgba(245, 158, 11, 0.15);
-  --giris-tint-16: rgba(245, 158, 11, 0.16);
-  --giris-tint-18: rgba(245, 158, 11, 0.18);
-  --giris-tint-20: rgba(245, 158, 11, 0.20);
-  --giris-tint-22: rgba(245, 158, 11, 0.22);
-  --giris-tint-25: rgba(245, 158, 11, 0.25);
-  --giris-tint-26: rgba(245, 158, 11, 0.26);
-  --giris-tint-28: rgba(245, 158, 11, 0.28);
-  --giris-tint-30: rgba(245, 158, 11, 0.30);
-  --giris-tint-35: rgba(245, 158, 11, 0.35);
-  --giris-tint-40: rgba(245, 158, 11, 0.40);
-  --giris-tint-50: rgba(245, 158, 11, 0.50);
-  --giris-tint-55: rgba(245, 158, 11, 0.55);
+  --giris-aksan: var(--accent, #10b981);
+  --giris-aksan-koyu: #059669;
+  --giris-aksan-parlak: #34d399;
+  --giris-tint-05: rgba(16, 185, 129, 0.05);
+  --giris-tint-08: rgba(16, 185, 129, 0.08);
+  --giris-tint-14: rgba(16, 185, 129, 0.14);
+  --giris-tint-15: rgba(16, 185, 129, 0.15);
+  --giris-tint-16: rgba(16, 185, 129, 0.16);
+  --giris-tint-18: rgba(16, 185, 129, 0.18);
+  --giris-tint-20: rgba(16, 185, 129, 0.20);
+  --giris-tint-22: rgba(16, 185, 129, 0.22);
+  --giris-tint-25: rgba(16, 185, 129, 0.25);
+  --giris-tint-26: rgba(16, 185, 129, 0.26);
+  --giris-tint-28: rgba(16, 185, 129, 0.28);
+  --giris-tint-30: rgba(16, 185, 129, 0.30);
+  --giris-tint-35: rgba(16, 185, 129, 0.35);
+  --giris-tint-40: rgba(16, 185, 129, 0.40);
+  --giris-tint-50: rgba(16, 185, 129, 0.50);
+  --giris-tint-55: rgba(16, 185, 129, 0.55);
   min-height: 100vh;
   min-height: 100dvh;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 0%, #1c160a 0%, #0b0a08 62%);
+  background: radial-gradient(circle at 50% 0%, #0c1a15 0%, #0b0a08 62%);
   overflow-x: hidden;
   overflow-y: auto;
   padding:

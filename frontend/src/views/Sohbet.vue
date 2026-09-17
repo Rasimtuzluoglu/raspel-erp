@@ -1026,9 +1026,9 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .oneri-cip:hover {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: var(--accent, #3b82f6);
-  color: var(--accent, #3b82f6);
+  background: var(--accent-soft);
+  border-color: var(--accent, var(--accent));
+  color: var(--accent, var(--accent));
 }
 .oneri-cip.oneri-ocr {
   background: rgba(139, 92, 246, 0.12);
@@ -1100,8 +1100,8 @@ onUnmounted(() => {
   background: var(--bg-primary);
 }
 .oda-ogesi.aktif {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--accent, #3b82f6);
+  background: var(--accent-soft);
+  color: var(--accent, var(--accent));
   font-weight: 600;
 }
 .oda-ad {
@@ -1124,7 +1124,7 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  background: var(--accent, #3b82f6);
+  background: var(--accent, var(--accent));
   color: #fff;
 }
 .oda-bos {
@@ -1182,7 +1182,7 @@ onUnmounted(() => {
 }
 .ai-ikon-buyuk {
   font-size: 48px;
-  color: #3b82f6;
+  color: var(--accent);
   margin-bottom: 16px;
   display: block;
 }
@@ -1205,8 +1205,8 @@ onUnmounted(() => {
 }
 .mesaj.kendi {
   align-self: flex-end;
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
 }
 .mesaj.ai-cevap {
   background: rgba(16, 185, 129, 0.08);
@@ -1308,7 +1308,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--accent, #3b82f6);
+  color: var(--accent, var(--accent));
   text-decoration: none;
 }
 .mesaj-gorsel {

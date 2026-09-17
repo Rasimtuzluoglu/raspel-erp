@@ -1883,7 +1883,7 @@ h3 {
 .form-group :deep(.p-inputtext:enabled:focus),
 .form-group :deep(.p-textarea:enabled:focus) {
   border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft-strong) !important;
 }
 .form-group :deep(.p-inputtext.p-invalid),
 .form-group :deep(.p-textarea.p-invalid) {

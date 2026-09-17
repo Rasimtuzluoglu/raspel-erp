@@ -221,7 +221,7 @@ const demoYukle = async () => {
 }
 .onboard-ikon {
   font-size: 3rem;
-  color: #3b82f6;
+  color: var(--accent);
   margin-bottom: 0.5rem;
 }
 .onboard-ust h2 {
@@ -252,8 +252,8 @@ const demoYukle = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
   font-weight: 700;
   font-size: 14px;
 }

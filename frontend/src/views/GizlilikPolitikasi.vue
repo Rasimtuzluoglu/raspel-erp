@@ -214,7 +214,7 @@ const yazdir = () => {
 }
 
 .hero-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, var(--accent-soft) 100%);
   border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 16px;
   padding: 1.5rem 2rem;

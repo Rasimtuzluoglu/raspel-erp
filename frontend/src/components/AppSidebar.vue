@@ -567,8 +567,8 @@ const onaySayisiniYukle = async () => {
   width: 100%;
   padding: 8px 10px;
   margin-bottom: 8px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 12.5px;
@@ -577,7 +577,7 @@ const onaySayisiniYukle = async () => {
   transition: all 0.15s;
 }
 .firma-secici:hover {
-  background: rgba(59, 130, 246, 0.18);
+  background: var(--accent-soft-strong);
 }
 .firma-secici i:first-child {
   color: var(--accent);

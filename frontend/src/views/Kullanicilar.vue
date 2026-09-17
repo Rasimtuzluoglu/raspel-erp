@@ -459,7 +459,7 @@ h1 {
 .kullanici-kart:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: var(--accent-border);
 }
 .kart-ust {
   display: flex;
@@ -473,7 +473,7 @@ h1 {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid rgba(59, 130, 246, 0.3);
+  border: 2px solid var(--accent-border);
 }
 .avatar img {
   width: 100%;
@@ -486,7 +486,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   font-weight: 700;
   font-size: 18px;
@@ -514,8 +514,8 @@ h1 {
   flex-shrink: 0;
 }
 .rol-badge.admin {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .rol-badge.user {
   background: rgba(34, 197, 94, 0.15);
@@ -571,11 +571,11 @@ h1 {
   border: none !important;
 }
 .islem-btn.duzenle {
-  background: rgba(59, 130, 246, 0.12) !important;
-  color: #60a5fa !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
 }
 .islem-btn.duzenle:hover {
-  background: rgba(59, 130, 246, 0.25) !important;
+  background: var(--accent-soft-strong) !important;
 }
 .islem-btn.sil {
   background: rgba(239, 68, 68, 0.12) !important;
@@ -618,7 +618,7 @@ h1 {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid rgba(59, 130, 246, 0.3);
+  border: 2px solid var(--accent-border);
 }
 .avatar-preview-img {
   width: 100%;
@@ -631,7 +631,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   font-weight: 700;
   font-size: 20px;

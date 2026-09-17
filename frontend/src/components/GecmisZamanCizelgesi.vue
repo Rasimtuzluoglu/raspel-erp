@@ -155,7 +155,7 @@ const getMarkerClass = (islem) => {
   background-color: #10b981;
 }
 .marker-info {
-  background-color: #3b82f6;
+  background-color: var(--accent);
 }
 .marker-danger {
   background-color: #ef4444;

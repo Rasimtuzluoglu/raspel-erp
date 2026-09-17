@@ -1366,7 +1366,7 @@ h1 {
 }
 .urun-ekleme {
   background: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 10px;
   padding: 14px;
   margin: 15px 0;
@@ -1378,7 +1378,7 @@ h1 {
   font-weight: 700;
 }
 .badge.satis {
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--accent-soft-strong);
   color: var(--accent);
 }
 .badge.alis {

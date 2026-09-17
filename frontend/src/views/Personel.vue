@@ -596,7 +596,7 @@ const izinKaydet = async () => {
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 </style>

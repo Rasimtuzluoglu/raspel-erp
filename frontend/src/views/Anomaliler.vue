@@ -293,8 +293,8 @@ onMounted(() => {
   padding: 0;
 }
 .ip-info-box {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   border-radius: 10px;
   padding: 14px 18px;
   display: flex;
@@ -304,7 +304,7 @@ onMounted(() => {
 }
 .ip-info-box i {
   font-size: 28px;
-  color: #3b82f6;
+  color: var(--accent);
 }
 .ip-info-box strong {
   display: block;
@@ -339,7 +339,7 @@ onMounted(() => {
 .anomali-card {
   background: var(--bg-card, #1e293b);
   border: 1px solid var(--border);
-  border-left: 6px solid #3b82f6;
+  border-left: 6px solid var(--accent);
   border-radius: 10px;
   padding: 1.25rem;
 }
@@ -350,7 +350,7 @@ onMounted(() => {
   border-left-color: #f59e0b;
 }
 .anomali-card.dusuk {
-  border-left-color: #3b82f6;
+  border-left-color: var(--accent);
 }
 
 .card-header {
@@ -375,8 +375,8 @@ onMounted(() => {
   color: #fbbf24;
 }
 .badge.dusuk {
-  background: rgba(59, 130, 246, 0.25);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 
 .tur-label {

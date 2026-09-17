@@ -1682,7 +1682,7 @@ const fisiYazdir = () => {
   .aracubuk button {
     font-family: Arial, sans-serif; font-size: 14px; font-weight: 600;
     padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer;
-    background: #3b82f6; color: #fff; margin: 0 4px;
+    background: var(--accent); color: #fff; margin: 0 4px;
   }
   .aracubuk button.iptal { background: #475569; }
   .fis { padding: 6px 4px; margin-top: 52px; }
@@ -2199,7 +2199,7 @@ const sepetiTemizle = () => {
   font-size: 11px;
   font-weight: 700;
   color: var(--accent);
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
   padding: 1px 8px;
   border-radius: 10px;
 }
@@ -2255,7 +2255,7 @@ const sepetiTemizle = () => {
   font-weight: 700;
   color: var(--accent);
   padding: 2px 10px;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--accent-soft);
   border-radius: 12px;
   white-space: nowrap;
 }
@@ -2371,14 +2371,14 @@ const sepetiTemizle = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 13px;
 }
 .secili-musteri-chip i {
-  color: #60a5fa;
+  color: var(--accent);
   font-size: 14px;
 }
 .secili-musteri-ad {
@@ -2425,7 +2425,7 @@ const sepetiTemizle = () => {
 }
 .sepet-item.aktif-satir {
   background: rgba(59, 130, 246, 0.08);
-  box-shadow: inset 3px 0 0 var(--accent, #3b82f6);
+  box-shadow: inset 3px 0 0 var(--accent, var(--accent));
   border-radius: 8px;
 }
 .sepet-item:last-child {
@@ -2569,7 +2569,7 @@ const sepetiTemizle = () => {
 }
 .odeme-yontem-btn.active {
   border-color: var(--accent);
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 .odeme-yontem-btn i {
@@ -2644,9 +2644,9 @@ const sepetiTemizle = () => {
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
 .musteri-bakiye-uyari.info {
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft-strong);
 }
 .gunluk-baslik {
   display: flex;

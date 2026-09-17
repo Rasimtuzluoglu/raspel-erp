@@ -277,7 +277,7 @@ const yukle = async () => {
   color: var(--text-primary);
 }
 .seksiyon-baslik i {
-  color: #3b82f6;
+  color: var(--accent);
 }
 .kdv-ozet {
   display: flex;

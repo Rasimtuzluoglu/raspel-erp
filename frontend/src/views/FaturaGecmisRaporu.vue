@@ -369,7 +369,7 @@ onMounted(yukle)
   font-weight: 600;
   color: #fff;
 }
-.olay-badge.olustur { background: #3b82f6; }
+.olay-badge.olustur { background: var(--accent); }
 .olay-badge.guncelle { background: #f59e0b; }
 .olay-badge.durum { background: #8b5cf6; }
 .olay-badge.sil { background: #ef4444; }

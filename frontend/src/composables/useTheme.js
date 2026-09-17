@@ -4,7 +4,7 @@ const MODE_KEY = 'raspel_erp_theme'
 const COLOR_KEY = 'raspel_primary_color'
 
 const mode = ref(localStorage.getItem(MODE_KEY) || 'dark')
-const accentColor = ref(localStorage.getItem(COLOR_KEY) || '#f59e0b')
+const accentColor = ref(localStorage.getItem(COLOR_KEY) || '#10b981')
 
 let systemMedia = null
 let mediaHandler = null

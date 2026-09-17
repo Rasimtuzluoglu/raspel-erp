@@ -337,12 +337,12 @@ onUnmounted(() => {
   background: rgba(148, 163, 184, 0.12);
 }
 .calc-btn.operator {
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--accent-soft-strong);
   color: var(--accent);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: var(--accent-border);
 }
 .calc-btn.operator:hover {
-  background: rgba(59, 130, 246, 0.25);
+  background: var(--accent-soft-strong);
 }
 .calc-btn.equals {
   background: var(--accent);

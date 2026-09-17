@@ -1191,7 +1191,7 @@ const whatsAppPaylas = () => {
   justify-content: center;
   font-size: 20px;
 }
-.kart-toplam .kart-ikon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.kart-toplam .kart-ikon { background: var(--accent-soft); color: var(--accent); }
 .kart-bekleyen .kart-ikon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 .kart-onayli .kart-ikon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
 .kart-donusen .kart-ikon { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
@@ -1221,9 +1221,9 @@ const whatsAppPaylas = () => {
   transition: all 0.2s;
 }
 .chip-btn.aktif {
-  background: var(--primary-color, #3b82f6);
+  background: var(--primary-color, var(--accent));
   color: #fff;
-  border-color: var(--primary-color, #3b82f6);
+  border-color: var(--primary-color, var(--accent));
 }
 
 .badge-rev {

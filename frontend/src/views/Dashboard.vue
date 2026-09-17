@@ -1651,7 +1651,7 @@ const whatsappLink = (f) => {
   padding: 18px 22px;
   border-radius: 18px;
   background:
-    radial-gradient(900px 200px at 0% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(900px 200px at 0% 0%, var(--accent-soft-strong), transparent 60%),
     radial-gradient(700px 220px at 100% 0%, rgba(139, 92, 246, 0.14), transparent 60%),
     var(--bg-card);
   border: 1px solid var(--border);
@@ -1683,7 +1683,7 @@ const whatsappLink = (f) => {
   margin-left: 8px;
   padding: 2px 10px;
   border-radius: 20px;
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
@@ -1881,7 +1881,7 @@ const whatsappLink = (f) => {
 .stat-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: rgba(59, 130, 246, 0.25);
+  border-color: var(--accent-soft-strong);
 }
 .stat-icon {
   width: 52px;
@@ -2010,7 +2010,7 @@ const whatsappLink = (f) => {
   box-shadow: var(--shadow);
 }
 .mini-stat:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: var(--accent-border);
   transform: translateY(-2px);
 }
 .mini-stat-icon {
@@ -2307,7 +2307,7 @@ const whatsappLink = (f) => {
 .charts-row > :deep(.p-card):hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: var(--accent-border);
 }
 .charts-row > :deep(.p-card) .p-card-title {
   display: flex;

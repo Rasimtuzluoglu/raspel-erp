@@ -332,7 +332,7 @@ onMounted(() => {
 }
 .ozet-ust i {
   font-size: 20px;
-  color: var(--accent, #3b82f6);
+  color: var(--accent, var(--accent));
 }
 .ozet-ust strong {
   display: block;

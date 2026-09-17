@@ -214,8 +214,8 @@ const yazdir = () => {
 }
 
 .hero-card {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: linear-gradient(135deg, var(--accent-soft) 0%, rgba(139, 92, 246, 0.12) 100%);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 16px;
   padding: 1.5rem 2rem;
   margin-bottom: 2rem;
@@ -229,14 +229,14 @@ const yazdir = () => {
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: #3b82f6;
+  background: var(--accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px var(--accent-border);
 }
 
 .hero-text {
@@ -316,12 +316,12 @@ const yazdir = () => {
 }
 
 .toc-item:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--accent-soft);
   color: var(--text-primary);
 }
 
 .toc-item.active {
-  background: #3b82f6;
+  background: var(--accent);
   color: #ffffff;
 }
 
@@ -364,7 +364,7 @@ const yazdir = () => {
 }
 
 .madde-card.highlighted {
-  border-color: #3b82f6;
+  border-color: var(--accent);
 }
 
 .card-header {
@@ -412,11 +412,11 @@ const yazdir = () => {
   align-items: center;
   gap: 8px;
   background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.82rem;
-  color: #60a5fa;
+  color: var(--accent);
 }
 
 .no-results {

@@ -194,7 +194,7 @@ const degisiklikler = (kayit) => {
   z-index: 1;
 }
 .m-success { background: #10b981; }
-.m-info { background: #3b82f6; }
+.m-info { background: var(--accent); }
 .m-warning { background: #f59e0b; }
 .m-danger { background: #ef4444; }
 .m-print { background: #8b5cf6; }
@@ -247,8 +247,8 @@ const degisiklikler = (kayit) => {
   font-weight: 600;
 }
 .fg-rozet.yazici {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .fg-rozet.kopya {
   background: rgba(100, 116, 139, 0.18);

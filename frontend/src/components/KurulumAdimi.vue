@@ -239,12 +239,12 @@ const adminPassword = defineModel('adminPassword', { type: String, default: '' }
   transition: all 0.2s ease;
 }
 .input-wrapper :deep(.p-inputtext:focus) {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent) !important;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.22) !important;
   outline: none;
 }
 .input-wrapper:focus-within > i {
-  color: #3b82f6;
+  color: var(--accent);
 }
 .sifre-toggle {
   position: absolute;
@@ -268,7 +268,7 @@ const adminPassword = defineModel('adminPassword', { type: String, default: '' }
   width: 100%;
   padding: 12px;
   margin-top: 4px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   border: none;
   border-radius: 12px;
   font-size: 15px;
@@ -277,7 +277,7 @@ const adminPassword = defineModel('adminPassword', { type: String, default: '' }
   transition: all 0.2s ease;
 }
 .giris-buton:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, var(--accent-hover), var(--accent-hover));
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(59, 130, 246, 0.4);
 }

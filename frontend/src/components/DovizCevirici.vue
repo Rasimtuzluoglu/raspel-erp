@@ -172,7 +172,7 @@ watch([tutar, kaynak, hedef], cevir)
   color: var(--accent);
 }
 .takas-btn:hover {
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--accent-soft);
 }
 .sonuc {
   flex: 1;

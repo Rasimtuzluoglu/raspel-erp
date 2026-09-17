@@ -46,7 +46,7 @@ const props = defineProps({
   baslik: { type: String, default: '' },
   deger: { type: [Number, String], default: 0 },
   ikon: { type: String, default: 'pi pi-chart-line' },
-  renk: { type: String, default: '#f59e0b' },
+  renk: { type: String, default: '#10b981' },
   trend: { type: Number, default: null },
   sparkline: { type: Array, default: () => [] },
   paraBirimi: { type: Boolean, default: true }

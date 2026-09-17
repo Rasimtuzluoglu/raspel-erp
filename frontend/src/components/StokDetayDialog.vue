@@ -731,8 +731,8 @@ watch(
   color: #4ade80;
 }
 .badge.satis {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .positive {
   color: #4ade80;

@@ -496,14 +496,14 @@ const tamamla = async () => {
   align-items: center;
   gap: 8px;
   padding: 14px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 10px;
   font-size: 13px;
   color: var(--text-secondary);
 }
 .bos-uyari i {
-  color: #60a5fa;
+  color: var(--accent);
 }
 
 .ozet-kutu {

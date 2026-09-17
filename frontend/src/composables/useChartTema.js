@@ -20,7 +20,7 @@ export function useChartTema() {
     return {
       metin: cssDegisken('--text-secondary', '#94a3b8'),
       izgara: cssDegisken('--border', 'rgba(148, 163, 184, 0.2)'),
-      vurgu: accentColor.value || '#3b82f6'
+      vurgu: accentColor.value || '#10b981'
     }
   })
 

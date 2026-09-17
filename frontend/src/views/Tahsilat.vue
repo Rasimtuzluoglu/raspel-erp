@@ -522,8 +522,8 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 .ozet-ikon.toplam {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .ozet-ikon.gecmis {
   background: rgba(239, 68, 68, 0.15);

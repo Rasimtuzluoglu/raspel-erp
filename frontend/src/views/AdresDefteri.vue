@@ -446,8 +446,8 @@ const confirmDel = (k) => {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .adres-hucre {
   display: inline-block;
@@ -478,8 +478,8 @@ const confirmDel = (k) => {
   height: 30px;
   border-radius: 8px;
   text-decoration: none;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 .qa-btn.wa {
   color: #25d366;

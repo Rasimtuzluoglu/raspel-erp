@@ -290,7 +290,7 @@ onMounted(yukle)
   border-color: rgba(16, 185, 129, 0.4);
 }
 .adim i {
-  color: var(--accent, #3b82f6);
+  color: var(--accent, var(--accent));
 }
 .ok {
   color: var(--text-muted);

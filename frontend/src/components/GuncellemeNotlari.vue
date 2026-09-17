@@ -86,8 +86,8 @@ const kapat = () => {
 }
 .surum-etiketi {
   display: inline-block;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
   padding: 2px 10px;
   border-radius: 20px;
   font-size: 12px;

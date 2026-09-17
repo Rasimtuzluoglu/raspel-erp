@@ -572,7 +572,7 @@ const printTermalFis = (satisData) => {
         .header p { margin: 2px 0; font-size: 10px; }
         .footer { margin-top: 10px; text-align: center; font-size: 10px; }
         .no-print { text-align: center; margin-bottom: 12px; }
-        .no-print button { padding: 6px 16px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .no-print button { padding: 6px 16px; background: var(--accent-hover); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         @media print { .no-print { display: none !important; } }
       </style>
     </head>
@@ -682,7 +682,7 @@ h1 {
 }
 .urun-ekleme {
   background: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid var(--accent-soft-strong);
   border-radius: 10px;
   padding: 16px;
   margin: 15px 0;
@@ -723,7 +723,7 @@ h1 {
 .summary-row.total {
   font-weight: 700;
   font-size: 18px;
-  border-top: 2px solid #3b82f6;
+  border-top: 2px solid var(--accent);
   margin-top: 5px;
   padding-top: 10px;
   color: var(--text-primary);
@@ -739,8 +739,8 @@ h1 {
   color: #fb923c;
 }
 .durum-badge.teklif {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
 }
 .durum-badge.kesildi {
   background: rgba(34, 197, 94, 0.15);
@@ -778,7 +778,7 @@ h1 {
   color: #e2e8f0;
 }
 .modu-option.active {
-  background: #3b82f6;
+  background: var(--accent);
   color: #fff;
 }
 .w-full {
