@@ -371,3 +371,27 @@ export const aiConfigAPI = {
   }
 }
 
+export const adresDefteriAPI = {
+  getAll(params) {
+    return apiClient.get('/adres-defteri', { params })
+  },
+  getById(id) {
+    return apiClient.get(`/adres-defteri/${id}`)
+  },
+  create(data) {
+    return apiClient.post('/adres-defteri', data)
+  },
+  update(id, data) {
+    return apiClient.put(`/adres-defteri/${id}`, data)
+  },
+  delete(id) {
+    return apiClient.delete(`/adres-defteri/${id}`)
+  },
+  turler() {
+    return apiClient.get('/adres-defteri/turler')
+  },
+  etiketler() {
+    return apiClient.get('/adres-defteri/etiketler')
+  }
+}
+

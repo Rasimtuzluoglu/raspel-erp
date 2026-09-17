@@ -37,6 +37,7 @@
 | **Karanlık / Aydınlık Tema** | Tailwind CSS + PrimeVue Lara tema ile gece ve gündüz kullanımına uygun modern tema desteği. |
 | **CRM Kanban & Zaman Çizelgesi** | Müşteri fırsatlarını sürükle-bırak yöntemiyle yönetin, kayıt tarihçelerini Timeline ile inceleyin. |
 | **Klavye Kısayolları** | `Ctrl+K` Omnibar hızlı arama, `Ctrl+Shift+T` tema değiştirme, `Esc` kapatma ile fareye ihtiyaç duymadan hızlı operasyon. |
+| **Adres Defteri** | Elektrikçi, tesisatçı, marangoz gibi hizmet kişileri; ad, telefon, e-posta, adres ve etiketlerle kayıtlı. Arama + meslek/etiket filtresi ve hızlı arama/WhatsApp/e-posta/harita aksiyonları. |
 | **Oturum & Anomali Güvenliği** | Aktif oturumları listeleme/uzaktan sonlandırma, mükerrer fatura/ödeme ve yüksek tutar anomalilerini otomatik bildirme. |
 | **Yedek Doğrulama & Denetim İzi** | Yedeklerin bütünlük/güncellik health-check'i; denetim loglarında değişiklik öncesi/sonrası değer (diff) kaydı. |
 
@@ -58,6 +59,7 @@
 - **Sipariş & İrsaliye**: Siparişten irsaliyeye, irsaliyeden faturaya tek tıkla kontrollü iş akışı. Saha siparişleri onay akışı.
 - **E-Fatura**: UBL-TR 2.1 standardında GİB uyumlu e-fatura ve e-arşiv entegrasyonu. GİB durum sorgulama.
 - **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri. Müşteri kayıp (churn) riski skorlama.
+- **Adres Defteri**: Elektrikçi, tesisatçı, marangoz gibi hizmet kişilerinin ad, telefon, e-posta, adres ve etiketlerini kayıt altına alır. İsim/telefon/adres arama, meslek ve etiket filtresi, tek tıkla arama/WhatsApp/e-posta ve haritada açma.
 
 ### Stok & Envanter
 - **Stok Kartları & Barkod**: Kritik seviye alarmı, akıllı AI talep tahmini, hareket geçmişi. Ağırlıklı ortalama maliyet (COGS) motoru ile güncel birim maliyet ve satış anı maliyet anlık görüntüsü.
@@ -120,11 +122,11 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 1015 Test (0 Hata)
+mvn -B test -q          # 1033 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test           # 678 Test (0 Hata)
+npm run test           # 691 Test (0 Hata)
 
 # Kod Standartları & Linting
 cd frontend
@@ -151,7 +153,7 @@ raspel-erp/
 │
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4 + Tailwind CSS
 │   └── src/
-│       ├── views/           # 71 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti, KarlilikAnalizi vb.)
+│       ├── views/           # 72 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti, KarlilikAnalizi vb.)
 │       ├── components/      # 51 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, FaturaGecmisDialog vb.)
 │       ├── stores/          # 12 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
 │       ├── composables/     # 20 Composable Hook (Tema, Yetki, Oturum, Kısayol)

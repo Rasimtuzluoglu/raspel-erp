@@ -409,6 +409,7 @@ const tumMenuler = [
   { path: '/saha-portali', labelKey: 'nav.sahaPortali', icon: 'pi pi-compass', grupKey: 'nav.ticaret' },
   { path: '/teklifler', labelKey: 'nav.teklifler', icon: 'pi pi-file-edit', grupKey: 'nav.ticaret' },
   { path: '/crm', labelKey: 'nav.crm', icon: 'pi pi-bullseye', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/adres-defteri', labelKey: 'nav.adresDefteri', icon: 'pi pi-address-book', grupKey: 'nav.ticaret' },
   { path: '/e-fatura', labelKey: 'nav.eFatura', icon: 'pi pi-file-pdf', grupKey: 'nav.ticaret', gelismis: true },
   { path: '/satinalma', labelKey: 'nav.satinalma', icon: 'pi pi-shopping-bag', grupKey: 'nav.ticaret', gelismis: true },
   { path: '/siparisler', labelKey: 'nav.siparis', icon: 'pi pi-receipt', grupKey: 'nav.ticaret', gelismis: true },

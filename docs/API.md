@@ -51,6 +51,9 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | POST | `/api/stoklar` | Stok oluştur |
 | GET | `/api/stoklar/ara?q=` | Stok ara |
 | GET | `/api/depolar`, `/api/irsaliyeler`, `/api/iadeler` | Depo/irsaliye/iade |
+| GET | `/api/adres-defteri?q=&tur=&etiket=` | Adres defteri (arama/filtre, sayfalı) |
+| POST/PUT/DELETE | `/api/adres-defteri[/{id}]` | Adres defteri kaydı oluştur/güncelle/sil |
+| GET | `/api/adres-defteri/turler`, `/api/adres-defteri/etiketler` | Filtre seçenekleri |
 
 ### Üretim
 | Metot | Yol | Açıklama |

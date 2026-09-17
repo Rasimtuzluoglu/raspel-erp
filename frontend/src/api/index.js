@@ -56,9 +56,9 @@ export {
   aiConfigAPI,
   apiTokenAPI,
   churnAPI,
-  onayAyariAPI
+  onayAyariAPI,
+  adresDefteriAPI
 } from './modules/sistem.js'
-
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 
 export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './modules/dosya.js'

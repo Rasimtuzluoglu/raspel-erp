@@ -88,6 +88,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/adres-defteri',
+    name: 'AdresDefteri',
+    component: () => import('../views/AdresDefteri.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/kullanicilar',
     name: 'Kullanicilar',
     component: () => import('../views/Kullanicilar.vue'),

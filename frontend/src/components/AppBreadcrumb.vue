@@ -75,7 +75,7 @@ const labelKeyMap = {
   '/vardiyalar': 'nav.vardiya',
   '/anomaliler': 'nav.anomaliler',
   '/kategoriler': 'nav.kategori',
-  '/kullanicilar': 'nav.kullanici',
+  '/adres-defteri': 'nav.adresDefteri',  '/kullanicilar': 'nav.kullanici',
   '/toplu-stok': 'nav.topluStok',
   '/sirketler': 'nav.sirket',
   '/donemler': 'nav.donem',
