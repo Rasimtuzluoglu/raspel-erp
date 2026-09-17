@@ -304,7 +304,18 @@
             </div>
 
             <div
-              v-if="m.grafikVerisi && m.grafikVerisi.labels"
+              v-if="m.grafikTipi && m.grafikTipi !== 'none' && m.grafikVerisi"
+              class="ai-grafik"
+            >
+              <component
+                :is="grafikBileseni(m.grafikTipi)"
+                :data="m.grafikVerisi"
+                :options="aiGrafikOptions"
+              />
+            </div>
+
+            <div
+              v-else-if="m.grafikVerisi && m.grafikVerisi.labels"
               class="ai-rozet-grid"
             >
               <div
@@ -441,6 +452,28 @@ import { useAuthStore } from '../stores/authStore.js'
 import { sohbetAPI, sohbetOdaAPI, aiConfigAPI, kullaniciAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useI18n } from 'vue-i18n'
+import { Bar, Doughnut, Line } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  PointElement,
+  LineElement
+} from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement)
+
+const aiGrafikOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } }
+}
+const grafikBileseni = (tip) => ({ bar: Bar, doughnut: Doughnut, line: Line }[tip] || Bar)
 
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
@@ -554,7 +587,7 @@ const hizliSoruSor = (soru) => {
   gonder()
 }
 
-// AI yanıtını SSE (akış) ile getirir; başarısız olursa klasik uca geri düşer.
+// AI yanıtını yapısal uçtan (metin + tablo + grafik) getirir.
 const aiStreamGonder = async (metin) => {
   aiMesajlar.value.push({ rol: 'user', metin, zaman: new Date() })
   yeniMesaj.value = ''
@@ -564,70 +597,18 @@ const aiStreamGonder = async (metin) => {
   aiYukleniyor.value = true
 
   try {
-    let token = ''
-    try {
-      token = authStore.token || ''
-    } catch {
-      /* empty */
-    }
-    const base = import.meta.env.VITE_API_BASE_URL || '/api'
-    const url = `${base}/sohbet/ai-sorgu-stream?` + new URLSearchParams({ soru: metin }).toString()
-    const res = await fetch(url, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      credentials: 'include'
-    })
-    if (!res.ok || !res.body) throw new Error(t('sohbet.akisYok'))
-
-    const okuyucu = res.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    let bosYanit = true
-    for (;;) {
-      const { done, value } = await okuyucu.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      let idx
-      while ((idx = buffer.indexOf('\n\n')) >= 0) {
-        const event = buffer.slice(0, idx)
-        buffer = buffer.slice(idx + 2)
-        const dataLines = event.split('\n').filter((l) => l.startsWith('data:'))
-        if (dataLines.length) {
-          const payload = dataLines.map((l) => l.slice(5).trim()).join('\n')
-          if (payload) {
-            try {
-              aiMesaj.metin += JSON.parse(payload)
-            } catch {
-              aiMesaj.metin += payload
-            }
-            bosYanit = false
-            kaydir()
-          }
-        }
-      }
-    }
-    if (bosYanit) {
-      await aiYanitGeriDus(aiMesaj, metin)
-    }
-  } catch {
-    await aiYanitGeriDus(aiMesaj, metin)
-  } finally {
-    aiYukleniyor.value = false
-    kaydir()
-  }
-}
-
-const aiYanitGeriDus = async (aiMesaj, metin) => {
-  try {
-    const res2 = await sohbetAPI.aiSorgu(metin)
-    const data = res2.data
-    aiMesaj.metin = data.cevapMetni
+    const res = await sohbetAPI.aiSorgu(metin)
+    const data = res.data || {}
+    aiMesaj.metin = data.cevapMetni || t('sohbet.hataAi')
     aiMesaj.grafikTipi = data.grafikTipi
     aiMesaj.grafikVerisi = data.grafikVerisi
     aiMesaj.tabloVerisi = data.tabloVerisi
+    aiMesaj.intent = data.intent
   } catch {
-    if (!aiMesaj.metin) {
-      aiMesaj.metin = t('sohbet.hataAi')
-    }
+    if (!aiMesaj.metin) aiMesaj.metin = t('sohbet.hataAi')
+  } finally {
+    aiYukleniyor.value = false
+    kaydir()
   }
 }
 
@@ -1271,6 +1252,11 @@ onUnmounted(() => {
 .ai-tablo td {
   padding: 6px 10px;
   border-bottom: 1px solid var(--border);
+}
+.ai-grafik {
+  position: relative;
+  height: 260px;
+  margin-top: 12px;
 }
 .ai-rozet-grid {
   display: flex;

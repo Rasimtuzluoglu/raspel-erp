@@ -67,6 +67,7 @@ public class LlmClientService {
 
         Map<String, Object> body = new HashMap<>();
         body.put("model", model != null ? model : "gpt-4o");
+        body.put("temperature", 0);
         body.put("messages", List.of(
             Map.of("role", "system", "content", systemPrompt),
             Map.of("role", "user", "content", userPrompt)
@@ -99,6 +100,7 @@ public class LlmClientService {
                  "parts", List.of(Map.of("text", systemPrompt))
              ));
         }
+        body.put("generationConfig", Map.of("temperature", 0));
         body.put("contents", List.of(
             Map.of("parts", List.of(Map.of("text", userPrompt)))
         ));
@@ -131,6 +133,7 @@ public class LlmClientService {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model != null ? model : "claude-3-sonnet-20240229");
         body.put("max_tokens", 1024);
+        body.put("temperature", 0);
         if (systemPrompt != null && !systemPrompt.isEmpty()) {
             body.put("system", systemPrompt);
         }

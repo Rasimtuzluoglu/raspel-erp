@@ -116,14 +116,17 @@ public class SohbetService {
         }
 
         String temizSoru = soru.toLowerCase(Locale.forLanguageTag("tr"));
+        String intent = niyetBelirle(temizSoru);
+        LocalDate[] aralik = tarihAraligi(temizSoru);
 
         // 1. Ciro & En Çok Satış Yapılan Müşteriler
-        if (temizSoru.contains("ciro") || temizSoru.contains("müşteri") || temizSoru.contains("musteri") || temizSoru.contains("satış") || temizSoru.contains("satis")) {
+        if ("CIRO_MUSTERI".equals(intent)) {
             List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
                     .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
+                    .filter(f -> aralik == null || (f.getTarih() != null && !f.getTarih().isBefore(aralik[0]) && !f.getTarih().isAfter(aralik[1])))
                     .collect(Collectors.toList());
 
-            Map<String, BigDecimal> cariCiro = new HashMap<>();
+            Map<String, BigDecimal> cariCiro = new LinkedHashMap<>();
             for (Fatura f : faturalar) {
                 String cariAd = f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel Satış";
                 BigDecimal tutar = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
@@ -131,43 +134,42 @@ public class SohbetService {
             }
 
             List<Map.Entry<String, BigDecimal>> sirali = cariCiro.entrySet().stream()
-                    .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                    .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed()
+                            .thenComparing(Map.Entry.comparingByKey()))
                     .limit(5)
                     .collect(Collectors.toList());
 
             List<String> labels = sirali.stream().map(Map.Entry::getKey).collect(Collectors.toList());
             List<BigDecimal> data = sirali.stream().map(Map.Entry::getValue).collect(Collectors.toList());
 
-            Map<String, Object> dataset = new HashMap<>();
+            Map<String, Object> dataset = new LinkedHashMap<>();
             dataset.put("label", "Toplam Satış (TL)");
             dataset.put("data", data);
             dataset.put("backgroundColor", List.of("#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#06b6d4"));
 
-            Map<String, Object> grafik = new HashMap<>();
+            Map<String, Object> grafik = new LinkedHashMap<>();
             grafik.put("labels", labels);
             grafik.put("datasets", List.of(dataset));
 
             List<Map<String, Object>> tablo = new ArrayList<>();
             for (int i = 0; i < sirali.size(); i++) {
-                tablo.add(Map.of(
-                        "sira", i + 1,
-                        "musteri", sirali.get(i).getKey(),
-                        "ciro", sirali.get(i).getValue() + " ₺"
-                ));
+                tablo.add(satir("sira", i + 1, "musteri", sirali.get(i).getKey(), "ciro", paraMetni(sirali.get(i).getValue())));
             }
+            BigDecimal toplam = data.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            String donem = aralik == null ? "" : " (" + aralik[0] + " - " + aralik[1] + ")";
 
             return AISorguSonucDTO.builder()
                     .soru(soru)
-                    .cevapMetni(String.format("En yüksek ciro yapılan ilk %d müşteri listelendi. Toplam ciro dağılımı grafikte gösterilmektedir.", sirali.size()))
-                    .grafikTipi("bar")
-                    .grafikVerisi(grafik)
+                    .cevapMetni(String.format("En yüksek ciro yapılan ilk %d müşteri listelendi%s. Toplam: %s.", sirali.size(), donem, paraMetni(toplam)))
+                    .grafikTipi(sirali.isEmpty() ? "none" : "bar")
+                    .grafikVerisi(sirali.isEmpty() ? null : grafik)
                     .tabloVerisi(tablo)
                     .intent("CIRO_MUSTERI")
                     .build();
         }
 
         // 2. Vadesi Gelen Ödemeler & Tahsilatlar
-        if (temizSoru.contains("vade") || temizSoru.contains("ödeme") || temizSoru.contains("odeme") || temizSoru.contains("borç") || temizSoru.contains("alacak")) {
+        if ("VADESI_GELEN".equals(intent)) {
             List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
                     .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
                     .collect(Collectors.toList());
@@ -187,27 +189,27 @@ public class SohbetService {
                     if (f.getTur() == Fatura.FaturaTur.SATIS) toplamAlacak = toplamAlacak.add(tutar);
                     else toplamBorc = toplamBorc.add(tutar);
 
-                    tablo.add(Map.of(
+                    tablo.add(satir(
                             "faturaNo", f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : ("#" + f.getId()),
                             "cari", f.getCariHesap() != null ? f.getCariHesap().getAd() : "-",
                             "vade", vade.toString(),
                             "tur", tip,
-                            "tutar", tutar + " ₺"
+                            "tutar", paraMetni(tutar)
                     ));
                 }
             }
+            tablo.sort(Comparator.comparing(m -> String.valueOf(m.get("vade"))));
 
-            Map<String, Object> grafik = Map.of(
-                    "labels", List.of("Beklenen Tahsilatlar", "Yaklaşan Ödemeler"),
-                    "datasets", List.of(Map.of(
-                            "data", List.of(toplamAlacak, toplamBorc),
-                            "backgroundColor", List.of("#10b981", "#ef4444")
-                    ))
-            );
+            Map<String, Object> grafik = new LinkedHashMap<>();
+            grafik.put("labels", List.of("Beklenen Tahsilatlar", "Yaklaşan Ödemeler"));
+            Map<String, Object> vadeDataset = new LinkedHashMap<>();
+            vadeDataset.put("data", List.of(toplamAlacak, toplamBorc));
+            vadeDataset.put("backgroundColor", List.of("#10b981", "#ef4444"));
+            grafik.put("datasets", List.of(vadeDataset));
 
             return AISorguSonucDTO.builder()
                     .soru(soru)
-                    .cevapMetni(String.format("Gelecek 15 gün içinde %s TL tahsilat ve %s TL ödeme vadesi bulunmaktadır.", toplamAlacak, toplamBorc))
+                    .cevapMetni(String.format("Gelecek 15 gün içinde %s tahsilat ve %s ödeme vadesi bulunmaktadır.", paraMetni(toplamAlacak), paraMetni(toplamBorc)))
                     .grafikTipi("doughnut")
                     .grafikVerisi(grafik)
                     .tabloVerisi(tablo)
@@ -216,7 +218,7 @@ public class SohbetService {
         }
 
         // 3. Kasa, Banka ve Likidite Durumu
-        if (temizSoru.contains("kasa") || temizSoru.contains("banka") || temizSoru.contains("bakiye") || temizSoru.contains("likidite") || temizSoru.contains("para")) {
+        if ("LIKIDITE".equals(intent)) {
             List<Kasa> kasalar = kasaRepository.findBySirketIdOrderByAd(sirketId);
             List<Banka> bankalar = bankaRepository.findBySirketIdOrderByAd(sirketId);
 
@@ -225,20 +227,19 @@ public class SohbetService {
             BigDecimal genelBakiye = kasaToplam.add(bankaToplam);
 
             List<Map<String, Object>> tablo = new ArrayList<>();
-            kasalar.forEach(k -> tablo.add(Map.of("hesap", k.getAd() + " (Kasa)", "tur", "Kasa", "bakiye", k.getBakiye() + " ₺")));
-            bankalar.forEach(b -> tablo.add(Map.of("hesap", b.getAd() + " (Banka)", "tur", "Banka", "bakiye", b.getBakiye() + " ₺")));
+            kasalar.forEach(k -> tablo.add(satir("hesap", k.getAd() + " (Kasa)", "tur", "Kasa", "bakiye", paraMetni(k.getBakiye()))));
+            bankalar.forEach(b -> tablo.add(satir("hesap", b.getAd() + " (Banka)", "tur", "Banka", "bakiye", paraMetni(b.getBakiye()))));
 
-            Map<String, Object> grafik = Map.of(
-                    "labels", List.of("Kasa Varlıkları", "Banka Hesapları"),
-                    "datasets", List.of(Map.of(
-                            "data", List.of(kasaToplam, bankaToplam),
-                            "backgroundColor", List.of("#f59e0b", "#3b82f6")
-                    ))
-            );
+            Map<String, Object> grafik = new LinkedHashMap<>();
+            grafik.put("labels", List.of("Kasa Varlıkları", "Banka Hesapları"));
+            Map<String, Object> likDataset = new LinkedHashMap<>();
+            likDataset.put("data", List.of(kasaToplam, bankaToplam));
+            likDataset.put("backgroundColor", List.of("#f59e0b", "#3b82f6"));
+            grafik.put("datasets", List.of(likDataset));
 
             return AISorguSonucDTO.builder()
                     .soru(soru)
-                    .cevapMetni(String.format("Şirketin toplam likiditesi %s TL'dir (Kasa: %s TL, Banka: %s TL).", genelBakiye, kasaToplam, bankaToplam))
+                    .cevapMetni(String.format("Şirketin toplam likiditesi %s'dir (Kasa: %s, Banka: %s).", paraMetni(genelBakiye), paraMetni(kasaToplam), paraMetni(bankaToplam)))
                     .grafikTipi("doughnut")
                     .grafikVerisi(grafik)
                     .tabloVerisi(tablo)
@@ -247,7 +248,7 @@ public class SohbetService {
         }
 
         // 4. Stok Durumu & Kritik Stoklar
-        if (temizSoru.contains("stok") || temizSoru.contains("kritik") || temizSoru.contains("depo") || temizSoru.contains("envanter")) {
+        if ("STOK_DURUM".equals(intent)) {
             List<Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId);
             List<Map<String, Object>> tablo = new ArrayList<>();
             int kritikSayisi = 0;
@@ -264,20 +265,19 @@ public class SohbetService {
             for (Stok s : sirali) {
                 boolean kritik = s.getMinMiktar() != null && s.getMiktar() != null && s.getMiktar().compareTo(s.getMinMiktar()) <= 0;
                 if (kritik) kritikSayisi++;
-                tablo.add(Map.of(
+                tablo.add(satir(
                         "stok", s.getAd(),
                         "miktar", (s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO) + " " + (s.getBirim() != null ? s.getBirim() : "adet"),
                         "durum", kritik ? "Kritik" : "Yeterli"
                 ));
             }
 
-            Map<String, Object> grafik = Map.of(
-                    "labels", sirali.stream().map(Stok::getAd).collect(Collectors.toList()),
-                    "datasets", List.of(Map.of(
-                            "data", sirali.stream().map(s -> s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO).collect(Collectors.toList()),
-                            "backgroundColor", List.of("#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444")
-                    ))
-            );
+            Map<String, Object> grafik = new LinkedHashMap<>();
+            grafik.put("labels", sirali.stream().map(Stok::getAd).collect(Collectors.toList()));
+            Map<String, Object> stokDataset = new LinkedHashMap<>();
+            stokDataset.put("data", sirali.stream().map(s -> s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO).collect(Collectors.toList()));
+            stokDataset.put("backgroundColor", "#3b82f6");
+            grafik.put("datasets", List.of(stokDataset));
 
             return AISorguSonucDTO.builder()
                     .soru(soru)
@@ -290,10 +290,10 @@ public class SohbetService {
         }
 
         // 5. Kârlılık / Kâr Marjı
-        if (temizSoru.contains("kâr") || temizSoru.contains("kar") || temizSoru.contains("marj") || temizSoru.contains("kazanç") || temizSoru.contains("karlılık")) {
+        if ("KARLILIK".equals(intent)) {
             List<Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId);
 
-            List<Map<String, Object>> tablo = new ArrayList<>();
+            List<Object[]> hesaplanan = new ArrayList<>();
             for (Stok s : stoklar) {
                 BigDecimal satis = s.getSatisFiyati() != null ? s.getSatisFiyati() : s.getFiyat();
                 BigDecimal maliyet = s.getFiyat() != null ? s.getFiyat() : BigDecimal.ZERO;
@@ -302,27 +302,42 @@ public class SohbetService {
                 if (satis != null && satis.signum() > 0) {
                     marjYuzde = marj.multiply(BigDecimal.valueOf(100)).divide(satis, 2, java.math.RoundingMode.HALF_UP);
                 }
-                tablo.add(Map.of(
-                        "stok", s.getAd(),
-                        "maliyet", maliyet + " ₺",
-                        "satis", (satis != null ? satis : BigDecimal.ZERO) + " ₺",
-                        "marj", marj + " ₺ (%" + marjYuzde + ")"
-                ));
+                hesaplanan.add(new Object[]{s.getAd(), maliyet, (satis != null ? satis : BigDecimal.ZERO), marjYuzde});
+            }
+            // Deterministik sıralama: önce marj (sayısal) azalan, eşitlikte ürün adı artan.
+            hesaplanan.sort((a, b) -> {
+                int c = ((BigDecimal) b[3]).compareTo((BigDecimal) a[3]);
+                return c != 0 ? c : String.valueOf(a[0]).compareTo(String.valueOf(b[0]));
+            });
+
+            int toplamUrun = hesaplanan.size();
+            List<Map<String, Object>> enKarlilar = new ArrayList<>();
+            List<String> chartLabels = new ArrayList<>();
+            List<BigDecimal> chartData = new ArrayList<>();
+            for (int i = 0; i < hesaplanan.size(); i++) {
+                Object[] h = hesaplanan.get(i);
+                if (i < 5) {
+                    enKarlilar.add(satir("stok", h[0], "maliyet", paraMetni((BigDecimal) h[1]),
+                            "satis", paraMetni((BigDecimal) h[2]), "marjYuzde", "%" + h[3]));
+                }
+                if (i < 10) {
+                    chartLabels.add(String.valueOf(h[0]));
+                    chartData.add((BigDecimal) h[3]);
+                }
             }
 
-            List<Map<String, Object>> enKarlilar = tablo.stream()
-                    .sorted((a, b) -> {
-                        String am = (String) a.get("marj");
-                        String bm = (String) b.get("marj");
-                        return bm.compareTo(am);
-                    })
-                    .limit(5)
-                    .collect(Collectors.toList());
+            Map<String, Object> grafik = new LinkedHashMap<>();
+            grafik.put("labels", chartLabels);
+            Map<String, Object> karDataset = new LinkedHashMap<>();
+            karDataset.put("data", chartData);
+            karDataset.put("backgroundColor", "#10b981");
+            grafik.put("datasets", List.of(karDataset));
 
             return AISorguSonucDTO.builder()
                     .soru(soru)
-                    .cevapMetni(String.format("%d ürün için kâr marjı hesaplandı. En yüksek marjlı ilk %d ürün aşağıda listelenmiştir.", tablo.size(), enKarlilar.size()))
-                    .grafikTipi("none")
+                    .cevapMetni(String.format("%d ürün için kâr marjı hesaplandı. En yüksek marjlı ilk %d ürün aşağıda listelenmiştir.", toplamUrun, enKarlilar.size()))
+                    .grafikTipi(enKarlilar.isEmpty() ? "none" : "bar")
+                    .grafikVerisi(enKarlilar.isEmpty() ? null : grafik)
                     .tabloVerisi(enKarlilar)
                     .intent("KARLILIK")
                     .build();
@@ -473,6 +488,74 @@ public class SohbetService {
         } catch (java.io.IOException e) {
             throw new com.raspel.erp.exception.BusinessException("Dosya yüklenemedi: " + e.getMessage());
         }
+    }
+
+    private static final List<String> KAR_HARIC = List.of("kargo", "karar", "kart", "karşı", "karsi", "karne", "karadeniz");
+    private static final List<String> PARA_HARIC = List.of("parametre", "parça", "parca", "param", "paragraf");
+
+    /** Kelime kökü eşleşmesine göre niyet puanı üretir (deterministik). */
+    private int puan(String soru, String... kokler) {
+        int p = 0;
+        for (String token : soru.split("[^\\p{L}\\p{N}]+")) {
+            if (token.isEmpty()) continue;
+            for (String kok : kokler) {
+                if (!token.startsWith(kok)) continue;
+                if (("kar".equals(kok) || "kâr".equals(kok)) && KAR_HARIC.contains(token)) continue;
+                if ("para".equals(kok) && PARA_HARIC.contains(token)) continue;
+                p++;
+                break;
+            }
+        }
+        return p;
+    }
+
+    /** Soru için niyeti puanlama + sabit öncelik sırasıyla belirler. */
+    private String niyetBelirle(String soru) {
+        int ciro = puan(soru, "ciro", "müşteri", "musteri", "satı", "satis");
+        int vade = puan(soru, "vade", "ödeme", "odeme", "borç", "borc", "alacak");
+        int likidite = puan(soru, "kasa", "banka", "bakiye", "likidite", "para");
+        int karlilik = puan(soru, "kâr", "kar", "marj", "kazanç", "kazanc", "karlılık", "karlilik");
+        int stok = puan(soru, "stok", "kritik", "depo", "envanter");
+        int max = Math.max(Math.max(Math.max(ciro, vade), Math.max(likidite, karlilik)), stok);
+        if (max == 0) return "GENEL";
+        if (ciro == max) return "CIRO_MUSTERI";
+        if (vade == max) return "VADESI_GELEN";
+        if (likidite == max) return "LIKIDITE";
+        if (karlilik == max) return "KARLILIK";
+        return "STOK_DURUM";
+    }
+
+    /** Sorudaki tarih ifadesinden [baslangic, bitis] üretir; yoksa null. */
+    private LocalDate[] tarihAraligi(String soru) {
+        LocalDate bugun = LocalDate.now();
+        if (soru.contains("bu ay")) {
+            return new LocalDate[]{bugun.withDayOfMonth(1), bugun.withDayOfMonth(bugun.lengthOfMonth())};
+        }
+        if (soru.contains("geçen ay") || soru.contains("gecen ay")) {
+            LocalDate gecen = bugun.minusMonths(1);
+            return new LocalDate[]{gecen.withDayOfMonth(1), gecen.withDayOfMonth(gecen.lengthOfMonth())};
+        }
+        if (soru.contains("bu yıl") || soru.contains("bu yil")) {
+            return new LocalDate[]{bugun.withDayOfYear(1), bugun.withDayOfYear(bugun.lengthOfYear())};
+        }
+        if (soru.contains("son 30") || soru.contains("son bir ay") || soru.contains("son 1 ay")) {
+            return new LocalDate[]{bugun.minusDays(30), bugun};
+        }
+        return null;
+    }
+
+    /** Sıra korunan (deterministik) tablo satırı üretir. */
+    private static Map<String, Object> satir(Object... kv) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            m.put(String.valueOf(kv[i]), kv[i + 1]);
+        }
+        return m;
+    }
+
+    private static String paraMetni(BigDecimal v) {
+        BigDecimal d = v != null ? v : BigDecimal.ZERO;
+        return d.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString() + " ₺";
     }
 
     private SohbetMesajDTO toDTO(SohbetMesaj m) {

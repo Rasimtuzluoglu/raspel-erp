@@ -79,6 +79,7 @@ class SohbetServiceTest {
         f.setTur(Fatura.FaturaTur.SATIS);
         f.setDurum(Fatura.FaturaDurum.KESILDI);
         f.setGenelToplam(BigDecimal.valueOf(150000));
+        f.setTarih(LocalDate.now());
         f.setCariHesap(cari);
 
         when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(f));
