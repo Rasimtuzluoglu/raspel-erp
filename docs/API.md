@@ -87,6 +87,14 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | GET | `/api/audit-log` | Denetim logları (filtreli) |
 | GET | `/api/anomaliler` | Anomali taraması |
 
+### Sohbet
+| Metot | Yol | Açıklama |
+|---|---|---|
+| GET/POST | `/api/sohbet` | Genel sohbet mesajları (gerçek zamanlı WebSocket) |
+| POST | `/api/sohbet/dosya` | Genel sohbete dosya/görsel yükle (multipart) |
+| POST | `/api/sohbet/odalar/{id}/dosya` | Odaya dosya/görsel yükle |
+| POST | `/api/sohbet/ai-sorgu` | Doğal dil AI sorgusu (grafik/tablo yanıtı) |
+
 ### Dosya & Belge
 | Metot | Yol | Açıklama |
 |---|---|---|

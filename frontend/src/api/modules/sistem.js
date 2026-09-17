@@ -84,6 +84,11 @@ export const sohbetAPI = {
   },
   aiOcr(gorsel, mimeType) {
     return apiClient.post('/sohbet/ai-ocr', { gorsel, mimeType })
+  },
+  dosya(file) {
+    const form = new FormData()
+    form.append('file', file)
+    return apiClient.post('/sohbet/dosya', form, { headers: { 'Content-Type': 'multipart/form-data' } })
   }
 }
 
@@ -124,7 +129,7 @@ export const sohbetOdaAPI = {
   dosyaYukle(id, file) {
     const form = new FormData()
     form.append('file', file)
-    return apiClient.post(`/sohbet/odalar/${id}/dosya`, form)
+    return apiClient.post(`/sohbet/odalar/${id}/dosya`, form, { headers: { 'Content-Type': 'multipart/form-data' } })
   }
 }
 

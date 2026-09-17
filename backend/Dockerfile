@@ -6,7 +6,8 @@ COPY src ./src
 RUN mvn package -Dmaven.test.skip=true -B
 
 FROM eclipse-temurin:21.0.6_7-jre-alpine
-RUN apk add --no-cache postgresql16-client curl
+ENV TZ=Europe/Istanbul
+RUN apk add --no-cache postgresql16-client curl tzdata
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8081

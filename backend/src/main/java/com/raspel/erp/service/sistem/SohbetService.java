@@ -38,6 +38,12 @@ public class SohbetService {
     private final BankaRepository bankaRepository;
     private final AiConfigService aiConfigService;
     private final LlmClientService llmClientService;
+    private final DosyaDepolamaService dosyaDepolama;
+
+    private static final String DOSYA_KLASOR = "sohbet";
+    private static final java.util.Set<String> IZINLI_UZANTILAR = java.util.Set.of(
+            ".pdf", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".txt", ".csv",
+            ".doc", ".docx", ".xls", ".xlsx", ".zip");
 
     /** Şirket bazlı kısa dönem sohbet belleği (AI asistan çok turlu bağlam). */
     private final Map<Long, java.util.ArrayDeque<String>> sohbetHafizasi = new java.util.concurrent.ConcurrentHashMap<>();
@@ -51,14 +57,17 @@ public class SohbetService {
 
     @Transactional
     public SohbetMesajDTO mesajGonder(SohbetMesajDTO dto, Long sirketId, Long kullaniciId, String kullaniciAd) {
-        if (dto.getMesaj() == null || dto.getMesaj().isBlank()) {
+        boolean mesajVar = dto.getMesaj() != null && !dto.getMesaj().isBlank();
+        boolean dosyaVar = dto.getDosyaUrl() != null && !dto.getDosyaUrl().isBlank();
+        if (!mesajVar && !dosyaVar) {
             throw new com.raspel.erp.exception.BusinessException("Mesaj boş olamaz");
         }
         SohbetMesaj mesaj = SohbetMesaj.builder()
                 .sirketId(sirketId)
                 .kullaniciId(kullaniciId)
                 .kullaniciAd(kullaniciAd)
-                .mesaj(dto.getMesaj().trim())
+                .mesaj(mesajVar ? dto.getMesaj().trim() : "")
+                .dosyaUrl(dosyaVar ? dto.getDosyaUrl() : null)
                 .build();
         mesaj = sohbetMesajRepository.save(mesaj);
         SohbetMesajDTO dtoKayit = toDTO(mesaj);
@@ -444,6 +453,28 @@ public class SohbetService {
         }
     }
 
+    /** Genel sohbete dosya/görsel yükler ve erişim URL'ini döndürür. */
+    @Transactional(readOnly = true)
+    public String dosyaYukle(org.springframework.web.multipart.MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new com.raspel.erp.exception.BusinessException("Dosya boş");
+        }
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains(".")) {
+            ext = originalName.substring(originalName.lastIndexOf(".")).toLowerCase();
+        }
+        if (!IZINLI_UZANTILAR.contains(ext)) {
+            throw new com.raspel.erp.exception.BusinessException("Bu dosya tipi desteklenmiyor: "
+                    + (ext.isBlank() ? "(uzantısız)" : ext));
+        }
+        try {
+            return "/api/uploads/sohbet/" + dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+        } catch (java.io.IOException e) {
+            throw new com.raspel.erp.exception.BusinessException("Dosya yüklenemedi: " + e.getMessage());
+        }
+    }
+
     private SohbetMesajDTO toDTO(SohbetMesaj m) {
         return SohbetMesajDTO.builder()
                 .id(m.getId())
@@ -452,6 +483,7 @@ public class SohbetService {
                 .kullaniciAd(m.getKullaniciAd())
                 .odaId(m.getOdaId())
                 .mesaj(m.getMesaj())
+                .dosyaUrl(m.getDosyaUrl())
                 .olusturmaTarihi(m.getOlusturmaTarihi())
                 .build();
     }

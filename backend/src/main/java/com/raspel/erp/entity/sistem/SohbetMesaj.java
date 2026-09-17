@@ -2,7 +2,7 @@ package com.raspel.erp.entity.sistem;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * Ekip içi sohbet mesajı.
@@ -38,10 +38,10 @@ public class SohbetMesaj {
     private String mesaj;
 
     @Column(name = "olusturma_tarihi", nullable = false)
-    private LocalDateTime olusturmaTarihi;
+    private Instant olusturmaTarihi;
 
     @PrePersist
     protected void onCreate() {
-        olusturmaTarihi = LocalDateTime.now();
+        olusturmaTarihi = Instant.now();
     }
 }

@@ -3,7 +3,7 @@ package com.raspel.erp.entity.sistem;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * Sohbet odası üyeliği.
@@ -27,13 +27,13 @@ public class SohbetOdaUye {
     private Long kullaniciId;
 
     @Column(name = "son_okuma")
-    private LocalDateTime sonOkuma;
+    private Instant sonOkuma;
 
     @Column(name = "eklenme_tarihi", nullable = false)
-    private LocalDateTime eklenmeTarihi;
+    private Instant eklenmeTarihi;
 
     @PrePersist
     protected void onCreate() {
-        eklenmeTarihi = LocalDateTime.now();
+        eklenmeTarihi = Instant.now();
     }
 }

@@ -1,7 +1,7 @@
 package com.raspel.erp.dto.sistem;
 
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -15,5 +15,5 @@ public class SohbetMesajDTO {
     private Long odaId;
     private String dosyaUrl;
     private String mesaj;
-    private LocalDateTime olusturmaTarihi;
+    private Instant olusturmaTarihi;
 }

@@ -22,8 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,13 +42,14 @@ class SohbetServiceTest {
     @Mock private BankaRepository bankaRepository;
     @Mock private com.raspel.erp.service.sistem.AiConfigService aiConfigService;
     @Mock private com.raspel.erp.service.sistem.LlmClientService llmClientService;
+    @Mock private com.raspel.erp.service.sistem.DosyaDepolamaService dosyaDepolama;
 
     @InjectMocks private SohbetService sohbetService;
 
     @Test
     void sonMesajlar_returnsReversedList() {
-        SohbetMesaj m1 = SohbetMesaj.builder().id(1L).mesaj("Mesaj 1").olusturmaTarihi(LocalDateTime.now()).build();
-        SohbetMesaj m2 = SohbetMesaj.builder().id(2L).mesaj("Mesaj 2").olusturmaTarihi(LocalDateTime.now()).build();
+        SohbetMesaj m1 = SohbetMesaj.builder().id(1L).mesaj("Mesaj 1").olusturmaTarihi(Instant.now()).build();
+        SohbetMesaj m2 = SohbetMesaj.builder().id(2L).mesaj("Mesaj 2").olusturmaTarihi(Instant.now()).build();
         when(sohbetMesajRepository.findTop50BySirketIdOrderByOlusturmaTarihiDesc(1L)).thenReturn(new java.util.ArrayList<>(List.of(m2, m1)));
 
         List<SohbetMesajDTO> result = sohbetService.sonMesajlar(1L);

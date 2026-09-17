@@ -84,7 +84,7 @@ public class FileUploadController {
     @Operation(summary = "Sohbet dosyası getir", description = "Sohbette paylaşılan dosyayı/görseli döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<byte[]> getSohbetDosya(@PathVariable String filename) {
-        return dosyaGetir(filename, "sohbet");
+        return dosyaGetir(filename, "sohbet", true);
     }
 
     @GetMapping("/dosya/imzali-url")
@@ -155,6 +155,10 @@ public class FileUploadController {
     }
 
     private ResponseEntity<byte[]> dosyaGetir(String filename, String klasor) {
+        return dosyaGetir(filename, klasor, false);
+    }
+
+    private ResponseEntity<byte[]> dosyaGetir(String filename, String klasor, boolean resimDegilseIndir) {
         DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(klasor, filename);
         if (dosya == null) {
             return ResponseEntity.notFound().build();
@@ -165,9 +169,12 @@ public class FileUploadController {
         } catch (Exception e) {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;
         }
+        boolean resim = "image".equalsIgnoreCase(mediaType.getType());
+        String disposition = (resimDegilseIndir && !resim ? "attachment" : "inline")
+                + "; filename=\"" + filename.replace("\"", "") + "\"";
         return ResponseEntity.ok()
                 .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                 .body(dosya.icerik());
     }
 }

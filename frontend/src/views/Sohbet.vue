@@ -514,8 +514,15 @@ const formatZaman = (t) => {
   })
 }
 
-const formatTabloBaslik = (key) => {
-  const map = {
+/** Yerel listeye mesajı (id'ye göre tekrarı önleyerek) ekler ve aşağı kaydırır. */
+const mesajEkle = (hedefRef, m) => {
+  if (!hedefRef || !hedefRef.value || !m) return
+  if (m.id != null && hedefRef.value.some((x) => x.id === m.id)) return
+  hedefRef.value.push(m)
+  kaydir()
+}
+
+const formatTabloBaslik = (key) => {  const map = {
     sira: '#',
     musteri: t('sohbet.musteri'),
     ciro: t('sohbet.toplamCiro'),
@@ -676,11 +683,15 @@ const gonder = async () => {
   // Ekip Sohbeti
   gonderiliyor.value = true
   try {
+    let gonderilen
     if (seciliOdaId.value) {
-      await sohbetOdaAPI.mesajGonder(seciliOdaId.value, { mesaj: metin })
+      const r = await sohbetOdaAPI.mesajGonder(seciliOdaId.value, { mesaj: metin })
+      gonderilen = r.data
     } else {
-      await sohbetAPI.gonder({ mesaj: metin })
+      const r = await sohbetAPI.gonder({ mesaj: metin })
+      gonderilen = r.data
     }
+    mesajEkle(seciliOdaId.value ? odaMesajlar : mesajlar, gonderilen)
     yeniMesaj.value = ''
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('sohbet.mesajGonderilemedi'))
@@ -830,8 +841,7 @@ const baglan = () => {
             const sirketId = authStore.sirketId
             subscription = stompClient.subscribe(`/topic/sohbet/${sirketId}`, (msg) => {
               try {
-                mesajlar.value.push(JSON.parse(msg.body))
-                kaydir()
+                mesajEkle(mesajlar, JSON.parse(msg.body))
               } catch {
                 /* empty */
               }
@@ -907,16 +917,29 @@ const resimMi = (url) => /\.(png|jpe?g|gif|webp|bmp)$/i.test(url || '')
 
 const sohbetDosyaYukle = async (event) => {
   const dosya = event.target.files?.[0]
-  if (!dosya || !seciliOdaId.value) return
+  if (!dosya) return
   gonderiliyor.value = true
   try {
-    const res = await sohbetOdaAPI.dosyaYukle(seciliOdaId.value, dosya)
-    const url = res.data?.url
-    if (url) {
-      await sohbetOdaAPI.mesajGonder(seciliOdaId.value, { mesaj: dosya.name, dosyaUrl: url })
+    let url
+    if (seciliOdaId.value) {
+      const res = await sohbetOdaAPI.dosyaYukle(seciliOdaId.value, dosya)
+      url = res.data?.url
+    } else {
+      const res = await sohbetAPI.dosya(dosya)
+      url = res.data?.url
     }
+    if (!url) throw new Error(t('sohbet.dosyaYuklenemedi'))
+    let gonderilen
+    if (seciliOdaId.value) {
+      const r = await sohbetOdaAPI.mesajGonder(seciliOdaId.value, { mesaj: dosya.name, dosyaUrl: url })
+      gonderilen = r.data
+    } else {
+      const r = await sohbetAPI.gonder({ mesaj: dosya.name, dosyaUrl: url })
+      gonderilen = r.data
+    }
+    mesajEkle(seciliOdaId.value ? odaMesajlar : mesajlar, gonderilen)
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('sohbet.dosyaYuklenemedi'))
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('sohbet.dosyaYuklenemedi'))
   } finally {
     gonderiliyor.value = false
     event.target.value = ''

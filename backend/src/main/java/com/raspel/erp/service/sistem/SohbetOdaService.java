@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -164,7 +164,7 @@ public class SohbetOdaService {
     @Transactional
     public void okunduIsaretle(Long odaId, Long kullaniciId) {
         uyeRepository.findByOdaIdAndKullaniciId(odaId, kullaniciId).ifPresent(u -> {
-            u.setSonOkuma(LocalDateTime.now());
+            u.setSonOkuma(Instant.now());
             uyeRepository.save(u);
         });
     }
@@ -241,10 +241,10 @@ public class SohbetOdaService {
                 .collect(Collectors.toList());
         long okunmamis = 0;
         if (uyeMi) {
-            LocalDateTime sonOkuma = uyeRepository.findByOdaIdAndKullaniciId(oda.getId(), kullaniciId)
+            Instant sonOkuma = uyeRepository.findByOdaIdAndKullaniciId(oda.getId(), kullaniciId)
                     .map(SohbetOdaUye::getSonOkuma)
                     .orElse(null);
-            LocalDateTime esik = sonOkuma != null ? sonOkuma : LocalDateTime.of(1970, 1, 1, 0, 0);
+            Instant esik = sonOkuma != null ? sonOkuma : Instant.EPOCH;
             okunmamis = mesajRepository.countByOdaIdAndOlusturmaTarihiGreaterThan(oda.getId(), esik);
         }
         return SohbetOdaDTO.builder()

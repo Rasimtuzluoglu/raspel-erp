@@ -3,7 +3,7 @@ package com.raspel.erp.entity.sistem;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * Ekip içi grup sohbet odası.
@@ -33,10 +33,10 @@ public class SohbetOda {
     private Long olusturanKullaniciId;
 
     @Column(name = "olusturma_tarihi", nullable = false)
-    private LocalDateTime olusturmaTarihi;
+    private Instant olusturmaTarihi;
 
     @PrePersist
     protected void onCreate() {
-        olusturmaTarihi = LocalDateTime.now();
+        olusturmaTarihi = Instant.now();
     }
 }

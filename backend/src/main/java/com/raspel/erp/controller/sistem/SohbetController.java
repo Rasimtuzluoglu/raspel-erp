@@ -40,6 +40,13 @@ public class SohbetController {
         return ResponseEntity.ok(sohbetService.mesajGonder(dto, sirketId, kullaniciId, displayName));
     }
 
+    @PostMapping("/dosya")
+    @Operation(summary = "Genel sohbete dosya yükle", description = "Genel sohbette paylaşılmak üzere dosya/görsel yükler")
+    public ResponseEntity<java.util.Map<String, String>> dosyaYukle(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.ok(java.util.Map.of("url", sohbetService.dosyaYukle(file)));
+    }
+
     @PostMapping("/ai-sorgu")
     @Operation(summary = "Doğal dilde veri sorgulama (AI Asistan)", description = "Yapay zeka ile doğal dil analitiği ve görsel grafik yanıtı üretir")
     public ResponseEntity<com.raspel.erp.dto.sistem.AISorguSonucDTO> aiSorgu(@RequestBody java.util.Map<String, String> body, HttpServletRequest request) {
