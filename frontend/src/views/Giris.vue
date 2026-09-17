@@ -714,7 +714,7 @@ const tumAdimlariSifirla = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 0%, #0c1a15 0%, #0b0a08 62%);
+  background: radial-gradient(circle at 50% 0%, #0a1620 0%, #0b0f14 62%);
   overflow-x: hidden;
   overflow-y: auto;
   padding:
@@ -749,7 +749,7 @@ const tumAdimlariSifirla = () => {
     --giris-tint-40: color-mix(in srgb, var(--giris-aksan) 40%, transparent);
     --giris-tint-50: color-mix(in srgb, var(--giris-aksan) 50%, transparent);
     --giris-tint-55: color-mix(in srgb, var(--giris-aksan) 55%, transparent);
-    background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--giris-aksan) 10%, #0b0a08) 0%, #0b0a08 62%);
+    background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--giris-aksan) 10%, #0b0f14) 0%, #0b0f14 62%);
   }
 }
 
@@ -810,7 +810,7 @@ const tumAdimlariSifirla = () => {
 }
 
 [data-theme='light'] .giris-sayfasi {
-  background: radial-gradient(circle at 50% 0%, #fffdf9 0%, #f3ece0 100%);
+  background: radial-gradient(circle at 50% 0%, #ffffff 0%, #eef2f6 100%);
 }
 
 /* Sinematik sahne katmanlari (tamamen composited; canvas / agir blur yok) */
@@ -920,7 +920,7 @@ const tumAdimlariSifirla = () => {
 }
 
 [data-theme='light'] .giris-hero-alani {
-  background: linear-gradient(135deg, rgba(250, 247, 242, 0.9) 0%, rgba(243, 236, 224, 0.95) 100%);
+  background: linear-gradient(135deg, rgba(245, 247, 250, 0.9) 0%, rgba(238, 242, 246, 0.95) 100%);
   border-right-color: rgba(226, 232, 240, 0.9);
 }
 

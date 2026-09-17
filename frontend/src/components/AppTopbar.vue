@@ -59,7 +59,7 @@ const baslik = computed(() => authStore.sirketAdi || authStore.companyName || 'R
   gap: 12px;
   margin: -20px -24px 16px;
   padding: 10px 24px;
-  background: var(--bg-header, rgba(20, 17, 9, 0.82));
+  background: var(--bg-header, rgba(18, 24, 33, 0.82));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);

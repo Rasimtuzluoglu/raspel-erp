@@ -5,12 +5,12 @@
   border-color: var(--border, #e5e7eb);
 }
 :root {
-  /* Yuzeyler / metin (tek koyu zemin: sicak mukrekk) */
-  --bg-primary: #0b0a08;
-  --bg-secondary: #141109;
-  --bg-card: #141109;
+  /* Yuzeyler / metin (tek koyu zemin: notr slate) */
+  --bg-primary: #0b0f14;
+  --bg-secondary: #121821;
+  --bg-card: #121821;
   --bg-muted: rgba(148, 163, 184, 0.08);
-  --bg-header: rgba(20, 17, 9, 0.82);
+  --bg-header: rgba(18, 24, 33, 0.82);
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
@@ -96,12 +96,12 @@
 }
 
 [data-theme='light'] {
-  --bg-primary: #faf7f2;
+  --bg-primary: #f5f7fa;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
   --bg-muted: rgba(148, 163, 184, 0.1);
   --bg-header: rgba(255, 255, 255, 0.85);
-  --text-primary: #1a1206;
+  --text-primary: #0f172a;
   --text-secondary: #57534e;
   --text-muted: #94a3b8;
   --accent: #10b981;
@@ -329,7 +329,7 @@ img {
   width: var(--sidebar-w);
   height: 100vh;
   height: 100dvh;
-  background: rgba(20, 17, 9, 0.98);
+  background: rgba(18, 24, 33, 0.98);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -1485,7 +1485,7 @@ img {
     border-right: none;
     border-bottom: 1px solid var(--border);
     overflow: visible;
-    background: rgba(20, 17, 9, 0.98);
+    background: rgba(18, 24, 33, 0.98);
   }
   .sidebar-ust {
     padding: 0;

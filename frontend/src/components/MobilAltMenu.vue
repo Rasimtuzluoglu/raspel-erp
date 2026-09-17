@@ -60,7 +60,7 @@ const aktif = (path) => {
     padding-bottom: env(safe-area-inset-bottom);
     display: flex;
     align-items: stretch;
-    background: var(--bg-card, #141109);
+    background: var(--bg-card, #121821);
     border-top: 1px solid var(--border);
     z-index: 900;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
