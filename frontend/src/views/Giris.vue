@@ -3,10 +3,30 @@
     class="giris-sayfasi"
     :style="parallax"
   >
-    <!-- Ambient Aurora Glow Orbs -->
-    <div class="aurora-orb aurora-1" />
-    <div class="aurora-orb aurora-2" />
-    <div class="aurora-orb aurora-3" />
+    <!-- Sinematik sahne: CSS mesh katmanlari (canvas / agir blur yok) -->
+    <div
+      class="sahne-arka"
+      aria-hidden="true"
+    >
+      <div class="sahne-mesh" />
+      <div class="sahne-grid" />
+      <div class="sahne-parilti p1" />
+      <div class="sahne-parilti p2" />
+    </div>
+
+    <!-- Yuzen dekoratif cam kartlar (parallax, transform-only) -->
+    <div
+      class="yuzen-kart yk-1"
+      aria-hidden="true"
+    >
+      <i class="pi pi-chart-line" /><span>+24%</span>
+    </div>
+    <div
+      class="yuzen-kart yk-2"
+      aria-hidden="true"
+    >
+      <i class="pi pi-shield" /><span>SSL</span>
+    </div>
 
     <div class="giris-split-wrapper">
       <!-- SOL BÖLÜM: Kurumsal Hero & Özellik Vitrini (Masaüstü) -->
@@ -21,6 +41,7 @@
           </div>
         </div>
 
+        <span class="hero-eyebrow"><i class="pi pi-bolt" /> {{ $t('giris.heroEyebrow') }}</span>
         <h1 class="hero-title">
           {{ $t('giris.heroTitle') }}
         </h1>
@@ -44,32 +65,61 @@
           <LoginPreview />
         </div>
 
-        <!-- Vitrin ozellik cipleri -->
-        <div class="hero-feature-chips">
-          <span class="hero-chip"><i class="pi pi-sparkles" /> {{ $t('giris.featureAi') }}</span>
-          <span class="hero-chip"><i class="pi pi-box" /> {{ $t('giris.featurePos') }}</span>
-          <span class="hero-chip"><i class="pi pi-file-check" /> {{ $t('giris.featureEInvoice') }}</span>
-          <span class="hero-chip"><i class="pi pi-shield" /> {{ $t('giris.featureSecurity') }}</span>
+        <!-- Ozellik listesi -->
+        <div class="hero-features">
+          <span class="hero-features-title">{{ $t('giris.featuresTitle') }}</span>
+          <div class="hero-features-grid">
+            <div class="feature-item">
+              <span class="feature-ikon"><i class="pi pi-sparkles" /></span>
+              <div class="feature-metin">
+                <strong>{{ $t('giris.featureAiTitle') }}</strong>
+                <span>{{ $t('giris.featureAiDesc') }}</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-ikon"><i class="pi pi-file-check" /></span>
+              <div class="feature-metin">
+                <strong>{{ $t('giris.featureEInvoiceTitle') }}</strong>
+                <span>{{ $t('giris.featureEInvoiceDesc') }}</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-ikon"><i class="pi pi-box" /></span>
+              <div class="feature-metin">
+                <strong>{{ $t('giris.featureStockTitle') }}</strong>
+                <span>{{ $t('giris.featureStockDesc') }}</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-ikon"><i class="pi pi-chart-bar" /></span>
+              <div class="feature-metin">
+                <strong>{{ $t('giris.featureProfitTitle') }}</strong>
+                <span>{{ $t('giris.featureProfitDesc') }}</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-ikon"><i class="pi pi-compass" /></span>
+              <div class="feature-metin">
+                <strong>{{ $t('giris.featureFieldTitle') }}</strong>
+                <span>{{ $t('giris.featureFieldDesc') }}</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-ikon"><i class="pi pi-wallet" /></span>
+              <div class="feature-metin">
+                <strong>{{ $t('giris.featureCollectionTitle') }}</strong>
+                <span>{{ $t('giris.featureCollectionDesc') }}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Güvenlik & Standart Rozetleri (Sol Alt) -->
-        <div class="hero-security-badges">
-          <div class="sec-badge">
-            <i class="pi pi-shield" />
-            <span>{{ $t('giris.securityTotp') }}</span>
-          </div>
-          <div class="sec-badge">
-            <i class="pi pi-lock" />
-            <span>{{ $t('giris.securityAes') }}</span>
-          </div>
-          <div class="sec-badge">
-            <i class="pi pi-cloud" />
-            <span>{{ $t('giris.securityCloud') }}</span>
-          </div>
-          <div class="sec-badge">
-            <i class="pi pi-verified" />
-            <span>{{ $t('giris.securityIso') }}</span>
-          </div>
+        <!-- Guven rozetleri (notr) -->
+        <div class="hero-trust">
+          <span class="trust-badge"><i class="pi pi-shield" /> {{ $t('giris.trustKvkk') }}</span>
+          <span class="trust-badge"><i class="pi pi-lock" /> {{ $t('giris.trustSsl') }}</span>
+          <span class="trust-badge"><i class="pi pi-key" /> {{ $t('giris.trust2fa') }}</span>
+          <span class="trust-badge"><i class="pi pi-cloud" /> {{ $t('giris.trustCloud') }}</span>
         </div>
       </div>
 
@@ -90,9 +140,15 @@
               </p>
             </div>
             <div class="mobil-chips">
-              <span><i class="pi pi-shield" /> {{ $t('giris.miniSecuritySsl') }}</span>
-              <span><i class="pi pi-lock" /> {{ $t('giris.miniSecurity2fa') }}</span>
-              <span><i class="pi pi-cloud" /> {{ $t('giris.miniSecurityCloud') }}</span>
+              <span><i class="pi pi-sparkles" /> {{ $t('giris.previewTabAi') }}</span>
+              <span><i class="pi pi-file-check" /> {{ $t('giris.previewTabInvoice') }}</span>
+              <span><i class="pi pi-box" /> {{ $t('giris.previewTabStock') }}</span>
+              <span><i class="pi pi-chart-bar" /> {{ $t('giris.previewTabProfit') }}</span>
+            </div>
+            <div class="mobil-chips mobil-trust">
+              <span><i class="pi pi-shield" /> {{ $t('giris.trustKvkk') }}</span>
+              <span><i class="pi pi-lock" /> {{ $t('giris.trustSsl') }}</span>
+              <span><i class="pi pi-key" /> {{ $t('giris.trust2fa') }}</span>
             </div>
           </div>
 
@@ -376,10 +432,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useMouse, usePreferredReducedMotion, useIntervalFn } from '@vueuse/core'
+import { useMouse, usePreferredReducedMotion, useIntervalFn, useThrottleFn } from '@vueuse/core'
 import { useAuthStore } from '../stores/authStore.js'
 import { kurulumAPI } from '../api/index.js'
 import ThemeSwitcher from '../components/ThemeSwitcher.vue'
@@ -410,10 +466,18 @@ const girisToken = ref('')
 const sonSecilenSirketId = ref(Number(localStorage.getItem('raspel_erp_son_sirket')) || null)
 const sonSirketAd = ref(localStorage.getItem('raspel_erp_son_sirket_ad') || '')
 
-// Hareket azaltma tercihi ve fare parallax (yalnizca transform/opacity)
+// Hareket azaltma tercihi ve fare parallax (yalnizca transform/opacity, throttle'li)
 const azHareket = usePreferredReducedMotion()
 const hareketAzalt = computed(() => azHareket.value === 'reduce')
-const { x: fareX, y: fareY } = useMouse()
+const { x: hamX, y: hamY } = useMouse()
+const fareX = ref(0)
+const fareY = ref(0)
+// Mousemove'u 40ms'te bir isleyerek gereksiz stil hesabini onler (performans).
+const fareGuncelle = useThrottleFn((x, y) => {
+  fareX.value = x
+  fareY.value = y
+}, 40)
+watchEffect(() => fareGuncelle(hamX.value, hamY.value))
 
 const parallax = computed(() => {
   if (hareketAzalt.value || typeof window === 'undefined') return {}
@@ -422,10 +486,10 @@ const parallax = computed(() => {
   const dx = (fareX.value - w / 2) / (w / 2)
   const dy = (fareY.value - h / 2) / (h / 2)
   return {
-    '--px': `${(dx * 7).toFixed(2)}px`,
-    '--py': `${(dy * 7).toFixed(2)}px`,
-    '--pxs': `${(dx * 16).toFixed(2)}px`,
-    '--pys': `${(dy * 16).toFixed(2)}px`
+    '--px': `${(dx * 6).toFixed(2)}px`,
+    '--py': `${(dy * 6).toFixed(2)}px`,
+    '--pxs': `${(dx * 14).toFixed(2)}px`,
+    '--pys': `${(dy * 14).toFixed(2)}px`
   }
 })
 
@@ -713,45 +777,110 @@ const tumAdimlariSifirla = () => {
   background: radial-gradient(circle at top left, #f8fafc 0%, #e2e8f0 100%);
 }
 
-/* Aurora Glow Floating Orbs */
-.aurora-orb {
+/* Sinematik sahne katmanlari (tamamen composited; canvas / agir blur yok) */
+.sahne-arka {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.sahne-mesh {
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(38% 45% at 22% 20%, rgba(59, 130, 246, 0.30), transparent 70%),
+    radial-gradient(42% 48% at 82% 26%, rgba(139, 92, 246, 0.26), transparent 72%),
+    radial-gradient(46% 50% at 68% 82%, rgba(16, 185, 129, 0.16), transparent 74%),
+    radial-gradient(40% 42% at 12% 78%, rgba(56, 189, 248, 0.16), transparent 72%);
+  transform: rotate(0deg);
+  animation: sahneDon 90s linear infinite;
+  will-change: transform;
+}
+.sahne-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 78%);
+  opacity: 0.6;
+}
+.sahne-parilti {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
   pointer-events: none;
-  opacity: 0.35;
-  z-index: 0;
-  animation: float 14s ease-in-out infinite alternate;
 }
-.aurora-1 {
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, #3b82f6, transparent);
-  top: -80px;
-  left: -80px;
+.sahne-parilti.p1 {
+  width: 46vw;
+  height: 46vw;
+  max-width: 720px;
+  max-height: 720px;
+  top: -12%;
+  left: -8%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.22), transparent 62%);
+  animation: parildama 16s ease-in-out infinite alternate;
 }
-.aurora-2 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #8b5cf6, transparent);
-  bottom: -100px;
-  right: 5%;
-  animation-delay: -5s;
+.sahne-parilti.p2 {
+  width: 40vw;
+  height: 40vw;
+  max-width: 620px;
+  max-height: 620px;
+  bottom: -14%;
+  right: -6%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.20), transparent 62%);
+  animation: parildama 20s ease-in-out infinite alternate -6s;
 }
-.aurora-3 {
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, #10b981, transparent);
-  top: 40%;
-  left: 30%;
-  opacity: 0.2;
-  animation-delay: -9s;
+@keyframes sahneDon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes parildama {
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(1.12); opacity: 0.6; }
 }
 
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, -20px) scale(1.08); }
-  100% { transform: translate(-20px, 30px) scale(0.95); }
+/* Yuzen dekoratif cam kartlar (parallax + hafif yuzme) */
+.yuzen-kart {
+  position: absolute;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(30, 41, 59, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  transform: translate3d(var(--px, 0), var(--py, 0), 0);
+  transition: transform 0.3s ease-out;
+}
+.yuzen-kart i {
+  color: #60a5fa;
+}
+.yk-1 {
+  top: 15%;
+  left: 5%;
+  animation: yuz 8s ease-in-out infinite alternate;
+}
+.yk-2 {
+  bottom: 15%;
+  right: 6%;
+  animation: yuz 10s ease-in-out infinite alternate -3s;
+}
+@keyframes yuz {
+  from { translate: 0 0; }
+  to { translate: 0 -14px; }
+}
+[data-theme='light'] .yuzen-kart {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(203, 213, 225, 0.8);
 }
 
 /* Split Screen Wrapper */
@@ -760,15 +889,19 @@ const tumAdimlariSifirla = () => {
   z-index: 1;
   display: flex;
   width: 100%;
-  max-width: min(1140px, 100%);
+  max-width: min(1180px, 100%);
   min-width: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  max-height: calc(100dvh - 40px);
+  background: rgba(15, 23, 42, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65);
   overflow: hidden;
+  animation: sahneGiris 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes sahneGiris {
+  from { opacity: 0; transform: translateY(20px) scale(0.985); }
+  to { opacity: 1; transform: none; }
 }
 
 [data-theme='light'] .giris-split-wrapper {
@@ -784,9 +917,11 @@ const tumAdimlariSifirla = () => {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  scrollbar-width: thin;
 }
 
 [data-theme='light'] .giris-hero-alani {
@@ -845,6 +980,106 @@ const tumAdimlariSifirla = () => {
   line-height: 1.5;
   margin: 0 0 6px;
 }
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #60a5fa;
+  margin-bottom: 4px;
+}
+.hero-eyebrow i {
+  font-size: 11px;
+}
+
+/* Ozellik listesi */
+.hero-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hero-features-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.hero-features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.feature-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.feature-ikon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.14);
+  color: #60a5fa;
+  font-size: 12px;
+}
+.feature-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.feature-metin strong {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.feature-metin span {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Guven rozetleri */
+.hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+.trust-badge i {
+  color: #10b981;
+  font-size: 11px;
+}
 
 /* Hero donen baslik */
 .hero-rotate {
@@ -878,67 +1113,6 @@ const tumAdimlariSifirla = () => {
   transform: translate3d(var(--pxs, 0), var(--pys, 0), 0);
   transition: transform 0.25s ease-out;
   will-change: transform;
-}
-
-/* Ozellik cipleri */
-.hero-feature-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.hero-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-[data-theme='light'] .hero-chip {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: rgba(203, 213, 225, 0.6);
-}
-.hero-chip:hover {
-  border-color: rgba(59, 130, 246, 0.4);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-}
-.hero-chip i {
-  color: #60a5fa;
-  font-size: 12px;
-}
-
-/* Security Badges (Hero Footer) */
-.hero-security-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-[data-theme='light'] .hero-security-badges {
-  border-top-color: rgba(203, 213, 225, 0.6);
-}
-.sec-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.sec-badge i {
-  color: #10b981;
-  font-size: 12px;
 }
 
 /* SAĞ: Form Alanı */
@@ -1457,7 +1631,12 @@ const tumAdimlariSifirla = () => {
 
 /* Hareket azaltma tercihi (erisilebilirlik) */
 @media (prefers-reduced-motion: reduce) {
-  .aurora-orb {
+  .sahne-mesh,
+  .sahne-parilti,
+  .yuzen-kart {
+    animation: none;
+  }
+  .giris-split-wrapper {
     animation: none;
   }
   .caps-lock-uyari {
@@ -1474,6 +1653,18 @@ const tumAdimlariSifirla = () => {
 }
 
 /* Responsive Düzen */
+@media (max-width: 1280px) {
+  .yuzen-kart {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .hero-features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .giris-hero-alani {
     display: none;
@@ -1484,6 +1675,7 @@ const tumAdimlariSifirla = () => {
   .giris-split-wrapper {
     max-width: 480px;
     border-radius: 20px;
+    max-height: none;
   }
   .giris-form-alani {
     padding: 32px 24px;

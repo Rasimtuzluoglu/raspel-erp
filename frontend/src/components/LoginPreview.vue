@@ -169,6 +169,62 @@
               </div>
             </div>
 
+            <!-- Üretim -->
+            <div
+              v-else-if="aktif === 'production'"
+              key="production"
+              class="mock mock-prod"
+            >
+              <div class="mock-prod-head">
+                <span class="mock-line w45" />
+                <span class="mock-badge" />
+              </div>
+              <div class="mock-prod-row">
+                <span class="mock-prod-icon"><i class="pi pi-cog" /></span>
+                <div class="mock-prod-info">
+                  <span class="mock-line w60" />
+                  <span class="mock-bar"><i style="width: 68%" /></span>
+                </div>
+                <span class="mock-qty">68%</span>
+              </div>
+              <div class="mock-prod-row">
+                <span class="mock-prod-icon"><i class="pi pi-cog" /></span>
+                <div class="mock-prod-info">
+                  <span class="mock-line w50" />
+                  <span class="mock-bar"><i style="width: 32%" /></span>
+                </div>
+                <span class="mock-qty">32%</span>
+              </div>
+              <div class="mock-prod-row">
+                <span class="mock-prod-icon"><i class="pi pi-check" /></span>
+                <div class="mock-prod-info">
+                  <span class="mock-line w55" />
+                  <span class="mock-bar"><i style="width: 92%" /></span>
+                </div>
+                <span class="mock-qty">92%</span>
+              </div>
+            </div>
+
+            <!-- Kârlılık -->
+            <div
+              v-else-if="aktif === 'profit'"
+              key="profit"
+              class="mock mock-profit"
+            >
+              <div class="mock-profit-head">
+                <span class="mock-line w40" />
+                <span class="mock-line w20 accent" />
+              </div>
+              <div class="mock-bars">
+                <span style="height: 42%" />
+                <span style="height: 66%" />
+                <span style="height: 54%" />
+                <span style="height: 88%" />
+                <span style="height: 72%" />
+                <span style="height: 95%" />
+              </div>
+            </div>
+
             <!-- AI Asistan -->
             <div
               v-else
@@ -231,12 +287,39 @@
         type="button"
         role="tab"
         class="preview-tab"
+        :class="{ aktif: aktif === 'production' }"
+        :aria-selected="aktif === 'production'"
+        @click="sec('production')"
+      >
+        <i class="pi pi-cog" /> {{ $t('giris.previewTabProduction') }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="preview-tab"
+        :class="{ aktif: aktif === 'profit' }"
+        :aria-selected="aktif === 'profit'"
+        @click="sec('profit')"
+      >
+        <i class="pi pi-chart-bar" /> {{ $t('giris.previewTabProfit') }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="preview-tab"
         :class="{ aktif: aktif === 'ai' }"
         :aria-selected="aktif === 'ai'"
         @click="sec('ai')"
       >
         <i class="pi pi-sparkles" /> {{ $t('giris.previewTabAi') }}
       </button>
+    </div>
+
+    <div
+      class="preview-progress"
+      aria-hidden="true"
+    >
+      <span :style="{ width: ilerleme + '%' }" />
     </div>
 
     <transition
@@ -250,6 +333,8 @@
         <span v-if="aktif === 'dashboard'">{{ $t('giris.previewCapDashboard') }}</span>
         <span v-else-if="aktif === 'invoice'">{{ $t('giris.previewCapInvoice') }}</span>
         <span v-else-if="aktif === 'stock'">{{ $t('giris.previewCapStock') }}</span>
+        <span v-else-if="aktif === 'production'">{{ $t('giris.previewCapProduction') }}</span>
+        <span v-else-if="aktif === 'profit'">{{ $t('giris.previewCapProfit') }}</span>
         <span v-else>{{ $t('giris.previewCapAi') }}</span>
       </p>
     </transition>
@@ -260,9 +345,12 @@
 import { ref, computed, watchEffect } from 'vue'
 import { useElementHover, useIntervalFn, usePreferredReducedMotion } from '@vueuse/core'
 
-const sekmeler = ['dashboard', 'invoice', 'stock', 'ai']
+const sekmeler = ['dashboard', 'invoice', 'stock', 'production', 'profit', 'ai']
 const aktif = ref('dashboard')
 const kokEl = ref(null)
+
+const aktifIndex = computed(() => Math.max(0, sekmeler.indexOf(aktif.value)))
+const ilerleme = computed(() => ((aktifIndex.value + 1) / sekmeler.length) * 100)
 
 const hover = useElementHover(kokEl)
 const azHareket = usePreferredReducedMotion()
@@ -654,6 +742,82 @@ const sec = (id) => {
   transform: translateY(6px);
 }
 
+/* Üretim */
+.mock-prod-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.2);
+}
+.mock-prod-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mock-prod-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.16);
+  color: #a78bfa;
+  font-size: 12px;
+}
+.mock-prod-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Kârlılık */
+.mock-profit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mock-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 122px;
+  padding: 8px 4px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+.mock-bars span {
+  flex: 1;
+  min-height: 10px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #60a5fa, rgba(59, 130, 246, 0.25));
+  transform-origin: bottom;
+  animation: barYuksekligi 0.6s ease;
+}
+@keyframes barYuksekligi {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* İlerleme göstergesi */
+.preview-progress {
+  height: 3px;
+  border-radius: 3px;
+  margin-top: 10px;
+  background: rgba(148, 163, 184, 0.15);
+  overflow: hidden;
+}
+.preview-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #3b82f6, #a78bfa);
+  transition: width 0.4s ease;
+}
+
 @media (max-width: 520px) {
   .preview-tab span,
   .preview-tab {
@@ -666,6 +830,12 @@ const sec = (id) => {
   .mock-chart-line {
     stroke-dashoffset: 0;
     animation: none;
+  }
+  .mock-bars span {
+    animation: none;
+  }
+  .preview-progress span {
+    transition: none;
   }
   .preview-fade-enter-active,
   .preview-fade-leave-active {
