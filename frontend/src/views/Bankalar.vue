@@ -330,7 +330,7 @@ h1 {
 .loading {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-muted);
 }
 .form-group {
   margin-bottom: 20px;
@@ -339,14 +339,14 @@ h1 {
   display: block;
   margin-bottom: 8px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-secondary);
 }
 .positive {
-  color: #4caf50;
+  color: var(--success);
   font-weight: bold;
 }
 .negative {
-  color: #f44336;
+  color: var(--danger);
   font-weight: bold;
 }
 .kopyalanabilir {

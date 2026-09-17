@@ -1684,7 +1684,7 @@ const whatsappLink = (f) => {
   padding: 2px 10px;
   border-radius: 20px;
   background: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
+  color: var(--accent);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1855,10 +1855,10 @@ const whatsappLink = (f) => {
   top: 0;
   bottom: 0;
   width: 4px;
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  background: linear-gradient(180deg, var(--accent), var(--accent-hover));
 }
 .stat-card.cari::before {
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  background: linear-gradient(180deg, var(--accent), var(--accent-hover));
 }
 .stat-card.finans::before {
   background: linear-gradient(180deg, #6366f1, #4f46e5);
@@ -1886,7 +1886,7 @@ const whatsappLink = (f) => {
 .stat-icon {
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, #1976d2, #1565c0);
+  background: linear-gradient(135deg, var(--accent), #1565c0);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1897,7 +1897,7 @@ const whatsappLink = (f) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 .stat-icon.cari {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
 }
 .stat-icon.finans {
   background: linear-gradient(135deg, #6366f1, #4f46e5);
@@ -1945,7 +1945,7 @@ const whatsappLink = (f) => {
   background: linear-gradient(135deg, #eab308, #ca8a04);
 }
 .stat-icon.ise-baslayacak {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
 }
 .stat-content {
   flex: 1;
@@ -2025,7 +2025,7 @@ const whatsappLink = (f) => {
   flex-shrink: 0;
 }
 .mini-stat-icon.siparis {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
 }
 .mini-stat-icon.teslimat {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
@@ -2103,7 +2103,7 @@ const whatsappLink = (f) => {
   background: linear-gradient(135deg, #dc2626, #ef4444);
 }
 .bugun-kart.siparis {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
 }
 .bugun-kart.teslimat {
   background: linear-gradient(135deg, #7c3aed, #8b5cf6);
@@ -2215,7 +2215,7 @@ const whatsappLink = (f) => {
   transition: width 0.4s ease;
 }
 .hedef-fill.ciro {
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  background: linear-gradient(90deg, var(--accent-hover), var(--accent));
 }
 .hedef-fill.kar {
   background: linear-gradient(90deg, #7c3aed, #8b5cf6);
@@ -2414,16 +2414,16 @@ const whatsappLink = (f) => {
   vertical-align: middle;
 }
 .dot.pos {
-  background: #4caf50;
+  background: var(--success);
 }
 .dot.neg {
-  background: #f44336;
+  background: var(--danger);
 }
 .dot.kasa {
   background: #f59e0b;
 }
 .dot.banka {
-  background: #3b82f6;
+  background: var(--accent);
 }
 
 .bottom-grid {
@@ -2527,11 +2527,11 @@ const whatsappLink = (f) => {
   color: #f87171;
 }
 .positive {
-  color: #4caf50;
+  color: var(--success);
   font-weight: bold;
 }
 .negative {
-  color: #f44336;
+  color: var(--danger);
   font-weight: bold;
 }
 
@@ -2627,7 +2627,7 @@ const whatsappLink = (f) => {
 }
 
 .chip-refresh-btn:hover {
-  color: #3b82f6;
+  color: var(--accent);
 }
 
 .quick-actions {
@@ -2661,7 +2661,7 @@ const whatsappLink = (f) => {
   background: linear-gradient(135deg, #d97706, #b45309);
 }
 .action-card.teklif {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
 }
 .action-card.saha {
   background: linear-gradient(135deg, #7c3aed, #8b5cf6);

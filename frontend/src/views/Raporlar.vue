@@ -1528,7 +1528,7 @@ h1 {
   display: block;
   margin-bottom: 6px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 .filtre-btn {
@@ -1584,14 +1584,14 @@ h1 {
   gap: 6px;
 }
 .rapor-bilgi {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 15px;
 }
 .rapor-bilgi h3 {
   margin: 0 0 10px 0;
-  color: #1976d2;
+  color: var(--accent);
 }
 .rapor-bilgi p {
   margin: 5px 0;
@@ -1611,23 +1611,23 @@ h1 {
 .ozet-kart span {
   display: block;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   margin-bottom: 8px;
 }
 .ozet-kart strong {
   font-size: 22px;
 }
 .ozet-kart.gelir strong {
-  color: #4caf50;
+  color: var(--success);
 }
 .ozet-kart.gider strong {
-  color: #f44336;
+  color: var(--danger);
 }
 .ozet-kart.kar strong {
-  color: #4caf50;
+  color: var(--success);
 }
 .ozet-kart.zarar strong {
-  color: #f44336;
+  color: var(--danger);
 }
 .badge {
   padding: 4px 12px;
@@ -1636,19 +1636,19 @@ h1 {
   font-weight: bold;
 }
 .badge.tahsilat {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .badge.odeme {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .positive {
-  color: #4caf50;
+  color: var(--success);
   font-weight: bold;
 }
 .negative {
-  color: #f44336;
+  color: var(--danger);
   font-weight: bold;
 }
 .vade-badge {
@@ -1658,16 +1658,16 @@ h1 {
   font-weight: bold;
 }
 .risk-yok {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .risk-az {
   background: #fff3e0;
   color: #e65100;
 }
 .risk-orta {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .risk-yuksek {
   background: #fce4ec;
@@ -1684,7 +1684,7 @@ h1 {
   color: var(--text-primary);
 }
 .tedarikci-grup .pi {
-  color: #3b82f6;
+  color: var(--accent);
 }
 .rapor-grafik {
   position: relative;

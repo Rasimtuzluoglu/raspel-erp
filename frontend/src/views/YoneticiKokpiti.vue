@@ -1033,7 +1033,7 @@ const hatirlatWhatsApp = (cari) => {
   height: 24px;
   border-radius: 6px;
   background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: var(--accent);
   font-size: 0.75rem;
   font-weight: 800;
   display: flex;

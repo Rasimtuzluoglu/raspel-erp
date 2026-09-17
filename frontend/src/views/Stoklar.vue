@@ -1420,7 +1420,7 @@ h2 {
 }
 .batch-count {
   font-size: 12px;
-  color: #60a5fa;
+  color: var(--accent);
   font-weight: 600;
 }
 .detail-grid {

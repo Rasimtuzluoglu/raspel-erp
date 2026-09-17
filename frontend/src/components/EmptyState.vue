@@ -59,12 +59,12 @@ defineEmits(['action'])
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.06) 55%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
   animation: empty-pulse 2.5s ease-in-out infinite;
 }
 .empty-state-icon {
   font-size: 40px;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
   position: relative;
   z-index: 1;
   text-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);

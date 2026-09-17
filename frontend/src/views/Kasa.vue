@@ -883,7 +883,7 @@ h2 {
 .loading {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-muted);
 }
 .kasa-cards {
   display: grid;
@@ -906,7 +906,7 @@ h2 {
   border-color: rgba(59, 130, 246, 0.25);
 }
 .kasa-card.active {
-  border-color: #3b82f6;
+  border-color: var(--accent);
   background: rgba(59, 130, 246, 0.08);
 }
 .kasa-ust {
@@ -917,7 +917,7 @@ h2 {
 }
 .kasa-ust i {
   font-size: 28px;
-  color: #1976d2;
+  color: var(--accent);
 }
 .kasa-ust h3 {
   margin: 0;
@@ -933,10 +933,10 @@ h2 {
   gap: 8px;
 }
 .positive {
-  color: #4caf50;
+  color: var(--success);
 }
 .negative {
-  color: #f44336;
+  color: var(--danger);
 }
 .hareket-bolumu {
   background: var(--bg-card);
@@ -958,7 +958,7 @@ h2 {
   display: block;
   margin-bottom: 6px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 .badge {
@@ -968,12 +968,12 @@ h2 {
   font-weight: bold;
 }
 .badge.gelir {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .badge.gider {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .w-full {
   width: 100% !important;

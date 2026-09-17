@@ -48,6 +48,7 @@
       :lazy="lazy"
       :total-records="totalRecords"
       :rows-per-page-options="rowsPerPageOptions"
+      :paginator-template="paginatorTemplate"
       responsive-layout="scroll"
       :selection="selection"
       @update:selection="$emit('update:selection', $event)"
@@ -108,6 +109,10 @@ const props = defineProps({
   lazy: { type: Boolean, default: false },
   totalRecords: { type: Number, default: 0 },
   rowsPerPageOptions: { type: Array, default: () => [10, 25, 50, 100] },
+  paginatorTemplate: {
+    type: String,
+    default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport'
+  },
   selection: { type: Array, default: () => [] },
   /** localStorage anahtarı — sayfa boyutu tercihi bu anahtar altında kalıcı saklanır */
   gorunumAnahtari: { type: String, default: '' },
@@ -183,8 +188,13 @@ watch(
   margin-bottom: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   padding: 2px 8px;
+  transition: border-color var(--dur-base, 0.2s) var(--ease-standard, ease), box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.tablo-arama:focus-within {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .tablo-arama > i {
   color: var(--text-muted);
@@ -206,9 +216,9 @@ watch(
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 10px;
+  background: linear-gradient(90deg, var(--accent-soft) 0%, var(--accent-soft-strong) 100%);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md, 10px);
   padding: 8px 16px;
   margin-bottom: 12px;
   color: var(--text-primary, #f1f5f9);
@@ -223,7 +233,7 @@ watch(
 }
 
 .batch-info i {
-  color: #3b82f6;
+  color: var(--accent);
   font-size: 16px;
 }
 

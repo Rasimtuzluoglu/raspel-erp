@@ -47,14 +47,14 @@ defineProps({
   color: var(--text-secondary);
 }
 .required-star {
-  color: #ef4444;
+  color: var(--danger, #ef4444);
   margin-left: 2px;
 }
 .form-error {
   display: block;
   margin-top: 0.3rem;
   font-size: 0.78rem;
-  color: #ef4444;
+  color: var(--danger, #ef4444);
 }
 .form-hint {
   display: block;
@@ -67,11 +67,11 @@ defineProps({
 .has-error :deep(.p-textarea),
 .has-error :deep(.p-multiselect),
 .has-error :deep(.p-inputnumber) {
-  border-color: #ef4444 !important;
+  border-color: var(--danger, #ef4444) !important;
 }
 .has-error :deep(.p-inputtext:focus),
 .has-error :deep(.p-dropdown:focus),
 .has-error :deep(.p-textarea:focus) {
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+  box-shadow: 0 0 0 3px var(--danger-soft, rgba(239, 68, 68, 0.2)) !important;
 }
 </style>

@@ -2192,3 +2192,22 @@ h3 {
   border-top-color: var(--accent) !important;
   border-left-color: var(--accent) !important;
 }
+
+/* Popup menu (ExportMenu vb.) - tema uyumlu */
+.p-menu {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--elev-2) !important;
+}
+.p-menu .p-menuitem-link {
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.p-menu .p-menuitem-link:hover {
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08)) !important;
+  color: var(--text-primary) !important;
+}
+.p-menu .p-menuitem-icon {
+  color: var(--text-muted) !important;
+}

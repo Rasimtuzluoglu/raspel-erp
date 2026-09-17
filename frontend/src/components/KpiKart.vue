@@ -46,7 +46,7 @@ const props = defineProps({
   baslik: { type: String, default: '' },
   deger: { type: [Number, String], default: 0 },
   ikon: { type: String, default: 'pi pi-chart-line' },
-  renk: { type: String, default: '#3b82f6' },
+  renk: { type: String, default: '#f59e0b' },
   trend: { type: Number, default: null },
   sparkline: { type: Array, default: () => [] },
   paraBirimi: { type: Boolean, default: true }
@@ -69,19 +69,19 @@ const bicimliDeger = computed(() =>
   flex-direction: column;
   gap: 6px;
   padding: 16px 18px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg, 14px);
   background:
     linear-gradient(180deg, rgba(148, 163, 184, 0.06), rgba(148, 163, 184, 0) 60%),
     var(--bg-card);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.25));
+  transition: transform var(--dur-base, 0.2s) var(--ease-standard, ease), box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease), border-color var(--dur-base, 0.2s) var(--ease-standard, ease);
   overflow: hidden;
 }
 .kpi-kart:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
-  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+  border-color: var(--accent-border, rgba(245, 158, 11, 0.32));
 }
 .kpi-ust {
   display: flex;
@@ -119,12 +119,12 @@ const bicimliDeger = computed(() =>
   flex-shrink: 0;
 }
 .kpi-trend.yukselis {
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.14);
+  color: var(--success, #10b981);
+  background: var(--success-soft, rgba(16, 185, 129, 0.14));
 }
 .kpi-trend.dusus {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.14);
+  color: var(--danger, #ef4444);
+  background: var(--danger-soft, rgba(239, 68, 68, 0.14));
 }
 .kpi-trend i {
   font-size: 10px;

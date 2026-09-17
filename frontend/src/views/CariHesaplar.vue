@@ -1832,7 +1832,7 @@ h3 {
 .loading {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-muted);
   font-size: 16px;
 }
 
@@ -1848,7 +1848,7 @@ h3 {
 .form-section-title {
   font-size: 14px;
   font-weight: 700;
-  color: #60a5fa;
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 16px;
@@ -1882,7 +1882,7 @@ h3 {
 }
 .form-group :deep(.p-inputtext:enabled:focus),
 .form-group :deep(.p-textarea:enabled:focus) {
-  border-color: #3b82f6 !important;
+  border-color: var(--accent) !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
 }
 .form-group :deep(.p-inputtext.p-invalid),
@@ -1903,12 +1903,12 @@ h3 {
 }
 
 .positive {
-  color: #4caf50;
+  color: var(--success);
   font-weight: bold;
 }
 
 .negative {
-  color: #f44336;
+  color: var(--danger);
   font-weight: bold;
 }
 
@@ -1920,13 +1920,13 @@ h3 {
 }
 
 .badge.tahsilat {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background-color: var(--success-soft);
+  color: var(--success);
 }
 
 .badge.odeme {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: var(--danger-soft);
+  color: var(--danger);
 }
 
 .hareket-info {
@@ -1986,13 +1986,13 @@ h3 {
 }
 .iban-gecerli {
   display: block;
-  color: #4caf50;
+  color: var(--success);
   font-size: 11px;
   margin-top: 2px;
 }
 .iban-gecersiz {
   display: block;
-  color: #f44336;
+  color: var(--danger);
   font-size: 11px;
   margin-top: 2px;
 }

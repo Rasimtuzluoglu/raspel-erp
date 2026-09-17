@@ -1311,7 +1311,7 @@ h1 {
 .loading {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-muted);
 }
 .form-grid {
   display: grid;
@@ -1379,7 +1379,7 @@ h1 {
 }
 .badge.satis {
   background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  color: var(--accent);
 }
 .badge.alis {
   background: rgba(239, 68, 68, 0.15);
@@ -1397,7 +1397,7 @@ h1 {
 }
 .durum-badge.teklif {
   background: rgba(96, 165, 250, 0.15);
-  color: #60a5fa;
+  color: var(--accent);
 }
 .durum-badge.kesildi {
   background: rgba(34, 197, 94, 0.15);
