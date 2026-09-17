@@ -14,19 +14,6 @@
       <div class="sahne-parilti p2" />
     </div>
 
-    <!-- Yuzen dekoratif cam kartlar (panel kenarina hizali, parallax) -->
-    <div
-      class="sahne-yuzen"
-      aria-hidden="true"
-    >
-      <div class="yuzen-kart yk-1">
-        <i class="pi pi-chart-line" /><span>+24%</span>
-      </div>
-      <div class="yuzen-kart yk-2">
-        <i class="pi pi-shield" /><span>SSL</span>
-      </div>
-    </div>
-
     <div class="giris-split-wrapper">
       <!-- SOL BÖLÜM: Kurumsal Hero & Özellik Vitrini (Masaüstü) -->
       <div class="giris-hero-alani">
@@ -891,56 +878,6 @@ const tumAdimlariSifirla = () => {
   to { transform: scale(1.12); opacity: 0.6; }
 }
 
-/* Yuzen dekoratif cam kartlar (parallax + hafif yuzme) */
-.yuzen-kart {
-  position: absolute;
-  z-index: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(30, 41, 59, 0.55);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 700;
-  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.6);
-  pointer-events: none;
-  transform: translate3d(var(--px, 0), var(--py, 0), 0);
-  transition: transform 0.3s ease-out;
-}
-.yuzen-kart i {
-  color: var(--giris-aksan-parlak);
-}
-/* Yuzen kartlar panel genisligine hizali konumlanir (simetrik, tasma yok) */
-.sahne-yuzen {
-  position: absolute;
-  inset: 0;
-  max-width: min(1180px, 100%);
-  margin: 0 auto;
-  pointer-events: none;
-  z-index: 0;
-}
-.yk-1 {
-  top: 14%;
-  left: -108px;
-  animation: yuz 8s ease-in-out infinite alternate;
-}
-.yk-2 {
-  bottom: 14%;
-  right: -108px;
-  animation: yuz 10s ease-in-out infinite alternate -3s;
-}
-@keyframes yuz {
-  from { translate: 0 0; }
-  to { translate: 0 -14px; }
-}
-[data-theme='light'] .yuzen-kart {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(203, 213, 225, 0.8);
-}
-
 /* Split Screen Wrapper */
 .giris-split-wrapper {
   position: relative;
@@ -1721,8 +1658,7 @@ const tumAdimlariSifirla = () => {
 /* Hareket azaltma tercihi (erisilebilirlik) */
 @media (prefers-reduced-motion: reduce) {
   .sahne-mesh,
-  .sahne-parilti,
-  .yuzen-kart {
+  .sahne-parilti {
     animation: none;
   }
   .giris-split-wrapper {
@@ -1742,12 +1678,6 @@ const tumAdimlariSifirla = () => {
 }
 
 /* Responsive Düzen */
-@media (max-width: 1400px) {
-  .yuzen-kart {
-    display: none;
-  }
-}
-
 @media (max-width: 1180px) {
   .hero-features-grid {
     grid-template-columns: 1fr;
