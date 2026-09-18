@@ -66,6 +66,42 @@ public class SirketController {
         return ResponseEntity.ok(sirketService.konsolideOzet(id));
     }
 
+    @GetMapping("/{id}/fatura-sablonu")
+    @Operation(summary = "Fatura tasarım şablonu", description = "Şirket için sunucuda saklanan fatura tasarım ayarlarını döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<java.util.Map<String, String>> faturaSablonu(@PathVariable Long id) {
+        String sablon = sirketService.faturaSablonuGetir(id);
+        return ResponseEntity.ok(java.util.Map.of("sablon", sablon != null ? sablon : ""));
+    }
+
+    @PutMapping("/{id}/fatura-sablonu")
+    @Operation(summary = "Fatura tasarım şablonu kaydet", description = "Fatura tasarım ayarlarını sunucuda saklar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<java.util.Map<String, String>> faturaSablonuKaydet(
+            @PathVariable Long id, @RequestBody java.util.Map<String, Object> body) {
+        String sablon = body != null && body.get("sablon") != null ? String.valueOf(body.get("sablon")) : null;
+        String kayitli = sirketService.faturaSablonuKaydet(id, sablon);
+        return ResponseEntity.ok(java.util.Map.of("sablon", kayitli != null ? kayitli : ""));
+    }
+
+    @GetMapping("/{id}/pos-fis-ayarlari")
+    @Operation(summary = "POS fiş ayarları", description = "Şirket için sunucuda saklanan POS fiş ayarlarını döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<java.util.Map<String, String>> posFisAyarlari(@PathVariable Long id) {
+        String ayar = sirketService.posFisAyarlariGetir(id);
+        return ResponseEntity.ok(java.util.Map.of("ayarlar", ayar != null ? ayar : ""));
+    }
+
+    @PutMapping("/{id}/pos-fis-ayarlari")
+    @Operation(summary = "POS fiş ayarları kaydet", description = "POS fiş ayarlarını sunucuda saklar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<java.util.Map<String, String>> posFisAyarlariKaydet(
+            @PathVariable Long id, @RequestBody java.util.Map<String, Object> body) {
+        String ayar = body != null && body.get("ayarlar") != null ? String.valueOf(body.get("ayarlar")) : null;
+        String kayitli = sirketService.posFisAyarlariKaydet(id, ayar);
+        return ResponseEntity.ok(java.util.Map.of("ayarlar", kayitli != null ? kayitli : ""));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Şirket sil", description = "Şirket kaydını siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")

@@ -26,6 +26,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +46,10 @@ class KullaniciServiceTest {
     private AktifOturumService aktifOturumService;
     @Mock
     private com.raspel.erp.config.TenantChecker tenantChecker;
+    @Mock
+    private com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private KullaniciService kullaniciService;
@@ -327,5 +332,80 @@ class KullaniciServiceTest {
     void sifreDogrula_bosSifreReddedilir() {
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> kullaniciService.sifreDogrula(1L, "  "));
+    }
+
+    @Test
+    void sifreSifirlamaTalebi_emailYoksaSessizDoner() {
+        Kullanici k = createKullanici(1L);
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+
+        kullaniciService.sifreSifirlamaTalebi("testuser1");
+
+        verify(emailService, never()).htmlGonder(any(), any(), any());
+        verify(sifreSifirlaTokenRepository, never()).save(any());
+    }
+
+    @Test
+    void sifreSifirlamaTalebi_emailVarsaTokenKaydederVeGonderir() {
+        Kullanici k = createKullanici(1L);
+        k.setEmail("kullanici@example.com");
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(emailService.htmlGonder(eq("kullanici@example.com"), any(), any())).thenReturn(true);
+
+        kullaniciService.sifreSifirlamaTalebi("testuser1");
+
+        verify(sifreSifirlaTokenRepository).kullaniciTokenlariniGecersizKil(1L);
+        verify(sifreSifirlaTokenRepository).save(any());
+        verify(emailService).htmlGonder(eq("kullanici@example.com"), any(), any());
+    }
+
+    @Test
+    void sifreSifirlamaTalebi_kullaniciYoksaSessizDoner() {
+        when(kullaniciRepository.findByUsername("yok")).thenReturn(Optional.empty());
+
+        kullaniciService.sifreSifirlamaTalebi("yok");
+
+        verify(sifreSifirlaTokenRepository, never()).save(any());
+        verify(emailService, never()).htmlGonder(any(), any(), any());
+    }
+
+    @Test
+    void sifreSifirlamaOnayla_gecersizTokenReddedilir() {
+        when(sifreSifirlaTokenRepository.findByTokenHash(any())).thenReturn(Optional.empty());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.sifreSifirlamaOnayla("gecersiz", "YeniSifre123!"));
+    }
+
+    @Test
+    void sifreSifirlamaOnayla_suresiDolmusTokenReddedilir() {
+        var token = com.raspel.erp.entity.sistem.SifreSifirlaToken.builder()
+                .id(5L).kullaniciId(1L).tokenHash("h")
+                .sonKullanma(java.time.LocalDateTime.now().minusHours(2))
+                .kullanildi(false).build();
+        when(sifreSifirlaTokenRepository.findByTokenHash(any())).thenReturn(Optional.of(token));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.sifreSifirlamaOnayla("abc", "YeniSifre123!"));
+    }
+
+    @Test
+    void sifreSifirlamaOnayla_gecerliTokenSifreyiGunceller() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("eski");
+        var token = com.raspel.erp.entity.sistem.SifreSifirlaToken.builder()
+                .id(5L).kullaniciId(1L).tokenHash("h")
+                .sonKullanma(java.time.LocalDateTime.now().plusHours(1))
+                .kullanildi(false).build();
+        when(sifreSifirlaTokenRepository.findByTokenHash(any())).thenReturn(Optional.of(token));
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(passwordEncoder.encode("YeniSifre123!")).thenReturn("yeni-hash");
+
+        kullaniciService.sifreSifirlamaOnayla("abc", "YeniSifre123!");
+
+        assertEquals("yeni-hash", k.getPassword());
+        assertEquals(1L, k.getTokenVersion());
+        assertTrue(token.getKullanildi());
+        verify(sifreSifirlaTokenRepository).save(token);
     }
 }

@@ -286,14 +286,19 @@ public class TahsilatService {
         int gonderilen = 0;
         for (Fatura f : cariFaturalari) {
             LocalDate vade = vade(f);
-            emailService.odemeHatimlaticiGonder(
+            boolean gonderildi = emailService.odemeHatimlaticiGonder(
                     cari.getEmail(),
                     f.getFaturaNumarasi(),
                     f.getGenelToplam() != null ? f.getGenelToplam().toString() : "0.00",
                     f.getKalanTutar() != null ? f.getKalanTutar().toString() : "0.00",
                     vade != null ? vade.format(VADE_FORMAT) : "-",
                     cari.getAd());
-            gonderilen++;
+            if (gonderildi) {
+                gonderilen++;
+            }
+        }
+        if (gonderilen == 0) {
+            throw new BusinessException("Ödeme hatırlatma e-postası gönderilemedi: SMTP yapılandırılmamış veya gönderim hatası");
         }
         log.info("Tahsilat hatırlatması gönderildi -> Cari: {}, Fatura sayısı: {}", cari.getAd(), gonderilen);
         return gonderilen;

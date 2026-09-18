@@ -18,6 +18,8 @@ public class KullaniciDTO {
     private String displayName;
     private String avatarUrl;
     private String companyName;
+    @Email(message = "Geçerli bir e-posta adresi giriniz")
+    private String email;
     private Long sirketId;
     private List<Long> sirketIds;
     private String role;

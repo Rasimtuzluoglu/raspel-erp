@@ -56,6 +56,12 @@ public class Sirket {
     @Builder.Default
     private Boolean negatifStokIzni = false;
 
+    @Column(name = "fatura_sablonu", columnDefinition = "TEXT")
+    private String faturaSablonu;
+
+    @Column(name = "pos_fis_ayarlari", columnDefinition = "TEXT")
+    private String posFisAyarlari;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

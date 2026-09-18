@@ -379,14 +379,12 @@ public class FaturaService {
         // E-posta gönderim durumu fatura yanıtında bildirilir:
         // "fatura kesildi ama e-posta iletilemedi" bilgisi kaybolmasın.
         String emailGonderimDurumu = null;
-        try {
-            if (sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
-                emailService.faturaBildirimiGonder(cariHesap.getEmail(), faturaNo, genelToplam.toString());
-                emailGonderimDurumu = "GONDERILDI";
+        if (sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
+            boolean gonderildi = emailService.faturaBildirimiGonder(cariHesap.getEmail(), faturaNo, genelToplam.toString());
+            emailGonderimDurumu = gonderildi ? "GONDERILDI" : "GONDERILEMEDI";
+            if (!gonderildi) {
+                log.warn("Fatura bildirim e-postası gönderilemedi (SMTP yapılandırılmamış veya hata): {}", faturaNo);
             }
-        } catch (Exception e) {
-            emailGonderimDurumu = "GONDERILEMEDI";
-            log.warn("Fatura bildirim e-postası gönderilemedi (fatura {} kesildi ama e-posta iletilemedi): {}", faturaNo, e.getMessage());
         }
 
         log.info("Fatura oluşturuldu - No: {}, ID: {}", faturaNo, kaydedilen.getId());
@@ -410,25 +408,25 @@ public class FaturaService {
         return sonuc;
     }
 
-    /** Tahsil edilen tutarı seçili kasaya giriş olarak işler. */
+    /**
+     * Tahsil edilen tutarı seçili kasaya giriş olarak işler.
+     * Hata durumunda sessizce yutulmaz: kasa seçilip tahsilat yapıldıysa
+     * kasa hareketi kaydedilmezse fatura oluşturma işlemi geri alınır.
+     */
     private void kasaGirisi(Fatura fatura, BigDecimal tutar) {
-        try {
-            Kasa kasa = kasaRepository.findByIdForUpdate(fatura.getKasaId())
-                    .orElseThrow(() -> new BusinessException("Kasa bulunamadı: " + fatura.getKasaId()));
-            tenantChecker.check(kasa.getSirketId(), "Kasa");
-            kasa.setBakiye(kasa.getBakiye().add(tutar));
-            kasaRepository.save(kasa);
-            kasaHareketRepository.save(KasaHareket.builder()
-                    .kasa(kasa).tur("GELIR").tutar(tutar)
-                    .hareketTarihi(fatura.getTarih())
-                    .aciklama("Satış: " + fatura.getFaturaNumarasi())
-                    .build());
-        } catch (Exception e) {
-            log.warn("Kasa girişi işlenemedi: {}", e.getMessage());
-        }
+        Kasa kasa = kasaRepository.findByIdForUpdate(fatura.getKasaId())
+                .orElseThrow(() -> new BusinessException("Kasa bulunamadı: " + fatura.getKasaId()));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
+        kasa.setBakiye(kasa.getBakiye().add(tutar));
+        kasaRepository.save(kasa);
+        kasaHareketRepository.save(KasaHareket.builder()
+                .kasa(kasa).tur("GELIR").tutar(tutar)
+                .hareketTarihi(fatura.getTarih())
+                .aciklama("Satış: " + fatura.getFaturaNumarasi())
+                .build());
     }
 
-    /** Fatura PDF'ini cari hesabın e-posta adresine gönderir. */
+    /** Fatura PDF'ini cari hesabın e-posta adresine gönderir. Gönderilemezse hata fırlatır. */
     public void gonderEmail(Long id) {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
@@ -438,12 +436,15 @@ public class FaturaService {
             throw new BusinessException("Bu faturanın cari hesabında e-posta adresi tanımlı değil");
         }
         byte[] pdf = pdfRaporService.faturaRaporu(id);
-        emailService.faturaPdfGonder(
+        boolean gonderildi = emailService.faturaPdfGonder(
                 fatura.getCariHesap().getEmail(),
                 pdf,
                 fatura.getFaturaNumarasi(),
                 fatura.getGenelToplam() != null ? fatura.getGenelToplam().toString() : "0.00",
                 fatura.getCariHesap().getAd());
+        if (!gonderildi) {
+            throw new BusinessException("E-posta gönderilemedi: SMTP yapılandırılmamış veya gönderim hatası");
+        }
         try {
             if (fatura.getSirketId() != null) {
                 bildirimService.bildirimGonder(fatura.getSirketId(), "FATURA",

@@ -35,6 +35,8 @@ import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.entity.envanter.Stok;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -94,18 +96,21 @@ public class PdfRaporService {
         } catch (Exception ignored) {}
 
         boolean alis = f.getTur() == Fatura.FaturaTur.ALIS;
-        String baslik = alis ? "ALIŞ FATURASI" : "SATIŞ FATURASI";
+        FaturaSablonu sablon = faturaSablonuOku(f.getSirketId());
+        String baslik = sablon.faturaBasligi != null && !sablon.faturaBasligi.isBlank()
+                ? sablon.faturaBasligi
+                : (alis ? "ALIŞ FATURASI" : "SATIŞ FATURASI");
         String cariLabel = alis ? "Tedarikçi:" : "Müşteri:";
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
-            PDPage page = new PDPage(PDRectangle.A4);
+            PDPage page = new PDPage(sablon.sayfaBoyutu());
             doc.addPage(page);
             FontSet font = fontlar(doc);
             PDPageContentStream cs = new PDPageContentStream(doc, page);
             try {
-                float y = PDRectangle.A4.getHeight() - MARGIN;
+                float y = page.getMediaBox().getHeight() - MARGIN;
 
-                y = header(cs, y, baslik, font);
+                y = header(cs, y, baslik, font, sablon);
                 y -= 10;
                 y = infoSatiri(cs, y, "Fatura No:", "#" + (f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())), font);
                 y = infoSatiri(cs, y, "Tarih:", f.getOlusturmaTarihi() != null ? f.getOlusturmaTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-", font);
@@ -141,11 +146,11 @@ public class PdfRaporService {
                     // Sayfa tasarsa yeni sayfa ac ve tablo basligini yeniden ciz.
                     if (y < 100) {
                         cs.close();
-                        page = new PDPage(PDRectangle.A4);
+                        page = new PDPage(sablon.sayfaBoyutu());
                         doc.addPage(page);
                         cs = new PDPageContentStream(doc, page);
-                        y = PDRectangle.A4.getHeight() - MARGIN;
-                        y = header(cs, y, baslik + " (devam)", font);
+                        y = page.getMediaBox().getHeight() - MARGIN;
+                        y = header(cs, y, baslik + " (devam)", font, sablon);
                         y -= 8;
                         y = siraBasligi(cs, y, font, "Sıra", "Ürün / Hizmet", "Miktar", "Birim Fiyat", "Tutar");
                         y -= 4;
@@ -158,18 +163,19 @@ public class PdfRaporService {
                 y = cizgi(cs, y);
                 y -= 8;
 
+                float sayfaGenislik = page.getMediaBox().getWidth();
                 String genelToplam = f.getGenelToplam() != null ? f.getGenelToplam().toString() : "0";
                 cs.setFont(font.bold, 12);
-                cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 120 + MARGIN, y); cs.showText("Genel Toplam:"); cs.endText();
-                cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 40 + MARGIN, y); cs.showText(genelToplam + " TL"); cs.endText();
+                cs.beginText(); cs.newLineAtOffset(sayfaGenislik - 120 - MARGIN, y); cs.showText("Genel Toplam:"); cs.endText();
+                cs.beginText(); cs.newLineAtOffset(sayfaGenislik - 40 - MARGIN, y); cs.showText(genelToplam + " TL"); cs.endText();
                 y -= 20;
 
                 BigDecimal toplamAgirlik = kalemler.stream()
                         .map(k -> k.getAgirlik() != null && k.getAdet() != null ? k.getAgirlik().multiply(k.getAdet()) : BigDecimal.ZERO)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 if (toplamAgirlik.compareTo(BigDecimal.ZERO) > 0) {
-                    cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 120 + MARGIN, y); cs.showText("Toplam Ağırlık:"); cs.endText();
-                    cs.beginText(); cs.newLineAtOffset(PAGE_WIDTH - 40 + MARGIN, y); cs.showText(toplamAgirlik.stripTrailingZeros().toPlainString() + " kg"); cs.endText();
+                    cs.beginText(); cs.newLineAtOffset(sayfaGenislik - 120 - MARGIN, y); cs.showText("Toplam Ağırlık:"); cs.endText();
+                    cs.beginText(); cs.newLineAtOffset(sayfaGenislik - 40 - MARGIN, y); cs.showText(toplamAgirlik.stripTrailingZeros().toPlainString() + " kg"); cs.endText();
                     y -= 20;
                 }
                 y -= 20;
@@ -211,11 +217,21 @@ public class PdfRaporService {
     }
 
     private float header(PDPageContentStream cs, float y, String title, FontSet font) throws IOException {
+        return header(cs, y, title, font, FaturaSablonu.varsayilan());
+    }
+
+    private float header(PDPageContentStream cs, float y, String title, FontSet font, FaturaSablonu sablon) throws IOException {
         cs.setFont(font.bold, 22);
+        if (sablon != null && sablon.renk != null) {
+            float[] rgb = hexToRgb(sablon.renk);
+            cs.setNonStrokingColor(rgb[0], rgb[1], rgb[2]);
+        }
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RasPel ERP"); cs.endText();
+        cs.setNonStrokingColor(0f, 0f, 0f);
 
         PDImageXObject logo = sirketLogosuBul();
-        if (logo != null) {
+        boolean logoGoster = sablon == null || sablon.logoGoster == null || sablon.logoGoster;
+        if (logo != null && logoGoster) {
             try {
                 float logoGenislik = 90;
                 float logoYukseklik = logoGenislik * logo.getHeight() / logo.getWidth();
@@ -225,9 +241,95 @@ public class PdfRaporService {
 
         y -= 28;
         cs.setFont(font.bold, 16);
+        if (sablon != null && sablon.renk != null) {
+            float[] rgb = hexToRgb(sablon.renk);
+            cs.setNonStrokingColor(rgb[0], rgb[1], rgb[2]);
+        }
         cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(title); cs.endText();
+        cs.setNonStrokingColor(0f, 0f, 0f);
         y -= 30;
         return y;
+    }
+
+    private static float[] hexToRgb(String hex) {
+        try {
+            String h = hex.startsWith("#") ? hex.substring(1) : hex;
+            if (h.length() == 3) {
+                h = "" + h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+            }
+            int r = Integer.parseInt(h.substring(0, 2), 16);
+            int g = Integer.parseInt(h.substring(2, 4), 16);
+            int b = Integer.parseInt(h.substring(4, 6), 16);
+            return new float[]{r / 255f, g / 255f, b / 255f};
+        } catch (Exception e) {
+            return new float[]{0f, 0f, 0f};
+        }
+    }
+
+    /** Sunucuda saklanan fatura tasarım şablonu (V105). Okunamazsa varsayılanlar. */
+    private FaturaSablonu faturaSablonuOku(Long sirketId) {
+        if (sirketId == null) return FaturaSablonu.varsayilan();
+        try {
+            return sirketRepository.findById(sirketId)
+                    .map(Sirket::getFaturaSablonu)
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(this::parseSablon)
+                    .orElseGet(FaturaSablonu::varsayilan);
+        } catch (Exception e) {
+            return FaturaSablonu.varsayilan();
+        }
+    }
+
+    private FaturaSablonu parseSablon(String json) {
+        try {
+            JsonNode n = new ObjectMapper().readTree(json);
+            FaturaSablonu v = FaturaSablonu.varsayilan();
+            if (n.hasNonNull("faturaBasligi")) v.faturaBasligi = n.get("faturaBasligi").asText();
+            if (n.hasNonNull("altBaslik")) v.altBaslik = n.get("altBaslik").asText();
+            if (n.hasNonNull("renk")) v.renk = n.get("renk").asText();
+            if (n.hasNonNull("kagitBoyutu")) v.kagitBoyutu = n.get("kagitBoyutu").asText();
+            if (n.hasNonNull("sayfaYonu")) v.sayfaYonu = n.get("sayfaYonu").asText();
+            if (n.hasNonNull("logoGoster")) v.logoGoster = n.get("logoGoster").asBoolean();
+            if (n.hasNonNull("imzaKutusuGoster")) v.imzaKutusuGoster = n.get("imzaKutusuGoster").asBoolean();
+            if (n.hasNonNull("odemeDurumuGoster")) v.odemeDurumuGoster = n.get("odemeDurumuGoster").asBoolean();
+            if (n.hasNonNull("qrKodGoster")) v.qrKodGoster = n.get("qrKodGoster").asBoolean();
+            return v;
+        } catch (Exception e) {
+            return FaturaSablonu.varsayilan();
+        }
+    }
+
+    /** Fatura tasarım ayarlarının PDF üretiminde kullanılan alt kümesi. */
+    static final class FaturaSablonu {
+        String faturaBasligi;
+        String altBaslik;
+        String renk = "#1e40af";
+        String kagitBoyutu = "a4";
+        String sayfaYonu = "portrait";
+        Boolean logoGoster = true;
+        Boolean imzaKutusuGoster = false;
+        Boolean odemeDurumuGoster = false;
+        Boolean qrKodGoster = false;
+
+        static FaturaSablonu varsayilan() {
+            return new FaturaSablonu();
+        }
+
+        PDRectangle sayfaBoyutu() {
+            if (kagitBoyutu == null) return PDRectangle.A4;
+            boolean yatay = "landscape".equalsIgnoreCase(sayfaYonu);
+            return switch (kagitBoyutu.toLowerCase()) {
+                case "a5" -> yatay
+                        ? new PDRectangle(PDRectangle.A5.getHeight(), PDRectangle.A5.getWidth())
+                        : PDRectangle.A5;
+                case "letter" -> yatay
+                        ? new PDRectangle(PDRectangle.LETTER.getHeight(), PDRectangle.LETTER.getWidth())
+                        : PDRectangle.LETTER;
+                default -> yatay
+                        ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth())
+                        : PDRectangle.A4;
+            };
+        }
     }
 
     private PDImageXObject sirketLogosuBul() {

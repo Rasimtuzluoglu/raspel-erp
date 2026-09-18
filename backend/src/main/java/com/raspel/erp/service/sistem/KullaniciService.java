@@ -52,9 +52,16 @@ public class KullaniciService {
     private final StringRedisTemplate redisTemplate;
     private final AktifOturumService aktifOturumService;
     private final com.raspel.erp.config.TenantChecker tenantChecker;
+    private final com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
+    private final EmailService emailService;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+    private static final long SIFRE_TOKEN_GECERLILIK_MS = 60 * 60 * 1000; // 1 saat
 
     /** Bekleyen girişler: girisToken -> (kullaniciId, oluşturmaZamani). 5 dakika geçerli.
      *  Redis'te saklanır (sunucu restart'ında kaybolmaz); Redis'e erişilemezse bellek fallback'i kullanılır. */
@@ -156,6 +163,7 @@ public class KullaniciService {
                 .displayName(dto.getDisplayName())
                 .avatarUrl(dto.getAvatarUrl())
                 .companyName(dto.getCompanyName())
+                .email(dto.getEmail())
                 .sirketId(dto.getSirketId())
                 .role(dto.getRole() != null ? dto.getRole() : "USER")
                 .sahaKullanici(dto.getSahaKullanici() != null && dto.getSahaKullanici())
@@ -172,6 +180,7 @@ public class KullaniciService {
         if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
+        if (dto.getEmail() != null) k.setEmail(dto.getEmail());
         if (dto.getSirketId() != null) k.setSirketId(dto.getSirketId());
         if (dto.getSirketIds() != null) setSirketler(k, dto.getSirketIds(), dto.getSirketId());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
@@ -238,6 +247,83 @@ public class KullaniciService {
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
         if (!passwordEncoder.matches(sifre, k.getPassword())) {
             throw new BusinessException("Güvenlik doğrulaması başarısız: şifre hatalı");
+        }
+    }
+
+    /**
+     * Şifre sıfırlama talebi: kullanıcı adına kayıtlı e-posta adresine tek kullanımlık
+     * bağlantı gönderir. Güvenlik gereği kullanıcı/e-posta varlığı sızdırılmaz:
+     * kullanıcı yoksa veya e-posta tanımlı değilse sessizce döner.
+     */
+    public void sifreSifirlamaTalebi(String username) {
+        if (username == null || username.isBlank()) return;
+        Kullanici k = kullaniciRepository.findByUsername(username.trim()).orElse(null);
+        if (k == null || k.getEmail() == null || k.getEmail().isBlank()) {
+            log.info("Şifre sıfırlama talebi: kullanıcı/e-posta yok, sessizce dönüldü ({})", username);
+            return;
+        }
+
+        String hamToken = java.util.UUID.randomUUID().toString().replace("-", "")
+                + java.util.UUID.randomUUID().toString().replace("-", "");
+        String tokenHash = hashToken(hamToken);
+        sifreSifirlaTokenRepository.kullaniciTokenlariniGecersizKil(k.getId());
+        sifreSifirlaTokenRepository.save(com.raspel.erp.entity.sistem.SifreSifirlaToken.builder()
+                .kullaniciId(k.getId())
+                .tokenHash(tokenHash)
+                .sonKullanma(java.time.LocalDateTime.now()
+                        .plus(java.time.Duration.ofMillis(SIFRE_TOKEN_GECERLILIK_MS)))
+                .kullanildi(false)
+                .build());
+
+        String taban = frontendUrl != null && !frontendUrl.isBlank() ? frontendUrl : "http://localhost:5173";
+        String baglanti = taban.replaceAll("/+$", "") + "/sifre-sifirla?token=" + hamToken;
+        String konu = "RasPel ERP - Şifre Sıfırlama";
+        String html = "<p>Sayın " + (k.getDisplayName() != null ? k.getDisplayName() : k.getUsername()) + ",</p>"
+                + "<p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın. Bağlantı 1 saat geçerlidir ve tek kullanımlıktır.</p>"
+                + "<p><a href=\"" + baglanti + "\">Şifremi sıfırla</a></p>"
+                + "<p>Bu talebi siz yapmadıysanız bu e-postayı dikkate almayın.</p>"
+                + "<p>RasPel ERP</p>";
+        boolean gonderildi = emailService.htmlGonder(k.getEmail(), konu, html);
+        if (!gonderildi) {
+            log.warn("Şifre sıfırlama e-postası gönderilemedi (SMTP yapılandırılmamış veya hata): {}", k.getUsername());
+        }
+    }
+
+    /**
+     * Şifre sıfırlama onayı: token doğrulanır, tek kullanımlık olduğu işaretlenir ve
+     * yeni şifre kaydedilir. Tüm oturumlar geçersiz kılınır (tokenVersion artırılır).
+     */
+    public void sifreSifirlamaOnayla(String hamToken, String yeniSifre) {
+        sifrePolitikasiKontrol(yeniSifre);
+        if (hamToken == null || hamToken.isBlank()) {
+            throw new BusinessException("Geçersiz sıfırlama bağlantısı");
+        }
+        var token = sifreSifirlaTokenRepository.findByTokenHash(hashToken(hamToken))
+                .orElseThrow(() -> new BusinessException("Geçersiz veya kullanılmış sıfırlama bağlantısı"));
+        if (Boolean.TRUE.equals(token.getKullanildi())
+                || token.getSonKullanma() == null
+                || token.getSonKullanma().isBefore(java.time.LocalDateTime.now())) {
+            throw new BusinessException("Sıfırlama bağlantısının süresi dolmuş veya kullanılmış");
+        }
+        Kullanici k = kullaniciRepository.findById(token.getKullaniciId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", token.getKullaniciId()));
+        k.setPassword(passwordEncoder.encode(yeniSifre));
+        k.setTokenVersion((k.getTokenVersion() != null ? k.getTokenVersion() : 0L) + 1);
+        kullaniciRepository.save(k);
+        token.setKullanildi(true);
+        sifreSifirlaTokenRepository.save(token);
+        log.info("Şifre sıfırlama tamamlandı: {}", k.getUsername());
+    }
+
+    private String hashToken(String hamToken) {
+        try {
+            var md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(hamToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new BusinessException("Token hashlenemedi");
         }
     }
 
@@ -507,7 +593,7 @@ public class KullaniciService {
         return KullaniciDTO.builder()
                 .id(k.getId()).username(k.getUsername())
                 .displayName(k.getDisplayName()).avatarUrl(k.getAvatarUrl())
-                .companyName(k.getCompanyName()).sirketId(k.getSirketId())
+                .companyName(k.getCompanyName()).email(k.getEmail()).sirketId(k.getSirketId())
                 .sirketIds(sirketler != null ? sirketler.stream().map(Sirket::getId).collect(Collectors.toList()) : List.of())
                 .role(k.getRole()).sahaKullanici(k.getSahaKullanici()).active(k.getActive())
                 .twoFactorEnabled(k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled())

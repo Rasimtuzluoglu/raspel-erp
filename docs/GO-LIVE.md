@@ -1,4 +1,4 @@
-# RasPel ERP - Production Go-Live Checklist
+﻿# RasPel ERP - Production Go-Live Checklist
 
 > Bu liste, sistemi canliya almadan once kontrol edilmesi gereken maddeleri icerir.
 > Her madde gecildikten sonra isaretleyin.
@@ -39,8 +39,8 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B clean verify` -> 1040 test, JaCoCo gate dahil)
-- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (695 test, coverage gate dahil)
+- [ ] Backend testleri gecti (`mvn -B clean verify` -> 1055 test, JaCoCo gate dahil)
+- [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (701 test, coverage gate dahil)
 - [ ] Cypress E2E suite CI'da gecti (9 spec)
 - [ ] `npm run i18n:check` temiz (eksik/cop anahtar yok)
 - [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)

@@ -924,7 +924,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, sirketAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
@@ -1449,10 +1449,32 @@ onMounted(async () => {
       gunlukSatislariYukle()
     ])
     kayitliSepetVar.value = !!localStorage.getItem('raspel_kayitli_sepet')
+    await fisAyarlariSunucudanYukle()
   } catch (e) {
     console.error('Yukleme hatasi', e)
   }
 })
+
+const fisAyarlariSunucudanYukle = async () => {
+  const sirketId = authStore?.sirketId
+  if (!sirketId) return
+  try {
+    const res = await sirketAPI.getPosFisAyarlari(sirketId)
+    if (res.data?.ayarlar) {
+      const a = JSON.parse(res.data.ayarlar)
+      if (a.fisAltNotu != null) {
+        fisAltNotu.value = a.fisAltNotu
+        localStorage.setItem('raspel_fis_notu', a.fisAltNotu)
+      }
+      if (a.fisFiyatli != null) {
+        fisFiyatli.value = a.fisFiyatli
+        localStorage.setItem('raspel_fis_fiyatli', String(a.fisFiyatli))
+      }
+    }
+  } catch {
+    /* sunucu yoksa yerel önbellek kullanılır */
+  }
+}
 
 const personelSecenekleri = computed(() =>
   personelListesi.value

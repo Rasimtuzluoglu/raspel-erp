@@ -148,6 +148,7 @@ class FaturaServiceTest {
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
         Fatura saved = createFatura(1L);
         when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+        when(emailService.faturaBildirimiGonder(eq("cari@example.com"), any(), any())).thenReturn(true);
 
         var result = faturaService.faturaOlustur(dto, 1L, null, null);
 
@@ -166,8 +167,7 @@ class FaturaServiceTest {
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
         Fatura saved = createFatura(1L);
         when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
-        doThrow(new RuntimeException("smtp down"))
-                .when(emailService).faturaBildirimiGonder(eq("cari@example.com"), any(), any());
+        when(emailService.faturaBildirimiGonder(eq("cari@example.com"), any(), any())).thenReturn(false);
 
         var result = faturaService.faturaOlustur(dto, 1L, null, null);
 

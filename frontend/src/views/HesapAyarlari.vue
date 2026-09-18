@@ -679,7 +679,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { kullaniciAPI, aiConfigAPI, apiTokenAPI, sistemDurumAPI } from '../api/index.js'
+import { kullaniciAPI, aiConfigAPI, apiTokenAPI, sistemDurumAPI, sirketAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useTheme } from '../composables/useTheme.js'
 import { useLocale } from '../composables/useLocale.js'
@@ -716,7 +716,7 @@ const guncellemeKontrol = async () => {
   guncellemeYukleniyor.value = false
 }
 
-// Fiş yazdırma ayarları (POS ile ortak localStorage)
+// Fiş yazdırma ayarları (sunucuda saklanır; localStorage hızlı önbellek)
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || t('hesapAyarlari.fisVarsayilanNot'))
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
 const fisSecenekleri = [
@@ -724,8 +724,42 @@ const fisSecenekleri = [
   { label: t('hesapAyarlari.fiyatsiz'), value: false }
 ]
 
-watch(fisAltNotu, (v) => localStorage.setItem('raspel_fis_notu', v || ''))
-watch(fisFiyatli, (v) => localStorage.setItem('raspel_fis_fiyatli', String(v)))
+const fisAyarlariYukle = async () => {
+  const sirketId = authStore?.sirketId
+  if (!sirketId) return
+  try {
+    const res = await sirketAPI.getPosFisAyarlari(sirketId)
+    if (res.data?.ayarlar) {
+      const a = JSON.parse(res.data.ayarlar)
+      if (a.fisAltNotu != null) {
+        fisAltNotu.value = a.fisAltNotu
+        localStorage.setItem('raspel_fis_notu', a.fisAltNotu)
+      }
+      if (a.fisFiyatli != null) {
+        fisFiyatli.value = a.fisFiyatli
+        localStorage.setItem('raspel_fis_fiyatli', String(a.fisFiyatli))
+      }
+    }
+  } catch {
+    /* sunucu yoksa yerel önbellek kullanılır */
+  }
+}
+
+const fisAyarlariKaydet = async () => {
+  const ayarlar = { fisAltNotu: fisAltNotu.value || '', fisFiyatli: fisFiyatli.value }
+  localStorage.setItem('raspel_fis_notu', ayarlar.fisAltNotu)
+  localStorage.setItem('raspel_fis_fiyatli', String(ayarlar.fisFiyatli))
+  const sirketId = authStore?.sirketId
+  if (sirketId) {
+    try {
+      await sirketAPI.savePosFisAyarlari(sirketId, JSON.stringify(ayarlar))
+    } catch {
+      /* sunucu yoksa yerel önbellek yeterli */
+    }
+  }
+}
+
+watch([fisAltNotu, fisFiyatli], () => { fisAyarlariKaydet() })
 
 const fisAyariDinleyici = (e) => {
   if (e.key === 'raspel_fis_fiyatli' && e.newValue !== null) {
@@ -736,6 +770,7 @@ const fisAyariDinleyici = (e) => {
 }
 onMounted(() => window.addEventListener('storage', fisAyariDinleyici))
 onUnmounted(() => window.removeEventListener('storage', fisAyariDinleyici))
+onMounted(() => fisAyarlariYukle())
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()

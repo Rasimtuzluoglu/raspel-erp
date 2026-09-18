@@ -398,6 +398,35 @@
               <a @click="sifremiUnuttumAdimi = false">&larr; {{ $t('giris.backToLogin') }}</a>
             </div>
             <p>{{ $t('giris.forgotHint') }}</p>
+            <div class="sifirla-form">
+              <InputText
+                v-model="sifirlaUsername"
+                :placeholder="$t('giris.usernamePlaceholder')"
+                class="w-full"
+                :disabled="sifirlaGonderiliyor"
+                @keyup.enter="sifreSifirlamaTalepEt"
+              />
+              <Button
+                :label="$t('giris.forgotSendLink')"
+                icon="pi pi-send"
+                :loading="sifirlaGonderiliyor"
+                @click="sifreSifirlamaTalepEt"
+              />
+            </div>
+            <Message
+              v-if="sifirlaMesaj"
+              severity="success"
+              :closable="false"
+            >
+              {{ sifirlaMesaj }}
+            </Message>
+            <Message
+              v-if="sifirlaHata"
+              severity="error"
+              :closable="false"
+            >
+              {{ sifirlaHata }}
+            </Message>
           </div>
 
           <!-- Kart Altı Güvenlik Mikro Rozetleri (Mobil & Genel) -->
@@ -423,7 +452,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMouse, usePreferredReducedMotion, useIntervalFn, useThrottleFn } from '@vueuse/core'
 import { useAuthStore } from '../stores/authStore.js'
-import { kurulumAPI } from '../api/index.js'
+import { kurulumAPI, kullaniciAPI } from '../api/index.js'
 import ThemeSwitcher from '../components/ThemeSwitcher.vue'
 import KurulumAdimi from '../components/KurulumAdimi.vue'
 import LoginPreview from '../components/LoginPreview.vue'
@@ -448,6 +477,29 @@ const ikiFaktorAdimi = ref(false)
 const sirketSecimAdimi = ref(false)
 const ikiFaktorKod = ref('')
 const girisToken = ref('')
+
+const sifirlaUsername = ref('')
+const sifirlaGonderiliyor = ref(false)
+const sifirlaMesaj = ref('')
+const sifirlaHata = ref('')
+
+const sifreSifirlamaTalepEt = async () => {
+  sifirlaMesaj.value = ''
+  sifirlaHata.value = ''
+  if (!sifirlaUsername.value.trim()) {
+    sifirlaHata.value = t('giris.forgotUsernameRequired')
+    return
+  }
+  sifirlaGonderiliyor.value = true
+  try {
+    const r = await kullaniciAPI.sifreSifirlamaTalebi({ username: sifirlaUsername.value.trim() })
+    sifirlaMesaj.value = r.data?.message || t('giris.forgotLinkSent')
+  } catch (err) {
+    sifirlaHata.value = err.response?.data?.message || t('giris.forgotSendFailed')
+  } finally {
+    sifirlaGonderiliyor.value = false
+  }
+}
 
 const sonSecilenSirketId = ref(Number(localStorage.getItem('raspel_erp_son_sirket')) || null)
 const sonSirketAd = ref(localStorage.getItem('raspel_erp_son_sirket_ad') || '')

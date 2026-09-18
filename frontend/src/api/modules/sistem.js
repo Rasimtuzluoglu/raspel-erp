@@ -25,9 +25,15 @@ export const kullaniciAPI = {
   giris2fa(data) {
     return apiClient.post('/kullanicilar/giris-2fa', data)
   },
-  sifreDegistir(data) {
-    return apiClient.put('/kullanicilar/sifre-degistir', data)
-  },
+    sifreDegistir(data) {
+      return apiClient.put('/kullanicilar/sifre-degistir', data)
+    },
+    sifreSifirlamaTalebi(data) {
+      return apiClient.post('/kullanicilar/sifre-sifirlama-talebi', data)
+    },
+    sifreSifirlamaOnayla(data) {
+      return apiClient.post('/kullanicilar/sifre-sifirlama-onayla', data)
+    },
   ben() {
     return apiClient.get('/kullanicilar/ben')
   },
@@ -242,10 +248,22 @@ export const sirketAPI = {
   delete(id) {
     return apiClient.delete(`/sirketler/${id}`)
   },
-  getKonsolideOzet(id) {
-    return apiClient.get(`/sirketler/${id}/konsolide-ozet`)
+    getKonsolideOzet(id) {
+      return apiClient.get(`/sirketler/${id}/konsolide-ozet`)
+    },
+    getFaturaSablonu(id) {
+      return apiClient.get(`/sirketler/${id}/fatura-sablonu`)
+    },
+    saveFaturaSablonu(id, sablon) {
+      return apiClient.put(`/sirketler/${id}/fatura-sablonu`, { sablon })
+    },
+    getPosFisAyarlari(id) {
+      return apiClient.get(`/sirketler/${id}/pos-fis-ayarlari`)
+    },
+    savePosFisAyarlari(id, ayarlar) {
+      return apiClient.put(`/sirketler/${id}/pos-fis-ayarlari`, { ayarlar })
+    }
   }
-}
 
 export const subeAPI = {
   getAll() {

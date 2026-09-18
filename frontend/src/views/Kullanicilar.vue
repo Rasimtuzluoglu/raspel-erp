@@ -64,6 +64,12 @@
         </div>
         <div class="kart-islem">
           <Button
+            v-tooltip.top="t('kullanicilar.sifreSifirlaBaslik')"
+            icon="pi pi-key"
+            class="p-button-rounded p-button-sm islem-btn sifirla"
+            @click="sifreSifirlaAc(u)"
+          />
+          <Button
             v-tooltip.top="t('common.edit')"
             icon="pi pi-pencil"
             class="p-button-rounded p-button-sm islem-btn duzenle"
@@ -110,6 +116,15 @@
         <InputText
           v-model="form.displayName"
           :placeholder="t('kullanicilar.gorunenAdPlaceholder')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-grup">
+        <label>{{ t('kullanicilar.email') }}</label>
+        <InputText
+          v-model="form.email"
+          type="email"
+          :placeholder="t('kullanicilar.emailPlaceholder')"
           class="w-full"
         />
       </div>
@@ -245,6 +260,51 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="showSifirlaDialog"
+      :header="t('kullanicilar.sifreSifirlaBaslik')"
+      :modal="true"
+      style="width: 440px"
+    >
+      <p class="sifirla-aciklama">
+        <strong>{{ sifirlaKullanici?.displayName }}</strong> (@{{ sifirlaKullanici?.username }})
+      </p>
+      <div class="form-grup">
+        <label>{{ t('kullanicilar.yeniSifre') }}</label>
+        <Password
+          v-model="sifirlaForm.yeniSifre"
+          :feedback="true"
+          toggle-mask
+          class="w-full"
+          :disabled="sifirlaSaving"
+        />
+      </div>
+      <div class="form-grup">
+        <label>{{ t('kullanicilar.yeniSifreTekrar') }}</label>
+        <Password
+          v-model="sifirlaForm.tekrar"
+          :feedback="false"
+          toggle-mask
+          class="w-full"
+          :disabled="sifirlaSaving"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showSifirlaDialog = false"
+        />
+        <Button
+          :label="t('kullanicilar.sifreSifirlaBaslik')"
+          icon="pi pi-key"
+          :loading="sifirlaSaving"
+          @click="sifreSifirlaKaydet"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -273,6 +333,7 @@ const editingId = ref(null)
 const form = ref({
   username: '',
   displayName: '',
+  email: '',
   password: '',
   avatarUrl: '',
   companyName: '',
@@ -317,6 +378,7 @@ const openDialog = () => {
   form.value = {
     username: '',
     displayName: '',
+    email: '',
     password: '',
     avatarUrl: '',
     companyName: '',
@@ -333,6 +395,7 @@ const editKullanici = (u) => {
   form.value = {
     username: u.username,
     displayName: u.displayName,
+    email: u.email || '',
     password: '',
     avatarUrl: u.avatarUrl || '',
     companyName: u.companyName || '',
@@ -399,6 +462,42 @@ const save = async () => {
     toastBildirim.hata(err.response?.data?.message || t('kullanicilar.islemBasarisiz'))
   } finally {
     saving.value = false
+  }
+}
+
+const showSifirlaDialog = ref(false)
+const sifirlaKullanici = ref(null)
+const sifirlaSaving = ref(false)
+const sifirlaForm = ref({ yeniSifre: '', tekrar: '' })
+
+const sifreSifirlaAc = (u) => {
+  sifirlaKullanici.value = u
+  sifirlaForm.value = { yeniSifre: '', tekrar: '' }
+  showSifirlaDialog.value = true
+}
+
+const sifreSifirlaKaydet = async () => {
+  if (!sifirlaForm.value.yeniSifre || sifirlaForm.value.yeniSifre.length < 8) {
+    toastBildirim.uyari(t('kullanicilar.sifreEnAz8'))
+    return
+  }
+  if (sifirlaForm.value.yeniSifre !== sifirlaForm.value.tekrar) {
+    toastBildirim.uyari(t('kullanicilar.sifrelerEslesmiyor'))
+    return
+  }
+  sifirlaSaving.value = true
+  try {
+    await kullaniciAPI.update(sifirlaKullanici.value.id, {
+      username: sifirlaKullanici.value.username,
+      displayName: sifirlaKullanici.value.displayName,
+      password: sifirlaForm.value.yeniSifre
+    })
+    toastBildirim.basarili(t('kullanicilar.sifreSifirlandi'))
+    showSifirlaDialog.value = false
+  } catch (err) {
+    toastBildirim.hata(err.response?.data?.message || t('kullanicilar.islemBasarisiz'))
+  } finally {
+    sifirlaSaving.value = false
   }
 }
 
@@ -583,6 +682,18 @@ h1 {
 }
 .islem-btn.sil:hover {
   background: rgba(239, 68, 68, 0.25) !important;
+}
+.islem-btn.sifirla {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #fbbf24 !important;
+}
+.islem-btn.sifirla:hover {
+  background: rgba(245, 158, 11, 0.25) !important;
+}
+.sifirla-aciklama {
+  margin-bottom: 16px;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 .form-grup {
   margin-bottom: 18px;

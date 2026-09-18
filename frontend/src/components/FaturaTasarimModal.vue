@@ -891,9 +891,21 @@ const sablonDegistir = (sablonId) => {
 }
 
 // Şablonu Kaydetme & Sıfırlama
-const sablonuKaydet = () => {
-  const key = `raspel_fatura_sablon_${authStore.sirketId || 'genel'}`
-  localStorage.setItem(key, JSON.stringify(ayarlar.value))
+const sablonuKaydet = async () => {
+  const sirketId = authStore.sirketId
+  const key = `raspel_fatura_sablon_${sirketId || 'genel'}`
+  const json = JSON.stringify(ayarlar.value)
+  // Önce sunucuya yaz (kalıcı, PDF üretiminde kullanılır), başarısızsa yerelde tut.
+  if (sirketId) {
+    try {
+      await sirketAPI.saveFaturaSablonu(sirketId, json)
+      localStorage.removeItem(key)
+    } catch {
+      localStorage.setItem(key, json)
+    }
+  } else {
+    localStorage.setItem(key, json)
+  }
   toast.add({
     severity: 'success',
     summary: t('faturaTasarim.kaydedildi'),
@@ -902,8 +914,20 @@ const sablonuKaydet = () => {
   })
 }
 
-const sablonuYukle = () => {
-  const key = `raspel_fatura_sablon_${authStore.sirketId || 'genel'}`
+const sablonuYukle = async () => {
+  const sirketId = authStore.sirketId
+  const key = `raspel_fatura_sablon_${sirketId || 'genel'}`
+  if (sirketId) {
+    try {
+      const res = await sirketAPI.getFaturaSablonu(sirketId)
+      if (res.data?.sablon) {
+        ayarlar.value = { ...varsayilanAyarlar, ...JSON.parse(res.data.sablon) }
+        return
+      }
+    } catch {
+      /* sunucu yoksa yerel yedeğe düş */
+    }
+  }
   const kayitli = localStorage.getItem(key)
   if (kayitli) {
     try {
@@ -914,10 +938,18 @@ const sablonuYukle = () => {
   }
 }
 
-const sablonuSifirla = () => {
+const sablonuSifirla = async () => {
   ayarlar.value = { ...varsayilanAyarlar }
-  const key = `raspel_fatura_sablon_${authStore.sirketId || 'genel'}`
+  const sirketId = authStore.sirketId
+  const key = `raspel_fatura_sablon_${sirketId || 'genel'}`
   localStorage.removeItem(key)
+  if (sirketId) {
+    try {
+      await sirketAPI.saveFaturaSablonu(sirketId, '')
+    } catch {
+      /* sunucu yoksa yerel temizlik yeterli */
+    }
+  }
   toast.add({
     severity: 'info',
     summary: t('faturaTasarim.sifirlandi'),

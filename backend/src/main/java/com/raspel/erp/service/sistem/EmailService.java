@@ -46,28 +46,46 @@ public class EmailService {
         </style>
         """;
 
+    /**
+     * SMTP yapılandırılmış mı? Yapılandırılmadıysa e-posta gerçekten gönderilmez
+     * ve çağıranlar bunu "GONDERILDI" olarak raporlamamalıdır.
+     */
+    public boolean smtpYapilandirilmis() {
+        return mailSender != null && mailUsername != null && !mailUsername.isBlank();
+    }
+
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
     @Async
     public void emailGonder(String to, String subject, String body) {
+        gonderVeRaporla(to, subject, standartSablon(body), null, null);
+    }
+
+    private boolean gonderVeRaporla(String to, String subject, String html, byte[] ek, String ekAdi) {
+        if (!smtpYapilandirilmis()) {
+            log.info("[E-POSTA MOCK] SMTP yapılandırılmadığı için e-posta gönderilmedi -> To: {}, Subject: {}", to, subject);
+            return false;
+        }
         try {
-            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                helper.setFrom(fromEmail);
-                helper.setTo(to);
-                helper.setSubject(subject);
-                helper.setText(standartSablon(body), true);
-                mailSender.send(message);
-                log.info("E-posta başarıyla gönderildi -> To: {}, Subject: {}", to, subject);
-            } else {
-                log.info("[E-POSTA MOCK] SMTP yapılandırılmadığı için e-posta loga yazıldı -> To: {}, Subject: {}\nBody: {}", to, subject, body);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            if (ek != null) {
+                helper.addAttachment(ekAdi != null ? ekAdi : "ek", new org.springframework.core.io.ByteArrayResource(ek));
             }
+            mailSender.send(message);
+            log.info("E-posta başarıyla gönderildi -> To: {}, Subject: {}", to, subject);
+            return true;
         } catch (Exception e) {
             log.error("E-posta gönderilirken hata oluştu -> To: {}, Error: {}", to, e.getMessage());
+            return false;
         }
     }
 
-    @Async
-    public void faturaBildirimiGonder(String to, String faturaNo, String tutar) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean faturaBildirimiGonder(String to, String faturaNo, String tutar) {
         String subject = "RasPel ERP - Yeni Fatura Bilgilendirmesi #" + faturaNo;
         String html = sablonUst("Yeni Fatura Oluşturuldu") + """
             <p>Sayın Müşterimiz,</p>
@@ -79,11 +97,11 @@ public class EmailService {
             <p>Detaylı görüntüleme için sisteme giriş yapabilirsiniz.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(faturaNo, faturaNo, tutar) + sablonAlt();
-        htmlGonder(to, subject, html);
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
-    @Async
-    public void siparisBildirimiGonder(String to, String siparisNo, String durum) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean siparisBildirimiGonder(String to, String siparisNo, String durum) {
         String subject = "RasPel ERP - Sipariş Durum Güncellemesi #" + siparisNo;
         String html = sablonUst("Sipariş Bilgilendirmesi") + """
             <p>Sayın Müşterimiz,</p>
@@ -95,11 +113,11 @@ public class EmailService {
             <p>Siparişinizin detaylarını sistem üzerinden takip edebilirsiniz.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(siparisNo, siparisNo, durum) + sablonAlt();
-        htmlGonder(to, subject, html);
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
-    @Async
-    public void sifreSifirlamaGonder(String to, String geciciSifre) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean sifreSifirlamaGonder(String to, String geciciSifre) {
         String subject = "RasPel ERP - Şifre Sıfırlama";
         String html = sablonUst("Şifre Sıfırlama") + """
             <p>Sayın Kullanıcı,</p>
@@ -110,11 +128,11 @@ public class EmailService {
             <p>Güvenliğiniz için giriş yaptıktan sonra şifrenizi değiştirmeyi unutmayın.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(geciciSifre) + sablonAlt();
-        htmlGonder(to, subject, html);
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
-    @Async
-    public void faturaPdfGonder(String to, byte[] pdfBytes, String faturaNo, String tutar, String aliciAdi) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean faturaPdfGonder(String to, byte[] pdfBytes, String faturaNo, String tutar, String aliciAdi) {
         String subject = "Fatura #" + faturaNo + " — RasPel ERP";
         String html = sablonUst("Fatura Ekinde") + """
             <p>Sayın %s,</p>
@@ -126,55 +144,23 @@ public class EmailService {
             <p>Ödeme için faturanın üzerindeki vade tarihine dikkat ediniz.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(aliciAdi != null ? aliciAdi : "Müşterimiz", faturaNo, faturaNo, tutar) + sablonAlt();
-        try {
-            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                helper.setFrom(fromEmail);
-                helper.setTo(to);
-                helper.setSubject(subject);
-                helper.setText(html, true);
-                helper.addAttachment("fatura-" + faturaNo + ".pdf", new org.springframework.core.io.ByteArrayResource(pdfBytes));
-                mailSender.send(message);
-                log.info("Fatura PDF e-postası gönderildi -> To: {}, Fatura: {}", to, faturaNo);
-            } else {
-                log.info("[E-POSTA MOCK] Fatura PDF e-postası loga yazıldı -> To: {}, Fatura: {}", to, faturaNo);
-            }
-        } catch (Exception e) {
-            log.error("Fatura PDF e-postası gönderilirken hata -> To: {}, Error: {}", to, e.getMessage());
-        }
+        return gonderVeRaporla(to, subject, html, pdfBytes, "fatura-" + faturaNo + ".pdf");
     }
 
-    @Async
-    public void raporPdfGonder(String to, String raporAdi, byte[] pdfBytes, String dosyaAdi) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean raporPdfGonder(String to, String raporAdi, byte[] pdfBytes, String dosyaAdi) {
         String subject = raporAdi + " — RasPel ERP";
         String html = sablonUst("Rapor Ekinde") + """
             <p>Sayın ilgili,</p>
             <p><strong>%s</strong> raporu PDF olarak ektedir.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(raporAdi) + sablonAlt();
-        try {
-            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                helper.setFrom(fromEmail);
-                helper.setTo(to);
-                helper.setSubject(subject);
-                helper.setText(html, true);
-                helper.addAttachment(dosyaAdi != null && !dosyaAdi.isBlank() ? dosyaAdi : "rapor.pdf",
-                        new org.springframework.core.io.ByteArrayResource(pdfBytes));
-                mailSender.send(message);
-                log.info("Rapor PDF e-postası gönderildi -> To: {}, Rapor: {}", to, raporAdi);
-            } else {
-                log.info("[E-POSTA MOCK] Rapor PDF e-postası loga yazıldı -> To: {}, Rapor: {}", to, raporAdi);
-            }
-        } catch (Exception e) {
-            log.error("Rapor PDF e-postası gönderilirken hata -> To: {}, Error: {}", to, e.getMessage());
-        }
+        return gonderVeRaporla(to, subject, html, pdfBytes,
+                dosyaAdi != null && !dosyaAdi.isBlank() ? dosyaAdi : "rapor.pdf");
     }
 
-    @Async
-    public void odemeHatimlaticiGonder(String to, String faturaNo, String tutar, String kalanTutar, String vade, String cariAdi) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean odemeHatimlaticiGonder(String to, String faturaNo, String tutar, String kalanTutar, String vade, String cariAdi) {
         String subject = "Hatırlatma: Fatura #" + faturaNo + " ödemesi bekleniyor";
         String html = sablonUst("Ödeme Hatırlatması") + """
             <p>Sayın %s,</p>
@@ -188,11 +174,11 @@ public class EmailService {
             <p>Faturanın ödenmesini rica ederiz. Zaten ödeme yaptıysanız bu e-postayı dikkate almayınız.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(cariAdi != null ? cariAdi : "Müşterimiz", faturaNo, faturaNo, tutar, kalanTutar, vade) + sablonAlt();
-        htmlGonder(to, subject, html);
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
-    @Async
-    public void stokUyarisiGonder(String to, String stokAd, String miktar, String birim) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean stokUyarisiGonder(String to, String stokAd, String miktar, String birim) {
         String subject = "RasPel ERP - Kritik Stok Uyarısı: " + stokAd;
         String html = sablonUst("Kritik Stok Uyarısı") + """
             <p>Sayın Yönetici,</p>
@@ -204,11 +190,11 @@ public class EmailService {
             <p>Tedarik siparişi oluşturmayı değerlendirebilirsiniz.</p>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(stokAd, miktar, birim) + sablonAlt();
-        htmlGonder(to, subject, html);
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
-    @Async
-    public void hoşGeldinGonder(String to, String kullaniciAdi) {
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean hoşGeldinGonder(String to, String kullaniciAdi) {
         String subject = "RasPel ERP'ye Hoş Geldiniz!";
         String html = sablonUst("Hoş Geldiniz " + kullaniciAdi + "!") + """
             <p>RasPel ERP sistemine başarıyla kaydoldunuz.</p>
@@ -222,26 +208,12 @@ public class EmailService {
             </div>
             <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
             """.formatted(kullaniciAdi) + sablonAlt();
-        htmlGonder(to, subject, html);
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
-    private void htmlGonder(String to, String subject, String html) {
-        try {
-            if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                helper.setFrom(fromEmail);
-                helper.setTo(to);
-                helper.setSubject(subject);
-                helper.setText(html, true);
-                mailSender.send(message);
-                log.info("HTML e-posta gönderildi -> To: {}, Subject: {}", to, subject);
-            } else {
-                log.info("[E-POSTA MOCK] HTML e-posta loga yazıldı -> To: {}, Subject: {}", to, subject);
-            }
-        } catch (Exception e) {
-            log.error("HTML e-posta gönderilirken hata -> To: {}, Error: {}", to, e.getMessage());
-        }
+    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
+    public boolean htmlGonder(String to, String subject, String html) {
+        return gonderVeRaporla(to, subject, html, null, null);
     }
 
     private String sablonUst(String baslik) {

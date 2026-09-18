@@ -105,4 +105,30 @@ class SirketServiceTest {
         when(sirketRepository.existsById(99L)).thenReturn(false);
         assertThrows(RuntimeException.class, () -> sirketService.sil(99L));
     }
+
+    @Test
+    void faturaSablonuKaydet_veGetir() {
+        Sirket existing = createSirket(1L);
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(sirketRepository.save(any(Sirket.class))).thenReturn(existing);
+
+        String json = "{\"renk\":\"#ff0000\"}";
+        String kayitli = sirketService.faturaSablonuKaydet(1L, json);
+
+        assertEquals(json, kayitli);
+        assertEquals(json, sirketService.faturaSablonuGetir(1L));
+    }
+
+    @Test
+    void posFisAyarlariKaydet_veGetir() {
+        Sirket existing = createSirket(1L);
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(sirketRepository.save(any(Sirket.class))).thenReturn(existing);
+
+        String json = "{\"fisFiyatli\":false}";
+        String kayitli = sirketService.posFisAyarlariKaydet(1L, json);
+
+        assertEquals(json, kayitli);
+        assertEquals(json, sirketService.posFisAyarlariGetir(1L));
+    }
 }

@@ -118,6 +118,42 @@ public class SirketService {
     }
 
     @Transactional(readOnly = true)
+    public String faturaSablonuGetir(Long sirketId) {
+        Sirket s = sirketRepository.findById(sirketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", sirketId));
+        erisimKontrol(s);
+        return s.getFaturaSablonu();
+    }
+
+    @CacheEvict(value = "lookup", allEntries = true)
+    public String faturaSablonuKaydet(Long sirketId, String sablonJson) {
+        Sirket s = sirketRepository.findById(sirketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", sirketId));
+        erisimKontrol(s);
+        s.setFaturaSablonu(sablonJson);
+        sirketRepository.save(s);
+        return s.getFaturaSablonu();
+    }
+
+    @Transactional(readOnly = true)
+    public String posFisAyarlariGetir(Long sirketId) {
+        Sirket s = sirketRepository.findById(sirketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", sirketId));
+        erisimKontrol(s);
+        return s.getPosFisAyarlari();
+    }
+
+    @CacheEvict(value = "lookup", allEntries = true)
+    public String posFisAyarlariKaydet(Long sirketId, String ayarJson) {
+        Sirket s = sirketRepository.findById(sirketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", sirketId));
+        erisimKontrol(s);
+        s.setPosFisAyarlari(ayarJson);
+        sirketRepository.save(s);
+        return s.getPosFisAyarlari();
+    }
+
+    @Transactional(readOnly = true)
     public com.raspel.erp.dto.sistem.KonsolideOzetDTO konsolideOzet(Long anaSirketId) {
         Sirket ana = sirketRepository.findById(anaSirketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Şirket", anaSirketId));

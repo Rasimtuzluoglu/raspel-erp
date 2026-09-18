@@ -32,6 +32,8 @@ class PdfRaporServiceTest {
     @Mock private IrsaliyeKalemRepository irsaliyeKalemRepository;
     @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
     @Mock private com.raspel.erp.repository.sistem.SirketRepository sirketRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private PdfRaporService pdfRaporService;
 
@@ -87,8 +89,7 @@ class PdfRaporServiceTest {
     }
 
     @Test
-    void stokEtiketi_turkceKarakterlerlePdfUretir() {
-        com.raspel.erp.entity.envanter.Stok stok = new com.raspel.erp.entity.envanter.Stok();
+    void stokEtiketi_turkceKarakterlerlePdfUretir() {        com.raspel.erp.entity.envanter.Stok stok = new com.raspel.erp.entity.envanter.Stok();
         stok.setId(1L);
         stok.setAd("Şişe Çeşmesi Ürünü ĞİÖÇÜ");
         stok.setStokKodu("STK-ŞĞÜ");
@@ -101,5 +102,25 @@ class PdfRaporServiceTest {
         assertNotNull(result);
         assertTrue(result.length > 0);
         assertEquals('%', result[0]);
+    }
+
+    @Test
+    void faturaRaporu_sunucudakiSablonuUygular() {
+        com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
+        fatura.setId(1L);
+        fatura.setFaturaNumarasi("FTR-001");
+        fatura.setTur(com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS);
+        fatura.setSirketId(1L);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of());
+        com.raspel.erp.entity.sistem.Sirket sirket = new com.raspel.erp.entity.sistem.Sirket();
+        sirket.setId(1L);
+        sirket.setFaturaSablonu("{\"faturaBasligi\":\"ÖZEL BAŞLIK\",\"renk\":\"#ff0000\",\"kagitBoyutu\":\"a5\",\"logoGoster\":false}");
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(sirket));
+
+        byte[] pdf = pdfRaporService.faturaRaporu(1L);
+
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 0);
     }
 }

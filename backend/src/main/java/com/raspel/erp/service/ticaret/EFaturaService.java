@@ -42,7 +42,7 @@ public class EFaturaService {
     private final TenantChecker tenantChecker;
     private final RestTemplate restTemplate;
 
-    /** GİB/entegratör uç noktası. Boş ise yerel onay (simülasyon) yapılır. */
+    /** GİB/entegratör uç noktası. Boş ise gönderim/sorgulama yapılamaz (sahte onay üretilmez). */
     @Value("${app.efatura.gib-endpoint:}")
     private String gibEndpoint;
 
@@ -144,7 +144,7 @@ public class EFaturaService {
 
     /**
      * GİB/entegratörden güncel durum kodunu sorgular ve kaydı günceller.
-     * Uç nokta tanımlı değilse (simülasyon) 1200 -> 1300 geçişi yapılır.
+     * Entegratör uç noktası tanımlı değilse simülasyon yapılmaz; açık hata döner.
      */
     public EFaturaDTO durumSorgula(Long id) {
         EFatura eFatura = eFaturaRepository.findById(id)
@@ -157,28 +157,27 @@ public class EFaturaService {
         if (eFatura.getGibDurumKodu() == 1300 || eFatura.getGibDurumKodu() == 1350) {
             return entityToDTO(eFatura); // zaten nihai durumda
         }
+        if (gibEndpoint == null || gibEndpoint.isBlank()) {
+            throw new BusinessException("GİB entegratör uç noktası tanımlı değil. Durum sorgulaması yapılamaz.");
+        }
 
         Integer yeniKod = null;
         String yeniAciklama = null;
-        if (gibEndpoint != null && !gibEndpoint.isBlank()) {
-            try {
-                String sorguUrl = gibEndpoint.endsWith("/")
-                        ? gibEndpoint + eFatura.getEttn() + "/durum"
-                        : gibEndpoint + "/" + eFatura.getEttn() + "/durum";
-                var yanit = restTemplate.getForEntity(sorguUrl, java.util.Map.class);
-                if (yanit.getBody() != null && yanit.getBody().get("durumKodu") instanceof Number n) {
-                    yeniKod = n.intValue();
-                    yeniAciklama = (String) yanit.getBody().get("durumAciklama");
-                }
-            } catch (Exception ex) {
-                log.warn("GİB durum sorgulama başarısız: {}", ex.getMessage());
+        try {
+            String sorguUrl = gibEndpoint.endsWith("/")
+                    ? gibEndpoint + eFatura.getEttn() + "/durum"
+                    : gibEndpoint + "/" + eFatura.getEttn() + "/durum";
+            var yanit = restTemplate.getForEntity(sorguUrl, java.util.Map.class);
+            if (yanit.getBody() != null && yanit.getBody().get("durumKodu") instanceof Number n) {
+                yeniKod = n.intValue();
+                yeniAciklama = (String) yanit.getBody().get("durumAciklama");
             }
+        } catch (Exception ex) {
+            log.warn("GİB durum sorgulama başarısız: {}", ex.getMessage());
         }
 
         if (yeniKod == null) {
-            // Simülasyon: gönderilmiş (1200) kayıtlar onaylanmış (1300) kabul edilir.
-            yeniKod = 1300;
-            yeniAciklama = "GİB onayı alındı (yerel onay/simülasyon).";
+            throw new BusinessException("GİB durum sorgulaması başarısız: entegratörden geçerli yanıt alınamadı.");
         }
 
         eFatura.setGibDurumKodu(yeniKod);

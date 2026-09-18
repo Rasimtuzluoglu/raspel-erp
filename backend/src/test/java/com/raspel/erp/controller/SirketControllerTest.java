@@ -109,6 +109,46 @@ class SirketControllerTest {
         mockMvc.perform(delete("/api/sirketler/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldGetFaturaSablonu() throws Exception {
+        when(sirketService.faturaSablonuGetir(1L)).thenReturn("{\"renk\":\"#ff0000\"}");
+
+        mockMvc.perform(get("/api/sirketler/1/fatura-sablonu"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sablon").value("{\"renk\":\"#ff0000\"}"));
+    }
+
+    @Test
+    void shouldSaveFaturaSablonu() throws Exception {
+        when(sirketService.faturaSablonuKaydet(eq(1L), anyString())).thenReturn("{\"renk\":\"#00ff00\"}");
+
+        mockMvc.perform(put("/api/sirketler/1/fatura-sablonu")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sablon\":\"{\\\"renk\\\":\\\"#00ff00\\\"}\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sablon").value("{\"renk\":\"#00ff00\"}"));
+    }
+
+    @Test
+    void shouldGetPosFisAyarlari() throws Exception {
+        when(sirketService.posFisAyarlariGetir(1L)).thenReturn("{\"fisFiyatli\":true}");
+
+        mockMvc.perform(get("/api/sirketler/1/pos-fis-ayarlari"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ayarlar").value("{\"fisFiyatli\":true}"));
+    }
+
+    @Test
+    void shouldSavePosFisAyarlari() throws Exception {
+        when(sirketService.posFisAyarlariKaydet(eq(1L), anyString())).thenReturn("{\"fisFiyatli\":false}");
+
+        mockMvc.perform(put("/api/sirketler/1/pos-fis-ayarlari")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ayarlar\":\"{\\\"fisFiyatli\\\":false}\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ayarlar").value("{\"fisFiyatli\":false}"));
+    }
 }
 
 

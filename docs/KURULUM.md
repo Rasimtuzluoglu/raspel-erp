@@ -1,4 +1,4 @@
-# RasPel ERP — Kurulum Kılavuzu
+﻿# RasPel ERP — Kurulum Kılavuzu
 
 ## Gereksinimler
 - Docker + Docker Compose (v2)
@@ -120,10 +120,10 @@ docker-compose up -d --build
 ## 5. Testler
 
 ```bash
-# Backend (1040 test)
+# Backend (1055 test)
 cd backend && mvn test
 
-# Frontend (695 test)
+# Frontend (701 test)
 cd frontend && npm run test
 
 # Uçtan uca iş akışı (backend çalışırken)

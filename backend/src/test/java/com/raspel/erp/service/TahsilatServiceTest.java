@@ -113,11 +113,26 @@ class TahsilatServiceTest {
                 fatura(2L, c1, LocalDate.now().minusDays(15), "2000"));
 
         when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), anyList())).thenReturn(faturalar);
+        when(emailService.odemeHatimlaticiGonder(anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(true);
 
         int sent = tahsilatService.hatirlat(1L, 1L);
 
         assertEquals(2, sent);
         verify(emailService, times(2)).odemeHatimlaticiGonder(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void hatirlat_smtpYoksaHataVerir() {
+        CariHesap c1 = cari(1L, "A Ltd", "a@x.com");
+        List<Fatura> faturalar = List.of(
+                fatura(1L, c1, LocalDate.now().minusDays(5), "1000"));
+
+        when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), anyList())).thenReturn(faturalar);
+        when(emailService.odemeHatimlaticiGonder(anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(false);
+
+        assertThrows(BusinessException.class, () -> tahsilatService.hatirlat(1L, 1L));
     }
 
     @Test

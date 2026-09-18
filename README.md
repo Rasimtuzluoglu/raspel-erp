@@ -1,4 +1,4 @@
-# RasPel ERP — Modern & Akıllı Kurumsal Kaynak Planlama Sistemi
+﻿# RasPel ERP — Modern & Akıllı Kurumsal Kaynak Planlama Sistemi
 
 > Fatura, stok, cari, saha operasyonları, finans ve personel yönetimi... Hepsi tek ekranda. İnternet kesilse de çalışan PWA desteği, yapay zeka ile talep tahmini, eşzamanlı çoklu kullanıcı güvenliği ve gelişmiş yetkilendirme.
 
@@ -122,11 +122,11 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 1040 Test (0 Hata)
+mvn -B test -q          # 1055 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test           # 695 Test (0 Hata)
+npm run test           # 701 Test (0 Hata)
 
 # Kod Standartları & Linting
 cd frontend
@@ -153,7 +153,7 @@ raspel-erp/
 │
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4 + Tailwind CSS
 │   └── src/
-│       ├── views/           # 72 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti, KarlilikAnalizi vb.)
+│       ├── views/           # 73 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti, KarlilikAnalizi vb.)
 │       ├── components/      # 51 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, FaturaGecmisDialog vb.)
 │       ├── stores/          # 13 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
 │       ├── composables/     # 20 Composable Hook (Tema, Yetki, Oturum, Kısayol)

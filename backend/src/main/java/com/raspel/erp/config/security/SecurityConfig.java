@@ -57,6 +57,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/kullanicilar/giris",
                         "/api/kullanicilar/giris-2fa",
                         "/api/kullanicilar/giris-sirket",
+                        "/api/kullanicilar/sifre-sifirlama-talebi",
+                        "/api/kullanicilar/sifre-sifirlama-onayla",
                         "/api/kullanicilar/cikis").permitAll()
                 .requestMatchers("/api/kurulum/**").permitAll()
                 // Base health (aggregate UP/DOWN) ve prometheus metrikleri aciktir.

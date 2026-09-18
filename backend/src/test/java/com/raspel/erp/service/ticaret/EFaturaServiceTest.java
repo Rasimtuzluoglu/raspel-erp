@@ -147,9 +147,15 @@ class EFaturaServiceTest {
     }
 
     @Test
-    void testDurumSorgula_SimulasyondaOnaylar() {
+    void testDurumSorgula_SimulasyondaOnaylar() throws Exception {
+        String endpoint = "https://gib-test.example/gib";
+        var field = EFaturaService.class.getDeclaredField("gibEndpoint");
+        field.setAccessible(true);
+        field.set(eFaturaService, endpoint);
         mockEFatura.setGibDurumKodu(1200);
         when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(restTemplate.getForEntity(anyString(), eq(java.util.Map.class)))
+                .thenReturn(org.springframework.http.ResponseEntity.ok(java.util.Map.of("durumKodu", 1300, "durumAciklama", "Onaylandi")));
         when(eFaturaRepository.save(any(EFatura.class))).thenAnswer(inv -> inv.getArgument(0));
 
         EFaturaDTO result = eFaturaService.durumSorgula(10L);
@@ -157,6 +163,15 @@ class EFaturaServiceTest {
         assertEquals(1300, result.getGibDurumKodu());
         assertNotNull(result.getGibDurumAciklama());
         verify(eFaturaRepository, times(1)).save(mockEFatura);
+    }
+
+    @Test
+    void testDurumSorgula_EndpointYoksaHataVerir() {
+        mockEFatura.setGibDurumKodu(1200);
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+
+        assertThrows(BusinessException.class, () -> eFaturaService.durumSorgula(10L));
+        verify(eFaturaRepository, never()).save(any());
     }
 
     @Test

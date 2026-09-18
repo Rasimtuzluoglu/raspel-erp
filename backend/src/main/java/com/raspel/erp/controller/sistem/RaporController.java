@@ -58,7 +58,11 @@ public class RaporController {
         }
         String raporAdi = baslik != null && !baslik.isBlank() ? baslik : "Rapor";
         String ek = dosyaAdi != null && !dosyaAdi.isBlank() ? dosyaAdi : "rapor.pdf";
-        emailService.raporPdfGonder(alici, raporAdi, bytes, ek);
+        boolean gonderildi = emailService.raporPdfGonder(alici, raporAdi, bytes, ek);
+        if (!gonderildi) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Rapor e-postası gönderilemedi: SMTP yapılandırılmamış veya gönderim hatası");
+        }
         return ResponseEntity.ok(java.util.Map.of("durum", "GONDERILDI"));
     }
 

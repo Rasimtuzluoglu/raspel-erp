@@ -15,6 +15,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/sifre-sifirla',
+    name: 'SifreSifirla',
+    component: () => import('../views/SifreSifirla.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
     name: 'Dashboard',
     component: Dashboard,

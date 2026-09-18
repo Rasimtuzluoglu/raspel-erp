@@ -96,6 +96,23 @@ public class KullaniciController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/sifre-sifirlama-talebi")
+    @Operation(summary = "Şifre sıfırlama talebi", description = "Kullanıcı adına kayıtlı e-posta adresine tek kullanımlık sıfırlama bağlantısı gönderir")
+    public ResponseEntity<java.util.Map<String, String>> sifreSifirlamaTalebi(
+            @Valid @RequestBody com.raspel.erp.dto.sistem.SifreSifirlaTalepRequest req) {
+        kullaniciService.sifreSifirlamaTalebi(req.getUsername());
+        return ResponseEntity.ok(java.util.Map.of("message",
+                "Eğer bu kullanıcı için bir e-posta tanımlıysa sıfırlama bağlantısı gönderildi."));
+    }
+
+    @PostMapping("/sifre-sifirlama-onayla")
+    @Operation(summary = "Şifre sıfırlamayı onayla", description = "E-posta ile gelen token ile yeni şifreyi belirler")
+    public ResponseEntity<java.util.Map<String, String>> sifreSifirlamaOnayla(
+            @Valid @RequestBody com.raspel.erp.dto.sistem.SifreSifirlaOnayRequest req) {
+        kullaniciService.sifreSifirlamaOnayla(req.getToken(), req.getYeniSifre());
+        return ResponseEntity.ok(java.util.Map.of("message", "Şifreniz başarıyla güncellendi."));
+    }
+
     @PostMapping("/setup-2fa")
     @Operation(summary = "2FA Kurulumu", description = "Oturum açmış kullanıcı için gerçek TOTP secret ve otpauth URI üretir")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")

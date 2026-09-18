@@ -35,6 +35,9 @@ public class Kullanici {
     @Column(name = "company_name", length = 200)
     private String companyName;
 
+    @Column(length = 255)
+    private String email;
+
     @Column(name = "sirket_id")
     private Long sirketId;
 
