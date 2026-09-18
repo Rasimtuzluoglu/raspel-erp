@@ -10,6 +10,22 @@ http:
         average: 100
         burst: 50
 
+    # Guvenlik basliklari: API ve frontend router'larina uygulanir.
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        frameDeny: true
+        customFrameOptionsValue: "DENY"
+        customResponseHeaders:
+          Permissions-Policy: "camera=(), microphone=(self), geolocation=()"
+          Server: ""
+          X-Powered-By: ""
+
     cors-headers:
       headers:
         accessControlAllowOriginList:
@@ -69,6 +85,7 @@ http:
       middlewares:
         - cors-headers
         - ratelimit
+        - security-headers
       priority: 2
 
     adminer-http:
@@ -111,6 +128,7 @@ http:
       middlewares:
         - cors-headers
         - ratelimit
+        - security-headers
       tls:
         certResolver: letsencrypt
       priority: 2

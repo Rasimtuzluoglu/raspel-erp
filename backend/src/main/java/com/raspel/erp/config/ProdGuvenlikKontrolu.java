@@ -47,6 +47,19 @@ public class ProdGuvenlikKontrolu {
     @Value("${spring.data.redis.password:}")
     private String redisPassword;
 
+    @Value("${app.cors.allowed-origins:}")
+    private String corsAllowedOrigins;
+
+    @Value("${app.frontend.url:}")
+    private String frontendUrl;
+
+    /**
+     * Gercek alan adi zorunlulugu. Yerel/staging ortamlarda localhost kullanilabildigi
+     * icin varsayilan false'tur; gercek uretimde true yapilarak fail-fast saglanir.
+     */
+    @Value("${app.security.strict-domains:false}")
+    private boolean strictDomains;
+
     @PostConstruct
     public void kontrol() {
         boolean prodAktif = Arrays.asList(environment.getActiveProfiles()).contains("prod");
@@ -80,6 +93,21 @@ public class ProdGuvenlikKontrolu {
         if (rabbitmqPassword == null || rabbitmqPassword.isBlank()) {
             throw new IllegalStateException("prod profilinde RABBITMQ_PASSWORD zorunludur.");
         }
-        log.info("Prod guvenlik kontrolu tamam: JWT_SECRET, AI_ENCRYPTION_KEY ve depolama kredileri guclu.");
+        if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {
+            throw new IllegalStateException("prod profilinde APP_CORS_ALLOWED_ORIGINS zorunludur.");
+        }
+        if (strictDomains) {
+            // Gercek uretimde localhost origin'i kabul edilmez.
+            if (corsAllowedOrigins.contains("localhost") || corsAllowedOrigins.contains("127.0.0.1")) {
+                throw new IllegalStateException(
+                        "prod profilinde APP_CORS_ALLOWED_ORIGINS gercek alan adi olmalidir (localhost kabul edilmez).");
+            }
+            if (frontendUrl != null && !frontendUrl.isBlank()
+                    && (frontendUrl.contains("localhost") || frontendUrl.contains("127.0.0.1"))) {
+                throw new IllegalStateException(
+                        "prod profilinde APP_FRONTEND_URL gercek alan adi olmalidir (localhost kabul edilmez).");
+            }
+        }
+        log.info("Prod guvenlik kontrolu tamam: JWT_SECRET, AI_ENCRYPTION_KEY, depolama kredileri ve CORS dogrulandi.");
     }
 }

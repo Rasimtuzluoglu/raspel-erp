@@ -191,6 +191,8 @@ services:
       # icin .env uzerinden APP_COOKIE_SECURE=false / APP_SECURITY_HTTPS_ONLY=false yapin.
       APP_COOKIE_SECURE: ${APP_COOKIE_SECURE:-true}
       APP_SECURITY_HTTPS_ONLY: ${APP_SECURITY_HTTPS_ONLY:-true}
+      # Gercek uretimde true yapin (localhost origin'lerini reddeder).
+      APP_SECURITY_STRICT_DOMAINS: ${APP_SECURITY_STRICT_DOMAINS:-false}
     volumes:
       - backup_data:/app/backups
     depends_on:
