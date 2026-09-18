@@ -37,6 +37,18 @@ class TenantCheckerTest {
     }
 
     @Test
+    void check_tenantBilgisiOlmayanKayitReddedilir() {
+        oturumSirket(1L);
+        assertThrows(ResourceNotFoundException.class, () -> tenantChecker.check(null, "Test"));
+    }
+
+    @Test
+    void check_requestYoksaDogrulamaYapilmaz() {
+        assertDoesNotThrow(() -> tenantChecker.check(null, "Test"));
+        assertDoesNotThrow(() -> tenantChecker.check(2L, "Test"));
+    }
+
+    @Test
     void tenantKey_sirketBilgisiIcerir() {
         oturumSirket(3L);
         assertEquals("42:3", TenantChecker.tenantKey(42L));

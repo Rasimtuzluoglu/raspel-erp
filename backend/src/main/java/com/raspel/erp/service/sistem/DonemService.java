@@ -45,7 +45,7 @@ public class DonemService {
                 .map(this::entityToDTO).collect(Collectors.toList());
     }
 
-    @Cacheable(value = "lookup", key = "'donemId:' + #id")
+    @Cacheable(value = "lookup", key = "T(com.raspel.erp.config.TenantChecker).tenantKey('donemId:' + #id)")
     @Transactional(readOnly = true)
     public DonemDTO getir(Long id) {
         Donem d = donemRepository.findById(id)

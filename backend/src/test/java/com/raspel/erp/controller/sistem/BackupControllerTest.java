@@ -2,12 +2,14 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.controller.TestSecurityMocks;
 import com.raspel.erp.service.sistem.BackupService;
+import com.raspel.erp.service.sistem.KullaniciService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,6 +28,7 @@ class BackupControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @MockBean private BackupService backupService;
+    @MockBean private KullaniciService kullaniciService;
 
     @Test
     void shouldManualBackup() throws Exception {
@@ -68,9 +71,12 @@ class BackupControllerTest {
     @Test
     void shouldRestoreBackup() throws Exception {
         when(backupService.restoreBackup("a.sql.gz")).thenReturn("a.sql.gz");
-        mockMvc.perform(post("/api/backups/restore/a.sql.gz"))
+        mockMvc.perform(post("/api/backups/restore/a.sql.gz")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sifre\":\"gizli\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.filename").value("a.sql.gz"));
+        verify(kullaniciService).sifreDogrula(null, "gizli");
     }
 
     @Test

@@ -21,6 +21,7 @@ public class MaasBordroService {
     private final MaasBordroRepository maasBordroRepository;
     private final PersonelRepository personelRepository;
     private final OtomatikMuhasebeService otomatikMuhasebeService;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<MaasBordroDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -29,13 +30,16 @@ public class MaasBordroService {
 
     @Transactional(readOnly = true)
     public MaasBordroDTO getir(Long id) {
-        return entityToDTO(maasBordroRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id)));
+        MaasBordro bordro = maasBordroRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id));
+        tenantChecker.check(bordro.getSirketId(), "MaasBordro");
+        return entityToDTO(bordro);
     }
 
     public MaasBordroDTO olustur(MaasBordroDTO dto, Long sirketId) {
         Personel personel = personelRepository.findById(dto.getPersonelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", dto.getPersonelId()));
+        tenantChecker.check(personel.getSirketId(), "Personel");
         MaasBordro bordro = MaasBordro.builder()
                 .personel(personel)
                 .yil(dto.getYil())
@@ -56,6 +60,7 @@ public class MaasBordroService {
     public MaasBordroDTO guncelle(Long id, MaasBordroDTO dto) {
         MaasBordro bordro = maasBordroRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id));
+        tenantChecker.check(bordro.getSirketId(), "MaasBordro");
         if (dto.getYil() != null) bordro.setYil(dto.getYil());
         if (dto.getAy() != null) bordro.setAy(dto.getAy());
         if (dto.getBrutMaas() != null) bordro.setBrutMaas(dto.getBrutMaas());
@@ -66,6 +71,7 @@ public class MaasBordroService {
         if (dto.getPersonelId() != null) {
             Personel personel = personelRepository.findById(dto.getPersonelId())
                     .orElseThrow(() -> new ResourceNotFoundException("Personel", dto.getPersonelId()));
+            tenantChecker.check(personel.getSirketId(), "Personel");
             bordro.setPersonel(personel);
         }
         MaasBordro kaydedilen = maasBordroRepository.save(bordro);
@@ -78,6 +84,7 @@ public class MaasBordroService {
     public void sil(Long id) {
         MaasBordro bordro = maasBordroRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id));
+        tenantChecker.check(bordro.getSirketId(), "MaasBordro");
         otomatikMuhasebeService.bordroIptal(bordro.getId(), bordro.getSirketId());
         maasBordroRepository.delete(bordro);
     }

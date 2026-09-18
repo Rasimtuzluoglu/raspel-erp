@@ -40,6 +40,9 @@ class VeriAktarimServiceTest {
     @Mock
     private SirketRepository sirketRepository;
 
+    @Mock
+    private com.raspel.erp.config.TenantChecker tenantChecker;
+
     @InjectMocks
     private VeriAktarimService veriAktarimService;
 
@@ -50,6 +53,7 @@ class VeriAktarimServiceTest {
     void setUp() {
         kaynakSirket = Sirket.builder().id(1L).ad("Kaynak Sirket").build();
         hedefSirket = Sirket.builder().id(2L).ad("Hedef Sirket").build();
+        lenient().when(tenantChecker.getCurrentSirketId()).thenReturn(null);
     }
 
     @Test
@@ -140,7 +144,6 @@ class VeriAktarimServiceTest {
     @Test
     void aktarimYap_ayniSirketHata() {
         when(sirketRepository.findById(1L)).thenReturn(Optional.of(kaynakSirket));
-        when(sirketRepository.findById(1L)).thenReturn(Optional.of(kaynakSirket));
 
         VeriAktarimDTO dto = VeriAktarimDTO.builder()
                 .kaynakSirketId(1L)
@@ -148,6 +151,19 @@ class VeriAktarimServiceTest {
                 .build();
 
         assertThrows(BusinessException.class, () -> veriAktarimService.aktarimYap(dto));
+    }
+
+    @Test
+    void aktarimYap_baskaSirketAktariminiReddeder() {
+        when(tenantChecker.getCurrentSirketId()).thenReturn(3L);
+
+        VeriAktarimDTO dto = VeriAktarimDTO.builder()
+                .kaynakSirketId(1L)
+                .hedefSirketId(2L)
+                .build();
+
+        assertThrows(BusinessException.class, () -> veriAktarimService.aktarimYap(dto));
+        verify(sirketRepository, never()).findById(any());
     }
 
     @Test

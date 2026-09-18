@@ -29,6 +29,7 @@ public class StokDuzeltmeService {
     private final StokHareketRepository stokHareketRepository;
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     @Transactional
     public StokDuzeltmeDTO duzelt(StokDuzeltmeDTO dto, Long sirketId, Long kullaniciId) {
@@ -40,6 +41,7 @@ public class StokDuzeltmeService {
         }
         Stok stok = stokRepository.findByIdForUpdate(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
         BigDecimal eski = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
         stok.setMiktar(dto.getYeniMiktar());
         stokRepository.save(stok);

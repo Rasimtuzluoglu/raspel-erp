@@ -70,6 +70,49 @@
 
     <ConfirmDialog />
 
+    <Dialog
+      v-model:visible="geriYukleDialog"
+      :header="t('yedekler.geriYuklemeOnayi')"
+      modal
+      :style="{ width: '420px' }"
+      :closable="!geriYuklemeSuruyor"
+    >
+      <Message
+        severity="warn"
+        :closable="false"
+        class="geri-yukle-uyari"
+      >
+        {{ t('yedekler.geriYuklemeOnayMesaj', { ad: geriYuklenecekDosya }) }}
+      </Message>
+      <div class="geri-yukle-form">
+        <label for="geriYukleSifre">{{ t('yedekler.sifreDogrula') }}</label>
+        <Password
+          v-model="geriYukleSifre"
+          input-id="geriYukleSifre"
+          :feedback="false"
+          toggle-mask
+          class="geri-yukle-sifre"
+          :disabled="geriYuklemeSuruyor"
+          @keyup.enter="geriYuklemeyiOnayla"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          :disabled="geriYuklemeSuruyor"
+          @click="geriYukleDialog = false"
+        />
+        <Button
+          :label="t('yedekler.evetGeriYukle')"
+          icon="pi pi-upload"
+          class="p-button-warning"
+          :loading="geriYuklemeSuruyor"
+          @click="geriYuklemeyiOnayla"
+        />
+      </template>
+    </Dialog>
+
     <Message
       v-if="hata"
       severity="error"
@@ -411,6 +454,10 @@ const hata = ref('')
 const basari = ref('')
 const schedule = ref({})
 const dogrulama = ref({})
+const geriYukleDialog = ref(false)
+const geriYuklenecekDosya = ref('')
+const geriYukleSifre = ref('')
+const geriYuklemeSuruyor = ref(false)
 
 const dogrulamaYukle = async () => {
   try {
@@ -551,21 +598,27 @@ const sil = (filename) => {
 }
 
 const geriYukle = (filename) => {
-  confirm.require({
-    message: t('yedekler.geriYuklemeOnayMesaj', { ad: filename }),
-    header: t('yedekler.geriYuklemeOnayi'),
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('yedekler.evetGeriYukle'),
-    rejectLabel: t('common.cancel'),
-    accept: async () => {
-      try {
-        const res = await backupAPI.restore(filename)
-        basari.value = res.data?.message || t('yedekler.geriYuklemeTamamlandi')
-      } catch (err) {
-        hata.value = err.response?.data?.message || t('yedekler.geriYuklemeBasarisiz')
-      }
-    }
-  })
+  geriYuklenecekDosya.value = filename
+  geriYukleSifre.value = ''
+  geriYukleDialog.value = true
+}
+
+const geriYuklemeyiOnayla = async () => {
+  if (!geriYukleSifre.value) {
+    hata.value = t('yedekler.sifreGerekli')
+    return
+  }
+  geriYuklemeSuruyor.value = true
+  try {
+    const res = await backupAPI.restore(geriYuklenecekDosya.value, geriYukleSifre.value)
+    basari.value = res.data?.message || t('yedekler.geriYuklemeTamamlandi')
+    geriYukleDialog.value = false
+    await yukle()
+  } catch (err) {
+    hata.value = err.response?.data?.message || t('yedekler.geriYuklemeBasarisiz')
+  } finally {
+    geriYuklemeSuruyor.value = false
+  }
 }
 
 const formatSize = (bytes) => {
@@ -795,6 +848,26 @@ onMounted(() => {
   padding: 40px;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+.geri-yukle-uyari {
+  margin-bottom: 16px;
+}
+.geri-yukle-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.geri-yukle-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.geri-yukle-sifre {
+  width: 100%;
+}
+.geri-yukle-sifre :deep(input) {
+  width: 100%;
 }
 
 @media (max-width: 900px) {

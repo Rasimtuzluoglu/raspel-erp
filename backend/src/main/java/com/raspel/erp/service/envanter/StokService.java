@@ -449,8 +449,8 @@ public class StokService {
     public long toplamStokAdet(Long sirketId) { return stokRepository.countBySirketId(sirketId); }
 
     @Transactional(readOnly = true)
-    public BigDecimal toplamStokMiktari() {
-        BigDecimal toplam = stokRepository.toplamMiktar();
+    public BigDecimal toplamStokMiktari(Long sirketId) {
+        BigDecimal toplam = stokRepository.toplamMiktarBySirketId(sirketId);
         return toplam != null ? toplam : BigDecimal.ZERO;
     }
 

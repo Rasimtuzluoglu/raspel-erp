@@ -103,7 +103,8 @@ public class KullaniciService {
 
     public Page<KullaniciDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         if (sirketId == null) {
-            return kullaniciRepository.findAll(pageable).map(this::entityToDTO);
+            // Tenant bağlamı yoksa tüm şirketlerin kullanıcıları döndürülmez (izolasyon).
+            return Page.empty(pageable);
         }
         return kullaniciRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
@@ -216,10 +217,28 @@ public class KullaniciService {
         sifrePolitikasiKontrol(req.getYeniSifre());
         Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı adı bulunamadı: " + req.getUsername()));
+        tenantChecker.check(k.getSirketId(), "Kullanıcı");
         k.setPassword(passwordEncoder.encode(req.getYeniSifre()));
         k.setTokenVersion((k.getTokenVersion() != null ? k.getTokenVersion() : 0L) + 1);
         kullaniciRepository.save(k);
         log.info("Kullanıcı şifresi sıfırlandı: {}", req.getUsername());
+    }
+
+    /**
+     * Kritik işlemler (örn. veritabanı geri yükleme) öncesi kimlik yeniden doğrulaması.
+     */
+    public void sifreDogrula(Long kullaniciId, String sifre) {
+        if (kullaniciId == null) {
+            throw new BusinessException("Kullanıcı kimliği doğrulanamadı");
+        }
+        if (sifre == null || sifre.isBlank()) {
+            throw new BusinessException("Güvenlik doğrulaması başarısız: şifre hatalı");
+        }
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
+        if (!passwordEncoder.matches(sifre, k.getPassword())) {
+            throw new BusinessException("Güvenlik doğrulaması başarısız: şifre hatalı");
+        }
     }
 
     public com.raspel.erp.dto.sistem.TwoFactorDTO setupTwoFactor(Long kullaniciId) {

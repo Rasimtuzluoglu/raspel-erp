@@ -82,6 +82,8 @@ public class BackupService {
 
     private Path backupPath;
 
+    private final java.util.concurrent.atomic.AtomicBoolean islemSuruyor = new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private final DataSource dataSource;
     private final DosyaDepolamaService dosyaDepolama;
     private final JdbcTemplate jdbcTemplate;
@@ -481,6 +483,18 @@ public class BackupService {
         if (!gecerliIsim(filename)) {
             throw new RuntimeException("Geçersiz dosya adı: " + filename);
         }
+        // Aynı anda yalnızca bir geri yükleme çalışır; canlı veriyi ezen işlemler çakışmamalı.
+        if (!islemSuruyor.compareAndSet(false, true)) {
+            throw new BusinessException("Başka bir geri yükleme işlemi sürüyor. Lütfen bekleyin.");
+        }
+        try {
+            return restoreBackupInternal(filename);
+        } finally {
+            islemSuruyor.set(false);
+        }
+    }
+
+    private String restoreBackupInternal(String filename) {
         Path file = backupPath.resolve(filename).normalize();
         boolean yerelVar = file.startsWith(backupPath) && Files.exists(file);
         Path restoreKaynak = file;
@@ -501,6 +515,14 @@ public class BackupService {
             } catch (java.io.IOException e) {
                 throw new RuntimeException("Geçici yedek dosyası oluşturulamadı: " + filename, e);
             }
+        }
+
+        // Geri yükleme mevcut veriyi ezer; önce otomatik güvenlik yedeği alınamazsa işlem iptal edilir.
+        try {
+            String guvenlikYedegi = manualBackup("DAILY");
+            log.warn("Geri yükleme öncesi güvenlik yedeği alındı: {} (geri yüklenecek: {})", guvenlikYedegi, filename);
+        } catch (Exception e) {
+            throw new BusinessException("Geri yükleme öncesi güvenlik yedeği alınamadı, işlem iptal edildi: " + e.getMessage());
         }
 
         try {

@@ -39,7 +39,7 @@
 
 ## Test
 
-- [ ] Backend testleri gecti (`mvn -B clean verify` -> 1033 test, JaCoCo gate dahil)
+- [ ] Backend testleri gecti (`mvn -B clean verify` -> 1040 test, JaCoCo gate dahil)
 - [ ] Frontend build alindi (`npm run build`) ve lint/test temiz (695 test, coverage gate dahil)
 - [ ] Cypress E2E suite CI'da gecti (9 spec)
 - [ ] `npm run i18n:check` temiz (eksik/cop anahtar yok)

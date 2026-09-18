@@ -27,9 +27,18 @@ public class VeriAktarimService {
     private final StokRepository stokRepository;
     private final CariHesapRepository cariHesapRepository;
     private final SirketRepository sirketRepository;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
+
+    private void tenantDogrula(Long kaynakSirketId, Long hedefSirketId) {
+        Long mevcut = tenantChecker.getCurrentSirketId();
+        if (mevcut != null && !mevcut.equals(kaynakSirketId) && !mevcut.equals(hedefSirketId)) {
+            throw new BusinessException("Aktarim yalnizca kendi sirketinizle yapilabilir");
+        }
+    }
 
     @Transactional
     public VeriAktarimSonucDTO aktarimYap(VeriAktarimDTO dto) {
+        tenantDogrula(dto.getKaynakSirketId(), dto.getHedefSirketId());
         Sirket kaynak = sirketRepository.findById(dto.getKaynakSirketId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kaynak Şirket", dto.getKaynakSirketId()));
         Sirket hedef = sirketRepository.findById(dto.getHedefSirketId())
@@ -137,6 +146,7 @@ public class VeriAktarimService {
 
     @Transactional(readOnly = true)
     public VeriAktarimSonucDTO onizleme(Long kaynakSirketId, Long hedefSirketId) {
+        tenantDogrula(kaynakSirketId, hedefSirketId);
         Sirket kaynak = sirketRepository.findById(kaynakSirketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kaynak Şirket", kaynakSirketId));
         Sirket hedef = sirketRepository.findById(hedefSirketId)

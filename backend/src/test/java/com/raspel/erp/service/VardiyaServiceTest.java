@@ -26,6 +26,7 @@ class VardiyaServiceTest {
 
     @Mock private VardiyaRepository vardiyaRepository;
     @Mock private PersonelRepository personelRepository;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private VardiyaService vardiyaService;
 
     private Vardiya createVardiya(Long id, Long personelId) {
@@ -47,6 +48,9 @@ class VardiyaServiceTest {
 
     @Test
     void personelVardiyalari_returnsForPersonel() {
+        Personel p = new Personel();
+        p.setId(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(p));
         when(vardiyaRepository.findByPersonelIdOrderByTarihDesc(1L))
                 .thenReturn(List.of(createVardiya(1L, 1L)));
         var result = vardiyaService.personelVardiyalari(1L);

@@ -3515,6 +3515,8 @@
     "evetGeriYukle": "Evet, Geri Yükle",
     "geriYuklemeTamamlandi": "Geri yükleme tamamlandı",
     "geriYuklemeBasarisiz": "Geri yükleme başarısız",
+    "sifreDogrula": "Güvenlik doğrulaması için şifrenizi girin",
+    "sifreGerekli": "Devam etmek için şifrenizi girin",
     "bulutAyarlariKaydedildi": "Bulut yedekleme ayarları kaydedildi",
     "bulutAyarlariKaydedilemedi": "Bulut ayarları kaydedilemedi",
     "bulutSenkronizasyonBasari": "Buluta senkronizasyon başarılı",

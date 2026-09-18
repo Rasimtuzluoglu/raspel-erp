@@ -62,9 +62,17 @@ class KullaniciServiceTest {
     }
 
     @Test
-    void tumunuGetir_returnsAllUsers() {
-        when(kullaniciRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(List.of(createKullanici(1L), createKullanici(2L))));
+    void tumunuGetir_nullSirketBosDoner() {
         Page<KullaniciDTO> result = kullaniciService.tumunuGetir(null, Pageable.unpaged());
+        assertTrue(result.isEmpty());
+        verify(kullaniciRepository, never()).findAll(any(Pageable.class));
+    }
+
+    @Test
+    void tumunuGetir_returnsTenantUsers() {
+        when(kullaniciRepository.findBySirketId(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createKullanici(1L), createKullanici(2L))));
+        Page<KullaniciDTO> result = kullaniciService.tumunuGetir(1L, Pageable.unpaged());
         assertEquals(2, result.getContent().size());
     }
 
@@ -292,5 +300,32 @@ class KullaniciServiceTest {
         assertEquals(2, sonuc.size());
         assertEquals("FATURA,ANOMALI", k.getBildirimTercihleri());
         verify(kullaniciRepository).save(k);
+    }
+
+    @Test
+    void sifreDogrula_dogruSifreGecer() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("dogru", "encoded")).thenReturn(true);
+
+        assertDoesNotThrow(() -> kullaniciService.sifreDogrula(1L, "dogru"));
+    }
+
+    @Test
+    void sifreDogrula_yanlisSifreReddedilir() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("yanlis", "encoded")).thenReturn(false);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.sifreDogrula(1L, "yanlis"));
+    }
+
+    @Test
+    void sifreDogrula_bosSifreReddedilir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.sifreDogrula(1L, "  "));
     }
 }

@@ -28,6 +28,7 @@ class MaasBordroServiceTest {
     @Mock private MaasBordroRepository maasBordroRepository;
     @Mock private PersonelRepository personelRepository;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private MaasBordroService maasBordroService;
 
     private Personel createPersonel() {

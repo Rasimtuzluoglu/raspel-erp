@@ -36,7 +36,12 @@ public class TenantChecker {
 
     public void check(Long entitySirketId, String entityName) {
         Long currentSirketId = getCurrentSirketId();
-        if (currentSirketId != null && entitySirketId != null && !currentSirketId.equals(entitySirketId)) {
+        if (currentSirketId == null) {
+            // Request context yoksa (test / dahili cagri) dogrulama yapilamaz.
+            return;
+        }
+        // Fail-closed: tenant bilgisi olmayan kayitlar da erisilemez.
+        if (entitySirketId == null || !currentSirketId.equals(entitySirketId)) {
             throw new ResourceNotFoundException(entityName + " bu sirkete ait degil");
         }
     }

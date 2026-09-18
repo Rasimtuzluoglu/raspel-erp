@@ -34,8 +34,8 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
 
     long countBySirketId(Long sirketId);
 
-    @Query("SELECT SUM(s.miktar) FROM Stok s")
-    BigDecimal toplamMiktar();
+    @Query("SELECT SUM(s.miktar) FROM Stok s WHERE s.sirketId = :sirketId")
+    BigDecimal toplamMiktarBySirketId(@Param("sirketId") Long sirketId);
 
     @Query("SELECT s FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar ORDER BY s.miktar ASC")
     List<Stok> kritikStoklar(Long sirketId);

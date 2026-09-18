@@ -30,8 +30,8 @@ export const backupAPI = {
   delete(filename) {
     return apiClient.delete(`/backups/${filename}`)
   },
-  restore(filename) {
-    return apiClient.post(`/backups/restore/${filename}`)
+  restore(filename, sifre) {
+    return apiClient.post(`/backups/restore/${filename}`, { sifre })
   },
   getSchedule() {
     return apiClient.get('/backups/schedule')

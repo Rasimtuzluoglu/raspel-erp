@@ -304,8 +304,8 @@ class StokServiceTest {
 
     @Test
     void toplamStokMiktari_returnsSum() {
-        when(stokRepository.toplamMiktar()).thenReturn(BigDecimal.valueOf(100));
-        BigDecimal total = stokService.toplamStokMiktari();
+        when(stokRepository.toplamMiktarBySirketId(1L)).thenReturn(BigDecimal.valueOf(100));
+        BigDecimal total = stokService.toplamStokMiktari(1L);
         assertEquals(BigDecimal.valueOf(100), total);
     }
 

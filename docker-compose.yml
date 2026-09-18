@@ -67,10 +67,12 @@ services:
   redis:
     image: redis:7-alpine
     container_name: raspel-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --appendfsync everysec --maxmemory 200mb --maxmemory-policy noeviction
     ports:
       - "127.0.0.1:6379:6379"
     restart: unless-stopped
+    volumes:
+      - redis_data:/data
     networks:
       - backend-net
     healthcheck:
@@ -313,3 +315,4 @@ volumes:
   rabbitmq_data:
   letsencrypt_data:
   minio_data:
+  redis_data:

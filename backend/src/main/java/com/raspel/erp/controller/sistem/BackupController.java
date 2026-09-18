@@ -1,6 +1,8 @@
 package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.service.sistem.BackupService;
+import com.raspel.erp.service.sistem.KullaniciService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,6 +23,7 @@ import java.util.Map;
 public class BackupController {
 
     private final BackupService backupService;
+    private final KullaniciService kullaniciService;
 
     @PostMapping("/manual")
     @Operation(summary = "Manuel yedek al", description = "Veritabanının manuel yedeğini alır")
@@ -57,8 +60,12 @@ public class BackupController {
     }
 
     @PostMapping("/restore/{filename:.+}")
-    @Operation(summary = "Yedekten geri yükle", description = "Belirtilen yedek dosyasını geri yükler (dikkat: mevcut verilerin üzerine yazar)")
-    public ResponseEntity<Map<String, Object>> restoreBackup(@PathVariable String filename) {
+    @Operation(summary = "Yedekten geri yükle", description = "Belirtilen yedek dosyasını geri yükler (dikkat: mevcut verilerin üzerine yazar). Şifre ile yeniden kimlik doğrulaması zorunludur.")
+    public ResponseEntity<Map<String, Object>> restoreBackup(@PathVariable String filename,
+                                                             @RequestBody Map<String, String> body,
+                                                             HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        kullaniciService.sifreDogrula(kullaniciId, body == null ? null : body.get("sifre"));
         backupService.restoreBackup(filename);
         return ResponseEntity.ok(Map.of(
                 "message", "Geri yükleme tamamlandı",

@@ -3515,6 +3515,8 @@
     "evetGeriYukle": "Yes, Restore",
     "geriYuklemeTamamlandi": "Restore completed",
     "geriYuklemeBasarisiz": "Restore failed",
+    "sifreDogrula": "Enter your password for security verification",
+    "sifreGerekli": "Enter your password to continue",
     "bulutAyarlariKaydedildi": "Cloud backup settings saved",
     "bulutAyarlariKaydedilemedi": "Could not save cloud settings",
     "bulutSenkronizasyonBasari": "Cloud sync successful",

@@ -21,6 +21,7 @@ public class VardiyaService {
 
     private final VardiyaRepository vardiyaRepository;
     private final PersonelRepository personelRepository;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<VardiyaDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -29,12 +30,17 @@ public class VardiyaService {
 
     @Transactional(readOnly = true)
     public VardiyaDTO getir(Long id) {
-        return entityToDTO(vardiyaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vardiya", id)));
+        Vardiya vardiya = vardiyaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vardiya", id));
+        tenantChecker.check(vardiya.getSirketId(), "Vardiya");
+        return entityToDTO(vardiya);
     }
 
     @Transactional(readOnly = true)
     public List<VardiyaDTO> personelVardiyalari(Long personelId) {
+        Personel personel = personelRepository.findById(personelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Personel", personelId));
+        tenantChecker.check(personel.getSirketId(), "Personel");
         return vardiyaRepository.findByPersonelIdOrderByTarihDesc(personelId).stream()
                 .map(this::entityToDTO)
                 .toList();
@@ -43,6 +49,7 @@ public class VardiyaService {
     public VardiyaDTO olustur(VardiyaDTO dto, Long sirketId) {
         Personel personel = personelRepository.findById(dto.getPersonelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", dto.getPersonelId()));
+        tenantChecker.check(personel.getSirketId(), "Personel");
         Vardiya vardiya = Vardiya.builder()
                 .personel(personel)
                 .tarih(dto.getTarih())
@@ -57,6 +64,7 @@ public class VardiyaService {
     public VardiyaDTO guncelle(Long id, VardiyaDTO dto) {
         Vardiya vardiya = vardiyaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vardiya", id));
+        tenantChecker.check(vardiya.getSirketId(), "Vardiya");
         if (dto.getTarih() != null) vardiya.setTarih(dto.getTarih());
         if (dto.getBaslangic() != null) vardiya.setBaslangic(dto.getBaslangic());
         if (dto.getBitis() != null) vardiya.setBitis(dto.getBitis());
@@ -64,15 +72,17 @@ public class VardiyaService {
         if (dto.getPersonelId() != null) {
             Personel personel = personelRepository.findById(dto.getPersonelId())
                     .orElseThrow(() -> new ResourceNotFoundException("Personel", dto.getPersonelId()));
+            tenantChecker.check(personel.getSirketId(), "Personel");
             vardiya.setPersonel(personel);
         }
         return entityToDTO(vardiyaRepository.save(vardiya));
     }
 
     public void sil(Long id) {
-        if (!vardiyaRepository.existsById(id))
-            throw new ResourceNotFoundException("Vardiya", id);
-        vardiyaRepository.deleteById(id);
+        Vardiya vardiya = vardiyaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vardiya", id));
+        tenantChecker.check(vardiya.getSirketId(), "Vardiya");
+        vardiyaRepository.delete(vardiya);
     }
 
     private VardiyaDTO entityToDTO(Vardiya v) {
