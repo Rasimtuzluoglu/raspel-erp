@@ -267,10 +267,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   max-width: 100%;
+  overflow-x: hidden;
 }
 
 #app {
   max-width: 100%;
+  overflow-x: hidden;
 }
 
 img {
@@ -864,12 +866,16 @@ img {
 .p-dialog {
   border-radius: 16px !important;
   overflow: hidden;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
 }
 .p-dialog .p-dialog-header {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
   border-color: var(--border) !important;
   padding: 20px 24px !important;
+  flex-shrink: 0;
 }
 .p-dialog .p-dialog-header .p-dialog-title {
   font-weight: 700 !important;
@@ -878,11 +884,15 @@ img {
 .p-dialog .p-dialog-content {
   background: var(--bg-card) !important;
   padding: 20px 24px !important;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .p-dialog .p-dialog-footer {
   background: var(--bg-card) !important;
   border-color: var(--border) !important;
   padding: 16px 24px !important;
+  flex-shrink: 0;
 }
 
 .p-card {
@@ -1655,6 +1665,16 @@ img {
   }
   .charts-grid {
     grid-template-columns: 1fr 1fr !important;
+  }
+  /* Tablet: tablolar kırpılmasın; yatay kaydırma korunur. */
+  .p-datatable .p-datatable-wrapper,
+  .p-datatable .p-datatable-scrollable-wrapper,
+  .p-datatable .p-datatable-scrollable-body {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .p-datatable table {
+    min-width: 640px;
   }
 }
 

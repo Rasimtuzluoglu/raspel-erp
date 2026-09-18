@@ -702,4 +702,43 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+@media (max-width: 900px) {
+  .ajanda-baslik {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .ay-gezinme {
+    justify-content: space-between;
+  }
+  .takvim-grid {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .gun-basliklar,
+  .gun-hucreleri {
+    min-width: 560px;
+  }
+  .gun-hucre {
+    min-height: 56px;
+  }
+}
+
+@media (max-width: 600px) {
+  .gun-basliklar,
+  .gun-hucreleri {
+    min-width: 480px;
+  }
+  .gun-hucre {
+    min-height: 48px;
+    padding: 4px;
+  }
+  .gun-no {
+    font-size: 12px;
+  }
+  .ay-etiket {
+    font-size: 14px;
+  }
+}
 </style>

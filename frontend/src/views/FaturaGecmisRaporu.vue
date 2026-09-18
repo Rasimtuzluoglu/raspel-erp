@@ -98,7 +98,6 @@
         striped-rows
         size="small"
         scrollable
-        scroll-height="520px"
       >
         <Column
           field="tarih"

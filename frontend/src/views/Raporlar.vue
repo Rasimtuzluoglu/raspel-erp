@@ -892,7 +892,6 @@
               size="small"
               striped-rows
               scrollable
-              scroll-height="500px"
             >
               <Column
                 header=""
