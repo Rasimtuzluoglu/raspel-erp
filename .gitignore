@@ -64,3 +64,6 @@ frontend/cypress/downloads/
 
 # Runtime uploads (user data)
 backend/uploads/
+
+# Gitleaks raporu
+gitleaks-report.json

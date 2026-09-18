@@ -1,17 +1,10 @@
 title = "RasPel ERP Gitleaks Config"
 
-[allowlist]
-  description = "Allowlisted patterns"
-  paths = [
-    '''package-lock\.json''',
-    '''\.min\.js''',
-    '''\.min\.css'''
-  ]
-
 [[rules]]
   id = "generic-api-key"
   description = "Generic API Key"
-  regex = '''(?i)(api[_-]?key|secret|token|password|passwd|pwd)["'\s]*(?::|=>|=)["'\s]*[a-zA-Z0-9+/=_-]{20,}'''
+  regex = '''(?i)(api[_-]?key|secret|token|password|passwd|pwd)["'\s]*(?::|=>|=)["'\s]*([a-zA-Z0-9+/=_-]{20,})'''
+  secretGroup = 2
   tags = ["key", "api"]
 
 [[rules]]
@@ -25,3 +18,64 @@ title = "RasPel ERP Gitleaks Config"
   description = "Private Key"
   regex = '''-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
   tags = ["key", "crypto"]
+
+# Projeye ozgu sirlar: env degiskenleri kod/config icinde sabit degerle yer alamaz.
+[[rules]]
+  id = "raspel-jwt-secret"
+  description = "Hardcoded JWT secret"
+  regex = '''(?i)(JWT_SECRET|app\.jwt\.secret)["'\s]*(?::|=>|=)["'\s]*["']?([A-Za-z0-9+/=_-]{16,})'''
+  secretGroup = 2
+  tags = ["key", "jwt"]
+
+[[rules]]
+  id = "raspel-encryption-key"
+  description = "Hardcoded AI/backup encryption key"
+  regex = '''(?i)(AI_ENCRYPTION_KEY|APP_BACKUP_ENCRYPTION_KEY|app\.backup\.encryption-key)["'\s]*(?::|=>|=)["'\s]*["']?([A-Za-z0-9+/=_-]{16,})'''
+  secretGroup = 2
+  tags = ["key", "crypto"]
+
+[[rules]]
+  id = "raspel-vapid-private-key"
+  description = "Hardcoded VAPID private key"
+  regex = '''(?i)VAPID_PRIVATE_KEY["'\s]*(?::|=>|=)["'\s]*["']?([A-Za-z0-9+/=_-]{16,})'''
+  secretGroup = 1
+  tags = ["key"]
+
+# Deger ${VAR} interpolasyonu ya da bos ise eslesmez (deger `$` ile baslayamaz).
+[[rules]]
+  id = "raspel-db-password"
+  description = "Hardcoded database password"
+  regex = '''(?i)(POSTGRES_PASSWORD|SPRING_DATASOURCE_PASSWORD|DB_PASSWORD|REDIS_PASSWORD)["'\s]*(?::|=>|=)["'\s]*["']?([^\s"'$}]{4,})'''
+  secretGroup = 2
+  tags = ["password"]
+
+[allowlist]
+  description = "Allowlisted patterns"
+  paths = [
+    '''package-lock\.json$''',
+    '''\.min\.js$''',
+    '''\.min\.css$''',
+    '''(^|/)node_modules/''',
+    '''(^|/)target/''',
+    '''(^|/)dist/''',
+    '''(^|/)\.env$''',
+    '''\.env\.example$''',
+    '''\.gitleaks\.toml$''',
+    '''docker-compose\.dev\.yml$''',
+    '''SECURITY\.md$''',
+    '''docs/KURULUM\.md$''',
+    '''scripts/disaster-recovery-test\.ps1$''',
+    '''backend/src/test/''',
+    '''frontend/cypress/visual/screenshots\.cy\.js$'''
+  ]
+  regexes = [
+    '''(?i)changeme''',
+    '''(?i)degistir''',
+    '''(?i)ornek@example\.com''',
+    '''(?i)^(postgres|raspel|raspelRedis2026|test)$''',
+    '''(?i)^(your-|my-|<|example)''',
+    '''\$apr1\$''',
+    '''dGhpcyBpcyBhIHZlcnkgbG9uZyBzZWNyZXQga2V5''',
+    '''cmFzcGVsLWVycC1qd3Qtc2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtYW5kLXRlc3RpbmctcHVycG9zZXMtMjAyNg==''',
+    '''raspel_pat_test'''
+  ]
