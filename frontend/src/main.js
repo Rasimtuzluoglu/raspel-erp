@@ -20,6 +20,7 @@ import SatirEylemleri from './components/SatirEylemleri.vue'
 
 import permissionDirective from './directives/permission.js'
 import tabloEtiketDirective, { initTabloEtiketleri } from './directives/tabloEtiket.js'
+import { registerSW as pwaKaydet } from 'virtual:pwa-register'
 
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
@@ -31,6 +32,25 @@ import { pvTr } from './utils/primevueLocales.js'
 
 const { initTheme } = useTheme()
 initTheme()
+
+// Surum uyusmazligi kontrolu: yeni surum yayinlandiysa eski onbellegi temizle
+// (tek seferlik) ve taze icerik alinmasini sagla.
+;(function () {
+  try {
+    const SURUM = __APP_VERSION__
+    const ANAHTAR = 'raspel_gorulen_surum'
+    const onceki = localStorage.getItem(ANAHTAR)
+    if (onceki && onceki !== SURUM) {
+      if (window.caches && caches.keys) {
+        caches.keys().then((k) => Promise.all(k.map((x) => caches.delete(x))))
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        navigator.serviceWorker.getRegistrations().then((r) => r.forEach((x) => x.unregister()))
+      }
+    }
+    localStorage.setItem(ANAHTAR, SURUM)
+  } catch (e) { /* yoksay */ }
+})()
 
 const app = createApp(App)
 
@@ -63,6 +83,36 @@ app.component('SatirEylemleri', SatirEylemleri)
 app.directive('permission', permissionDirective)
 app.directive('tablo-etiket', tabloEtiketDirective)
 
+// Vue genel hata yakalayici: bir gorunum cokerse beyaz ekran yerine
+// kullaniciya bilgi ver ve gerekiyorsa onbellek kurtarmasini tetikle.
+app.config.errorHandler = (err, instance, info) => {
+  // eslint-disable-next-line no-console
+  console.error('[RasPel] Uygulama hatasi:', err, info)
+}
+
 app.mount('#app')
 
 initTabloEtiketleri()
+
+// PWA: service worker'i manuel kaydet; yeni surum hazir oldugunda otomatik
+// devreye al. Boylece eski onbellek takili kalmaz (beyaz ekran onlenir).
+pwaKaydet({
+  immediate: true,
+  onRegisteredSW(_swUrl, registration) {
+    if (!registration) return
+    // Saatte bir guncelleme kontrolu.
+    setInterval(() => {
+      registration.update().catch(() => {})
+    }, 60 * 60 * 1000)
+  },
+  onNeedRefresh() {
+    // Yeni surum hazir: bekleyen SW'ye hemen devreye gir sinyali gonder.
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' })
+    }
+    // Bir sonraki gezinmede taze icerik alinmasi icin onbellegi bosalt.
+    if (window.caches && caches.keys) {
+      caches.keys().then((k) => Promise.all(k.map((x) => caches.delete(x))))
+    }
+  }
+})

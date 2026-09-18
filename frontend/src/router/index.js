@@ -515,4 +515,34 @@ router.afterEach((to) => {
   document.title = `${baslik} · RasPel ERP`
 })
 
+/**
+ * Bos zaman on-yukleme: kullanicinin gezinmesini beklemeden, tarayici bos
+ * kaldiginda en sik kullanilan route chunk'larini arka planda indirir.
+ * Boylece sayfa gecisleri aninda acilir (hizli program).
+ */
+function routeOnYukle() {
+  const oncelikli = ['/', '/faturalar', '/cari-hesaplar', '/stoklar', '/hizli-satis', '/tahsilat', '/raporlar']
+  const adlar = new Set(oncelikli)
+  const indirilecek = routes.filter(
+    (r) => r.component && typeof r.component === 'function' && adlar.has(r.path)
+  )
+  let i = 0
+  const siradaki = () => {
+    if (i >= indirilecek.length) return
+    const r = indirilecek[i++]
+    Promise.resolve(r.component()).catch(() => {}).finally(siradaki)
+  }
+  // requestIdleCallback varsa onu kullan, yoksa kucuk bir gecikmeyle baslat.
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    window.requestIdleCallback(siradaki, { timeout: 4000 })
+  } else {
+    setTimeout(siradaki, 1500)
+  }
+}
+
+if (typeof window !== 'undefined') {
+  // Ilk sayfa tamamen yuklendikten sonra baslat.
+  window.addEventListener('load', () => setTimeout(routeOnYukle, 500), { once: true })
+}
+
 export default router

@@ -13,6 +13,10 @@ module.exports = {
     ecmaVersion: 2021,
     sourceType: 'module'
   },
+  globals: {
+    // Vite define ile build-time gomulen surum sabiti.
+    __APP_VERSION__: 'readonly'
+  },
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',

@@ -1,5 +1,5 @@
 import { clientsClaim } from 'workbox-core'
-import { precacheAndRoute, createHandlerBoundToURL, cleanupOutdatedCaches } from 'workbox-precaching'
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute, NavigationRoute } from 'workbox-routing'
 import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
@@ -9,13 +9,37 @@ self.skipWaiting()
 clientsClaim()
 cleanupOutdatedCaches()
 
+// Uygulamadan gelen kurtarma komutlari:
+// - SKIP_WAITING: bekleyen yeni SW'yi hemen devreye alir.
+// - CLEAR_CACHES: tum onbellekleri temizleyip taze icerik sunulmasini saglar.
+self.addEventListener('message', (event) => {
+  const tip = event.data && event.data.type
+  if (tip === 'SKIP_WAITING') {
+    self.skipWaiting()
+  } else if (tip === 'CLEAR_CACHES') {
+    event.waitUntil(
+      caches.keys().then((anahtarlar) => Promise.all(anahtarlar.map((k) => caches.delete(k))))
+    )
+  }
+})
+
 precacheAndRoute(self.__WB_MANIFEST)
 
-// SPA fallback: API/WS disindaki tum gezinme istekleri index.html'e duser.
+// SPA gezinme istekleri: NetworkFirst. Boylece her yenilemede taze index.html
+// (ve guncel asset referanslari) alinir; yeni surum yayinlandiginda eski
+// onbellek takili kalmaz. Cevrimdisiyken precache'teki index.html'e duser.
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('/index.html'), {
-    denylist: [/^\/api\//, /^\/ws\//]
-  })
+  new NavigationRoute(
+    new NetworkFirst({
+      cacheName: 'pages',
+      networkTimeoutSeconds: 3,
+      plugins: [
+        new CacheableResponsePlugin({ statuses: [0, 200] }),
+        new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 })
+      ]
+    }),
+    { denylist: [/^\/api\//, /^\/ws\//] }
+  )
 )
 
 // Finansal API yanitlari NetworkFirst ile tazelenir; cache yalnizca kisa sureli

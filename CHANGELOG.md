@@ -2,6 +2,16 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.16.1] - 2026-09-19 (Beyaz Ekran Önleme & PWA Otomatik Kurtarma)
+### Düzeltmeler
+- **Beyaz ekran sorunu giderildi**: Eski service worker'ın bayat `index.html`/asset sunması engellendi. Gezinme istekleri artık **NetworkFirst** ile taze HTML alıyor.
+- **Otomatik kurtarma**: Asset/chunk yükleme hatasında (`dynamically imported module`, `ChunkLoadError`) önbellek temizlenip tek seferlik yenilenir (`public/kurtarma.js`).
+- **Sürüm uyumsuzluğu tespiti**: Build-time `__APP_VERSION__` ile eski önbellek tespit edilip temizlenir.
+- **SW komut kanalı**: `SKIP_WAITING` / `CLEAR_CACHES` mesajları ile yeni service worker anında devreye alınır.
+
+### Performans
+- **Boşta route ön-yükleme**: Tarayıcı boşta iken en sık kullanılan görünümlerin (Panel, Faturalar, Cariler, Stoklar, Hızlı Satış, Tahsilat, Raporlar) chunk'ları arka planda indirilir; sayfa geçişleri anında açılır.
+
 ## [1.16.0] - 2026-09-19 (Güvenlik Sertleştirme, Dönem Kilidi, İskonto Motoru, CRM)
 ### Eklenenler
 - **Çok kiracılı (multi-tenant) izolasyon sertleştirmesi**: `TenantChecker.check` fail-closed; maaş bordro, vardiya, stok düzeltme, veri aktarım ve kullanıcı servislerinde tenant sahiplik doğrulaması; cache anahtarları tenant bazlı; `tumunuGetir` fallback kaldırıldı.

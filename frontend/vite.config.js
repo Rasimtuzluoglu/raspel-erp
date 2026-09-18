@@ -6,6 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig(({ mode }) => ({
+  define: {
+    // Surum bilgisi build-time gomulur; eski onbellek tespitinde kullanilir.
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '0.0.0')
+  },
   plugins: [
     vue(),
     Components({
@@ -19,7 +23,7 @@ export default defineConfig(({ mode }) => ({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
-      injectRegister: 'script-defer',
+      injectRegister: false,
       devOptions: { enabled: false },
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
