@@ -186,9 +186,6 @@ export const taksitAPI = {
   },
   sil(id) {
     return apiClient.delete(`/taksitler/${id}`)
-  },
-  planSil(planNo) {
-    return apiClient.delete(`/taksitler/plan/${planNo}`)
   }
 }
 
@@ -207,9 +204,6 @@ export const posAPI = {
   },
   gunSonu() {
     return apiClient.post('/pos-terminalleri/gun-sonu')
-  },
-  gunSonuRapor() {
-    return apiClient.get('/pos-terminalleri/gun-sonu/rapor')
   },
   olustur(data) {
     return apiClient.post('/pos-terminalleri', data)
@@ -246,9 +240,6 @@ export const muhasebeAPI = {
   },
   fisIptal(id) {
     return apiClient.post(`/muhasebe/fisler/${id}/iptal`)
-  },
-  fisSil(id) {
-    return apiClient.delete(`/muhasebe/fisler/${id}`)
   },
   getMizan(params) {
     return apiClient.get('/muhasebe/mizan', { params })

@@ -12,7 +12,6 @@ import java.util.List;
 public interface PersonelMasrafTalepRepository extends JpaRepository<PersonelMasrafTalep, Long> {
     Page<PersonelMasrafTalep> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
     List<PersonelMasrafTalep> findBySirketIdAndDurumOrderByTarihDesc(Long sirketId, String durum);
-    List<PersonelMasrafTalep> findByPersonelIdOrderByTarihDesc(Long personelId);
     List<PersonelMasrafTalep> findByKullaniciIdOrderByTarihDesc(Long kullaniciId);
     long countBySirketIdAndDurum(Long sirketId, String durum);
 }

@@ -14,7 +14,6 @@ import java.util.List;
 @Repository
 public interface StokSeriRepository extends JpaRepository<StokSeri, Long> {
     List<StokSeri> findByStokId(Long stokId);
-    List<StokSeri> findBySeriNo(String seriNo);
     Page<StokSeri> findByStokSirketId(Long sirketId, Pageable pageable);
 
     @Query("SELECT s FROM StokSeri s WHERE s.stok.sirketId = :sirketId AND s.sonKullanmaTarihi IS NOT NULL " +

@@ -17,15 +17,11 @@ public interface StokHareketRepository extends JpaRepository<StokHareket, Long> 
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findByStokSirketIdOrderByHareketTarihiDesc(Long sirketId);
 
-    @EntityGraph(attributePaths = {"stok", "cariHesap"})
-    List<StokHareket> findAllByOrderByHareketTarihiDesc();
-
     @Override
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findAll();
 
     long countByStokId(Long stokId);
-    long countByTur(String tur);
     long countByStokSirketIdAndTur(Long sirketId, String tur);
 
     @Query("SELECT new map(h.stok.ad as stokAd, h.stok.stokKodu as stokKodu, SUM(h.miktar) as satisMiktari) FROM StokHareket h WHERE h.tur = 'CIKIS' AND h.stok.sirketId = :sirketId GROUP BY h.stok.ad, h.stok.stokKodu ORDER BY SUM(h.miktar) DESC")

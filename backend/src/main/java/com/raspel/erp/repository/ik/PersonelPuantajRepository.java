@@ -10,5 +10,4 @@ import java.util.List;
 @Repository
 public interface PersonelPuantajRepository extends JpaRepository<PersonelPuantaj, Long> {
     List<PersonelPuantaj> findBySirketIdAndPersonelIdAndTarihBetweenOrderByTarihAsc(Long sirketId, Long personelId, LocalDate baslangic, LocalDate bitis);
-    List<PersonelPuantaj> findByTarih(LocalDate tarih);
 }

@@ -960,10 +960,10 @@ const tumAdimlariSifirla = () => {
 /* SOL: Hero & Vitrin */
 .giris-hero-alani {
   flex: 1.15;
-  padding: 38px 44px;
+  padding: 26px 34px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   justify-content: safe center;
   overflow-y: auto;
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
@@ -1001,7 +1001,7 @@ const tumAdimlariSifirla = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 .hero-logo-box {
   width: 44px;
@@ -1035,18 +1035,18 @@ const tumAdimlariSifirla = () => {
 }
 
 .hero-title {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.25;
-  margin: 0 0 10px;
+  line-height: 1.22;
+  margin: 0 0 8px;
   letter-spacing: -0.5px;
 }
 .hero-desc {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0 0 6px;
+  line-height: 1.45;
+  margin: 0 0 4px;
 }
 .hero-eyebrow {
   display: inline-flex;
@@ -1079,14 +1079,14 @@ const tumAdimlariSifirla = () => {
 .hero-features-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 .feature-item {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
-  padding: 9px 10px;
-  border-radius: 12px;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 11px;
   background: rgba(148, 163, 184, 0.06);
   border: 1px solid rgba(148, 163, 184, 0.12);
   transition: transform 0.18s ease, border-color 0.18s ease;
@@ -1128,17 +1128,17 @@ const tumAdimlariSifirla = () => {
 .hero-trust {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 14px;
+  gap: 7px;
+  padding-top: 10px;
   border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 .trust-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
+  gap: 5px;
+  padding: 5px 10px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--text-secondary);
   background: rgba(148, 163, 184, 0.08);
@@ -1151,8 +1151,8 @@ const tumAdimlariSifirla = () => {
 
 /* Hero donen baslik */
 .hero-rotate {
-  min-height: 24px;
-  margin: 2px 0 12px;
+  min-height: 22px;
+  margin: 0 0 8px;
 }
 .hero-rotate-item {
   font-size: 15.5px;
@@ -1733,6 +1733,58 @@ const tumAdimlariSifirla = () => {
 @media (max-width: 1180px) {
   .hero-features-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Kisa ekranlar: hero'yu sikistir, tum icerik kaydirmadan gorunsun */
+@media (max-height: 900px) {
+  .giris-hero-alani {
+    padding: 20px 28px;
+    gap: 8px;
+  }
+  .hero-brand {
+    margin-bottom: 10px;
+  }
+  .hero-title {
+    font-size: 21px;
+  }
+  .hero-desc {
+    font-size: 12.5px;
+  }
+  .feature-metin span {
+    display: none;
+  }
+  .feature-item {
+    padding: 6px 9px;
+  }
+  .trust-badge {
+    font-size: 10px;
+    padding: 4px 9px;
+  }
+}
+
+@media (max-height: 760px) {
+  .giris-hero-alani {
+    padding: 16px 24px;
+    gap: 6px;
+  }
+  .hero-brand,
+  .hero-rotate,
+  .hero-eyebrow {
+    display: none;
+  }
+  .hero-title {
+    font-size: 19px;
+    margin-bottom: 6px;
+  }
+  .hero-desc {
+    display: none;
+  }
+  .hero-features {
+    gap: 7px;
+  }
+  .hero-trust {
+    padding-top: 8px;
   }
 }
 

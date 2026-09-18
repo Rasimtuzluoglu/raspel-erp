@@ -120,10 +120,10 @@ docker-compose up -d --build
 ## 5. Testler
 
 ```bash
-# Backend (1055 test)
+# Backend (1047 test)
 cd backend && mvn test
 
-# Frontend (701 test)
+# Frontend (687 test)
 cd frontend && npm run test
 
 # Uçtan uca iş akışı (backend çalışırken)

@@ -49,23 +49,11 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findBySirketIdOrderByHareketTarihiDesc(Long sirketId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"cariHesap"})
-    List<Hareket> findAllByOrderByHareketTarihiDescOlusturmaTarihiDesc(Pageable pageable);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
-    List<Hareket> findAllByOrderByHareketTarihiDesc();
-
     @Override
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findAll();
 
     long countByCariHesapId(Long cariHesapId);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
-    List<Hareket> findByHareketTarihiBetweenOrderByHareketTarihiDesc(LocalDate baslangic, LocalDate bitis);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
-    Page<Hareket> findByHareketTarihiBetween(LocalDate baslangic, LocalDate bitis, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findBySirketIdAndHareketTarihiBetween(Long sirketId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
@@ -74,22 +62,10 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     Page<Hareket> findBySirketIdAndCariHesapIdAndHareketTarihiBetween(Long sirketId, Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})
-    List<Hareket> findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(Long cariHesapId, LocalDate baslangic, LocalDate bitis);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
-    Page<Hareket> findByCariHesapIdAndHareketTarihiBetween(Long cariHesapId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(Long cariHesapId, LocalDate baslangic, LocalDate bitis);
 
     @EntityGraph(attributePaths = {"cariHesap"})
-    List<Hareket> findByHareketTarihiBetweenOrderByHareketTarihiAsc(LocalDate baslangic, LocalDate bitis);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(Long sirketId, LocalDate baslangic, LocalDate bitis);
-
-    @EntityGraph(attributePaths = {"cariHesap"})
-    List<Hareket> findBySirketIdAndHareketTarihiBetweenOrderByHareketTarihiDesc(Long sirketId, LocalDate baslangic, LocalDate bitis);
 
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(Long sirketId, Long posTerminaliId);

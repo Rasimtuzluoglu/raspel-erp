@@ -194,24 +194,6 @@ public class EmailService {
     }
 
     /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
-    public boolean hoşGeldinGonder(String to, String kullaniciAdi) {
-        String subject = "RasPel ERP'ye Hoş Geldiniz!";
-        String html = sablonUst("Hoş Geldiniz " + kullaniciAdi + "!") + """
-            <p>RasPel ERP sistemine başarıyla kaydoldunuz.</p>
-            <p>Artık tüm iş süreçlerinizi tek platform üzerinden yönetebilirsiniz:</p>
-            <div class="kutu" style="font-size:13px;color:#475569">
-              • Cari hesap ve fatura yönetimi<br/>
-              • Stok ve depo takibi<br/>
-              • Satış ve satın alma süreçleri<br/>
-              • Personel ve İK yönetimi<br/>
-              • Detaylı raporlama
-            </div>
-            <p>Saygılarımızla,<br/><strong>RasPel ERP Ekibi</strong></p>
-            """.formatted(kullaniciAdi) + sablonAlt();
-        return gonderVeRaporla(to, subject, html, null, null);
-    }
-
-    /** @return true yalnızca e-posta gerçekten SMTP ile gönderildiyse. */
     public boolean htmlGonder(String to, String subject, String html) {
         return gonderVeRaporla(to, subject, html, null, null);
     }

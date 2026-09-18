@@ -220,9 +220,6 @@ export const crmAPI = {
   getFirsatlar(params) {
     return apiClient.get('/crm/firsatlar', { params })
   },
-  getFirsat(id) {
-    return apiClient.get(`/crm/firsatlar/${id}`)
-  },
   firsatOlustur(data) {
     return apiClient.post('/crm/firsatlar', data)
   },

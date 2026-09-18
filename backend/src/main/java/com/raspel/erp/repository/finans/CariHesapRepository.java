@@ -23,7 +23,6 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     /**
      * İsme göre cari hesapları ara (büyük/küçük harf duyarsız)
      */
-    List<CariHesap> findByAdContainingIgnoreCase(String query);
 
     @Query("SELECT COALESCE(SUM(c.bakiye), 0) FROM CariHesap c WHERE c.sirketId = :sirketId")
     BigDecimal toplamBakiyeHesaplaBySirketId(@Param("sirketId") Long sirketId);

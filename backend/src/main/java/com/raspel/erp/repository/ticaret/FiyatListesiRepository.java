@@ -10,5 +10,4 @@ import java.util.List;
 @Repository
 public interface FiyatListesiRepository extends JpaRepository<FiyatListesi, Long> {
     Page<FiyatListesi> findBySirketId(Long sirketId, Pageable pageable);
-    List<FiyatListesi> findByStokIdOrderByGecerliBaslangicDesc(Long stokId);
 }

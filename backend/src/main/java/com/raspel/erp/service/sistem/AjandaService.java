@@ -190,18 +190,6 @@ public class AjandaService {
         ajandaHatirlaticiRepository.deleteById(id);
     }
 
-    /** Vadesi gelmiş, bildirilmemiş hatırlatıcıları döndürür ve bildirildi işaretler. */
-    @Transactional
-    public List<AjandaHatirlaticiDTO> vadesiGelenHatirlaticilar(java.time.LocalDateTime simdi) {
-        List<AjandaHatirlatici> gelen = ajandaHatirlaticiRepository
-                .findByBildirildiFalseAndHatirlatmaZamaniLessThanEqual(simdi);
-        for (AjandaHatirlatici h : gelen) {
-            h.setBildirildi(true);
-            ajandaHatirlaticiRepository.save(h);
-        }
-        return gelen.stream().map(this::hatirlaticiToDTO).collect(java.util.stream.Collectors.toList());
-    }
-
     private void yetkiKontrol(Long sahipKullaniciId, Long istekKullaniciId) {
         if (sahipKullaniciId == null || !sahipKullaniciId.equals(istekKullaniciId)) {
             throw new BusinessException("Bu kayda erişim yetkiniz bulunmuyor.");

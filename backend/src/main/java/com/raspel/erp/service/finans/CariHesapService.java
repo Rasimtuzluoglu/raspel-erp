@@ -93,13 +93,6 @@ public class CariHesapService {
         cariFiyatRepository.deleteById(id);
     }
 
-    /** Bir cariye özel fiyat varsa onu, yoksa null döner (satışta kullanılır). */
-    @Transactional(readOnly = true)
-    public BigDecimal cariOzelFiyat(Long cariHesapId, Long stokId) {
-        return cariFiyatRepository.findByCariHesapIdAndStokId(cariHesapId, stokId)
-                .map(CariFiyat::getFiyat).orElse(null);
-    }
-
     /**
      * Tüm cari hesapları getir
      */

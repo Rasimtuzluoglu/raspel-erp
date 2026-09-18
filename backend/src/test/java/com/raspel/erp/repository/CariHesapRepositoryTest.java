@@ -38,26 +38,6 @@ class CariHesapRepositoryTest {
     }
 
     @Test
-    void findByAdContainingIgnoreCase_returnsMatchingResults() {
-        cariHesapRepository.save(createCariHesap("ABC Müşteri", BigDecimal.ZERO));
-        cariHesapRepository.save(createCariHesap("XYZ Tedarikçi", BigDecimal.ZERO));
-        cariHesapRepository.save(createCariHesap("abc limited", BigDecimal.ZERO));
-
-        List<CariHesap> result = cariHesapRepository.findByAdContainingIgnoreCase("abc");
-
-        assertEquals(2, result.size());
-    }
-
-    @Test
-    void findByAdContainingIgnoreCase_returnsEmptyWhenNoMatch() {
-        cariHesapRepository.save(createCariHesap("Test Cari", BigDecimal.ZERO));
-
-        List<CariHesap> result = cariHesapRepository.findByAdContainingIgnoreCase("nonexistent");
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
     void save_persistsAndGeneratesId() {
         CariHesap saved = cariHesapRepository.save(createCariHesap("Yeni Cari", BigDecimal.valueOf(500)));
 

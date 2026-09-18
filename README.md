@@ -122,11 +122,11 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 1055 Test (0 Hata)
+mvn -B test -q          # 1047 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test           # 701 Test (0 Hata)
+npm run test           # 687 Test (0 Hata)
 
 # Kod Standartları & Linting
 cd frontend
@@ -156,7 +156,7 @@ raspel-erp/
 │       ├── views/           # 73 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti, KarlilikAnalizi vb.)
 │       ├── components/      # 51 Paylaşılan Bileşenler (DovizCevirici, KdvHesaplayici, FaturaGecmisDialog vb.)
 │       ├── stores/          # 13 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
-│       ├── composables/     # 20 Composable Hook (Tema, Yetki, Oturum, Kısayol)
+│       ├── composables/     # 19 Composable Hook (Tema, Yetki, Oturum, Kısayol)
 │       └── api/             # Modüler Axios İstemcisi
 │
 ├── config/                  # Traefik Reverse Proxy, Prometheus, Grafana

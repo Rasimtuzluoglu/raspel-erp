@@ -10,5 +10,4 @@ import java.util.List;
 @Repository
 public interface SatinalmaTalepRepository extends JpaRepository<SatinalmaTalep, Long> {
     Page<SatinalmaTalep> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
-    List<SatinalmaTalep> findByDurumAndSirketId(String durum, Long sirketId);
 }

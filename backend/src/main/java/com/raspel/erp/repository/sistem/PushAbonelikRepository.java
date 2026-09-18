@@ -12,7 +12,5 @@ public interface PushAbonelikRepository extends JpaRepository<PushAbonelik, Long
 
     List<PushAbonelik> findBySirketId(Long sirketId);
 
-    List<PushAbonelik> findByKullaniciId(Long kullaniciId);
-
     void deleteByEndpoint(String endpoint);
 }

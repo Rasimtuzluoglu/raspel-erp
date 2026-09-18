@@ -57,12 +57,6 @@ public class PersonelMasrafTalepService {
                 .stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<PersonelMasrafTalepDTO> personelTalepleri(Long personelId) {
-        return talepRepository.findByPersonelIdOrderByTarihDesc(personelId)
-                .stream().map(this::entityToDTO).collect(Collectors.toList());
-    }
-
     public PersonelMasrafTalepDTO talepOlustur(PersonelMasrafTalepDTO dto, Long sirketId, Long kullaniciId) {
         PersonelMasrafTalep talep = PersonelMasrafTalep.builder()
                 .personelId(dto.getPersonelId())

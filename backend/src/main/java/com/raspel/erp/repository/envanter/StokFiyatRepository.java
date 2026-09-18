@@ -10,6 +10,4 @@ import java.util.List;
 @Repository
 public interface StokFiyatRepository extends JpaRepository<StokFiyat, Long> {
     List<StokFiyat> findByStokIdOrderByFiyatAsc(Long stokId);
-    List<StokFiyat> findByStokIdInOrderByFiyatAsc(Collection<Long> stokIds);
-    void deleteByStokId(Long stokId);
 }

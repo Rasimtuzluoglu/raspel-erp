@@ -85,9 +85,6 @@ export const stokAPI = {
   fiyatSil(fiyatId) {
     return apiClient.delete(`/stoklar/fiyatlar/${fiyatId}`)
   },
-  tumHareketler() {
-    return apiClient.get('/stoklar/hareketler/tum')
-  },
   addHareket(id, data) {
     return apiClient.post(`/stoklar/${id}/hareketler`, data)
   },
@@ -133,12 +130,6 @@ export const depoTransferAPI = {
   getAll() {
     return apiClient.get('/depo-transferler')
   },
-  bekleyenler() {
-    return apiClient.get('/depo-transferler/bekleyenler')
-  },
-  talepOlustur(data) {
-    return apiClient.post('/depo-transferler', data)
-  },
   onayla(id) {
     return apiClient.post(`/depo-transferler/${id}/onayla`)
   },
@@ -151,9 +142,6 @@ export const kategoriAPI = {
   getAll() {
     return apiClient.get('/kategoriler')
   },
-  getByTur(tur) {
-    return apiClient.get(`/kategoriler/tur/${tur}`)
-  },
   create(data) {
     return apiClient.post('/kategoriler', data)
   },
@@ -165,9 +153,6 @@ export const kategoriAPI = {
 export const stokSeriAPI = {
   getAll() {
     return apiClient.get('/stok-seri')
-  },
-  getByStok(stokId) {
-    return apiClient.get(`/stok-seri/stok/${stokId}`)
   },
   create(data) {
     return apiClient.post('/stok-seri', data)

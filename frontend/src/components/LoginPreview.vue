@@ -430,7 +430,7 @@ const sec = (id) => {
 /* Govde */
 .preview-body {
   display: flex;
-  min-height: 208px;
+  min-height: 164px;
 }
 .preview-side {
   display: flex;
@@ -472,7 +472,7 @@ const sec = (id) => {
 .preview-main {
   flex: 1;
   min-width: 0;
-  padding: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -482,7 +482,7 @@ const sec = (id) => {
 .mock {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .mock-line,
 .kpi-label,
@@ -530,7 +530,7 @@ const sec = (id) => {
 .kpi-value { width: 85%; height: 11px; background: var(--giris-tint-50, rgba(16, 185, 129,0.5)); }
 .mock-chart {
   width: 100%;
-  height: 62px;
+  height: 46px;
   display: block;
 }
 .mock-chart-line {
@@ -686,8 +686,8 @@ const sec = (id) => {
 /* Sekmeler */
 .preview-tabs {
   display: flex;
-  gap: 6px;
-  margin-top: 12px;
+  gap: 5px;
+  margin-top: 10px;
   flex-wrap: wrap;
 }
 .preview-tab {
@@ -696,13 +696,13 @@ const sec = (id) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 7px 8px;
-  border-radius: 10px;
+  gap: 5px;
+  padding: 5px 7px;
+  border-radius: 9px;
   background: rgba(148, 163, 184, 0.07);
   border: 1px solid rgba(148, 163, 184, 0.16);
   color: var(--text-secondary, #cbd5e1);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -723,11 +723,11 @@ const sec = (id) => {
 }
 
 .preview-caption {
-  margin: 10px 2px 0;
-  font-size: 12.5px;
+  margin: 8px 2px 0;
+  font-size: 12px;
   color: var(--text-secondary, #cbd5e1);
   line-height: 1.4;
-  min-height: 34px;
+  min-height: 30px;
 }
 
 /* Gecisler */
@@ -786,7 +786,7 @@ const sec = (id) => {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  height: 122px;
+  height: 84px;
   padding: 8px 4px 0;
   border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
@@ -823,6 +823,31 @@ const sec = (id) => {
   .preview-tab span,
   .preview-tab {
     font-size: 10.5px;
+  }
+}
+
+/* Kisa ekranlar: vitrin daha da kompakt */
+@media (max-height: 900px) {
+  .preview-body {
+    min-height: 148px;
+  }
+  .mock-chart {
+    height: 40px;
+  }
+  .mock-bars {
+    height: 68px;
+  }
+  .preview-caption {
+    min-height: 0;
+  }
+}
+
+@media (max-height: 760px) {
+  .preview-body {
+    min-height: 132px;
+  }
+  .preview-caption {
+    display: none;
   }
 }
 

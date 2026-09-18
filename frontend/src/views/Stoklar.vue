@@ -1423,31 +1423,4 @@ h2 {
   color: var(--accent);
   font-weight: 600;
 }
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.detail-item {
-  padding: 6px 0;
-}
-.detail-label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  margin-bottom: 3px;
-}
-.detail-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.detail-value.normal {
-  color: #4ade80;
-}
-.detail-value.kritik {
-  color: #f87171;
-}
 </style>

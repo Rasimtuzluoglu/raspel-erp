@@ -14,11 +14,7 @@ import java.util.List;
 @Repository
 public interface PersonelIzinRepository extends JpaRepository<PersonelIzin, Long> {
     List<PersonelIzin> findByPersonelIdOrderByBaslangicDesc(Long personelId);
-    List<PersonelIzin> findByDurum(String durum);
-    long countByDurum(String durum);
     Page<PersonelIzin> findByPersonelIdIn(List<Long> personelIds, Pageable pageable);
-    @Query("SELECT COUNT(i) FROM PersonelIzin i WHERE i.durum = 'ONAYLANDI' AND i.baslangic <= :bugun AND i.bitis >= :bugun")
-    long countBugunIzinli(LocalDate bugun);
 
     @Query("SELECT COUNT(i) FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id WHERE i.durum = :durum AND p.sirketId = :sirketId")
     long countByDurumAndSirketId(String durum, Long sirketId);

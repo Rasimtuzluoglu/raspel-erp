@@ -12,13 +12,6 @@ public interface StokMaliyetHareketRepository extends JpaRepository<StokMaliyetH
 
     List<StokMaliyetHareket> findByStokIdOrderByTarihAscIdAsc(Long stokId);
 
-    List<StokMaliyetHareket> findBySirketIdAndTarihBetweenOrderByTarihAscIdAsc(Long sirketId, LocalDate baslangic, LocalDate bitis);
-
-    boolean existsByStokId(Long stokId);
-
-    @Query("SELECT COUNT(m) FROM StokMaliyetHareket m")
-    long toplamKayit();
-
     @Query("SELECT m FROM StokMaliyetHareket m WHERE m.stokId = :stokId ORDER BY m.tarih DESC, m.id DESC")
     List<StokMaliyetHareket> sonHareketler(@Param("stokId") Long stokId);
 }

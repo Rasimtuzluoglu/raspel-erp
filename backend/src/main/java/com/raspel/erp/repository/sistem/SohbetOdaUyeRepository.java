@@ -15,5 +15,4 @@ public interface SohbetOdaUyeRepository extends JpaRepository<SohbetOdaUye, Long
     boolean existsByOdaIdAndKullaniciId(Long odaId, Long kullaniciId);
     void deleteByOdaId(Long odaId);
     void deleteByOdaIdAndKullaniciId(Long odaId, Long kullaniciId);
-    long countByOdaId(Long odaId);
 }

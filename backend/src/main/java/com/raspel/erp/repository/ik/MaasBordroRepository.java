@@ -10,5 +10,4 @@ import java.util.List;
 @Repository
 public interface MaasBordroRepository extends JpaRepository<MaasBordro, Long> {
     Page<MaasBordro> findBySirketIdOrderByYilDescAyDesc(Long sirketId, Pageable pageable);
-    List<MaasBordro> findByPersonelIdOrderByYilDescAyDesc(Long personelId);
 }

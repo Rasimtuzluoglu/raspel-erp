@@ -112,14 +112,6 @@ public class WebPushService {
         return gonderAbonelikler(pushAbonelikRepository.findBySirketId(sirketId), tur, baslik, mesaj, url);
     }
 
-    /** Tek kullaniciya ait tum aboneliklere bildirim gonderir. */
-    public int gonderKullanici(Long kullaniciId, String baslik, String mesaj, String url) {
-        if (!hazir || kullaniciId == null) {
-            return 0;
-        }
-        return gonderAbonelikler(pushAbonelikRepository.findByKullaniciId(kullaniciId), null, baslik, mesaj, url);
-    }
-
     private int gonderAbonelikler(List<PushAbonelik> abonelikler, String tur, String baslik, String mesaj, String url) {
         if (abonelikler == null || abonelikler.isEmpty()) {
             return 0;

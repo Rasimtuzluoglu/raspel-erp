@@ -415,12 +415,6 @@ export const adresDefteriAPI = {
   },
   delete(id) {
     return apiClient.delete(`/adres-defteri/${id}`)
-  },
-  turler() {
-    return apiClient.get('/adres-defteri/turler')
-  },
-  etiketler() {
-    return apiClient.get('/adres-defteri/etiketler')
   }
 }
 

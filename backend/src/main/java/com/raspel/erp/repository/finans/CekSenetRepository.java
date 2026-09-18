@@ -12,5 +12,4 @@ import java.util.List;
 @Repository
 public interface CekSenetRepository extends JpaRepository<CekSenet, Long> {
     Page<CekSenet> findBySirketIdOrderByVadeTarihiAsc(Long sirketId, Pageable pageable);
-    List<CekSenet> findByDurumAndVadeTarihiBefore(String durum, LocalDate tarih);
 }
