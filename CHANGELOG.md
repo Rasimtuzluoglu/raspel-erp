@@ -2,6 +2,26 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.16.0] - 2026-09-19 (Güvenlik Sertleştirme, Dönem Kilidi, İskonto Motoru, CRM)
+### Eklenenler
+- **Çok kiracılı (multi-tenant) izolasyon sertleştirmesi**: `TenantChecker.check` fail-closed; maaş bordro, vardiya, stok düzeltme, veri aktarım ve kullanıcı servislerinde tenant sahiplik doğrulaması; cache anahtarları tenant bazlı; `tumunuGetir` fallback kaldırıldı.
+- **Yedekleme/geri yükleme güvenliği**: Restore öncesi zorunlu ön-snapshot, tekil işlem kilidi ve şifre ile yeniden kimlik doğrulaması. Redis kalıcılığı (`appendonly` + volume).
+- **Şifre sıfırlama akışı (V104)**: E-posta ile tek kullanımlık, 1 saat geçerli bağlantı (SHA-256 token) + yönetici panelinden hızlı sıfırlama; `/sifre-sifirla` sayfası.
+- **Sunucu-taraflı fatura tasarımı & POS fiş ayarları (V105)**: Tasarım şablonu ve fiş ayarları şirket bazında saklanır; PDF üretiminde uygulanır.
+- **Dönem kilidi & yıl sonu kapanışı (V106)**: Kilitli dönem belgeleri değiştirilemez; yıl sonu kapanışı dönemleri kilitler ve kapanış özetini saklar.
+- **Gelişmiş fiyat/iskonto motoru (V107)**: Stok/cari/kategori/miktar aralığı ve tarih bazlı kademeli iskonto kuralları; fatura kaleminde otomatik uygulanır.
+- **CRM Merkezi (V108)**: Lead yönetimi ve cariye dönüştürme, aktivite (arama/toplantı/e-posta/görev) takibi ve bütçe/hedef kitleli kampanyalar.
+- **Gerçek gönderim durumu**: E-posta servisi gönderim sonucunu döndürür; SMTP yoksa "GÖNDERİLDİ" raporlanmaz. e-Fatura sahte onayı kaldırıldı.
+- **Performans**: Rapor/liste uçlarında N+1 sorguları kaldırıldı (toplu stok/kalem/cari yükleme), export üst sınırı.
+- **Prod sertleştirme**: Traefik TLS 1.2+ ve güçlü cipher suite'ler, API güvenlik başlıkları; nginx güvenlik başlıkları (CSP dahil) kalıtım sorunu giderildi; `APP_SECURITY_STRICT_DOMAINS` ile localhost origin reddi.
+
+### Değişenler
+- Giriş ekranı sol tanıtım paneli kompaktlaştırıldı; kısa ekranlarda içerik kaydırmadan görünür.
+- Ölü kod temizliği: kullanılmayan servis/repository/API metotları, `FeatureFlagService`, `useCanliAyar` kaldırıldı.
+
+### Eklenen Testler
+- Backend: 1047 → 1081. Frontend: 687 → 710.
+
 ## [1.15.0] - 2026-09-02 (Pivot Rapor, Aktivite Akışı, İş Emri)
 ### Eklenenler
 - **Dinamik pivot tablo**: `GET /api/raporlar/pivot` + Raporlar'da "Pivot Tablo" sekmesi. Satır (cari/ürün/kategori/tür/ödeme/ay), sütun ve değer (tutar/adet) seçilerek çapraz rapor.
