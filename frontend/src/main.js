@@ -20,7 +20,6 @@ import SatirEylemleri from './components/SatirEylemleri.vue'
 
 import permissionDirective from './directives/permission.js'
 import tabloEtiketDirective, { initTabloEtiketleri } from './directives/tabloEtiket.js'
-import { registerSW as pwaKaydet } from 'virtual:pwa-register'
 
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
@@ -94,25 +93,36 @@ app.mount('#app')
 
 initTabloEtiketleri()
 
-// PWA: service worker'i manuel kaydet; yeni surum hazir oldugunda otomatik
-// devreye al. Boylece eski onbellek takili kalmaz (beyaz ekran onlenir).
-pwaKaydet({
-  immediate: true,
-  onRegisteredSW(_swUrl, registration) {
-    if (!registration) return
-    // Saatte bir guncelleme kontrolu.
-    setInterval(() => {
-      registration.update().catch(() => {})
-    }, 60 * 60 * 1000)
-  },
-  onNeedRefresh() {
-    // Yeni surum hazir: bekleyen SW'ye hemen devreye gir sinyali gonder.
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' })
-    }
-    // Bir sonraki gezinmede taze icerik alinmasi icin onbellegi bosalt.
-    if (window.caches && caches.keys) {
-      caches.keys().then((k) => Promise.all(k.map((x) => caches.delete(x))))
-    }
-  }
-})
+// Legacy (surumsuz) service worker kayitlarini temizle: takili kalan eski SW
+// beyaz ekrana yol acabiliyor. Surum degistiginde eski kayit kaldirilir.
+;(function () {
+  if (!('serviceWorker' in navigator)) return
+  const BEKLENEN = '/sw.js?v=' + __APP_VERSION__
+  navigator.serviceWorker.getRegistrations().then((kayitlar) => {
+    kayitlar.forEach((r) => {
+      const url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || ''
+      // Surum sorgusu olmayan eski sw.js kayitlarini kaldir.
+      if (url.endsWith('/sw.js') && !url.includes('?v=')) {
+        r.unregister().catch(() => {})
+      }
+    })
+  }).catch(() => {})
+
+  // Surumlu URL ile kaydet: surum degisince tarayici yeni SW'yi kesin yukler
+  // (eski surumun onbelleginde takili kalma sorunu kalici olarak onlenir).
+  navigator.serviceWorker.register(BEKLENEN, { scope: '/' })
+    .then((reg) => {
+      reg.update().catch(() => {})
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000)
+    })
+    .catch(() => {})
+
+  // Yeni SW kontrolu devralinca bir kez yenile (taze icerik).
+  let devralindi = false
+  const ilkKontrolcuVar = !!navigator.serviceWorker.controller
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (devralindi || !ilkKontrolcuVar) return
+    devralindi = true
+    window.location.reload()
+  })
+})()
