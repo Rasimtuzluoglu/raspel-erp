@@ -93,14 +93,13 @@ public class FaturaService {
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> tumFaturalariGetir(Long sirketId, Pageable pageable) {
-        return faturaRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable)
-                .map(this::entityDTOyeCevir);
+        return sayfaDTOyaCevir(faturaRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable));
     }
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> ara(Long sirketId, String q, Pageable pageable) {
         String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
-        return faturaRepository.ara(sirketId, like, pageable).map(this::entityDTOyeCevir);
+        return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, pageable));
     }
 
     @Transactional(readOnly = true)
@@ -127,8 +126,7 @@ public class FaturaService {
      */
     @Transactional(readOnly = true)
     public Page<FaturaDTO> cariFaturalari(Long cariId, Long sirketId, Pageable pageable) {
-        return faturaRepository.findByCariHesapIdAndSirketIdOrderByTarihDesc(cariId, sirketId, pageable)
-                .map(this::entityDTOyeCevir);
+        return sayfaDTOyaCevir(faturaRepository.findByCariHesapIdAndSirketIdOrderByTarihDesc(cariId, sirketId, pageable));
     }
 
     /**
@@ -934,6 +932,27 @@ public class FaturaService {
                         .filter(id -> id != null)
                         .collect(Collectors.toList())
         ).stream().collect(Collectors.toMap(Stok::getId, s -> s, (s1, s2) -> s1));
+        return entityDTOyeCevir(fatura, stokHaritasi);
+    }
+
+    /**
+     * Sayfa içindeki tüm faturaların kalemlerindeki stokları tek sorguda yükler,
+     * böylece fatura başına ayrı stok sorgusu (N+1) çalışmaz.
+     */
+    private Page<FaturaDTO> sayfaDTOyaCevir(Page<Fatura> sayfa) {
+        Set<Long> stokIdler = new HashSet<>();
+        for (Fatura f : sayfa.getContent()) {
+            for (FaturaKalem k : f.getKalemler()) {
+                if (k.getStokId() != null) stokIdler.add(k.getStokId());
+            }
+        }
+        Map<Long, Stok> stokHaritasi = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(Stok::getId, s -> s, (s1, s2) -> s1));
+        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi));
+    }
+
+    private FaturaDTO entityDTOyeCevir(Fatura fatura, Map<Long, Stok> stokHaritasi) {
 
         List<FaturaKalemDTO> kalemDTO = fatura.getKalemler().stream().map(k -> {
             String stokAd = null;

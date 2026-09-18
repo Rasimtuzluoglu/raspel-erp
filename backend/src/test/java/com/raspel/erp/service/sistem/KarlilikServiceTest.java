@@ -43,8 +43,13 @@ class KarlilikServiceTest {
     private final LocalDate BIT = LocalDate.of(2026, 9, 30);
 
     private Fatura satis(Long id) {
+        return satis(id, List.of());
+    }
+
+    private Fatura satis(Long id, List<FaturaKalem> kalemler) {
         return Fatura.builder().id(id).tur(Fatura.FaturaTur.SATIS)
-                .durum(Fatura.FaturaDurum.KESILDI).tarih(LocalDate.of(2026, 9, 10)).sirketId(SIRKET).build();
+                .durum(Fatura.FaturaDurum.KESILDI).tarih(LocalDate.of(2026, 9, 10)).sirketId(SIRKET)
+                .kalemler(new java.util.ArrayList<>(kalemler)).build();
     }
 
     private FaturaKalem kalem(Long stokId, String adet, String birimFiyat, String birimMaliyet) {
@@ -67,10 +72,8 @@ class KarlilikServiceTest {
 
     @Test
     void kategoriKirilimi_veOzetHesaplanir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L)));
-        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(
-                kalem(10L, "2", "100", "40"),
-                kalem(11L, "1", "200", "150")));
+        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "2", "100", "40"),
+                kalem(11L, "1", "200", "150")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
         when(stokRepository.findById(11L)).thenReturn(Optional.of(stok(11L, "Gıda")));
         bosIade();
@@ -89,8 +92,8 @@ class KarlilikServiceTest {
 
     @Test
     void snapshotMaliyetOrtalamadanOnceKullanilir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L)));
-        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(kalem(10L, "1", "100", "25")));
+        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT))
+                .thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "100", "25")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "X")));
         bosIade();
 
@@ -101,15 +104,15 @@ class KarlilikServiceTest {
 
     @Test
     void iadeCiroVeMaliyetiDuser() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L)));
-        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(kalem(10L, "2", "100", "40")));
+        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT))
+                .thenReturn(List.of(satis(1L, List.of(kalem(10L, "2", "100", "40")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
         when(maliyetService.ortalamaMaliyet(any(Stok.class))).thenReturn(new BigDecimal("40"));
         Iade iade = Iade.builder().id(5L).tur("SATIS").durum("TAMAMLANDI")
                 .tarih(LocalDate.of(2026, 9, 12)).sirketId(SIRKET).build();
         when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(SIRKET, "SATIS", "TAMAMLANDI", BAS, BIT))
                 .thenReturn(List.of(iade));
-        when(iadeKalemRepository.findByIadeId(5L)).thenReturn(List.of(
+        when(iadeKalemRepository.findByIadeIdIn(any())).thenReturn(List.of(
                 IadeKalem.builder().id(1L).iadeId(5L).stokId(10L).miktar(BigDecimal.ONE)
                         .birimFiyat(new BigDecimal("100")).build()));
 
@@ -123,10 +126,8 @@ class KarlilikServiceTest {
 
     @Test
     void negatifMarjliKalemlerListelenir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L)));
-        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(
-                kalem(10L, "1", "50", "80"),
-                kalem(11L, "1", "200", "150")));
+        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "50", "80"),
+                kalem(11L, "1", "200", "150")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Zarar")));
         when(stokRepository.findById(11L)).thenReturn(Optional.of(stok(11L, "Kar")));
         bosIade();
@@ -140,8 +141,8 @@ class KarlilikServiceTest {
 
     @Test
     void urunGruplamaStokAdiniKullanir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L)));
-        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(kalem(10L, "1", "100", "40")));
+        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT))
+                .thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "100", "40")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "X")));
         bosIade();
 

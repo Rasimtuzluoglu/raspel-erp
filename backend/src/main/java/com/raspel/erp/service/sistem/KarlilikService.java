@@ -64,7 +64,8 @@ public class KarlilikService {
         for (Fatura f : faturalar) {
             if (f.getTur() != Fatura.FaturaTur.SATIS || f.getDurum() != Fatura.FaturaDurum.KESILDI) continue;
             String ay = f.getTarih() != null ? YearMonth.from(f.getTarih()).toString() : null;
-            for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
+            // kalemler fatura sorgusunda EntityGraph ile eager yüklenir; ek sorgu gerekmez.
+            for (FaturaKalem k : f.getKalemler()) {
                 BigDecimal adet = k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO;
                 if (adet.signum() == 0) continue;
                 BigDecimal netBirim = netBirim(k);
@@ -82,13 +83,18 @@ public class KarlilikService {
             }
         }
 
-        // SATIS iadeleri düşülür
+        // SATIS iadeleri düşülür (iade kalemleri tek sorguda toplu yüklenir).
         BigDecimal iadeCiro = BigDecimal.ZERO;
         BigDecimal iadeMaliyet = BigDecimal.ZERO;
-        for (Iade iade : iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(
-                sirketId, "SATIS", "TAMAMLANDI", bas, bit)) {
+        List<Iade> iadeler = iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(
+                sirketId, "SATIS", "TAMAMLANDI", bas, bit);
+        Map<Long, List<IadeKalem>> iadeKalemMap = iadeler.isEmpty() ? Map.of()
+                : iadeKalemRepository.findByIadeIdIn(
+                        iadeler.stream().map(Iade::getId).collect(java.util.stream.Collectors.toList()))
+                    .stream().collect(java.util.stream.Collectors.groupingBy(IadeKalem::getIadeId));
+        for (Iade iade : iadeler) {
             String ay = iade.getTarih() != null ? YearMonth.from(iade.getTarih()).toString() : null;
-            for (IadeKalem ik : iadeKalemRepository.findByIadeId(iade.getId())) {
+            for (IadeKalem ik : iadeKalemMap.getOrDefault(iade.getId(), List.of())) {
                 BigDecimal miktar = ik.getMiktar() != null ? ik.getMiktar() : BigDecimal.ZERO;
                 if (miktar.signum() == 0) continue;
                 BigDecimal ciro = (ik.getBirimFiyat() != null ? ik.getBirimFiyat() : BigDecimal.ZERO).multiply(miktar);

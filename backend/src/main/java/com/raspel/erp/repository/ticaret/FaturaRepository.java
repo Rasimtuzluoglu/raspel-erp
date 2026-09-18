@@ -26,6 +26,21 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
+    /**
+     * Yalnızca fatura başlıklarının gerektiği raporlar için (KDV, BA-BS, nakit akışı):
+     * kalemler lazy bırakılır, cari hesap eager yüklenir. N+1 ve gereksiz kalem yükü önlenir.
+     */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId ORDER BY f.tarih DESC")
+    List<Fatura> basliklariGetir(@Param("sirketId") Long sirketId);
+
+    /** Yalnızca belirtilen tarih aralığındaki fatura başlıkları (kalemler lazy). */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.tarih BETWEEN :baslangic AND :bitis ORDER BY f.tarih DESC")
+    List<Fatura> basliklariTarihAraligindaGetir(@Param("sirketId") Long sirketId,
+                                                @Param("baslangic") java.time.LocalDate baslangic,
+                                                @Param("bitis") java.time.LocalDate bitis);
+
     @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findBySirketIdAndTarihBetween(Long sirketId, java.time.LocalDate baslangic, java.time.LocalDate bitis);
 

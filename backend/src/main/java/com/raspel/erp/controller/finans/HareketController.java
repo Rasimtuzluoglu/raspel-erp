@@ -33,7 +33,10 @@ import com.raspel.erp.entity.finans.Hareket;
 @Slf4j
 @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class HareketController {
-    
+
+    /** CSV dışa aktarımda bellek koruması için üst sınır. */
+    private static final int MAX_CSV_ROWS = 10000;
+
     private final HareketService hareketService;
     
     @GetMapping("/cari/{cariHesapId}")
@@ -58,7 +61,8 @@ public class HareketController {
     public ResponseEntity<byte[]> hareketlerCsv(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/hareketler/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<HareketDTO> liste = hareketService.tumHareketleriGetir(sirketId, Pageable.unpaged()).getContent();
+        List<HareketDTO> liste = hareketService.tumHareketleriGetir(sirketId,
+                org.springframework.data.domain.PageRequest.of(0, MAX_CSV_ROWS)).getContent();
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Cari Hesap,Tür,Tutar,Tarih,Açıklama\n");

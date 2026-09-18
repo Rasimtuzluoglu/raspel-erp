@@ -33,7 +33,10 @@ import com.raspel.erp.entity.finans.CariHesap;
 @Slf4j
 @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class CariHesapController {
-    
+
+    /** CSV dışa aktarımda bellek koruması için üst sınır. */
+    private static final int MAX_CSV_ROWS = 10000;
+
     private final CariHesapService cariHesapService;
     private final com.raspel.erp.service.finans.CariKartService cariKartService;
     
@@ -72,7 +75,8 @@ public class CariHesapController {
     public ResponseEntity<byte[]> cariHesaplarCsv(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("GET /api/cari-hesaplar/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId, Pageable.unpaged()).getContent();
+        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId,
+                org.springframework.data.domain.PageRequest.of(0, MAX_CSV_ROWS)).getContent();
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Ad,Vergi Numarası,Telefon,Bakiye\n");

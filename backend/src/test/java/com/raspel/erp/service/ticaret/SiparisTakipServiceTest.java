@@ -41,13 +41,13 @@ class SiparisTakipServiceTest {
         when(siparisRepository.findBySirketIdOrderByTarihDesc(eq(1L), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(s)));
 
-        when(uretimEmriRepository.findBySirketIdAndSiparisId(1L, 1L))
+        when(uretimEmriRepository.findBySirketIdAndSiparisIdIn(eq(1L), any()))
                 .thenReturn(List.of(UretimEmri.builder().id(1L).sirketId(1L).siparisId(1L).urunId(10L).miktar(java.math.BigDecimal.ONE).durum("URETIMDE").build()));
-        when(irsaliyeRepository.findBySirketIdAndSiparisId(1L, 1L))
+        when(irsaliyeRepository.findBySirketIdAndSiparisIdIn(eq(1L), any()))
                 .thenReturn(List.of(Irsaliye.builder().id(1L).sirketId(1L).siparisId(1L).irsaliyeNo("IRS-1").durum("KESILDI").tur("SATIS").build()));
-        when(teslimatRepository.findBySirketIdAndSiparisId(1L, 1L))
+        when(teslimatRepository.findBySirketIdAndSiparisIdIn(eq(1L), any()))
                 .thenReturn(List.of(Teslimat.builder().id(1L).sirketId(1L).siparisId(1L).durum("TESLIM_EDILDI").build()));
-        when(cariHesapRepository.findById(7L)).thenReturn(java.util.Optional.of(
+        when(cariHesapRepository.findAllById(any())).thenReturn(List.of(
                 com.raspel.erp.entity.finans.CariHesap.builder().id(7L).ad("A Ltd").build()));
 
         List<SiparisTakipDTO> sonuc = takipService.zincir(1L);

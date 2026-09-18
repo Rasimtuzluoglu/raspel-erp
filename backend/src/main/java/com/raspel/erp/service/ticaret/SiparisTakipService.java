@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -36,14 +37,34 @@ public class SiparisTakipService {
     @Transactional(readOnly = true)
     public List<SiparisTakipDTO> zincir(Long sirketId) {
         List<Siparis> siparisler = siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, PageRequest.of(0, 200)).getContent();
-        return siparisler.stream().map(s -> {
-            List<UretimEmri> emirler = uretimEmriRepository.findBySirketIdAndSiparisId(sirketId, s.getId());
-            List<Irsaliye> irsaliyeler = irsaliyeRepository.findBySirketIdAndSiparisId(sirketId, s.getId());
-            List<Teslimat> teslimatlar = teslimatRepository.findBySirketIdAndSiparisId(sirketId, s.getId());
+        if (siparisler.isEmpty()) return List.of();
 
-            String cariAd = s.getCariHesapId() != null
-                    ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null)
-                    : null;
+        List<Long> siparisIdler = siparisler.stream().map(Siparis::getId).collect(Collectors.toList());
+
+        // Zincir verileri sipariş başına ayrı sorgu yerine toplu çekilir (N+1 önlenir).
+        Map<Long, List<UretimEmri>> emirMap = uretimEmriRepository
+                .findBySirketIdAndSiparisIdIn(sirketId, siparisIdler).stream()
+                .collect(Collectors.groupingBy(UretimEmri::getSiparisId));
+        Map<Long, List<Irsaliye>> irsaliyeMap = irsaliyeRepository
+                .findBySirketIdAndSiparisIdIn(sirketId, siparisIdler).stream()
+                .collect(Collectors.groupingBy(Irsaliye::getSiparisId));
+        Map<Long, List<Teslimat>> teslimatMap = teslimatRepository
+                .findBySirketIdAndSiparisIdIn(sirketId, siparisIdler).stream()
+                .collect(Collectors.groupingBy(Teslimat::getSiparisId));
+
+        java.util.Set<Long> cariIdler = siparisler.stream().map(Siparis::getCariHesapId)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> cariAdlari = cariIdler.isEmpty() ? Map.of()
+                : cariHesapRepository.findAllById(cariIdler).stream()
+                        .collect(Collectors.toMap(com.raspel.erp.entity.finans.CariHesap::getId,
+                                com.raspel.erp.entity.finans.CariHesap::getAd, (a, b) -> a));
+
+        return siparisler.stream().map(s -> {
+            List<UretimEmri> emirler = emirMap.getOrDefault(s.getId(), List.of());
+            List<Irsaliye> irsaliyeler = irsaliyeMap.getOrDefault(s.getId(), List.of());
+            List<Teslimat> teslimatlar = teslimatMap.getOrDefault(s.getId(), List.of());
+
+            String cariAd = s.getCariHesapId() != null ? cariAdlari.get(s.getCariHesapId()) : null;
 
             Teslimat t = teslimatlar.isEmpty() ? null : teslimatlar.get(0);
             boolean teslimatGecikti = t != null && t.getBeklenenTeslimTarihi() != null

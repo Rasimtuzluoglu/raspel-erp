@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
@@ -347,13 +348,24 @@ public class StokService {
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
         tenantChecker.check(stok.getSirketId(), "Stok");
         return stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(stokId)
-                .stream().map(this::hareketToDTO).collect(Collectors.toList());
+                .stream().map(h -> hareketToDTO(h, Map.of(), Map.of())).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<StokHareketDTO> tumHareketler(Long sirketId) {
-        return stokHareketRepository.findByStokSirketIdOrderByHareketTarihiDesc(sirketId)
-                .stream().map(this::hareketToDTO).collect(Collectors.toList());
+        List<StokHareket> hareketler = stokHareketRepository.findByStokSirketIdOrderByHareketTarihiDesc(sirketId);
+        // Depo ve seri adlarını tek sorguda toplu çöz (N+1 önlenir).
+        Set<Long> depoIdler = hareketler.stream().map(StokHareket::getDepoId)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> seriIdler = hareketler.stream().map(StokHareket::getSeriId)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> depoAdlari = depoIdler.isEmpty() ? Map.of()
+                : depoRepository.findAllById(depoIdler).stream()
+                        .collect(Collectors.toMap(com.raspel.erp.entity.sube.Depo::getId, com.raspel.erp.entity.sube.Depo::getAd, (a, b) -> a));
+        Map<Long, String> seriNolar = seriIdler.isEmpty() ? Map.of()
+                : stokSeriRepository.findAllById(seriIdler).stream()
+                        .collect(Collectors.toMap(com.raspel.erp.entity.envanter.StokSeri::getId, com.raspel.erp.entity.envanter.StokSeri::getSeriNo, (a, b) -> a));
+        return hareketler.stream().map(h -> hareketToDTO(h, depoAdlari, seriNolar)).collect(Collectors.toList());
     }
 
     public StokHareketDTO hareketEkle(StokHareketDTO dto) {
@@ -562,8 +574,20 @@ public class StokService {
     }
 
     private StokHareketDTO hareketToDTO(StokHareket h) {
+        return hareketToDTO(h, Map.of(), Map.of());
+    }
+
+    private StokHareketDTO hareketToDTO(StokHareket h, Map<Long, String> depoAdlari, Map<Long, String> seriNolar) {
         BigDecimal agirlik = (h.getStok().getAgirlik() != null && h.getMiktar() != null)
                 ? h.getStok().getAgirlik().multiply(h.getMiktar()) : null;
+        String depoAd = h.getDepoId() != null
+                ? (depoAdlari.containsKey(h.getDepoId()) ? depoAdlari.get(h.getDepoId())
+                        : depoRepository.findById(h.getDepoId()).map(d -> d.getAd()).orElse(null))
+                : null;
+        String seriNo = h.getSeriId() != null
+                ? (seriNolar.containsKey(h.getSeriId()) ? seriNolar.get(h.getSeriId())
+                        : stokSeriRepository.findById(h.getSeriId()).map(s -> s.getSeriNo()).orElse(null))
+                : null;
         return StokHareketDTO.builder().id(h.getId()).stokId(h.getStok().getId())
                 .stokAd(h.getStok().getAd()).stokKodu(h.getStok().getStokKodu())
                 .tur(h.getTur()).miktar(h.getMiktar()).hareketTarihi(h.getHareketTarihi())
@@ -571,11 +595,9 @@ public class StokService {
                 .cariHesapId(h.getCariHesap() != null ? h.getCariHesap().getId() : null)
                 .cariHesapAd(h.getCariHesap() != null ? h.getCariHesap().getAd() : null)
                 .depoId(h.getDepoId())
-                .depoAd(h.getDepoId() != null
-                        ? depoRepository.findById(h.getDepoId()).map(d -> d.getAd()).orElse(null) : null)
+                .depoAd(depoAd)
                 .seriId(h.getSeriId())
-                .seriNo(h.getSeriId() != null
-                        ? stokSeriRepository.findById(h.getSeriId()).map(s -> s.getSeriNo()).orElse(null) : null)
+                .seriNo(seriNo)
                 .kaynakTip(h.getKaynakTip())
                 .kaynakId(h.getKaynakId())
                 .agirlik(agirlik)

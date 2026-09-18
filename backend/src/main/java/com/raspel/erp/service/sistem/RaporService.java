@@ -134,9 +134,8 @@ public class RaporService {
     }
 
     public RaporDTO.KdvRaporDTO kdvRaporu(LocalDate baslangic, LocalDate bitis, Long sirketId) {
-        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+        List<Fatura> faturalar = faturaRepository.basliklariTarihAraligindaGetir(sirketId, baslangic, bitis).stream()
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                .filter(f -> !f.getTarih().isBefore(baslangic) && !f.getTarih().isAfter(bitis))
                 .collect(Collectors.toList());
 
         BigDecimal cikisKdv = faturalar.stream()
@@ -200,16 +199,16 @@ public class RaporService {
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
 
-        List<Fatura> kesilmis = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+        List<Fatura> kesilmis = faturaRepository.findBySirketIdAndTarihBetween(sirketId, bas, bit).stream()
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                .filter(f -> !f.getTarih().isBefore(bas) && !f.getTarih().isAfter(bit))
                 .collect(Collectors.toList());
 
         Map<BigDecimal, BigDecimal[]> satisMap = new TreeMap<>();
         Map<BigDecimal, BigDecimal[]> alisMap = new TreeMap<>();
 
         for (Fatura f : kesilmis) {
-            for (com.raspel.erp.entity.ticaret.FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
+            // kalemler fatura sorgusunda EntityGraph ile eager yüklenir; ek sorgu gerekmez.
+            for (FaturaKalem k : f.getKalemler()) {
                 BigDecimal oran = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
                 BigDecimal matrah = kdvMatrah(k.getTutar(), oran);
                 Map<BigDecimal, BigDecimal[]> hedef = f.getTur() == Fatura.FaturaTur.SATIS ? satisMap : alisMap;
@@ -245,9 +244,8 @@ public class RaporService {
         BigDecimal limit = esik != null ? esik : new BigDecimal("5000");
 
         Fatura.FaturaTur faturaTur = "BA".equalsIgnoreCase(tur) ? Fatura.FaturaTur.ALIS : Fatura.FaturaTur.SATIS;
-        List<RaporDTO.BaBsSatiriDTO> kayitlar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+        List<RaporDTO.BaBsSatiriDTO> kayitlar = faturaRepository.basliklariTarihAraligindaGetir(sirketId, bas, bit).stream()
                 .filter(f -> f.getTur() == faturaTur && f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                .filter(f -> !f.getTarih().isBefore(bas) && !f.getTarih().isAfter(bit))
                 .filter(f -> f.getGenelToplam() != null && f.getGenelToplam().compareTo(limit) > 0)
                 .map(f -> RaporDTO.BaBsSatiriDTO.builder()
                         .faturaNo(f.getFaturaNumarasi()).tarih(f.getTarih())
@@ -276,22 +274,13 @@ public class RaporService {
      * Maliyet, kalemin bağlı olduğu stoğun tedarikçi fiyatı (yoksa alış fiyatı) üzerinden hesaplanır.
      */
     public RaporDTO.CariKarlilikDTO cariKarlilikRaporu(LocalDate baslangic, LocalDate bitis, Long sirketId) {
-        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetween(sirketId, baslangic, bitis).stream()
                 .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                .filter(f -> !f.getTarih().isBefore(baslangic) && !f.getTarih().isAfter(bitis))
                 .collect(Collectors.toList());
 
-        // Karlılık maliyet hesabı için stok maliyetleri önceden yüklenir.
-        Map<Long, BigDecimal> stokMaliyet = new HashMap<>();
-        for (Fatura f : faturalar) {
-            for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
-                if (k.getStokId() != null && !stokMaliyet.containsKey(k.getStokId())) {
-                    BigDecimal maliyet = stokMaliyetGetir(k.getStokId());
-                    stokMaliyet.put(k.getStokId(), maliyet);
-                }
-            }
-        }
+        // Kârlılık maliyet hesabı için stok maliyetleri tek seferde toplu yüklenir (N+1 önlenir).
+        Map<Long, BigDecimal> stokMaliyet = stokMaliyetleriniTopluYukle(faturalar);
 
         Map<Long, RaporDTO.CariKarlilikSatiriDTO> satirMap = new LinkedHashMap<>();
         for (Fatura f : faturalar) {
@@ -299,7 +288,7 @@ public class RaporService {
             String cariAd = f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel";
 
             BigDecimal faturaMaliyet = BigDecimal.ZERO;
-            for (FaturaKalem k : faturaKalemRepository.findByFaturaId(f.getId())) {
+            for (FaturaKalem k : f.getKalemler()) {
                 BigDecimal birimMaliyet = k.getBirimMaliyet() != null
                         ? k.getBirimMaliyet()
                         : (k.getStokId() != null ? stokMaliyet.getOrDefault(k.getStokId(), BigDecimal.ZERO) : BigDecimal.ZERO);
@@ -354,6 +343,29 @@ public class RaporService {
                     return m != null ? m : BigDecimal.ZERO;
                 })
                 .orElse(BigDecimal.ZERO);
+    }
+
+    /** Verilen faturalardaki tüm stokların maliyetini tek sorguda toplu hesaplar. */
+    private Map<Long, BigDecimal> stokMaliyetleriniTopluYukle(List<Fatura> faturalar) {
+        Set<Long> stokIdler = new HashSet<>();
+        for (Fatura f : faturalar) {
+            for (FaturaKalem k : f.getKalemler()) {
+                if (k.getStokId() != null && k.getBirimMaliyet() == null) {
+                    stokIdler.add(k.getStokId());
+                }
+            }
+        }
+        if (stokIdler.isEmpty()) return Map.of();
+
+        Map<Long, BigDecimal> sonuc = new HashMap<>();
+        for (com.raspel.erp.entity.envanter.Stok s : stokRepository.findAllById(stokIdler)) {
+            BigDecimal m = maliyetService.ortalamaMaliyet(s);
+            if (m == null || m.signum() == 0) {
+                m = s.getTedarikciFiyat() != null ? s.getTedarikciFiyat() : s.getFiyat();
+            }
+            sonuc.put(s.getId(), m != null ? m : BigDecimal.ZERO);
+        }
+        return sonuc;
     }
 
     /**
@@ -438,8 +450,8 @@ public class RaporService {
         LocalDate bugun = LocalDate.now();
         LocalDate bitis = bugun.plusDays(gunSayisi);
 
-        // Gelecek vadeli Satış ve Alış faturaları
-        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
+        // Gelecek vadeli Satış ve Alış faturaları (yalnızca başlıklar; kalemler gerekmez)
+        List<Fatura> faturalar = faturaRepository.basliklariGetir(sirketId).stream()
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .collect(Collectors.toList());
 

@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface IadeKalemRepository extends JpaRepository<IadeKalem, Long> {
     List<IadeKalem> findByIadeId(Long iadeId);
+    List<IadeKalem> findByIadeIdIn(java.util.Collection<Long> iadeIds);
     void deleteByIadeId(Long iadeId);
 
     /**
