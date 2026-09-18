@@ -286,6 +286,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/iskonto-kurallari',
+    name: 'IskontoKurallari',
+    component: () => import('../views/IskontoKurallari.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/crm-merkezi',
+    name: 'CrmMerkezi',
+    component: () => import('../views/CrmMerkezi.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/iadeler',
     name: 'Iadeler',
     component: () => import('../views/Iadeler.vue'),

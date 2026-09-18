@@ -305,9 +305,21 @@ export const donemAPI = {
   update(id, data) {
     return apiClient.put(`/donemler/${id}`, data)
   },
-  aktifYap(id) {
-    return apiClient.put(`/donemler/${id}/aktif`)
-  },
+    aktifYap(id) {
+      return apiClient.put(`/donemler/${id}/aktif`)
+    },
+    kilitle(id) {
+      return apiClient.put(`/donemler/${id}/kilitle`)
+    },
+    kilidiAc(id) {
+      return apiClient.put(`/donemler/${id}/kilit-ac`)
+    },
+    yilSonuKapat(data) {
+      return apiClient.post('/donemler/yil-sonu-kapat', data)
+    },
+    kapanislar() {
+      return apiClient.get('/donemler/kapanislar')
+    },
   delete(id) {
     return apiClient.delete(`/donemler/${id}`)
   }

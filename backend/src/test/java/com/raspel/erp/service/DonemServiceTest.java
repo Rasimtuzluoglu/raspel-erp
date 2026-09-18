@@ -2,8 +2,11 @@ package com.raspel.erp.service;
 
 import com.raspel.erp.dto.sistem.DonemDTO;
 import com.raspel.erp.entity.sistem.Donem;
+import com.raspel.erp.entity.sistem.DonemKapanis;
 import com.raspel.erp.repository.sistem.DonemRepository;
+import com.raspel.erp.repository.sistem.DonemKapanisRepository;
 import com.raspel.erp.config.TenantChecker;
+import com.raspel.erp.exception.BusinessException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.service.sistem.DonemService;
 
@@ -26,6 +30,7 @@ import com.raspel.erp.service.sistem.DonemService;
 class DonemServiceTest {
 
     @Mock private DonemRepository donemRepository;
+    @Mock private DonemKapanisRepository donemKapanisRepository;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private DonemService donemService;
 
@@ -113,5 +118,76 @@ class DonemServiceTest {
     void sil_throwsWhenNotFound() {
         when(donemRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> donemService.sil(99L));
+    }
+
+    @Test
+    void sil_kilitliDonemReddedilir() {
+        Donem d = createDonem(1L);
+        d.setKilitli(true);
+        when(donemRepository.findById(1L)).thenReturn(Optional.of(d));
+
+        assertThrows(BusinessException.class, () -> donemService.sil(1L));
+        verify(donemRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void tarihKilitliMi_kilitliAraliktaTrueDoner() {
+        Donem d = createDonem(1L);
+        d.setKilitli(true);
+        when(donemRepository.findBySirketIdAndKilitliTrue(1L)).thenReturn(List.of(d));
+
+        assertTrue(donemService.tarihKilitliMi(1L, LocalDate.of(2026, 3, 15)));
+        assertFalse(donemService.tarihKilitliMi(1L, LocalDate.of(2026, 8, 15)));
+    }
+
+    @Test
+    void kilitle_veKilidiAc() {
+        Donem d = createDonem(1L);
+        when(donemRepository.findById(1L)).thenReturn(Optional.of(d));
+        when(donemRepository.save(any(Donem.class))).thenAnswer(i -> i.getArgument(0));
+
+        var kilitli = donemService.kilitle(1L);
+        assertTrue(kilitli.getKilitli());
+        assertNotNull(kilitli.getKilitTarihi());
+
+        var acik = donemService.kilidiAc(1L);
+        assertFalse(acik.getKilitli());
+        assertNull(acik.getKilitTarihi());
+    }
+
+    @Test
+    void yilSonuKapat_donemleriKilitlerVeKaydeder() {
+        when(donemRepository.findBySirketIdOrderByBaslangicDesc(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createDonem(1L))));
+        when(donemKapanisRepository.findBySirketIdAndYil(1L, 2026)).thenReturn(Optional.empty());
+        when(donemKapanisRepository.save(any(DonemKapanis.class))).thenAnswer(i -> {
+            DonemKapanis k = i.getArgument(0);
+            k.setId(5L);
+            return k;
+        });
+        when(donemRepository.save(any(Donem.class))).thenAnswer(i -> i.getArgument(0));
+
+        var sonuc = donemService.yilSonuKapat(1L, 2026, "yil sonu", 9L);
+
+        assertEquals(2026, sonuc.getYil());
+        assertEquals(1, sonuc.getKilitlenenDonemSayisi());
+        verify(donemRepository).save(any(Donem.class));
+    }
+
+    @Test
+    void yilSonuKapat_ikinciKezReddedilir() {
+        when(donemKapanisRepository.findBySirketIdAndYil(1L, 2026))
+                .thenReturn(Optional.of(DonemKapanis.builder().id(1L).sirketId(1L).yil(2026).build()));
+
+        assertThrows(BusinessException.class, () -> donemService.yilSonuKapat(1L, 2026, null, null));
+    }
+
+    @Test
+    void yilSonuKapat_donemYoksaHataVerir() {
+        when(donemKapanisRepository.findBySirketIdAndYil(1L, 2030)).thenReturn(Optional.empty());
+        when(donemRepository.findBySirketIdOrderByBaslangicDesc(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        assertThrows(BusinessException.class, () -> donemService.yilSonuKapat(1L, 2030, null, null));
     }
 }

@@ -47,6 +47,9 @@
 | **Otomatik Bulut Yedekleme** | Yedekleri otomatik/manuel olarak bulut deposuna (MinIO / S3 uyumlu) senkronize eder; kopyalar istendiğinde AES-256-GCM ile şifrelenir (`.enc`). |
 | **BTC & Döviz Kurları** | USD, EUR, GBP, Altın ve Bitcoin kurları TCMB ve Binance/CoinGecko API'lerinden canlı çekilir, anlık çevirici ile dönüşüm yapılır. |
 | **Kapsamlı Performans Optimizasyonu** | Rapor ve liste uçlarında N+1 sorguları ortadan kaldırıldı; toplu (batch) stok/kalem/cari yüklemesi, sayfa bazlı tek sorgu ile DTO dönüşümü ve export üst sınırı. |
+| **🔒 Dönem Kilidi & Yıl Sonu Kapanışı** | Kilitli dönemlerdeki belgeler değiştirilemez; yıl sonu kapanışı ilgili mali yılın tüm dönemlerini kalıcı olarak kilitler ve kapanış özetini saklar. Fatura oluşturma/düzenleme/durum değişikliği kilit kontrolünden geçer. |
+| **💯 Gelişmiş Fiyat/İskonto Motoru** | Stok, cari, kategori ve miktar aralığına göre kademeli iskonto kuralları. Fatura kaleminde iskonto belirtilmediğinde en uygun kural (öncelik + oran) otomatik uygulanır. |
+| **🎯 CRM Merkezi (Lead · Aktivite · Kampanya)** | Potansiyel müşteri (lead) yönetimi ve cari hesaba dönüştürme; arama/toplantı/e-posta/görev aktiviteleri; bütçe ve lead takipli pazarlama kampanyaları. |
 
 ---
 
@@ -75,7 +78,7 @@
 - **Fatura Yönetimi**: Alış/Satış faturası, otomatik seri no (`FTR-1-2026-000001`), iskonto, KDV, PDF, e-posta gönderimi ve çoğaltma. İşlem geçmişi (diff) ve yazdırma izi. Sunucu-taraflı tasarım şablonu PDF'e uygulanır.
 - **Banka & Kasa**: Hesap bakiyeleri, para giriş/çıkışı, CSV/Excel/OFX hesap özeti yükleme, otomatik mutabakat ve kasalar arası para aktarımı.
 - **Çek/Senet, Bütçe & Masraflar**: Portföy takibi, departman bütçeleri, masraf fişleri ve nakit akışı projeksiyonu.
-- **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir, bilanço ve kâr/zarar.
+- **Genel Muhasebe**: Otomatik tek düzen hesap planı, dengeli yevmiye fişi, mizan, defter-i kebir, bilanço ve kâr/zarar. Dönem kilidi ve yıl sonu kapanışı ile mali dönem bütünlüğü korunur.
 - **Döviz Kurları & BTC**: Canlı döviz/kripto kurları, otomatik çevirici, manuel kur girişi.
 - **Tahsilat Merkezi**: Vade takibi, yaşlandırma raporu, hatırlatma e-postası (gerçek gönderim durumu), WhatsApp/arama aksiyonları.
 
@@ -84,6 +87,8 @@
 - **Sipariş & İrsaliye**: Siparişten irsaliyeye, irsaliyeden faturaya tek tıkla kontrollü iş akışı. Saha siparişleri onay akışı.
 - **E-Fatura**: UBL-TR 2.1 standardında GİB uyumlu e-fatura ve e-arşiv entegrasyonu. GİB gönderim ve durum sorgulaması yalnızca gerçek entegratör üzerinden; sahte onay üretilmez.
 - **CRM Kanban**: Satış hunisi, teklif yönetimi, aşama takibi ve müşteri bazlı özel fiyat listeleri. Müşteri kayıp (churn) riski skorlama.
+- **CRM Merkezi**: Lead (potansiyel müşteri) yönetimi ve cari hesaba dönüştürme, aktivite (arama/toplantı/e-posta/görev) takibi ve bütçe/hedef kitleli kampanya yönetimi.
+- **İskonto Kuralları**: Kademeli fiyat/iskonto motoru ile stok/cari/kategori/miktar bazlı otomatik iskonto uygulaması.
 - **Adres Defteri**: Hizmet kişilerinin kaydı; isim/telefon/adres arama, meslek ve etiket filtresi, tek tıkla arama/WhatsApp/e-posta ve haritada açma.
 
 ### 📦 Stok & Envanter
@@ -146,11 +151,11 @@ Proje uçtan uca kapsamlı birim ve entegrasyon testleriyle korunmaktadır:
 ```bash
 # Backend Testleri (JUnit 5 + H2 + Mockito)
 cd backend
-mvn -B test -q          # 1047 Test (0 Hata)
+mvn -B test -q          # 1073 Test (0 Hata)
 
 # Frontend Testleri (Vitest)
 cd frontend
-npm run test            # 687 Test (0 Hata)
+npm run test            # 710 Test (0 Hata)
 
 # Kod Standartları & Linting
 npm run lint            # Sıfır ESLint Uyarısı
@@ -177,7 +182,7 @@ raspel-erp/
 │
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4 + Tailwind CSS
 │   └── src/
-│       ├── views/           # 73 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti vb.)
+│       ├── views/           # 75 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti vb.)
 │       ├── components/      # 51 Paylaşılan Bileşen
 │       ├── stores/          # 13 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
 │       ├── composables/     # 19 Composable Hook (Tema, Yetki, Oturum, Kısayol)

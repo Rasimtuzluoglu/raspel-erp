@@ -61,6 +61,8 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {

@@ -87,6 +87,8 @@ public class FaturaService {
     private final KasaHareketRepository kasaHareketRepository;
     private final FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -241,6 +243,10 @@ public class FaturaService {
     public FaturaDTO faturaOlustur(FaturaDTO dto, Long sirketId, Long kullaniciId, String displayName) {
         log.info("Fatura oluşturuluyor - Tür: {}, sirketId: {}", dto.getTur(), sirketId);
 
+        // Kilitli döneme ait tarihli belge oluşturulamaz.
+        java.time.LocalDate faturaTarihi = dto.getTarih() != null ? dto.getTarih() : java.time.LocalDate.now();
+        donemService.kilitKontrol(sirketId, faturaTarihi, "fatura oluşturma");
+
         CariHesap cariHesap = null;
         if (dto.getCariHesapId() != null) {
             cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
@@ -263,14 +269,27 @@ public class FaturaService {
                 .filter(id -> id != null)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<Long, BigDecimal> agirlikHaritasi = stokIdler.isEmpty() ? Map.of()
+        Map<Long, Stok> stokHaritasi = stokIdler.isEmpty() ? Map.of()
                 : stokRepository.findAllById(stokIdler).stream()
-                        .filter(s -> s.getAgirlik() != null)
-                        .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
+                        .collect(Collectors.toMap(Stok::getId, s -> s, (a, b) -> a));
+        Map<Long, BigDecimal> agirlikHaritasi = stokHaritasi.values().stream()
+                .filter(s -> s.getAgirlik() != null)
+                .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
 
+        // Kalemde iskonto belirtilmediyse kademeli iskonto motorundan oran çözülür.
+        java.time.LocalDate iskontoTarihi = dto.getTarih() != null ? dto.getTarih() : LocalDate.now();
+        Long cariId = cariHesap != null ? cariHesap.getId() : null;
         List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
-            BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
+            BigDecimal iskontoOrani = k.getIskontoOrani();
+            if (iskontoOrani == null) {
+                Stok stok = k.getStokId() != null ? stokHaritasi.get(k.getStokId()) : null;
+                iskontoOrani = iskontoMotoruService.iskontoHesapla(
+                        sirketId, k.getStokId(), cariId,
+                        stok != null ? stok.getKategori() : null,
+                        k.getAdet(), iskontoTarihi);
+                if (iskontoOrani == null) iskontoOrani = BigDecimal.ZERO;
+            }
             BigDecimal brütTutar = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
             BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
@@ -459,6 +478,7 @@ public class FaturaService {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
+        donemService.kilitKontrol(fatura.getSirketId(), fatura.getTarih(), "fatura durum güncelleme");
 
         Fatura.FaturaDurum durum;
         try {
@@ -511,6 +531,7 @@ public class FaturaService {
         Fatura fatura = faturaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
+        donemService.kilitKontrol(fatura.getSirketId(), fatura.getTarih(), "fatura düzenleme");
 
         if (fatura.getDurum() == Fatura.FaturaDurum.IPTAL) {
             throw new BusinessException("İptal edilmiş fatura düzenlenemez");

@@ -15,6 +15,13 @@
           @change="donemleriYukle"
         />
         <Button
+          :label="t('donemler.yilSonuKapat')"
+          icon="pi pi-lock"
+          severity="warning"
+          :disabled="!seciliSirketId"
+          @click="kapanisDialog = true"
+        />
+        <Button
           :label="t('donemler.yeniDonem')"
           icon="pi pi-plus"
           :disabled="!seciliSirketId"
@@ -60,15 +67,23 @@
         :header="t('common.status')"
       >
         <template #body="{ data }">
-          <Tag
-            :value="data.aktif ? t('donemler.aktif') : t('donemler.pasif')"
-            :severity="data.aktif ? 'success' : 'danger'"
-          />
+          <div class="durum-hucre">
+            <Tag
+              :value="data.aktif ? t('donemler.aktif') : t('donemler.pasif')"
+              :severity="data.aktif ? 'success' : 'danger'"
+            />
+            <Tag
+              v-if="data.kilitli"
+              :value="t('donemler.kilitli')"
+              severity="warning"
+              icon="pi pi-lock"
+            />
+          </div>
         </template>
       </Column>
       <Column
         :header="t('donemler.islem')"
-        style="width: 120px"
+        style="width: 170px"
       >
         <template #body="{ data }">
           <Button
@@ -79,18 +94,102 @@
             @click="aktifYap(data)"
           />
           <Button
+            v-if="!data.kilitli"
+            icon="pi pi-lock"
+            class="p-button-rounded p-button-text p-button-warning"
+            :title="t('donemler.kilitle')"
+            @click="kilitle(data)"
+          />
+          <Button
+            v-else
+            icon="pi pi-lock-open"
+            class="p-button-rounded p-button-text p-button-secondary"
+            :title="t('donemler.kilidiAc')"
+            @click="kilidiAc(data)"
+          />
+          <Button
             icon="pi pi-pencil"
             class="p-button-rounded p-button-text"
+            :disabled="data.kilitli"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-text p-button-danger"
+            :disabled="data.kilitli"
             @click="sil(data)"
           />
         </template>
       </Column>
     </DataTable>
+
+    <Dialog
+      v-model:visible="kapanisDialog"
+      :header="t('donemler.yilSonuKapat')"
+      modal
+      :style="{ width: '460px' }"
+    >
+      <Message
+        severity="warn"
+        :closable="false"
+        class="kapanis-uyari"
+      >
+        {{ t('donemler.kapanisUyari') }}
+      </Message>
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ t('donemler.maliYil') }}</label>
+          <InputNumber
+            v-model="kapanisForm.yil"
+            :use-grouping="false"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('donemler.kapanisNotu') }}</label>
+          <Textarea
+            v-model="kapanisForm.ozet"
+            rows="3"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="kapanisDialog = false"
+        />
+        <Button
+          :label="t('donemler.kapat')"
+          icon="pi pi-lock"
+          severity="warning"
+          :loading="kapanisYukleniyor"
+          @click="yilSonuKapat"
+        />
+      </template>
+    </Dialog>
+
+    <Card
+      v-if="kapanislar.length"
+      class="kapanis-kart"
+    >
+      <template #title>
+        <i class="pi pi-history" /> {{ t('donemler.kapanisGecmisi') }}
+      </template>
+      <template #content>
+        <div
+          v-for="k in kapanislar"
+          :key="k.id"
+          class="kapanis-satir"
+        >
+          <span class="kapanis-yil">{{ k.yil }}</span>
+          <span class="kapanis-tarih">{{ formatTarihSaat(k.kapanisTarihi) }}</span>
+          <span class="kapanis-not">{{ k.ozet || '-' }}</span>
+        </div>
+      </template>
+    </Card>
 
     <Dialog
       v-model:visible="dialog"
@@ -152,7 +251,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { donemAPI, sirketAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
-import { getLocalDateString } from '../utils/format.js'
+import { getLocalDateString, formatTarihSaat } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -166,6 +265,10 @@ const duzenleme = ref(false)
 const kaydediliyor = ref(false)
 const seciliId = ref(null)
 const form = ref({ ad: '', baslangic: null, bitis: null, aktif: true })
+const kapanisDialog = ref(false)
+const kapanisYukleniyor = ref(false)
+const kapanisForm = ref({ yil: new Date().getFullYear(), ozet: '' })
+const kapanislar = ref([])
 
 onMounted(async () => {
   try {
@@ -174,11 +277,79 @@ onMounted(async () => {
     if (sirketler.value.length > 0) {
       seciliSirketId.value = sirketler.value[0].id
       await donemleriYukle()
+      await kapanislariYukle()
     }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.hataSirketler'))
   }
 })
+
+const kapanislariYukle = async () => {
+  if (!seciliSirketId.value) {
+    kapanislar.value = []
+    return
+  }
+  try {
+    const r = await donemAPI.kapanislar()
+    kapanislar.value = r.data || []
+  } catch {
+    kapanislar.value = []
+  }
+}
+
+const kilitle = async (data) => {
+  try {
+    await donemAPI.kilitle(data.id)
+    toastBildirim.basarili(t('donemler.kilitlendi'))
+    await donemleriYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.islemBasarisiz'))
+  }
+}
+
+const kilidiAc = (data) => {
+  confirm.require({
+    message: t('donemler.kilidiAcOnay'),
+    header: t('donemler.kilidiAc'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('donemler.evet'),
+    rejectLabel: t('common.cancel'),
+    accept: async () => {
+      try {
+        await donemAPI.kilidiAc(data.id)
+        toastBildirim.basarili(t('donemler.kilidiAcildi'))
+        await donemleriYukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.islemBasarisiz'))
+      }
+    },
+    reject: () => {}
+  })
+}
+
+const yilSonuKapat = async () => {
+  if (!kapanisForm.value.yil) {
+    toastBildirim.uyari(t('donemler.maliYilZorunlu'))
+    return
+  }
+  kapanisYukleniyor.value = true
+  try {
+    await donemAPI.yilSonuKapat({
+      sirketId: seciliSirketId.value,
+      yil: kapanisForm.value.yil,
+      ozet: kapanisForm.value.ozet
+    })
+    toastBildirim.basarili(t('donemler.kapanisBasarili'))
+    kapanisDialog.value = false
+    kapanisForm.value = { yil: new Date().getFullYear(), ozet: '' }
+    await donemleriYukle()
+    await kapanislariYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || err?.message || t('donemler.kapanisBasarisiz'))
+  } finally {
+    kapanisYukleniyor.value = false
+  }
+}
 
 const donemleriYukle = async () => {
   if (!seciliSirketId.value) {
@@ -300,5 +471,42 @@ const sil = (data) => {
 }
 .w-full {
   width: 100%;
+}
+.durum-hucre {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.kapanis-uyari {
+  margin-bottom: 16px;
+}
+.kapanis-kart {
+  margin-top: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.kapanis-satir {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.kapanis-satir:last-child {
+  border-bottom: none;
+}
+.kapanis-yil {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 48px;
+}
+.kapanis-tarih {
+  color: var(--text-muted);
+  min-width: 150px;
+}
+.kapanis-not {
+  color: var(--text-secondary);
 }
 </style>

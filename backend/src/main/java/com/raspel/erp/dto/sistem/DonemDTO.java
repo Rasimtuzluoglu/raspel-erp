@@ -15,5 +15,8 @@ public class DonemDTO {
     private LocalDate baslangic;
     private LocalDate bitis;
     private Boolean aktif;
+    private Boolean kilitli;
+    private LocalDateTime kilitTarihi;
+    private Long kilitKullaniciId;
     private LocalDateTime olusturmaTarihi;
 }

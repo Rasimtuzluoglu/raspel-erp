@@ -18,6 +18,15 @@ public class TenantChecker {
         }
     }
 
+    public Long getCurrentKullaniciId() {
+        try {
+            HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+            return (Long) req.getAttribute("kullaniciId");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /**
      * Cache anahtarlarina tenant bilgisi ekler. Boylece ayni ID'ye sahip kayitlar
      * farkli sirketler icin ayri cache entry'lerinde tutulur ve cache HIT'inde

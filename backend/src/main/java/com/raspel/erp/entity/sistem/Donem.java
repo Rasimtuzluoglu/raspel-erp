@@ -32,6 +32,16 @@ public class Donem {
     @Column(nullable = false)
     private Boolean aktif;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean kilitli = false;
+
+    @Column(name = "kilit_tarihi")
+    private LocalDateTime kilitTarihi;
+
+    @Column(name = "kilit_kullanici_id")
+    private Long kilitKullaniciId;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
@@ -39,5 +49,6 @@ public class Donem {
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();
         if (aktif == null) aktif = true;
+        if (kilitli == null) kilitli = false;
     }
 }

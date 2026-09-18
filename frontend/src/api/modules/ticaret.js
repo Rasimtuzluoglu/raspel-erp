@@ -212,9 +212,30 @@ export const fiyatListesiAPI = {
     return apiClient.put(`/fiyat-listesi/${id}`, data)
   },
   delete(id) {
-    return apiClient.delete(`/fiyat-listesi/${id}`)
+      return apiClient.delete(`/fiyat-listesi/${id}`)
+    }
   }
-}
+
+  export const iskontoKuraliAPI = {
+    getAll(params) {
+      return apiClient.get('/iskonto-kurallari', { params })
+    },
+    getById(id) {
+      return apiClient.get(`/iskonto-kurallari/${id}`)
+    },
+    create(data) {
+      return apiClient.post('/iskonto-kurallari', data)
+    },
+    update(id, data) {
+      return apiClient.put(`/iskonto-kurallari/${id}`, data)
+    },
+    delete(id) {
+      return apiClient.delete(`/iskonto-kurallari/${id}`)
+    },
+    hesapla(params) {
+      return apiClient.get('/iskonto-kurallari/hesapla', { params })
+    }
+  }
 
 export const crmAPI = {
   getFirsatlar(params) {
@@ -227,8 +248,50 @@ export const crmAPI = {
     return apiClient.put(`/crm/firsatlar/${id}`, data)
   },
   firsatSil(id) {
-    return apiClient.delete(`/crm/firsatlar/${id}`)
-  }
+      return apiClient.delete(`/crm/firsatlar/${id}`)
+    },
+    // Lead
+    getLeadler(params) {
+      return apiClient.get('/crm/leadler', { params })
+    },
+    leadOlustur(data) {
+      return apiClient.post('/crm/leadler', data)
+    },
+    leadGuncelle(id, data) {
+      return apiClient.put(`/crm/leadler/${id}`, data)
+    },
+    leadDonustur(id, cariHesapId) {
+      return apiClient.put(`/crm/leadler/${id}/donustur`, null, { params: { cariHesapId } })
+    },
+    leadSil(id) {
+      return apiClient.delete(`/crm/leadler/${id}`)
+    },
+    // Aktivite
+    getAktiviteler(params) {
+      return apiClient.get('/crm/aktiviteler', { params })
+    },
+    aktiviteOlustur(data) {
+      return apiClient.post('/crm/aktiviteler', data)
+    },
+    aktiviteTamamla(id, tamamlandi = true) {
+      return apiClient.put(`/crm/aktiviteler/${id}/tamamla`, null, { params: { tamamlandi } })
+    },
+    aktiviteSil(id) {
+      return apiClient.delete(`/crm/aktiviteler/${id}`)
+    },
+    // Kampanya
+    getKampanyalar(params) {
+      return apiClient.get('/crm/kampanyalar', { params })
+    },
+    kampanyaOlustur(data) {
+      return apiClient.post('/crm/kampanyalar', data)
+    },
+    kampanyaGuncelle(id, data) {
+      return apiClient.put(`/crm/kampanyalar/${id}`, data)
+    },
+    kampanyaSil(id) {
+      return apiClient.delete(`/crm/kampanyalar/${id}`)
+    }
 }
 
 export const satinalmaTalepAPI = {

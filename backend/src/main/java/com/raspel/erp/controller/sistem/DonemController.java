@@ -73,6 +73,49 @@ public class DonemController {
         return ResponseEntity.ok(donemService.aktifYap(id));
     }
 
+    @PutMapping("/{id}/kilitle")
+    @Operation(summary = "Dönemi kilitle", description = "Dönemi kilitler; kilitli dönemdeki belgeler değiştirilemez")
+    public ResponseEntity<DonemDTO> kilitle(@PathVariable Long id) {
+        return ResponseEntity.ok(donemService.kilitle(id));
+    }
+
+    @PutMapping("/{id}/kilit-ac")
+    @Operation(summary = "Dönem kilidini aç", description = "Dönemin kilidini açar (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DonemDTO> kilidiAc(@PathVariable Long id) {
+        return ResponseEntity.ok(donemService.kilidiAc(id));
+    }
+
+    @GetMapping("/{id}/kilitli-mi")
+    @Operation(summary = "Tarih kilidi kontrolü", description = "Verilen tarihin kilitli döneme denk gelip gelmediğini döndürür")
+    public ResponseEntity<java.util.Map<String, Object>> kilitliMi(
+            @PathVariable Long id, @RequestParam String tarih) {
+        DonemDTO d = donemService.getir(id);
+        boolean kilitli = donemService.tarihKilitliMi(d.getSirketId(), java.time.LocalDate.parse(tarih));
+        return ResponseEntity.ok(java.util.Map.of("kilitli", kilitli));
+    }
+
+    @PostMapping("/yil-sonu-kapat")
+    @Operation(summary = "Yıl sonu kapanışı", description = "Mali yılı kapsayan dönemleri kilitler ve kapanış özetini kaydeder (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.raspel.erp.dto.sistem.DonemKapanisDTO> yilSonuKapat(
+            @RequestBody com.raspel.erp.dto.sistem.DonemKapanisDTO dto,
+            jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        if (sirketId == null) sirketId = dto.getSirketId();
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(donemService.yilSonuKapat(sirketId, dto.getYil(), dto.getOzet(), kullaniciId));
+    }
+
+    @GetMapping("/kapanislar")
+    @Operation(summary = "Kapanışları getir", description = "Şirketin yıl sonu kapanış kayıtlarını listeler")
+    public ResponseEntity<List<com.raspel.erp.dto.sistem.DonemKapanisDTO>> kapanislar(
+            jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(donemService.kapanislariGetir(sirketId));
+    }
+
+
     @PutMapping("/{id}")
     @Operation(summary = "Dönem güncelle", description = "Dönem bilgilerini günceller")
     public ResponseEntity<DonemDTO> guncelle(@PathVariable Long id, @Valid @RequestBody DonemDTO dto) {

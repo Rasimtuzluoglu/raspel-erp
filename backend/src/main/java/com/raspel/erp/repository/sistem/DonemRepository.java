@@ -11,4 +11,5 @@ import java.util.List;
 public interface DonemRepository extends JpaRepository<Donem, Long> {
     Page<Donem> findBySirketIdOrderByBaslangicDesc(Long sirketId, Pageable pageable);
     List<Donem> findBySirketIdAndAktifTrue(Long sirketId);
+    List<Donem> findBySirketIdAndKilitliTrue(Long sirketId);
 }
