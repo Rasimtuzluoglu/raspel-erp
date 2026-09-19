@@ -469,7 +469,7 @@ const gorunenMenuler = computed(() => {
     if (m.path === '/') return false
     
     if (authStore.isDriver) {
-      const driverErisilebilir = ['/teslimatlar', '/hesap-ayarlari']
+      const driverErisilebilir = ['/teslimatlar', '/saha-portali', '/sohbet', '/notlar', '/belgeler', '/hesap-ayarlari']
       if (!driverErisilebilir.includes(m.path)) return false
     }
 
@@ -539,7 +539,11 @@ const cikis = () => {
 
 onMounted(() => {
   initTheme()
-  onaySayisiniYukle()
+  // Onay sayaçları yalnızca ofis kullanıcıları için anlamlıdır; şoför/saha
+  // kullanıcılarında bu uçlar 403 döndürdüğü için hiç çağrılmaz.
+  if (!authStore.isDriver && !authStore.isSaha) {
+    onaySayisiniYukle()
+  }
 })
 
 const onaySayisi = ref(0)

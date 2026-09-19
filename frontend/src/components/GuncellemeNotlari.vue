@@ -10,12 +10,12 @@
       <div class="surum">
         <span class="surum-etiketi">v{{ SURUM }}</span>
         <ul>
-          <li><i class="pi pi-check-circle" /> Kağıtsız dijital teslimat: teslim alan + dijital imza zorunlu</li>
-          <li><i class="pi pi-check-circle" /> Teslimat fişi PDF (indir/yazdır/WhatsApp paylaş)</li>
-          <li><i class="pi pi-check-circle" /> Saha Portalı yenilendi: teslimat+imza, tahsilat, çok kalemli sipariş, ziyaret fotoğrafı, masraf fişi, görev/not ve performans</li>
-          <li><i class="pi pi-check-circle" /> Şoför menüsü ve yetkileri sertleştirildi, izin talebi düzeltildi</li>
-          <li><i class="pi pi-check-circle" /> Cari hesaba borçlandırma ve satışta kalem düzenleme</li>
-          <li><i class="pi pi-check-circle" /> Termal fiş 58/80mm ve kilo/tonaj gösterimi</li>
+          <li><i class="pi pi-check-circle" /> Şoförler artık Saha Portalı'na da giriş yapabilir</li>
+          <li><i class="pi pi-check-circle" /> Fatura "Ürün Seç" listesi açık temada okunabilir hâle getirildi</li>
+          <li><i class="pi pi-check-circle" /> Şoför/saha girişinde görülen yetki/404 ekranı giderildi</li>
+          <li><i class="pi pi-check-circle" /> Kağıtsız dijital teslimat: teslim alan + zorunlu imza + PDF fiş</li>
+          <li><i class="pi pi-check-circle" /> Saha Portalı: tahsilat, sipariş, ziyaret, masraf, görev/not, performans</li>
+          <li><i class="pi pi-check-circle" /> Test ve gösterim için örnek (demo) veriler eklendi</li>
         </ul>
       </div>
       <div class="surum">

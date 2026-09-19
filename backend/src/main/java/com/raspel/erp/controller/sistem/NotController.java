@@ -22,7 +22,7 @@ import com.raspel.erp.entity.sistem.Not;
 @RestController
 @RequestMapping("/api/notlar")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class NotController {
 
     private final NotService notService;

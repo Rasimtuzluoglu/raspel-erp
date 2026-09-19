@@ -445,14 +445,14 @@
             >
               <template #option="s">
                 <div style="display: flex; align-items: center; gap: 10px">
-                  <span style="flex: 1; color: #f1f5f9">{{ s.option.ad }}</span>
+                  <span style="flex: 1; color: var(--text-primary)">{{ s.option.ad }}</span>
                   <span
                     v-if="kritikStokMu(s.option)"
                     class="kitlik-rozeti"
                     :title="t('faturalar.kritikStokTitle', { n: s.option.minMiktar || 0 })"
                   >{{ t('faturalar.sonAdet', { n: Math.floor(s.option.miktar) }) }}</span>
-                  <span style="color: #4ade80; font-size: 12px; font-weight: 600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
-                  <span style="color: #94a3b8; font-size: 12px">{{ formatCurrency(s.option.fiyat) }}</span>
+                  <span style="color: var(--success); font-size: 12px; font-weight: 600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
+                  <span style="color: var(--text-muted); font-size: 12px">{{ formatCurrency(s.option.fiyat) }}</span>
                 </div>
               </template>
             </Dropdown>

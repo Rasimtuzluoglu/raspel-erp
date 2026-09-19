@@ -21,7 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/siparisler")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class SiparisController {
 
     private final SiparisService siparisService;

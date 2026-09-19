@@ -117,11 +117,10 @@ apiClient.interceptors.response.use(
       })
       return Promise.reject(error)
     }
-    if (
-      status === 403 &&
-      !window.location.pathname.startsWith('/giris') &&
-      !window.location.pathname.startsWith('/yetki-reddi')
-    ) {
+    if (status === 403 && !window.location.pathname.startsWith('/giris')) {
+      // Yalnızca token süresi dolmuşsa oturumu kapat ve girişe yönlendir.
+      // Aksi halde (rol kaynaklı 403) route erişimi router guard'ı tarafından yönetilir;
+      // arka plan isteklerinin kullanıcıyı yetki-reddi sayfasına düşürmesini engelliyoruz.
       const tokenSuresiDolmus = tokenSuresiDolduMu()
       if (tokenSuresiDolmus) {
         if (redirectKorumasi) return Promise.reject(error)
@@ -134,10 +133,6 @@ apiClient.interceptors.response.use(
         }
         import('../router/index.js').then(({ default: router }) => {
           router.push({ name: 'Giris', query: { redirect: router.currentRoute.value.fullPath } })
-        })
-      } else {
-        import('../router/index.js').then(({ default: router }) => {
-          router.push('/yetki-reddi')
         })
       }
     }

@@ -31,7 +31,7 @@ import com.raspel.erp.entity.finans.CariHesap;
 @RequestMapping("/api/cari-hesaplar")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
 public class CariHesapController {
 
     /** CSV dışa aktarımda bellek koruması için üst sınır. */

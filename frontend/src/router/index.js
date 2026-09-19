@@ -504,6 +504,7 @@ router.beforeEach((to, from, next) => {
     const driverIzinli = [
       '/',
       '/teslimatlar',
+      '/saha-portali',
       '/sohbet',
       '/notlar',
       '/belgeler',

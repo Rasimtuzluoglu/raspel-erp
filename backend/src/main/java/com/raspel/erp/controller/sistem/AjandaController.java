@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/ajanda")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class AjandaController {
 
     private final AjandaService ajandaService;

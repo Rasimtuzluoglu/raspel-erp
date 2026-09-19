@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequestMapping("/api/belgeler")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class BelgeController {
 
     private static final String BELGE_KLASOR = "belgeler";

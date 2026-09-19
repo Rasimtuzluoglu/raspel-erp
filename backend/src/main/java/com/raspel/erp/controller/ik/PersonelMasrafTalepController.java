@@ -21,7 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/personel-masraf-talepler")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class PersonelMasrafTalepController {
 
     private final PersonelMasrafTalepService talepService;

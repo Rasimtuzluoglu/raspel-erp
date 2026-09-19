@@ -33,14 +33,14 @@ public class SirketController {
 
     @GetMapping("/aktif")
     @Operation(summary = "Aktif şirketleri getir", description = "Oturum açmış kullanıcının erişebildiği aktif şirketleri listeler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
     public ResponseEntity<List<SirketDTO>> aktifOlanlar() {
         return ResponseEntity.ok(sirketService.aktifOlanlariGetir());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre şirket getir", description = "Şirket ID'sine göre detayları getirir (kullanıcı yalnızca erişebildiği şirketi görür)")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
     public ResponseEntity<SirketDTO> getir(@PathVariable Long id) {
         return ResponseEntity.ok(sirketService.getir(id));
     }
@@ -68,7 +68,7 @@ public class SirketController {
 
     @GetMapping("/{id}/fatura-sablonu")
     @Operation(summary = "Fatura tasarım şablonu", description = "Şirket için sunucuda saklanan fatura tasarım ayarlarını döndürür")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
     public ResponseEntity<java.util.Map<String, String>> faturaSablonu(@PathVariable Long id) {
         String sablon = sirketService.faturaSablonuGetir(id);
         return ResponseEntity.ok(java.util.Map.of("sablon", sablon != null ? sablon : ""));
@@ -86,7 +86,7 @@ public class SirketController {
 
     @GetMapping("/{id}/pos-fis-ayarlari")
     @Operation(summary = "POS fiş ayarları", description = "Şirket için sunucuda saklanan POS fiş ayarlarını döndürür")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
     public ResponseEntity<java.util.Map<String, String>> posFisAyarlari(@PathVariable Long id) {
         String ayar = sirketService.posFisAyarlariGetir(id);
         return ResponseEntity.ok(java.util.Map.of("ayarlar", ayar != null ? ayar : ""));

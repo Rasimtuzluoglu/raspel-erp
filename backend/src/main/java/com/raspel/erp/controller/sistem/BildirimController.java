@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/bildirimler")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class BildirimController {
 
     private final BildirimService bildirimService;

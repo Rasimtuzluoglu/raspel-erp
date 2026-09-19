@@ -30,7 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/tahsilat")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
 public class TahsilatController {
 
     private final TahsilatService tahsilatService;
@@ -62,7 +62,7 @@ public class TahsilatController {
 
     @PostMapping
     @Operation(summary = "Tahsilat gir", description = "Cariye ait açık faturalara ödeme tahsis eder; ödeme yöntemi (NAKIT/KART/TAKSIT/HAVALE) ve taksit bilgisi kaydedilir. Saha personeli (USER) da tahsilat kaydedebilir.")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
     public ResponseEntity<Map<String, Object>> tahsilatGir(
             @RequestBody @jakarta.validation.Valid TahsilatGirisDTO dto,
             HttpServletRequest request) {

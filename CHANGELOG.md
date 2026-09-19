@@ -2,6 +2,15 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.19.0] - 2026-09-19 (Şoför Saha Portalı Erişimi, Okunabilirlik, Demo Veri)
+### Eklenenler
+- **Şoför (DRIVER) artık Saha Portalı'na erişebilir**: router ve kenar menü allowlist'ine `/saha-portali` eklendi; saha portalının kullandığı uçlara (siparişler, izin, masraf, notlar, ajanda, stoklar, cari hesaplar, tahsilat, belgeler, bildirimler, şirket) DRIVER rolü eklendi.
+- **Demo veri seti**: test/gösterim için cariler, stoklar, faturalar (şoföre atanmış teslimatlar), siparişler, personel (şoför/saha bağlı), izin, masraf, notlar ve görevler eklendi.
+
+### Düzeltmeler
+- **Fatura "Ürün Seç" listesi okunabilirliği**: açılır liste öğelerindeki sabit açık renk (`#f1f5f9`/`#94a3b8`) tema değişkenlerine bağlandı; açık temada ürün ad/fiyat artık okunur.
+- **Yetki (403) sayfasına düşme**: kenar menüdeki onay sayaçları şoför/saha kullanıcıları için artık çağrılmıyor; global 403 yakalayıcısı arka plan isteklerinde kullanıcıyı zorla `/yetki-reddi` sayfasına yönlendirmiyor (rol kaynaklı 403'ler yalnızca bildirim olarak gösterilir, rota erişimi router guard'ında kalır). Bu, şoför/portal girişinde görülen "yetki/404" ekranını giderir.
+
 ## [1.18.1] - 2026-09-19 (E2E Test Düzeltmesi)
 ### Düzeltmeler
 - **Saha tahsilatı**: `POST /api/tahsilat` yetkisine `USER` rolü eklendi. Saha personeli (role USER) artık saha portalından tahsilat kaydedebilir (önce yalnız ADMIN/MUHASEBE idi ve 403 dönüyordu).

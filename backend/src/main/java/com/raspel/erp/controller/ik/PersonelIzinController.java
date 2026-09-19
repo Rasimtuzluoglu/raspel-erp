@@ -23,7 +23,7 @@ import com.raspel.erp.entity.ik.Personel;
 @RestController
 @RequestMapping("/api/personel-izin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
 public class PersonelIzinController {
 
     private final PersonelIzinService personelIzinService;

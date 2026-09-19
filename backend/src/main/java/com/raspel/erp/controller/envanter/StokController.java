@@ -44,6 +44,7 @@ public class StokController {
 
     @GetMapping
     @Operation(summary = "Tüm stokları getir (sayfalı)", description = "Tüm stokları sayfalı olarak listeler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
     public ResponseEntity<Page<StokDTO>> tumu(
             HttpServletRequest request,
             @PageableDefault(size = 50) Pageable pageable) {
