@@ -7,7 +7,7 @@
       <div class="toolbar-end">
         <Button
           :label="t('depolar.depolarArasiTransfer')"
-          icon="pi pi-exchange"
+          icon="pi pi-sync"
           class="p-button-info p-button-outlined"
           @click="transferDialog = true"
         />

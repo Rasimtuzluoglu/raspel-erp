@@ -29,7 +29,7 @@
       <div class="takas-satir">
         <div class="takas-cizgi" />
         <Button
-          icon="pi pi-arrow-up-arrow-down"
+          icon="pi pi-arrow-right-arrow-left"
           class="p-button-rounded p-button-text p-button-sm takas-btn"
           :title="$t('cmp.dzSwap')"
           @click="takas"

@@ -195,7 +195,7 @@ public class RaporService {
 
     /** Belirtilen ay (YYYY-MM) için KDV beyannameye hazırlık listesi üretir. */
     public RaporDTO.KdvBeyannameDTO kdvBeyannameGetir(String donem, Long sirketId) {
-        YearMonth ay = YearMonth.parse(donem);
+        YearMonth ay = donemAyCoz(donem);
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
 
@@ -238,7 +238,7 @@ public class RaporService {
 
     /** Belirtilen ay (YYYY-MM) için BA (alış) veya BS (satış) bildirimi listesi üretir. */
     public RaporDTO.BaBsDTO baBsGetir(String donem, String tur, BigDecimal esik, Long sirketId) {
-        YearMonth ay = YearMonth.parse(donem);
+        YearMonth ay = donemAyCoz(donem);
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
         BigDecimal limit = esik != null ? esik : new BigDecimal("5000");
@@ -260,6 +260,15 @@ public class RaporService {
         return RaporDTO.BaBsDTO.builder()
                 .donem(donem).tur(faturaTur == Fatura.FaturaTur.ALIS ? "BA" : "BS")
                 .esik(limit).kayitlar(kayitlar).toplamTutar(toplam).build();
+    }
+
+    /** Dönem (YYYY-MM) değerini çözer; geçersizse anlamlı bir iş kuralı hatası fırlatır. */
+    private YearMonth donemAyCoz(String donem) {
+        try {
+            return YearMonth.parse(donem);
+        } catch (java.time.format.DateTimeParseException | NullPointerException e) {
+            throw new com.raspel.erp.exception.BusinessException("Geçersiz dönem. YYYY-MM biçiminde olmalıdır (ör. 2026-09).");
+        }
     }
 
     private BigDecimal kdvMatrah(BigDecimal kdvliTutar, BigDecimal oran) {

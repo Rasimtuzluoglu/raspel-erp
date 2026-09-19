@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="kurulum-ikon">
-      <i class="pi pi-rocket" />
+      <i class="pi pi-bolt" />
     </div>
     <h2 class="iki-fa-baslik">
       {{ $t('kurulum.welcome') }}

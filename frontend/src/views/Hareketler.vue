@@ -165,7 +165,7 @@
             v-if="tümHareketler.length === 0"
             :message="t('hareketler.empty')"
             :sub-message="t('hareketler.emptyHint')"
-            icon="pi pi-exchange"
+            icon="pi pi-sync"
             :action-label="t('hareketler.yeniHareket')"
             action-icon="pi pi-plus"
             @action="openDialog"

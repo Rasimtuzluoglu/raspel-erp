@@ -715,7 +715,7 @@ const bolumler = computed(() => [
   { key: 'guvenlik', label: t('hesapAyarlari.guvenlik'), ikon: 'pi pi-shield' },
   { key: 'gorunum', label: t('hesapAyarlari.gorunum'), ikon: 'pi pi-palette' },
   { key: 'bildirimler', label: t('hesapAyarlari.bildirimler'), ikon: 'pi pi-bell' },
-  { key: 'entegrasyonlar', label: t('hesapAyarlari.entegrasyonlar'), ikon: 'pi pi-plug' },
+  { key: 'entegrasyonlar', label: t('hesapAyarlari.entegrasyonlar'), ikon: 'pi pi-link' },
   { key: 'yazdirma', label: t('hesapAyarlari.yazdirma'), ikon: 'pi pi-print' },
   { key: 'sistem', label: t('hesapAyarlari.sistem'), ikon: 'pi pi-sync' }
 ])

@@ -168,7 +168,7 @@ const maddeler = computed(() => [
     id: 6,
     baslik: t('gizlilikPolitikasi.madde6Baslik'),
     kategori: t('gizlilikPolitikasi.madde6Kategori'),
-    icon: 'pi pi-user-check',
+    icon: 'pi pi-user-edit',
     iconBg: 'rgba(236, 72, 153, 0.15)',
     iconColor: '#ec4899',
     icerik: t('gizlilikPolitikasi.madde6Icerik'),

@@ -192,7 +192,7 @@
       <Card class="ozet-kart">
         <template #title>
           <i
-            class="pi pi-calendar-week"
+            class="pi pi-calendar"
             style="margin-right: 8px"
           />{{ t('yedekler.haftalik') }}
         </template>
@@ -230,7 +230,7 @@
       <Card class="ozet-kart">
         <template #title>
           <i
-            class="pi pi-calendar-star"
+            class="pi pi-calendar-plus"
             style="margin-right: 8px"
           />{{ t('yedekler.yillik') }}
         </template>
@@ -342,7 +342,7 @@
                 >
                   <template #body="s">
                     <i
-                      class="pi pi-file-archive"
+                      class="pi pi-file"
                       style="margin-right: 8px; color: #3b82f6"
                     />{{ s.data.filename }}
                   </template>

@@ -2,7 +2,7 @@
   <div class="onboarding">
     <div class="onboard-kart">
       <div class="onboard-ust">
-        <i class="pi pi-rocket onboard-ikon" />
+        <i class="pi pi-bolt onboard-ikon" />
         <h2>{{ $t('onboarding.hosGeldiniz') }}</h2>
         <p>{{ $t('onboarding.bosSistem') }}</p>
       </div>

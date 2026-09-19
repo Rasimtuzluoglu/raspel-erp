@@ -14,12 +14,11 @@
 
     <div class="donem-secim">
       <label>{{ t('vergiRaporlari.donemAy') }}</label>
-      <InputText
+      <input
         v-model="donem"
-        placeholder="YYYY-MM"
-        class="donem-input"
-        @keyup.enter="yukle"
-      />
+        type="month"
+        class="p-inputtext donem-input"
+      >
       <Button
         icon="pi pi-search"
         :label="t('vergiRaporlari.getir')"
@@ -211,7 +210,8 @@ import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const { t } = useI18n()
 
-const donem = ref(new Date().toISOString().slice(0, 7))
+const _bugun = new Date()
+const donem = ref(`${_bugun.getFullYear()}-${String(_bugun.getMonth() + 1).padStart(2, '0')}`)
 const kdvBeyanname = ref(null)
 const bsRapor = ref(null)
 const baRapor = ref(null)
@@ -226,17 +226,18 @@ const yukle = async () => {
     toastBildirim.uyari(t('vergiRaporlari.donemFormatUyari'))
     return
   }
-  try {
-    const [kdv, bs, ba] = await Promise.all([
-      raporAPI.kdvBeyanname(donem.value),
-      raporAPI.baBs({ donem: donem.value, tur: 'BS' }),
-      raporAPI.baBs({ donem: donem.value, tur: 'BA' })
-    ])
-    kdvBeyanname.value = kdv.data
-    bsRapor.value = bs.data
-    baRapor.value = ba.data
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('vergiRaporlari.hataRapor'))
+  // Üç rapor bağımsız yüklenir; biri hata verse bile diğerleri gösterilir.
+  const [kdv, bs, ba] = await Promise.allSettled([
+    raporAPI.kdvBeyanname(donem.value),
+    raporAPI.baBs({ donem: donem.value, tur: 'BS' }),
+    raporAPI.baBs({ donem: donem.value, tur: 'BA' })
+  ])
+  kdvBeyanname.value = kdv.status === 'fulfilled' ? kdv.value.data : null
+  bsRapor.value = bs.status === 'fulfilled' ? bs.value.data : null
+  baRapor.value = ba.status === 'fulfilled' ? ba.value.data : null
+  const hata = [kdv, bs, ba].find((r) => r.status === 'rejected')
+  if (hata) {
+    toastBildirim.hata(hata.reason?.response?.data?.message || t('vergiRaporlari.hataRapor'))
   }
 }
 </script>

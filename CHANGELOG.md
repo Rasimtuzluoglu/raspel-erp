@@ -2,6 +2,12 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.19.1] - 2026-09-19 (Bozuk Türkçe Karakter Onarımı, İkonlar, KDV/BA-BS)
+### Düzeltmeler
+- **Bozuk Türkçe karakterler (mojibake) onarıldı**: Demo verilerinin UTF-8 yerine ANSI okunmasıyla oluşan `YÄ±ldÄ±z GÄ±da` türü kayıtlar cari/stok/not/görev/sipariş/masraf/izin/teslimat/fatura metin alanlarında düzeltildi.
+- **Eksik ikonlar**: PrimeIcons'ta bulunmayan 9 ikon geçerli karşılıklarıyla değiştirildi — özellikle **Entegrasyonlar** sekmesi (`pi-plug` → `pi-link`), ayrıca `pi-exchange`→`pi-sync`, `pi-rocket`→`pi-bolt`, `pi-calendar-week/star`→`pi-calendar/calendar-plus`, `pi-file-archive`→`pi-file`, `pi-user-check`→`pi-user-edit`, `pi-arrow-up-arrow-down`→`pi-arrow-right-arrow-left`.
+- **KDV Beyannamesi & BA/BS**: geçersiz dönem (`2026-13` gibi) artık 500/hata bildirimi yerine anlamlı **400** mesajı döndürür; dönem girişi serbest metin yerine **ay seçici** oldu ve iki rapor bağımsız yükleniyor (biri hata verse diğeri görünür).
+
 ## [1.19.0] - 2026-09-19 (Şoför Saha Portalı Erişimi, Okunabilirlik, Demo Veri)
 ### Eklenenler
 - **Şoför (DRIVER) artık Saha Portalı'na erişebilir**: router ve kenar menü allowlist'ine `/saha-portali` eklendi; saha portalının kullandığı uçlara (siparişler, izin, masraf, notlar, ajanda, stoklar, cari hesaplar, tahsilat, belgeler, bildirimler, şirket) DRIVER rolü eklendi.
