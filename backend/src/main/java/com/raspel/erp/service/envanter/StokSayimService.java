@@ -33,7 +33,7 @@ public class StokSayimService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final BildirimService bildirimService;
-    private final com.raspel.erp.service.sube.DepoStokService depoStokService;
+        private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
 
     @Transactional(readOnly = true)
@@ -186,9 +186,13 @@ public class StokSayimService {
     private void kritikStokBildirimiGonder(Stok stok) {
         try {
             if (stok.getMinMiktar() != null && stok.getMiktar().compareTo(stok.getMinMiktar()) <= 0 && stok.getSirketId() != null) {
-                bildirimService.bildirimGonder(stok.getSirketId(), "STOK",
-                        "Kritik Stok: " + stok.getAd(),
-                        "Stok miktarı (" + stok.getMiktar() + ") kritik seviyeye (" + stok.getMinMiktar() + ") düştü.");
+                Long sirketId = stok.getSirketId();
+                String ad = stok.getAd();
+                java.math.BigDecimal miktar = stok.getMiktar();
+                java.math.BigDecimal minMiktar = stok.getMinMiktar();
+                com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(sirketId, "STOK",
+                        "Kritik Stok: " + ad,
+                        "Stok miktarı (" + miktar + ") kritik seviyeye (" + minMiktar + ") düştü."));
             }
         } catch (Exception e) {
             log.warn("Kritik stok bildirimi gönderilemedi: {}", e.getMessage());

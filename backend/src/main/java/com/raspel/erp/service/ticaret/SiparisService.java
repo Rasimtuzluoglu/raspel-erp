@@ -51,7 +51,7 @@ public class SiparisService {
     private final FaturaService faturaService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
-    private final EmailService emailService;
+        private final EmailService emailService;
     private final TenantChecker tenantChecker;
     private final GorevRepository gorevRepository;
     private final PersonelRepository personelRepository;
@@ -111,14 +111,12 @@ public class SiparisService {
                         .kdvOrani(k.getKdvOrani()).tutar(k.getTutar()).build());
             }
         }
-        try {
-            if (sirketId != null) {
-                bildirimService.bildirimGonder(sirketId, "SIPARIS",
-                        "Yeni Sipariş: " + siparisNo,
-                        "Tutar: " + dto.getGenelToplam() + " ₺");
-            }
-        } catch (Exception e) {
-            log.warn("Sipariş bildirimi gönderilemedi: {}", e.getMessage());
+        if (sirketId != null) {
+            Long bildirimSirketId = sirketId;
+            java.math.BigDecimal bildirimTutar = dto.getGenelToplam();
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "SIPARIS",
+                    "Yeni Sipariş: " + siparisNo,
+                    "Tutar: " + bildirimTutar + " ₺"));
         }
         cacheYardimci.temizle("dashboard");
         return entityToDTO(s);
@@ -208,14 +206,14 @@ public class SiparisService {
                 log.warn("Sipariş teslimatı güncellenemedi ({}): {}", s.getSiparisNo(), e.getMessage());
             }
         }
-        try {
-            if (s.getCariHesapId() != null) {
-                cariHesapRepository.findById(s.getCariHesapId())
-                        .filter(c -> c.getEmail() != null && !c.getEmail().isBlank())
-                        .ifPresent(c -> emailService.siparisBildirimiGonder(c.getEmail(), s.getSiparisNo(), durum));
-            }
-        } catch (Exception e) {
-            log.warn("Sipariş bildirim e-postası gönderilemedi: {}", e.getMessage());
+        if (s.getCariHesapId() != null) {
+            cariHesapRepository.findById(s.getCariHesapId())
+                    .filter(c -> c.getEmail() != null && !c.getEmail().isBlank())
+                    .ifPresent(c -> {
+                        String eposta = c.getEmail();
+                        String siparisNo = s.getSiparisNo();
+                        com.raspel.erp.support.AfterCommitExecutor.calistir(() -> emailService.siparisBildirimiGonder(eposta, siparisNo, durum));
+                    });
         }
         cacheYardimci.temizle("dashboard");
         return sonuc;
@@ -348,13 +346,12 @@ public class SiparisService {
             } catch (Exception e) {
                 log.warn("Sipariş teslimatı oluşturulamadı ({}): {}", s.getSiparisNo(), e.getMessage());
             }
-            try {
-                bildirimService.bildirimGonder(sirketId, "TESLIMAT",
-                        "Şoför atandı: " + s.getSiparisNo(),
-                        "Şoför: " + driverAd);
-            } catch (Exception e) {
-                log.warn("Şoför atama bildirimi gönderilemedi: {}", e.getMessage());
-            }
+            String bildirimSiparisNo = s.getSiparisNo();
+            String bildirimSoforAd = driverAd != null ? driverAd : "";
+            Long bildirimSirketId = sirketId;
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "TESLIMAT",
+                    "Şoför atandı: " + bildirimSiparisNo,
+                    "Şoför: " + bildirimSoforAd));
         }
         return entityToDTO(s);
     }

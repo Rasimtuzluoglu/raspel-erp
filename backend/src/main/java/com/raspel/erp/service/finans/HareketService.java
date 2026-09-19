@@ -39,7 +39,7 @@ public class HareketService {
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
     private final BildirimService bildirimService;
-    private final FaturaRepository faturaRepository;
+        private final FaturaRepository faturaRepository;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
@@ -178,14 +178,12 @@ public class HareketService {
             faturaOdemeUygula(bagliFaturaId, dto.getTutar(), "Hareket #" + kaydedilenHareket.getId());
         }
         
-        try {
-            if (sirketId != null && !borclandirma) {
-                bildirimService.bildirimGonder(sirketId, hareketTuru == Hareket.HareketTuru.TAHSILAT ? "TAKSILAT" : "ODEME",
-                        (hareketTuru == Hareket.HareketTuru.TAHSILAT ? "Tahsilat: " : "Ödeme: ") + dto.getTutar() + " ₺",
-                        cariHesap.getAd() + (dto.getAciklama() != null ? " - " + dto.getAciklama() : ""));
-            }
-        } catch (Exception e) {
-            log.warn("Hareket bildirimi gönderilemedi: {}", e.getMessage());
+        if (sirketId != null && !borclandirma) {
+            Long bildirimSirketId = sirketId;
+            String turAdi = hareketTuru == Hareket.HareketTuru.TAHSILAT ? "TAKSILAT" : "ODEME";
+            String baslik = (hareketTuru == Hareket.HareketTuru.TAHSILAT ? "Tahsilat: " : "Ödeme: ") + dto.getTutar() + " ₺";
+            String aciklama = cariHesap.getAd() + (dto.getAciklama() != null ? " - " + dto.getAciklama() : "");
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, turAdi, baslik, aciklama));
         }
         
         log.info("Hareket başarıyla oluşturuldu - ID: {}", kaydedilenHareket.getId());

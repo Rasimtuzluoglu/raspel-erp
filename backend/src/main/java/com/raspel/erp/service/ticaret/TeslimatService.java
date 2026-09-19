@@ -40,7 +40,7 @@ public class TeslimatService {
     private final FaturaRepository faturaRepository;
     private final DosyaDepolamaService dosyaDepolama;
     private final BildirimService bildirimService;
-    private final TeslimatDurumLogRepository durumLogRepository;
+        private final TeslimatDurumLogRepository durumLogRepository;
     private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     private final SiparisRepository siparisRepository;
     private final PdfRaporService pdfRaporService;
@@ -141,14 +141,13 @@ public class TeslimatService {
                 .build();
         t = teslimatRepository.save(t);
 
-        try {
-            if (sirketId != null) {
-                bildirimService.bildirimGonder(sirketId, "TESLIMAT",
-                        "Yeni teslimat atandı: " + surucu.getDisplayName(),
-                        (musteriAdi != null ? musteriAdi + " - " : "") + (t.getTeslimatAdresi() != null ? t.getTeslimatAdresi() : ""));
-            }
-        } catch (Exception e) {
-            log.warn("Teslimat bildirimi gönderilemedi: {}", e.getMessage());
+        if (sirketId != null) {
+            Long bildirimSirketId = sirketId;
+            String surucuAd = surucu.getDisplayName();
+            String adres = (musteriAdi != null ? musteriAdi + " - " : "")
+                    + (t.getTeslimatAdresi() != null ? t.getTeslimatAdresi() : "");
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "TESLIMAT",
+                    "Yeni teslimat atandı: " + surucuAd, adres));
         }
 
         return toDTO(t, surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername());

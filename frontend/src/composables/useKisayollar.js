@@ -3,6 +3,28 @@ import router from '../router'
 
 const tuslar = new Map()
 
+// Ayni kisayol birden fazla bilesen tarafindan kaydedilebilir; her biri icin
+// ayri handler tutulur. Bir bilesen unmount oldugunda yalnizca kendi handler'i
+// kaldirilir (diger bilesenlerin kisayolu bozulmaz).
+function kaydet(eylem, fn) {
+  if (!tuslar.has(eylem)) tuslar.set(eylem, new Set())
+  tuslar.get(eylem).add(fn)
+}
+
+function kaldir(eylem, fn) {
+  const set = tuslar.get(eylem)
+  if (!set) return
+  set.delete(fn)
+  if (set.size === 0) tuslar.delete(eylem)
+}
+
+function calistir(eylem) {
+  const set = tuslar.get(eylem)
+  if (!set || set.size === 0) return false
+  set.forEach((fn) => fn())
+  return true
+}
+
 let gTimer = null
 let gAktif = false
 
@@ -29,9 +51,8 @@ function handler(e) {
   const key = e.key.toLowerCase()
 
   if (ctrl && key === 's') {
-    if (tuslar.has('kaydet')) {
+    if (calistir('kaydet')) {
       e.preventDefault()
-      tuslar.get('kaydet')()
     }
     return
   }
@@ -41,29 +62,24 @@ function handler(e) {
       clearTimeout(gTimer)
       return
     }
-    if (tuslar.has('iptal')) {
-      tuslar.get('iptal')()
-    }
+    calistir('iptal')
     return
   }
   if (e.key === 'F2') {
-    if (tuslar.has('yeni')) {
+    if (calistir('yeni')) {
       e.preventDefault()
-      tuslar.get('yeni')()
     }
     return
   }
   if (ctrl && key === 'p') {
-    if (tuslar.has('yazdir')) {
+    if (calistir('yazdir')) {
       e.preventDefault()
-      tuslar.get('yazdir')()
     }
     return
   }
   if (ctrl && key === 'k') {
-    if (tuslar.has('ara')) {
+    if (calistir('ara')) {
       e.preventDefault()
-      tuslar.get('ara')()
     }
     return
   }
@@ -104,19 +120,19 @@ function handler(e) {
 // preventDefault() cagirir (App.vue defaultPrevented kontrolu ile atlar).
 window.addEventListener('keydown', handler, true)
 
-export function useKisayollar({ kaydet, iptal, yeni, yazdir, ara } = {}) {
+export function useKisayollar({ kaydet: kaydetFn, iptal, yeni, yazdir, ara } = {}) {
   onMounted(() => {
-    if (kaydet) tuslar.set('kaydet', kaydet)
-    if (iptal) tuslar.set('iptal', iptal)
-    if (yeni) tuslar.set('yeni', yeni)
-    if (yazdir) tuslar.set('yazdir', yazdir)
-    if (ara) tuslar.set('ara', ara)
+    if (kaydetFn) kaydet('kaydet', kaydetFn)
+    if (iptal) kaydet('iptal', iptal)
+    if (yeni) kaydet('yeni', yeni)
+    if (yazdir) kaydet('yazdir', yazdir)
+    if (ara) kaydet('ara', ara)
   })
   onUnmounted(() => {
-    if (kaydet) tuslar.delete('kaydet')
-    if (iptal) tuslar.delete('iptal')
-    if (yeni) tuslar.delete('yeni')
-    if (yazdir) tuslar.delete('yazdir')
-    if (ara) tuslar.delete('ara')
+    if (kaydetFn) kaldir('kaydet', kaydetFn)
+    if (iptal) kaldir('iptal', iptal)
+    if (yeni) kaldir('yeni', yeni)
+    if (yazdir) kaldir('yazdir', yazdir)
+    if (ara) kaldir('ara', ara)
   })
 }

@@ -47,6 +47,9 @@ class FaturaControllerTest {
     @MockBean
     private com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
 
+    @MockBean
+    private com.raspel.erp.service.sistem.IdempotencyService idempotencyService;
+
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tur("SATIS").build());
@@ -87,6 +90,40 @@ class FaturaControllerTest {
                         .requestAttr("sirketId", 1L))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.faturaNumarasi").value("FTR-001"));
+    }
+
+    @Test
+    void shouldReturnExistingFaturaWhenIdempotencyKeyRepeated() throws Exception {
+        var kalem = FaturaKalemDTO.builder().aciklama("Ürün").adet(java.math.BigDecimal.valueOf(1)).birimFiyat(BigDecimal.valueOf(100)).build();
+        var dto = FaturaDTO.builder().id(7L).faturaNumarasi("FTR-007").tarih(LocalDate.now()).tur("SATIS").kalemler(List.of(kalem)).build();
+        when(idempotencyService.deneKilit(anyString())).thenReturn(false);
+        when(idempotencyService.tamamlananSonuc(anyString())).thenReturn(java.util.Optional.of(7L));
+        when(faturaService.faturaGetir(7L)).thenReturn(dto);
+
+        mockMvc.perform(post("/api/faturalar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Idempotency-Key", "abc-123")
+                        .content(objectMapper.writeValueAsString(dto))
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.faturaNumarasi").value("FTR-007"));
+    }
+
+    @Test
+    void shouldReleaseIdempotencyLockWhenCreateFails() throws Exception {
+        var kalem = FaturaKalemDTO.builder().aciklama("Ürün").adet(java.math.BigDecimal.valueOf(1)).birimFiyat(BigDecimal.valueOf(100)).build();
+        var dto = FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tarih(LocalDate.now()).tur("SATIS").kalemler(List.of(kalem)).build();
+        when(idempotencyService.deneKilit(anyString())).thenReturn(true);
+        when(faturaService.faturaOlustur(any(FaturaDTO.class), anyLong(), any(), any()))
+                .thenThrow(new com.raspel.erp.exception.BusinessException("hata"));
+
+        mockMvc.perform(post("/api/faturalar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Idempotency-Key", "abc-456")
+                        .content(objectMapper.writeValueAsString(dto))
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isBadRequest());
+        verify(idempotencyService).serbestBirak(anyString());
     }
 
     @Test

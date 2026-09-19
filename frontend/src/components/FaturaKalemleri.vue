@@ -89,6 +89,8 @@
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-danger p-button-sm"
+            :aria-label="$t('common.delete')"
+            :title="$t('common.delete')"
             @click="$emit('remove', s.index)"
           />
         </template>

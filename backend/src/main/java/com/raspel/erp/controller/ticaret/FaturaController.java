@@ -34,9 +34,7 @@ public class FaturaController {
 
     private final FaturaService faturaService;
     private final com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
-    private final java.util.concurrent.ConcurrentHashMap<String, IdempotencyKaydi> idempotencyCache = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final long IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
-    private static final long IDEMPOTENCY_TEMIZLIK_MS = 5 * 60 * 1000;
+    private final com.raspel.erp.service.sistem.IdempotencyService idempotencyService;
 
     @GetMapping
     @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler. search ile fatura no/cari adı araması yapılır.")
@@ -137,48 +135,34 @@ public class FaturaController {
             Long kullaniciId = (Long) request.getAttribute("kullaniciId");
             String displayName = (String) request.getAttribute("displayName");
 
-            // Anahtarı olusturmadan ONCE rezerve et (putIfAbsent) ki es zamanli iki istek
-            // ayni faturayi iki kez olusturmasin. Baska bir istek zaten tamamlandiysa
-            // onun sonucu donulur.
-            IdempotencyKaydi rezervasyon = new IdempotencyKaydi(null);
-            IdempotencyKaydi onceki;
-            while (true) {
-                IdempotencyKaydi mevcut = idempotencyCache.putIfAbsent(idempotencyKey, rezervasyon);
-                if (mevcut == null) {
-                    onceki = null;
-                    break;
-                }
-                // Suresi dolmus kaydi temizleyip yeniden dene.
-                if (mevcut.suresiDoldu() && idempotencyCache.remove(idempotencyKey, mevcut)) {
-                    continue;
-                }
-                // Baska istek ayni anda isliyorsa kisa sure bekleyip sonucu tekrar kontrol et.
-                if (mevcut.bekleyenMi()) {
+            // Dağıtık kilit: anahtarı fatura oluşturmadan ÖNCE rezerve et.
+            // Aynı isteğin tekrarı (retry) mükerrer fatura üretmez.
+            String anahtar = "idem:fatura:" + (sirketId != null ? sirketId : 0L) + ":" + idempotencyKey;
+            if (!idempotencyService.deneKilit(anahtar)) {
+                // Başka bir istek işliyor olabilir; kısa süre sonucu bekle.
+                for (int i = 0; i < 20; i++) {
+                    java.util.Optional<Long> sonuc = idempotencyService.tamamlananSonuc(anahtar);
+                    if (sonuc.isPresent()) {
+                        return ResponseEntity.ok(faturaService.faturaGetir(sonuc.get()));
+                    }
                     try {
-                        Thread.sleep(150);
+                        Thread.sleep(100);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
+                        break;
                     }
-                    IdempotencyKaydi guncel = idempotencyCache.get(idempotencyKey);
-                    if (guncel != null && !guncel.bekleyenMi() && !guncel.suresiDoldu()) {
-                        return ResponseEntity.ok(guncel.fatura);
-                    }
-                    continue;
                 }
-                onceki = mevcut;
-                break;
-            }
-            if (onceki != null) {
-                return ResponseEntity.ok(onceki.fatura);
+                throw new com.raspel.erp.exception.BusinessException(
+                        "Bu istek hâlâ işleniyor. Lütfen birkaç saniye sonra tekrar deneyin.");
             }
 
             try {
                 FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
-                idempotencyCache.put(idempotencyKey, new IdempotencyKaydi(olusturulan));
+                idempotencyService.tamamla(anahtar, olusturulan.getId());
                 return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
             } catch (RuntimeException e) {
-                // Olusturma basarisizsa rezervasyonu serbest birak; sonraki deneme calissin.
-                idempotencyCache.remove(idempotencyKey, rezervasyon);
+                // Oluşturma başarısızsa kilidi bırak; sonraki deneme çalışsın.
+                idempotencyService.serbestBirak(anahtar);
                 throw e;
             }
         }
@@ -187,19 +171,6 @@ public class FaturaController {
         String displayName = (String) request.getAttribute("displayName");
         FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
         return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
-    }
-
-    /** TTL süresi dolan idempotency kayıtlarını periyodik olarak temizler (unbounded büyümeyi engeller). */
-    @PreAuthorize("permitAll()")
-    @Scheduled(fixedDelay = IDEMPOTENCY_TEMIZLIK_MS)
-    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "idempotencyTemizlik", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
-    public void idempotencyCacheTemizle() {
-        int oncekiBoyut = idempotencyCache.size();
-        idempotencyCache.entrySet().removeIf(e -> e.getValue().suresiDoldu());
-        int temizlenen = oncekiBoyut - idempotencyCache.size();
-        if (temizlenen > 0) {
-            log.info("Idempotency cache temizlendi: {} kayıt silindi", temizlenen);
-        }
     }
 
     @PutMapping("/{id}")
@@ -277,23 +248,4 @@ public class FaturaController {
     }
 
     record DurumRequest(String durum) {}
-
-    private static final class IdempotencyKaydi {
-        final FaturaDTO fatura;
-        final long olusturmaZamani;
-
-        IdempotencyKaydi(FaturaDTO fatura) {
-            this.fatura = fatura;
-            this.olusturmaZamani = System.currentTimeMillis();
-        }
-
-        boolean suresiDoldu() {
-            return System.currentTimeMillis() - olusturmaZamani > IDEMPOTENCY_TTL_MS;
-        }
-
-        /** Eşzamanlı ikinci istek, henüz tamamlanmamış rezervasyonu beklememesi için. */
-        boolean bekleyenMi() {
-            return fatura == null;
-        }
-    }
 }

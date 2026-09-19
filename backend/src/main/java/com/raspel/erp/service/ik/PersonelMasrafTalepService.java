@@ -37,7 +37,7 @@ public class PersonelMasrafTalepService {
     private final KullaniciRepository kullaniciRepository;
     private final MasrafService masrafService;
     private final BildirimService bildirimService;
-    private final TenantChecker tenantChecker;
+        private final TenantChecker tenantChecker;
     private final OnayAyariService onayAyariService;
 
     @Transactional(readOnly = true)
@@ -88,14 +88,14 @@ public class PersonelMasrafTalepService {
             log.warn("Otomatik onay kontrolü başarısız: {}", e.getMessage());
         }
 
-        try {
-            if (sirketId != null) {
-                bildirimService.bildirimGonder(sirketId, "MASRAF_TALEBI",
-                        "Yeni Personel Talebi: " + talep.getTur(),
-                        "Tutar: " + talep.getTutar() + " ₺, Açıklama: " + talep.getAciklama());
-            }
-        } catch (Exception e) {
-            log.warn("Talep bildirimi gönderilemedi: {}", e.getMessage());
+        if (sirketId != null) {
+            Long bildirimSirketId = sirketId;
+            String tur = talep.getTur();
+            java.math.BigDecimal tutar = talep.getTutar();
+            String aciklama = talep.getAciklama();
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "MASRAF_TALEBI",
+                    "Yeni Personel Talebi: " + tur,
+                    "Tutar: " + tutar + " ₺, Açıklama: " + aciklama));
         }
 
         return entityToDTO(talep);

@@ -14,6 +14,8 @@ export const useDovizStore = defineStore('doviz', () => {
   const aktifParaBirimi = ref('TRY')
   const loading = ref(false)
   const sonGuncelleme = ref(new Date())
+  // Kurlar API'den alinamayip varsayilan/onbellek degerler kullanildiginda true olur.
+  const bayat = ref(false)
 
   const getKur = (kod) => {
     if (kod === 'TRY')
@@ -74,8 +76,11 @@ export const useDovizStore = defineStore('doviz', () => {
       if (res.data && res.data.length) {
         kurlar.value = res.data
         sonGuncelleme.value = new Date()
+        bayat.value = false
       }
     } catch (e) {
+      // Varsayilan kurlarla devam edilir; arayuz "bayat kur" uyarisi gosterebilir.
+      bayat.value = true
       console.warn('Döviz kurları yüklenirken hata, varsayılan kurlar kullanılıyor:', e)
     } finally {
       loading.value = false
@@ -89,13 +94,15 @@ export const useDovizStore = defineStore('doviz', () => {
       if (res.data && res.data.length) {
         kurlar.value = res.data
         sonGuncelleme.value = new Date()
+        bayat.value = false
       }
     } catch (e) {
+      bayat.value = true
       console.error('Kurlar güncellenemedi:', e)
     } finally {
       loading.value = false
     }
   }
 
-  return { kurlar, aktifParaBirimi, loading, sonGuncelleme, getKur, convert, formatPara, kurlariYukle, kurlariGuncelle }
+  return { kurlar, aktifParaBirimi, loading, sonGuncelleme, bayat, getKur, convert, formatPara, kurlariYukle, kurlariGuncelle }
 })

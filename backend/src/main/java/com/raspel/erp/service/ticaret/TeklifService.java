@@ -41,7 +41,7 @@ public class TeklifService {
     private final FaturaService faturaService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
-    private final TenantChecker tenantChecker;
+        private final TenantChecker tenantChecker;
 
     @Transactional(readOnly = true)
     public Page<TeklifDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -156,14 +156,12 @@ public class TeklifService {
             }
         }
 
-        try {
-            if (sirketId != null) {
-                bildirimService.bildirimGonder(sirketId, "TEKLIF",
-                        "Yeni Satış Teklifi: " + teklifNo,
-                        "Tutar: " + genelToplam + " ₺");
-            }
-        } catch (Exception e) {
-            log.warn("Teklif bildirimi gönderilemedi: {}", e.getMessage());
+        if (sirketId != null) {
+            Long bildirimSirketId = sirketId;
+            java.math.BigDecimal bildirimTutar = genelToplam;
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "TEKLIF",
+                    "Yeni Satış Teklifi: " + teklifNo,
+                    "Tutar: " + bildirimTutar + " ₺"));
         }
 
         return entityToDTO(t);

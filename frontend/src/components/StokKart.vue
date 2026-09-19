@@ -36,11 +36,15 @@
       <Button
         icon="pi pi-pencil"
         class="p-button-rounded p-button-info p-button-sm"
+        :aria-label="$t('common.edit')"
+        :title="$t('common.edit')"
         @click.stop="$emit('duzenle', stok)"
       />
       <Button
         icon="pi pi-trash"
         class="p-button-rounded p-button-danger p-button-sm"
+        :aria-label="$t('common.delete')"
+        :title="$t('common.delete')"
         @click.stop="$emit('sil', stok.id)"
       />
     </div>

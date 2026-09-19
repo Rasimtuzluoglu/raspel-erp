@@ -4274,6 +4274,7 @@
   "cmp": {
     "dzHeader": "Currency Converter",
     "dzSwap": "Swap currencies",
+    "dovizBayat": "Exchange rates may be out of date; defaults are being used.",
     "dzTry": "TRY - Turkish Lira",
     "dzAmount": "Amount",
     "kdvHeader": "VAT Calculator",

@@ -1,5 +1,15 @@
 import { apiClient } from '../client.js'
 
+// Idempotency anahtari üretir (tarayici destegi yoksa zaman damgasi + rastgele ile).
+function idempotencyAnahtari() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  } catch {
+    /* yoksay */
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 export const cariHesapAPI = {
   getAll(params) {
     return apiClient.get('/cari-hesaplar', { params })
@@ -71,7 +81,10 @@ export const faturaAPI = {
     return apiClient.get(`/faturalar/${id}`)
   },
   create(data) {
-    return apiClient.post('/faturalar', data)
+    // Idempotency anahtari: ag tekrarinda/çift tıklamada mükerrer fatura oluşmasını engeller.
+    return apiClient.post('/faturalar', data, {
+      headers: { 'X-Idempotency-Key': idempotencyAnahtari() }
+    })
   },
   update(id, data) {
     return apiClient.put(`/faturalar/${id}`, data)

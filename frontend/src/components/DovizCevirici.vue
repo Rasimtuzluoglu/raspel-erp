@@ -60,6 +60,15 @@
           class="kur-tarih"
         >• {{ kurTarihi }}</span>
       </div>
+
+      <div
+        v-if="bayat"
+        class="kur-bayat-uyari"
+        role="status"
+      >
+        <i class="pi pi-exclamation-triangle" />
+        <span>{{ t('cmp.dovizBayat') }}</span>
+      </div>
     </div>
   </Dialog>
 </template>
@@ -81,6 +90,7 @@ const sonuc = ref('0')
 const kurlar = ref([{ label: t('cmp.dzTry'), kod: 'TRY' }])
 const kurMap = ref({})
 const kurTarihi = ref('')
+const bayat = ref(false)
 
 onMounted(async () => {
   try {
@@ -98,9 +108,11 @@ onMounted(async () => {
     })
     kurMap.value = map
     kurlar.value = liste
+    bayat.value = false
     cevir()
   } catch {
-    /* ignore */
+    // Kurlar alinamadiginda varsayilan degerlerle devam edilir; kullanici uyarilir.
+    bayat.value = true
   }
 })
 

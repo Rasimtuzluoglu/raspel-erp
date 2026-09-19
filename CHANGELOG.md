@@ -2,6 +2,23 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.26.0] - 2026-09-20 (Faz 5 - Transaction Hijyeni ve Dağıtık Idempotency)
+### Mimari
+- **Bildirimler commit sonrasına taşındı**: Fatura, sipariş, hareket, stok, teklif, teslimat ve masraf talebi akışlarındaki WebSocket/RabbitMQ bildirimleri ve kritik stok e-postaları yeni `AfterCommitExecutor` ile transaction commit edildikten sonra gönderiliyor. Böylece transaction yavaş dış servis için açık tutulmuyor ve rollback olan işlem için yanlış bildirim çıkmıyor.
+
+### Idempotency (çok replikalı)
+- **Dağıtık idempotency**: `X-Idempotency-Key` artık `IdempotencyService` ile yönetiliyor; Redis varsa `SET NX EX` (10 dk TTL) ile replikalar arası geçerli, Redis yoksa JVM içi yedeğe düşüyor. Aynı anahtarla eşzamanlı ikinci istek mükerrer fatura oluşturamaz; işlem hatasında kilit bırakılır.
+- Frontend fatura oluşturmada `crypto.randomUUID()` ile anahtar üretip gönderiyor (ağ tekrarı/çift tıklama koruması).
+
+### Frontend
+- **Döviz kuru bayatlığı**: Kur API'sinden veri alınamazsa `dovizStore.bayat` işaretleniyor ve Döviz Çevirici'de uyarı gösteriliyor (sessiz varsayılan kullanımı bitti).
+- **Kısayol çakışması giderildi**: `useKisayollar` artık aynı kısayolu birden fazla bileşenin kaydetmesine izin veriyor; bir bileşen kaldırıldığında diğerinin kısayolu bozulmuyor.
+- **Erişilebilirlik**: İkon-only sil/düzenle düğmelerine `aria-label` eklendi.
+- AGENTS.md test sayıları güncellendi (backend 1100 / frontend 717).
+
+### Testler
+- Backend 1100 test (IdempotencyService + fatura idempotency regresyonları), frontend 717 test (0 hata); lint + i18n + build temiz.
+
 ## [1.25.0] - 2026-09-19 (Faz 4 - Dayanıklılık ve Kaynak Güvenliği)
 ### Kaynak Sızıntıları
 - **Redis bağlantı sızıntıları giderildi**: `LoginRateLimitFilter` her giriş denemesinde açılan bağlantıyı artık `try-with-resources` ile kapatıyor; `RedisHealthIndicator` ping hata verse bile bağlantıyı kapatıyor (aktüatör sağlık yoklaması bağlantı havuzunu tüketemez).

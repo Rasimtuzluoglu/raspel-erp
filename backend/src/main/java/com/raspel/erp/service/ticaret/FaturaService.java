@@ -77,7 +77,7 @@ public class FaturaService {
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
-    private final EmailService emailService;
+        private final EmailService emailService;
     private final PdfRaporService pdfRaporService;
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
@@ -422,15 +422,14 @@ public class FaturaService {
         }
 
         log.info("Fatura oluşturuldu - No: {}, ID: {}", faturaNo, kaydedilen.getId());
-        try {
-            if (sirketId != null) {
-                bildirimService.bildirimGonder(sirketId, "FATURA",
-                        "Yeni Fatura: " + faturaNo,
-                        "Tutar: " + genelToplam + " ₺" + (cariHesap != null ? " - " + cariHesap.getAd() : ""),
-                        displayName);
-            }
-        } catch (Exception e) {
-            log.warn("Fatura bildirimi gönderilemedi: {}", e.getMessage());
+        if (sirketId != null) {
+            Long bildirimSirketId = sirketId;
+            String bildirimCariAd = cariHesap != null ? cariHesap.getAd() : null;
+            java.math.BigDecimal bildirimTutar = genelToplam;
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "FATURA",
+                    "Yeni Fatura: " + faturaNo,
+                    "Tutar: " + bildirimTutar + " ₺" + (bildirimCariAd != null ? " - " + bildirimCariAd : ""),
+                    displayName));
         }
 
         // Kasa seçilmiş ve tahsilat yapılmışsa kasaya giriş işle
@@ -481,9 +480,11 @@ public class FaturaService {
         }
         try {
             if (fatura.getSirketId() != null) {
-                bildirimService.bildirimGonder(fatura.getSirketId(), "FATURA",
+                Long bildirimSirketId = fatura.getSirketId();
+                String alici = fatura.getCariHesap().getEmail();
+                com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "FATURA",
                         "Fatura e-posta ile gönderildi: " + fatura.getFaturaNumarasi(),
-                        "Alıcı: " + fatura.getCariHesap().getEmail());
+                        "Alıcı: " + alici));
             }
         } catch (Exception e) {
             log.warn("Fatura gönderim bildirimi başarısız: {}", e.getMessage());
@@ -956,14 +957,16 @@ public class FaturaService {
                 Stok stok = stokRepository.findById(stokId).orElse(null);
                 if (stok == null) continue;
                 if (sirketId != null) {
-                    bildirimService.bildirimGonder(sirketId, "STOK",
+                    Long bildirimSirketId = sirketId;
+                    com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "STOK",
                             "Kritik Stok: " + stok.getAd(),
-                            "Mevcut: " + stok.getMiktar() + ", Minimum: " + stok.getMinMiktar());
+                            "Mevcut: " + stok.getMiktar() + ", Minimum: " + stok.getMinMiktar()));
                 }
                 if (sirketEmail != null && !sirketEmail.isBlank()) {
-                    emailService.stokUyarisiGonder(sirketEmail, stok.getAd(),
+                    String bildirimEmail = sirketEmail;
+                    com.raspel.erp.support.AfterCommitExecutor.calistir(() -> emailService.stokUyarisiGonder(bildirimEmail, stok.getAd(),
                             stok.getMiktar() != null ? stok.getMiktar().toString() : "0",
-                            stok.getBirim() != null ? stok.getBirim() : "");
+                            stok.getBirim() != null ? stok.getBirim() : ""));
                 }
             }
         } catch (Exception e) {

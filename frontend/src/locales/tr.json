@@ -4276,6 +4276,7 @@
   "cmp": {
     "dzHeader": "Döviz Çevirici",
     "dzSwap": "Para birimlerini değiştir",
+    "dovizBayat": "Döviz kurları güncel olmayabilir; varsayılan değerler kullanılıyor.",
     "dzTry": "TRY - Türk Lirası",
     "dzAmount": "Tutar",
     "kdvHeader": "KDV Hesaplayıcı",
