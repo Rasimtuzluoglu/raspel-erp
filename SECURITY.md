@@ -33,13 +33,22 @@ GRAFANA_PASSWORD=
 
 - JWT cookie: `Secure` + `HttpOnly` + `SameSite=Strict`
 - HSTS aktif
-- Actuator health detayları: `when-authorized` (gizli)
+- Actuator: yalnızca `health` ve `prometheus` kimliksiz erişilebilir; diğer uçlar ADMIN
 - `/api/sirketler/aktif` public değil
 - Şifre politikası: min 8, max 72, büyük/küçük harf + rakam + özel karakter
-- Giriş rate limit: IP başına 5 deneme / 60 sn
+- Giriş rate limit: 5 deneme / 60 sn (IP **ve** kullanıcı adı bazında; şifre sıfırlama uçları dahil)
+- Zayıf/varsayılan parolalar (`postgres`, `raspel`, `raspelRedis2026`, `admin`, `123456` vb.) prod'da reddedilir (fail-fast)
+- CORS joker (`*`) origin prod'da reddedilir
 - CSV export: formula injection koruması (`=`, `+`, `-`, `@` önekleri)
 - Container'lar non-root kullanıcıyla çalışır
 - Ağ izolasyonu: frontend-net / backend-net / db-net
+
+### Yedekleme / Kurtarma (K10)
+
+- Günlük otomatik `pg_dump` yedeği alınır (uygulama içi `BackupService`, 03:00) ve şifrelenmiş bulut kopyası MinIO'ya yüklenir.
+- MinIO aynı sunucuda çalıştığı için **offsite kopya** için MinIO bucket'ı S3 uyumlu harici depoya replike edilmeli veya `scripts/backup.ps1` çıktısı harici ortama kopyalanmalıdır.
+- PITR (point-in-time recovery) gereksinimi için PostgreSQL WAL arşivleme (`archive_mode=on`) ayrıca yapılandırılmalıdır; mevcut kurulum günlük snapshot seviyesindedir.
+- Kurtarma tatbikatı: `scripts/disaster-recovery-test.ps1` (üç ayda bir çalıştırılması önerilir).
 
 ### Anahtar Döndürme
 

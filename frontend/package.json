@@ -1,6 +1,6 @@
 {
   "name": "raspel-erp",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "description": "RasPel ERP - Kurumsal Kaynak Planlama Sistemi Vue 3 Frontend",
   "type": "module",
   "scripts": {

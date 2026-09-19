@@ -30,11 +30,20 @@ import java.util.stream.Stream;
 @Slf4j
 public class LlmClientService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    // LLM yanitlari uzun surebilir; baglanti 10 sn, okuma 120 sn ile sinirlandirilir.
+    private final RestTemplate restTemplate = restTemplateOlustur();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient streamingClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(20))
             .build();
+
+    private static RestTemplate restTemplateOlustur() {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10_000);
+        factory.setReadTimeout(120_000);
+        return new RestTemplate(factory);
+    }
 
     public String sendQuery(String provider, String model, String apiKey, String systemPrompt, String userPrompt) {
         if (provider == null) {

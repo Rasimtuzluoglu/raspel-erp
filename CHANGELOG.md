@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.22.0] - 2026-09-19 (Üretim Sertleştirmesi - Faz 2)
+### Güvenlik
+- **Varsayılan/zayıf parolalar prod'da reddedilir**: `ProdGuvenlikKontrolu` artık `postgres`, `raspel`, `raspelRedis2026`, `admin`, `123456` gibi bilinen zayıf değerlerle prod başlatmayı engelliyor (fail-fast); CORS joker (`*`) origin de reddediliyor.
+- **Canlı kimlik bilgileri döndürüldü**: PostgreSQL, Redis ve RabbitMQ parolaları güçlü rastgele değerlerle değiştirildi (canlı ALTER/change_password + `.env`); uygulama varsayılanları (`application.properties`) artık boş — parola yalnızca ortam değişkeninden okunuyor.
+- **Belge yükleme sertleştirildi**: Uzantı/MIME taklidine karşı magic-byte içerik doğrulaması (PDF/PNG/JPEG/GIF/BMP/WEBP/ZIP/Office/RTF; metinlerde NUL bayt reddi); indirme uç noktasında path traversal ve tenant dışı erişim kapatıldı (fail-closed); yükleme hatası artık iç detay sızdırmıyor.
+- **Denetim kaydı tenant kilidi**: Şirket bağlamı olmadan denetim kaydı sorgusu artık tüm şirketlerin kayıtlarını döndürmüyor (boş sonuç + uyarı).
+- **Hata mesajı sanitizasyonu**: Constraint ihlali yanıtları ham mesaj yerine alan adı + doğrulama mesajı döndürüyor.
+- **Girdi doğrulama (S14 kısmi)**: Stok düzeltme, POS terminali, personel masraf talebi, stok/cari özel fiyat DTO'larına zorunluluk/aralık kısıtları ve ilgili uç noktalara `@Valid` eklendi.
+- **Gitleaks kör noktaları kapatıldı**: `.env` yol muafiyeti ve zayıf parola değer muafiyeti kaldırıldı; artık commit edilen bir `.env`/zayıf parola taramada yakalanır.
+- **Yedekleme betiği**: `scripts/backup.ps1` parolayı argv yerine ortam değişkeniyle geçiriyor.
+
+### DevOps / Yapılandırma
+- **Flyway**: prod profilinde `baseline-on-migrate=false` — geçmişi olmayan şemaya sessiz baseline uygulanması engellendi.
+- **HTTP istemci zaman aşımı**: `RestTemplate` (5 sn bağlantı / 30 sn okuma) ve LLM istemcisi (10/120 sn) artık sarkma yapmıyor.
+- SECURITY.md: yeni sertleştirmeler, zayıf parola politikası ve offsite yedek/PITR gereksinimleri belgelendi.
+
+### Testler
+- Backend 1094 test (0 hata); masraf talebi zorunlu alan doğrulaması için regresyon testi eklendi.
+
 ## [1.21.0] - 2026-09-19 (Üretim Sertleştirmesi - Faz 1)
 ### Güvenlik
 - **Oturum iptali düzeltildi**: Kara liste TTL'i artık token'ın gerçek bitiş zamanına göre hesaplanıyor (sabit 30 gün yerine); Redis kesintisinde yerel iptal listesi devrede.

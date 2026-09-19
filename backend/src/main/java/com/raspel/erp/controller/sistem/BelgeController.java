@@ -67,6 +67,11 @@ public class BelgeController {
                 || !IZIN_VERILEN_UZANTILAR.contains(uzanti)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz dosya tipi. İzin verilenler: PDF, Office, resim, metin, ZIP"));
         }
+        // Uzanti/MIME istemci tarafindan taklit edilebilir; icerik imzasini (magic byte) dogrula.
+        if (!icerikImzasiGecerliMi(file, uzanti)) {
+            log.warn("Belge icerik imzasi uzantiyla uyusmuyor: {}", orjinalAd);
+            return ResponseEntity.badRequest().body(Map.of("error", "Dosya içeriği uzantısıyla uyuşmuyor"));
+        }
         Long sirketId = (Long) request.getAttribute("sirketId");
         try {
             String filename = dosyaDepolama.kaydet(BELGE_KLASOR, file);
@@ -79,7 +84,7 @@ public class BelgeController {
             return ResponseEntity.ok(belge);
         } catch (IOException e) {
             log.error("Belge yüklenemedi", e);
-            return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi: " + e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi"));
         }
     }
 
@@ -101,8 +106,12 @@ public class BelgeController {
     @Operation(summary = "Belge indir", description = "Belgeyi indirir")
     public ResponseEntity<byte[]> indir(@PathVariable String filename, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        boolean aitMi = belgeRepository.findByUrlEndingWith(filename).stream()
-                .anyMatch(b -> b.getSirketId() == null || b.getSirketId().equals(sirketId));
+        // Yol gezinme (path traversal) ve tenant disi erisimi kapali tut.
+        if (filename == null || filename.contains("..") || !filename.matches("[A-Za-z0-9._-]{1,128}")) {
+            return ResponseEntity.notFound().build();
+        }
+        boolean aitMi = sirketId != null && belgeRepository.findByUrlEndingWith(filename).stream()
+                .anyMatch(b -> sirketId.equals(b.getSirketId()));
         if (!aitMi) {
             return ResponseEntity.notFound().build();
         }
@@ -136,5 +145,48 @@ public class BelgeController {
         }
         belgeRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Uzantiya gore dosya icerik imzasini dogrular. Imza degilse istemci MIME/uzanti
+     * taklidi yapiyor olabilir; yuklemeyi reddederiz.
+     */
+    private boolean icerikImzasiGecerliMi(MultipartFile file, String uzanti) {
+        byte[] b;
+        try (java.io.InputStream in = file.getInputStream()) {
+            b = in.readNBytes(12);
+        } catch (IOException e) {
+            return false;
+        }
+        return switch (uzanti) {
+            case ".pdf" -> baslar(b, 0x25, 0x50, 0x44, 0x46);
+            case ".png" -> baslar(b, 0x89, 0x50, 0x4E, 0x47);
+            case ".jpg", ".jpeg" -> baslar(b, 0xFF, 0xD8, 0xFF);
+            case ".gif" -> baslar(b, 0x47, 0x49, 0x46, 0x38);
+            case ".bmp" -> baslar(b, 0x42, 0x4D);
+            case ".webp" -> b.length >= 12 && baslar(b, 0x52, 0x49, 0x46, 0x46)
+                    && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P';
+            case ".zip", ".docx", ".xlsx" -> baslar(b, 0x50, 0x4B, 0x03, 0x04)
+                    || baslar(b, 0x50, 0x4B, 0x05, 0x06);
+            case ".doc", ".xls" -> baslar(b, 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1);
+            case ".rtf" -> baslar(b, 0x7B, 0x5C, 0x72, 0x74, 0x66);
+            // Metin tabanli uzantilarda imza yoktur; NUL bayti iceren ikili dosya kabul edilmez.
+            default -> !nulBaytiVarMi(b);
+        };
+    }
+
+    private boolean baslar(byte[] veri, int... imza) {
+        if (veri.length < imza.length) return false;
+        for (int i = 0; i < imza.length; i++) {
+            if ((veri[i] & 0xFF) != imza[i]) return false;
+        }
+        return true;
+    }
+
+    private boolean nulBaytiVarMi(byte[] veri) {
+        for (byte b : veri) {
+            if (b == 0) return true;
+        }
+        return false;
     }
 }

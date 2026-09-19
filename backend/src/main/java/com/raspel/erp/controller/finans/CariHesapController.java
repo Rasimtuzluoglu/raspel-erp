@@ -170,7 +170,7 @@ public class CariHesapController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<com.raspel.erp.dto.finans.CariFiyatDTO> cariFiyatKaydet(
             @PathVariable Long id,
-            @RequestBody com.raspel.erp.dto.finans.CariFiyatDTO dto,
+            @jakarta.validation.Valid @RequestBody com.raspel.erp.dto.finans.CariFiyatDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(cariHesapService.cariFiyatKaydet(id, dto, sirketId));

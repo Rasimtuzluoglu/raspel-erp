@@ -159,8 +159,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException e) {
+        // Ham mesaj metod adi/arguman degeri icerebilir; yalnizca alan adi + dogrulama mesaji dondurulur.
+        String detay = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(v -> {
+                    String alan = v.getPropertyPath().toString();
+                    int nokta = alan.lastIndexOf('.');
+                    return (nokta >= 0 ? alan.substring(nokta + 1) : alan) + ": " + v.getMessage();
+                })
+                .orElse("Geçersiz parametre");
+        log.warn("Constraint violation: {}", detay);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(buildBody("Doğrulama hatası: " + e.getMessage(), HttpStatus.BAD_REQUEST));
+                .body(buildBody("Doğrulama hatası: " + detay, HttpStatus.BAD_REQUEST));
     }
 
     @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)

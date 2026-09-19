@@ -52,7 +52,7 @@ public class PersonelMasrafTalepController {
     @PostMapping
     @Operation(summary = "Yeni masraf / avans talebi oluştur")
     public ResponseEntity<PersonelMasrafTalepDTO> talepOlustur(
-            @RequestBody PersonelMasrafTalepDTO dto,
+            @jakarta.validation.Valid @RequestBody PersonelMasrafTalepDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");

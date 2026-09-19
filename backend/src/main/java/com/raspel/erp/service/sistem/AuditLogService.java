@@ -4,6 +4,7 @@ import com.raspel.erp.entity.sistem.AuditLog;
 import com.raspel.erp.repository.sistem.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
@@ -48,6 +50,11 @@ public class AuditLogService {
 
     public Page<AuditLog> filtreliGetir(Long sirketId, Long kullaniciId, String islem, String entityAdi,
                                          LocalDate baslangicTarih, LocalDate bitisTarih, Pageable pageable) {
+        // Tenant baglami yoksa tum sirketlerin denetim kayitlari donmez (fail-closed).
+        if (sirketId == null) {
+            log.warn("Denetim kaydi sorgusu sirket baglami olmadan yapildi; bos sonuc donuldu.");
+            return Page.empty(pageable);
+        }
         LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;
         LocalDateTime bitis = bitisTarih != null ? bitisTarih.atTime(LocalTime.MAX) : null;
         return auditLogRepository.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangic, bitis, pageable);

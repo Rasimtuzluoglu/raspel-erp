@@ -15,6 +15,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -54,7 +55,9 @@ class PersonelMasrafTalepControllerTest {
     @Test
     void shouldCreateTalep() throws Exception {
         var dto = PersonelMasrafTalepDTO.builder()
+                .tur("YAKIT")
                 .tutar(BigDecimal.valueOf(250))
+                .tarih(LocalDate.now())
                 .kategori("YAKIT")
                 .aciklama("Benzin")
                 .build();
@@ -68,6 +71,16 @@ class PersonelMasrafTalepControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tutar").value(250));
+    }
+
+    @Test
+    void shouldRejectTalepWithoutRequiredFields() throws Exception {
+        mockMvc.perform(post("/api/personel-masraf-talepler")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 2L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aciklama\":\"Benzin\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

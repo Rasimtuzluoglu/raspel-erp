@@ -29,7 +29,8 @@ $env:PGPASSWORD = $password
 
 try {
     # pg_dump | gzip tek seferde (BackupService'in yaptigi gibi).
-    docker exec $ContainerName sh -c "PGPASSWORD='$password' pg_dump -U $DbUser -d $DbName --no-owner --no-acl --clean --if-exists | gzip > /tmp/$stamp.sql.gz"
+    # Sifre argv'de degil, ortam degiskeni olarak iletilir (process listesinde gorunmez).
+    docker exec -e PGPASSWORD $ContainerName sh -c "pg_dump -U $DbUser -d $DbName --no-owner --no-acl --clean --if-exists | gzip > /tmp/$stamp.sql.gz"
     if ($LASTEXITCODE -ne 0) { throw "pg_dump hatasi (exit $LASTEXITCODE)" }
     docker cp "$ContainerName`:/tmp/$stamp.sql.gz" $backupFile
     docker exec $ContainerName rm -f "/tmp/$stamp.sql.gz"

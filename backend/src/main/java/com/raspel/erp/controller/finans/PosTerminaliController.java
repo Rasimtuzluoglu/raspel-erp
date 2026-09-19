@@ -72,7 +72,7 @@ public class PosTerminaliController {
     @PostMapping
     @Operation(summary = "POS terminali oluştur")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
-    public ResponseEntity<PosTerminaliDTO> olustur(@RequestBody PosTerminaliDTO dto, HttpServletRequest request) {
+    public ResponseEntity<PosTerminaliDTO> olustur(@jakarta.validation.Valid @RequestBody PosTerminaliDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(posService.olustur(dto, sirketId));
     }
@@ -80,7 +80,7 @@ public class PosTerminaliController {
     @PutMapping("/{id}")
     @Operation(summary = "POS terminalini güncelle")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
-    public ResponseEntity<PosTerminaliDTO> guncelle(@PathVariable Long id, @RequestBody PosTerminaliDTO dto, HttpServletRequest request) {
+    public ResponseEntity<PosTerminaliDTO> guncelle(@PathVariable Long id, @jakarta.validation.Valid @RequestBody PosTerminaliDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(posService.guncelle(id, dto, sirketId));
     }

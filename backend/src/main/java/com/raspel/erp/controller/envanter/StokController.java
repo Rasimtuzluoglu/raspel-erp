@@ -197,7 +197,7 @@ public class StokController {
     @Operation(summary = "Stok fiyatı ekle", description = "Stoğa yeni bir fiyat tanımı ekler")
     public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatEkle(
             @PathVariable Long id,
-            @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto,
+            @jakarta.validation.Valid @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(stokService.fiyatEkle(id, dto, sirketId));
@@ -207,7 +207,7 @@ public class StokController {
     @Operation(summary = "Stok fiyatı güncelle", description = "Fiyat tanımını günceller")
     public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatGuncelle(
             @PathVariable Long fiyatId,
-            @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto) {
+            @jakarta.validation.Valid @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto) {
         return ResponseEntity.ok(stokService.fiyatGuncelle(fiyatId, dto));
     }
 

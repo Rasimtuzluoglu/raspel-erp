@@ -31,7 +31,7 @@ public class StokDuzeltmeController {
 
     @PostMapping
     @Operation(summary = "Stok düzelt", description = "Stok miktarını düzeltir ve geçmişe kaydeder")
-    public ResponseEntity<StokDuzeltmeDTO> duzelt(@RequestBody StokDuzeltmeDTO dto, HttpServletRequest request) {
+    public ResponseEntity<StokDuzeltmeDTO> duzelt(@jakarta.validation.Valid @RequestBody StokDuzeltmeDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.status(HttpStatus.CREATED).body(duzeltmeService.duzelt(dto, sirketId, kullaniciId));
