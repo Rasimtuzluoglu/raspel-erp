@@ -2,6 +2,18 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.23.0] - 2026-09-19 (Faz 3 - Ölçeklenebilirlik ve Tutarlılık)
+### Mimari / Ölçeklenebilirlik
+- **ShedLock entegrasyonu**: 15 zamanlanmış iş (yedekleme, POS gün sonu, TCMB kurları, tekrarlayan fatura, hatırlatıcı, anomali tarama vb.) artık `@SchedulerLock` ile korunuyor. Yatay ölçeklemede (çok instance) her iş yalnızca bir düğümde çalışır; `sistem.shedlock` tablosu V111 ile eklendi.
+- **Optimistic locking genişletildi**: `CariHesap` ve `Banka` bakiyelerine `@Version` eklendi (V112); `Stok`, `Kasa`, `Fatura` zaten korumalıydı. Eş zamanlı bakiye güncellemelerinde kayıp güncelleme (lost update) engellenir.
+- **N+1 giderimi**: `Teklif`, `Satınalma Sipariş` listeleri kalem/stok/cari verilerini toplu sorgulara (IN + map) çevirdi; CSV alış faturası import'u stokları önden tek sorguyla yükleyip kod→stok map'i kullanıyor.
+
+### Frontend Performans
+- **i18n lazy yükleme**: İngilizce dil paketi (en.json, ~146 kB) başlangıç bundle'ından çıkarıldı; yalnızca dil değiştirildiğinde indiriliyor. Başlangıç `index` chunk'ı **534 kB → 390 kB** (gzip 166 → 119 kB) düştü.
+
+### Testler
+- Backend 1094, frontend 717 test (0 hata); lint + i18n kontrolü temiz.
+
 ## [1.22.0] - 2026-09-19 (Üretim Sertleştirmesi - Faz 2)
 ### Güvenlik
 - **Varsayılan/zayıf parolalar prod'da reddedilir**: `ProdGuvenlikKontrolu` artık `postgres`, `raspel`, `raspelRedis2026`, `admin`, `123456` gibi bilinen zayıf değerlerle prod başlatmayı engelliyor (fail-fast); CORS joker (`*`) origin de reddediliyor.

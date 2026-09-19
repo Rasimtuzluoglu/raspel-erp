@@ -28,6 +28,7 @@ public class GunlukOzetService {
     private final EmailService emailService;
 
     @Scheduled(cron = "0 0 7 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "gunlukOzet", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
     public void gunlukOzetGonder() {
         List<Sirket> sirketler = sirketRepository.findByAktifTrue();
         for (Sirket s : sirketler) {

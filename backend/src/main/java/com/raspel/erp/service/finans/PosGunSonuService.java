@@ -91,6 +91,7 @@ public class PosGunSonuService {
     }
 
     @Scheduled(cron = "0 0 23 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "posGunSonu", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
     public void otomatikGunSonu() {
         try {
             sirketRepository.findByAktifTrue().forEach(s -> {

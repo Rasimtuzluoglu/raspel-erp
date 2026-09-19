@@ -43,6 +43,7 @@ public class AnomaliBildirimService {
     private String slackWebhook;
 
     @Scheduled(cron = "0 0 6 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "anomaliTarama", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
     public void gunlukAnomaliTarama() {
         List<Sirket> sirketler = sirketRepository.findByAktifTrue();
         for (Sirket s : sirketler) {

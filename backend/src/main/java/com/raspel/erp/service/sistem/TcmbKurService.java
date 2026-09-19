@@ -29,6 +29,7 @@ public class TcmbKurService {
     private final DovizKuruRepository dovizKuruRepository;
 
     @Scheduled(cron = "0 0 9,12,16 * * ?")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "tcmbKurGuncelle", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
     public void tcmbKurlariniGuncelle() {
         log.info("TCMB Güncel Döviz Kurları çekiliyor...");
         Map<String, BigDecimal[]> rates = new HashMap<>();

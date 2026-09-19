@@ -6,6 +6,7 @@ import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisKalemDTO;
 import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.ticaret.SatinalmaSiparis;
 import com.raspel.erp.entity.ticaret.SatinalmaSiparisKalem;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 
@@ -40,7 +42,22 @@ public class SatinalmaSiparisService {
 
     @Transactional(readOnly = true)
     public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        return siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
+        Page<SatinalmaSiparis> sayfa = siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable);
+        List<SatinalmaSiparis> siparisler = sayfa.getContent();
+        if (siparisler.isEmpty()) return sayfa.map(this::entityToDTO);
+
+        // N+1 onlemi: kalem, stok ve cari verilerini toplu sorgularla getir.
+        List<Long> siparisIdler = siparisler.stream().map(SatinalmaSiparis::getId).collect(Collectors.toList());
+        Map<Long, List<SatinalmaSiparisKalem>> kalemMap = kalemRepository.findBySiparisIdIn(siparisIdler).stream()
+                .collect(Collectors.groupingBy(SatinalmaSiparisKalem::getSiparisId));
+
+        Map<Long, Stok> stokMap = stokMapOlustur(kalemMap.values().stream()
+                .flatMap(List::stream).map(SatinalmaSiparisKalem::getStokId).collect(Collectors.toSet()));
+        Map<Long, CariHesap> cariMap = cariMapOlustur(siparisler.stream()
+                .map(SatinalmaSiparis::getCariHesapId).collect(Collectors.toSet()));
+
+        return sayfa.map(s -> entityToDTO(s,
+                kalemMap.getOrDefault(s.getId(), List.of()), stokMap, cariMap));
     }
 
     @Transactional(readOnly = true)
@@ -185,23 +202,51 @@ public class SatinalmaSiparisService {
     }
 
     private SatinalmaSiparisDTO entityToDTO(SatinalmaSiparis s) {
-        List<SatinalmaSiparisKalemDTO> kalemler = kalemRepository.findBySiparisId(s.getId()).stream()
-                .map(k -> SatinalmaSiparisKalemDTO.builder()
-                        .id(k.getId()).siparisId(k.getSiparisId()).stokId(k.getStokId())
-                        .stokAdi(k.getStokId() != null ? stokRepository.findById(k.getStokId()).map(st -> st.getAd()).orElse(null) : null)
-                        .aciklama(k.getAciklama()).miktar(k.getMiktar())
-                        .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
-                        .kdvOrani(k.getKdvOrani()).tutar(k.getTutar())
-                        .olusturmaTarihi(k.getOlusturmaTarihi()).build())
+        List<SatinalmaSiparisKalem> kalemler = kalemRepository.findBySiparisId(s.getId());
+        Map<Long, Stok> stokMap = stokMapOlustur(kalemler.stream()
+                .map(SatinalmaSiparisKalem::getStokId).collect(Collectors.toSet()));
+        Map<Long, CariHesap> cariMap = cariMapOlustur(
+                new java.util.HashSet<>(java.util.Collections.singletonList(s.getCariHesapId())));
+        return entityToDTO(s, kalemler, stokMap, cariMap);
+    }
+
+    private Map<Long, Stok> stokMapOlustur(java.util.Collection<Long> stokIdler) {
+        List<Long> gecerli = stokIdler.stream().filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        if (gecerli.isEmpty()) return java.util.Map.of();
+        return stokRepository.findAllById(gecerli).stream()
+                .collect(Collectors.toMap(Stok::getId, st -> st, (a, b) -> a));
+    }
+
+    private Map<Long, CariHesap> cariMapOlustur(java.util.Collection<Long> cariIdler) {
+        List<Long> gecerli = cariIdler.stream().filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        if (gecerli.isEmpty()) return java.util.Map.of();
+        return cariHesapRepository.findAllById(gecerli).stream()
+                .collect(Collectors.toMap(CariHesap::getId, c -> c, (a, b) -> a));
+    }
+
+    private SatinalmaSiparisDTO entityToDTO(SatinalmaSiparis s, List<SatinalmaSiparisKalem> kalemler,
+                                            Map<Long, Stok> stokMap, Map<Long, CariHesap> cariMap) {
+        List<SatinalmaSiparisKalemDTO> kalemlerDto = kalemler.stream()
+                .map(k -> {
+                    Stok stok = k.getStokId() != null ? stokMap.get(k.getStokId()) : null;
+                    return SatinalmaSiparisKalemDTO.builder()
+                            .id(k.getId()).siparisId(k.getSiparisId()).stokId(k.getStokId())
+                            .stokAdi(stok != null ? stok.getAd() : null)
+                            .aciklama(k.getAciklama()).miktar(k.getMiktar())
+                            .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
+                            .kdvOrani(k.getKdvOrani()).tutar(k.getTutar())
+                            .olusturmaTarihi(k.getOlusturmaTarihi()).build();
+                })
                 .collect(Collectors.toList());
 
+        CariHesap cari = s.getCariHesapId() != null ? cariMap.get(s.getCariHesapId()) : null;
         return SatinalmaSiparisDTO.builder()
                 .id(s.getId()).siparisNo(s.getSiparisNo()).tarih(s.getTarih())
                 .cariHesapId(s.getCariHesapId())
-                .cariHesapAdi(s.getCariHesapId() != null ? cariHesapRepository.findById(s.getCariHesapId()).map(c -> c.getAd()).orElse(null) : null)
+                .cariHesapAdi(cari != null ? cari.getAd() : null)
                 .talepId(s.getTalepId()).durum(s.getDurum())
                 .araToplam(s.getAraToplam()).kdv(s.getKdv()).genelToplam(s.getGenelToplam())
                 .aciklama(s.getAciklama()).sirketId(s.getSirketId())
-                .olusturmaTarihi(s.getOlusturmaTarihi()).kalemler(kalemler).build();
+                .olusturmaTarihi(s.getOlusturmaTarihi()).kalemler(kalemlerDto).build();
     }
 }

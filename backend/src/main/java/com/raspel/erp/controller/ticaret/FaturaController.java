@@ -164,6 +164,7 @@ public class FaturaController {
     /** TTL süresi dolan idempotency kayıtlarını periyodik olarak temizler (unbounded büyümeyi engeller). */
     @PreAuthorize("permitAll()")
     @Scheduled(fixedDelay = IDEMPOTENCY_TEMIZLIK_MS)
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "idempotencyTemizlik", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
     public void idempotencyCacheTemizle() {
         int oncekiBoyut = idempotencyCache.size();
         idempotencyCache.entrySet().removeIf(e -> e.getValue().suresiDoldu());

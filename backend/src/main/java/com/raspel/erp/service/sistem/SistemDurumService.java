@@ -48,6 +48,7 @@ public class SistemDurumService {
      * kayıtları her gece 04:00'te siler. Süre app.hata-log.retention-days ile ayarlanır.
      */
     @Scheduled(cron = "0 0 4 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "eskiHataLogTemizligi", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
     @Transactional
     public void eskiHataLoglariniTemizle() {
         try {

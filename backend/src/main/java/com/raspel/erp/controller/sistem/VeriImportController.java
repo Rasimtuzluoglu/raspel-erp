@@ -183,6 +183,11 @@ public class VeriImportController {
 
             String line;
             int satirNo = 1;
+            // N+1 onlemi: sirketin stoklarini bir kez yukleyip kod -> stok map'i olustur.
+            Map<String, Stok> stokKodMap = new HashMap<>();
+            for (Stok s : stokRepository.findBySirketIdOrderByAd(sirketId)) {
+                if (s.getStokKodu() != null) stokKodMap.putIfAbsent(s.getStokKodu().toLowerCase(), s);
+            }
             while ((line = br.readLine()) != null) {
                 satirNo++;
                 if (line.trim().isEmpty()) continue;
@@ -191,7 +196,7 @@ public class VeriImportController {
                     String faturaNo = kolonDeger(cols, kolonIndex, "faturano", satirNo, hatalar);
                     if (faturaNo == null) { hatalar.add("Satır " + satirNo + ": faturaNo zorunlu"); continue; }
                     String stokKodu = kolonDeger(cols, kolonIndex, "stokkodu", satirNo, hatalar);
-                    Stok stok = stokKodu != null ? stokRepository.findBySirketIdAndStokKodu(sirketId, stokKodu).orElse(null) : null;
+                    Stok stok = stokKodu != null ? stokKodMap.get(stokKodu.toLowerCase()) : null;
                     if (stok == null) { hatalar.add("Satır " + satirNo + ": stok bulunamadı -> " + stokKodu); continue; }
 
                     int adet = Math.max(1, parseInteger(kolonDeger(cols, kolonIndex, "adet", satirNo, null), 1));

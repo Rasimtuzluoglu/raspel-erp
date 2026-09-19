@@ -85,6 +85,10 @@ public class CariHesap {
     /** Cari hesabın bakiyesi (Alacak pozitif, Borç negatif) */
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal bakiye;
+
+    /** Es zamanli bakiye guncellemelerinde kayip guncellemeyi onler. */
+    @jakarta.persistence.Version
+    private Integer version;
     
     @Column(name = "sirket_id")
     private Long sirketId;

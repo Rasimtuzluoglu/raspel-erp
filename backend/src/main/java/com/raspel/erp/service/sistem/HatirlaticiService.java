@@ -28,6 +28,7 @@ public class HatirlaticiService {
     private final BildirimService bildirimService;
 
     @Scheduled(cron = "0 0 8 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "hatirlatici", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
     public void vadesiGecenHatirlaticiGonder() {
         List<Fatura> faturalar;
         try {

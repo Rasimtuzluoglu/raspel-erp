@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface SatinalmaSiparisKalemRepository extends JpaRepository<SatinalmaSiparisKalem, Long> {
     List<SatinalmaSiparisKalem> findBySiparisId(Long siparisId);
+    List<SatinalmaSiparisKalem> findBySiparisIdIn(java.util.Collection<Long> siparisIdler);
     void deleteBySiparisId(Long siparisId);
 }

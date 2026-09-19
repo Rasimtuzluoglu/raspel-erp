@@ -45,7 +45,22 @@ public class TeklifService {
 
     @Transactional(readOnly = true)
     public Page<TeklifDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        return teklifRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
+        Page<Teklif> sayfa = teklifRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable);
+        List<Teklif> teklifler = sayfa.getContent();
+        if (teklifler.isEmpty()) return sayfa.map(this::entityToDTO);
+
+        // N+1 onlemi: kalem, stok ve cari verilerini toplu sorgularla getir.
+        List<Long> teklifIdler = teklifler.stream().map(Teklif::getId).collect(Collectors.toList());
+        Map<Long, List<TeklifKalem>> kalemMap = kalemRepository.findByTeklifIdIn(teklifIdler).stream()
+                .collect(Collectors.groupingBy(TeklifKalem::getTeklifId));
+
+        Map<Long, Stok> stokMap = stokMapOlustur(kalemMap.values().stream()
+                .flatMap(List::stream).map(TeklifKalem::getStokId).collect(Collectors.toSet()));
+        Map<Long, CariHesap> cariMap = cariMapOlustur(teklifler.stream()
+                .map(Teklif::getCariHesapId).collect(Collectors.toSet()));
+
+        return sayfa.map(t -> entityToDTO(t,
+                kalemMap.getOrDefault(t.getId(), List.of()), stokMap, cariMap));
     }
 
     @Transactional(readOnly = true)
@@ -377,17 +392,35 @@ public class TeklifService {
 
     private TeklifDTO entityToDTO(Teklif t) {
         List<TeklifKalem> kalemler = kalemRepository.findByTeklifId(t.getId());
+        Map<Long, Stok> stokMap = stokMapOlustur(kalemler.stream()
+                .map(TeklifKalem::getStokId).collect(Collectors.toSet()));
+        Map<Long, CariHesap> cariMap = cariMapOlustur(new HashSet<>(java.util.Collections.singletonList(t.getCariHesapId())));
+        return entityToDTO(t, kalemler, stokMap, cariMap);
+    }
 
+    private Map<Long, Stok> stokMapOlustur(java.util.Collection<Long> stokIdler) {
+        List<Long> gecerli = stokIdler.stream().filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        if (gecerli.isEmpty()) return Map.of();
+        return stokRepository.findAllById(gecerli).stream()
+                .collect(Collectors.toMap(Stok::getId, s -> s, (a, b) -> a));
+    }
+
+    private Map<Long, CariHesap> cariMapOlustur(java.util.Collection<Long> cariIdler) {
+        List<Long> gecerli = cariIdler.stream().filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        if (gecerli.isEmpty()) return Map.of();
+        return cariHesapRepository.findAllById(gecerli).stream()
+                .collect(Collectors.toMap(CariHesap::getId, c -> c, (a, b) -> a));
+    }
+
+    private TeklifDTO entityToDTO(Teklif t, List<TeklifKalem> kalemler,
+                                  Map<Long, Stok> stokMap, Map<Long, CariHesap> cariMap) {
         List<TeklifKalemDTO> kalemDTOs = kalemler.stream().map(k -> {
-            String stokKodu = null;
-            if (k.getStokId() != null) {
-                stokKodu = stokRepository.findById(k.getStokId()).map(Stok::getStokKodu).orElse(null);
-            }
+            Stok stok = k.getStokId() != null ? stokMap.get(k.getStokId()) : null;
             return TeklifKalemDTO.builder()
                     .id(k.getId())
                     .teklifId(k.getTeklifId())
                     .stokId(k.getStokId())
-                    .stokKodu(stokKodu)
+                    .stokKodu(stok != null ? stok.getStokKodu() : null)
                     .aciklama(k.getAciklama())
                     .miktar(k.getMiktar())
                     .birim(k.getBirim())
@@ -405,17 +438,14 @@ public class TeklifService {
         String cariEmail = null;
         String cariAdres = null;
 
-        if (t.getCariHesapId() != null) {
-            Optional<CariHesap> cariOpt = cariHesapRepository.findById(t.getCariHesapId());
-            if (cariOpt.isPresent()) {
-                CariHesap c = cariOpt.get();
-                cariAd = c.getAd();
-                cariVergiNo = c.getVergiNumarasi();
-                cariVergiDairesi = c.getVergiDairesi();
-                cariTelefon = c.getTelefon();
-                cariEmail = c.getEmail();
-                cariAdres = c.getAdres();
-            }
+        CariHesap c = t.getCariHesapId() != null ? cariMap.get(t.getCariHesapId()) : null;
+        if (c != null) {
+            cariAd = c.getAd();
+            cariVergiNo = c.getVergiNumarasi();
+            cariVergiDairesi = c.getVergiDairesi();
+            cariTelefon = c.getTelefon();
+            cariEmail = c.getEmail();
+            cariAdres = c.getAdres();
         }
 
         return TeklifDTO.builder()

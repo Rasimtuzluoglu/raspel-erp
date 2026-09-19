@@ -310,6 +310,7 @@ public class BackupService {
      * autoSync kapalıysa atlanır.
      */
     @Scheduled(cron = "${app.backup.cloud-auto-cron:0 30 3 * * ?}")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupCloudSync", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void autoCloudSync() {
         if (!otomatikBulutSenkronAktif()) return;
         log.info("Otomatik bulut senkronizasyonu başladı");
@@ -596,6 +597,7 @@ public class BackupService {
     }
 
     @Scheduled(cron = "${app.backup.auto-cron:0 0 3 * * ?}")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupDaily", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void dailyAutoBackup() {
         if (!yedekKilidiniAl()) return;
         log.info("Daily auto backup started (cron: {})", autoCron);
@@ -608,6 +610,7 @@ public class BackupService {
     }
 
     @Scheduled(cron = "0 0 3 ? * SUN")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupWeekly", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void weeklyAutoBackup() {
         if (!yedekKilidiniAl()) return;
         log.info("Weekly auto backup started");
@@ -620,6 +623,7 @@ public class BackupService {
     }
 
     @Scheduled(cron = "0 0 3 1 * ?")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupMonthly", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void monthlyAutoBackup() {
         if (!yedekKilidiniAl()) return;
         log.info("Monthly auto backup started");
@@ -632,6 +636,7 @@ public class BackupService {
     }
 
     @Scheduled(cron = "0 0 3 1 1 ?")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupYearly", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void yearlyAutoBackup() {
         if (!yedekKilidiniAl()) return;
         log.info("Yearly auto backup started");
@@ -776,6 +781,7 @@ public class BackupService {
      * Günlük yedek doğrulama health-check'i. Son yedek bayat ya da bozuksa uyarı loglar.
      */
     @Scheduled(cron = "0 30 4 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupDogrulama", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void gunlukYedekDogrulama() {
         try {
             Map<String, Object> sonuc = yedekDogrula();

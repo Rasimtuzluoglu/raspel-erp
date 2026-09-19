@@ -22,6 +22,7 @@ public class TeslimatGecikmeUyarisiService {
     private final BildirimService bildirimService;
 
     @Scheduled(cron = "0 30 7 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "teslimatGecikme", lockAtMostFor = "PT15M", lockAtLeastFor = "PT1M")
     public void gecikmisTeslimatlariBildir() {
         try {
             List<Teslimat> gecikenler = teslimatService.gecikmisTeslimatlar();

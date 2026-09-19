@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface TeklifKalemRepository extends JpaRepository<TeklifKalem, Long> {
     List<TeklifKalem> findByTeklifId(Long teklifId);
+    List<TeklifKalem> findByTeklifIdIn(java.util.Collection<Long> teklifIdler);
     void deleteByTeklifId(Long teklifId);
 }
