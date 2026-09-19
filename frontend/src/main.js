@@ -94,6 +94,17 @@ app.config.errorHandler = (err, instance, info) => {
   console.error('[RasPel] Uygulama hatasi:', err, info)
 }
 
+// Yakalanmayan Promise redleri (or. store action'lari) konsolda kaybolmasin;
+// kullaniciya gereksiz teknik detay gostermeden loglayalim. HTTP hatalari zaten
+// axios interceptor tarafindan toast ile bildirilir.
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason
+  // Iptal edilmis istekler (AbortError) beklenen durumdur; gurultu yapmasin.
+  if (reason && (reason.name === 'AbortError' || reason.code === 'ERR_CANCELED')) return
+  // eslint-disable-next-line no-console
+  console.error('[RasPel] Yakalanmayan promise hatasi:', reason)
+})
+
 app.mount('#app')
 
 initTabloEtiketleri()

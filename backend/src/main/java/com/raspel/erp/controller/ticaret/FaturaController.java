@@ -133,26 +133,54 @@ public class FaturaController {
             HttpServletRequest request,
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
         if (idempotencyKey != null) {
-            IdempotencyKaydi mevcut = idempotencyCache.get(idempotencyKey);
-            if (mevcut != null && !mevcut.suresiDoldu()) {
-                return ResponseEntity.ok(mevcut.fatura);
-            }
-            // TTL süresi dolmuş kayıt map'te kaldığında putIfAbsent yeni kaydı engeller
-            // ve mükerrer fatura oluşur; bu yüzden süresi dolan giriş temizlenir.
-            if (mevcut != null) {
-                idempotencyCache.remove(idempotencyKey, mevcut);
-            }
             Long sirketId = (Long) request.getAttribute("sirketId");
             Long kullaniciId = (Long) request.getAttribute("kullaniciId");
             String displayName = (String) request.getAttribute("displayName");
-            FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
-            IdempotencyKaydi yeni = new IdempotencyKaydi(olusturulan);
-            IdempotencyKaydi onceki = idempotencyCache.putIfAbsent(idempotencyKey, yeni);
+
+            // Anahtarı olusturmadan ONCE rezerve et (putIfAbsent) ki es zamanli iki istek
+            // ayni faturayi iki kez olusturmasin. Baska bir istek zaten tamamlandiysa
+            // onun sonucu donulur.
+            IdempotencyKaydi rezervasyon = new IdempotencyKaydi(null);
+            IdempotencyKaydi onceki;
+            while (true) {
+                IdempotencyKaydi mevcut = idempotencyCache.putIfAbsent(idempotencyKey, rezervasyon);
+                if (mevcut == null) {
+                    onceki = null;
+                    break;
+                }
+                // Suresi dolmus kaydi temizleyip yeniden dene.
+                if (mevcut.suresiDoldu() && idempotencyCache.remove(idempotencyKey, mevcut)) {
+                    continue;
+                }
+                // Baska istek ayni anda isliyorsa kisa sure bekleyip sonucu tekrar kontrol et.
+                if (mevcut.bekleyenMi()) {
+                    try {
+                        Thread.sleep(150);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    IdempotencyKaydi guncel = idempotencyCache.get(idempotencyKey);
+                    if (guncel != null && !guncel.bekleyenMi() && !guncel.suresiDoldu()) {
+                        return ResponseEntity.ok(guncel.fatura);
+                    }
+                    continue;
+                }
+                onceki = mevcut;
+                break;
+            }
             if (onceki != null) {
-                // Eşzamanlı istek aynı anahtarla kaydetti; o kayıt esas alınır.
                 return ResponseEntity.ok(onceki.fatura);
             }
-            return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
+
+            try {
+                FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
+                idempotencyCache.put(idempotencyKey, new IdempotencyKaydi(olusturulan));
+                return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
+            } catch (RuntimeException e) {
+                // Olusturma basarisizsa rezervasyonu serbest birak; sonraki deneme calissin.
+                idempotencyCache.remove(idempotencyKey, rezervasyon);
+                throw e;
+            }
         }
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
@@ -261,6 +289,11 @@ public class FaturaController {
 
         boolean suresiDoldu() {
             return System.currentTimeMillis() - olusturmaZamani > IDEMPOTENCY_TTL_MS;
+        }
+
+        /** Eşzamanlı ikinci istek, henüz tamamlanmamış rezervasyonu beklememesi için. */
+        boolean bekleyenMi() {
+            return fatura == null;
         }
     }
 }

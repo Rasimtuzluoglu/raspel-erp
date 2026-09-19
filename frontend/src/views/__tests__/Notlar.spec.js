@@ -27,7 +27,7 @@ vi.mock('../../stores/notStore.js', () => ({
   useNotStore: () => ({
     notlar: notlarMock,
     loading: false,
-    getAllNotlar: vi.fn(),
+    getAllNotlar: vi.fn(() => Promise.resolve()),
     addNot: vi.fn(),
     updateNot: vi.fn(),
     deleteNot: vi.fn()

@@ -409,7 +409,8 @@ const satisForm = ref({
 const tarihAraligi = ref(null)
 
 onMounted(async () => {
-  await Promise.all([satislariYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
+  // Store'lar hata firlatir; bir hata digerlerini engellemesin.
+  await Promise.allSettled([satislariYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
 })
 
 const satislariYukle = async () => {

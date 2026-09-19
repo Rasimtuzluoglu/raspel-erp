@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -240,38 +241,41 @@ public class BankaMutabakatService {
 
     private List<String[]> parseCsv(MultipartFile dosya) throws Exception {
         List<String[]> satirlar = new ArrayList<>();
-        BufferedReader okuyucu = new BufferedReader(new InputStreamReader(dosya.getInputStream(), StandardCharsets.UTF_8));
-        String satir;
-        boolean ilkSatir = true;
-        while ((satir = okuyucu.readLine()) != null) {
-            if (satir.isBlank()) continue;
-            String[] alanlar = satir.split("[;,]");
-            // Başlık satırını atla
-            if (ilkSatir) {
-                ilkSatir = false;
-                if (alanlar[0].toLowerCase().contains("tarih") || alanlar[0].toLowerCase().contains("date")) continue;
+        try (BufferedReader okuyucu = new BufferedReader(
+                new InputStreamReader(dosya.getInputStream(), StandardCharsets.UTF_8))) {
+            String satir;
+            boolean ilkSatir = true;
+            while ((satir = okuyucu.readLine()) != null) {
+                if (satir.isBlank()) continue;
+                String[] alanlar = satir.split("[;,]");
+                // Başlık satırını atla
+                if (ilkSatir) {
+                    ilkSatir = false;
+                    if (alanlar[0].toLowerCase().contains("tarih") || alanlar[0].toLowerCase().contains("date")) continue;
+                }
+                if (alanlar.length >= 3) satirlar.add(alanlar);
             }
-            if (alanlar.length >= 3) satirlar.add(alanlar);
         }
         return satirlar;
     }
 
     private List<String[]> parseExcel(MultipartFile dosya) throws Exception {
         List<String[]> satirlar = new ArrayList<>();
-        Workbook workbook = new XSSFWorkbook(dosya.getInputStream());
-        Sheet sayfa = workbook.getSheetAt(0);
-        boolean ilkSatir = true;
-        for (Row row : sayfa) {
-            if (ilkSatir) { ilkSatir = false; continue; }
-            String[] alanlar = new String[5];
-            for (int i = 0; i < 5; i++) {
-                Cell h = row.getCell(i);
-                alanlar[i] = h != null ? h.toString().trim() : "";
+        try (InputStream is = dosya.getInputStream();
+             Workbook workbook = new XSSFWorkbook(is)) {
+            Sheet sayfa = workbook.getSheetAt(0);
+            boolean ilkSatir = true;
+            for (Row row : sayfa) {
+                if (ilkSatir) { ilkSatir = false; continue; }
+                String[] alanlar = new String[5];
+                for (int i = 0; i < 5; i++) {
+                    Cell h = row.getCell(i);
+                    alanlar[i] = h != null ? h.toString().trim() : "";
+                }
+                if (alanlar[0].isEmpty()) continue;
+                satirlar.add(alanlar);
             }
-            if (alanlar[0].isEmpty()) continue;
-            satirlar.add(alanlar);
         }
-        workbook.close();
         return satirlar;
     }
 

@@ -157,7 +157,9 @@ public class DosyaDepolamaService {
             if (!target.startsWith(dir)) {
                 throw new IOException("Geçersiz dosya yolu");
             }
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream in = file.getInputStream()) {
+                Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+            }
         }
         return filename;
     }

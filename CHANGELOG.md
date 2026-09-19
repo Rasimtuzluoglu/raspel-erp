@@ -2,6 +2,24 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.25.0] - 2026-09-19 (Faz 4 - Dayanıklılık ve Kaynak Güvenliği)
+### Kaynak Sızıntıları
+- **Redis bağlantı sızıntıları giderildi**: `LoginRateLimitFilter` her giriş denemesinde açılan bağlantıyı artık `try-with-resources` ile kapatıyor; `RedisHealthIndicator` ping hata verse bile bağlantıyı kapatıyor (aktüatör sağlık yoklaması bağlantı havuzunu tüketemez).
+- **Dosya/akış sızıntıları**: TCMB kur çekimi, banka mutabakat CSV/Excel ayrıştırma, dosya depolama kopyalama ve resim magic-byte okuma akışları `try-with-resources` ile kapatıldı.
+
+### Dayanıklılık
+- **Fatura idempotency yarışı düzeltildi**: `X-Idempotency-Key` artık fatura oluşturulmadan **önce** rezerve ediliyor (`putIfAbsent`); eşzamanlı ikinci istek mükerrer fatura üretemiyor, başarısız oluşturmada rezervasyon serbest bırakılıyor.
+- **MinIO zaman aşımları**: obje deposu istemcisine bağlantı/yazma/okuma zaman aşımı ve bağlantı yeniden deneme eklendi; sarkan MinIO işlemleri kaynak tüketmiyor.
+- **RabbitMQ yayıncı yeniden deneme**: `spring.rabbitmq.template.retry` (3 deneme, exponential backoff) etkinleştirildi; yayın hatalarında mesaj kaybı azaltıldı.
+- **Zamanlanmış iş sağlamlığı**: TCMB yanıtında USD yoksa NPE yerine kontrollü atlama; tekrarlayan fatura taramasında DB hatası tüm işi durdurmuyor; async görevler için yakalanmayan istisna loglayıcısı eklendi.
+
+### Frontend
+- **Global unhandled rejection yakalayıcı**: `unhandledrejection` olayı loglanıyor (AbortError hariç); store hataları sessizce kaybolmuyor.
+- **Kritik görünümlerde hata dayanıklılığı**: Kategoriler, Notlar, Kasa, Stoklar, Satış, Raporlar, Cari Hesaplar yüklemeleri `allSettled`/try-catch ile birbirini engellemiyor.
+
+### Testler
+- Backend 1094, frontend 717 test (0 hata); lint + i18n + build temiz.
+
 ## [1.24.0] - 2026-09-19 (Faz 3 tamamlanma)
 ### Güvenlik / Girdi Doğrulama
 - **@Valid kapsamı genişletildi**: Reçete, üretim emri, ajanda görev/hatırlatıcı, push abonelik, depo transferi, barkod tarama, şirket hedefi, 2FA ve stok düzeltme DTO'larına zorunluluk/aralık/uzunluk kısıtları eklendi; ilgili uç noktalara `@Valid` uygulandı. Push aboneliği iç içe `keys` alanı da doğrulanıyor; 2FA kodu 6 haneli desenle sınırlandı.

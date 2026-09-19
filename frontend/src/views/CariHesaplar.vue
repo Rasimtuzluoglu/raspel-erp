@@ -1339,7 +1339,11 @@ const tahsilatAc = async (cariHesap) => {
 
 const tahsilatSonrasiYenile = async () => {
   tahsilatHedefCari.value = null
-  await cariHesapStore.getAllCariHesaplar()
+  try {
+    await cariHesapStore.getAllCariHesaplar()
+  } catch {
+    /* yenileme hatasi global olarak bildirilir */
+  }
 }
 
 const borclandirmaDialog = ref(false)
@@ -1352,7 +1356,11 @@ const borclandirmaAc = (cariHesap) => {
 
 const borclandirmaSonrasiYenile = async () => {
   borclandirmaHedefCari.value = null
-  await cariHesapStore.getAllCariHesaplar()
+  try {
+    await cariHesapStore.getAllCariHesaplar()
+  } catch {
+    /* yenileme hatasi global olarak bildirilir */
+  }
   if (showHareketlerDialog.value && selectedCariHesap.value) {
     await viewHareketler(selectedCariHesap.value)
   }

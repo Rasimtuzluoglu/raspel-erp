@@ -127,8 +127,9 @@ public class LoginRateLimitFilter implements Filter {
 
     private boolean redisKullanilabilir() {
         if (redisTemplate == null) return false;
-        try {
-            redisTemplate.getConnectionFactory().getConnection().ping();
+        try (org.springframework.data.redis.connection.RedisConnection conn =
+                     redisTemplate.getConnectionFactory().getConnection()) {
+            conn.ping();
             return true;
         } catch (Exception e) {
             return false;

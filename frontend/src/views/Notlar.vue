@@ -212,7 +212,9 @@ let geriAlZamanlayici = null
 
 const dialogBaslik = computed(() => (duzenlemeModu.value ? t('notlar.duzenle') : t('notlar.yeniNot')))
 
-onMounted(() => store.getAllNotlar())
+onMounted(() => {
+  store.getAllNotlar().catch(() => { /* hata global olarak bildirilir */ })
+})
 
 onUnmounted(() => {
   if (geriAlZamanlayici) clearTimeout(geriAlZamanlayici)

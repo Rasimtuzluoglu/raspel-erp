@@ -130,7 +130,10 @@ public class FileUploadController {
         // Magic-byte doğrulaması: istemcinin beyan ettiği MIME/uzantıya güvenmek yerine
         // içerik imzasını kontrol et (depolanmış XSS/polyglot dosya engeli).
         try {
-            byte[] bas = file.getInputStream().readNBytes(12);
+            byte[] bas;
+            try (java.io.InputStream in = file.getInputStream()) {
+                bas = in.readNBytes(12);
+            }
             if (!magicByteGecerli(bas)) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Dosya içeriği geçerli bir resim değil."));
             }

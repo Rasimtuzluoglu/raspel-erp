@@ -121,7 +121,9 @@ const showDialog = ref(false)
 const saving = ref(false)
 const form = ref({ ad: '', tur: '' })
 
-onMounted(() => kategoriStore.getAllKategoriler())
+onMounted(() => {
+  kategoriStore.getAllKategoriler().catch(() => { /* hata global olarak bildirilir */ })
+})
 
 const openDialog = () => {
   form.value = { ad: '', tur: '' }

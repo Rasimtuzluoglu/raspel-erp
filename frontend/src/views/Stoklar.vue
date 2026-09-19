@@ -915,7 +915,8 @@ const filtreDegisti = () => {
 const kritikAdet = computed(() => stokStore.stoklar.filter((s) => s.minMiktar && s.miktar <= s.minMiktar).length)
 
 onMounted(async () => {
-  await Promise.all([stoklariYukle(), cariHesapStore.getAllCariHesaplar()])
+  // Bir yukleme hatasi digerini engellemesin (store'lar hata firlatir).
+  await Promise.allSettled([stoklariYukle(), cariHesapStore.getAllCariHesaplar()])
 })
 
 const filtreTemizle = () => {

@@ -16,10 +16,9 @@ public class RedisHealthIndicator implements HealthIndicator {
 
     @Override
     public Health health() {
-        try {
-            var connection = redisConnectionFactory.getConnection();
+        // Baglanti her durumda kapatilir (ping hata verse bile).
+        try (var connection = redisConnectionFactory.getConnection()) {
             String pong = connection.ping();
-            connection.close();
             if ("PONG".equals(pong)) {
                 return Health.up().withDetail("status", "connected").build();
             }

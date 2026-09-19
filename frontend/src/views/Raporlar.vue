@@ -1268,7 +1268,11 @@ const formatDateForApi = (d) => {
 }
 
 onMounted(async () => {
-  await cariHesapStore.getAllCariHesaplar()
+  try {
+    await cariHesapStore.getAllCariHesaplar()
+  } catch {
+    /* cari listesi yuklenemezse rapor sekmeleri yine de acilir */
+  }
   sekmeYukle(aktifSekme.value)
 })
 

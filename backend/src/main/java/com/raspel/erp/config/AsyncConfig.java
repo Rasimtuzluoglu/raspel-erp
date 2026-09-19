@@ -24,6 +24,14 @@ public class AsyncConfig {
         executor.setAwaitTerminationSeconds(30);
         executor.setRejectedExecutionHandler((r, e) ->
                 log.error("Async gorev kuyrugu dolu, gorev reddedildi: {}", r.getClass().getSimpleName()));
+        // Yakalanmayan async hatalar varsayilan logger'da kaybolmasin; acikca logla.
+        executor.setTaskDecorator(runnable -> () -> {
+            try {
+                runnable.run();
+            } catch (Throwable t) {
+                log.error("Async gorev hata ile sonlandi", t);
+            }
+        });
         executor.initialize();
         return executor;
     }

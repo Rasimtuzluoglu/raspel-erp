@@ -605,7 +605,8 @@ const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? t('kasa.gel
 const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter((k) => k.tur === hareketTur.value))
 
 onMounted(async () => {
-  await Promise.all([kasaStore.getAllKasalar(), kategoriStore.getAllKategoriler()])
+  // Store cagrilari hata firlatabilir; bir hata diger yuklemeyi durdurmasin.
+  await Promise.allSettled([kasaStore.getAllKasalar(), kategoriStore.getAllKategoriler()])
   try {
     const r = await bankaAPI.getAll({ size: 500 })
     bankalar.value = unwrapList(r)

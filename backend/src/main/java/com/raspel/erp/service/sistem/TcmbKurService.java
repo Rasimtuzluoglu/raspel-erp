@@ -41,10 +41,12 @@ public class TcmbKurService {
             conn.setRequestProperty("Accept", "application/xml, text/xml, */*");
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
-            InputStream is = conn.getInputStream();
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(is);
+            Document doc;
+            try (InputStream is = conn.getInputStream()) {
+                doc = dBuilder.parse(is);
+            }
             doc.getDocumentElement().normalize();
 
             NodeList nList = doc.getElementsByTagName("Currency");
@@ -73,10 +75,14 @@ public class TcmbKurService {
         }
 
         // Calculate Gram Gold (GAU) approx based on USD rate
-        BigDecimal usdSatis = rates.get("USD")[1];
-        BigDecimal goldGramAlis = usdSatis.multiply(new BigDecimal("89.50")).setScale(4, RoundingMode.HALF_UP);
-        BigDecimal goldGramSatis = usdSatis.multiply(new BigDecimal("90.50")).setScale(4, RoundingMode.HALF_UP);
-        rates.put("GAU", new BigDecimal[]{goldGramAlis, goldGramSatis});
+        BigDecimal usdSatis = rates.containsKey("USD") ? rates.get("USD")[1] : null;
+        if (usdSatis == null) {
+            log.warn("TCMB yanitinda USD kuru yok; altin (GAU) kuru hesaplanamadi.");
+        } else {
+            BigDecimal goldGramAlis = usdSatis.multiply(new BigDecimal("89.50")).setScale(4, RoundingMode.HALF_UP);
+            BigDecimal goldGramSatis = usdSatis.multiply(new BigDecimal("90.50")).setScale(4, RoundingMode.HALF_UP);
+            rates.put("GAU", new BigDecimal[]{goldGramAlis, goldGramSatis});
+        }
 
         // Bitcoin (BTC) kuru kripto borsasından çekilir (TCMB'de yer almaz)
         BigDecimal btcFiyat = btcFiyatiGetir();

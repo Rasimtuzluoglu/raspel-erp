@@ -105,7 +105,13 @@ public class TekrarlayanFaturaService {
     @Scheduled(cron = "0 0 5 * * *")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "tekrarlayanFatura", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void vadesiGelenleriIsle() {
-        List<TekrarlayanFatura> vadesiGelen = repository.findByAktifTrueAndSonrakiCalistirmaLessThanEqual(LocalDate.now());
+        List<TekrarlayanFatura> vadesiGelen;
+        try {
+            vadesiGelen = repository.findByAktifTrueAndSonrakiCalistirmaLessThanEqual(LocalDate.now());
+        } catch (Exception e) {
+            log.error("Tekrarlayan fatura taraması başlatılamadı: {}", e.getMessage(), e);
+            return;
+        }
         log.info("Tekrarlayan fatura taraması: {} tanım vadesi geldi", vadesiGelen.size());
         for (TekrarlayanFatura tf : vadesiGelen) {
             try {
