@@ -52,6 +52,10 @@ public class StokSayimService {
     public StokSayimDTO olustur(StokSayimDTO dto, Long sirketId) {
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        if (sirketId != null && stok.getSirketId() != null && !sirketId.equals(stok.getSirketId())) {
+            throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+        }
         StokSayim sayim = StokSayim.builder()
                 .tarih(dto.getTarih())
                 .stok(stok)
@@ -78,6 +82,10 @@ public class StokSayimService {
         if (dto.getStokId() != null) {
             Stok stok = stokRepository.findById(dto.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (sayim.getSirketId() != null && stok.getSirketId() != null && !sayim.getSirketId().equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
             sayim.setStok(stok);
         }
         return entityToDTO(stokSayimRepository.save(sayim));
@@ -104,6 +112,11 @@ public class StokSayimService {
             if (fark.compareTo(BigDecimal.ZERO) != 0) {
                 Stok stok = stokRepository.findByIdForUpdate(sayim.getStok().getId())
                         .orElseThrow(() -> new ResourceNotFoundException("Stok", sayim.getStok().getId()));
+                // Güvenlik: sayımın şirketi dışındaki stoklara dokunulamaz.
+                tenantChecker.check(stok.getSirketId(), "Stok");
+                if (sayim.getSirketId() != null && stok.getSirketId() != null && !sayim.getSirketId().equals(stok.getSirketId())) {
+                    throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+                }
                 BigDecimal sayimEskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 stok.setMiktar(stok.getMiktar().add(fark));
                 stokRepository.save(stok);

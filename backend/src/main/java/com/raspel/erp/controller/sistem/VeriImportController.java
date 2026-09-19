@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.transaction.annotation.Transactional;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -44,7 +43,6 @@ public class VeriImportController {
 
     @PostMapping("/stok")
     @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar")
-    @Transactional
     public ResponseEntity<Map<String, Object>> stokImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
@@ -163,7 +161,6 @@ public class VeriImportController {
 
     @PostMapping("/alis-fatura")
     @Operation(summary = "CSV ile alış faturası aktar", description = "CSV dosyası ile toplu alış faturası girişi yapar. Kolonlar: faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani (aynı faturaNo'ya sahip satırlar tek faturada birleştirilir)")
-    @Transactional
     public ResponseEntity<Map<String, Object>> alisFaturaImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");

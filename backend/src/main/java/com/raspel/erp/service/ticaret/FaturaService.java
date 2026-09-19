@@ -210,7 +210,13 @@ public class FaturaService {
                 stokId, sirketId, Fatura.FaturaTur.ALIS, Fatura.FaturaDurum.KESILDI);
 
         BigDecimal guncelFiyat = stokRepository.findById(stokId)
-                .map(Stok::getFiyat)
+                .map(s -> {
+                    tenantChecker.check(s.getSirketId(), "Stok");
+                    if (sirketId != null && s.getSirketId() != null && !sirketId.equals(s.getSirketId())) {
+                        throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+                    }
+                    return s.getFiyat();
+                })
                 .orElse(null);
 
         List<StokFiyatGecmisiDTO.Kayit> kayitlar = gecmis.stream()
@@ -251,6 +257,10 @@ public class FaturaService {
         if (dto.getCariHesapId() != null) {
             cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                     .orElseThrow(() -> new ResourceNotFoundException("Cari hesap", dto.getCariHesapId()));
+            tenantChecker.check(cariHesap.getSirketId(), "Cari hesap");
+            if (sirketId != null && cariHesap.getSirketId() != null && !sirketId.equals(cariHesap.getSirketId())) {
+                throw new ResourceNotFoundException("Cari hesap bu sirkete ait degil");
+            }
         }
 
         Fatura.FaturaTur tur;
@@ -272,6 +282,13 @@ public class FaturaService {
         Map<Long, Stok> stokHaritasi = stokIdler.isEmpty() ? Map.of()
                 : stokRepository.findAllById(stokIdler).stream()
                         .collect(Collectors.toMap(Stok::getId, s -> s, (a, b) -> a));
+        // Güvenlik: çözülen stokların tamamı isteğin şirketine ait olmalıdır.
+        for (Stok s : stokHaritasi.values()) {
+            tenantChecker.check(s.getSirketId(), "Stok");
+            if (sirketId != null && s.getSirketId() != null && !sirketId.equals(s.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
+        }
         Map<Long, BigDecimal> agirlikHaritasi = stokHaritasi.values().stream()
                 .filter(s -> s.getAgirlik() != null)
                 .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
@@ -562,6 +579,10 @@ public class FaturaService {
         if (dto.getCariHesapId() != null) {
             cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                     .orElseThrow(() -> new ResourceNotFoundException("Cari hesap", dto.getCariHesapId()));
+            tenantChecker.check(cariHesap.getSirketId(), "Cari hesap");
+            if (fatura.getSirketId() != null && cariHesap.getSirketId() != null && !fatura.getSirketId().equals(cariHesap.getSirketId())) {
+                throw new ResourceNotFoundException("Cari hesap bu sirkete ait degil");
+            }
         }
 
         Fatura.FaturaTur tur;
@@ -580,6 +601,13 @@ public class FaturaService {
                 : stokRepository.findAllById(stokIdler).stream()
                         .filter(s -> s.getAgirlik() != null)
                         .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
+        // Güvenlik: güncellenen faturanın şirketi dışındaki stoklar reddedilir.
+        for (Stok s : stokRepository.findAllById(stokIdler)) {
+            tenantChecker.check(s.getSirketId(), "Stok");
+            if (fatura.getSirketId() != null && s.getSirketId() != null && !fatura.getSirketId().equals(s.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
+        }
 
         List<FaturaKalem> yeniKalemler = dto.getKalemler().stream().map(k -> {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
@@ -763,6 +791,11 @@ public class FaturaService {
 
             Stok stok = stokRepository.findByIdForUpdate(stokId)
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+            // Güvenlik: revize edilen faturanın şirketi dışındaki stoklara dokunulamaz.
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (fatura.getSirketId() != null && stok.getSirketId() != null && !fatura.getSirketId().equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
             BigDecimal yeniMiktar = (stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO).add(stokDegisim);
             if (yeniMiktar.compareTo(BigDecimal.ZERO) < 0) {
                 if (negatifStokIzinli(fatura.getSirketId())) {
@@ -824,6 +857,11 @@ public class FaturaService {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            // Güvenlik: faturanın şirketi dışındaki stoklara dokunulamaz.
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (fatura.getSirketId() != null && stok.getSirketId() != null && !fatura.getSirketId().equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
             Long seriId = null;
             if ("CIKIS".equals(tur)) {
                 BigDecimal adet = (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO);

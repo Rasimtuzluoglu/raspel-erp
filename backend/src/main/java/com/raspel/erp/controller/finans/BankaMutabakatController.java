@@ -26,8 +26,9 @@ public class BankaMutabakatController {
 
     @GetMapping
     @Operation(summary = "Banka hareketlerini listele", description = "Bankaya yüklenen hareketleri ve eşleşme durumunu listeler")
-    public ResponseEntity<List<BankaHareketiDTO>> listele(@PathVariable Long bankaId) {
-        return ResponseEntity.ok(bankaMutabakatService.listele(bankaId));
+    public ResponseEntity<List<BankaHareketiDTO>> listele(@PathVariable Long bankaId, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bankaMutabakatService.listele(bankaId, sirketId));
     }
 
     @PostMapping("/yukle")
@@ -38,7 +39,7 @@ public class BankaMutabakatController {
                                                         HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         bankaMutabakatService.yukle(bankaId, dosya, sirketId);
-        return ResponseEntity.ok(bankaMutabakatService.listele(bankaId));
+        return ResponseEntity.ok(bankaMutabakatService.listele(bankaId, sirketId));
     }
 
     @PostMapping("/otomatik-eslestir")

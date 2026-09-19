@@ -189,6 +189,30 @@ export const useAuthStore = defineStore('auth', () => {
     yetkiler.value = []
     tokenExpiresAt.value = null
     authTemizle()
+    hassasYerelVerileriTemizle()
+  }
+
+  /** Çıkışta cihazda kalan hassas iş verilerini ve servis çalışan önbelleğini temizler. */
+  const hassasYerelVerileriTemizle = () => {
+    try {
+      localStorage.removeItem('raspel_offline_satis_kuyrugu')
+      localStorage.removeItem('raspel_kayitli_sepet')
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('raspel_taslak_'))
+        .forEach((k) => localStorage.removeItem(k))
+    } catch {
+      /* yoksay */
+    }
+    try {
+      if (window.caches && caches.keys) {
+        caches.keys().then((anahtarlar) => Promise.all(anahtarlar.map((k) => caches.delete(k)))).catch(() => {})
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHES' })
+      }
+    } catch {
+      /* yoksay */
+    }
   }
 
   const kullaniciGuncelle = async () => {

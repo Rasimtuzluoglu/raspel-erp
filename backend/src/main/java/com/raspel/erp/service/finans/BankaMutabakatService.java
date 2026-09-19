@@ -42,6 +42,7 @@ public class BankaMutabakatService {
     private final BankaHareketiRepository bankaHareketiRepository;
     private final FaturaRepository faturaRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
 
     private static final DateTimeFormatter[] TARIH_FORMATLARI = {
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),
@@ -50,8 +51,11 @@ public class BankaMutabakatService {
             DateTimeFormatter.ofPattern("dd/MM/yyyy")
     };
 
-    public List<BankaHareketiDTO> listele(Long bankaId) {
-        List<BankaHareketi> hareketler = bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId);
+    public List<BankaHareketiDTO> listele(Long bankaId, Long sirketId) {
+        bankaDogrula(bankaId);
+        List<BankaHareketi> hareketler = bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId).stream()
+                .filter(h -> sirketId == null || sirketId.equals(h.getSirketId()))
+                .collect(Collectors.toList());
         // N+1 önlemi: eşleşen fatura numaralarını tek sorguda topla
         Set<Long> faturaIds = hareketler.stream()
                 .map(BankaHareketi::getEslesenFaturaId)
@@ -59,11 +63,16 @@ public class BankaMutabakatService {
                 .collect(Collectors.toSet());
         Map<Long, String> faturaNoMap = faturaIds.isEmpty() ? Map.of()
                 : faturaRepository.findAllById(faturaIds).stream()
+                        .filter(f -> sirketId == null || sirketId.equals(f.getSirketId()))
                         .collect(Collectors.toMap(Fatura::getId, Fatura::getFaturaNumarasi));
 
-        // Eşleşmemiş hareketler için öneri skorları hesapla
+        // Eşleşmemiş hareketler için öneri skorları hesapla (yalnızca isteğin şirketi).
         List<Fatura> acikFaturalar = hareketler.stream().anyMatch(h -> !Boolean.TRUE.equals(h.getEslestirildi()))
-                ? faturaRepository.findByTurAndOdemeDurumuNotIn(Fatura.FaturaTur.SATIS, List.of("ODENDI", "IPTAL"))
+                && sirketId != null
+                ? faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(
+                        sirketId, Fatura.FaturaDurum.IPTAL, List.of("ODENDI", "IPTAL")).stream()
+                        .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
+                        .collect(Collectors.toList())
                 : List.of();
 
         return hareketler.stream()
@@ -71,8 +80,16 @@ public class BankaMutabakatService {
                 .collect(Collectors.toList());
     }
 
+    /** Bankanın var olduğunu ve isteğin şirketine ait olduğunu doğrular. */
+    private void bankaDogrula(Long bankaId) {
+        Banka banka = bankaRepository.findById(bankaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
+        tenantChecker.check(banka.getSirketId(), "Banka");
+    }
+
     public int yukle(Long bankaId, MultipartFile dosya, Long sirketId) {
         if (dosya == null || dosya.isEmpty()) throw new BusinessException("Dosya boş olamaz");
+        bankaDogrula(bankaId);
         List<String[]> satirlar = parseDosya(dosya);
         if (satirlar.isEmpty()) throw new BusinessException("Dosyadan satır okunamadı");
 
@@ -91,7 +108,10 @@ public class BankaMutabakatService {
     }
 
     public List<BankaHareketiDTO> otomatikEslestir(Long bankaId, Long sirketId) {
-        List<BankaHareketi> eslesmesiz = bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(bankaId);
+        bankaDogrula(bankaId);
+        List<BankaHareketi> eslesmesiz = bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(bankaId).stream()
+                .filter(h -> sirketId == null || sirketId.equals(h.getSirketId()))
+                .collect(Collectors.toList());
         List<Fatura> faturalar = sirketId != null
                 ? faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(sirketId, Fatura.FaturaDurum.IPTAL, List.of("ODENDI"))
                 : List.of();
@@ -110,14 +130,19 @@ public class BankaMutabakatService {
                 }
             }
         }
-        return listele(bankaId);
+        return listele(bankaId, sirketId);
     }
 
     public BankaHareketiDTO eslestir(Long hareketId, Long faturaId) {
         BankaHareketi h = bankaHareketiRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka hareketi", hareketId));
         tenantChecker.check(h.getSirketId(), "Banka hareketi");
-        if (!faturaRepository.existsById(faturaId)) throw new ResourceNotFoundException("Fatura", faturaId);
+        Fatura fatura = faturaRepository.findById(faturaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Fatura", faturaId));
+        // Güvenlik: yalnızca aynı şirkete ait fatura ile eşleştirilebilir.
+        if (h.getSirketId() == null || !h.getSirketId().equals(fatura.getSirketId())) {
+            throw new ResourceNotFoundException("Fatura bu sirkete ait degil");
+        }
         h.setEslestirildi(true);
         h.setEslesenFaturaId(faturaId);
         return entityToDTO(bankaHareketiRepository.save(h));
@@ -133,6 +158,7 @@ public class BankaMutabakatService {
     }
 
     public void sil(Long bankaId) {
+        bankaDogrula(bankaId);
         List<BankaHareketi> list = bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId);
         bankaHareketiRepository.deleteAll(list);
     }

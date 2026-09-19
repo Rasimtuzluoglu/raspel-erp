@@ -129,6 +129,7 @@ class KasaServiceTest {
         Kasa kasa = createKasa(1L);
         KasaHareket h = KasaHareket.builder().id(1L).kasa(kasa).tur("GELIR")
                 .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now()).build();
+        when(kasaRepository.findById(1L)).thenReturn(Optional.of(kasa));
         when(kasaHareketRepository.findByKasaIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(h));
         var result = kasaService.kasaHareketleriGetir(1L);
         assertEquals(1, result.size());

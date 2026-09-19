@@ -194,16 +194,16 @@
               />
             </div>
             <div class="mesaj-icerik">
-              <template v-if="m.dosyaUrl">
+              <template v-if="guvenliDosyaUrl(m.dosyaUrl)">
                 <a
-                  :href="m.dosyaUrl"
+                  :href="guvenliDosyaUrl(m.dosyaUrl)"
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                   class="mesaj-dosya"
                 >
                   <img
                     v-if="resimMi(m.dosyaUrl)"
-                    :src="m.dosyaUrl"
+                    :src="guvenliDosyaUrl(m.dosyaUrl)"
                     class="mesaj-gorsel"
                     :alt="t('sohbet.paylasilanGorsel')"
                   >
@@ -934,6 +934,12 @@ const yaziyorGonder = () => {
 }
 
 const resimMi = (url) => /\.(png|jpe?g|gif|webp|bmp)$/i.test(url || '')
+
+/** XSS koruması: yalnızca http(s), göreli ve blob URL'lere izin verir. */
+const guvenliDosyaUrl = (url) => {
+  const u = String(url || '').trim()
+  return /^(https?:\/\/|\/|blob:)/i.test(u) ? u : null
+}
 
 const sohbetDosyaYukle = async (event) => {
   const dosya = event.target.files?.[0]

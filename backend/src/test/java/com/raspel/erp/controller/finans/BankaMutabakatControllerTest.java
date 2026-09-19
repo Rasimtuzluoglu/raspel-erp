@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,7 +37,7 @@ class BankaMutabakatControllerTest {
 
     @Test
     void listele_donar() throws Exception {
-        when(bankaMutabakatService.listele(1L)).thenReturn(List.of(
+        when(bankaMutabakatService.listele(eq(1L), any())).thenReturn(List.of(
                 BankaHareketiDTO.builder().id(1L).aciklama("Hareket").build()));
 
         mockMvc.perform(get("/api/bankalar/1/mutabakat"))

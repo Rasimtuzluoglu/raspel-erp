@@ -22,7 +22,7 @@ http:
         frameDeny: true
         customFrameOptionsValue: "DENY"
         customResponseHeaders:
-          Permissions-Policy: "camera=(), microphone=(self), geolocation=()"
+          Permissions-Policy: "camera=(self), microphone=(self), geolocation=(self)"
           Server: ""
           X-Powered-By: ""
 
@@ -38,47 +38,34 @@ http:
         accessControlAllowCredentials: true
         accessControlMaxAge: 3600
 
-    # DASHBOARD_BASIC_AUTH ortam degiskeninden okunur (users: "kullanici:hash").
-    # Uretmek icin: docker run --rm httpd:alpine htpasswd -nb admin GUCLU_SIFRENIZ
-    # ve degeri .env dosyasina DASHBOARD_BASIC_AUTH=... olarak yazin.
-    # .env dosyasinda bu degisken yoksa dashboard erisimi kapali kalir (fail-closed).
-    dashboard-auth:
-      basicAuth:
-        users:
-          - '{{ env "DASHBOARD_BASIC_AUTH" }}'
+    # DASHBOARD_BASIC_AUTH tanimliysa Traefik dashboard'u ayrica acilabilir.
+    # Varsayilan dosyada dashboard router'i yer almaz (bos basicAuth parse hatasi verir).
 
   routers:
-    # HTTP (port 80) — sadece APP_DOMAIN'e izin verir, diger host'lar HTTPS'e yonlendirilir.
-    # APP_DOMAIN degeri compose uzerinden traefik konteynerine env olarak verilir;
-    # {{ env "APP_DOMAIN" }} file provider Go templating ile cozulur.
+    # HTTP (port 80) — gercek domainler HTTPS'e yonlendirilir. localhost/127.0.0.1
+    # yerel gelistirme icin HTTP olarak birakilir (ACME localhost'a sertifika uretemez).
+    # ACME http-01 challenge router'i Traefik tarafindan otomatik eklenir.
     web-redirect:
-      rule: 'PathPrefix(`/`) && !Host(`{{ env "APP_DOMAIN" }}`)'
+      rule: 'PathPrefix(`/`) && !Host(`localhost`) && !Host(`127.0.0.1`)'
+      service: noop@internal
       entryPoints:
         - web
       middlewares:
         - redirect-https
-      priority: 100
+      priority: 100000
 
-    dashboard-http:
-      rule: 'PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
-      service: api@internal
-      entryPoints:
-        - web
-      middlewares:
-        - dashboard-auth
-      priority: 10
-
-    frontend-http:
-      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
+    # Yerel HTTP erisim (dev): redirect yok, dogrudan servis edilir.
+    frontend-http-local:
+      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && (Host(`localhost`) || Host(`127.0.0.1`))'
       service: frontend
       entryPoints:
         - web
       middlewares:
-        - cors-headers
-      priority: 1
+        - security-headers
+      priority: 5
 
-    api-http:
-      rule: 'PathPrefix(`/api`) && Host(`{{ env "APP_DOMAIN" }}`)'
+    api-http-local:
+      rule: 'PathPrefix(`/api`) && (Host(`localhost`) || Host(`127.0.0.1`))'
       service: backend
       entryPoints:
         - web
@@ -86,31 +73,11 @@ http:
         - cors-headers
         - ratelimit
         - security-headers
-      priority: 2
-
-    adminer-http:
-      rule: 'PathPrefix(`/adminer`) && Host(`{{ env "APP_DOMAIN" }}`)'
-      service: adminer
-      entryPoints:
-        - web
-      middlewares:
-        - cors-headers
-      priority: 3
+      priority: 6
 
     # HTTPS (port 443) — yalnizca APP_DOMAIN icin gecerli
-    dashboard:
-      rule: 'PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
-      service: api@internal
-      entryPoints:
-        - websecure
-      middlewares:
-        - dashboard-auth
-      tls:
-        certResolver: letsencrypt
-      priority: 10
-
     frontend:
-      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/adminer`) && !PathPrefix(`/dashboard`) && Host(`{{ env "APP_DOMAIN" }}`)'
+      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: frontend
       entryPoints:
         - websecure
@@ -133,19 +100,6 @@ http:
         certResolver: letsencrypt
       priority: 2
 
-    # Adminer: Yalnizca dev/debug profilinde calisir, production'da devre disidir
-    adminer:
-      rule: 'PathPrefix(`/adminer`) && Host(`{{ env "APP_DOMAIN" }}`)'
-      service: adminer
-      entryPoints:
-        - websecure
-      middlewares:
-        - cors-headers
-        - dashboard-auth
-      tls:
-        certResolver: letsencrypt
-      priority: 3
-
   services:
     frontend:
       loadBalancer:
@@ -162,13 +116,5 @@ http:
           - url: "http://raspel-backend:8081"
         healthCheck:
           path: /actuator/health
-          interval: 10s
-          timeout: 3s
-
-    adminer:
-      loadBalancer:
-        servers:
-          - url: "http://raspel-adminer:8080"
-        healthCheck:
           interval: 10s
           timeout: 3s

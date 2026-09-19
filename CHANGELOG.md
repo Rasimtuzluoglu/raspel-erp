@@ -2,6 +2,23 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.20.0] - 2026-09-19 (Üretim Güvenliği Sertleştirmesi - Faz 0)
+### Güvenlik
+- **2FA bypass kapatıldı**: `giris-sirket` artık 2FA aktifken şifre adımından gelen (doğrulanmamış) token ile JWT üretmiyor; JWT yalnızca TOTP doğrulaması sonrası veriliyor.
+- **Çapraz-tenant yazma/okuma engellendi**: Fatura (oluştur/güncelle/revize, stok hareketleri, fiyat geçmişi), İade, Stok Sayım, Stok Seri, Fiyat Listesi ve Kasa hareketlerinde ilişkili `stokId/cariHesapId/depoId` kayıtları isteğin şirketine karşı doğrulanıyor.
+- **Banka mutabakatı tenant izolasyonu**: `listele`/`yukle`/`otomatikEslestir`/`eslestir`/`sil` artık banka ve fatura şirketini doğruluyor; öneri sorgusu yalnız isteğin şirketiyle sınırlı.
+- **Veri importu transaction hatası giderildi**: CSV alış faturası/stok importunda controller seviyesindeki `@Transactional` kaldırıldı; satır hataları paylaşılan transaction'ı rollback-only yapmıyor.
+- **Frontend**: axios retry artık yalnız idempotent metotlarda (POST tekrarları mükerrer fatura/tahsilat oluşturamaz); çıkışta hassas yerel kayıtlar (offline sepet kuyruğu, taslaklar) ve SW önbelleği temizleniyor; sohbet dosya bağlantılarında `javascript:` şema doğrulaması.
+- **Güvenlik başlıkları**: `Permissions-Policy` barkod tarayıcı için `camera=(self)` yapıldı.
+
+### DevOps
+- **HTTP→HTTPS zorunlu**: port 80'deki tüm istekler (APP_DOMAIN dahil) HTTPS'e yönlendiriliyor; kimliksiz `adminer-http` router'ı kaldırıldı.
+- **Adminer** artık `debug` profili ile çalışıyor (production'da varsayılan kapalı) ve doğru ağa bağlandı.
+- **CI bağımlılık güvenliği**: ölü `ExportMenu`/`xlsx` (yüksek CVE, fix yok) kaldırıldı; `brace-expansion` override'ı kaldırıldı; `npm audit --omit=dev --audit-level=high` yeniden **0 zafiyet**.
+
+### Testler
+- Backend: 2FA bypass regresyon testleri + çapraz-tenant fatura stoğu reddi testi. Toplam 1092 test (0 hata).
+
 ## [1.19.1] - 2026-09-19 (Bozuk Türkçe Karakter Onarımı, İkonlar, KDV/BA-BS)
 ### Düzeltmeler
 - **Bozuk Türkçe karakterler (mojibake) onarıldı**: Demo verilerinin UTF-8 yerine ANSI okunmasıyla oluşan `YÄ±ldÄ±z GÄ±da` türü kayıtlar cari/stok/not/görev/sipariş/masraf/izin/teslimat/fatura metin alanlarında düzeltildi.

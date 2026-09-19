@@ -41,6 +41,10 @@ public class FiyatListesiService {
     public FiyatListesiDTO olustur(FiyatListesiDTO dto, Long sirketId) {
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        if (sirketId != null && stok.getSirketId() != null && !sirketId.equals(stok.getSirketId())) {
+            throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+        }
         FiyatListesi fl = FiyatListesi.builder()
                 .stok(stok)
                 .alisFiyat(dto.getAlisFiyat())
@@ -65,6 +69,10 @@ public class FiyatListesiService {
         if (dto.getStokId() != null) {
             Stok stok = stokRepository.findById(dto.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (fl.getSirketId() != null && stok.getSirketId() != null && !fl.getSirketId().equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
             fl.setStok(stok);
         }
         return entityToDTO(fiyatListesiRepository.save(fl));

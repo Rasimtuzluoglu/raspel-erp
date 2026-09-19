@@ -155,7 +155,11 @@ axiosRetry(apiClient, {
   retries: 2,
   retryDelay: (retryCount) => retryCount * 1000,
   retryCondition: (error) => {
-    return !error.response || error.response.status >= 500
+    // Yalnızca idempotent istekler tekrar denenir. POST/PATCH tekrarı finansal
+    // belgelerin (fatura/tahsilat/sipariş) mükerrer oluşmasına yol açabilir.
+    const method = (error.config?.method || 'get').toLowerCase()
+    const idempotent = ['get', 'head', 'options', 'put', 'delete'].includes(method)
+    return idempotent && (!error.response || error.response.status >= 500)
   },
   onRetry: (retryCount, error) => {
     console.warn(`API retry (${retryCount}/2):`, error.config?.url)

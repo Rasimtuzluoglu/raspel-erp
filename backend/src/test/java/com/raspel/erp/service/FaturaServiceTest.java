@@ -140,6 +140,26 @@ class FaturaServiceTest {
     }
 
     @Test
+    void faturaOlustur_baskaSirketStoguReddedilir() {
+        CariHesap cari = createCariHesap();
+        cari.setSirketId(1L);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        Stok yabanciStok = createStok();
+        yabanciStok.setSirketId(2L);
+        when(stokRepository.findAllById(anyList())).thenReturn(List.of(yabanciStok));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1")
+                .adet(BigDecimal.valueOf(2)).birimFiyat(BigDecimal.valueOf(100))
+                .kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+
+        // Çapraz-tenant yazma engeli: başka şirketin stoğu ile fatura oluşturulamaz.
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> faturaService.faturaOlustur(dto, 1L, null, null));
+        verify(faturaRepository, never()).save(any(Fatura.class));
+    }
+
+    @Test
     void faturaOlustur_emailBasarsaDurumuYanitaEkler() {
         CariHesap cari = createCariHesap();
         cari.setEmail("cari@example.com");

@@ -64,23 +64,28 @@ public class KullaniciService {
 
     private static final long SIFRE_TOKEN_GECERLILIK_MS = 60 * 60 * 1000; // 1 saat
 
-    /** Bekleyen girişler: girisToken -> (kullaniciId, oluşturmaZamani). 5 dakika geçerli.
+    /** Bekleyen girişler: girisToken -> (kullaniciId, oluşturmaZamani, 2FA dogrulandiMi). 5 dakika geçerli.
      *  Redis'te saklanır (sunucu restart'ında kaybolmaz); Redis'e erişilemezse bellek fallback'i kullanılır. */
     private final ConcurrentMap<String, long[]> bekleyenGirislerBellek = new ConcurrentHashMap<>();
     private static final long GIRIS_TOKEN_GECERLILIK_MS = 5 * 60 * 1000;
     private static final String GIRIS_REDIS_PREFIX = "giris:bekleyen:";
 
     private void bekleyenKaydet(String token, long kullaniciId, long zaman) {
+        bekleyenKaydet(token, kullaniciId, zaman, true);
+    }
+
+    private void bekleyenKaydet(String token, long kullaniciId, long zaman, boolean ikiFaktoriDogrulandi) {
+        long dogrulandi = ikiFaktoriDogrulandi ? 1L : 0L;
         try {
             if (redisTemplate != null) {
                 redisTemplate.opsForValue().set(GIRIS_REDIS_PREFIX + token,
-                        kullaniciId + ":" + zaman, Duration.ofMillis(GIRIS_TOKEN_GECERLILIK_MS));
+                        kullaniciId + ":" + zaman + ":" + dogrulandi, Duration.ofMillis(GIRIS_TOKEN_GECERLILIK_MS));
                 return;
             }
         } catch (Exception e) {
             log.warn("Redis erişilemedi, giriş oturumu bellekte tutulacak: {}", e.getMessage());
         }
-        bekleyenGirislerBellek.put(token, new long[]{kullaniciId, zaman});
+        bekleyenGirislerBellek.put(token, new long[]{kullaniciId, zaman, dogrulandi});
     }
 
     private long[] bekleyenGetir(String token) {
@@ -89,7 +94,8 @@ public class KullaniciService {
                 String val = redisTemplate.opsForValue().get(GIRIS_REDIS_PREFIX + token);
                 if (val != null) {
                     String[] parcalar = val.split(":");
-                    return new long[]{Long.parseLong(parcalar[0]), Long.parseLong(parcalar[1])};
+                    long dogrulandi = parcalar.length > 2 ? Long.parseLong(parcalar[2]) : 0L;
+                    return new long[]{Long.parseLong(parcalar[0]), Long.parseLong(parcalar[1]), dogrulandi};
                 }
             }
         } catch (Exception e) {
@@ -394,10 +400,12 @@ public class KullaniciService {
 
         log.info("Başarılı giriş: {}", req.getUsername());
 
-        String girisToken = UUID.randomUUID().toString();
-        bekleyenKaydet(girisToken, k.getId(), System.currentTimeMillis());
-
         boolean twoFactorAktif = k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled();
+
+        String girisToken = UUID.randomUUID().toString();
+        // 2FA aktifse token "henuz dogrulanmadi" olarak isaretlenir; giris-sirket bu token ile
+        // JWT uretemez. JWT ancak giris-2fa adimiyla uretilen dogrulanmis token ile alinir.
+        bekleyenKaydet(girisToken, k.getId(), System.currentTimeMillis(), !twoFactorAktif);
         List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
 
         return LoginResponse.builder()
@@ -475,6 +483,13 @@ public class KullaniciService {
         Kullanici k = kullaniciRepository.findById(kullaniciId)
                 .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
         if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
+
+        // 2FA aktifse, sifre adimindan gelen (dogrulanmamis) token ile JWT uretilemez.
+        boolean twoFactorAktif = Boolean.TRUE.equals(k.getTwoFactorEnabled());
+        boolean ikiFaktorDogrulandi = kayit.length > 2 && kayit[2] == 1L;
+        if (twoFactorAktif && !ikiFaktorDogrulandi) {
+            throw new BusinessException("İki adımlı doğrulama gerekli. Lütfen doğrulama kodunu giriniz.");
+        }
 
         if (sirketId == null) {
             sirketId = k.getSirketId();

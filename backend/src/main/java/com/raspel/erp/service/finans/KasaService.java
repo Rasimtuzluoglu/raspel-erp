@@ -90,6 +90,9 @@ public class KasaService {
 
     @Transactional(readOnly = true)
     public List<KasaHareketDTO> kasaHareketleriGetir(Long kasaId) {
+        Kasa kasa = kasaRepository.findById(kasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
         return kasaHareketRepository.findByKasaIdOrderByHareketTarihiDesc(kasaId)
                 .stream().map(this::hareketToDTO).collect(Collectors.toList());
     }

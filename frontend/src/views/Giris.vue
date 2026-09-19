@@ -23,7 +23,7 @@
           </div>
           <div class="hero-brand-text">
             <span class="hero-brand-name">RasPel ERP</span>
-            <span class="hero-badge">v1.19.1 Enterprise</span>
+            <span class="hero-badge">v1.20.0 Enterprise</span>
           </div>
         </div>
 

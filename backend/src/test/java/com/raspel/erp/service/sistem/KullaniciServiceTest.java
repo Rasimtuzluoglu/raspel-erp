@@ -248,6 +248,50 @@ class KullaniciServiceTest {
     }
 
     @Test
+    void girisSirket_ikiFaktorDogrulanmadanJwtUretemez() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setSirketId(5L);
+        k.setTwoFactorEnabled(true);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+
+        LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").build());
+
+        // Sifre adimindan gelen token, 2FA dogrulanmadan JWT'ye cevrilemez (bypass kapali).
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.girisSirket(pending.getGirisToken(), 5L));
+        verify(jwtUtil, never()).generateToken(any(), any(), any());
+    }
+
+    @Test
+    void girisSirket_ikiFaktorDogrulandiktanSonraGecer() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setSirketId(5L);
+        k.setTwoFactorEnabled(true);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(jwtUtil.generateToken(any(), any(), any())).thenReturn("jwt-token");
+
+        LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").build());
+        String kod = TotpUtil.generateCode("JBSWY3DPEHPK3PXP", System.currentTimeMillis());
+        LoginResponse dogrulanmis = kullaniciService.giris2faTamamla(TwoFactorGirisRequest.builder()
+                .girisToken(pending.getGirisToken()).code(kod).build());
+
+        LoginResponse sonuc = kullaniciService.girisSirket(dogrulanmis.getGirisToken(), 5L);
+
+        assertEquals("jwt-token", sonuc.getToken());
+        verify(jwtUtil).generateToken(any(), any(), any());
+    }
+
+    @Test
     void enableTwoFactor_gecersizKodReddedilir() {
         Kullanici k = createKullanici(1L);
         k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");

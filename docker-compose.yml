@@ -239,6 +239,8 @@ services:
   adminer:
     image: adminer:4.8.1
     container_name: raspel-adminer
+    # Production'da varsayilan olarak baslamaz; gerektiginde: docker compose --profile debug up -d adminer
+    profiles: ["debug"]
     ports:
       - "127.0.0.1:8082:8080"
     depends_on:
@@ -247,6 +249,7 @@ services:
     restart: unless-stopped
     networks:
       - db-net
+      - backend-net
     environment:
       ADMINER_DEFAULT_SERVER: postgres
       ADMINER_DEFAULT_DB: raspelerp

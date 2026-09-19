@@ -7,7 +7,7 @@
 
     <groupId>com.raspel</groupId>
     <artifactId>raspel-erp</artifactId>
-    <version>1.19.1</version>
+    <version>1.20.0</version>
     <packaging>jar</packaging>
 
     <name>Raspel ERP</name>

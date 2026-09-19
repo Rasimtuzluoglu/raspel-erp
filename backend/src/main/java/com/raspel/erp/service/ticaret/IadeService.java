@@ -92,6 +92,7 @@ public class IadeService {
 
         if (dto.getKalemler() != null) {
             for (IadeKalemDTO k : dto.getKalemler()) {
+                stokTenantDogrula(k.getStokId(), sirketId);
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
                 BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
                 BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -138,6 +139,7 @@ public class IadeService {
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
             iadeKalemRepository.deleteByIadeId(iade.getId());
             for (IadeKalemDTO k : dto.getKalemler()) {
+                stokTenantDogrula(k.getStokId(), iade.getSirketId());
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
                 BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
                 BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -205,6 +207,11 @@ public class IadeService {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            // Güvenlik: iadenin şirketi dışındaki stoklara dokunulamaz.
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (iade.getSirketId() != null && stok.getSirketId() != null && !iade.getSirketId().equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
             if (alisIadesi) {
                 if (stok.getMiktar().compareTo(k.getMiktar()) < 0)
                     throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd() + ", Mevcut: " + stok.getMiktar());
@@ -230,6 +237,17 @@ public class IadeService {
         cariBakiyeUygula(iade, false);
     }
 
+    /** İade kaleminde gönderilen stoğun iade şirketine ait olduğunu doğrular. */
+    private void stokTenantDogrula(Long stokId, Long sirketId) {
+        if (stokId == null) return;
+        stokRepository.findById(stokId).ifPresent(stok -> {
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (sirketId != null && stok.getSirketId() != null && !sirketId.equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
+        });
+    }
+
     /** Iadeye bagli faturanin deposu; yoksa varsayilan aktif depo. */
     private Long depoIdBul(Iade iade) {
         Long depoId = null;
@@ -247,6 +265,11 @@ public class IadeService {
             if (k.getStokId() == null) continue;
             Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            // Güvenlik: iadenin şirketi dışındaki stoklara dokunulamaz.
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (iade.getSirketId() != null && stok.getSirketId() != null && !iade.getSirketId().equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
             if (alisIadesi) {
                 BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                 stok.setMiktar(stok.getMiktar().add(k.getMiktar()));

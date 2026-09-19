@@ -29,8 +29,13 @@ class BankaMutabakatServiceTest {
     @Mock private BankaHareketiRepository bankaHareketiRepository;
     @Mock private FaturaRepository faturaRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
 
     @InjectMocks private BankaMutabakatService bankaMutabakatService;
+
+    private com.raspel.erp.entity.finans.Banka banka(Long id) {
+        return com.raspel.erp.entity.finans.Banka.builder().id(id).ad("Test Banka").sirketId(1L).build();
+    }
 
     private Fatura fatura(Long id, BigDecimal tutar, LocalDate tarih, String durum) {
         return Fatura.builder()
@@ -52,6 +57,7 @@ class BankaMutabakatServiceTest {
 
         when(bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(10L)).thenReturn(List.of(hareket));
         when(faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(eq(1L), eq(Fatura.FaturaDurum.IPTAL), anyList())).thenReturn(List.of(eslesenFatura));
+        when(bankaRepository.findById(10L)).thenReturn(Optional.of(banka(10L)));
         when(bankaHareketiRepository.save(any(BankaHareketi.class))).thenAnswer(inv -> inv.getArgument(0));
         when(bankaHareketiRepository.findByBankaIdOrderByTarihDesc(10L)).thenReturn(List.of(hareket));
 
@@ -72,6 +78,7 @@ class BankaMutabakatServiceTest {
 
         when(bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(10L)).thenReturn(List.of(hareket));
         when(faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(eq(1L), eq(Fatura.FaturaDurum.IPTAL), anyList())).thenReturn(List.of(farkliFatura));
+        when(bankaRepository.findById(10L)).thenReturn(Optional.of(banka(10L)));
         when(bankaHareketiRepository.findByBankaIdOrderByTarihDesc(10L)).thenReturn(List.of(hareket));
 
         bankaMutabakatService.otomatikEslestir(10L, 1L);
@@ -82,9 +89,9 @@ class BankaMutabakatServiceTest {
 
     @Test
     void eslestir_manuelEslesmeKurar() {
-        BankaHareketi hareket = BankaHareketi.builder().id(1L).bankaId(10L).eslestirildi(false).build();
+        BankaHareketi hareket = BankaHareketi.builder().id(1L).bankaId(10L).eslestirildi(false).sirketId(1L).build();
         when(bankaHareketiRepository.findById(1L)).thenReturn(Optional.of(hareket));
-        when(faturaRepository.existsById(5L)).thenReturn(true);
+        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura(5L, BigDecimal.valueOf(1000), LocalDate.now(), "ODENMEDI")));
         when(bankaHareketiRepository.save(any(BankaHareketi.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var dto = bankaMutabakatService.eslestir(1L, 5L);

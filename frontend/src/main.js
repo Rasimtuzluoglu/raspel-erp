@@ -13,7 +13,6 @@ import AppDataTable from './components/AppDataTable.vue'
 import PageHeader from './components/PageHeader.vue'
 import EmptyState from './components/EmptyState.vue'
 import SkeletonLoader from './components/SkeletonLoader.vue'
-import ExportMenu from './components/ExportMenu.vue'
 import GecmisZamanCizelgesi from './components/GecmisZamanCizelgesi.vue'
 import FaturaGecmisDialog from './components/FaturaGecmisDialog.vue'
 import SatirEylemleri from './components/SatirEylemleri.vue'
@@ -74,7 +73,6 @@ app.component('AppDataTable', AppDataTable)
 app.component('PageHeader', PageHeader)
 app.component('EmptyState', EmptyState)
 app.component('SkeletonLoader', SkeletonLoader)
-app.component('ExportMenu', ExportMenu)
 app.component('GecmisZamanCizelgesi', GecmisZamanCizelgesi)
 app.component('FaturaGecmisDialog', FaturaGecmisDialog)
 app.component('SatirEylemleri', SatirEylemleri)

@@ -40,6 +40,9 @@ public class StokSeriService {
 
     @Transactional(readOnly = true)
     public List<StokSeriDTO> stokIcinGetir(Long stokId) {
+        Stok stok = stokRepository.findById(stokId)
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+        tenantChecker.check(stok.getSirketId(), "Stok");
         return stokSeriRepository.findByStokId(stokId).stream()
                 .map(this::entityToDTO).collect(Collectors.toList());
     }
@@ -63,6 +66,7 @@ public class StokSeriService {
     public StokSeriDTO olustur(StokSeriDTO dto) {
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
         java.math.BigDecimal miktar = dto.getMiktar() != null ? dto.getMiktar() : java.math.BigDecimal.ONE;
         StokSeri seri = StokSeri.builder()
                 .stok(stok)
@@ -124,6 +128,7 @@ public class StokSeriService {
         if (dto.getStokId() != null) {
             Stok stok = stokRepository.findById(dto.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+            tenantChecker.check(stok.getSirketId(), "Stok");
             seri.setStok(stok);
         }
         if (dto.getStokHareketId() != null) {
