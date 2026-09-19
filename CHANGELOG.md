@@ -2,6 +2,27 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.17.0] - 2026-09-19 (Kullanım Kolaylaştırma, Tema, KVKK)
+### Eklenenler
+- **Cariye borçlandırma**: Cari hesaba manuel borç (dekont/finansman) ekleme — yeni `BORC` hareket türü (V-gerekmez) + cari kartından "Borçlandırma" dialogu; bakiye otomatik borç yönünde güncellenir.
+- **Satışta kalem düzenleme ve çoklu fiyat**: Satış kalemleri artık satır içinde (ürün adı, adet, birim fiyat, KDV) düzenlenebilir; KDV oranı seçilebilir ve stok kartından gelir. Cari/ürün fiyat seviyeleri panelden uygulanabilir.
+- **Sohbette yöneticiye özel mesaj silme**: Genel sohbet ve oda mesajları yalnızca ADMIN tarafından silinebilir; silme WebSocket ile tüm istemcilere anlık yansır.
+- **Termal fiş 58/80mm ve kilo gösterimi**: POS fiş genişliği şirket ayarından seçilir; uzun ürün adları sarılır, toplam ağırlık (kg/ton) fişe eklenir.
+- **Serbest renk seçici**: Vurgu rengi için özel renk seçimi; varsayılan aksan **petrol yeşili (#0F766E)** olarak güncellendi, mevcut presetler korundu.
+- **KVKK uyumlu metinler**: Gizlilik Politikası (aydınlatma metni: veri sorumlusu, kategoriler, hukuki sebepler, aktarım, saklama, çerezler, m.11 hakları) ve Kullanım Şartları (taraflar, veri sorumluluğu, sorumluluk sınırı, fesih, uygulanacak hukuk) güncellendi.
+
+### Düzeltmeler
+- **Karlılık analizi menü aktifliği**: Alt yol açıkken üst menünün de aktif görünmesi engellendi (en uzun yol eşleşmesi).
+- **Stok grubu filtresi**: Sabit/hardcoded seçenekler yerine gerçek verilerden gelen önerilerle çalışır hâle getirildi.
+- **Cari sütun ayarları**: Sütun göster/gizle ve yoğunluk ayarı kalıcı olarak uygulanıyor.
+- **Cari üzerinden "Fatura Kes"**: İlgili cari, fatura ekranında önceden seçili geliyor.
+- **Toplu seçim**: Satır tıklaması yerine yalnızca onay kutusu ile seçim; yanlışlıkla seçim önlendi.
+- **Yenilikler penceresi**: Sürüm başına yalnızca bir kez gösterilir (X/maske ile kapatılsa dahi).
+- **Dashboard ikonu**: PrimeIcons'ta bulunmayan `pi-handshake` simgesi geçerli simgeyle değiştirildi.
+
+### Eklenen Testler
+- Backend: 1081 → 1091. Frontend: 710 → 714 (escpos sarma/ağırlık).
+
 ## [1.16.1] - 2026-09-19 (Beyaz Ekran Önleme & PWA Otomatik Kurtarma)
 ### Düzeltmeler
 - **Beyaz ekran sorunu giderildi**: Eski service worker'ın bayat `index.html`/asset sunması engellendi. Gezinme istekleri artık **NetworkFirst** ile taze HTML alıyor.

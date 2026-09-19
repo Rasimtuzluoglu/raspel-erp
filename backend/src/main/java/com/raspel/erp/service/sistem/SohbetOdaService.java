@@ -161,6 +161,31 @@ public class SohbetOdaService {
         return dtoKayit;
     }
 
+    /**
+     * Oda mesajını siler. Yalnızca ADMIN rolü erişebilir (controller'da @PreAuthorize
+     * ile kısıtlanır). Mesajın odaya ve şirkete ait olduğu doğrulanır.
+     */
+    @Transactional
+    public void mesajSil(Long odaId, Long mesajId, Long sirketId) {
+        odaBul(odaId, sirketId);
+        SohbetMesaj mesaj = mesajRepository.findById(mesajId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mesaj bulunamadı"));
+        if (mesaj.getOdaId() == null || !mesaj.getOdaId().equals(odaId)) {
+            throw new BusinessException("Mesaj bu odaya ait değil");
+        }
+        if (sirketId != null && !sirketId.equals(mesaj.getSirketId())) {
+            throw new BusinessException("Bu mesaja erişim yetkiniz yok");
+        }
+        mesajRepository.delete(mesaj);
+        try {
+            if (sirketId != null) {
+                messagingTemplate.convertAndSend("/topic/sohbet/oda/" + sirketId + "/" + odaId + "/sil", mesajId);
+            }
+        } catch (Exception e) {
+            log.warn("Oda mesaj silme olayı yayınlanamadı: {}", e.getMessage());
+        }
+    }
+
     @Transactional
     public void okunduIsaretle(Long odaId, Long kullaniciId) {
         uyeRepository.findByOdaIdAndKullaniciId(odaId, kullaniciId).ifPresent(u -> {

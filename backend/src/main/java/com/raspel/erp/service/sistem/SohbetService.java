@@ -82,6 +82,27 @@ public class SohbetService {
         return dtoKayit;
     }
 
+    /**
+     * Genel sohbet mesajını siler. Yalnızca ADMIN rolü erişebilir (controller'da
+     * @PreAuthorize ile kısıtlanır). Şirket uyuşmazlığı reddedilir.
+     */
+    @Transactional
+    public void mesajSil(Long mesajId, Long sirketId) {
+        SohbetMesaj mesaj = sohbetMesajRepository.findById(mesajId)
+                .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Mesaj", mesajId));
+        if (sirketId != null && !sirketId.equals(mesaj.getSirketId())) {
+            throw new com.raspel.erp.exception.BusinessException("Bu mesaja erişim yetkiniz yok");
+        }
+        sohbetMesajRepository.delete(mesaj);
+        try {
+            if (mesaj.getSirketId() != null) {
+                messagingTemplate.convertAndSend("/topic/sohbet/" + mesaj.getSirketId() + "/sil", mesajId);
+            }
+        } catch (Exception e) {
+            log.warn("Sohbet silme olayı yayınlanamadı: {}", e.getMessage());
+        }
+    }
+
     @Transactional(readOnly = true)
     public AISorguSonucDTO aiSorgula(String soru, Long sirketId) {
         if (soru == null || soru.isBlank()) {

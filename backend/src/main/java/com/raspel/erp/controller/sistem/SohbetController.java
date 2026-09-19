@@ -40,6 +40,16 @@ public class SohbetController {
         return ResponseEntity.ok(sohbetService.mesajGonder(dto, sirketId, kullaniciId, displayName));
     }
 
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Sohbet mesajını sil", description = "Genel sohbet mesajını siler (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> mesajSil(@PathVariable Long id, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        log.info("DELETE /api/sohbet/{} - Mesaj siliniyor, sirketId: {}", id, sirketId);
+        sohbetService.mesajSil(id, sirketId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/dosya")
     @Operation(summary = "Genel sohbete dosya yükle", description = "Genel sohbette paylaşılmak üzere dosya/görsel yükler")
     public ResponseEntity<java.util.Map<String, String>> dosyaYukle(

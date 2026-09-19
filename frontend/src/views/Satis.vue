@@ -257,31 +257,52 @@
         </Column>
         <Column :header="t('satis.urun')">
           <template #body="s">
-            {{ s.data.aciklama }}
+            <InputText
+              v-model="s.data.aciklama"
+              class="w-full kalem-girdi"
+            />
           </template>
         </Column>
         <Column
           :header="t('satis.adet')"
-          style="width: 80px"
+          style="width: 110px"
         >
           <template #body="s">
-            {{ s.data.adet }}
+            <InputNumber
+              v-model="s.data.adet"
+              :min="0.01"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              class="w-full kalem-girdi"
+            />
           </template>
         </Column>
         <Column
           :header="t('satis.birimFiyat')"
-          style="width: 120px"
+          style="width: 140px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.birimFiyat) }}
+            <InputNumber
+              v-model="s.data.birimFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              mode="currency"
+              currency="TRY"
+              class="w-full kalem-girdi"
+            />
           </template>
         </Column>
         <Column
           :header="t('satis.kdv')"
-          style="width: 60px"
+          style="width: 100px"
         >
           <template #body="s">
-            %{{ s.data.kdvOrani }}
+            <Dropdown
+              v-model="s.data.kdvOrani"
+              :options="kdvOranlari"
+              class="w-full kalem-girdi"
+            />
           </template>
         </Column>
         <Column
@@ -289,7 +310,7 @@
           style="width: 120px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.tutar || s.data.birimFiyat * s.data.adet) }}
+            {{ formatCurrency(kalemNetTutar(s.data)) }}
           </template>
         </Column>
         <Column
@@ -376,6 +397,7 @@ const satisModu = ref('SATIS')
 const seciliUrun = ref(null)
 const yeniUrunAdet = ref(1)
 const yeniUrunFiyat = ref(0)
+const kdvOranlari = [0, 1, 8, 10, 18, 20]
 
 const satisForm = ref({
   cariHesapId: null,
@@ -455,13 +477,13 @@ const urunEkle = () => {
     return
   }
   const brf = yeniUrunFiyat.value || u.fiyat
+  const kalemKdvOrani = Number(u.kdvOrani ?? 20)
   satisForm.value.kalemler.push({
     aciklama: u.ad,
     adet: yeniUrunAdet.value,
     birimFiyat: brf,
-    kdvOrani: 20,
-    stokId: u.id,
-    tutar: brf * yeniUrunAdet.value * (1 + 20 / 100)
+    kdvOrani: kalemKdvOrani,
+    stokId: u.id
   })
   seciliUrun.value = null
   yeniUrunAdet.value = 1
@@ -642,6 +664,13 @@ const printTermalFis = (satisData) => {
 .satis-container {
   padding: 0;
   max-width: 100%;
+}
+.kalem-girdi :deep(.p-inputtext),
+.kalem-girdi :deep(.p-inputnumber-input),
+.kalem-girdi :deep(.p-dropdown-label) {
+  padding: 0.3rem 0.5rem;
+  font-size: 13px;
+  width: 100%;
 }
 h1 {
   color: var(--text-primary);

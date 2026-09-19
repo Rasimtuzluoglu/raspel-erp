@@ -101,6 +101,28 @@ class HareketServiceTest {
     }
 
     @Test
+    void hareketOlustur_borclandirma_cariyiBorclandirir() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("BORC")
+                .tutar(BigDecimal.valueOf(750)).hareketTarihi(LocalDate.now())
+                .aciklama("Kart faizi").build();
+        Hareket saved = createHareket(1L);
+        saved.setTur(Hareket.HareketTuru.BORC);
+        saved.setTutar(BigDecimal.valueOf(750));
+        when(hareketRepository.save(any(Hareket.class))).thenReturn(saved);
+        doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(750).negate());
+
+        var result = hareketService.hareketOlustur(dto, 1L);
+
+        assertEquals(Hareket.HareketTuru.BORC.name(), result.getTur());
+        // Borçlandırma cari bakiyesini negatife çeker (borç artar)
+        verify(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(750).negate());
+        // Borçlandırma faturaya bağlanmaz
+        verify(faturaRepository, never()).save(any());
+    }
+
+    @Test
     void hareketOlustur_throwsWhenInvalidTur() {
         HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("INVALID").tutar(BigDecimal.valueOf(100)).build();
         assertThrows(RuntimeException.class, () -> hareketService.hareketOlustur(dto, 1L));

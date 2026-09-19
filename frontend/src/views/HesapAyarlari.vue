@@ -327,6 +327,17 @@
                         :aria-label="c.name"
                         @click="applyColor(c.value)"
                       />
+                      <label
+                        class="renk-ozel"
+                        :title="t('hesapAyarlari.ozelRenk')"
+                      >
+                        <input
+                          type="color"
+                          :value="accentColor"
+                          :aria-label="t('hesapAyarlari.ozelRenk')"
+                          @input="applyColor($event.target.value)"
+                        >
+                      </label>
                     </div>
                   </div>
                   <div class="field">
@@ -597,6 +608,15 @@
                       option-value="value"
                     />
                   </div>
+                  <div class="fis-ayar-satir">
+                    <label>{{ t('hesapAyarlari.fisGenisligi') }}</label>
+                    <SelectButton
+                      v-model="fisGenislik"
+                      :options="fisGenislikSecenekleri"
+                      option-label="label"
+                      option-value="value"
+                    />
+                  </div>
                 </template>
               </Card>
             </div>
@@ -719,9 +739,14 @@ const guncellemeKontrol = async () => {
 // Fiş yazdırma ayarları (sunucuda saklanır; localStorage hızlı önbellek)
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || t('hesapAyarlari.fisVarsayilanNot'))
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
+const fisGenislik = ref(localStorage.getItem('raspel_fis_genislik') || '80')
 const fisSecenekleri = [
   { label: t('hesapAyarlari.fiyatli'), value: true },
   { label: t('hesapAyarlari.fiyatsiz'), value: false }
+]
+const fisGenislikSecenekleri = [
+  { label: '80mm', value: '80' },
+  { label: '58mm', value: '58' }
 ]
 
 const fisAyarlariYukle = async () => {
@@ -739,6 +764,10 @@ const fisAyarlariYukle = async () => {
         fisFiyatli.value = a.fisFiyatli
         localStorage.setItem('raspel_fis_fiyatli', String(a.fisFiyatli))
       }
+      if (a.fisGenislik != null) {
+        fisGenislik.value = String(a.fisGenislik)
+        localStorage.setItem('raspel_fis_genislik', String(a.fisGenislik))
+      }
     }
   } catch {
     /* sunucu yoksa yerel önbellek kullanılır */
@@ -746,9 +775,10 @@ const fisAyarlariYukle = async () => {
 }
 
 const fisAyarlariKaydet = async () => {
-  const ayarlar = { fisAltNotu: fisAltNotu.value || '', fisFiyatli: fisFiyatli.value }
+  const ayarlar = { fisAltNotu: fisAltNotu.value || '', fisFiyatli: fisFiyatli.value, fisGenislik: fisGenislik.value }
   localStorage.setItem('raspel_fis_notu', ayarlar.fisAltNotu)
   localStorage.setItem('raspel_fis_fiyatli', String(ayarlar.fisFiyatli))
+  localStorage.setItem('raspel_fis_genislik', String(ayarlar.fisGenislik))
   const sirketId = authStore?.sirketId
   if (sirketId) {
     try {
@@ -759,7 +789,7 @@ const fisAyarlariKaydet = async () => {
   }
 }
 
-watch([fisAltNotu, fisFiyatli], () => { fisAyarlariKaydet() })
+watch([fisAltNotu, fisFiyatli, fisGenislik], () => { fisAyarlariKaydet() })
 
 const fisAyariDinleyici = (e) => {
   if (e.key === 'raspel_fis_fiyatli' && e.newValue !== null) {
@@ -778,6 +808,7 @@ const authStore = useAuthStore()
 const { isDark, mode, accentColor, applyMode, applyColor, initTheme } = useTheme()
 
 const renkler = [
+  { name: t('hesapAyarlari.renkPetrol'), value: '#0f766e' },
   { name: t('hesapAyarlari.renkOkyanus'), value: '#3b82f6' },
   { name: t('hesapAyarlari.renkZumrut'), value: '#10b981' },
   { name: t('hesapAyarlari.renkAsilMor'), value: '#8b5cf6' },
@@ -1388,6 +1419,28 @@ const kopyala = async (text) => {
 .renk-dot.aktif {
   border-color: var(--text-primary);
   box-shadow: 0 0 0 3px var(--accent-border);
+}
+.renk-ozel {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  display: inline-flex;
+  transition: all 0.15s;
+}
+.renk-ozel:hover {
+  transform: scale(1.12);
+}
+.renk-ozel input {
+  width: 200%;
+  height: 200%;
+  margin: -25%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: none;
 }
 .empty-state {
   text-align: center;

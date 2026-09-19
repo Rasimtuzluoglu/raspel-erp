@@ -184,6 +184,14 @@
             <div class="mesaj-ust">
               <strong>{{ m.kullaniciAd || t('sohbet.bilinmeyen') }}</strong>
               <span class="mesaj-zaman">{{ formatZaman(m.olusturmaTarihi) }}</span>
+              <Button
+                v-if="adminMi && m.id"
+                icon="pi pi-trash"
+                class="p-button-text p-button-rounded p-button-sm mesaj-sil-btn"
+                :title="t('sohbet.mesajSil')"
+                :aria-label="t('sohbet.mesajSil')"
+                @click="mesajSil(m)"
+              />
             </div>
             <div class="mesaj-icerik">
               <template v-if="m.dosyaUrl">
@@ -519,6 +527,7 @@ const kullanicilar = ref([])
 const eklenecekKullaniciId = ref(null)
 
 const kendiId = computed(() => authStore?.kullanici?.id)
+const adminMi = computed(() => String(authStore?.kullanici?.role || '').toUpperCase() === 'ADMIN')
 
 const seciliOda = computed(() => odalar.value.find((o) => o.id === seciliOdaId.value) || null)
 const aktifMesajlar = computed(() => (seciliOdaId.value ? odaMesajlar.value : mesajlar.value))
@@ -529,7 +538,9 @@ const eklenecekKullanicilar = computed(() => {
 
 let stompClient = null
 let subscription = null
+let silSubscription = null
 let odaSubscription = null
+let odaSilSubscription = null
 let yaziyorSubscription = null
 let yaziyorZamanlayici = null
 let yaziyorGizlemeZamanlayici = null
@@ -553,6 +564,22 @@ const mesajEkle = (hedefRef, m) => {
   if (m.id != null && hedefRef.value.some((x) => x.id === m.id)) return
   hedefRef.value.push(m)
   kaydir()
+}
+
+/** Yalnızca ADMIN mesaj silebilir. Genel sohbet veya oda mesajı silinir. */
+const mesajSil = async (m) => {
+  if (!m?.id) return
+  try {
+    if (seciliOdaId.value) {
+      await sohbetOdaAPI.mesajSil(seciliOdaId.value, m.id)
+      odaMesajlar.value = odaMesajlar.value.filter((x) => x.id !== m.id)
+    } else {
+      await sohbetAPI.mesajSil(m.id)
+      mesajlar.value = mesajlar.value.filter((x) => x.id !== m.id)
+    }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.mesajSilinemedi'))
+  }
 }
 
 const formatTabloBaslik = (key) => {  const map = {
@@ -827,6 +854,10 @@ const baglan = () => {
                 /* empty */
               }
             })
+            silSubscription = stompClient.subscribe(`/topic/sohbet/${sirketId}/sil`, (msg) => {
+              const id = Number(msg.body)
+              mesajlar.value = mesajlar.value.filter((x) => x.id !== id)
+            })
             odaAboneligiYenile()
           },
           onDisconnect: () => {
@@ -843,6 +874,10 @@ const odaAboneligiYenile = () => {
   if (odaSubscription) {
     odaSubscription.unsubscribe()
     odaSubscription = null
+  }
+  if (odaSilSubscription) {
+    odaSilSubscription.unsubscribe()
+    odaSilSubscription = null
   }
   if (yaziyorSubscription) {
     yaziyorSubscription.unsubscribe()
@@ -861,6 +896,10 @@ const odaAboneligiYenile = () => {
       } catch {
         /* empty */
       }
+    })
+    odaSilSubscription = stompClient.subscribe(`/topic/sohbet/oda/${sirketId}/${seciliOdaId.value}/sil`, (msg) => {
+      const id = Number(msg.body)
+      odaMesajlar.value = odaMesajlar.value.filter((x) => x.id !== id)
     })
     yaziyorSubscription = stompClient.subscribe(`/topic/sohbet/oda/${sirketId}/${seciliOdaId.value}/yaziyor`, (msg) => {
       try {
@@ -947,7 +986,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (subscription) subscription.unsubscribe()
+  if (silSubscription) silSubscription.unsubscribe()
   if (odaSubscription) odaSubscription.unsubscribe()
+  if (odaSilSubscription) odaSilSubscription.unsubscribe()
   if (yaziyorSubscription) yaziyorSubscription.unsubscribe()
   if (yaziyorZamanlayici) clearTimeout(yaziyorZamanlayici)
   if (yaziyorGizlemeZamanlayici) clearTimeout(yaziyorGizlemeZamanlayici)
@@ -1228,6 +1269,15 @@ onUnmounted(() => {
 .mesaj-zaman {
   font-size: 11px;
   color: var(--text-muted);
+}
+.mesaj-sil-btn {
+  margin-left: auto;
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--text-muted);
+}
+.mesaj-sil-btn:hover {
+  color: var(--danger, #ef4444);
 }
 .mesaj-icerik {
   font-size: 14px;

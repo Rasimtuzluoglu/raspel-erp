@@ -88,6 +88,9 @@ export const sohbetAPI = {
   gonder(data) {
     return apiClient.post('/sohbet', data)
   },
+  mesajSil(id) {
+    return apiClient.delete(`/sohbet/${id}`)
+  },
   aiSorgu(soru) {
     return apiClient.post('/sohbet/ai-sorgu', { soru })
   },
@@ -131,6 +134,9 @@ export const sohbetOdaAPI = {
   },
   mesajGonder(id, data) {
     return apiClient.post(`/sohbet/odalar/${id}/mesajlar`, data)
+  },
+  mesajSil(id, mesajId) {
+    return apiClient.delete(`/sohbet/odalar/${id}/mesajlar/${mesajId}`)
   },
   okundu(id) {
     return apiClient.post(`/sohbet/odalar/${id}/okundu`)

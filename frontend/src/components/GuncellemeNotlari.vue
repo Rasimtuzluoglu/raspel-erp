@@ -8,6 +8,17 @@
   >
     <div class="changelog">
       <div class="surum">
+        <span class="surum-etiketi">v{{ SURUM }}</span>
+        <ul>
+          <li><i class="pi pi-check-circle" /> Cari hesaba borçlandırma (borç ekleme) işlemi</li>
+          <li><i class="pi pi-check-circle" /> Satışta kalem düzenleme ve çoklu fiyat seçimi</li>
+          <li><i class="pi pi-check-circle" /> Sohbette yöneticiye özel mesaj silme</li>
+          <li><i class="pi pi-check-circle" /> Termal fiş 58/80mm seçeneği ve kilo/tonaj gösterimi</li>
+          <li><i class="pi pi-check-circle" /> Serbest renk seçmeli yeni tema tonu</li>
+          <li><i class="pi pi-check-circle" /> Stok grubu filtresi ve tablo sıralama iyileştirmeleri</li>
+        </ul>
+      </div>
+      <div class="surum">
         <span class="surum-etiketi">v1.1.0</span>
         <ul>
           <li><i class="pi pi-check-circle" /> Notlar modülü eklendi (renkli etiketler, önem derecesi)</li>
@@ -42,9 +53,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
-const SURUM = '1.1.0'
+const SURUM = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.17.0'
 const ANAHTAR = 'raspel_gorulen_surum'
 const goster = ref(false)
 
@@ -52,6 +63,12 @@ onMounted(() => {
   if (localStorage.getItem(ANAHTAR) !== SURUM) {
     goster.value = true
   }
+})
+
+// Pencere X ile veya maske ile kapatılsa bile bir daha gösterilmemesi için
+// görünürlük false olduğunda görülen sürümü kalıcı olarak kaydet.
+watch(goster, (acik) => {
+  if (!acik) localStorage.setItem(ANAHTAR, SURUM)
 })
 
 const kapat = () => {

@@ -108,6 +108,15 @@ public class SohbetOdaController {
         return ResponseEntity.ok(odaService.mesajGonder(id, dto, sirketId, kullaniciId, displayName));
     }
 
+    @DeleteMapping("/{id}/mesajlar/{mesajId}")
+    @Operation(summary = "Oda mesajını sil", description = "Oda mesajını siler (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> mesajSil(@PathVariable Long id, @PathVariable Long mesajId, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        odaService.mesajSil(id, mesajId, sirketId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{id}/okundu")
     @Operation(summary = "Odayı okundu işaretle", description = "Odadaki mesajları okundu olarak işaretler")
     public ResponseEntity<Void> okundu(@PathVariable Long id, HttpServletRequest request) {

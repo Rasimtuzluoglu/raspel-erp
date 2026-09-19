@@ -75,6 +75,17 @@
               :aria-label="c.name"
               @click="applyColor(c.value)"
             />
+            <label
+              class="color-dot custom"
+              :title="$t('theme.customColor')"
+            >
+              <input
+                type="color"
+                :value="accentColor"
+                :aria-label="$t('theme.customColor')"
+                @input="applyColor($event.target.value)"
+              >
+            </label>
           </div>
         </div>
 
@@ -117,6 +128,7 @@ const { isDark, mode, accentColor, applyMode, applyColor, initTheme, disposeThem
 const { aktifDil, dilDegistir } = useLocale()
 
 const colors = computed(() => [
+  { name: t('hesapAyarlari.renkPetrol'), value: '#0f766e' },
   { name: t('hesapAyarlari.renkOkyanus'), value: '#3b82f6' },
   { name: t('hesapAyarlari.renkZumrut'), value: '#10b981' },
   { name: t('hesapAyarlari.renkAsilMor'), value: '#8b5cf6' },
@@ -287,5 +299,22 @@ onUnmounted(() => {
 .color-dot.active {
   border-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
+
+.color-dot.custom {
+  overflow: hidden;
+  border-color: var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.color-dot.custom input {
+  width: 200%;
+  height: 200%;
+  margin: -25%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: none;
 }
 </style>

@@ -557,7 +557,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 
 const dovizStore = useDovizStore()
-import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI, teslimatAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI, teslimatAPI, cariHesapAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -711,10 +711,18 @@ onMounted(async () => {
   // Cari ekranından gelen "Yeni Fatura" kısayolu: cariId query'si varsa cariyi seçip dialog aç
   if (route.query.cariId) {
     const cariId = Number(route.query.cariId)
-    const cari = cariHesapStore?.cariHesaplar?.find((c) => c.id === cariId)
+    let cari = cariHesapStore?.cariHesaplar?.find((c) => c.id === cariId)
+    if (!cari) {
+      try {
+        const r = await cariHesapAPI.getById(cariId)
+        cari = r.data
+      } catch {
+        cari = null
+      }
+    }
     if (cari) {
-      seciliCariNesnesi.value = cari
       openCreateDialog()
+      seciliCariNesnesi.value = cari
       form.value.cariHesapId = cariId
     }
   }

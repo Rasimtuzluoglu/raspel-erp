@@ -94,12 +94,15 @@
         class="filter-input"
         @input="filtreDegisti"
       />
-      <Dropdown
+      <AutoComplete
         v-model="filtreStokGrubu"
-        :options="['', 'Hammadde', 'Mamul', 'Yari Mamul', 'Sarf', 'Aksesuar']"
+        :suggestions="stokGrubuOnerileri"
         :placeholder="t('stoklar.filtreStokGrubu')"
         class="filter-dropdown"
+        dropdown
+        :show-clear="true"
         @change="filtreDegisti"
+        @item-select="filtreDegisti"
       />
       <InputNumber
         v-model="filtreMinFiyat"
@@ -139,7 +142,6 @@
         :total-records="stokStore.toplamKayit"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
         :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
-        selection-mode="multiple"
         data-key="id"
         striped-rows
         sort-field="miktar"
@@ -856,6 +858,14 @@ const hareketTur = ref('GIRIS')
 const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' })
 
 const hareketBaslik = computed(() => (hareketTur.value === 'GIRIS' ? t('stoklar.hareketGiris') : t('stoklar.hareketCikis')))
+
+const stokGrubuOnerileri = computed(() => {
+  const q = String(filtreStokGrubu.value || '').toLowerCase()
+  const degerler = [...new Set(stokStore.stoklar.map((s) => s.stokGrubu).filter(Boolean))]
+  return degerler
+    .filter((g) => g.toLowerCase().includes(q))
+    .sort((a, b) => a.localeCompare(b, 'tr'))
+})
 
 const filtrelenmisStoklar = computed(() => {
   return stokStore.stoklar.filter((s) => {

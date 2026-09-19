@@ -1160,6 +1160,7 @@ const kaydediliyor = ref(false)
 const fisNo = ref('')
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || t('hizliSatis.fisAltNotVarsayilan'))
+const fisGenislik = ref(localStorage.getItem('raspel_fis_genislik') || '80')
 
 // Sekmeler arası canlı senkron: Ayarlar'da değişince POS'a anında yansır
 const dinleyici = (e) => {
@@ -1167,6 +1168,8 @@ const dinleyici = (e) => {
     fisFiyatli.value = e.newValue !== 'false'
   } else if (e.key === 'raspel_fis_notu' && e.newValue !== null) {
     fisAltNotu.value = e.newValue
+  } else if (e.key === 'raspel_fis_genislik' && e.newValue !== null) {
+    fisGenislik.value = e.newValue
   }
 }
 onMounted(() => window.addEventListener('storage', dinleyici))
@@ -1338,6 +1341,17 @@ const toplamFt3 = computed(() =>
   }, 0)
 )
 
+const toplamAgirlik = computed(() =>
+  sepet.value.reduce((t, i) => t + (Number(i.agirlik) || 0) * (Number(i.miktar) || 0), 0)
+)
+
+const agirlikVarMi = computed(() => toplamAgirlik.value > 0)
+
+const agirlikMetni = (kg) => {
+  const deger = Number(kg) || 0
+  return deger >= 1000 ? (deger / 1000).toFixed(3) + ' ton' : deger.toFixed(2) + ' kg'
+}
+
 const indirimTutari = computed(() => {
   if (indirimDegeri.value <= 0) return 0
   if (indirimTipi.value === 'yuzde') return toplam.value * (Math.min(indirimDegeri.value, 100) / 100)
@@ -1470,6 +1484,10 @@ const fisAyarlariSunucudanYukle = async () => {
         fisFiyatli.value = a.fisFiyatli
         localStorage.setItem('raspel_fis_fiyatli', String(a.fisFiyatli))
       }
+      if (a.fisGenislik != null) {
+        fisGenislik.value = String(a.fisGenislik)
+        localStorage.setItem('raspel_fis_genislik', String(a.fisGenislik))
+      }
     }
   } catch {
     /* sunucu yoksa yerel önbellek kullanılır */
@@ -1591,6 +1609,7 @@ const sepeteEkle = async (u) => {
     fiyatTipi: fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende'),
     birim: u.birim || 'adet',
     birimHacim: u.birimHacim || 1,
+    agirlik: Number(u.agirlik) || 0,
     sonAldigiFiyat: null,
     sonAldigiTarih: null,
     sonAldigiBilgisiYukleniyor: false
@@ -1695,7 +1714,7 @@ const fisiYazdir = () => {
 <title>${t('hizliSatis.fisOnizleme')}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; width: 80mm; margin: 0 auto; color: #000; font-size: 12px; }
+  body { font-family: 'Courier New', monospace; width: ${fisGenislik.value === '58' ? '58mm' : '80mm'}; margin: 0 auto; color: #000; font-size: 12px; }
   .aracubuk {
     position: fixed; top: 0; left: 0; right: 0; z-index: 10;
     width: 100%; padding: 10px; text-align: center;
@@ -1738,6 +1757,7 @@ const fisiYazdir = () => {
     ${teslimNotu.value ? `<div class="musteri">${t('hizliSatis.not')}: ${escapeHtml(teslimNotu.value)}</div>` : ''}
     <div class="ayrac">- - - - - - - - - - - - - -</div>
     ${kalemHtml}
+    ${agirlikVarMi.value ? `<div class="satir"><span class="ad">${t('hizliSatis.toplamAgirlik')}</span><span class="tutar">${agirlikMetni(toplamAgirlik.value)}</span></div>` : ''}
     ${ozetHtml}
     <div class="satir"><span class="ad">${t('hizliSatis.toplamUrun')}</span><span class="tutar">${sepet.value.length}</span></div>
     <div class="satir"><span class="ad">${t('common.status')}</span><span class="tutar">${odemeDurumText.value}</span></div>
@@ -1772,7 +1792,9 @@ const termalYazdir = async () => {
     baslik: sirketAdi.value || 'RASPEL ERP',
     tarih: simdikiTarih.value,
     fisNo: fisNo.value || undefined,
+    genislik: fisGenislik.value,
     kalemler: sepet.value.map((i) => ({ ad: i.ad, adet: i.miktar, tutar: i.miktar * i.fiyat })),
+    toplamAgirlik: agirlikVarMi.value ? toplamAgirlik.value : undefined,
     toplam: genelToplam.value,
     altNot: fisAltNotu.value || undefined
   })

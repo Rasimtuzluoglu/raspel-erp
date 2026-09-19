@@ -69,6 +69,25 @@ class SohbetServiceTest {
     }
 
     @Test
+    void mesajSil_deletesWhenSirketMatches() {
+        SohbetMesaj m = SohbetMesaj.builder().id(7L).sirketId(1L).mesaj("Silinecek").build();
+        when(sohbetMesajRepository.findById(7L)).thenReturn(java.util.Optional.of(m));
+
+        sohbetService.mesajSil(7L, 1L);
+
+        verify(sohbetMesajRepository).delete(m);
+    }
+
+    @Test
+    void mesajSil_throwsWhenBaskaSirket() {
+        SohbetMesaj m = SohbetMesaj.builder().id(7L).sirketId(2L).mesaj("Gizli").build();
+        when(sohbetMesajRepository.findById(7L)).thenReturn(java.util.Optional.of(m));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> sohbetService.mesajSil(7L, 1L));
+        verify(sohbetMesajRepository, never()).delete(any(SohbetMesaj.class));
+    }
+
+    @Test
     void aiSorgula_ciroIntent() {
         CariHesap cari = new CariHesap();
         cari.setId(10L);

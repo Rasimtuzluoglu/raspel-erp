@@ -2,9 +2,18 @@ import { ref, computed } from 'vue'
 
 const MODE_KEY = 'raspel_erp_theme'
 const COLOR_KEY = 'raspel_primary_color'
+const VARSAYILAN_RENK = '#0f766e'
+const ESKI_VARSAYILAN = '#10b981'
 
 const mode = ref(localStorage.getItem(MODE_KEY) || 'dark')
-const accentColor = ref(localStorage.getItem(COLOR_KEY) || '#10b981')
+
+// Eski varsayılan renk kayıtlıysa (kullanıcı seçimi yoksa) yeni varsayılana taşı.
+let kayitliRenk = localStorage.getItem(COLOR_KEY)
+if (kayitliRenk && kayitliRenk.toLowerCase() === ESKI_VARSAYILAN) {
+  kayitliRenk = VARSAYILAN_RENK
+  localStorage.setItem(COLOR_KEY, kayitliRenk)
+}
+const accentColor = ref(kayitliRenk || VARSAYILAN_RENK)
 
 let systemMedia = null
 let mediaHandler = null
@@ -45,6 +54,21 @@ function kontrastRengi(hex) {
   }
 }
 
+/** `#rrggbb` rengini "r, g, b" biçimine çevirir; geçersizse null döner. */
+function hexToRgb(hex) {
+  try {
+    const h = String(hex).replace('#', '')
+    if (h.length !== 6) return null
+    const r = parseInt(h.substring(0, 2), 16)
+    const g = parseInt(h.substring(2, 4), 16)
+    const b = parseInt(h.substring(4, 6), 16)
+    if ([r, g, b].some((n) => Number.isNaN(n))) return null
+    return `${r}, ${g}, ${b}`
+  } catch {
+    return null
+  }
+}
+
 function applyColor(hex) {
   if (!hex) return
   accentColor.value = hex
@@ -54,6 +78,12 @@ function applyColor(hex) {
   style.setProperty('--accent-contrast', kontrastRengi(hex))
   style.setProperty('--primary-color', hex)
   style.setProperty('--primary-color-hover', hex + 'dd')
+  const rgb = hexToRgb(hex)
+  if (rgb) {
+    style.setProperty('--accent-soft', `rgba(${rgb}, 0.18)`)
+    style.setProperty('--accent-soft-strong', `rgba(${rgb}, 0.28)`)
+    style.setProperty('--accent-border', `rgba(${rgb}, 0.42)`)
+  }
   localStorage.setItem(COLOR_KEY, hex)
 }
 

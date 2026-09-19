@@ -88,22 +88,9 @@
         >
           <template #body="slotProps">
             <span
-              :class="[
-                'badge',
-                String(
-                  typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur
-                ).toUpperCase() === 'TAHSILAT'
-                  ? 'tahsilat'
-                  : 'odeme'
-              ]"
+              :class="['badge', hareketBadgeSinifi(slotProps.data.tur)]"
             >
-              {{
-                String(
-                  typeof slotProps.data.tur === 'object' ? slotProps.data.tur?.value : slotProps.data.tur
-                ).toUpperCase() === 'TAHSILAT'
-                  ? t('hareketler.tahsilat')
-                  : t('hareketler.odeme')
-              }}
+              {{ hareketTuruEtiketi(slotProps.data.tur) }}
             </span>
           </template>
         </Column>
@@ -257,7 +244,7 @@
       </div>
 
       <div
-        v-if="form.cariHesapId && (faturaSecenekleri.length > 0 || faturalarYukleniyor)"
+        v-if="form.cariHesapId && form.tur !== 'BORC' && (faturaSecenekleri.length > 0 || faturalarYukleniyor)"
         class="form-group"
       >
         <label for="faturaId">{{ t('hareketler.bagliFatura') }}</label>
@@ -392,8 +379,18 @@ watch(() => form.value.cariHesapId, (yeni) => {
 
 const hareketTurleri = computed(() => [
   { label: t('hareketler.tahsilat'), value: 'TAHSILAT' },
-  { label: t('hareketler.odeme'), value: 'ODEME' }
+  { label: t('hareketler.odeme'), value: 'ODEME' },
+  { label: t('hareketler.borclandirma'), value: 'BORC' }
 ])
+
+const hareketTurDegeri = (tur) =>
+  String(typeof tur === 'object' ? tur?.value : tur).toUpperCase()
+const hareketTuruEtiketi = (tur) =>
+  ({ TAHSILAT: t('hareketler.tahsilat'), ODEME: t('hareketler.odeme'), BORC: t('hareketler.borclandirma') })[
+    hareketTurDegeri(tur)
+  ] || hareketTurDegeri(tur)
+const hareketBadgeSinifi = (tur) =>
+  ({ TAHSILAT: 'tahsilat', ODEME: 'odeme', BORC: 'borclandirma' })[hareketTurDegeri(tur)] || 'odeme'
 
 const odemeSekliSecenekleri = computed(() => [
   { label: t('hareketler.nakit'), value: 'NAKIT' },
@@ -677,6 +674,11 @@ h1 {
 .badge.odeme {
   background-color: #ffebee;
   color: #c62828;
+}
+
+.badge.borclandirma {
+  background-color: #fff8e1;
+  color: #b26a00;
 }
 
 .w-full {

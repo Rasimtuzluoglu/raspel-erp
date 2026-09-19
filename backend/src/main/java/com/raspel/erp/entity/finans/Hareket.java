@@ -27,7 +27,7 @@ public class Hareket {
     @JoinColumn(name = "cari_hesap_id", nullable = false)
     private CariHesap cariHesap;
     
-    /** Hareket türü: TAHSILAT veya ODEME */
+    /** Hareket türü: TAHSILAT, ODEME veya BORC (borçlandırma) */
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private HareketTuru tur;
@@ -96,7 +96,8 @@ public class Hareket {
      */
     public enum HareketTuru {
         TAHSILAT("Tahsilat"),
-        ODEME("Odeme");
+        ODEME("Odeme"),
+        BORC("Borçlandırma");
 
         private final String goruntulemeAdi;
 

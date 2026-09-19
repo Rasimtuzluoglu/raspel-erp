@@ -131,18 +131,23 @@ public class HareketService {
         // Bakiye güncelleme tutarını hesapla.
         // Bakiye gösterimi: pozitif = alacak, negatif = borç (kullanıcıya eksi olarak görünür).
         // Satış faturası kesilince cari borçlanır (bakiye azalır/negatif), tahsilat alınınca bakiye artar (borç kapanır).
+        // BORC (borçlandırma) da satış gibi cariyi borçlandırır (bakiye negatife çekilir).
+        boolean borclandirma = hareketTuru == Hareket.HareketTuru.BORC;
         BigDecimal bakiyeGuncellemeTutari = hareketTuru == Hareket.HareketTuru.TAHSILAT
                 ? dto.getTutar()
                 : dto.getTutar().negate();
 
-        // Ödeme yöntemi geçerli değilse reddet
-        String odemeYontemi = odemeYontemiDogrula(dto.getOdemeYontemi());
+        // Ödeme yöntemi geçerli değilse reddet (borçlandırmada ödeme yöntemi/taksit yoktur)
+        String odemeYontemi = borclandirma ? null : odemeYontemiDogrula(dto.getOdemeYontemi());
         // Taksit için kurum ve tutar zorunlu
         if ("TAKSIT".equals(odemeYontemi)
                 && (dto.getTaksitKurum() == null || dto.getTaksitKurum().isBlank()
                 || dto.getTaksitTutar() == null || dto.getTaksitTutar().compareTo(BigDecimal.ZERO) <= 0)) {
             throw new BusinessException("Taksit seçildiğinde taksit kurumu ve çekilen tutar girilmelidir");
         }
+
+        // Borçlandırma bir tahsilat/ödeme değildir; faturaya bağlanmaz.
+        Long bagliFaturaId = borclandirma ? null : dto.getFaturaId();
 
         // Hareket oluştur
         Hareket hareket = Hareket.builder()
@@ -159,7 +164,7 @@ public class HareketService {
                 .posAd(dto.getPosAd())
                 .komisyonTutar(dto.getKomisyonTutar())
                 .valorTarihi(dto.getValorTarihi())
-                .faturaId(dto.getFaturaId())
+                .faturaId(bagliFaturaId)
                 .sirketId(sirketId)
                 .build();
         
@@ -169,12 +174,12 @@ public class HareketService {
         cariHesapService.bakiyeGuncelle(dto.getCariHesapId(), bakiyeGuncellemeTutari);
 
         // Faturaya işle (varsa): ödenen tutar artar
-        if (dto.getFaturaId() != null) {
-            faturaOdemeUygula(dto.getFaturaId(), dto.getTutar(), "Hareket #" + kaydedilenHareket.getId());
+        if (bagliFaturaId != null) {
+            faturaOdemeUygula(bagliFaturaId, dto.getTutar(), "Hareket #" + kaydedilenHareket.getId());
         }
         
         try {
-            if (sirketId != null) {
+            if (sirketId != null && !borclandirma) {
                 bildirimService.bildirimGonder(sirketId, hareketTuru == Hareket.HareketTuru.TAHSILAT ? "TAKSILAT" : "ODEME",
                         (hareketTuru == Hareket.HareketTuru.TAHSILAT ? "Tahsilat: " : "Ödeme: ") + dto.getTutar() + " ₺",
                         cariHesap.getAd() + (dto.getAciklama() != null ? " - " + dto.getAciklama() : ""));

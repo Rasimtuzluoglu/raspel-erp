@@ -23,6 +23,7 @@
         <TabloAyarlari
           tablo-key="cari"
           :kolonlar="kolonlar"
+          @update:kolonlar="kolonGuncelle"
           @update:yogunluk="tabloYogunluk = $event"
         />
         <Button
@@ -114,7 +115,6 @@
       <AppDataTable
         v-model:selection="selectedCariHesaplar"
         :value="cariHesapStore?.cariHesaplar || []"
-        selection-mode="multiple"
         data-key="id"
         striped-rows
         :size="tabloYogunluk === 'compact' ? 'small' : 'normal'"
@@ -515,6 +515,10 @@
             <span class="ozet-etiket">{{ t('cariHesaplar.toplamOdeme') }}</span>
             <span class="negative">{{ formatCurrency(toplamOdeme) }}</span>
           </div>
+          <div class="ozet-satir">
+            <span class="ozet-etiket">{{ t('cariHesaplar.toplamBorclandirma') }}</span>
+            <span class="negative">{{ formatCurrency(toplamBorclandirma) }}</span>
+          </div>
           <div class="ozet-satir ozet-bakiye">
             <span class="ozet-etiket">{{ t('cariHesaplar.guncelBakiye') }}</span>
             <strong :class="guncelBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(guncelBakiye) }}</strong>
@@ -555,8 +559,8 @@
             style="width: 100px"
           >
             <template #body="slotProps">
-              <span :class="['badge', slotProps.data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
-                {{ slotProps.data.tur === 'TAHSILAT' ? t('cariHesaplar.tahsilat') : t('cariHesaplar.odeme') }}
+              <span :class="['badge', hareketBadgeSinifi(slotProps.data.tur)]">
+                {{ hareketTuruEtiketi(slotProps.data.tur) }}
               </span>
             </template>
           </Column>
@@ -816,6 +820,12 @@
       @kaydedildi="tahsilatSonrasiYenile"
     />
 
+    <BorclandirmaGirDialog
+      v-model:visible="borclandirmaDialog"
+      :cari="borclandirmaHedefCari"
+      @kaydedildi="borclandirmaSonrasiYenile"
+    />
+
     <Dialog
       v-model:visible="topluEmailDialog"
       :header="t('cariHesaplar.topluEposta')"
@@ -960,6 +970,7 @@ import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
+import BorclandirmaGirDialog from '../components/BorclandirmaGirDialog.vue'
 import CariKart360Dialog from '../components/CariKart360Dialog.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -972,16 +983,27 @@ const { kopyala } = usePanoyaKopyala()
 const { t } = useI18n()
 
 const tabloYogunluk = ref('comfortable')
-const kolonlar = computed(() => [
-  { field: 'id', header: 'ID', visible: true },
-  { field: 'ad', header: t('cariHesaplar.ad'), visible: true },
-  { field: 'tur', header: t('cariHesaplar.tur'), visible: true },
-  { field: 'yetkiliKisi', header: t('cariHesaplar.yetkili'), visible: true },
-  { field: 'telefon', header: t('cariHesaplar.telefon'), visible: true },
-  { field: 'krediLimiti', header: t('cariHesaplar.krediLimiti'), visible: true },
-  { field: 'odemeVadesi', header: t('cariHesaplar.vadeGun'), visible: true },
-  { field: 'bakiye', header: t('cariHesaplar.bakiye'), visible: true }
+const kolonGorunurluk = ref({})
+const varsayilanKolonlar = computed(() => [
+  { field: 'id', header: 'ID' },
+  { field: 'ad', header: t('cariHesaplar.ad') },
+  { field: 'tur', header: t('cariHesaplar.tur') },
+  { field: 'yetkiliKisi', header: t('cariHesaplar.yetkili') },
+  { field: 'telefon', header: t('cariHesaplar.telefon') },
+  { field: 'krediLimiti', header: t('cariHesaplar.krediLimiti') },
+  { field: 'odemeVadesi', header: t('cariHesaplar.vadeGun') },
+  { field: 'bakiye', header: t('cariHesaplar.bakiye') }
 ])
+const kolonlar = computed(() =>
+  varsayilanKolonlar.value.map((k) => ({ ...k, visible: kolonGorunurluk.value[k.field] !== false }))
+)
+const kolonGuncelle = (yeni) => {
+  const map = {}
+  ;(yeni || []).forEach((k) => {
+    map[k.field] = k.visible !== false
+  })
+  kolonGorunurluk.value = map
+}
 
 useKisayollar({
   yeni: () => openDialog(),
@@ -1044,7 +1066,15 @@ const toplamTahsilat = computed(() =>
 const toplamOdeme = computed(() =>
   cariHareketler.value.filter((h) => h.tur === 'ODEME').reduce((s, h) => s + (h.tutar || 0), 0)
 )
-const guncelBakiye = computed(() => toplamOdeme.value - toplamTahsilat.value)
+const toplamBorclandirma = computed(() =>
+  cariHareketler.value.filter((h) => h.tur === 'BORC').reduce((s, h) => s + (h.tutar || 0), 0)
+)
+const guncelBakiye = computed(() => toplamOdeme.value - toplamTahsilat.value - toplamBorclandirma.value)
+
+const hareketTuruEtiketi = (tur) =>
+  ({ TAHSILAT: t('cariHesaplar.tahsilat'), ODEME: t('cariHesaplar.odeme'), BORC: t('cariHesaplar.borclandirma') })[tur] || tur
+const hareketBadgeSinifi = (tur) =>
+  ({ TAHSILAT: 'tahsilat', ODEME: 'odeme', BORC: 'borclandirma' })[tur] || 'odeme'
 
 const ibanGecerli = computed(() => {
   const val = (form.value.iban || '').replace(/\s/g, '').toUpperCase()
@@ -1156,6 +1186,7 @@ const closeDialog = () => {
 
 const cariEylemleri = (c) => [
   { etiket: t('cariHesaplar.tahsilat'), ikon: 'pi pi-money-bill', islem: () => tahsilatAc(c) },
+  { etiket: t('cariHesaplar.borclandirma'), ikon: 'pi pi-plus-circle', islem: () => borclandirmaAc(c) },
   { etiket: t('cariHesaplar.hareketlerDetay'), ikon: 'pi pi-list', islem: () => viewHareketler(c) },
   { etiket: t('cariKart.baslik'), ikon: 'pi pi-id-card', islem: () => kartAc(c) },
   { etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDelete(c.id) }
@@ -1309,6 +1340,22 @@ const tahsilatAc = async (cariHesap) => {
 const tahsilatSonrasiYenile = async () => {
   tahsilatHedefCari.value = null
   await cariHesapStore.getAllCariHesaplar()
+}
+
+const borclandirmaDialog = ref(false)
+const borclandirmaHedefCari = ref(null)
+
+const borclandirmaAc = (cariHesap) => {
+  borclandirmaHedefCari.value = cariHesap
+  borclandirmaDialog.value = true
+}
+
+const borclandirmaSonrasiYenile = async () => {
+  borclandirmaHedefCari.value = null
+  await cariHesapStore.getAllCariHesaplar()
+  if (showHareketlerDialog.value && selectedCariHesap.value) {
+    await viewHareketler(selectedCariHesap.value)
+  }
 }
 
 const kartAc = (cariHesap) => {
@@ -1927,6 +1974,11 @@ h3 {
 .badge.odeme {
   background-color: var(--danger-soft);
   color: var(--danger);
+}
+
+.badge.borclandirma {
+  background-color: var(--warning-soft, rgba(245, 158, 11, 0.15));
+  color: var(--warning, #f59e0b);
 }
 
 .hareket-info {

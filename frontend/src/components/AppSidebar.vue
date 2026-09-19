@@ -51,7 +51,7 @@
         v-for="m in favoriMenuler"
         :key="m.path"
         :to="m.path"
-        :class="{ active: $route.path === m.path || ($route.path.startsWith(m.path) && m.path !== '/') }"
+        :class="{ active: menuAktif(m.path) }"
         :title="$t(m.labelKey)"
       >
         <i :class="m.icon" /><span>{{ $t(m.labelKey) }}</span>
@@ -65,7 +65,7 @@
       <router-link
         v-if="!authStore.isDriver"
         to="/"
-        :class="{ active: $route.path === '/' }"
+        :class="{ active: menuAktif('/') }"
         :title="$t('nav.dashboard')"
       >
         <i class="pi pi-home" /><span>{{ $t('nav.dashboard') }}</span>
@@ -95,7 +95,7 @@
         </div>
         <router-link
           :to="m.path"
-          :class="{ active: $route.path === m.path || ($route.path.startsWith(m.path) && m.path !== '/') }"
+          :class="{ active: menuAktif(m.path) }"
           :title="$t(m.labelKey)"
         >
           <i :class="m.icon" /><span>{{ $t(m.labelKey) }}</span>
@@ -301,7 +301,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { sirketAPI } from '../api/index.js'
 import { personelIzinAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
@@ -325,6 +325,7 @@ defineEmits([
 ])
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { aktif: sunumAktif, degistir: sunumDegistir } = useSunumModu()
 
@@ -494,6 +495,23 @@ const gorunenMenuler = computed(() => {
 const favoriMenuler = computed(() =>
   tumMenuler.filter((m) => favoriler.value.includes(m.path) && (!m.admin || authStore?.kullanici?.role === 'ADMIN'))
 )
+
+/**
+ * Aktif menüyü en uzun yol eşleşmesine göre belirler. Böylece
+ * /raporlar/karlilik-analizi açıkken /raporlar da aktif görünmez.
+ */
+const aktifYol = computed(() => {
+  const yol = route.path
+  let enIyi = yol === '/' ? '/' : ''
+  for (const m of tumMenuler) {
+    if (m.path !== '/' && (yol === m.path || yol.startsWith(m.path + '/')) && m.path.length > enIyi.length) {
+      enIyi = m.path
+    }
+  }
+  return enIyi
+})
+
+const menuAktif = (path) => aktifYol.value === path
 
 const sirketLogo = ref(null)
 

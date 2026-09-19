@@ -390,7 +390,7 @@
       <!-- 1c. CARİ ÖZET & TAHSİLAT TAKİBİ -->
       <template v-if="widgets.cariOzet.gorunur">
         <h2 class="section-title">
-          <i class="pi pi-handshake" /> {{ t('dashboard.cariOzetTahsilat') }}
+          <i class="pi pi-users" /> {{ t('dashboard.cariOzetTahsilat') }}
         </h2>
         <div class="cari-ozet-grid">
           <div class="cari-ozet-kart alacak">
