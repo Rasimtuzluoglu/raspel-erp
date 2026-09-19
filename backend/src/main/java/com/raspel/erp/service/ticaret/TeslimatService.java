@@ -5,16 +5,19 @@ import com.raspel.erp.dto.ticaret.TeslimatDTO;
 import com.raspel.erp.dto.ticaret.TeslimatDurumLogDTO;
 import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.entity.ticaret.Siparis;
 import com.raspel.erp.entity.ticaret.Teslimat;
 import com.raspel.erp.entity.ticaret.TeslimatDurumLog;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.ticaret.TeslimatDurumLogRepository;
 import com.raspel.erp.repository.ticaret.TeslimatRepository;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.sistem.DosyaDepolamaService;
+import com.raspel.erp.service.sistem.PdfRaporService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,9 +42,12 @@ public class TeslimatService {
     private final BildirimService bildirimService;
     private final TeslimatDurumLogRepository durumLogRepository;
     private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
+    private final SiparisRepository siparisRepository;
+    private final PdfRaporService pdfRaporService;
 
     private static final List<String> BEKLEYEN_DURUMLAR = List.of("BEKLEMEDE", "YOLDA");
     private static final String FOTO_KLASOR = "teslimat-fotolari";
+    private static final String IMZA_KLASOR = "teslimat-imzalari";
 
     @Transactional(readOnly = true)
     public List<SurucuDTO> suruculer(Long sirketId, Long kullaniciId) {
@@ -302,6 +308,107 @@ public class TeslimatService {
         });
     }
 
+    /** Dijital teslim isteği gövdesi. */
+    public record TeslimIstegi(String teslimAlanAd, String teslimNotu, String teslimKonum) {}
+
+    @Transactional(readOnly = true)
+    public TeslimatDTO getir(Long id, Long sirketId, Long kullaniciId) {
+        Teslimat t = teslimatDogrula(id, sirketId, kullaniciId);
+        String driverAd = t.getDriverId() != null ? kullaniciRepository.findById(t.getDriverId())
+                .map(k -> k.getDisplayName() != null ? k.getDisplayName() : k.getUsername())
+                .orElse(null) : null;
+        return toDTO(t, driverAd);
+    }
+
+    /**
+     * Dijital teslimat: teslim alan adı + dijital imza zorunludur. İmza PNG olarak
+     * saklanır, durum TESLIM_EDILDI yapılır ve bağlı fatura teslim bilgileri güncellenir.
+     */
+    @Transactional
+    public TeslimatDTO teslimEt(Long id, TeslimIstegi istek, MultipartFile imza, Long sirketId, Long kullaniciId) {
+        Teslimat t = teslimatDogrula(id, sirketId, kullaniciId);
+        if (istek == null || istek.teslimAlanAd() == null || istek.teslimAlanAd().isBlank()) {
+            throw new BusinessException("Teslim alan kişinin ad-soyadı zorunludur");
+        }
+        if (imza == null || imza.isEmpty()) {
+            throw new BusinessException("Dijital imza zorunludur");
+        }
+        String oncekiDurum = t.getDurum();
+        try {
+            String filename = dosyaDepolama.kaydet(IMZA_KLASOR, imza);
+            t.setTeslimImzaUrl("/api/uploads/teslimat-imzalari/" + filename);
+        } catch (IOException e) {
+            throw new BusinessException("İmza kaydedilemedi: " + e.getMessage());
+        }
+        t.setTeslimAlanAd(istek.teslimAlanAd().trim());
+        if (istek.teslimNotu() != null) t.setTeslimNotu(istek.teslimNotu());
+        if (istek.teslimKonum() != null) t.setTeslimKonum(istek.teslimKonum());
+        if (t.getTeslimEdenAd() == null || t.getTeslimEdenAd().isBlank()) {
+            t.setTeslimEdenAd(kullaniciRepository.findById(kullaniciId)
+                    .map(k -> k.getDisplayName() != null ? k.getDisplayName() : k.getUsername())
+                    .orElse(null));
+        }
+        t.setDurum(Teslimat.Durum.TESLIM_EDILDI.name());
+        t.setTeslimTarihi(LocalDateTime.now());
+        t = teslimatRepository.save(t);
+        durumLogRepository.save(TeslimatDurumLog.builder()
+                .teslimatId(t.getId())
+                .oncekiDurum(oncekiDurum)
+                .yeniDurum(Teslimat.Durum.TESLIM_EDILDI.name())
+                .kullaniciId(kullaniciId)
+                .build());
+        faturaTeslimSenkron(t);
+        return toDTO(t, t.getTeslimEdenAd());
+    }
+
+    /**
+     * Sipariş bazlı dijital teslimat (saha portalı). Siparişin teslimat kaydını
+     * bulur/oluşturur, imzayı işler ve sipariş durumunu TESLIM_EDILDI yapar.
+     */
+    @Transactional
+    public TeslimatDTO teslimEtSiparis(Long siparisId, TeslimIstegi istek, MultipartFile imza, Long sirketId, Long kullaniciId) {
+        Siparis s = siparisRepository.findById(siparisId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sipariş", siparisId));
+        if (sirketId != null && !sirketId.equals(s.getSirketId())) {
+            throw new BusinessException("Bu siparişe erişim yetkiniz yok");
+        }
+        Long driverId = s.getDriverId() != null ? s.getDriverId() : kullaniciId;
+        TeslimatDTO teslimat = siparisTeslimatiUpsert(siparisId, driverId, s.getSirketId(), null, null);
+        TeslimatDTO sonuc = teslimEt(teslimat.getId(), istek, imza, sirketId, kullaniciId);
+        s.setDurum("TESLIM_EDILDI");
+        siparisRepository.save(s);
+        return sonuc;
+    }
+
+    /** Bağlı faturanın teslim alan/durum/not bilgilerini teslimattan senkronlar. */
+    private void faturaTeslimSenkron(Teslimat t) {
+        if (t.getFaturaId() == null) return;
+        faturaRepository.findById(t.getFaturaId()).ifPresent(f -> {
+            f.setTeslimDurumu(Teslimat.Durum.TESLIM_EDILDI.name());
+            if (t.getTeslimEdenAd() != null) f.setTeslimEden(t.getTeslimEdenAd());
+            if (t.getTeslimNotu() != null) f.setTeslimNotu(t.getTeslimNotu());
+            faturaRepository.save(f);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] teslimatFisiPdf(Long id, Long sirketId, Long kullaniciId) {
+        teslimatDogrula(id, sirketId, kullaniciId);
+        return pdfRaporService.teslimatFisiRaporu(id);
+    }
+
+    private Teslimat teslimatDogrula(Long id, Long sirketId, Long kullaniciId) {
+        Teslimat t = teslimatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teslimat", id));
+        if (sirketId != null && !sirketId.equals(t.getSirketId())) {
+            throw new BusinessException("Bu teslimata erişim yetkiniz yok");
+        }
+        if (driverMi(kullaniciId) && !kullaniciId.equals(t.getDriverId())) {
+            throw new BusinessException("Yalnızca kendi teslimatlarınıza erişebilirsiniz");
+        }
+        return t;
+    }
+
     private boolean gecerliDurum(String durum) {
         for (Teslimat.Durum d : Teslimat.Durum.values()) {
             if (d.name().equals(durum)) return true;
@@ -337,6 +444,11 @@ public class TeslimatService {
                 .notlar(t.getNotlar())
                 .olusturmaTarihi(t.getOlusturmaTarihi())
                 .teslimTarihi(t.getTeslimTarihi())
+                .teslimAlanAd(t.getTeslimAlanAd())
+                .teslimImzaUrl(t.getTeslimImzaUrl())
+                .teslimNotu(t.getTeslimNotu())
+                .teslimKonum(t.getTeslimKonum())
+                .teslimEdenAd(t.getTeslimEdenAd())
                 .gecikti(gecikti)
                 .build();
     }

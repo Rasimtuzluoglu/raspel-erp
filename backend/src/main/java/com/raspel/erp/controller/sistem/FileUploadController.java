@@ -80,6 +80,13 @@ public class FileUploadController {
         return dosyaGetir(filename, "teslimat-fotolari");
     }
 
+    @GetMapping("/uploads/teslimat-imzalari/{filename}")
+    @Operation(summary = "Teslimat imzası getir", description = "Dijital teslim imzası PNG'sini döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
+    public ResponseEntity<byte[]> getTeslimatImza(@PathVariable String filename) {
+        return dosyaGetir(filename, "teslimat-imzalari");
+    }
+
     @GetMapping("/uploads/sohbet/{filename}")
     @Operation(summary = "Sohbet dosyası getir", description = "Sohbette paylaşılan dosyayı/görseli döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")

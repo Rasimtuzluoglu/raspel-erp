@@ -37,6 +37,8 @@ class TeslimatServiceTest {
     @Mock private BildirimService bildirimService;
     @Mock private TeslimatDurumLogRepository durumLogRepository;
     @Mock private com.raspel.erp.repository.ik.PersonelRepository personelRepository;
+    @Mock private com.raspel.erp.repository.ticaret.SiparisRepository siparisRepository;
+    @Mock private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
     @InjectMocks private TeslimatService teslimatService;
 
     @Test
@@ -163,5 +165,75 @@ class TeslimatServiceTest {
 
         assertEquals(5L, mevcut.getDriverId());
         assertEquals(5L, sonuc.getDriverId());
+    }
+
+    @Test
+    void teslimEt_imzaZorunlu() {
+        Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).durum("YOLDA").build();
+        when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").build()));
+
+        var istek = new TeslimatService.TeslimIstegi("Ahmet Yılmaz", null, null);
+        assertThrows(BusinessException.class, () -> teslimatService.teslimEt(1L, istek, null, 1L, 5L));
+    }
+
+    @Test
+    void teslimEt_teslimAlanZorunlu() {
+        Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).durum("YOLDA").build();
+        when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").build()));
+        MockMultipartFile imza = new MockMultipartFile("file", "i.png", "image/png", new byte[]{1, 2, 3});
+
+        var istek = new TeslimatService.TeslimIstegi("  ", null, null);
+        assertThrows(BusinessException.class, () -> teslimatService.teslimEt(1L, istek, imza, 1L, 5L));
+    }
+
+    @Test
+    void teslimEt_basariliKayitVeFaturaSenkronu() throws Exception {
+        Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).faturaId(10L).durum("YOLDA").build();
+        when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").displayName("Ali").build()));
+        when(dosyaDepolama.kaydet(eq("teslimat-imzalari"), any())).thenReturn("imza.png");
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> inv.getArgument(0));
+        Fatura f = Fatura.builder().id(10L).sirketId(1L).build();
+        when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
+        MockMultipartFile imza = new MockMultipartFile("file", "i.png", "image/png", new byte[]{1, 2, 3});
+
+        var istek = new TeslimatService.TeslimIstegi("Ahmet Yılmaz", "Hasarsız", "41.0, 29.0");
+        TeslimatDTO sonuc = teslimatService.teslimEt(1L, istek, imza, 1L, 5L);
+
+        assertEquals("TESLIM_EDILDI", sonuc.getDurum());
+        assertEquals("Ahmet Yılmaz", sonuc.getTeslimAlanAd());
+        assertEquals("/api/uploads/teslimat-imzalari/imza.png", sonuc.getTeslimImzaUrl());
+        assertEquals("Ali", sonuc.getTeslimEdenAd());
+        verify(durumLogRepository).save(any());
+        verify(faturaRepository).save(f);
+        assertEquals("TESLIM_EDILDI", f.getTeslimDurumu());
+    }
+
+    @Test
+    void teslimEtSiparis_siparisiTeslimEdildiYapar() throws Exception {
+        com.raspel.erp.entity.ticaret.Siparis s = com.raspel.erp.entity.ticaret.Siparis.builder()
+                .id(10L).sirketId(1L).durum("YOLDA").build();
+        when(siparisRepository.findById(10L)).thenReturn(Optional.of(s));
+        when(teslimatRepository.findBySirketIdAndSiparisId(1L, 10L)).thenReturn(List.of());
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+            Teslimat t = inv.getArgument(0);
+            if (t.getId() == null) t.setId(1L);
+            return t;
+        });
+        Teslimat kayitli = Teslimat.builder().id(1L).sirketId(1L).siparisId(10L).driverId(5L).durum("BEKLEMEDE").build();
+        when(teslimatRepository.findById(1L)).thenReturn(Optional.of(kayitli));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").displayName("Ali").build()));
+        when(dosyaDepolama.kaydet(eq("teslimat-imzalari"), any())).thenReturn("imza.png");
+        when(siparisRepository.save(any(com.raspel.erp.entity.ticaret.Siparis.class))).thenAnswer(inv -> inv.getArgument(0));
+        MockMultipartFile imza = new MockMultipartFile("file", "i.png", "image/png", new byte[]{1, 2, 3});
+
+        var istek = new TeslimatService.TeslimIstegi("Ahmet", null, null);
+        TeslimatDTO sonuc = teslimatService.teslimEtSiparis(10L, istek, imza, 1L, 5L);
+
+        assertEquals("TESLIM_EDILDI", sonuc.getDurum());
+        assertEquals("TESLIM_EDILDI", s.getDurum());
+        verify(siparisRepository).save(s);
     }
 }

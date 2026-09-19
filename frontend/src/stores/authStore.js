@@ -161,7 +161,8 @@ export const useAuthStore = defineStore('auth', () => {
       avatarUrl: data.avatarUrl,
       companyName: data.companyName,
       role: data.role,
-      sahaKullanici: data.sahaKullanici === true
+      sahaKullanici: data.sahaKullanici === true,
+      personelId: data.personelId ?? null
     }
     token.value = data.token || ''
     companyName.value = data.companyName || ''
@@ -194,7 +195,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (!kullanici.value?.id) return
     try {
       const r = await kullaniciAPI.ben()
-      kullanici.value = r.data
+      const oncekiPersonelId = kullanici.value?.personelId ?? null
+      kullanici.value = { ...r.data, personelId: r.data?.personelId ?? oncekiPersonelId }
       companyName.value = r.data.companyName || companyName.value
       await yetkileriYukle()
       authKaydet(localStorage.getItem(AUTH_ANAHTAR) != null)

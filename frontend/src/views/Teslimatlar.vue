@@ -50,7 +50,10 @@
 
     <div class="teslimat-duzen">
       <!-- Şoför Listesi -->
-      <div class="surucu-listesi">
+      <div
+        v-if="!soforMu"
+        class="surucu-listesi"
+      >
         <div
           v-if="yukleniyor"
           class="bos"
@@ -241,6 +244,46 @@
               >
                 <i class="pi pi-directions" /> {{ t('teslimatlar.yolTarifiAl') }}
               </a>
+              <button
+                v-if="teslim.durum !== 'TESLIM_EDILDI'"
+                type="button"
+                class="durum-btn imzala"
+                @click="teslimModalAc(teslim)"
+              >
+                <i class="pi pi-pencil" /> {{ t('teslimatlar.teslimEtImzala') }}
+              </button>
+              <div
+                v-if="teslim.durum === 'TESLIM_EDILDI'"
+                class="teslim-bilgi"
+              >
+                <span
+                  v-if="teslim.teslimImzaUrl"
+                  class="teslim-imza-kutu"
+                >
+                  <img
+                    :src="teslim.teslimImzaUrl"
+                    class="teslim-imza"
+                    :alt="t('teslimatlar.imza')"
+                  >
+                </span>
+                <span class="teslim-alan">
+                  <i class="pi pi-user" /> {{ teslim.teslimAlanAd || '—' }}
+                </span>
+                <button
+                  type="button"
+                  class="durum-btn fis"
+                  @click="fisAc(teslim)"
+                >
+                  <i class="pi pi-file-pdf" /> {{ t('teslimatlar.teslimatFisi') }}
+                </button>
+                <button
+                  type="button"
+                  class="durum-btn paylas"
+                  @click="teslimPaylas(teslim)"
+                >
+                  <i class="pi pi-whatsapp" /> {{ t('teslimatlar.paylas') }}
+                </button>
+              </div>
               <Dropdown
                 :model-value="teslim.durum"
                 :options="durumSecenekleri"
@@ -262,7 +305,7 @@
                   v-if="teslim.durum !== 'TESLIM_EDILDI'"
                   type="button"
                   class="durum-btn teslim"
-                  @click="durumGuncelle(teslim, 'TESLIM_EDILDI')"
+                  @click="teslimModalAc(teslim)"
                 >
                   <i class="pi pi-check" /> {{ t('teslimatlar.durumTeslimEdildi') }}
                 </button>
@@ -272,17 +315,92 @@
         </template>
       </div>
     </div>
+
+    <Dialog
+      v-model:visible="imzaModal"
+      :modal="true"
+      :header="t('teslimatlar.dijitalTeslimat')"
+      :style="{ width: '94%', maxWidth: '480px' }"
+    >
+      <div class="imza-modal-icerik">
+        <div class="imza-alan-grup">
+          <label>{{ t('teslimatlar.teslimAlanZorunlu') }}</label>
+          <InputText
+            v-model="imzaForm.teslimAlanAd"
+            :placeholder="t('teslimatlar.teslimAlanPlaceholder')"
+            class="w-full"
+          />
+        </div>
+        <div class="imza-alan-grup">
+          <label>{{ t('teslimatlar.teslimNotu') }}</label>
+          <Textarea
+            v-model="imzaForm.teslimNotu"
+            rows="2"
+            :placeholder="t('teslimatlar.teslimNotuPlaceholder')"
+            class="w-full"
+          />
+        </div>
+        <div class="imza-alan-grup">
+          <ImzaPad
+            ref="imzaPadRef"
+            :etiket="t('teslimatlar.dijitalImza')"
+          />
+        </div>
+        <div class="imza-alan-grup imza-foto-satir">
+          <label class="foto-sec-etiket">
+            <i class="pi pi-camera" /> {{ t('teslimatlar.teslimFotografiOpsiyonel') }}
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              @change="imzaFotoSec"
+            >
+          </label>
+          <button
+            type="button"
+            class="konum-btn"
+            @click="konumAl"
+          >
+            <i class="pi pi-map-marker" /> {{ t('teslimatlar.konumAl') }}
+          </button>
+        </div>
+        <small
+          v-if="imzaForm.teslimKonum"
+          class="konum-bilgi"
+        >
+          <i class="pi pi-map-marker" /> {{ imzaForm.teslimKonum }}
+        </small>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="imzaModal = false"
+        />
+        <Button
+          :label="t('teslimatlar.teslimatiOnayla')"
+          icon="pi pi-check"
+          class="p-button-success"
+          :loading="teslimEdiliyor"
+          @click="teslimatiTamamla"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { teslimatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { useI18n } from 'vue-i18n'
 import { formatTarih } from '../utils/format.js'
+import ImzaPad from '../components/ImzaPad.vue'
 
 const toastBildirim = useToastBildirim()
+const authStore = useAuthStore()
 const { t } = useI18n()
 
 const suruculer = ref([])
@@ -294,6 +412,16 @@ const filtre = ref('TUMU')
 const rehberAcik = ref(false)
 const gecmisAcik = ref({})
 const gecmisler = ref({})
+
+// Dijital imza / teslim
+const imzaModal = ref(false)
+const imzaHedef = ref(null)
+const imzaForm = ref({ teslimAlanAd: '', teslimNotu: '', teslimKonum: '' })
+const teslimEdiliyor = ref(false)
+const imzaPadRef = ref(null)
+const imzaFoto = ref(null)
+
+const soforMu = computed(() => authStore?.kullanici?.role === 'DRIVER')
 
 const gecmisYukle = async (teslim) => {
   try {
@@ -412,6 +540,85 @@ const fotoYukle = async (teslim, event) => {
   } finally {
     event.target.value = ''
   }
+}
+
+const teslimModalAc = (teslim) => {
+  imzaHedef.value = teslim
+  imzaForm.value = { teslimAlanAd: '', teslimNotu: '', teslimKonum: '' }
+  imzaFoto.value = null
+  imzaModal.value = true
+  nextTick(() => imzaPadRef.value?.hazirla())
+}
+
+const imzaFotoSec = (event) => {
+  imzaFoto.value = event.target.files?.[0] || null
+}
+
+const konumAl = () => {
+  if (!navigator.geolocation) return
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      imzaForm.value.teslimKonum = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`
+    },
+    () => {},
+    { enableHighAccuracy: true, timeout: 10000 }
+  )
+}
+
+const teslimatiTamamla = async () => {
+  if (!imzaHedef.value?.id) return
+  if (!imzaForm.value.teslimAlanAd?.trim()) {
+    toastBildirim.uyari(t('teslimatlar.teslimAlanZorunlu'))
+    return
+  }
+  if (imzaPadRef.value?.bosMu?.() !== false) {
+    toastBildirim.uyari(t('teslimatlar.imzaZorunlu'))
+    return
+  }
+  teslimEdiliyor.value = true
+  try {
+    const blob = await imzaPadRef.value.toBlob()
+    if (!blob) {
+      toastBildirim.uyari(t('teslimatlar.imzaZorunlu'))
+      return
+    }
+    const dosya = new File([blob], `imza-${imzaHedef.value.id}.png`, { type: 'image/png' })
+    const res = await teslimatAPI.teslimEt(imzaHedef.value.id, imzaForm.value, dosya)
+    // Teslim fotoğrafı varsa ayrıca yükle (opsiyonel).
+    if (imzaFoto.value) {
+      try {
+        await teslimatAPI.fotoYukle(imzaHedef.value.id, imzaFoto.value)
+      } catch {
+        /* fotoğraf yüklenemedi; teslim yine de tamam */
+      }
+    }
+    const guncel = res.data
+    const idx = teslimatlar.value.findIndex((x) => x.id === guncel.id)
+    if (idx >= 0) teslimatlar.value[idx] = guncel
+    toastBildirim.basarili(t('teslimatlar.teslimEdildi'))
+    imzaModal.value = false
+    await suruculeriYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.teslimEdilemedi'))
+  } finally {
+    teslimEdiliyor.value = false
+  }
+}
+
+const fisAc = (teslim) => {
+  window.open(`/api/deliveries/${teslim.id}/fis`, '_blank')
+}
+
+const teslimPaylas = (teslim) => {
+  const satirlar = [
+    t('teslimatlar.fisBaslik'),
+    `${t('teslimatlar.faturaNo', { id: teslim.faturaId })}: ${teslim.faturaNumarasi || '#' + teslim.faturaId}`,
+    `${t('teslimatlar.musteri')}: ${teslim.musteriAdi || '-'}`,
+    `${t('teslimatlar.teslimAlanEtiket')}: ${teslim.teslimAlanAd || '-'}`,
+    teslim.teslimTarihi ? `${t('teslimatlar.teslimTarihiEtiket')}: ${formatTarih(teslim.teslimTarihi)}` : null,
+    `${t('teslimatlar.teslimEdenEtiket')}: ${teslim.teslimEdenAd || seciliSurucu.value?.ad || '-'}`
+  ].filter(Boolean)
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(satirlar.join('\n'))}`, '_blank')
 }
 
 onMounted(() => {
@@ -776,8 +983,86 @@ onMounted(() => {
 .durum-btn.teslim {
   background: #10b981;
 }
+.durum-btn.imzala {
+  background: #10b981;
+}
+.durum-btn.fis {
+  background: #ef4444;
+}
+.durum-btn.paylas {
+  background: #25d366;
+}
 .durum-btn:hover {
   filter: brightness(1.08);
+}
+.teslim-bilgi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.teslim-imza-kutu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.teslim-imza {
+  height: 34px;
+  max-width: 120px;
+  object-fit: contain;
+}
+.teslim-alan {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.imza-modal-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.imza-alan-grup label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.imza-foto-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.foto-sec-etiket,
+.konum-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.foto-sec-etiket:hover,
+.konum-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.konum-bilgi {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 @media (max-width: 900px) {
   .teslimat-duzen {

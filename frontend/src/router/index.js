@@ -500,8 +500,22 @@ router.beforeEach((to, from, next) => {
     } else {
       next()
     }
-  } else if (authStore.isDriver && to.path === '/') {
-    next('/teslimatlar')
+  } else if (authStore.isDriver && to.path !== '/yetki-reddi') {
+    const driverIzinli = [
+      '/',
+      '/teslimatlar',
+      '/sohbet',
+      '/notlar',
+      '/belgeler',
+      '/hesap-ayarlari'
+    ]
+    if (!driverIzinli.includes(to.path) && !to.path.startsWith('/profil')) {
+      next('/yetki-reddi')
+    } else if (to.path === '/') {
+      next('/teslimatlar')
+    } else {
+      next()
+    }
   } else {
     next()
   }

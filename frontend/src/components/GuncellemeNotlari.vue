@@ -10,12 +10,12 @@
       <div class="surum">
         <span class="surum-etiketi">v{{ SURUM }}</span>
         <ul>
-          <li><i class="pi pi-check-circle" /> Cari hesaba borçlandırma (borç ekleme) işlemi</li>
-          <li><i class="pi pi-check-circle" /> Satışta kalem düzenleme ve çoklu fiyat seçimi</li>
-          <li><i class="pi pi-check-circle" /> Sohbette yöneticiye özel mesaj silme</li>
-          <li><i class="pi pi-check-circle" /> Termal fiş 58/80mm seçeneği ve kilo/tonaj gösterimi</li>
-          <li><i class="pi pi-check-circle" /> Serbest renk seçmeli yeni tema tonu</li>
-          <li><i class="pi pi-check-circle" /> Stok grubu filtresi ve tablo sıralama iyileştirmeleri</li>
+          <li><i class="pi pi-check-circle" /> Kağıtsız dijital teslimat: teslim alan + dijital imza zorunlu</li>
+          <li><i class="pi pi-check-circle" /> Teslimat fişi PDF (indir/yazdır/WhatsApp paylaş)</li>
+          <li><i class="pi pi-check-circle" /> Saha Portalı yenilendi: teslimat+imza, tahsilat, çok kalemli sipariş, ziyaret fotoğrafı, masraf fişi, görev/not ve performans</li>
+          <li><i class="pi pi-check-circle" /> Şoför menüsü ve yetkileri sertleştirildi, izin talebi düzeltildi</li>
+          <li><i class="pi pi-check-circle" /> Cari hesaba borçlandırma ve satışta kalem düzenleme</li>
+          <li><i class="pi pi-check-circle" /> Termal fiş 58/80mm ve kilo/tonaj gösterimi</li>
         </ul>
       </div>
       <div class="surum">

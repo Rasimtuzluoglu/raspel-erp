@@ -413,6 +413,28 @@ export const teslimatAPI = {
   },
   gecmis(id) {
     return apiClient.get(`/deliveries/${id}/gecmis`)
+  },
+  getById(id) {
+    return apiClient.get(`/deliveries/${id}`)
+  },
+  teslimEt(id, data, imzaFile) {
+    const form = new FormData()
+    if (data?.teslimAlanAd != null) form.append('teslimAlanAd', data.teslimAlanAd)
+    if (data?.teslimNotu != null) form.append('teslimNotu', data.teslimNotu)
+    if (data?.teslimKonum != null) form.append('teslimKonum', data.teslimKonum)
+    if (imzaFile) form.append('file', imzaFile)
+    return apiClient.post(`/deliveries/${id}/teslim`, form)
+  },
+  teslimEtSiparis(siparisId, data, imzaFile) {
+    const form = new FormData()
+    if (data?.teslimAlanAd != null) form.append('teslimAlanAd', data.teslimAlanAd)
+    if (data?.teslimNotu != null) form.append('teslimNotu', data.teslimNotu)
+    if (data?.teslimKonum != null) form.append('teslimKonum', data.teslimKonum)
+    if (imzaFile) form.append('file', imzaFile)
+    return apiClient.post(`/deliveries/siparis/${siparisId}/teslim`, form)
+  },
+  fis(id) {
+    return apiClient.get(`/deliveries/${id}/fis`, { responseType: 'blob' })
   }
 }
 

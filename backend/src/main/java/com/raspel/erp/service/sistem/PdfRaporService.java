@@ -31,6 +31,8 @@ import com.raspel.erp.entity.ticaret.Siparis;
 import com.raspel.erp.entity.ticaret.SiparisKalem;
 import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.entity.ticaret.Teslimat;
+import com.raspel.erp.repository.ticaret.TeslimatRepository;
 import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.config.TenantChecker;
@@ -51,6 +53,8 @@ public class PdfRaporService {
     private final CariHesapRepository cariHesapRepository;
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
+    private final TeslimatRepository teslimatRepository;
+    private final DosyaDepolamaService dosyaDepolamaService;
 
     private static final float MARGIN = 50;
     private static final float PAGE_WIDTH = PDRectangle.A4.getWidth() - 2 * MARGIN;
@@ -214,6 +218,102 @@ public class PdfRaporService {
                 kalemler.stream().map(k ->
                         (k.getAciklama() != null ? k.getAciklama() : "") + " | " + k.getMiktar() + " adet"
                 ).toList());
+    }
+
+    /**
+     * Teslimat fişi (kağıtsız teslimat). Fatura kalemleri, teslim alan kişi,
+     * şoför ve dijital imza görselini içeren PDF üretir.
+     */
+    public byte[] teslimatFisiRaporu(Long teslimatId) {
+        Teslimat t = teslimatRepository.findById(teslimatId)
+                .orElseThrow(() -> new ResourceNotFoundException("Teslimat", teslimatId));
+        tenantChecker.check(t.getSirketId(), "Teslimat");
+        Fatura f = t.getFaturaId() != null ? faturaRepository.findById(t.getFaturaId()).orElse(null) : null;
+        List<FaturaKalem> kalemler = f != null ? faturaKalemRepository.findByFaturaId(f.getId()) : java.util.List.of();
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            doc.addPage(page);
+            FontSet font = fontlar(doc);
+            PDPageContentStream cs = new PDPageContentStream(doc, page);
+            try {
+                float y = page.getMediaBox().getHeight() - MARGIN;
+                y = header(cs, y, "TESLİMAT FİŞİ", font);
+                y -= 10;
+                y = infoSatiri(cs, y, "Fatura No:", t.getFaturaNumarasi() != null ? "#" + t.getFaturaNumarasi()
+                        : (t.getFaturaId() != null ? "#" + t.getFaturaId() : "-"), font);
+                y = infoSatiri(cs, y, "Müşteri:", t.getMusteriAdi() != null ? t.getMusteriAdi() : "-", font);
+                y = infoSatiri(cs, y, "Teslimat Adresi:", t.getTeslimatAdresi() != null ? t.getTeslimatAdresi() : "-", font);
+                y = infoSatiri(cs, y, "Teslim Eden (Şoför):", t.getTeslimEdenAd() != null ? t.getTeslimEdenAd() : "-", font);
+                y = infoSatiri(cs, y, "Teslim Alan:", t.getTeslimAlanAd() != null ? t.getTeslimAlanAd() : "-", font);
+                y = infoSatiri(cs, y, "Teslim Tarihi:", t.getTeslimTarihi() != null
+                        ? t.getTeslimTarihi().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-", font);
+                if (t.getTeslimNotu() != null && !t.getTeslimNotu().isBlank()) {
+                    y = infoSatiri(cs, y, "Not:", t.getTeslimNotu(), font);
+                }
+                y -= 16;
+
+                y = cizgi(cs, y);
+                y -= 8;
+                y = siraBasligi(cs, y, font, "Sıra", "Ürün / Hizmet", "Miktar", "Birim Fiyat", "Tutar");
+                y -= 4;
+                y = cizgi(cs, y);
+                y -= 6;
+
+                int sira = 1;
+                for (FaturaKalem k : kalemler) {
+                    y = siraSatiri(cs, y, font, String.valueOf(sira++),
+                            k.getAciklama() != null ? k.getAciklama() : "-",
+                            k.getAdet() != null ? k.getAdet().toString() : "0",
+                            k.getBirimFiyat() != null ? k.getBirimFiyat().toString() : "0",
+                            k.getTutar() != null ? k.getTutar().toString() : "0");
+                }
+                if (kalemler.isEmpty()) {
+                    y = infoSatiri(cs, y, "", "Bu teslimata bağlı fatura kalemi bulunmuyor.", font);
+                }
+
+                y -= 10;
+                y = cizgi(cs, y);
+                y -= 10;
+                float sayfaGenislik = page.getMediaBox().getWidth();
+
+                PDImageXObject imza = imzaGorseli(doc, t.getTeslimImzaUrl());
+                if (imza != null) {
+                    float imzaGenislik = 180;
+                    float imzaYukseklik = imzaGenislik * imza.getHeight() / imza.getWidth();
+                    float imzaY = Math.max(MARGIN + 20, y - imzaYukseklik - 30);
+                    cs.drawImage(imza, sayfaGenislik - imzaGenislik - MARGIN, imzaY, imzaGenislik, imzaYukseklik);
+                    cs.setFont(font.regular, 9);
+                    cs.beginText();
+                    cs.newLineAtOffset(sayfaGenislik - imzaGenislik - MARGIN, imzaY - 12);
+                    cs.showText("Teslim Alan İmzası");
+                    cs.endText();
+                }
+                cs.setFont(font.bold, 9);
+                cs.beginText(); cs.newLineAtOffset(MARGIN, MARGIN + 10);
+                cs.showText("RasPel ERP - Dijital teslimat fişi (kağıtsız)");
+                cs.endText();
+            } finally {
+                cs.close();
+            }
+            doc.save(baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Teslimat fişi oluşturulamadı", e);
+        }
+    }
+
+    /** Teslim imzası PNG'sini PDF gömülebilir görsele çevirir; bulunamazsa null. */
+    private PDImageXObject imzaGorseli(PDDocument doc, String imzaUrl) {
+        try {
+            if (imzaUrl == null || imzaUrl.isBlank()) return null;
+            String filename = imzaUrl.substring(imzaUrl.lastIndexOf('/') + 1);
+            DosyaDepolamaService.DepolananDosya dosya = dosyaDepolamaService.getir("teslimat-imzalari", filename);
+            if (dosya == null || dosya.icerik() == null || dosya.icerik().length == 0) return null;
+            return PDImageXObject.createFromByteArray(doc, dosya.icerik(), "imza");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private float header(PDPageContentStream cs, float y, String title, FontSet font) throws IOException {

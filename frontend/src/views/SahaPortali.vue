@@ -115,6 +115,18 @@
                   @click="gpsKonumAl"
                 />
               </div>
+              <div class="form-field">
+                <label>{{ t('sahaPortali.ziyaretFotografiOpsiyonel') }}</label>
+                <label class="foto-sec-etiket">
+                  <i class="pi pi-camera" /> {{ ziyaretFoto ? ziyaretFoto.name : t('sahaPortali.fotografSec') }}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    @change="(e) => (ziyaretFoto = e.target.files?.[0] || null)"
+                  >
+                </label>
+              </div>
               <Button
                 :label="t('sahaPortali.ziyaretIlet')"
                 icon="pi pi-send"
@@ -244,6 +256,221 @@
           </div>
         </div>
       </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-money-bill" />
+            {{ t('sahaPortali.tahsilat') }}
+          </span>
+        </template>
+        <div class="fade-in-section">
+          <div class="form-container-card">
+            <div class="form-header">
+              <h3><i class="pi pi-money-bill text-primary mr-2" />{{ t('sahaPortali.tahsilatBaslik') }}</h3>
+              <p>{{ t('sahaPortali.tahsilatAciklama') }}</p>
+            </div>
+            <div class="form-body">
+              <div class="form-field">
+                <label>{{ t('sahaPortali.musteriZorunlu') }}</label>
+                <Dropdown
+                  v-model="tahsilatForm.cariHesapId"
+                  :options="cariHesaplar"
+                  option-label="ad"
+                  option-value="id"
+                  :placeholder="t('sahaPortali.musteriSecin')"
+                  filter
+                  class="w-full"
+                />
+              </div>
+              <div class="form-row-2">
+                <div class="form-field">
+                  <label>{{ t('sahaPortali.tutarZorunlu') }}</label>
+                  <input
+                    v-model.number="tahsilatForm.tutar"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    class="p-inputtext w-full"
+                    placeholder="0.00"
+                  >
+                </div>
+                <div class="form-field">
+                  <label>{{ t('sahaPortali.odemeYontemi') }}</label>
+                  <Dropdown
+                    v-model="tahsilatForm.odemeYontemi"
+                    :options="odemeYontemleri"
+                    option-label="label"
+                    option-value="value"
+                    class="w-full"
+                  />
+                </div>
+              </div>
+              <div class="form-field">
+                <label>{{ t('common.description') }}</label>
+                <Textarea
+                  v-model="tahsilatForm.aciklama"
+                  rows="2"
+                  class="w-full"
+                />
+              </div>
+              <Button
+                :label="t('sahaPortali.tahsilatiKaydet')"
+                icon="pi pi-check"
+                class="p-button-success w-full font-bold"
+                :loading="tahsilatGonderiliyor"
+                @click="tahsilatKaydet"
+              />
+            </div>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-check-square" />
+            {{ t('sahaPortali.gorevNot') }}
+          </span>
+        </template>
+        <div class="fade-in-section gorev-not-grid">
+          <div class="form-container-card">
+            <div class="form-header">
+              <h3><i class="pi pi-check-square text-primary mr-2" />{{ t('sahaPortali.gorevEkle') }}</h3>
+            </div>
+            <div class="form-body">
+              <div class="form-field">
+                <label>{{ t('sahaPortali.gorevBasligi') }}</label>
+                <InputText
+                  v-model="gorevForm.baslik"
+                  class="w-full"
+                />
+              </div>
+              <div class="form-row-2">
+                <div class="form-field">
+                  <label>{{ t('sahaPortali.bitisTarihi') }}</label>
+                  <input
+                    v-model="gorevForm.bitisTarihi"
+                    type="date"
+                    class="p-inputtext w-full"
+                  >
+                </div>
+                <div class="form-field">
+                  <label>{{ t('sahaPortali.oncelik') }}</label>
+                  <Dropdown
+                    v-model="gorevForm.oncelik"
+                    :options="oncelikSecenekleri"
+                    option-label="label"
+                    option-value="value"
+                    class="w-full"
+                  />
+                </div>
+              </div>
+              <div class="form-field">
+                <label>{{ t('common.description') }}</label>
+                <Textarea
+                  v-model="gorevForm.aciklama"
+                  rows="2"
+                  class="w-full"
+                />
+              </div>
+              <Button
+                :label="t('sahaPortali.gorevKaydet')"
+                icon="pi pi-plus"
+                class="p-button-primary w-full"
+                :loading="gorevGonderiliyor"
+                @click="gorevKaydet"
+              />
+            </div>
+          </div>
+
+          <div class="form-container-card">
+            <div class="form-header">
+              <h3><i class="pi pi-pen-to-square text-primary mr-2" />{{ t('sahaPortali.hizliNot') }}</h3>
+            </div>
+            <div class="form-body">
+              <div class="form-field">
+                <label>{{ t('sahaPortali.notBasligi') }}</label>
+                <InputText
+                  v-model="notForm.baslik"
+                  class="w-full"
+                />
+              </div>
+              <div class="form-field">
+                <label>{{ t('common.description') }}</label>
+                <Textarea
+                  v-model="notForm.icerik"
+                  rows="3"
+                  class="w-full"
+                />
+              </div>
+              <Button
+                :label="t('sahaPortali.notKaydet')"
+                icon="pi pi-save"
+                class="p-button-primary w-full"
+                :loading="notGonderiliyor"
+                @click="notKaydet"
+              />
+            </div>
+          </div>
+
+          <div class="form-container-card gorev-liste">
+            <div class="form-header">
+              <h3><i class="pi pi-list text-primary mr-2" />{{ t('sahaPortali.gorevlerim') }}</h3>
+            </div>
+            <div v-if="gorevler.length">
+              <div
+                v-for="g in gorevler"
+                :key="g.id"
+                class="gorev-satir"
+              >
+                <Checkbox
+                  :model-value="g.durum === 'TAMAMLANDI'"
+                  :binary="true"
+                  @update:model-value="gorevTamamla(g)"
+                />
+                <span :class="{ tamam: g.durum === 'TAMAMLANDI' }">{{ g.baslik }}</span>
+                <small v-if="g.bitisTarihi">{{ formatTarih(g.bitisTarihi) }}</small>
+              </div>
+            </div>
+            <div
+              v-else
+              class="empty-box"
+            >
+              <p>{{ t('sahaPortali.gorevYok') }}</p>
+            </div>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel>
+        <template #header>
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-chart-bar" />
+            {{ t('sahaPortali.performans') }}
+          </span>
+        </template>
+        <div class="fade-in-section">
+          <div class="performans-grid">
+            <div class="kpi-kart">
+              <span class="kpi-deger">{{ bekleyenSiparisSayisi }}</span>
+              <span class="kpi-etiket">{{ t('sahaPortali.bekleyenSiparis') }}</span>
+            </div>
+            <div class="kpi-kart">
+              <span class="kpi-deger">{{ teslimEdilenSiparisSayisi }}</span>
+              <span class="kpi-etiket">{{ t('sahaPortali.teslimEdilenSiparis') }}</span>
+            </div>
+            <div class="kpi-kart">
+              <span class="kpi-deger">{{ ziyaretSayisi }}</span>
+              <span class="kpi-etiket">{{ t('sahaPortali.ziyaretSayisi') }}</span>
+            </div>
+            <div class="kpi-kart">
+              <span class="kpi-deger">{{ formatPara(tahsilatToplam) }}</span>
+              <span class="kpi-etiket">{{ t('sahaPortali.tahsilatToplam') }}</span>
+            </div>
+          </div>
+        </div>
+      </TabPanel>
     </TabView>
 
     <!-- MODAL: HIZLI SİPARİŞ AL -->
@@ -294,6 +521,14 @@
             class="w-full"
             @change="hizliSiparisStokSecildi"
           />
+          <small
+            v-if="seciliStokBilgi"
+            class="stok-raf-bilgi"
+          >
+            <i class="pi pi-box" /> {{ t('sahaPortali.stokKodu') }}: {{ seciliStokBilgi.stokKodu || '-' }} ·
+            {{ t('sahaPortali.rafNo') }}: {{ seciliStokBilgi.rafNo || '-' }} ·
+            {{ t('sahaPortali.stokMiktar') }}: {{ seciliStokBilgi.miktar ?? '-' }}
+          </small>
         </div>
         <div class="form-row-2">
           <div class="form-field">
@@ -314,6 +549,36 @@
               step="0.01"
               class="p-inputtext w-full"
             >
+          </div>
+        </div>
+        <Button
+          :label="t('sahaPortali.kalemEkle')"
+          icon="pi pi-plus"
+          class="p-button-outlined w-full"
+          :disabled="!yeniSiparisForm.stokId"
+          @click="kalemEkle"
+        />
+        <div
+          v-if="yeniSiparisForm.kalemler.length"
+          class="sepet-liste"
+        >
+          <div
+            v-for="(k, i) in yeniSiparisForm.kalemler"
+            :key="i"
+            class="sepet-satir"
+          >
+            <span class="sepet-ad">{{ k.ad }} × {{ k.miktar }}</span>
+            <span class="sepet-tutar">{{ formatPara(k.tutar) }}</span>
+            <button
+              type="button"
+              class="sepet-sil"
+              @click="kalemSil(i)"
+            >
+              <i class="pi pi-trash" />
+            </button>
+          </div>
+          <div class="sepet-toplam">
+            {{ t('sahaPortali.sepetToplam') }}: {{ formatPara(sepetToplam) }}
           </div>
         </div>
         <div class="form-field">
@@ -368,23 +633,10 @@
         <div class="form-field">
           <div class="flex justify-between items-center mb-1">
             <label>{{ t('sahaPortali.dijitalImza') }}</label>
-            <button
-              type="button"
-              class="text-xs text-red-500 hover:underline"
-              @click="imzayiTemizle"
-            >
-              {{ t('sahaPortali.imzayiTemizle') }}
-            </button>
           </div>
-          <canvas
-            ref="imzaCanvas"
-            class="imza-canvas w-full h-36 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-secondary dark:bg-gray-800 touch-none"
-            @mousedown="imzaBaslat"
-            @mousemove="imzaCiz"
-            @mouseup="imzaBitir"
-            @touchstart="imzaBaslatTouch"
-            @touchmove="imzaCizTouch"
-            @touchend="imzaBitir"
+          <ImzaPad
+            ref="imzaPadRef"
+            :etiket="t('sahaPortali.dijitalImzaEtiket')"
           />
         </div>
       </div>
@@ -521,6 +773,18 @@
             class="w-full"
           />
         </div>
+        <div class="form-field">
+          <label>{{ t('sahaPortali.masrafFisiOpsiyonel') }}</label>
+          <label class="foto-sec-etiket">
+            <i class="pi pi-camera" /> {{ masrafFoto ? masrafFoto.name : t('sahaPortali.fotografSec') }}
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              @change="(e) => (masrafFoto = e.target.files?.[0] || null)"
+            >
+          </label>
+        </div>
       </div>
       <template #footer>
         <Button
@@ -578,9 +842,10 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI } from '../api/index.js'
+import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI, teslimatAPI, tahsilatAPI, ajandaAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
+import ImzaPad from '../components/ImzaPad.vue'
 import { useI18n } from 'vue-i18n'
 import { formatTarih } from '../utils/format.js'
 
@@ -637,8 +902,42 @@ const yeniSiparisForm = ref({
   stokId: null,
   miktar: 1,
   birimFiyat: 0,
-  adres: ''
+  adres: '',
+  kalemler: []
 })
+
+// Saha modülleri: tahsilat, görev/not, fotoğraflar
+const tahsilatForm = ref({ cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', aciklama: '' })
+const tahsilatGonderiliyor = ref(false)
+const tahsilatToplam = ref(0)
+const odemeYontemleri = computed(() => [
+  { label: t('sahaPortali.nakit'), value: 'NAKIT' },
+  { label: t('sahaPortali.havale'), value: 'HAVALE' },
+  { label: t('sahaPortali.kart'), value: 'KART' }
+])
+
+const gorevForm = ref({ baslik: '', bitisTarihi: '', oncelik: 'ORTA', aciklama: '' })
+const gorevler = ref([])
+const gorevGonderiliyor = ref(false)
+const oncelikSecenekleri = computed(() => [
+  { label: t('sahaPortali.oncelikDusuk'), value: 'DUSUK' },
+  { label: t('sahaPortali.oncelikOrta'), value: 'ORTA' },
+  { label: t('sahaPortali.oncelikYuksek'), value: 'YUKSEK' }
+])
+const notForm = ref({ baslik: '', icerik: '' })
+const notGonderiliyor = ref(false)
+const ziyaretFoto = ref(null)
+const masrafFoto = ref(null)
+const notlar = ref([])
+
+const seciliStokBilgi = computed(() => stoklar.value.find((s) => s.id === yeniSiparisForm.value.stokId) || null)
+const sepetToplam = computed(() =>
+  yeniSiparisForm.value.kalemler.reduce((t, k) => t + (Number(k.tutar) || 0), 0)
+)
+const teslimEdilenSiparisSayisi = computed(() =>
+  siparisler.value.filter((s) => s?.durum === 'TESLIM_EDILDI').length
+)
+const ziyaretSayisi = computed(() => notlar.value.filter((n) => n?.kategori === 'SAHA_ZIYARET').length)
 
 // Format Helpers (Lokal ve Güvenli)
 const formatPara = (v) => {
@@ -646,9 +945,7 @@ const formatPara = (v) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
 }
 // Canvas
-const imzaCanvas = ref(null)
-let cizimYapiliyor = false
-let ctx = null
+const imzaPadRef = ref(null)
 
 onMounted(async () => {
   await tumunuYukle()
@@ -657,18 +954,22 @@ onMounted(async () => {
 const tumunuYukle = async () => {
   yukleniyor.value = true
   try {
-    const [sipRes, izinRes, masrafRes, cariRes, stokRes] = await Promise.allSettled([
+    const [sipRes, izinRes, masrafRes, cariRes, stokRes, notRes, gorevRes] = await Promise.allSettled([
       siparisAPI.getAll({ size: 50 }),
       personelIzinAPI.getAll(),
       personelMasrafTalepAPI.getKullaniciTalepleri(),
       cariHesapAPI.getAll({ size: 500 }),
-      stokAPI.getAll({ size: 500 })
+      stokAPI.getAll({ size: 500 }),
+      notAPI.getAll({ size: 200 }),
+      ajandaAPI.gorevler()
     ])
     if (sipRes.status === 'fulfilled') siparisler.value = unwrapList(sipRes.value)
     if (izinRes.status === 'fulfilled') izinler.value = unwrapList(izinRes.value)
     if (masrafRes.status === 'fulfilled') masraflar.value = unwrapList(masrafRes.value)
     if (cariRes.status === 'fulfilled') cariHesaplar.value = unwrapList(cariRes.value)
     if (stokRes.status === 'fulfilled') stoklar.value = unwrapList(stokRes.value)
+    if (notRes.status === 'fulfilled') notlar.value = unwrapList(notRes.value)
+    if (gorevRes.status === 'fulfilled') gorevler.value = unwrapList(gorevRes.value)
   } finally {
     yukleniyor.value = false
   }
@@ -688,50 +989,32 @@ const imzaModalAc = (siparis) => {
   seciliSiparis.value = siparis
   imzaForm.value = { teslimAlan: '', notlar: '' }
   imzaModal.value = true
-  nextTick(() => {
-    if (imzaCanvas.value) {
-      imzaCanvas.value.width = imzaCanvas.value.offsetWidth
-      imzaCanvas.value.height = imzaCanvas.value.offsetHeight
-      ctx = imzaCanvas.value.getContext('2d')
-      ctx.lineWidth = 2
-      ctx.strokeStyle = '#1e293b'
-    }
-  })
+  nextTick(() => imzaPadRef.value?.hazirla())
 }
 
-const imzaBaslat = (e) => { if (!ctx) return; cizimYapiliyor = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY) }
-const imzaCiz = (e) => { if (cizimYapiliyor && ctx) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke() } }
-const imzaBitir = () => { cizimYapiliyor = false }
-const imzaBaslatTouch = (e) => { if (!ctx) return; e.preventDefault(); cizimYapiliyor = true; const r = imzaCanvas.value.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top) }
-const imzaCizTouch = (e) => { if (!ctx) return; e.preventDefault(); if (cizimYapiliyor) { const r = imzaCanvas.value.getBoundingClientRect(); ctx.lineTo(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top); ctx.stroke() } }
-const imzayiTemizle = () => { if (ctx && imzaCanvas.value) ctx.clearRect(0, 0, imzaCanvas.value.width, imzaCanvas.value.height) }
-
-const imzaBlobUret = () =>
-  new Promise((resolve) => {
-    if (!imzaCanvas.value || typeof imzaCanvas.value.toBlob !== 'function') return resolve(null)
-    imzaCanvas.value.toBlob((b) => resolve(b), 'image/png')
-  })
-
 const teslimatOnayla = async () => {
-  if (!imzaForm.value.teslimAlan) {
+  if (!imzaForm.value.teslimAlan?.trim()) {
     toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.teslimAlanGiriniz'), life: 3000 })
     return
   }
   if (!seciliSiparis.value?.id) return
+  if (imzaPadRef.value?.bosMu?.() !== false) {
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.imzaZorunlu'), life: 3000 })
+    return
+  }
   teslimEdiliyor.value = true
   try {
-    // Teslim durumunu sunucuya yaz (bagli teslimat da otomatik senkronlanir).
-    await siparisAPI.durumGuncelle(seciliSiparis.value.id, 'TESLIM_EDILDI')
-    // Imzayi siparise belge olarak ekle (opsiyonel; hata olsa bile teslimi engellemez).
-    try {
-      const blob = await imzaBlobUret()
-      if (blob) {
-        const dosya = new File([blob], `teslimat-imza-${seciliSiparis.value.id}.png`, { type: 'image/png' })
-        await belgeAPI.yukle('Siparis', seciliSiparis.value.id, dosya)
-      }
-    } catch {
-      /* imza eklenemedi */
+    const blob = await imzaPadRef.value.toBlob()
+    if (!blob) {
+      toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.imzaZorunlu'), life: 3000 })
+      return
     }
+    const dosya = new File([blob], `imza-${seciliSiparis.value.id}.png`, { type: 'image/png' })
+    await teslimatAPI.teslimEtSiparis(
+      seciliSiparis.value.id,
+      { teslimAlanAd: imzaForm.value.teslimAlan.trim(), teslimNotu: imzaForm.value.notlar },
+      dosya
+    )
     seciliSiparis.value.durum = 'TESLIM_EDILDI'
     toast.add({ severity: 'success', summary: t('sahaPortali.teslimEdildi'), detail: t('sahaPortali.siparisTeslimEdildi'), life: 3000 })
     imzaModal.value = false
@@ -807,13 +1090,21 @@ const masrafTalepGonder = async () => {
   }
   masrafGonderiliyor.value = true
   try {
-    await personelMasrafTalepAPI.create({
+    const olusan = await personelMasrafTalepAPI.create({
       tur: masrafForm.value.tur,
       kategori: masrafForm.value.kategori,
       tutar: masrafForm.value.tutar,
       aciklama: masrafForm.value.aciklama,
       tarih: new Date().toISOString().substring(0, 10)
     })
+    if (masrafFoto.value && olusan?.data?.id) {
+      try {
+        await belgeAPI.yukle('MasrafTalep', olusan.data.id, masrafFoto.value)
+      } catch {
+        /* fiş yüklenemedi; talep yine de iletildi */
+      }
+    }
+    masrafFoto.value = null
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.talepIletildi'), life: 3000 })
     yeniMasrafModal.value = false
     await tumunuYukle()
@@ -890,6 +1181,14 @@ const ziyaretKaydet = async () => {
       icerik: ziyaretForm.value.notlar,
       kategori: 'SAHA_ZIYARET'
     })
+    if (ziyaretFoto.value) {
+      try {
+        await belgeAPI.yukle('CariHesap', ziyaretForm.value.cariHesapId, ziyaretFoto.value)
+      } catch {
+        /* fotoğraf yüklenemedi; ziyaret yine de kaydedildi */
+      }
+    }
+    ziyaretFoto.value = null
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.ziyaretKaydedildi'), life: 3000 })
     ziyaretForm.value.notlar = ''
     ziyaretForm.value.cariHesapId = null
@@ -897,6 +1196,108 @@ const ziyaretKaydet = async () => {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
     ziyaretKaydediliyor.value = false
+  }
+}
+
+const kalemEkle = () => {
+  const s = seciliStokBilgi.value
+  if (!s) return
+  const miktar = Number(yeniSiparisForm.value.miktar) || 1
+  const fiyat = Number(yeniSiparisForm.value.birimFiyat) || 0
+  yeniSiparisForm.value.kalemler.push({
+    stokId: s.id,
+    ad: s.ad,
+    miktar,
+    birimFiyat: fiyat,
+    kdvOrani: s.kdvOrani ?? 20,
+    tutar: miktar * fiyat
+  })
+  yeniSiparisForm.value.stokId = null
+  yeniSiparisForm.value.miktar = 1
+  yeniSiparisForm.value.birimFiyat = 0
+}
+
+const kalemSil = (i) => {
+  yeniSiparisForm.value.kalemler.splice(i, 1)
+}
+
+const tahsilatKaydet = async () => {
+  if (!tahsilatForm.value.cariHesapId || !tahsilatForm.value.tutar || tahsilatForm.value.tutar <= 0) {
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.cariTutarZorunlu'), life: 3000 })
+    return
+  }
+  tahsilatGonderiliyor.value = true
+  try {
+    await tahsilatAPI.gir({
+      cariId: tahsilatForm.value.cariHesapId,
+      tutar: tahsilatForm.value.tutar,
+      odemeYontemi: tahsilatForm.value.odemeYontemi,
+      aciklama: tahsilatForm.value.aciklama || t('sahaPortali.sahaTahsilati'),
+      hareketTarihi: new Date().toISOString().substring(0, 10)
+    })
+    tahsilatToplam.value += Number(tahsilatForm.value.tutar) || 0
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.tahsilatKaydedildi'), life: 3000 })
+    tahsilatForm.value = { cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', aciklama: '' }
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
+  } finally {
+    tahsilatGonderiliyor.value = false
+  }
+}
+
+const gorevKaydet = async () => {
+  if (!gorevForm.value.baslik?.trim()) {
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.gorevBasligiZorunlu'), life: 3000 })
+    return
+  }
+  gorevGonderiliyor.value = true
+  try {
+    await ajandaAPI.gorevOlustur({
+      baslik: gorevForm.value.baslik.trim(),
+      bitisTarihi: gorevForm.value.bitisTarihi || null,
+      oncelik: gorevForm.value.oncelik,
+      aciklama: gorevForm.value.aciklama
+    })
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.gorevKaydedildi'), life: 3000 })
+    gorevForm.value = { baslik: '', bitisTarihi: '', oncelik: 'ORTA', aciklama: '' }
+    await tumunuYukle()
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
+  } finally {
+    gorevGonderiliyor.value = false
+  }
+}
+
+const gorevTamamla = async (g) => {
+  if (!g?.id) return
+  try {
+    if (g.durum === 'TAMAMLANDI') {
+      await ajandaAPI.gorevGuncelle(g.id, { ...g, durum: 'BEKLIYOR' })
+      g.durum = 'BEKLIYOR'
+    } else {
+      await ajandaAPI.gorevTamamla(g.id)
+      g.durum = 'TAMAMLANDI'
+    }
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
+  }
+}
+
+const notKaydet = async () => {
+  if (!notForm.value.baslik?.trim() || !notForm.value.icerik?.trim()) {
+    toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.notZorunlu'), life: 3000 })
+    return
+  }
+  notGonderiliyor.value = true
+  try {
+    await notAPI.create({ baslik: notForm.value.baslik.trim(), icerik: notForm.value.icerik.trim(), kategori: 'SAHA_NOT' })
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.notKaydedildi'), life: 3000 })
+    notForm.value = { baslik: '', icerik: '' }
+    await tumunuYukle()
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
+  } finally {
+    notGonderiliyor.value = false
   }
 }
 
@@ -910,31 +1311,32 @@ const hizliSiparisStokSecildi = () => {
 }
 
 const hizliSiparisKaydet = async () => {
-  if (!yeniSiparisForm.value?.cariHesapId || !yeniSiparisForm.value?.stokId) {
+  const form = yeniSiparisForm.value
+  // Sepete eklenmemiş ama seçili tek ürün varsa otomatik kalem olarak al.
+  if (form.stokId) kalemEkle()
+  if (!form.cariHesapId || !form.kalemler.length) {
     toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.musteriUrunZorunlu'), life: 3000 })
     return
   }
   siparisKaydediliyor.value = true
   try {
-    const miktar = yeniSiparisForm.value.miktar || 1
-    const fiyat = yeniSiparisForm.value.birimFiyat || 0
     await siparisAPI.create({
-      cariHesapId: yeniSiparisForm.value.cariHesapId,
+      cariHesapId: form.cariHesapId,
       tarih: new Date().toISOString().substring(0, 10),
       durum: 'BEKLIYOR',
       aciklama: t('sahaPortali.sahaSiparisi'),
-      teslimatAdresi: yeniSiparisForm.value.adres || '',
-      kalemler: [
-        {
-          stokId: yeniSiparisForm.value.stokId,
-          miktar: miktar,
-          birimFiyat: fiyat,
-          tutar: miktar * fiyat
-        }
-      ]
+      teslimatAdresi: form.adres || '',
+      kalemler: form.kalemler.map((k) => ({
+        stokId: k.stokId,
+        miktar: k.miktar,
+        birimFiyat: k.birimFiyat,
+        kdvOrani: k.kdvOrani,
+        tutar: k.tutar
+      }))
     })
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.siparisGonderildi'), life: 3000 })
     yeniSiparisModal.value = false
+    yeniSiparisForm.value = { cariHesapId: null, stokId: null, miktar: 1, birimFiyat: 0, adres: '', kalemler: [] }
     await tumunuYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
@@ -1167,6 +1569,117 @@ const hizliSiparisKaydet = async () => {
 
 .fade-in-section {
   animation: fadeIn 0.25s ease-in-out;
+}
+
+.stok-raf-bilgi {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.sepet-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-muted, rgba(0, 0, 0, 0.04));
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.sepet-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.sepet-ad {
+  flex: 1;
+  min-width: 0;
+}
+.sepet-tutar {
+  font-weight: 700;
+}
+.sepet-sil {
+  border: none;
+  background: transparent;
+  color: var(--danger, #ef4444);
+  cursor: pointer;
+}
+.sepet-toplam {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: right;
+}
+.foto-sec-etiket {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.foto-sec-etiket:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.gorev-not-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.gorev-liste .gorev-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.gorev-liste .gorev-satir:last-child {
+  border-bottom: none;
+}
+.gorev-liste .gorev-satir span {
+  flex: 1;
+  min-width: 0;
+}
+.gorev-liste .gorev-satir .tamam {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.gorev-liste .gorev-satir small {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.performans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 1rem;
+}
+.kpi-kart {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kpi-deger {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--primary-color, var(--accent));
+}
+.kpi-etiket {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 @keyframes fadeIn {

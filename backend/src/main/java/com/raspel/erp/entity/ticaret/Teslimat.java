@@ -64,6 +64,26 @@ public class Teslimat {
     @Column(name = "teslim_tarihi")
     private LocalDateTime teslimTarihi;
 
+    /** Teslim alan kişinin ad-soyadı (dijital teslimde alıcı imzasıyla birlikte). */
+    @Column(name = "teslim_alan_ad", length = 255)
+    private String teslimAlanAd;
+
+    /** Dijital imza PNG erişim URL'i (/api/uploads/teslimat-imzalari/...). */
+    @Column(name = "teslim_imza_url", columnDefinition = "TEXT")
+    private String teslimImzaUrl;
+
+    /** Teslim anındaki not. */
+    @Column(name = "teslim_notu", columnDefinition = "TEXT")
+    private String teslimNotu;
+
+    /** Teslimin alındığı GPS konumu (enlem, boylam). */
+    @Column(name = "teslim_konum", length = 120)
+    private String teslimKonum;
+
+    /** Teslimi gerçekleştiren şoförün adı (anlık görüntü). */
+    @Column(name = "teslim_eden_ad", length = 255)
+    private String teslimEdenAd;
+
     @PrePersist
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();

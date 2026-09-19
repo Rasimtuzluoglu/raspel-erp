@@ -54,6 +54,7 @@ public class KullaniciService {
     private final com.raspel.erp.config.TenantChecker tenantChecker;
     private final com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
     private final EmailService emailService;
+    private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
@@ -405,6 +406,7 @@ public class KullaniciService {
                 .displayName(k.getDisplayName())
                 .avatarUrl(k.getAvatarUrl())
                 .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
+                .personelId(personelIdBul(k))
                 .twoFactorGerekli(twoFactorAktif)
                 .girisToken(girisToken)
                 .sirketler(twoFactorAktif ? null : sirketler)
@@ -447,6 +449,7 @@ public class KullaniciService {
                 .displayName(k.getDisplayName())
                 .avatarUrl(k.getAvatarUrl())
                 .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
+                .personelId(personelIdBul(k))
                 .twoFactorGerekli(false)
                 .girisToken(yeniToken)
                 .sirketler(sirketler)
@@ -548,6 +551,15 @@ public class KullaniciService {
         return tokenOlusturVeDon(k, null, sirketId);
     }
 
+    private Long personelIdBul(Kullanici k) {
+        if (k == null) return null;
+        try {
+            return personelRepository.findByKullaniciId(k.getId()).map(p -> p.getId()).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private LoginResponse tokenOlusturVeDon(Kullanici k, String istekFirma, Long istekSirketId) {
         String company = istekFirma != null && !istekFirma.isBlank() ? istekFirma : k.getCompanyName();
         Long sirketId = istekSirketId != null ? istekSirketId : k.getSirketId();
@@ -566,6 +578,7 @@ public class KullaniciService {
                 .sirketAdi(sirketAdi)
                 .companyName(company)
                 .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
+                .personelId(personelIdBul(k))
                 .token(token)
                 .tokenExpiresAt(System.currentTimeMillis() + jwtExpirationMs)
                 .twoFactorGerekli(false)

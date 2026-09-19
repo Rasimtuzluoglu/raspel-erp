@@ -25,5 +25,10 @@ public class TeslimatDTO {
     private String notlar;
     private LocalDateTime olusturmaTarihi;
     private LocalDateTime teslimTarihi;
+    private String teslimAlanAd;
+    private String teslimImzaUrl;
+    private String teslimNotu;
+    private String teslimKonum;
+    private String teslimEdenAd;
     private boolean gecikti;
 }

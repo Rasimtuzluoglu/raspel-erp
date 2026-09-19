@@ -2,6 +2,21 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.18.0] - 2026-09-19 (Kağıtsız Dijital Teslimat & Tam Kapsamlı Saha Portalı)
+### Eklenenler
+- **Dijital teslimat fişi (kağıtsız)**: Teslimatlar ekranında şoför, teslim alan adı + **dijital imza (zorunlu)** ile teslimi tamamlar. İmza PNG olarak saklanır; `V109` ile `ticaret.teslimat` üzerine `teslim_alan_ad`, `teslim_imza_url`, `teslim_notu`, `teslim_konum`, `teslim_eden_ad` kolonları eklendi.
+- **Birleşik teslim akışı**: Hem `Teslimatlar` (fatura bazlı) hem `Saha Portalı` (sipariş bazlı) aynı `ImzaPad` bileşenini ve `POST /api/deliveries/{id}/teslim` · `POST /api/deliveries/siparis/{siparisId}/teslim` uçlarını kullanır. Teslimde bağlı faturanın teslim durumu/eden/notu senkronlanır.
+- **Teslimat fişi PDF**: `GET /api/deliveries/{id}/fis` — fatura kalemleri, teslim alan, şoför, tarih ve **imza görselini** içeren PDF; ekranda açılır/yazdırılır ve WhatsApp ile paylaşılabilir.
+- **Saha Portalı modülleri**: Sahada **tahsilat** alma, **çok kalemli hızlı sipariş** (stok/raf sorgu + barkod), **ziyaret fotoğrafı + GPS**, **masraf fişi fotoğrafı**, **görev + hızlı not**, ve **performans/KPI** sekmesi.
+- **Şoför erişim sertleştirmesi**: Router'da DRIVER için allowlist; şoför yalnızca teslimat/sohbet/not/belge/hesap ekranlarına erişir.
+- **İzin talebi düzeltmesi**: Login yanıtına `personelId` eklendi (`LoginResponse`) — saha portalından izin talebi artık çalışır.
+
+### Düzeltmeler
+- Teslimat imza/foto yükleme DRIVER rolüyle uyumlu hale getirildi (`/api/uploads/teslimat-imzalari`).
+
+### Eklenen Testler
+- Backend: 1091 → 1095 (TeslimatService dijital teslim/sipariş/imza senaryoları). Frontend: 714 → 718.
+
 ## [1.17.0] - 2026-09-19 (Kullanım Kolaylaştırma, Tema, KVKK)
 ### Eklenenler
 - **Cariye borçlandırma**: Cari hesaba manuel borç (dekont/finansman) ekleme — yeni `BORC` hareket türü (V-gerekmez) + cari kartından "Borçlandırma" dialogu; bakiye otomatik borç yönünde güncellenir.

@@ -17,6 +17,7 @@ public class LoginResponse {
     private String companyName;
     private String role;
     private Boolean sahaKullanici;
+    private Long personelId;
     private String token;
 
     private Boolean twoFactorGerekli;
