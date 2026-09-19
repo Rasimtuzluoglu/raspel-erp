@@ -17,10 +17,10 @@ export default defineConfig({
       include: ['src/**/*.{js,vue}'],
       exclude: ['src/main.js', 'src/**/__tests__/**', 'src/locales/**'],
       thresholds: {
-        statements: 16,
-        lines: 16,
-        functions: 8,
-        branches: 6,
+        statements: 22,
+        lines: 22,
+        functions: 15,
+        branches: 14,
         'src/api/modules/**': {
           statements: 60,
           lines: 60,

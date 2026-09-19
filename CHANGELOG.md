@@ -2,6 +2,19 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.27.0] - 2026-09-20 (Faz 6 - Test Kapsamı ve Operasyon)
+### Test Kapsamı
+- **Yeni servis testleri (7)**: `BarkodService` (PNG imzası), `QRService`, `DepoStokService` (delta/negatif sıfırlama/varsayılan depo), `TeslimatGecikmeUyarisiService`, `GuncellemeService` (release/commit/hata), `DosyaDepolamaService` (yerel yazma/okuma/path traversal), `LlmClientService`.
+- **Yeni controller testleri (6)**: `OnayAyariController`, `SiparisTakipController`, `StokDuzeltmeController` (`@Valid` + iş hatası), `ApiTokenController`, `PosTerminaliController`, `TeslimatController`.
+- Backend testleri **1100 → 1143**.
+
+### Kalite Kapıları
+- **JaCoCo eşikleri yükseltildi**: instruction %50→%55, branch %30→%35, line %55→%60 (mevcut kapsam: ~%59/%39/%64).
+- **Vitest eşikleri yükseltildi**: statements/lines %16→%22, functions %8→%15, branches %6→%14.
+
+### Doküman
+- **`docs/OPERASYON.md`**: ShedLock kilit tablosu ve takılma müdahalesi, idempotency izleme, transaction hijyeni, yedek/PITR gereksinimleri, sağlık izleme ve sürüm yükseltme adımları. README'den bağlandı.
+
 ## [1.26.0] - 2026-09-20 (Faz 5 - Transaction Hijyeni ve Dağıtık Idempotency)
 ### Mimari
 - **Bildirimler commit sonrasına taşındı**: Fatura, sipariş, hareket, stok, teklif, teslimat ve masraf talebi akışlarındaki WebSocket/RabbitMQ bildirimleri ve kritik stok e-postaları yeni `AfterCommitExecutor` ile transaction commit edildikten sonra gönderiliyor. Böylece transaction yavaş dış servis için açık tutulmuyor ve rollback olan işlem için yanlış bildirim çıkmıyor.

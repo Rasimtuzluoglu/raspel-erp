@@ -7,7 +7,7 @@
 
     <groupId>com.raspel</groupId>
     <artifactId>raspel-erp</artifactId>
-    <version>1.26.0</version>
+    <version>1.27.0</version>
     <packaging>jar</packaging>
 
     <name>Raspel ERP</name>
@@ -302,17 +302,17 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum>
+                                            <minimum>0.55</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.30</minimum>
+                                            <minimum>0.35</minimum>
                                         </limit>
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.55</minimum>
+                                            <minimum>0.60</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

@@ -140,7 +140,7 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-Detaylı canlıya geçiş kontrol listesi için [`docs/GO-LIVE.md`](docs/GO-LIVE.md) dosyasını inceleyebilirsiniz.
+Detaylı canlıya geçiş kontrol listesi için [`docs/GO-LIVE.md`](docs/GO-LIVE.md), günlük operasyon, ShedLock kilitleri, idempotency ve yedekleme/kurtarma adımları için [`docs/OPERASYON.md`](docs/OPERASYON.md) dosyasını inceleyebilirsiniz.
 
 ---
 
