@@ -16,6 +16,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtUtil jwtUtil;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
+    private final com.raspel.erp.service.sistem.AktifOturumService aktifOturumService;
 
     /**
      * true ise bildirim/sohbet yayınları RabbitMQ STOMP broker üzerinden yapılır
@@ -65,6 +67,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new JwtChannelInterceptor(jwtUtil));
+        registration.interceptors(new JwtChannelInterceptor(jwtUtil, kullaniciRepository, aktifOturumService));
     }
 }

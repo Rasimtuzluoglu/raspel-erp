@@ -36,6 +36,8 @@ public class PosGunSonuService {
     private final BankaRepository bankaRepository;
     private final PosGunSonuRepository gunSonuRepository;
     private final SirketRepository sirketRepository;
+    // Self-invocation'da @Transactional proxy'si devreye girmediği için programatik tx kullanılır.
+    private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     @Transactional
     public List<Map<String, Object>> gunSonuIsle(Long sirketId) {
@@ -93,7 +95,8 @@ public class PosGunSonuService {
         try {
             sirketRepository.findByAktifTrue().forEach(s -> {
                 try {
-                    gunSonuIsle(s.getId());
+                    // Her şirket için ayrı ve atomik transaction (banka bakiyesi + gün sonu kaydı).
+                    transactionTemplate.execute(status -> gunSonuIsle(s.getId()));
                 } catch (Exception e) {
                     log.warn("POS gün sonu çalıştırılamadı ({}): {}", s.getAd(), e.getMessage());
                 }

@@ -28,6 +28,15 @@ public class AktifOturumService {
     private static final String SESSION_KEY = "session:";
     private static final String SESSION_USER_KEY = "session:user:";
     private static final String REVOKED_KEY = "session:revoked:";
+    private static final Duration VARSAYILAN_IPTAL_TTL = Duration.ofDays(1);
+
+    /**
+     * Redis erişilemezse yerel olarak iptal edilen token'ların kısa süreli tutulduğu
+     * liste (jti -> bitiş epoch ms). Redis kesintisinde iptallerin büsbütün kaybolmasını
+     * engeller; sınırsız büyümeyi önlemek için üst sınır uygulanır.
+     */
+    private final java.util.concurrent.ConcurrentMap<String, Long> yerelIptaller = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final int YEREL_IPTAL_LIMIT = 10_000;
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -80,6 +89,7 @@ public class AktifOturumService {
     /** Oturumu iptal eder: kaydı siler ve token'ı kara listeye alır. */
     public void oturumIptal(String jti) {
         if (jti == null) return;
+        Duration kalan = VARSAYILAN_IPTAL_TTL;
         try {
             String json = redisTemplate.opsForValue().get(SESSION_KEY + jti);
             if (json != null) {
@@ -87,12 +97,36 @@ public class AktifOturumService {
                 if (dto != null && dto.getKullaniciId() != null) {
                     redisTemplate.opsForSet().remove(SESSION_USER_KEY + dto.getKullaniciId(), jti);
                 }
+                if (dto != null && dto.getSonKullanim() != null) {
+                    // Kara liste, token'in gercek bitis zamanina kadar tutulur.
+                    Duration hesaplanan = Duration.between(LocalDateTime.now(), dto.getSonKullanim());
+                    if (!hesaplanan.isNegative() && !hesaplanan.isZero()) {
+                        kalan = hesaplanan;
+                    }
+                }
             }
             redisTemplate.delete(SESSION_KEY + jti);
-            // Kalan token süresi kadar kara listede tut (max 30 gün)
-            redisTemplate.opsForValue().set(REVOKED_KEY + jti, "1", Duration.ofDays(30));
+            redisTemplate.opsForValue().set(REVOKED_KEY + jti, "1", kalan);
         } catch (Exception e) {
-            log.warn("Oturum iptal edilemedi: {}", e.getMessage());
+            log.warn("Oturum iptal kaydı Redis'e yazılamadı, yerel listeye alındı: {}", e.getMessage());
+        }
+        yerelIptalEkle(jti, kalan);
+    }
+
+    private void yerelIptalEkle(String jti, Duration ttl) {
+        try {
+            if (yerelIptaller.size() >= YEREL_IPTAL_LIMIT) {
+                long now = System.currentTimeMillis();
+                yerelIptaller.entrySet().removeIf(e -> e.getValue() < now);
+                if (yerelIptaller.size() >= YEREL_IPTAL_LIMIT) {
+                    // Hâlâ doluysa en eski girdileri temizle
+                    yerelIptaller.keySet().stream().limit(yerelIptaller.size() - (YEREL_IPTAL_LIMIT / 2))
+                            .forEach(yerelIptaller::remove);
+                }
+            }
+            yerelIptaller.put(jti, System.currentTimeMillis() + ttl.toMillis());
+        } catch (Exception ignored) {
+            /* yoksay */
         }
     }
 
@@ -111,9 +145,23 @@ public class AktifOturumService {
     /** Token'ın iptal edilip edilmediğini kontrol eder. */
     public boolean iptalEdilmis(String jti) {
         if (jti == null) return false;
+        // Önce yerel (Redis kesintisinde de geçerli) iptal listesine bakılır.
+        try {
+            Long bitis = yerelIptaller.get(jti);
+            if (bitis != null) {
+                if (bitis >= System.currentTimeMillis()) return true;
+                yerelIptaller.remove(jti);
+            }
+        } catch (Exception ignored) {
+            /* yoksay */
+        }
+        if (redisTemplate == null) return false;
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(REVOKED_KEY + jti));
         } catch (Exception e) {
+            // Redis erişilemezse yalnızca yerel iptal listesi uygulanır; aksi halde
+            // Redis kesintisi tüm oturumları kilitleyeceği için burada fail-open kalınır.
+            log.warn("Iptal kontrolu yapilamadi (yerel liste kullanildi): {}", e.getMessage());
             return false;
         }
     }

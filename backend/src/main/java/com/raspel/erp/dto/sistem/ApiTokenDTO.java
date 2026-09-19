@@ -14,5 +14,6 @@ public class ApiTokenDTO {
     private String ad;
     private String token; // yalnızca oluşturma anında döndürülür
     private LocalDateTime sonKullanim;
+    private LocalDateTime sonKullanma;
     private LocalDateTime olusturmaTarihi;
 }

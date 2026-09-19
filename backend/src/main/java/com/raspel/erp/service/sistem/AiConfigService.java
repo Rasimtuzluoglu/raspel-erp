@@ -130,7 +130,8 @@ public class AiConfigService {
         } catch (Exception e) {
             log.error("AI Connection test failed for sirket: {}", sirketId, e);
             result.put("success", false);
-            result.put("message", "Baglanti basarisiz: " + e.getMessage());
+            // Sağlayıcı/hata detayı istemciye sızdırılmaz (API anahtarı, URL, gövde içerebilir).
+            result.put("message", "Baglanti kurulamadi. Lutfen API anahtari ve model bilgisini kontrol edin.");
         }
         return result;
     }

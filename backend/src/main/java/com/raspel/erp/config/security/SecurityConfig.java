@@ -63,10 +63,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/kurulum/**").permitAll()
                 // Base health (aggregate UP/DOWN) ve prometheus metrikleri aciktir.
                 // show-details=when-authorized oldugu icin anonim istek detay gormez.
-                // Detayli health (/actuator/health/**, liveness/readiness) ve diger tum
-                // actuator endpoint'leri kimlik dogrulama gerektirir.
-                .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
-                .requestMatchers("/actuator/**").authenticated()
+                // Diger tum actuator endpoint'leri yalnizca ADMIN rolune aciktir.
+                .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/ws/**", "/ws/info").authenticated()
                 .anyRequest().authenticated()
             )

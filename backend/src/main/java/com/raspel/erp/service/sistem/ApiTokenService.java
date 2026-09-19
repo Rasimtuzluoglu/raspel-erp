@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class ApiTokenService {
 
     private static final String TOKEN_PREFIX = "raspel_pat_";
+    private static final long VARSAYILAN_GECERLILIK_GUN = 90;
     private final ApiTokenRepository apiTokenRepository;
     private final KullaniciRepository kullaniciRepository;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -47,6 +48,8 @@ public class ApiTokenService {
                 .kullaniciId(kullaniciId)
                 .ad(ad != null && !ad.isBlank() ? ad : "API Token")
                 .tokenHash(sha256(token))
+                .sonKullanma(LocalDateTime.now().plusDays(VARSAYILAN_GECERLILIK_GUN))
+                .tokenVersion(kullanici.getTokenVersion() != null ? kullanici.getTokenVersion() : 0L)
                 .build();
         ApiToken saved = apiTokenRepository.save(apiToken);
 
@@ -68,8 +71,16 @@ public class ApiTokenService {
     @Transactional(readOnly = true)
     public Kullanici tokenIleKullaniciBul(String token) {
         if (token == null || !token.startsWith(TOKEN_PREFIX)) return null;
+        LocalDateTime simdi = LocalDateTime.now();
         return apiTokenRepository.findByTokenHash(sha256(token))
-                .map(t -> kullaniciRepository.findById(t.getKullaniciId()).orElse(null))
+                // Süresi dolmuş token kabul edilmez.
+                .filter(t -> t.getSonKullanma() == null || t.getSonKullanma().isAfter(simdi))
+                .map(t -> kullaniciRepository.findById(t.getKullaniciId())
+                        // Parola değiştiyse (tokenVersion değişti) eski token geçersizdir.
+                        .filter(k -> t.getTokenVersion() == null
+                                || java.util.Objects.equals(t.getTokenVersion(),
+                                        k.getTokenVersion() != null ? k.getTokenVersion() : 0L))
+                        .orElse(null))
                 .orElse(null);
     }
 
@@ -99,6 +110,7 @@ public class ApiTokenService {
                 .kullaniciId(t.getKullaniciId())
                 .ad(t.getAd())
                 .sonKullanim(t.getSonKullanim())
+                .sonKullanma(t.getSonKullanma())
                 .olusturmaTarihi(t.getOlusturmaTarihi())
                 .build();
     }

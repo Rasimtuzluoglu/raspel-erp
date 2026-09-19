@@ -15,22 +15,18 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) {
         if (request instanceof ServletServerHttpRequest servletRequest) {
-            // Tercih 1: ?token= parametresi (eski istemciler)
-            String token = servletRequest.getServletRequest().getParameter("token");
-            if (token == null || token.isBlank()) {
-                // Tercih 2: httpOnly jwt cookie (aynı-orijin SockJS bağlantıları)
-                Cookie[] cookies = servletRequest.getServletRequest().getCookies();
-                if (cookies != null) {
-                    for (Cookie c : cookies) {
-                        if ("jwt".equals(c.getName())) {
-                            token = c.getValue();
-                            break;
+            // Token yalnızca httpOnly jwt cookie'den okunur. Query-string token'ı
+            // (eski ?token= parametresi) log/proxy sızıntısı riski nedeniyle kaldırıldı.
+            Cookie[] cookies = servletRequest.getServletRequest().getCookies();
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("jwt".equals(c.getName())) {
+                        if (c.getValue() != null && !c.getValue().isBlank()) {
+                            attributes.put("token", c.getValue());
                         }
+                        break;
                     }
                 }
-            }
-            if (token != null && !token.isBlank()) {
-                attributes.put("token", token);
             }
         }
         return true;

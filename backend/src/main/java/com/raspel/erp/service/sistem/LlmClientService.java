@@ -88,11 +88,13 @@ public class LlmClientService {
     }
 
     private String sendGoogleRequest(String model, String apiKey, String systemPrompt, String userPrompt) {
-        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", 
-            model != null ? model : "gemini-2.5-flash", apiKey);
+        // API anahtari URL yerine header ile gonderilir (log/proxy sizintisini onler).
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent",
+            model != null ? model : "gemini-2.5-flash");
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-goog-api-key", apiKey);
 
         Map<String, Object> body = new HashMap<>();
         if (systemPrompt != null && !systemPrompt.isEmpty()) {
@@ -212,10 +214,11 @@ public class LlmClientService {
     }
 
     private String sendGoogleVisionRequest(String model, String apiKey, String systemPrompt, String userPrompt, String base64Image, String mimeType) {
-        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-                model != null ? model : "gemini-2.5-flash", apiKey);
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent",
+                model != null ? model : "gemini-2.5-flash");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-goog-api-key", apiKey);
 
         List<Map<String, Object>> parts = new ArrayList<>();
         if (systemPrompt != null && !systemPrompt.isEmpty()) {
@@ -334,8 +337,8 @@ public class LlmClientService {
     }
 
     private void streamGoogle(String model, String apiKey, String systemPrompt, String userPrompt, Consumer<String> onToken) {
-        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?alt=sse&key=%s",
-                model != null ? model : "gemini-2.5-flash", apiKey);
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?alt=sse",
+                model != null ? model : "gemini-2.5-flash");
 
         Map<String, Object> body = new HashMap<>();
         if (systemPrompt != null && !systemPrompt.isEmpty()) {
@@ -346,6 +349,7 @@ public class LlmClientService {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
+                .header("x-goog-api-key", apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(writeJson(body)))
                 .build();
 

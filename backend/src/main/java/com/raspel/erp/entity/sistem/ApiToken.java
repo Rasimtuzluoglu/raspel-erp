@@ -29,6 +29,14 @@ public class ApiToken {
     @Column(name = "son_kullanim")
     private LocalDateTime sonKullanim;
 
+    /** Token'ın geçerlilik bitiş zamanı. Null ise süresiz kabul edilir (eski kayıtlar). */
+    @Column(name = "son_kullanma")
+    private LocalDateTime sonKullanma;
+
+    /** Oluşturulma anındaki kullanıcı token sürümü; parola değişiminde token geçersiz olur. */
+    @Column(name = "token_version")
+    private Long tokenVersion;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

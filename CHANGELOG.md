@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.21.0] - 2026-09-19 (Üretim Sertleştirmesi - Faz 1)
+### Güvenlik
+- **Oturum iptali düzeltildi**: Kara liste TTL'i artık token'ın gerçek bitiş zamanına göre hesaplanıyor (sabit 30 gün yerine); Redis kesintisinde yerel iptal listesi devrede.
+- **Kullanıcı bazlı brute-force koruması**: Giriş/2FA denemeleri hem IP hem kullanıcı adı (SHA-256) bazında sınırlandırılıyor; **şifre sıfırlama uçları** da korumaya dahil edildi.
+- **PAT (API token) süresi ve iptali (V110)**: Token'lara 90 gün son kullanma ve oluşturma anındaki `tokenVersion` yazılıyor; süresi dolan veya parola değişiminden sonra eski token'lar reddediliyor.
+- **Actuator kısıtı**: `/actuator/**` (health/prometheus hariç) artık yalnızca ADMIN.
+- **AI yapılandırması**: Kaydetme/test/silme yalnızca ADMIN; Google/Gemini API anahtarı URL yerine `x-goog-api-key` header'ı ile gönderiliyor; sağlayıcı hata detayları istemciye sızdırılmıyor.
+- **WebSocket auth sertleştirildi**: Token yalnızca httpOnly cookie'den okunuyor (query-string token kaldırıldı); CONNECT'te iptal/aktif/tokenVersion/şirket doğrulaması yapılıyor.
+
+### Performans / Veri
+- **V110**: 26 tenant/tarih/FK kolonu için eksik indeksler; `pos_gun_sonu(pos_id, tarih)` benzersiz kısıtı.
+- **POS gün sonu atomikliği**: Zamanlanmış iş artık `TransactionTemplate` ile çağrılıyor; banka bakiyesi ve gün sonu kaydı tek transaction.
+
+### DevOps
+- **CI deploy kapısı**: `deploy` artık `backend + frontend + e2e + security` yeşil olmadan çalışmaz; workflow `permissions: contents: read`; deploy `environment: production` + `--wait` + smoke test.
+
+### Testler
+- Backend 1093 test (0 hata); WebSocket iptal/oturum regresyon testi eklendi.
+
 ## [1.20.0] - 2026-09-19 (Üretim Güvenliği Sertleştirmesi - Faz 0)
 ### Güvenlik
 - **2FA bypass kapatıldı**: `giris-sirket` artık 2FA aktifken şifre adımından gelen (doğrulanmamış) token ile JWT üretmiyor; JWT yalnızca TOTP doğrulaması sonrası veriliyor.

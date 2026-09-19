@@ -30,6 +30,7 @@ public class AiConfigController {
 
     @PostMapping
     @Operation(summary = "AI yapilandirmasini kaydet")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AiConfigDTO> saveConfig(@RequestBody AiConfigDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(aiConfigService.saveConfig(dto, sirketId));
@@ -37,6 +38,7 @@ public class AiConfigController {
 
     @PostMapping("/test")
     @Operation(summary = "AI baglanti testi")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> testConnection(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(aiConfigService.testConnection(sirketId));
@@ -44,6 +46,7 @@ public class AiConfigController {
 
     @DeleteMapping
     @Operation(summary = "AI yapilandirmasini sil")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteConfig(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         aiConfigService.deleteConfig(sirketId);

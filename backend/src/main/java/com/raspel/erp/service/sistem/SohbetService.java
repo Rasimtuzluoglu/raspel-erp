@@ -485,7 +485,8 @@ public class SohbetService {
             throw e;
         } catch (Exception e) {
             log.error("OCR okuma başarısız: {}", e.getMessage());
-            throw new com.raspel.erp.exception.BusinessException("Fatura okunamadı: " + e.getMessage());
+            // Sağlayıcı/hata detayı istemciye sızdırılmaz.
+            throw new com.raspel.erp.exception.BusinessException("Fatura okunamadı. Lütfen AI yapılandırmasını kontrol edin.");
         }
     }
 
