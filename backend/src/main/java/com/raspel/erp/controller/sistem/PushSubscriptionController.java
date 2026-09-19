@@ -32,7 +32,7 @@ public class PushSubscriptionController {
     @PostMapping("/abone")
     @Operation(summary = "Push aboneligi kaydet", description = "Tarayici PushSubscription bilgisini kaydeder/gunceller")
     public ResponseEntity<PushAbonelikDTO> abone(
-            @RequestBody PushAbonelikDTO dto,
+            @jakarta.validation.Valid @RequestBody PushAbonelikDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");

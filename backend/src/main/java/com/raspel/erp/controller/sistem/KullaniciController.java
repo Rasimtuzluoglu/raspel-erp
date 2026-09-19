@@ -124,7 +124,7 @@ public class KullaniciController {
     @PostMapping("/enable-2fa")
     @Operation(summary = "2FA Etkinleştir", description = "TOTP doğrulama kodunu kontrol edip 2FA'yi aktif eder")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Void> enable2FA(@RequestBody com.raspel.erp.dto.sistem.TwoFactorDTO dto, HttpServletRequest request) {
+    public ResponseEntity<Void> enable2FA(@jakarta.validation.Valid @RequestBody com.raspel.erp.dto.sistem.TwoFactorDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         kullaniciService.enableTwoFactor(kullaniciId, dto.getCode());
         return ResponseEntity.ok().build();
@@ -133,7 +133,7 @@ public class KullaniciController {
     @PostMapping("/disable-2fa")
     @Operation(summary = "2FA Devre Dışı", description = "TOTP kodunu doğrulayıp 2FA'yi kapatır")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Void> disable2FA(@RequestBody com.raspel.erp.dto.sistem.TwoFactorDTO dto, HttpServletRequest request) {
+    public ResponseEntity<Void> disable2FA(@jakarta.validation.Valid @RequestBody com.raspel.erp.dto.sistem.TwoFactorDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         kullaniciService.disableTwoFactor(kullaniciId, dto.getCode());
         return ResponseEntity.ok().build();

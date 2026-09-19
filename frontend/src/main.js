@@ -32,7 +32,8 @@ const { initTheme } = useTheme()
 initTheme()
 
 // Surum uyusmazligi kontrolu: yeni surum yayinlandiysa eski onbellegi temizle
-// (tek seferlik) ve taze icerik alinmasini sagla.
+// (tek seferlik) ve taze icerik alinmasini sagla. Ayrica sirket disi/cihaza kalan
+// eski is taslaklarini ve sepet/kutu verilerini surum gecisinde gecersiz kil.
 ;(function () {
   try {
     const SURUM = __APP_VERSION__
@@ -45,6 +46,12 @@ initTheme()
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
         navigator.serviceWorker.getRegistrations().then((r) => r.forEach((x) => x.unregister()))
       }
+      // Surum atlarken sema degismis olabilir; kalici is verilerini temizle.
+      localStorage.removeItem('raspel_offline_satis_kuyrugu')
+      localStorage.removeItem('raspel_kayitli_sepet')
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('raspel_taslak_'))
+        .forEach((k) => localStorage.removeItem(k))
     }
     localStorage.setItem(ANAHTAR, SURUM)
   } catch (e) { /* yoksay */ }

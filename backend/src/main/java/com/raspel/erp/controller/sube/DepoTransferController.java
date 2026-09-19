@@ -38,7 +38,7 @@ public class DepoTransferController {
 
     @PostMapping
     @Operation(summary = "Transfer talebi oluştur", description = "Onay bekleyen depo transferi talebi oluşturur")
-    public ResponseEntity<DepoTransferDTO> talepOlustur(@RequestBody DepoTransferDTO dto, HttpServletRequest request) {
+    public ResponseEntity<DepoTransferDTO> talepOlustur(@jakarta.validation.Valid @RequestBody DepoTransferDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.status(HttpStatus.CREATED).body(depoTransferService.talepOlustur(dto, sirketId, kullaniciId));

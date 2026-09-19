@@ -2,6 +2,17 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.24.0] - 2026-09-19 (Faz 3 tamamlanma)
+### Güvenlik / Girdi Doğrulama
+- **@Valid kapsamı genişletildi**: Reçete, üretim emri, ajanda görev/hatırlatıcı, push abonelik, depo transferi, barkod tarama, şirket hedefi, 2FA ve stok düzeltme DTO'larına zorunluluk/aralık/uzunluk kısıtları eklendi; ilgili uç noktalara `@Valid` uygulandı. Push aboneliği iç içe `keys` alanı da doğrulanıyor; 2FA kodu 6 haneli desenle sınırlandı.
+
+### Frontend
+- **Sürüm geçişi veri temizliği**: Yeni sürüme geçişte şema değişebileceğinden eski offline satış kuyruğu, kayıtlı sepet ve `raspel_taslak_*` form taslakları otomatik temizleniyor (versiyonlu invalidation).
+- PrimeVue zaten `PrimeVueResolver` ile on-demand import ediliyor (otomatik tree-shaking); ek değişiklik gerekmedi.
+
+### Testler
+- Backend 1094, frontend 717 test (0 hata); lint + i18n kontrolü temiz.
+
 ## [1.23.0] - 2026-09-19 (Faz 3 - Ölçeklenebilirlik ve Tutarlılık)
 ### Mimari / Ölçeklenebilirlik
 - **ShedLock entegrasyonu**: 15 zamanlanmış iş (yedekleme, POS gün sonu, TCMB kurları, tekrarlayan fatura, hatırlatıcı, anomali tarama vb.) artık `@SchedulerLock` ile korunuyor. Yatay ölçeklemede (çok instance) her iş yalnızca bir düğümde çalışır; `sistem.shedlock` tablosu V111 ile eklendi.

@@ -1,5 +1,7 @@
 package com.raspel.erp.dto.envanter;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -14,8 +16,11 @@ public class UretimEmriDTO {
     private Long id;
     private Long sirketId;
     private Long siparisId;
+    @NotNull(message = "Uretilecek urun secilmelidir")
     private Long urunId;
     private String urunAd;
+    @NotNull(message = "Miktar zorunludur")
+    @DecimalMin(value = "0.01", message = "Miktar sifirdan buyuk olmalidir")
     private BigDecimal miktar;
     private String durum;
     private String aciklama;

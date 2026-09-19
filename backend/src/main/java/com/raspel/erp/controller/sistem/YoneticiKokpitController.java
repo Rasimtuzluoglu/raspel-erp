@@ -49,7 +49,7 @@ public class YoneticiKokpitController {
     @PostMapping("/hedef")
     @Operation(summary = "Aylık ciro ve kâr hedefini kaydet / güncelle")
     public ResponseEntity<SirketHedefDTO> hedefKaydet(
-            @RequestBody SirketHedefDTO dto,
+            @jakarta.validation.Valid @RequestBody SirketHedefDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(kokpitService.hedefKaydet(dto, sirketId));

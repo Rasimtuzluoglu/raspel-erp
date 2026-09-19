@@ -57,7 +57,7 @@ public class AjandaController {
 
     @PutMapping("/tasks/{id}")
     @Operation(summary = "Görev güncelle", description = "Kişisel görevi günceller")
-    public ResponseEntity<AjandaGorevDTO> gorevGuncelle(@PathVariable Long id, @RequestBody AjandaGorevDTO dto, HttpServletRequest request) {
+    public ResponseEntity<AjandaGorevDTO> gorevGuncelle(@PathVariable Long id, @jakarta.validation.Valid @RequestBody AjandaGorevDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(ajandaService.gorevGuncelle(id, dto, kullaniciId));
     }
@@ -88,7 +88,7 @@ public class AjandaController {
 
     @PostMapping("/reminders")
     @Operation(summary = "Hatırlatıcı oluştur", description = "Yeni kişisel hatırlatıcı oluşturur")
-    public ResponseEntity<AjandaHatirlaticiDTO> hatirlaticiOlustur(@RequestBody AjandaHatirlaticiDTO dto, HttpServletRequest request) {
+    public ResponseEntity<AjandaHatirlaticiDTO> hatirlaticiOlustur(@jakarta.validation.Valid @RequestBody AjandaHatirlaticiDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(ajandaService.hatirlaticiOlustur(dto, kullaniciId, sirketId));

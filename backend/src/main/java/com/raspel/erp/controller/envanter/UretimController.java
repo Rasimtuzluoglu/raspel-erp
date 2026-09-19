@@ -47,13 +47,13 @@ public class UretimController {
 
     @PostMapping("/receteler")
     @Operation(summary = "Reçete oluştur")
-    public ResponseEntity<ReceteDTO> receteOlustur(@RequestBody ReceteDTO dto, HttpServletRequest request) {
+    public ResponseEntity<ReceteDTO> receteOlustur(@jakarta.validation.Valid @RequestBody ReceteDTO dto, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(uretimService.receteOlustur(dto, sirket(request)));
     }
 
     @PutMapping("/receteler/{id}")
     @Operation(summary = "Reçete güncelle (revizyon artar)")
-    public ResponseEntity<ReceteDTO> receteGuncelle(@PathVariable Long id, @RequestBody ReceteDTO dto, HttpServletRequest request) {
+    public ResponseEntity<ReceteDTO> receteGuncelle(@PathVariable Long id, @jakarta.validation.Valid @RequestBody ReceteDTO dto, HttpServletRequest request) {
         return ResponseEntity.ok(uretimService.receteGuncelle(id, dto, sirket(request)));
     }
 
@@ -74,7 +74,7 @@ public class UretimController {
 
     @PostMapping("/emirler")
     @Operation(summary = "Üretim emri oluştur")
-    public ResponseEntity<UretimEmriDTO> emirOlustur(@RequestBody UretimEmriDTO dto, HttpServletRequest request) {
+    public ResponseEntity<UretimEmriDTO> emirOlustur(@jakarta.validation.Valid @RequestBody UretimEmriDTO dto, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(uretimService.uretimEmriOlustur(dto, sirket(request)));
     }
 
