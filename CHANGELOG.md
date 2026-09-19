@@ -2,6 +2,11 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.18.1] - 2026-09-19 (E2E Test Düzeltmesi)
+### Düzeltmeler
+- **Saha tahsilatı**: `POST /api/tahsilat` yetkisine `USER` rolü eklendi. Saha personeli (role USER) artık saha portalından tahsilat kaydedebilir (önce yalnız ADMIN/MUHASEBE idi ve 403 dönüyordu).
+- Uçtan uca doğrulama: fatura→şoför teslimat atama→zorunlu dijital imza→teslimat fişi PDF→fatura teslim senkronu; saha sipariş imzalı teslim→teslim edildi; saha tahsilat; şoför yetki izolasyonu (403). Tümü başarılı.
+
 ## [1.18.0] - 2026-09-19 (Kağıtsız Dijital Teslimat & Tam Kapsamlı Saha Portalı)
 ### Eklenenler
 - **Dijital teslimat fişi (kağıtsız)**: Teslimatlar ekranında şoför, teslim alan adı + **dijital imza (zorunlu)** ile teslimi tamamlar. İmza PNG olarak saklanır; `V109` ile `ticaret.teslimat` üzerine `teslim_alan_ad`, `teslim_imza_url`, `teslim_notu`, `teslim_konum`, `teslim_eden_ad` kolonları eklendi.

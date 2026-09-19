@@ -61,8 +61,8 @@ public class TahsilatController {
     }
 
     @PostMapping
-    @Operation(summary = "Tahsilat gir", description = "Cariye ait açık faturalara ödeme tahsis eder; ödeme yöntemi (NAKIT/KART/TAKSIT/HAVALE) ve taksit bilgisi kaydedilir")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    @Operation(summary = "Tahsilat gir", description = "Cariye ait açık faturalara ödeme tahsis eder; ödeme yöntemi (NAKIT/KART/TAKSIT/HAVALE) ve taksit bilgisi kaydedilir. Saha personeli (USER) da tahsilat kaydedebilir.")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<Map<String, Object>> tahsilatGir(
             @RequestBody @jakarta.validation.Valid TahsilatGirisDTO dto,
             HttpServletRequest request) {
