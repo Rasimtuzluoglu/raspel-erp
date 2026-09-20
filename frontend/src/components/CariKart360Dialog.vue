@@ -70,6 +70,47 @@
           </AppDataTable>
         </TabPanel>
 
+        <TabPanel :header="t('cariKart.hareketler')">
+          <AppDataTable
+            :value="kart.sonHareketler"
+            :paginator="false"
+            :empty-message="t('cariKart.kayitYok')"
+          >
+            <Column
+              field="tarih"
+              :header="t('cariKart.tarih')"
+            >
+              <template #body="{ data }">
+                {{ formatDate(data.tarih) }}
+              </template>
+            </Column>
+            <Column
+              field="tur"
+              :header="t('cariKart.hareketTuru')"
+            >
+              <template #body="{ data }">
+                <span :class="['badge', data.tur === 'TAHSILAT' ? 'tahsilat' : 'odeme']">
+                  {{ hareketTuruEtiketi(data.tur) }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              field="tutar"
+              :header="t('cariKart.tutar')"
+            >
+              <template #body="{ data }">
+                <span :class="data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
+                  {{ data.tur === 'TAHSILAT' ? '+' : '-' }}{{ formatCurrency(data.tutar) }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              field="aciklama"
+              :header="t('cariKart.aciklama')"
+            />
+          </AppDataTable>
+        </TabPanel>
+
         <TabPanel :header="t('cariKart.faturalar')">
           <AppDataTable
             :value="kart.sonFaturalar"
@@ -331,6 +372,9 @@ const emit = defineEmits(['update:visible'])
 const { t } = useI18n()
 const kart = ref(null)
 const yukleniyor = ref(false)
+
+const hareketTuruEtiketi = (tur) =>
+  ({ TAHSILAT: t('hareketler.tahsilat'), ODEME: t('hareketler.odeme'), BORC: t('hareketler.borclandirma') }[tur] || tur)
 
 const ozetSatirlari = computed(() => {
   const o = kart.value?.ozet

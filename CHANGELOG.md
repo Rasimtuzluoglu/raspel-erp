@@ -2,6 +2,28 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.30.0] - 2026-09-20 (Geri Bildirim Turu 2)
+### Oturum Sayacı
+- Sayaç **sağ üstte sabit** konuma taşındı (sol menüden kaldırıldı); son 10 dakikada kırmızı.
+- **"+30 dk" uzat butonu yalnızca son 10 dakikada** görünür.
+
+### Tek Oturum ("en son giriş kazanır")
+- Kullanıcı başına tek geçerli oturum: yeni girişte önceki oturum otomatik iptal edilir; farklı cihaz/tarayıcıdaki eski token 401 ile düşer.
+- `AktifOturumService`'e `session:aktif:<kullaniciId>` işaretçisi eklendi; `JwtAuthFilter` ve WebSocket `JwtChannelInterceptor` güncel jti'yi doğrular. Redis kesintisinde fail-open.
+
+### Cari / Borçlandırma
+- Hareket listelerinde (Cari Hesaplar + Hareketler + 360 kart) tutar **işareti açık** gösterilir: Tahsilat `+`, Ödeme/Borçlandırma `-` (borç artışı negatif).
+- (Backend borçlandırma davranışı canlıda doğrulandı: 0 → +500 borç → **-500**; -1500 → -2000.)
+
+### Cari Kart 360
+- **Yeni "Hareketler" sekmesi**: tahsilat/ödeme/borçlandırma kayıtları (tür, tarih, tutar, açıklama) görünür. `CariKartDTO.sonHareketler` eklendi.
+
+### Tahsilat — Toplu Mesaj
+- "Tüm borçlulara mesaj" artık popup engelleyiciye takılmıyor: **borçlu listesi penceresi** açılır; her satırda WhatsApp düğmesi (doğrudan tıklama) ve "Listeyi Kopyala" ile panoya aktarma.
+
+### Testler
+- Backend **1150**, frontend **720** test (0 hata); lint + i18n + build temiz.
+
 ## [1.29.0] - 2026-09-20 (Kullanıcı Geri Bildirimleri: UX, Güvenlik, PDF)
 ### Dashboard
 - Bugünkü Ödeme kartının sağındaki boş alan **Vadesi Geçen Fatura** ve **Vadesi Yaklaşan Fatura** kartlarıyla dolduruldu (mevcut `/api/dashboard` verisi kullanıldı, yeni sorgu yok).

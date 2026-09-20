@@ -1214,6 +1214,20 @@ img {
 .p-toast {
   z-index: 99999 !important;
 }
+/* Oturum sayaci: sag ustte sabit kapsul (toast'in altinda kalir) */
+.oturum-sayaci-sabit {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 950;
+}
+@media (max-width: 900px) {
+  /* Mobilde ust serit menu var; sayaci onun altina indir. */
+  .oturum-sayaci-sabit {
+    top: 64px;
+    right: 10px;
+  }
+}
 .p-toast .p-toast-message {
   position: relative !important;
   overflow: hidden !important;
@@ -2191,6 +2205,7 @@ h3 {
   .sunum-banner,
   .offline-banner,
   .bildirim-zili-kapsayici,
+  .oturum-sayaci-sabit,
   .p-toast {
     display: none !important;
   }

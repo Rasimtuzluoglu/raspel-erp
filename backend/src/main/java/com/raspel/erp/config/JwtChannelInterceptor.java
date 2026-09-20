@@ -55,6 +55,10 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             if (k == null || !Boolean.TRUE.equals(k.getActive())) {
                 throw new MessageDeliveryException("Kullanıcı aktif değil");
             }
+            // "En son giris kazanir": gecersiz (eski) oturumla WS baglantisi kurulamaz.
+            if (!aktifOturumService.aktifOturumMu(k.getId(), jwtUtil.getJtiFromToken(token))) {
+                throw new MessageDeliveryException("Bu oturum başka bir cihazda sona erdi");
+            }
             // Parola değişiminde tokenVersion artar; eski token ile WS bağlantısı kurulamaz.
             Long tokenVersion = jwtUtil.getTokenVersionFromToken(token);
             long dbVersion = k.getTokenVersion() != null ? k.getTokenVersion() : 0L;

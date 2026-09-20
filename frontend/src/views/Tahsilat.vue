@@ -14,6 +14,66 @@
       />
     </div>
 
+    <Dialog
+      v-model:visible="topluMesajDialog"
+      :header="t('tahsilat.topluMesajBaslik')"
+      modal
+      :style="{ width: '680px', maxWidth: '95vw' }"
+    >
+      <p class="toplu-mesaj-ipucu">
+        {{ t('tahsilat.topluMesajIpucu') }}
+      </p>
+      <div class="toplu-mesaj-araclar">
+        <Button
+          :label="t('tahsilat.listeyiKopyala')"
+          icon="pi pi-copy"
+          class="p-button-sm p-button-outlined"
+          @click="listeyiKopyala"
+        />
+      </div>
+      <AppDataTable
+        :value="borcluCariler"
+        :paginator="borcluCariler.length > 10"
+        :rows="10"
+        :empty-message="t('cariKart.kayitYok')"
+      >
+        <Column
+          field="cariAd"
+          :header="t('tahsilat.borcluCari')"
+        />
+        <Column
+          field="telefon"
+          :header="t('tahsilat.telefon')"
+        />
+        <Column
+          field="toplamAlacak"
+          :header="t('tahsilat.alacakTutar')"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.toplamAlacak) }}
+          </template>
+        </Column>
+        <Column :header="t('common.actions')">
+          <template #body="{ data }">
+            <Button
+              icon="pi pi-whatsapp"
+              class="p-button-sm p-button-success"
+              :aria-label="t('tahsilat.whatsapp')"
+              :title="t('tahsilat.whatsapp')"
+              @click="whatsappAc(data)"
+            />
+            <Button
+              icon="pi pi-copy"
+              class="p-button-sm p-button-text"
+              :aria-label="t('tahsilat.listeyiKopyala')"
+              :title="t('tahsilat.listeyiKopyala')"
+              @click="satirKopyala(data)"
+            />
+          </template>
+        </Column>
+      </AppDataTable>
+    </Dialog>
+
     <div
       v-if="yukleniyor"
       class="yukleniyor"
@@ -430,11 +490,34 @@ const whatsappAc = (cari) => {
 
 const borcluCariler = computed(() => (ozet.value?.cariler || []).filter((c) => c.telefon && c.toplamAlacak > 0))
 
+const topluMesajDialog = ref(false)
+
+const topluMesajSatiri = (cari) =>
+  `${cari.cariAd} - ${formatCurrency(cari.toplamAlacak)} - ${cari.telefon || '-'}`
+
+const listeyiKopyala = async () => {
+  try {
+    await navigator.clipboard.writeText(borcluCariler.value.map(topluMesajSatiri).join('\n'))
+    toastBildirim.basarili(t('tahsilat.listeKopyalandi'))
+  } catch {
+    toastBildirim.hata(t('tahsilat.kopyalanamadi'))
+  }
+}
+
+const satirKopyala = async (cari) => {
+  try {
+    await navigator.clipboard.writeText(topluMesajSatiri(cari))
+    toastBildirim.basarili(t('tahsilat.listeKopyalandi'))
+  } catch {
+    toastBildirim.hata(t('tahsilat.kopyalanamadi'))
+  }
+}
+
+// Toplu gönderimde tarayıcı popup engelleyicisi çok pencereyi bloke eder;
+// bunun yerine borçlu listesini açıp satır bazında (kullanıcı tıklamasıyla) gönderim yapılır.
 const tumuWhatsapp = () => {
-  borcluCariler.value.forEach((c, i) => {
-    setTimeout(() => whatsappAc(c), i * 400)
-  })
-  toastBildirim.bilgi(t('tahsilat.whatsappAciliyor', { n: borcluCariler.value.length }))
+  if (!borcluCariler.value.length) return
+  topluMesajDialog.value = true
 }
 
 const ara = (cari) => {

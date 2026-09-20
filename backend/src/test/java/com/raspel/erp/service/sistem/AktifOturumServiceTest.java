@@ -111,4 +111,33 @@ class AktifOturumServiceTest {
         assertEquals(1, sonuc.size());
         assertEquals("jti-1", sonuc.get(0).getJti());
     }
+
+    @Test
+    void testAktifOturumAyarla_EskiOturumuIptalEderVeYenisiniYazar() {
+        when(valueOps.get("session:aktif:1")).thenReturn("jti-eski");
+        when(valueOps.get("session:jti-eski")).thenReturn(null);
+
+        aktifOturumService.aktifOturumAyarla(1L, "jti-yeni", Duration.ofHours(1));
+
+        verify(valueOps, times(1)).set("session:aktif:1", "jti-yeni", Duration.ofHours(1));
+        verify(valueOps).set(eq("session:revoked:jti-eski"), eq("1"), any(Duration.class));
+    }
+
+    @Test
+    void testAktifOturumMu_GuncelJtiIcinTrue() {
+        when(valueOps.get("session:aktif:1")).thenReturn("jti-1");
+        assertTrue(aktifOturumService.aktifOturumMu(1L, "jti-1"));
+    }
+
+    @Test
+    void testAktifOturumMu_EskiJtiIcinFalse() {
+        when(valueOps.get("session:aktif:1")).thenReturn("jti-yeni");
+        assertFalse(aktifOturumService.aktifOturumMu(1L, "jti-eski"));
+    }
+
+    @Test
+    void testAktifOturumMu_KayitYoksaFailOpen() {
+        when(valueOps.get("session:aktif:1")).thenReturn(null);
+        assertTrue(aktifOturumService.aktifOturumMu(1L, "herhangi"));
+    }
 }

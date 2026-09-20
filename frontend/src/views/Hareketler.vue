@@ -114,7 +114,7 @@
         >
           <template #body="slotProps">
             <span :class="slotProps.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
-              {{ formatCurrency(slotProps.data.tutar) }}
+              {{ slotProps.data.tur === 'TAHSILAT' ? '+' : '-' }}{{ formatCurrency(slotProps.data.tutar) }}
             </span>
           </template>
         </Column>

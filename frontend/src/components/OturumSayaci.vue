@@ -10,6 +10,7 @@
     <i class="pi pi-clock" />
     <span class="oturum-sure">{{ kalanMetin }}</span>
     <button
+      v-if="kritik"
       type="button"
       class="oturum-uzat-btn"
       :disabled="yukleniyor"

@@ -63,6 +63,7 @@ class JwtChannelInterceptorTest {
         when(kullaniciRepository.findByUsername("ali")).thenReturn(Optional.of(Kullanici.builder()
                 .id(1L).username("ali").role("USER").active(true).sirketId(5L).tokenVersion(0L).build()));
         when(aktifOturumService.iptalEdilmis("jti-1")).thenReturn(false);
+        when(aktifOturumService.aktifOturumMu(1L, "jti-1")).thenReturn(true);
 
         interceptor.preSend(connectMesaji(attrs), null);
 

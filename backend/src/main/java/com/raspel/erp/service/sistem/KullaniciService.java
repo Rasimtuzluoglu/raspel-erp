@@ -649,6 +649,8 @@ public class KullaniciService {
                 // Request context yoksa (test/dahili çağrı) IP kaydedilmez
             }
             aktifOturumService.oturumKaydet(jti, k.getId(), k.getUsername(), sirketId, ip, Duration.ofMillis(ttlMs));
+            // "En son giris kazanir": onceki oturum jti'si iptal edilir.
+            aktifOturumService.aktifOturumAyarla(k.getId(), jti, Duration.ofMillis(ttlMs));
         } catch (Exception e) {
             log.warn("Aktif oturum kaydedilemedi: {}", e.getMessage());
         }

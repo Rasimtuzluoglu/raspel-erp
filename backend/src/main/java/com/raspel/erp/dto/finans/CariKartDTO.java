@@ -34,6 +34,7 @@ public class CariKartDTO {
     private List<NotOzet> notlar;
     private List<FiyatOzet> ozelFiyatlar;
     private List<TaksitOzet> taksitler;
+    private List<HareketOzet> sonHareketler;
 
     @Data
     @NoArgsConstructor
@@ -152,5 +153,20 @@ public class CariKartDTO {
         private BigDecimal tutar;
         private String odemeDurumu;
         private long gecikmeGunu;
+    }
+
+    /** Cari hareketi (tahsilat / ödeme / borçlandırma). */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class HareketOzet {
+        private Long id;
+        private String tur;
+        private LocalDate tarih;
+        private BigDecimal tutar;
+        private String aciklama;
+        private Long faturaId;
+        private String odemeYontemi;
     }
 }

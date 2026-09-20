@@ -85,6 +85,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
             Long kullaniciId = jwtUtil.getUserIdFromToken(token);
             Long sirketId = jwtUtil.getSirketIdFromToken(token);
+            // "En son giris kazanir": bu jti kullanicinin gecerli oturumu degilse reddedilir.
+            if (!aktifOturumService.aktifOturumMu(kullaniciId, jwtUtil.getJtiFromToken(token))) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             if (kullaniciId != null) {
                 request.setAttribute("kullaniciId", kullaniciId);
             }

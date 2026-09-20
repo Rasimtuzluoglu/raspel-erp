@@ -28,6 +28,8 @@ public class AktifOturumService {
     private static final String SESSION_KEY = "session:";
     private static final String SESSION_USER_KEY = "session:user:";
     private static final String REVOKED_KEY = "session:revoked:";
+    /** Kullanıcının o an geçerli (tek) oturumunun jti'si. "En son giriş kazanır". */
+    private static final String AKTIF_JTI_KEY = "session:aktif:";
     private static final Duration VARSAYILAN_IPTAL_TTL = Duration.ofDays(1);
 
     /**
@@ -139,6 +141,48 @@ public class AktifOturumService {
         } catch (Exception e) {
             log.warn("Oturum okunamadı: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /** Kullanıcının geçerli (tek) oturum jti'sini kaydeder ve eskisini iptal eder. */
+    public void aktifOturumAyarla(Long kullaniciId, String yeniJti, Duration ttl) {
+        if (kullaniciId == null || yeniJti == null) return;
+        try {
+            String eskiJti = redisTemplate.opsForValue().get(AKTIF_JTI_KEY + kullaniciId);
+            if (eskiJti != null && !eskiJti.equals(yeniJti)) {
+                oturumIptal(eskiJti);
+            }
+            redisTemplate.opsForValue().set(AKTIF_JTI_KEY + kullaniciId, yeniJti, ttl);
+        } catch (Exception e) {
+            log.warn("Aktif oturum jti kaydedilemedi: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Verilen jti kullanıcının geçerli oturumu mu?
+     * Redis erişilemezse fail-open (true) döner ki kesinti tüm oturumları kilitlemesin.
+     */
+    public boolean aktifOturumMu(Long kullaniciId, String jti) {
+        if (kullaniciId == null || jti == null) return true;
+        try {
+            String aktif = redisTemplate.opsForValue().get(AKTIF_JTI_KEY + kullaniciId);
+            return aktif == null || aktif.equals(jti);
+        } catch (Exception e) {
+            log.warn("Aktif oturum kontrolu yapilamadi (fail-open): {}", e.getMessage());
+            return true;
+        }
+    }
+
+    /** Çıkışta geçerli oturum işaretçisini temizler (yalnızca eşleşiyorsa). */
+    public void aktifOturumTemizle(Long kullaniciId, String jti) {
+        if (kullaniciId == null || jti == null) return;
+        try {
+            String aktif = redisTemplate.opsForValue().get(AKTIF_JTI_KEY + kullaniciId);
+            if (jti.equals(aktif)) {
+                redisTemplate.delete(AKTIF_JTI_KEY + kullaniciId);
+            }
+        } catch (Exception e) {
+            log.warn("Aktif oturum isaretcisi temizlenemedi: {}", e.getMessage());
         }
     }
 

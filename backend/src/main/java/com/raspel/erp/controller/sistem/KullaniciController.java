@@ -189,9 +189,11 @@ public class KullaniciController {
     @Operation(summary = "Çıkış", description = "JWT cookie'sini temizler ve mevcut oturumu iptal eder")
     public ResponseEntity<Void> cikis(HttpServletRequest request, HttpServletResponse response) {
         Object jti = request.getAttribute("jti");
+        Long cikanKullaniciId = (Long) request.getAttribute("kullaniciId");
         if (jti instanceof String s && !s.isBlank()) {
             try {
                 aktifOturumService.oturumIptal(s);
+                aktifOturumService.aktifOturumTemizle(cikanKullaniciId, s);
             } catch (Exception ignored) {
                 // oturum kaydı yoksa yoksay
             }

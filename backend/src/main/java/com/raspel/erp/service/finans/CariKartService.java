@@ -102,6 +102,19 @@ public class CariKartService {
                 .notlar(notlar.stream().map(this::notOzet).collect(Collectors.toList()))
                 .ozelFiyatlar(fiyatlar.stream().map(f -> fiyatOzet(f, stokMap.get(f.getStokId()))).collect(Collectors.toList()))
                 .taksitler(taksitler.stream().map(this::taksitOzet).collect(Collectors.toList()))
+                .sonHareketler(hareketler.stream().limit(SON_KAYIT_LIMIT).map(this::hareketOzet).collect(Collectors.toList()))
+                .build();
+    }
+
+    private CariKartDTO.HareketOzet hareketOzet(Hareket h) {
+        return CariKartDTO.HareketOzet.builder()
+                .id(h.getId())
+                .tur(h.getTur() != null ? h.getTur().name() : null)
+                .tarih(h.getHareketTarihi())
+                .tutar(h.getTutar())
+                .aciklama(h.getAciklama())
+                .faturaId(h.getFaturaId())
+                .odemeYontemi(h.getOdemeYontemi())
                 .build();
     }
 

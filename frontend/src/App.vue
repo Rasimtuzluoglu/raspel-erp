@@ -19,6 +19,11 @@
       <div class="sidebar-spacer" />
     </template>
 
+    <OturumSayaci
+      v-if="authStore.isLoggedIn"
+      class="oturum-sayaci-sabit"
+    />
+
     <main
       id="main"
       class="main-content"
@@ -152,6 +157,7 @@ import { useToast } from 'primevue/usetoast'
 import { useMagicKeys } from '@vueuse/core'
 
 import AppSidebar from './components/AppSidebar.vue'
+import OturumSayaci from './components/OturumSayaci.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import GuncellemeNotlari from './components/GuncellemeNotlari.vue'
 import QuickSearch from './components/QuickSearch.vue'
