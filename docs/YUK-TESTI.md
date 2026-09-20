@@ -51,12 +51,24 @@ DELETE FROM stok.stok st USING sistem.sirket s WHERE st.sirket_id=s.id AND s.ad=
 | Senaryo | Eşzamanlılık | Sonuç |
 |---|---|---|
 | Smoke | 1 VU / 30 sn | p95 **90 ms**, hata %0 |
-| Load | 0→20 VU / 6 dk | 9.260 istek, p95 **23 ms**, hata %0 |
+| Load | 0→20 VU / 6 dk | 9.348 istek, p95 **28 ms**, hata %0 |
 | Write flow (POS satış) | 0→15 VU / 4,5 dk | 2.207 satış, p95 **48 ms**, hata **%0** |
+| Spike | 5→100 VU ani / 3,5 dk | 24.062 istek, p95 **98 ms**, hata **%0,1**, restart 0 |
+| Soak | 20 VU / 30 dk | 186.698 istek, p95 **30 ms**, hata **%0**, restart 0, bellek stabil |
+| Stress (kırılma noktası) | 0→200 VU / 15 dk | 150–200 VU üzerinde kapasite sınırı; bkz. aşağıda |
 | Correctness | 1 iterasyon | oversell yok (10/10), idempotency tek kayıt |
 
 > Ölçümler aynı makinede (uygulama + yük üreticisi) yapıldığı için görecelidir;
 > gerçek kapasite için ayrı bir yük üreticisi önerilir.
+
+### Kapasite Sınırı
+
+- **20 VU (gerçekçi üretim: 3 kasa + 2 depo)**: %0 hata, p95 < 30 ms — rahat.
+- **100 VU (ani yoğunluk)**: %0,1 hata, restart 0 — kabul edilebilir.
+- **150–200 VU**: HikariCP pool (50) doygunluğa ulaşır (`waiting` artar, 5 sn
+  connection-timeout aşılır) ve heap 1,28 GB'a dayanır. Bu, tek backend
+  instance'ının **bilinen kapasite sınırıdır**; yatay ölçekleme (replica) veya
+  daha büyük instance gerekir. Stress senaryosu bu sınırı bulmak için tasarlanmıştır.
 
 ## Yük Testinin Ortaya Çıkardığı ve Giderilen Kritik Sorunlar
 
@@ -72,6 +84,22 @@ DELETE FROM stok.stok st USING sistem.sirket s WHERE st.sirket_id=s.id AND s.ad=
 3. **Cari bakiyesinde optimistic-lock çakışması**: oku-değiştir-yaz (%10,8 hata).
    **Çözüm:** `UPDATE CariHesap SET bakiye = bakiye + :tutar` atomik güncelleme.
    Hata **%0**.
+4. **`/api/dashboard` sınırsız fatura yüklemesi (bellek şişmesi / OOM)**: dashboard
+   her açılışta vadesi yaklaşan **6.293 faturayı** entity olarak yüklüyordu (~1 MB
+   yanıt) → yük altında heap tükeniyordu. **Çözüm:** `findVadesiGecen`/`findVadesiYaklasan`
+   `Pageable` ile sınırlandı (en çok 5 bildirim), alacak yaşlandırma toplamları DB
+   aggregate'e çevrildi. Yanıt 999.475 → **5.821 byte** (171× küçülme).
+5. **Diğer sınırsız listeleme sorguları**: `GunlukOzetService`, `AjandaService`,
+   `YoneticiKokpitService`, `RaporService` (yaşlandırma) ve `TahsilatService`
+   (tahsis + hatırlatma, 2 kullanım) tüm şirket faturalarını belleğe yükleyip
+   filtrelıyordu. **Çözüm:** cari'ye özel sorgular (`findTahsilatEdilecekByCari`) ve
+   grup bazında aggregate (`cariBazindaMaksGecikme`, native `MAX(:bugun - vade_tarihi)`).
+6. **JVM cgroup limitini görmüyordu**: 1 GiB konteynerde JVM heap'i **host** RAM'ine
+   göre (4,15 GiB) hesaplıyordu; stress/spike altında konteyner tekrar tekrar
+   OOM-kill yiyordu (`oom` → exit 137). **Çözüm:** Dockerfile `ENTRYPOINT`'te açık
+   `-Xms256m -Xmx1280m -Xss512k -XX:MaxMetaspaceSize=256m -XX:MaxDirectMemorySize=128m`;
+   `mem_limit` **2 GB** (`.env` `BACKEND_MEM_LIMIT`), Tomcat thread havuzu 100'e
+   sınırlandı. Restart **%88 hata → %0**.
 
 ## Doğruluk Testi Kapsamı (`correctness.js`)
 
@@ -85,3 +113,4 @@ DELETE FROM stok.stok st USING sistem.sirket s WHERE st.sirket_id=s.id AND s.ad=
 - `hikaricp_connections_pending` uzun süre > 0 olmamalı (bkz. Prometheus kuralı
   `DatabasePoolSaturation`).
 - Soak boyunca JVM heap ve DB bağlantı sayısı sabit kalmalı (sızıntı yok).
+

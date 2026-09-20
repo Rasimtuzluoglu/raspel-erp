@@ -50,8 +50,10 @@ class DashboardServiceTest {
         when(cariHesapService.toplamCariSayisiGetir(1L)).thenReturn(10L);
         when(cariHesapService.toplamBakiyeGetir(1L)).thenReturn(BigDecimal.valueOf(100000));
         when(hareketService.sonHareketleriGetir(5, 1L)).thenReturn(List.of());
-        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
-        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.toplamVadesiGecenKalan(any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.toplamKalanVadeAraliginda(any(), any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
         var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(10L, result.getToplamCariSayisi());
         assertEquals(BigDecimal.valueOf(100000), result.getToplamBakiye());
@@ -68,8 +70,10 @@ class DashboardServiceTest {
 
     @Test
     void dashboard_alacakYaslandirmayiHesaplar() {
-        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
-        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.toplamVadesiGecenKalan(any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.toplamKalanVadeAraliginda(any(), any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
         var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(4, result.getAlacakYaslandirma().size());
         assertEquals("Vadesi Geçti", result.getAlacakYaslandirma().get(0).getAralik());
@@ -82,8 +86,10 @@ class DashboardServiceTest {
         s1.setMiktar(BigDecimal.valueOf(10));
         s1.setFiyat(BigDecimal.valueOf(50));
         when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(s1));
-        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
-        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.toplamVadesiGecenKalan(any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.toplamKalanVadeAraliginda(any(), any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
         var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(0, result.getToplamStokDegeri().compareTo(BigDecimal.valueOf(500)));
     }
@@ -105,8 +111,10 @@ class DashboardServiceTest {
         when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(eq(1L), eq("SATIS"), eq("TAMAMLANDI"), any(), any()))
                 .thenReturn(List.of(iade));
 
-        when(faturaRepository.findVadesiGecen(any(), any(), any(), any())).thenReturn(List.of());
-        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findVadesiGecen(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.toplamVadesiGecenKalan(any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.toplamKalanVadeAraliginda(any(), any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.findVadesiYaklasan(any(), any(), any(), any(), any(), any())).thenReturn(List.of());
 
         var result = dashboardService.dashboardVerileriGetir(1L);
         assertEquals(0, result.getIadeOrani().compareTo(BigDecimal.valueOf(5.0)));

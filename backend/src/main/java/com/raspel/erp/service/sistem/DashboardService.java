@@ -116,13 +116,16 @@ public class DashboardService {
 
         var odemeDurumlari = List.of("ODENDI", "IPTAL");
         var bugun = LocalDate.now();
+        // Dashboard yalnizca ust N bildirimi gosterir; sorgular sayfa ile sinirlandirilir
+        // (aksi halde tum faturalar entity olarak yuklenip bellek/OOM riski olusturur).
+        var vadeSayfa = org.springframework.data.domain.PageRequest.of(0, 5);
         List<DashboardDTO.VadeBildirimiDTO> vadesiGecenFaturalar = safeGetList(
-                () -> faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bugun)
+                () -> faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bugun, vadeSayfa)
                         .stream().map(this::vadeDTOyaCevir).collect(Collectors.toList()),
                 Collections.emptyList());
         List<DashboardDTO.VadeBildirimiDTO> vadesiYaklasanFaturalar = safeGetList(
                 () -> faturaRepository.findVadesiYaklasan(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari,
-                                bugun, bugun.plusDays(7))
+                                bugun, bugun.plusDays(7), vadeSayfa)
                         .stream().map(this::vadeDTOyaCevir).collect(Collectors.toList()),
                 Collections.emptyList());
 
@@ -266,9 +269,7 @@ public class DashboardService {
         List<String> odemeDurumlari = List.of("ODENDI", "IPTAL");
         LocalDate bugun = LocalDate.now();
         BigDecimal vadesiGecen = safeGet(
-                () -> faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bugun).stream()
-                        .map(f -> f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                () -> faturaRepository.toplamVadesiGecenKalan(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bugun),
                 BigDecimal.ZERO);
         return List.of(
                 DashboardDTO.AlacakYasDTO.builder().aralik("Vadesi Geçti").tutar(vadesiGecen).build(),
@@ -282,9 +283,7 @@ public class DashboardService {
 
     private BigDecimal kalanTopla(Long sirketId, List<String> odemeDurumlari, LocalDate bas, LocalDate bit) {
         return safeGet(
-                () -> faturaRepository.findVadesiYaklasan(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bas, bit).stream()
-                        .map(f -> f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                () -> faturaRepository.toplamKalanVadeAraliginda(sirketId, Fatura.FaturaDurum.KESILDI, odemeDurumlari, bas, bit),
                 BigDecimal.ZERO);
     }
 

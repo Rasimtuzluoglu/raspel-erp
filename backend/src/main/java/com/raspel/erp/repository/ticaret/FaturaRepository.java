@@ -75,6 +75,30 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     List<Fatura> findBySirketIdAndDurumNotAndOdemeDurumuNotIn(Long sirketId, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);
 
     /**
+     * Vadesi geçmiş faturaların kalan tutar toplamı (yalnızca toplam gerektiğinde;
+     * entity listesi yüklenmez, bellek/OOM riski oluşmaz).
+     */
+    @Query("SELECT COALESCE(SUM(f.kalanTutar), 0) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.durum = :durum AND f.odemeDurumu NOT IN :odemeDurumlari " +
+            "AND f.kalanTutar > 0 AND f.vadeTarihi < :bugun")
+    java.math.BigDecimal toplamVadesiGecenKalan(@Param("sirketId") Long sirketId,
+                                                @Param("durum") Fatura.FaturaDurum durum,
+                                                @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                                                @Param("bugun") java.time.LocalDate bugun);
+
+    /**
+     * Belirtilen vade aralığındaki faturaların kalan tutar toplamı (aggregate; liste yüklenmez).
+     */
+    @Query("SELECT COALESCE(SUM(f.kalanTutar), 0) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.durum = :durum AND f.odemeDurumu NOT IN :odemeDurumlari " +
+            "AND f.kalanTutar > 0 AND f.vadeTarihi BETWEEN :baslangic AND :bitis")
+    java.math.BigDecimal toplamKalanVadeAraliginda(@Param("sirketId") Long sirketId,
+                                                   @Param("durum") Fatura.FaturaDurum durum,
+                                                   @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                                                   @Param("baslangic") java.time.LocalDate baslangic,
+                                                   @Param("bitis") java.time.LocalDate bitis);
+
+    /**
      * Vadesi yaklaşan (bugün + ileriye dönük) ve kalan tutarı olan faturalar.
      */
     @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.durum = :durum " +
@@ -86,7 +110,8 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                      @Param("durum") Fatura.FaturaDurum durum,
                                      @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
                                      @Param("baslangic") java.time.LocalDate baslangic,
-                                     @Param("bitis") java.time.LocalDate bitis);
+                                     @Param("bitis") java.time.LocalDate bitis,
+                                     Pageable pageable);
 
     /**
      * Vadesi geçmiş ve kalan tutarı olan faturalar.
@@ -99,7 +124,8 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     List<Fatura> findVadesiGecen(@Param("sirketId") Long sirketId,
                                   @Param("durum") Fatura.FaturaDurum durum,
                                   @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
-                                  @Param("bugun") java.time.LocalDate bugun);
+                                  @Param("bugun") java.time.LocalDate bugun,
+                                  Pageable pageable);
 
     /**
      * Tahsilat merkezi için ödenmemiş (kalan tutarı olan) faturalar.
@@ -112,4 +138,34 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                       @Param("tur") Fatura.FaturaTur tur,
                                       @Param("durum") Fatura.FaturaDurum durum,
                                       @Param("odemeDurumlari") java.util.List<String> odemeDurumlari);
+
+    /**
+     * Tek bir cari için ödenmemiş (kalan tutarı olan) faturalar. Tahsilat tahsisi ve
+     * hatırlatma akışlarında tüm şirket faturalarının belleğe yüklenmesini önler.
+     */
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.cariHesap.id = :cariHesapId " +
+            "AND f.tur = :tur AND f.durum = :durum AND f.odemeDurumu NOT IN :odemeDurumlari " +
+            "AND f.kalanTutar > 0 ORDER BY f.vadeTarihi ASC")
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findTahsilatEdilecekByCari(@Param("sirketId") Long sirketId,
+                                            @Param("cariHesapId") Long cariHesapId,
+                                            @Param("tur") Fatura.FaturaTur tur,
+                                            @Param("durum") Fatura.FaturaDurum durum,
+                                            @Param("odemeDurumlari") java.util.List<String> odemeDurumlari);
+
+    /**
+     * Cari bazında en çok geciken fatura günü (yaşlandırma raporu). Tüm fatura listesi
+     * yüklenmeden DB'de grup bazında hesaplanır: [cariHesapId, maksGecikmeGun].
+     */
+    @Query(value = "SELECT f.cari_hesap_id, MAX(:bugun - f.vade_tarihi) FROM fatura.fatura f " +
+            "WHERE f.sirket_id = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+            "AND f.odeme_durumu NOT IN (:odemeDurumlari) AND f.kalan_tutar > 0 " +
+            "AND f.cari_hesap_id IS NOT NULL AND f.vade_tarihi < :bugun " +
+            "GROUP BY f.cari_hesap_id",
+            nativeQuery = true)
+    List<Object[]> cariBazindaMaksGecikme(@Param("sirketId") Long sirketId,
+                                          @Param("tur") String tur,
+                                          @Param("durum") String durum,
+                                          @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                                          @Param("bugun") java.time.LocalDate bugun);
 }

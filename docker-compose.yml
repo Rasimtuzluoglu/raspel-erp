@@ -223,8 +223,13 @@ services:
       - db-net
     deploy:
       resources:
-        limits: { memory: 1g }
+        limits: { memory: 2g }
         reservations: { memory: 256m }
+    # Hard memory cap: JVM heap/metaspace/direct are bounded in the Dockerfile;
+    # cgroup limit is the last line of defence. Stress test (200 VU) needed more
+    # than 1 GiB, so the limit is configurable (default 2g).
+    mem_limit: ${BACKEND_MEM_LIMIT:-2g}
+    memswap_limit: ${BACKEND_MEM_LIMIT:-2g}
     logging:
       options:
         max-size: "10m"

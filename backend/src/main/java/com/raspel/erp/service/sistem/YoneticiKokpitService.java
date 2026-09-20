@@ -194,9 +194,11 @@ public class YoneticiKokpitService {
                 .limit(5)
                 .collect(Collectors.toList());
 
-        // 8. Kritik Vadesi Geçen Alacaklar
+        // 8. Kritik Vadesi Geçen Alacaklar (gecikme gunu en yuksek 10 kayit gosterilir;
+        // sorgu sayfa ile sinirlandirilir, tum fatura listesi yuklenmez)
         List<Fatura> vadesiGecenler = (sirketId != null)
-                ? faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), bugun)
+                ? faturaRepository.findVadesiGecen(sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), bugun,
+                        org.springframework.data.domain.PageRequest.of(0, 10))
                 : Collections.emptyList();
 
         BigDecimal vadesiGecenAlacak = vadesiGecenler.stream()

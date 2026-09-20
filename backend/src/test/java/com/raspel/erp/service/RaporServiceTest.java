@@ -151,19 +151,12 @@ class RaporServiceTest {
         cari2.setAd("Cari 2");
         cari2.setBakiye(BigDecimal.valueOf(1000));
 
-        Fatura fatura1 = new Fatura();
-        fatura1.setCariHesap(cari1);
-        fatura1.setVadeTarihi(LocalDate.now().minusDays(45));
-        fatura1.setTarih(LocalDate.now().minusDays(75));
-
-        Fatura fatura2 = new Fatura();
-        fatura2.setCariHesap(cari2);
-        fatura2.setVadeTarihi(LocalDate.now().minusDays(15));
-        fatura2.setTarih(LocalDate.now().minusDays(45));
-
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari1, cari2));
-        when(faturaRepository.findTahsilatEdilecek(any(), any(), any(), any()))
-                .thenReturn(List.of(fatura1, fatura2));
+        // DB'de cari bazinda hesaplanan maks gecikme gunleri (Object[]{cariId, gun}).
+        when(faturaRepository.cariBazindaMaksGecikme(any(), any(), any(), anyList(), any()))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{1L, 45},
+                        new Object[]{2L, 15}));
 
         var result = raporService.yaslandirmaRaporu(1L);
 

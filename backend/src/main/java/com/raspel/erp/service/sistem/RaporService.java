@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.raspel.erp.repository.finans.CariHesapRepository;
@@ -154,15 +153,14 @@ public class RaporService {
     public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu(Long sirketId) {
         LocalDate bugun = LocalDate.now();
 
-        // Cari bazında en çok geciken faturanın gecikme gününü vade tarihine göre hesapla
+        // Cari bazında en çok geciken faturanın gecikme günü DB'de grup bazında hesaplanır
+        // (tüm fatura listesi belleğe yüklenmez).
         Map<Long, Integer> cariGecikme = new HashMap<>();
-        for (Fatura f : faturaRepository.findTahsilatEdilecek(
-                sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"))) {
-            if (f.getCariHesap() == null) continue;
-            int gun = (int) ChronoUnit.DAYS.between(vadeTarihi(f), bugun);
-            if (gun > 0) {
-                cariGecikme.merge(f.getCariHesap().getId(), gun, Math::max);
-            }
+        for (Object[] row : faturaRepository.cariBazindaMaksGecikme(
+                sirketId, Fatura.FaturaTur.SATIS.name(), Fatura.FaturaDurum.KESILDI.name(),
+                List.of("ODENDI", "IPTAL"), bugun)) {
+            if (row[0] == null || row[1] == null) continue;
+            cariGecikme.put(((Number) row[0]).longValue(), ((Number) row[1]).intValue());
         }
 
         return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
@@ -174,15 +172,6 @@ public class RaporService {
                 })
                 .sorted(Comparator.comparingInt(RaporDTO.YaslandirmaDTO::getGun).reversed())
                 .collect(Collectors.toList());
-    }
-
-    private LocalDate vadeTarihi(Fatura f) {
-        if (f.getVadeTarihi() != null) return f.getVadeTarihi();
-        CariHesap cari = f.getCariHesap();
-        if (cari != null && cari.getOdemeVadesi() != null) {
-            return f.getTarih().plusDays(cari.getOdemeVadesi());
-        }
-        return f.getTarih();
     }
 
     private String aralik(int gun) {

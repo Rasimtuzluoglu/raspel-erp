@@ -64,7 +64,7 @@ class YoneticiKokpitServiceTest {
         ));
         when(cariHesapRepository.toplamPozitifBakiyeBySirketId(1L)).thenReturn(BigDecimal.valueOf(50000));
         when(cariHesapRepository.toplamNegatifBakiyeBySirketId(1L)).thenReturn(BigDecimal.valueOf(-20000));
-        when(faturaRepository.findVadesiGecen(eq(1L), any(), any(), any()))
+        when(faturaRepository.findVadesiGecen(eq(1L), any(), any(), any(), any()))
                 .thenReturn(Collections.emptyList());
 
         YoneticiKokpitDTO result = kokpitService.getKokpitVerileri(1L, 2026, 8);

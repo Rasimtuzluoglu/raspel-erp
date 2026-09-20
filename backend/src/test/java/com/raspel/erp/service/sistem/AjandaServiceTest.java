@@ -43,7 +43,7 @@ class AjandaServiceTest {
         f1.setFaturaNumarasi("FTR-1-2026-000001");
         f1.setVadeTarihi(LocalDate.of(2026, 8, 5));
         f1.setKalanTutar(new java.math.BigDecimal("1500.00"));
-        when(faturaRepository.findVadesiYaklasan(eq(1L), eq(Fatura.FaturaDurum.KESILDI), any(), eq(bas), eq(bit)))
+        when(faturaRepository.findVadesiYaklasan(eq(1L), eq(Fatura.FaturaDurum.KESILDI), any(), eq(bas), eq(bit), any()))
                 .thenReturn(List.of(f1));
 
         List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit, null);
@@ -61,7 +61,7 @@ class AjandaServiceTest {
         LocalDate bas = LocalDate.of(2026, 8, 1);
         LocalDate bit = LocalDate.of(2026, 8, 31);
         when(gorevRepository.sirketGorevleri(1L, bas, bit)).thenReturn(List.of());
-        when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bas), eq(bit))).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bas), eq(bit), any())).thenReturn(List.of());
 
         List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit, null);
 
@@ -74,7 +74,7 @@ class AjandaServiceTest {
         LocalDate bit = LocalDate.of(2026, 8, 31);
         Gorev g = Gorev.builder().id(1L).ad("Görev").durum("YAPILACAK").build();
         when(gorevRepository.sirketGorevleri(1L, bas, bit)).thenReturn(List.of(g));
-        when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bas), eq(bit))).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bas), eq(bit), any())).thenReturn(List.of());
 
         List<AjandaOlayDTO> olaylar = ajandaService.olaylar(1L, bas, bit, null);
 

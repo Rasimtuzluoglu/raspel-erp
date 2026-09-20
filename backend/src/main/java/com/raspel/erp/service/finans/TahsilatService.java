@@ -165,11 +165,10 @@ public class TahsilatService {
                     .orElseThrow(() -> new ResourceNotFoundException("POS Terminali", posTerminaliId));
         }
 
-        // Açık faturaları vade öncelikli al
-        List<Fatura> acikFaturalar = faturaRepository.findTahsilatEdilecek(
-                        sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, ODENDI_DURUMLARI)
+        // Açık faturaları vade öncelikli al (yalnızca bu cariye ait faturalar)
+        List<Fatura> acikFaturalar = faturaRepository.findTahsilatEdilecekByCari(
+                        sirketId, cariId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, ODENDI_DURUMLARI)
                 .stream()
-                .filter(f -> f.getCariHesap() != null && f.getCariHesap().getId().equals(cariId))
                 .sorted(Comparator.comparing(this::vade, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
 
@@ -267,12 +266,8 @@ public class TahsilatService {
 
     @Transactional(readOnly = true)
     public int hatirlat(Long cariId, Long sirketId) {
-        List<Fatura> faturalar = faturaRepository.findTahsilatEdilecek(
-                sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, ODENDI_DURUMLARI);
-
-        List<Fatura> cariFaturalari = faturalar.stream()
-                .filter(f -> f.getCariHesap() != null && f.getCariHesap().getId().equals(cariId))
-                .collect(Collectors.toList());
+        List<Fatura> cariFaturalari = faturaRepository.findTahsilatEdilecekByCari(
+                sirketId, cariId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, ODENDI_DURUMLARI);
 
         if (cariFaturalari.isEmpty()) {
             throw new ResourceNotFoundException("Cari için ödenmemiş fatura bulunamadı", cariId);

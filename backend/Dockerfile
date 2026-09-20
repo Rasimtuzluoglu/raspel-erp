@@ -14,6 +14,6 @@ EXPOSE 8081
 RUN addgroup -S raspel && adduser -S raspel -G raspel && \
     mkdir -p /app/backups && chown -R raspel:raspel /app
 USER raspel
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
   CMD curl -fsS http://localhost:8081/actuator/health || exit 1
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms256m", "-Xmx1280m", "-Xss512k", "-XX:MaxMetaspaceSize=256m", "-XX:MaxDirectMemorySize=128m", "-XX:+UseG1GC", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=/tmp/heapdump.hprof", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]

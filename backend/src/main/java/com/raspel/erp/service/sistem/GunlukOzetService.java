@@ -45,7 +45,8 @@ public class GunlukOzetService {
         Long sirketId = s.getId();
         int kritikStok = stokRepository.kritikStoklar(sirketId).size();
         List<Fatura> vadesiGecen = faturaRepository.findVadesiGecen(
-                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), LocalDate.now());
+                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), LocalDate.now(),
+                org.springframework.data.domain.PageRequest.of(0, 1));
         int vadesiGecenSayisi = vadesiGecen.size();
 
         String konu = "RasPel ERP - Günlük Özet (" + LocalDate.now() + ")";

@@ -46,7 +46,8 @@ public class AjandaService {
         }
 
         List<Fatura> vadeler = faturaRepository.findVadesiYaklasan(
-                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), baslangic, bitis);
+                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), baslangic, bitis,
+                org.springframework.data.domain.PageRequest.of(0, 200));
         for (Fatura f : vadeler) {
             if (f.getVadeTarihi() == null) continue;
             olaylar.add(AjandaOlayDTO.builder()

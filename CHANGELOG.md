@@ -2,12 +2,30 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
-## [1.33.0] - 2026-09-20 (Giriş Ekranı Firma Seçimi Revizyonu)
-### Arayüz
+## [1.33.0] - 2026-09-20 (Giriş Ekranı Firma Seçimi + Yük Altında Kararlılık)
+### Giriş Ekranı / Arayüz
 - **Firma seçim adımı yeniden tasarlandı**: eksik olan `.sirket-secim-kart` / `.sirket-kart-ad` / `.sirket-kart-vkn` stilleri tamamlandı; sıkışık görünüm giderildi.
 - Her firma artık bir **avatar rozeti** (gradyan), daha okunur iki satırlı bilgi (ad + VKN) ve sağda tür/yıl/star/ok göstergeleriyle kart halinde.
 - Liste **kaydırılabilir** (`max-height: 340px`) — çok firma olduğunda taşma yerine iç kaydırma; hover/focus animasyonları ve tema değişkenleriyle uyumlu.
 - Ölü CSS temizlendi (`.sirket-secim-buton`, `.sirket-mini-*`, `.sirket-ad`, `.sirket-ok`).
+
+### Yük Altında Kararlılık (stress/spike testiyle bulundu)
+- **Backend OOM-kill / restart döngüsü**: konteyner 1 GiB ile sınırlıyken JVM varsayılan `MaxRAMPercentage=25` ile heap'i **host** RAM'ine göre (4,15 GiB) hesaplıyordu; cgroup limitini göremediği için stress (~150–200 VU) ve spike (~100 VU) altında konteyner tekrar tekrar yeniden başlatılıyordu (hata %88 / %17; connection refused).
+- `ENTRYPOINT` açıkça sabitlendi: `-Xms256m -Xmx1280m -Xss512k -XX:MaxMetaspaceSize=256m -XX:MaxDirectMemorySize=128m` (+`HeapDumpOnOutOfMemoryError`); healthcheck `start-period` 60s→90s.
+- `docker-compose.yml` backend `mem_limit/memswap_limit` **1g→2g** (`.env` `BACKEND_MEM_LIMIT`), Tomcat thread havuzu `threads.max=100`; Hikari `maximum-pool-size` **30→50** (`validation-timeout=3000`), postgres `max_connections=100` ile uyumlu. Stress altında restart **%88 hata → %0** (100 VU spike).
+
+### Sınırsız Listeleme Sorguları (bellek şişmesi / OOM kök nedeni)
+- **`/api/dashboard` her açılışta 6.293 vadesi-yaklaşan faturayı entity olarak yüklüyordu** (~1 MB yanıt) — asıl OOM nedeni buydu. `findVadesiGecen`/`findVadesiYaklasan` artık `Pageable` ile sınırlandırılıyor; dashboard en çok **5** bildirim gösterir. Yanıt **999.475 → 5.821 byte** (171× küçülme).
+- Alacak yaşlandırma toplamları artık DB aggregate ile hesaplanıyor (`toplamVadesiGecenKalan`, `toplamKalanVadeAraliginda`); tüm fatura listesi belleğe yüklenmiyor.
+- Tahsilat tahsisi/hatırlatma ve yaşlandırma raporu için cari'ye özel sorgular: `findTahsilatEdilecekByCari`, `cariBazindaMaksGecikme` (native grup bazında `MAX(:bugun - vade_tarihi)`).
+- `GunlukOzetService`, `AjandaService`, `YoneticiKokpitService`, `RaporService` ve `TahsilatService` (3 kullanım) aynı şekilde sınırlandırıldı.
+- Backend **1150** test (0 hata) — mock imzaları yeni repository metotlarına göre güncellendi.
+
+### Yük Testi Sonuçları (stress/spike/soak)
+- **Spike (5→100 VU ani)**: %17,37 hata → **%0,1**, restart 0.
+- **Load (20 VU, 6 dk)**: 9.348 istek, p95 **28 ms**, hata **%0** (regresyon yok).
+- **Soak (20 VU, 30 dk)**: 186.698 istek, p95 **30 ms**, hata **%0**, restart 0, bellek stabil (740 MB) — sızıntı yok.
+- **Stress (0→200 VU)**: 150–200 VU üzerinde HikariCP pool (50) doygunluğu ve heap sınırı; tek instance'ın bilinen kapasite sınırı (yatay ölçekleme gerekir). Detay: `docs/YUK-TESTI.md`.
 
 ## [1.32.0] - 2026-09-20 (Yük/Stres Testi ve Performans Düzeltmeleri)
 ### Yük Testi Altyapısı
