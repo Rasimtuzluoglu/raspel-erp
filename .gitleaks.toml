@@ -51,6 +51,22 @@ title = "RasPel ERP Gitleaks Config"
 
 [allowlist]
   description = "Allowlisted patterns"
+  # Gecmis (legacy) commit'ler: v1.22.0 oncesinde kalan ve o tarihten sonra ROTATE
+  # EDILEN sirlar / yanlis-pozitifler. Dogrulama:
+  #  - Canli .env'deki JWT_SECRET (92 karakter) bu gecmis degerlerin hicbiriyle eslesmiyor.
+  #  - DB/Redis/RabbitMQ parolalari v1.22.0'da guclu degerlerle donduruldu.
+  #  - HEAD'de ilgili dosyalar temiz: application.properties/docker-compose varsayilanlari
+  #    kaldirildi; frontend/cypress/e2e/screenshots.cy.js silindi.
+  # Not: Yalnizca bu commit'ler muaf; HEAD ve gelecekteki commit'ler taranmaya devam eder.
+  commits = [
+    '''2e03e7922e7224d8f6ff0a067b8f0211c230576c''',
+    '''eb5c51b7f9a89a06ae4569d348d7d7de410488b0''',
+    '''9f8fa4bcddd488691b511396ced5068e00028f8d''',
+    '''23317d8d1a15bc50ded63d95a68018916838cf52''',
+    '''2708473a3a23b4eb35e0b4ac7d1706838f612250''',
+    '''fe52e852e8b941946f7ea2f4622539441fa44df8''',
+    '''2636b1d354666c28097d0e976a2e5f75216becb3'''
+  ]
   paths = [
     '''package-lock\.json$''',
     '''\.min\.js$''',
@@ -65,7 +81,8 @@ title = "RasPel ERP Gitleaks Config"
     '''docs/KURULUM\.md$''',
     '''scripts/disaster-recovery-test\.ps1$''',
     '''backend/src/test/''',
-    '''frontend/cypress/visual/screenshots\.cy\.js$'''
+    '''frontend/cypress/visual/screenshots\.cy\.js$''',
+    '''frontend/cypress/e2e/screenshots\.cy\.js$'''
   ]
   regexes = [
     '''(?i)changeme''',
@@ -75,5 +92,7 @@ title = "RasPel ERP Gitleaks Config"
     '''\$apr1\$''',
     '''dGhpcyBpcyBhIHZlcnkgbG9uZyBzZWNyZXQga2V5''',
     '''cmFzcGVsLWVycC1qd3Qtc2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtYW5kLXRlc3RpbmctcHVycG9zZXMtMjAyNg==''',
-    '''raspel_pat_test'''
+    '''raspel_pat_test''',
+    # Yanlis-pozitif: degisken adi "token" iceriyor ama sir degil.
+    '''(?i)sifresifirlatokenrepository'''
   ]

@@ -138,6 +138,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Gitleaks'in push aralığını (before..after) doğru hesaplayabilmesi için
+          # tam geçmiş gerekir; aksi halde shallow checkout nedeniyle tüm geçmiş taranır.
+          fetch-depth: 0
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:

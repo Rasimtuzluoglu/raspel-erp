@@ -70,3 +70,5 @@ gitleaks-report.json
 
 # Trivy tarama raporlari (yerel calistirmalar)
 trivy-*.json
+# Gitleaks yerel tarama raporu (sir icerebilir)
+gl-report.json
