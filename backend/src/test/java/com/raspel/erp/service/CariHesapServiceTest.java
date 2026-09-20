@@ -146,10 +146,13 @@ class CariHesapServiceTest {
     void bakiyeGuncelle_updatesBalance() {
         CariHesap cari = createCariHesap(1L);
         cari.setBakiye(BigDecimal.valueOf(100));
-        when(cariHesapRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(cari));
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        when(cariHesapRepository.bakiyeArttir(1L, BigDecimal.valueOf(50))).thenReturn(1);
+
         cariHesapService.bakiyeGuncelle(1L, BigDecimal.valueOf(50));
-        assertEquals(BigDecimal.valueOf(150), cari.getBakiye());
-        verify(cariHesapRepository).save(cari);
+
+        // Bakiye artik oku-degistir-yaz yerine atomik DB guncellemesiyle artirilir.
+        verify(cariHesapRepository).bakiyeArttir(1L, BigDecimal.valueOf(50));
     }
 
     @Test

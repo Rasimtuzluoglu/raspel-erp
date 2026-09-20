@@ -5,11 +5,18 @@ import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.ticaret.TeklifRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Supplier;
 
+/**
+ * Belge numarasi uretimi. Numara, `sistem.seri_sayac` tablosunda tutulan bir sayac
+ * uzerinden ATOMIK olarak uretilir (INSERT ... ON CONFLICT DO UPDATE ... RETURNING).
+ * Boylece es zamanli istekler (coklu kasa/instance) ayni numarayi uretemez.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -18,51 +25,46 @@ public class SeriNoServisi {
     private final FaturaRepository faturaRepository;
     private final SiparisRepository siparisRepository;
     private final TeklifRepository teklifRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    // NOT: `synchronized` yalnızca tek JVM instance içinde mükerrer üretimi engeller.
-    // Çoklu instance (yatay ölçekleme) senaryosunda asıl koruma, tablo üzerindeki
-    // UNIQUE kısıtlardır (fatura.fatura_numarasi, siparis.siparis_no, ticaret.teklif_no).
-    // Böylece iki instance aynı numarayı üretmeye çalışsa bile DB ikincisini reddeder.
-
-    public synchronized String faturaNoUret(Long sirketId) {
-        String yil = String.valueOf(LocalDate.now().getYear());
-        String prefix = "FTR-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
-        List<String> mevcutlar = faturaRepository.findFaturaNumarasiByPrefix(prefix, sirketId);
-        int maxSeri = mevcutlar.stream()
-                .mapToInt(no -> {
-                    try {
-                        return Integer.parseInt(no.substring(prefix.length()));
-                    } catch (Exception e) {
-                        return 0;
-                    }
-                })
-                .max()
-                .orElse(0);
-        return prefix + String.format("%06d", maxSeri + 1);
+    public String faturaNoUret(Long sirketId) {
+        String prefix = "FTR-" + (sirketId != null ? sirketId + "-" : "") + LocalDate.now().getYear() + "-";
+        return sonraki(sirketId, "FATURA", prefix, () -> faturaRepository.findFaturaNumarasiByPrefix(prefix, sirketId));
     }
 
-    public synchronized String siparisNoUret(Long sirketId) {
-        String yil = String.valueOf(LocalDate.now().getYear());
-        String prefix = "SIP-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
-        List<String> mevcutlar = siparisRepository.findSiparisNoByPrefix(prefix, sirketId);
-        int maxSeri = mevcutlar.stream()
-                .mapToInt(no -> {
-                    try {
-                        return Integer.parseInt(no.substring(prefix.length()));
-                    } catch (Exception e) {
-                        return 0;
-                    }
-                })
-                .max()
-                .orElse(0);
-        return prefix + String.format("%06d", maxSeri + 1);
+    public String siparisNoUret(Long sirketId) {
+        String prefix = "SIP-" + (sirketId != null ? sirketId + "-" : "") + LocalDate.now().getYear() + "-";
+        return sonraki(sirketId, "SIPARIS", prefix, () -> siparisRepository.findSiparisNoByPrefix(prefix, sirketId));
     }
 
-    public synchronized String teklifNoUret(Long sirketId) {
-        String yil = String.valueOf(LocalDate.now().getYear());
-        String prefix = "TKL-" + (sirketId != null ? sirketId + "-" : "") + yil + "-";
-        List<String> mevcutlar = teklifRepository.findTeklifNoByPrefix(prefix, sirketId);
-        int maxSeri = mevcutlar.stream()
+    public String teklifNoUret(Long sirketId) {
+        String prefix = "TKL-" + (sirketId != null ? sirketId + "-" : "") + LocalDate.now().getYear() + "-";
+        return sonraki(sirketId, "TEKLIF", prefix, () -> teklifRepository.findTeklifNoByPrefix(prefix, sirketId));
+    }
+
+    private String sonraki(Long sirketId, String tur, String prefix, Supplier<List<String>> mevcutGetter) {
+        // sirketId null ise (teorik) sayac tutulamaz; eski davranisa dus.
+        if (sirketId == null) {
+            return prefix + String.format("%06d", maxSeri(mevcutGetter.get(), prefix) + 1);
+        }
+        // Sayac ilk kez olusturulurken mevcut belgelerden tohum degeri hesaplanir;
+        // satir zaten varsa agir tarama yapilmaz.
+        Integer mevcutDeger = jdbcTemplate.query(
+                "SELECT deger FROM sistem.seri_sayac WHERE sirket_id = ? AND tur = ?",
+                rs -> rs.next() ? rs.getInt(1) : null, sirketId, tur);
+        int tohum = mevcutDeger != null ? 0 : maxSeri(mevcutGetter.get(), prefix) + 1;
+
+        Integer deger = jdbcTemplate.queryForObject(
+                "INSERT INTO sistem.seri_sayac (sirket_id, tur, deger) VALUES (?, ?, ?) "
+                        + "ON CONFLICT (sirket_id, tur) DO UPDATE SET deger = sistem.seri_sayac.deger + 1 "
+                        + "RETURNING deger",
+                Integer.class, sirketId, tur, tohum);
+        return prefix + String.format("%06d", deger != null ? deger : tohum);
+    }
+
+    private int maxSeri(List<String> mevcutlar, String prefix) {
+        if (mevcutlar == null) return 0;
+        return mevcutlar.stream()
                 .mapToInt(no -> {
                     try {
                         return Integer.parseInt(no.substring(prefix.length()));
@@ -72,6 +74,5 @@ public class SeriNoServisi {
                 })
                 .max()
                 .orElse(0);
-        return prefix + String.format("%06d", maxSeri + 1);
     }
 }

@@ -157,7 +157,7 @@ public class FaturaController {
             }
 
             try {
-                FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
+                FaturaDTO olusturulan = faturaOlusturTekrarDene(dto, sirketId, kullaniciId, displayName);
                 idempotencyService.tamamla(anahtar, olusturulan.getId());
                 return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
             } catch (RuntimeException e) {
@@ -169,8 +169,19 @@ public class FaturaController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         String displayName = (String) request.getAttribute("displayName");
-        FaturaDTO olusturulan = faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
+        FaturaDTO olusturulan = faturaOlusturTekrarDene(dto, sirketId, kullaniciId, displayName);
         return ResponseEntity.status(HttpStatus.CREATED).body(olusturulan);
+    }
+
+    /**
+     * Fatura numarası uygulama tarafında (max+1) üretildiği için eşzamanlı istekler
+     * aynı numarayı üretip `uk_fatura_no_sirket` ihlali verebilir. Bu durumda işlem
+     * (yeni numara ile) birkaç kez yeniden denenir; kullanıcı hata görmez.
+     */
+    private FaturaDTO faturaOlusturTekrarDene(FaturaDTO dto, Long sirketId, Long kullaniciId, String displayName) {
+        return com.raspel.erp.support.MukerrerKayitRetry.calistir(
+                () -> faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName),
+                e -> com.raspel.erp.support.MukerrerKayitRetry.kisitMi(e, "uk_fatura_no_sirket"));
     }
 
     @PutMapping("/{id}")

@@ -46,7 +46,10 @@ public class TeklifController {
     @Operation(summary = "Yeni teklif oluştur")
     public ResponseEntity<TeklifDTO> olustur(@jakarta.validation.Valid @RequestBody TeklifDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.status(HttpStatus.CREATED).body(teklifService.olustur(dto, sirketId));
+        TeklifDTO olusan = com.raspel.erp.support.MukerrerKayitRetry.calistir(
+                () -> teklifService.olustur(dto, sirketId),
+                e -> com.raspel.erp.support.MukerrerKayitRetry.kisitMi(e, "uk_teklif_no_sirket"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(olusan);
     }
 
     @PutMapping("/{id}")

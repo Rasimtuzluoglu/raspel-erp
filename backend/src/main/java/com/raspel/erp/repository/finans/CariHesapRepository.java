@@ -52,6 +52,14 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     @Query("SELECT c FROM CariHesap c WHERE c.id = :id")
     Optional<CariHesap> findByIdForUpdate(@Param("id") Long id);
 
+    /**
+     * Bakiyeyi ATOMIK olarak arttirir/azaltir (okuma-degistirme-yazma yok). Es zamanli
+     * tahsilat/satis islemlerinde @Version cakismasi olusmaz.
+     */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE CariHesap c SET c.bakiye = COALESCE(c.bakiye, 0) + :tutar WHERE c.id = :id")
+    int bakiyeArttir(@Param("id") Long id, @Param("tutar") BigDecimal tutar);
+
     @Query("SELECT c FROM CariHesap c WHERE c.sirketId = :sirketId " +
             "AND (:q IS NULL OR lower(c.ad) LIKE :q OR lower(c.vergiNumarasi) LIKE :q OR lower(c.telefon) LIKE :q) " +
             "AND (:tur IS NULL OR c.tur = :tur OR c.tur = 'Her Ikisi') " +

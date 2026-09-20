@@ -43,7 +43,10 @@ public class SiparisController {
     @Operation(summary = "Yeni sipariş oluştur", description = "Yeni bir sipariş oluşturur")
     public ResponseEntity<SiparisDTO> olustur(HttpServletRequest request, @Valid @RequestBody SiparisDTO dto) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.status(HttpStatus.CREATED).body(siparisService.olustur(dto, sirketId));
+        SiparisDTO olusan = com.raspel.erp.support.MukerrerKayitRetry.calistir(
+                () -> siparisService.olustur(dto, sirketId),
+                e -> com.raspel.erp.support.MukerrerKayitRetry.kisitMi(e, "uk_siparis_no_sirket"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(olusan);
     }
 
     @PutMapping("/{id}")

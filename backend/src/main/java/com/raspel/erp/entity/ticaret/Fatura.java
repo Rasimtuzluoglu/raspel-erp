@@ -73,7 +73,11 @@ public class Fatura {
     @Builder.Default
     private BigDecimal kalanTutar = BigDecimal.ZERO;
 
+    // Sayfalama ile birlikte JOIN FETCH kullanildiginda Hibernate tum sonucu belleğe
+    // yukleyip sayfalamayi bellekte yapar (HHH90003004). Bu yuzden kalemler lazy
+    // birakilir ve sayfa basina gruplu (batch) yuklenir; N+1 olusmaz.
     @OneToMany(mappedBy = "fatura", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     @Builder.Default
     private List<FaturaKalem> kalemler = new ArrayList<>();
 

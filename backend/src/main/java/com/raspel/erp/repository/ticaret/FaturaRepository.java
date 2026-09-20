@@ -14,16 +14,16 @@ import com.raspel.erp.entity.finans.CariHesap;
 
 @Repository
 public interface FaturaRepository extends JpaRepository<Fatura, Long> {
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
             "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
             "ORDER BY f.tarih DESC")
     Page<Fatura> ara(@Param("sirketId") Long sirketId, @Param("q") String q, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
     /**
@@ -41,14 +41,14 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                                 @Param("baslangic") java.time.LocalDate baslangic,
                                                 @Param("bitis") java.time.LocalDate bitis);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdAndTarihBetween(Long sirketId, java.time.LocalDate baslangic, java.time.LocalDate bitis);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     Optional<Fatura> findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);
 
     @Override
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findAll();
 
     long count();
@@ -57,7 +57,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     long countByCariHesapId(Long cariHesapId);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     Page<Fatura> findByCariHesapIdAndSirketIdOrderByTarihDesc(Long cariHesapId, Long sirketId, Pageable pageable);
 
     /** Cari ekstre icin: kesilmis faturalar (tarih araliginda). */
@@ -68,10 +68,10 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @Query("SELECT f.faturaNumarasi FROM Fatura f WHERE f.faturaNumarasi LIKE :prefix% AND f.sirketId = :sirketId")
     List<String> findFaturaNumarasiByPrefix(@Param("prefix") String prefix, @Param("sirketId") Long sirketId);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findByTurAndOdemeDurumuNotIn(Fatura.FaturaTur tur, java.util.List<String> odemeDurumlari);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdAndDurumNotAndOdemeDurumuNotIn(Long sirketId, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);
 
     /**

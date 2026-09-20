@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.32.0] - 2026-09-20 (Yük/Stres Testi ve Performans Düzeltmeleri)
+### Yük Testi Altyapısı
+- **k6** (Docker, `loadtest` profili) + senaryolar: `smoke`, `load`, `stress`, `spike`, `soak`, `write-flow`, `correctness` (`loadtest/`).
+- **Veri üretici**: `scripts/generate-test-data.ps1` (izole "YUK TESTI" şirketi; 5k cari, 2k stok, 100k fatura + 300k kalem, 150k/200k hareket).
+- `docs/YUK-TESTI.md`: çalıştırma, sonuçlar, eşikler ve temizlik.
+
+### Kritik Performans/Dayanıklılık Düzeltmeleri (yük testiyle bulundu)
+- **Bellekte sayfalama/çökme**: `FaturaRepository` sayfalı sorgularda `kalemler` koleksiyonunu fetch ediyordu (HHH90003004). Koleksiyon fetch kaldırıldı + `Fatura.kalemler` için `@BatchSize(50)`. Faturalar listesi **1.489 ms → 263 ms**, 100k fatura ile çökme giderildi.
+- **Eşzamanlı fatura numarası mükerrerliği** (%13,8 hata): `sistem.seri_sayac` (V113) ile atomik `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`; ayrıca mükerrer-numara retry yardımcısı (`MukerrerKayitRetry`, fatura/sipariş/teklif). Hata **%0**.
+- **Cari bakiyesinde optimistic-lock çakışması** (%10,8 hata): oku-değiştir-yaz yerine atomik `UPDATE CariHesap SET bakiye = bakiye + :tutar`. Hata **%0**.
+
+### Ölçülen Sonuçlar (tek makine)
+- Load (20 VU, 6 dk): 9.260 istek, **p95 23 ms**, hata %0.
+- POS yazma akışı (15 VU, 4,5 dk): 2.207 satış, **p95 48 ms**, hata **%0**.
+- Doğruluk: oversell engellendi (stok 10 → tam 10 satış), idempotency tek kayıt.
+
+### Testler
+- Backend **1150**, frontend **720** test (0 hata).
+
 ## [1.31.0] - 2026-09-20 (Operasyon / Felaket Kurtarma Sertleştirmesi)
 ### PITR (Point-in-Time Recovery)
 - PostgreSQL **WAL arşivleme** etkinleştirildi (`wal_level=replica`, `archive_mode=on`, `archive_timeout=60`); arşiv `./backups/wal-archive` altına yazılır.

@@ -292,14 +292,14 @@ public class CariHesapService {
      */
     public void bakiyeGuncelle(Long cariHesapId, BigDecimal tutar) {
         log.debug("Bakiye güncelleniyor - ID: {}, Tutar: {}", cariHesapId, tutar);
-        
-        CariHesap cariHesap = cariHesapRepository.findByIdForUpdate(cariHesapId)
+
+        CariHesap cariHesap = cariHesapRepository.findById(cariHesapId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
-        
-        BigDecimal yeniBakiye = cariHesap.getBakiye().add(tutar);
-        cariHesap.setBakiye(yeniBakiye);
-        cariHesapRepository.save(cariHesap);
+
+        // Atomik artirma: es zamanli islemlerde oku-degistir-yaz kaynakli
+        // OptimisticLockingFailureException olusmaz.
+        cariHesapRepository.bakiyeArttir(cariHesapId, tutar);
         cacheYardimci.temizle("cariHesaplar", "dashboard");
     }
     

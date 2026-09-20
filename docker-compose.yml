@@ -323,6 +323,25 @@ services:
     networks:
       - backend-net
 
+  # Yuk/stres testi araci (k6). Normal calismada baslamaz; profil ile acilir:
+  #   docker compose --profile loadtest run --rm k6 run load.js
+  k6:
+    image: grafana/k6:0.54.0
+    container_name: raspel-k6
+    profiles: ["loadtest"]
+    environment:
+      BASE_URL: http://raspel-backend:8081
+      TEST_USER: ${LOADTEST_USER:-admin_test}
+      TEST_PASSWORD: ${LOADTEST_PASSWORD:-Test1234!}
+      TEST_SIRKET_ID: ${LOADTEST_SIRKET_ID:-5}
+      DURATION: ${LOADTEST_DURATION:-1m}
+    volumes:
+      - ./loadtest:/scripts:ro
+    working_dir: /scripts
+    command: ["run", "smoke.js"]
+    networks:
+      - backend-net
+
 networks:
   frontend-net:
     driver: bridge
