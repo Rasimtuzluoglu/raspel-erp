@@ -1,9 +1,12 @@
 package com.raspel.erp.config;
 
 import io.minio.MinioClient;
+import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class MinioConfig {
@@ -29,16 +32,16 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        okhttp3.OkHttpClient okHttpClient = new okhttp3.OkHttpClient.Builder()
-                .connectTimeout(baglantiZamanAsimi, java.util.concurrent.TimeUnit.MILLISECONDS)
-                .writeTimeout(yazmaZamanAsimi, java.util.concurrent.TimeUnit.MILLISECONDS)
-                .readTimeout(okumaZamanAsimi, java.util.concurrent.TimeUnit.MILLISECONDS)
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .connectTimeout(baglantiZamanAsimi, TimeUnit.MILLISECONDS)
+                .writeTimeout(yazmaZamanAsimi, TimeUnit.MILLISECONDS)
+                .readTimeout(okumaZamanAsimi, TimeUnit.MILLISECONDS)
                 .retryOnConnectionFailure(true)
                 .build();
         return MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
-                .httpClient(okHttpClient)
+                .httpClient(httpClient)
                 .build();
     }
 }

@@ -18,31 +18,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
       - name: Build and Test Backend
-        run: mvn -B clean verify
+        run: mvn -B clean verify -e
         working-directory: ./backend
       - name: Upload Backend Coverage
-        uses: actions/upload-artifact@v4
+        if: always()
+        uses: actions/upload-artifact@v5
         with:
           name: backend-coverage
           path: backend/target/site/jacoco/
+          if-no-files-found: ignore
 
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: ./frontend/package-lock.json
       - name: Install Dependencies
@@ -54,9 +56,6 @@ jobs:
       - name: i18n integrity check
         run: npm run i18n:check
         working-directory: ./frontend
-      - name: Docs sync check (structure counts)
-        run: npm run docs:check
-        working-directory: ./frontend
       - name: Test with Coverage
         run: npm run test -- --coverage
         working-directory: ./frontend
@@ -64,43 +63,72 @@ jobs:
         run: npm run build
         working-directory: ./frontend
       - name: Upload Frontend Coverage
-        uses: actions/upload-artifact@v4
+        if: always()
+        uses: actions/upload-artifact@v5
         with:
           name: frontend-coverage
           path: frontend/coverage/
+          if-no-files-found: ignore
       - name: npm audit
         run: npm audit --omit=dev --audit-level=high
         working-directory: ./frontend
 
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Docs sync check (structure counts)
+        run: node scripts/docs-sync.mjs --check
+
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: ./frontend/package-lock.json
       - name: Install Dependencies
         run: npm ci
         working-directory: ./frontend
       - name: Start dev server (PWA service worker yok, E2E stabil)
-        run: |
-          npm run dev -- --port 5173 --strictPort &
-          for i in $(seq 1 60); do curl -s -o /dev/null http://127.0.0.1:5173 && break; sleep 1; done
-          curl -s -o /dev/null http://127.0.0.1:5173
         working-directory: ./frontend
+        run: |
+          nohup npx vite --host 127.0.0.1 --port 5173 --strictPort > /tmp/vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://127.0.0.1:5173; then
+              echo "Dev server hazir (${i}s)."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "HATA: Dev server 60 sn icinde ayaga kalkmadi. Log:"
+          cat /tmp/vite.log
+          exit 1
       - name: Cypress E2E tests
         run: npx cypress run
         working-directory: ./frontend
       - name: Upload Cypress screenshots (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cypress-screenshots
           path: frontend/cypress/screenshots/
+          if-no-files-found: ignore
+      - name: Upload dev server log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: vite-log
+          path: /tmp/vite.log
           if-no-files-found: ignore
 
   security:
@@ -109,17 +137,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
+          scanners: 'vuln'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           hide-progress: true
+          trivyignores: '.trivyignore'
+          skip-dirs: 'node_modules,target,dist,.git,frontend/coverage,frontend/cypress/screenshots'
           github-pat: ${{ secrets.GITHUB_TOKEN }}
       - name: Gitleaks - Secret scanning
         uses: gitleaks/gitleaks-action@v2

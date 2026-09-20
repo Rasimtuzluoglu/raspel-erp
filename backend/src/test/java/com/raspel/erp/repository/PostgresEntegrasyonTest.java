@@ -96,9 +96,12 @@ class PostgresEntegrasyonTest {
     }
 
     private CariHesap ornekCari(Long sirketId, String ad) {
+        // uk_cari_vergi_no_sirket benzersiz kisiti: ayni sirkette ayni vergi no olamaz.
+        // sirket + ad kombinasyonundan deterministik ve benzersiz bir vergi no uret.
+        String vergiNo = String.format("%010d", Math.abs((sirketId * 31L + ad.hashCode()) % 10_000_000_000L));
         return CariHesap.builder()
                 .ad(ad)
-                .vergiNumarasi("1234567890")
+                .vergiNumarasi(vergiNo)
                 .bakiye(BigDecimal.ZERO)
                 .sirketId(sirketId)
                 .olusturmaTarihi(LocalDateTime.now())

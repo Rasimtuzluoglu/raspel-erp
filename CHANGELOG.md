@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.28.0] - 2026-09-20 (Güvenlik Yükseltmesi ve CI/CD Onarımı)
+### Güvenlik
+- **Spring Boot 3.2.12 → 3.5.16**: Tomcat, Spring Security, Spring Framework, Jackson kaynaklı CRITICAL/HIGH CVE'ler kapatıldı (özellikle `spring-security-web` CRITICAL ve `tomcat-embed-core` serisi).
+- **Bağımlılık yükseltmeleri/pinleri**: MinIO 8.5.12→8.5.17, PostgreSQL 42.6.2→42.7.12, BouncyCastle 1.78.1→1.85; `dependencyManagement` ile Netty 4.1.137.Final, jose4j 0.9.6, async-http-client 2.16.1, amqp-client 5.34.0 sabitlendi; Tomcat `10.1.60`'a pinlendi.
+- **Trivy taraması**: backend ve frontend'te CRITICAL/HIGH bulgu **0** (tek muafiyet gerekçeli: `CVE-2025-59952`, MinIO 8.6 okhttp5 uyumsuzluğu nedeniyle `.trivyignore`'da açıklandı).
+- `MinioConfig`: zaman aşımı ayarları MinIO 8.5.x OkHttp 4.x API'siyle uyumlu hale getirildi.
+
+### CI/CD Onarımı
+- **Kök nedenler giderildi**: `docs:check` drift (AGENTS.md sayaçları), e2e dev server başlatılamaması (exit 7), Node 20 deprecation, Trivy yapılandırması.
+- **Action sürümleri**: `checkout@v5`, `setup-java@v5`, `setup-node@v5`, `upload-artifact@v5`.
+- **Node 22** (LTS) tüm frontend/e2e/docs job'larında.
+- **Ayrı `docs` job'ı**: kök doküman senkron kontrolü frontend'den ayrıldı.
+- **e2e**: dev server `127.0.0.1:5173` üzerinde `nohup` + health poll + hata halinde log artifact; Cypress `baseUrl` uyumlu hale getirildi.
+- **security**: Trivy yalnızca `vuln` scanner + `.trivyignore` + `skip-dirs`; Gitleaks korunuyor.
+- **backend**: `mvn -B clean verify -e`, başarısızlıkta coverage artifact.
+
+### Test
+- Backend **1143** test (Spring Boot 3.5.16 ile Postgres Testcontainers entegrasyon testi artık gerçekten çalışıyor; testteki `uk_cari_vergi_no_sirket` çakışması giderildi). Frontend **717** test. `docs:check` + i18n + lint + build temiz.
+
 ## [1.27.0] - 2026-09-20 (Faz 6 - Test Kapsamı ve Operasyon)
 ### Test Kapsamı
 - **Yeni servis testleri (7)**: `BarkodService` (PNG imzası), `QRService`, `DepoStokService` (delta/negatif sıfırlama/varsayılan depo), `TeslimatGecikmeUyarisiService`, `GuncellemeService` (release/commit/hata), `DosyaDepolamaService` (yerel yazma/okuma/path traversal), `LlmClientService`.

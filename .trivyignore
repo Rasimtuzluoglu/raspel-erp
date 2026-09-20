@@ -1,0 +1,15 @@
+# Trivy güvenlik muafiyetleri
+#
+# Her muafiyet için: CVE, etkilenen paket, neden kabul edildiği ve yeniden
+# değerlendirme koşulu yazılmalıdır. Muafiyetler süresiz DEĞİLDİR; upstream
+# düzeltme yayınlandığında kaldırılmalıdır.
+
+# CVE-2025-59952 — io.minio:minio (8.6.0 öncesi)
+# MinIO Java SDK, güvenilmeyen kaynaktan gelen XML içeriğindeki sistem-property/
+# ortam-değişkeni referanslarını değerleriyle değiştirebiliyor (bilgi sızıntısı).
+# Bizim kullanımımızda XML yalnızca kendi güvenilen MinIO sunucumuzdan gelir;
+# bucket/object adları sabit kodludur, kullanıcı girdisi XML olarak ayrıştırılmaz.
+# Gerçek maruziyet düşüktür. Fix sürümü 8.6.0'dır; ancak 8.6.0 okhttp 5.x ile
+# MinioClient derleme uyumsuzluğu (okhttp3.HttpUrl) yarattığı için yükseltme
+# ertelendi. 8.6.x uyumluluğu doğrulandığında bu satır kaldırılmalıdır.
+CVE-2025-59952

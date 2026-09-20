@@ -67,3 +67,6 @@ backend/uploads/
 
 # Gitleaks raporu
 gitleaks-report.json
+
+# Trivy tarama raporlari (yerel calistirmalar)
+trivy-*.json
