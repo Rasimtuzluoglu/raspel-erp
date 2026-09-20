@@ -23,7 +23,7 @@
           </div>
           <div class="hero-brand-text">
             <span class="hero-brand-name">RasPel ERP</span>
-            <span class="hero-badge">v1.32.0 Enterprise</span>
+            <span class="hero-badge">v1.33.0 Enterprise</span>
           </div>
         </div>
 
@@ -258,14 +258,14 @@
                     :class="{ 'son-secilen': s.id === sonSecilenSirketId }"
                     @click="sirketSecVeGirisYap(s)"
                   >
-                    <div class="sirket-kart-sol">
+                    <span class="sirket-kart-avatar">
                       <i class="pi pi-building" />
-                      <div class="sirket-kart-bilgi">
-                        <span class="sirket-kart-ad">{{ s.ad }}</span>
-                        <span class="sirket-kart-vkn">VKN: {{ s.vergiNo || '-' }}</span>
-                      </div>
-                    </div>
-                    <div class="sirket-kart-sag">
+                    </span>
+                    <span class="sirket-kart-bilgi">
+                      <span class="sirket-kart-ad">{{ s.ad }}</span>
+                      <span class="sirket-kart-vkn">VKN: {{ s.vergiNo || '-' }}</span>
+                    </span>
+                    <span class="sirket-kart-sag">
                       <span
                         v-if="s.tur && s.tur !== 'DIGER'"
                         class="sirket-tur-badge"
@@ -281,8 +281,8 @@
                         v-if="s.id === sonSecilenSirketId"
                         class="pi pi-star-fill son-secilen-yildiz"
                       />
-                      <i class="pi pi-arrow-right" />
-                    </div>
+                      <i class="pi pi-arrow-right sirket-kart-ok" />
+                    </span>
                   </button>
                 </template>
               </div>
@@ -805,32 +805,94 @@ const tumAdimlariSifirla = () => {
   }
 }
 
-/* Company Selection Enhance */
+/* Company Selection */
 .sirket-grup-baslik {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin: 16px 0 8px 8px;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 12px 4px 2px;
 }
-.sirket-kart-sol {
+.sirket-secim-kart {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+.sirket-secim-kart:hover {
+  border-color: var(--giris-aksan);
+  background: var(--giris-tint-08);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px var(--giris-tint-15);
+}
+.sirket-secim-kart:focus-visible {
+  outline: 2px solid var(--giris-aksan);
+  outline-offset: 2px;
+}
+.sirket-kart-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
+  color: var(--accent-contrast, #ffffff);
+  font-size: 17px;
+  box-shadow: 0 4px 12px var(--giris-tint-25);
+}
+.sirket-kart-bilgi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.sirket-kart-ad {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sirket-kart-vkn {
+  font-size: 11.5px;
+  color: var(--text-muted);
 }
 .sirket-kart-sag {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sirket-kart-ok {
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: color 0.18s, transform 0.18s;
+}
+.sirket-secim-kart:hover .sirket-kart-ok {
+  color: var(--giris-aksan);
+  transform: translateX(2px);
 }
 .sirket-tur-badge {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(148, 163, 184, 0.15);
   color: var(--text-secondary);
 }
 .tur-resmi {
@@ -859,6 +921,14 @@ const tumAdimlariSifirla = () => {
 .sirket-secim-kart.son-secilen {
   border-color: var(--giris-tint-50);
   background: var(--giris-tint-05);
+  box-shadow: 0 0 0 1px var(--giris-tint-30) inset;
+}
+.sirket-listesi::-webkit-scrollbar {
+  width: 6px;
+}
+.sirket-listesi::-webkit-scrollbar-thumb {
+  background: var(--giris-tint-30);
+  border-radius: 3px;
 }
 
 [data-theme='light'] .giris-sayfasi {
@@ -1546,47 +1616,11 @@ const tumAdimlariSifirla = () => {
 .sirket-listesi {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.sirket-secim-buton {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.sirket-secim-buton:hover {
-  border-color: var(--giris-aksan);
-  background: var(--giris-tint-08);
-  transform: translateY(-1px);
-}
-.sirket-mini-logo {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-.sirket-mini-icon {
-  font-size: 18px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-.sirket-ad {
-  flex: 1;
-  text-align: left;
-  font-weight: 500;
-}
-.sirket-ok {
-  color: var(--text-muted);
-  font-size: 13px;
+  gap: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 4px 6px 4px 4px;
+  margin: 0 -6px 2px -4px;
 }
 .sirket-yok {
   text-align: center;

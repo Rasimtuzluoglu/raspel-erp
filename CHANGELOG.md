@@ -2,6 +2,13 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.33.0] - 2026-09-20 (Giriş Ekranı Firma Seçimi Revizyonu)
+### Arayüz
+- **Firma seçim adımı yeniden tasarlandı**: eksik olan `.sirket-secim-kart` / `.sirket-kart-ad` / `.sirket-kart-vkn` stilleri tamamlandı; sıkışık görünüm giderildi.
+- Her firma artık bir **avatar rozeti** (gradyan), daha okunur iki satırlı bilgi (ad + VKN) ve sağda tür/yıl/star/ok göstergeleriyle kart halinde.
+- Liste **kaydırılabilir** (`max-height: 340px`) — çok firma olduğunda taşma yerine iç kaydırma; hover/focus animasyonları ve tema değişkenleriyle uyumlu.
+- Ölü CSS temizlendi (`.sirket-secim-buton`, `.sirket-mini-*`, `.sirket-ad`, `.sirket-ok`).
+
 ## [1.32.0] - 2026-09-20 (Yük/Stres Testi ve Performans Düzeltmeleri)
 ### Yük Testi Altyapısı
 - **k6** (Docker, `loadtest` profili) + senaryolar: `smoke`, `load`, `stress`, `spike`, `soak`, `write-flow`, `correctness` (`loadtest/`).
