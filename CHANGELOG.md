@@ -2,6 +2,23 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.31.0] - 2026-09-20 (Operasyon / Felaket Kurtarma Sertleştirmesi)
+### PITR (Point-in-Time Recovery)
+- PostgreSQL **WAL arşivleme** etkinleştirildi (`wal_level=replica`, `archive_mode=on`, `archive_timeout=60`); arşiv `./backups/wal-archive` altına yazılır.
+- `scripts/pitr-basebackup.ps1`: periyodik `pg_basebackup` + saklama temizliği.
+- `docs/OPERASYON.md`: adım adım PITR kurtarma runbook'u (base backup + WAL replay + `recovery_target_time`).
+
+### Offsite Yedek
+- `scripts/offsite-replicate.ps1`: rclone / scp / harici disk hedeflerine offsite kopya.
+- `backups/` git dışında (WAL arşivi/logical dump staging).
+
+### İzleme / Uyarılar
+- Alertmanager **e-posta kanalı** (`ALERT_EMAIL_TO` + `SMTP_*`) eklendi; Slack ile birlikte çalışır, tanımsız kanal otomatik kaldırılır.
+- Prometheus kural seti genişletildi: **DB bağlantı havuzu doygunluğu** ve **yüksek HTTP gecikmesi (p95)**.
+
+### Testler
+- Backend **1150**, frontend **720** test (0 hata); lint + i18n + build temiz.
+
 ## [1.30.0] - 2026-09-20 (Geri Bildirim Turu 2)
 ### Oturum Sayacı
 - Sayaç **sağ üstte sabit** konuma taşındı (sol menüden kaldırıldı); son 10 dakikada kırmızı.

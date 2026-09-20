@@ -1,5 +1,10 @@
 global:
   resolve_timeout: 5m
+  smtp_smarthost: '__SMTP_SMARTHOST__'
+  smtp_from: '__SMTP_FROM__'
+  smtp_auth_username: '__SMTP_USERNAME__'
+  smtp_auth_password: '__SMTP_PASSWORD__'
+  smtp_require_tls: true
 
 route:
   receiver: 'default'
@@ -10,9 +15,12 @@ route:
 
 receivers:
   - name: 'default'
-    # Slack entegrasyonu: SLACK_WEBHOOK_URL ortam degiskeni tanimliysa alertler Slack'e gider.
-    # Tanimli degilse entrypoint bu blogu kaldirir, alertler yalnizca web arayuzunde gorunur.
+    # Slack: SLACK_WEBHOOK_URL tanimliysa gonderilir; degilse entrypoint blogu kaldirir.
     slack_configs:
       - api_url: '__SLACK_WEBHOOK_URL__'
         channel: '#raspel-alerts'
+        send_resolved: true
+    # E-posta: ALERT_EMAIL_TO + SMTP_SMARTHOST tanimliysa gonderilir; degilse kaldirilir.
+    email_configs:
+      - to: '__ALERT_EMAIL_TO__'
         send_resolved: true

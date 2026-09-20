@@ -27,3 +27,21 @@ groups:
         annotations:
           summary: "Yüksek 5xx Hata Oranı (%5+)"
           description: "HTTP 5xx sunucu hata oranı son 5 dakikada %5'i aştı."
+
+      - alert: DatabasePoolSaturation
+        expr: hikaricp_connections_pending > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veritabanı bağlantı havuzu doygun"
+          description: "HikariCP'de 2 dakikadır bekleyen bağlantı isteği var; havuz boyutu yetersiz olabilir."
+
+      - alert: HighHttpLatency
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) > 1.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yüksek HTTP gecikmesi (p95 > 1.5s)"
+          description: "HTTP isteklerinin %95'i 5 dakikadır 1.5 saniyenin üzerinde yanıt veriyor."

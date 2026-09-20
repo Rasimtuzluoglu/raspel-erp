@@ -39,6 +39,18 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: raspel-postgres
+    # PITR (point-in-time recovery): WAL arsivleme aciktir. Base backup + WAL ile
+    # istenen ana geri donulebilir. archive_command basarisizsa WAL silinmez (test !).
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "archive_mode=on"
+      - "-c"
+      - "archive_timeout=60"
+      - "-c"
+      - "archive_command=test ! -f /wal-archive/%f && cp %p /wal-archive/%f"
     environment:
       POSTGRES_DB: raspelerp
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -47,6 +59,7 @@ services:
       - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backups/wal-archive:/wal-archive
     restart: unless-stopped
     networks:
       - db-net
@@ -296,6 +309,11 @@ services:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
     environment:
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+      SMTP_SMARTHOST: ${SMTP_SMARTHOST:-}
+      SMTP_FROM: ${SMTP_FROM:-alertmanager@raspel-erp.com}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     ports:
       - "127.0.0.1:9093:9093"
     volumes:

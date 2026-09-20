@@ -74,17 +74,80 @@ calistirilamadi`).
 - Günlük otomatik `pg_dump` → `APP_BACKUP_DIR`; şifreli bulut kopyası MinIO'ya.
 - Elle yedek: `scripts/backup.ps1` (parola argv'de değil ortam değişkeniyle geçer).
 - Kurtarma tatbikatı: `scripts/disaster-recovery-test.ps1` (üç ayda bir).
-- **Offsite**: MinIO aynı sunucuda olduğundan S3 uyumlu harici depoya replikasyon
-  veya `backup.ps1` çıktısının harici ortama kopyalanması gerekir.
-- **PITR** için PostgreSQL WAL arşivleme (`archive_mode=on`) ayrıca yapılandırılmalıdır;
-  mevcut kurulum günlük snapshot seviyesindedir.
+- Günlük yedek doğrulama uygulama içinde otomatik çalışır (`BackupService.gunlukYedekDogrulama`).
 
-## 5. Sağlık İzleme
+### 4a. PITR (Point-in-Time Recovery / WAL arşivleme)
+
+PostgreSQL artık `archive_mode=on` ile çalışır; WAL dosyaları `./backups/wal-archive`
+(container içinde `/wal-archive`) altına arşivlenir. Böylece bir felakette en son
+base backup'tan sonra **istenen ana** kadar geri dönülebilir.
+
+- **Base backup** al (öneri: haftada bir, Retention 14 gün):
+
+  ```powershell
+  powershell -File scripts/pitr-basebackup.ps1 -KeepDays 14
+  ```
+
+  Çıktı: `backups/wal-archive/base/<YYYYMMDD_HHmmss>/` (tar.gz + pg_wal).
+
+- **Arşiv kontrolü**:
+
+  ```bash
+  docker exec raspel-postgres sh -c "ls -1 /wal-archive | head; echo '---base---'; ls -1 /wal-archive/base"
+  docker exec raspel-postgres psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
+  ```
+
+  `failed_count` artıyorsa `archive_command` başarısız demektir; WAL silinmez, disk büyür.
+
+- **Kurtarma adımları** (felaket anında, dikkatli uygulayın):
+
+  1. Uygulamayı durdurun: `docker compose stop backend frontend`.
+  2. Mevcut veriyi koruma altına alın (üzerine yazmadan önce):
+     `docker run --rm -v raspel-erp_postgres_data:/data -v "%CD%/backups:/backup" alpine sh -c "cd /data && tar czf /backup/pre-restore-$(date +%s).tar.gz ."`
+  3. Data dizinini boşaltıp base backup'ı açın:
+     `docker run --rm -v raspel-erp_postgres_data:/var/lib/postgresql/data -v "%CD%/backups/wal-archive:/wal-archive" alpine sh -c "rm -rf /var/lib/postgresql/data/* && tar xzf /wal-archive/base/<STAMP>/base.tar.gz -C /var/lib/postgresql/data && mkdir -p /var/lib/postgresql/data/pg_wal && tar xzf /wal-archive/base/<STAMP>/pg_wal.tar.gz -C /var/lib/postgresql/data/pg_wal"`
+  4. Kurtarma hedefini yazın (`/var/lib/postgresql/data/postgresql.auto.conf`):
+     ```
+     restore_command = 'cp /wal-archive/%f %p'
+     recovery_target_time = '2026-09-20 16:00:00+03'
+     recovery_target_action = 'promote'
+     ```
+     ve data dizinine `recovery.signal` adlı boş dosya koyun.
+  5. `docker compose up -d postgres`; loglarda `recovery stopping before ...` ve
+     `database system is ready to accept connections` görülene kadar bekleyin.
+  6. Doğrulayın: `docker exec raspel-postgres psql -U postgres -d raspelerp -c "select count(*) from fatura.fatura;"` ve
+     `docker compose up -d backend frontend`.
+
+  > Not: `recovery_target_time` istediğiniz ana göre ayarlanır; belirtilmezse tüm
+  > arşivlenmiş WAL uygulanır ve mevcut son ana kadar gelinir.
+
+### 4b. Offsite (harici) yedek
+
+MinIO aynı sunucuda olduğundan offsite kopya ayrıca alınmalıdır. Script üç hedefi
+destekler (birini ortam değişkeniyle seçin):
+
+```powershell
+# S3/B2/Drive (rclone kurulu olmalı)
+$env:OFFSITE_RCLONE_REMOTE="b2:raspel-backups"; powershell -File scripts/offsite-replicate.ps1
+# Uzak sunucu
+$env:OFFSITE_SCP_TARGET="user@server:/backups/raspel"; powershell -File scripts/offsite-replicate.ps1
+# Harici disk / NAS
+$env:OFFSITE_DIR="E:\RasPelBackups"; powershell -File scripts/offsite-replicate.ps1
+```
+
+Bu komutu günlük yedek sonrasına zamanlayın (Windows Task Scheduler veya cron).
+
+## 5. Sağlık İzleme ve Uyarılar
 
 - `GET /actuator/health` (kimliksiz) — container healthcheck.
 - `GET /actuator/prometheus` (kimliksiz) — Prometheus scrape.
 - Diğer `/actuator/**` uçları **yalnızca ADMIN**.
-- Kafka/RabbitMQ ve Redis bağlantıları Prometheus/Grafana panolarından izlenir.
+- **Alertmanager** bildirim kanalları (ortam değişkeniyle):
+  - Slack: `SLACK_WEBHOOK_URL` (kanal: `#raspel-alerts`).
+  - E-posta: `ALERT_EMAIL_TO` + `SMTP_SMARTHOST`, `SMTP_FROM`, `SMTP_USERNAME`, `SMTP_PASSWORD`.
+  - Tanımlı olmayan kanalın bloğu başlangıçta otomatik kaldırılır (htpasswd/güvenli).
+- Kural seti (`config/prometheus/alert.rules.yml`): ServiceDown, yüksek heap,
+  yüksek 5xx oranı, DB bağlantı havuzu doygunluğu, yüksek HTTP gecikmesi (p95).
 
 ## 6. Sürüm Yükseltme
 

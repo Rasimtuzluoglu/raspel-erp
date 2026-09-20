@@ -72,3 +72,6 @@ gitleaks-report.json
 trivy-*.json
 # Gitleaks yerel tarama raporu (sir icerebilir)
 gl-report.json
+
+# Runtime backups (WAL arsivi, base backup, offsite staging)
+backups/
