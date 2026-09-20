@@ -21,4 +21,6 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
 
     @Query("SELECT s.siparisNo FROM Siparis s WHERE s.siparisNo LIKE :prefix% AND s.sirketId = :sirketId")
     List<String> findSiparisNoByPrefix(@Param("prefix") String prefix, @Param("sirketId") Long sirketId);
+
+    long countByCariHesapId(Long cariHesapId);
 }

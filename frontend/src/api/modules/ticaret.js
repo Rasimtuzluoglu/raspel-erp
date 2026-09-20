@@ -35,6 +35,9 @@ export const cariHesapAPI = {
   delete(id) {
     return apiClient.delete(`/cari-hesaplar/${id}`)
   },
+  topluSil(ids) {
+    return apiClient.delete('/cari-hesaplar/toplu-sil', { data: ids })
+  },
   getFiyatlar(id) {
     return apiClient.get(`/cari-hesaplar/${id}/fiyatlar`)
   },

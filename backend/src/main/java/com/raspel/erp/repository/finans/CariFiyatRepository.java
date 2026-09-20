@@ -11,4 +11,7 @@ import java.util.Optional;
 public interface CariFiyatRepository extends JpaRepository<CariFiyat, Long> {
     List<CariFiyat> findByCariHesapIdOrderByStokId(Long cariHesapId);
     Optional<CariFiyat> findByCariHesapIdAndStokId(Long cariHesapId, Long stokId);
+
+    long countByCariHesapId(Long cariHesapId);
+    void deleteByCariHesapId(Long cariHesapId);
 }

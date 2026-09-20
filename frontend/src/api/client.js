@@ -142,7 +142,9 @@ apiClient.interceptors.response.use(
 
 const tokenSuresiDolduMu = () => {
   try {
-    const kayitli = JSON.parse(localStorage.getItem('raspel_erp_auth') || '{}')
+    // "Beni hatırla" kapalıysa kayıt sessionStorage'da tutulur; ikisini de kontrol et.
+    const ham = localStorage.getItem('raspel_erp_auth') || sessionStorage.getItem('raspel_erp_auth')
+    const kayitli = JSON.parse(ham || '{}')
     const bitis = kayitli.tokenExpiresAt
     if (!bitis) return false
     return bitis < Date.now()

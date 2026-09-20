@@ -985,6 +985,47 @@ const whatsappGonder = async (fatura) => {
   window.open(url, '_blank')
 }
 
+// Faturayı PNG görsel olarak müşteriye gönderir (yarı-otomatik):
+// görseli panoya kopyalar + indirir, ardından WhatsApp sohbetini mesajla açar.
+const faturaGorselGonder = async (fatura) => {
+  try {
+    const r = await pdfAPI.faturaGorsel(fatura.id)
+    const blob = new Blob([r.data], { type: 'image/png' })
+    let kopyalandi = false
+    try {
+      if (navigator.clipboard && typeof window.ClipboardItem !== 'undefined') {
+        await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blob })])
+        kopyalandi = true
+      }
+    } catch {
+      /* pano izni yoksa indirme yeterli */
+    }
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `fatura_${fatura.faturaNumarasi || fatura.id}.png`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => window.URL.revokeObjectURL(url), 30000)
+
+    const cariAd = fatura.cariHesapAd || t('faturalar.musterimiz')
+    const tutar = fatura.genelToplam
+      ? fatura.genelToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL'
+      : ''
+    const mesaj = t('faturalar.gorselMesaj', { ad: cariAd, no: fatura.faturaNumarasi || 'Fatura', tutar })
+    const tel = (fatura.cariTelefon || '').replace(/\D/g, '')
+    const link = tel
+      ? `https://wa.me/${tel}?text=${encodeURIComponent(mesaj)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(mesaj)}`
+    window.open(link, '_blank')
+
+    toastBildirim.basarili(kopyalandi ? t('faturalar.gorselKopyalandi') : t('faturalar.gorselIndirildi'))
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('faturalar.gorselHata'))
+  }
+}
+
 const onizle = async (fatura) => {
   try {
     const res = await pdfAPI.faturaOnizleme(fatura.id)
@@ -1215,6 +1256,7 @@ const faturaEylemleri = (f) => {  const items = [
     { etiket: t('faturalar.pdfIndir'), ikon: 'pi pi-download', islem: () => pdfIndir(f) },
     { etiket: t('faturalar.onizle'), ikon: 'pi pi-eye', islem: () => onizle(f) },
     { etiket: t('faturalar.whatsapp'), ikon: 'pi pi-whatsapp', islem: () => whatsappGonder(f) },
+    { etiket: t('faturalar.gorselGonder'), ikon: 'pi pi-image', islem: () => faturaGorselGonder(f) },
     { etiket: t('common.duplicate'), ikon: 'pi pi-copy', islem: () => cogalt(f) },
     { etiket: t('faturaGecmis.title'), ikon: 'pi pi-history', islem: () => gecmisAc(f) }
   ]

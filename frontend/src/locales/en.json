@@ -103,7 +103,10 @@
     "sirket": "Select Company",
     "welcome": "Welcome to RasPel ERP",
     "sessionExpiring": "Session Expiring Soon",
-    "extendSession": "Extend Session"
+    "extendSession": "Extend Session",
+    "sessionTimer": "Session time",
+    "extend30": "+30 min",
+    "extendTooltip": "Extend session by 30 minutes"
   },
   "giris": {
     "subtitle": "The SME's Single Dashboard",
@@ -457,6 +460,11 @@
     "faturaTuruSeciniz": "Select invoice type",
     "kalemleriDoldurun": "Fill in all items completely",
     "whatsappMesaj": "Dear {ad},\nYour invoice {no} with an amount of {tutar} has been issued. Kind regards.\nRaspel ERP",
+    "gorselGonder": "Send Invoice Image",
+    "gorselMesaj": "Dear {ad}, your invoice {no} for {tutar} is attached/shown below. Kind regards.\nRaspel ERP",
+    "gorselKopyalandi": "Invoice image copied to clipboard and downloaded. You can paste it into the WhatsApp chat.",
+    "gorselIndirildi": "Invoice image downloaded. You can attach it to the WhatsApp chat.",
+    "gorselHata": "Could not generate the invoice image",
     "onizle": "Preview"
   },
   "stoklar": {
@@ -1454,6 +1462,7 @@
     "silmeHata": "Failed to delete account",
     "topluSilmeOnayi": "Bulk Delete Confirmation",
     "topluSilindi": "Selected accounts deleted",
+    "topluSilindiSayi": "{n} accounts deleted",
     "epostaAdresiYok": "No selected account has an email address",
     "epostaIstemiAcildi": "Email client opened for {n} recipients",
     "hareketlerHata": "Failed to load transactions",
@@ -4147,6 +4156,8 @@
     "bugununOzetiHedefler": "Today's Summary & Targets",
     "bugunkuTahsilatKart": "Today's Collections",
     "bugunkuOdemeKart": "Today's Payments",
+    "vadesiGecenFatura": "Overdue Invoices",
+    "vadesiYaklasanFatura": "Upcoming Invoices",
     "bugunkuSiparis": "Today's Orders",
     "bekleyenTeslimat": "Pending Deliveries",
     "aylikCiroHedefi": "Monthly Revenue Target",

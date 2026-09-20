@@ -105,6 +105,36 @@ class PdfRaporServiceTest {
     }
 
     @Test
+    void faturaRaporu_lazyCariProxySiniSessionDisindaCozer() {
+        com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
+        fatura.setId(2L);
+        fatura.setFaturaNumarasi("FTR-002");
+        fatura.setTur(com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS);
+        fatura.setSirketId(1L);
+
+        // Lazy proxy: getId() calisir; alan erisimine gerek kalmadan cari yeniden yuklenmeli.
+        com.raspel.erp.entity.finans.CariHesap proxy = mock(com.raspel.erp.entity.finans.CariHesap.class);
+        when(proxy.getId()).thenReturn(4L);
+        fatura.setCariHesap(proxy);
+
+        when(faturaRepository.findById(2L)).thenReturn(Optional.of(fatura));
+        when(faturaKalemRepository.findByFaturaId(2L)).thenReturn(List.of());
+        com.raspel.erp.entity.sistem.Sirket sirket = new com.raspel.erp.entity.sistem.Sirket();
+        sirket.setId(1L);
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(sirket));
+        com.raspel.erp.entity.finans.CariHesap gercek = new com.raspel.erp.entity.finans.CariHesap();
+        gercek.setId(4L);
+        gercek.setAd("Müşteri A");
+        when(cariHesapRepository.findById(4L)).thenReturn(Optional.of(gercek));
+
+        byte[] pdf = pdfRaporService.faturaRaporu(2L);
+
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 0);
+        verify(cariHesapRepository).findById(4L);
+    }
+
+    @Test
     void faturaRaporu_sunucudakiSablonuUygular() {
         com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
         fatura.setId(1L);

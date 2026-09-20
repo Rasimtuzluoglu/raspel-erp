@@ -105,7 +105,10 @@
     "sirket": "Şirket Seçiniz",
     "welcome": "RasPel ERP'ye Hoş Geldiniz",
     "sessionExpiring": "Oturum Süresi Dolmak Üzere",
-    "extendSession": "Oturumu Uzat"
+    "extendSession": "Oturumu Uzat",
+    "sessionTimer": "Oturum süresi",
+    "extend30": "+30 dk",
+    "extendTooltip": "Oturumu 30 dakika uzat"
   },
   "giris": {
     "subtitle": "KOBİ'nin Tek Panosu",
@@ -459,6 +462,11 @@
     "faturaTuruSeciniz": "Fatura türü seçiniz",
     "kalemleriDoldurun": "Tüm kalemleri eksiksiz doldurun",
     "whatsappMesaj": "Sayın {ad},\n{no} numaralı, {tutar} tutarındaki faturanız düzenlenmiştir. Bilginize sunarız.\nRaspel ERP",
+    "gorselGonder": "Fatura Görseli Gönder",
+    "gorselMesaj": "Sayın {ad}, {no} numaralı, {tutar} tutarındaki faturanız ekte/görseldedir. Bilginize sunarız.\nRaspel ERP",
+    "gorselKopyalandi": "Fatura görseli panoya kopyalandı ve indirildi. WhatsApp sohbetine yapıştırabilirsiniz.",
+    "gorselIndirildi": "Fatura görseli indirildi. WhatsApp sohbetine ekleyebilirsiniz.",
+    "gorselHata": "Fatura görseli oluşturulamadı",
     "onizle": "Önizle"
   },
   "stoklar": {
@@ -1456,6 +1464,7 @@
     "silmeHata": "Cari hesap silinirken hata oluştu",
     "topluSilmeOnayi": "Toplu Silme Onayı",
     "topluSilindi": "Seçili cari hesaplar silindi",
+    "topluSilindiSayi": "{n} cari silindi",
     "epostaAdresiYok": "E-posta adresi olan seçili cari yok",
     "epostaIstemiAcildi": "{n} alıcıya e-posta istemcisi açıldı",
     "hareketlerHata": "Hareketler yüklenirken hata oluştu",
@@ -4149,6 +4158,8 @@
     "bugununOzetiHedefler": "Bugünün Özeti & Hedefler",
     "bugunkuTahsilatKart": "Bugünkü Tahsilat",
     "bugunkuOdemeKart": "Bugünkü Ödeme",
+    "vadesiGecenFatura": "Vadesi Geçen Fatura",
+    "vadesiYaklasanFatura": "Vadesi Yaklaşan Fatura",
     "bugunkuSiparis": "Bugünkü Sipariş",
     "bekleyenTeslimat": "Bekleyen Teslimat",
     "aylikCiroHedefi": "Aylık Ciro Hedefi",

@@ -12,4 +12,6 @@ import java.util.List;
 @Repository
 public interface CekSenetRepository extends JpaRepository<CekSenet, Long> {
     Page<CekSenet> findBySirketIdOrderByVadeTarihiAsc(Long sirketId, Pageable pageable);
+
+    long countByCariHesapId(Long cariHesapId);
 }

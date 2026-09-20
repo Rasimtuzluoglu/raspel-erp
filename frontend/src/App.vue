@@ -139,38 +139,6 @@
     <ConfirmDialog />
 
     <MobilAltMenu v-if="altMenuGoster" />
-
-    <Dialog
-      v-model:visible="oturum.goster"
-      :header="$t('auth.sessionExpiring')"
-      :modal="true"
-      :closable="false"
-      style="width: 400px"
-    >
-      <div class="oturum-uyari">
-        <i class="pi pi-exclamation-triangle oturum-ikon" />
-        <p>
-          Oturumunuz <strong>{{ oturum.kalanSaniye }} saniye</strong> içinde sona erecek.
-        </p>
-        <p class="oturum-ipucu">
-          Devam etmek için "Oturumu Uzat" butonuna tıklayın.
-        </p>
-      </div>
-      <template #footer>
-        <Button
-          :label="$t('auth.logout')"
-          icon="pi pi-sign-out"
-          class="p-button-text"
-          @click="oturum.cikis"
-        />
-        <Button
-          :label="$t('auth.extendSession')"
-          icon="pi pi-refresh"
-          class="p-button-primary"
-          @click="oturum.devamEt"
-        />
-      </template>
-    </Dialog>
   </div>
 </template>
 
@@ -179,7 +147,6 @@ import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } fr
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
-import { useOturumUyarisi } from './composables/useOturumUyarisi.js'
 import { useSunumModu } from './composables/useSunumModu.js'
 import { useToast } from 'primevue/usetoast'
 import { useMagicKeys } from '@vueuse/core'
@@ -224,7 +191,6 @@ const marjAcik = ref(false)
 const ibanAcik = ref(false)
 const tcAcik = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
-const oturum = useOturumUyarisi()
 
 // Klavye Kisayollari (Ctrl+K / Cmd+K aramayi acar)
 watch([ctrl_k, cmd_k], ([ctrl, cmd]) => {

@@ -2,6 +2,40 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.29.0] - 2026-09-20 (Kullanıcı Geri Bildirimleri: UX, Güvenlik, PDF)
+### Dashboard
+- Bugünkü Ödeme kartının sağındaki boş alan **Vadesi Geçen Fatura** ve **Vadesi Yaklaşan Fatura** kartlarıyla dolduruldu (mevcut `/api/dashboard` verisi kullanıldı, yeni sorgu yok).
+
+### Hesap Makinesi
+- **Klavye düzeltmesi**: tuş dinleyicisi artık `onMounted` ile kaydediliyor (bileşen `v-if` ile açıldığı için eski watcher hiç tetiklenmiyordu). İşlenen tuşlarda global kısayollara sızma engellendi.
+
+### Oturum Güvenliği
+- Oturum süresi **1 saat** (mutlak) olarak ayarlandı (`JWT_EXPIRATION_MS`).
+- Başlıkta **kalıcı geri sayım**; son **10 dakikada kırmızı**, yanında **"+30 dk"** uzatma butonu.
+- Yeni `POST /api/kullanicilar/oturum-uzat` ucu: mevcut bitişe 30 dk ekler (üst sınır 2 saat), yeni token üretip cookie'yi yeniler ve eski token'ı iptal eder.
+- `tokenSuresiDolduMu` artık `sessionStorage`'ı da dikkate alıyor (beni hatırla kapalıyken de doğru çalışır).
+
+### Cari Hesap Silme Güvenliği
+- Silme **yalnızca ADMIN** (arayüzde toplu/tek silme ADMIN'e kısıtlandı; backend zaten ADMIN).
+- **İşlem kaydı olan cari silinemez**: hareket, fatura, teklif, sipariş, satınalma siparişi, çek/senet, irsaliye, taksit ve stok hareketi kontrol edilir; engeller kullanıcıya birlikte raporlanır.
+- Not, CRM aktivite/fırsat ve cari özel fiyat kayıtları cari ile **birlikte silinir**.
+- Yeni `DELETE /api/cari-hesaplar/toplu-sil` (ADMIN): tek istekte toplu silme, her kayıt için sonuç/atlanma nedeni döner.
+- Cari silme artık **denetim kaydına** yazılıyor.
+
+### Fatura Gönderimi
+- Yeni `GET /api/rapor/fatura/{id}/gorsel`: faturayı **PNG görsel** olarak üretir (PDFBox raster).
+- Faturalar'da **"Fatura Görseli Gönder"**: görseli panoya kopyalar + indirir, WhatsApp sohbetini (telefon varsa) mesajla açar → yarı-otomatik gönderim.
+
+### PDF Kalitesi (kapsamlı yeniden tasarım)
+- Ortak düzen altyapısı: **metin kaydırma** (uzun ad/adres/açıklama taşmıyor), **sağa hizalı sayısal sütunlar**, zebra satırlar, tablo başlığının yeni sayfada yinelenmesi ve **sayfa numaralı alt bilgi**.
+- **Gerçek şirket başlığı** (ad, vergi dairesi/no, adres, telefon, e-posta, logo) ve **müşteri/tedarikçi bloğu**; müşteriye basılan "Cari Hesap ID" kaldırıldı.
+- **KDV dökümü**: Ara Toplam, İskonto, KDV, **Genel Toplam**; ödeme durumu seçeneğiyle Ödenen/Kalan.
+- **Türkçe para biçimi** (1.234,56 ₺); tüm raporlar (fatura, sipariş, irsaliye, teslimat fişi, tablo raporları) yeni düzene geçti.
+- Şablon seçenekleri PDF'e yansıyor: alt başlık, logo, **QR kod**, **imza kutusu**, ödeme durumu.
+
+### Testler
+- Backend **1145**, frontend **720** test (0 hata); lint + i18n + build temiz.
+
 ## [1.28.0] - 2026-09-20 (Güvenlik Yükseltmesi ve CI/CD Onarımı)
 ### Güvenlik
 - **Spring Boot 3.2.12 → 3.5.16**: Tomcat, Spring Security, Spring Framework, Jackson kaynaklı CRITICAL/HIGH CVE'ler kapatıldı (özellikle `spring-security-web` CRITICAL ve `tomcat-embed-core` serisi).

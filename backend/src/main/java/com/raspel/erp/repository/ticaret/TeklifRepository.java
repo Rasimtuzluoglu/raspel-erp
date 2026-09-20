@@ -21,4 +21,6 @@ public interface TeklifRepository extends JpaRepository<Teklif, Long> {
     boolean existsBySirketIdAndTeklifNoAndRevizyonNo(Long sirketId, String teklifNo, Integer revizyonNo);
 
     long countBySirketIdAndDurum(Long sirketId, String durum);
+
+    long countByCariHesapId(Long cariHesapId);
 }

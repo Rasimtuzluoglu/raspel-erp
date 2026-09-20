@@ -164,6 +164,10 @@
           </button>
         </div>
 
+        <div class="admin-oturum">
+          <OturumSayaci />
+        </div>
+
         <div class="admin-actions">
           <BildirimZili class="bildirim-zili-kapsayici" />
           <ThemeSwitcher />
@@ -307,6 +311,7 @@ import { sirketAPI } from '../api/index.js'
 import { personelIzinAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
+import OturumSayaci from './OturumSayaci.vue'
 import KisayolRehberi from './KisayolRehberi.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { useTheme } from '../composables/useTheme.js'

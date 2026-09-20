@@ -146,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 const props = defineProps({ visible: Boolean })
 defineEmits(['update:visible'])
 
@@ -226,6 +226,7 @@ const kopyala = async () => {
 const klavyeTusu = (e) => {
   if (!props.visible) return
   const k = e.key
+  let islendi = true
   if (k >= '0' && k <= '9') {
     e.preventDefault()
     rakam(k)
@@ -250,27 +251,39 @@ const klavyeTusu = (e) => {
   } else if (k === 'Backspace') {
     e.preventDefault()
     sil()
-  } else if (k === 'Escape' || k === 'c' || k === 'C') {
+  } else if (k === 'c' || k === 'C') {
+    e.preventDefault()
     temizle()
   } else if (k === '%') {
     e.preventDefault()
     yuzde()
+  } else {
+    islendi = false
   }
+  // Islenen tuslarda global kisayollara (orn. sayfa arama) sizmasini engelle.
+  // Escape bilerek disarida: App.vue makineyi Escape ile kapatir.
+  if (islendi) e.stopPropagation()
 }
+
+// Bilesen v-if ile yalnizca acikken mount edildigi icin dinleyiciyi
+// dogrudan onMounted'ta kaydetmek gerekir (watch tek basina tetiklenmez).
+onMounted(() => {
+  if (props.visible) document.addEventListener('keydown', klavyeTusu, true)
+})
 
 watch(
   () => props.visible,
   (v) => {
     if (v) {
-      document.addEventListener('keydown', klavyeTusu)
+      document.addEventListener('keydown', klavyeTusu, true)
     } else {
-      document.removeEventListener('keydown', klavyeTusu)
+      document.removeEventListener('keydown', klavyeTusu, true)
     }
   }
 )
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', klavyeTusu)
+  document.removeEventListener('keydown', klavyeTusu, true)
 })
 </script>
 

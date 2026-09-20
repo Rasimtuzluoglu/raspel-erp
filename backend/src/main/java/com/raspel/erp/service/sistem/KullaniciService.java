@@ -575,15 +575,49 @@ public class KullaniciService {
         }
     }
 
+    private static final long OTURUM_UZATMA_MS = 30 * 60 * 1000L; // "Uzat" basina +30 dk
+    private static final long OTURUM_MAX_MS = 2 * 60 * 60 * 1000L;  // mutlak ust sinir (suiistimali onler)
+
+    /** Oturum acikken suresi bitmek uzereyse 30 dk daha verir; ust sinir 2 saattir. */
+    public LoginResponse oturumUzat(Long kullaniciId, String mevcutToken) {
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
+        if (!k.getActive()) throw new BusinessException("Bu kullanıcı aktif değil");
+        long simdi = System.currentTimeMillis();
+        Long mevcutBitis = mevcutToken != null ? jwtUtil.getExpirationFromToken(mevcutToken) : null;
+        long temel = (mevcutBitis != null && mevcutBitis > simdi) ? mevcutBitis : simdi;
+        long hedef = Math.min(temel + OTURUM_UZATMA_MS, simdi + OTURUM_MAX_MS);
+        LoginResponse yanit = tokenOlusturVeDon(k, null, null, hedef);
+        // Eski token'i iptal et (yeni token ile oturum devam eder).
+        try {
+            if (mevcutToken != null) {
+                String eskiJti = jwtUtil.getJtiFromToken(mevcutToken);
+                if (eskiJti != null) aktifOturumService.oturumIptal(eskiJti);
+            }
+        } catch (Exception ignored) {
+            // Eski token iptal edilemezse yeni token yine de gecerlidir.
+        }
+        return yanit;
+    }
+
     private LoginResponse tokenOlusturVeDon(Kullanici k, String istekFirma, Long istekSirketId) {
+        return tokenOlusturVeDon(k, istekFirma, istekSirketId, null);
+    }
+
+    private LoginResponse tokenOlusturVeDon(Kullanici k, String istekFirma, Long istekSirketId, Long ozelBitisMs) {
         String company = istekFirma != null && !istekFirma.isBlank() ? istekFirma : k.getCompanyName();
         Long sirketId = istekSirketId != null ? istekSirketId : k.getSirketId();
         String sirketAdi = null;
         if (sirketId != null) {
             sirketAdi = sirketRepository.findById(sirketId).map(Sirket::getAd).orElse(null);
         }
-        String token = jwtUtil.generateToken(k, sirketId, sirketAdi);
-        aktifOturumKaydet(token, k, sirketId);
+        long bitisMs = ozelBitisMs != null ? ozelBitisMs : System.currentTimeMillis() + jwtExpirationMs;
+        long gecerlilikMs = Math.max(bitisMs - System.currentTimeMillis(), 1000L);
+        // Ozel bitis verilmediyse varsayilan sureli token uret (mevcut davranis korunur).
+        String token = ozelBitisMs != null
+                ? jwtUtil.generateToken(k, sirketId, sirketAdi, gecerlilikMs)
+                : jwtUtil.generateToken(k, sirketId, sirketAdi);
+        aktifOturumKaydet(token, k, sirketId, ozelBitisMs != null ? gecerlilikMs : jwtExpirationMs);
         return LoginResponse.builder()
                 .id(k.getId())
                 .username(k.getUsername())
@@ -595,12 +629,16 @@ public class KullaniciService {
                 .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
                 .personelId(personelIdBul(k))
                 .token(token)
-                .tokenExpiresAt(System.currentTimeMillis() + jwtExpirationMs)
+                .tokenExpiresAt(bitisMs)
                 .twoFactorGerekli(false)
                 .build();
     }
 
     private void aktifOturumKaydet(String token, Kullanici k, Long sirketId) {
+        aktifOturumKaydet(token, k, sirketId, jwtExpirationMs);
+    }
+
+    private void aktifOturumKaydet(String token, Kullanici k, Long sirketId, long ttlMs) {
         try {
             String jti = jwtUtil.getJtiFromToken(token);
             String ip = null;
@@ -610,7 +648,7 @@ public class KullaniciService {
             } catch (Exception ignored) {
                 // Request context yoksa (test/dahili çağrı) IP kaydedilmez
             }
-            aktifOturumService.oturumKaydet(jti, k.getId(), k.getUsername(), sirketId, ip, Duration.ofMillis(jwtExpirationMs));
+            aktifOturumService.oturumKaydet(jti, k.getId(), k.getUsername(), sirketId, ip, Duration.ofMillis(ttlMs));
         } catch (Exception e) {
             log.warn("Aktif oturum kaydedilemedi: {}", e.getMessage());
         }

@@ -51,6 +51,16 @@ public class PdfRaporController {
                 .body(pdf);
     }
 
+    @GetMapping("/fatura/{id}/gorsel")
+    @Operation(summary = "Fatura görseli (PNG)", description = "Faturayı müşteriye göndermek için PNG görsel olarak döndürür")
+    public ResponseEntity<byte[]> faturaGorsel(@PathVariable Long id) {
+        byte[] png = pdfRaporService.faturaGorselPng(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=fatura_" + id + ".png")
+                .contentType(MediaType.IMAGE_PNG)
+                .body(png);
+    }
+
     @GetMapping("/irsaliye/{id}")
     @Operation(summary = "İrsaliye raporu PDF", description = "İrsaliye detaylarını PDF olarak indirir")
     public ResponseEntity<byte[]> irsaliyeRaporu(@PathVariable Long id) {

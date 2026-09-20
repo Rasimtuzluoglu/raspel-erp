@@ -23,4 +23,6 @@ public interface TaksitRepository extends JpaRepository<Taksit, Long>, JpaSpecif
     List<Taksit> findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(Long sirketId, Long cariHesapId);
 
     void deleteByPlanNoAndSirketId(String planNo, Long sirketId);
+
+    long countByCariHesap_Id(Long cariHesapId);
 }

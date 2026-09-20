@@ -157,6 +157,31 @@ public class CariHesapController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/toplu-sil")
+    @Operation(summary = "Cari hesapları toplu sil",
+            description = "Verilen cari ID'lerini siler. İşlem kaydı olan cari silinmez; sonuç raporlanır. (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> cariHesaplariTopluSil(@RequestBody List<Long> idler) {
+        if (idler == null || idler.isEmpty()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "Silinecek kayıt seçilmedi"));
+        }
+        List<Long> silinen = new java.util.ArrayList<>();
+        List<java.util.Map<String, Object>> atlanan = new java.util.ArrayList<>();
+        for (Long id : idler) {
+            try {
+                cariHesapService.cariHesapSil(id);
+                silinen.add(id);
+            } catch (Exception e) {
+                atlanan.add(java.util.Map.of("id", id, "neden", e.getMessage() != null ? e.getMessage() : "Silinemedi"));
+            }
+        }
+        java.util.Map<String, Object> sonuc = new java.util.LinkedHashMap<>();
+        sonuc.put("istenen", idler.size());
+        sonuc.put("silinen", silinen);
+        sonuc.put("atlanan", atlanan);
+        return ResponseEntity.ok(sonuc);
+    }
+
     // CARİYE ÖZEL FİYAT
 
     @GetMapping("/{id}/fiyatlar")

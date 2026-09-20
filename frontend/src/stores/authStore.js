@@ -232,6 +232,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Oturumun bitişine 30 dakika ekler (sunucu yeni token üretip cookie'yi yeniler). */
+  const oturumUzat = async () => {
+    const r = await kullaniciAPI.oturumUzat()
+    const data = r.data || {}
+    if (data.tokenExpiresAt) tokenExpiresAt.value = data.tokenExpiresAt
+    if (data.token) token.value = data.token
+    authKaydet(localStorage.getItem(AUTH_ANAHTAR) != null)
+    return data
+  }
+
   init()
 
   return {
@@ -256,6 +266,7 @@ export const useAuthStore = defineStore('auth', () => {
     cikisYap,
     kullaniciGuncelle,
     yetkileriYukle,
+    oturumUzat,
     init
   }
 })

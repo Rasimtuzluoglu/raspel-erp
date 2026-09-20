@@ -14,4 +14,6 @@ public interface IrsaliyeRepository extends JpaRepository<Irsaliye, Long> {
     List<Irsaliye> findBySirketIdAndSiparisId(Long sirketId, Long siparisId);
 
     List<Irsaliye> findBySirketIdAndSiparisIdIn(Long sirketId, java.util.Collection<Long> siparisIdler);
+
+    long countByCariHesapId(Long cariHesapId);
 }

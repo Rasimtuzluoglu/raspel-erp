@@ -11,4 +11,6 @@ import java.util.List;
 public interface SatinalmaSiparisRepository extends JpaRepository<SatinalmaSiparis, Long> {
     Page<SatinalmaSiparis> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
     List<SatinalmaSiparis> findByCariHesapId(Long cariHesapId);
+
+    long countByCariHesapId(Long cariHesapId);
 }

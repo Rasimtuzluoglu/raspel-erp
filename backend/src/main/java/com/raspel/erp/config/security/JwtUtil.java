@@ -47,6 +47,11 @@ public class JwtUtil {
     }
 
     public String generateToken(Kullanici kullanici, Long sirketId, String sirketAdi) {
+        return generateToken(kullanici, sirketId, sirketAdi, expirationMs);
+    }
+
+    /** Belirtilen gecerlilik suresiyle token uretir (oturum uzatma icin). */
+    public String generateToken(Kullanici kullanici, Long sirketId, String sirketAdi, long gecerlilikMs) {
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(kullanici.getUsername())
@@ -57,9 +62,18 @@ public class JwtUtil {
                 .claim("sirketAdi", sirketAdi)
                 .claim("tokenVersion", kullanici.getTokenVersion() != null ? kullanici.getTokenVersion() : 0L)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(new Date(System.currentTimeMillis() + gecerlilikMs))
                 .signWith(signingKey)
                 .compact();
+    }
+
+    /** Token'in bitis zamanini (epoch ms) dondurur; okunamazsa null. */
+    public Long getExpirationFromToken(String token) {
+        try {
+            return getClaims(token).getPayload().getExpiration().getTime();
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public String getUsernameFromToken(String token) {

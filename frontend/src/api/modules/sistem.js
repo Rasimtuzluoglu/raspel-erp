@@ -69,6 +69,9 @@ export const kullaniciAPI = {
   },
   sirketDegistir(sirketId) {
     return apiClient.post('/kullanicilar/sirket-degistir', { sirketId })
+  },
+  oturumUzat() {
+    return apiClient.post('/kullanicilar/oturum-uzat')
   }
 }
 

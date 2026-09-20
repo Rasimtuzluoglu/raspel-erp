@@ -385,6 +385,24 @@
             <strong class="mini-stat-deger gizli-veri">{{ formatCurrency(dashboardStore?.bugunkuOdeme || 0) }}</strong>
           </div>
         </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon gecen-fatura">
+            <i class="pi pi-exclamation-circle" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">{{ t('dashboard.vadesiGecenFatura') }}</span>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.vadesiGecenFaturalar?.length || 0 }}</strong>
+          </div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon yaklasan-fatura">
+            <i class="pi pi-calendar-clock" />
+          </div>
+          <div class="mini-stat-icerik">
+            <span class="mini-stat-etiket">{{ t('dashboard.vadesiYaklasanFatura') }}</span>
+            <strong class="mini-stat-deger gizli-veri">{{ dashboardStore?.vadesiYaklasanFaturalar?.length || 0 }}</strong>
+          </div>
+        </div>
       </div>
 
       <!-- 1c. CARİ ÖZET & TAHSİLAT TAKİBİ -->
@@ -2047,6 +2065,12 @@ const whatsappLink = (f) => {
 }
 .mini-stat-icon.odeme {
   background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+.mini-stat-icon.gecen-fatura {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+}
+.mini-stat-icon.yaklasan-fatura {
+  background: linear-gradient(135deg, #f97316, #ea580c);
 }
 .mini-stat-icerik {
   display: flex;

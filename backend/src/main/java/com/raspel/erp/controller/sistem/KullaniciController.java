@@ -263,6 +263,24 @@ public class KullaniciController {
         return ResponseEntity.ok(loginResponse);
     }
 
+    @PostMapping("/oturum-uzat")
+    @Operation(summary = "Oturumu uzat", description = "Süresi dolmak üzere olan oturuma 30 dakika ekler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
+    public ResponseEntity<LoginResponse> oturumUzat(
+            @CookieValue(value = "jwt", required = false) String jwtToken,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        String mevcutToken = jwtToken;
+        if (mevcutToken == null || mevcutToken.isBlank()) {
+            String auth = request.getHeader("Authorization");
+            if (auth != null && auth.startsWith("Bearer ")) mevcutToken = auth.substring(7);
+        }
+        LoginResponse loginResponse = kullaniciService.oturumUzat(kullaniciId, mevcutToken);
+        jwtCookieEkle(response, loginResponse.getToken());
+        return ResponseEntity.ok(loginResponse);
+    }
+
     private void jwtCookieEkle(HttpServletResponse response, String token) {
         jwtCookieEkle(response, token, false);
     }

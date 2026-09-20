@@ -246,6 +246,7 @@
             @click="topluEmailDialog = true"
           />
           <Button
+            v-if="isAdmin"
             :label="t('cariHesaplar.topluSil')"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"
@@ -961,6 +962,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { useRouter } from 'vue-router'
 import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
@@ -978,6 +980,8 @@ import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore?.kullanici?.role === 'ADMIN')
 const router = useRouter()
 const { kopyala } = usePanoyaKopyala()
 const { t } = useI18n()
@@ -1184,13 +1188,19 @@ const closeDialog = () => {
   submitted.value = false
 }
 
-const cariEylemleri = (c) => [
-  { etiket: t('cariHesaplar.tahsilat'), ikon: 'pi pi-money-bill', islem: () => tahsilatAc(c) },
-  { etiket: t('cariHesaplar.borclandirma'), ikon: 'pi pi-plus-circle', islem: () => borclandirmaAc(c) },
-  { etiket: t('cariHesaplar.hareketlerDetay'), ikon: 'pi pi-list', islem: () => viewHareketler(c) },
-  { etiket: t('cariKart.baslik'), ikon: 'pi pi-id-card', islem: () => kartAc(c) },
-  { etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDelete(c.id) }
-]
+const cariEylemleri = (c) => {
+  const eylemler = [
+    { etiket: t('cariHesaplar.tahsilat'), ikon: 'pi pi-money-bill', islem: () => tahsilatAc(c) },
+    { etiket: t('cariHesaplar.borclandirma'), ikon: 'pi pi-plus-circle', islem: () => borclandirmaAc(c) },
+    { etiket: t('cariHesaplar.hareketlerDetay'), ikon: 'pi pi-list', islem: () => viewHareketler(c) },
+    { etiket: t('cariKart.baslik'), ikon: 'pi pi-id-card', islem: () => kartAc(c) }
+  ]
+  // Cari silme yalnizca ADMIN; islem kaydi olan cari backend'de engellenir.
+  if (isAdmin.value) {
+    eylemler.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDelete(c.id) })
+  }
+  return eylemler
+}
 
 const editCariHesap = (cariHesap) => {
   editingId.value = cariHesap.id
@@ -1268,19 +1278,19 @@ const batchSil = () => {
     header: t('cariHesaplar.topluSilmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
-      const sonuclar = await Promise.allSettled(
-        [...selectedCariHesaplar.value].map((c) => cariHesapStore.deleteCariHesap(c.id))
-      )
-      sonuclar.forEach((r) => {
-        if (r.status === 'rejected') {
-          toastBildirim.hata(
-            r.reason?.response?.data?.message || r.reason?.message || t('cariHesaplar.silmeHata')
-          )
-        }
-      })
-      selectedCariHesaplar.value = []
-      await loadCariHesaplar()
-      toastBildirim.basarili(t('cariHesaplar.topluSilindi'))
+      try {
+        const ids = selectedCariHesaplar.value.map((c) => c.id).filter((v) => v != null)
+        const r = await cariHesapAPI.topluSil(ids)
+        const silinen = r.data?.silinen?.length || 0
+        const atlanan = r.data?.atlanan || []
+        if (silinen > 0) toastBildirim.basarili(t('cariHesaplar.topluSilindiSayi', { n: silinen }))
+        atlanan.forEach((a) => toastBildirim.hata(a.neden))
+      } catch (error) {
+        toastBildirim.hata(error?.response?.data?.message || t('cariHesaplar.silmeHata'))
+      } finally {
+        selectedCariHesaplar.value = []
+        await loadCariHesaplar()
+      }
     }
   })
 }

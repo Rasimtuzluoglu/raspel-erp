@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -451,5 +452,34 @@ class KullaniciServiceTest {
         assertEquals(1L, k.getTokenVersion());
         assertTrue(token.getKullanildi());
         verify(sifreSifirlaTokenRepository).save(token);
+    }
+
+    @Test
+    void oturumUzat_30DakikaEklerVeEskiTokeniIptalEder() {
+        Kullanici k = createKullanici(1L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(jwtUtil.getExpirationFromToken("eski")).thenReturn(System.currentTimeMillis() + 5 * 60 * 1000);
+        when(jwtUtil.generateToken(eq(k), isNull(), isNull(), anyLong())).thenReturn("yeni");
+        when(jwtUtil.getJtiFromToken("yeni")).thenReturn("jti-yeni");
+        when(jwtUtil.getJtiFromToken("eski")).thenReturn("jti-eski");
+
+        LoginResponse r = kullaniciService.oturumUzat(1L, "eski");
+
+        assertNotNull(r);
+        assertEquals("yeni", r.getToken());
+        // Bitis: mevcut bitis + 30 dk (veya simdi + 30 dk) civarinda olmali.
+        assertTrue(r.getTokenExpiresAt() > System.currentTimeMillis() + 25 * 60 * 1000);
+        verify(aktifOturumService).oturumKaydet(eq("jti-yeni"), eq(1L), any(), any(), any(), any());
+        verify(aktifOturumService).oturumIptal("jti-eski");
+    }
+
+    @Test
+    void oturumUzat_pasifKullaniciReddedilir() {
+        Kullanici k = createKullanici(2L);
+        k.setActive(false);
+        when(kullaniciRepository.findById(2L)).thenReturn(Optional.of(k));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.oturumUzat(2L, "eski"));
     }
 }

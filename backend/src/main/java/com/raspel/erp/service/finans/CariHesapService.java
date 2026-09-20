@@ -9,6 +9,17 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.TeklifRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.repository.ticaret.SatinalmaSiparisRepository;
+import com.raspel.erp.repository.ticaret.CrmAktiviteRepository;
+import com.raspel.erp.repository.ticaret.CariFirsatRepository;
+import com.raspel.erp.repository.finans.CekSenetRepository;
+import com.raspel.erp.repository.finans.TaksitRepository;
+import com.raspel.erp.repository.muhasebe.IrsaliyeRepository;
+import com.raspel.erp.repository.envanter.StokHareketRepository;
+import com.raspel.erp.repository.sistem.NotRepository;
+import com.raspel.erp.service.sistem.AuditLogService;
 import com.raspel.erp.repository.finans.CariFiyatRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.entity.finans.CariFiyat;
@@ -43,6 +54,17 @@ public class CariHesapService {
     private final CariHesapRepository cariHesapRepository;
     private final HareketRepository hareketRepository;
     private final FaturaRepository faturaRepository;
+    private final TeklifRepository teklifRepository;
+    private final SiparisRepository siparisRepository;
+    private final SatinalmaSiparisRepository satinalmaSiparisRepository;
+    private final CekSenetRepository cekSenetRepository;
+    private final IrsaliyeRepository irsaliyeRepository;
+    private final TaksitRepository taksitRepository;
+    private final StokHareketRepository stokHareketRepository;
+    private final NotRepository notRepository;
+    private final CrmAktiviteRepository crmAktiviteRepository;
+    private final CariFirsatRepository cariFirsatRepository;
+    private final AuditLogService auditLogService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final CariFiyatRepository cariFiyatRepository;
@@ -223,18 +245,46 @@ public class CariHesapService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
 
-        long hareketSayisi = hareketRepository.countByCariHesapId(id);
-        if (hareketSayisi > 0) {
-            throw new BusinessException("Bu cari hesaba ait " + hareketSayisi + " adet hareket bulunmaktadır. Önce hareketleri siliniz.");
-        }
+        // Islem gormus cari silinemez: finansal/operasyonel kayitlar engel teskil eder.
+        silmeEngelleriniKontrol(id);
 
-        long faturaSayisi = faturaRepository.countByCariHesapId(id);
-        if (faturaSayisi > 0) {
-            throw new BusinessException("Bu cari hesaba ait " + faturaSayisi + " adet fatura bulunmaktadır. Önce faturaları iptal/siliniz.");
-        }
+        // Islem niteligi tasimayan bagli kayitlar cari ile birlikte silinir.
+        cariFiyatRepository.deleteByCariHesapId(id);
+        notRepository.deleteByCariHesapId(id);
+        crmAktiviteRepository.deleteByCariHesapId(id);
+        cariFirsatRepository.deleteByCariHesapId(id);
 
         cariHesapRepository.deleteById(id);
+        auditLogService.finansalSilmeLog("CariHesap", id,
+                "Cari hesap silindi: " + cariHesap.getAd());
         log.info("Cari hesap başarıyla silindi - ID: {}", id);
+    }
+
+    /** Cariye bagli finansal/operasyonel kayit varsa silmeyi engeller. */
+    private void silmeEngelleriniKontrol(Long id) {
+        java.util.List<String> engeller = new java.util.ArrayList<>();
+        long hareket = hareketRepository.countByCariHesapId(id);
+        if (hareket > 0) engeller.add(hareket + " hareket");
+        long fatura = faturaRepository.countByCariHesapId(id);
+        if (fatura > 0) engeller.add(fatura + " fatura");
+        long teklif = teklifRepository.countByCariHesapId(id);
+        if (teklif > 0) engeller.add(teklif + " teklif");
+        long siparis = siparisRepository.countByCariHesapId(id);
+        if (siparis > 0) engeller.add(siparis + " sipariş");
+        long satinalma = satinalmaSiparisRepository.countByCariHesapId(id);
+        if (satinalma > 0) engeller.add(satinalma + " satınalma siparişi");
+        long cekSenet = cekSenetRepository.countByCariHesapId(id);
+        if (cekSenet > 0) engeller.add(cekSenet + " çek/senet");
+        long irsaliye = irsaliyeRepository.countByCariHesapId(id);
+        if (irsaliye > 0) engeller.add(irsaliye + " irsaliye");
+        long taksit = taksitRepository.countByCariHesap_Id(id);
+        if (taksit > 0) engeller.add(taksit + " taksit");
+        long stokHareket = stokHareketRepository.countByCariHesap_Id(id);
+        if (stokHareket > 0) engeller.add(stokHareket + " stok hareketi");
+        if (!engeller.isEmpty()) {
+            throw new BusinessException(
+                    "Bu cariye ait işlem kayıtları bulunduğu için silinemez: " + String.join(", ", engeller) + ".");
+        }
     }
     
     /**

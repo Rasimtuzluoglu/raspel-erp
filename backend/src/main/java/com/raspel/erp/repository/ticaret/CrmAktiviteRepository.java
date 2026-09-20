@@ -18,4 +18,7 @@ public interface CrmAktiviteRepository extends JpaRepository<CrmAktivite, Long> 
     List<CrmAktivite> findBySirketIdAndLeadIdOrderByOlusturmaTarihiDesc(Long sirketId, Long leadId);
 
     long countBySirketIdAndTamamlandiFalse(Long sirketId);
+
+    long countByCariHesapId(Long cariHesapId);
+    void deleteByCariHesapId(Long cariHesapId);
 }

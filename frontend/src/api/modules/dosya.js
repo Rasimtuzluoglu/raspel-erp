@@ -108,6 +108,9 @@ export const pdfAPI = {
   faturaOnizleme(id) {
     return apiClient.get(`/rapor/fatura/${id}/onizleme`, { responseType: 'blob' })
   },
+  faturaGorsel(id) {
+    return apiClient.get(`/rapor/fatura/${id}/gorsel`, { responseType: 'blob' })
+  },
   siparis(id) {
     return apiClient.get(`/rapor/siparis/${id}`, { responseType: 'blob' })
   },
