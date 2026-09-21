@@ -4513,11 +4513,24 @@
     "tur": "Tür",
     "giris": "Giriş",
     "cikis": "Çıkış",
-    "aciklama": "Açıklama"
+    "aciklama": "Açıklama",
+    "stokHareketleri": "Stok Hareketleri"
   },
   "bildirim": {
     "izinVer": "İzin Ver",
-    "ac": "Aç"
+    "ac": "Aç",
+    "baslik": "Bildirimler",
+    "tercihler": "Bildirim Tercihleri",
+    "temizle": "Temizle",
+    "masaustuBaslik": "Masaüstü Bildirimleri",
+    "masaustuAcik": "Masaüstü bildirimleri açık",
+    "tarayiciIzni": "Tarayıcı izni gerekli",
+    "pushBaslik": "Push Bildirimleri",
+    "pushDesteklenmiyor": "Bu tarayıcı push bildirimini desteklemiyor",
+    "pushAcik": "Push bildirimleri açık",
+    "pushKapali": "Push bildirimleri kapalı",
+    "kapat": "Kapat",
+    "yok": "Bildirim yok"
   },
   "onboarding": {
     "demoYukle": "Demo Veriyi Yükle",

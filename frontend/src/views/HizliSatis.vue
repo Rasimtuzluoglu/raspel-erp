@@ -672,6 +672,12 @@
                   class="fis-onizleme"
                 >
                   <div class="fis-header">
+                    <img
+                      v-if="sirketLogosu"
+                      :src="sirketLogosu"
+                      class="fis-logo"
+                      alt="logo"
+                    >
                     <div class="fis-baslik">
                       {{ sirketAdi || 'RASPEL ERP' }}
                     </div>
@@ -1060,6 +1066,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
+import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
@@ -1079,6 +1086,7 @@ const stokStore = useStokStore()
 const kategoriStore = useKategoriStore()
 const offlineKuyruk = useOfflineSatisKuyrugu()
 const { t } = useI18n()
+const { sirketLogosu } = useMarka()
 
 const offlineKuyruguSenkronizeEt = async () => {
   try {
@@ -1924,6 +1932,7 @@ const fisiYazdir = () => {
   .aracubuk button.iptal { background: #475569; }
   .fis { padding: 6px 4px; margin-top: 52px; }
   .baslik { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+.logo { display: block; max-height: 48px; max-width: 140px; margin: 0 auto 4px; object-fit: contain; }
   .tarih, .fisno { text-align: center; font-size: 10px; margin-top: 2px; }
   .musteri { margin-top: 6px; font-size: 11px; }
   .ayrac { text-align: center; color: #555; margin: 4px 0; letter-spacing: 1px; }
@@ -1944,6 +1953,7 @@ const fisiYazdir = () => {
     <button class="iptal" onclick="window.close()">${t('hizliSatis.kapat')}</button>
   </div>
   <div class="fis">
+    ${sirketLogosu.value ? `<img class="logo" src="${sirketLogosu.value}" alt="logo" />` : ''}
     <div class="baslik">${escapeHtml(sirketAdi.value || 'RASPEL ERP')}</div>
     <div class="tarih">${simdikiTarih.value}</div>
     <div class="fisno">${t('hizliSatis.fisNo')} ${fisNo.value}</div>
@@ -3367,6 +3377,13 @@ const sepetiTemizle = () => {
 .fis-header {
   text-align: center;
   margin-bottom: 6px;
+}
+.fis-logo {
+  display: block;
+  max-height: 40px;
+  max-width: 120px;
+  margin: 0 auto 4px;
+  object-fit: contain;
 }
 .fis-baslik {
   font-size: 13px;

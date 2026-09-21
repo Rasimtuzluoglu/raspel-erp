@@ -4513,11 +4513,24 @@
     "tur": "Type",
     "giris": "In",
     "cikis": "Out",
-    "aciklama": "Description"
+    "aciklama": "Description",
+    "stokHareketleri": "Stock Movements"
   },
   "bildirim": {
     "izinVer": "Allow",
-    "ac": "Open"
+    "ac": "Enable",
+    "baslik": "Notifications",
+    "tercihler": "Notification Preferences",
+    "temizle": "Clear",
+    "masaustuBaslik": "Desktop Notifications",
+    "masaustuAcik": "Desktop notifications on",
+    "tarayiciIzni": "Browser permission required",
+    "pushBaslik": "Push Notifications",
+    "pushDesteklenmiyor": "This browser does not support push notifications",
+    "pushAcik": "Push notifications on",
+    "pushKapali": "Push notifications off",
+    "kapat": "Turn off",
+    "yok": "No notifications"
   },
   "onboarding": {
     "demoYukle": "Load Demo Data",

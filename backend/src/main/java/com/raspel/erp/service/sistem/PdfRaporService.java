@@ -710,10 +710,24 @@ public class PdfRaporService {
             }
         }
 
+        // Urun (RasPel) logosu kucuk olarak sol ustte; sirket logosu sag ustte kalir.
+        float solX = MARGIN;
+        PDImageXObject urunLogo = urunLogoYukle(doc);
+        if (urunLogo != null) {
+            try {
+                float lg = 34f;
+                float ly = lg * urunLogo.getHeight() / urunLogo.getWidth();
+                cs.drawImage(urunLogo, MARGIN, y - ly + 16f, lg, ly);
+                solX = MARGIN + 42f;
+            } catch (Exception ignored) {
+                // urun logosu cizilemezse metin normal konumda kalir
+            }
+        }
+
         float yy = y;
         String ad = (s != null && !bosMu(s.getAd())) ? s.getAd() : "RasPel ERP";
         cs.setFont(font.bold, 15f);
-        cs.beginText(); cs.newLineAtOffset(MARGIN, yy); cs.showText(boslukTemizle(ad)); cs.endText();
+        cs.beginText(); cs.newLineAtOffset(solX, yy); cs.showText(boslukTemizle(ad)); cs.endText();
         yy -= 15f;
         cs.setFont(font.regular, 9f);
         List<String> bilgi = new ArrayList<>();
@@ -726,8 +740,8 @@ public class PdfRaporService {
             if (!bosMu(s.getWebSite())) bilgi.add(s.getWebSite());
         }
         for (String b : bilgi) {
-            for (String p : sar(b, font.regular, 9f, solGenislik)) {
-                cs.beginText(); cs.newLineAtOffset(MARGIN, yy); cs.showText(p); cs.endText();
+            for (String p : sar(b, font.regular, 9f, solGenislik - (solX - MARGIN))) {
+                cs.beginText(); cs.newLineAtOffset(solX, yy); cs.showText(p); cs.endText();
                 yy -= 12f;
             }
         }
@@ -755,6 +769,18 @@ public class PdfRaporService {
         }
         yy -= 8f;
         return yy;
+    }
+
+    /** Urun (RasPel) logosunu classpath'ten yukler; yoksa null. */
+    private PDImageXObject urunLogoYukle(PDDocument doc) {
+        try (java.io.InputStream in = getClass().getResourceAsStream("/brand/logo-icon.png")) {
+            if (in == null) return null;
+            byte[] bytes = in.readAllBytes();
+            if (bytes.length == 0) return null;
+            return PDImageXObject.createFromByteArray(doc, bytes, "raspel-logo");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private PDImageXObject logoYukle(PDDocument doc, FaturaSablonu sablon, Sirket s) {

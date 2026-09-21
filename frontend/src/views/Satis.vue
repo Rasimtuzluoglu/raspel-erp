@@ -383,6 +383,7 @@ import { faturaAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { useMarka } from '../composables/useMarka.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
@@ -396,6 +397,7 @@ const { t } = useI18n()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const authStore = useAuthStore()
+const { sirketLogosu } = useMarka()
 
 const satislar = ref([])
 const showSatisDialog = ref(false)
@@ -600,6 +602,8 @@ const printTermalFis = (satisData) => {
         td, th { padding: 3px 0; vertical-align: top; font-size: 11px; }
         .header { margin-bottom: 8px; }
         .header h2 { margin: 0; font-size: 16px; font-weight: bold; }
+        .logo { display: block; max-height: 48px; max-width: 140px; margin: 0 auto 4px; object-fit: contain; }
+        .raspel-mini { font-size: 9px; color: #666; margin: 0; }
         .header p { margin: 2px 0; font-size: 10px; }
         .footer { margin-top: 10px; text-align: center; font-size: 10px; }
         .no-print { text-align: center; margin-bottom: 12px; }
@@ -613,7 +617,9 @@ const printTermalFis = (satisData) => {
         <button onclick="window.close()" style="background:#64748b; margin-left:6px;">Kapat</button>
       </div>
       <div class="header text-center">
-        <h2>RASPEL ERP</h2>
+        ${sirketLogosu.value ? `<img class="logo" src="${sirketLogosu.value}" alt="logo" />` : ''}
+        <h2>${escapeHtml(authStore?.sirketAdi || 'RASPEL ERP')}</h2>
+        <p class="raspel-mini">RasPel ERP</p>
         <p>SATIŞ FİŞİ</p>
         <p>${t('satis.fisNo')} ${escapeHtml(satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now()))}</p>
         <p>${t('common.date')}: ${formatDate(satisData.tarih || new Date())}</p>

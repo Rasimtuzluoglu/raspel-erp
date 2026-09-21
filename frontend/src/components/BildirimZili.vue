@@ -6,7 +6,7 @@
     <Button
       icon="pi pi-bell"
       class="p-button-rounded p-button-text p-button-sm"
-      title="Bildirimler"
+      :title="$t('bildirim.baslik')"
       :aria-label="$t('common.notifications')"
       aria-haspopup="true"
       :aria-expanded="panelAcik"
@@ -24,18 +24,18 @@
         @click.stop
       >
         <div class="panel-baslik">
-          <strong>Bildirimler</strong>
+          <strong>{{ $t('bildirim.baslik') }}</strong>
           <div class="panel-ayarlar">
             <Button
               icon="pi pi-cog"
               class="p-button-sm p-button-text"
-              title="Bildirim Tercihleri"
+              :title="$t('bildirim.tercihler')"
               @click="tercihPaneli = !tercihPaneli"
             />
             <Button
               icon="pi pi-check"
               class="p-button-sm p-button-text"
-              title="Temizle"
+              :title="$t('bildirim.temizle')"
               @click="temizle"
             />
           </div>
@@ -55,13 +55,13 @@
             <Checkbox
               :model-value="tercihler[ter.tur] !== false"
               :binary="true"
-              @update:model-value="tercihDegistir(t.tur, $event)"
+              @update:model-value="tercihDegistir(ter.tur, $event)"
             />
             <span>{{ t.etiket }}</span>
           </label>
           <div class="tercih-ayrac" />
           <div class="tercih-baslik">
-            Masaüstü Bildirimleri
+            {{ $t('bildirim.masaustuBaslik') }}
           </div>
           <div
             v-if="masaustu.izinli"
@@ -71,7 +71,7 @@
               class="pi pi-check-circle"
               style="color: #4ade80"
             />
-            <span>Masaüstü bildirimleri açık</span>
+            <span>{{ $t('bildirim.masaustuAcik') }}</span>
           </div>
           <div
             v-else
@@ -81,7 +81,7 @@
               class="pi pi-exclamation-triangle"
               style="color: #fbbf24"
             />
-            <span>Tarayıcı izni gerekli</span>
+            <span>{{ $t('bildirim.tarayiciIzni') }}</span>
             <Button
               :label="$t('bildirim.izinVer')"
               size="small"
@@ -90,7 +90,7 @@
             />
           </div>
           <div class="tercih-baslik">
-            Push Bildirimleri
+            {{ $t('bildirim.pushBaslik') }}
           </div>
           <div
             v-if="!pushDestek"
@@ -100,7 +100,7 @@
               class="pi pi-times-circle"
               style="color: #94a3b8"
             />
-            <span>Bu tarayıcı push bildirimini desteklemiyor</span>
+            <span>{{ $t('bildirim.pushDesteklenmiyor') }}</span>
           </div>
           <div
             v-else-if="pushAktif"
@@ -110,9 +110,9 @@
               class="pi pi-check-circle"
               style="color: #4ade80"
             />
-            <span>Push bildirimleri açık</span>
+            <span>{{ $t('bildirim.pushAcik') }}</span>
             <Button
-              label="Kapat"
+              :label="$t('bildirim.kapat')"
               size="small"
               class="p-button-sm p-button-outlined"
               @click="pushKapat"
@@ -126,7 +126,7 @@
               class="pi pi-mobile"
               style="color: #fbbf24"
             />
-            <span>Push bildirimleri kapalı</span>
+            <span>{{ $t('bildirim.pushKapali') }}</span>
             <Button
               :label="$t('bildirim.ac')"
               size="small"
@@ -140,7 +140,7 @@
           class="panel-bos"
         >
           <i class="pi pi-inbox" />
-          <p>Bildirim yok</p>
+          <p>{{ $t('bildirim.yok') }}</p>
         </div>
         <div
           v-else-if="!tercihPaneli"
@@ -284,7 +284,7 @@ watch(sonBildirim, (yeni) => {
     bildirimler.value.unshift(yeni)
     okunmamis.value++
     if (tercihler.value[yeni.tur] !== false) {
-      masaustu.goster(yeni.baslik || 'Bildirim', yeni.mesaj || '')
+      masaustu.goster(yeni.baslik || t('bildirim.baslik'), yeni.mesaj || '')
     }
   }
 })

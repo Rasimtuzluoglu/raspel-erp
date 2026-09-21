@@ -13,19 +13,19 @@
           class="detail-grid"
         >
           <div class="detail-item">
-            <span class="detail-label">Stok Kodu</span>
+            <span class="detail-label">{{ $t('stoklar.stokKodu') }}</span>
             <span class="detail-value">{{ stok.stokKodu || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Barkod</span>
+            <span class="detail-label">{{ $t('stoklar.barkod') }}</span>
             <span class="detail-value">{{ stok.barkod || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Birim</span>
+            <span class="detail-label">{{ $t('stoklar.birim') }}</span>
             <span class="detail-value">{{ stok.birim || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Miktar</span>
+            <span class="detail-label">{{ $t('stoklar.analiz.miktar') }}</span>
             <span
               class="detail-value"
               :class="stok.minMiktar && stok.miktar <= stok.minMiktar ? 'kritik' : 'normal'"
@@ -34,38 +34,38 @@
             </span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Alış Fiyatı</span>
+            <span class="detail-label">{{ $t('stoklar.alisFiyati') }}</span>
             <span class="detail-value gizli-veri">{{ formatCurrency(stok.fiyat) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Satış Fiyatı</span>
+            <span class="detail-label">{{ $t('stoklar.satisFiyati') }}</span>
             <span class="detail-value">{{ formatCurrency(stok.satisFiyati) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Kategori</span>
+            <span class="detail-label">{{ $t('stoklar.kategori') }}</span>
             <span class="detail-value">{{ stok.kategori || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Marka</span>
+            <span class="detail-label">{{ $t('stoklar.marka') }}</span>
             <span class="detail-value">{{ stok.marka || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Min. Stok</span>
+            <span class="detail-label">{{ $t('stoklar.minStok') }}</span>
             <span class="detail-value">{{ stok.minMiktar || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Raf No</span>
+            <span class="detail-label">{{ $t('stoklar.rafNo') }}</span>
             <span class="detail-value">{{ stok.rafNo || '-' }}</span>
           </div>
         </div>
         <div class="form-section-title">
-          Stok Hareketleri
+          {{ $t('stokDetay.stokHareketleri') }}
         </div>
         <div
           v-if="hareketlerYukleniyor"
           class="loading"
         >
-          <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+          <p><i class="pi pi-spin pi-spinner" /> {{ $t('common.loading') }}</p>
         </div>
         <EmptyState
           v-else-if="hareketler.length === 0"
@@ -100,7 +100,7 @@
             </template>
           </Column>
           <Column
-            header="Miktar"
+            :header="$t('stoklar.analiz.miktar')"
             style="width: 90px"
           >
             <template #body="s">
