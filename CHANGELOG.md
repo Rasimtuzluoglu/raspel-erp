@@ -2,6 +2,30 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.35.0] - 2026-09-21 (Hızlı Satış Kullanım Kolaylığı)
+### Sağ Panel Düzeni ve Katlanabilir Bölümler
+- Bölüm sırası akışa göre düzenlendi: **Müşteri → Sipariş Özeti → Ödeme → Satışı Tamamla → Teslimat → Fiş Önizleme → Bugünkü Satışlar**.
+- **Katlanabilir bölümler** (tercihler `localStorage`'da saklanır):
+  - **Teslimat**: varsayılan **kapalı** (sonradan açılır; katlıyken seçili personel rozet olarak görünür).
+  - **Fiş Önizleme**: varsayılan **açık** — kaldırılmadı, yalnız katlanabilir yapıldı.
+  - **Bugünkü Satışlar**: varsayılan kapalı.
+  - **Sipariş özeti "Detay"** (ft³) : varsayılan kapalı (indirim ve genel toplam her zaman görünür).
+
+### Sabitlenen Satış Butonu
+- **"Satışı Tamamla"** sağ panelin altına **sticky** sabitlendi; yanında büyük **GENEL TOPLAM** etiketi. Uzun panelde kaydırma derdi bitti.
+
+### Büyük Yazı Modu Kapsamı Genişletildi
+- Önceden yalnız sepet satırı/adet kontrollerini etkiliyordu; artık **ürün kartları** (kod/ad/fiyat), **ödeme yöntemleri**, **tüm tutarlar** (genel toplam, kalan), **müşteri alanı**, **bölüm başlıkları**, **günlük satışlar**, **sticky tamamla** dahil.
+- **Fiş önizleme hariç** (termal fiş gerçek boyutunu temsil eder; korunur, ölçeklenmez).
+
+### Klavye / Erişilebilirlik
+- Ürün kartlarına `tabindex` + `role="button"` + Enter/Space ile seçim (fare olmadan da kullanılabilir).
+- Katlanabilir başlıklara `aria-expanded`, min 40px dokunma hedefi, focus-visible.
+
+### Notlar
+- Davranış değişmedi; yalnız düzen, varsayılan görünürlük ve ölçek. Tüm klavye kısayolları korundu.
+- Frontend **720** test yeşil.
+
 ## [1.34.0] - 2026-09-21 (Prod Sertleştirme: Self-Lock, Türkçe/i18n, Hızlı Satış, İngilizce Çıktı)
 ### Kritik: "Kullanıcı bu şirkete ait değil" self-lock giderildi
 - **Kök neden**: `KullaniciService.getir()` kullanıcının **kayıtlı (home)** şirketini kontrol ediyordu; şirket değiştirince JWT'deki aktif şirket farklı olduğu için `/ben` 404 dönüyor ve oturum (`authStore.init`) kilitleniyordu.

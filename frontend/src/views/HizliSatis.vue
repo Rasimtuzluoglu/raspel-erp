@@ -146,7 +146,12 @@
               v-for="u in filtrelenmisUrunler"
               :key="u.id"
               class="product-card"
+              role="button"
+              tabindex="0"
+              :aria-label="u.ad"
               @click="sepeteEkle(u)"
+              @keydown.enter.prevent="sepeteEkle(u)"
+              @keydown.space.prevent="sepeteEkle(u)"
             >
               <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
               <span class="product-name">{{ u.ad }}</span>
@@ -363,11 +368,26 @@
                 </div>
               </div>
               <hr class="ozet-ayrac">
-              <div class="ozet-satir">
+              <button
+                type="button"
+                class="ozet-detay-btn"
+                :aria-expanded="detayAcik"
+                @click="detayAcikDegistir"
+              >
+                <i
+                  class="pi katlanir-ok"
+                  :class="detayAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                />
+                {{ detayAcik ? t('hizliSatis.detayGizle') : t('hizliSatis.detayGoster') }}
+              </button>
+              <div
+                v-show="detayAcik"
+                class="ozet-satir"
+              >
                 <span>{{ t('hizliSatis.toplamFt3') }}</span>
                 <span>{{ toplamFt3.toFixed(2) }} ft³</span>
               </div>
-              <div class="ozet-satir">
+              <div class="ozet-satir ozet-indirim-satir">
                 <span>{{ t('hizliSatis.indirim') }}</span>
                 <div class="ozet-indirim">
                   <SelectButton
@@ -514,71 +534,95 @@
               </div>
             </div>
 
-            <Button
-              :label="t('hizliSatis.satisiTamamla')"
-              icon="pi pi-check"
-              class="p-button-success w-full satis-buton"
-              :loading="kaydediliyor"
-              :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
-              @click="satisiTamamla"
-            />
-            <Button
-              v-if="sonSatis"
-              :label="t('hizliSatis.sonSatisiIptal')"
-              icon="pi pi-undo"
-              class="p-button-outlined p-button-danger w-full"
-              @click="sonSatisiIptalEt"
-            />
+            <div class="sticky-tamamla">
+              <div class="sticky-tutar">
+                <span>{{ t('hizliSatis.genelToplam') }}</span>
+                <strong>{{ formatCurrency(genelToplam) }}</strong>
+              </div>
+              <Button
+                :label="t('hizliSatis.satisiTamamla')"
+                icon="pi pi-check"
+                class="p-button-success w-full satis-buton"
+                :loading="kaydediliyor"
+                :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
+                @click="satisiTamamla"
+              />
+              <Button
+                v-if="sonSatis"
+                :label="t('hizliSatis.sonSatisiIptal')"
+                icon="pi pi-undo"
+                class="p-button-outlined p-button-danger w-full"
+                @click="sonSatisiIptalEt"
+              />
+            </div>
 
             <div class="pos-bolum">
-              <div class="pos-bolum-baslik">
-                <i class="pi pi-truck" /> {{ t('hizliSatis.teslimat') }}
-              </div>
-              <div class="teslim-eden-alan">
-                <label for="hizli-teslim-eden">{{ t('hizliSatis.teslimEden') }}</label>
-                <Dropdown
-                  id="hizli-teslim-eden"
-                  v-model="teslimEden"
-                  :options="personelSecenekleri"
-                  option-label="label"
-                  option-value="value"
-                  filter
-                  editable
-                  :placeholder="t('hizliSatis.personelSecinYaz')"
-                  class="w-full"
-                  :show-clear="true"
-                >
-                  <template #option="s">
-                    <div class="personel-opsiyon">
-                      <i class="pi pi-user" />
-                      <span>{{ s.option.label }}</span>
-                    </div>
-                  </template>
-                </Dropdown>
-              </div>
+              <button
+                type="button"
+                class="pos-bolum-baslik katlanir-baslik"
+                :aria-expanded="teslimatAcik"
+                :title="teslimatAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                @click="teslimatAcikDegistir"
+              >
+                <span class="katlanir-sol">
+                  <i
+                    class="pi katlanir-ok"
+                    :class="teslimatAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                  />
+                  <i class="pi pi-truck" /> {{ t('hizliSatis.teslimat') }}
+                </span>
+                <span
+                  v-if="!teslimatAcik && teslimEden"
+                  class="katlanir-rozet"
+                >{{ teslimEdenEtiketi }}</span>
+              </button>
+              <template v-if="teslimatAcik">
+                <div class="teslim-eden-alan">
+                  <label for="hizli-teslim-eden">{{ t('hizliSatis.teslimEden') }}</label>
+                  <Dropdown
+                    id="hizli-teslim-eden"
+                    v-model="teslimEden"
+                    :options="personelSecenekleri"
+                    option-label="label"
+                    option-value="value"
+                    filter
+                    editable
+                    :placeholder="t('hizliSatis.personelSecinYaz')"
+                    class="w-full"
+                    :show-clear="true"
+                  >
+                    <template #option="s">
+                      <div class="personel-opsiyon">
+                        <i class="pi pi-user" />
+                        <span>{{ s.option.label }}</span>
+                      </div>
+                    </template>
+                  </Dropdown>
+                </div>
 
-              <div class="teslim-eden-alan">
-                <label for="hizli-teslim-durum">{{ t('hizliSatis.teslimDurumu') }}</label>
-                <Dropdown
-                  id="hizli-teslim-durum"
-                  v-model="teslimDurumu"
-                  :options="teslimDurumSecenekleri"
-                  option-label="label"
-                  option-value="value"
-                  class="w-full"
-                />
-              </div>
+                <div class="teslim-eden-alan">
+                  <label for="hizli-teslim-durum">{{ t('hizliSatis.teslimDurumu') }}</label>
+                  <Dropdown
+                    id="hizli-teslim-durum"
+                    v-model="teslimDurumu"
+                    :options="teslimDurumSecenekleri"
+                    option-label="label"
+                    option-value="value"
+                    class="w-full"
+                  />
+                </div>
 
-              <div class="teslim-eden-alan">
-                <label for="hizli-teslim-not">{{ t('hizliSatis.teslimNotu') }}</label>
-                <Textarea
-                  id="hizli-teslim-not"
-                  v-model="teslimNotu"
-                  rows="2"
-                  :placeholder="t('hizliSatis.teslimNotuPlaceholder')"
-                  class="w-full"
-                />
-              </div>
+                <div class="teslim-eden-alan">
+                  <label for="hizli-teslim-not">{{ t('hizliSatis.teslimNotu') }}</label>
+                  <Textarea
+                    id="hizli-teslim-not"
+                    v-model="teslimNotu"
+                    rows="2"
+                    :placeholder="t('hizliSatis.teslimNotuPlaceholder')"
+                    class="w-full"
+                  />
+                </div>
+              </template>
             </div>
 
             <div
@@ -586,7 +630,21 @@
               class="pos-bolum"
             >
               <div class="pos-bolum-baslik fis-baslik-satir">
-                <span><i class="pi pi-print" /> {{ t('hizliSatis.fisOnizleme') }}</span>
+                <button
+                  type="button"
+                  class="katlanir-baslik katlanir-baslik-inline"
+                  :aria-expanded="fisAcik"
+                  :title="fisAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                  @click="fisAcikDegistir"
+                >
+                  <span class="katlanir-sol">
+                    <i
+                      class="pi katlanir-ok"
+                      :class="fisAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                    />
+                    <i class="pi pi-print" /> {{ t('hizliSatis.fisOnizleme') }}
+                  </span>
+                </button>
                 <div class="fis-ayarlar">
                   <Button
                     :label="t('hizliSatis.yazdirF9')"
@@ -604,7 +662,10 @@
                   />
                 </div>
               </div>
-              <div class="fis-onizleme-kapsam">
+              <div
+                v-show="fisAcik"
+                class="fis-onizleme-kapsam"
+              >
                 <div
                   id="fisOnizleme"
                   class="fis-onizleme"
@@ -713,30 +774,46 @@
 
             <div class="pos-bolum">
               <div class="gunluk-baslik">
-                <span><i class="pi pi-clock" /> {{ t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length }) }}</span>
+                <button
+                  type="button"
+                  class="katlanir-baslik katlanir-baslik-inline"
+                  :aria-expanded="gunlukAcik"
+                  :title="gunlukAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                  @click="gunlukAcikDegistir"
+                >
+                  <span class="katlanir-sol">
+                    <i
+                      class="pi katlanir-ok"
+                      :class="gunlukAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                    />
+                    <i class="pi pi-clock" /> {{ t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length }) }}
+                  </span>
+                </button>
                 <Button
                   icon="pi pi-refresh"
                   class="p-button-sm p-button-text"
                   @click="gunlukSatislariYukle"
                 />
               </div>
-              <div
-                v-if="gunlukSatislar.length === 0"
-                class="sepet-bos"
-              >
-                {{ t('hizliSatis.bugunSatisYok') }}
-              </div>
-              <div
-                v-for="s in gunlukSatislar"
-                :key="s.id"
-                class="gunluk-satis-satir"
-              >
-                <div class="gunluk-satis-bilgi">
-                  <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
-                  <span class="gunluk-satis-cari">{{ s.cariHesapAd || t('hizliSatis.anlik') }}</span>
+              <template v-if="gunlukAcik">
+                <div
+                  v-if="gunlukSatislar.length === 0"
+                  class="sepet-bos"
+                >
+                  {{ t('hizliSatis.bugunSatisYok') }}
                 </div>
-                <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
-              </div>
+                <div
+                  v-for="s in gunlukSatislar"
+                  :key="s.id"
+                  class="gunluk-satis-satir"
+                >
+                  <div class="gunluk-satis-bilgi">
+                    <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
+                    <span class="gunluk-satis-cari">{{ s.cariHesapAd || t('hizliSatis.anlik') }}</span>
+                  </div>
+                  <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
+                </div>
+              </template>
             </div>
           </template>
         </Card>
@@ -1132,6 +1209,29 @@ const ipucuKapat = () => {
 // kullanan personel için büyük yazı; kazara satışı önlemek için onay adımı.
 const buyukYazi = ref(localStorage.getItem('raspel_pos_buyuk_yazi') === 'true')
 const onayIste = ref(localStorage.getItem('raspel_pos_onay_iste') === 'true')
+
+// Katlanabilir bolum tercihleri (varsayilanlar: fis ACik, teslimat ve gunluk KAPALI).
+const teslimatAcik = ref(localStorage.getItem('raspel_pos_teslimat_acik') === 'true')
+const fisAcik = ref(localStorage.getItem('raspel_pos_fis_acik') !== 'false')
+const gunlukAcik = ref(localStorage.getItem('raspel_pos_gunluk_acik') === 'true')
+const detayAcik = ref(localStorage.getItem('raspel_pos_detay_acik') === 'true')
+
+const teslimatAcikDegistir = () => {
+  teslimatAcik.value = !teslimatAcik.value
+  localStorage.setItem('raspel_pos_teslimat_acik', String(teslimatAcik.value))
+}
+const fisAcikDegistir = () => {
+  fisAcik.value = !fisAcik.value
+  localStorage.setItem('raspel_pos_fis_acik', String(fisAcik.value))
+}
+const gunlukAcikDegistir = () => {
+  gunlukAcik.value = !gunlukAcik.value
+  localStorage.setItem('raspel_pos_gunluk_acik', String(gunlukAcik.value))
+}
+const detayAcikDegistir = () => {
+  detayAcik.value = !detayAcik.value
+  localStorage.setItem('raspel_pos_detay_acik', String(detayAcik.value))
+}
 
 const buyukYaziToggle = () => {
   buyukYazi.value = !buyukYazi.value
@@ -1588,6 +1688,14 @@ const teslimDurumSecenekleri = computed(() => [
   { label: t('faturalar.durumYolda'), value: 'YOLDA' },
   { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
 ])
+
+// Teslimat bolumu katliyken secili personeli rozet olarak gosterir.
+const teslimEdenEtiketi = computed(() => {
+  const v = teslimEden.value
+  if (!v) return ''
+  const bulunan = personelSecenekleri.value.find((p) => p.value === v)
+  return bulunan ? bulunan.label : v
+})
 
 const personelListesiniYukle = async () => {
   try {
@@ -2107,6 +2215,107 @@ const sepetiTemizle = () => {
 .pos-buyuk .user-info {
   font-size: 16px;
 }
+/* Urun karti */
+.pos-buyuk .product-kod {
+  font-size: 14px;
+  min-width: 100px;
+}
+.pos-buyuk .product-name {
+  font-size: 17px;
+}
+.pos-buyuk .product-price {
+  font-size: 18px;
+}
+.pos-buyuk .product-cari-fiyat {
+  font-size: 15px;
+}
+.pos-buyuk .product-cari-fiyat i {
+  font-size: 14px;
+}
+.pos-buyuk .product-card {
+  padding: 14px 14px;
+}
+.pos-buyuk .urun-sayaci {
+  font-size: 13px;
+}
+.pos-buyuk .cok-satan-ad {
+  font-size: 16px;
+}
+.pos-buyuk .cok-satan-fiyat {
+  font-size: 15px;
+}
+.pos-buyuk .cok-satan-chip {
+  padding: 11px 15px;
+}
+/* Bolum basliklari */
+.pos-buyuk .pos-bolum-baslik,
+.pos-buyuk .katlanir-baslik {
+  font-size: 16px;
+}
+.pos-buyuk .product-header h3 {
+  font-size: 18px;
+}
+/* Sepet */
+.pos-buyuk .sepet-tutar {
+  font-size: 16px;
+}
+.pos-buyuk .sepet-son-alis {
+  font-size: 15px;
+}
+.pos-buyuk .sepet-item {
+  padding: 14px 0;
+}
+/* Ozet ve tutarlar */
+.pos-buyuk .ozet-satir,
+.pos-buyuk .odeme-kalan {
+  font-size: 16px;
+}
+.pos-buyuk .odenen-satir label {
+  font-size: 15px;
+}
+.pos-buyuk .genel-toplam-deger {
+  font-size: 24px;
+}
+.pos-buyuk .kalan-deger {
+  font-size: 17px;
+}
+/* Odeme yontemleri */
+.pos-buyuk .odeme-yontem-btn {
+  font-size: 14px;
+  padding: 11px 6px;
+}
+.pos-buyuk .odeme-yontem-btn i {
+  font-size: 20px;
+}
+/* Musteri */
+.pos-buyuk .musteri-option,
+.pos-buyuk .secili-musteri-ad {
+  font-size: 15px;
+}
+.pos-buyuk .musteri-option-detay {
+  font-size: 13px;
+}
+/* Gunluk satislar */
+.pos-buyuk .gunluk-satis-cari {
+  font-size: 14px;
+}
+.pos-buyuk .gunluk-satis-tutar {
+  font-size: 16px;
+}
+.pos-buyuk .gunluk-satis-no {
+  font-size: 15px;
+}
+/* Kisa yol ipucu */
+.pos-buyuk .pos-ipucu {
+  font-size: 14px;
+}
+/* Sticky tamamla */
+.pos-buyuk .sticky-tutar {
+  font-size: 16px;
+}
+.pos-buyuk .sticky-tutar strong {
+  font-size: 24px;
+}
 .pos-tercih-btn {
   border: 1px solid var(--border);
   background: var(--bg-secondary);
@@ -2304,6 +2513,96 @@ const sepetiTemizle = () => {
 }
 .pos-bolum-baslik.sepet-baslik {
   justify-content: space-between;
+}
+
+/* Katlanabilir bolum basligi */
+.katlanir-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  font-size: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.katlanir-baslik:hover {
+  background: var(--bg-secondary);
+}
+.katlanir-baslik:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.katlanir-baslik-inline {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+}
+.katlanir-sol {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.katlanir-sol i {
+  color: var(--accent);
+  font-size: 14px;
+}
+.katlanir-ok {
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+}
+.katlanir-rozet {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sticky Satisi Tamamla */
+.sticky-tamamla {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 6px;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border-top: 2px solid var(--border);
+}
+.sticky-tutar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.sticky-tutar strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
 }
 
 .filter-card :deep(.p-card-content) {
@@ -2951,6 +3250,29 @@ const sepetiTemizle = () => {
   border: none;
   border-top: 1px solid var(--border);
   margin: 6px 0;
+}
+.ozet-detay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.ozet-detay-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+.pos-buyuk .ozet-detay-btn {
+  font-size: 15px;
+  min-height: 40px;
 }
 .ozet-genel {
   border-top: 2px solid var(--border);
