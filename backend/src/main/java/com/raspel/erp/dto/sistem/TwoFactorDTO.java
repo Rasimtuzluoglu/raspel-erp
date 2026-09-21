@@ -14,6 +14,6 @@ public class TwoFactorDTO {
     private Boolean enabled;
     private String secret;
     private String qrCodeUri;
-    @Pattern(regexp = "^$|\\d{6}", message = "Dogrulama kodu 6 haneli olmalidir")
+    @Pattern(regexp = "^$|\\d{6}", message = "Doğrulama kodu 6 haneli olmalıdır")
     private String code;
 }

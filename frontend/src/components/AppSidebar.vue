@@ -251,12 +251,11 @@
       </div>
     </div>
 
-    <KisayolRehberi v-model:goster="rehberGoster" />
-
     <Dialog
       v-model:visible="sirketDialogAcik"
       :header="$t('nav.sirketDegistir')"
       :modal="true"
+      :closable="!sirketDegistiriliyor"
       :style="{ width: '440px' }"
     >
       <div
@@ -266,12 +265,20 @@
         <i class="pi pi-building" />
         <p>{{ $t('nav.sirketListesiYuklenemedi') }}</p>
       </div>
+      <div
+        v-else-if="sirketDegistiriliyor"
+        class="sirket-degistir-bos"
+      >
+        <i class="pi pi-spin pi-spinner" />
+        <p>{{ $t('nav.sirketDegistiriliyor') }}</p>
+      </div>
       <div class="sirket-degistir-liste">
         <button
           v-for="s in sirketSecenekleri"
           :key="s.id"
           class="sirket-degistir-kart"
           :class="{ aktif: s.id === authStore.sirketId }"
+          :disabled="sirketDegistiriliyor"
           @click="sirketDegistir(s)"
         >
           <div class="sirket-degistir-bilgi">
@@ -307,10 +314,11 @@ import { sirketAPI } from '../api/index.js'
 import { personelIzinAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
-import KisayolRehberi from './KisayolRehberi.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { useTheme } from '../composables/useTheme.js'
 import { useSunumModu } from '../composables/useSunumModu.js'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useI18n } from 'vue-i18n'
 
 defineEmits([
   'open-search',
@@ -328,9 +336,10 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { aktif: sunumAktif, degistir: sunumDegistir } = useSunumModu()
+const toastBildirim = useToastBildirim()
+const { t } = useI18n()
 
 const mobilMenuAcik = ref(false)
-const rehberGoster = ref(false)
 const aracAcik = ref(false)
 const gelismisMod = ref(safeGet('raspel_erp_gelismis_mod', false))
 const sirketDialogAcik = ref(false)
@@ -353,8 +362,9 @@ const sirketDegistir = async (sirket) => {
     sirketDialogAcik.value = false
     // Aktif şirket değişti; verilerin tazelenmesi için tam yenileme
     window.location.reload()
-  } catch {
-    // Hata kullanıcıya bildirilmeden dialog açık kalır
+  } catch (err) {
+    const mesaj = err?.response?.data?.message || err?.message || t('nav.sirketDegistirilemedi')
+    toastBildirim.hata(mesaj)
   } finally {
     sirketDegistiriliyor.value = false
   }

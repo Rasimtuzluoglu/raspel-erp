@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="TC Kimlik Dogrulayici"
+    :header="t('tcDogrula.baslik')"
     :modal="false"
     :style="{ width: '320px' }"
     :draggable="false"
@@ -9,7 +9,7 @@
   >
     <div class="tc-form">
       <div class="form-satir">
-        <label>TC Kimlik No</label>
+        <label>{{ t('tcDogrula.tcNo') }}</label>
         <InputText
           v-model="tc"
           placeholder="12345678901"
@@ -24,10 +24,10 @@
         :class="sonuc ? 'gecerli' : 'gecersiz'"
       >
         <i :class="sonuc ? 'pi pi-check-circle' : 'pi pi-times-circle'" />
-        <strong>{{ sonuc ? 'Gecerli TC Kimlik No' : 'Gecersiz TC Kimlik No' }}</strong>
+        <strong>{{ sonuc ? t('tcDogrula.gecerli') : t('tcDogrula.gecersiz') }}</strong>
       </div>
       <p class="tc-uyari">
-        * Algoritmik dogrulama yapilir. Resmi dogrulama icin NVI servisleri kullanilmalidir.
+        {{ t('tcDogrula.uyari') }}
       </p>
     </div>
   </Dialog>
@@ -35,9 +35,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 defineProps({ visible: Boolean })
 defineEmits(['update:visible'])
 
+const { t } = useI18n()
 const tc = ref('')
 const sonuc = ref(null)
 

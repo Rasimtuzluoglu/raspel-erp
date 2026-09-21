@@ -33,7 +33,7 @@ class PdfRaporControllerTest {
     @Test
     void shouldGetSiparisRaporu() throws Exception {
         byte[] pdfBytes = "fake-pdf-content".getBytes();
-        when(pdfRaporService.siparisRaporu(1L)).thenReturn(pdfBytes);
+        when(pdfRaporService.siparisRaporu(eq(1L), any())).thenReturn(pdfBytes);
 
         mockMvc.perform(get("/api/rapor/siparis/1"))
                 .andExpect(status().isOk())
@@ -45,7 +45,7 @@ class PdfRaporControllerTest {
     @Test
     void shouldGetIrsaliyeRaporu() throws Exception {
         byte[] pdfBytes = "fake-pdf-content-2".getBytes();
-        when(pdfRaporService.irsaliyeRaporu(2L)).thenReturn(pdfBytes);
+        when(pdfRaporService.irsaliyeRaporu(eq(2L), any())).thenReturn(pdfBytes);
 
         mockMvc.perform(get("/api/rapor/irsaliye/2"))
                 .andExpect(status().isOk())
@@ -56,7 +56,7 @@ class PdfRaporControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenSiparisRaporu() throws Exception {
-        when(pdfRaporService.siparisRaporu(anyLong()))
+        when(pdfRaporService.siparisRaporu(anyLong(), any()))
                 .thenThrow(new com.raspel.erp.exception.ResourceNotFoundException("Siparis", 999L));
 
         mockMvc.perform(get("/api/rapor/siparis/999"))

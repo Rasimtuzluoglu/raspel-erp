@@ -26,9 +26,9 @@ public class PushAbonelikDTO {
     @AllArgsConstructor
     @Builder
     public static class Keys {
-        @NotBlank(message = "p256dh anahtari zorunludur")
+        @NotBlank(message = "p256dh anahtarı zorunludur")
         private String p256dh;
-        @NotBlank(message = "auth anahtari zorunludur")
+        @NotBlank(message = "auth anahtarı zorunludur")
         private String auth;
     }
 }

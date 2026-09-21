@@ -1,5 +1,8 @@
 <template>
-  <div class="pos-container">
+  <div
+    class="pos-container"
+    :class="{ 'pos-buyuk': buyukYazi }"
+  >
     <div class="pos-header">
       <div class="breadcrumb">
         <i class="pi pi-home" /> {{ t('hizliSatis.breadcrumb') }}
@@ -11,6 +14,26 @@
         >
           <i class="pi pi-user" /> {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username }}
         </div>
+        <button
+          type="button"
+          class="pos-tercih-btn"
+          :class="{ aktif: buyukYazi }"
+          :title="t('hizliSatis.buyukYazi')"
+          :aria-pressed="buyukYazi"
+          @click="buyukYaziToggle"
+        >
+          <i class="pi pi-search-plus" />
+        </button>
+        <button
+          type="button"
+          class="pos-tercih-btn"
+          :class="{ aktif: onayIste }"
+          :title="t('hizliSatis.onayIste')"
+          :aria-pressed="onayIste"
+          @click="onayIsteToggle"
+        >
+          <i class="pi pi-check-square" />
+        </button>
         <button
           type="button"
           class="pos-ipucu-btn"
@@ -284,6 +307,8 @@
                     <button
                       type="button"
                       class="adet-btn"
+                      :aria-label="t('hizliSatis.miktarAzalt')"
+                      :title="t('hizliSatis.miktarAzalt')"
                       @click="miktarAzalt(idx)"
                     >
                       −
@@ -293,11 +318,14 @@
                       type="number"
                       min="1"
                       class="sepet-adet-input"
+                      :aria-label="t('hizliSatis.adet')"
                       :title="t('hizliSatis.adet')"
                     >
                     <button
                       type="button"
                       class="adet-btn"
+                      :aria-label="t('hizliSatis.miktarArtir')"
+                      :title="t('hizliSatis.miktarArtir')"
                       @click="item.miktar++"
                     >
                       +
@@ -765,7 +793,9 @@
         <Dropdown
           id="ym-tur"
           v-model="yeniMusteri.tur"
-          :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
+          :options="cariTurSecenekleri"
+          option-label="label"
+          option-value="value"
           :placeholder="$t('hizliSatis.musteriPlaceholder')"
           class="w-full"
         />
@@ -804,6 +834,36 @@
     v-model:visible="scannerAcik"
     @scan="barkodTarandi"
   />
+
+  <Dialog
+    v-model:visible="onayDialog"
+    :header="t('hizliSatis.onayBaslik')"
+    :modal="true"
+    style="width: 380px"
+  >
+    <div class="satis-onay">
+      <i class="pi pi-question-circle satis-onay-ikon" />
+      <p class="satis-onay-metin">
+        {{ t('hizliSatis.onayMetin') }}
+      </p>
+      <p class="satis-onay-tutar">
+        {{ t('hizliSatis.toplam') }}: <strong>{{ formatCurrency(genelToplam) }}</strong>
+      </p>
+    </div>
+    <template #footer>
+      <Button
+        :label="t('hizliSatis.onayIptal')"
+        severity="secondary"
+        text
+        @click="satisOnayIptal"
+      />
+      <Button
+        :label="t('hizliSatis.onayOnayla')"
+        icon="pi pi-check"
+        @click="satisOnayla"
+      />
+    </template>
+  </Dialog>
 
   <Dialog
     v-model:visible="satisOzetDialog"
@@ -1068,6 +1128,24 @@ const ipucuKapat = () => {
   localStorage.setItem('raspel_pos_ipucu_kapali', 'true')
 }
 
+// POS kullanılabilirlik tercihleri (varsayılan: kapalı). Yaşlı/uzak mesafeden
+// kullanan personel için büyük yazı; kazara satışı önlemek için onay adımı.
+const buyukYazi = ref(localStorage.getItem('raspel_pos_buyuk_yazi') === 'true')
+const onayIste = ref(localStorage.getItem('raspel_pos_onay_iste') === 'true')
+
+const buyukYaziToggle = () => {
+  buyukYazi.value = !buyukYazi.value
+  localStorage.setItem('raspel_pos_buyuk_yazi', String(buyukYazi.value))
+}
+
+const onayIsteToggle = () => {
+  onayIste.value = !onayIste.value
+  localStorage.setItem('raspel_pos_onay_iste', String(onayIste.value))
+}
+
+const onayDialog = ref(false)
+const onayBekleyenSatis = ref(false)
+
 onMounted(() => {
   window.addEventListener('keydown', handlePosKeys, true)
   window.addEventListener('online', offlineKuyruguSenkronizeEt)
@@ -1138,6 +1216,11 @@ const teslimDurumu = ref('BEKLIYOR')
 const teslimNotu = ref('')
 const personelListesi = ref([])
 const musteriModu = ref('musteri')
+const cariTurSecenekleri = computed(() => [
+  { label: t('cariTur.musteri'), value: 'Musteri' },
+  { label: t('cariTur.tedarikci'), value: 'Tedarikci' },
+  { label: t('cariTur.herIkisi'), value: 'Her Ikisi' }
+])
 const musteriModlari = computed(() => [
   { label: t('hizliSatis.perakende'), value: 'perakende', icon: 'pi pi-shopping-cart' },
   { label: t('hizliSatis.musteri'), value: 'musteri', icon: 'pi pi-users' }
@@ -1879,6 +1962,27 @@ const satisiTamamla = async () => {
     toast.add({ severity: 'warn', summary: t('hizliSatis.sepetBos'), detail: t('hizliSatis.onceUrunEkleyin'), life: 2500 })
     return
   }
+  // Kazara satışı önleme: tercih açıksa kısa onay adımı göster.
+  if (onayIste.value) {
+    onayBekleyenSatis.value = true
+    onayDialog.value = true
+    return
+  }
+  await satisiTamamlaOnaysiz()
+}
+
+const satisOnayla = async () => {
+  onayDialog.value = false
+  onayBekleyenSatis.value = false
+  await satisiTamamlaOnaysiz()
+}
+
+const satisOnayIptal = () => {
+  onayDialog.value = false
+  onayBekleyenSatis.value = false
+}
+
+const satisiTamamlaOnaysiz = async () => {
   if (odemeYontemi.value === 'TAKSIT' && (!taksitKurum.value.trim() || !taksitTutar.value || taksitTutar.value <= 0)) {
     toastBildirim.uyari(t('hizliSatis.taksitZorunlu'))
     return
@@ -1886,14 +1990,14 @@ const satisiTamamla = async () => {
   kaydediliyor.value = true
   const satisVerisi = {
     cariHesapId: anlikMusteri.value ? null : seciliMusteri.value.id,
-    cariHesapAdi: anlikMusteri.value ? 'Anlik Musteri' : seciliMusteri.value.ad,
+    cariHesapAdi: anlikMusteri.value ? t('hizliSatis.perakendeMusteri') : seciliMusteri.value.ad,
     tur: 'SATIS',
     durum: 'KESILDI',
     tarih: getLocalDateString(),
     teslimEden: teslimEden.value || null,
     teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
     teslimNotu: teslimNotu.value || null,
-    aciklama: 'Hizli Satis',
+    aciklama: t('hizliSatis.hizliSatisAciklama'),
     araToplam: toplam.value,
     indirim: indirimTutari.value,
     genelToplam: genelToplam.value,
@@ -1994,6 +2098,56 @@ const sepetiTemizle = () => {
   padding: 0;
   min-height: 0;
   max-width: 100%;
+}
+/* Buyuk yazi modu: yasli/uzak mesafeden kullanan personel icin olcekler */
+.pos-buyuk {
+  font-size: 18px;
+}
+.pos-buyuk .breadcrumb,
+.pos-buyuk .user-info {
+  font-size: 16px;
+}
+.pos-tercih-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.pos-tercih-btn:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.pos-tercih-btn.aktif {
+  background: var(--accent, var(--primary-color));
+  border-color: var(--accent, var(--primary-color));
+  color: var(--accent-contrast, #ffffff);
+}
+.satis-onay {
+  text-align: center;
+  padding: 8px 0;
+}
+.satis-onay-ikon {
+  font-size: 2.4rem;
+  color: var(--accent, var(--primary-color));
+  margin-bottom: 10px;
+}
+.satis-onay-metin {
+  font-size: 15px;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+.satis-onay-tutar {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin: 0;
 }
 .pos-header {
   display: flex;
@@ -2482,9 +2636,9 @@ const sepetiTemizle = () => {
   margin-bottom: 6px;
 }
 .sepet-kod {
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 5px;
@@ -2496,7 +2650,7 @@ const sepetiTemizle = () => {
 }
 .sepet-ad {
   flex: 1;
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--text-primary);
   min-width: 0;
@@ -2509,15 +2663,26 @@ const sepetiTemizle = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 34px;
+  height: 34px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
-  color: var(--text-muted);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.15s;
+}
+.pos-buyuk .sepet-kod {
+  font-size: 13px;
+}
+.pos-buyuk .sepet-ad {
+  font-size: 16px;
+}
+.pos-buyuk .sepet-sil {
+  width: 42px;
+  height: 42px;
+  font-size: 19px;
 }
 .sepet-sil:hover {
   background: rgba(239, 68, 68, 0.12);
@@ -2538,13 +2703,13 @@ const sepetiTemizle = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--bg-secondary);
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
@@ -2554,17 +2719,28 @@ const sepetiTemizle = () => {
   color: var(--accent);
 }
 .sepet-adet-input {
-  width: 46px;
+  width: 52px;
   text-align: center;
   font-weight: 700;
-  font-size: 13px;
-  height: 26px;
+  font-size: 14px;
+  height: 34px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0 4px;
   outline: none;
+}
+/* Buyuk yazi modu: adet/fiyat kontrolleri daha da buyuk */
+.pos-buyuk .adet-btn {
+  width: 42px;
+  height: 42px;
+  font-size: 19px;
+}
+.pos-buyuk .sepet-adet-input {
+  width: 62px;
+  height: 42px;
+  font-size: 17px;
 }
 /* Mobil: POS adet/fiyat kontrolleri dokunma hedefi >=40px */
 @media (max-width: 900px) {

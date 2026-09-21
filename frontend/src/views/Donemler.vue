@@ -252,9 +252,11 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { donemAPI, sirketAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
 import { getLocalDateString, formatTarihSaat } from '../utils/format.js'
+import { useAuthStore } from '../stores/authStore.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
+const authStore = useAuthStore()
 
 const donemler = ref([])
 const sirketler = ref([])
@@ -275,7 +277,11 @@ onMounted(async () => {
     const r = await sirketAPI.getAktif()
     sirketler.value = r.data
     if (sirketler.value.length > 0) {
-      seciliSirketId.value = sirketler.value[0].id
+      // Aktif JWT şirketini önceliklendir; listeyi körlemesine ilk elemandan alma
+      // (aksi halde başka şirkete geçilmişse "Dönem bu şirkete ait değil" hatası oluşur).
+      const aktifId = authStore.sirketId
+      const aktifVar = aktifId != null && sirketler.value.some((s) => s.id === aktifId)
+      seciliSirketId.value = aktifVar ? aktifId : sirketler.value[0].id
       await donemleriYukle()
       await kapanislariYukle()
     }

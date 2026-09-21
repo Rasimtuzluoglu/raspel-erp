@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="Kar Marji Hesaplayici"
+    :header="t('marjHesap.baslik')"
     :modal="false"
     :style="{ width: '320px' }"
     :draggable="true"
@@ -10,21 +10,21 @@
   >
     <div class="marj-form">
       <div class="form-satir">
-        <label>Alis Fiyati</label><InputNumber
+        <label>{{ t('marjHesap.alisFiyati') }}</label><InputNumber
           v-model="alis"
           :min="0"
           class="w-full"
         />
       </div>
       <div class="form-satir">
-        <label>Satis Fiyati</label><InputNumber
+        <label>{{ t('marjHesap.satisFiyati') }}</label><InputNumber
           v-model="satis"
           :min="0"
           class="w-full"
         />
       </div>
       <div class="form-satir">
-        <label>veya Kar Marj (%)</label>
+        <label>{{ t('marjHesap.veyaMarj') }}</label>
         <InputNumber
           v-model="marj"
           :min="0"
@@ -35,13 +35,13 @@
       </div>
       <div class="marj-sonuc">
         <div class="sonuc-satir">
-          <span>Kar Tutari:</span><strong :class="kar >= 0 ? 'positive' : 'negative'">{{ format(kar) }}</strong>
+          <span>{{ t('marjHesap.karTutari') }}</span><strong :class="kar >= 0 ? 'positive' : 'negative'">{{ format(kar) }}</strong>
         </div>
         <div class="sonuc-satir">
-          <span>Kar Marj %:</span><strong>{{ yuzde.toFixed(2) }}%</strong>
+          <span>{{ t('marjHesap.karMarjYuzde') }}</span><strong>{{ yuzde.toFixed(2) }}%</strong>
         </div>
         <div class="sonuc-satir">
-          <span>Satis (marjli):</span><strong>{{ format(satis || 0) }}</strong>
+          <span>{{ t('marjHesap.satisMarjli') }}</span><strong>{{ format(satis || 0) }}</strong>
         </div>
       </div>
     </div>
@@ -50,8 +50,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 defineProps({ visible: Boolean })
 defineEmits(['update:visible'])
+
+const { t } = useI18n()
 
 const alis = ref(100)
 const satis = ref(150)

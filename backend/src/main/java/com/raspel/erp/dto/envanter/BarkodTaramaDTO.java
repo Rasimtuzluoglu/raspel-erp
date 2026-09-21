@@ -16,6 +16,6 @@ import java.math.BigDecimal;
 public class BarkodTaramaDTO {
     @NotBlank(message = "Barkod zorunludur")
     private String barkod;
-    @DecimalMin(value = "0.01", message = "Adet sifirdan buyuk olmalidir")
+    @DecimalMin(value = "0.01", message = "Adet sıfırdan büyük olmalıdır")
     private BigDecimal adet;
 }

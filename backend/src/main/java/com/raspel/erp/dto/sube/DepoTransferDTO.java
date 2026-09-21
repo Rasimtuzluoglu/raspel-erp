@@ -17,14 +17,14 @@ public class DepoTransferDTO {
     @NotNull(message = "Kaynak depo secilmelidir")
     private Long kaynakDepoId;
     private String kaynakDepoAd;
-    @NotNull(message = "Hedef depo secilmelidir")
+    @NotNull(message = "Hedef depo seçilmelidir")
     private Long hedefDepoId;
     private String hedefDepoAd;
     @NotNull(message = "Stok secilmelidir")
     private Long stokId;
     private String stokAd;
     @NotNull(message = "Miktar zorunludur")
-    @DecimalMin(value = "0.01", message = "Miktar sifirdan buyuk olmalidir")
+    @DecimalMin(value = "0.01", message = "Miktar sıfırdan büyük olmalıdır")
     private BigDecimal miktar;
     private String durum;
     private String aciklama;

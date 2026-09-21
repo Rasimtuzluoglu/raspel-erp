@@ -205,7 +205,7 @@ const csvIptal = () => {
 
 const ornekCsv = () => {
   const icerik =
-    'ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar\nTest Urun;URN-001;8691234567890;Adet;100;50;10\nTest Urun 2;URN-002;;Kg;200;30;5'
+      'ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar\nTest Ürün;URN-001;8691234567890;Adet;100;50;10\nTest Ürün 2;URN-002;;Kg;200;30;5'
   const blob = new Blob(['\uFEFF' + icerik], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

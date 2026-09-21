@@ -21,11 +21,11 @@ public class PersonelMasrafTalepDTO {
     private Long kullaniciId;
     private String kullaniciAdi;
     private Long sirketId;
-    @NotBlank(message = "Masraf turu zorunludur")
+    @NotBlank(message = "Masraf türü zorunludur")
     private String tur;
     private String kategori;
     @NotNull(message = "Tutar zorunludur")
-    @DecimalMin(value = "0.01", message = "Tutar sifirdan buyuk olmalidir")
+    @DecimalMin(value = "0.01", message = "Tutar sıfırdan büyük olmalıdır")
     private BigDecimal tutar;
     private String paraBirimi;
     @NotNull(message = "Tarih zorunludur")

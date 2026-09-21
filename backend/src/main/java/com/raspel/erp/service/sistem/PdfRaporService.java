@@ -107,10 +107,15 @@ public class PdfRaporService {
 
     // ------------------------------------------------------------------ Fatura
 
+    /** Geriye dönük uyumluluk: varsayılan dil Türkçe. */
     public byte[] faturaRaporu(Long faturaId) {
+        return faturaRaporu(faturaId, PdfMetin.tr());
+    }
+
+    public byte[] faturaRaporu(Long faturaId, PdfMetin m) {
         Fatura f = faturaRepository.findById(faturaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Fatura", faturaId));
-        tenantChecker.check(f.getSirketId(), "Fatura");
+                .orElseThrow(() -> new ResourceNotFoundException(m.t("fatura"), faturaId));
+        tenantChecker.check(f.getSirketId(), m.t("fatura"));
         List<FaturaKalem> kalemler = faturaKalemRepository.findByFaturaId(faturaId);
 
         boolean alis = f.getTur() == Fatura.FaturaTur.ALIS;
@@ -118,7 +123,7 @@ public class PdfRaporService {
         Sirket sirket = sirketBul(f.getSirketId());
         String baslik = sablon.faturaBasligi != null && !sablon.faturaBasligi.isBlank()
                 ? sablon.faturaBasligi
-                : (alis ? "ALIŞ FATURASI" : "SATIŞ FATURASI");
+                : (alis ? m.t("alisFaturasi") : m.t("satisFaturasi"));
 
         CariHesap cari = cariHesap(f);
 
@@ -131,39 +136,39 @@ public class PdfRaporService {
             List<String> cariSatir = new ArrayList<>();
             if (cari != null) {
                 if (!bosMu(cari.getVergiDairesi()) || !bosMu(cari.getVergiNumarasi())) {
-                    cariSatir.add(birlestir(birlestir(cari.getVergiDairesi(), " V.D."), cari.getVergiNumarasi(), " - "));
+                    cariSatir.add(birlestir(birlestir(cari.getVergiDairesi(), " " + m.t("vd")), cari.getVergiNumarasi(), " - "));
                 }
                 if (!bosMu(cari.getAdres())) cariSatir.add(cari.getAdres());
                 String il = birlestir(cari.getIl(), cari.getIlce(), " / ");
                 if (!il.isBlank()) cariSatir.add(il);
-                if (!bosMu(cari.getTelefon())) cariSatir.add("Tel: " + cari.getTelefon());
+                if (!bosMu(cari.getTelefon())) cariSatir.add(m.t("tel") + ": " + cari.getTelefon());
                 if (!bosMu(cari.getEmail())) cariSatir.add(cari.getEmail());
             }
             float ySol = b.bilgiBlogu(MARGIN, y, PAGE_WIDTH * 0.53f,
-                    (alis ? "TEDARİKÇİ" : "MÜŞTERİ") + (cari != null && !bosMu(cari.getAd()) ? " / " + cari.getAd() : ""),
+                    (alis ? m.t("tedarikci") : m.t("musteri")) + (cari != null && !bosMu(cari.getAd()) ? " / " + cari.getAd() : ""),
                     cariSatir);
 
             List<String> kunye = new ArrayList<>();
-            kunye.add("Fatura No: " + boslukTemizle(f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())));
-            kunye.add("Fatura Tarihi: " + tarih(f.getTarih(), f.getOlusturmaTarihi()));
-            if (f.getVadeTarihi() != null) kunye.add("Vade Tarihi: " + f.getVadeTarihi().format(TARIH));
-            kunye.add("Durum: " + (f.getDurum() != null ? f.getDurum().name() : "-"));
-            kunye.add("Para Birimi: " + (f.getParaBirimi() != null && !f.getParaBirimi().isBlank() ? f.getParaBirimi() : "TL"));
+            kunye.add(m.t("faturaNo") + ": " + boslukTemizle(f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : String.valueOf(f.getId())));
+            kunye.add(m.t("faturaTarihi") + ": " + tarih(f.getTarih(), f.getOlusturmaTarihi()));
+            if (f.getVadeTarihi() != null) kunye.add(m.t("vadeTarihi") + ": " + f.getVadeTarihi().format(TARIH));
+            kunye.add(m.t("durum") + ": " + (f.getDurum() != null ? f.getDurum().name() : "-"));
+            kunye.add(m.t("paraBirimi") + ": " + (f.getParaBirimi() != null && !f.getParaBirimi().isBlank() ? f.getParaBirimi() : "TL"));
             if (f.getOlusturanKullaniciAdi() != null && !f.getOlusturanKullaniciAdi().isBlank()) {
-                kunye.add("Oluşturan: " + f.getOlusturanKullaniciAdi());
+                kunye.add(m.t("olusturan") + ": " + f.getOlusturanKullaniciAdi());
             }
-            float ySag = b.bilgiBlogu(MARGIN + PAGE_WIDTH * 0.55f, y, PAGE_WIDTH * 0.45f, "BELGE BİLGİLERİ", kunye);
+            float ySag = b.bilgiBlogu(MARGIN + PAGE_WIDTH * 0.55f, y, PAGE_WIDTH * 0.45f, m.t("belgeBilgileri"), kunye);
 
             b.y = Math.min(ySol, ySag) - 8;
 
             // Kalem tablosu
             List<Kolon> kolonlar = List.of(
-                    new Kolon("Sıra", PAGE_WIDTH * 0.055f, false),
-                    new Kolon("Ürün / Hizmet", PAGE_WIDTH * 0.43f, false),
-                    new Kolon("Miktar", PAGE_WIDTH * 0.11f, true),
-                    new Kolon("Birim Fiyat", PAGE_WIDTH * 0.15f, true),
-                    new Kolon("KDV %", PAGE_WIDTH * 0.09f, true),
-                    new Kolon("Tutar", PAGE_WIDTH * 0.165f, true));
+                    new Kolon(m.t("sira"), PAGE_WIDTH * 0.055f, false),
+                    new Kolon(m.t("urunHizmet"), PAGE_WIDTH * 0.43f, false),
+                    new Kolon(m.t("miktar"), PAGE_WIDTH * 0.11f, true),
+                    new Kolon(m.t("birimFiyat"), PAGE_WIDTH * 0.15f, true),
+                    new Kolon(m.t("kdvYuzde"), PAGE_WIDTH * 0.09f, true),
+                    new Kolon(m.t("tutar"), PAGE_WIDTH * 0.165f, true));
 
             String birim = f.getParaBirimi() != null && !f.getParaBirimi().isBlank() ? f.getParaBirimi() : "TL";
             List<String[]> satirlar = new ArrayList<>();
@@ -181,25 +186,25 @@ public class PdfRaporService {
                     toplamAgirlik = toplamAgirlik.add(k.getAgirlik().multiply(k.getAdet()));
                 }
             }
-            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", "Kalem bulunmuyor", "", "", "", ""});
+            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", m.t("kalemBulunmuyor"), "", "", "", ""});
             b.tablo(kolonlar, satirlar);
 
             // Toplamlar
             b.y -= 4;
-            b.toplamSatiri("Ara Toplam", para(f.getAraToplam(), birim), false);
+            b.toplamSatiri(m.t("araToplam"), para(f.getAraToplam(), birim), false);
             if (f.getGenelIskontoTutari() != null && f.getGenelIskontoTutari().compareTo(BigDecimal.ZERO) > 0) {
-                b.toplamSatiri("İskonto", "-" + para(f.getGenelIskontoTutari(), birim), false);
+                b.toplamSatiri(m.t("iskonto"), "-" + para(f.getGenelIskontoTutari(), birim), false);
             }
-            b.toplamSatiri("KDV", para(f.getKdv(), birim), false);
-            b.toplamSatiri("GENEL TOPLAM", para(f.getGenelToplam(), birim), true);
+            b.toplamSatiri(m.t("kdv"), para(f.getKdv(), birim), false);
+            b.toplamSatiri(m.t("genelToplam"), para(f.getGenelToplam(), birim), true);
 
             if (sablon.odemeDurumuGoster != null && sablon.odemeDurumuGoster) {
-                b.toplamSatiri("Ödenen", para(f.getOdenenTutar(), birim), false);
-                b.toplamSatiri("Kalan", para(f.getKalanTutar(), birim), false);
-                b.toplamSatiri("Ödeme Durumu", f.getOdemeDurumu() != null ? f.getOdemeDurumu() : "-", false);
+                b.toplamSatiri(m.t("odenen"), para(f.getOdenenTutar(), birim), false);
+                b.toplamSatiri(m.t("kalan"), para(f.getKalanTutar(), birim), false);
+                b.toplamSatiri(m.t("odemeDurumu"), f.getOdemeDurumu() != null ? f.getOdemeDurumu() : "-", false);
             }
             if (toplamAgirlik.compareTo(BigDecimal.ZERO) > 0) {
-                b.toplamSatiri("Toplam Ağırlık", sayi(toplamAgirlik) + " kg", false);
+                b.toplamSatiri(m.t("toplamAgirlik"), sayi(toplamAgirlik) + " kg", false);
             }
 
             // QR kod (şablon seçeneği)
@@ -212,7 +217,7 @@ public class PdfRaporService {
 
             // İmza kutusu (şablon seçeneği)
             if (sablon.imzaKutusuGoster != null && sablon.imzaKutusuGoster) {
-                b.imzaKutusu("İmza / Kaşe");
+                b.imzaKutusu(m.t("imzaKase"));
             }
 
             b.kapat();
@@ -227,7 +232,11 @@ public class PdfRaporService {
 
     /** Faturayı müşteriye göndermek için tek sayfalık PNG görsel üretir. */
     public byte[] faturaGorselPng(Long faturaId) {
-        byte[] pdf = faturaRaporu(faturaId);
+        return faturaGorselPng(faturaId, PdfMetin.tr());
+    }
+
+    public byte[] faturaGorselPng(Long faturaId, PdfMetin m) {
+        byte[] pdf = faturaRaporu(faturaId, m);
         try (PDDocument doc = org.apache.pdfbox.Loader.loadPDF(pdf);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             org.apache.pdfbox.rendering.PDFRenderer renderer = new org.apache.pdfbox.rendering.PDFRenderer(doc);
@@ -242,9 +251,13 @@ public class PdfRaporService {
     // ------------------------------------------------------------------ Sipariş
 
     public byte[] siparisRaporu(Long siparisId) {
+        return siparisRaporu(siparisId, PdfMetin.tr());
+    }
+
+    public byte[] siparisRaporu(Long siparisId, PdfMetin m) {
         Siparis s = siparisRepository.findById(siparisId)
-                .orElseThrow(() -> new ResourceNotFoundException("Siparis", siparisId));
-        tenantChecker.check(s.getSirketId(), "Siparis");
+                .orElseThrow(() -> new ResourceNotFoundException(m.t("siparisFormu"), siparisId));
+        tenantChecker.check(s.getSirketId(), m.t("siparisFormu"));
         List<SiparisKalem> kalemler = siparisKalemRepository.findBySiparisId(siparisId);
 
         FaturaSablonu sablon = faturaSablonuOku(s.getSirketId());
@@ -253,24 +266,24 @@ public class PdfRaporService {
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             FontSet font = fontlar(doc);
-            Belge b = new Belge(doc, font, sablon, sirket, "SİPARİŞ FORMU", sablon.altBaslik);
+            Belge b = new Belge(doc, font, sablon, sirket, m.t("siparisFormu"), sablon.altBaslik);
 
             List<String> kunye = new ArrayList<>();
-            kunye.add("Sipariş No: " + boslukTemizle(s.getSiparisNo()));
-            kunye.add("Tarih: " + tarih(s.getTarih(), s.getOlusturmaTarihi()));
-            kunye.add("Durum: " + (s.getDurum() != null ? s.getDurum() : "-"));
-            kunye.add("Müşteri: " + (cari != null && !bosMu(cari.getAd()) ? cari.getAd() : ("#" + s.getCariHesapId())));
-            if (!bosMu(s.getAciklama())) kunye.add("Açıklama: " + s.getAciklama());
-            b.y = b.bilgiBlogu(MARGIN, b.y, PAGE_WIDTH, "SİPARİŞ BİLGİLERİ", kunye) - 8;
+            kunye.add(m.t("siparisNo") + ": " + boslukTemizle(s.getSiparisNo()));
+            kunye.add(m.t("tarih") + ": " + tarih(s.getTarih(), s.getOlusturmaTarihi()));
+            kunye.add(m.t("durum") + ": " + (s.getDurum() != null ? s.getDurum() : "-"));
+            kunye.add(m.t("musteri") + ": " + (cari != null && !bosMu(cari.getAd()) ? cari.getAd() : ("#" + s.getCariHesapId())));
+            if (!bosMu(s.getAciklama())) kunye.add(m.t("aciklama") + ": " + s.getAciklama());
+            b.y = b.bilgiBlogu(MARGIN, b.y, PAGE_WIDTH, m.t("siparisBilgileri"), kunye) - 8;
 
             List<Kolon> kolonlar = List.of(
-                    new Kolon("Sıra", PAGE_WIDTH * 0.05f, false),
-                    new Kolon("Ürün / Hizmet", PAGE_WIDTH * 0.36f, false),
-                    new Kolon("Miktar", PAGE_WIDTH * 0.10f, true),
-                    new Kolon("Birim", PAGE_WIDTH * 0.09f, false),
-                    new Kolon("Birim Fiyat", PAGE_WIDTH * 0.13f, true),
-                    new Kolon("KDV %", PAGE_WIDTH * 0.09f, true),
-                    new Kolon("Tutar", PAGE_WIDTH * 0.18f, true));
+                    new Kolon(m.t("sira"), PAGE_WIDTH * 0.05f, false),
+                    new Kolon(m.t("urunHizmet"), PAGE_WIDTH * 0.36f, false),
+                    new Kolon(m.t("miktar"), PAGE_WIDTH * 0.10f, true),
+                    new Kolon(m.t("birim"), PAGE_WIDTH * 0.09f, false),
+                    new Kolon(m.t("birimFiyat"), PAGE_WIDTH * 0.13f, true),
+                    new Kolon(m.t("kdvYuzde"), PAGE_WIDTH * 0.09f, true),
+                    new Kolon(m.t("tutar"), PAGE_WIDTH * 0.18f, true));
 
             List<String[]> satirlar = new ArrayList<>();
             int sira = 1;
@@ -284,13 +297,13 @@ public class PdfRaporService {
                         k.getKdvOrani() != null ? sayi(k.getKdvOrani()) : "-",
                         paraBare(k.getTutar())});
             }
-            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", "Kalem bulunmuyor", "", "", "", "", ""});
+            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", m.t("kalemBulunmuyor"), "", "", "", "", ""});
             b.tablo(kolonlar, satirlar);
 
             b.y -= 4;
-            b.toplamSatiri("Ara Toplam", para(s.getAraToplam(), "TL"), false);
-            b.toplamSatiri("KDV", para(s.getKdv(), "TL"), false);
-            b.toplamSatiri("GENEL TOPLAM", para(s.getGenelToplam(), "TL"), true);
+            b.toplamSatiri(m.t("araToplam"), para(s.getAraToplam(), "TL"), false);
+            b.toplamSatiri(m.t("kdv"), para(s.getKdv(), "TL"), false);
+            b.toplamSatiri(m.t("genelToplam"), para(s.getGenelToplam(), "TL"), true);
 
             b.kapat();
             doc.save(baos);
@@ -303,9 +316,13 @@ public class PdfRaporService {
     // ------------------------------------------------------------------ İrsaliye
 
     public byte[] irsaliyeRaporu(Long irsaliyeId) {
+        return irsaliyeRaporu(irsaliyeId, PdfMetin.tr());
+    }
+
+    public byte[] irsaliyeRaporu(Long irsaliyeId, PdfMetin m) {
         Irsaliye i = irsaliyeRepository.findById(irsaliyeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Irsaliye", irsaliyeId));
-        tenantChecker.check(i.getSirketId(), "Irsaliye");
+                .orElseThrow(() -> new ResourceNotFoundException(m.t("irsaliye"), irsaliyeId));
+        tenantChecker.check(i.getSirketId(), m.t("irsaliye"));
         List<IrsaliyeKalem> kalemler = irsaliyeKalemRepository.findByIrsaliyeId(irsaliyeId);
 
         FaturaSablonu sablon = faturaSablonuOku(i.getSirketId());
@@ -314,21 +331,21 @@ public class PdfRaporService {
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             FontSet font = fontlar(doc);
-            Belge b = new Belge(doc, font, sablon, sirket, "İRSALİYE", sablon.altBaslik);
+            Belge b = new Belge(doc, font, sablon, sirket, m.t("irsaliye"), sablon.altBaslik);
 
             List<String> kunye = new ArrayList<>();
-            kunye.add("İrsaliye No: " + boslukTemizle(i.getIrsaliyeNo()));
-            kunye.add("Tarih: " + tarih(i.getTarih(), i.getOlusturmaTarihi()));
-            kunye.add("Durum: " + (i.getDurum() != null ? i.getDurum() : "-"));
-            kunye.add("Müşteri: " + (cari != null && !bosMu(cari.getAd()) ? cari.getAd() : ("#" + i.getCariHesapId())));
-            if (!bosMu(i.getAciklama())) kunye.add("Açıklama: " + i.getAciklama());
-            b.y = b.bilgiBlogu(MARGIN, b.y, PAGE_WIDTH, "İRSALİYE BİLGİLERİ", kunye) - 8;
+            kunye.add(m.t("irsaliyeNo") + ": " + boslukTemizle(i.getIrsaliyeNo()));
+            kunye.add(m.t("tarih") + ": " + tarih(i.getTarih(), i.getOlusturmaTarihi()));
+            kunye.add(m.t("durum") + ": " + (i.getDurum() != null ? i.getDurum() : "-"));
+            kunye.add(m.t("musteri") + ": " + (cari != null && !bosMu(cari.getAd()) ? cari.getAd() : ("#" + i.getCariHesapId())));
+            if (!bosMu(i.getAciklama())) kunye.add(m.t("aciklama") + ": " + i.getAciklama());
+            b.y = b.bilgiBlogu(MARGIN, b.y, PAGE_WIDTH, m.t("irsaliyeBilgileri"), kunye) - 8;
 
             List<Kolon> kolonlar = List.of(
-                    new Kolon("Sıra", PAGE_WIDTH * 0.06f, false),
-                    new Kolon("Ürün / Hizmet", PAGE_WIDTH * 0.60f, false),
-                    new Kolon("Miktar", PAGE_WIDTH * 0.17f, true),
-                    new Kolon("Birim", PAGE_WIDTH * 0.17f, false));
+                    new Kolon(m.t("sira"), PAGE_WIDTH * 0.06f, false),
+                    new Kolon(m.t("urunHizmet"), PAGE_WIDTH * 0.60f, false),
+                    new Kolon(m.t("miktar"), PAGE_WIDTH * 0.17f, true),
+                    new Kolon(m.t("birim"), PAGE_WIDTH * 0.17f, false));
 
             List<String[]> satirlar = new ArrayList<>();
             int sira = 1;
@@ -339,11 +356,11 @@ public class PdfRaporService {
                         sayi(k.getMiktar()),
                         k.getBirim() != null ? k.getBirim() : "-"});
             }
-            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", "Kalem bulunmuyor", "", ""});
+            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", m.t("kalemBulunmuyor"), "", ""});
             b.tablo(kolonlar, satirlar);
 
             b.y -= 14;
-            b.imzaKutusu("Teslim Alan İmza / Kaşe");
+            b.imzaKutusu(m.t("imzaKaseIrsaliye"));
 
             b.kapat();
             doc.save(baos);
@@ -356,6 +373,10 @@ public class PdfRaporService {
     // ------------------------------------------------------------------ Teslimat fişi
 
     public byte[] teslimatFisiRaporu(Long teslimatId) {
+        return teslimatFisiRaporu(teslimatId, PdfMetin.tr());
+    }
+
+    public byte[] teslimatFisiRaporu(Long teslimatId, PdfMetin m) {
         Teslimat t = teslimatRepository.findById(teslimatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Teslimat", teslimatId));
         tenantChecker.check(t.getSirketId(), "Teslimat");
@@ -367,26 +388,26 @@ public class PdfRaporService {
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             FontSet font = fontlar(doc);
-            Belge b = new Belge(doc, font, sablon, sirket, "TESLİMAT FİŞİ", sablon.altBaslik);
+            Belge b = new Belge(doc, font, sablon, sirket, m.t("teslimatFisi"), sablon.altBaslik);
 
             List<String> kunye = new ArrayList<>();
-            kunye.add("Fatura No: " + (t.getFaturaNumarasi() != null ? boslukTemizle(t.getFaturaNumarasi())
+            kunye.add(m.t("fatura") + " No: " + (t.getFaturaNumarasi() != null ? boslukTemizle(t.getFaturaNumarasi())
                     : (t.getFaturaId() != null ? "#" + t.getFaturaId() : "-")));
-            kunye.add("Müşteri: " + (t.getMusteriAdi() != null ? t.getMusteriAdi() : "-"));
-            kunye.add("Teslimat Adresi: " + (t.getTeslimatAdresi() != null ? t.getTeslimatAdresi() : "-"));
-            kunye.add("Teslim Eden (Şoför): " + (t.getTeslimEdenAd() != null ? t.getTeslimEdenAd() : "-"));
-            kunye.add("Teslim Alan: " + (t.getTeslimAlanAd() != null ? t.getTeslimAlanAd() : "-"));
-            kunye.add("Teslim Tarihi: " + (t.getTeslimTarihi() != null ? t.getTeslimTarihi().format(TARIH_SAAT) : "-"));
+            kunye.add(m.t("musteri") + ": " + (t.getMusteriAdi() != null ? t.getMusteriAdi() : "-"));
+            kunye.add(m.t("teslimatAdresi") + ": " + (t.getTeslimatAdresi() != null ? t.getTeslimatAdresi() : "-"));
+            kunye.add(m.t("teslimEden") + ": " + (t.getTeslimEdenAd() != null ? t.getTeslimEdenAd() : "-"));
+            kunye.add(m.t("teslimAlan") + ": " + (t.getTeslimAlanAd() != null ? t.getTeslimAlanAd() : "-"));
+            kunye.add(m.t("teslimTarihi") + ": " + (t.getTeslimTarihi() != null ? t.getTeslimTarihi().format(TARIH_SAAT) : "-"));
             if (t.getTeslimNotu() != null && !t.getTeslimNotu().isBlank()) kunye.add("Not: " + t.getTeslimNotu());
-            b.y = b.bilgiBlogu(MARGIN, b.y, PAGE_WIDTH, "TESLİMAT BİLGİLERİ", kunye) - 8;
+            b.y = b.bilgiBlogu(MARGIN, b.y, PAGE_WIDTH, m.t("teslimatBilgileri"), kunye) - 8;
 
             List<Kolon> kolonlar = List.of(
-                    new Kolon("Sıra", PAGE_WIDTH * 0.055f, false),
-                    new Kolon("Ürün / Hizmet", PAGE_WIDTH * 0.43f, false),
-                    new Kolon("Miktar", PAGE_WIDTH * 0.11f, true),
-                    new Kolon("Birim Fiyat", PAGE_WIDTH * 0.15f, true),
-                    new Kolon("KDV %", PAGE_WIDTH * 0.09f, true),
-                    new Kolon("Tutar", PAGE_WIDTH * 0.165f, true));
+                    new Kolon(m.t("sira"), PAGE_WIDTH * 0.055f, false),
+                    new Kolon(m.t("urunHizmet"), PAGE_WIDTH * 0.43f, false),
+                    new Kolon(m.t("miktar"), PAGE_WIDTH * 0.11f, true),
+                    new Kolon(m.t("birimFiyat"), PAGE_WIDTH * 0.15f, true),
+                    new Kolon(m.t("kdvYuzde"), PAGE_WIDTH * 0.09f, true),
+                    new Kolon(m.t("tutar"), PAGE_WIDTH * 0.165f, true));
 
             List<String[]> satirlar = new ArrayList<>();
             int sira = 1;
@@ -399,12 +420,12 @@ public class PdfRaporService {
                         k.getKdvOrani() != null ? sayi(k.getKdvOrani()) : "-",
                         paraBare(k.getTutar())});
             }
-            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", "Bu teslimata bağlı fatura kalemi bulunmuyor.", "", "", "", ""});
+            if (satirlar.isEmpty()) satirlar.add(new String[]{"-", m.t("bagliKalemYok"), "", "", "", ""});
             b.tablo(kolonlar, satirlar);
 
             b.y -= 20;
             PDImageXObject imza = imzaGorseli(doc, t.getTeslimImzaUrl());
-            b.imzaAlani(imza, "Teslim Alan İmzası");
+            b.imzaAlani(imza, m.t("teslimAlanImzasi"));
 
             b.kapat();
             doc.save(baos);

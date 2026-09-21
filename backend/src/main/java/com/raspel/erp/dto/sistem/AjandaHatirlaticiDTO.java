@@ -14,10 +14,10 @@ public class AjandaHatirlaticiDTO {
     private Long id;
     @NotNull(message = "Gorev secilmelidir")
     private Long gorevId;
-    @NotBlank(message = "Baslik zorunludur")
+    @NotBlank(message = "Başlık zorunludur")
     @Size(max = 200, message = "Baslik en fazla 200 karakter olabilir")
     private String baslik;
-    @NotNull(message = "Hatirlatma zamani zorunludur")
+    @NotNull(message = "Hatırlatma zamanı zorunludur")
     private LocalDateTime hatirlatmaZamani;
     private Boolean bildirildi;
     private LocalDateTime olusturmaTarihi;

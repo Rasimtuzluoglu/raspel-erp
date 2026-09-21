@@ -16,14 +16,14 @@ import java.math.BigDecimal;
 public class PosTerminaliDTO {
     private Long id;
     private Long sirketId;
-    @NotBlank(message = "POS adi zorunludur")
-    @Size(max = 100, message = "POS adi en fazla 100 karakter olabilir")
+    @NotBlank(message = "POS adı zorunludur")
+    @Size(max = 100, message = "POS adı en fazla 100 karakter olabilir")
     private String ad;
     @NotNull(message = "Banka secilmelidir")
     private Long bankaId;
     private String bankaAd;
     @DecimalMin(value = "0.0", message = "Komisyon orani negatif olamaz")
-    @DecimalMax(value = "100.0", message = "Komisyon orani 100'den buyuk olamaz")
+    @DecimalMax(value = "100.0", message = "Komisyon oranı 100'den büyük olamaz")
     private BigDecimal komisyonOrani;
     private Boolean aktif;
 }

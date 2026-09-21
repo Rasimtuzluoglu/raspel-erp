@@ -41,6 +41,9 @@ onErrorCaptured((err, instance, info) => {
   return false
 })
 
+// Not: Rota değişiminde hata sıfırlama, App.vue'da <ErrorBoundary :key="route.fullPath">
+// ile sağlanır; böylece bileşen yeni rotada temiz oluşturulur ve bu bileşen
+// router enjeksiyonuna bağımlı kalmaz (izole test ortamları için).
 const resetError = () => {
   error.value = null
 }

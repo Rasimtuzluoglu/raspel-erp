@@ -129,10 +129,10 @@ public class TaksitService {
     @Transactional
     public List<TaksitDTO> planOlustur(TaksitPlanDTO dto, Long sirketId) {
         if (dto.getToplamTutar() == null || dto.getToplamTutar().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("Toplam tutar 0'dan buyuk olmalidir");
+            throw new BusinessException("Toplam tutar 0'dan büyük olmalıdır");
         }
         if (dto.getTaksitSayisi() == null || dto.getTaksitSayisi() < 1) {
-            throw new BusinessException("Taksit sayisi en az 1 olmalidir");
+            throw new BusinessException("Taksit sayısı en az 1 olmalidir");
         }
         CariHesap cari = cariHesapRepository.findById(dto.getCariId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariId()));

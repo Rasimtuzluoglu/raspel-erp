@@ -96,7 +96,7 @@ public class Hareket {
      */
     public enum HareketTuru {
         TAHSILAT("Tahsilat"),
-        ODEME("Odeme"),
+        ODEME("Ödeme"),
         BORC("Borçlandırma");
 
         private final String goruntulemeAdi;

@@ -20,12 +20,12 @@ public class TaksitPlanDTO {
     private Long cariId;
 
     @NotNull(message = "Toplam tutar girilmelidir")
-    @DecimalMin(value = "0.01", message = "Toplam tutar 0'dan buyuk olmalidir")
+    @DecimalMin(value = "0.01", message = "Toplam tutar 0'dan büyük olmalıdır")
     private BigDecimal toplamTutar;
 
-    @NotNull(message = "Taksit sayisi girilmelidir")
-    @Min(value = 1, message = "Taksit sayisi en az 1 olmalidir")
-    @Max(value = 60, message = "Taksit sayisi en fazla 60 olabilir")
+    @NotNull(message = "Taksit sayısı girilmelidir")
+    @Min(value = 1, message = "Taksit sayısı en az 1 olmalidir")
+    @Max(value = 60, message = "Taksit sayısı en fazla 60 olabilir")
     private Integer taksitSayisi;
 
     /** Ilk taksitin vade tarihi (bos ise bugun). */
@@ -36,7 +36,7 @@ public class TaksitPlanDTO {
     @Max(value = 12, message = "Periyot en fazla 12 ay olabilir")
     private Integer periyotAy;
 
-    @Size(max = 255, message = "Kurum adi en fazla 255 karakter olabilir")
+    @Size(max = 255, message = "Kurum adı en fazla 255 karakter olabilir")
     private String kurum;
 
     private Long faturaId;

@@ -30,6 +30,18 @@ const apiClient = axios.create({
   }
 })
 
+// Sunucu tarafi (PDF/fis) belge dili icin aktif arayuz dilini bildir.
+apiClient.interceptors.request.use((config) => {
+  try {
+    const dil = (typeof localStorage !== 'undefined' && localStorage.getItem('lang') === 'en') ? 'en' : 'tr'
+    config.headers = config.headers || {}
+    config.headers['Accept-Language'] = dil
+  } catch {
+    /* yoksay */
+  }
+  return config
+})
+
 import NProgress from 'nprogress'
 import { useAuthStore } from '../stores/authStore.js'
 
@@ -76,6 +88,10 @@ let redirectKorumasi = false
 apiClient.interceptors.response.use(
   (response) => {
     handleNProgress(false)
+    // Başarılı bir istek geldiğinde koruma bayrağını sıfırla; aksi halde ilk 401/403
+    // sonrası (SPA yeniden yüklenmeden tekrar giriş yapılsa bile) sonraki oturum
+    // kaybında yönlendirme bir daha çalışmaz ve kullanıcı sessizce takılı kalır.
+    redirectKorumasi = false
     return response
   },
   async (error) => {

@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sistem;
 
 import com.raspel.erp.controller.TestSecurityMocks;
 import com.raspel.erp.service.sistem.DosyaDepolamaService;
+import com.raspel.erp.config.TenantChecker;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,6 +13,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,6 +30,9 @@ class FileUploadControllerTest {
 
     @MockBean
     private DosyaDepolamaService dosyaDepolama;
+
+    @MockBean
+    private TenantChecker tenantChecker;
 
     @Test
     void uploadAvatar_bosDosyaReddedilir() throws Exception {
@@ -44,6 +50,7 @@ class FileUploadControllerTest {
 
     @Test
     void getAvatar_olmayanDosya404Doner() throws Exception {
+        when(dosyaDepolama.getir(any(), any())).thenReturn(null);
         mockMvc.perform(get("/api/uploads/avatars/bulunmayan.png"))
                 .andExpect(status().isNotFound());
     }

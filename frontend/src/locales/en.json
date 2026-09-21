@@ -3,6 +3,36 @@
     "title": "RasPel ERP",
     "subtitle": "Next-Gen Enterprise Resource Planning System"
   },
+  "marjHesap": {
+    "baslik": "Profit Margin Calculator",
+    "alisFiyati": "Purchase Price",
+    "satisFiyati": "Sale Price",
+    "veyaMarj": "or Profit Margin (%)",
+    "karTutari": "Profit Amount:",
+    "karMarjYuzde": "Profit Margin %:",
+    "satisMarjli": "Sale (with margin):"
+  },
+  "ibanDogrula": {
+    "baslik": "IBAN Validator",
+    "iban": "IBAN",
+    "gecerli": "Valid IBAN",
+    "gecersiz": "Invalid IBAN",
+    "banka": "Bank",
+    "sube": "Branch",
+    "hesap": "Account"
+  },
+  "tcDogrula": {
+    "baslik": "TR ID Validator",
+    "tcNo": "TR ID Number",
+    "gecerli": "Valid TR ID Number",
+    "gecersiz": "Invalid TR ID Number",
+    "uyari": "* Algorithmic validation is performed. For official validation, NVI services must be used."
+  },
+  "cariTur": {
+    "musteri": "Customer",
+    "tedarikci": "Supplier",
+    "herIkisi": "Both"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "finans": "Finance",
@@ -20,6 +50,8 @@
     "siparis": "Orders",
     "irsaliye": "Waybills",
     "fiyatListesi": "Price List",
+    "iskontoKurallari": "Discount Rules",
+    "crmMerkezi": "CRM Center",
     "iade": "Returns",
     "envanter": "Inventory",
     "stok": "Stock Management",
@@ -91,6 +123,8 @@
     "sirketDegistir": "Switch Company",
     "sirketDegistirBaslik": "Switch company",
     "sirketListesiYuklenemedi": "Could not load company list.",
+    "sirketDegistiriliyor": "Switching company...",
+    "sirketDegistirilemedi": "Could not switch company. Please try again.",
     "vkn": "Tax No",
     "user": "User",
     "puantaj": "Timesheets"
@@ -262,6 +296,8 @@
     "optional": "Optional",
     "recordsWord": "records",
     "unexpectedError": "An unexpected page error occurred.",
+    "islemBasarisiz": "Operation failed",
+    "bilinmeyenHata": "An unknown error occurred",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "today": "Today",
     "thisWeek": "This Week",
@@ -667,6 +703,16 @@
     "sepetiKaydet": "Save Cart",
     "sepetTemizlendi": "Cart cleared",
     "kisayolIpucu": "Keyboard shortcuts",
+    "buyukYazi": "Large text mode",
+    "onayIste": "Confirm before sale",
+    "onayBaslik": "Confirm Sale",
+    "onayMetin": "Are you sure you want to complete the sale?",
+    "onayOnayla": "Yes, Complete",
+    "onayIptal": "Cancel",
+    "miktarAzalt": "Decrease quantity",
+    "miktarArtir": "Increase quantity",
+    "perakendeMusteri": "Retail Customer",
+    "hizliSatisAciklama": "Quick Sale",
     "hizliUrunBaslik": "Create New Product",
     "urunAdi": "Product Name",
     "miktar": "Quantity",

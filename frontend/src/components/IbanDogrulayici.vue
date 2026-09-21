@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="IBAN Dogrulayici"
+    :header="t('ibanDogrula.baslik')"
     :modal="false"
     :style="{ width: '380px' }"
     :draggable="false"
@@ -9,7 +9,7 @@
   >
     <div class="iban-form">
       <div class="form-satir">
-        <label>IBAN</label>
+        <label>{{ t('ibanDogrula.iban') }}</label>
         <div class="iban-input-group">
           <InputText
             v-model="iban"
@@ -26,9 +26,9 @@
       >
         <i :class="sonuc.gecerli ? 'pi pi-check-circle' : 'pi pi-times-circle'" />
         <div>
-          <strong>{{ sonuc.gecerli ? 'Gecerli IBAN' : 'Gecersiz IBAN' }}</strong>
+          <strong>{{ sonuc.gecerli ? t('ibanDogrula.gecerli') : t('ibanDogrula.gecersiz') }}</strong>
           <p v-if="sonuc.gecerli">
-            {{ sonuc.ulke }} • Banka: {{ sonuc.banka }} • Sube: {{ sonuc.sube }} • Hesap: {{ sonuc.hesap }}
+            {{ sonuc.ulke }} • {{ t('ibanDogrula.banka') }}: {{ sonuc.banka }} • {{ t('ibanDogrula.sube') }}: {{ sonuc.sube }} • {{ t('ibanDogrula.hesap') }}: {{ sonuc.hesap }}
           </p>
         </div>
       </div>
@@ -38,9 +38,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 defineProps({ visible: Boolean })
 defineEmits(['update:visible'])
 
+const { t } = useI18n()
 const iban = ref('')
 const sonuc = ref(null)
 

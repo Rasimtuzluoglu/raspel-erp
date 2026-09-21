@@ -266,7 +266,7 @@ public class RaporController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         RaporDTO.CariKarlilikDTO rapor = raporService.cariKarlilikRaporu(baslangic, bitis, sirketId);
-        String[] kolonlar = {"Cari", "Satis", "Maliyet", "Kar", "Marj %", "Fatura"};
+        String[] kolonlar = {"Cari", "Satış", "Maliyet", "Kâr", "Marj %", "Fatura"};
         List<String[]> satirlar = new java.util.ArrayList<>();
         if (rapor.getSatirlar() != null) {
             for (RaporDTO.CariKarlilikSatiriDTO s : rapor.getSatirlar()) {

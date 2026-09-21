@@ -642,7 +642,7 @@ const printTermalFis = (satisData) => {
       <div class="footer">
         <p>Bizi tercih ettiğiniz için teşekkür ederiz!</p>
         <p>Yazilim: RasPel ERP</p>
-        <p>Islem Yapan: ${escapeHtml(authStore?.kullanici?.displayName || '-')}</p>
+        <p>İşlem Yapan: ${escapeHtml(authStore?.kullanici?.displayName || '-')}</p>
       </div>
     </body>
     </html>

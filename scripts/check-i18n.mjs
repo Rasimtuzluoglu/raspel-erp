@@ -176,6 +176,47 @@ if (turkceBulunan.length) {
   console.log(`[WARN] Toplam ${toplam} satirda i18n disi Turkce literal (${turkceBulunan.length} dosya)`)
 }
 
+// check 6: ASCII'ye indirgenmis Turkce (noktali harfi eksik) literalleri yakala.
+// check 5 yalnizca ozel karakter iceren metinleri gorur; "Satis", "Islem",
+// "Musteri", "Gecersiz" gibi ASCII'ye indirgenmis kelimeler hic yakalanmiyordu.
+// Yanlis pozitifi onlemek icin dar ve yuksek guvenli kelime listesi kullanilir;
+// yalnizca kullaniciya gorunen metin baglamlari (label/header/placeholder/title/
+// description/aciklama/mesaj) hedeflenir.
+const ASCII_TR = [
+  'Satis', 'Siparis', 'Islem', 'Musteri', 'Gecersiz', 'Gecerli', 'Kayit',
+  'Odeme', 'Sifre', 'Guncelle', 'Yapilandirma', 'Dogrulama', 'Basarili',
+  'Irsaliye', 'Maas', 'Izin', 'Cek', 'Doviz', 'Sirket', 'Kullanici',
+  'Tum', 'Adet', 'Urun', 'Bakiye', 'Tutar', 'Isme', 'Kritik', 'Stok',
+  'Sifirdan', 'Buyuk', 'Kucuk', 'Olmalidir', 'Yapilamaz', 'Bulunamadi',
+  'Iptal', 'Onaylandi', 'Tamamlandi', 'Basarisiz', 'Degistir', 'Icerik'
+]
+const ASCII_TR_RE = new RegExp('\\b(' + ASCII_TR.join('|') + ')\\b')
+const GORUNUR_ATTR_RE = /(?:header|label|placeholder|title|description|caption|summary|aciklama|mesaj|baslik|labelText)\s*[:=]\s*(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g
+const asciiBulunan = new Map()
+for (const f of usedFiles) {
+  if (!f.endsWith('.vue')) continue
+  const code = fs.readFileSync(f, 'utf8').replace(/<style[\s\S]*?<\/style>/gi, '')
+  for (const m of code.matchAll(GORUNUR_ATTR_RE)) {
+    const metin = m[2]
+    if (TR_CHAR_RE.test(metin)) continue // zaten Turkce karakterli; check 5 ilgilenir
+    const hit = metin.match(ASCII_TR_RE)
+    if (hit) {
+      const rel = path.relative(ROOT, f)
+      const onceki = asciiBulunan.get(rel) || 0
+      asciiBulunan.set(rel, onceki + 1)
+    }
+  }
+}
+if (asciiBulunan.size) {
+  let toplam = 0
+  const sirali = [...asciiBulunan.entries()].sort((a, b) => b[1] - a[1])
+  for (const [, c] of sirali) toplam += c
+  for (const [f, c] of sirali.slice(0, 10)) {
+    report(STRICT ? 'ERROR' : 'WARN', `ASCII TURKCE METIN (noktali harf eksik)  ${f} (x${c})`)
+  }
+  console.log(`[WARN] Toplam ${toplam} yerde ASCII Turkce metin (${asciiBulunan.size} dosya)`)
+}
+
 
 console.log(`\ni18n ozeti: kullanilan ${usedKeys.size} | tr ${tr.length} | en ${en.length} | parametreli cagri ${paramCalls}`)
 if (failures > 0) {

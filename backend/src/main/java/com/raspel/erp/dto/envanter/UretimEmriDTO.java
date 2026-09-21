@@ -16,11 +16,11 @@ public class UretimEmriDTO {
     private Long id;
     private Long sirketId;
     private Long siparisId;
-    @NotNull(message = "Uretilecek urun secilmelidir")
+    @NotNull(message = "Üretilecek ürün secilmelidir")
     private Long urunId;
     private String urunAd;
     @NotNull(message = "Miktar zorunludur")
-    @DecimalMin(value = "0.01", message = "Miktar sifirdan buyuk olmalidir")
+    @DecimalMin(value = "0.01", message = "Miktar sıfırdan büyük olmalıdır")
     private BigDecimal miktar;
     private String durum;
     private String aciklama;

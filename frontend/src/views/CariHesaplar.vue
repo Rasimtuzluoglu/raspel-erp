@@ -82,7 +82,9 @@
     >
       <Dropdown
         v-model="filtreTur"
-        :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
+        :options="cariTurSecenekleri"
+        option-label="label"
+        option-value="value"
         :placeholder="t('cariHesaplar.tur')"
         class="filtre-select"
         show-clear
@@ -300,7 +302,9 @@
               <label for="tur">{{ t('cariHesaplar.cariTuru') }}</label>
               <Dropdown
                 v-model="form.tur"
-                :options="['Musteri', 'Tedarikci', 'Her Ikisi']"
+                :options="cariTurSecenekleri"
+                option-label="label"
+                option-value="value"
                 :placeholder="t('faturalar.seciniz')"
                 class="w-full"
               />
@@ -1036,6 +1040,12 @@ onUnmounted(() => {
 
 const filtreTur = ref(null)
 const filtreBakiye = ref(null)
+// Değerler backend'in beklediği ASCII sabitler; etiketler yerelleştirilir.
+const cariTurSecenekleri = computed(() => [
+  { label: t('cariTur.musteri'), value: 'Musteri' },
+  { label: t('cariTur.tedarikci'), value: 'Tedarikci' },
+  { label: t('cariTur.herIkisi'), value: 'Her Ikisi' }
+])
 const bakiyeFiltreleri = computed(() => [
   { label: t('cariHesaplar.alacakli'), value: 'alacak' },
   { label: t('cariHesaplar.borclu'), value: 'borc' }

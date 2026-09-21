@@ -2,6 +2,41 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.34.0] - 2026-09-21 (Prod Sertleştirme: Self-Lock, Türkçe/i18n, Hızlı Satış, İngilizce Çıktı)
+### Kritik: "Kullanıcı bu şirkete ait değil" self-lock giderildi
+- **Kök neden**: `KullaniciService.getir()` kullanıcının **kayıtlı (home)** şirketini kontrol ediyordu; şirket değiştirince JWT'deki aktif şirket farklı olduğu için `/ben` 404 dönüyor ve oturum (`authStore.init`) kilitleniyordu.
+- **Çözüm**: Kullanıcı **kendi** kaydını (`/ben`) her zaman okuyabilir; başkasının kaydı için aktif JWT şirketi veya atanmış şirket kontrolü (`tenantErisimiDogrula`). 3 regresyon testi eklendi.
+
+### Diğer kilitlenme noktaları
+- **Dönemler** (`Donemler.vue`): liste ilk şirketi değil, **aktif JWT şirketini** seçer (yanlış şirkette "Dönem bu şirkete ait değil" hatası giderildi).
+- **Şirket değiştirme** (`AppSidebar.vue`): hata artık toast ile bildirilir; işlem sırasında spinner + buton kilidi (sessiz donma giderildi).
+- **ErrorBoundary**: rota başına yeniden oluşturulur (`:key`); tek view çökmesi artık kullanıcıyı kilitli hata kartında bırakmaz.
+- **`redirectKorumasi`** (`client.js`): başarılı istekte sıfırlanır; oturum kaybında yönlendirme tekrar çalışır.
+- **KisayolRehberi** iki kez mount ediliyordu (üst üste overlay) → tek mount'a indirildi.
+
+### Türkçe Karakter / i18n Bütünlüğü
+- Backend'de **~70 ASCII-bozuk kullanıcı mesajı** doğru Türkçeye çevrildi (DTO validasyonları + BusinessException + rapor başlıkları); `Hareket.ODEME` görünen adı "Ödeme".
+- Frontend ASCII literaller düzeltildi: `KarMarjiHesaplayici`, `IbanDogrulayici`, `TcKimlikDogrulayici` (tamamen ASCII idi), `App.vue` toast, `CariHesaplar`/`HizliSatis` cari türü (değerler ASCII kalır, **etiketler Türkçe**), `Satis.vue` fişi.
+- `tr.json` 3 hata düzeltildi; **`en.json` eksik `nav.crmMerkezi` + `nav.iskontoKurallari`** eklendi → tr/en **4246/4246** simetrik.
+- **`check-i18n.mjs` güçlendirildi**: ASCII'ye indirgenmiş Türkçe (`Satis`, `Islem`, `Gecersiz`...) literallerini yakalayan yeni kontrol (check 6).
+
+### İngilizce Belge Çıktısı
+- **PDF etiket sözlüğü** (`PdfMetin`, tr/en): fatura, sipariş, irsaliye, teslimat fişi, stok etiketi tüm başlık/alan adları dile duyarlı.
+- `PdfRaporController` **`Accept-Language`** başlığından belge dilini çözer; frontend `client.js` aktif arayüz dilini gönderir.
+- Fatura PNG görseli de aynı dili kullanır.
+
+### Hızlı Satış (POS) Kullanılabilirliği
+- **Büyük yazı modu** (varsayılan kapalı, tek tık): ürün/sepet/ödeme metinleri ve dokunma hedefleri ölçeklenir — yaşlı/uzak mesafeden kullanan personel için.
+- **Satışta onay iste** opsiyonu (varsayılan kapalı): F9/F10 ve "Satışı Tamamla" öncesi kısa onay adımı (kazara satış önleme).
+- Dokunma hedefleri masaüstünde de büyütüldü (sil 22→34px, adet ± 26→34px; büyük modda 42px).
+- Sepet kodu/ürün adı okunabilirliği artırıldı; adet ±/sil butonlarına `aria-label` ve `title`.
+
+### Güvenlik
+- **`FileUploadController`**: dosya okumaları **şirkete özel klasöre** izole edildi (tahmin edilebilir adla çapraz-şirket dosya okuma engellendi); logo public kalır (tüm şirket klasörleri taranır), tenant'sız eski dosyalar için geriye dönük fallback.
+
+### Testler
+- Backend **1161** test (self-lock regresyon dahil), frontend **720** test (0 hata).
+
 ## [1.33.0] - 2026-09-20 (Giriş Ekranı Firma Seçimi + Yük Altında Kararlılık)
 ### Giriş Ekranı / Arayüz
 - **Firma seçim adımı yeniden tasarlandı**: eksik olan `.sirket-secim-kart` / `.sirket-kart-ad` / `.sirket-kart-vkn` stilleri tamamlandı; sıkışık görünüm giderildi.

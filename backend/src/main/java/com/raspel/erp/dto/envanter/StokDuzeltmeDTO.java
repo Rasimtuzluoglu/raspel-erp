@@ -23,7 +23,7 @@ public class StokDuzeltmeDTO {
     @NotNull(message = "Yeni miktar zorunludur")
     @DecimalMin(value = "0.0", message = "Yeni miktar negatif olamaz")
     private BigDecimal yeniMiktar;
-    @NotBlank(message = "Duzeltme nedeni zorunludur")
+    @NotBlank(message = "Düzeltme nedeni zorunludur")
     @Size(max = 500, message = "Neden en fazla 500 karakter olabilir")
     private String neden;
     private Long kullaniciId;

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AjandaGorevDTO {
     private Long id;
-    @NotBlank(message = "Gorev basligi zorunludur")
+    @NotBlank(message = "Görev başlığı zorunludur")
     @Size(max = 200, message = "Baslik en fazla 200 karakter olabilir")
     private String baslik;
     @Size(max = 2000, message = "Aciklama en fazla 2000 karakter olabilir")

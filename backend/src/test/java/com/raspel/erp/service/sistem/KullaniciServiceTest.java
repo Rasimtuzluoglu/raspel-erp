@@ -84,9 +84,58 @@ class KullaniciServiceTest {
 
     @Test
     void getir_returnsUser() {
-        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(createKullanici(1L)));
+        Kullanici k = createKullanici(1L);
+        k.setSirketId(1L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(tenantChecker.getCurrentKullaniciId()).thenReturn(1L);
         KullaniciDTO result = kullaniciService.getir(1L);
         assertEquals("testuser1", result.getUsername());
+    }
+
+    @Test
+    void getir_kendiKaydi_sirketDegisseBileDoner() {
+        // Kullanicinin kayitli (home) sirketi 1; JWT aktif sirketi 2 (sirket degistirdi).
+        // /ben cagrisi self-lock olmamali.
+        Kullanici k = createKullanici(1L);
+        k.setSirketId(1L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(tenantChecker.getCurrentKullaniciId()).thenReturn(1L);
+
+        KullaniciDTO result = kullaniciService.getir(1L);
+
+        assertEquals("testuser1", result.getUsername());
+        verify(tenantChecker, never()).check(any(), any());
+    }
+
+    @Test
+    void getir_baskasininKaydi_farkliSirketteReddedilir() {
+        // Baska bir kullanicinin kaydini, o kullanicinin home sirketi aktif sirketle
+        // eslesmiyorsa ve atanmis sirket yoksa okuyamaz.
+        Kullanici k = createKullanici(5L);
+        k.setSirketId(3L);
+        k.setSirketler(java.util.Set.of());
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(k));
+        when(tenantChecker.getCurrentKullaniciId()).thenReturn(1L);
+        when(tenantChecker.getCurrentSirketId()).thenReturn(2L);
+
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> kullaniciService.getir(5L));
+    }
+
+    @Test
+    void getir_baskasininKaydi_atanmisSirketteDoner() {
+        Kullanici k = createKullanici(5L);
+        k.setSirketId(3L);
+        com.raspel.erp.entity.sistem.Sirket s = new com.raspel.erp.entity.sistem.Sirket();
+        s.setId(2L);
+        k.setSirketler(java.util.Set.of(s));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(k));
+        when(tenantChecker.getCurrentKullaniciId()).thenReturn(1L);
+        when(tenantChecker.getCurrentSirketId()).thenReturn(2L);
+
+        KullaniciDTO result = kullaniciService.getir(5L);
+
+        assertEquals("testuser5", result.getUsername());
     }
 
     @Test

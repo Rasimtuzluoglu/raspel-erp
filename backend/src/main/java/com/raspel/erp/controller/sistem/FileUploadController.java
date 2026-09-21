@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import com.raspel.erp.service.sistem.DosyaDepolamaService;
+import com.raspel.erp.config.TenantChecker;
 
 @Tag(name = "Dosya Yükleme", description = "Dosya yükleme ve sunma API")
 @RestController
@@ -27,71 +28,101 @@ public class FileUploadController {
     private static final List<String> IZIN_VERILEN_MIME = List.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
     private final DosyaDepolamaService dosyaDepolama;
+    private final TenantChecker tenantChecker;
 
-    public FileUploadController(DosyaDepolamaService dosyaDepolama) {
+    public FileUploadController(DosyaDepolamaService dosyaDepolama, TenantChecker tenantChecker) {
         this.dosyaDepolama = dosyaDepolama;
+        this.tenantChecker = tenantChecker;
+    }
+
+    /**
+     * Tenant'a özel klasör yolu. Dosyalar şirket bazında izole edilir; böylece
+     * tahmin edilebilir bir dosya adıyla başka şirketin dosyası okunamaz.
+     * Sirket bağlamı yoksa (kurulum/public) ortak kök kullanılır.
+     */
+    private String tenantKlasor(String klasor) {
+        Long sirketId = tenantChecker.getCurrentSirketId();
+        return sirketId != null ? klasor + "/s" + sirketId : klasor;
+    }
+
+    /**
+     * Okuma için aday klasörler: önce aktif tenant klasörü, sonra eski (tenant'sız)
+     * ortak klasör — geriye dönük uyumluluk için.
+     */
+    private List<String> okumaKlasorleri(String klasor) {
+        Long sirketId = tenantChecker.getCurrentSirketId();
+        if (sirketId == null) {
+            return List.of(klasor);
+        }
+        return List.of(klasor + "/s" + sirketId, klasor);
     }
 
     @PostMapping("/upload/avatar")
     @Operation(summary = "Avatar yükle", description = "Kullanıcı avatarı yükler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
-        return dosyaYukle(file, AVATAR_KLASOR, "/api/uploads/avatars/");
+        return dosyaYukle(file, tenantKlasor(AVATAR_KLASOR), "/api/uploads/avatars/");
     }
 
     @GetMapping("/uploads/avatars/{filename}")
     @Operation(summary = "Avatar getir", description = "Kullanıcı avatarını döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<byte[]> getAvatar(@PathVariable String filename) {
-        return dosyaGetir(filename, AVATAR_KLASOR);
+        return dosyaGetirTenantli(filename, AVATAR_KLASOR);
     }
 
     @PostMapping("/upload/sirket-logo")
     @Operation(summary = "Şirket logosu yükle", description = "Şirket logosu yükler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadSirketLogo(@RequestParam("file") MultipartFile file) {
-        return dosyaYukle(file, LOGO_KLASOR, "/api/uploads/sirket-logos/");
+        return dosyaYukle(file, tenantKlasor(LOGO_KLASOR), "/api/uploads/sirket-logos/");
     }
 
     @PostMapping("/upload/foto")
     @Operation(summary = "Cari/ürün fotoğrafı yükle", description = "Cari hesap veya ürün fotoğrafı yükler")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Map<String, String>> uploadFoto(@RequestParam("file") MultipartFile file) {
-        return dosyaYukle(file, FOTO_KLASOR, "/api/uploads/fotolar/");
+        return dosyaYukle(file, tenantKlasor(FOTO_KLASOR), "/api/uploads/fotolar/");
     }
 
     @GetMapping("/uploads/fotolar/{filename}")
     @Operation(summary = "Fotoğraf getir", description = "Cari/ürün fotoğrafını döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<byte[]> getFoto(@PathVariable String filename) {
-        return dosyaGetir(filename, FOTO_KLASOR);
+        return dosyaGetirTenantli(filename, FOTO_KLASOR);
     }
 
     @GetMapping("/uploads/sirket-logos/{filename}")
     @Operation(summary = "Şirket logosu getir", description = "Şirket logosunu döndürür (public)")
     public ResponseEntity<byte[]> getSirketLogo(@PathVariable String filename) {
-        return dosyaGetir(filename, LOGO_KLASOR);
+        // Logo public uçtur (giriş ekranı firma seçiminde gösterilir); tenant klasörü
+        // bilinmediği için tüm şirket klasörleri taranır.
+        for (String aday : List.of(LOGO_KLASOR)) {
+            ResponseEntity<byte[]> r = dosyaGetirAnyTenant(filename, aday);
+            if (r != null) return r;
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/uploads/teslimat-fotolari/{filename}")
     @Operation(summary = "Teslimat fotoğrafı getir", description = "Teslimat fotoğrafını döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
     public ResponseEntity<byte[]> getTeslimatFoto(@PathVariable String filename) {
-        return dosyaGetir(filename, "teslimat-fotolari");
+        return dosyaGetirTenantli(filename, "teslimat-fotolari");
     }
 
     @GetMapping("/uploads/teslimat-imzalari/{filename}")
     @Operation(summary = "Teslimat imzası getir", description = "Dijital teslim imzası PNG'sini döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'DRIVER')")
     public ResponseEntity<byte[]> getTeslimatImza(@PathVariable String filename) {
-        return dosyaGetir(filename, "teslimat-imzalari");
+        return dosyaGetirTenantli(filename, "teslimat-imzalari");
     }
 
     @GetMapping("/uploads/sohbet/{filename}")
     @Operation(summary = "Sohbet dosyası getir", description = "Sohbette paylaşılan dosyayı/görseli döndürür")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<byte[]> getSohbetDosya(@PathVariable String filename) {
-        return dosyaGetir(filename, "sohbet", true);
+        return dosyaGetirTenantli(filename, "sohbet", true);
     }
 
     @GetMapping("/dosya/imzali-url")
@@ -168,11 +199,44 @@ public class FileUploadController {
         return dosyaGetir(filename, klasor, false);
     }
 
-    private ResponseEntity<byte[]> dosyaGetir(String filename, String klasor, boolean resimDegilseIndir) {
-        DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(klasor, filename);
-        if (dosya == null) {
-            return ResponseEntity.notFound().build();
+    /**
+     * Tenant'a özel klasörden okur; bulunamazsa eski (tenant'sız) ortak klasöre düşer.
+     */
+    private ResponseEntity<byte[]> dosyaGetirTenantli(String filename, String klasor) {
+        return dosyaGetirTenantli(filename, klasor, false);
+    }
+
+    private ResponseEntity<byte[]> dosyaGetirTenantli(String filename, String klasor, boolean resimDegilseIndir) {
+        for (String aday : okumaKlasorleri(klasor)) {
+            DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(aday, filename);
+            if (dosya != null) {
+                return dosyaYanitla(filename, dosya, resimDegilseIndir);
+            }
         }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Logo gibi public dosyalar için tüm tenant klasörlerini tarar.
+     */
+    private ResponseEntity<byte[]> dosyaGetirAnyTenant(String filename, String klasor) {
+        DosyaDepolamaService.DepolananDosya dogrudan = dosyaDepolama.getir(klasor, filename);
+        if (dogrudan != null) {
+            return dosyaYanitla(filename, dogrudan, false);
+        }
+        for (DosyaDepolamaService.NesneBilgi nesne : dosyaDepolama.listele(klasor)) {
+            String ad = nesne.ad();
+            if (ad.startsWith("s") && ad.contains("/") && ad.substring(ad.indexOf('/') + 1).equals(filename)) {
+                DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(klasor + "/" + ad.substring(0, ad.indexOf('/')), filename);
+                if (dosya != null) {
+                    return dosyaYanitla(filename, dosya, false);
+                }
+            }
+        }
+        return null;
+    }
+
+    private ResponseEntity<byte[]> dosyaYanitla(String filename, DosyaDepolamaService.DepolananDosya dosya, boolean resimDegilseIndir) {
         MediaType mediaType;
         try {
             mediaType = MediaType.parseMediaType(dosya.contentType());
@@ -186,5 +250,13 @@ public class FileUploadController {
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                 .body(dosya.icerik());
+    }
+
+    private ResponseEntity<byte[]> dosyaGetir(String filename, String klasor, boolean resimDegilseIndir) {
+        DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(klasor, filename);
+        if (dosya == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return dosyaYanitla(filename, dosya, resimDegilseIndir);
     }
 }

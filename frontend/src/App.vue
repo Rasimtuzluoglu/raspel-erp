@@ -78,7 +78,7 @@
         </div>
       </transition>
       <AppBreadcrumb v-if="authStore.isLoggedIn" />
-      <ErrorBoundary>
+      <ErrorBoundary :key="errorBoundaryKey">
         <router-view v-slot="{ Component }">
           <transition
             name="sayfa-gecis"
@@ -154,6 +154,7 @@ import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useSunumModu } from './composables/useSunumModu.js'
 import { useToast } from 'primevue/usetoast'
+import { useI18n } from 'vue-i18n'
 import { useMagicKeys } from '@vueuse/core'
 
 import AppSidebar from './components/AppSidebar.vue'
@@ -183,7 +184,11 @@ const route = useRoute()
 // POS/hizli satis tam ekran calisma alanidir; sabit alt menü fiş önizleme ve
 // yazdırma butonlarinin uzerine biniyor. Bu route'ta alt menüyü gostermeyiz.
 const altMenuGoster = computed(() => authStore.isLoggedIn && !route.path.startsWith('/hizli-satis'))
+// ErrorBoundary'yi rota basina yeniden olusturur; hata durumu boylece sifirlanir.
+// route izole test ortaminda tanimsiz olabildigi icin guvenli erisim.
+const errorBoundaryKey = computed(() => route?.fullPath || 'app')
 const toast = useToast()
+const { t } = useI18n()
 const { aktif: sunumAktif, maske: sunumMaske, degistir: sunumDegistir, maskeAyarla: sunumMaskeAyarla } = useSunumModu()
 const { ctrl_k, cmd_k, escape } = useMagicKeys()
 
@@ -223,8 +228,8 @@ watch(escape, (v) => {
 const handleApiError = (e) => {
   toast.add({
     severity: 'error',
-    summary: 'Islem Basarisiz',
-    detail: e.detail?.message || 'Bilinmeyen bir hata olustu',
+    summary: t('common.islemBasarisiz'),
+    detail: e.detail?.message || t('common.bilinmeyenHata'),
     life: 5000
   })
 }

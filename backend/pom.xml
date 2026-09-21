@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -7,7 +7,7 @@
 
     <groupId>com.raspel</groupId>
     <artifactId>raspel-erp</artifactId>
-    <version>1.33.0</version>
+    <version>1.34.0</version>
     <packaging>jar</packaging>
 
     <name>Raspel ERP</name>
@@ -141,7 +141,7 @@
             <version>3.0.3</version>
         </dependency>
 
-        <!-- ZXing (QR/karekod Ã¼retimi) -->
+        <!-- ZXing (QR/karekod üretimi) -->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
@@ -183,7 +183,7 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
-        <!-- Flyway Migration (10.x: PostgreSQL 16 desteÄŸi) -->
+        <!-- Flyway Migration (10.x: PostgreSQL 16 desteği) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>

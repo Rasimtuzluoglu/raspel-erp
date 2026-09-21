@@ -16,7 +16,7 @@ public class StokFiyatDTO {
     private Long id;
     @NotNull(message = "Stok secilmelidir")
     private Long stokId;
-    @Size(max = 200, message = "Fiyat adi en fazla 200 karakter olabilir")
+    @Size(max = 200, message = "Fiyat adı en fazla 200 karakter olabilir")
     private String ad;
     @NotNull(message = "Fiyat zorunludur")
     @DecimalMin(value = "0.0", message = "Fiyat negatif olamaz")

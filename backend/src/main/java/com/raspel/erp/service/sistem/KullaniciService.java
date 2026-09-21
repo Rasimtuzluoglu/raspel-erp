@@ -126,8 +126,38 @@ public class KullaniciService {
     public KullaniciDTO getir(Long id) {
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
-        tenantChecker.check(k.getSirketId(), "Kullanıcı");
+        // Kullanıcı kendi kaydını her zaman okuyabilir (/ben). Şirket değiştirme sonrası
+        // JWT'deki aktif şirket ile kayıtlı (home) şirket farklı olabildiği için burada
+        // tenant kontrolü uygulanırsa kullanıcı kendi hesabına erişemez (self-lock).
+        boolean kendisi = id.equals(tenantChecker.getCurrentKullaniciId());
+        if (!kendisi) {
+            tenantErisimiDogrula(k);
+        }
         return entityToDTO(k);
+    }
+
+    /**
+     * Kaydın, oturumdaki aktif şirket bağlamında erişilebilir olup olmadığını doğrular.
+     * Aktif şirket kaydın home şirketi değilse, kullanıcının o şirkete gerçekten
+     * atanmış olması (veya ADMIN olması) gerekir.
+     */
+    private void tenantErisimiDogrula(Kullanici k) {
+        Long aktifSirketId = tenantChecker.getCurrentSirketId();
+        if (aktifSirketId == null) {
+            return;
+        }
+        if (aktifSirketId.equals(k.getSirketId())) {
+            return;
+        }
+        if ("ADMIN".equals(k.getRole())) {
+            return;
+        }
+        Set<Sirket> sirketler = k.getSirketler();
+        boolean atanmis = sirketler != null && sirketler.stream()
+                .anyMatch(s -> aktifSirketId.equals(s.getId()));
+        if (!atanmis) {
+            throw new ResourceNotFoundException("Kullanıcı bu sirkete ait degil");
+        }
     }
 
     public List<String> bildirimTercihleriGetir(Long kullaniciId) {

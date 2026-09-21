@@ -15,10 +15,10 @@ import java.util.List;
 public class ReceteDTO {
     private Long id;
     private Long sirketId;
-    @NotBlank(message = "Recete adi zorunludur")
-    @Size(max = 200, message = "Recete adi en fazla 200 karakter olabilir")
+    @NotBlank(message = "Reçete adı zorunludur")
+    @Size(max = 200, message = "Reçete adı en fazla 200 karakter olabilir")
     private String ad;
-    @NotNull(message = "Uretilecek urun secilmelidir")
+    @NotNull(message = "Üretilecek ürün secilmelidir")
     private Long urunId;
     private String urunAd;
     private String aciklama;
