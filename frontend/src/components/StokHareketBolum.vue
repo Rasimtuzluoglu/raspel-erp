@@ -33,6 +33,9 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
         :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           :header="t('common.date')"
           style="width: 100px"
@@ -107,6 +110,7 @@
           <template #body="s">
             <Button
               icon="pi pi-trash"
+              :aria-label="$t('common.delete')"
               class="p-button-rounded p-button-danger p-button-sm"
               @click="$emit('sil', s.data.id)"
             />

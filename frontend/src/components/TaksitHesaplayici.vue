@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :visible="visible"
-    header="Taksit Hesaplayici"
+    :header="$t('taksitHesaplayici.title')"
     :modal="false"
     :style="{ width: '380px' }"
     :draggable="true"
@@ -10,21 +10,21 @@
   >
     <div class="taksit-form">
       <div class="form-satir">
-        <label>Tutar</label><InputNumber
+        <label>{{ $t('taksitHesaplayici.tutar') }}</label><InputNumber
           v-model="tutar"
           :min="0"
           class="w-full"
         />
       </div>
       <div class="form-satir">
-        <label>Taksit Sayisi</label><Select
+        <label>{{ $t('taksitHesaplayici.taksitSayisi') }}</label><Select
           v-model="taksit"
           :options="taksitler"
           class="w-full"
         />
       </div>
       <div class="form-satir">
-        <label>Faiz Orani (% aylik)</label><InputNumber
+        <label>{{ $t('taksitHesaplayici.faizOrani') }}</label><InputNumber
           v-model="faiz"
           :min="0"
           :max="100"
@@ -36,14 +36,17 @@
         size="small"
         class="mt-3"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="ay"
-          header="Ay"
+          :header="$t('taksitHesaplayici.ay')"
           style="width: 50px"
         />
         <Column
           field="taksit"
-          header="Taksit"
+          :header="$t('taksitHesaplayici.taksit')"
         >
           <template #body="s">
             {{ format(s.data.taksit) }}
@@ -51,7 +54,7 @@
         </Column>
         <Column
           field="kalan"
-          header="Kalan"
+          :header="$t('taksitHesaplayici.kalan')"
         >
           <template #body="s">
             {{ format(s.data.kalan) }}
@@ -60,15 +63,15 @@
       </DataTable>
       <div class="taksit-ozet">
         <div class="ozet-satir">
-          <span>Aylık Taksit</span>
+          <span>{{ $t('taksitHesaplayici.aylikTaksit') }}</span>
           <strong>{{ format(aylikTaksit) }}</strong>
         </div>
         <div class="ozet-satir">
-          <span>Toplam Ödeme</span>
+          <span>{{ $t('taksitHesaplayici.toplamOdeme') }}</span>
           <strong>{{ format(toplam) }}</strong>
         </div>
         <div class="ozet-satir">
-          <span>Toplam Faiz</span>
+          <span>{{ $t('taksitHesaplayici.toplamFaiz') }}</span>
           <strong class="faiz">{{ format(toplamFaiz) }}</strong>
         </div>
       </div>

@@ -105,6 +105,7 @@
         <button
           type="button"
           class="sifre-toggle"
+          :aria-label="sifreGorunur ? $t('common.hide') : $t('common.show')"
           tabindex="-1"
           @click="sifreGorunur = !sifreGorunur"
         >

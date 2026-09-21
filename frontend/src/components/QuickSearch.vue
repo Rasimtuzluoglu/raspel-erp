@@ -396,6 +396,11 @@ const navigate = (item) => {
 }
 
 let searchTimer = null
+// Sirayla gelen aramalarda eski (gec) yanitin yenisini ezmesini engeller.
+let aramaSeq = 0
+// Ayni sorgu icin kisa sureli onbellek; gereksiz tekrar isteklerini azaltir.
+const aramaOnbellek = new Map()
+const ARAMA_ONBELLEK_MS = 30000
 
 const icindeAra = (val, q) => (val || '').toString().toLowerCase().includes(q)
 
@@ -410,6 +415,13 @@ watch(query, (val) => {
     error.value = null
     selectedIndex.value = 0
     const q = val.trim().toLowerCase()
+    const seq = ++aramaSeq
+    const kayit = aramaOnbellek.get(q)
+    if (kayit && Date.now() - kayit.zaman < ARAMA_ONBELLEK_MS) {
+      results.value = kayit.sonuc
+      loading.value = false
+      return
+    }
     try {
       const [
         cariler,
@@ -606,11 +618,14 @@ watch(query, (val) => {
       const digerleri = birlesik.filter((i) => !i.title?.toLowerCase().startsWith(q))
       const baslayanlar = birlesik.filter((i) => i.title?.toLowerCase().startsWith(q))
       const sirali = [...moduller2, ...baslayanlar, ...digerleri]
-      results.value = sirali.slice(0, 15)
+      if (seq !== aramaSeq) return
+      const sonuc = sirali.slice(0, 15)
+      results.value = sonuc
+      aramaOnbellek.set(q, { zaman: Date.now(), sonuc })
     } catch (e) {
       error.value = t('quickSearch.aramaHatasi')
     } finally {
-      loading.value = false
+      if (seq === aramaSeq) loading.value = false
     }
   }, 300)
 })

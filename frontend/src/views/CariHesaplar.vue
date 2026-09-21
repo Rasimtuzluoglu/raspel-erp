@@ -593,220 +593,234 @@
           </template>
         </AppDataTable>
 
-        <div
-          v-if="cariFaturalar && cariFaturalar.length > 0"
-          class="cari-faturalar"
-        >
-          <div class="cari-not-baslik">
-            <h4>
-              <i
-                class="pi pi-file"
-                style="margin-right: 6px"
-              />{{ t('cariHesaplar.gecmisFaturalar', { n: cariFaturalar.length }) }}
-            </h4>
-          </div>
-          <AppDataTable
-            :value="cariFaturalar"
-            size="small"
-            striped-rows
-            :rows="5"
-            :paginator="cariFaturalar.length > 5"
-          >
-            <Column :header="t('cariHesaplar.faturaNo')">
-              <template #body="{ data }">
-                <a
-                  class="fatura-link"
-                  @click="faturaDetayAc(data)"
-                >{{ data.faturaNumarasi }}</a>
-              </template>
-            </Column>
-            <Column :header="t('common.date')">
-              <template #body="{ data }">
-                {{ formatDate(data.tarih) }}
-              </template>
-            </Column>
-            <Column :header="t('cariHesaplar.tur')">
-              <template #body="{ data }">
-                {{ data.tur === 'SATIS' ? t('cariHesaplar.satis') : t('cariHesaplar.alis') }}
-              </template>
-            </Column>
-            <Column :header="t('common.amount')">
-              <template #body="{ data }">
-                <span class="positive">{{ formatCurrency(data.genelToplam) }}</span>
-              </template>
-            </Column>
-            <Column :header="t('common.status')">
-              <template #body="{ data }">
-                <span :class="['badge', data.odemeDurumu === 'ODENDI' ? 'tahsilat' : 'odeme']">
-                  {{ data.odemeDurumu === 'ODENDI' ? t('cariHesaplar.odendi') : data.odemeDurumu === 'KISMI_ODENDI' ? t('cariHesaplar.kismi') : t('cariHesaplar.odenmedi') }}
-                </span>
-              </template>
-            </Column>
-          </AppDataTable>
-        </div>
-
-        <div class="cari-ozel-fiyatlar">
-          <div class="cari-not-baslik">
-            <h4>
-              <i
-                class="pi pi-tag"
-                style="margin-right: 6px"
-              />{{ t('cariHesaplar.ozelFiyatlar') }}
-            </h4>
-          </div>
-          <div
-            v-for="f in cariOzelFiyatlar"
-            :key="f.id"
-            class="ozel-fiyat-satir"
-          >
-            <span class="ozel-fiyat-urun">{{ f.stokAd }}</span>
-            <span class="ozel-fiyat-tutar">{{ formatCurrency(f.fiyat) }}</span>
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text p-button-danger p-button-sm"
-              @click="cariOzelFiyatSil(f)"
-            />
-          </div>
-          <div class="ozel-fiyat-ekle">
-            <Dropdown
-              v-model="ozelFiyatStok"
-              :options="stokSecenekleri"
-              option-label="ad"
-              option-value="id"
-              :placeholder="t('cariHesaplar.urunSec')"
-              filter
-              class="ozel-fiyat-stok-select"
-            />
-            <InputNumber
-              v-model="ozelFiyatTutar"
-              mode="currency"
-              currency="TRY"
-              locale="tr-TR"
-              :min-fraction-digits="2"
-              :placeholder="t('cariHesaplar.fiyat')"
-              class="ozel-fiyat-tutar-input"
-            />
-            <Button
-              icon="pi pi-plus"
-              :label="t('cariHesaplar.ekle')"
-              size="small"
-              @click="cariOzelFiyatEkle"
-            />
-          </div>
-        </div>
-
-        <div
-          v-if="sonUrunler && sonUrunler.length > 0"
-          class="cari-urunler"
-        >
-          <div class="cari-not-baslik">
-            <h4>
-              <i
-                class="pi pi-box"
-                style="margin-right: 6px"
-              />{{ t('cariHesaplar.gecmisteAldigiUrunler') }}
-            </h4>
-          </div>
-          <div class="cari-urunler-grid">
-            <button
-              v-for="u in sonUrunler"
-              :key="u.stokId"
-              type="button"
-              class="cari-urun-chip"
-              @click="urunFiyatGecmisiGoster(u)"
-            >
-              <span class="cari-urun-ad">{{ u.stokAd }}</span>
-              <span class="cari-urun-bilgi">{{ u.sonAlisTarihi }} · {{ t('cariHesaplar.nAdet', { n: u.adet }) }}</span>
-              <span class="cari-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
-            </button>
-          </div>
-          <div
-            v-if="seciliUrunFiyatGecmisi"
-            class="cari-urun-fiyat-gecmisi"
-          >
-            <div class="fg-baslik">
-              <span><i class="pi pi-chart-line" /> {{ seciliUrunFiyatGecmisi.urunAd }} — {{ t('cariHesaplar.fiyatGecmisi') }}</span>
-              <button
-                type="button"
-                class="fg-kapat"
-                @click="seciliUrunFiyatGecmisi = null"
-              >
-                <i class="pi pi-times" />
-              </button>
-            </div>
+        <TabView class="cari-sekmeler">
+          <TabPanel :header="t('cariHesaplar.gecmisFaturalarTab')">
             <div
-              v-for="(k, i) in seciliUrunFiyatGecmisi.gecmis"
-              :key="i"
-              class="fg-satir"
+              v-if="cariFaturalar && cariFaturalar.length > 0"
+              class="cari-faturalar"
             >
-              <span class="fg-tarih">{{ formatDate(k.tarih) }}</span>
-              <span class="fg-fatura">{{ k.faturaNumarasi }}</span>
-              <span class="fg-adet">{{ t('cariHesaplar.nAdet', { n: k.adet }) }}</span>
-              <span class="fg-fiyat">{{ formatCurrency(k.birimFiyat) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="cari-notlar">
-          <div class="cari-not-baslik">
-            <h4>
-              <i
-                class="pi pi-pen-to-square"
-                style="margin-right: 6px"
-              />{{ t('cariHesaplar.gorusmeNotlari') }}
-            </h4>
-          </div>
-          <div class="cari-not-ekle">
-            <Dropdown
-              v-model="yeniCariNotOnem"
-              :options="notOnemSecenekleri"
-              option-label="label"
-              option-value="value"
-              class="not-onem-select"
-            />
-            <InputText
-              v-model="yeniCariNot"
-              :placeholder="t('cariHesaplar.yeniNotPlaceholder')"
-              @keyup.enter="cariNotEkle"
-            />
-            <Button
-              icon="pi pi-plus"
-              class="p-button-sm"
-              @click="cariNotEkle"
-            />
-          </div>
-          <div
-            v-if="(!cariNotlar || !cariNotlar.length)"
-            class="cari-not-bos"
-          >
-            {{ t('cariHesaplar.notYok') }}
-          </div>
-          <div
-            v-for="n in cariNotlar"
-            :key="n.id"
-            class="cari-not-satir"
-          >
-            <div class="cari-not-icerik">
-              <div class="cari-not-baslik-satir">
-                <strong>{{ n.baslik }}</strong>
-                <span
-                  v-if="n.onemDerecesi && n.onemDerecesi !== 'NORMAL'"
-                  class="not-onem-rozet"
-                  :class="n.onemDerecesi.toLowerCase()"
-                >
-                  {{ n.onemDerecesi === 'YUKSEK' ? t('cariHesaplar.yuksek') : t('cariHesaplar.kritik') }}
-                </span>
+              <div class="cari-not-baslik">
+                <h4>
+                  <i
+                    class="pi pi-file"
+                    style="margin-right: 6px"
+                  />{{ t('cariHesaplar.gecmisFaturalar', { n: cariFaturalar.length }) }}
+                </h4>
               </div>
-              <p>{{ n.icerik }}</p>
-              <small>{{ formatTarihSaat(n.olusturmaTarihi, '') }}</small>
+              <AppDataTable
+                :value="cariFaturalar"
+                size="small"
+                striped-rows
+                :rows="5"
+                :paginator="cariFaturalar.length > 5"
+              >
+                <Column :header="t('cariHesaplar.faturaNo')">
+                  <template #body="{ data }">
+                    <a
+                      class="fatura-link"
+                      @click="faturaDetayAc(data)"
+                    >{{ data.faturaNumarasi }}</a>
+                  </template>
+                </Column>
+                <Column :header="t('common.date')">
+                  <template #body="{ data }">
+                    {{ formatDate(data.tarih) }}
+                  </template>
+                </Column>
+                <Column :header="t('cariHesaplar.tur')">
+                  <template #body="{ data }">
+                    {{ data.tur === 'SATIS' ? t('cariHesaplar.satis') : t('cariHesaplar.alis') }}
+                  </template>
+                </Column>
+                <Column :header="t('common.amount')">
+                  <template #body="{ data }">
+                    <span class="positive">{{ formatCurrency(data.genelToplam) }}</span>
+                  </template>
+                </Column>
+                <Column :header="t('common.status')">
+                  <template #body="{ data }">
+                    <span :class="['badge', data.odemeDurumu === 'ODENDI' ? 'tahsilat' : 'odeme']">
+                      {{ data.odemeDurumu === 'ODENDI' ? t('cariHesaplar.odendi') : data.odemeDurumu === 'KISMI_ODENDI' ? t('cariHesaplar.kismi') : t('cariHesaplar.odenmedi') }}
+                    </span>
+                  </template>
+                </Column>
+              </AppDataTable>
             </div>
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text p-button-danger p-button-sm"
-              @click="cariNotSil(n)"
-            />
-          </div>
-        </div>
+          </TabPanel>
+
+          <TabPanel :header="t('cariHesaplar.ozelFiyatlar')">
+            <div class="cari-ozel-fiyatlar">
+              <div class="cari-not-baslik">
+                <h4>
+                  <i
+                    class="pi pi-tag"
+                    style="margin-right: 6px"
+                  />{{ t('cariHesaplar.ozelFiyatlar') }}
+                </h4>
+              </div>
+              <div
+                v-for="f in cariOzelFiyatlar"
+                :key="f.id"
+                class="ozel-fiyat-satir"
+              >
+                <span class="ozel-fiyat-urun">{{ f.stokAd }}</span>
+                <span class="ozel-fiyat-tutar">{{ formatCurrency(f.fiyat) }}</span>
+                <Button
+                  icon="pi pi-trash"
+                  :aria-label="$t('common.delete')"
+                  class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                  @click="cariOzelFiyatSil(f)"
+                />
+              </div>
+              <div class="ozel-fiyat-ekle">
+                <Dropdown
+                  v-model="ozelFiyatStok"
+                  :options="stokSecenekleri"
+                  option-label="ad"
+                  option-value="id"
+                  :placeholder="t('cariHesaplar.urunSec')"
+                  filter
+                  class="ozel-fiyat-stok-select"
+                />
+                <InputNumber
+                  v-model="ozelFiyatTutar"
+                  mode="currency"
+                  currency="TRY"
+                  locale="tr-TR"
+                  :min-fraction-digits="2"
+                  :placeholder="t('cariHesaplar.fiyat')"
+                  class="ozel-fiyat-tutar-input"
+                />
+                <Button
+                  icon="pi pi-plus"
+                  :label="t('cariHesaplar.ekle')"
+                  size="small"
+                  @click="cariOzelFiyatEkle"
+                />
+              </div>
+            </div>
+          </TabPanel>
+
+          <TabPanel :header="t('cariHesaplar.gecmisteAldigiUrunler')">
+            <div
+              v-if="sonUrunler && sonUrunler.length > 0"
+              class="cari-urunler"
+            >
+              <div class="cari-not-baslik">
+                <h4>
+                  <i
+                    class="pi pi-box"
+                    style="margin-right: 6px"
+                  />{{ t('cariHesaplar.gecmisteAldigiUrunler') }}
+                </h4>
+              </div>
+              <div class="cari-urunler-grid">
+                <button
+                  v-for="u in sonUrunler"
+                  :key="u.stokId"
+                  type="button"
+                  class="cari-urun-chip"
+                  @click="urunFiyatGecmisiGoster(u)"
+                >
+                  <span class="cari-urun-ad">{{ u.stokAd }}</span>
+                  <span class="cari-urun-bilgi">{{ u.sonAlisTarihi }} · {{ t('cariHesaplar.nAdet', { n: u.adet }) }}</span>
+                  <span class="cari-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
+                </button>
+              </div>
+              <div
+                v-if="seciliUrunFiyatGecmisi"
+                class="cari-urun-fiyat-gecmisi"
+              >
+                <div class="fg-baslik">
+                  <span><i class="pi pi-chart-line" /> {{ seciliUrunFiyatGecmisi.urunAd }} — {{ t('cariHesaplar.fiyatGecmisi') }}</span>
+                  <button
+                    type="button"
+                    class="fg-kapat"
+                    :aria-label="t('common.close')"
+                    @click="seciliUrunFiyatGecmisi = null"
+                  >
+                    <i class="pi pi-times" />
+                  </button>
+                </div>
+                <div
+                  v-for="(k, i) in seciliUrunFiyatGecmisi.gecmis"
+                  :key="i"
+                  class="fg-satir"
+                >
+                  <span class="fg-tarih">{{ formatDate(k.tarih) }}</span>
+                  <span class="fg-fatura">{{ k.faturaNumarasi }}</span>
+                  <span class="fg-adet">{{ t('cariHesaplar.nAdet', { n: k.adet }) }}</span>
+                  <span class="fg-fiyat">{{ formatCurrency(k.birimFiyat) }}</span>
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+
+          <TabPanel :header="t('cariHesaplar.gorusmeNotlari')">
+            <div class="cari-notlar">
+              <div class="cari-not-baslik">
+                <h4>
+                  <i
+                    class="pi pi-pen-to-square"
+                    style="margin-right: 6px"
+                  />{{ t('cariHesaplar.gorusmeNotlari') }}
+                </h4>
+              </div>
+              <div class="cari-not-ekle">
+                <Dropdown
+                  v-model="yeniCariNotOnem"
+                  :options="notOnemSecenekleri"
+                  option-label="label"
+                  option-value="value"
+                  class="not-onem-select"
+                />
+                <InputText
+                  v-model="yeniCariNot"
+                  :placeholder="t('cariHesaplar.yeniNotPlaceholder')"
+                  @keyup.enter="cariNotEkle"
+                />
+                <Button
+                  icon="pi pi-plus"
+                  :aria-label="$t('common.add')"
+                  class="p-button-sm"
+                  @click="cariNotEkle"
+                />
+              </div>
+              <div
+                v-if="(!cariNotlar || !cariNotlar.length)"
+                class="cari-not-bos"
+              >
+                {{ t('cariHesaplar.notYok') }}
+              </div>
+              <div
+                v-for="n in cariNotlar"
+                :key="n.id"
+                class="cari-not-satir"
+              >
+                <div class="cari-not-icerik">
+                  <div class="cari-not-baslik-satir">
+                    <strong>{{ n.baslik }}</strong>
+                    <span
+                      v-if="n.onemDerecesi && n.onemDerecesi !== 'NORMAL'"
+                      class="not-onem-rozet"
+                      :class="n.onemDerecesi.toLowerCase()"
+                    >
+                      {{ n.onemDerecesi === 'YUKSEK' ? t('cariHesaplar.yuksek') : t('cariHesaplar.kritik') }}
+                    </span>
+                  </div>
+                  <p>{{ n.icerik }}</p>
+                  <small>{{ formatTarihSaat(n.olusturmaTarihi, '') }}</small>
+                </div>
+                <Button
+                  icon="pi pi-trash"
+                  :aria-label="$t('common.delete')"
+                  class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                  @click="cariNotSil(n)"
+                />
+              </div>
+            </div>
+          </TabPanel>
+        </TabView>
       </div>
 
       <template #footer>
@@ -978,6 +992,8 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
 import BorclandirmaGirDialog from '../components/BorclandirmaGirDialog.vue'
 import CariKart360Dialog from '../components/CariKart360Dialog.vue'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
@@ -1265,8 +1281,10 @@ const saveCariHesap = async () => {
 const confirmDelete = (id) => {
   confirm.require({
     message: t('cariHesaplar.silOnayMesaj'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
     accept: () => deleteCariHesap(id),
     reject: () => {}
   })
@@ -1285,7 +1303,7 @@ const batchSil = () => {
   if (selectedCariHesaplar.value.length === 0) return
   confirm.require({
     message: t('cariHesaplar.topluSilOnayMesaj', { n: selectedCariHesaplar.value.length }),
-    header: t('cariHesaplar.topluSilmeOnayi'),
+    header: t('common.topluSilmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
@@ -1446,14 +1464,23 @@ const cariOzelFiyatEkle = async () => {
   }
 }
 
-const cariOzelFiyatSil = async (f) => {
-  try {
-    await cariHesapAPI.fiyatSil(f.id)
-    cariOzelFiyatlar.value = cariOzelFiyatlar.value.filter((x) => x.id !== f.id)
-    toastBildirim.basarili(t('cariHesaplar.ozelFiyatSilindi'))
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('cariHesaplar.silinemedi'))
-  }
+const cariOzelFiyatSil = (f) => {
+  confirm.require({
+    message: t('common.silmeOnayMesaji'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await cariHesapAPI.fiyatSil(f.id)
+        cariOzelFiyatlar.value = cariOzelFiyatlar.value.filter((x) => x.id !== f.id)
+        toastBildirim.basarili(t('cariHesaplar.ozelFiyatSilindi'))
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('cariHesaplar.silinemedi'))
+      }
+    }
+  })
 }
 
 const cariFaturalar = ref([])
@@ -1540,13 +1567,22 @@ const cariNotEkle = async () => {
   }
 }
 
-const cariNotSil = async (n) => {
-  try {
-    await notAPI.delete(n.id)
-    await cariNotlariYukle(selectedCariHesap.value.id)
-  } catch (err) {
-    toastBildirim.hata(t('cariHesaplar.notSilinemedi'))
-  }
+const cariNotSil = (n) => {
+  confirm.require({
+    message: t('common.silmeOnayMesaji'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await notAPI.delete(n.id)
+        await cariNotlariYukle(selectedCariHesap.value.id)
+      } catch (err) {
+        toastBildirim.hata(t('cariHesaplar.notSilinemedi'))
+      }
+    }
+  })
 }
 
 const csvExport = () => {

@@ -8,19 +8,21 @@
         to="/"
         class="brand"
       >
-        <img
-          v-if="sirketLogo"
-          :src="sirketLogo"
-          class="brand-logo"
-          alt="logo"
-          loading="lazy"
-        >
-        <div
-          v-else
-          class="brand-icon"
-        >
-          <i class="pi pi-calculator" />
-        </div>
+        <span class="brand-logolar">
+          <img
+            :src="URUN_LOGO_ICON"
+            class="brand-raspel"
+            alt="RasPel"
+            loading="lazy"
+          >
+          <img
+            v-if="sirketLogosu"
+            :src="sirketLogosu"
+            class="brand-logo"
+            alt="logo"
+            loading="lazy"
+          >
+        </span>
         <div class="brand-text">
           <span class="brand-title">RasPel</span>
           <span
@@ -40,7 +42,10 @@
       </div>
     </div>
 
-    <div class="sidebar-menu">
+    <div
+      ref="sidebarMenuEl"
+      class="sidebar-menu"
+    >
       <div
         v-if="favoriMenuler && favoriMenuler.length"
         class="menu-grup"
@@ -90,10 +95,18 @@
         <div
           v-if="!i || m.grupKey !== gorunenMenuler[i - 1].grupKey"
           class="menu-grup"
+          :class="{ 'menu-grup-toggle': !!m.grupKey }"
+          @click="toggleGrup(m.grupKey)"
         >
           {{ $t(m.grupKey) }}
+          <i
+            v-if="m.grupKey"
+            class="pi menu-grup-ok"
+            :class="grupKapali(m.grupKey) ? 'pi-chevron-down' : 'pi-chevron-up'"
+          />
         </div>
         <router-link
+          v-show="!grupKapali(m.grupKey)"
           :to="m.path"
           :class="{ active: menuAktif(m.path) }"
           :title="$t(m.labelKey)"
@@ -306,12 +319,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { unwrapList } from '../api/utils/unwrap.js'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
-import { sirketAPI } from '../api/index.js'
-import { personelIzinAPI, satinalmaTalepAPI, siparisAPI } from '../api/index.js'
+import { onaySayilariAPI } from '../api/index.js'
+import { useMarka } from '../composables/useMarka.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
@@ -338,6 +350,8 @@ const authStore = useAuthStore()
 const { aktif: sunumAktif, degistir: sunumDegistir } = useSunumModu()
 const toastBildirim = useToastBildirim()
 const { t } = useI18n()
+
+const { sirketLogosu, URUN_LOGO_ICON, yukle: markaYukle } = useMarka()
 
 const mobilMenuAcik = ref(false)
 const aracAcik = ref(false)
@@ -441,6 +455,7 @@ const tumMenuler = [
   { path: '/uretim', labelKey: 'nav.uretim', icon: 'pi pi-cog', grupKey: 'nav.envanter' },
   { path: '/subeler', labelKey: 'nav.sube', icon: 'pi pi-sitemap', grupKey: 'nav.yonetim', gelismis: true },
   { path: '/personel', labelKey: 'nav.personel', icon: 'pi pi-id-card', grupKey: 'nav.yonetim' },
+  { path: '/puantaj', labelKey: 'nav.puantaj', icon: 'pi pi-clock', grupKey: 'nav.yonetim', gelismis: true },
   { path: '/izinler', labelKey: 'nav.izin', icon: 'pi pi-calendar', grupKey: 'nav.yonetim', gelismis: true },
   { path: '/projeler', labelKey: 'nav.proje', icon: 'pi pi-folder', grupKey: 'nav.yonetim', gelismis: true },
   {
@@ -506,6 +521,27 @@ const favoriMenuler = computed(() =>
   tumMenuler.filter((m) => favoriler.value.includes(m.path) && (!m.admin || authStore?.kullanici?.role === 'ADMIN'))
 )
 
+// Menu kalabaligini azaltmak icin grup basliklari katlanabilir (tercih kalici).
+const sidebarMenuEl = ref(null)
+const kapaliGruplar = ref(safeGet('raspel_erp_kapali_gruplar', []))
+const grupKapali = (k) => !!k && kapaliGruplar.value.includes(k)
+const toggleGrup = (k) => {
+  if (!k) return
+  const idx = kapaliGruplar.value.indexOf(k)
+  if (idx === -1) kapaliGruplar.value.push(k)
+  else kapaliGruplar.value.splice(idx, 1)
+  safeSet('raspel_erp_kapali_gruplar', kapaliGruplar.value)
+  // Katlaninca icerik kisalir; kalan scroll konumu bos alan/scrollbar birakmasin.
+  nextTick(() => {
+    const el = sidebarMenuEl.value
+    if (!el) return
+    if (el.scrollHeight <= el.clientHeight) el.scrollTop = 0
+    else if (el.scrollTop > el.scrollHeight - el.clientHeight) {
+      el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight)
+    }
+  })
+}
+
 /**
  * Aktif menüyü en uzun yol eşleşmesine göre belirler. Böylece
  * /raporlar/karlilik-analizi açıkken /raporlar da aktif görünmez.
@@ -523,25 +559,6 @@ const aktifYol = computed(() => {
 
 const menuAktif = (path) => aktifYol.value === path
 
-const sirketLogo = ref(null)
-
-watch(
-  () => authStore.sirketId,
-  async (id) => {
-    if (id) {
-      try {
-        const r = await sirketAPI.getById(id)
-        sirketLogo.value = r.data?.logoUrl || null
-      } catch {
-        sirketLogo.value = null
-      }
-    } else {
-      sirketLogo.value = null
-    }
-  },
-  { immediate: true }
-)
-
 const cikis = () => {
   authStore.cikisYap()
   router.push({ name: 'Giris' })
@@ -549,6 +566,8 @@ const cikis = () => {
 
 onMounted(() => {
   initTheme()
+  // Şirket logosu (varsa) store üzerinden bir kez yüklenir.
+  markaYukle()
   // Onay sayaçları yalnızca ofis kullanıcıları için anlamlıdır; şoför/saha
   // kullanıcılarında bu uçlar 403 döndürdüğü için hiç çağrılmaz.
   if (!authStore.isDriver && !authStore.isSaha) {
@@ -560,18 +579,9 @@ const onaySayisi = ref(0)
 
 const onaySayisiniYukle = async () => {
   try {
-    const [iRes, tRes, sRes] = await Promise.all([
-      personelIzinAPI.getAll(),
-      satinalmaTalepAPI.getAll(),
-      siparisAPI.getAll({ size: 100 })
-    ])
-    const izinler = unwrapList(iRes)
-    const talepler = unwrapList(tRes)
-    const siparisler = unwrapList(sRes)
-    onaySayisi.value =
-      izinler.filter((i) => i.durum === 'BEKLEMEDE').length +
-      talepler.filter((t) => t.durum === 'TASLAK').length +
-      siparisler.filter((s) => s.durum === 'BEKLIYOR').length
+    const r = await onaySayilariAPI.get()
+    const d = r.data || {}
+    onaySayisi.value = (d.izin || 0) + (d.satinalma || 0) + (d.siparis || 0)
   } catch {
     onaySayisi.value = 0
   }

@@ -43,6 +43,7 @@
         </span>
         <Button
           icon="pi pi-refresh"
+          :aria-label="$t('common.refresh')"
           :loading="yukleniyor"
           @click="yukle"
         />
@@ -99,6 +100,9 @@
         size="small"
         scrollable
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="tarih"
           :header="t('faturaGecmisRapor.tarih')"

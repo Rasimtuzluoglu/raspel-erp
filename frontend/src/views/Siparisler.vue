@@ -355,7 +355,7 @@ const uretimEmriOlustur = (siparis) => {
     header: t('uretim.title'),
     icon: 'pi pi-cog',
     acceptLabel: t('uretim.olustur'),
-    rejectLabel: t('common.cancel'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         const r = await uretimAPI.siparistenEmir(siparis.id)
@@ -398,10 +398,10 @@ const durumGuncelle = async (data, durum) => {
 const sil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('siparisler.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('siparisler.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await siparisAPI.delete(data.id)

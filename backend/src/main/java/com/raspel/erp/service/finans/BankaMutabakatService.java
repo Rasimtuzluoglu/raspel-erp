@@ -117,21 +117,39 @@ public class BankaMutabakatService {
                 ? faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(sirketId, Fatura.FaturaDurum.IPTAL, List.of("ODENDI"))
                 : List.of();
 
+        // Tutara gore indeksle: O(N*M) yerine O(N) eslesme; kayit basina save yerine
+        // tek saveAll.
+        Map<String, List<Fatura>> tutarIndeks = faturalar.stream()
+                .filter(f -> f.getTarih() != null)
+                .collect(Collectors.groupingBy(f -> tutarAnahtari(
+                        f.getKalanTutar() != null && f.getKalanTutar().signum() > 0
+                                ? f.getKalanTutar() : f.getGenelToplam())));
+
+        List<BankaHareketi> degisenler = new ArrayList<>();
         for (BankaHareketi h : eslesmesiz) {
             BigDecimal tutar = h.getBorc().signum() > 0 ? h.getBorc() : h.getAlacak();
-            for (Fatura f : faturalar) {
-                BigDecimal eslesecek = f.getKalanTutar() != null && f.getKalanTutar().signum() > 0
-                        ? f.getKalanTutar() : f.getGenelToplam();
-                if (eslesecek != null && eslesecek.compareTo(tutar) == 0
-                        && Math.abs(f.getTarih().toEpochDay() - h.getTarih().toEpochDay()) <= 3) {
+            if (tutar == null) continue;
+            List<Fatura> adaylar = tutarIndeks.get(tutarAnahtari(tutar));
+            if (adaylar == null) continue;
+            for (Fatura f : adaylar) {
+                if (Math.abs(f.getTarih().toEpochDay() - h.getTarih().toEpochDay()) <= 3) {
                     h.setEslestirildi(true);
                     h.setEslesenFaturaId(f.getId());
-                    bankaHareketiRepository.save(h);
+                    degisenler.add(h);
                     break;
                 }
             }
         }
+        if (!degisenler.isEmpty()) {
+            bankaHareketiRepository.saveAll(degisenler);
+        }
         return listele(bankaId, sirketId);
+    }
+
+    /** Tutar karsilastirmasi icin olcek-bagimsiz anahtar (100, 100.00 ve 1E+2 esit). */
+    private static String tutarAnahtari(BigDecimal tutar) {
+        if (tutar == null) return "null";
+        return tutar.stripTrailingZeros().toPlainString();
     }
 
     public BankaHareketiDTO eslestir(Long hareketId, Long faturaId) {

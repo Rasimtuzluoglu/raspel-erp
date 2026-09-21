@@ -21,9 +21,29 @@ public class RaporDTO {
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class CariEkstreDTO {
         private String cariAd;
+        private String cariVergiNo;
+        private String cariTelefon;
+        private String cariEmail;
+        private String cariAdres;
         private BigDecimal donemBasBakiye;
         private BigDecimal donemSonBakiye;
-        private List<HareketDTO> hareketler;
+        private BigDecimal toplamBorc;
+        private BigDecimal toplamAlacak;
+        private BigDecimal netHareket;
+        private List<CariEkstreSatiriDTO> hareketler;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class CariEkstreSatiriDTO {
+        private Long id;
+        private java.time.LocalDate tarih;
+        private String tur;
+        private String aciklama;
+        private String faturaNumarasi;
+        private java.time.LocalDate vadeTarihi;
+        private BigDecimal borc;
+        private BigDecimal alacak;
+        private BigDecimal yuruyenBakiye;
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor @Builder

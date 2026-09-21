@@ -61,6 +61,8 @@ public class SecurityConfig {
                         "/api/kullanicilar/sifre-sifirlama-onayla",
                         "/api/kullanicilar/cikis").permitAll()
                 .requestMatchers("/api/kurulum/**").permitAll()
+                // Şirket logosu giriş ekranında (oturum öncesi) gösterilir; public.
+                .requestMatchers("/api/uploads/sirket-logos/**").permitAll()
                 // Base health (aggregate UP/DOWN) ve prometheus metrikleri aciktir.
                 // show-details=when-authorized oldugu icin anonim istek detay gormez.
                 // Diger tum actuator endpoint'leri yalnizca ADMIN rolune aciktir.

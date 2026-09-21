@@ -271,8 +271,10 @@ const saveBanka = async () => {
 const confirmDelete = (id) => {
   confirm.require({
     message: t('bankalar.silOnayMesaj'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
     accept: async () => {
       try {
         await bankaStore.deleteBanka(id)

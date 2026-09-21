@@ -193,6 +193,15 @@ public class StokController {
         return ResponseEntity.ok(stokService.fiyatlariGetir(id));
     }
 
+    @GetMapping("/fiyatlar")
+    @Operation(summary = "Birden fazla stok fiyatını getir", description = "Verilen stok ID'leri için fiyat tanımlarını tek istekte döner")
+    public ResponseEntity<Map<Long, List<com.raspel.erp.dto.envanter.StokFiyatDTO>>> topluFiyatlar(
+            @RequestParam("ids") List<Long> ids,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.fiyatlariTopluGetir(ids, sirketId));
+    }
+
     @PostMapping("/{id}/fiyatlar")
     @Operation(summary = "Stok fiyatı ekle", description = "Stoğa yeni bir fiyat tanımı ekler")
     public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatEkle(
@@ -224,6 +233,16 @@ public class StokController {
     public ResponseEntity<StokDTO> olustur(@RequestBody @jakarta.validation.Valid StokDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(stokService.olustur(dto, sirketId));
+    }
+
+    @PostMapping("/toplu")
+    @Operation(summary = "Toplu stok oluştur", description = "Birden fazla stok kaydını tek istekte oluşturur (CSV içe aktarma)")
+    public ResponseEntity<Map<String, Object>> topluOlustur(
+            @RequestBody List<StokDTO> dtolar,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        int adet = stokService.topluOlustur(dtolar, sirketId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("eklenen", adet));
     }
 
     @PutMapping("/{id}")

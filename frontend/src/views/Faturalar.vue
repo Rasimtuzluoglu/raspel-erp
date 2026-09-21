@@ -470,6 +470,7 @@
           </div>
           <Button
             icon="pi pi-plus"
+            :aria-label="$t('common.add')"
             class="p-button-success"
             style="margin-bottom: 2px"
             :disabled="!urunSecimi || !urunAdet"
@@ -1302,20 +1303,30 @@ const excelIndir = async () => {
   }
 }
 
-const topluSil = async () => {
-  topluSiliniyor.value = true
-  try {
-    for (const item of selectedItems.value) {
-      await faturaAPI.delete(item.id)
+const topluSil = () => {
+  if (!selectedItems.value.length) return
+  confirm.require({
+    message: t('common.topluSilmeOnayMesaji', { n: selectedItems.value.length }),
+    header: t('common.topluSilmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      topluSiliniyor.value = true
+      try {
+        for (const item of selectedItems.value) {
+          await faturaAPI.delete(item.id)
+        }
+        toastBildirim.basarili(t('faturalar.kayitSilindi', { n: selectedItems.value.length }))
+        selectedItems.value = []
+        await faturaStore.getAllFaturalar()
+      } catch {
+        toastBildirim.hata(t('faturalar.silmeBasarisiz'))
+      } finally {
+        topluSiliniyor.value = false
+      }
     }
-    toastBildirim.basarili(t('faturalar.kayitSilindi', { n: selectedItems.value.length }))
-    selectedItems.value = []
-    await faturaStore.getAllFaturalar()
-  } catch {
-    toastBildirim.hata(t('faturalar.silmeBasarisiz'))
-  } finally {
-    topluSiliniyor.value = false
-  }
+  })
 }
 
 

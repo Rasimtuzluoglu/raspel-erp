@@ -17,6 +17,9 @@
       responsive-layout="scroll"
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="id"
         header="#"
@@ -213,9 +216,18 @@
             />
             <Button
               icon="pi pi-upload"
+              :aria-label="$t('common.upload')"
               class="p-button-outlined"
               :loading="logoYukleniyor"
               @click="$refs.logoInput.click()"
+            />
+            <Button
+              v-if="form.logoUrl"
+              icon="pi pi-trash"
+              :aria-label="$t('sirketler.logoKaldir')"
+              severity="danger"
+              outlined
+              @click="logoKaldir"
             />
             <input
               ref="logoInput"
@@ -305,6 +317,9 @@
           size="small"
           striped-rows
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="sirketAdi"
             :header="t('sirketler.sirket')"
@@ -447,6 +462,15 @@ const dialogAc = (data) => {
     }
   }
   dialog.value = true
+}
+
+const logoKaldir = async () => {
+  try {
+    if (seciliId.value) await sirketAPI.deleteLogo(seciliId.value)
+  } catch {
+    /* dosya silinemese de form referansi temizlenir */
+  }
+  form.value.logoUrl = ''
 }
 
 const logoSec = async (event) => {

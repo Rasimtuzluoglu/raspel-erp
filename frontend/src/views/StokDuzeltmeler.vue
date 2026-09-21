@@ -43,6 +43,7 @@
         <h2>{{ t('stokDuzeltmeler.duzeltmeGecmisi') }}</h2>
         <Button
           icon="pi pi-refresh"
+          :aria-label="$t('common.refresh')"
           class="p-button-text p-button-sm"
           @click="yukle"
         />

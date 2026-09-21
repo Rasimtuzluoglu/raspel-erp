@@ -162,7 +162,8 @@ class FaturaGecmisServiceTest {
 
     @Test
     void rapor_faturaBilgileriyleDoner() {
-        when(faturaGecmisRepository.filtreli(1L, null, null, null, null)).thenReturn(List.of(
+        when(faturaGecmisRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(
                 FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("YAZDIR")
                         .yazdirmaFormat("A4").build()));
         when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
@@ -178,7 +179,8 @@ class FaturaGecmisServiceTest {
 
     @Test
     void rapor_turFiltresiUygulanir() {
-        when(faturaGecmisRepository.filtreli(1L, null, null, null, null)).thenReturn(List.of(
+        when(faturaGecmisRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(
                 FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("OLUSTUR").build()));
         when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
                 Fatura.builder().id(5L).faturaNumarasi("FTR-5")

@@ -72,8 +72,8 @@ public class FileUploadController {
     }
 
     @PostMapping("/upload/sirket-logo")
-    @Operation(summary = "Şirket logosu yükle", description = "Şirket logosu yükler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Şirket logosu yükle", description = "Şirket logosu yükler (ADMIN/USER/MUHASEBE, kendi şirketi)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<Map<String, String>> uploadSirketLogo(@RequestParam("file") MultipartFile file) {
         return dosyaYukle(file, tenantKlasor(LOGO_KLASOR), "/api/uploads/sirket-logos/");
     }

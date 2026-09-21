@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AjandaHatirlaticiDTO {
     private Long id;
-    @NotNull(message = "Gorev secilmelidir")
+    /** Opsiyonel: bagimsiz hatirlatici icin gorev secilmesi gerekmez. */
     private Long gorevId;
     @NotBlank(message = "Başlık zorunludur")
     @Size(max = 200, message = "Baslik en fazla 200 karakter olabilir")

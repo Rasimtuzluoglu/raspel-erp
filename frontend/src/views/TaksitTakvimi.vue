@@ -95,6 +95,9 @@
         :rows="10"
         :empty-message="t('taksitTakvimi.kayitYok')"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="vadeTarihi"
           :header="t('taksitTakvimi.vade')"
@@ -156,7 +159,7 @@
               text
               rounded
               severity="danger"
-              :aria-label="t('taksitTakvimi.sil')"
+              :aria-label="t('common.delete')"
               @click="sil(data)"
             />
           </template>
@@ -452,7 +455,7 @@ const ode = (k) => {
     header: t('taksitTakvimi.ode'),
     icon: 'pi pi-check-circle',
     acceptLabel: t('taksitTakvimi.evet'),
-    rejectLabel: t('taksitTakvimi.iptal'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await taksitAPI.ode(k.id)
@@ -468,10 +471,10 @@ const ode = (k) => {
 const sil = (k) => {
   confirm.require({
     message: t('taksitTakvimi.silOnay'),
-    header: t('taksitTakvimi.sil'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('taksitTakvimi.evet'),
-    rejectLabel: t('taksitTakvimi.iptal'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await taksitAPI.sil(k.id)

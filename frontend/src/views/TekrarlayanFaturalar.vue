@@ -22,6 +22,9 @@
           striped-rows
           size="small"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="cariHesapAd"
             :header="t('tekrarlayanFaturalar.cari')"
@@ -81,6 +84,7 @@
             <template #body="s">
               <Button
                 icon="pi pi-pencil"
+                :aria-label="$t('common.edit')"
                 class="p-button-sm p-button-text"
                 @click="duzenle(s.data)"
               />
@@ -92,6 +96,7 @@
               />
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-sm p-button-text p-button-danger"
                 @click="sil(s.data)"
               />
@@ -219,6 +224,7 @@
         />
         <Button
           icon="pi pi-times"
+          :aria-label="$t('common.close')"
           class="p-button-sm p-button-text p-button-danger"
           @click="form.kalemler.splice(i, 1)"
         />
@@ -374,7 +380,7 @@ const kaydet = async () => {
 const sil = (k) => {
   confirm.require({
     message: t('tekrarlayanFaturalar.silOnayMesaj'),
-    header: t('tekrarlayanFaturalar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {

@@ -221,14 +221,16 @@ public class RaporController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
         RaporDTO.CariEkstreDTO ekstre = raporService.cariEkstreGetir(cariHesapId, baslangic, bitis);
-        String[] kolonlar = {"Tarih", "Tur", "Aciklama", "Tutar"};
+        String[] kolonlar = {"Tarih", "Tur", "Aciklama", "Borc", "Alacak", "Bakiye"};
         List<String[]> satirlar = ekstre.getHareketler() == null ? List.of()
                 : ekstre.getHareketler().stream()
                         .map(h -> new String[]{
-                                h.getHareketTarihi() != null ? h.getHareketTarihi().toString() : "-",
+                                h.getTarih() != null ? h.getTarih().toString() : "-",
                                 h.getTur() != null ? h.getTur() : "-",
                                 h.getAciklama() != null ? h.getAciklama() : "-",
-                                h.getTutar() != null ? h.getTutar().toPlainString() : "0"
+                                h.getBorc() != null ? h.getBorc().toPlainString() : "0",
+                                h.getAlacak() != null ? h.getAlacak().toPlainString() : "0",
+                                h.getYuruyenBakiye() != null ? h.getYuruyenBakiye().toPlainString() : "0"
                         })
                         .collect(java.util.stream.Collectors.toList());
         byte[] pdf = pdfRaporService.tabloRaporu(

@@ -77,6 +77,7 @@
       <Column
         field="aciklama"
         :header="t('common.description')"
+        class="izin-aciklama-kolon"
       >
         <template #body="{ data }">
           {{ data.aciklama || '-' }}
@@ -84,7 +85,7 @@
       </Column>
       <Column
         :header="t('common.actions')"
-        style="width: 180px"
+        style="width: 150px"
       >
         <template #body="{ data }">
           <Button
@@ -110,6 +111,12 @@
           />
         </template>
       </Column>
+      <template #empty>
+        <EmptyState
+          icon="pi pi-calendar"
+          :message="t('common.noData')"
+        />
+      </template>
     </DataTable>
   </div>
 </template>
@@ -177,7 +184,7 @@ const onayla = (data) => {
     header: t('izinler.izinOnayi'),
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: t('izinler.onayla'),
-    rejectLabel: t('common.cancel'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'ONAYLANDI', kullaniciAdi.value)
@@ -197,7 +204,7 @@ const reddet = (data) => {
     header: t('izinler.izinReddi'),
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: t('izinler.reddet'),
-    rejectLabel: t('common.cancel'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await personelIzinAPI.durumGuncelle(data.id, 'REDDEDILDI', kullaniciAdi.value)
@@ -216,10 +223,10 @@ const kullaniciAdi = computed(() => authStore?.kullanici?.displayName || authSto
 const sil = (data) => {
   confirm.require({
     message: t('izinler.silOnayMesaj'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await personelIzinAPI.delete(data.id)
@@ -253,5 +260,17 @@ const sil = (data) => {
   gap: 8px;
   flex-wrap: wrap;
   max-width: 100%;
+}
+/* Uzun aciklama kolonu tabloyu genisletip gereksiz yatay scroll uretmesin. */
+.izin-aciklama-kolon {
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 1200px) {
+  .izin-aciklama-kolon {
+    display: none;
+  }
 }
 </style>

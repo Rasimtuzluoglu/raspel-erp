@@ -44,10 +44,10 @@ class AnomaliTespitEngineTest {
         Fatura f1 = Fatura.builder().id(1L).cariHesap(cari).genelToplam(BigDecimal.valueOf(5000)).build();
         Fatura f2 = Fatura.builder().id(2L).cariHesap(cari).genelToplam(BigDecimal.valueOf(5000)).build();
 
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(eq(100L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(f1, f2)));
-        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(eq(100L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(faturaRepository.mukerrerFaturaGruplari(100L)).thenReturn(List.of(
+                java.util.Map.of("cariId", 10L, "cariAd", "Test Cari", "tutar", BigDecimal.valueOf(5000), "adet", 2L, "ilkId", 1L)));
+        when(hareketRepository.mukerrerHareketGruplari(100L)).thenReturn(List.of());
+        when(faturaRepository.yuksekTutarliFaturalar(eq(100L), any())).thenReturn(List.of());
 
         List<AnomaliDTO> list = anomaliTespitEngine.anomalileriTara(100L);
 
@@ -61,10 +61,9 @@ class AnomaliTespitEngineTest {
         CariHesap cari = CariHesap.builder().id(10L).ad("Test Cari").build();
         Fatura f1 = Fatura.builder().id(1L).cariHesap(cari).faturaNumarasi("FTR-999").genelToplam(BigDecimal.valueOf(75000)).build();
 
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(eq(100L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(f1)));
-        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(eq(100L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(faturaRepository.mukerrerFaturaGruplari(100L)).thenReturn(List.of());
+        when(hareketRepository.mukerrerHareketGruplari(100L)).thenReturn(List.of());
+        when(faturaRepository.yuksekTutarliFaturalar(eq(100L), any())).thenReturn(List.of(f1));
 
         List<AnomaliDTO> list = anomaliTespitEngine.anomalileriTara(100L);
 

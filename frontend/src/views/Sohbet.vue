@@ -459,6 +459,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { sohbetAPI, sohbetOdaAPI, aiConfigAPI, kullaniciAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
@@ -485,6 +486,7 @@ const grafikBileseni = (tip) => ({ bar: Bar, doughnut: Doughnut, line: Line }[ti
 
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
+const confirm = useConfirm()
 const { t } = useI18n()
 
 const aktifMod = ref('ai')
@@ -567,19 +569,28 @@ const mesajEkle = (hedefRef, m) => {
 }
 
 /** Yalnızca ADMIN mesaj silebilir. Genel sohbet veya oda mesajı silinir. */
-const mesajSil = async (m) => {
+const mesajSil = (m) => {
   if (!m?.id) return
-  try {
-    if (seciliOdaId.value) {
-      await sohbetOdaAPI.mesajSil(seciliOdaId.value, m.id)
-      odaMesajlar.value = odaMesajlar.value.filter((x) => x.id !== m.id)
-    } else {
-      await sohbetAPI.mesajSil(m.id)
-      mesajlar.value = mesajlar.value.filter((x) => x.id !== m.id)
+  confirm.require({
+    message: t('common.silmeOnayMesaji'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        if (seciliOdaId.value) {
+          await sohbetOdaAPI.mesajSil(seciliOdaId.value, m.id)
+          odaMesajlar.value = odaMesajlar.value.filter((x) => x.id !== m.id)
+        } else {
+          await sohbetAPI.mesajSil(m.id)
+          mesajlar.value = mesajlar.value.filter((x) => x.id !== m.id)
+        }
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('sohbet.mesajSilinemedi'))
+      }
     }
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('sohbet.mesajSilinemedi'))
-  }
+  })
 }
 
 const formatTabloBaslik = (key) => {  const map = {

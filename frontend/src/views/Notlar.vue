@@ -28,6 +28,7 @@
       />
       <Button
         icon="pi pi-times"
+        :aria-label="$t('common.close')"
         class="p-button-text p-button-sm"
         @click="geriAlGoster = false"
       />
@@ -258,7 +259,7 @@ const sil = async (id) => {
   const silinen = store.notlar.find((n) => n.id === id)
   try {
     await store.deleteNot(id)
-    toast.add({ severity: 'success', summary: 'Silindi', detail: 'Not silindi.', life: 3000 })
+    toastBildirim.basarili(t('notlar.notSilindi'))
     if (silinen) {
       silinenSon.value = silinen
       geriAlGoster.value = true

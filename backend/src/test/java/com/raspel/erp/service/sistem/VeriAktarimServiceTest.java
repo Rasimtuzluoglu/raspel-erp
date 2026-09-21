@@ -64,7 +64,8 @@ class VeriAktarimServiceTest {
         Stok stok = Stok.builder().id(100L).ad("Stok 1").stokKodu("S01").miktar(BigDecimal.TEN).build();
         when(stokRepository.findBySirketIdOrderByAd(eq(1L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(stok)));
-        when(stokRepository.findBySirketIdAndStokKodu(2L, "S01")).thenReturn(Optional.empty());
+        when(stokRepository.findBySirketIdOrderByAd(eq(2L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
 
         VeriAktarimDTO dto = VeriAktarimDTO.builder()
                 .kaynakSirketId(1L)
@@ -77,9 +78,10 @@ class VeriAktarimServiceTest {
         assertEquals(1, sonuc.getAktarilanStokSayisi());
         assertEquals(0, sonuc.getAtlananStokSayisi());
 
-        ArgumentCaptor<Stok> stokCaptor = ArgumentCaptor.forClass(Stok.class);
-        verify(stokRepository).save(stokCaptor.capture());
-        Stok savedStok = stokCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Stok>> stokCaptor = ArgumentCaptor.forClass(List.class);
+        verify(stokRepository).saveAll(stokCaptor.capture());
+        Stok savedStok = stokCaptor.getValue().get(0);
         assertEquals("Stok 1", savedStok.getAd());
         assertEquals("S01", savedStok.getStokKodu());
         assertEquals(BigDecimal.ZERO, savedStok.getMiktar());
@@ -109,9 +111,10 @@ class VeriAktarimServiceTest {
         assertEquals(1, sonuc.getAktarilanCariSayisi());
         assertEquals(0, sonuc.getAtlananCariSayisi());
 
-        ArgumentCaptor<CariHesap> cariCaptor = ArgumentCaptor.forClass(CariHesap.class);
-        verify(cariHesapRepository).save(cariCaptor.capture());
-        CariHesap savedCari = cariCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<CariHesap>> cariCaptor = ArgumentCaptor.forClass(List.class);
+        verify(cariHesapRepository).saveAll(cariCaptor.capture());
+        CariHesap savedCari = cariCaptor.getValue().get(0);
         assertEquals("Cari 1", savedCari.getAd());
         assertEquals("12345", savedCari.getVergiNumarasi());
         assertEquals(BigDecimal.ZERO, savedCari.getBakiye());
@@ -126,7 +129,8 @@ class VeriAktarimServiceTest {
         Stok stok = Stok.builder().id(100L).ad("Stok 1").stokKodu("S01").build();
         when(stokRepository.findBySirketIdOrderByAd(eq(1L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(stok)));
-        when(stokRepository.findBySirketIdAndStokKodu(2L, "S01")).thenReturn(Optional.of(stok));
+        when(stokRepository.findBySirketIdOrderByAd(eq(2L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(Stok.builder().id(999L).ad("Mevcut").stokKodu("S01").build())));
 
         VeriAktarimDTO dto = VeriAktarimDTO.builder()
                 .kaynakSirketId(1L)
@@ -138,7 +142,7 @@ class VeriAktarimServiceTest {
 
         assertEquals(0, sonuc.getAktarilanStokSayisi());
         assertEquals(1, sonuc.getAtlananStokSayisi());
-        verify(stokRepository, never()).save(any());
+        verify(stokRepository, never()).saveAll(any());
     }
 
     @Test

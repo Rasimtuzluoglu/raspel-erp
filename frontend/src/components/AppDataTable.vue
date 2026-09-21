@@ -34,6 +34,7 @@
       <Button
         v-if="aramaTerimi"
         icon="pi pi-times"
+        :aria-label="$t('common.close')"
         class="p-button-rounded p-button-text"
         @click="aramaTerimi = ''"
       />

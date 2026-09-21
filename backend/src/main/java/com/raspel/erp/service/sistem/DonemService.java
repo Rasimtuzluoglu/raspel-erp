@@ -37,20 +37,20 @@ public class DonemService {
         return donemRepository.findBySirketIdOrderByBaslangicDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
-    @Cacheable(value = "lookup", key = "'donemSirket:' + #sirketId")
+    @Cacheable(value = "lookup", sync = true, key = "'donemSirket:' + #sirketId")
     @Transactional(readOnly = true)
     public List<DonemDTO> sirketeGoreGetir(Long sirketId) {
         return donemRepository.findBySirketIdOrderByBaslangicDesc(sirketId, Pageable.unpaged()).map(this::entityToDTO).getContent();
     }
 
-    @Cacheable(value = "lookup", key = "'donemAktif:' + #sirketId")
+    @Cacheable(value = "lookup", sync = true, key = "'donemAktif:' + #sirketId")
     @Transactional(readOnly = true)
     public List<DonemDTO> aktifDonemler(Long sirketId) {
         return donemRepository.findBySirketIdAndAktifTrue(sirketId).stream()
                 .map(this::entityToDTO).collect(Collectors.toList());
     }
 
-    @Cacheable(value = "lookup", key = "T(com.raspel.erp.config.TenantChecker).tenantKey('donemId:' + #id)")
+    @Cacheable(value = "lookup", sync = true, key = "T(com.raspel.erp.config.TenantChecker).tenantKey('donemId:' + #id)")
     @Transactional(readOnly = true)
     public DonemDTO getir(Long id) {
         Donem d = donemRepository.findById(id)

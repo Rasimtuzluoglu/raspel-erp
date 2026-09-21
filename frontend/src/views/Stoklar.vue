@@ -323,8 +323,14 @@
             <InputText
               v-model="form.ad"
               :placeholder="t('stoklar.urunAdiPlaceholder')"
+              :class="{ 'p-invalid': formHatalar.ad }"
               class="w-full"
+              @input="formHatalar.ad = ''"
             />
+            <small
+              v-if="formHatalar.ad"
+              class="p-error"
+            >{{ formHatalar.ad }}</small>
           </div>
           <div class="form-grup">
             <label>{{ t('stoklar.birim') }}</label>
@@ -599,6 +605,7 @@
             />
             <Button
               icon="pi pi-trash"
+              :aria-label="$t('common.delete')"
               class="p-button-rounded p-button-text p-button-danger"
               @click="fiyatSil(f)"
             />
@@ -850,6 +857,8 @@ const form = ref({
   fiyatlar: []
 })
 
+const formHatalar = ref({ ad: '' })
+
 const { temizle: formTemizle } = useFormKorumasi(form)
 const { silVeGeriAl } = useGeriAl()
 
@@ -1032,8 +1041,9 @@ const fiyatSil = async (f) => {
 }
 
 const saveStok = async () => {
+  formHatalar.value = { ad: '' }
   if (!form.value.ad.trim()) {
-    toastBildirim.uyari(t('stoklar.urunAdiGiriniz'))
+    formHatalar.value.ad = t('stoklar.urunAdiGiriniz')
     return
   }
   saving.value = true
@@ -1087,7 +1097,7 @@ const confirmDel = (id) => {
   const silinecek = stokStore.stoklar.find((s) => s.id === id)
   confirm.require({
     message: t('stoklar.silOnayMesaj'),
-    header: t('stoklar.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
@@ -1117,7 +1127,7 @@ const batchSil = () => {
   if (!seciliStoklar.value.length) return
   confirm.require({
     message: t('stoklar.topluSilOnayMesaj', { n: seciliStoklar.value.length }),
-    header: t('stoklar.topluSilOnay'),
+    header: t('common.topluSilmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       let basarili = 0,
@@ -1184,16 +1194,25 @@ const saveHareket = async () => {
   }
 }
 
-const delHareket = async (id) => {
-  try {
-    await stokAPI.deleteHareket(id)
-    const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
-    stokHareketler.value = hr.data
-    seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
-    toastBildirim.basarili(t('stoklar.hareketSilindi'))
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.silmeBasarisiz'))
-  }
+const delHareket = (id) => {
+  confirm.require({
+    message: t('common.silmeOnayMesaji'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await stokAPI.deleteHareket(id)
+        const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
+        stokHareketler.value = hr.data
+        seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
+        toastBildirim.basarili(t('stoklar.hareketSilindi'))
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.silmeBasarisiz'))
+      }
+    }
+  })
 }
 
 const batchFiyatDialog = ref(false)

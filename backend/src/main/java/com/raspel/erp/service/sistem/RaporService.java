@@ -59,45 +59,80 @@ public class RaporService {
                 .orElseThrow(() -> new RuntimeException("Cari hesap bulunamadı"));
         tenantChecker.check(cari.getSirketId(), "Cari hesap");
 
-        List<HareketDTO> hareketler = new java.util.ArrayList<>(hareketRepository
-                .findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(cariHesapId, baslangic, bitis)
-                .stream().map(hareketService::entityDTOyeCevir).collect(Collectors.toList()));
-
-        // Kesilmis faturalar da ekstreye dahil edilir. Cari bakiye cariHesapService
-        // tarafindan guncellenir; burada gorunum icin sentetik hareket satirlari uretilir.
+        List<RaporDTO.CariEkstreSatiriDTO> satirlar = new java.util.ArrayList<>();
+        // 1) Gercek cari hareketleri (borc/alacak yonu tur'e gore belirlenir)
+        for (Hareket h : hareketRepository
+                .findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(cariHesapId, baslangic, bitis)) {
+            RaporDTO.CariEkstreSatiriDTO s = RaporDTO.CariEkstreSatiriDTO.builder()
+                    .id(h.getId())
+                    .tarih(h.getHareketTarihi())
+                    .tur(h.getTur() != null ? h.getTur().name() : null)
+                    .aciklama(h.getAciklama())
+                    .build();
+            borcAlacakUygula(s, h.getTutar());
+            satirlar.add(s);
+        }
+        // 2) Kesilmis faturalar (gorunum icin sentetik satir; cari bakiye zaten guncel)
         for (Fatura f : faturaRepository.findByCariHesapIdAndDurumAndTarihBetweenOrderByTarihAscIdAsc(
                 cariHesapId, Fatura.FaturaDurum.KESILDI, baslangic, bitis)) {
             boolean satis = f.getTur() == Fatura.FaturaTur.SATIS;
-            hareketler.add(HareketDTO.builder()
+            RaporDTO.CariEkstreSatiriDTO s = RaporDTO.CariEkstreSatiriDTO.builder()
                     .id(f.getId() != null ? -f.getId() : null)
-                    .cariHesapId(cariHesapId)
-                    .cariHesapAd(cari.getAd())
+                    .tarih(f.getTarih())
                     .tur(satis ? "SATIS_FATURA" : "ALIS_FATURA")
-                    .tutar(f.getGenelToplam())
-                    .hareketTarihi(f.getTarih())
-                    .faturaId(f.getId())
+                    .faturaNumarasi(f.getFaturaNumarasi())
+                    .vadeTarihi(f.getVadeTarihi())
                     .aciklama("Fatura #" + f.getFaturaNumarasi()
                             + (f.getAciklama() != null && !f.getAciklama().isBlank() ? " - " + f.getAciklama() : ""))
-                    .build());
+                    .build();
+            borcAlacakUygula(s, f.getGenelToplam());
+            satirlar.add(s);
         }
-        hareketler.sort(java.util.Comparator.comparing(HareketDTO::getHareketTarihi,
+        satirlar.sort(java.util.Comparator.comparing(RaporDTO.CariEkstreSatiriDTO::getTarih,
                 java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
 
+        // Bakiye semantigi: pozitif = cari bize borclu. borc sutunu bakiyeyi artirir.
         BigDecimal donemSonu = cari.getBakiye() != null ? cari.getBakiye() : BigDecimal.ZERO;
-        BigDecimal etki = BigDecimal.ZERO;
-        for (HareketDTO h : hareketler) {
-            if (h.getTutar() == null) continue;
-            switch (h.getTur()) {
-                case "TAHSILAT", "ALIS_FATURA" -> etki = etki.add(h.getTutar());
-                case "ODEME", "SATIS_FATURA" -> etki = etki.subtract(h.getTutar());
-                default -> { /* diger turler bakiyeyi etkilemez */ }
-            }
+        BigDecimal toplamBorc = BigDecimal.ZERO;
+        BigDecimal toplamAlacak = BigDecimal.ZERO;
+        for (RaporDTO.CariEkstreSatiriDTO s : satirlar) {
+            if (s.getBorc() != null) toplamBorc = toplamBorc.add(s.getBorc());
+            if (s.getAlacak() != null) toplamAlacak = toplamAlacak.add(s.getAlacak());
         }
-        BigDecimal donemBasi = donemSonu.subtract(etki);
+        // Cari bakiye semantigi: negatif = cari bize borclu. Borc sutunu bakiyeyi
+        // azaltir (cari borclanir), alacak sutunu artirir (cari oder / biz borclaniriz).
+        BigDecimal netHareket = toplamAlacak.subtract(toplamBorc);
+        BigDecimal donemBasi = donemSonu.subtract(netHareket);
+        BigDecimal yuruyen = donemBasi;
+        for (RaporDTO.CariEkstreSatiriDTO s : satirlar) {
+            yuruyen = yuruyen.add(s.getAlacak() != null ? s.getAlacak() : BigDecimal.ZERO)
+                    .subtract(s.getBorc() != null ? s.getBorc() : BigDecimal.ZERO);
+            s.setYuruyenBakiye(yuruyen);
+        }
 
         return RaporDTO.CariEkstreDTO.builder()
-                .cariAd(cari.getAd()).donemBasBakiye(donemBasi)
-                .donemSonBakiye(donemSonu).hareketler(hareketler).build();
+                .cariAd(cari.getAd())
+                .cariVergiNo(cari.getVergiNumarasi())
+                .cariTelefon(cari.getTelefon())
+                .cariEmail(cari.getEmail())
+                .cariAdres(cari.getAdres())
+                .donemBasBakiye(donemBasi)
+                .donemSonBakiye(donemSonu)
+                .toplamBorc(toplamBorc)
+                .toplamAlacak(toplamAlacak)
+                .netHareket(netHareket)
+                .hareketler(satirlar).build();
+    }
+
+    /** Tur'e gore borc/alacak sutunlarini doldurur (borc bakiyeyi artirir). */
+    private void borcAlacakUygula(RaporDTO.CariEkstreSatiriDTO s, BigDecimal tutar) {
+        BigDecimal t = tutar != null ? tutar : BigDecimal.ZERO;
+        String tur = s.getTur() != null ? s.getTur() : "";
+        switch (tur) {
+            case "SATIS_FATURA", "ODEME", "BORC" -> { s.setBorc(t); s.setAlacak(BigDecimal.ZERO); }
+            case "TAHSILAT", "ALIS_FATURA" -> { s.setBorc(BigDecimal.ZERO); s.setAlacak(t); }
+            default -> { s.setBorc(BigDecimal.ZERO); s.setAlacak(BigDecimal.ZERO); }
+        }
     }
 
     public RaporDTO.GelirGiderOzetDTO gelirGiderOzeti(LocalDate baslangic, LocalDate bitis, Long sirketId) {

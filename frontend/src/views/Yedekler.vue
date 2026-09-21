@@ -140,6 +140,7 @@
           </span>
           <Button
             icon="pi pi-refresh"
+            :aria-label="$t('common.refresh')"
             class="p-button-sm p-button-text"
             @click="dogrulamaYukle"
           />
@@ -335,6 +336,9 @@
                 sort-field="lastModified"
                 :sort-order="-1"
               >
+                <template #empty>
+                  <EmptyState />
+                </template>
                 <Column
                   field="filename"
                   :header="t('yedekler.dosyaAdi')"
@@ -583,8 +587,8 @@ const sil = (filename) => {
     message: t('yedekler.silOnayMesaj', { ad: filename }),
     header: t('yedekler.yedekSil'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await backupAPI.delete(filename)

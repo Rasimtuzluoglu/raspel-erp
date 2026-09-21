@@ -25,8 +25,14 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       injectRegister: false,
       devOptions: { enabled: false },
+      // Yalnizca uygulama kabugu (index.html, manifest, ikonlar) precache edilir.
+      // Route/vendor JS+CSS parcalari precache disi kalir; ilk ziyarette runtime
+      // "static-assets" (CacheFirst) rotasi tarafindan onbellege alinir. Boylece
+      // precache boyutu ~4.5MB'den birkac KB'ye iner ve lazy chunk'lar gercekten
+      // talep uzerine yuklenir.
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+        globPatterns: ['**/*.{html,ico,png,svg,webmanifest}'],
+        globIgnores: ['**/assets/**']
       },
       manifest: {
         id: '/',
@@ -89,11 +95,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return
-          // PrimeVue: ayri, stabil vendor chunk (onbellek dostu)
-          if (id.includes('node_modules/primevue') || id.includes('node_modules/@primevue')) {
-            return 'primevue'
-          }
-          if (id.includes('primeicons')) {
+          // NOT: PrimeVue tek parca halinde zorlanmaz; PrimeVueResolver bilesenleri
+          // kullanan gorunume gore otomatik import ettigi icin Rollup bunlari route
+          // bazli boler. Boylece ~1MB'lik tekil primevue chunk'i ilk yukten kalkar.
+          if (id.includes('node_modules/primeicons')) {
             return 'primevue-icons'
           }
           // Grafikler yalnizca Dashboard/Muhasebe/StokDetay gibi tembel

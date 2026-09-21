@@ -810,6 +810,7 @@
             />
             <Button
               icon="pi pi-trash"
+              :aria-label="$t('common.delete')"
               class="p-button-text p-button-danger p-button-sm"
               @click="receteForm.kalemler.splice(i, 1)"
             />

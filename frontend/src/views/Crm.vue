@@ -184,6 +184,7 @@
           <span><i class="pi pi-chart-line" /> {{ t('crm.churnBaslik') }}</span>
           <Button
             icon="pi pi-refresh"
+            :aria-label="$t('common.refresh')"
             class="p-button-sm p-button-text"
             :loading="churnYukleniyor"
             @click="churnYukle"
@@ -200,6 +201,9 @@
           striped-rows
           :loading="churnYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="cariAd"
             :header="t('crm.musteri')"
@@ -529,10 +533,10 @@ const firsatSurukleBirak = async (e, yeniDurum) => {
 const sil = (data) => {
   confirm.require({
     message: t('crm.silOnayMesaj', { ad: data.ad }),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await crmAPI.firsatSil(data.id)

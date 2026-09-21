@@ -43,6 +43,7 @@
           <template #body="s">
             <Button
               icon="pi pi-trash"
+              :aria-label="$t('common.delete')"
               class="p-button-rounded p-button-danger p-button-sm"
               @click="confirmDel(s.data.id)"
             />
@@ -150,7 +151,7 @@ const save = async () => {
 const confirmDel = (id) => {
   confirm.require({
     message: t('kategoriler.silOnayMesaj'),
-    header: t('kategoriler.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {

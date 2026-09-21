@@ -218,6 +218,17 @@ if (asciiBulunan.size) {
 }
 
 
+// --unused: tanimli ama kaynakta (statik) kullanilmayan anahtarlari listeler.
+// Dinamik kullanim yanlis pozitif uretmesin diye anahtar metni kaynakta
+// herhangi bir yerde geciyorsa "kullaniliyor" sayilir. Build'i kirmaz.
+if (process.argv.includes('--unused')) {
+  const tumKaynak = usedFiles.map((f) => fs.readFileSync(f, 'utf8')).join('\n')
+  const kullanilmayan = [...trMap.keys()].filter((k) => !usedKeys.has(k) && !tumKaynak.includes(k))
+  console.log(`\n[unused] Kullanilmayan i18n anahtari (dinamik kullanim haric): ${kullanilmayan.length}`)
+  for (const k of kullanilmayan.slice(0, 40)) console.log(`  - ${k}`)
+  if (kullanilmayan.length > 40) console.log(`  ... ve ${kullanilmayan.length - 40} adet daha`)
+}
+
 console.log(`\ni18n ozeti: kullanilan ${usedKeys.size} | tr ${tr.length} | en ${en.length} | parametreli cagri ${paramCalls}`)
 if (failures > 0) {
   console.log(`\ni18n KONTROL BASARISIZ (${failures} hata)`)

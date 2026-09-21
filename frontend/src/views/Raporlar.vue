@@ -110,24 +110,46 @@
         >
           <div class="rapor-bilgi">
             <h3>{{ ekstreData.cariAd }}</h3>
-            <p>
-              {{ t('raporlar.donemBasBakiye') }}
-              <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{
-                formatCurrency(ekstreData.donemBasBakiye)
-              }}</strong>
+            <p
+              v-if="ekstreData.cariVergiNo"
+              class="ekstre-meta"
+            >
+              {{ t('raporlar.vergiNo') }}: {{ ekstreData.cariVergiNo }}
+              <span v-if="ekstreData.cariTelefon"> · {{ ekstreData.cariTelefon }}</span>
+              <span v-if="ekstreData.cariEmail"> · {{ ekstreData.cariEmail }}</span>
             </p>
-            <p>
-              {{ t('raporlar.donemSonBakiye') }}
-              <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{
-                formatCurrency(ekstreData.donemSonBakiye)
-              }}</strong>
+            <p
+              v-if="ekstreData.cariAdres"
+              class="ekstre-meta"
+            >
+              {{ ekstreData.cariAdres }}
             </p>
+            <div class="ekstre-ozet">
+              <span>{{ t('raporlar.donemBasBakiye') }}:
+                <strong :class="ekstreData.donemBasBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemBasBakiye) }}</strong>
+              </span>
+              <span>{{ t('raporlar.toplamBorc') }}:
+                <strong class="negative">{{ formatCurrency(ekstreData.toplamBorc) }}</strong>
+              </span>
+              <span>{{ t('raporlar.toplamAlacak') }}:
+                <strong class="positive">{{ formatCurrency(ekstreData.toplamAlacak) }}</strong>
+              </span>
+              <span>{{ t('raporlar.donemSonBakiye') }}:
+                <strong :class="ekstreData.donemSonBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(ekstreData.donemSonBakiye) }}</strong>
+              </span>
+            </div>
             <div class="rapor-aksiyonlar">
               <Button
                 icon="pi pi-file-pdf"
                 :label="t('raporlar.pdf')"
                 class="p-button-sm p-button-outlined"
                 @click="ekstrePdfIndir"
+              />
+              <Button
+                icon="pi pi-file-excel"
+                :label="t('raporlar.excelIndir')"
+                class="p-button-sm p-button-outlined"
+                @click="ekstreCsvIndir"
               />
               <Button
                 icon="pi pi-envelope"
@@ -138,25 +160,28 @@
             </div>
           </div>
           <DataTable
-            :value="ekstreData.hareketler"
+            :value="ekstreSatirlari"
             striped-rows
-            :rows="10"
+            :rows="15"
             :paginator="true"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
-              field="hareketTarihi"
+              field="tarih"
               :header="t('common.date')"
-              style="width: 100px"
+              style="width: 110px"
             >
               <template #body="s">
-                {{ formatDate(s.data.hareketTarihi) }}
+                {{ s.data.tarih ? formatDate(s.data.tarih) : '-' }}
               </template>
             </Column>
             <Column
               field="tur"
               :header="t('raporlar.tur')"
-              style="width: 90px"
+              style="width: 120px"
             >
               <template #body="s">
                 <span :class="['badge', ekstreTurSinif(s.data.tur)]">
@@ -165,23 +190,45 @@
               </template>
             </Column>
             <Column
-              field="tutar"
-              :header="t('common.amount')"
-              style="width: 120px"
-            >
-              <template #body="s">
-                <span :class="ekstreTurSinif(s.data.tur) === 'tahsilat' ? 'positive' : 'negative'">{{
-                  formatCurrency(s.data.tutar)
-                }}</span>
-              </template>
-            </Column>
-            <Column
               field="aciklama"
               :header="t('common.description')"
             />
+            <Column
+              field="borc"
+              :header="t('raporlar.borc')"
+              style="width: 120px"
+            >
+              <template #body="s">
+                <span
+                  v-if="s.data.borc"
+                  class="negative"
+                >{{ formatCurrency(s.data.borc) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="alacak"
+              :header="t('raporlar.alacak')"
+              style="width: 120px"
+            >
+              <template #body="s">
+                <span
+                  v-if="s.data.alacak"
+                  class="positive"
+                >{{ formatCurrency(s.data.alacak) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="yuruyenBakiye"
+              :header="t('raporlar.bakiye')"
+              style="width: 140px"
+            >
+              <template #body="s">
+                <strong :class="(s.data.yuruyenBakiye || 0) >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.yuruyenBakiye) }}</strong>
+              </template>
+            </Column>
           </DataTable>
           <Message
-            v-if="ekstreData.hareketler.length === 0"
+            v-if="!ekstreData.hareketler || ekstreData.hareketler.length === 0"
             severity="info"
             :text="t('raporlar.hareketYok')"
           />
@@ -275,6 +322,9 @@
             :value="ggData.aylikDagilim"
             striped-rows
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="ay"
               :header="$t('raporlar.ay')"
@@ -387,6 +437,9 @@
             :paginator="true"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="cariAd"
               :header="$t('raporlar.cariHesap')"
@@ -504,6 +557,9 @@
             :paginator="true"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="cariAd"
               :header="$t('raporlar.cariHesap')"
@@ -603,6 +659,9 @@
           row-group-mode="subheader"
           group-rows-by="cariHesapAd"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <template #groupheader="{ group }">
             <span class="tedarikci-grup"><i class="pi pi-building" /> {{ group.value }} ({{ $t('raporlar.tedarikci') }})</span>
           </template>
@@ -663,6 +722,9 @@
           striped-rows
           :loading="ukLoading"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="stokKodu"
             :header="$t('raporlar.stokKodu')"
@@ -781,6 +843,9 @@
             :paginator="true"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="tarih"
               :header="t('common.date')"
@@ -893,6 +958,9 @@
               striped-rows
               scrollable
             >
+              <template #empty>
+                <EmptyState />
+              </template>
               <Column
                 header=""
                 frozen
@@ -1435,11 +1503,46 @@ const ekstreTurLabel = (tur) =>
     TAHSILAT: t('raporlar.tahsilat'),
     ODEME: t('raporlar.odeme'),
     SATIS_FATURA: t('raporlar.satisFatura'),
-    ALIS_FATURA: t('raporlar.alimFatura')
+    ALIS_FATURA: t('raporlar.alimFatura'),
+    BORC: t('raporlar.borclandirma'),
+    DEVIR: t('raporlar.devir'),
+    KAPANIS: t('raporlar.kapanis')
   })[tur] || tur
 
 const ekstreTurSinif = (tur) =>
-  ({ TAHSILAT: 'tahsilat', ALIS_FATURA: 'tahsilat', ODEME: 'odeme', SATIS_FATURA: 'odeme' })[tur] || 'odeme'
+  ({ TAHSILAT: 'tahsilat', ALIS_FATURA: 'tahsilat', ODEME: 'odeme', SATIS_FATURA: 'odeme', BORC: 'odeme' })[tur] || 'odeme'
+
+// Tabloya devir (ilk) ve kapanis (son) satirlari eklenir.
+const ekstreSatirlari = computed(() => {
+  const d = ekstreData.value
+  if (!d) return []
+  const rows = [{ tur: 'DEVIR', tarih: null, aciklama: t('raporlar.devir'), borc: null, alacak: null, yuruyenBakiye: d.donemBasBakiye }]
+  for (const h of d.hareketler || []) rows.push(h)
+  rows.push({ tur: 'KAPANIS', tarih: null, aciklama: t('raporlar.kapanis'), borc: d.toplamBorc, alacak: d.toplamAlacak, yuruyenBakiye: d.donemSonBakiye })
+  return rows
+})
+
+const ekstreCsvIndir = () => {
+  const d = ekstreData.value
+  if (!d) return
+  const basliklar = ['Tarih', 'Tur', 'Aciklama', 'Borc', 'Alacak', 'Bakiye']
+  const satirlar = ekstreSatirlari.value.map((s) => [
+    s.tarih ? formatDate(s.tarih) : '',
+    ekstreTurLabel(s.tur),
+    (s.aciklama || '').replace(/;/g, ','),
+    s.borc ?? '',
+    s.alacak ?? '',
+    s.yuruyenBakiye ?? ''
+  ])
+  const csv = [basliklar, ...satirlar].map((r) => r.join(';')).join('\n')
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `cari-ekstre-${d.cariAd || ''}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 </script>
@@ -1598,6 +1701,18 @@ h1 {
 }
 .rapor-bilgi p {
   margin: 5px 0;
+}
+.ekstre-meta {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.ekstre-ozet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 8px 0 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 .ozet-kartlar {
   display: grid;

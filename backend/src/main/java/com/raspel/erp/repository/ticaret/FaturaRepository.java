@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import com.raspel.erp.entity.finans.CariHesap;
 
@@ -168,4 +170,21 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                           @Param("durum") String durum,
                                           @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
                                           @Param("bugun") java.time.LocalDate bugun);
+
+    // Churn analizi icin cari bazli fatura ozeti (tam tabloyu belleğe yuklemeden).
+    @Query("SELECT new map(f.cariHesap.id as cariId, MAX(f.tarih) as sonTarih, COUNT(f) as adet, " +
+            "COALESCE(SUM(f.genelToplam), 0) as ciro) " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId AND f.cariHesap IS NOT NULL GROUP BY f.cariHesap.id")
+    List<Map<String, Object>> cariFaturaOzeti(@Param("sirketId") Long sirketId);
+
+    // Anomali: ayni cari + ayni tutarda birden fazla fatura (SQL tarafinda gruplama).
+    @Query("SELECT new map(f.cariHesap.id as cariId, f.cariHesap.ad as cariAd, f.genelToplam as tutar, " +
+            "COUNT(f) as adet, MIN(f.id) as ilkId) " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId AND f.cariHesap IS NOT NULL AND f.genelToplam IS NOT NULL " +
+            "GROUP BY f.cariHesap.id, f.cariHesap.ad, f.genelToplam HAVING COUNT(f) > 1")
+    List<Map<String, Object>> mukerrerFaturaGruplari(@Param("sirketId") Long sirketId);
+
+    // Anomali: esik ustu tutarli faturalar (yalnizca eslesenler yuklenir).
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.genelToplam > :esik ORDER BY f.genelToplam DESC")
+    List<Fatura> yuksekTutarliFaturalar(@Param("sirketId") Long sirketId, @Param("esik") BigDecimal esik);
 }

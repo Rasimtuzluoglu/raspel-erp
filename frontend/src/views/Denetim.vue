@@ -121,7 +121,7 @@
     <Card>
       <template #content>
         <DataTable
-          :value="logs"
+          :value="logSatirlari"
           :loading="yukleniyor"
           striped-rows
           :rows="20"
@@ -134,6 +134,9 @@
           :sort-order="-1"
           @page="sayfaDegisti"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="tarih"
             :header="t('common.date')"
@@ -184,7 +187,7 @@
                 class="detay-metin"
                 @click="detayGoster(s.data)"
               >
-                {{ kisaDetay(s.data.detay) }}
+                {{ s.data.kisaDetay }}
               </span>
               <span v-else>-</span>
             </template>
@@ -230,7 +233,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -369,6 +372,10 @@ const kisaDetay = (detay) => {
     return detay.length > 60 ? detay.slice(0, 60) + '…' : detay
   }
 }
+
+// JSON.parse/stringify satir basina her render'da tekrarlanmasin diye
+// kisaltilmis detay bir kez hesaplanir.
+const logSatirlari = computed(() => logs.value.map((l) => ({ ...l, kisaDetay: kisaDetay(l.detay) })))
 
 const detayDialogAcik = ref(false)
 const seciliDetay = ref(null)

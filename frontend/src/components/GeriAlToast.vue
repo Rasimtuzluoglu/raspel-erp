@@ -14,6 +14,7 @@
       />
       <Button
         icon="pi pi-times"
+        :aria-label="$t('common.close')"
         class="p-button-sm p-button-text"
         @click="gizle"
       />

@@ -310,6 +310,7 @@
             <button
               type="button"
               class="p-button p-button-text p-button-sm"
+              :aria-label="$t('common.zoomOut')"
               :disabled="zoomOrani <= 0.5"
               @click="zoomOrani = Math.max(0.5, zoomOrani - 0.1)"
             >
@@ -319,6 +320,7 @@
             <button
               type="button"
               class="p-button p-button-text p-button-sm"
+              :aria-label="$t('common.zoomIn')"
               :disabled="zoomOrani >= 1.3"
               @click="zoomOrani = Math.min(1.3, zoomOrani + 0.1)"
             >

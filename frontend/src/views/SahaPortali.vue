@@ -25,6 +25,7 @@
           />
           <Button
             icon="pi pi-refresh"
+            :aria-label="$t('common.refresh')"
             class="p-button-rounded p-button-text text-white p-button-sm"
             :loading="yukleniyor"
             @click="tumunuYukle"
@@ -504,6 +505,7 @@
             />
             <Button
               icon="pi pi-search"
+              :aria-label="$t('common.searchAction')"
               class="p-button-outlined"
               @click="barkodlaUrunBul"
             />
@@ -572,6 +574,7 @@
             <button
               type="button"
               class="sepet-sil"
+              :aria-label="$t('common.delete')"
               @click="kalemSil(i)"
             >
               <i class="pi pi-trash" />
@@ -975,6 +978,23 @@ const tumunuYukle = async () => {
   }
 }
 
+// Mutasyon sonrasi yalnizca etkilenen veri kumesini yeniler (7 ucu birden cekmek yerine).
+const siparisleriYukle = async () => {
+  try { siparisler.value = unwrapList(await siparisAPI.getAll({ size: 50 })) } catch { /* yoksay */ }
+}
+const izinleriYukle = async () => {
+  try { izinler.value = unwrapList(await personelIzinAPI.getAll()) } catch { /* yoksay */ }
+}
+const masraflariYukle = async () => {
+  try { masraflar.value = unwrapList(await personelMasrafTalepAPI.getKullaniciTalepleri()) } catch { /* yoksay */ }
+}
+const notlariYukle = async () => {
+  try { notlar.value = unwrapList(await notAPI.getAll({ size: 200 })) } catch { /* yoksay */ }
+}
+const gorevleriYukle = async () => {
+  try { gorevler.value = unwrapList(await ajandaAPI.gorevler()) } catch { /* yoksay */ }
+}
+
 const bekleyenSiparisSayisi = computed(() =>
   siparisler.value.filter(s => s?.durum !== 'TESLIM_EDILDI' && s?.durum !== 'IPTAL').length
 )
@@ -1018,7 +1038,7 @@ const teslimatOnayla = async () => {
     seciliSiparis.value.durum = 'TESLIM_EDILDI'
     toast.add({ severity: 'success', summary: t('sahaPortali.teslimEdildi'), detail: t('sahaPortali.siparisTeslimEdildi'), life: 3000 })
     imzaModal.value = false
-    await tumunuYukle()
+    await siparisleriYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
@@ -1046,7 +1066,7 @@ const durumKaydet = async () => {
     seciliSiparis.value.durum = seciliYeniDurum.value
     durumSecModal.value = false
     toast.add({ severity: 'success', summary: t('sahaPortali.guncellendi'), detail: t('sahaPortali.siparisDurumGuncellendi'), life: 2500 })
-    await tumunuYukle()
+    await siparisleriYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
@@ -1075,7 +1095,7 @@ const izinTalepGonder = async () => {
     })
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.izinIletildi'), life: 3000 })
     yeniIzinModal.value = false
-    await tumunuYukle()
+    await izinleriYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
@@ -1107,7 +1127,7 @@ const masrafTalepGonder = async () => {
     masrafFoto.value = null
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.talepIletildi'), life: 3000 })
     yeniMasrafModal.value = false
-    await tumunuYukle()
+    await masraflariYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {
@@ -1260,7 +1280,7 @@ const gorevKaydet = async () => {
     })
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.gorevKaydedildi'), life: 3000 })
     gorevForm.value = { baslik: '', bitisTarihi: '', oncelik: 'ORTA', aciklama: '' }
-    await tumunuYukle()
+    await gorevleriYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
@@ -1293,7 +1313,7 @@ const notKaydet = async () => {
     await notAPI.create({ baslik: notForm.value.baslik.trim(), icerik: notForm.value.icerik.trim(), kategori: 'SAHA_NOT' })
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.notKaydedildi'), life: 3000 })
     notForm.value = { baslik: '', icerik: '' }
-    await tumunuYukle()
+    await notlariYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {
@@ -1337,7 +1357,7 @@ const hizliSiparisKaydet = async () => {
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.siparisGonderildi'), life: 3000 })
     yeniSiparisModal.value = false
     yeniSiparisForm.value = { cariHesapId: null, stokId: null, miktar: 1, birimFiyat: 0, adres: '', kalemler: [] }
-    await tumunuYukle()
+    await siparisleriYukle()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
   } finally {

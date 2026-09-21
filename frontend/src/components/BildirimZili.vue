@@ -7,7 +7,7 @@
       icon="pi pi-bell"
       class="p-button-rounded p-button-text p-button-sm"
       title="Bildirimler"
-      aria-label="Bildirimler"
+      :aria-label="$t('common.notifications')"
       aria-haspopup="true"
       :aria-expanded="panelAcik"
       @click.stop="panelAcik = !panelAcik"

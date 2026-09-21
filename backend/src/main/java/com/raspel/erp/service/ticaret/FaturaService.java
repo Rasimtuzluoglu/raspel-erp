@@ -410,15 +410,23 @@ public class FaturaService {
             }
         }
 
-        // E-posta gönderim durumu fatura yanıtında bildirilir:
-        // "fatura kesildi ama e-posta iletilemedi" bilgisi kaybolmasın.
+        // E-posta, DB transaction'ı commit edildikten SONRA gönderilir; boylece SMTP
+        // gecikmesi transaction'i/kilitleri acik tutmaz. (Testte aktif transaction
+        // yoksa AfterCommitExecutor gorevi hemen calistirir.)
         String emailGonderimDurumu = null;
         if (sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
-            boolean gonderildi = emailService.faturaBildirimiGonder(cariHesap.getEmail(), faturaNo, genelToplam.toString());
-            emailGonderimDurumu = gonderildi ? "GONDERILDI" : "GONDERILEMEDI";
-            if (!gonderildi) {
-                log.warn("Fatura bildirim e-postası gönderilemedi (SMTP yapılandırılmamış veya hata): {}", faturaNo);
-            }
+            final String[] durum = new String[1];
+            final String emailAdres = cariHesap.getEmail();
+            final String emailFaturaNo = faturaNo;
+            final String emailTutar = genelToplam.toString();
+            com.raspel.erp.support.AfterCommitExecutor.calistir(() -> {
+                boolean gonderildi = emailService.faturaBildirimiGonder(emailAdres, emailFaturaNo, emailTutar);
+                durum[0] = gonderildi ? "GONDERILDI" : "GONDERILEMEDI";
+                if (!gonderildi) {
+                    log.warn("Fatura bildirim e-postası gönderilemedi (SMTP yapılandırılmamış veya hata): {}", emailFaturaNo);
+                }
+            });
+            emailGonderimDurumu = durum[0] != null ? durum[0] : "GONDERILIYOR";
         }
 
         log.info("Fatura oluşturuldu - No: {}, ID: {}", faturaNo, kaydedilen.getId());
@@ -994,7 +1002,13 @@ public class FaturaService {
                         .filter(id -> id != null)
                         .collect(Collectors.toList())
         ).stream().collect(Collectors.toMap(Stok::getId, s -> s, (s1, s2) -> s1));
-        return entityDTOyeCevir(fatura, stokHaritasi);
+        Map<Long, String> depoHaritasi = fatura.getDepoId() == null ? Map.of()
+                : depoRepository.findAllById(List.of(fatura.getDepoId())).stream()
+                        .collect(Collectors.toMap(com.raspel.erp.entity.sube.Depo::getId, com.raspel.erp.entity.sube.Depo::getAd, (a, b) -> a));
+        Map<Long, String> kasaHaritasi = fatura.getKasaId() == null ? Map.of()
+                : kasaRepository.findAllById(List.of(fatura.getKasaId())).stream()
+                        .collect(Collectors.toMap(Kasa::getId, Kasa::getAd, (a, b) -> a));
+        return entityDTOyeCevir(fatura, stokHaritasi, depoHaritasi, kasaHaritasi);
     }
 
     /**
@@ -1003,18 +1017,30 @@ public class FaturaService {
      */
     private Page<FaturaDTO> sayfaDTOyaCevir(Page<Fatura> sayfa) {
         Set<Long> stokIdler = new HashSet<>();
+        Set<Long> depoIdler = new HashSet<>();
+        Set<Long> kasaIdler = new HashSet<>();
         for (Fatura f : sayfa.getContent()) {
             for (FaturaKalem k : f.getKalemler()) {
                 if (k.getStokId() != null) stokIdler.add(k.getStokId());
             }
+            if (f.getDepoId() != null) depoIdler.add(f.getDepoId());
+            if (f.getKasaId() != null) kasaIdler.add(f.getKasaId());
         }
         Map<Long, Stok> stokHaritasi = stokIdler.isEmpty() ? Map.of()
                 : stokRepository.findAllById(stokIdler).stream()
                         .collect(Collectors.toMap(Stok::getId, s -> s, (s1, s2) -> s1));
-        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi));
+        // Depo ve kasa adlari sayfa basina tek sorguda (fatura basina 2 sorgu yerine).
+        Map<Long, String> depoHaritasi = depoIdler.isEmpty() ? Map.of()
+                : depoRepository.findAllById(depoIdler).stream()
+                        .collect(Collectors.toMap(com.raspel.erp.entity.sube.Depo::getId, com.raspel.erp.entity.sube.Depo::getAd, (a, b) -> a));
+        Map<Long, String> kasaHaritasi = kasaIdler.isEmpty() ? Map.of()
+                : kasaRepository.findAllById(kasaIdler).stream()
+                        .collect(Collectors.toMap(Kasa::getId, Kasa::getAd, (a, b) -> a));
+        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi, depoHaritasi, kasaHaritasi));
     }
 
-    private FaturaDTO entityDTOyeCevir(Fatura fatura, Map<Long, Stok> stokHaritasi) {
+    private FaturaDTO entityDTOyeCevir(Fatura fatura, Map<Long, Stok> stokHaritasi,
+                                       Map<Long, String> depoHaritasi, Map<Long, String> kasaHaritasi) {
 
         List<FaturaKalemDTO> kalemDTO = fatura.getKalemler().stream().map(k -> {
             String stokAd = null;
@@ -1072,17 +1098,13 @@ public class FaturaService {
                 .teslimNotu(fatura.getTeslimNotu())
                 .teslimFotograf(fatura.getTeslimFotograf())
                 .depoId(fatura.getDepoId())
-                .depoAd(fatura.getDepoId() != null
-                        ? depoRepository.findById(fatura.getDepoId()).map(com.raspel.erp.entity.sube.Depo::getAd).orElse(null)
-                        : null)
+                .depoAd(fatura.getDepoId() != null ? depoHaritasi.get(fatura.getDepoId()) : null)
                 .paraBirimi(fatura.getParaBirimi())
                 .odemeYontemi(fatura.getOdemeYontemi())
                 .taksitKurum(fatura.getTaksitKurum())
                 .taksitTutar(fatura.getTaksitTutar())
                 .kasaId(fatura.getKasaId())
-                .kasaAd(fatura.getKasaId() != null
-                        ? kasaRepository.findById(fatura.getKasaId()).map(Kasa::getAd).orElse(null)
-                        : null)
+                .kasaAd(fatura.getKasaId() != null ? kasaHaritasi.get(fatura.getKasaId()) : null)
                 .build();
     }
 }

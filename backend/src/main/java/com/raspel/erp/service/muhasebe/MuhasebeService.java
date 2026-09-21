@@ -88,8 +88,12 @@ public class MuhasebeService {
     public List<MuhasebeFisiDTO> fisleriGetir(Long sirketId, LocalDate baslangic, LocalDate bitis) {
         LocalDate bas = baslangic != null ? baslangic : LocalDate.now().minusMonths(12);
         LocalDate bit = bitis != null ? bitis : LocalDate.now();
-        return muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(sirketId, bas, bit)
-                .stream().map(f -> fisEntityToDTO(f, true)).collect(Collectors.toList());
+        List<MuhasebeFisi> fisler = muhasebeFisiRepository.findBySirketIdAndTarihBetweenOrderByTarihAsc(sirketId, bas, bit);
+        // Fiş başına kalem sorgusu (N+1) yerine tüm kalemler tek sorguda çekilip gruplanır.
+        Map<Long, List<MuhasebeFisKalem>> kalemHaritasi = muhasebeFisKalemRepository
+                .findBySirketIdAndFisTarihBetween(sirketId, bas, bit).stream()
+                .collect(Collectors.groupingBy(MuhasebeFisKalem::getFisId));
+        return fisler.stream().map(f -> fisEntityToDTO(f, true, kalemHaritasi)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -388,7 +392,13 @@ public class MuhasebeService {
     }
 
     private MuhasebeFisiDTO fisEntityToDTO(MuhasebeFisi f, boolean kalemlerDahil) {
-        List<MuhasebeFisKalem> kalemler = muhasebeFisKalemRepository.findByFisIdOrderByIdAsc(f.getId());
+        return fisEntityToDTO(f, kalemlerDahil, null);
+    }
+
+    private MuhasebeFisiDTO fisEntityToDTO(MuhasebeFisi f, boolean kalemlerDahil, Map<Long, List<MuhasebeFisKalem>> kalemHaritasi) {
+        List<MuhasebeFisKalem> kalemler = kalemHaritasi != null
+                ? kalemHaritasi.getOrDefault(f.getId(), List.of())
+                : muhasebeFisKalemRepository.findByFisIdOrderByIdAsc(f.getId());
         BigDecimal borc = kalemler.stream().map(MuhasebeFisKalem::getBorc).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal alacak = kalemler.stream().map(MuhasebeFisKalem::getAlacak).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         return MuhasebeFisiDTO.builder()

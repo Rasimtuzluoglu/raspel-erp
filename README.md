@@ -1,5 +1,7 @@
 ﻿<div align="center">
 
+<img src="frontend/public/logo-full.png" alt="RasPel ERP" width="240">
+
 # ⚡ RasPel ERP
 
 ### Modern & Akıllı Kurumsal Kaynak Planlama Sistemi

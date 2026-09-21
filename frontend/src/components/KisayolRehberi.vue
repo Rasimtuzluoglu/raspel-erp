@@ -7,71 +7,34 @@
   >
     <div class="kisayol-grid">
       <div class="kisayol-baslik">
-        Genel
+        {{ $t('shortcuts.general') }}
       </div>
       <div class="kisayol-satir">
-        <kbd>Ctrl</kbd> + <kbd>K</kbd><span>Hızlı Arama</span>
+        <kbd>Ctrl</kbd> + <kbd>K</kbd><span>{{ $t('shortcuts.search') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>Ctrl</kbd> + <kbd>S</kbd><span>Kaydet</span>
+        <kbd>Ctrl</kbd> + <kbd>S</kbd><span>{{ $t('shortcuts.save') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>Ctrl</kbd> + <kbd>P</kbd><span>Yazdır</span>
+        <kbd>Ctrl</kbd> + <kbd>P</kbd><span>{{ $t('shortcuts.print') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>Esc</kbd><span>Kapat / İptal</span>
+        <kbd>Esc</kbd><span>{{ $t('shortcuts.close') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>F2</kbd><span>Hızlı Satış'a git</span>
+        <kbd>F2</kbd><span>{{ $t('shortcuts.gotoHizliSatis') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>F4</kbd><span>Stoklar'a git</span>
+        <kbd>F4</kbd><span>{{ $t('shortcuts.gotoStok') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>G</kbd> + harf<span>Hızlı gezinme (g+c cari, g+f fatura, g+h POS)</span>
+        <kbd>G</kbd> + <kbd>{{ $t('shortcuts.letter') }}</kbd><span>{{ $t('shortcuts.quickNav') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd><span>Sunum (Müşteri) modu</span>
+        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd><span>{{ $t('shortcuts.presentationMode') }}</span>
       </div>
       <div class="kisayol-satir">
-        <kbd>?</kbd><span>Bu rehberi aç</span>
-      </div>
-
-      <div class="kisayol-baslik">
-        Hızlı Satış (POS) sayfasında
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F1</kbd><span>Barkod alanına odaklan</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F2</kbd><span>Sepeti temizle</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F3</kbd><span>Ürün arama alanına odaklan</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F4</kbd><span>Müşteri seçimi</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F5</kbd><span>Yeni müşteri ekle</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F6</kbd><span>Kamera tarayıcıyı aç</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F9</kbd><span>Tam ödeme + satışı tamamla</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>F10</kbd><span>Kısmi ödeme + satışı tamamla</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd><span>Ödeme yöntemi: Nakit / Kart / Havale</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>Alt</kbd> + <kbd>↑</kbd>/<kbd>↓</kbd><span>Aktif satır miktarını artır/azalt</span>
-      </div>
-      <div class="kisayol-satir">
-        <kbd>Del</kbd><span>Aktif satırı sil</span>
+        <kbd>?</kbd><span>{{ $t('shortcuts.guide') }}</span>
       </div>
     </div>
   </Dialog>

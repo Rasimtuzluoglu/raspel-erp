@@ -31,6 +31,9 @@
       striped-rows
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="stokAdi"
         :header="t('stokSeriler.urun')"
@@ -84,6 +87,7 @@
         <template #body="{ data }">
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
             @click="sil(data)"
           />
@@ -259,10 +263,10 @@ const kaydet = async () => {
 const sil = (data) => {
   confirm.require({
     message: t('stokSeriler.silOnayMesaj', { seriNo: data.seriNo }),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await stokSeriAPI.delete(data.id)

@@ -65,6 +65,31 @@ public class StokService {
                 .stream().map(this::fiyatEntityToDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Birden fazla stok icin fiyat tanimlarini tek sorguda getirir.
+     * Hizli Satis gibi N adet stok fiyati isteyen akislarda N HTTP/DB istegini
+     * tek istege indirir. Yalnizca istege bagli sirkete ait stoklar doner.
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, List<StokFiyatDTO>> fiyatlariTopluGetir(List<Long> stokIdler, Long sirketId) {
+        Map<Long, List<StokFiyatDTO>> sonuc = new java.util.LinkedHashMap<>();
+        if (stokIdler == null || stokIdler.isEmpty()) {
+            return sonuc;
+        }
+        List<Long> izinli = stokRepository.findAllById(stokIdler).stream()
+                .filter(s -> sirketId == null || sirketId.equals(s.getSirketId()))
+                .map(Stok::getId)
+                .collect(Collectors.toList());
+        for (Long id : izinli) {
+            sonuc.put(id, new ArrayList<>());
+        }
+        if (!izinli.isEmpty()) {
+            stokFiyatRepository.findByStokIdInOrderByFiyatAsc(izinli).forEach(f ->
+                    sonuc.computeIfAbsent(f.getStokId(), k -> new ArrayList<>()).add(fiyatEntityToDTO(f)));
+        }
+        return sonuc;
+    }
+
     public StokFiyatDTO fiyatEkle(Long stokId, StokFiyatDTO dto, Long sirketId) {
         Stok stok = stokRepository.findById(stokId)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
@@ -474,18 +499,24 @@ public class StokService {
     public List<com.raspel.erp.dto.envanter.TalepTahminiDTO> talepTahmini(Long sirketId) {
         List<Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId, org.springframework.data.domain.Pageable.unpaged()).getContent();
         Map<Long, String> tedarikciler = tedarikciAdlari(stoklar);
-        
+
+        // Son 90 günün çıkış toplamları tek sorguda (stok bazlı) alınır; her stok için
+        // ayrı sorgu (N+1) ve tüm geçmişin belleğe yüklenmesi önlenir.
+        java.time.LocalDate ucAyOnce = java.time.LocalDate.now().minusDays(90);
+        Map<Long, BigDecimal> cikisHaritasi = new java.util.HashMap<>();
+        for (Map<String, Object> satir : stokHareketRepository.sonCikisToplamlari(sirketId, ucAyOnce)) {
+            Object id = satir.get("stokId");
+            Object toplam = satir.get("toplam");
+            if (id instanceof Number n) {
+                cikisHaritasi.put(n.longValue(), toplam instanceof BigDecimal b ? b : BigDecimal.ZERO);
+            }
+        }
+
         List<com.raspel.erp.dto.envanter.TalepTahminiDTO> tahminler = new ArrayList<>();
         
         for (Stok s : stoklar) {
-            List<StokHareket> hareketler = stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(s.getId());
-            
-            // Son 90 gün içindeki çıkış (tüketim) miktarı
-            java.time.LocalDate ucAyOnce = java.time.LocalDate.now().minusDays(90);
-            BigDecimal sonUcAylikCikis = hareketler.stream()
-                    .filter(h -> "CIKIS".equals(h.getTur()) && h.getHareketTarihi() != null && !h.getHareketTarihi().isBefore(ucAyOnce))
-                    .map(StokHareket::getMiktar)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // Son 90 gün içindeki çıkış (tüketim) miktarı (önceden hesaplanmış haritadan)
+            BigDecimal sonUcAylikCikis = cikisHaritasi.getOrDefault(s.getId(), BigDecimal.ZERO);
             
             BigDecimal gunlukTuketim = sonUcAylikCikis.divide(BigDecimal.valueOf(90), 2, java.math.RoundingMode.HALF_UP);
             if (gunlukTuketim.compareTo(BigDecimal.ZERO) <= 0) {

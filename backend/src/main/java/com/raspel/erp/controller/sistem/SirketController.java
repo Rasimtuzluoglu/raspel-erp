@@ -59,6 +59,20 @@ public class SirketController {
         return ResponseEntity.ok(sirketService.guncelle(id, dto));
     }
 
+    @PutMapping("/{id}/logo")
+    @Operation(summary = "Şirket logosunu kaydet", description = "Yüklenmiş logo adresini şirkete bağlar (kendi şirketi)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<SirketDTO> logoGuncelle(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(sirketService.logoGuncelle(id, body != null ? body.get("logoUrl") : null));
+    }
+
+    @DeleteMapping("/{id}/logo")
+    @Operation(summary = "Şirket logosunu kaldır", description = "Şirket logosunu temizler ve yüklenen dosyayı siler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<SirketDTO> logoSil(@PathVariable Long id) {
+        return ResponseEntity.ok(sirketService.logoSil(id));
+    }
+
     @GetMapping("/{id}/konsolide-ozet")
     @Operation(summary = "Konsolide grup şirket özeti", description = "Ana şirket ve bağlı alt şirketlerin toplam stok, bakiye ve ciro özetini getirir")
     @PreAuthorize("hasRole('ADMIN')")

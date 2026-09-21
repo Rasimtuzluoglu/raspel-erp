@@ -42,6 +42,7 @@
           />
           <Button
             icon="pi pi-refresh"
+            :aria-label="$t('common.refresh')"
             class="p-button-outlined p-button-sm"
             :loading="yukleniyor"
             @click="verileriYukle"

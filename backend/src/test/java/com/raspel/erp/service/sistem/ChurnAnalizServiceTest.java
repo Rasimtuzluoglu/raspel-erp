@@ -46,13 +46,9 @@ class ChurnAnalizServiceTest {
     void churnRiskiAnaliz_uzunSureIslemYapmayanYuksekRisk() {
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari(1L, "A Müşteri")));
 
-        CariHesap c = cari(1L, "A Müşteri");
-        Hareket h = Hareket.builder().id(1L).cariHesap(c).tutar(new BigDecimal("100"))
-                .hareketTarihi(LocalDate.now().minusDays(120)).tur(Hareket.HareketTuru.TAHSILAT).build();
-        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(h)));
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(hareketRepository.cariIslemOzeti(1L)).thenReturn(List.of(
+                java.util.Map.of("cariId", 1L, "sonTarih", LocalDate.now().minusDays(120), "adet", 1L)));
+        when(faturaRepository.cariFaturaOzeti(1L)).thenReturn(List.of());
 
         List<ChurnRiskDTO> sonuc = churnAnalizService.churnRiskiAnaliz(1L);
 
@@ -65,13 +61,9 @@ class ChurnAnalizServiceTest {
     void churnRiskiAnaliz_aktifMusteriDusukRisk() {
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari(1L, "Aktif Müşteri")));
 
-        CariHesap c = cari(1L, "Aktif Müşteri");
-        Fatura f = Fatura.builder().id(1L).cariHesap(c).genelToplam(new BigDecimal("500"))
-                .tarih(LocalDate.now().minusDays(3)).build();
-        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(f)));
+        when(hareketRepository.cariIslemOzeti(1L)).thenReturn(List.of());
+        when(faturaRepository.cariFaturaOzeti(1L)).thenReturn(List.of(
+                java.util.Map.of("cariId", 1L, "sonTarih", LocalDate.now().minusDays(3), "adet", 1L, "ciro", new BigDecimal("500"))));
 
         List<ChurnRiskDTO> sonuc = churnAnalizService.churnRiskiAnaliz(1L);
 
@@ -82,10 +74,8 @@ class ChurnAnalizServiceTest {
     @Test
     void churnRiskiAnaliz_islemYapmayanMusteriAtlanir() {
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari(1L, "Yeni Müşteri")));
-        when(hareketRepository.findBySirketIdOrderByHareketTarihiDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(hareketRepository.cariIslemOzeti(1L)).thenReturn(List.of());
+        when(faturaRepository.cariFaturaOzeti(1L)).thenReturn(List.of());
 
         List<ChurnRiskDTO> sonuc = churnAnalizService.churnRiskiAnaliz(1L);
 

@@ -172,7 +172,25 @@ public class FaturaGecmisService {
         if (sirketId == null) return List.of();
         java.time.LocalDateTime bas = baslangic != null ? baslangic.atStartOfDay() : null;
         java.time.LocalDateTime bit = bitis != null ? bitis.atTime(java.time.LocalTime.MAX) : null;
-        List<FaturaGecmis> kayitlar = faturaGecmisRepository.filtreli(sirketId, olay, kullaniciId, bas, bit);
+        // Dinamik Specification: null parametreler sorguya eklenmez (Postgres tip hatasi onlenir).
+        var spec = org.springframework.data.jpa.domain.Specification.<FaturaGecmis>where(
+                (root, query, cb) -> cb.equal(root.get("sirketId"), sirketId));
+        if (olay != null && !olay.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("olay"), olay));
+        }
+        if (kullaniciId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("kullaniciId"), kullaniciId));
+        }
+        if (bas != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("tarih"), bas));
+        }
+        if (bit != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("tarih"), bit));
+        }
+        var sirala = org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Order.desc("tarih"),
+                org.springframework.data.domain.Sort.Order.desc("id"));
+        List<FaturaGecmis> kayitlar = faturaGecmisRepository.findAll(spec, sirala);
         if (kayitlar.isEmpty()) return List.of();
         List<Long> faturaIds = kayitlar.stream().map(FaturaGecmis::getFaturaId).distinct().toList();
         Map<Long, Fatura> faturaMap = faturaRepository.findAllById(faturaIds).stream()

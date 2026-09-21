@@ -19,7 +19,7 @@
     <Toolbar class="toolbar">
       <template #end>
         <Button
-          label="Excel"
+          :label="t('personel.excelIndir')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
           @click="excelIndir"
@@ -34,7 +34,6 @@
           striped-rows
           :loading="yukleniyor"
           :paginator="false"
-          :empty-message="t('personel.empty')"
         >
           <Column
             field="ad"
@@ -93,6 +92,7 @@
             <template #body="{ data }">
               <Button
                 icon="pi pi-pencil"
+                :aria-label="$t('common.edit')"
                 class="p-button-rounded p-button-text"
                 @click="personelDialogAc(data)"
               />
@@ -104,6 +104,7 @@
               />
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text p-button-danger"
                 @click="personelSil(data)"
               />
@@ -136,7 +137,11 @@
           <Column
             field="izinTuru"
             :header="t('personel.izinTuru')"
-          />
+          >
+            <template #body="{ data }">
+              {{ izinTuruEtiket(data.izinTuru) }}
+            </template>
+          </Column>
           <Column
             field="baslangic"
             :header="t('personel.baslangic')"
@@ -155,7 +160,7 @@
           >
             <template #body="{ data }">
               <Tag
-                :value="data.durum"
+                :value="durumEtiket(data.durum)"
                 :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'REDDEDILDI' ? 'danger' : 'warn'"
               />
             </template>
@@ -322,7 +327,9 @@
           <label>{{ t('personel.izinTuruZorunlu') }}</label>
           <Dropdown
             v-model="izinForm.izinTuru"
-            :options="izinTurleri"
+            :options="izinTuruSecenekleri"
+            option-label="label"
+            option-value="value"
             :placeholder="t('common.select')"
             class="w-full"
           />
@@ -424,6 +431,25 @@ const izinTurleri = [
   'UCRETSIZ_IZIN'
 ]
 
+// Ham enum kodlari yerine yerellestirilmis etiketler.
+const izinTuruEtiket = (kod) => ({
+  YILLIK_IZIN: t('personel.izinYillik'),
+  HASTA_IZNI: t('personel.izinHasta'),
+  MAZERET_IZNI: t('personel.izinMazeret'),
+  DOGUM_IZNI: t('personel.izinDogum'),
+  BABALIK_IZNI: t('personel.izinBabalik'),
+  EVLILIK_IZNI: t('personel.izinEvlilik'),
+  UCRETSIZ_IZIN: t('personel.izinUcretsiz')
+}[kod] || kod)
+
+const durumEtiket = (durum) => ({
+  BEKLEMEDE: t('personel.durumBeklemede'),
+  ONAYLANDI: t('personel.durumOnaylandi'),
+  REDDEDILDI: t('personel.durumReddedildi')
+}[durum] || durum)
+
+const izinTuruSecenekleri = computed(() => izinTurleri.map((k) => ({ label: izinTuruEtiket(k), value: k })))
+
 function defaultForm() {
   return {
     ad: '',
@@ -508,10 +534,10 @@ const personelKaydet = async () => {
 const personelSil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await personelAPI.delete(data.id)

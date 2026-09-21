@@ -26,6 +26,7 @@
         />
         <Button
           icon="pi pi-refresh"
+          :aria-label="$t('common.refresh')"
           :loading="yukleniyor"
           @click="yukle"
         />
@@ -68,33 +69,49 @@
         />
       </div>
 
+      <div
+        v-if="!veri.aylikTrend?.length && !veri.kirilim?.length"
+        class="bos-durum"
+      >
+        <EmptyState
+          icon="pi pi-chart-line"
+          :message="t('karlilik.veriYok')"
+        />
+      </div>
+
       <div class="grafik-grid">
         <Card class="grafik-kart">
           <template #title>
             {{ t('karlilik.aylikTrend') }}
           </template>
-          <Line
-            :data="trendData"
-            :options="lineOptions"
-          />
+          <div class="grafik-yukseklik">
+            <Line
+              :data="trendData"
+              :options="lineOptions"
+            />
+          </div>
         </Card>
         <Card class="grafik-kart">
           <template #title>
             {{ t('karlilik.kirilimGrafik') }}
           </template>
-          <Bar
-            :data="kirilimData"
-            :options="barOptions"
-          />
+          <div class="grafik-yukseklik">
+            <Bar
+              :data="kirilimData"
+              :options="barOptions"
+            />
+          </div>
         </Card>
         <Card class="grafik-kart">
           <template #title>
             {{ t('karlilik.ciroPayi') }}
           </template>
-          <Doughnut
-            :data="payData"
-            :options="pieOptions"
-          />
+          <div class="grafik-yukseklik">
+            <Doughnut
+              :data="payData"
+              :options="pieOptions"
+            />
+          </div>
         </Card>
       </div>
 
@@ -129,6 +146,9 @@
           sort-field="brutKar"
           :sort-order="-1"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="ad"
             :header="alanBasligi"
@@ -218,7 +238,8 @@ const bugun = new Date()
 const veri = ref(null)
 const yukleniyor = ref(false)
 const grup = ref('KATEGORI')
-const baslangic = ref(new Date(bugun.getFullYear(), bugun.getMonth(), 1))
+// Varsayilan aralik: yil basi -> bugun (YTD); boylece tablo/grafikler dolu gelir.
+const baslangic = ref(new Date(bugun.getFullYear(), 0, 1))
 const bitis = ref(bugun)
 
 const grupSecenekleri = computed(() => [
@@ -362,8 +383,15 @@ onMounted(yukle)
 .grafik-kart :deep(.p-card-body) {
   min-height: 320px;
 }
+.grafik-yukseklik {
+  position: relative;
+  height: 260px;
+}
 .grafik-kart :deep(canvas) {
   max-height: 260px;
+}
+.bos-durum {
+  margin-bottom: 20px;
 }
 .tablo-kart {
   margin-top: 8px;

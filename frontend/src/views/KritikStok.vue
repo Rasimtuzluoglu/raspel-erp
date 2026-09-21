@@ -62,6 +62,9 @@
         striped-rows
         :loading="yukleniyor"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="stokKodu"
           :header="t('kritikStok.stokKodu')"
@@ -163,6 +166,9 @@
         striped-rows
         :loading="yukleniyor"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="stokKodu"
           :header="t('kritikStok.stokKodu')"

@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,5 +45,18 @@ class AjandaControllerTest {
                         .param("bitis", "2026-08-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tip").value("GOREV"));
+    }
+
+    @Test
+    void hatirlatici_gorevSecilmeden_olusturulabilir() throws Exception {
+        // gorevId opsiyoneldir (bagimsiz hatirlatici); @NotNull kaldirildi.
+        when(ajandaService.hatirlaticiOlustur(any(), any(), any())).thenReturn(
+                com.raspel.erp.dto.sistem.AjandaHatirlaticiDTO.builder().id(1L).baslik("Test").build());
+
+        mockMvc.perform(post("/api/ajanda/reminders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"baslik\":\"Test\",\"hatirlatmaZamani\":\"2026-09-22T10:30:00\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.baslik").value("Test"));
     }
 }

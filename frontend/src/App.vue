@@ -153,7 +153,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
 import { useSunumModu } from './composables/useSunumModu.js'
-import { useToast } from 'primevue/usetoast'
+import { useToastBildirim } from './composables/useToastBildirim.js'
 import { useI18n } from 'vue-i18n'
 import { useMagicKeys } from '@vueuse/core'
 
@@ -187,7 +187,7 @@ const altMenuGoster = computed(() => authStore.isLoggedIn && !route.path.startsW
 // ErrorBoundary'yi rota basina yeniden olusturur; hata durumu boylece sifirlanir.
 // route izole test ortaminda tanimsiz olabildigi icin guvenli erisim.
 const errorBoundaryKey = computed(() => route?.fullPath || 'app')
-const toast = useToast()
+const toastBildirim = useToastBildirim()
 const { t } = useI18n()
 const { aktif: sunumAktif, maske: sunumMaske, degistir: sunumDegistir, maskeAyarla: sunumMaskeAyarla } = useSunumModu()
 const { ctrl_k, cmd_k, escape } = useMagicKeys()
@@ -224,14 +224,16 @@ watch(escape, (v) => {
   }
 })
 
-// Global API Hata Bildirimleri
+// Global API Hata Bildirimleri (yedek katman).
+// View'lerin çoğu kendi catch bloğunda daha bağlamsal bir mesaj gösterir.
+// Aynı hatanın iki kez görünmemesi için global bildirim bir sonraki tura
+// ertelenir (view toast'ı önce çıkar) ve paylaşımlı dedupe devreye girer.
 const handleApiError = (e) => {
-  toast.add({
-    severity: 'error',
-    summary: t('common.islemBasarisiz'),
-    detail: e.detail?.message || t('common.bilinmeyenHata'),
-    life: 5000
-  })
+  const mesaj = e.detail?.message
+  if (!mesaj) return
+  setTimeout(() => {
+    toastBildirim.hata(mesaj, t('common.islemBasarisiz'))
+  }, 0)
 }
 
 const handleGlobalShortcuts = (e) => {

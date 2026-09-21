@@ -4,6 +4,9 @@
       :value="kalemler"
       striped-rows
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         header="#"
         style="width: 40px"

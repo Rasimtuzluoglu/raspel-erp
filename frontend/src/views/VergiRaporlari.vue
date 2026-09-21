@@ -56,6 +56,9 @@
             :value="kdvBeyanname.satislar"
             striped-rows
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="kdvOrani"
               :header="$t('vergiRaporlari.kdvOrani')"
@@ -88,6 +91,9 @@
             :value="kdvBeyanname.alislar"
             striped-rows
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="kdvOrani"
               :header="$t('vergiRaporlari.kdvOrani')"

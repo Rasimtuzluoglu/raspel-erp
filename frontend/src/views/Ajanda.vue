@@ -10,12 +10,14 @@
       <div class="ay-gezinme">
         <Button
           icon="pi pi-chevron-left"
+          :aria-label="t('common.previousMonth')"
           class="p-button-text p-button-sm"
           @click="ayDegistir(-1)"
         />
         <span class="ay-etiket">{{ ayEtiket }}</span>
         <Button
           icon="pi pi-chevron-right"
+          :aria-label="t('common.nextMonth')"
           class="p-button-text p-button-sm"
           @click="ayDegistir(1)"
         />
@@ -415,6 +417,13 @@ const gorevKaydet = async () => {
   }
 }
 
+// LocalDateTime backend'e yerel saat diliminde gonderilir (toISOString UTC'ye
+// kaydirip hatirlaticinin erken calismasina yol acardi).
+const yerelDateTimeIso = (d) => {
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+}
+
 const hatirlaticiKaydet = async () => {
   if (!hatirlaticiForm.value.baslik.trim() || !hatirlaticiForm.value.hatirlatmaZamani) {
     toastBildirim.uyari(t('ajanda.baslikZamanZorunlu'))
@@ -424,7 +433,7 @@ const hatirlaticiKaydet = async () => {
   try {
     await ajandaAPI.hatirlaticiOlustur({
       baslik: hatirlaticiForm.value.baslik,
-      hatirlatmaZamani: hatirlaticiForm.value.hatirlatmaZamani.toISOString()
+      hatirlatmaZamani: yerelDateTimeIso(hatirlaticiForm.value.hatirlatmaZamani)
     })
     toastBildirim.basarili(t('ajanda.hatirlaticiOlusturuldu'))
     hatirlaticiDialogAc.value = false
@@ -432,7 +441,11 @@ const hatirlaticiKaydet = async () => {
     hatirlaticilariYukle()
     yukle()
   } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('ajanda.hatirlaticiOlusturulamadi'))
+    const alanHatalari = err?.response?.data?.errors
+    const detay = alanHatalari
+      ? Object.values(alanHatalari).join(' ')
+      : err?.response?.data?.message || t('ajanda.hatirlaticiOlusturulamadi')
+    toastBildirim.hata(detay)
   } finally {
     kaydediliyor.value = false
   }

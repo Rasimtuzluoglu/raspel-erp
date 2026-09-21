@@ -104,6 +104,9 @@
           striped-rows
           :loading="fisYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="fisNo"
             :header="t('muhasebe.fisNo')"
@@ -198,6 +201,9 @@
           striped-rows
           :loading="mizanYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="hesapKodu"
             :header="t('muhasebe.hesapKodu')"
@@ -277,6 +283,9 @@
           striped-rows
           :loading="kebirYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="tarih"
             :header="t('common.date')"
@@ -347,6 +356,9 @@
               size="small"
               :loading="bilancoYukleniyor"
             >
+              <template #empty>
+                <EmptyState />
+              </template>
               <Column
                 field="kod"
                 :header="t('muhasebe.kod')"
@@ -375,6 +387,9 @@
               size="small"
               :loading="bilancoYukleniyor"
             >
+              <template #empty>
+                <EmptyState />
+              </template>
               <Column
                 field="kod"
                 :header="t('muhasebe.kod')"
@@ -440,6 +455,9 @@
               size="small"
               :loading="karZararYukleniyor"
             >
+              <template #empty>
+                <EmptyState />
+              </template>
               <Column
                 field="kod"
                 :header="t('muhasebe.kod')"
@@ -465,6 +483,9 @@
               size="small"
               :loading="karZararYukleniyor"
             >
+              <template #empty>
+                <EmptyState />
+              </template>
               <Column
                 field="kod"
                 :header="t('muhasebe.kod')"
@@ -614,6 +635,7 @@
           />
           <Button
             icon="pi pi-times"
+            :aria-label="$t('common.close')"
             class="p-button-rounded p-button-text p-button-danger"
             @click="fisForm.kalemler.splice(i, 1)"
           />
@@ -669,6 +691,9 @@
         :value="fisDetay?.kalemler || []"
         striped-rows
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="hesapKodu"
           :header="t('muhasebe.hesap')"
@@ -851,10 +876,10 @@ const hesapKaydet = async () => {
 const hesapSil = (data) => {
   confirm.require({
     message: t('muhasebe.hesapSilOnay', { hesap: `${data.kod} - ${data.ad}` }),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await muhasebeAPI.hesapSil(data.id)
@@ -948,7 +973,7 @@ const fisIptal = (data) => {
     header: t('muhasebe.iptalOnayi'),
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: t('muhasebe.evetIptalEt'),
-    rejectLabel: t('muhasebe.vazgec'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await muhasebeAPI.fisIptal(data.id)

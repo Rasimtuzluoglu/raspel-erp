@@ -267,6 +267,7 @@
         <span><i class="pi pi-history" /> {{ t('tahsilat.tahsilatGecmisi') }}</span>
         <Button
           icon="pi pi-refresh"
+          :aria-label="$t('common.refresh')"
           class="p-button-sm p-button-text"
           :loading="gecmisYukleniyor"
           @click="gecmisYukle"

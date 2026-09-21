@@ -390,10 +390,10 @@ const save = async () => {
 const confirmDel = (k) => {
   confirm.require({
     message: t('adresDefteri.silOnay', { ad: k.ad }),
-    header: t('common.delete'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('common.delete'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await adresStore.deleteKisi(k.id)

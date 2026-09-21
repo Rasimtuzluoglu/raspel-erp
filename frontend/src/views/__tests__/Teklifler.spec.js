@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
@@ -73,7 +74,7 @@ describe('Teklifler.vue', () => {
   it('renders quotes list and stats correctly', async () => {
     const Teklifler = (await import('../Teklifler.vue')).default
     const wrapper = mount(Teklifler, {
-      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+      global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.teklifler-sayfasi').exists()).toBe(true)

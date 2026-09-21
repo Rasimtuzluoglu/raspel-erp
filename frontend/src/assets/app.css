@@ -395,15 +395,9 @@ img {
 .brand-icon {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: white;
+  object-fit: contain;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px var(--accent-soft-strong);
 }
 
 .brand-text {
@@ -457,6 +451,20 @@ img {
 .menu-grup:first-of-type {
   border-top: none;
   margin-top: 0;
+}
+.menu-grup-toggle {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+.menu-grup-toggle:hover {
+  color: var(--text-secondary);
+}
+.menu-grup-ok {
+  font-size: 10px;
+  opacity: 0.7;
 }
 
 .sidebar-menu a {
@@ -746,6 +754,18 @@ img {
   letter-spacing: 0.3px;
 }
 
+.brand-logolar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.brand-raspel {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 .brand-logo {
   width: 34px;
   height: 34px;
@@ -1183,27 +1203,16 @@ img {
 .p-tabview {
   background: transparent !important;
 }
+/* PrimeVue v4 sinif adlari (v3'teki .p-tabview-nav / -nav-link kaldirildi). */
 .p-tabview .p-tabview-tablist {
-  overflow-x: auto;
-  scrollbar-width: thin;
-  -webkit-overflow-scrolling: touch;
-}
-.p-tabview .p-tabview-tablist::-webkit-scrollbar {
-  height: 4px;
-}
-.p-tabview .p-tabview-tablist::-webkit-scrollbar-thumb {
-  background: var(--border, rgba(148, 163, 184, 0.4));
-  border-radius: 4px;
-}
-.p-tabview .p-tabview-nav {
   background: transparent !important;
   border-color: var(--border) !important;
 }
-.p-tabview .p-tabview-nav li .p-tabview-nav-link {
+.p-tabview .p-tabview-tab-header {
   background: transparent !important;
   color: var(--text-secondary) !important;
 }
-.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+.p-tabview .p-tabview-tablist-item-active > .p-tabview-tab-header {
   color: var(--accent) !important;
   border-color: var(--accent) !important;
 }
@@ -1680,15 +1689,10 @@ img {
   .charts-grid {
     grid-template-columns: 1fr 1fr !important;
   }
-  /* Tablet: tablolar kırpılmasın; yatay kaydırma korunur. */
-  .p-datatable .p-datatable-wrapper,
-  .p-datatable .p-datatable-scrollable-wrapper,
-  .p-datatable .p-datatable-scrollable-body {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
+  /* Tablet: tablolari zorla genisletip yatay scroll uretme; icerik sigarsa
+     kaydirma olmaz (base .p-datatable-wrapper zaten gerekince kaydirir). */
   .p-datatable table {
-    min-width: 640px;
+    min-width: 0;
   }
 }
 

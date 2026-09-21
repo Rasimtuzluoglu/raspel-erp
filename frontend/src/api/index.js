@@ -58,7 +58,8 @@ export {
   apiTokenAPI,
   churnAPI,
   onayAyariAPI,
-  adresDefteriAPI
+  adresDefteriAPI,
+  onaySayilariAPI
 } from './modules/sistem.js'
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 

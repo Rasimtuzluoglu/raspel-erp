@@ -51,11 +51,13 @@
         <template #body="{ data }">
           <Button
             icon="pi pi-pencil"
+            :aria-label="$t('common.edit')"
             class="p-button-rounded p-button-text"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
             @click="sil(data)"
           />
@@ -192,10 +194,10 @@ const kaydet = async () => {
 const sil = (data) => {
   confirm.require({
     message: t('subeler.silOnayMesaj', { ad: data.ad }),
-    header: t('subeler.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('subeler.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await subeAPI.delete(data.id)

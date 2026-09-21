@@ -345,10 +345,8 @@ class StokServiceTest {
 
         when(stokRepository.findBySirketIdOrderByAd(1L, Pageable.unpaged()))
                 .thenReturn(new PageImpl<>(List.of(stok)));
-        when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L))
-                .thenReturn(List.of(
-                        StokHareket.builder().tur("CIKIS").miktar(BigDecimal.valueOf(90)).hareketTarihi(LocalDate.now().minusDays(10)).build()
-                ));
+        when(stokHareketRepository.sonCikisToplamlari(any(), any()))
+                .thenReturn(List.of(java.util.Map.of("stokId", 1L, "toplam", BigDecimal.valueOf(90))));
 
         var result = stokService.talepTahmini(1L);
         assertNotNull(result);

@@ -1,50 +1,45 @@
 <template>
   <Dialog
     v-model:visible="goster"
-    header="Yenilikler"
+    :header="$t('guncellemeNotlari.baslik')"
     :modal="true"
     style="width: 520px"
     :closable="true"
+    dismissable-mask
   >
     <div class="changelog">
       <div class="surum">
         <span class="surum-etiketi">v{{ SURUM }}</span>
         <ul>
-          <li><i class="pi pi-check-circle" /> Şoförler artık Saha Portalı'na da giriş yapabilir</li>
-          <li><i class="pi pi-check-circle" /> Fatura "Ürün Seç" listesi açık temada okunabilir hâle getirildi</li>
-          <li><i class="pi pi-check-circle" /> Şoför/saha girişinde görülen yetki/404 ekranı giderildi</li>
-          <li><i class="pi pi-check-circle" /> Kağıtsız dijital teslimat: teslim alan + zorunlu imza + PDF fiş</li>
-          <li><i class="pi pi-check-circle" /> Saha Portalı: tahsilat, sipariş, ziyaret, masraf, görev/not, performans</li>
-          <li><i class="pi pi-check-circle" /> Test ve gösterim için örnek (demo) veriler eklendi</li>
+          <li
+            v-for="(madde, i) in guncelNotlar"
+            :key="i"
+          >
+            <i class="pi pi-check-circle" /> {{ madde }}
+          </li>
         </ul>
       </div>
       <div class="surum">
-        <span class="surum-etiketi">v1.1.0</span>
+        <span class="surum-etiketi">v{{ SURUM_110 }}</span>
         <ul>
-          <li><i class="pi pi-check-circle" /> Notlar modülü eklendi (renkli etiketler, önem derecesi)</li>
-          <li><i class="pi pi-check-circle" /> Fiyatlı / fiyatsız fiş ve fatura yazdırma seçeneği</li>
-          <li><i class="pi pi-check-circle" /> Klavye kısayolları (Ctrl+S, F2, Ctrl+P, Esc)</li>
-          <li><i class="pi pi-check-circle" /> Genel arama artık 9 modülü tarıyor</li>
-          <li><i class="pi pi-check-circle" /> Tablo sütun ayarları ve yoğunluk seçimi</li>
-          <li><i class="pi pi-check-circle" /> Toplu işlemler (stok ve cari)</li>
-          <li><i class="pi pi-check-circle" /> Silme geri alma, taslak otomatik kayıt</li>
-          <li><i class="pi pi-check-circle" /> Denetim log filtreleme + Excel export</li>
-          <li><i class="pi pi-check-circle" /> WebSocket anlık bildirimler ve bildirim tercihleri</li>
-          <li><i class="pi pi-check-circle" /> CSV toplu veri aktarımı (stok, cari)</li>
-          <li><i class="pi pi-check-circle" /> Profesyonel fatura PDF şablonu</li>
-          <li><i class="pi pi-check-circle" /> Oturum zaman aşımı uyarısı</li>
+          <li
+            v-for="(madde, i) in notlar110"
+            :key="i"
+          >
+            <i class="pi pi-check-circle" /> {{ madde }}
+          </li>
         </ul>
       </div>
       <div class="surum">
-        <span class="surum-etiketi">v1.0.0</span>
+        <span class="surum-etiketi">v{{ SURUM_100 }}</span>
         <ul>
-          <li><i class="pi pi-check-circle" /> İlk sürüm: finans, ticaret, envanter, İK ve sistem modülleri</li>
+          <li><i class="pi pi-check-circle" /> {{ $t('guncellemeNotlari.v100') }}</li>
         </ul>
       </div>
     </div>
     <template #footer>
       <Button
-        label="Tamam"
+        :label="$t('guncellemeNotlari.tamam')"
         icon="pi pi-check"
         @click="kapat"
       />
@@ -53,11 +48,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { tm } = useI18n()
 const SURUM = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.17.0'
+const SURUM_110 = '1.1.0'
+const SURUM_100 = '1.0.0'
 const ANAHTAR = 'raspel_gorulen_surum'
 const goster = ref(false)
+
+function listeAl(anahtar) {
+  const deger = tm(anahtar)
+  return Array.isArray(deger) ? deger : []
+}
+const guncelNotlar = computed(() => listeAl('guncellemeNotlari.guncel'))
+const notlar110 = computed(() => listeAl('guncellemeNotlari.v110'))
 
 onMounted(() => {
   if (localStorage.getItem(ANAHTAR) !== SURUM) {

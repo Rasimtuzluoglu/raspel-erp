@@ -49,6 +49,9 @@
               size="small"
               striped-rows
             >
+              <template #empty>
+                <EmptyState />
+              </template>
               <Column :header="t('topluStok.satir')">
                 <template #body="s">
                   {{ s.index + 1 }}
@@ -171,31 +174,30 @@ const csvSec = (e) => {
 
 const csvAktar = async () => {
   aktariyor.value = true
-  let basari = 0,
-    hata = 0
-  for (const veri of csvVeri.value) {
-    try {
-      await stokAPI.create({
-        stokKodu: veri.stokkodu || veri.stokKodu || '',
-        barkod: veri.barkod || '',
-        ad: veri.ad || veri.isim || '',
-        birim: veri.birim || 'Adet',
-        fiyat: veri.fiyat || 0,
-        miktar: veri.miktar || 0,
-        minMiktar: veri.minmiktar || veri.minMiktar || null,
-        stokGrubu: veri.stokgrubu || veri.stokGrubu || '',
-        rafNo: veri.rafno || veri.rafNo || '',
-        aciklama: ''
-      })
-      basari++
-    } catch {
-      hata++
-    }
+  const payload = csvVeri.value.map((veri) => ({
+    stokKodu: veri.stokkodu || veri.stokKodu || '',
+    barkod: veri.barkod || '',
+    ad: veri.ad || veri.isim || '',
+    birim: veri.birim || 'Adet',
+    fiyat: veri.fiyat || 0,
+    miktar: veri.miktar || 0,
+    minMiktar: veri.minmiktar || veri.minMiktar || null,
+    stokGrubu: veri.stokgrubu || veri.stokGrubu || '',
+    rafNo: veri.rafno || veri.rafNo || '',
+    aciklama: ''
+  }))
+  try {
+    // Satır başına ayrı POST yerine tek toplu istek.
+    const r = await stokAPI.topluCreate(payload)
+    const basari = r.data?.eklenen ?? payload.length
+    sonuc.value = { basari, hata: Math.max(0, payload.length - basari) }
+  } catch {
+    sonuc.value = { basari: 0, hata: payload.length }
+  } finally {
+    csvVeri.value = []
+    seciliDosya.value = ''
+    aktariyor.value = false
   }
-  sonuc.value = { basari, hata }
-  csvVeri.value = []
-  seciliDosya.value = ''
-  aktariyor.value = false
 }
 
 const csvIptal = () => {

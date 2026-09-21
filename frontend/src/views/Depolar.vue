@@ -69,11 +69,13 @@
               />
               <Button
                 icon="pi pi-pencil"
+                :aria-label="$t('common.edit')"
                 class="p-button-rounded p-button-text"
                 @click="dialogAc(data)"
               />
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text"
                 @click="sil(data)"
               />
@@ -146,6 +148,9 @@
             striped-rows
             size="small"
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="stokKodu"
               :header="t('depolar.stokKodu')"
@@ -305,6 +310,9 @@
         size="small"
         :loading="talepYukleniyor"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column :header="t('depolar.kaynakDepo')">
           <template #body="{ data }">
             {{ data.kaynakDepoAd || data.kaynakDepoId }}
@@ -341,12 +349,14 @@
             <template v-if="data.durum === 'BEKLIYOR'">
               <Button
                 icon="pi pi-check"
+                :aria-label="$t('common.onayla')"
                 class="p-button-rounded p-button-success p-button-sm"
                 style="margin-right: 6px"
                 @click="talepOnayla(data)"
               />
               <Button
                 icon="pi pi-times"
+                :aria-label="$t('common.close')"
                 class="p-button-rounded p-button-danger p-button-sm"
                 @click="talepReddet(data)"
               />
@@ -444,10 +454,10 @@ const kaydet = async () => {
 const sil = (data) => {
   confirm.require({
     message: t('depolar.silOnayMesaj', { ad: data.ad }),
-    header: t('depolar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('depolar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await depoAPI.delete(data.id)
@@ -564,13 +574,12 @@ const talepReddet = async (t) => {
   padding: 0;
 }
 .depolar-container :deep(.p-tabview-tablist) {
-  overflow-x: visible;
   scrollbar-width: none;
 }
-.depolar-container :deep(.p-tabview-tablist::-webkit-scrollbar) {
-  display: none;
+.depolar-container :deep(.p-tabview-tablist-scroll-container) {
+  scrollbar-width: none;
 }
-.depolar-container :deep(.p-tabview-nav-link) {
+.depolar-container :deep(.p-tabview-tab-header) {
   white-space: nowrap;
 }
 .sayfa-baslik {

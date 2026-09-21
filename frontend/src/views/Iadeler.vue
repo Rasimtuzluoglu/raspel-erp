@@ -88,6 +88,7 @@
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
             @click="sil(data)"
           />
@@ -200,6 +201,7 @@
             />
             <Button
               icon="pi pi-trash"
+              :aria-label="$t('common.delete')"
               class="p-button-rounded p-button-danger p-button-sm"
               @click="form.kalemler.splice(i, 1)"
             />
@@ -350,10 +352,10 @@ const durumGuncelle = async (data, durum) => {
 const sil = (data) => {
   confirm.require({
     message: t('iadeler.silOnayMesaj'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await iadeAPI.delete(data.id)

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS sistem.sirket (
     telefon VARCHAR(20),
     email VARCHAR(100),
     web_site VARCHAR(200),
+    logo_url VARCHAR(500),
     aktif BOOLEAN NOT NULL DEFAULT true,
     olusturma_tarihi TIMESTAMP NOT NULL,
     parent_id BIGINT,

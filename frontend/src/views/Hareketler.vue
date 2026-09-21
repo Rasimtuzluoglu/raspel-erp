@@ -512,8 +512,10 @@ const saveHareket = async () => {
 const confirmDelete = (id) => {
   confirm.require({
     message: t('hareketler.silOnayMesaj'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
     accept: () => deleteHareket(id),
     reject: () => {}
   })
@@ -567,20 +569,30 @@ const excelIndir = async () => {
   }
 }
 
-const topluSil = async () => {
-  topluSiliniyor.value = true
-  try {
-    for (const item of selectedItems.value) {
-      await hareketAPI.delete(item.id)
+const topluSil = () => {
+  if (!selectedItems.value.length) return
+  confirm.require({
+    message: t('common.topluSilmeOnayMesaji', { n: selectedItems.value.length }),
+    header: t('common.topluSilmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      topluSiliniyor.value = true
+      try {
+        for (const item of selectedItems.value) {
+          await hareketAPI.delete(item.id)
+        }
+        toastBildirim.basarili(t('hareketler.topluSilindi', { n: selectedItems.value.length }))
+        selectedItems.value = []
+        await loadData()
+      } catch {
+        toastBildirim.hata(t('hareketler.silmeBasarisiz'))
+      } finally {
+        topluSiliniyor.value = false
+      }
     }
-    toastBildirim.basarili(t('hareketler.topluSilindi', { n: selectedItems.value.length }))
-    selectedItems.value = []
-    await loadData()
-  } catch {
-    toastBildirim.hata(t('hareketler.silmeBasarisiz'))
-  } finally {
-    topluSiliniyor.value = false
-  }
+  })
 }
 
 

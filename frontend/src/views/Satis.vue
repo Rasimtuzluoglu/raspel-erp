@@ -39,6 +39,9 @@
         sort-field="tarih"
         :sort-order="-1"
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           field="faturaNumarasi"
           :header="t('satis.colFaturaNo')"
@@ -224,6 +227,7 @@
           >
             <Button
               icon="pi pi-plus"
+              :aria-label="$t('common.add')"
               class="p-button-success"
               :disabled="!seciliUrun || !yeniUrunAdet"
               @click="urunEkle"
@@ -247,6 +251,9 @@
         :value="satisForm.kalemler"
         striped-rows
       >
+        <template #empty>
+          <EmptyState />
+        </template>
         <Column
           header="#"
           style="width: 40px"
@@ -320,6 +327,7 @@
           <template #body="s">
             <Button
               icon="pi pi-trash"
+              :aria-label="$t('common.delete')"
               class="p-button-rounded p-button-danger p-button-sm"
               @click="satisForm.kalemler.splice(s.index, 1)"
             />

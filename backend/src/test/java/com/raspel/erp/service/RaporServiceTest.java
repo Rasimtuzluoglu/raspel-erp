@@ -77,8 +77,6 @@ class RaporServiceTest {
         Hareket hareket = createHareket();
         when(hareketRepository.findByCariHesapIdAndHareketTarihiBetweenOrderByHareketTarihiAsc(any(), any(), any()))
                 .thenReturn(List.of(hareket));
-        HareketDTO dto = HareketDTO.builder().tur("TAHSILAT").tutar(BigDecimal.valueOf(1000)).build();
-        when(hareketService.entityDTOyeCevir(any(Hareket.class))).thenReturn(dto);
         var result = raporService.cariEkstreGetir(1L, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
         assertEquals("Test Cari", result.getCariAd());
     }

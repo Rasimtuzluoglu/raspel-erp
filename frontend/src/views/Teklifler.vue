@@ -794,11 +794,13 @@ import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI, faturaAPI } from '../api/i
 import { formatCurrency, formatDate } from '../utils/format.js'
 import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 
 const toast = useToast()
+const confirm = useConfirm()
 const { t } = useI18n()
 
 const teklifler = ref([])
@@ -1088,52 +1090,80 @@ const teklifKaydet = async () => {
   }
 }
 
-const silOnay = async (teklif) => {
-  if (confirm(t('teklifler.silOnay', { n: teklif.teklifNo }))) {
-    try {
-      await teklifAPI.delete(teklif.id)
-      toast.add({ severity: 'success', summary: t('teklifler.silindi'), detail: t('teklifler.teklifSilindi'), life: 3000 })
-      await teklifleriGetir()
-    } catch (err) {
-      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+const silOnay = (teklif) => {
+  confirm.require({
+    message: t('teklifler.silOnay', { n: teklif.teklifNo }),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.delete'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await teklifAPI.delete(teklif.id)
+        toast.add({ severity: 'success', summary: t('teklifler.silindi'), detail: t('teklifler.teklifSilindi'), life: 3000 })
+        await teklifleriGetir()
+      } catch (err) {
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+      }
     }
-  }
+  })
 }
 
-const revizyonOlustur = async (teklif) => {
-  if (confirm(t('teklifler.revizyonOnay', { n: teklif.teklifNo, r: teklif.revizyonNo + 1 }))) {
-    try {
-      await teklifAPI.revizyonOlustur(teklif.id)
-      toast.add({ severity: 'success', summary: t('teklifler.revizyonOlusturuldu'), detail: t('teklifler.revizyonHazirlandi'), life: 3000 })
-      await teklifleriGetir()
-    } catch (err) {
-      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+const revizyonOlustur = (teklif) => {
+  confirm.require({
+    message: t('teklifler.revizyonOnay', { n: teklif.teklifNo, r: teklif.revizyonNo + 1 }),
+    header: t('common.onayla'),
+    icon: 'pi pi-question-circle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.onayla'), severity: 'primary', size: 'small' },
+    accept: async () => {
+      try {
+        await teklifAPI.revizyonOlustur(teklif.id)
+        toast.add({ severity: 'success', summary: t('teklifler.revizyonOlusturuldu'), detail: t('teklifler.revizyonHazirlandi'), life: 3000 })
+        await teklifleriGetir()
+      } catch (err) {
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+      }
     }
-  }
+  })
 }
 
-const sipariseDonustur = async (teklif) => {
-  if (confirm(t('teklifler.siparisOnay', { n: teklif.teklifNo }))) {
-    try {
-      const res = await teklifAPI.sipariseDonustur(teklif.id)
-      toast.add({ severity: 'success', summary: t('teklifler.donusturuldu'), detail: t('teklifler.siparisKaydedildi', { n: res.data?.siparisNo }), life: 3500 })
-      await teklifleriGetir()
-    } catch (err) {
-      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+const sipariseDonustur = (teklif) => {
+  confirm.require({
+    message: t('teklifler.siparisOnay', { n: teklif.teklifNo }),
+    header: t('common.onayla'),
+    icon: 'pi pi-question-circle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.onayla'), severity: 'primary', size: 'small' },
+    accept: async () => {
+      try {
+        const res = await teklifAPI.sipariseDonustur(teklif.id)
+        toast.add({ severity: 'success', summary: t('teklifler.donusturuldu'), detail: t('teklifler.siparisKaydedildi', { n: res.data?.siparisNo }), life: 3500 })
+        await teklifleriGetir()
+      } catch (err) {
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+      }
     }
-  }
+  })
 }
 
-const faturayaDonustur = async (teklif) => {
-  if (confirm(t('teklifler.faturaOnay', { n: teklif.teklifNo }))) {
-    try {
-      const res = await teklifAPI.faturayaDonustur(teklif.id)
-      toast.add({ severity: 'success', summary: t('teklifler.faturalasti'), detail: t('teklifler.faturaKesildi', { n: res.data?.faturaNumarasi }), life: 3500 })
-      await teklifleriGetir()
-    } catch (err) {
-      toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+const faturayaDonustur = (teklif) => {
+  confirm.require({
+    message: t('teklifler.faturaOnay', { n: teklif.teklifNo }),
+    header: t('common.onayla'),
+    icon: 'pi pi-question-circle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.onayla'), severity: 'primary', size: 'small' },
+    accept: async () => {
+      try {
+        const res = await teklifAPI.faturayaDonustur(teklif.id)
+        toast.add({ severity: 'success', summary: t('teklifler.faturalasti'), detail: t('teklifler.faturaKesildi', { n: res.data?.faturaNumarasi }), life: 3500 })
+        await teklifleriGetir()
+      } catch (err) {
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+      }
     }
-  }
+  })
 }
 
 const onizlemeAc = (teklif) => {

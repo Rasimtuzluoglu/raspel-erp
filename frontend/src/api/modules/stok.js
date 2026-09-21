@@ -76,6 +76,13 @@ export const stokAPI = {
   getFiyatlar(id) {
     return apiClient.get(`/stoklar/${id}/fiyatlar`)
   },
+  getFiyatlarToplu(ids) {
+    const liste = Array.isArray(ids) ? ids : []
+    return apiClient.get('/stoklar/fiyatlar', { params: { ids: liste.join(',') } })
+  },
+  topluCreate(list) {
+    return apiClient.post('/stoklar/toplu', list)
+  },
   fiyatEkle(id, data) {
     return apiClient.post(`/stoklar/${id}/fiyatlar`, data)
   },

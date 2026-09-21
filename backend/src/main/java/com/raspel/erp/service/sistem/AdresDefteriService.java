@@ -84,14 +84,14 @@ public class AdresDefteriService {
         adresDefteriRepository.delete(a);
     }
 
-    @Cacheable(value = "lookup", key = "'adresTur:' + #sirketId")
+    @Cacheable(value = "lookup", sync = true, key = "'adresTur:' + #sirketId")
     @Transactional(readOnly = true)
     public List<String> turListesi(Long sirketId) {
         if (sirketId == null) return List.of();
         return adresDefteriRepository.turListesi(sirketId);
     }
 
-    @Cacheable(value = "lookup", key = "'adresEtiket:' + #sirketId")
+    @Cacheable(value = "lookup", sync = true, key = "'adresEtiket:' + #sirketId")
     @Transactional(readOnly = true)
     public List<String> etiketListesi(Long sirketId) {
         if (sirketId == null) return List.of();

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { kullaniciAPI, apiClient } from '../api/index.js'
+import { kullaniciAPI, apiClient, sirketAPI } from '../api/index.js'
 
 export const useAuthStore = defineStore('auth', () => {
   const kullanici = ref(null)
@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const companyName = ref('')
   const sirketId = ref(null)
   const sirketAdi = ref('')
+  const sirketLogo = ref('')
   const yetkiler = ref([])
   const loading = ref(false)
   const tokenExpiresAt = ref(null)
@@ -78,6 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
         companyName.value = data.companyName || ''
         sirketId.value = data.sirketId || null
         sirketAdi.value = data.sirketAdi || ''
+        sirketLogo.value = data.sirketLogo || ''
         yetkiler.value = data.yetkiler || []
         tokenExpiresAt.value = data.tokenExpiresAt || null
         if (kullanici.value) {
@@ -168,10 +170,28 @@ export const useAuthStore = defineStore('auth', () => {
     companyName.value = data.companyName || ''
     sirketId.value = data.sirketId || null
     sirketAdi.value = data.sirketAdi || ''
+    sirketLogo.value = data.logoUrl || data.sirketLogo || ''
     tokenExpiresAt.value = data.tokenExpiresAt || null
 
     authKaydet(rememberMe === true)
     yetkileriYukle()
+  }
+
+  /** Şirket logosunu (yoksa) bir kez yükler; tek kaynak olarak store'da tutar. */
+  const sirketLogosunuYukle = async () => {
+    if (!sirketId.value) return ''
+    if (sirketLogo.value) return sirketLogo.value
+    try {
+      const r = await sirketAPI.getById(sirketId.value)
+      sirketLogo.value = r.data?.logoUrl || ''
+    } catch {
+      sirketLogo.value = ''
+    }
+    return sirketLogo.value
+  }
+
+  const sirketLogosunuAyarla = (url) => {
+    sirketLogo.value = url || ''
   }
 
   const cikisYap = () => {
@@ -186,6 +206,7 @@ export const useAuthStore = defineStore('auth', () => {
     companyName.value = ''
     sirketId.value = null
     sirketAdi.value = ''
+    sirketLogo.value = ''
     yetkiler.value = []
     tokenExpiresAt.value = null
     authTemizle()
@@ -242,6 +263,22 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
+  // Tek seferlik gecis: eski surumde isaretli kalan "beni hatirla" tercihini ve
+  // kalici oturum kaydini sifirla. Boylece varsayilan olarak her sekme/browser
+  // acilisinda giris istenir; kullanici isterse yeniden isaretleyebilir.
+  ;(function oturumPolitikasiGecisi() {
+    try {
+      const MARKER = 'raspel_erp_session_politika_v2'
+      if (!localStorage.getItem(MARKER)) {
+        localStorage.removeItem('raspel_erp_beni_hatirla')
+        localStorage.removeItem(AUTH_ANAHTAR)
+        localStorage.setItem(MARKER, '1')
+      }
+    } catch {
+      /* yoksay */
+    }
+  })()
+
   init()
 
   return {
@@ -250,6 +287,7 @@ export const useAuthStore = defineStore('auth', () => {
     companyName,
     sirketId,
     sirketAdi,
+    sirketLogo,
     yetkiler,
     tokenExpiresAt,
     loading,
@@ -263,6 +301,8 @@ export const useAuthStore = defineStore('auth', () => {
     giris2fa,
     sirketDegistir,
     sirketlerim,
+    sirketLogosunuYukle,
+    sirketLogosunuAyarla,
     cikisYap,
     kullaniciGuncelle,
     yetkileriYukle,

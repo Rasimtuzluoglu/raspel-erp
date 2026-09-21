@@ -306,10 +306,10 @@ const oneriOnayla = async (hareket) => {
 const eslestirmeyiKaldir = (hareket) => {
   confirm.require({
     message: t('bankaMutabakat.kaldirOnayMesaj'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('bankaMutabakat.evet'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await bankaMutabakatAPI.eslestirmeyiKaldir(seciliBanka.value, hareket.id)

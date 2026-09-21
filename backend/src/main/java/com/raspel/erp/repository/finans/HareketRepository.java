@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.math.BigDecimal;
 
 /**
@@ -69,4 +70,16 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(Long sirketId, Long posTerminaliId);
+
+    // Churn analizi icin cari bazli ozet (tam tabloyu belleğe yuklemeden).
+    @Query("SELECT new map(h.cariHesap.id as cariId, MAX(h.hareketTarihi) as sonTarih, COUNT(h) as adet) " +
+            "FROM Hareket h WHERE h.sirketId = :sirketId AND h.cariHesap IS NOT NULL GROUP BY h.cariHesap.id")
+    List<Map<String, Object>> cariIslemOzeti(@Param("sirketId") Long sirketId);
+
+    // Anomali: ayni cari + ayni tutar + ayni turde birden fazla hareket (SQL gruplama).
+    @Query("SELECT new map(h.cariHesap.id as cariId, h.cariHesap.ad as cariAd, h.tutar as tutar, " +
+            "h.tur as tur, COUNT(h) as adet, MIN(h.id) as ilkId) " +
+            "FROM Hareket h WHERE h.sirketId = :sirketId AND h.cariHesap IS NOT NULL AND h.tutar IS NOT NULL " +
+            "GROUP BY h.cariHesap.id, h.cariHesap.ad, h.tutar, h.tur HAVING COUNT(h) > 1")
+    List<Map<String, Object>> mukerrerHareketGruplari(@Param("sirketId") Long sirketId);
 }

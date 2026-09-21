@@ -13,31 +13,11 @@
     />
 
     <div class="ayarlar-duzen">
-      <nav
-        class="ayar-menu"
-        role="tablist"
-        :aria-label="t('hesapAyarlari.title')"
+      <TabView
+        v-model:active-index="aktifBolum"
+        class="ayar-icerik"
       >
-        <button
-          v-for="(b, i) in bolumler"
-          :key="b.key"
-          type="button"
-          class="ayar-menu-btn"
-          :class="{ aktif: aktifBolum === i }"
-          role="tab"
-          :aria-selected="aktifBolum === i"
-          @click="aktifBolum = i"
-        >
-          <i :class="b.ikon" />
-          <span>{{ b.label }}</span>
-        </button>
-      </nav>
-
-      <div class="ayar-icerik">
-        <section
-          v-show="aktifBolum === 0"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[0].label">
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -126,12 +106,9 @@
               </Card>
             </div>
           </div>
-        </section>
+        </TabPanel>
 
-        <section
-          v-show="aktifBolum === 1"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[1].label">
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -187,6 +164,7 @@
                           <code>{{ kurulumData.secret }}</code>
                           <Button
                             icon="pi pi-copy"
+                            :aria-label="$t('common.copy')"
                             class="p-button-rounded p-button-text"
                             @click="kopyala(kurulumData.secret)"
                           />
@@ -220,6 +198,7 @@
                     <span><i class="pi pi-desktop" />{{ t('hesapAyarlari.aktifOturumlar') }}</span>
                     <Button
                       icon="pi pi-refresh"
+                      :aria-label="$t('common.refresh')"
                       class="p-button-sm p-button-text"
                       @click="oturumlariYukle"
                     />
@@ -235,6 +214,9 @@
                     striped-rows
                     size="small"
                   >
+                    <template #empty>
+                      <EmptyState />
+                    </template>
                     <Column
                       :header="t('hesapAyarlari.kullanici')"
                       field="kullaniciAdi"
@@ -274,12 +256,9 @@
               </Card>
             </div>
           </div>
-        </section>
+        </TabPanel>
 
-        <section
-          v-show="aktifBolum === 2"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[2].label">
           <div class="sekme-icerik">
             <Card class="ayar-kart">
               <template #title>
@@ -363,12 +342,9 @@
               </template>
             </Card>
           </div>
-        </section>
+        </TabPanel>
 
-        <section
-          v-show="aktifBolum === 3"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[3].label">
           <div class="sekme-icerik">
             <Card class="ayar-kart">
               <template #title>
@@ -398,12 +374,9 @@
               </template>
             </Card>
           </div>
-        </section>
+        </TabPanel>
 
-        <section
-          v-show="aktifBolum === 4"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[4].label">
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart ai-ayar-kart">
@@ -446,6 +419,7 @@
                         />
                         <Button
                           :icon="aiKeyGoster ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                          :aria-label="aiKeyGoster ? t('common.hide') : t('common.show')"
                           severity="secondary"
                           outlined
                           @click="aiKeyGoster = !aiKeyGoster"
@@ -541,6 +515,7 @@
                     </div>
                     <Button
                       icon="pi pi-trash"
+                      :aria-label="$t('common.delete')"
                       class="p-button-rounded p-button-text p-button-danger"
                       @click="tokenSil(token)"
                     />
@@ -549,12 +524,9 @@
               </Card>
             </div>
           </div>
-        </section>
+        </TabPanel>
 
-        <section
-          v-show="aktifBolum === 5"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[5].label">
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -621,12 +593,9 @@
               </Card>
             </div>
           </div>
-        </section>
+        </TabPanel>
 
-        <section
-          v-show="aktifBolum === 6"
-          class="ayar-bolum"
-        >
+        <TabPanel :header="bolumler[6].label">
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -686,8 +655,59 @@
               </Card>
             </div>
           </div>
-        </section>
-      </div>
+        </TabPanel>
+
+        <TabPanel :header="bolumler[7].label">
+          <div class="sekme-icerik">
+            <div class="ayarlar-grid">
+              <Card class="ayar-kart">
+                <template #title>
+                  <i class="pi pi-image" />{{ t('hesapAyarlari.markaBaslik') }}
+                </template>
+                <template #content>
+                  <p class="marka-aciklama">
+                    {{ t('hesapAyarlari.markaAciklama') }}
+                  </p>
+                  <div class="marka-onizleme">
+                    <img
+                      :src="markaOnizleme"
+                      alt="logo"
+                      class="marka-logo"
+                    >
+                  </div>
+                  <input
+                    ref="markaInput"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    class="gizli-input"
+                    @change="markaSec"
+                  >
+                  <div class="marka-aksiyonlar">
+                    <Button
+                      :label="t('hesapAyarlari.logoYukle')"
+                      icon="pi pi-upload"
+                      :loading="markaYukleniyor"
+                      @click="$refs.markaInput.click()"
+                    />
+                    <Button
+                      v-if="markaVar"
+                      :label="t('hesapAyarlari.logoKaldir')"
+                      icon="pi pi-trash"
+                      severity="danger"
+                      outlined
+                      @click="markaKaldir"
+                    />
+                  </div>
+                  <small
+                    v-if="markaHata"
+                    class="p-error"
+                  >{{ markaHata }}</small>
+                </template>
+              </Card>
+            </div>
+          </div>
+        </TabPanel>
+      </TabView>
     </div>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
@@ -699,12 +719,16 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { kullaniciAPI, aiConfigAPI, apiTokenAPI, sistemDurumAPI, sirketAPI } from '../api/index.js'
+import { kullaniciAPI, aiConfigAPI, apiTokenAPI, sistemDurumAPI, sirketAPI, uploadAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { useConfirm } from 'primevue/useconfirm'
+import { useMarka } from '../composables/useMarka.js'
 import { useTheme } from '../composables/useTheme.js'
 import { useLocale } from '../composables/useLocale.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
 import { formatTarihKisa as formatTarih, formatTarihSaat } from '../utils/format.js'
 
 const { t } = useI18n()
@@ -717,9 +741,65 @@ const bolumler = computed(() => [
   { key: 'bildirimler', label: t('hesapAyarlari.bildirimler'), ikon: 'pi pi-bell' },
   { key: 'entegrasyonlar', label: t('hesapAyarlari.entegrasyonlar'), ikon: 'pi pi-link' },
   { key: 'yazdirma', label: t('hesapAyarlari.yazdirma'), ikon: 'pi pi-print' },
-  { key: 'sistem', label: t('hesapAyarlari.sistem'), ikon: 'pi pi-sync' }
+  { key: 'sistem', label: t('hesapAyarlari.sistem'), ikon: 'pi pi-sync' },
+  { key: 'marka', label: t('hesapAyarlari.marka'), ikon: 'pi pi-image' }
 ])
 const faturaTasarimModalAcik = ref(false)
+
+// ---- Kurumsal marka (logo) ----
+const { sirketLogosu, logoIcon, yukle: markaYukle, ayarla: markaAyarla } = useMarka()
+const confirm = useConfirm()
+const markaInput = ref(null)
+const markaYukleniyor = ref(false)
+const markaHata = ref('')
+const markaVar = computed(() => !!sirketLogosu.value)
+const markaOnizleme = computed(() => sirketLogosu.value || logoIcon.value)
+
+const markaSec = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  markaHata.value = ''
+  if (!file.type.startsWith('image/')) {
+    markaHata.value = t('hesapAyarlari.logoGecersiz')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    markaHata.value = t('hesapAyarlari.logoBoyut')
+    return
+  }
+  markaYukleniyor.value = true
+  try {
+    const r = await uploadAPI.uploadSirketLogo(file)
+    const url = r.data?.url || ''
+    await sirketAPI.updateLogo(authStore.sirketId, url)
+    markaAyarla(url)
+    toastBildirim.basarili(t('hesapAyarlari.logoYuklendi'))
+  } catch (err) {
+    markaHata.value = err?.response?.data?.message || t('hesapAyarlari.logoYuklenemedi')
+  } finally {
+    markaYukleniyor.value = false
+    if (markaInput.value) markaInput.value.value = ''
+  }
+}
+
+const markaKaldir = () => {
+  confirm.require({
+    message: t('hesapAyarlari.logoKaldirOnay'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await sirketAPI.deleteLogo(authStore.sirketId)
+        markaAyarla('')
+        toastBildirim.basarili(t('hesapAyarlari.logoKaldirildi'))
+      } catch {
+        toastBildirim.hata(t('hesapAyarlari.logoKaldirilamadi'))
+      }
+    }
+  })
+}
 
 // Güncelleme kontrolü (GitHub)
 const guncellemeYukleniyor = ref(false)
@@ -986,6 +1066,7 @@ const aiConfigSil = async () => {
 
 onMounted(async () => {
   initTheme()
+  markaYukle()
   const k = authStore?.kullanici
   if (k) {
     profilForm.value = {
@@ -1178,71 +1259,21 @@ const kopyala = async (text) => {
   margin-bottom: 24px;
 }
 .ayarlar-duzen {
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-.ayar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--bg-card);
-  position: sticky;
-  top: 16px;
-}
-.ayar-menu-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s, color 0.15s;
-}
-.ayar-menu-btn i {
-  font-size: 15px;
-  width: 18px;
-  text-align: center;
-}
-.ayar-menu-btn:hover {
-  background: rgba(148, 163, 184, 0.1);
-  color: var(--text-primary);
-}
-.ayar-menu-btn.aktif {
-  background: var(--accent-soft-strong);
-  color: var(--accent);
+  display: block;
 }
 .ayar-icerik {
   min-width: 0;
 }
+/* PrimeVue v4 TabView: panelin varsayilan yan dolgusunu sifirla, sekmeler
+   icerigi ile hizala. */
+.ayar-icerik :deep(.p-tabview-panels) {
+  padding: 1rem 0 0;
+}
+.ayar-icerik :deep(.p-tabview-tablist) {
+  border-color: var(--border);
+}
 .sekme-icerik {
   padding-top: 0;
-}
-@media (max-width: 860px) {
-  .ayarlar-duzen {
-    grid-template-columns: 1fr;
-  }
-  .ayar-menu {
-    position: static;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 6px;
-  }
-  .ayar-menu-btn {
-    width: auto;
-    white-space: nowrap;
-  }
 }
 .ayarlar-grid {
   display: grid;
@@ -1496,6 +1527,37 @@ const kopyala = async (text) => {
 .token-tarih {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+.marka-aciklama {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  max-width: 560px;
+}
+.marka-onizleme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 110px;
+  padding: 10px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.marka-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.marka-aksiyonlar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gizli-input {
+  display: none;
 }
 </style>
 

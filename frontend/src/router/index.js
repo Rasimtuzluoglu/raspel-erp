@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
+import i18n from '../i18n.js'
 import Giris from '../views/Giris.vue'
-import Dashboard from '../views/Dashboard.vue'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
@@ -23,7 +23,7 @@ const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: Dashboard,
+    component: () => import('../views/Dashboard.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -522,11 +522,89 @@ router.beforeEach((to, from, next) => {
   }
 })
 
+// Yol -> i18n baslik anahtari. Sekme basligi yerellestirilir; eslesme yoksa
+// yol parcasindan turetilir.
+const ROTA_BASLIK_ANAHTARLARI = {
+  '/': 'nav.dashboard',
+  '/sohbet': 'nav.sohbet',
+  '/ajanda': 'nav.ajanda',
+  '/onaylar': 'nav.onaylar',
+  '/belgeler': 'nav.belgeler',
+  '/sistem-durum': 'nav.sistemDurum',
+  '/muhasebe': 'nav.muhasebe',
+  '/cari-hesaplar': 'nav.cari',
+  '/faturalar': 'nav.faturalar',
+  '/tekrarlayan-faturalar': 'nav.tekrarlayanFaturalar',
+  '/bankalar': 'nav.banka',
+  '/kasa': 'nav.kasa',
+  '/banka-mutabakat': 'nav.bankaMutabakat',
+  '/cek-senet': 'nav.ceksenet',
+  '/tahsilat': 'nav.tahsilat',
+  '/taksit-takvimi': 'nav.taksitTakvimi',
+  '/pos-terminalleri': 'nav.posTerminalleri',
+  '/butceler': 'nav.butce',
+  '/masraflar': 'nav.masraf',
+  '/satislar': 'nav.satis',
+  '/hizli-satis': 'nav.hizliSatis',
+  '/saha-portali': 'nav.sahaPortali',
+  '/teklifler': 'nav.teklifler',
+  '/crm': 'nav.crm',
+  '/crm-merkezi': 'nav.crmMerkezi',
+  '/adres-defteri': 'nav.adresDefteri',
+  '/e-fatura': 'nav.eFatura',
+  '/satinalma': 'nav.satinalma',
+  '/siparisler': 'nav.siparis',
+  '/siparis-takip': 'nav.siparisTakip',
+  '/teslimatlar': 'nav.teslimatlar',
+  '/irsaliyeler': 'nav.irsaliye',
+  '/fiyat-listesi': 'nav.fiyatListesi',
+  '/iskonto-kurallari': 'nav.iskontoKurallari',
+  '/iadeler': 'nav.iade',
+  '/stoklar': 'nav.stok',
+  '/kritik-stok': 'nav.kritikStok',
+  '/toplu-stok': 'nav.topluStok',
+  '/depolar': 'nav.depo',
+  '/stok-seriler': 'nav.serilot',
+  '/stok-sayim': 'nav.stokSayim',
+  '/stok-duzeltmeler': 'nav.stokDuzeltmeler',
+  '/uretim': 'nav.uretim',
+  '/subeler': 'nav.sube',
+  '/personel': 'nav.personel',
+  '/puantaj': 'nav.puantaj',
+  '/izinler': 'nav.izin',
+  '/projeler': 'nav.proje',
+  '/maas-bordro': 'nav.maasBordro',
+  '/vardiyalar': 'nav.vardiya',
+  '/sirketler': 'nav.sirket',
+  '/yeni-yil-sihirbazi': 'nav.yeniYil',
+  '/donemler': 'nav.donem',
+  '/kullanicilar': 'nav.kullanici',
+  '/yetki-yonetimi': 'nav.yetkiler',
+  '/kategoriler': 'nav.kategori',
+  '/notlar': 'nav.notlar',
+  '/veri-aktar': 'nav.veriAktar',
+  '/kullanim-sartlari': 'nav.kullanimSartlari',
+  '/gizlilik-politikasi': 'nav.gizlilik',
+  '/hesap-ayarlari': 'nav.hesapAyarlari',
+  '/yedekler': 'nav.yedek',
+  '/yonetici-kokpiti': 'nav.yoneticiKokpiti',
+  '/raporlar': 'nav.rapor',
+  '/raporlar/karlilik-analizi': 'nav.karlilikAnalizi',
+  '/raporlar/fatura-gecmis': 'nav.faturaGecmisRaporu',
+  '/vergi-raporlari': 'nav.vergiRaporlari',
+  '/anomaliler': 'nav.anomaliler',
+  '/hareketler': 'nav.hareket',
+  '/denetim': 'nav.denetim'
+}
+
 router.afterEach((to) => {
   NProgress.done()
-  // Sekme basligi: route meta basligi veya son yol parcasi
+  // Sekme basligi: route meta basligi -> yol anahtari -> yol parcasi
   const son = to.path.split('/').filter(Boolean).pop()
-  const baslik = to.meta?.title || (son ? son.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR')) : 'Panel')
+  const anahtar = to.meta?.titleKey || ROTA_BASLIK_ANAHTARLARI[to.path]
+  const baslik = anahtar
+    ? i18n.global.t(anahtar)
+    : (son ? son.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR')) : i18n.global.t('nav.dashboard'))
   document.title = `${baslik} · RasPel ERP`
 })
 

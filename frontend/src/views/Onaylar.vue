@@ -357,6 +357,12 @@
                 />
               </template>
             </Column>
+            <template #empty>
+              <EmptyState
+                icon="pi pi-check-square"
+                :message="t('common.noData')"
+              />
+            </template>
           </DataTable>
         </div>
       </TabPanel>

@@ -762,7 +762,14 @@ public class PdfRaporService {
         if (s == null || bosMu(s.getLogoUrl())) return null;
         try {
             String filename = s.getLogoUrl().substring(s.getLogoUrl().lastIndexOf('/') + 1);
-            DosyaDepolamaService.DepolananDosya d = dosyaDepolamaService.getir("sirket-logos", filename);
+            // Logo tenant klasorune (sirket-logos/s{id}) yazilir; eski kayitlar kok
+            // klasorde olabilecegi icin once tenant, sonra kok denenir.
+            DosyaDepolamaService.DepolananDosya d = s.getId() != null
+                    ? dosyaDepolamaService.getir("sirket-logos/s" + s.getId(), filename)
+                    : null;
+            if (d == null || d.icerik() == null || d.icerik().length == 0) {
+                d = dosyaDepolamaService.getir("sirket-logos", filename);
+            }
             if (d == null || d.icerik() == null || d.icerik().length == 0) return null;
             return PDImageXObject.createFromByteArray(doc, d.icerik(), "logo");
         } catch (Exception e) {

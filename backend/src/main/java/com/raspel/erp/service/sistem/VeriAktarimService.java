@@ -17,7 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -54,10 +58,13 @@ public class VeriAktarimService {
         // Stok aktarımı
         if (dto.isStoklariAktar()) {
             List<Stok> kaynakStoklar = stokRepository.findBySirketIdOrderByAd(dto.getKaynakSirketId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
+            // Hedefteki mevcut stok kodları tek sorguda yüklenir (satır başına sorgu yerine).
+            Set<String> hedefStokKodlari = stokRepository.findBySirketIdOrderByAd(dto.getHedefSirketId(), org.springframework.data.domain.Pageable.unpaged())
+                    .getContent().stream().map(Stok::getStokKodu).filter(Objects::nonNull).collect(Collectors.toSet());
+            List<Stok> yeniStoklar = new ArrayList<>();
             for (Stok kayStok : kaynakStoklar) {
                 // Mükerrer kontrol: aynı stok kodu hedefte var mı?
-                if (kayStok.getStokKodu() != null &&
-                    stokRepository.findBySirketIdAndStokKodu(dto.getHedefSirketId(), kayStok.getStokKodu()).isPresent()) {
+                if (kayStok.getStokKodu() != null && hedefStokKodlari.contains(kayStok.getStokKodu())) {
                     atlananStok++;
                     continue;
                 }
@@ -86,25 +93,28 @@ public class VeriAktarimService {
                         .maliyetYontemi(kayStok.getMaliyetYontemi())
                         .sirketId(dto.getHedefSirketId())
                         .build();
-                stokRepository.save(yeniStok);
+                yeniStoklar.add(yeniStok);
+                if (yeniStok.getStokKodu() != null) hedefStokKodlari.add(yeniStok.getStokKodu());
                 aktarilanStok++;
             }
+            if (!yeniStoklar.isEmpty()) stokRepository.saveAll(yeniStoklar);
             log.info("Stok aktarımı tamamlandı: {} aktarıldı, {} atlandı", aktarilanStok, atlananStok);
         }
 
         // Cari hesap aktarımı
         if (dto.isCarileriAktar()) {
             List<CariHesap> kaynakCariler = cariHesapRepository.findBySirketId(dto.getKaynakSirketId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
+            // Hedefteki mevcut vergi numaraları tek sorguda yüklenir (iç içe tam tarama yerine).
+            Set<String> hedefVergiNumaralari = cariHesapRepository.findBySirketId(dto.getHedefSirketId(), org.springframework.data.domain.Pageable.unpaged())
+                    .getContent().stream().map(CariHesap::getVergiNumarasi)
+                    .filter(v -> v != null && !v.isEmpty()).collect(Collectors.toSet());
+            List<CariHesap> yeniCariler = new ArrayList<>();
             for (CariHesap kayCari : kaynakCariler) {
                 // Mükerrer kontrol: aynı vergi no hedefte var mı?
-                if (kayCari.getVergiNumarasi() != null && !kayCari.getVergiNumarasi().isEmpty()) {
-                    boolean mevcutMu = cariHesapRepository.findBySirketId(dto.getHedefSirketId(), org.springframework.data.domain.Pageable.unpaged())
-                            .getContent().stream()
-                            .anyMatch(c -> kayCari.getVergiNumarasi().equals(c.getVergiNumarasi()));
-                    if (mevcutMu) {
-                        atlananCari++;
-                        continue;
-                    }
+                if (kayCari.getVergiNumarasi() != null && !kayCari.getVergiNumarasi().isEmpty()
+                        && hedefVergiNumaralari.contains(kayCari.getVergiNumarasi())) {
+                    atlananCari++;
+                    continue;
                 }
                 CariHesap yeniCari = CariHesap.builder()
                         .ad(kayCari.getAd())
@@ -127,9 +137,13 @@ public class VeriAktarimService {
                         .bakiye(dto.isBakiyeleriSifirla() ? BigDecimal.ZERO : kayCari.getBakiye())
                         .sirketId(dto.getHedefSirketId())
                         .build();
-                cariHesapRepository.save(yeniCari);
+                yeniCariler.add(yeniCari);
+                if (yeniCari.getVergiNumarasi() != null && !yeniCari.getVergiNumarasi().isEmpty()) {
+                    hedefVergiNumaralari.add(yeniCari.getVergiNumarasi());
+                }
                 aktarilanCari++;
             }
+            if (!yeniCariler.isEmpty()) cariHesapRepository.saveAll(yeniCariler);
             log.info("Cari aktarımı tamamlandı: {} aktarıldı, {} atlandı", aktarilanCari, atlananCari);
         }
 

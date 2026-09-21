@@ -27,6 +27,9 @@
       responsive-layout="scroll"
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="ad"
         :header="t('iskontoKurallari.kuralAdi')"
@@ -100,11 +103,13 @@
         <template #body="{ data }">
           <Button
             icon="pi pi-pencil"
+            :aria-label="$t('common.edit')"
             class="p-button-rounded p-button-text"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text p-button-danger"
             @click="sil(data)"
           />
@@ -359,10 +364,10 @@ const kaydet = async () => {
 const sil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await iskontoKuraliAPI.delete(data.id)

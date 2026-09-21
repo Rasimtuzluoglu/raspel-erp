@@ -20,6 +20,9 @@
           striped-rows
           :loading="taleplerYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="talepNo"
             :header="t('satinalma.talepNo')"
@@ -91,6 +94,9 @@
           striped-rows
           :loading="siparislerYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="siparisNo"
             :header="t('satinalma.siparisNo')"
@@ -381,10 +387,10 @@ const talepDurumGuncelle = async (data, durum) => {
 const talepSil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await satinalmaTalepAPI.delete(data.id)
@@ -432,7 +438,7 @@ const siparisFaturayaCevir = (data) => {
     header: t('satinalma.faturayaCevirBaslik'),
     icon: 'pi pi-file',
     acceptLabel: t('satinalma.evetDonustur'),
-    rejectLabel: t('common.cancel'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await satinalmaSiparisAPI.faturayaCevir(data.id)
@@ -449,10 +455,10 @@ const siparisFaturayaCevir = (data) => {
 const siparisSil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await satinalmaSiparisAPI.delete(data.id)

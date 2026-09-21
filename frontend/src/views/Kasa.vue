@@ -78,11 +78,13 @@
         <div class="kasa-islem">
           <Button
             icon="pi pi-pencil"
+            :aria-label="$t('common.edit')"
             class="p-button-rounded p-button-info p-button-sm"
             @click.stop="editKasa(kasa)"
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-danger p-button-sm"
             @click.stop="confirmDel(kasa.id)"
           />
@@ -227,6 +229,7 @@
             <template #body="s">
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-danger p-button-sm"
                 @click="delHareket(s.data.id)"
               />
@@ -256,8 +259,14 @@
           :min="0.01"
           :min-fraction-digits="2"
           :max-fraction-digits="2"
+          :class="{ 'p-invalid': hareketHatalar.tutar }"
           class="w-full"
+          @input="hareketHatalar.tutar = ''"
         />
+        <small
+          v-if="hareketHatalar.tutar"
+          class="p-error"
+        >{{ hareketHatalar.tutar }}</small>
       </div>
       <div class="form-group">
         <label>{{ t('kasa.tarihZorunlu') }}</label>
@@ -579,6 +588,7 @@ const kasaForm = ref({ ad: '', bakiye: 0 })
 const showHareketDialog = ref(false)
 const hareketTur = ref('GELIR')
 const hareketForm = ref({ tutar: null, hareketTarihi: new Date(), kategoriId: null, aciklama: '' })
+const hareketHatalar = ref({ tutar: '' })
 
 const showAktarDialog = ref(false)
 const aktarForm = ref({ kaynakKasaId: null, hedefKasaId: null, tutar: null, aciklama: '' })
@@ -663,8 +673,10 @@ const saveKasa = async () => {
 const confirmDel = (id) => {
   confirm.require({
     message: t('kasa.silOnayMesaj'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
     accept: async () => {
       try {
         await kasaStore.deleteKasa(id)
@@ -688,8 +700,9 @@ const openHareketDialog = (tur) => {
 }
 
 const saveHareket = async () => {
+  hareketHatalar.value = { tutar: '' }
   if (!hareketForm.value.tutar || hareketForm.value.tutar <= 0) {
-    toastBildirim.uyari(t('kasa.gecerliTutar'))
+    hareketHatalar.value.tutar = t('kasa.gecerliTutar')
     return
   }
   saving.value = true
@@ -715,17 +728,26 @@ const saveHareket = async () => {
   }
 }
 
-const delHareket = async (id) => {
-  try {
-    await kasaAPI.deleteHareket(id)
-    kasaHareketler.value = kasaHareketler.value.filter((h) => h.id !== id)
-    await kasaStore.getAllKasalar()
-    const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
-    if (guncel) seciliKasa.value = guncel
-    toastBildirim.basarili(t('kasa.hareketSilindi'))
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.silmeBasarisiz'))
-  }
+const delHareket = (id) => {
+  confirm.require({
+    message: t('common.silmeOnayMesaji'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await kasaAPI.deleteHareket(id)
+        kasaHareketler.value = kasaHareketler.value.filter((h) => h.id !== id)
+        await kasaStore.getAllKasalar()
+        const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
+        if (guncel) seciliKasa.value = guncel
+        toastBildirim.basarili(t('kasa.hareketSilindi'))
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.silmeBasarisiz'))
+      }
+    }
+  })
 }
 
 const openAktarDialog = () => {

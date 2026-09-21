@@ -33,6 +33,7 @@ public class SirketService {
     private final KullaniciRepository kullaniciRepository;
     private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
     private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    private final DosyaDepolamaService dosyaDepolamaService;
 
     public Page<SirketDTO> tumunuGetir(Pageable pageable) {
         return sirketRepository.findAll(pageable).map(this::entityToDTO);
@@ -102,7 +103,14 @@ public class SirketService {
         if (dto.getTelefon() != null) s.setTelefon(dto.getTelefon());
         if (dto.getEmail() != null) s.setEmail(dto.getEmail());
         if (dto.getWebSite() != null) s.setWebSite(dto.getWebSite());
-        if (dto.getLogoUrl() != null) s.setLogoUrl(dto.getLogoUrl());
+        if (dto.getLogoUrl() != null) {
+            // Yalnizca kendi yukleme yolumuz kabul edilir; dis URL reddedilir.
+            String url = dto.getLogoUrl().trim();
+            if (!url.isEmpty() && !url.startsWith("/api/uploads/sirket-logos/")) {
+                throw new BusinessException("Geçersiz logo adresi");
+            }
+            s.setLogoUrl(url.isEmpty() ? null : url);
+        }
         if (dto.getParentId() != null) s.setParentId(dto.getParentId());
         if (dto.getTur() != null) s.setTur(dto.getTur());
         if (dto.getYil() != null) s.setYil(dto.getYil());
@@ -115,6 +123,45 @@ public class SirketService {
     public void sil(Long id) {
         if (!sirketRepository.existsById(id)) throw new ResourceNotFoundException("Şirket", id);
         sirketRepository.deleteById(id);
+    }
+
+    /**
+     * Yüklenmiş logo adresini şirkete bağlar (ADMIN/USER/MUHASEBE, kendi şirketi).
+     * Şirket güncelleme (ADMIN-only) yetkisi olmayan kullanıcılar için ayrı uç.
+     */
+    @CacheEvict(value = "lookup", allEntries = true)
+    public SirketDTO logoGuncelle(Long id, String logoUrl) {
+        Sirket s = sirketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", id));
+        erisimKontrol(s);
+        String url = logoUrl == null ? "" : logoUrl.trim();
+        if (!url.isEmpty() && !url.startsWith("/api/uploads/sirket-logos/")) {
+            throw new BusinessException("Geçersiz logo adresi");
+        }
+        s.setLogoUrl(url.isEmpty() ? null : url);
+        return entityToDTO(sirketRepository.save(s));
+    }
+
+    /**
+     * Şirket logosunu kaldırır: logoUrl temizlenir ve yüklenen dosya silinir.
+     */
+    @CacheEvict(value = "lookup", allEntries = true)
+    public SirketDTO logoSil(Long id) {
+        Sirket s = sirketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket", id));
+        erisimKontrol(s);
+        String eski = s.getLogoUrl();
+        s.setLogoUrl(null);
+        Sirket kaydedilen = sirketRepository.save(s);
+        if (eski != null && !eski.isBlank()) {
+            try {
+                String filename = eski.substring(eski.lastIndexOf('/') + 1);
+                dosyaDepolamaService.sil("sirket-logos/s" + id, filename);
+            } catch (Exception ignored) {
+                // Dosya zaten yoksa/erisilemezse logo referansi yine temizlendi.
+            }
+        }
+        return entityToDTO(kaydedilen);
     }
 
     @Transactional(readOnly = true)

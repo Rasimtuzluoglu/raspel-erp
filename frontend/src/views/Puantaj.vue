@@ -43,6 +43,9 @@
       striped-rows
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="tarih"
         :header="t('common.date')"
@@ -77,11 +80,13 @@
         <template #body="{ data }">
           <Button
             icon="pi pi-pencil"
+            :aria-label="$t('common.edit')"
             class="p-button-rounded p-button-info p-button-sm"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-danger p-button-sm"
             @click="sil(data)"
           />
@@ -241,8 +246,10 @@ const kaydet = async () => {
 const sil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
     accept: async () => {
       try {
         await puantajAPI.delete(data.id)

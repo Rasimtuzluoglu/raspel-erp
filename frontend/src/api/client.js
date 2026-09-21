@@ -112,10 +112,15 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Global Toast Trigger
+    // Global Toast Trigger.
+    // Yalnizca sunucu bir mesaj dondurdugunde tetiklenir; aksi halde mesaji
+    // view'lerin kendi (yerellestirilmis) catch bloklari gosterir. Boylece ayni
+    // hata hem global hem view toast'i olarak iki kez gorunmez.
     if (status >= 400 && status !== 401) {
-      const errorMsg = data?.message || data?.error || 'Bir hata oluştu.'
-      window.dispatchEvent(new CustomEvent('api-error', { detail: { status, message: errorMsg } }))
+      const errorMsg = data?.message || data?.error
+      if (errorMsg) {
+        window.dispatchEvent(new CustomEvent('api-error', { detail: { status, message: errorMsg } }))
+      }
     }
 
     if (status === 401 && !window.location.pathname.startsWith('/giris')) {

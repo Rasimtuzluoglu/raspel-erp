@@ -3,6 +3,7 @@ package com.raspel.erp.service.ik;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ik.PersonelDTO;
 import com.raspel.erp.entity.ik.Personel;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +87,15 @@ public class PersonelService {
         Personel p = personelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", id));
         tenantChecker.check(p.getSirketId(), "Personel");
-        personelRepository.deleteById(id);
+        try {
+            personelRepository.deleteById(id);
+            // FK kisitlari (izin/puantaj/maas vb.) hemen tetiklensin ki anlamli hata donelim.
+            personelRepository.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new BusinessException(
+                    "Bu personele bagli kayitlar (izin, puantaj, maas vb.) oldugu icin silinemez. "
+                            + "Once bagli kayitlari kaldirin.");
+        }
         cacheYardimci.temizle("dashboard");
     }
 

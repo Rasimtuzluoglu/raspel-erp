@@ -504,8 +504,10 @@ const sifreSifirlaKaydet = async () => {
 const confirmDel = (id) => {
   confirm.require({
     message: t('kullanicilar.silmeOnayMesaji'),
-    header: t('kasa.onay'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
     accept: async () => {
       try {
         await kullaniciAPI.delete(id)

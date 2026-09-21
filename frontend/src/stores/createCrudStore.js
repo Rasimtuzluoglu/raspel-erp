@@ -42,27 +42,47 @@ export function createCrudStore(name, api, opts = {}) {
       durumlar[k] = factory()
     }
 
+    // Ayni anda yapilan ozdes istekleri tekilleştirir (in-flight dedup); boylece
+    // or. sidebar + view ayni anda getAll cagirdiginda tek istek gider.
+    const inflight = new Map()
+    // Opsiyonel TTL onbellegi (opts.cacheTtl, ms). Varsayilan kapali; mutasyon
+    // sonrasi temizlenir.
+    const onbellek = new Map()
+
     const getAll = async (...args) => {
-      loading.value = true
-      error.value = null
-      try {
-        const r = await api.getAll(...args)
-        liste.value = unwrapList(r)
-        if (opts.totalKey && durumlar[opts.totalKey]) {
-          durumlar[opts.totalKey].value = r.data?.totalElements ?? liste.value.length
-        }
-        return liste.value
-      } catch (err) {
-        error.value = err.response?.data?.message || err.message
-        throw err
-      } finally {
-        loading.value = false
+      const anahtar = JSON.stringify(args)
+      if (opts.cacheTtl) {
+        const kayit = onbellek.get(anahtar)
+        if (kayit && Date.now() - kayit.zaman < opts.cacheTtl) return kayit.veri
       }
+      if (inflight.has(anahtar)) return inflight.get(anahtar)
+      const istek = (async () => {
+        loading.value = true
+        error.value = null
+        try {
+          const r = await api.getAll(...args)
+          liste.value = unwrapList(r)
+          if (opts.totalKey && durumlar[opts.totalKey]) {
+            durumlar[opts.totalKey].value = r.data?.totalElements ?? liste.value.length
+          }
+          if (opts.cacheTtl) onbellek.set(anahtar, { zaman: Date.now(), veri: liste.value })
+          return liste.value
+        } catch (err) {
+          error.value = err.response?.data?.message || err.message
+          throw err
+        } finally {
+          loading.value = false
+          inflight.delete(anahtar)
+        }
+      })()
+      inflight.set(anahtar, istek)
+      return istek
     }
 
     const add = async (data) => {
       try {
         const r = await api.create(data)
+        onbellek.clear()
         if (addPosition === 'unshift') liste.value.unshift(r.data)
         else liste.value.push(r.data)
         if (opts.afterAdd) opts.afterAdd(r.data, { liste, durumlar })
@@ -76,6 +96,7 @@ export function createCrudStore(name, api, opts = {}) {
     const update = async (id, data) => {
       try {
         const r = await api.update(id, data)
+        onbellek.clear()
         const idx = liste.value.findIndex((x) => x.id === id)
         if (idx !== -1) liste.value[idx] = r.data
         return r.data
@@ -88,6 +109,7 @@ export function createCrudStore(name, api, opts = {}) {
     const remove = async (id) => {
       try {
         await api.delete(id)
+        onbellek.clear()
         liste.value = liste.value.filter((x) => x.id !== id)
         if (opts.afterRemove) opts.afterRemove(id, { liste, durumlar })
       } catch (err) {

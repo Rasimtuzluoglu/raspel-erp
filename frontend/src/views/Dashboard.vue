@@ -877,6 +877,9 @@
             striped-rows
             size="small"
           >
+            <template #empty>
+              <EmptyState />
+            </template>
             <Column
               field="cariHesapAd"
               :header="t('dashboard.cariHesap')"

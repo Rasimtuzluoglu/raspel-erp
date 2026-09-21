@@ -29,7 +29,7 @@ public class NotService {
                 .map(this::entityToDTO);
     }
 
-    @Cacheable(value = "lookup", key = "'not:sirket:' + #sirketId + ':kullanici:' + #kullaniciId")
+    @Cacheable(value = "lookup", sync = true, key = "'not:sirket:' + #sirketId + ':kullanici:' + #kullaniciId")
     @Transactional(readOnly = true)
     public List<NotDTO> kullaniciNotlari(Long sirketId, Long kullaniciId) {
         return notRepository.findBySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(sirketId, kullaniciId)

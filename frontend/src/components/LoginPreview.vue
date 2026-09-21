@@ -18,7 +18,10 @@
       <div class="preview-body">
         <!-- Mini kenar menu -->
         <aside class="preview-side">
-          <span class="side-logo"><i class="pi pi-bolt" /></span>
+          <span class="side-logo"><img
+            :src="markaLogo"
+            alt=""
+          ></span>
           <span class="side-item aktif"><i class="pi pi-chart-line" /></span>
           <span class="side-item"><i class="pi pi-file-check" /></span>
           <span class="side-item"><i class="pi pi-box" /></span>
@@ -345,6 +348,8 @@
 import { ref, computed, watchEffect } from 'vue'
 import { useElementHover, useIntervalFn, usePreferredReducedMotion } from '@vueuse/core'
 
+const markaLogo = '/logo-icon.png'
+
 const sekmeler = ['dashboard', 'invoice', 'stock', 'production', 'profit', 'ai']
 const aktif = ref('dashboard')
 const kokEl = ref(null)
@@ -444,14 +449,15 @@ const sec = (id) => {
 .side-logo {
   width: 26px;
   height: 26px;
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--giris-aksan, #10b981), var(--giris-aksan-koyu, #059669));
-  color: #fff;
-  font-size: 12px;
   margin-bottom: 6px;
+}
+.side-logo img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 .side-item {
   width: 26px;

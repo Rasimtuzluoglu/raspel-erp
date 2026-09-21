@@ -51,6 +51,9 @@
       striped-rows
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="tarih"
         :header="t('common.date')"
@@ -123,6 +126,7 @@
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
             @click="sil(data)"
           />
@@ -318,10 +322,10 @@ const durumGuncelle = async (data, durum) => {
 const sil = (data) => {
   confirm.require({
     message: t('stokSayim.silOnayMesaj'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await stokSayimAPI.delete(data.id)

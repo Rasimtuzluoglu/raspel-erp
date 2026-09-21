@@ -36,6 +36,9 @@
       responsive-layout="scroll"
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="id"
         header="#"
@@ -109,12 +112,14 @@
           />
           <Button
             icon="pi pi-pencil"
+            :aria-label="$t('common.edit')"
             class="p-button-rounded p-button-text"
             :disabled="data.kilitli"
             @click="dialogAc(data)"
           />
           <Button
             icon="pi pi-trash"
+            :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text p-button-danger"
             :disabled="data.kilitli"
             @click="sil(data)"
@@ -319,7 +324,7 @@ const kilidiAc = (data) => {
     header: t('donemler.kilidiAc'),
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: t('donemler.evet'),
-    rejectLabel: t('common.cancel'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await donemAPI.kilidiAc(data.id)
@@ -419,10 +424,10 @@ const kaydet = async () => {
 const sil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await donemAPI.delete(data.id)

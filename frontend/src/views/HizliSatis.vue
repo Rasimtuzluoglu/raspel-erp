@@ -63,6 +63,7 @@
       <button
         type="button"
         class="pos-ipucu-kapat"
+        :aria-label="$t('common.close')"
         @click="ipucuKapat"
       >
         <i class="pi pi-times" />
@@ -791,6 +792,7 @@
                 </button>
                 <Button
                   icon="pi pi-refresh"
+                  :aria-label="$t('common.refresh')"
                   class="p-button-sm p-button-text"
                   @click="gunlukSatislariYukle"
                 />
@@ -1120,7 +1122,7 @@ const handlePosKeys = (e) => {
     e.preventDefault()
     sepet.value = []
     aktifSatir.value = -1
-    toast.add({ severity: 'info', summary: 'F2', detail: t('hizliSatis.sepetTemizlendi'), life: 2000 })
+    toast.add({ severity: 'info', summary: t('common.toastInfo'), detail: t('hizliSatis.sepetTemizlendi'), life: 2000 })
     return
   }
   if (e.key === 'F3') {
@@ -1442,19 +1444,22 @@ const cariFiyati = (urunId) => cariOzelFiyatlar.value[urunId] || null
 // Görünen ürünlerin fiyat listelerini topluca çeker
 const urunFiyatlariniYukle = async (urunler) => {
   const yeni = { ...urunFiyatlari.value }
-  await Promise.all((urunler || []).map(async (u) => {
-    if (u.id == null || yeni[u.id]) return
-    try {
-      const r = await stokAPI.getFiyatlar(u.id)
-      const liste = r.data || []
+  const eksik = (urunler || []).filter((u) => u?.id != null && !yeni[u.id]).map((u) => u.id)
+  if (!eksik.length) return
+  try {
+    // Ürün başına ayrı istek yerine tek toplu istek.
+    const r = await stokAPI.getFiyatlarToplu(eksik)
+    const harita = r.data || {}
+    for (const id of eksik) {
+      const liste = harita[id] || []
       if (liste.length) {
-        yeni[u.id] = liste.map((f) => ({ ad: f.ad || f.fiyatTipi || f.tip || t('hizliSatis.fiyat'), fiyat: Number(f.fiyat) }))
+        yeni[id] = liste.map((f) => ({ ad: f.ad || f.fiyatTipi || f.tip || t('hizliSatis.fiyat'), fiyat: Number(f.fiyat) }))
       }
-    } catch {
-      /* fiyat listesi alınamadı */
     }
-  }))
-  urunFiyatlari.value = yeni
+    urunFiyatlari.value = yeni
+  } catch {
+    /* fiyat listesi alınamadı */
+  }
 }
 
 // Sepete ürün eklenirken çoklu fiyat listesini de getirir

@@ -75,11 +75,13 @@
         />
         <Button
           icon="pi pi-pencil"
+          :aria-label="$t('common.edit')"
           class="p-button-rounded p-button-text p-button-sm"
           @click="dialogAc(p)"
         />
         <Button
           icon="pi pi-trash"
+          :aria-label="$t('common.delete')"
           class="p-button-rounded p-button-text p-button-sm p-button-danger"
           @click="sil(p)"
         />

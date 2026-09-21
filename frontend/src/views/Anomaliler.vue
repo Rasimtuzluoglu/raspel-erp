@@ -102,6 +102,9 @@
           striped-rows
           :loading="ipYukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="ipAdresi"
             :header="t('anomaliler.izinVerilenIp')"

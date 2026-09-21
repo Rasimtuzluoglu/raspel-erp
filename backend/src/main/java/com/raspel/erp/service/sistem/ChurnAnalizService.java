@@ -2,14 +2,11 @@ package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.dto.sistem.ChurnRiskDTO;
 import com.raspel.erp.entity.finans.CariHesap;
-import com.raspel.erp.entity.finans.Hareket;
-import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.HareketRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,44 +36,45 @@ public class ChurnAnalizService {
 
     public List<ChurnRiskDTO> churnRiskiAnaliz(Long sirketId) {
         List<CariHesap> cariler = cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId);
-        List<Hareket> hareketler = hareketRepository.findBySirketIdOrderByHareketTarihiDesc(sirketId, Pageable.unpaged()).getContent();
-        List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId, Pageable.unpaged()).getContent();
 
-        Map<Long, List<Hareket>> hareketByCari = hareketler.stream()
-                .filter(h -> h.getCariHesap() != null)
-                .collect(Collectors.groupingBy(h -> h.getCariHesap().getId()));
-        Map<Long, List<Fatura>> faturaByCari = faturalar.stream()
-                .filter(f -> f.getCariHesap() != null)
-                .collect(Collectors.groupingBy(f -> f.getCariHesap().getId()));
+        // Tam tabloları belleğe yüklemek yerine cari bazli SQL ozetleri.
+        Map<Long, LocalDate> hareketSon = new HashMap<>();
+        Map<Long, Long> hareketAdet = new HashMap<>();
+        for (Map<String, Object> r : hareketRepository.cariIslemOzeti(sirketId)) {
+            Long cariId = ((Number) r.get("cariId")).longValue();
+            hareketSon.put(cariId, (LocalDate) r.get("sonTarih"));
+            hareketAdet.put(cariId, ((Number) r.get("adet")).longValue());
+        }
+
+        Map<Long, LocalDate> faturaSon = new HashMap<>();
+        Map<Long, Long> faturaAdet = new HashMap<>();
+        Map<Long, BigDecimal> faturaCiro = new HashMap<>();
+        for (Map<String, Object> r : faturaRepository.cariFaturaOzeti(sirketId)) {
+            Long cariId = ((Number) r.get("cariId")).longValue();
+            faturaSon.put(cariId, (LocalDate) r.get("sonTarih"));
+            faturaAdet.put(cariId, ((Number) r.get("adet")).longValue());
+            faturaCiro.put(cariId, r.get("ciro") instanceof BigDecimal b ? b : BigDecimal.ZERO);
+        }
 
         LocalDate bugun = LocalDate.now();
         List<ChurnRiskDTO> sonuc = new ArrayList<>();
 
         for (CariHesap c : cariler) {
             Long cariId = c.getId();
-            List<Hareket> h = hareketByCari.getOrDefault(cariId, List.of());
-            List<Fatura> f = faturaByCari.getOrDefault(cariId, List.of());
-
-            LocalDate sonIslem = null;
-            if (!h.isEmpty()) {
-                sonIslem = h.stream().map(Hareket::getHareketTarihi).max(LocalDate::compareTo).orElse(null);
-            }
-            for (Fatura ft : f) {
-                if (ft.getTarih() != null && (sonIslem == null || ft.getTarih().isAfter(sonIslem))) {
-                    sonIslem = ft.getTarih();
-                }
+            LocalDate sonIslem = hareketSon.get(cariId);
+            LocalDate sonFatura = faturaSon.get(cariId);
+            if (sonFatura != null && (sonIslem == null || sonFatura.isAfter(sonIslem))) {
+                sonIslem = sonFatura;
             }
 
             // Hiç işlem yoksa bilgi eksik, atla (churn hesaplanamaz).
             if (sonIslem == null) continue;
 
             int gunOnce = (int) ChronoUnit.DAYS.between(sonIslem, bugun);
-            int islemSayisi = h.size() + f.size();
-            BigDecimal ciro = f.stream()
-                    .map(Fatura::getGenelToplam).filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            long islemSayisi = hareketAdet.getOrDefault(cariId, 0L) + faturaAdet.getOrDefault(cariId, 0L);
+            BigDecimal ciro = faturaCiro.getOrDefault(cariId, BigDecimal.ZERO);
 
-            int skor = skorHesapla(gunOnce, islemSayisi);
+            int skor = skorHesapla(gunOnce, (int) islemSayisi);
             String seviye = skor >= 70 ? "YUKSEK" : skor >= 40 ? "ORTA" : "DUSUK";
             String oneri = oneriUret(seviye, gunOnce);
 

@@ -29,7 +29,7 @@ public class SubeService {
         return subeRepository.findBySirketIdOrderByAdAsc(sirketId, pageable).map(this::entityToDTO);
     }
 
-    @Cacheable(value = "lookup", key = "'sube:aktif:sirket:' + #sirketId")
+    @Cacheable(value = "lookup", sync = true, key = "'sube:aktif:sirket:' + #sirketId")
     @Transactional(readOnly = true)
     public List<SubeDTO> aktifSubeler(Long sirketId) {
         return subeRepository.findBySirketIdAndAktifTrue(sirketId).stream()

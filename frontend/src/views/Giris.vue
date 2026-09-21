@@ -19,7 +19,11 @@
       <div class="giris-hero-alani">
         <div class="hero-brand">
           <div class="hero-logo-box">
-            <i class="pi pi-bolt hero-logo-icon" />
+            <img
+              :src="markaLogoIcon"
+              class="hero-logo-icon"
+              alt="RasPel"
+            >
           </div>
           <div class="hero-brand-text">
             <span class="hero-brand-name">RasPel ERP</span>
@@ -115,7 +119,10 @@
           <!-- Mobil kompakt hero (<960px) -->
           <div class="giris-mobil-hero">
             <div class="mobil-mark">
-              <i class="pi pi-bolt" />
+              <img
+                :src="markaLogoIcon"
+                alt="RasPel"
+              >
             </div>
             <div class="mobil-metin">
               <h1 class="mobil-title">
@@ -139,19 +146,32 @@
           </div>
 
           <div class="giris-logo">
-            <div class="logo-icon">
+            <div
+              v-if="sirketLogo"
+              class="marka-logolar"
+            >
               <img
-                v-if="sirketLogo"
-                :src="sirketLogo"
-                class="sirket-logo"
-                alt="logo"
+                :src="markaLogoIcon"
+                class="marka-mini-logo"
+                alt="RasPel"
               >
-              <i
-                v-else
-                class="pi pi-calculator"
-              />
+              <div class="logo-icon">
+                <img
+                  :src="sirketLogo"
+                  class="sirket-logo"
+                  alt="logo"
+                >
+              </div>
             </div>
-            <h2>RasPel ERP</h2>
+            <img
+              v-else
+              :src="markaLogoFull"
+              class="marka-tam-logo"
+              alt="RasPel ERP"
+            >
+            <h2 v-if="sirketLogo">
+              RasPel ERP
+            </h2>
             <p class="alt-baslik">
               {{ $t('giris.subtitle') }}
             </p>
@@ -221,7 +241,13 @@
                 @click="ikiFaktorDogrula"
               />
               <div class="geri-satir">
-                <a @click="geriDon">&larr; {{ $t('giris.back') }}</a>
+                <button
+                  type="button"
+                  class="geri-link"
+                  @click="geriDon"
+                >
+                  &larr; {{ $t('giris.back') }}
+                </button>
               </div>
             </div>
 
@@ -293,7 +319,13 @@
                 {{ $t('giris.noCompany') }}
               </p>
               <div class="geri-satir">
-                <a @click="tumAdimlariSifirla">&larr; {{ $t('giris.loginAgain') }}</a>
+                <button
+                  type="button"
+                  class="geri-link"
+                  @click="tumAdimlariSifirla"
+                >
+                  &larr; {{ $t('giris.loginAgain') }}
+                </button>
               </div>
             </div>
 
@@ -382,7 +414,13 @@
               </div>
 
               <div class="giris-alt-linkler">
-                <a @click="sifremiUnuttumAdimi = true">{{ $t('giris.forgotPassword') }}</a>
+                <button
+                  type="button"
+                  class="geri-link"
+                  @click="sifremiUnuttumAdimi = true"
+                >
+                  {{ $t('giris.forgotPassword') }}
+                </button>
               </div>
             </div>
           </div>
@@ -395,7 +433,13 @@
             <div class="sifirla-ust">
               <i class="pi pi-envelope" />
               <h3>{{ $t('giris.forgotTitle') }}</h3>
-              <a @click="sifremiUnuttumAdimi = false">&larr; {{ $t('giris.backToLogin') }}</a>
+              <button
+                type="button"
+                class="geri-link"
+                @click="sifremiUnuttumAdimi = false"
+              >
+                &larr; {{ $t('giris.backToLogin') }}
+              </button>
             </div>
             <p>{{ $t('giris.forgotHint') }}</p>
             <div class="sifirla-form">
@@ -460,6 +504,9 @@ import LoginPreview from '../components/LoginPreview.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
+
+const markaLogoIcon = '/logo-icon.png'
+const markaLogoFull = '/logo-full.png'
 
 const kullaniciInput = ref(null)
 const sifreInput = ref(null)
@@ -694,6 +741,7 @@ const girisYap = async () => {
 const sirketSecVeGirisYap = async (sirket) => {
   hata.value = ''
   sirketLogo.value = sirket.logoUrl || ''
+  authStore.sirketLogosunuAyarla(sirket.logoUrl || '')
   try {
     await authStore.girisSirket(girisToken.value, sirket.id, beniHatirla.value)
     localStorage.setItem('raspel_erp_son_sirket', sirket.id)
@@ -768,7 +816,6 @@ const tumAdimlariSifirla = () => {
   justify-content: center;
   background: radial-gradient(circle at 50% 0%, #0a1620 0%, #0b0f14 62%);
   overflow-x: hidden;
-  overflow-y: auto;
   padding:
     calc(30px + env(safe-area-inset-top))
     calc(20px + env(safe-area-inset-right))
@@ -1076,16 +1123,15 @@ const tumAdimlariSifirla = () => {
 .hero-logo-box {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px var(--giris-tint-40);
+  flex-shrink: 0;
 }
 .hero-logo-icon {
-  font-size: 22px;
-  color: var(--accent-contrast, #ffffff);
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 .hero-brand-name {
   font-size: 22px;
@@ -1287,9 +1333,24 @@ const tumAdimlariSifirla = () => {
   height: 100%;
   object-fit: cover;
 }
-.logo-icon i {
-  font-size: 28px;
-  color: var(--accent-contrast, #ffffff);
+.marka-tam-logo {
+  display: block;
+  width: 170px;
+  max-width: 62%;
+  height: auto;
+  margin: 0 auto 4px;
+}
+.marka-logolar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.marka-mini-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 .giris-logo h2 {
   color: var(--text-primary);
@@ -1604,12 +1665,25 @@ const tumAdimlariSifirla = () => {
   text-align: center;
   margin-top: 14px;
 }
-.geri-satir a {
+.geri-satir a,
+.geri-link {
   color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
 }
-.geri-satir a:hover {
+.geri-link {
+  border: none;
+  background: none;
+  padding: 6px 8px;
+  font-family: inherit;
+  border-radius: 6px;
+}
+.geri-link:focus-visible {
+  outline: 2px solid var(--giris-aksan);
+  outline-offset: 2px;
+}
+.geri-satir a:hover,
+.geri-link:hover {
   color: var(--text-primary);
 }
 
@@ -1678,15 +1752,15 @@ const tumAdimlariSifirla = () => {
 .mobil-mark {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  color: var(--accent-contrast, #ffffff);
-  font-size: 20px;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px var(--giris-tint-40);
+}
+.mobil-mark img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 .mobil-metin {
   flex: 1;

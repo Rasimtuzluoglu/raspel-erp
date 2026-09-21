@@ -257,6 +257,12 @@ export const sirketAPI = {
   delete(id) {
     return apiClient.delete(`/sirketler/${id}`)
   },
+  updateLogo(id, logoUrl) {
+    return apiClient.put(`/sirketler/${id}/logo`, { logoUrl })
+  },
+  deleteLogo(id) {
+    return apiClient.delete(`/sirketler/${id}/logo`)
+  },
     getKonsolideOzet(id) {
       return apiClient.get(`/sirketler/${id}/konsolide-ozet`)
     },
@@ -436,6 +442,12 @@ export const adresDefteriAPI = {
   },
   delete(id) {
     return apiClient.delete(`/adres-defteri/${id}`)
+  }
+}
+
+export const onaySayilariAPI = {
+  get() {
+    return apiClient.get('/onay-sayilari')
   }
 }
 

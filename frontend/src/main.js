@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, defineAsyncComponent } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Lara from '@primevue/themes/lara'
@@ -9,13 +9,16 @@ import i18n from './i18n.js'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 
-import AppDataTable from './components/AppDataTable.vue'
 import PageHeader from './components/PageHeader.vue'
 import EmptyState from './components/EmptyState.vue'
 import SkeletonLoader from './components/SkeletonLoader.vue'
-import GecmisZamanCizelgesi from './components/GecmisZamanCizelgesi.vue'
-import FaturaGecmisDialog from './components/FaturaGecmisDialog.vue'
-import SatirEylemleri from './components/SatirEylemleri.vue'
+
+// Agir global bilesenler tembel yuklenir; boylece entry chunk'i (ilk yuk) kuculur.
+// Ilk kullanimda indirilir (oturum acildiktan sonra), login ekranini etkilemez.
+const AppDataTable = defineAsyncComponent(() => import('./components/AppDataTable.vue'))
+const GecmisZamanCizelgesi = defineAsyncComponent(() => import('./components/GecmisZamanCizelgesi.vue'))
+const FaturaGecmisDialog = defineAsyncComponent(() => import('./components/FaturaGecmisDialog.vue'))
+const SatirEylemleri = defineAsyncComponent(() => import('./components/SatirEylemleri.vue'))
 
 import permissionDirective from './directives/permission.js'
 import tabloEtiketDirective, { initTabloEtiketleri } from './directives/tabloEtiket.js'

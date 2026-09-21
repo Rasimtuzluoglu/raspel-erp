@@ -22,6 +22,9 @@
           responsive-layout="scroll"
           :loading="yukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="ad"
             :header="t('crmMerkezi.ad')"
@@ -73,11 +76,13 @@
               />
               <Button
                 icon="pi pi-pencil"
+                :aria-label="$t('common.edit')"
                 class="p-button-rounded p-button-text"
                 @click="leadDialogAc(data)"
               />
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text p-button-danger"
                 @click="leadSil(data)"
               />
@@ -101,6 +106,9 @@
           responsive-layout="scroll"
           :loading="yukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="baslik"
             :header="t('crmMerkezi.baslik')"
@@ -152,6 +160,7 @@
               />
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text p-button-danger"
                 @click="aktiviteSil(data)"
               />
@@ -175,6 +184,9 @@
           responsive-layout="scroll"
           :loading="yukleniyor"
         >
+          <template #empty>
+            <EmptyState />
+          </template>
           <Column
             field="ad"
             :header="t('crmMerkezi.ad')"
@@ -221,11 +233,13 @@
             <template #body="{ data }">
               <Button
                 icon="pi pi-pencil"
+                :aria-label="$t('common.edit')"
                 class="p-button-rounded p-button-text"
                 @click="kampanyaDialogAc(data)"
               />
               <Button
                 icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text p-button-danger"
                 @click="kampanyaSil(data)"
               />
@@ -625,10 +639,10 @@ const leadKaydet = async () => {
 const leadSil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await crmAPI.leadSil(data.id)
@@ -650,7 +664,7 @@ const leadDonustur = (data) => {
     header: t('crmMerkezi.donustur'),
     icon: 'pi pi-question-circle',
     acceptLabel: t('common.save'),
-    rejectLabel: t('common.cancel'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await crmAPI.leadDonustur(data.id, data.cariHesapId)
@@ -694,10 +708,10 @@ const aktiviteTamamla = async (data) => {
 const aktiviteSil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await crmAPI.aktiviteSil(data.id)
@@ -750,10 +764,10 @@ const kampanyaKaydet = async () => {
 const kampanyaSil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('masraflar.evetSil'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await crmAPI.kampanyaSil(data.id)

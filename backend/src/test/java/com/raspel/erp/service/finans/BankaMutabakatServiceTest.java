@@ -58,7 +58,7 @@ class BankaMutabakatServiceTest {
         when(bankaHareketiRepository.findByBankaIdAndEslestirildiFalse(10L)).thenReturn(List.of(hareket));
         when(faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(eq(1L), eq(Fatura.FaturaDurum.IPTAL), anyList())).thenReturn(List.of(eslesenFatura));
         when(bankaRepository.findById(10L)).thenReturn(Optional.of(banka(10L)));
-        when(bankaHareketiRepository.save(any(BankaHareketi.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(bankaHareketiRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
         when(bankaHareketiRepository.findByBankaIdOrderByTarihDesc(10L)).thenReturn(List.of(hareket));
 
         bankaMutabakatService.otomatikEslestir(10L, 1L);

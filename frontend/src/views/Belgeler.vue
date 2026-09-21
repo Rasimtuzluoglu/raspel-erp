@@ -19,6 +19,9 @@
       striped-rows
       :loading="yukleniyor"
     >
+      <template #empty>
+        <EmptyState />
+      </template>
       <Column
         field="dosyaAdi"
         :header="t('belgeler.dosya')"
@@ -246,10 +249,10 @@ const onizle = async (belge) => {
 const sil = (belge) => {
   confirm.require({
     message: t('belgeler.silinsinMi', { ad: belge.dosyaAdi }),
-    header: t('masraflar.silmeOnayi'),
+    header: t('common.silmeOnayi'),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('belgeler.evet'),
-    rejectLabel: t('common.cancel'),
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
         await belgeAPI.sil(belge.id)
