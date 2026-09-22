@@ -187,7 +187,7 @@ raspel-erp/
 │       ├── views/           # 75 Görünüm (Dashboard, Tahsilat, SahaPortali, Onaylar, YoneticiKokpiti vb.)
 │       ├── components/      # 51 Paylaşılan Bileşen
 │       ├── stores/          # 13 Pinia Durum Yönetimi (auth, dashboard, doviz, fatura, stok vb.)
-│       ├── composables/     # 19 Composable Hook (Tema, Yetki, Oturum, Kısayol)
+│       ├── composables/     # 20 Composable Hook (Tema, Yetki, Oturum, Kısayol)
 │       └── api/             # Modüler Axios İstemcisi
 │
 ├── config/                  # Traefik Reverse Proxy, Prometheus, Grafana
