@@ -44,10 +44,9 @@ public class GunlukOzetService {
     private void ozetGonder(Sirket s) {
         Long sirketId = s.getId();
         int kritikStok = stokRepository.kritikStoklar(sirketId).size();
-        List<Fatura> vadesiGecen = faturaRepository.findVadesiGecen(
-                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), LocalDate.now(),
-                org.springframework.data.domain.PageRequest.of(0, 1));
-        int vadesiGecenSayisi = vadesiGecen.size();
+        // Gercek vadesi gecen fatura sayisi (eskiden yalnizca ilk kayit sayiliyordu).
+        long vadesiGecenSayisi = faturaRepository.countVadesiGecen(
+                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), LocalDate.now());
 
         String konu = "RasPel ERP - Günlük Özet (" + LocalDate.now() + ")";
         String icerik = "Merhaba,\n\n"

@@ -2088,6 +2088,7 @@
     "title": "Hesap Ayarları",
     "introText": "Profil bilgilerinizi güncelleyin, şifrenizi değiştirin ve iki faktörlü doğrulama (2FA) ile hesabınızı güvenceye alın.",
     "marka": "Marka",
+    "adminGerekli": "Bu bölüm yalnızca yönetici (ADMIN) kullanıcılar içindir.",
     "markaBaslik": "Kurumsal Marka / Logo",
     "markaAciklama": "Şirket logonuzu yükleyin; uygulama genelinde (giriş ekranı, kenar menü, belgeler) RasPel logosu yerine görünür.",
     "logoYukle": "Logo Yükle",
@@ -4301,6 +4302,7 @@
     "whatsappMesaj": "Sayın {ad},\n\nVadesi geçen {tutar} tutarındaki ödemenizi hatırlatır, iyi çalışmalar dileriz."
   },
   "dashboard": {
+    "veriEksikUyari": "Bazı veriler yüklenemedi; eksik alanlar 0 olarak gösteriliyor olabilir. Lütfen sayfayı yenileyin.",
     "kurlariYenile": "Kurları Yenile",
     "yenile": "Yenile",
     "widgetAyarlari": "Widget Ayarları",

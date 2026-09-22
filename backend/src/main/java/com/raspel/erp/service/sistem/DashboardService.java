@@ -60,6 +60,7 @@ public class DashboardService {
     @Cacheable(value = "dashboard", key = "'dashboard:' + #sirketId")
     public DashboardDTO dashboardVerileriGetir(Long sirketId) {
         log.debug("Dashboard verileri getiriliyor... sirketId: {}", sirketId);
+        veriEksikTl.set(Boolean.FALSE);
 
         Long toplamCariSayisi = safeGet(() -> cariHesapService.toplamCariSayisiGetir(sirketId), 0L);
         BigDecimal toplamBakiye = safeGet(() -> cariHesapService.toplamBakiyeGetir(sirketId), BigDecimal.ZERO);
@@ -72,7 +73,9 @@ public class DashboardService {
         Long buAyIseBaslayacak = safeGet(() -> personelRepository.countBySirketIdAndIseGirisTarihiBetween(sirketId, ayBaslangic, ayBitis), 0L);
 
         Long bugunkuSiparis = safeGet(() -> siparisRepository.countBySirketIdAndTarih(sirketId, LocalDate.now()), 0L);
-        Long bekleyenTeslimat = safeGet(() -> siparisRepository.countBySirketIdAndDurumNot(sirketId, "TAMAMLANDI"), 0L);
+        // Teslim edilmemis ve iptal edilmemis siparisler "bekleyen teslimat"tir.
+        Long bekleyenTeslimat = safeGet(() -> siparisRepository.countBySirketIdAndDurumNotIn(
+                sirketId, java.util.List.of("TESLIM_EDILDI", "IPTAL")), 0L);
 
         long toplamStok = safeGet(() -> stokRepository.countBySirketId(sirketId), 0L);
         long toplamCikis = safeGet(() -> stokHareketRepository.countByStokSirketIdAndTur(sirketId, "CIKIS"), 0L);
@@ -224,6 +227,7 @@ public class DashboardService {
         String ozet = ozetOlustur(gerceklesenCiro, kritikStokSayisi, vadesiGecenFaturalar, enCokBorcCariler);
 
         return DashboardDTO.builder()
+                .veriEksik(veriEksikTl.get())
                 .toplamCariSayisi(toplamCariSayisi)
                 .toplamBakiye(toplamBakiye)
                 .sonHareketler(sonHareketler)
@@ -314,10 +318,14 @@ public class DashboardService {
                 .build();
     }
 
+    // Hangi istegin verisinin eksik kaldigini izlemek icin istek-bazli bayrak.
+    private final ThreadLocal<Boolean> veriEksikTl = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
     private <T> T safeGet(SafeSupplier<T> supplier, T defaultValue) {
         try {
             return supplier.get();
         } catch (Exception e) {
+            veriEksikTl.set(Boolean.TRUE);
             log.warn("Dashboard verisi alinamadi (varsayilan kullanilacak): {}", e.getMessage());
             return defaultValue;
         }
@@ -327,6 +335,7 @@ public class DashboardService {
         try {
             return supplier.get();
         } catch (Exception e) {
+            veriEksikTl.set(Boolean.TRUE);
             log.warn("Dashboard listesi alinamadi (varsayilan kullanilacak): {}", e.getMessage());
             return defaultValue;
         }

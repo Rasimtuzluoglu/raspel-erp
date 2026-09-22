@@ -38,7 +38,7 @@ class GunlukOzetServiceTest {
         Sirket s = Sirket.builder().id(1L).ad("Test").email("sirket@test.com").build();
         when(sirketRepository.findByAktifTrue()).thenReturn(List.of(s));
         when(stokRepository.kritikStoklar(1L)).thenReturn(List.of(Stok.builder().id(1L).build()));
-        when(faturaRepository.findVadesiGecen(eq(1L), any(), any(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.countVadesiGecen(eq(1L), any(), any(), any())).thenReturn(0L);
 
         gunlukOzetService.gunlukOzetGonder();
 

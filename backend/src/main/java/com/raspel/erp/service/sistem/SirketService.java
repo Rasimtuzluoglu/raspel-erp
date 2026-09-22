@@ -33,6 +33,7 @@ public class SirketService {
     private final KullaniciRepository kullaniciRepository;
     private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
     private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     private final DosyaDepolamaService dosyaDepolamaService;
 
     public Page<SirketDTO> tumunuGetir(Pageable pageable) {
@@ -212,6 +213,7 @@ public class SirketService {
         java.math.BigDecimal toplamStokDegeri = java.math.BigDecimal.ZERO;
         java.math.BigDecimal toplamAlacak = java.math.BigDecimal.ZERO;
         java.math.BigDecimal toplamBorc = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal toplamCiro = java.math.BigDecimal.ZERO;
 
         List<com.raspel.erp.dto.sistem.KonsolideOzetDTO.SirketOzetDTO> sirketOzetleri = new java.util.ArrayList<>();
 
@@ -230,7 +232,10 @@ public class SirketService {
                     .map(c -> c.getBakiye() != null ? c.getBakiye() : java.math.BigDecimal.ZERO)
                     .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
+            java.math.BigDecimal sirketCiro = faturaRepository.sumKesilmisSatisCiro(s.getId());
+
             toplamStokDegeri = toplamStokDegeri.add(sirketStokDeger);
+            toplamCiro = toplamCiro.add(sirketCiro != null ? sirketCiro : java.math.BigDecimal.ZERO);
             if (sirketBakiye.compareTo(java.math.BigDecimal.ZERO) >= 0) {
                 toplamAlacak = toplamAlacak.add(sirketBakiye);
             } else {
@@ -256,7 +261,7 @@ public class SirketService {
                 .toplamStokDegeri(toplamStokDegeri)
                 .toplamAlacakBakiye(toplamAlacak)
                 .toplamBorcBakiye(toplamBorc)
-                .toplamCiro(java.math.BigDecimal.ZERO)
+                .toplamCiro(toplamCiro)
                 .sirketler(sirketOzetleri)
                 .build();
     }

@@ -29,3 +29,12 @@ CREATE TABLE IF NOT EXISTS sistem.sirket (
     tur VARCHAR(20) DEFAULT 'DIGER',
     yil INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS sistem.ip_whitelist (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sirket_id BIGINT,
+    ip_adresi VARCHAR(100) NOT NULL,
+    aciklama VARCHAR(255),
+    durum VARCHAR(20) NOT NULL DEFAULT 'AKTIF',
+    ekleme_tarihi DATE NOT NULL
+);

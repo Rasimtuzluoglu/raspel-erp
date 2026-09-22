@@ -60,6 +60,8 @@ public class DashboardDTO {
     private BigDecimal toplamStokDegeri;
 
     private String ozet;
+    /** Bazi veriler alinamadiysa (varsayilan/0 gosterildi) true; kullanici uyarilir. */
+    private Boolean veriEksik;
 
     @Data
     @NoArgsConstructor

@@ -2088,6 +2088,7 @@
     "title": "Account Settings",
     "introText": "Update your profile, change your password and secure your account with two-factor authentication (2FA).",
     "marka": "Brand",
+    "adminGerekli": "This section is only available to administrators (ADMIN).",
     "markaBaslik": "Corporate Brand / Logo",
     "markaAciklama": "Upload your company logo; it replaces the RasPel logo across the app (login, sidebar, documents).",
     "logoYukle": "Upload Logo",
@@ -4301,6 +4302,7 @@
     "whatsappMesaj": "Dear {ad},\n\nThis is a reminder about your overdue payment of {tutar}. Best regards."
   },
   "dashboard": {
+    "veriEksikUyari": "Some data could not be loaded; missing values may be shown as 0. Please refresh the page.",
     "kurlariYenile": "Refresh Rates",
     "yenile": "Refresh",
     "widgetAyarlari": "Widget Settings",

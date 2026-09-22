@@ -47,13 +47,16 @@ public class HatirlaticiService {
             LocalDate vade = fatura.getTarih().plusDays(cari.getOdemeVadesi() != null ? cari.getOdemeVadesi() : 0);
             if (!vade.isBefore(LocalDate.now())) continue;
 
-            emailService.odemeHatimlaticiGonder(
+            boolean gonderildi = emailService.odemeHatimlaticiGonder(
                     cari.getEmail(),
                     fatura.getFaturaNumarasi(),
                     fatura.getGenelToplam() != null ? fatura.getGenelToplam().toString() : "0.00",
                     fatura.getKalanTutar().toString(),
                     vade.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                     cari.getAd());
+            if (!gonderildi) {
+                log.warn("Vade hatırlatma e-postası gönderilemedi -> {}", cari.getEmail());
+            }
 
             if (fatura.getSirketId() != null) {
                 bildirimService.bildirimGonder(fatura.getSirketId(), "VADE",

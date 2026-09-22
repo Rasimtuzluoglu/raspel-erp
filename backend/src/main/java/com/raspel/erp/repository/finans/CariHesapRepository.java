@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,8 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
 
     @Query("SELECT COUNT(c) FROM CariHesap c WHERE c.sirketId = :sirketId")
     long countBySirketId(@Param("sirketId") Long sirketId);
+
+    long countBySirketIdAndOlusturmaTarihiBetween(Long sirketId, LocalDateTime baslangic, LocalDateTime bitis);
 
     List<CariHesap> findBySirketIdOrderByAdAsc(Long sirketId);
 

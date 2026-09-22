@@ -41,6 +41,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const alacakYaslandirma = ref([])
   const toplamStokDegeri = ref(0)
   const ozet = ref('')
+  const veriEksik = ref(false)
   const loading = ref(false)
   const error = ref(null)
 
@@ -88,6 +89,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       alacakYaslandirma.value = d.alacakYaslandirma || []
       toplamStokDegeri.value = d.toplamStokDegeri || 0
       ozet.value = d.ozet || ''
+      veriEksik.value = d.veriEksik === true
       return d
     } catch (err) {
       error.value = err.message
@@ -137,6 +139,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     alacakYaslandirma,
     toplamStokDegeri,
     ozet,
+    veriEksik,
     loading,
     error,
     getDashboardData

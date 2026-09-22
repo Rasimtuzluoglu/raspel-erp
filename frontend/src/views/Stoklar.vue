@@ -55,14 +55,6 @@
           @click="excelIndir"
         />
         <div class="toolbar-end">
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
-            <InputText
-              v-model="aramaMetni"
-              :placeholder="t('stoklar.aramaPlaceholder')"
-              @input="ara"
-            />
-          </span>
           <Button
             :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'"
             class="p-button-text p-button-sm"
@@ -717,7 +709,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -751,12 +743,6 @@ useKisayollar({
     showDialog.value = false
   },
   kaydet: () => saveStok()
-})
-
-const aramaMetni = ref('')
-let aramaZaman = null
-onUnmounted(() => {
-  if (aramaZaman) clearTimeout(aramaZaman)
 })
 
 const filtreArama = ref('')

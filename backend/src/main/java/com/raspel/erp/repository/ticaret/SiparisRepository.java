@@ -19,6 +19,8 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
     long countBySirketIdAndTarih(Long sirketId, LocalDate tarih);
     long countBySirketIdAndDurumNot(Long sirketId, String durum);
     long countBySirketIdAndDurum(Long sirketId, String durum);
+    long countBySirketIdAndDurumIn(Long sirketId, java.util.Collection<String> durumlar);
+    long countBySirketIdAndDurumNotIn(Long sirketId, java.util.Collection<String> durumlar);
 
     @Query("SELECT s.siparisNo FROM Siparis s WHERE s.siparisNo LIKE :prefix% AND s.sirketId = :sirketId")
     List<String> findSiparisNoByPrefix(@Param("prefix") String prefix, @Param("sirketId") Long sirketId);

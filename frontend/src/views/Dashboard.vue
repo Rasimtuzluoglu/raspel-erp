@@ -1,5 +1,12 @@
 <template>
   <div class="dashboard-container">
+    <Message
+      v-if="dashboardStore.veriEksik"
+      severity="warn"
+      :closable="false"
+      class="veri-eksik-uyari"
+      :text="t('dashboard.veriEksikUyari')"
+    />
     <div class="dashboard-header">
       <div class="dashboard-baslik-blok">
         <h1>RasPel ERP</h1>

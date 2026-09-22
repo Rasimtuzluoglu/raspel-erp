@@ -86,6 +86,7 @@ public class FaturaGecmisService {
         try {
             return objectMapper.writeValueAsString(m);
         } catch (Exception e) {
+            log.warn("Fatura snapshot serileştirilemedi: {}", e.getMessage());
             return null;
         }
     }
@@ -108,6 +109,7 @@ public class FaturaGecmisService {
             }
             return sb.length() == 0 ? null : kisalt(sb.toString());
         } catch (Exception e) {
+            log.warn("Fatura geçmiş fark özeti üretilemedi: {}", e.getMessage());
             return null;
         }
     }

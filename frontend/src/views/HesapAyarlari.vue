@@ -378,7 +378,10 @@
 
         <TabPanel :header="bolumler[4].label">
           <div class="sekme-icerik">
-            <div class="ayarlar-grid">
+            <div
+              v-if="authStore.isAdmin"
+              class="ayarlar-grid"
+            >
               <Card class="ayar-kart ai-ayar-kart">
                 <template #title>
                   <div class="ai-baslik-satir">
@@ -523,6 +526,12 @@
                 </template>
               </Card>
             </div>
+            <Message
+              v-else
+              severity="info"
+              :closable="false"
+              :text="t('hesapAyarlari.adminGerekli')"
+            />
           </div>
         </TabPanel>
 
@@ -597,7 +606,10 @@
 
         <TabPanel :header="bolumler[6].label">
           <div class="sekme-icerik">
-            <div class="ayarlar-grid">
+            <div
+              v-if="authStore.isAdmin"
+              class="ayarlar-grid"
+            >
               <Card class="ayar-kart">
                 <template #title>
                   <i class="pi pi-cloud-download" />{{ t('hesapAyarlari.guncelleme') }}
@@ -654,6 +666,12 @@
                 </template>
               </Card>
             </div>
+            <Message
+              v-else
+              severity="info"
+              :closable="false"
+              :text="t('hesapAyarlari.adminGerekli')"
+            />
           </div>
         </TabPanel>
 

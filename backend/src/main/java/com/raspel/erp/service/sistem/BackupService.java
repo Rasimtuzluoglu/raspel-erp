@@ -685,12 +685,6 @@ public class BackupService {
         }
     }
 
-    public void cleanAllOldBackups() {
-        for (String t : RETENTION_MAP.keySet()) {
-            cleanOldBackups(t, retentionFor(t));
-        }
-    }
-
     // ------------------------------------------------------------------
     // Zamanlama / durum bilgisi
     // ------------------------------------------------------------------

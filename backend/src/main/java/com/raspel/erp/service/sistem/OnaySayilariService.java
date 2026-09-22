@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,7 +30,9 @@ public class OnaySayilariService {
         Map<String, Long> sonuc = new LinkedHashMap<>();
         sonuc.put("izin", personelIzinRepository.countByDurumAndSirketId("BEKLEMEDE", sirketId));
         sonuc.put("satinalma", satinalmaTalepRepository.countBySirketIdAndDurum(sirketId, "TASLAK"));
-        sonuc.put("siparis", siparisRepository.countBySirketIdAndDurum(sirketId, "BEKLIYOR"));
+        // Normal siparis akisi durumu "TEKLIF" kullanir; saha portali "BEKLIYOR"
+        // gonderebilir. Ikisi de "bekleyen" sayilir.
+        sonuc.put("siparis", siparisRepository.countBySirketIdAndDurumIn(sirketId, List.of("TEKLIF", "BEKLIYOR")));
         return sonuc;
     }
 }

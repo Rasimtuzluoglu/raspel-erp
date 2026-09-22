@@ -288,12 +288,12 @@
                 </div>
                 <div class="field">
                   <label>{{ t('yedekler.otomatikSenkron') }}</label>
-                  <Switch v-model="cloudConfig.autoSync" />
+                  <ToggleSwitch v-model="cloudConfig.autoSync" />
                   <small class="alan-aciklama">{{ t('yedekler.otomatikSenkronAciklama') }}</small>
                 </div>
                 <div class="field">
                   <label>{{ t('yedekler.sifrele') }}</label>
-                  <Switch v-model="cloudConfig.encryptionEnabled" />
+                  <ToggleSwitch v-model="cloudConfig.encryptionEnabled" />
                   <small class="alan-aciklama">{{ t('yedekler.sifreleAciklama') }}</small>
                 </div>
                 <div class="bulut-aksiyonlar">

@@ -1430,7 +1430,7 @@ const kasalariYukle = async () => {
 const gunlukSatislariYukle = async () => {
   try {
     const bugun = getLocalDateString()
-    const r = await faturaAPI.getAll({ size: 50, sort: 'tarih,desc' })
+    const r = await faturaAPI.getAll({ size: 200, sort: 'tarih,desc' })
     const list = unwrapList(r)
     gunlukSatislar.value = list.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
   } catch {

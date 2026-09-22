@@ -129,6 +129,14 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                   @Param("bugun") java.time.LocalDate bugun,
                                   Pageable pageable);
 
+    /** Vadesi gecen fatura sayisi (tam kayit yuklemeden). */
+    @Query("SELECT COUNT(f) FROM Fatura f WHERE f.sirketId = :sirketId AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 AND f.vadeTarihi < :bugun")
+    long countVadesiGecen(@Param("sirketId") Long sirketId,
+                          @Param("durum") Fatura.FaturaDurum durum,
+                          @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                          @Param("bugun") java.time.LocalDate bugun);
+
     /**
      * Tahsilat merkezi için ödenmemiş (kalan tutarı olan) faturalar.
      */
@@ -187,4 +195,10 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     // Anomali: esik ustu tutarli faturalar (yalnizca eslesenler yuklenir).
     @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.genelToplam > :esik ORDER BY f.genelToplam DESC")
     List<Fatura> yuksekTutarliFaturalar(@Param("sirketId") Long sirketId, @Param("esik") BigDecimal esik);
+
+    // Konsolide ciro: kesilmis satis faturalarinin toplam tutari.
+    @Query("SELECT COALESCE(SUM(f.genelToplam), 0) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI")
+    BigDecimal sumKesilmisSatisCiro(@Param("sirketId") Long sirketId);
 }

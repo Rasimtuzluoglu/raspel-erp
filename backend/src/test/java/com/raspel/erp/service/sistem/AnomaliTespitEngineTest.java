@@ -71,20 +71,4 @@ class AnomaliTespitEngineTest {
         assertTrue(list.stream().anyMatch(a -> a.getTur().equals("ANORMAL_MASRAF")));
     }
 
-    @Test
-    void testIpWhitelist_crudOperations() {
-        var list = anomaliTespitEngine.getIpWhitelist();
-        assertNotNull(list);
-        int initialSize = list.size();
-
-        var added = anomaliTespitEngine.addIpWhitelist(java.util.Map.of(
-                "ipAdresi", "10.0.0.1",
-                "aciklama", "Test VPN"
-        ));
-        assertEquals(initialSize + 1, added.size());
-
-        String id = String.valueOf(added.get(added.size() - 1).get("id"));
-        var afterDelete = anomaliTespitEngine.deleteIpWhitelist(id);
-        assertEquals(initialSize, afterDelete.size());
-    }
 }

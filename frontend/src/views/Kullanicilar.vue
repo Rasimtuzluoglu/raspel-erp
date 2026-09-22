@@ -363,7 +363,7 @@ const avatarDosyaSec = (e) => {
 onMounted(async () => {
   loading.value = true
   try {
-    const [r, sR] = await Promise.all([kullaniciAPI.getAll(), sirketAPI.getAktif()])
+    const [r, sR] = await Promise.all([kullaniciAPI.getAll({ size: 500 }), sirketAPI.getAktif()])
     kullanicilar.value = unwrapList(r)
     sirketListesi.value = sR.data || []
   } catch {
@@ -456,7 +456,7 @@ const save = async () => {
       toastBildirim.basarili(t('kullanicilar.olusturuldu'))
     }
     closeDialog()
-    const r = await kullaniciAPI.getAll()
+    const r = await kullaniciAPI.getAll({ size: 500 })
     kullanicilar.value = unwrapList(r)
   } catch (err) {
     toastBildirim.hata(err.response?.data?.message || t('kullanicilar.islemBasarisiz'))

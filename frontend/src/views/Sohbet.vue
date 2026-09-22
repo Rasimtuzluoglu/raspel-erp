@@ -138,6 +138,7 @@
           </span>
           <div class="oda-aksiyonlar">
             <Button
+              v-if="authStore.isAdmin"
               :label="t('sohbet.uyeler')"
               icon="pi pi-users"
               class="p-button-sm p-button-outlined"
@@ -742,7 +743,7 @@ const odalariYukle = async () => {
 
 const kullanicilariYukle = async () => {
   try {
-    const r = await kullaniciAPI.getAll()
+    const r = await kullaniciAPI.getAll({ size: 500 })
     const tumu = unwrapList(r)
     kullanicilar.value = tumu.filter((k) => k.sirketId === authStore.sirketId)
   } catch {

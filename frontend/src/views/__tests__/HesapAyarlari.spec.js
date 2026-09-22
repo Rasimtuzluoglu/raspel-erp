@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
+import { useAuthStore } from '../../stores/authStore.js'
 import i18n from '../../i18n.js'
 
 vi.mock('axios', () => ({
@@ -44,10 +45,15 @@ describe('HesapAyarlari.vue', () => {
     expect(wrapper.find('.hesap-ayarlari').exists()).toBe(true)
   })
 
-  it('renders AI Settings card and inputs', async () => {
+  it('renders AI Settings card and inputs (admin)', async () => {
+    // Entegrasyonlar/sistem bölümleri yalnızca ADMIN için görünür.
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useAuthStore()
+    auth.kullanici = { id: 1, username: 'admin', role: 'ADMIN' }
     const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
     const wrapper = mount(HesapAyarlari, {
-      global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
+      global: { stubs, plugins: [pinia, ToastService, ConfirmationService, i18n] }
     })
     await flushPromises()
     expect(wrapper.find('.ai-ayar-kart').exists()).toBe(true)

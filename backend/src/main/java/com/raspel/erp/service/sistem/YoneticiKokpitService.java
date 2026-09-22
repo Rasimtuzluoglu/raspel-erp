@@ -242,6 +242,12 @@ public class YoneticiKokpitService {
                     .build());
         }
 
+        // 10. Yeni müşteri: dönem içinde oluşturulan cari hesapların gerçek sayısı.
+        long yeniMusteriSayisi = sirketId != null
+                ? cariHesapRepository.countBySirketIdAndOlusturmaTarihiBetween(
+                        sirketId, baslangic.atStartOfDay(), bitis.atTime(java.time.LocalTime.MAX))
+                : 0L;
+
         return YoneticiKokpitDTO.builder()
                 .yil(aktifYil)
                 .ay(aktifAy)
@@ -261,7 +267,7 @@ public class YoneticiKokpitService {
                 .netKarMarji(netKarMarji)
                 .toplamSatisAdedi(satisFaturalari.size())
                 .hedefSatisAdedi(hedefSatisAdedi)
-                .yeniMusteriSayisi(topMusteriler.size())
+                .yeniMusteriSayisi((int) yeniMusteriSayisi)
                 .hedefYeniMusteri(hedefYeniMusteri)
                 .kasaBankaToplam(kasaBankaToplam)
                 .toplamAlacak(toplamAlacak)

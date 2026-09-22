@@ -741,6 +741,7 @@ public class FaturaService {
                     .map(s -> Boolean.TRUE.equals(s.getNegatifStokIzni()))
                     .orElse(false);
         } catch (Exception e) {
+            log.warn("Negatif stok izni okunamadı (sirket {}): {}", sirketId, e.getMessage());
             return false;
         }
     }

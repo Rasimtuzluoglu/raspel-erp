@@ -360,7 +360,8 @@ const seciliCariFaturalariYukle = async (cariHesapId) => {
   if (!cariHesapId) return
   faturalarYukleniyor.value = true
   try {
-    const r = await faturaAPI.getAll({ cariHesapId, page: 0, size: 100 })
+    // Cariye ozel uç; /faturalar cariHesapId parametresini yok sayiyordu.
+    const r = await faturaAPI.cariFaturalari(cariHesapId)
     const faturalar = Array.isArray(r.data?.content) ? r.data.content : Array.isArray(r.data) ? r.data : []
     faturaSecenekleri.value = faturalar.filter(
       (f) => f.durum === 'KESILDI' && (f.kalanTutar || 0) > 0

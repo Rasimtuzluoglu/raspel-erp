@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,30 +40,7 @@ public class AnomaliTespitEngine {
         return anomaliler;
     }
 
-    private static final List<Map<String, Object>> IP_WHITELIST = new ArrayList<>(List.of(
-            Map.of("id", "1", "ipAdresi", "192.168.1.0/24", "aciklama", "Merkez Ofis Yerel Ağı", "durum", "AKTIF", "eklemeTarihi", "2026-01-15"),
-            Map.of("id", "2", "ipAdresi", "88.255.120.45", "aciklama", "İstanbul Şube Statik IP", "durum", "AKTIF", "eklemeTarihi", "2026-02-10")
-    ));
-
-    public List<Map<String, Object>> getIpWhitelist() {
-        return new ArrayList<>(IP_WHITELIST);
-    }
-
-    public List<Map<String, Object>> addIpWhitelist(Map<String, Object> entry) {
-        if (entry != null && entry.get("ipAdresi") != null) {
-            Map<String, Object> newEntry = new HashMap<>(entry);
-            newEntry.put("id", UUID.randomUUID().toString());
-            newEntry.put("eklemeTarihi", LocalDateTime.now().toLocalDate().toString());
-            newEntry.putIfAbsent("durum", "AKTIF");
-            IP_WHITELIST.add(newEntry);
-        }
-        return getIpWhitelist();
-    }
-
-    public List<Map<String, Object>> deleteIpWhitelist(String id) {
-        IP_WHITELIST.removeIf(i -> String.valueOf(i.get("id")).equals(id));
-        return getIpWhitelist();
-    }
+    // IP beyaz listesi artik IpWhitelistService ile veritabaninda (tenant bazli) tutulur.
 
     private void mukerrerFaturaKontrol(Long sirketId, List<AnomaliDTO> list) {
         for (Map<String, Object> g : faturaRepository.mukerrerFaturaGruplari(sirketId)) {

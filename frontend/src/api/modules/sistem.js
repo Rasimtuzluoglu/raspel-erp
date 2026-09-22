@@ -1,8 +1,8 @@
 import { apiClient } from '../client.js'
 
 export const kullaniciAPI = {
-  getAll() {
-    return apiClient.get('/kullanicilar')
+  getAll(params) {
+    return apiClient.get('/kullanicilar', { params })
   },
   getById(id) {
     return apiClient.get(`/kullanicilar/${id}`)

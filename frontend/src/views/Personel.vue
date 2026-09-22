@@ -237,7 +237,10 @@
               class="w-full"
             />
           </div>
-          <div class="field">
+          <div
+            v-if="authStore.isAdmin"
+            class="field"
+          >
             <label>{{ t('personel.kullaniciHesabi') }}</label>
             <Dropdown
               v-model="personelForm.kullaniciId"
@@ -380,6 +383,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { personelAPI, personelIzinAPI, excelAPI, kullaniciAPI } from '../api/index.js'
@@ -389,6 +393,7 @@ import { useI18n } from 'vue-i18n'
 import { getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const authStore = useAuthStore()
 const { t } = useI18n()
 
 const personeller = ref([])
@@ -472,7 +477,7 @@ function defaultForm() {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [pR, iR, kR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll(), kullaniciAPI.getAll().catch(() => ({ data: [] }))])
+    const [pR, iR, kR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll(), kullaniciAPI.getAll({ size: 500 }).catch(() => ({ data: [] }))])
     personeller.value = unwrapList(pR)
     tumIzinler.value = unwrapList(iR)
     kullanicilar.value = unwrapList(kR)

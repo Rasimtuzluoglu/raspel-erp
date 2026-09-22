@@ -816,7 +816,7 @@ const gunSonuAc = async () => {
   gunSonuDialog.value = true
   try {
     const bugun = getLocalDateString()
-    const r = await faturaAPI.getAll({ size: 200, sort: 'tarih,desc' })
+    const r = await faturaAPI.getAll({ size: 500, sort: 'tarih,desc' })
     const faturalar = unwrapList(r)
     const bugunSatislar = faturalar.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
     const toplamSatis = bugunSatislar.reduce((t, f) => t + (f.genelToplam || 0), 0)
