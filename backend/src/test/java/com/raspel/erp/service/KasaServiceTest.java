@@ -40,6 +40,7 @@ class KasaServiceTest {
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private KasaService kasaService;
 
     private Kasa createKasa(Long id) {
@@ -171,9 +172,38 @@ class KasaServiceTest {
         KasaHareket h = KasaHareket.builder().id(1L).kasa(kasa).tur("GELIR")
                 .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now()).build();
         when(kasaHareketRepository.findById(1L)).thenReturn(Optional.of(h));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
         kasaService.hareketSil(1L);
         assertEquals(BigDecimal.valueOf(4000), kasa.getBakiye());
         verify(kasaHareketRepository).deleteById(1L);
+    }
+
+    @Test
+    void hareketEkle_kilitliDonem_reddedilir() {
+        Kasa kasa = createKasa(1L);
+        kasa.setBakiye(BigDecimal.valueOf(5000));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+        KasaHareketDTO dto = KasaHareketDTO.builder().kasaId(1L).tur("GELIR")
+                .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now()).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> kasaService.hareketEkle(dto));
+        verify(kasaHareketRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketSil_kilitliDonem_reddedilir() {
+        Kasa kasa = createKasa(1L);
+        KasaHareket h = KasaHareket.builder().id(1L).kasa(kasa).tur("GELIR")
+                .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now()).build();
+        when(kasaHareketRepository.findById(1L)).thenReturn(Optional.of(h));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> kasaService.hareketSil(1L));
+        verify(kasaHareketRepository, never()).deleteById(anyLong());
     }
 
     @Test

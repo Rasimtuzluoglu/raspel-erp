@@ -96,7 +96,7 @@ class CekSenetControllerTest {
     @Test
     void shouldUpdateDurum() throws Exception {
         var dto = CekSenetDTO.builder().id(1L).durum("TAHSIL_EDILDI").build();
-        when(cekSenetService.durumGuncelle(eq(1L), anyString())).thenReturn(dto);
+        when(cekSenetService.durumGuncelle(eq(1L), anyString(), any(), any())).thenReturn(dto);
 
         mockMvc.perform(put("/api/cek-senet/1/durum")
                         .contentType(MediaType.APPLICATION_JSON)

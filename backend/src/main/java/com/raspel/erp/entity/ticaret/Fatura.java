@@ -118,6 +118,16 @@ public class Fatura {
     @Column(name = "taksit_kurum", length = 255)
     private String taksitKurum;
 
+    @Column(name = "banka_id")
+    private Long bankaId;
+
+    @Column(name = "karta_banka_aktar")
+    private Boolean kartaBankaAktar;
+
+    /** Faturanın dayandığı irsaliye; varsa stok/irsaliye çift düşümünü önlemek için kullanılır. */
+    @Column(name = "irsaliye_id")
+    private Long irsaliyeId;
+
     /** Taksit olarak çekilen tutar */
     @Column(name = "taksit_tutar", precision = 19, scale = 2)
     private BigDecimal taksitTutar;

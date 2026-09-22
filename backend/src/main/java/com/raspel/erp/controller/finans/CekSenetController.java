@@ -57,7 +57,7 @@ public class CekSenetController {
     @Operation(summary = "Çek/senet durum güncelle", description = "Çek/senet durumunu günceller (tahsil/tahsil edildi/karşılıksız vb.)")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<CekSenetDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
-        return ResponseEntity.ok(cekSenetService.durumGuncelle(id, body.getDurum()));
+        return ResponseEntity.ok(cekSenetService.durumGuncelle(id, body.getDurum(), body.getKasaId(), body.getBankaId()));
     }
 
     @DeleteMapping("/{id}")

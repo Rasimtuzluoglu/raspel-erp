@@ -85,6 +85,9 @@ public class FaturaService {
     private final TcmbKurService tcmbKurService;
     private final KasaRepository kasaRepository;
     private final KasaHareketRepository kasaHareketRepository;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    private final com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
     private final FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final com.raspel.erp.service.sistem.DonemService donemService;
@@ -391,6 +394,9 @@ public class FaturaService {
                 .taksitKurum(dto.getTaksitKurum())
                 .taksitTutar(dto.getTaksitTutar())
                 .kasaId(dto.getKasaId())
+                .bankaId(dto.getBankaId())
+                .kartaBankaAktar(dto.getKartaBankaAktar())
+                .irsaliyeId(dto.getIrsaliyeId())
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -403,11 +409,17 @@ public class FaturaService {
                 null, faturaGecmisService.snapshot(kaydedilen));
 
         if (faturaDurum == Fatura.FaturaDurum.KESILDI) {
-            List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(tur), "Fatura #" + fatura.getFaturaNumarasi());
-            cariBakiyeGuncelle(fatura, false);
-            if (tur == Fatura.FaturaTur.SATIS) {
-                kritikStokUyarisiGonder(kritik, sirketId);
+            // İrsaliye zaten stok çıkışı yaptıysa fatura tekrar düşmemeli (çift düşüm önlenir).
+            if (!irsaliyeStokIslenmisMi(dto.getIrsaliyeId())) {
+                List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(tur), "Fatura #" + fatura.getFaturaNumarasi());
+                if (tur == Fatura.FaturaTur.SATIS) {
+                    kritikStokUyarisiGonder(kritik, sirketId);
+                }
+            } else {
+                log.info("Fatura #{} irsaliye #{} üzerinden oluşturuldu; stok hareketi irsaliyede yapıldığı için tekrar düşülmedi",
+                        fatura.getFaturaNumarasi(), dto.getIrsaliyeId());
             }
+            cariBakiyeGuncelle(fatura, false);
         }
 
         // E-posta, DB transaction'ı commit edildikten SONRA gönderilir; boylece SMTP
@@ -443,6 +455,10 @@ public class FaturaService {
         // Kasa seçilmiş ve tahsilat yapılmışsa kasaya giriş işle
         if (kaydedilen.getKasaId() != null && odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
             kasaGirisi(kaydedilen, odenenTutar);
+        } else if (Boolean.TRUE.equals(kaydedilen.getKartaBankaAktar())
+                && kaydedilen.getBankaId() != null && odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
+            // KART tahsilatı doğrudan banka hesabına aktar (POS gün sonu dışı).
+            bankaGirisi(kaydedilen, odenenTutar);
         }
         FaturaDTO sonuc = entityDTOyeCevir(kaydedilen);
         sonuc.setEmailGonderimDurumu(emailGonderimDurumu);
@@ -454,6 +470,28 @@ public class FaturaService {
      * Hata durumunda sessizce yutulmaz: kasa seçilip tahsilat yapıldıysa
      * kasa hareketi kaydedilmezse fatura oluşturma işlemi geri alınır.
      */
+    /**
+     * Tahsil edilen tutarı seçili banka hesabına alacak olarak işler (KART doğrudan aktarım).
+     * Kasa ile aynı yaklaşımla idempotent değildir; yalnızca fatura oluşturmada bir kez çağrılır.
+     */
+    private void bankaGirisi(Fatura fatura, BigDecimal tutar) {
+        com.raspel.erp.entity.finans.Banka banka = bankaRepository.findByIdForUpdate(fatura.getBankaId())
+                .orElseThrow(() -> new BusinessException("Banka bulunamadı: " + fatura.getBankaId()));
+        tenantChecker.check(banka.getSirketId(), "Banka");
+        banka.setBakiye(banka.getBakiye() != null ? banka.getBakiye().add(tutar) : tutar);
+        bankaRepository.save(banka);
+        bankaHareketiRepository.save(com.raspel.erp.entity.finans.BankaHareketi.builder()
+                .bankaId(banka.getId())
+                .tarih(fatura.getTarih() != null ? fatura.getTarih() : LocalDate.now())
+                .aciklama("Satış (KART): " + fatura.getFaturaNumarasi())
+                .borc(BigDecimal.ZERO)
+                .alacak(tutar)
+                .bakiye(banka.getBakiye())
+                .eslestirildi(false)
+                .sirketId(fatura.getSirketId())
+                .build());
+    }
+
     private void kasaGirisi(Fatura fatura, BigDecimal tutar) {
         Kasa kasa = kasaRepository.findByIdForUpdate(fatura.getKasaId())
                 .orElseThrow(() -> new BusinessException("Kasa bulunamadı: " + fatura.getKasaId()));
@@ -558,6 +596,10 @@ public class FaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
         donemService.kilitKontrol(fatura.getSirketId(), fatura.getTarih(), "fatura düzenleme");
+        // Yeni tarih de kilitli döneme denk gelmemeli (eski tarih kontrolü tek başına yetmez).
+        if (dto.getTarih() != null) {
+            donemService.kilitKontrol(fatura.getSirketId(), dto.getTarih(), "fatura düzenleme");
+        }
 
         if (fatura.getDurum() == Fatura.FaturaDurum.IPTAL) {
             throw new BusinessException("İptal edilmiş fatura düzenlenemez");
@@ -576,6 +618,7 @@ public class FaturaService {
         Map<Long, BigDecimal> eskiMiktarlar = new HashMap<>();
         BigDecimal eskiGenelToplam = fatura.getGenelToplam();
         Fatura.FaturaTur eskiTur = fatura.getTur();
+        String eskiParaBirimi = fatura.getParaBirimi();
         Long eskiCariId = fatura.getCariHesap() != null ? fatura.getCariHesap().getId() : null;
         if (kesilmisti) {
             for (FaturaKalem k : fatura.getKalemler()) {
@@ -700,8 +743,9 @@ public class FaturaService {
             stokFarkiIsle(fatura, eskiMiktarlar, yeniMiktarlar, tur);
 
             // Cari bakiye farkını işle (revize)
-            bakiyeUygula(eskiCariId, eskiTur, eskiGenelToplam, true);
-            bakiyeUygula(cariHesap != null ? cariHesap.getId() : null, tur, genelToplam, false);
+            bakiyeUygula(eskiCariId, eskiTur, eskiGenelToplam, eskiParaBirimi, true);
+            bakiyeUygula(cariHesap != null ? cariHesap.getId() : null, tur, genelToplam,
+                    dto.getParaBirimi() != null ? dto.getParaBirimi() : fatura.getParaBirimi(), false);
         }
 
         Fatura guncellenen = faturaRepository.save(fatura);
@@ -724,6 +768,17 @@ public class FaturaService {
         String silmeOncesiSnapshot = faturaGecmisService.snapshot(fatura);
         faturaRepository.deleteById(id);
         faturaGecmisService.kaydet(fatura, FaturaGecmisService.SIL, "Fatura silindi", silmeOncesiSnapshot, null);
+    }
+
+    /**
+     * Verilen irsaliye kesilmiş (stok etkisi işlenmiş) ise true döner. Bu durumda aynı
+     * kalemlerden fatura kesilirken stok ikinci kez düşülmez.
+     */
+    private boolean irsaliyeStokIslenmisMi(Long irsaliyeId) {
+        if (irsaliyeId == null) return false;
+        return irsaliyeRepository.findById(irsaliyeId)
+                .map(i -> "KESILDI".equals(i.getDurum()))
+                .orElse(false);
     }
 
     private String stokYonu(Fatura.FaturaTur tur) {
@@ -754,7 +809,11 @@ public class FaturaService {
      */
     private void cariBakiyeGuncelle(Fatura fatura, boolean ters) {
         if (fatura.getCariHesap() == null) return;
-        BigDecimal tutar = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
+        // Peşin/ön ödeme düşülür: cariye yalnızca kalan (ödenmemiş) tutar borç yazılır,
+        // aksi halde peşin satışta cari borç tam tutar kadar kalır.
+        BigDecimal tutar = fatura.getKalanTutar() != null ? fatura.getKalanTutar() : BigDecimal.ZERO;
+        // Dövizli fatura cari bakiyeye TL karşılığı olarak yansıtılır.
+        tutar = tlKarsiliginaCevir(fatura, tutar);
         if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
             // Satış: müşteri borçlanır -> bakiye negatif (borçlu)
             tutar = tutar.negate();
@@ -767,17 +826,18 @@ public class FaturaService {
 
     /**
      * Cari bakiyesine açık değerlerle etki uygular (revize için kullanılır).
+     * Dövizli tutar TL karşılığına çevrilir.
      */
-    private void bakiyeUygula(Long cariId, Fatura.FaturaTur tur, BigDecimal genelToplam, boolean ters) {
+    private void bakiyeUygula(Long cariId, Fatura.FaturaTur tur, BigDecimal tutar, String paraBirimi, boolean ters) {
         if (cariId == null) return;
-        BigDecimal tutar = genelToplam != null ? genelToplam : BigDecimal.ZERO;
+        BigDecimal deger = tlKarsiliginaCevir(tutar != null ? tutar : BigDecimal.ZERO, paraBirimi);
         if (tur == Fatura.FaturaTur.SATIS) {
-            tutar = tutar.negate();
+            deger = deger.negate();
         }
         if (ters) {
-            tutar = tutar.negate();
+            deger = deger.negate();
         }
-        cariHesapService.bakiyeGuncelle(cariId, tutar);
+        cariHesapService.bakiyeGuncelle(cariId, deger);
     }
 
     /**
@@ -848,7 +908,11 @@ public class FaturaService {
      * Kur servisi başarısız olursa ham fiyat korunur.
      */
     private BigDecimal tlKarsiliginaCevir(Fatura fatura, BigDecimal tutar) {
-        String paraBirimi = fatura.getParaBirimi();
+        return tlKarsiliginaCevir(tutar, fatura.getParaBirimi());
+    }
+
+    private BigDecimal tlKarsiliginaCevir(BigDecimal tutar, String paraBirimi) {
+        if (tutar == null) return BigDecimal.ZERO;
         if (paraBirimi == null || "TRY".equalsIgnoreCase(paraBirimi)) return tutar;
         try {
             return tcmbKurService.cevir(tutar, paraBirimi, "TRY");
@@ -1103,9 +1167,12 @@ public class FaturaService {
                 .paraBirimi(fatura.getParaBirimi())
                 .odemeYontemi(fatura.getOdemeYontemi())
                 .taksitKurum(fatura.getTaksitKurum())
+                .bankaId(fatura.getBankaId())
+                .kartaBankaAktar(fatura.getKartaBankaAktar())
                 .taksitTutar(fatura.getTaksitTutar())
                 .kasaId(fatura.getKasaId())
                 .kasaAd(fatura.getKasaId() != null ? kasaHaritasi.get(fatura.getKasaId()) : null)
+                .irsaliyeId(fatura.getIrsaliyeId())
                 .build();
     }
 }

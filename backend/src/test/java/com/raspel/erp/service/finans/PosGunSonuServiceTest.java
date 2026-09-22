@@ -48,8 +48,9 @@ class PosGunSonuServiceTest {
         var sonuc = gunSonuService.gunSonuIsle(1L);
 
         assertEquals(1, sonuc.size());
-        assertEquals(new BigDecimal("1000"), banka.getBakiye());
-        verify(gunSonuRepository).save(any());
+        // Bankaya komisyon düşülerek NET tutar geçer: 1000 - 20 = 980.
+        assertEquals(new BigDecimal("980"), banka.getBakiye());
+        verify(gunSonuRepository).saveAndFlush(any());
     }
 
     @Test
@@ -77,6 +78,6 @@ class PosGunSonuServiceTest {
                 com.raspel.erp.exception.BusinessException.class, () -> gunSonuService.gunSonuIsle(1L));
 
         assertTrue(ex.getMessage().toLowerCase().contains("banka"));
-        verify(gunSonuRepository, never()).save(any());
+        verify(gunSonuRepository, never()).saveAndFlush(any());
     }
 }

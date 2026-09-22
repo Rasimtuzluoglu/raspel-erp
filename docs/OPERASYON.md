@@ -140,14 +140,19 @@ Bu komutu günlük yedek sonrasına zamanlayın (Windows Task Scheduler veya cro
 ## 5. Sağlık İzleme ve Uyarılar
 
 - `GET /actuator/health` (kimliksiz) — container healthcheck.
-- `GET /actuator/prometheus` (kimliksiz) — Prometheus scrape.
+- `GET /actuator/prometheus` — **kimliksiz değil**: ya `ROLE_ADMIN` JWT ya da paylaşılan
+  scrape token'ı (`APP_METRICS_SCRAPE_TOKEN`, `X-Metrics-Token` başlığı veya `Authorization: Bearer`)
+  gerekir. Prometheus bu token'ı `docker secret` üzerinden okur; token boşsa scrape devre dışıdır.
 - Diğer `/actuator/**` uçları **yalnızca ADMIN**.
 - **Alertmanager** bildirim kanalları (ortam değişkeniyle):
   - Slack: `SLACK_WEBHOOK_URL` (kanal: `#raspel-alerts`).
   - E-posta: `ALERT_EMAIL_TO` + `SMTP_SMARTHOST`, `SMTP_FROM`, `SMTP_USERNAME`, `SMTP_PASSWORD`.
   - Tanımlı olmayan kanalın bloğu başlangıçta otomatik kaldırılır (htpasswd/güvenli).
 - Kural seti (`config/prometheus/alert.rules.yml`): ServiceDown, yüksek heap,
-  yüksek 5xx oranı, DB bağlantı havuzu doygunluğu, yüksek HTTP gecikmesi (p95).
+  yüksek 5xx oranı (uyarı %5 / kritik %2), DB bağlantı havuzu doygunluğu,
+  yüksek HTTP gecikmesi (p95 uyarı / p99 kritik), yüksek disk doluluk (%85),
+  yüksek JVM GC duraklaması ve RabbitMQ kuyruk birikmesi. SLO eşikleri:
+  p99 gecikme 3 sn, 5xx oranı %2 (kritik).
 
 ## 6. Sürüm Yükseltme
 

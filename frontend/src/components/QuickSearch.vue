@@ -185,7 +185,8 @@ const grupEtiketi = (type) => {
     banka: t('nav.banka'),
     kasa: t('nav.kasa'),
     depo: t('nav.depo'),
-    sube: t('nav.sube')
+    sube: t('nav.sube'),
+    belge: t('nav.belgeler')
   }
   return etiketler[type] || type
 }
@@ -205,7 +206,8 @@ const grupluSonuclar = computed(() => {
     'kasa',
     'depo',
     'sube',
-    'not'
+    'not',
+    'belge'
   ]
   for (const type of siraliTipler) {
     const items = results.value.filter((i) => i.type === type)
@@ -398,6 +400,8 @@ const navigate = (item) => {
 let searchTimer = null
 // Sirayla gelen aramalarda eski (gec) yanitin yenisini ezmesini engeller.
 let aramaSeq = 0
+// Kaynaklardan biri hata verirse kullaniciya "sonuc yok" yerine bilgi gosterilir.
+let aramaKismiHata = false
 // Ayni sorgu icin kisa sureli onbellek; gereksiz tekrar isteklerini azaltir.
 const aramaOnbellek = new Map()
 const ARAMA_ONBELLEK_MS = 30000
@@ -408,11 +412,13 @@ watch(query, (val) => {
   if (searchTimer) clearTimeout(searchTimer)
   if (!val || val.length < 1) {
     results.value = []
+    aramaSeq++ // uçan istekler boş sorgu sonuçlarını geri yazmasın
     return
   }
   searchTimer = setTimeout(async () => {
     loading.value = true
     error.value = null
+    aramaKismiHata = false
     selectedIndex.value = 0
     const q = val.trim().toLowerCase()
     const seq = ++aramaSeq
@@ -448,7 +454,7 @@ watch(query, (val) => {
               subtitle: t('quickSearch.vergiBakiye', { vergi: d.vergiNumarasi || '-', bakiye: formatCur(d.bakiye) })
             }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         stokAPI
           .ara(q)
           .then((r) =>
@@ -460,9 +466,9 @@ watch(query, (val) => {
               subtitle: t('quickSearch.kodMiktar', { kod: d.stokKodu || '-', miktar: d.miktar || 0, birim: d.birim || '' })
             }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         faturaAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((f) => icindeAra(f.faturaNumarasi, q) || icindeAra(f.cariHesapAd, q))
@@ -475,9 +481,9 @@ watch(query, (val) => {
                 subtitle: `${d.cariHesapAd || '-'} | ${formatCur(d.genelToplam)}`
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         personelAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((p) => icindeAra(p.ad, q) || icindeAra(p.soyad, q) || icindeAra(p.pozisyon, q))
@@ -490,9 +496,9 @@ watch(query, (val) => {
                 subtitle: `${d.pozisyon || '-'}`
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         projeAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((p) => icindeAra(p.ad, q) || icindeAra(p.kod, q))
@@ -505,9 +511,9 @@ watch(query, (val) => {
                 subtitle: t('quickSearch.durum', { durum: d.durum || '-' })
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         siparisAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((s) => icindeAra(s.siparisNo, q) || icindeAra(s.durum, q))
@@ -520,9 +526,9 @@ watch(query, (val) => {
                 subtitle: t('quickSearch.durum', { durum: d.durum || '-' })
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         notAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((n) => icindeAra(n.baslik, q))
@@ -535,9 +541,9 @@ watch(query, (val) => {
                 subtitle: t('quickSearch.onem', { onem: d.onemDerecesi || 'NORMAL' })
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         bankaAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((b) => icindeAra(b.ad, q) || icindeAra(b.iban, q))
@@ -550,9 +556,9 @@ watch(query, (val) => {
                 subtitle: t('quickSearch.iban', { iban: d.iban || '-' })
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         kasaAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((k) => icindeAra(k.ad, q))
@@ -565,25 +571,25 @@ watch(query, (val) => {
                 subtitle: t('quickSearch.bakiye', { tutar: formatCur(d.bakiye) })
               }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         depoAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((d) => icindeAra(d.ad, q))
               .slice(0, 3)
               .map((d) => ({ ...d, type: 'depo', ...typeConfig.depo, title: d.ad, subtitle: t('quickSearch.depo') }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         subeAPI
-          .getAll()
+          .getAll({ size: 100 })
           .then((r) =>
             (unwrapList(r))
               .filter((s) => icindeAra(s.ad, q))
               .slice(0, 3)
               .map((d) => ({ ...d, type: 'sube', ...typeConfig.sube, title: d.ad, subtitle: t('quickSearch.sube') }))
           )
-          .catch(() => []),
+          .catch(() => { aramaKismiHata = true; return [] }),
         belgeAPI
           .tumBelgeler()
           .then((r) =>
@@ -598,7 +604,7 @@ watch(query, (val) => {
                 subtitle: t('quickSearch.bagli', { ad: d.entityAdi || '-' })
               }))
           )
-          .catch(() => [])
+          .catch(() => { aramaKismiHata = true; return [] })
       ])
       const moduller2 = modulAra(q)
       const birlesik = [
@@ -621,7 +627,10 @@ watch(query, (val) => {
       if (seq !== aramaSeq) return
       const sonuc = sirali.slice(0, 15)
       results.value = sonuc
-      aramaOnbellek.set(q, { zaman: Date.now(), sonuc })
+      // Boş sonucu önbelleğe almayalım; aksi halde geçici hata 30 sn "bozuk" kalır.
+      if (sonuc.length) aramaOnbellek.set(q, { zaman: Date.now(), sonuc })
+      // Hiç sonuç yoksa ve en az bir kaynak hata verdiyse bunu gizleme.
+      if (sonuc.length === 0 && aramaKismiHata) error.value = t('quickSearch.aramaHatasi')
     } catch (e) {
       error.value = t('quickSearch.aramaHatasi')
     } finally {

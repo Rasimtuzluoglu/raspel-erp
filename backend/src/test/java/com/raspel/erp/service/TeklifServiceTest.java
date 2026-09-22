@@ -214,4 +214,26 @@ class TeklifServiceTest {
         assertEquals("SIPARISE_DONUSTU", t.getDurum());
         verify(teklifRepository).save(t);
     }
+
+    @Test
+    void sipariseDonustur_zatenDonusmus_reddedilir() {
+        Teklif t = createTeklif(1L);
+        t.setDurum("SIPARISE_DONUSTU");
+        when(teklifRepository.findById(1L)).thenReturn(Optional.of(t));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> teklifService.sipariseDonustur(1L));
+        verify(teklifRepository, never()).save(any());
+    }
+
+    @Test
+    void faturayaDonustur_zatenFaturalasmis_reddedilir() {
+        Teklif t = createTeklif(1L);
+        t.setDurum("FATURALASTI");
+        when(teklifRepository.findById(1L)).thenReturn(Optional.of(t));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> teklifService.faturayaDonustur(1L, null));
+        verify(faturaService, never()).faturaOlustur(any(), any(), any(), any());
+    }
 }

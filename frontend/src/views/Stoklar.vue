@@ -96,6 +96,16 @@
         @change="filtreDegisti"
         @item-select="filtreDegisti"
       />
+      <Dropdown
+        v-model="filtreDepo"
+        :options="depolar"
+        option-label="ad"
+        option-value="id"
+        :placeholder="t('stoklar.filtreDepo')"
+        :show-clear="true"
+        class="filter-dropdown"
+        @change="filtreDegisti"
+      />
       <InputNumber
         v-model="filtreMinFiyat"
         :placeholder="t('stoklar.minFiyat')"
@@ -126,6 +136,7 @@
     <template v-if="!stokStore.loading && gosterim === 'tablo'">
       <AppDataTable
         v-model:selection="seciliStoklar"
+        v-model:expanded-rows="expandedRows"
         :value="stokStore.stoklar"
         :paginator="true"
         :rows="25"
@@ -163,6 +174,31 @@
             @action="openDialog"
           />
         </template>
+        <template #expansion="slotProps">
+          <div class="depo-dagilim">
+            <strong>{{ t('stoklar.depoDagilimi') }}</strong>
+            <div
+              v-if="depoDagilim[slotProps.data.id] && depoDagilim[slotProps.data.id].length"
+              class="depo-dagilim-liste"
+            >
+              <span
+                v-for="d in depoDagilim[slotProps.data.id]"
+                :key="d.depoId"
+                class="depo-chip"
+              >
+                {{ d.depoAdi || '-' }}: <b>{{ d.miktar }} {{ slotProps.data.birim || '' }}</b>
+              </span>
+            </div>
+            <span
+              v-else
+              class="text-muted"
+            >{{ t('stoklar.depoYok') }}</span>
+          </div>
+        </template>
+        <Column
+          expander
+          style="width: 3rem"
+        />
         <Column
           selection-mode="multiple"
           header-style="width: 2.5rem"
@@ -195,6 +231,27 @@
             <span :class="s.data.minMiktar && s.data.miktar <= s.data.minMiktar ? 'kritik' : 'normal'">
               {{ s.data.miktar }} {{ s.data.birim || '' }}
             </span>
+          </template>
+        </Column>
+        <Column
+          :header="t('stoklar.colDepo')"
+          style="min-width: 150px"
+        >
+          <template #body="s">
+            <div
+              v-if="depoDagilim[s.data.id] && depoDagilim[s.data.id].length"
+              class="depo-dagilim-mini"
+            >
+              <span
+                v-for="d in depoDagilim[s.data.id]"
+                :key="d.depoId"
+                class="depo-chip-mini"
+              >{{ d.depoAdi || '-' }}: {{ d.miktar }}</span>
+            </div>
+            <span
+              v-else
+              class="text-muted"
+            >-</span>
           </template>
         </Column>
         <Column
@@ -480,6 +537,9 @@
             <Dropdown
               v-model="form.maliyetYontemi"
               :options="maliyetYontemiSecenekleri"
+              option-label="label"
+              option-value="value"
+              :placeholder="t('stoklar.seciniz')"
               class="w-full"
             />
           </div>
@@ -632,9 +692,11 @@
       v-model:miktar="hareketForm.miktar"
       v-model:hareket-tarihi="hareketForm.hareketTarihi"
       v-model:cari-hesap-id="hareketForm.cariHesapId"
+      v-model:depo-id="hareketForm.depoId"
       v-model:aciklama="hareketForm.aciklama"
       :baslik="hareketBaslik"
       :cari-hesaplar="cariHesapStore?.cariHesaplar || []"
+      :depolar="depolar"
       :loading="saving"
       @kaydet="saveHareket"
     />
@@ -716,7 +778,8 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { stokAPI, excelAPI, uploadAPI } from '../api/index.js'
+import { stokAPI, excelAPI, uploadAPI, depoAPI } from '../api/index.js'
+import { unwrapList } from '../api/utils/unwrap.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import StokHareketDialog from '../components/StokHareketDialog.vue'
@@ -749,6 +812,7 @@ const filtreArama = ref('')
 const filtreKategori = ref('')
 const filtreMarka = ref('')
 const filtreStokGrubu = ref('')
+const filtreDepo = ref(null)
 const filtreMinFiyat = ref(null)
 const filtreMaxFiyat = ref(null)
 
@@ -850,7 +914,24 @@ const { silVeGeriAl } = useGeriAl()
 
 const showHareketDialog = ref(false)
 const hareketTur = ref('GIRIS')
-const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' })
+const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: null, depoId: null, aciklama: '' })
+const depolar = ref([])
+const expandedRows = ref({})
+const depoDagilim = ref({})
+
+const depoDagilimYukle = async () => {
+  try {
+    const r = await depoAPI.stokDagilimi()
+    const harita = {}
+    for (const d of (r.data || [])) {
+      if (!harita[d.stokId]) harita[d.stokId] = []
+      harita[d.stokId].push(d)
+    }
+    depoDagilim.value = harita
+  } catch {
+    // Dağılım opsiyonel bir görünümdür; hata listeyi engellemez.
+  }
+}
 
 const hareketBaslik = computed(() => (hareketTur.value === 'GIRIS' ? t('stoklar.hareketGiris') : t('stoklar.hareketCikis')))
 
@@ -889,6 +970,7 @@ const stoklariYukle = async () => {
   if (filtreStokGrubu.value) params.stokGrubu = filtreStokGrubu.value
   if (filtreMinFiyat.value != null) params.minFiyat = filtreMinFiyat.value
   if (filtreMaxFiyat.value != null) params.maxFiyat = filtreMaxFiyat.value
+  if (filtreDepo.value != null) params.depoId = filtreDepo.value
   await stokStore.filtreli(params)
 }
 
@@ -911,7 +993,12 @@ const kritikAdet = computed(() => stokStore.stoklar.filter((s) => s.minMiktar &&
 
 onMounted(async () => {
   // Bir yukleme hatasi digerini engellemesin (store'lar hata firlatir).
-  await Promise.allSettled([stoklariYukle(), cariHesapStore.getAllCariHesaplar()])
+  await Promise.allSettled([
+    stoklariYukle(),
+    cariHesapStore.getAllCariHesaplar(),
+    depoAPI.getAll({ size: 500 }).then((r) => { depolar.value = unwrapList(r) }),
+    depoDagilimYukle()
+  ])
 })
 
 const filtreTemizle = () => {
@@ -919,6 +1006,7 @@ const filtreTemizle = () => {
   filtreKategori.value = ''
   filtreMarka.value = ''
   filtreStokGrubu.value = ''
+  filtreDepo.value = null
   filtreMinFiyat.value = null
   filtreMaxFiyat.value = null
   stokSayfa.value = 0
@@ -1105,7 +1193,7 @@ const confirmDel = (id) => {
 
 const openHareketDialog = (tur) => {
   hareketTur.value = tur
-  hareketForm.value = { miktar: null, hareketTarihi: new Date(), cariHesapId: null, aciklama: '' }
+  hareketForm.value = { miktar: null, hareketTarihi: new Date(), cariHesapId: null, depoId: null, aciklama: '' }
   showHareketDialog.value = true
 }
 
@@ -1166,11 +1254,13 @@ const saveHareket = async () => {
       miktar: hareketForm.value.miktar,
       hareketTarihi: getLocalDateString(hareketForm.value.hareketTarihi),
       cariHesapId: hareketForm.value.cariHesapId,
+      depoId: hareketForm.value.depoId,
       aciklama: hareketForm.value.aciklama
     })
     const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
     stokHareketler.value = hr.data
     seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
+    depoDagilimYukle()
     showHareketDialog.value = false
     toastBildirim.basarili(t('stoklar.hareketEklendi'))
   } catch (err) {
@@ -1320,6 +1410,42 @@ h2 {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.depo-dagilim {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.depo-dagilim-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.depo-chip {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 20px;
+  padding: 3px 12px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+.depo-dagilim-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.depo-chip-mini {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  padding: 1px 7px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
 }
 .loading {
   text-align: center;

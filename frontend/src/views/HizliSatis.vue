@@ -519,6 +519,22 @@
                 />
               </div>
 
+              <div
+                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
+                class="odenen-satir"
+              >
+                <label>{{ t('hizliSatis.kartBankaAktar') }}</label>
+                <Dropdown
+                  v-model="seciliBanka"
+                  :options="bankalar"
+                  option-label="ad"
+                  option-value="id"
+                  :placeholder="t('hizliSatis.bankaSecin')"
+                  show-clear
+                  class="w-full"
+                />
+              </div>
+
               <div class="odeme-durum">
                 <Tag
                   :value="odemeDurumText"
@@ -1070,7 +1086,7 @@ import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, sirketAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
@@ -1400,6 +1416,10 @@ const taksitTutar = ref(0)
 const seciliKasa = ref(null)
 const kasalar = ref([])
 
+// Kart için doğrudan banka aktarımı
+const seciliBanka = ref(null)
+const bankalar = ref([])
+
 // Para üstü
 const alinanNakit = ref(0)
 const paraUstu = computed(() => {
@@ -1424,6 +1444,15 @@ const kasalariYukle = async () => {
     }
   } catch {
     kasalar.value = []
+  }
+}
+
+const bankalariYukle = async () => {
+  try {
+    const r = await bankaAPI.getAll()
+    bankalar.value = unwrapList(r)
+  } catch {
+    bankalar.value = []
   }
 }
 
@@ -1656,6 +1685,7 @@ onMounted(async () => {
       personelListesiniYukle(),
       cokSatanlariYukle(),
       kasalariYukle(),
+      bankalariYukle(),
       gunlukSatislariYukle()
     ])
     kayitliSepetVar.value = !!localStorage.getItem('raspel_kayitli_sepet')
@@ -2129,7 +2159,9 @@ const satisiTamamlaOnaysiz = async () => {
     odemeYontemi: odemeYontemi.value,
     taksitKurum: odemeYontemi.value === 'TAKSIT' ? taksitKurum.value : null,
     taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
-    kasaId: seciliKasa.value || null,
+    kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
+    bankaId: odemeYontemi.value === 'KART' ? (seciliBanka.value || null) : null,
+    kartaBankaAktar: odemeYontemi.value === 'KART' && !!seciliBanka.value,
     kalemler: sepet.value.map((i) => ({
       stokId: i.id,
       aciklama: i.ad,

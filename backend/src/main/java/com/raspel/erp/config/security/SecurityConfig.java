@@ -63,10 +63,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/kurulum/**").permitAll()
                 // Şirket logosu giriş ekranında (oturum öncesi) gösterilir; public.
                 .requestMatchers("/api/uploads/sirket-logos/**").permitAll()
-                // Base health (aggregate UP/DOWN) ve prometheus metrikleri aciktir.
-                // show-details=when-authorized oldugu icin anonim istek detay gormez.
-                // Diger tum actuator endpoint'leri yalnizca ADMIN rolune aciktir.
-                .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
+                // Base health (aggregate UP/DOWN) aciktir; show-details=when-authorized
+                // oldugu icin anonim istek detay gormez. Prometheus metrikleri hassas
+                // altyapi bilgisi tasir; yalnizca ADMIN veya scrape token'i ile erisilir.
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                .requestMatchers("/actuator/prometheus").hasAnyRole("ADMIN", "PROMETHEUS")
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/ws/**", "/ws/info").authenticated()
                 .anyRequest().authenticated()

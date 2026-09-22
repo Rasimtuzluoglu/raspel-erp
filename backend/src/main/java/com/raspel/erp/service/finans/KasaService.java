@@ -43,6 +43,7 @@ public class KasaService {
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
@@ -101,6 +102,8 @@ public class KasaService {
         Kasa kasa = kasaRepository.findByIdForUpdate(dto.getKasaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", dto.getKasaId()));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
+        donemService.kilitKontrol(kasa.getSirketId(),
+                dto.getHareketTarihi() != null ? dto.getHareketTarihi() : java.time.LocalDate.now(), "kasa hareketi ekleme");
 
         BigDecimal tutar = dto.getTutar();
         if ("GIDER".equals(dto.getTur())) tutar = tutar.negate();
@@ -124,8 +127,11 @@ public class KasaService {
         public void hareketSil(Long hareketId) {
         KasaHareket hareket = kasaHareketRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", hareketId));
-        Kasa kasa = hareket.getKasa();
+        // Kasa satırını kilitle: eşzamanlı silme/ekleme sırasında bakiye kaybını önler.
+        Kasa kasa = kasaRepository.findByIdForUpdate(hareket.getKasa().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", hareket.getKasa().getId()));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
+        donemService.kilitKontrol(kasa.getSirketId(), hareket.getHareketTarihi(), "kasa hareketi silme");
         BigDecimal tutar = hareket.getTutar();
         if ("GIDER".equals(hareket.getTur())) tutar = tutar.negate();
         kasa.setBakiye(kasa.getBakiye().subtract(tutar));
@@ -161,6 +167,7 @@ public class KasaService {
         }
 
         java.time.LocalDate bugun = java.time.LocalDate.now();
+        donemService.kilitKontrol(kaynak.getSirketId(), bugun, "kasa aktarımı");
         kaynak.setBakiye(kaynak.getBakiye().subtract(tutar));
         hedef.setBakiye(hedef.getBakiye().add(tutar));
 
@@ -204,6 +211,7 @@ public class KasaService {
         banka.setBakiye(banka.getBakiye() != null ? banka.getBakiye().add(tutar) : tutar);
 
         java.time.LocalDate bugun = java.time.LocalDate.now();
+        donemService.kilitKontrol(kasa.getSirketId(), bugun, "kasa-banka aktarımı");
         String ek = aciklama != null && !aciklama.isBlank() ? " (" + aciklama + ")" : "";
 
         kasaRepository.save(kasa);
@@ -251,6 +259,7 @@ public class KasaService {
         kasa.setBakiye(kasa.getBakiye() != null ? kasa.getBakiye().add(tutar) : tutar);
 
         java.time.LocalDate bugun = java.time.LocalDate.now();
+        donemService.kilitKontrol(kasa.getSirketId(), bugun, "banka-kasa aktarımı");
         String ek = aciklama != null && !aciklama.isBlank() ? " (" + aciklama + ")" : "";
 
         bankaRepository.save(banka);

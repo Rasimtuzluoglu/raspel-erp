@@ -36,6 +36,7 @@ class DepoServiceTest {
     @Mock private SubeRepository subeRepository;
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.envanter.StokService stokService;
     @InjectMocks private DepoService depoService;
 
     private Depo ornekDepo(Long id) {
@@ -84,17 +85,16 @@ class DepoServiceTest {
     }
 
     @Test
-    void stokEkle_artirirMiktari() {
-        DepoStok mevcut = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("10")).build();
+    void stokEkle_globalHareketOlusturur() {
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
-        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 2L)).thenReturn(Optional.of(mevcut));
         when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
-        when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(mevcut));
+        when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of());
 
         depoService.stokEkle(1L, 2L, new BigDecimal("5"));
 
-        assertEquals(0, mevcut.getMiktar().compareTo(new BigDecimal("15")));
-        verify(depoStokRepository).save(mevcut);
+        verify(stokService).hareketEkle(argThat(d -> "GIRIS".equals(d.getTur())
+                && Long.valueOf(1L).equals(d.getDepoId())
+                && d.getMiktar().compareTo(new BigDecimal("5")) == 0));
     }
 
     @Test
@@ -116,25 +116,45 @@ class DepoServiceTest {
 
         depoService.stokCikar(1L, 2L, new BigDecimal("8"));
 
-        assertEquals(0, mevcut.getMiktar().compareTo(new BigDecimal("12")));
+        verify(stokService).hareketEkle(argThat(d -> "CIKIS".equals(d.getTur())
+                && Long.valueOf(1L).equals(d.getDepoId())
+                && d.getMiktar().compareTo(new BigDecimal("8")) == 0));
     }
 
     @Test
     void stokTransfer_ikisiniDeYapar() {
         DepoStok kaynak = DepoStok.builder().depoId(1L).stokId(2L).miktar(new BigDecimal("50")).build();
-        DepoStok hedef = DepoStok.builder().depoId(3L).stokId(2L).miktar(new BigDecimal("0")).build();
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         when(depoRepository.findById(3L)).thenReturn(Optional.of(ornekDepo(3L)));
         when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 2L)).thenReturn(Optional.of(kaynak));
-        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(3L, 2L)).thenReturn(Optional.of(hedef));
-        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
-        when(depoStokRepository.findByDepoId(1L)).thenReturn(List.of(kaynak));
-        when(depoStokRepository.findByDepoId(3L)).thenReturn(List.of(hedef));
+        when(stokRepository.findBySirketIdOrderByAd(anyLong())).thenReturn(List.of());
+        when(depoStokRepository.findByDepoId(anyLong())).thenReturn(List.of());
 
         depoService.stokTransfer(1L, 3L, 2L, new BigDecimal("10"));
 
-        assertEquals(0, kaynak.getMiktar().compareTo(new BigDecimal("40")));
-        assertEquals(0, hedef.getMiktar().compareTo(new BigDecimal("10")));
+        verify(stokService).hareketEkle(argThat(d -> "CIKIS".equals(d.getTur()) && Long.valueOf(1L).equals(d.getDepoId())));
+        verify(stokService).hareketEkle(argThat(d -> "GIRIS".equals(d.getTur()) && Long.valueOf(3L).equals(d.getDepoId())));
+    }
+
+    @Test
+    void stokDagilimi_depoKiriliminiDoner() {
+        when(depoRepository.findBySirketIdOrderByAdAsc(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(ornekDepo(1L))));
+        DepoStok ds = DepoStok.builder().id(5L).depoId(1L).stokId(2L).miktar(new BigDecimal("7")).build();
+        when(depoStokRepository.findByDepoIdIn(any())).thenReturn(List.of(ds));
+
+        var sonuc = depoService.stokDagilimi(1L);
+
+        assertEquals(1, sonuc.size());
+        assertEquals("Ana Depo", sonuc.get(0).getDepoAdi());
+        assertEquals(0, sonuc.get(0).getMiktar().compareTo(new BigDecimal("7")));
+    }
+
+    @Test
+    void stokDagilimi_depoYoksaBosDoner() {
+        when(depoRepository.findBySirketIdOrderByAdAsc(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        assertTrue(depoService.stokDagilimi(1L).isEmpty());
     }
 
     @Test

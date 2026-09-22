@@ -40,6 +40,7 @@ class HareketServiceTest {
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private HareketService hareketService;
 
     private CariHesap createCariHesap() {
@@ -120,6 +121,32 @@ class HareketServiceTest {
         verify(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(750).negate());
         // Borçlandırma faturaya bağlanmaz
         verify(faturaRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketOlustur_kilitliDonem_reddedilir() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+        HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT")
+                .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now()).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> hareketService.hareketOlustur(dto, 1L));
+        verify(hareketRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketSil_kilitliDonem_reddedilir() {
+        Hareket hareket = createHareket(1L);
+        when(hareketRepository.findById(1L)).thenReturn(Optional.of(hareket));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> hareketService.hareketSil(1L));
+        verify(hareketRepository, never()).deleteById(anyLong());
     }
 
     @Test

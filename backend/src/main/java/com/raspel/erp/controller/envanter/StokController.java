@@ -146,9 +146,10 @@ public class StokController {
             @RequestParam(required = false) String marka,
             @RequestParam(required = false) String stokGrubu,
             @RequestParam(required = false) java.math.BigDecimal minFiyat,
-            @RequestParam(required = false) java.math.BigDecimal maxFiyat) {
+            @RequestParam(required = false) java.math.BigDecimal maxFiyat,
+            @RequestParam(required = false) Long depoId) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(stokService.filtreli(sirketId, q, kategori, marka, stokGrubu, minFiyat, maxFiyat, pageable));
+        return ResponseEntity.ok(stokService.filtreli(sirketId, q, kategori, marka, stokGrubu, minFiyat, maxFiyat, depoId, pageable));
     }
 
     @GetMapping("/ara")

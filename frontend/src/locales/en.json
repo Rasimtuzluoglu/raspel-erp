@@ -611,6 +611,11 @@
     "hareketCari": "Account",
     "hareketAciklama": "Description",
     "hareketDepo": "Warehouse",
+    "depoSecin": "Select Warehouse",
+    "depoDagilimi": "Warehouse Breakdown",
+    "depoYok": "This product is not in any warehouse.",
+    "colDepo": "Warehouse Breakdown",
+    "filtreDepo": "Filter warehouse",
     "hareketSeri": "Serial/Lot",
     "hareketKaynak": "Source",
     "urunDuzenle": "Edit Product",
@@ -807,6 +812,8 @@
     "taksitTutar": "Installment Amount",
     "kasa": "Cash Desk",
     "kasaSecin": "Select cash desk",
+    "kartBankaAktar": "Transfer Card Amount to Bank",
+    "bankaSecin": "Select bank account (optional)",
     "kalan": "Remaining",
     "satisiTamamla": "Complete Sale",
     "sonSatisiIptal": "Cancel Last Sale",
@@ -1630,7 +1637,12 @@
     "hataYukleme": "Failed to load cheque/note list",
     "hataKaydet": "Failed to save cheque/note",
     "hataDurum": "Failed to update status",
-    "hataSil": "Failed to delete cheque/note"
+    "hataSil": "Failed to delete cheque/note",
+    "tahsilHesap": "Collection Account",
+    "hesapYok": "No cash/bank entry (ledger only)",
+    "kasa": "Cash",
+    "bankaHesabi": "Bank Account",
+    "tahsilEdildi": "Cheque/note collected"
   },
   "crm": {
     "title": "CRM — Opportunity Tracking",
@@ -2342,6 +2354,7 @@
   },
   "kullanicilar": {
     "title": "User Management",
+    "sifreBosIseDegismez": "Leave blank to keep the current password.",
     "yeniKullanici": "New User",
     "aktif": "Active",
     "pasif": "Inactive",

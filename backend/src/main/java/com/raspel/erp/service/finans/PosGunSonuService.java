@@ -65,22 +65,37 @@ public class PosGunSonuService {
                     .orElseThrow(() -> new BusinessException(
                             "Talep edilen POS'un bankası bulunamadı (POS: " + p.getAd()
                                     + ", bankaId: " + p.getBankaId() + "). Gün sonu işlemi durduruldu."));
-            banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).add(tutar));
+            // Bankaya POS komisyonu düşülerek NET tutar geçer; brüt yazılırsa bakiye şişer.
+            BigDecimal net = tutar.subtract(komisyon);
+            if (net.compareTo(BigDecimal.ZERO) < 0) net = BigDecimal.ZERO;
+            banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).add(net));
             bankaRepository.save(banka);
 
-            gunSonuRepository.save(PosGunSonu.builder()
-                    .posId(p.getId()).sirketId(sirketId)
-                    .tutar(tutar).komisyon(komisyon).tarih(bugun)
-                    .build());
+            try {
+                // (pos_id, tarih) unique kısıt + flush: eşzamanlı iki gün sonu çalışmasında
+                // ikinci kayıt DB seviyesinde reddedilir; banka bakiyesi iki kez artmaz.
+                gunSonuRepository.saveAndFlush(PosGunSonu.builder()
+                        .posId(p.getId()).sirketId(sirketId)
+                        .tutar(tutar).komisyon(komisyon).tarih(bugun)
+                        .build());
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                // Başka bir eşzamanlı çalışma bu POS için gün sonunu zaten işledi.
+                // Banka bakiyesi bu transaction içinde şişmesin diye işlemi geri alma sinyali ver.
+                log.warn("POS gün sonu zaten işlenmiş (POS: {}, tarih: {}); eşzamanlı çalışma nedeniyle atlandı",
+                        p.getAd(), bugun);
+                throw e;
+            }
 
             sonuc.add(Map.of(
                     "posId", p.getId(),
                     "posAd", p.getAd(),
                     "bankaId", p.getBankaId(),
                     "tutar", tutar,
-                    "komisyon", komisyon
+                    "komisyon", komisyon,
+                    "net", net
             ));
-            log.info("POS gün sonu: {} -> {} TL (komisyon: {} TL)", p.getAd(), tutar, komisyon);
+            log.info("POS gün sonu: {} -> brüt {} TL, komisyon {} TL, banka net {} TL",
+                    p.getAd(), tutar, komisyon, net);
         }
         return sonuc;
     }

@@ -17,5 +17,10 @@ scrape_configs:
 
   - job_name: 'backend'
     metrics_path: '/actuator/prometheus'
+    # /actuator/prometheus artik anonim degil; scrape paylasilan token ile yapilir.
+    # Token docker-compose'da APP_METRICS_SCRAPE_TOKEN olarak backend ile ayni degere ayarlanir.
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics_token
     static_configs:
       - targets: ['raspel-backend:8081']

@@ -66,6 +66,13 @@ public class DepoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/stok-dagilimi")
+    @Operation(summary = "Stok depo dağılımı", description = "Şirketteki tüm stokların depo bazlı kırılımını getirir")
+    public ResponseEntity<List<DepoStokDTO>> stokDagilimi(HttpServletRequest req) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        return ResponseEntity.ok(depoService.stokDagilimi(sirketId));
+    }
+
     @GetMapping("/{id}/stoklar")
     @Operation(summary = "Depo stoklarını getir", description = "Belirli bir depodaki stokları listeler")
     public ResponseEntity<List<DepoStokDTO>> depoStoklari(@PathVariable Long id) {

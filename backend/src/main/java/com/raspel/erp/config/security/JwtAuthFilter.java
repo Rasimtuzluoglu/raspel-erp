@@ -31,10 +31,33 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final AktifOturumService aktifOturumService;
     private final ApiTokenService apiTokenService;
 
+    /** Prometheus scrape icin paylasilan token (tanimliysa). Bos ise scrape devre disi. */
+    @org.springframework.beans.factory.annotation.Value("${app.metrics.scrape-token:}")
+    private String metricsScrapeToken;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // Prometheus scrape token'i: /actuator/prometheus icin PROMETHEUS rolu verir.
+        if (metricsScrapeToken != null && !metricsScrapeToken.isBlank()
+                && "/actuator/prometheus".equals(request.getRequestURI())
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
+            String gelen = request.getHeader("X-Metrics-Token");
+            if (gelen == null) {
+                String bearer = request.getHeader("Authorization");
+                if (bearer != null && bearer.startsWith("Bearer ")) gelen = bearer.substring(7);
+            }
+            if (metricsScrapeToken.equals(gelen)) {
+                var auth = new UsernamePasswordAuthenticationToken(
+                        "prometheus", null,
+                        java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PROMETHEUS")));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+
         String authHeader = request.getHeader("Authorization");
         String token = null;
 

@@ -3,16 +3,24 @@ package com.raspel.erp.repository.envanter;
 import com.raspel.erp.entity.envanter.StokHareket;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.raspel.erp.entity.envanter.Stok;
 
 @Repository
 public interface StokHareketRepository extends JpaRepository<StokHareket, Long> {
+
+    /** Hareket silme sırasında eşzamanlı işlemleri serileştirmek için kilitli okuma. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT h FROM StokHareket h WHERE h.id = :id")
+    Optional<StokHareket> findByIdForUpdate(@Param("id") Long id);
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findByStokIdOrderByHareketTarihiDesc(Long stokId);
 

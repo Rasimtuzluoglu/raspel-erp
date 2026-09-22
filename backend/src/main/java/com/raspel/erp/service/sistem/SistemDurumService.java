@@ -84,23 +84,40 @@ public class SistemDurumService {
 
         result.put("durum", genelDurum);
         result.put("surum", surum);
-        result.put("uptimeMs", ManagementFactory.getRuntimeMXBean().getUptime());
-        result.put("bellek", bellekBilgisi());
-        result.put("disk", diskBilgisi());
         result.put("bilesenler", bilesenler);
-        result.put("hataSayisi", hataLogRepository.count());
-        result.put("sonHatalar", sonHatalar(5));
-        try {
-            result.put("depolama", dosyaDepolama.kullanim());
-        } catch (Exception e) {
-            log.warn("Depolama bilgisi alınamadı: {}", e.getMessage());
-        }
-        try {
-            result.put("yedekleme", backupService.getSchedule());
-        } catch (Exception e) {
-            log.warn("Yedekleme bilgisi alınamadı: {}", e.getMessage());
+
+        // Hassas altyapı detayları (bellek/disk/uptime/hata logları/depolama/yedekleme)
+        // yalnızca ADMIN'e verilir; USER kısıtlı özet görür (bilgi sızıntısını önler).
+        if (adminMi()) {
+            result.put("uptimeMs", ManagementFactory.getRuntimeMXBean().getUptime());
+            result.put("bellek", bellekBilgisi());
+            result.put("disk", diskBilgisi());
+            result.put("hataSayisi", hataLogRepository.count());
+            result.put("sonHatalar", sonHatalar(5));
+            try {
+                result.put("depolama", dosyaDepolama.kullanim());
+            } catch (Exception e) {
+                log.warn("Depolama bilgisi alınamadı: {}", e.getMessage());
+            }
+            try {
+                result.put("yedekleme", backupService.getSchedule());
+            } catch (Exception e) {
+                log.warn("Yedekleme bilgisi alınamadı: {}", e.getMessage());
+            }
         }
         return result;
+    }
+
+    /** Aktif kullanıcı ADMIN rolüne sahip mi? (request context yoksa güvenli varsayım: hayır.) */
+    private boolean adminMi() {
+        try {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null) return false;
+            return auth.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private Map<String, Object> bellekBilgisi() {

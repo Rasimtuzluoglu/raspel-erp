@@ -75,13 +75,13 @@ class DovizKuruServiceTest {
     void testGunlukKurlariGetir_BosVeTcmbCekemezseVarsayilanlariOlusturur() {
         when(dovizKuruRepository.findByTarihOrderByDovizKoduAsc(any(LocalDate.class)))
                 .thenReturn(Collections.emptyList(), Collections.emptyList());
-        when(dovizKuruRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<DovizKuruDTO> result = dovizKuruService.gunlukKurlariGetir(LocalDate.now());
 
         assertNotNull(result);
-        assertEquals(3, result.size()); // USD, EUR, GBP
-        verify(dovizKuruRepository, times(1)).saveAll(any());
+        assertEquals(3, result.size()); // USD, EUR, GBP (yalnızca gösterim)
+        // Sahte/varsayılan kurlar DB'ye kaydedilmemeli (finansal hesaplamaya sızmamalı).
+        verify(dovizKuruRepository, never()).saveAll(any());
     }
 
     @Test

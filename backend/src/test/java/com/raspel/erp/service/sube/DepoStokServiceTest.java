@@ -88,9 +88,22 @@ class DepoStokServiceTest {
 
     @Test
     void coz_verilenDepoyuOncelerYoksaVarsayilanaDuser() {
+        when(depoRepository.findById(9L)).thenReturn(Optional.of(Depo.builder().id(9L).sirketId(5L).build()));
         assertEquals(9L, service.coz(9L, 5L));
 
         when(depoRepository.findBySirketIdAndAktifTrue(5L)).thenReturn(List.of(Depo.builder().id(4L).build()));
         assertEquals(4L, service.coz(null, 5L));
+    }
+
+    @Test
+    void coz_baskaSirketinDeposuReddedilir() {
+        when(depoRepository.findById(9L)).thenReturn(Optional.of(Depo.builder().id(9L).sirketId(6L).build()));
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class, () -> service.coz(9L, 5L));
+    }
+
+    @Test
+    void coz_olmayanDepoReddedilir() {
+        when(depoRepository.findById(9L)).thenReturn(Optional.empty());
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class, () -> service.coz(9L, 5L));
     }
 }

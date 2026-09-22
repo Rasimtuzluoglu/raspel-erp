@@ -290,7 +290,8 @@ class StokServiceTest {
         stok.setMiktar(BigDecimal.valueOf(50));
         StokHareket h = StokHareket.builder().id(1L).stok(stok).tur("GIRIS").miktar(BigDecimal.valueOf(10))
                 .hareketTarihi(LocalDate.now()).build();
-        when(stokHareketRepository.findById(1L)).thenReturn(Optional.of(h));
+        when(stokHareketRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(h));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         stokService.hareketSil(1L);
         assertEquals(BigDecimal.valueOf(40), stok.getMiktar());
         verify(stokHareketRepository).deleteById(1L);

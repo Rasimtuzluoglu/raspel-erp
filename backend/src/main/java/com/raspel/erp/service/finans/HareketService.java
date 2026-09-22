@@ -43,6 +43,7 @@ public class HareketService {
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     /**
      * Faturanın ödenen tutarını ve ödeme durumunu günceller.
@@ -109,6 +110,9 @@ public class HareketService {
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
+        // Kilitli döneme hareket yazılamaz.
+        donemService.kilitKontrol(cariHesap.getSirketId(),
+                dto.getHareketTarihi() != null ? dto.getHareketTarihi() : LocalDate.now(), "hareket oluşturma");
 
         // Bağlı fatura varsa önceden doğrula (fatura şirketi ile eşleşmeli)
         if (dto.getFaturaId() != null) {
@@ -234,6 +238,11 @@ public class HareketService {
         CariHesap cariHesap = cariHesapRepository.findById(dto.getCariHesapId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", dto.getCariHesapId()));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
+        // Eski ve yeni tarih kilitli döneme denk gelmemeli.
+        donemService.kilitKontrol(hareket.getSirketId(), hareket.getHareketTarihi(), "hareket güncelleme");
+        if (dto.getHareketTarihi() != null) {
+            donemService.kilitKontrol(cariHesap.getSirketId(), dto.getHareketTarihi(), "hareket güncelleme");
+        }
 
         if (dto.getFaturaId() != null) {
             Fatura yeniFatura = faturaRepository.findById(dto.getFaturaId())
@@ -247,6 +256,10 @@ public class HareketService {
         } catch (IllegalArgumentException e) {
             throw new BusinessException("Geçersiz hareket türü: " + dto.getTur());
         }
+
+        // Eski cari, hareket.setCariHesap ile ezilmeden önce saklanmalı; aksi halde
+        // cari değiştirildiğinde eski carinin bakiyesi düzeltilmez (delta 0 olur).
+        Long eskiCariId = hareket.getCariHesap() != null ? hareket.getCariHesap().getId() : null;
 
         BigDecimal eskiBakiyeEtkisi = hareket.getTur() == Hareket.HareketTuru.TAHSILAT
                 ? hareket.getTutar() : hareket.getTutar().negate();
@@ -278,7 +291,16 @@ public class HareketService {
 
         Hareket guncellenen = hareketRepository.save(hareket);
 
-        cariHesapService.bakiyeGuncelle(hareket.getCariHesap().getId(), yeniBakiyeEtkisi.subtract(eskiBakiyeEtkisi));
+        Long yeniCariId = hareket.getCariHesap() != null ? hareket.getCariHesap().getId() : null;
+        if (eskiCariId != null && !eskiCariId.equals(yeniCariId)) {
+            // Cari taşındı: eski cariden eski etkiyi geri al, yeni cariye yeni etkiyi uygula.
+            cariHesapService.bakiyeGuncelle(eskiCariId, eskiBakiyeEtkisi.negate());
+            if (yeniCariId != null) {
+                cariHesapService.bakiyeGuncelle(yeniCariId, yeniBakiyeEtkisi);
+            }
+        } else if (yeniCariId != null) {
+            cariHesapService.bakiyeGuncelle(yeniCariId, yeniBakiyeEtkisi.subtract(eskiBakiyeEtkisi));
+        }
 
         log.info("Hareket başarıyla güncellendi - ID: {}", id);
         return entityDTOyeCevir(guncellenen);
@@ -293,6 +315,7 @@ public class HareketService {
         Hareket hareket = hareketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
         tenantChecker.check(hareket.getSirketId(), "Hareket");
+        donemService.kilitKontrol(hareket.getSirketId(), hareket.getHareketTarihi(), "hareket silme");
         
         // Bakiye güncellemeyi ters işlemle yap (tahsilat silinirse bakiye azalır, ödeme silinirse artar)
         BigDecimal bakiyeGuncellemeTutari = hareket.getTur() == Hareket.HareketTuru.TAHSILAT 

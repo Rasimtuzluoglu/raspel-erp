@@ -67,6 +67,10 @@ public class DovizKuruService {
     }
 
     private List<DovizKuru> varsayilanKurlariOlustur(LocalDate tarih) {
+        // ÖNEMLİ: Bu kurlar uydurma değerlerdir. Yalnızca arayüzde gösterim için döndürülür;
+        // DB'ye KAYDEDİLMEZ ve döviz çevrimlerinde (TcmbKurService.cevir) kullanılmaz.
+        // Aksi halde TCMB'ye ulaşılamadığında sahte kurlarla finansal hesaplama yapılırdı.
+        log.warn("TCMB kurları alınamadı; varsayılan kurlar yalnızca gösterim amaçlı döndürülüyor (kaydedilmedi, tarih: {})", tarih);
         List<DovizKuru> varsayilanlar = new ArrayList<>();
         varsayilanlar.add(DovizKuru.builder()
                 .dovizKodu("USD").dovizAdi("ABD Doları").tarih(tarih)
@@ -84,7 +88,7 @@ public class DovizKuruService {
                 .efektifAlis(BigDecimal.valueOf(60.35)).efektifSatis(BigDecimal.valueOf(60.60))
                 .build());
 
-        return dovizKuruRepository.saveAll(varsayilanlar);
+        return varsayilanlar;
     }
 
     private DovizKuruDTO entityToDTO(DovizKuru k) {

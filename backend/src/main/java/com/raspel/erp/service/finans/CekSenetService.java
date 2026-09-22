@@ -25,6 +25,12 @@ public class CekSenetService {
     private final CekSenetRepository cekSenetRepository;
     private final CariHesapRepository cariHesapRepository;
     private final TenantChecker tenantChecker;
+    private final HareketService hareketService;
+    private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @Transactional(readOnly = true)
     public Page<CekSenetDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -58,6 +64,8 @@ public class CekSenetService {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
         tenantChecker.check(cs.getSirketId(), "Cek/Senet");
+        donemService.kilitKontrol(cs.getSirketId(),
+                cs.getVadeTarihi() != null ? cs.getVadeTarihi() : java.time.LocalDate.now(), "çek/senet düzenleme");
         if ("TAHSIL_EDILDI".equals(cs.getDurum()) || "ODENDI".equals(cs.getDurum())) {
             throw new BusinessException("Tahsil edilmiş veya ödenmiş çek/senet kaydı doğrudan düzenlenemez");
         }
@@ -76,17 +84,92 @@ public class CekSenetService {
     }
 
     public CekSenetDTO durumGuncelle(Long id, String durum) {
+        return durumGuncelle(id, durum, null, null);
+    }
+
+    /**
+     * Durum günceller. {@code TAHSIL_EDILDI} durumuna geçişte cari hesaba TAHSILAT hareketi
+     * yazılır ve (seçildiyse) kasa/banka hesabına giriş işlenir; böylece tahsilat cari/kasa/
+     * hareket kayıtlarına yansır. Tahsil edilmiş kayıt geri alınamaz.
+     */
+    public CekSenetDTO durumGuncelle(Long id, String durum, Long kasaId, Long bankaId) {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
         tenantChecker.check(cs.getSirketId(), "Cek/Senet");
+        donemService.kilitKontrol(cs.getSirketId(),
+                cs.getVadeTarihi() != null ? cs.getVadeTarihi() : java.time.LocalDate.now(), "çek/senet durum güncelleme");
+        String eskiDurum = cs.getDurum();
+        if ("TAHSIL_EDILDI".equals(eskiDurum) && !"TAHSIL_EDILDI".equals(durum)) {
+            throw new BusinessException("Tahsil edilmiş çek/senet geri alınamaz");
+        }
+        boolean yeniTahsil = "TAHSIL_EDILDI".equals(durum) && !"TAHSIL_EDILDI".equals(eskiDurum);
         cs.setDurum(durum);
-        return entityToDTO(cekSenetRepository.save(cs));
+        CekSenet kaydedilen = cekSenetRepository.save(cs);
+        if (yeniTahsil) {
+            tahsilatiIsle(kaydedilen, kasaId, bankaId);
+        }
+        return entityToDTO(kaydedilen);
+    }
+
+    private void tahsilatiIsle(CekSenet cs, Long kasaId, Long bankaId) {
+        if (cs.getTutar() == null || cs.getTutar().signum() <= 0) return;
+        if (kasaId != null && bankaId != null) {
+            throw new BusinessException("Aynı tahsilat hem kasaya hem bankaya işlenemez; tek hesap seçin");
+        }
+        if (cs.getCariHesapId() != null) {
+            hareketService.hareketOlustur(com.raspel.erp.dto.finans.HareketDTO.builder()
+                    .cariHesapId(cs.getCariHesapId())
+                    .tur("TAHSILAT")
+                    .tutar(cs.getTutar())
+                    .hareketTarihi(java.time.LocalDate.now())
+                    .odemeSekli("SENET".equals(cs.getTur()) ? "SENET" : "CEK")
+                    .aciklama("Çek/Senet tahsili" + (cs.getCekNo() != null ? " #" + cs.getCekNo() : ""))
+                    .build(), cs.getSirketId());
+        }
+        if (kasaId != null) {
+            kasaGirisi(kasaId, cs);
+        } else if (bankaId != null) {
+            bankaGirisi(bankaId, cs);
+        }
+    }
+
+    private void kasaGirisi(Long kasaId, CekSenet cs) {
+        com.raspel.erp.entity.finans.Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
+        tenantChecker.check(kasa.getSirketId(), "Kasa");
+        kasa.setBakiye(kasa.getBakiye() != null ? kasa.getBakiye().add(cs.getTutar()) : cs.getTutar());
+        kasaRepository.save(kasa);
+        kasaHareketRepository.save(com.raspel.erp.entity.finans.KasaHareket.builder()
+                .kasa(kasa).tur("GELIR").tutar(cs.getTutar())
+                .hareketTarihi(java.time.LocalDate.now())
+                .aciklama("Çek/Senet tahsili" + (cs.getCekNo() != null ? " #" + cs.getCekNo() : ""))
+                .build());
+    }
+
+    private void bankaGirisi(Long bankaId, CekSenet cs) {
+        com.raspel.erp.entity.finans.Banka banka = bankaRepository.findByIdForUpdate(bankaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
+        tenantChecker.check(banka.getSirketId(), "Banka");
+        banka.setBakiye(banka.getBakiye() != null ? banka.getBakiye().add(cs.getTutar()) : cs.getTutar());
+        bankaRepository.save(banka);
+        bankaHareketiRepository.save(com.raspel.erp.entity.finans.BankaHareketi.builder()
+                .bankaId(banka.getId())
+                .tarih(java.time.LocalDate.now())
+                .aciklama("Çek/Senet tahsili" + (cs.getCekNo() != null ? " #" + cs.getCekNo() : ""))
+                .borc(java.math.BigDecimal.ZERO)
+                .alacak(cs.getTutar())
+                .bakiye(banka.getBakiye())
+                .eslestirildi(false)
+                .sirketId(cs.getSirketId())
+                .build());
     }
 
     public void sil(Long id) {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
         tenantChecker.check(cs.getSirketId(), "Cek/Senet");
+        donemService.kilitKontrol(cs.getSirketId(),
+                cs.getVadeTarihi() != null ? cs.getVadeTarihi() : java.time.LocalDate.now(), "çek/senet silme");
         if ("TAHSIL_EDILDI".equals(cs.getDurum()) || "ODENDI".equals(cs.getDurum())) {
             throw new BusinessException("Tahsil edilmiş veya ödenmiş çek/senet kaydı silinemez");
         }

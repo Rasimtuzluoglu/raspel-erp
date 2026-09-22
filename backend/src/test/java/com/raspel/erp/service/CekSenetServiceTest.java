@@ -31,6 +31,12 @@ class CekSenetServiceTest {
     @Mock private CekSenetRepository cekSenetRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.finans.HareketService hareketService;
+    @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private CekSenetService cekSenetService;
 
     private CekSenet createCekSenet(Long id) {
@@ -87,12 +93,35 @@ class CekSenetServiceTest {
         when(cekSenetRepository.save(any(CekSenet.class))).thenReturn(cs);
         var result = cekSenetService.durumGuncelle(1L, "TAHSIL_EDILDI");
         assertEquals("TAHSIL_EDILDI", result.getDurum());
+        // Tahsilat cari hesaba TAHSILAT hareketi olarak yansımalı.
+        verify(hareketService).hareketOlustur(any(com.raspel.erp.dto.finans.HareketDTO.class), eq(1L));
+    }
+
+    @Test
+    void durumGuncelle_tahsilEdilmisGeriAlinamaz() {
+        CekSenet cs = createCekSenet(1L);
+        cs.setDurum("TAHSIL_EDILDI");
+        when(cekSenetRepository.findById(1L)).thenReturn(Optional.of(cs));
+        assertThrows(RuntimeException.class, () -> cekSenetService.durumGuncelle(1L, "PORTFOY"));
+        verifyNoInteractions(hareketService);
     }
 
     @Test
     void durumGuncelle_throwsWhenNotFound() {
         when(cekSenetRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> cekSenetService.durumGuncelle(99L, "TAHSIL_EDILDI"));
+    }
+
+    @Test
+    void durumGuncelle_kilitliDonem_reddedilir() {
+        CekSenet cs = createCekSenet(1L);
+        when(cekSenetRepository.findById(1L)).thenReturn(Optional.of(cs));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> cekSenetService.durumGuncelle(1L, "TAHSIL_EDILDI"));
+        verifyNoInteractions(hareketService);
     }
 
     @Test

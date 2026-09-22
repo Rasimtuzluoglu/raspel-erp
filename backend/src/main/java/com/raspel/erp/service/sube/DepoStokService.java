@@ -59,10 +59,17 @@ public class DepoStokService {
 
     /**
      * Verilen depo; boşsa varsayılan aktif depoya düşer. Hiç depo yoksa null.
+     * Verilen depo başka bir şirkete aitse erişim reddedilir (tenant izolasyonu).
      */
     @Transactional(readOnly = true)
     public Long coz(Long depoId, Long sirketId) {
-        if (depoId != null) return depoId;
+        if (depoId != null) {
+            Depo depo = depoRepository.findById(depoId)
+                    .orElseThrow(() -> new com.raspel.erp.exception.ResourceNotFoundException("Depo", depoId));
+            if (sirketId != null && !sirketId.equals(depo.getSirketId()))
+                throw new com.raspel.erp.exception.ResourceNotFoundException("Depo", depoId);
+            return depoId;
+        }
         return varsayilanDepoId(sirketId);
     }
 }

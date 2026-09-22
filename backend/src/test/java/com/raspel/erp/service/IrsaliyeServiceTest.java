@@ -39,6 +39,7 @@ class IrsaliyeServiceTest {
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @Mock private com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {
@@ -83,6 +84,29 @@ class IrsaliyeServiceTest {
         when(irsaliyeRepository.save(any(Irsaliye.class))).thenReturn(saved);
         var result = irsaliyeService.olustur(dto, 1L);
         assertNotNull(result);
+    }
+
+    @Test
+    void olustur_kilitliDonem_reddedilir() {
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(eq(1L), any(LocalDate.class), anyString());
+        IrsaliyeDTO dto = IrsaliyeDTO.builder().irsaliyeNo("IRS-999").tarih(LocalDate.now())
+                .cariHesapId(1L).tur("SATIS").sirketId(1L).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.olustur(dto, 1L));
+        verify(irsaliyeRepository, never()).save(any());
+    }
+
+    @Test
+    void durumGuncelle_kilitliDonem_reddedilir() {
+        Irsaliye irsaliye = createIrsaliye(1L);
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(irsaliye));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(eq(1L), any(LocalDate.class), anyString());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.durumGuncelle(1L, "KESILDI"));
     }
 
     @Test

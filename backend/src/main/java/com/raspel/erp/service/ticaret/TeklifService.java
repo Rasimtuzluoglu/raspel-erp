@@ -316,6 +316,10 @@ public class TeklifService {
         Teklif t = teklifRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teklif", id));
         tenantChecker.check(t.getSirketId(), "Teklif");
+        // Zaten dönüştürülmüş teklif tekrar siparişe çevrilemez (çift belge önlenir).
+        if ("SIPARISE_DONUSTU".equals(t.getDurum()) || "FATURALASTI".equals(t.getDurum())) {
+            throw new BusinessException("Bu teklif zaten siparişe/faturaya dönüştürülmüş");
+        }
 
         List<TeklifKalem> kalemler = kalemRepository.findByTeklifId(id);
 
@@ -353,6 +357,10 @@ public class TeklifService {
         Teklif t = teklifRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teklif", id));
         tenantChecker.check(t.getSirketId(), "Teklif");
+        // Faturalaşmış teklif tekrar faturaya çevrilemez (çift fatura önlenir).
+        if ("FATURALASTI".equals(t.getDurum())) {
+            throw new BusinessException("Bu teklif zaten faturaya dönüştürülmüş");
+        }
 
         List<TeklifKalem> kalemler = kalemRepository.findByTeklifId(id);
 

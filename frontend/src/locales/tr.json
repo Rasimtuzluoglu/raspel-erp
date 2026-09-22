@@ -611,6 +611,11 @@
     "hareketCari": "Cari Hesap",
     "hareketAciklama": "Açıklama",
     "hareketDepo": "Depo",
+    "depoSecin": "Depo Seçin",
+    "depoDagilimi": "Depo Dağılımı",
+    "depoYok": "Bu ürün hiçbir depoda bulunmuyor.",
+    "colDepo": "Depo Dağılımı",
+    "filtreDepo": "Depo filtrele",
     "hareketSeri": "Seri/Lot",
     "hareketKaynak": "Kaynak",
     "urunDuzenle": "Ürün Düzenle",
@@ -807,6 +812,8 @@
     "taksitTutar": "Çekilen Taksit Tutarı",
     "kasa": "Kasa",
     "kasaSecin": "Kasa seçin",
+    "kartBankaAktar": "Kart Tutarı Bankaya Aktar",
+    "bankaSecin": "Banka hesabı seçin (opsiyonel)",
     "kalan": "Kalan",
     "satisiTamamla": "Satışı Tamamla",
     "sonSatisiIptal": "Son Satışı İptal Et",
@@ -1630,7 +1637,12 @@
     "hataYukleme": "Çek/Senet listesi yüklenirken hata oluştu",
     "hataKaydet": "Çek/Senet kaydedilirken hata oluştu",
     "hataDurum": "Durum güncellenirken hata oluştu",
-    "hataSil": "Çek/Senet silinirken hata oluştu"
+    "hataSil": "Çek/Senet silinirken hata oluştu",
+    "tahsilHesap": "Tahsilat Hesabı",
+    "hesapYok": "Hesaba işleme (yalnızca cari)",
+    "kasa": "Kasa",
+    "bankaHesabi": "Banka Hesabı",
+    "tahsilEdildi": "Çek/Senet tahsil edildi"
   },
   "crm": {
     "title": "CRM — Fırsat Takibi",
@@ -2342,6 +2354,7 @@
   },
   "kullanicilar": {
     "title": "Kullanıcı Yönetimi",
+    "sifreBosIseDegismez": "Boş bırakırsanız şifre değişmez.",
     "yeniKullanici": "Yeni Kullanıcı",
     "aktif": "Aktif",
     "pasif": "Pasif",

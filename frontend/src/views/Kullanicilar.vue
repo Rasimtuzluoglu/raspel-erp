@@ -133,9 +133,14 @@
         <InputText
           v-model="form.password"
           type="password"
+          autocomplete="new-password"
           placeholder="••••••"
           class="w-full"
         />
+        <small
+          v-if="editingId"
+          class="alan-aciklama"
+        >{{ t('kullanicilar.sifreBosIseDegismez') }}</small>
       </div>
       <div class="form-grup">
         <label>{{ t('kullanicilar.avatar') }}</label>
@@ -459,7 +464,11 @@ const save = async () => {
     const r = await kullaniciAPI.getAll({ size: 500 })
     kullanicilar.value = unwrapList(r)
   } catch (err) {
-    toastBildirim.hata(err.response?.data?.message || t('kullanicilar.islemBasarisiz'))
+    const alanHatalari = err?.response?.data?.errors
+    const mesaj = alanHatalari
+      ? Object.values(alanHatalari).join(' ')
+      : err?.response?.data?.message || t('kullanicilar.islemBasarisiz')
+    toastBildirim.hata(mesaj)
   } finally {
     saving.value = false
   }
@@ -763,5 +772,11 @@ h1 {
   font-size: 11px;
   color: var(--text-muted);
   text-align: center;
+}
+.alan-aciklama {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 </style>

@@ -40,9 +40,11 @@ class IadeServiceTest {
     @Mock private TenantChecker tenantChecker;
     @Mock private CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     @Mock private com.raspel.erp.service.finans.CariHesapService cariHesapService;
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private IadeService iadeService;
 
     private void hazirla() {
@@ -248,6 +250,9 @@ class IadeServiceTest {
         cari.setId(5L);
         com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
         fatura.setCariHesap(cari);
+        fatura.setGenelToplam(new BigDecimal("240"));
+        fatura.setKalanTutar(new BigDecimal("240"));
+        fatura.setOdenenTutar(BigDecimal.ZERO);
 
         when(iadeRepository.findById(1L)).thenReturn(Optional.of(iade));
         when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of());
@@ -258,5 +263,55 @@ class IadeServiceTest {
 
         // Satis iadesi musteri borcunu 240 azaltir -> +240
         verify(cariHesapService).bakiyeGuncelle(5L, new BigDecimal("240"));
+        // Iade faturaya yansimali: kalan 240 -> 0, durum ODENDI.
+        assertEquals(0, fatura.getKalanTutar().compareTo(BigDecimal.ZERO));
+        assertEquals("ODENDI", fatura.getOdemeDurumu());
+        verify(faturaRepository).save(fatura);
+    }
+
+    @Test
+    void olustur_iadeMiktariFaturayiAsarsa_reddedilir() {
+        hazirla();
+        com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
+        fatura.setId(1L);
+        fatura.setSirketId(1L);
+        fatura.setGenelToplam(new BigDecimal("1000"));
+        com.raspel.erp.entity.ticaret.FaturaKalem fk = com.raspel.erp.entity.ticaret.FaturaKalem.builder()
+                .stokId(2L).adet(new BigDecimal("5")).build();
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(fk));
+
+        IadeKalemDTO kalem = IadeKalemDTO.builder().stokId(2L).miktar(new BigDecimal("10"))
+                .birimFiyat(new BigDecimal("10")).kdvOrani(BigDecimal.ZERO).build();
+        IadeDTO dto = IadeDTO.builder().faturaId(1L).tur("SATIS").tarih(java.time.LocalDate.now())
+                .kalemler(List.of(kalem)).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.olustur(dto, 1L));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    void olustur_kilitliDonem_reddedilir() {
+        IadeDTO dto = IadeDTO.builder().tur("SATIS").tarih(java.time.LocalDate.now())
+                .tutar(new BigDecimal("100")).build();
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.olustur(dto, 1L));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    void durumGuncelle_kilitliDonem_reddedilir() {
+        Iade iade = Iade.builder().id(1L).faturaId(1L).tur("SATIS")
+                .tutar(new BigDecimal("240")).durum("TASLAK").sirketId(1L).build();
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(iade));
+        doThrow(new com.raspel.erp.exception.BusinessException("Bu tarih kilitli"))
+                .when(donemService).kilitKontrol(any(), any(), anyString());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "TAMAMLANDI"));
     }
 }

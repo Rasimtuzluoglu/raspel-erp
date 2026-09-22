@@ -146,9 +146,9 @@ public class StokService {
      */
     @Transactional(readOnly = true)
     public Page<StokDTO> filtreli(Long sirketId, String q, String kategori, String marka,
-                                  String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Pageable pageable) {
+                                  String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Long depoId, Pageable pageable) {
         Page<Stok> page = stokRepository.filtreli(sirketId, likeDeseni(q), bosIseNull(kategori),
-                likeDeseni(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, pageable);
+                likeDeseni(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, depoId, pageable);
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
         return page.map(s -> entityToDTO(s, tedarikciAdlari));
     }
@@ -469,9 +469,12 @@ public class StokService {
     }
 
     public void hareketSil(Long hareketId) {
-        StokHareket h = stokHareketRepository.findById(hareketId)
+        // Hareket satırını kilitle; aynı hareketin eşzamanlı iki kez silinmesi/terslenmesi önlenir.
+        StokHareket h = stokHareketRepository.findByIdForUpdate(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hareket", hareketId));
-        Stok stok = h.getStok();
+        // Stok satırını da kilitle: eşzamanlı hareketlerde miktar kaybını önler.
+        Stok stok = stokRepository.findByIdForUpdate(h.getStok().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", h.getStok().getId()));
         tenantChecker.check(stok.getSirketId(), "Stok");
         if ("CIKIS".equals(h.getTur())) {
             BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
@@ -482,6 +485,11 @@ public class StokService {
             maliyetService.cikisIsle(stok, h.getMiktar(), stok.getMiktar(), stok.getSirketId(), "MANUEL", null);
         }
         stokRepository.save(stok);
+        // Depo kırılımını da hareketin tersi yönünde düzelt (aksi halde depo stoğu kayar).
+        if (h.getDepoId() != null) {
+            depoStokService.guncelle(h.getDepoId(), stok.getId(),
+                    "CIKIS".equals(h.getTur()) ? h.getMiktar() : h.getMiktar().negate());
+        }
         stokHareketRepository.deleteById(hareketId);
         cacheYardimci.temizle("stoklar", "dashboard");
     }

@@ -63,6 +63,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.ticaret.FaturaKalemRepository faturaKalemRepository;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
+    @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {
@@ -98,6 +99,8 @@ class FaturaServiceTest {
         f.setAraToplam(BigDecimal.valueOf(100));
         f.setKdv(BigDecimal.valueOf(20));
         f.setGenelToplam(BigDecimal.valueOf(120));
+        f.setOdenenTutar(BigDecimal.ZERO);
+        f.setKalanTutar(BigDecimal.valueOf(120));
         f.setOlusturmaTarihi(LocalDateTime.now());
         f.setKalemler(new ArrayList<>());
         return f;
@@ -218,6 +221,29 @@ class FaturaServiceTest {
     void faturaOlustur_throwsWhenInvalidTur() {
         FaturaDTO dto = FaturaDTO.builder().tur("INVALID").tarih(LocalDate.now()).kalemler(List.of()).build();
         assertThrows(RuntimeException.class, () -> faturaService.faturaOlustur(dto, 1L, null, null));
+    }
+
+    @Test
+    void faturaOlustur_irsaliyeKesilmisseStokTekrarDusulmez() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        com.raspel.erp.entity.muhasebe.Irsaliye irsaliye = new com.raspel.erp.entity.muhasebe.Irsaliye();
+        irsaliye.setId(7L);
+        irsaliye.setDurum("KESILDI");
+        irsaliye.setSirketId(1L);
+        when(irsaliyeRepository.findById(7L)).thenReturn(Optional.of(irsaliye));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(java.math.BigDecimal.valueOf(2))
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").durum("KESILDI").tarih(LocalDate.now())
+                .cariHesapId(1L).irsaliyeId(7L).kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+
+        faturaService.faturaOlustur(dto, 1L, null, null);
+
+        // İrsaliye zaten stok işlediği için faturada stok hareketi oluşmamalı.
+        verify(stokHareketRepository, never()).saveAll(any());
+        verify(stokRepository, never()).save(any());
     }
 
     @Test

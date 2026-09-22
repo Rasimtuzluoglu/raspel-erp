@@ -25,6 +25,10 @@ vi.mock('../api/index.js', () => ({
     filtreli: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0 } }),
     hareketEkle: vi.fn(), topluFiyat: vi.fn(), topluOlustur: vi.fn()
   },
+  depoAPI: {
+    getAll: vi.fn().mockResolvedValue({ data: [] }),
+    stokDagilimi: vi.fn().mockResolvedValue({ data: [] })
+  },
   kategoriAPI: { getAll: vi.fn().mockResolvedValue({ data: [] }) },
   tedarikciAPI: { getAll: vi.fn().mockResolvedValue({ data: [] }) },
   bildirimAPI: { getAll: vi.fn().mockResolvedValue({ data: [] }) }

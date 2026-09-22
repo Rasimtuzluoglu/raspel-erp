@@ -35,6 +35,7 @@ public class DepoService {
     private final SubeRepository subeRepository;
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.envanter.StokService stokService;
 
     @Transactional(readOnly = true)
     public Page<DepoDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -121,14 +122,33 @@ public class DepoService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Şirketin tüm depolarındaki stok kırılımı (stok x depo). Stoklar ekranındaki
+     * "Depo Dağılımı" görünümü tek çağrıda beslenir; depo başına ayrı istek atılmaz.
+     */
+    @Transactional(readOnly = true)
+    public List<DepoStokDTO> stokDagilimi(Long sirketId) {
+        List<Depo> depolar = depoRepository.findBySirketIdOrderByAdAsc(sirketId, Pageable.unpaged()).getContent();
+        if (depolar.isEmpty()) return List.of();
+        Map<Long, String> depoAdlari = depolar.stream()
+                .collect(Collectors.toMap(Depo::getId, Depo::getAd));
+        return depoStokRepository.findByDepoIdIn(depolar.stream().map(Depo::getId).collect(Collectors.toList()))
+                .stream()
+                .map(ds -> DepoStokDTO.builder()
+                        .id(ds.getId()).depoId(ds.getDepoId())
+                        .depoAdi(depoAdlari.get(ds.getDepoId()))
+                        .stokId(ds.getStokId()).miktar(ds.getMiktar())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     public DepoStokDTO stokEkle(Long depoId, Long stokId, BigDecimal miktar) {
         Depo d = depoRepository.findById(depoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Depo", depoId));
         tenantChecker.check(d.getSirketId(), "Depo");
-        DepoStok ds = depoStokRepository.findByDepoIdAndStokIdForUpdate(depoId, stokId)
-                .orElse(DepoStok.builder().depoId(depoId).stokId(stokId).miktar(BigDecimal.ZERO).build());
-        ds.setMiktar(ds.getMiktar().add(miktar));
-        depoStokRepository.save(ds);
+        // Global stok ve StokHareket tek bir noktadan (StokService) güncellenir; aksi halde
+        // depo kırılımı ile ana stok miktarı birbirinden kopar.
+        depoHareketiIsle(stokId, depoId, miktar, "GIRIS");
         return depoStoklari(depoId).stream()
                 .filter(s -> s.getStokId().equals(stokId))
                 .findFirst().orElse(null);
@@ -142,16 +162,24 @@ public class DepoService {
                 .orElseThrow(() -> new BusinessException("Bu depoda stok bulunamadı"));
         if (ds.getMiktar().compareTo(miktar) < 0)
             throw new BusinessException("Yetersiz stok! Mevcut: " + ds.getMiktar() + ", Çıkış: " + miktar);
-        ds.setMiktar(ds.getMiktar().subtract(miktar));
-        depoStokRepository.save(ds);
+        depoHareketiIsle(stokId, depoId, miktar, "CIKIS");
         return depoStoklari(depoId).stream()
                 .filter(s -> s.getStokId().equals(stokId))
                 .findFirst().orElse(null);
     }
 
     public void stokTransfer(Long kaynakDepoId, Long hedefDepoId, Long stokId, BigDecimal miktar) {
+        // Transfer global toplamı değiştirmez: kaynak çıkışı + hedef girişi net sıfırdır.
         stokCikar(kaynakDepoId, stokId, miktar);
         stokEkle(hedefDepoId, stokId, miktar);
+    }
+
+    private void depoHareketiIsle(Long stokId, Long depoId, BigDecimal miktar, String tur) {
+        stokService.hareketEkle(com.raspel.erp.dto.envanter.StokHareketDTO.builder()
+                .stokId(stokId).depoId(depoId).tur(tur).miktar(miktar)
+                .hareketTarihi(java.time.LocalDate.now())
+                .aciklama("GIRIS".equals(tur) ? "Depo stok girişi" : "Depo stok çıkışı")
+                .build());
     }
 
     private DepoDTO entityToDTO(Depo d, String subeAd) {

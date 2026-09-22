@@ -122,6 +122,9 @@ export const depoAPI = {
   getStoklar(id) {
     return apiClient.get(`/depolar/${id}/stoklar`)
   },
+  stokDagilimi() {
+    return apiClient.get('/depolar/stok-dagilimi')
+  },
   stokEkle(id, data) {
     return apiClient.post(`/depolar/${id}/stok-ekle`, data)
   },

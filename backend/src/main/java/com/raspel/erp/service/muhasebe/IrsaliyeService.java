@@ -46,6 +46,7 @@ public class IrsaliyeService {
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -61,6 +62,8 @@ public class IrsaliyeService {
     }
 
     public IrsaliyeDTO olustur(IrsaliyeDTO dto, Long sirketId) {
+        donemService.kilitKontrol(sirketId,
+                dto.getTarih() != null ? dto.getTarih() : LocalDate.now(), "irsaliye oluşturma");
         Irsaliye i = Irsaliye.builder()
                 .irsaliyeNo(dto.getIrsaliyeNo()).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).faturaId(dto.getFaturaId())
@@ -83,6 +86,10 @@ public class IrsaliyeService {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
         tenantChecker.check(i.getSirketId(), "İrsaliye");
+        donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye düzenleme");
+        if (dto.getTarih() != null) {
+            donemService.kilitKontrol(i.getSirketId(), dto.getTarih(), "irsaliye düzenleme");
+        }
         i.setIrsaliyeNo(dto.getIrsaliyeNo());
         i.setTarih(dto.getTarih());
         i.setCariHesapId(dto.getCariHesapId());
@@ -108,6 +115,7 @@ public class IrsaliyeService {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
         tenantChecker.check(i.getSirketId(), "İrsaliye");
+        donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye durum güncelleme");
 
         if ("KESILDI".equals(durum) && !"KESILDI".equals(i.getDurum())) {
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
@@ -193,6 +201,7 @@ public class IrsaliyeService {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
         tenantChecker.check(i.getSirketId(), "İrsaliye");
+        donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye silme");
         if ("KESILDI".equals(i.getDurum())) {
             throw new BusinessException("Kesilmiş irsaliye doğrudan silinemez, önce iptal edilmelidir");
         }

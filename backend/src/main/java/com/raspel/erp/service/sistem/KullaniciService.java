@@ -213,7 +213,9 @@ public class KullaniciService {
     public KullaniciDTO guncelle(Long id, KullaniciDTO dto) {
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
-        tenantChecker.check(k.getSirketId(), "Kullanıcı");
+        // getir() ile aynı esnek kontrol: aktif şirket home'dan farklı olsa da ADMIN/
+        // atanmış kullanıcı düzenleyebilir (self-lock ve gereksiz 404 önlenir).
+        tenantErisimiDogrula(k);
         if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
@@ -243,7 +245,7 @@ public class KullaniciService {
     public void sil(Long id) {
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
-        tenantChecker.check(k.getSirketId(), "Kullanıcı");
+        tenantErisimiDogrula(k);
         kullaniciRepository.delete(k);
     }
 
@@ -617,7 +619,10 @@ public class KullaniciService {
         Long mevcutBitis = mevcutToken != null ? jwtUtil.getExpirationFromToken(mevcutToken) : null;
         long temel = (mevcutBitis != null && mevcutBitis > simdi) ? mevcutBitis : simdi;
         long hedef = Math.min(temel + OTURUM_UZATMA_MS, simdi + OTURUM_MAX_MS);
-        LoginResponse yanit = tokenOlusturVeDon(k, null, null, hedef);
+        // Aktif şirket, mevcut token'dan korunur; home şirketine düşürülmez
+        // (aksi halde şirket değiştirdikten sonra liste/tenant bağlamı bozulur).
+        Long aktifSirketId = mevcutToken != null ? jwtUtil.getSirketIdFromToken(mevcutToken) : null;
+        LoginResponse yanit = tokenOlusturVeDon(k, null, aktifSirketId, hedef);
         // Eski token'i iptal et (yeni token ile oturum devam eder).
         try {
             if (mevcutToken != null) {

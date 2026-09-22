@@ -204,8 +204,11 @@ services:
       # icin .env uzerinden APP_COOKIE_SECURE=false / APP_SECURITY_HTTPS_ONLY=false yapin.
       APP_COOKIE_SECURE: ${APP_COOKIE_SECURE:-true}
       APP_SECURITY_HTTPS_ONLY: ${APP_SECURITY_HTTPS_ONLY:-true}
-      # Gercek uretimde true yapin (localhost origin'lerini reddeder).
-      APP_SECURITY_STRICT_DOMAINS: ${APP_SECURITY_STRICT_DOMAINS:-false}
+      # Uretim varsayilani true (localhost origin'lerini reddeder). Yerel gelistirme icin
+      # .env uzerinden APP_SECURITY_STRICT_DOMAINS=false yapin.
+      APP_SECURITY_STRICT_DOMAINS: ${APP_SECURITY_STRICT_DOMAINS:-true}
+      # /actuator/prometheus scrape paylasilan token'i (Prometheus ile ayni deger).
+      APP_METRICS_SCRAPE_TOKEN: ${APP_METRICS_SCRAPE_TOKEN:-}
     volumes:
       - backup_data:/app/backups
     depends_on:
@@ -277,10 +280,22 @@ services:
     container_name: raspel-prometheus
     ports:
       - "127.0.0.1:9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./config/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
       - prometheus_data:/prometheus
+    secrets:
+      - metrics_scrape_token
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cp /run/secrets/metrics_scrape_token /etc/prometheus/metrics_token
+        chmod 0400 /etc/prometheus/metrics_token
+        exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
     restart: unless-stopped
     depends_on:
       - backend
@@ -364,3 +379,7 @@ volumes:
   letsencrypt_data:
   minio_data:
   redis_data:
+
+secrets:
+  metrics_scrape_token:
+    environment: APP_METRICS_SCRAPE_TOKEN

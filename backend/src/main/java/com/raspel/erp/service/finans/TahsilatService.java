@@ -223,10 +223,15 @@ public class TahsilatService {
                     .build(), sirketId);
         }
 
-        // Kasa/banka hesabina giris (secildiyse)
+        // Kasa/banka hesabina giris (secildiyse). Ayni tutar iki hesaba birden yazilamaz.
+        if (kasaId != null && bankaId != null) {
+            throw new BusinessException("Aynı tahsilat hem kasaya hem bankaya işlenemez; tek hesap seçin");
+        }
         if (kasaId != null) {
             kasaGirisiIsle(kasaId, tutar, cari, hareketTarihi, sirketId);
-        } else if (bankaId != null) {
+        } else if (bankaId != null && posTerminaliId == null) {
+            // POS tahsilatı gün sonunda POS'un banka hesabına aktarılır; burada ayrıca
+            // bankaya yazılırsa tutar iki kez sayılır (çift yazım).
             bankaGirisiIsle(bankaId, tutar, cari, hareketTarihi, sirketId);
         }
 

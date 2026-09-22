@@ -44,7 +44,8 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
             "AND (:marka IS NULL OR lower(s.marka) LIKE :marka) " +
             "AND (:stokGrubu IS NULL OR s.stokGrubu = :stokGrubu) " +
             "AND (:minFiyat IS NULL OR s.satisFiyati >= :minFiyat OR s.fiyat >= :minFiyat) " +
-            "AND (:maxFiyat IS NULL OR s.satisFiyati <= :maxFiyat OR s.fiyat <= :maxFiyat)")
+            "AND (:maxFiyat IS NULL OR s.satisFiyati <= :maxFiyat OR s.fiyat <= :maxFiyat) " +
+            "AND (:depoId IS NULL OR EXISTS (SELECT ds FROM DepoStok ds WHERE ds.stokId = s.id AND ds.depoId = :depoId))")
     Page<Stok> filtreli(@Param("sirketId") Long sirketId,
                         @Param("q") String q,
                         @Param("kategori") String kategori,
@@ -52,5 +53,6 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
                         @Param("stokGrubu") String stokGrubu,
                         @Param("minFiyat") BigDecimal minFiyat,
                         @Param("maxFiyat") BigDecimal maxFiyat,
+                        @Param("depoId") Long depoId,
                         Pageable pageable);
 }

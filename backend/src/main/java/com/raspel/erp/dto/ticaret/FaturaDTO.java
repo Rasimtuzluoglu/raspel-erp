@@ -62,6 +62,11 @@ public class FaturaDTO {
     private BigDecimal taksitTutar;
     private Long kasaId;
     private String kasaAd;
+    private Long bankaId;
+    /** KART tahsilatı banka hesabına aktarılsın mı (POS gün sonu beklenmeden). */
+    private Boolean kartaBankaAktar;
+    /** Faturanın dayandığı irsaliye; verilirse stok çift düşümü önlenir. */
+    private Long irsaliyeId;
 
     /** Fatura kesilirken e-posta bildiriminin durumu: GONDERILDI / GONDERILEMEDI / null (gönderilmedi). */
     private String emailGonderimDurumu;

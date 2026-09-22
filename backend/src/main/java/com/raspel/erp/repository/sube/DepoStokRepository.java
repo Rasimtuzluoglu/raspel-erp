@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface DepoStokRepository extends JpaRepository<DepoStok, Long> {
     List<DepoStok> findByDepoId(Long depoId);
     List<DepoStok> findByStokId(Long stokId);
+    List<DepoStok> findByDepoIdIn(java.util.Collection<Long> depoIdler);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT ds FROM DepoStok ds WHERE ds.depoId = :depoId AND ds.stokId = :stokId")

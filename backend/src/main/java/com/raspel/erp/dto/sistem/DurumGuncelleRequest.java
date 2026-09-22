@@ -12,4 +12,10 @@ public class DurumGuncelleRequest {
     private String durum;
 
     private String onaylayan;
+
+    /** Tahsilat için opsiyonel kasa hesabı (yalnızca çek/senet tahsilinde kullanılır). */
+    private Long kasaId;
+
+    /** Tahsilat için opsiyonel banka hesabı (yalnızca çek/senet tahsilinde kullanılır). */
+    private Long bankaId;
 }

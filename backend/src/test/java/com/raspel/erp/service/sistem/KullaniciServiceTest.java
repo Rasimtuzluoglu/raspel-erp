@@ -166,11 +166,25 @@ class KullaniciServiceTest {
     @Test
     void guncelle_updatesUser() {
         Kullanici existing = createKullanici(1L);
+        existing.setSirketId(1L);
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(1L);
         KullaniciDTO dto = KullaniciDTO.builder().displayName("Updated").active(false).role("ADMIN").build();
         when(kullaniciRepository.save(any(Kullanici.class))).thenReturn(existing);
         KullaniciDTO result = kullaniciService.guncelle(1L, dto);
         assertEquals("Updated", result.getDisplayName());
+    }
+
+    @Test
+    void guncelle_baskaSirketteReddedilir() {
+        Kullanici existing = createKullanici(5L);
+        existing.setSirketId(3L);
+        existing.setSirketler(java.util.Set.of());
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(existing));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(2L);
+
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> kullaniciService.guncelle(5L, KullaniciDTO.builder().displayName("X").build()));
     }
 
     @Test
@@ -181,9 +195,25 @@ class KullaniciServiceTest {
 
     @Test
     void sil_deletesUser() {
-        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(createKullanici(1L)));
+        Kullanici k = createKullanici(1L);
+        k.setSirketId(1L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(1L);
         kullaniciService.sil(1L);
         verify(kullaniciRepository).delete(any(Kullanici.class));
+    }
+
+    @Test
+    void sil_baskaSirketteReddedilir() {
+        Kullanici k = createKullanici(5L);
+        k.setSirketId(3L);
+        k.setSirketler(java.util.Set.of());
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(k));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(2L);
+
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> kullaniciService.sil(5L));
+        verify(kullaniciRepository, never()).delete(any(Kullanici.class));
     }
 
     @Test
@@ -506,9 +536,16 @@ class KullaniciServiceTest {
     @Test
     void oturumUzat_30DakikaEklerVeEskiTokeniIptalEder() {
         Kullanici k = createKullanici(1L);
+        k.setSirketId(1L);
+        com.raspel.erp.entity.sistem.Sirket sirket = new com.raspel.erp.entity.sistem.Sirket();
+        sirket.setId(1L);
+        sirket.setAd("Firma");
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
         when(jwtUtil.getExpirationFromToken("eski")).thenReturn(System.currentTimeMillis() + 5 * 60 * 1000);
-        when(jwtUtil.generateToken(eq(k), isNull(), isNull(), anyLong())).thenReturn("yeni");
+        // Aktif sirket token'dan korunur (home sirketine dusurulmez).
+        when(jwtUtil.getSirketIdFromToken("eski")).thenReturn(1L);
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(sirket));
+        when(jwtUtil.generateToken(eq(k), eq(1L), eq("Firma"), anyLong())).thenReturn("yeni");
         when(jwtUtil.getJtiFromToken("yeni")).thenReturn("jti-yeni");
         when(jwtUtil.getJtiFromToken("eski")).thenReturn("jti-eski");
 
@@ -516,6 +553,7 @@ class KullaniciServiceTest {
 
         assertNotNull(r);
         assertEquals("yeni", r.getToken());
+        assertEquals(1L, r.getSirketId());
         // Bitis: mevcut bitis + 30 dk (veya simdi + 30 dk) civarinda olmali.
         assertTrue(r.getTokenExpiresAt() > System.currentTimeMillis() + 25 * 60 * 1000);
         verify(aktifOturumService).oturumKaydet(eq("jti-yeni"), eq(1L), any(), any(), any(), any());

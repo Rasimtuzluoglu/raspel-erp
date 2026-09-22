@@ -34,6 +34,18 @@
       />
     </div>
     <div class="form-grup">
+      <label>{{ $t('stoklar.hareketDepo') }}</label>
+      <Dropdown
+        v-model="depoId"
+        :options="depolar"
+        option-label="ad"
+        option-value="id"
+        :placeholder="$t('stoklar.depoSecin')"
+        show-clear
+        class="w-full"
+      />
+    </div>
+    <div class="form-grup">
       <label>{{ $t('common.description') }}</label>
       <Textarea
         v-model="aciklama"
@@ -62,6 +74,7 @@
 defineProps({
   baslik: { type: String, default: '' },
   cariHesaplar: { type: Array, default: () => [] },
+  depolar: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false }
 })
 
@@ -71,6 +84,7 @@ const visible = defineModel('visible', { type: Boolean, default: false })
 const miktar = defineModel('miktar', { type: Number, default: null })
 const hareketTarihi = defineModel('hareketTarihi', { type: [Date, String], default: null })
 const cariHesapId = defineModel('cariHesapId', { type: [Number, String], default: null })
+const depoId = defineModel('depoId', { type: [Number, String], default: null })
 const aciklama = defineModel('aciklama', { type: String, default: '' })
 </script>
 

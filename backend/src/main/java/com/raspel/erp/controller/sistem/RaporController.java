@@ -32,18 +32,20 @@ public class RaporController {
     private final com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.sistem.ExcelExportService excelExportService;
     private final com.raspel.erp.service.sistem.EmailService emailService;
+    private final com.raspel.erp.service.sistem.EmailPolitikaService emailPolitikaService;
 
     @PostMapping(value = "/eposta", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Rapor PDF'ini e-posta ile gönder",
             description = "Yüklenen PDF ekini belirtilen adrese gönderir (rapor paylaşımı)")
     public ResponseEntity<java.util.Map<String, String>> raporEpostaGonder(
+            HttpServletRequest request,
             @RequestParam("dosya") org.springframework.web.multipart.MultipartFile dosya,
             @RequestParam String alici,
             @RequestParam(required = false) String baslik,
             @RequestParam(required = false) String dosyaAdi) {
-        if (alici == null || !alici.contains("@")) {
-            throw new com.raspel.erp.exception.BusinessException("Geçerli bir e-posta adresi giriniz");
-        }
+        // Serbest alıcıya gönderim (relay) engellenir; yalnızca şirketin kayıtlı e-postaları.
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        emailPolitikaService.aliciDogrula(alici, sirketId);
         if (dosya == null || dosya.isEmpty()) {
             throw new com.raspel.erp.exception.BusinessException("Gönderilecek rapor dosyası boş");
         }
