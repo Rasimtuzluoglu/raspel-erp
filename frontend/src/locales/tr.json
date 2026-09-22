@@ -2365,7 +2365,7 @@
     "gorunenAd": "Görünen Ad *",
     "gorunenAdPlaceholder": "Ad soyad",
     "email": "E-posta",
-    "emailPlaceholder": "kullanici@ornek.com",
+    "emailPlaceholder": "kullanici{'@'}ornek.com",
     "sifreSifirlaBaslik": "Şifre Sıfırla",
     "yeniSifreTekrar": "Yeni Şifre (Tekrar)",
     "sifreEnAz8": "Şifre en az 8 karakter olmalıdır.",
@@ -2909,7 +2909,7 @@
     "epostaGonderildi": "Rapor e-posta ile gönderildi",
     "epostaHata": "Rapor e-posta ile gönderilemedi",
     "aliciEposta": "Alıcı e-posta",
-    "epostaYerTutucu": "ornek@firma.com"
+    "epostaYerTutucu": "ornek{'@'}firma.com"
   },
   "imzaPad": {
     "temizle": "Temizle",

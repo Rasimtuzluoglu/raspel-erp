@@ -48,7 +48,8 @@ function girdiMi() {
 
 function handler(e) {
   const ctrl = e.ctrlKey || e.metaKey
-  const key = e.key.toLowerCase()
+  // e.key bazi sentetik/edge-case olaylarda tanimsiz olabilir; cokmesin.
+  const key = (e.key || '').toLowerCase()
 
   if (ctrl && key === 's') {
     if (calistir('kaydet')) {

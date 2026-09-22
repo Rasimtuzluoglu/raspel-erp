@@ -2365,7 +2365,7 @@
     "gorunenAd": "Display Name *",
     "gorunenAdPlaceholder": "Full name",
     "email": "Email",
-    "emailPlaceholder": "user@example.com",
+    "emailPlaceholder": "user{'@'}example.com",
     "sifreSifirlaBaslik": "Reset Password",
     "yeniSifreTekrar": "New Password (Repeat)",
     "sifreEnAz8": "Password must be at least 8 characters.",
@@ -2909,7 +2909,7 @@
     "epostaGonderildi": "Report sent by e-mail",
     "epostaHata": "Could not send report by e-mail",
     "aliciEposta": "Recipient e-mail",
-    "epostaYerTutucu": "name@company.com"
+    "epostaYerTutucu": "name{'@'}company.com"
   },
   "imzaPad": {
     "temizle": "Clear",
