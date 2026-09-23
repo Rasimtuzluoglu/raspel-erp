@@ -227,13 +227,14 @@ for (const [key, value] of tr) {
   if (value.replace(/\{'@'\}/g, '').includes('@')) {
     report('ERROR', `KACISSIZ @ (linked format riski)  ${key}: ${value.slice(0, 80)}`)
   }
-  if (value.includes('|')) report('WARN', `LITERAL | (plural ayirici riski)  ${key}: ${value.slice(0, 80)}`)
+  if (value.includes('|')) report('ERROR', `LITERAL | (plural ayirici: metnin yarisi kaybolur)  ${key}: ${value.slice(0, 80)}`)
 }
 for (const [key, value] of en) {
   if (typeof value !== 'string') continue
   if (value.replace(/\{'@'\}/g, '').includes('@')) {
     report('ERROR', `KACISSIZ @ (en)  ${key}: ${value.slice(0, 80)}`)
   }
+  if (value.includes('|')) report('ERROR', `LITERAL | (en)  ${key}: ${value.slice(0, 80)}`)
 }
 
 // --unused: tanimli ama kaynakta (statik) kullanilmayan anahtarlari listeler.
