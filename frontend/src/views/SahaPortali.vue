@@ -958,8 +958,8 @@ const tumunuYukle = async () => {
   yukleniyor.value = true
   try {
     const [sipRes, izinRes, masrafRes, cariRes, stokRes, notRes, gorevRes] = await Promise.allSettled([
-      siparisAPI.getAll({ size: 50 }),
-      personelIzinAPI.getAll(),
+      siparisAPI.getAll({ size: 500 }),
+      personelIzinAPI.getAll({ size: 500 }),
       personelMasrafTalepAPI.getKullaniciTalepleri(),
       cariHesapAPI.getAll({ size: 500 }),
       stokAPI.getAll({ size: 500 }),
@@ -980,10 +980,10 @@ const tumunuYukle = async () => {
 
 // Mutasyon sonrasi yalnizca etkilenen veri kumesini yeniler (7 ucu birden cekmek yerine).
 const siparisleriYukle = async () => {
-  try { siparisler.value = unwrapList(await siparisAPI.getAll({ size: 50 })) } catch { /* yoksay */ }
+  try { siparisler.value = unwrapList(await siparisAPI.getAll({ size: 500 })) } catch { /* yoksay */ }
 }
 const izinleriYukle = async () => {
-  try { izinler.value = unwrapList(await personelIzinAPI.getAll()) } catch { /* yoksay */ }
+  try { izinler.value = unwrapList(await personelIzinAPI.getAll({ size: 500 })) } catch { /* yoksay */ }
 }
 const masraflariYukle = async () => {
   try { masraflar.value = unwrapList(await personelMasrafTalepAPI.getKullaniciTalepleri()) } catch { /* yoksay */ }

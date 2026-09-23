@@ -447,9 +447,10 @@ const kaydetSonrasi = () => {
 
 const aralikSeverity = (aralik) => {
   if (!aralik) return 'info'
-  if (aralik === 'Vadesi Gelmemiş') return 'success'
-  if (aralik === '90+ Gün') return 'danger'
-  if (aralik === '61-90 Gün') return 'danger'
+  // Sunucu aralik etiketleri Turkce uretilir; eslesme icin ASCII onek kullanilir.
+  if (aralik.startsWith('Vadesi')) return 'success'
+  if (aralik.startsWith('90+')) return 'danger'
+  if (aralik.startsWith('61-90')) return 'danger'
   return 'warning'
 }
 

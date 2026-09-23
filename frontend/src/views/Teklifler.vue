@@ -610,10 +610,10 @@
         <div class="mektup-header flex justify-between items-start border-b pb-4 mb-4">
           <div>
             <h2 class="text-xl font-bold text-primary">
-              {{ sirket?.ad || 'RasPel ERP Ticaret A.Ş.' }}
+              {{ sirket?.ad || t('teklifler.ornekSirketAd') }}
             </h2>
             <p class="text-xs text-muted">
-              {{ sirket?.adres || 'Örnek Mah. Sanayi Cad. No: 12 Kadıköy / İstanbul' }}
+              {{ sirket?.adres || t('teklifler.ornekAdres') }}
             </p>
             <p class="text-xs text-muted">
               Tel: {{ sirket?.telefon || '0216 555 0000' }} | E-Posta: {{ sirket?.email || 'info@raspel.com' }}
@@ -843,9 +843,9 @@ const varsayilanForm = {
   durum: 'TASLAK',
   paraBirimi: 'TRY',
   iskontoOrani: 0,
-  teslimatSarti: '3 İş Günü',
-  odemeSarti: 'Nakit / Havale',
-  garantiSarti: '2 Yıl Resmi Garanti',
+  teslimatSarti: t('teklifler.ornekTeslimat'),
+  odemeSarti: t('teklifler.ornekOdeme'),
+  garantiSarti: t('teklifler.ornekGaranti'),
   notlar: '',
   kalemler: [
     { stokId: null, aciklama: '', miktar: 1, birim: 'Adet', birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20, tutar: 0 }
@@ -866,7 +866,8 @@ onMounted(async () => {
 const teklifleriGetir = async () => {
   yukleniyor.value = true
   try {
-    const res = await teklifAPI.getAll({ size: 100 })
+    // Not: ilk 500 teklif gosterilir (liste ekrani); daha fazlasi icin sunucu sayfalamasi gerekir.
+    const res = await teklifAPI.getAll({ size: 500 })
     teklifler.value = unwrapList(res)
   } catch (err) {
     toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: t('teklifler.tekliflerYuklenemedi') + err.message, life: 3000 })

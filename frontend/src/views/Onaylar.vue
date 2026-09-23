@@ -396,7 +396,8 @@ const yukle = async () => {
       personelIzinAPI.getAll(),
       personelMasrafTalepAPI.getBekleyenler(),
       satinalmaTalepAPI.getAll(),
-      siparisAPI.getAll({ size: 100 })
+      // Not: onay bekleyen ilk 500 siparis gosterilir; ust sinir icin sunucu sayfalamasi gerekir.
+      siparisAPI.getAll({ size: 500 })
     ])
     if (iRes.status === 'fulfilled') {
       const allIzin = unwrapList(iRes.value)

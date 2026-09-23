@@ -19,8 +19,8 @@ export const personelAPI = {
 }
 
 export const personelIzinAPI = {
-  getAll() {
-    return apiClient.get('/personel-izin')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/personel-izin', { params })
   },
   getByPersonel(personelId) {
     return apiClient.get(`/personel-izin/personel/${personelId}`)
@@ -52,8 +52,8 @@ export const puantajAPI = {
 }
 
 export const maasBordroAPI = {
-  getAll() {
-    return apiClient.get('/maas-bordro')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/maas-bordro', { params })
   },
   getById(id) {
     return apiClient.get(`/maas-bordro/${id}`)
@@ -70,8 +70,8 @@ export const maasBordroAPI = {
 }
 
 export const vardiyaAPI = {
-  getAll() {
-    return apiClient.get('/vardiyalar')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/vardiyalar', { params })
   },
   getByPersonel(personelId) {
     return apiClient.get(`/vardiyalar/personel/${personelId}`)

@@ -625,7 +625,7 @@ const printTermalFis = (satisData) => {
           </tr>
         </thead>
         <tbody>
-          ${kalemlerHtml.length ? kalemlerHtml : '<tr><td colspan="2">1 Adet Satış Kalemi</td></tr>'}
+          ${kalemlerHtml.length ? kalemlerHtml : `<tr><td colspan="2">${t('satis.fisKalemFallback')}</td></tr>`}
         </tbody>
       </table>
       <div class="line"></div>

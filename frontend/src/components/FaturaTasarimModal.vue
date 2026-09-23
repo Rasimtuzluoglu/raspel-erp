@@ -467,10 +467,10 @@
               <div class="cari-kutu-icerik">
                 <div class="cari-sol">
                   <h3 class="cari-unvan">
-                    {{ aktifFatura?.cariHesapAd || 'Örnek Müşteri Ltd. Şti.' }}
+                    {{ aktifFatura?.cariHesapAd || $t('faturaTasarim.ornekCariAd') }}
                   </h3>
                   <p class="cari-adres">
-                    {{ aktifFatura?.cariAdres || 'Örnek Mah. Sanayi Cad. No: 12/A Kadıköy / İstanbul' }}
+                    {{ aktifFatura?.cariAdres || $t('faturaTasarim.ornekCariAdres') }}
                   </p>
                 </div>
                 <div class="cari-sag">
@@ -752,9 +752,9 @@ const varsayilanAyarlar = {
   kolonKdvOrani: true,
   fiyatGoster: true,
   bankaGoster: true,
-  bankaAdi: 'Garanti BBVA - Ticari Şube',
+  bankaAdi: t('faturaTasarim.ornekBankaAdi'),
   ibanNo: 'TR12 0006 2000 0001 2345 6789 01',
-  hesapSahibi: 'RasPel ERP Ltd. Şti.',
+  hesapSahibi: t('faturaTasarim.ornekHesapSahibi'),
   qrKodGoster: true,
   imzaKutusuGoster: true,
   odemeDurumuGoster: true,
@@ -966,9 +966,9 @@ const ornekKalemler = computed(() => {
     return aktifFatura.value.kalemler
   }
   return [
-    { stokKodu: 'STK-001', aciklama: 'Kurumsal ERP Yazılım Lisansı v2.5', adet: 1, birim: 'Adet', birimFiyat: 15000, iskontoOrani: 0, kdvOrani: 20, tutar: 15000 },
-    { stokKodu: 'STK-002', aciklama: 'Bulut Yedekleme & Sunucu Altyapı Hizmeti', adet: 12, birim: 'Ay', birimFiyat: 1200, iskontoOrani: 10, kdvOrani: 20, tutar: 12960 },
-    { stokKodu: 'STK-003', aciklama: 'Yıllık Teknik Destek ve Danışmanlık', adet: 1, birim: 'Yıl', birimFiyat: 6500, iskontoOrani: 0, kdvOrani: 20, tutar: 6500 }
+    { stokKodu: 'STK-001', aciklama: t('faturaTasarim.ornekKalem1'), adet: 1, birim: t('faturaTasarim.birimAdet'), birimFiyat: 15000, iskontoOrani: 0, kdvOrani: 20, tutar: 15000 },
+    { stokKodu: 'STK-002', aciklama: t('faturaTasarim.ornekKalem2'), adet: 12, birim: t('faturaTasarim.birimAy'), birimFiyat: 1200, iskontoOrani: 10, kdvOrani: 20, tutar: 12960 },
+    { stokKodu: 'STK-003', aciklama: t('faturaTasarim.ornekKalem3'), adet: 1, birim: t('faturaTasarim.birimYil'), birimFiyat: 6500, iskontoOrani: 0, kdvOrani: 20, tutar: 6500 }
   ]
 })
 
@@ -994,7 +994,7 @@ const hesaplananGenelToplam = computed(() => {
 
 const yaziylaTutar = computed(() => {
   const tutar = Math.round(Number(hesaplananGenelToplam.value) || 0)
-  return `${tutar.toLocaleString('tr-TR')} Türk Lirasıdır.`
+  return t('faturaTasarim.yaziylaTutar', { tutar: tutar.toLocaleString('tr-TR') })
 })
 
 const odemeDurumLabel = (durum) => {

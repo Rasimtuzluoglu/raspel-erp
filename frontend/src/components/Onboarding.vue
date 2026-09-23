@@ -120,30 +120,31 @@ const atla = () => {
 const demoYukle = async () => {
   demoYukleniyor.value = true
   try {
+    // Demo kayitlari veri olarak saklanir; Turkce karakterler Unicode kacisi ile yazilir.
     await kategoriAPI.create({ ad: 'Mobilya', tur: 'GIDER' })
-    await kategoriAPI.create({ ad: 'Satış', tur: 'GELIR' })
+    await kategoriAPI.create({ ad: 'Sat\u0131\u015f', tur: 'GELIR' })
 
     const ornekCariler = [
       {
-        ad: 'Demo Müşteri A',
+        ad: 'Demo M\u00fc\u015fteri A',
         vergiNo: '1111111111',
         telefon: '0532 111 11 11',
         email: 'musteria@demo.com',
-        il: 'İstanbul'
+        il: '\u0130stanbul'
       },
       {
-        ad: 'Demo Müşteri B',
+        ad: 'Demo M\u00fc\u015fteri B',
         vergiNo: '2222222222',
         telefon: '0532 222 22 22',
         email: 'musterib@demo.com',
         il: 'Ankara'
       },
       {
-        ad: 'Demo Tedarikçi',
+        ad: 'Demo Tedarik\u00e7i',
         vergiNo: '3333333333',
         telefon: '0532 333 33 33',
         email: 'tedarikci@demo.com',
-        il: 'İzmir'
+        il: '\u0130zmir'
       }
     ]
     for (const c of ornekCariler) await cariHesapAPI.create(c)

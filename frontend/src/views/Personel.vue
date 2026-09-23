@@ -477,7 +477,7 @@ function defaultForm() {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [pR, iR, kR] = await Promise.all([personelAPI.getAll(), personelIzinAPI.getAll(), kullaniciAPI.getAll({ size: 500 }).catch(() => ({ data: [] }))])
+    const [pR, iR, kR] = await Promise.all([personelAPI.getAll({ size: 500 }), personelIzinAPI.getAll({ size: 500 }), kullaniciAPI.getAll({ size: 500 }).catch(() => ({ data: [] }))])
     personeller.value = unwrapList(pR)
     tumIzinler.value = unwrapList(iR)
     kullanicilar.value = unwrapList(kR)

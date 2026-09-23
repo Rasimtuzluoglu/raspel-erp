@@ -508,7 +508,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { crmAPI, cariHesapAPI } from '../api/index.js'
@@ -540,32 +540,32 @@ const kampanyaDuzenleme = ref(false)
 const kampanyaId = ref(null)
 const kampanyaForm = ref(bosKampanya())
 
-const leadDurumlari = [
-  { label: 'Yeni', value: 'YENI' },
-  { label: 'Nitelikli', value: 'NITELIKLI' },
-  { label: 'Dönüştürüldü', value: 'DONUSTURULDU' },
-  { label: 'Kaybedildi', value: 'KAYBEDILDI' }
-]
-const aktiviteTurleri = [
-  { label: 'Arama', value: 'ARAMA' },
-  { label: 'Toplantı', value: 'TOPLANTI' },
-  { label: 'E-posta', value: 'EMAIL' },
-  { label: 'Not', value: 'NOT' },
-  { label: 'Görev', value: 'GOREV' }
-]
-const kampanyaTurleri = [
-  { label: 'E-posta', value: 'EMAIL' },
-  { label: 'SMS', value: 'SMS' },
-  { label: 'Sosyal Medya', value: 'SOSYAL' },
-  { label: 'Etkinlik', value: 'ETKINLIK' },
-  { label: 'Diğer', value: 'DIGER' }
-]
-const kampanyaDurumlari = [
-  { label: 'Planlandı', value: 'PLANLANDI' },
-  { label: 'Aktif', value: 'AKTIF' },
-  { label: 'Tamamlandı', value: 'TAMAMLANDI' },
-  { label: 'İptal', value: 'IPTAL' }
-]
+const leadDurumlari = computed(() => [
+  { label: t('crmMerkezi.leadYeni'), value: 'YENI' },
+  { label: t('crmMerkezi.leadNitelikli'), value: 'NITELIKLI' },
+  { label: t('crmMerkezi.leadDonusturuldu'), value: 'DONUSTURULDU' },
+  { label: t('crmMerkezi.leadKaybedildi'), value: 'KAYBEDILDI' }
+])
+const aktiviteTurleri = computed(() => [
+  { label: t('crmMerkezi.aktiviteArama'), value: 'ARAMA' },
+  { label: t('crmMerkezi.aktiviteToplanti'), value: 'TOPLANTI' },
+  { label: t('crmMerkezi.aktiviteEposta'), value: 'EMAIL' },
+  { label: t('crmMerkezi.aktiviteNot'), value: 'NOT' },
+  { label: t('crmMerkezi.aktiviteGorev'), value: 'GOREV' }
+])
+const kampanyaTurleri = computed(() => [
+  { label: t('crmMerkezi.aktiviteEposta'), value: 'EMAIL' },
+  { label: t('crmMerkezi.kampanyaSms'), value: 'SMS' },
+  { label: t('crmMerkezi.kampanyaSosyal'), value: 'SOSYAL' },
+  { label: t('crmMerkezi.kampanyaEtkinlik'), value: 'ETKINLIK' },
+  { label: t('crmMerkezi.kampanyaDiger'), value: 'DIGER' }
+])
+const kampanyaDurumlari = computed(() => [
+  { label: t('crmMerkezi.kampanyaPlanlandi'), value: 'PLANLANDI' },
+  { label: t('crmMerkezi.kampanyaAktif'), value: 'AKTIF' },
+  { label: t('crmMerkezi.kampanyaTamamlandi'), value: 'TAMAMLANDI' },
+  { label: t('crmMerkezi.kampanyaIptal'), value: 'IPTAL' }
+])
 
 function bosLead() {
   return {

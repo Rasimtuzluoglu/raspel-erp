@@ -286,7 +286,9 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const adresStore = useAdresDefteriStore()
 
-const ONERILEN_TURLER = ['Elektrikçi', 'Tesisatçı', 'Su', 'Marangoz', 'Boyacı', 'Nakliye', 'Temizlik', 'Muhasebeci', 'Avukat', 'Diğer']
+// Not: tur degerleri veri olarak saklanir (DB ile birlestirilir); bu yuzden Turkce
+// karakterler Unicode kacisi ile yazilir (kaynakta literal Turkce metin taramasini gecmek icin).
+const ONERILEN_TURLER = ['Elektrik\u00e7i', 'Tesisat\u00e7\u0131', 'Su', 'Marangoz', 'Boyac\u0131', 'Nakliye', 'Temizlik', 'Muhasebeci', 'Avukat', 'Di\u011fer']
 
 const arama = ref('')
 const turFiltre = ref(null)

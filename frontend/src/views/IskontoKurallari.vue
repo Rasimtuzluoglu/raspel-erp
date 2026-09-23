@@ -300,7 +300,8 @@ const aralikMetni = (k) => {
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const r = await iskontoKuraliAPI.getAll({ size: 200 })
+    // Not: ilk 500 iskonto kurali gosterilir; ust sinir icin sunucu sayfalamasi gerekir.
+    const r = await iskontoKuraliAPI.getAll({ size: 500 })
     kurallar.value = unwrapList(r)
   } catch {
     toastBildirim.hata(t('iskontoKurallari.hataYukleme'))

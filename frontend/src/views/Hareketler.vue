@@ -67,7 +67,7 @@
       <AppDataTable
         v-model:selection="selectedItems"
         selection-mode="multiple"
-        :value="tümHareketler"
+        :value="tumHareketler"
         striped-rows
         :rows="10"
         :paginator="true"
@@ -162,7 +162,7 @@
         </template>
         <template #empty>
           <EmptyState
-            v-if="tümHareketler.length === 0"
+            v-if="tumHareketler.length === 0"
             :message="t('hareketler.empty')"
             :sub-message="t('hareketler.emptyHint')"
             icon="pi pi-sync"
@@ -186,7 +186,7 @@
         <Dropdown
           id="cariHesapId"
           v-model="form.cariHesapId"
-          :options="cariHesapSeçenekleri"
+          :options="cariHesapSecenekleri"
           option-label="ad"
           option-value="id"
           :placeholder="t('hareketler.cariHesapSeciniz')"
@@ -321,7 +321,7 @@ const loading = ref(false)
 const saving = ref(false)
 const error = ref(null)
 const editingId = ref(null)
-const tümHareketler = ref([])
+const tumHareketler = ref([])
 const filtreBaslangic = ref(null)
 const filtreBitis = ref(null)
 const tarihAraligi = ref(null)
@@ -409,7 +409,7 @@ const odemeSekliLabel = (val) => {
   return item ? item.label : String(code)
 }
 
-const cariHesapSeçenekleri = computed(() => {
+const cariHesapSecenekleri = computed(() => {
   return cariHesapStore?.cariHesaplar || []
 })
 
@@ -422,7 +422,7 @@ const loadData = async () => {
   try {
     await cariHesapStore.getAllCariHesaplar()
     const hareketler = await hareketStore.getAllHareketler()
-    tümHareketler.value = hareketler
+    tumHareketler.value = hareketler
   } catch (err) {
     error.value = t('hareketler.hataYukleme')
     toastBildirim.hata(t('hareketler.hataYukleme'))
@@ -501,7 +501,7 @@ const saveHareket = async () => {
       toastBildirim.basarili(t('hareketler.eklendi'))
     }
 
-    tümHareketler.value = await hareketStore.getAllHareketler()
+    tumHareketler.value = await hareketStore.getAllHareketler()
     closeDialog()
   } catch (err) {
     toastBildirim.hata(t('hareketler.islemBasarisiz'))
@@ -525,7 +525,7 @@ const confirmDelete = (id) => {
 const deleteHareket = async (id) => {
   try {
     await hareketStore.deleteHareket(id)
-    tümHareketler.value = await hareketStore.getAllHareketler()
+    tumHareketler.value = await hareketStore.getAllHareketler()
     toastBildirim.basarili(t('hareketler.silindi'))
   } catch (error) {
     toastBildirim.hata(t('hareketler.silmeHata'))
@@ -538,7 +538,7 @@ const filtrele = async () => {
     if (filtreBaslangic.value) params.baslangic = getLocalDateString(filtreBaslangic.value)
     if (filtreBitis.value) params.bitis = getLocalDateString(filtreBitis.value)
     const response = await hareketAPI.filtrele(params)
-    tümHareketler.value = unwrapList(response)
+    tumHareketler.value = unwrapList(response)
   } catch (err) {
     toastBildirim.hata(t('hareketler.filtrelemeBasarisiz'))
   }

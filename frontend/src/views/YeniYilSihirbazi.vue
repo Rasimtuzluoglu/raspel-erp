@@ -11,7 +11,7 @@
 
     <div class="card">
       <Steps
-        :model="adımlar"
+        :model="adimlar"
         :readonly="false"
         :active-step="aktifAdim"
       />
@@ -282,7 +282,7 @@ const toast = useToastBildirim()
 const authStore = useAuthStore()
 
 const aktifAdim = ref(0)
-const adımlar = computed(() => [
+const adimlar = computed(() => [
   { label: t('yeniYilSihirbazi.sirketBilgileri') },
   { label: t('yeniYilSihirbazi.veriAktarimi') },
   { label: t('kasa.onay') }
