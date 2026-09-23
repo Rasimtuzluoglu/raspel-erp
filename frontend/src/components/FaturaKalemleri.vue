@@ -71,7 +71,7 @@
         <template #body="s">
           <Dropdown
             v-model="s.data.kdvOrani"
-            :options="[0, 10, 20]"
+            :options="kdvSecenekleri"
             class="w-full"
           />
         </template>
@@ -130,7 +130,9 @@ defineProps({
   kalemler: { type: Array, required: true },
   araToplam: { type: Number, default: 0 },
   kdvToplam: { type: Number, default: 0 },
-  genelToplam: { type: Number, default: 0 }
+  genelToplam: { type: Number, default: 0 },
+  /** KDV orani secenekleri (varsayilan [0,10,20]). */
+  kdvSecenekleri: { type: Array, default: () => [0, 10, 20] }
 })
 
 defineEmits(['add', 'remove'])

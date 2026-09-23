@@ -242,105 +242,15 @@
       <h3 style="margin: 18px 0 10px; color: #f1f5f9; font-size: 15px">
         {{ t('satis.satisKalemleri') }}
       </h3>
-      <DataTable
-        :value="satisForm.kalemler"
-        striped-rows
-      >
-        <template #empty>
-          <EmptyState />
-        </template>
-        <Column
-          header="#"
-          style="width: 40px"
-        >
-          <template #body="s">
-            {{ s.index + 1 }}
-          </template>
-        </Column>
-        <Column :header="t('satis.urun')">
-          <template #body="s">
-            <InputText
-              v-model="s.data.aciklama"
-              class="w-full kalem-girdi"
-            />
-          </template>
-        </Column>
-        <Column
-          :header="t('satis.adet')"
-          style="width: 110px"
-        >
-          <template #body="s">
-            <InputNumber
-              v-model="s.data.adet"
-              :min="0.01"
-              :min-fraction-digits="2"
-              :max-fraction-digits="2"
-              class="w-full kalem-girdi"
-            />
-          </template>
-        </Column>
-        <Column
-          :header="t('satis.birimFiyat')"
-          style="width: 140px"
-        >
-          <template #body="s">
-            <InputNumber
-              v-model="s.data.birimFiyat"
-              :min="0"
-              :min-fraction-digits="2"
-              :max-fraction-digits="2"
-              mode="currency"
-              currency="TRY"
-              class="w-full kalem-girdi"
-            />
-          </template>
-        </Column>
-        <Column
-          :header="t('satis.kdv')"
-          style="width: 100px"
-        >
-          <template #body="s">
-            <Dropdown
-              v-model="s.data.kdvOrani"
-              :options="kdvOranlari"
-              class="w-full kalem-girdi"
-            />
-          </template>
-        </Column>
-        <Column
-          :header="t('satis.tutar')"
-          style="width: 120px"
-        >
-          <template #body="s">
-            {{ formatCurrency(kalemNetTutar(s.data)) }}
-          </template>
-        </Column>
-        <Column
-          header=""
-          style="width: 50px"
-        >
-          <template #body="s">
-            <Button
-              icon="pi pi-trash"
-              :aria-label="$t('common.delete')"
-              class="p-button-rounded p-button-danger p-button-sm"
-              @click="satisForm.kalemler.splice(s.index, 1)"
-            />
-          </template>
-        </Column>
-      </DataTable>
-
-      <div class="summary-box">
-        <div class="summary-row">
-          <span>{{ t('satis.araToplam') }}</span><span>{{ formatCurrency(araToplam) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>{{ t('satis.kdvToplam') }}</span><span>{{ formatCurrency(kdvToplam) }}</span>
-        </div>
-        <div class="summary-row total">
-          <span>{{ t('satis.genelToplam') }}</span><span>{{ formatCurrency(genelToplam) }}</span>
-        </div>
-      </div>
+      <FaturaKalemleri
+        :kalemler="satisForm.kalemler"
+        :ara-toplam="araToplam"
+        :kdv-toplam="kdvToplam"
+        :genel-toplam="genelToplam"
+        :kdv-secenekleri="kdvOranlari"
+        @add="satisForm.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })"
+        @remove="(i) => satisForm.kalemler.splice(i, 1)"
+      />
 
       <div class="form-group">
         <label>{{ t('common.description') }}</label>
@@ -383,6 +293,7 @@ import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
+import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
@@ -490,6 +401,7 @@ const urunEkle = () => {
     aciklama: u.ad,
     adet: yeniUrunAdet.value,
     birimFiyat: brf,
+    iskontoOrani: 0,
     kdvOrani: kalemKdvOrani,
     stokId: u.id
   })
