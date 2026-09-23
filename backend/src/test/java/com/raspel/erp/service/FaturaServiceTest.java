@@ -64,6 +64,11 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
+    @Mock private com.raspel.erp.repository.finans.HareketRepository hareketRepository;
+    @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {
@@ -323,6 +328,46 @@ class FaturaServiceTest {
         assertEquals(0, stok.getMiktar().compareTo(BigDecimal.valueOf(100)));
         // Cari borcu geri alindi (ters kayit +120)
         verify(cariHesapService).bakiyeGuncelle(1L, new BigDecimal("120"));
+    }
+
+    @Test
+    void faturaDurumGuncelle_odenenFaturaIptal_kasaTersKayit() {
+        Fatura fatura = createFatura(1L);
+        fatura.setId(1L);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        fatura.setKasaId(1L);
+        fatura.setOdenenTutar(BigDecimal.valueOf(120));
+        fatura.setKalanTutar(BigDecimal.ZERO);
+
+        com.raspel.erp.entity.finans.Kasa kasa = new com.raspel.erp.entity.finans.Kasa();
+        kasa.setId(1L);
+        kasa.setBakiye(BigDecimal.valueOf(500));
+        com.raspel.erp.entity.finans.KasaHareket kh = com.raspel.erp.entity.finans.KasaHareket.builder()
+                .id(9L).kasa(kasa).tur("GELIR").tutar(BigDecimal.valueOf(120)).faturaId(1L).build();
+
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(hareketRepository.countByFaturaId(1L)).thenReturn(0L);
+        when(kasaHareketRepository.findByFaturaId(1L)).thenReturn(java.util.List.of(kh));
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+
+        faturaService.faturaDurumGuncelle(1L, "IPTAL");
+
+        // Peşin tahsilat kasaya girmişti; iptalde kasadan düşülür (500 - 120 = 380).
+        assertEquals(0, kasa.getBakiye().compareTo(BigDecimal.valueOf(380)));
+        verify(kasaHareketRepository).save(any(com.raspel.erp.entity.finans.KasaHareket.class));
+    }
+
+    @Test
+    void faturaDurumGuncelle_bagliHareketVarsaIptalReddedilir() {
+        Fatura fatura = createFatura(1L);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(hareketRepository.countByFaturaId(1L)).thenReturn(2L);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> faturaService.faturaDurumGuncelle(1L, "IPTAL"));
+        verify(faturaRepository, never()).save(any(Fatura.class));
     }
 
     @Test

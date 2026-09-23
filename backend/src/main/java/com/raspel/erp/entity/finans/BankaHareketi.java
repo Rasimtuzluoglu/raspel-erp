@@ -39,6 +39,14 @@ public class BankaHareketi {
     @Column(name = "eslesen_fatura_id")
     private Long eslesenFaturaId;
 
+    /** Kaynak fatura (mutabakat eşleşmesinden bağımsız; satış tahsilatı izi/iptal için). */
+    @Column(name = "kaynak_fatura_id")
+    private Long kaynakFaturaId;
+
+    /** Kaynak türü (ör. FATURA). */
+    @Column(name = "kaynak_tip", length = 20)
+    private String kaynakTip;
+
     @Column(nullable = false)
     private Boolean eslestirildi;
 

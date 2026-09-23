@@ -88,6 +88,7 @@ public class FaturaService {
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
+    private final com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     private final FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final com.raspel.erp.service.sistem.DonemService donemService;
@@ -477,6 +478,8 @@ public class FaturaService {
                 .bakiye(banka.getBakiye())
                 .eslestirildi(false)
                 .sirketId(fatura.getSirketId())
+                .kaynakFaturaId(fatura.getId())
+                .kaynakTip("FATURA")
                 .build());
     }
 
@@ -490,7 +493,52 @@ public class FaturaService {
                 .kasa(kasa).tur("GELIR").tutar(tutar)
                 .hareketTarihi(fatura.getTarih())
                 .aciklama("Satış: " + fatura.getFaturaNumarasi())
+                .faturaId(fatura.getId())
+                .kaynakTip("FATURA")
                 .build());
+    }
+
+    /**
+     * Fatura oluşturulurken kasaya/bankaya giren tahsilatı geri alır (iptal/geri alma).
+     * Kaynak faturaya bağlı hareketler bulunur; kasa/banka bakiyesi düşülür ve iz için
+     * ters yönlü hareket yazılır. Bağlı hareket yoksa sessizce geçer (idempotent).
+     */
+    private void kasaBankaTersKayit(Fatura fatura) {
+        if (fatura.getId() == null) return;
+        // Kasa girişleri (GELIR) -> ters GIDER
+        for (KasaHareket kh : kasaHareketRepository.findByFaturaId(fatura.getId())) {
+            if (!"GELIR".equals(kh.getTur())) continue;
+            Kasa kasa = kasaRepository.findByIdForUpdate(kh.getKasa().getId()).orElse(null);
+            if (kasa == null) continue;
+            BigDecimal tutar = kh.getTutar();
+            kasa.setBakiye((kasa.getBakiye() != null ? kasa.getBakiye() : BigDecimal.ZERO).subtract(tutar));
+            kasaRepository.save(kasa);
+            kasaHareketRepository.save(KasaHareket.builder()
+                    .kasa(kasa).tur("GIDER").tutar(tutar)
+                    .hareketTarihi(LocalDate.now())
+                    .aciklama("Fatura iptal: " + fatura.getFaturaNumarasi())
+                    .faturaId(fatura.getId()).kaynakTip("FATURA_IPTAL")
+                    .build());
+        }
+        // Banka alacak hareketleri -> ters borç
+        for (com.raspel.erp.entity.finans.BankaHareketi bh : bankaHareketiRepository.findByKaynakFaturaId(fatura.getId())) {
+            if (bh.getAlacak() == null || bh.getAlacak().signum() <= 0) continue;
+            com.raspel.erp.entity.finans.Banka banka = bankaRepository.findByIdForUpdate(bh.getBankaId()).orElse(null);
+            if (banka == null) continue;
+            BigDecimal tutar = bh.getAlacak();
+            banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).subtract(tutar));
+            bankaRepository.save(banka);
+            bankaHareketiRepository.save(com.raspel.erp.entity.finans.BankaHareketi.builder()
+                    .bankaId(banka.getId())
+                    .tarih(LocalDate.now())
+                    .aciklama("Fatura iptal: " + fatura.getFaturaNumarasi())
+                    .borc(tutar).alacak(BigDecimal.ZERO)
+                    .bakiye(banka.getBakiye())
+                    .eslestirildi(false)
+                    .sirketId(fatura.getSirketId())
+                    .kaynakFaturaId(fatura.getId()).kaynakTip("FATURA_IPTAL")
+                    .build());
+        }
     }
 
     /** Fatura PDF'ini cari hesabın e-posta adresine gönderir. Gönderilemezse hata fırlatır. */
@@ -550,11 +598,11 @@ public class FaturaService {
         boolean geriAliniyor = fatura.getDurum() == Fatura.FaturaDurum.KESILDI
                 && (durum == Fatura.FaturaDurum.TASLAK || durum == Fatura.FaturaDurum.IPTAL);
 
-        // Ödeme yapılmış fatura geri alınamaz/iptal edilemez (bakiye/tahsilat tutarsızlığı önlenir)
-        if (geriAliniyor
-                && fatura.getOdenenTutar() != null
-                && fatura.getOdenenTutar().compareTo(BigDecimal.ZERO) > 0) {
-            throw new BusinessException("Ödeme yapılmış fatura geri alınamaz/iptal edilemez. Önce tahsilat/ödeme hareketlerini silin.");
+        // Faturaya bağlı tahsilat/ödeme hareketleri varsa önce onlar silinmelidir;
+        // aksi halde cari ve kasa/banka ters kaydı tutarsız olur. Fatura oluşturulurken
+        // yapılan peşin tahsilat (kasa/banka hareketi) ise aşağıda otomatik geri alınır.
+        if (geriAliniyor && hareketRepository.countByFaturaId(id) > 0) {
+            throw new BusinessException("Faturaya bağlı tahsilat/ödeme hareketleri var. Önce onları silin.");
         }
 
         if (durum == Fatura.FaturaDurum.KESILDI && fatura.getDurum() != Fatura.FaturaDurum.KESILDI) {
@@ -566,6 +614,8 @@ public class FaturaService {
         } else if (geriAliniyor) {
             stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura geri alındı #" + fatura.getFaturaNumarasi());
             cariBakiyeGuncelle(fatura, true);
+            // Peşin tahsilat kasa/banka hareketini de geri al.
+            kasaBankaTersKayit(fatura);
         }
 
         fatura.setDurum(durum);

@@ -39,6 +39,14 @@ public class KasaHareket {
     @JoinColumn(name = "kategori_id")
     private GelirGiderKategori kategori;
 
+    /** Kaynak fatura (satış tahsilatı izlenebilirliği ve iptal ters kaydı için). */
+    @Column(name = "fatura_id")
+    private Long faturaId;
+
+    /** Kaynak türü (ör. FATURA). */
+    @Column(name = "kaynak_tip", length = 20)
+    private String kaynakTip;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

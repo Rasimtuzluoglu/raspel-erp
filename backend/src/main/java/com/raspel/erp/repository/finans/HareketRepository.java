@@ -56,6 +56,8 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
 
     long countByCariHesapId(Long cariHesapId);
 
+    long countByFaturaId(Long faturaId);
+
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findBySirketIdAndHareketTarihiBetween(Long sirketId, LocalDate baslangic, LocalDate bitis, Pageable pageable);
 
