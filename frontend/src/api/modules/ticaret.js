@@ -89,6 +89,9 @@ export const faturaAPI = {
   paraIzi(id) {
     return apiClient.get(`/faturalar/${id}/para-izi`)
   },
+  yenidenHesapla(id, kaydet = false) {
+    return apiClient.post(`/faturalar/${id}/yeniden-hesapla`, null, { params: { kaydet } })
+  },
   create(data) {
     // Idempotency anahtari: ag tekrarinda/çift tıklamada mükerrer fatura oluşmasını engeller.
     return apiClient.post('/faturalar', data, {

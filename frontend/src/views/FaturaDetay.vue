@@ -38,6 +38,14 @@
           @click="gecmisAcik = true"
         />
         <Button
+          v-if="authStore.isAdmin"
+          :label="t('faturaDetay.yenidenHesapla')"
+          icon="pi pi-calculator"
+          class="p-button-text"
+          :loading="yenidenHesaplaniyor"
+          @click="yenidenHesapla"
+        />
+        <Button
           :label="t('faturaDetay.sablonTasarlaYazdir')"
           icon="pi pi-palette"
           class="p-button-primary"
@@ -468,6 +476,39 @@ const paraIziYukle = async () => {
     paraIzi.value = r.data || null
   } catch {
     paraIzi.value = null
+  }
+}
+
+const yenidenHesaplaniyor = ref(false)
+
+const yenidenHesapla = async () => {
+  if (!fatura.value?.id) return
+  yenidenHesaplaniyor.value = true
+  try {
+    const onizleme = (await faturaAPI.yenidenHesapla(fatura.value.id, false)).data
+    confirm.require({
+      message: t('faturaDetay.yenidenHesaplaOnay', {
+        eski: formatCurrency(fatura.value.genelToplam),
+        yeni: formatCurrency(onizleme?.genelToplam)
+      }),
+      header: t('faturaDetay.yenidenHesapla'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: t('common.evetKaydet'),
+      rejectLabel: t('common.vazgec'),
+      accept: async () => {
+        try {
+          fatura.value = (await faturaAPI.yenidenHesapla(fatura.value.id, true)).data
+          toastBildirim.basarili(t('faturaDetay.yenidenHesaplandi'))
+        } catch (e) {
+          toastBildirim.hata(e?.response?.data?.message || t('faturaDetay.yenidenHesaplanamadi'))
+        }
+      },
+      reject: () => {}
+    })
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('faturaDetay.yenidenHesaplanamadi'))
+  } finally {
+    yenidenHesaplaniyor.value = false
   }
 }
 
