@@ -389,7 +389,7 @@ import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
-import { kdvOrani, kalemNetTutar, kalemBrutKdv } from '../utils/faturaHesapla.js'
+import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -506,7 +506,7 @@ const araToplam = computed(() =>
   satisForm.value.kalemler.reduce((t, k) => t + kalemNetTutar(k), 0)
 )
 const kdvToplam = computed(() =>
-  satisForm.value.kalemler.reduce((t, k) => t + kalemBrutKdv(k), 0)
+  satisForm.value.kalemler.reduce((t, k) => t + kalemKdv(k), 0)
 )
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 

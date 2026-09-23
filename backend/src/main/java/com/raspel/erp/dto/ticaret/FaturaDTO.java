@@ -38,6 +38,8 @@ public class FaturaDTO {
     private BigDecimal kdv;
     private BigDecimal genelToplam;
     private BigDecimal genelIskontoTutari;
+    /** POS/hızlı satış iskontosu (KDV dahil tutar). genelIskontoTutari yoksa bu kullanılır. */
+    private BigDecimal indirim;
     private BigDecimal toplamAgirlik;
     private String odemeDurumu;
     private BigDecimal odenenTutar;

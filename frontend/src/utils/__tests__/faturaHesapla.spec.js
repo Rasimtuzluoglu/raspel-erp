@@ -22,24 +22,25 @@ describe('faturaHesapla', () => {
     expect(kalemMiktar({})).toBe(1)
   })
 
-  it('kalemNetTutar satir iskontosu sonrasi neti verir', () => {
-    const net = kalemNetTutar({ birimFiyat: 1000, miktar: 2, iskontoOrani: 10 })
-    expect(net).toBe(1800)
+  it('kalemNetTutar KDV dahil brutten matrahi ayristirir (iskonto sonrasi)', () => {
+    // 1000 (KDV dahil) x2 = 2000; %10 iskonto -> 1800; net = 1800/1.2 = 1500
+    const net = kalemNetTutar({ birimFiyat: 1000, miktar: 2, iskontoOrani: 10, kdvOrani: 20 })
+    expect(net).toBe(1500)
   })
 
-  it('kalemKdv net (matrah) uzerinden hesaplar', () => {
+  it('kalemKdv iskontolu brütten net cikarilarak bulunur', () => {
     const kdv = kalemKdv({ birimFiyat: 1000, miktar: 2, iskontoOrani: 10, kdvOrani: 20 })
-    expect(kdv).toBe(360)
+    expect(kdv).toBe(300)
+  })
+
+  it('kalemTutar KDV dahil iskontolu brüt tutardir', () => {
+    const tutar = kalemTutar({ birimFiyat: 100, adet: 1, kdvOrani: 20 })
+    expect(tutar).toBe(100)
   })
 
   it('kalemBrutKdv brüt uzerinden hesaplar (teklif konvensiyonu)', () => {
     const kdv = kalemBrutKdv({ birimFiyat: 10000, miktar: 1, iskontoOrani: 10, kdvOrani: 20 })
     expect(kdv).toBe(2000)
-  })
-
-  it('kalemTutar net + kdv icerir', () => {
-    const tutar = kalemTutar({ birimFiyat: 100, adet: 1, kdvOrani: 20 })
-    expect(tutar).toBeTruthy()
   })
 
   it('teklifOzet genel iskonto KDVyi etkilemeden 11.000 verir', () => {

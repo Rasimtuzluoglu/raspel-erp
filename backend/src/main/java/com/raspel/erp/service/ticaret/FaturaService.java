@@ -299,7 +299,10 @@ public class FaturaService {
         // Kalemde iskonto belirtilmediyse kademeli iskonto motorundan oran çözülür.
         java.time.LocalDate iskontoTarihi = dto.getTarih() != null ? dto.getTarih() : LocalDate.now();
         Long cariId = cariHesap != null ? cariHesap.getId() : null;
-        List<FaturaKalem> kalemler = dto.getKalemler().stream().map(k -> {
+        // Birim fiyat KDV DAHİL kabul edilir; KDV matrahtan ayrıştırılır (FaturaTutar).
+        List<FaturaKalem> kalemler = new ArrayList<>();
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new ArrayList<>();
+        for (FaturaKalemDTO k : dto.getKalemler()) {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani();
             if (iskontoOrani == null) {
@@ -310,52 +313,36 @@ public class FaturaService {
                         k.getAdet(), iskontoTarihi);
                 if (iskontoOrani == null) iskontoOrani = BigDecimal.ZERO;
             }
-            BigDecimal brütTutar = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
-            BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
-            BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal kalemTutar = netTutar.add(kdvTutari);
-
-            return FaturaKalem.builder()
+            com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar.satir(
+                    k.getBirimFiyat(), k.getAdet(), iskontoOrani, kdvOrani);
+            satirlar.add(satir);
+            kalemler.add(FaturaKalem.builder()
                     .aciklama(k.getAciklama())
                     .adet(k.getAdet())
                     .birimFiyat(k.getBirimFiyat())
                     .kdvOrani(kdvOrani)
                     .iskontoOrani(iskontoOrani)
-                    .tutar(kalemTutar)
+                    .tutar(satir.brut())
                     .stokId(k.getStokId())
                     .agirlik(k.getStokId() != null ? agirlikHaritasi.get(k.getStokId()) : null)
-                    .build();
-        }).collect(Collectors.toList());
+                    .build());
+        }
 
-        BigDecimal araToplam = kalemler.stream()
-                .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
-                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                    return brüt.subtract(iskonto);
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal kdv = kalemler.stream()
-                .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
-                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                    BigDecimal net = brüt.subtract(iskonto);
-                    return net.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal genelIskonto = dto.getGenelIskontoTutari() != null ? dto.getGenelIskontoTutari() : BigDecimal.ZERO;
-        BigDecimal genelToplam = araToplam.add(kdv).subtract(genelIskonto);
-        if (genelToplam.compareTo(BigDecimal.ZERO) < 0) genelToplam = BigDecimal.ZERO;
+        // Genel iskonto: öncelik genelIskontoTutari, yoksa (POS) indirim alanı.
+        BigDecimal genelIskonto = dto.getGenelIskontoTutari() != null ? dto.getGenelIskontoTutari()
+                : (dto.getIndirim() != null ? dto.getIndirim() : BigDecimal.ZERO);
+        com.raspel.erp.util.FaturaTutar.Belge belge = com.raspel.erp.util.FaturaTutar.belge(satirlar, genelIskonto);
+        BigDecimal araToplam = belge.araToplam();
+        BigDecimal kdv = belge.kdv();
+        BigDecimal genelToplam = belge.genelToplam();
 
         BigDecimal odenenTutar = dto.getOdenenTutar() != null ? dto.getOdenenTutar() : BigDecimal.ZERO;
+        if (odenenTutar.signum() < 0) odenenTutar = BigDecimal.ZERO;
+        if (odenenTutar.compareTo(genelToplam) > 0) odenenTutar = genelToplam;
         BigDecimal kalanTutar = genelToplam.subtract(odenenTutar);
-        String odemeDurumu = dto.getOdemeDurumu();
-        if (odemeDurumu == null) {
-            odemeDurumu = kalanTutar.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
-                    : odenenTutar.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI";
-        }
+        // Ödeme durumu her zaman hesaplanır; istemciden gelen değere güvenilmez.
+        String odemeDurumu = kalanTutar.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
+                : odenenTutar.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI";
 
         Fatura.FaturaDurum faturaDurum;
         try {
@@ -452,13 +439,14 @@ public class FaturaService {
                     displayName));
         }
 
-        // Kasa seçilmiş ve tahsilat yapılmışsa kasaya giriş işle
-        if (kaydedilen.getKasaId() != null && odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
-            kasaGirisi(kaydedilen, odenenTutar);
-        } else if (Boolean.TRUE.equals(kaydedilen.getKartaBankaAktar())
-                && kaydedilen.getBankaId() != null && odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
-            // KART tahsilatı doğrudan banka hesabına aktar (POS gün sonu dışı).
-            bankaGirisi(kaydedilen, odenenTutar);
+        // Tahsilat yapılmışsa seçili hesaba giriş işle (kasa öncelikli).
+        if (odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
+            if (kaydedilen.getKasaId() != null) {
+                kasaGirisi(kaydedilen, odenenTutar);
+            } else if (kaydedilen.getBankaId() != null) {
+                // HAVALE ve (POS gün sonu dışı) KART tahsilatı banka hesabına aktarılır.
+                bankaGirisi(kaydedilen, odenenTutar);
+            }
         }
         FaturaDTO sonuc = entityDTOyeCevir(kaydedilen);
         sonuc.setEmailGonderimDurumu(emailGonderimDurumu);
@@ -661,54 +649,41 @@ public class FaturaService {
             }
         }
 
-        List<FaturaKalem> yeniKalemler = dto.getKalemler().stream().map(k -> {
+        // Birim fiyat KDV DAHİL kabul edilir; KDV matrahtan ayrıştırılır (FaturaTutar).
+        List<FaturaKalem> yeniKalemler = new ArrayList<>();
+        List<com.raspel.erp.util.FaturaTutar.Satir> yeniSatirlar = new ArrayList<>();
+        for (FaturaKalemDTO k : dto.getKalemler()) {
             BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
-            BigDecimal brütTutar = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
-            BigDecimal iskontoTutari = brütTutar.multiply(iskontoOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal netTutar = brütTutar.subtract(iskontoTutari);
-            BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal kalemTutar = netTutar.add(kdvTutari);
-            return FaturaKalem.builder()
+            com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar.satir(
+                    k.getBirimFiyat(), k.getAdet(), iskontoOrani, kdvOrani);
+            yeniSatirlar.add(satir);
+            yeniKalemler.add(FaturaKalem.builder()
                     .aciklama(k.getAciklama())
                     .adet(k.getAdet())
                     .birimFiyat(k.getBirimFiyat())
                     .kdvOrani(kdvOrani)
                     .iskontoOrani(iskontoOrani)
-                    .tutar(kalemTutar)
+                    .tutar(satir.brut())
                     .stokId(k.getStokId())
                     .agirlik(k.getStokId() != null ? agirlikHaritasi.get(k.getStokId()) : null)
-                    .build();
-        }).collect(Collectors.toList());
+                    .build());
+        }
 
-        BigDecimal araToplam = yeniKalemler.stream()
-                .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
-                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                    return brüt.subtract(iskonto);
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal kdv = yeniKalemler.stream()
-                .map(k -> {
-                    BigDecimal brüt = k.getBirimFiyat().multiply((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO));
-                    BigDecimal iskonto = brüt.multiply(k.getIskontoOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                    BigDecimal net = brüt.subtract(iskonto);
-                    return net.multiply(k.getKdvOrani()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal genelIskonto = dto.getGenelIskontoTutari() != null ? dto.getGenelIskontoTutari() : BigDecimal.ZERO;
-        BigDecimal genelToplam = araToplam.add(kdv).subtract(genelIskonto);
-        if (genelToplam.compareTo(BigDecimal.ZERO) < 0) genelToplam = BigDecimal.ZERO;
+        BigDecimal genelIskonto = dto.getGenelIskontoTutari() != null ? dto.getGenelIskontoTutari()
+                : (dto.getIndirim() != null ? dto.getIndirim() : BigDecimal.ZERO);
+        com.raspel.erp.util.FaturaTutar.Belge belge = com.raspel.erp.util.FaturaTutar.belge(yeniSatirlar, genelIskonto);
+        BigDecimal araToplam = belge.araToplam();
+        BigDecimal kdv = belge.kdv();
+        BigDecimal genelToplam = belge.genelToplam();
 
         BigDecimal odenenTutar = dto.getOdenenTutar() != null ? dto.getOdenenTutar() : BigDecimal.ZERO;
+        if (odenenTutar.signum() < 0) odenenTutar = BigDecimal.ZERO;
+        if (odenenTutar.compareTo(genelToplam) > 0) odenenTutar = genelToplam;
         BigDecimal kalanTutar = genelToplam.subtract(odenenTutar);
-        String odemeDurumu = dto.getOdemeDurumu();
-        if (odemeDurumu == null) {
-            odemeDurumu = kalanTutar.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
-                    : odenenTutar.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI";
-        }
+        // Ödeme durumu her zaman hesaplanır; istemciden gelen değere güvenilmez.
+        String odemeDurumu = kalanTutar.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
+                : odenenTutar.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI";
 
         fatura.setCariHesap(cariHesap);
         fatura.setTur(tur);

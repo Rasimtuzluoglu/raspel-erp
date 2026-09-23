@@ -520,10 +520,10 @@
               </div>
 
               <div
-                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
+                v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
                 class="odenen-satir"
               >
-                <label>{{ t('hizliSatis.kartBankaAktar') }}</label>
+                <label>{{ odemeYontemi === 'KART' ? t('hizliSatis.kartBankaAktar') : t('hizliSatis.havaleBanka') }}</label>
                 <Dropdown
                   v-model="seciliBanka"
                   :options="bankalar"
@@ -2160,7 +2160,7 @@ const satisiTamamlaOnaysiz = async () => {
     taksitKurum: odemeYontemi.value === 'TAKSIT' ? taksitKurum.value : null,
     taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
     kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
-    bankaId: odemeYontemi.value === 'KART' ? (seciliBanka.value || null) : null,
+    bankaId: (odemeYontemi.value === 'KART' || odemeYontemi.value === 'HAVALE') ? (seciliBanka.value || null) : null,
     kartaBankaAktar: odemeYontemi.value === 'KART' && !!seciliBanka.value,
     kalemler: sepet.value.map((i) => ({
       stokId: i.id,
