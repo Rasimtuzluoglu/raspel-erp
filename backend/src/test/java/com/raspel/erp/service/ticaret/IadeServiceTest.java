@@ -292,6 +292,36 @@ class IadeServiceTest {
     }
 
     @Test
+    void olustur_kumulatifIadeMiktariAsarsa_reddedilir() {
+        hazirla();
+        com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
+        fatura.setId(1L);
+        fatura.setSirketId(1L);
+        fatura.setGenelToplam(new BigDecimal("1000"));
+        com.raspel.erp.entity.ticaret.FaturaKalem fk = com.raspel.erp.entity.ticaret.FaturaKalem.builder()
+                .stokId(2L).adet(new BigDecimal("5")).build();
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(faturaKalemRepository.findByFaturaId(1L)).thenReturn(List.of(fk));
+        // Önceki tamamlanmış iade: 4 adet
+        com.raspel.erp.entity.ticaret.Iade onceki = com.raspel.erp.entity.ticaret.Iade.builder()
+                .id(7L).faturaId(1L).tur("SATIS").tutar(new BigDecimal("40")).durum("TAMAMLANDI").sirketId(1L).build();
+        when(iadeRepository.findByFaturaIdInAndSirketId(any(), eq(1L))).thenReturn(List.of(onceki));
+        com.raspel.erp.entity.ticaret.IadeKalem oncekiKalem = com.raspel.erp.entity.ticaret.IadeKalem.builder()
+                .iadeId(7L).stokId(2L).miktar(new BigDecimal("4")).build();
+        when(iadeKalemRepository.findByIadeId(7L)).thenReturn(List.of(oncekiKalem));
+
+        // Bu iade 2 adet -> toplam 6 > 5
+        IadeKalemDTO kalem = IadeKalemDTO.builder().stokId(2L).miktar(new BigDecimal("2"))
+                .birimFiyat(new BigDecimal("10")).kdvOrani(BigDecimal.ZERO).build();
+        IadeDTO dto = IadeDTO.builder().faturaId(1L).tur("SATIS").tarih(java.time.LocalDate.now())
+                .kalemler(List.of(kalem)).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.olustur(dto, 1L));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
     void olustur_kilitliDonem_reddedilir() {
         IadeDTO dto = IadeDTO.builder().tur("SATIS").tarih(java.time.LocalDate.now())
                 .tutar(new BigDecimal("100")).build();

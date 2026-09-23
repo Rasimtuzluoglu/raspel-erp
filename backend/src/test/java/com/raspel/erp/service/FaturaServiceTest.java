@@ -498,4 +498,42 @@ class FaturaServiceTest {
 
         assertEquals(1, result.getContent().size());
     }
+
+    @Test
+    void faturaYenidenHesapla_dryRunKaydetmezVeYeniToplamlariDoner() {
+        Fatura fatura = createFatura(1L);
+        fatura.setId(1L);
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K")
+                .adet(BigDecimal.valueOf(2)).birimFiyat(BigDecimal.valueOf(120))
+                .kdvOrani(BigDecimal.valueOf(20)).tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(kalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+
+        var dto = faturaService.faturaYenidenHesapla(1L, false);
+
+        // 120 (KDV dahil) x2 = 240; net 200, kdv 40
+        assertEquals(0, dto.getGenelToplam().compareTo(new BigDecimal("240")));
+        assertEquals(0, dto.getAraToplam().compareTo(new BigDecimal("200")));
+        assertEquals(0, dto.getKdv().compareTo(new BigDecimal("40")));
+        verify(faturaRepository, never()).save(any(Fatura.class));
+    }
+
+    @Test
+    void faturaYenidenHesapla_kaydetFaturayiGunceller() {
+        Fatura fatura = createFatura(1L);
+        fatura.setId(1L);
+        FaturaKalem kalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K")
+                .adet(BigDecimal.valueOf(2)).birimFiyat(BigDecimal.valueOf(120))
+                .kdvOrani(BigDecimal.valueOf(20)).tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(kalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+
+        faturaService.faturaYenidenHesapla(1L, true);
+
+        assertEquals(0, fatura.getGenelToplam().compareTo(new BigDecimal("240")));
+        assertEquals(0, fatura.getAraToplam().compareTo(new BigDecimal("200")));
+        assertEquals(0, kalem.getTutar().compareTo(new BigDecimal("240")));
+        verify(faturaRepository).save(fatura);
+    }
 }

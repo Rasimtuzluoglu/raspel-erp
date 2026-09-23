@@ -130,12 +130,24 @@ public class IadeService {
         }
         tenantChecker.check(fatura.getSirketId(), "Fatura");
 
-        // Kalem bazlı üst sınır: iade miktarı, ilgili fatura kaleminden fazla olamaz.
+        // Bu faturaya bağlı, iptal edilmemiş önceki iadeler (miktar ve tutar sınırı için).
+        List<Iade> oncekiIadeListesi = iadeRepository
+                .findByFaturaIdInAndSirketId(List.of(fatura.getId()), fatura.getSirketId())
+                .stream().filter(i -> !"IPTAL".equals(i.getDurum())).collect(Collectors.toList());
+
+        // Kalem bazlı üst sınır: (önceki iadeler + bu iade) ilgili fatura kalem miktarını aşamaz.
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
             Map<Long, BigDecimal> faturaMiktarlari = new java.util.HashMap<>();
             for (com.raspel.erp.entity.ticaret.FaturaKalem fk : faturaKalemRepository.findByFaturaId(fatura.getId())) {
                 if (fk.getStokId() == null) continue;
                 faturaMiktarlari.merge(fk.getStokId(), fk.getAdet() != null ? fk.getAdet() : BigDecimal.ZERO, BigDecimal::add);
+            }
+            Map<Long, BigDecimal> oncekiIadeMiktarlari = new java.util.HashMap<>();
+            for (Iade onceki : oncekiIadeListesi) {
+                for (IadeKalem ik : iadeKalemRepository.findByIadeId(onceki.getId())) {
+                    if (ik.getStokId() == null) continue;
+                    oncekiIadeMiktarlari.merge(ik.getStokId(), ik.getMiktar() != null ? ik.getMiktar() : BigDecimal.ZERO, BigDecimal::add);
+                }
             }
             Map<Long, BigDecimal> iadeMiktarlari = new java.util.HashMap<>();
             for (IadeKalemDTO k : dto.getKalemler()) {
@@ -144,14 +156,15 @@ public class IadeService {
             }
             for (Map.Entry<Long, BigDecimal> e : iadeMiktarlari.entrySet()) {
                 BigDecimal satisMiktari = faturaMiktarlari.getOrDefault(e.getKey(), BigDecimal.ZERO);
-                if (e.getValue().compareTo(satisMiktari) > 0) {
-                    throw new BusinessException("İade miktarı faturadaki satış miktarını aşamaz (stok: "
-                            + e.getKey() + ", satış: " + satisMiktari + ", iade: " + e.getValue() + ")");
+                BigDecimal toplamIade = oncekiIadeMiktarlari.getOrDefault(e.getKey(), BigDecimal.ZERO).add(e.getValue());
+                if (toplamIade.compareTo(satisMiktari) > 0) {
+                    throw new BusinessException("Toplam iade miktarı faturadaki satış miktarını aşamaz (stok: "
+                            + e.getKey() + ", satış: " + satisMiktari + ", toplam iade: " + toplamIade + ")");
                 }
             }
         }
 
-        // Tutar bazlı üst sınır: faturaya bağlı önceki tamamlanmış iadeler + bu iade <= fatura toplamı.
+        // Tutar bazlı üst sınır: önceki iadeler + bu iade <= fatura toplamı.
         BigDecimal yeniTutar = dto.getTutar() != null ? dto.getTutar() : BigDecimal.ZERO;
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
             yeniTutar = BigDecimal.ZERO;
@@ -162,9 +175,7 @@ public class IadeService {
                 yeniTutar = yeniTutar.add(net.add(kdv));
             }
         }
-        BigDecimal oncekiIadeler = iadeRepository.findByFaturaIdInAndSirketId(List.of(fatura.getId()), fatura.getSirketId())
-                .stream()
-                .filter(i -> !"IPTAL".equals(i.getDurum()))
+        BigDecimal oncekiIadeler = oncekiIadeListesi.stream()
                 .map(i -> i.getTutar() != null ? i.getTutar() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal faturaToplam = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
@@ -388,17 +399,25 @@ public class IadeService {
     }
 
     /**
-     * İade nedeniyle faturanın ödenen tutarını delta kadar değiştirir ve kalan/ödeme
-     * durumunu yeniden hesaplar. Satış ve alış iadesinde de kalan borç azalır.
+     * İade nedeniyle faturanın KALAN tutarını delta kadar değiştirir (delta: iade
+     * tamamlandığında +iadeTutar, iptalinde -iadeTutar). Ödenen tutar şişirilmez;
+     * iade, ödenmiş faturada müşteri lehine alacak olarak cariye yansır.
      */
     private void faturaKalanGuncelle(Fatura fatura, BigDecimal delta) {
         if (delta == null || delta.signum() == 0) return;
-        BigDecimal odenen = (fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO).add(delta);
-        if (odenen.signum() < 0) odenen = BigDecimal.ZERO;
         BigDecimal toplam = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
-        BigDecimal kalan = toplam.subtract(odenen).max(BigDecimal.ZERO);
-        fatura.setOdenenTutar(odenen);
+        BigDecimal mevcutKalan = fatura.getKalanTutar() != null ? fatura.getKalanTutar() : toplam;
+        BigDecimal kalan = mevcutKalan.subtract(delta);
+        if (kalan.signum() < 0) kalan = BigDecimal.ZERO;
+        if (kalan.compareTo(toplam) > 0) kalan = toplam;
         fatura.setKalanTutar(kalan);
+
+        BigDecimal odenen = fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO;
+        if (odenen.compareTo(toplam) > 0) {
+            odenen = toplam;
+            fatura.setOdenenTutar(odenen);
+        }
+        // Kalan 0 ise fatura kapanmıştır (ödeme veya iade ile) -> ODENDI.
         fatura.setOdemeDurumu(kalan.signum() <= 0 ? "ODENDI"
                 : odenen.signum() > 0 ? "KISMI_ODENDI" : "ODENMEDI");
         faturaRepository.save(fatura);

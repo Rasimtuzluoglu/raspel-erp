@@ -627,6 +627,65 @@ public class FaturaService {
         return entityDTOyeCevir(guncellenen);
     }
 
+    /**
+     * Faturayı KDV-dahil modele göre yeniden hesaplar. Geçmiş (eski semantikle kayıtlı)
+     * faturaların düzeltilmesi için güvenli, fatura-numarası/ID bazlı araç.
+     *
+     * @param kaydet false ise yalnızca önizleme (dry-run) döner; true ise kalem tutarları,
+     *               araToplam/kdv/genelToplam ve ödeme durumu güncellenip geçmişe yazılır.
+     */
+    @Transactional
+    public FaturaDTO faturaYenidenHesapla(Long id, boolean kaydet) {
+        Fatura fatura = faturaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
+        donemService.kilitKontrol(fatura.getSirketId(), fatura.getTarih(), "fatura yeniden hesaplama");
+
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new ArrayList<>();
+        for (FaturaKalem k : fatura.getKalemler()) {
+            satirlar.add(com.raspel.erp.util.FaturaTutar.satir(
+                    k.getBirimFiyat(), k.getAdet(), k.getIskontoOrani(), k.getKdvOrani()));
+        }
+        BigDecimal genelIskonto = fatura.getGenelIskontoTutari() != null ? fatura.getGenelIskontoTutari() : BigDecimal.ZERO;
+        com.raspel.erp.util.FaturaTutar.Belge belge = com.raspel.erp.util.FaturaTutar.belge(satirlar, genelIskonto);
+
+        BigDecimal odenen = fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO;
+        if (odenen.compareTo(belge.genelToplam()) > 0) odenen = belge.genelToplam();
+        BigDecimal kalan = belge.genelToplam().subtract(odenen);
+        String odemeDurumu = kalan.signum() <= 0 ? "ODENDI" : odenen.signum() > 0 ? "KISMI_ODENDI" : "ODENMEDI";
+
+        if (!kaydet) {
+            FaturaDTO onizleme = entityDTOyeCevir(fatura);
+            onizleme.setAraToplam(belge.araToplam());
+            onizleme.setKdv(belge.kdv());
+            onizleme.setGenelToplam(belge.genelToplam());
+            onizleme.setOdenenTutar(odenen);
+            onizleme.setKalanTutar(kalan);
+            onizleme.setOdemeDurumu(odemeDurumu);
+            return onizleme;
+        }
+
+        String oncekiSnapshot = faturaGecmisService.snapshot(fatura);
+        int i = 0;
+        for (FaturaKalem k : fatura.getKalemler()) {
+            k.setTutar(satirlar.get(i++).brut());
+        }
+        fatura.setAraToplam(belge.araToplam());
+        fatura.setKdv(belge.kdv());
+        fatura.setGenelToplam(belge.genelToplam());
+        fatura.setOdenenTutar(odenen);
+        fatura.setKalanTutar(kalan);
+        fatura.setOdemeDurumu(odemeDurumu);
+        Fatura kaydedilen = faturaRepository.save(fatura);
+        faturaGecmisService.kaydet(kaydedilen, FaturaGecmisService.GUNCELLE,
+                "Yeniden hesaplama (KDV dahil model)",
+                oncekiSnapshot, faturaGecmisService.snapshot(kaydedilen));
+        cacheYardimci.temizle("faturalar", "dashboard");
+        log.info("Fatura yeniden hesaplandı - ID: {}, eski genelToplam: {}, yeni: {}",
+                id, oncekiSnapshot, belge.genelToplam());
+        return entityDTOyeCevir(kaydedilen);
+    }
+
     @CacheEvict(value = "faturalar", allEntries = true)
     public FaturaDTO faturaGuncelle(Long id, FaturaDTO dto) {
         log.info("Fatura düzenleniyor - ID: {}", id);

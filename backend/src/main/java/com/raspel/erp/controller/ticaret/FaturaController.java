@@ -196,6 +196,16 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.faturaDurumGuncelle(id, request.durum));
     }
 
+    @PostMapping("/{id}/yeniden-hesapla")
+    @Operation(summary = "Faturayı yeniden hesapla",
+            description = "KDV dahil modele göre ara toplam/KDV/genel toplamı yeniden üretir. " +
+                    "kaydet=false ise yalnızca önizleme (dry-run). Yalnızca ADMIN.")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<FaturaDTO> yenidenHesapla(@PathVariable Long id,
+                                                    @RequestParam(defaultValue = "false") boolean kaydet) {
+        return ResponseEntity.ok(faturaService.faturaYenidenHesapla(id, kaydet));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Fatura sil", description = "Faturayı siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")
