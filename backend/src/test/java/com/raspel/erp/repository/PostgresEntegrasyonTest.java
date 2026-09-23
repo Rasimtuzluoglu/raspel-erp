@@ -108,6 +108,19 @@ class PostgresEntegrasyonTest {
         Integer notValidSayisi = jdbc.queryForObject(
                 "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND NOT convalidated", Integer.class);
         assertEquals(0, notValidSayisi);
+
+        // V120: iyimser kilitleme version kolonlari.
+        Integer versionSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns WHERE column_name = 'version' AND (" +
+                        "(table_schema='muhasebe' AND table_name='kasa_hareket') OR " +
+                        "(table_schema='finans' AND table_name='banka_hareketi') OR " +
+                        "(table_schema='cari' AND table_name='hareket') OR " +
+                        "(table_schema='ticaret' AND table_name='iade') OR " +
+                        "(table_schema='siparis' AND table_name='siparis') OR " +
+                        "(table_schema='muhasebe' AND table_name='irsaliye') OR " +
+                        "(table_schema='finans' AND table_name='taksit') OR " +
+                        "(table_schema='stok' AND table_name='stok_hareket'))", Integer.class);
+        assertEquals(8, versionSayisi);
     }
 
     @Test

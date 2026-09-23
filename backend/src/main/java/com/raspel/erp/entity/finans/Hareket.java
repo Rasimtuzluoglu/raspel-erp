@@ -82,6 +82,10 @@ public class Hareket {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /** İyimser kilitleme (eşzamanlı güncellemelerde kayıp veriyi önler). */
+    @Version
+    private Long version;
+
     /** Oluşturma tarihi */
     @Column(nullable = false, updatable = false)
     private LocalDateTime olusturmaTarihi;

@@ -79,6 +79,10 @@ public class Taksit {
     @Column(length = 500)
     private String aciklama;
 
+    /** İyimser kilitleme. */
+    @Version
+    private Long version;
+
     @Column(name = "olusturma_tarihi", nullable = false, updatable = false)
     private LocalDateTime olusturmaTarihi;
 

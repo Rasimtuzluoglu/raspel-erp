@@ -47,6 +47,10 @@ public class KasaHareket {
     @Column(name = "kaynak_tip", length = 20)
     private String kaynakTip;
 
+    /** İyimser kilitleme. */
+    @Version
+    private Long version;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

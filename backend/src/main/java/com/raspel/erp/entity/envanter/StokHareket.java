@@ -55,6 +55,10 @@ public class StokHareket {
     @Column(name = "seri_id")
     private Long seriId;
 
+    /** İyimser kilitleme. */
+    @Version
+    private Long version;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

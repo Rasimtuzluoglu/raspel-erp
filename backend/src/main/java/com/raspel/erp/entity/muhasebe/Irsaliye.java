@@ -47,6 +47,10 @@ public class Irsaliye {
     @Column(name = "depo_id")
     private Long depoId;
 
+    /** İyimser kilitleme. */
+    @Version
+    private Long version;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

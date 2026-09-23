@@ -54,6 +54,10 @@ public class Siparis {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /** İyimser kilitleme. */
+    @Version
+    private Long version;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
