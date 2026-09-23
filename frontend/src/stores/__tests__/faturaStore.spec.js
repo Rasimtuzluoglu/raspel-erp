@@ -38,6 +38,13 @@ describe('faturaStore', () => {
     expect(result).toEqual([mockFatura])
   })
 
+  it('getAllFaturalar records totalElements for server pagination', async () => {
+    faturaAPI.getAll.mockResolvedValue({ data: { content: [mockFatura], totalElements: 42 } })
+    await store.getAllFaturalar({ page: 0, size: 10 })
+    expect(store.faturalar).toHaveLength(1)
+    expect(store.toplamKayit).toBe(42)
+  })
+
   it('getAllFaturalar handles error', async () => {
     faturaAPI.getAll.mockRejectedValue(new Error('Err'))
     await expect(store.getAllFaturalar()).rejects.toThrow('Err')

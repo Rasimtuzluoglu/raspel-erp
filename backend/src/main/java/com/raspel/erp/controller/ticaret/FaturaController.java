@@ -41,10 +41,12 @@ public class FaturaController {
     public ResponseEntity<Page<FaturaDTO>> tumFaturalariGetir(
             HttpServletRequest request,
             @PageableDefault(size = 50) Pageable pageable,
-            @RequestParam(value = "search", required = false) String search) {
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "bas", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bas,
+            @RequestParam(value = "bit", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        if (search != null && !search.isBlank()) {
-            return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.ara(sirketId, search, pageable)));
+        if ((search != null && !search.isBlank()) || bas != null || bit != null) {
+            return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.ara(sirketId, search, bas, bit, pageable)));
         }
         return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.tumFaturalariGetir(sirketId, pageable)));
     }

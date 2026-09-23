@@ -107,8 +107,13 @@ public class FaturaService {
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> ara(Long sirketId, String q, Pageable pageable) {
+        return ara(sirketId, q, null, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<FaturaDTO> ara(Long sirketId, String q, LocalDate bas, LocalDate bit, Pageable pageable) {
         String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
-        return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, pageable));
+        return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, bas, bit, pageable));
     }
 
     @Transactional(readOnly = true)

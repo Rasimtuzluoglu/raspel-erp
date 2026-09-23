@@ -58,14 +58,17 @@
       <AppDataTable
         v-model:selection="selectedItems"
         selection-mode="multiple"
-        :value="filtrelenmisFaturalar"
+        :value="faturaStore.faturalar"
         striped-rows
-        :rows="10"
+        :lazy="true"
+        :total-records="faturaStore.toplamKayit"
+        :rows="sayfaBoyutu"
         :paginator="true"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
         gorunum-anahtari="faturalar"
+        @page="sayfaDegisti"
       >
         <Column
           field="faturaNumarasi"
@@ -230,7 +233,7 @@
         </template>
         <template #empty>
           <EmptyState
-            v-if="filtrelenmisFaturalar && filtrelenmisFaturalar.length === 0"
+            v-if="faturaStore.faturalar && faturaStore.faturalar.length === 0"
             :message="t('faturalar.empty')"
             :sub-message="t('faturalar.emptyHint')"
             icon="pi pi-file"
@@ -642,17 +645,43 @@ const selectedItems = ref([])
 const topluSiliniyor = ref(false)
 const arama = ref('')
 let aramaZamanlayici = null
+const sayfa = ref(0)
+const sayfaBoyutu = ref(10)
+
+const tarihParametreleri = () => {
+  const params = {}
+  const aralik = tarihAraligi.value
+  if (aralik && aralik.length === 2 && aralik[0] && aralik[1]) {
+    params.bas = getLocalDateString(aralik[0])
+    params.bit = getLocalDateString(aralik[1])
+  }
+  return params
+}
+
+const loadFaturalar = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
+  loading.value = true
+  try {
+    const params = { page: yeniSayfa, size: yeniBoyut, ...tarihParametreleri() }
+    if (arama.value.trim()) params.search = arama.value.trim()
+    await faturaStore.getAllFaturalar(params)
+  } catch {
+    /* toast yok */
+  } finally {
+    loading.value = false
+  }
+}
+
+const sayfaDegisti = (e) => {
+  sayfa.value = e.page
+  sayfaBoyutu.value = e.rows
+  loadFaturalar(e.page, e.rows)
+}
 
 const aramaDebounce = () => {
   if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
-  aramaZamanlayici = setTimeout(async () => {
-    loading.value = true
-    try {
-      await faturaStore.getAllFaturalar({ search: arama.value.trim() || undefined })
-    } catch {
-      /* toast yok */
-    }
-    loading.value = false
+  aramaZamanlayici = setTimeout(() => {
+    sayfa.value = 0
+    loadFaturalar(0, sayfaBoyutu.value)
   }, 300)
 }
 
@@ -692,19 +721,9 @@ const urunAdet = ref(1)
 
 const dialogBaslik = computed(() => (editingId.value ? t('faturalar.dialogDuzenle') : t('faturalar.dialogYeni')))
 
-const filtrelenmisFaturalar = computed(() => {
-  if (!tarihAraligi.value || tarihAraligi.value.length !== 2 || !tarihAraligi.value[0]) {
-    return faturaStore.faturalar
-  }
-  const bas = new Date(tarihAraligi.value[0])
-  bas.setHours(0, 0, 0, 0)
-  const bit = new Date(tarihAraligi.value[1])
-  bit.setHours(23, 59, 59, 999)
-  return faturaStore.faturalar.filter((f) => {
-    if (!f.tarih) return false
-    const t = new Date(f.tarih)
-    return t >= bas && t <= bit
-  })
+watch(tarihAraligi, () => {
+  sayfa.value = 0
+  loadFaturalar(0, sayfaBoyutu.value)
 })
 
 const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
@@ -724,7 +743,7 @@ onMounted(async () => {
   loading.value = true
   try {
     await Promise.all([
-      faturaStore.getAllFaturalar(),
+      loadFaturalar(0, sayfaBoyutu.value),
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
       personelListesiniYukle(),
@@ -1361,7 +1380,7 @@ const topluSil = () => {
         }
         toastBildirim.basarili(t('faturalar.kayitSilindi', { n: selectedItems.value.length }))
         selectedItems.value = []
-        await faturaStore.getAllFaturalar()
+        await loadFaturalar()
       } catch {
         toastBildirim.hata(t('faturalar.silmeBasarisiz'))
       } finally {

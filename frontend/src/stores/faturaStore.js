@@ -1,9 +1,12 @@
+import { ref } from 'vue'
 import { createCrudStore } from './createCrudStore.js'
 import { faturaAPI } from '../api/index.js'
 
 export const useFaturaStore = createCrudStore('fatura', faturaAPI, {
   stateKey: 'faturalar',
   addPosition: 'unshift',
+  totalKey: 'toplamKayit',
+  extraState: { toplamKayit: () => ref(0) },
   actions: { getAll: 'getAllFaturalar', add: 'addFatura', update: 'updateFatura', remove: 'deleteFatura' },
   extraActions: ({ liste, error, api }) => ({
     getFaturaById: async (id) => {

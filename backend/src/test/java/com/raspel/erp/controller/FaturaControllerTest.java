@@ -61,6 +61,19 @@ class FaturaControllerTest {
     }
 
     @Test
+    void shouldFilterByDateRange() throws Exception {
+        var list = List.of(FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tur("SATIS").build());
+        when(faturaService.ara(eq(1L), isNull(), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31)), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/faturalar?bas=2026-01-01&bit=2026-01-31").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].faturaNumarasi").value("FTR-001"));
+
+        verify(faturaService).ara(eq(1L), isNull(), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31)), any(Pageable.class));
+    }
+
+    @Test
     void shouldGetById() throws Exception {
         var dto = FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tur("SATIS").build();
         when(faturaService.faturaGetir(1L)).thenReturn(dto);

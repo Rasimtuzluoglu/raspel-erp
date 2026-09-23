@@ -121,6 +121,30 @@ class FaturaServiceTest {
     }
 
     @Test
+    void ara_tarihAraligiIleRepoCagirir() {
+        LocalDate bas = LocalDate.of(2026, 1, 1);
+        LocalDate bit = LocalDate.of(2026, 1, 31);
+        when(faturaRepository.ara(eq(1L), isNull(), eq(bas), eq(bit), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+
+        var result = faturaService.ara(1L, null, bas, bit, Pageable.unpaged());
+
+        assertEquals(1, result.getContent().size());
+        verify(faturaRepository).ara(eq(1L), isNull(), eq(bas), eq(bit), any(Pageable.class));
+    }
+
+    @Test
+    void ara_ucArgOverload_tarihsizRepoCagirir() {
+        when(faturaRepository.ara(eq(1L), eq("%x%"), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+
+        var result = faturaService.ara(1L, "x", Pageable.unpaged());
+
+        assertEquals(1, result.getContent().size());
+        verify(faturaRepository).ara(eq(1L), eq("%x%"), isNull(), isNull(), any(Pageable.class));
+    }
+
+    @Test
     void faturaGetir_returnsFatura() {
         when(faturaRepository.findById(1L)).thenReturn(Optional.of(createFatura(1L)));
         var result = faturaService.faturaGetir(1L);
