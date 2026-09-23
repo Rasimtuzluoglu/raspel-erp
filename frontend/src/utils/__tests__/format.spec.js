@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatDate, formatDateTime, durumLabel, getLocalDateString } from '../format.js'
+import { formatCurrency, formatPara, formatDate, formatDateTime, durumLabel, getLocalDateString } from '../format.js'
 
 describe('format.js', () => {
   it('formatCurrency handles null/undefined/NaN', () => {
@@ -10,6 +10,18 @@ describe('format.js', () => {
 
   it('formatCurrency formats valid number', () => {
     expect(formatCurrency(1000)).toContain('1.000')
+  })
+
+  it('formatPara para birimine gore sembol kullanir', () => {
+    expect(formatPara(1000, 'TRY')).toContain('₺')
+    expect(formatPara(1000, 'USD')).toContain('$')
+    expect(formatPara(1000, 'EUR')).toContain('€')
+    expect(formatPara(1000)).toContain('₺')
+    expect(formatPara(null, 'USD')).toContain('$')
+  })
+
+  it('formatPara bilinmeyen birimde kodu gosterir', () => {
+    expect(formatPara(100, 'XYZ')).toContain('XYZ')
   })
 
   it('formatDate returns empty for invalid', () => {

@@ -48,7 +48,7 @@
       v-if="loading"
       class="loading"
     >
-      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
     <div
@@ -110,7 +110,7 @@
           style="width: 130px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.genelToplam) }}
+            {{ formatPara(s.data.genelToplam, s.data.paraBirimi) }}
           </template>
         </Column>
         <Column
@@ -133,7 +133,7 @@
             <span
               v-if="s.data.kalanTutar && s.data.kalanTutar > 0"
               class="kalan-tutar"
-            >{{ formatCurrency(s.data.kalanTutar) }}</span>
+            >{{ formatPara(s.data.kalanTutar, s.data.paraBirimi) }}</span>
             <span
               v-else
               class="islem-yapan-bos"
@@ -254,7 +254,7 @@
     >
       <div class="form-grid">
         <div class="form-group">
-          <label>{{ form.tur === 'ALIS' ? t('faturalar.tedarikci') : t('faturalar.musteri') }}</label>
+          <label>{{ form.tur === 'ALIS' ? t('faturalar.tedarikci') : t('faturalar.musteri') }} <span class="required">*</span></label>
           <AutoComplete
             v-model="seciliCariNesnesi"
             :suggestions="cariOnerileri"
@@ -600,7 +600,7 @@ import FaturaFiyatGecmisi from '../components/FaturaFiyatGecmisi.vue'
 import FaturaSonUrunler from '../components/FaturaSonUrunler.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
-import { formatCurrency, getLocalDateString } from '../utils/format.js'
+import { formatCurrency, formatPara, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
 
@@ -1185,6 +1185,10 @@ const closeDialog = () => {
 const saveFatura = async () => {
   if (!form.value.tur) {
     toastBildirim.uyari(t('faturalar.faturaTuruSeciniz'))
+    return
+  }
+  if (!form.value.cariHesapId) {
+    toastBildirim.uyari(t('faturalar.cariSeciniz'))
     return
   }
   const gecersiz = form.value.kalemler.some((k) => !k.aciklama.trim() || !k.adet || !k.birimFiyat)

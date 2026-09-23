@@ -108,7 +108,7 @@
         <div class="field">
           <label>{{ t('common.date') }}</label><DatePicker
             v-model="form.tarih"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

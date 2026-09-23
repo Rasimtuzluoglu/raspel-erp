@@ -158,7 +158,7 @@
           <div class="field">
             <label>{{ t('cekSenet.vadeTarihiZorunlu') }}</label><DatePicker
               v-model="form.vadeTarihi"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>

@@ -141,7 +141,7 @@
                     </div>
                   </div>
                   <div class="text-right font-extrabold text-base text-emerald-600">
-                    {{ formatCurrency(m.tutar) }} {{ m.paraBirimi || 'TRY' }}
+                    {{ formatPara(m.tutar, m.paraBirimi) }}
                   </div>
                 </div>
                 <div class="bg-secondary dark:bg-gray-700/50 p-2.5 rounded-lg text-xs space-y-1 mb-3">
@@ -377,7 +377,7 @@ import { useI18n } from 'vue-i18n'
 import { personelIzinAPI, personelMasrafTalepAPI, satinalmaTalepAPI, siparisAPI, onayAyariAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { formatCurrency, formatDate } from '../utils/format.js'
+import { formatCurrency, formatPara, formatDate } from '../utils/format.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()

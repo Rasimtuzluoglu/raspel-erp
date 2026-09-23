@@ -202,7 +202,7 @@
           <label>{{ t('iskontoKurallari.gecerliBaslangic') }}</label>
           <DatePicker
             v-model="form.gecerliBaslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -210,7 +210,7 @@
           <label>{{ t('iskontoKurallari.gecerliBitis') }}</label>
           <DatePicker
             v-model="form.gecerliBitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

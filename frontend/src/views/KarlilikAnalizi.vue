@@ -14,13 +14,13 @@
         />
         <DatePicker
           v-model="baslangic"
-          date-format="dd/mm/yy"
+          date-format="dd.mm.yy"
           :placeholder="t('karlilik.baslangic')"
           class="tarih-girdi"
         />
         <DatePicker
           v-model="bitis"
-          date-format="dd/mm/yy"
+          date-format="dd.mm.yy"
           :placeholder="t('karlilik.bitis')"
           class="tarih-girdi"
         />

@@ -149,7 +149,7 @@
         <div class="field">
           <label>{{ t('maasBordro.odemeTarihi') }}</label><DatePicker
             v-model="form.odemeTarihi"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

@@ -1129,7 +1129,7 @@ const masrafTalepGonder = async () => {
     yeniMasrafModal.value = false
     await masraflariYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || t('sahaPortali.hata'), life: 3000 })
   } finally {
     masrafGonderiliyor.value = false
   }
@@ -1213,7 +1213,7 @@ const ziyaretKaydet = async () => {
     ziyaretForm.value.notlar = ''
     ziyaretForm.value.cariHesapId = null
   } catch (err) {
-    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || t('sahaPortali.hata'), life: 3000 })
   } finally {
     ziyaretKaydediliyor.value = false
   }
@@ -1359,7 +1359,7 @@ const hizliSiparisKaydet = async () => {
     yeniSiparisForm.value = { cariHesapId: null, stokId: null, miktar: 1, birimFiyat: 0, adres: '', kalemler: [] }
     await siparisleriYukle()
   } catch (err) {
-    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || t('sahaPortali.hata'), life: 3000 })
   } finally {
     siparisKaydediliyor.value = false
   }

@@ -197,7 +197,7 @@
           <label>{{ t('common.date') }}</label>
           <DatePicker
             v-model="talepForm.tarih"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -258,7 +258,7 @@
           <label>{{ t('common.date') }}</label>
           <DatePicker
             v-model="siparisForm.tarih"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

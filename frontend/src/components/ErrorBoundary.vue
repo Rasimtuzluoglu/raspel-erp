@@ -5,22 +5,22 @@
   >
     <div class="error-card">
       <i class="pi pi-exclamation-triangle error-icon" />
-      <h2>Bir Hata Oluştu</h2>
+      <h2>{{ $t('common.errorTitle') }}</h2>
       <p class="error-message">
-        {{ error.message || $t('common.unexpectedError') }}
+        {{ $t('common.unexpectedError') }}
       </p>
       <div class="error-actions">
         <button
           class="retry-btn"
           @click="resetError"
         >
-          <i class="pi pi-refresh" /> Tekrar Dene
+          <i class="pi pi-refresh" /> {{ $t('common.retry') }}
         </button>
         <button
           class="home-btn"
           @click="goHome"
         >
-          <i class="pi pi-home" /> Ana Sayfaya Dön
+          <i class="pi pi-home" /> {{ $t('common.goHome') }}
         </button>
       </div>
     </div>

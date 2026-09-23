@@ -157,7 +157,7 @@
           <label>{{ t('tekrarlayanFaturalar.baslangicTarihi') }}</label>
           <DatePicker
             v-model="form.baslangicTarihi"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -165,7 +165,7 @@
           <label>{{ t('tekrarlayanFaturalar.bitisTarihiOpsiyonel') }}</label>
           <DatePicker
             v-model="form.bitisTarihi"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

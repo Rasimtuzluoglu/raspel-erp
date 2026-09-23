@@ -311,7 +311,7 @@
         <div class="field">
           <label>{{ t('crm.tahminiKapanis') }}</label><DatePicker
             v-model="form.tahminiKapanis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

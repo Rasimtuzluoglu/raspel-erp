@@ -7,13 +7,13 @@
       <div class="filtreler">
         <DatePicker
           v-model="baslangic"
-          date-format="dd/mm/yy"
+          date-format="dd.mm.yy"
           :placeholder="t('faturaGecmisRapor.baslangic')"
           class="tarih-girdi"
         />
         <DatePicker
           v-model="bitis"
-          date-format="dd/mm/yy"
+          date-format="dd.mm.yy"
           :placeholder="t('faturaGecmisRapor.bitis')"
           class="tarih-girdi"
         />

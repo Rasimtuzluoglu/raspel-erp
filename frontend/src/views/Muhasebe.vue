@@ -84,12 +84,12 @@
         <div class="filtre-bar">
           <DatePicker
             v-model="filtreBaslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="filtreBitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.bitis')"
           />
           <Button
@@ -181,12 +181,12 @@
         <div class="filtre-bar">
           <DatePicker
             v-model="mizanBaslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="mizanBitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.bitis')"
           />
           <Button
@@ -263,12 +263,12 @@
           />
           <DatePicker
             v-model="kebirBaslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="kebirBitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.bitis')"
           />
           <Button
@@ -423,12 +423,12 @@
         <div class="filtre-bar">
           <DatePicker
             v-model="karZararBaslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.baslangic')"
           />
           <DatePicker
             v-model="karZararBitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             :placeholder="t('muhasebe.bitis')"
           />
           <Button
@@ -593,7 +593,7 @@
         <div class="field">
           <label>{{ t('muhasebe.tarihZorunlu') }}</label><DatePicker
             v-model="fisForm.tarih"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

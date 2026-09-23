@@ -115,14 +115,14 @@
           <div class="field">
             <label>{{ t('fiyatListesi.gecerlilikBaslangic') }}</label><DatePicker
               v-model="form.gecerlilikBaslangic"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
           <div class="field">
             <label>{{ t('fiyatListesi.gecerlilikBitis') }}</label><DatePicker
               v-model="form.gecerlilikBitis"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>

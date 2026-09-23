@@ -3,6 +3,18 @@ export const formatCurrency = (value) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value)
 }
 
+// Para birimine duyarli bicimlendirme. Kayit para birimi TRY disinda ise dogru
+// sembolu gosterir (yanlis ₺ algisini onler). Sembol eslemesi dovizStore ile aynidir.
+const PARA_SEMBOL = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', SAR: '﷼', GAU: ' GAU', BTC: '₿' }
+
+export const formatPara = (value, paraBirimi = 'TRY') => {
+  const v = value === null || value === undefined || isNaN(value) ? 0 : value
+  const birim = (paraBirimi || 'TRY').toUpperCase()
+  const sembol = PARA_SEMBOL[birim] || ` ${birim}`
+  const formatted = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
+  return birim === 'GAU' ? `${formatted}${sembol}` : `${formatted} ${sembol}`
+}
+
 const parseDate = (value) => {
   if (!value) return null
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {

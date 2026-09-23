@@ -54,7 +54,7 @@ describe('ErrorBoundary', () => {
     await nextTick()
 
     expect(wrapper.find('.error-boundary').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Boom')
+    expect(wrapper.find('.error-message').exists()).toBe(true)
     expect(consoleError).toHaveBeenCalled()
   })
 

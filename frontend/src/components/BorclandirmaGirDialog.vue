@@ -46,7 +46,7 @@
             <DatePicker
               v-model="form.hareketTarihi"
               show-icon
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </FormField>

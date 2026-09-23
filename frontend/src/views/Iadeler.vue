@@ -143,7 +143,7 @@
         <div class="field">
           <label>{{ t('iadeler.tarihZorunlu') }}</label><DatePicker
             v-model="form.tarih"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

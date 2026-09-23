@@ -174,14 +174,14 @@
           <div class="field">
             <label>{{ t('projeler.baslangic') }}</label><DatePicker
               v-model="form.baslangic"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
           <div class="field">
             <label>{{ t('projeler.bitis') }}</label><DatePicker
               v-model="form.bitis"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
@@ -233,14 +233,14 @@
           <div class="field">
             <label>{{ t('projeler.baslangic') }}</label><DatePicker
               v-model="gorevForm.baslangic"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
           <div class="field">
             <label>{{ t('projeler.bitis') }}</label><DatePicker
               v-model="gorevForm.bitis"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>

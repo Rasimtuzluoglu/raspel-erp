@@ -51,7 +51,7 @@
       v-if="kasaStore.loading"
       class="loading"
     >
-      <p><i class="pi pi-spin pi-spinner" /> Yükleniyor...</p>
+      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
     <div

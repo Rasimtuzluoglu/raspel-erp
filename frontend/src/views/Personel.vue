@@ -206,7 +206,7 @@
           <div class="field">
             <label>{{ t('personel.dogumTarihi') }}</label><DatePicker
               v-model="personelForm.dogumTarihi"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
@@ -266,7 +266,7 @@
           <div class="field">
             <label>{{ t('personel.iseGiris') }}</label><DatePicker
               v-model="personelForm.iseGirisTarihi"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
@@ -341,14 +341,14 @@
           <div class="field">
             <label>{{ t('personel.baslangic') }}</label><DatePicker
               v-model="izinForm.baslangic"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>
           <div class="field">
             <label>{{ t('personel.bitis') }}</label><DatePicker
               v-model="izinForm.bitis"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               class="w-full"
             />
           </div>

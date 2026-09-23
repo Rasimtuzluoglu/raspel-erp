@@ -201,7 +201,7 @@
         >
           <template #body="{ data }">
             <span class="font-bold text-base text-primary dark:text-gray-100">
-              {{ formatCurrency(data.genelToplam) }} {{ data.paraBirimi || 'TRY' }}
+              {{ formatPara(data.genelToplam, data.paraBirimi) }}
             </span>
           </template>
         </Column>
@@ -520,7 +520,7 @@
                   <div class="w-1/5 flex flex-col justify-end">
                     <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-right">{{ t('teklifler.tutar') }}</label>
                     <div class="font-bold text-sm text-right text-primary dark:text-gray-200 mt-1 whitespace-nowrap">
-                      {{ formatCurrency(k.tutar) }}
+                      {{ formatPara(k.tutar, form.paraBirimi) }}
                     </div>
                   </div>
                 </div>
@@ -546,7 +546,7 @@
             
             <div class="flex justify-between items-center py-1.5 text-sm">
               <span class="text-secondary dark:text-gray-400">{{ t('teklifler.araToplam') }}</span>
-              <span class="font-semibold">{{ formatCurrency(hesaplananAraToplam) }}</span>
+              <span class="font-semibold">{{ formatPara(hesaplananAraToplam, form.paraBirimi) }}</span>
             </div>
             
             <div class="flex justify-between items-center py-1.5 text-sm group">
@@ -565,14 +565,13 @@
             
             <div class="flex justify-between items-center py-1.5 text-sm">
               <span class="text-secondary dark:text-gray-400">{{ t('teklifler.hesaplananKdv') }}</span>
-              <span class="font-semibold">{{ formatCurrency(hesaplananKdv) }}</span>
+              <span class="font-semibold">{{ formatPara(hesaplananKdv, form.paraBirimi) }}</span>
             </div>
             
             <div class="flex justify-between items-center py-3 mt-2 border-t border-gray-200 dark:border-gray-700">
               <span class="text-lg font-bold text-primary dark:text-gray-200">{{ t('teklifler.genelToplam') }}</span>
               <div class="text-right">
-                <span class="text-xl font-black text-primary">{{ formatCurrency(hesaplananGenelToplam) }}</span>
-                <span class="text-sm font-bold text-muted ml-1">{{ form.paraBirimi || 'TRY' }}</span>
+                <span class="text-xl font-black text-primary">{{ formatPara(hesaplananGenelToplam, form.paraBirimi) }}</span>
               </div>
             </div>
           </div>
@@ -699,7 +698,7 @@
                 {{ k.miktar }} {{ k.birim }}
               </td>
               <td class="p-2 text-right">
-                {{ formatCurrency(k.birimFiyat) }}
+                {{ formatPara(k.birimFiyat, seciliTeklif?.paraBirimi) }}
               </td>
               <td class="p-2 text-center">
                 {{ k.iskontoOrani ? '%' + k.iskontoOrani : '-' }}
@@ -708,7 +707,7 @@
                 %{{ k.kdvOrani }}
               </td>
               <td class="p-2 text-right font-semibold">
-                {{ formatCurrency(k.tutar) }}
+                {{ formatPara(k.tutar, seciliTeklif?.paraBirimi) }}
               </td>
             </tr>
           </tbody>
@@ -737,22 +736,22 @@
           <div class="toplamlar-alani w-4/12 text-xs bg-secondary p-3 rounded border">
             <div class="flex justify-between py-1">
               <span>{{ t('teklifler.araToplam') }}</span>
-              <span class="font-semibold">{{ formatCurrency(seciliTeklif?.araToplam) }}</span>
+              <span class="font-semibold">{{ formatPara(seciliTeklif?.araToplam, seciliTeklif?.paraBirimi) }}</span>
             </div>
             <div
               v-if="seciliTeklif?.iskontoTutari > 0"
               class="flex justify-between py-1 text-red-600"
             >
               <span>{{ t('teklifler.iskonto', { n: seciliTeklif?.iskontoOrani }) }}</span>
-              <span>-{{ formatCurrency(seciliTeklif?.iskontoTutari) }}</span>
+              <span>-{{ formatPara(seciliTeklif?.iskontoTutari, seciliTeklif?.paraBirimi) }}</span>
             </div>
             <div class="flex justify-between py-1">
               <span>{{ t('teklifler.kdvToplami') }}</span>
-              <span class="font-semibold">{{ formatCurrency(seciliTeklif?.kdv) }}</span>
+              <span class="font-semibold">{{ formatPara(seciliTeklif?.kdv, seciliTeklif?.paraBirimi) }}</span>
             </div>
             <div class="flex justify-between py-2 border-t mt-1 font-bold text-sm text-primary">
               <span>{{ t('teklifler.genelToplam') }}</span>
-              <span>{{ formatCurrency(seciliTeklif?.genelToplam) }} {{ seciliTeklif?.paraBirimi }}</span>
+              <span>{{ formatPara(seciliTeklif?.genelToplam, seciliTeklif?.paraBirimi) }}</span>
             </div>
           </div>
         </div>
@@ -791,7 +790,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI, faturaAPI } from '../api/index.js'
-import { formatCurrency, formatDate } from '../utils/format.js'
+import { formatCurrency, formatPara, formatDate } from '../utils/format.js'
 import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -1085,7 +1084,7 @@ const teklifKaydet = async () => {
     formDialog.value = false
     await teklifleriGetir()
   } catch (err) {
-    toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: t('teklifler.kaydedilemedi') + err.message, life: 3000 })
+    toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err?.response?.data?.message || t('teklifler.kaydedilemedi'), life: 3000 })
   } finally {
     kaydediliyor.value = false
   }
@@ -1104,7 +1103,7 @@ const silOnay = (teklif) => {
         toast.add({ severity: 'success', summary: t('teklifler.silindi'), detail: t('teklifler.teklifSilindi'), life: 3000 })
         await teklifleriGetir()
       } catch (err) {
-        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err?.response?.data?.message || t('common.islemBasarisiz'), life: 3000 })
       }
     }
   })
@@ -1123,7 +1122,7 @@ const revizyonOlustur = (teklif) => {
         toast.add({ severity: 'success', summary: t('teklifler.revizyonOlusturuldu'), detail: t('teklifler.revizyonHazirlandi'), life: 3000 })
         await teklifleriGetir()
       } catch (err) {
-        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err?.response?.data?.message || t('common.islemBasarisiz'), life: 3000 })
       }
     }
   })
@@ -1142,7 +1141,7 @@ const sipariseDonustur = (teklif) => {
         toast.add({ severity: 'success', summary: t('teklifler.donusturuldu'), detail: t('teklifler.siparisKaydedildi', { n: res.data?.siparisNo }), life: 3500 })
         await teklifleriGetir()
       } catch (err) {
-        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err?.response?.data?.message || t('common.islemBasarisiz'), life: 3000 })
       }
     }
   })
@@ -1161,7 +1160,7 @@ const faturayaDonustur = (teklif) => {
         toast.add({ severity: 'success', summary: t('teklifler.faturalasti'), detail: t('teklifler.faturaKesildi', { n: res.data?.faturaNumarasi }), life: 3500 })
         await teklifleriGetir()
       } catch (err) {
-        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err.message, life: 3000 })
+        toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: err?.response?.data?.message || t('common.islemBasarisiz'), life: 3000 })
       }
     }
   })

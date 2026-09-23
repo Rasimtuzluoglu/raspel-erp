@@ -180,7 +180,7 @@
           <DatePicker
             v-model="gorevForm.bitisTarihi"
             show-icon
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -241,7 +241,7 @@
             show-time
             hour-format="24"
             show-icon
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

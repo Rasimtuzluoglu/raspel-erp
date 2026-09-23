@@ -215,7 +215,7 @@
           <label>{{ t('donemler.baslangicTarihiZorunlu') }}</label>
           <DatePicker
             v-model="form.baslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -223,7 +223,7 @@
           <label>{{ t('donemler.bitisTarihiZorunlu') }}</label>
           <DatePicker
             v-model="form.bitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>

@@ -531,6 +531,15 @@
         </div>
       </div>
 
+      <div class="ekstre-arac">
+        <Button
+          :label="t('cariHesaplar.ekstreYazdir')"
+          icon="pi pi-print"
+          class="p-button-sm p-button-outlined"
+          @click="cariEkstreYazdir"
+        />
+      </div>
+
       <div
         v-if="cariHareketlerYukleniyor"
         class="loading"
@@ -543,7 +552,7 @@
         class="table-container"
       >
         <AppDataTable
-          :value="cariHareketler"
+          :value="cariHareketlerBakiye"
           striped-rows
           :rows="10"
           :paginator="true"
@@ -584,6 +593,17 @@
             field="aciklama"
             :header="t('common.description')"
           />
+          <Column
+            field="bakiye"
+            :header="t('cariHesaplar.bakiye')"
+            style="width: 130px"
+          >
+            <template #body="slotProps">
+              <span :class="slotProps.data.bakiye >= 0 ? 'positive' : 'negative'">
+                {{ formatCurrency(slotProps.data.bakiye) }}
+              </span>
+            </template>
+          </Column>
           <template #empty>
             <EmptyState
               v-if="cariHareketler && cariHareketler.length === 0"
@@ -995,6 +1015,8 @@ import CariKart360Dialog from '../components/CariKart360Dialog.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import { formatCurrency } from '../utils/format.js'
+import { escapeHtml } from '../utils/escapeHtml.js'
+import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -1099,7 +1121,65 @@ const toplamOdeme = computed(() =>
 const toplamBorclandirma = computed(() =>
   cariHareketler.value.filter((h) => h.tur === 'BORC').reduce((s, h) => s + (h.tutar || 0), 0)
 )
-const guncelBakiye = computed(() => toplamOdeme.value - toplamTahsilat.value - toplamBorclandirma.value)
+// Backend ile ayni isaret kurali: tahsilat bakiyeyi artirir, odeme/borclandirma azaltir.
+const guncelBakiye = computed(() => toplamTahsilat.value - toplamOdeme.value - toplamBorclandirma.value)
+
+const hareketDelta = (h) => (h.tur === 'TAHSILAT' ? h.tutar || 0 : -(h.tutar || 0))
+
+// Ekstre: tarihe gore artan sirali, yuruyen bakiye kolonlu hareket listesi.
+const cariHareketlerBakiye = computed(() => {
+  const sirali = [...cariHareketler.value].sort(
+    (a, b) => new Date(a.hareketTarihi || 0) - new Date(b.hareketTarihi || 0)
+  )
+  let bakiye = 0
+  return sirali.map((h) => {
+    bakiye += hareketDelta(h)
+    return { ...h, bakiye }
+  })
+})
+
+const cariEkstreYazdir = () => {
+  const cari = selectedCariHesap.value
+  if (!cari) return
+  const satirlar = cariHareketlerBakiye.value
+    .map(
+      (h) => `<tr>
+        <td>${formatDate(h.hareketTarihi)}</td>
+        <td>${escapeHtml(hareketTuruEtiketi(h.tur))}</td>
+        <td class="sag">${formatCurrency(h.tutar)}</td>
+        <td class="sag ${h.bakiye >= 0 ? 'poz' : 'neg'}">${formatCurrency(h.bakiye)}</td>
+        <td>${escapeHtml(h.aciklama || '')}</td>
+      </tr>`
+    )
+    .join('')
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>${escapeHtml(t('cariHesaplar.ekstreBaslik'))}</title>
+    <style>
+      body{font-family:'Segoe UI',Arial,sans-serif;color:#111;margin:24px;font-size:12px;}
+      h1{font-size:16px;margin:0 0 4px;} h2{font-size:14px;margin:0 0 12px;color:#444;}
+      table{width:100%;border-collapse:collapse;margin-top:12px;}
+      th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left;}
+      th{background:#f3f4f6;} .sag{text-align:right;} .poz{color:#15803d;} .neg{color:#b91c1c;}
+      .ozet{margin-top:12px;text-align:right;font-size:13px;}
+      @media print{.no-print{display:none;}}
+    </style></head><body>
+      <div class="no-print" style="text-align:right;margin-bottom:8px;">
+        <button onclick="window.print()">${escapeHtml(t('common.print'))}</button>
+      </div>
+      <h1>${escapeHtml(t('cariHesaplar.ekstreBaslik'))}</h1>
+      <h2>${escapeHtml(cari.ad || '')}</h2>
+      <table><thead><tr>
+        <th>${escapeHtml(t('common.date'))}</th>
+        <th>${escapeHtml(t('cariHesaplar.tur'))}</th>
+        <th class="sag">${escapeHtml(t('common.amount'))}</th>
+        <th class="sag">${escapeHtml(t('cariHesaplar.bakiye'))}</th>
+        <th>${escapeHtml(t('common.description'))}</th>
+      </tr></thead><tbody>${satirlar}</tbody></table>
+      <div class="ozet"><strong>${escapeHtml(t('cariHesaplar.guncelBakiye'))}: ${formatCurrency(guncelBakiye.value)}</strong></div>
+    </body></html>`
+  const pencere = fisPenceresiAcVeYazdir(html)
+  if (!pencere) toastBildirim.hata(t('common.popupEngellendi'))
+}
 
 const hareketTuruEtiketi = (tur) =>
   ({ TAHSILAT: t('cariHesaplar.tahsilat'), ODEME: t('cariHesaplar.odeme'), BORC: t('cariHesaplar.borclandirma') })[tur] || tur

@@ -54,7 +54,7 @@
             <DatePicker
               v-model="filtre.tarihAraligi"
               selection-mode="range"
-              date-format="dd/mm/yy"
+              date-format="dd.mm.yy"
               :placeholder="t('denetim.baslangicBitis')"
               class="w-full"
               @date-select="filtrele"

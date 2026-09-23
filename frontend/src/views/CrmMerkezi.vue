@@ -391,7 +391,7 @@
           <DatePicker
             v-model="aktiviteForm.planlananTarih"
             show-time
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -468,7 +468,7 @@
           <label>{{ t('crmMerkezi.baslangic') }}</label>
           <DatePicker
             v-model="kampanyaForm.baslangic"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
@@ -476,7 +476,7 @@
           <label>{{ t('crmMerkezi.bitis') }}</label>
           <DatePicker
             v-model="kampanyaForm.bitis"
-            date-format="dd/mm/yy"
+            date-format="dd.mm.yy"
             class="w-full"
           />
         </div>
