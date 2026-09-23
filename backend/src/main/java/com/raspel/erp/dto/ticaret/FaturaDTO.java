@@ -62,6 +62,10 @@ public class FaturaDTO {
     private String odemeYontemi;
     private String taksitKurum;
     private BigDecimal taksitTutar;
+    /** TAKSIT satışında taksit sayısı (verilirse taksit planı oluşturulur). */
+    private Integer taksitSayisi;
+    /** TAKSIT planında iki taksit arası ay (varsayılan 1). */
+    private Integer periyotAy;
     private Long kasaId;
     private String kasaAd;
     private Long bankaId;

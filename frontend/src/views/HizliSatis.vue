@@ -505,6 +505,16 @@
                     class="w-full"
                   />
                 </div>
+                <div class="odenen-satir">
+                  <label>{{ t('hizliSatis.taksitSayisi') }}</label>
+                  <InputNumber
+                    v-model="taksitSayisi"
+                    :min="1"
+                    :max="60"
+                    show-buttons
+                    class="w-full"
+                  />
+                </div>
               </div>
 
               <div class="odenen-satir">
@@ -1411,6 +1421,7 @@ const odemeYontemleri = computed(() => [
 // Taksit bilgisi
 const taksitKurum = ref('')
 const taksitTutar = ref(0)
+const taksitSayisi = ref(1)
 
 // Kasa seçimi
 const seciliKasa = ref(null)
@@ -2159,6 +2170,7 @@ const satisiTamamlaOnaysiz = async () => {
     odemeYontemi: odemeYontemi.value,
     taksitKurum: odemeYontemi.value === 'TAKSIT' ? taksitKurum.value : null,
     taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
+    taksitSayisi: odemeYontemi.value === 'TAKSIT' ? taksitSayisi.value : null,
     kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
     bankaId: (odemeYontemi.value === 'KART' || odemeYontemi.value === 'HAVALE') ? (seciliBanka.value || null) : null,
     kartaBankaAktar: odemeYontemi.value === 'KART' && !!seciliBanka.value,

@@ -810,6 +810,7 @@
     "taksitKurum": "Installment Institution",
     "taksitKurumPlaceholder": "Bank / finance institution",
     "taksitTutar": "Installment Amount",
+    "taksitSayisi": "Number of Installments",
     "kasa": "Cash Desk",
     "kasaSecin": "Select cash desk",
     "kartBankaAktar": "Transfer Card Amount to Bank",

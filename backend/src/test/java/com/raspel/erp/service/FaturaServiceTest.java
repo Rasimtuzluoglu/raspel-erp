@@ -69,6 +69,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
     @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    @Mock private com.raspel.erp.service.finans.TaksitService taksitService;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {
@@ -535,5 +536,24 @@ class FaturaServiceTest {
         assertEquals(0, fatura.getAraToplam().compareTo(new BigDecimal("200")));
         assertEquals(0, kalem.getTutar().compareTo(new BigDecimal("240")));
         verify(faturaRepository).save(fatura);
+    }
+
+    @Test
+    void faturaOlustur_taksit_satisindaPlanOlusturulur() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(BigDecimal.ONE)
+                .birimFiyat(BigDecimal.valueOf(1200)).kdvOrani(BigDecimal.valueOf(20)).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").durum("KESILDI").tarih(LocalDate.now())
+                .cariHesapId(1L).odemeYontemi("TAKSIT").taksitKurum("Banka").taksitSayisi(3)
+                .kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        saved.setId(1L);
+        saved.setOdemeYontemi("TAKSIT");
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+
+        faturaService.faturaOlustur(dto, 1L, null, null);
+
+        verify(taksitService).planOlustur(any(com.raspel.erp.dto.finans.TaksitPlanDTO.class), eq(1L));
     }
 }

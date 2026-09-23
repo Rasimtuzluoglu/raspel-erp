@@ -89,6 +89,7 @@ public class FaturaService {
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
     private final com.raspel.erp.repository.finans.HareketRepository hareketRepository;
+    private final com.raspel.erp.service.finans.TaksitService taksitService;
     private final FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final com.raspel.erp.service.sistem.DonemService donemService;
@@ -449,6 +450,23 @@ public class FaturaService {
                 bankaGirisi(kaydedilen, odenenTutar);
             }
         }
+
+        // TAKSİT satışı: kalan tutar için taksit planı oluştur (nakit/banka hareketi yoktur).
+        if ("TAKSIT".equalsIgnoreCase(kaydedilen.getOdemeYontemi())
+                && cariHesap != null && kalanTutar.compareTo(BigDecimal.ZERO) > 0) {
+            int taksitSayisi = dto.getTaksitSayisi() != null && dto.getTaksitSayisi() > 0 ? dto.getTaksitSayisi() : 1;
+            taksitService.planOlustur(com.raspel.erp.dto.finans.TaksitPlanDTO.builder()
+                    .cariId(cariHesap.getId())
+                    .toplamTutar(kalanTutar)
+                    .taksitSayisi(taksitSayisi)
+                    .periyotAy(dto.getPeriyotAy())
+                    .kurum(dto.getTaksitKurum())
+                    .faturaId(kaydedilen.getId())
+                    .baslangicTarihi(kaydedilen.getVadeTarihi())
+                    .aciklama("Fatura " + kaydedilen.getFaturaNumarasi())
+                    .build(), sirketId);
+        }
+
         FaturaDTO sonuc = entityDTOyeCevir(kaydedilen);
         sonuc.setEmailGonderimDurumu(emailGonderimDurumu);
         return sonuc;
@@ -496,6 +514,22 @@ public class FaturaService {
                 .faturaId(fatura.getId())
                 .kaynakTip("FATURA")
                 .build());
+    }
+
+    /**
+     * Faturaya ait peşin tahsilat (odenenTutar) için kasa/banka girişini bir kez kaydeder.
+     * Zaten bağlı hareket varsa (idempotent) tekrar yazmaz.
+     */
+    private void tahsilatKaydetGerekirse(Fatura fatura) {
+        BigDecimal odenen = fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO;
+        if (odenen.signum() <= 0 || fatura.getId() == null) return;
+        if (!kasaHareketRepository.findByFaturaId(fatura.getId()).isEmpty()) return;
+        if (!bankaHareketiRepository.findByKaynakFaturaId(fatura.getId()).isEmpty()) return;
+        if (fatura.getKasaId() != null) {
+            kasaGirisi(fatura, odenen);
+        } else if (fatura.getBankaId() != null) {
+            bankaGirisi(fatura, odenen);
+        }
     }
 
     /**
@@ -606,11 +640,16 @@ public class FaturaService {
         }
 
         if (durum == Fatura.FaturaDurum.KESILDI && fatura.getDurum() != Fatura.FaturaDurum.KESILDI) {
-            List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(fatura.getTur()), "Fatura #" + fatura.getFaturaNumarasi());
-            cariBakiyeGuncelle(fatura, false);
-            if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
-                kritikStokUyarisiGonder(kritik, fatura.getSirketId());
+            // İrsaliye zaten stok işlediyse fatura tekrar düşmemeli (çift düşüm önlenir).
+            if (!irsaliyeStokIslenmisMi(fatura.getIrsaliyeId())) {
+                List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(fatura.getTur()), "Fatura #" + fatura.getFaturaNumarasi());
+                if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
+                    kritikStokUyarisiGonder(kritik, fatura.getSirketId());
+                }
             }
+            cariBakiyeGuncelle(fatura, false);
+            // Peşin tahsilat varsa kasa/banka girişini (idempotent) kaydet.
+            tahsilatKaydetGerekirse(fatura);
         } else if (geriAliniyor) {
             stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura geri alındı #" + fatura.getFaturaNumarasi());
             cariBakiyeGuncelle(fatura, true);
