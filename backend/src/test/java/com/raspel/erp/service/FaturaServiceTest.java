@@ -70,6 +70,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private com.raspel.erp.service.finans.TaksitService taksitService;
+    @Mock private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
     @InjectMocks private FaturaService faturaService;
 
     private CariHesap createCariHesap() {
@@ -576,5 +577,56 @@ class FaturaServiceTest {
 
         assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
                 () -> faturaService.faturaNumarasiIleGetir("YOK", 1L));
+    }
+
+    @Test
+    void faturaParaIzi_kasaBankaVeIadeBirlestirir() {
+        Fatura fatura = createFatura(1L);
+        fatura.setKasaId(10L);
+        fatura.setBankaId(20L);
+        fatura.setIrsaliyeId(30L);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+
+        com.raspel.erp.entity.finans.Kasa kasa =
+                com.raspel.erp.entity.finans.Kasa.builder().id(10L).ad("Merkez Kasa").build();
+        com.raspel.erp.entity.finans.KasaHareket kh =
+                com.raspel.erp.entity.finans.KasaHareket.builder()
+                        .id(100L).kasa(kasa).tur("GIRIS").tutar(BigDecimal.valueOf(500))
+                        .hareketTarihi(LocalDate.of(2026, 1, 1)).aciklama("Tahsilat")
+                        .kaynakTip("FATURA").build();
+        when(kasaHareketRepository.findByFaturaId(1L)).thenReturn(List.of(kh));
+
+        com.raspel.erp.entity.finans.BankaHareketi bh =
+                com.raspel.erp.entity.finans.BankaHareketi.builder()
+                        .id(200L).bankaId(20L).tarih(LocalDate.of(2026, 1, 2))
+                        .borc(BigDecimal.ZERO).alacak(BigDecimal.valueOf(300)).eslestirildi(false)
+                        .aciklama("Havale").kaynakTip("FATURA").build();
+        when(bankaHareketiRepository.findByKaynakFaturaId(1L)).thenReturn(List.of(bh));
+        when(bankaRepository.findById(20L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.finans.Banka.builder().id(20L).ad("Ziraat").build()));
+        when(kasaRepository.findById(10L)).thenReturn(Optional.of(kasa));
+
+        com.raspel.erp.entity.ticaret.Iade iade =
+                com.raspel.erp.entity.ticaret.Iade.builder()
+                        .id(300L).faturaId(1L).tur("SATIS").tarih(LocalDate.of(2026, 1, 3))
+                        .tutar(BigDecimal.valueOf(50)).durum("ONAYLANDI").aciklama("Iade").build();
+        when(iadeRepository.findByFaturaIdInAndSirketId(anyList(), any())).thenReturn(List.of(iade));
+
+        var sonuc = faturaService.faturaParaIzi(1L);
+
+        assertEquals(1, sonuc.getKasaHareketleri().size());
+        assertEquals("Merkez Kasa", sonuc.getKasaHareketleri().get(0).getHesapAd());
+        assertEquals(1, sonuc.getBankaHareketleri().size());
+        assertEquals("GIRIS", sonuc.getBankaHareketleri().get(0).getTur());
+        assertEquals("Ziraat", sonuc.getBankaHareketleri().get(0).getHesapAd());
+        assertEquals(1, sonuc.getIadeler().size());
+        assertEquals(30L, sonuc.getIrsaliyeId());
+    }
+
+    @Test
+    void faturaParaIzi_bulunamazsaHata() {
+        when(faturaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> faturaService.faturaParaIzi(99L));
     }
 }

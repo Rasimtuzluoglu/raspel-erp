@@ -276,6 +276,85 @@
         </div>
       </div>
 
+      <div
+        v-if="paraIziVar"
+        class="para-izi no-print"
+      >
+        <div class="para-izi-baslik">
+          <h3><i class="pi pi-sitemap" /> {{ t('faturaDetay.paraIzi') }}</h3>
+        </div>
+
+        <div
+          v-if="paraIzi.irsaliyeId"
+          class="para-izi-satir"
+        >
+          <span class="para-izi-etiket">{{ t('faturaDetay.bagliIrsaliye') }}</span>
+          <span class="para-izi-link">#{{ paraIzi.irsaliyeId }}</span>
+        </div>
+
+        <div
+          v-if="paraIzi.kasaHareketleri?.length"
+          class="para-izi-grup"
+        >
+          <h4>{{ t('faturaDetay.kasaHareketleri') }}</h4>
+          <div
+            v-for="h in paraIzi.kasaHareketleri"
+            :key="`k-${h.id}`"
+            class="para-izi-satir"
+          >
+            <span class="para-izi-etiket">
+              <span :class="['hareket-tur', h.tur === 'GIRIS' ? 'giris' : 'cikis']">{{ hareketTuruLabel(h.tur) }}</span>
+              {{ h.hesapAd || '-' }}
+            </span>
+            <span class="para-izi-tutar">{{ formatCurrency(h.tutar) }}</span>
+            <span class="para-izi-tarih">{{ formatDate(h.tarih) }}</span>
+            <span
+              v-if="h.kaynakTip"
+              class="para-izi-kaynak"
+            >{{ h.kaynakTip }}</span>
+          </div>
+        </div>
+
+        <div
+          v-if="paraIzi.bankaHareketleri?.length"
+          class="para-izi-grup"
+        >
+          <h4>{{ t('faturaDetay.bankaHareketleri') }}</h4>
+          <div
+            v-for="h in paraIzi.bankaHareketleri"
+            :key="`b-${h.id}`"
+            class="para-izi-satir"
+          >
+            <span class="para-izi-etiket">
+              <span :class="['hareket-tur', h.tur === 'GIRIS' ? 'giris' : 'cikis']">{{ hareketTuruLabel(h.tur) }}</span>
+              {{ h.hesapAd || '-' }}
+            </span>
+            <span class="para-izi-tutar">{{ formatCurrency(h.tutar) }}</span>
+            <span class="para-izi-tarih">{{ formatDate(h.tarih) }}</span>
+            <span
+              v-if="h.kaynakTip"
+              class="para-izi-kaynak"
+            >{{ h.kaynakTip }}</span>
+          </div>
+        </div>
+
+        <div
+          v-if="paraIzi.iadeler?.length"
+          class="para-izi-grup"
+        >
+          <h4>{{ t('faturaDetay.iadeler') }}</h4>
+          <div
+            v-for="i in paraIzi.iadeler"
+            :key="`i-${i.id}`"
+            class="para-izi-satir"
+          >
+            <span class="para-izi-etiket">{{ i.tur }} · {{ i.durum }}</span>
+            <span class="para-izi-tutar negative">{{ formatCurrency(i.tutar) }}</span>
+            <span class="para-izi-tarih">{{ formatDate(i.tarih) }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="fatura-alt">
         <p>{{ t('faturaDetay.olusturma') }} {{ formatDateTime(fatura.olusturmaTarihi) }}</p>
       </div>
@@ -381,6 +460,28 @@ const belgeleriYukle = async () => {
   }
 }
 
+const paraIzi = ref(null)
+
+const paraIziYukle = async () => {
+  try {
+    const r = await faturaAPI.paraIzi(route.params.id)
+    paraIzi.value = r.data || null
+  } catch {
+    paraIzi.value = null
+  }
+}
+
+const hareketTuruLabel = (tur) => (tur === 'GIRIS' ? t('faturaDetay.giris') : t('faturaDetay.cikis'))
+const paraIziVar = computed(() => {
+  if (!paraIzi.value) return false
+  return (
+    (paraIzi.value.kasaHareketleri?.length || 0) > 0 ||
+    (paraIzi.value.bankaHareketleri?.length || 0) > 0 ||
+    (paraIzi.value.iadeler?.length || 0) > 0 ||
+    paraIzi.value.irsaliyeId != null
+  )
+})
+
 const dosyaSecildi = async (e) => {
   const file = e.target.files[0]
   if (!file) return
@@ -450,6 +551,7 @@ onMounted(async () => {
       fatura.value.cariHesapAd
     )
     belgeleriYukle()
+    paraIziYukle()
   } catch (err) {
     error.value = err.response?.data?.message || t('faturaDetay.faturaBulunamadi')
   } finally {
@@ -672,6 +774,77 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   font-size: 12px;
   border-top: 1px solid #eee;
   padding-top: 15px;
+}
+.para-izi {
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--surface-2, rgba(148, 163, 184, 0.06));
+}
+.para-izi-baslik h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.para-izi-grup {
+  margin-top: 12px;
+}
+.para-izi-grup h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.para-izi-satir {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13px;
+}
+.para-izi-etiket {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.para-izi-tutar {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.para-izi-tarih {
+  color: var(--text-muted);
+  font-size: 12px;
+  min-width: 90px;
+  text-align: right;
+}
+.para-izi-kaynak {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(96, 165, 250, 0.15);
+  color: var(--accent);
+}
+.para-izi-link {
+  color: var(--accent);
+  font-weight: 600;
+}
+.hareket-tur {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 8px;
+}
+.hareket-tur.giris {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.hareket-tur.cikis {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 .durum-badge {
   padding: 4px 12px;

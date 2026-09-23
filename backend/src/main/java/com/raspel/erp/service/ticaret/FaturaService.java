@@ -3,6 +3,7 @@ package com.raspel.erp.service.ticaret;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
+import com.raspel.erp.dto.ticaret.FaturaParaIziDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.CariSonUrunDTO;
 import com.raspel.erp.dto.ticaret.CariUrunFiyatDTO;
@@ -94,6 +95,7 @@ public class FaturaService {
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
+    private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -135,6 +137,82 @@ public class FaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fatura bulunamadı: " + faturaNumarasi));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
         return entityDTOyeCevir(fatura);
+    }
+
+    /**
+     * Bir faturanin para izini dondurur: bagli kasa/banka hareketleri, iadeler ve
+     * irsaliye bagi. Bir satista sorun oldugunda paranin hangi hesaba, hangi belgeyle
+     * baglandigini gosterir.
+     */
+    @Transactional(readOnly = true)
+    public FaturaParaIziDTO faturaParaIzi(Long id) {
+        Fatura fatura = faturaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fatura", id));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
+
+        List<FaturaParaIziDTO.HareketIzi> kasa = new ArrayList<>();
+        for (KasaHareket kh : kasaHareketRepository.findByFaturaId(id)) {
+            kasa.add(FaturaParaIziDTO.HareketIzi.builder()
+                    .id(kh.getId())
+                    .hesapAd(kh.getKasa() != null ? kh.getKasa().getAd() : null)
+                    .tur(kh.getTur())
+                    .tutar(kh.getTutar())
+                    .tarih(kh.getHareketTarihi())
+                    .aciklama(kh.getAciklama())
+                    .kaynakTip(kh.getKaynakTip())
+                    .build());
+        }
+
+        List<FaturaParaIziDTO.HareketIzi> banka = new ArrayList<>();
+        for (com.raspel.erp.entity.finans.BankaHareketi bh : bankaHareketiRepository.findByKaynakFaturaId(id)) {
+            String hesapAd = bh.getBankaId() != null
+                    ? bankaRepository.findById(bh.getBankaId()).map(b -> b.getAd()).orElse(null) : null;
+            boolean giris = bh.getAlacak() != null && bh.getAlacak().signum() > 0;
+            banka.add(FaturaParaIziDTO.HareketIzi.builder()
+                    .id(bh.getId())
+                    .hesapAd(hesapAd)
+                    .tur(giris ? "GIRIS" : "CIKIS")
+                    .tutar(giris ? bh.getAlacak() : bh.getBorc())
+                    .tarih(bh.getTarih())
+                    .aciklama(bh.getAciklama())
+                    .kaynakTip(bh.getKaynakTip())
+                    .build());
+        }
+
+        List<FaturaParaIziDTO.IadeIzi> iadeler = iadeRepository
+                .findByFaturaIdInAndSirketId(List.of(id), fatura.getSirketId())
+                .stream()
+                .map(i -> FaturaParaIziDTO.IadeIzi.builder()
+                        .id(i.getId())
+                        .tur(i.getTur())
+                        .tarih(i.getTarih())
+                        .tutar(i.getTutar())
+                        .durum(i.getDurum())
+                        .aciklama(i.getAciklama())
+                        .build())
+                .collect(Collectors.toList());
+
+        String kasaAd = fatura.getKasaId() != null
+                ? kasaRepository.findById(fatura.getKasaId()).map(Kasa::getAd).orElse(null) : null;
+        String bankaAd = fatura.getBankaId() != null
+                ? bankaRepository.findById(fatura.getBankaId()).map(b -> b.getAd()).orElse(null) : null;
+
+        return FaturaParaIziDTO.builder()
+                .faturaId(fatura.getId())
+                .faturaNumarasi(fatura.getFaturaNumarasi())
+                .genelToplam(fatura.getGenelToplam())
+                .odenenTutar(fatura.getOdenenTutar())
+                .kalanTutar(fatura.getKalanTutar())
+                .odemeDurumu(fatura.getOdemeDurumu())
+                .kasaId(fatura.getKasaId())
+                .kasaAd(kasaAd)
+                .bankaId(fatura.getBankaId())
+                .bankaAd(bankaAd)
+                .irsaliyeId(fatura.getIrsaliyeId())
+                .kasaHareketleri(kasa)
+                .bankaHareketleri(banka)
+                .iadeler(iadeler)
+                .build();
     }
 
     /**

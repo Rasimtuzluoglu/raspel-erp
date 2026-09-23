@@ -86,6 +86,9 @@ export const faturaAPI = {
   getByNumara(faturaNumarasi) {
     return apiClient.get(`/faturalar/numara/${encodeURIComponent(faturaNumarasi)}`)
   },
+  paraIzi(id) {
+    return apiClient.get(`/faturalar/${id}/para-izi`)
+  },
   create(data) {
     // Idempotency anahtari: ag tekrarinda/çift tıklamada mükerrer fatura oluşmasını engeller.
     return apiClient.post('/faturalar', data, {

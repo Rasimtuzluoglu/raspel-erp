@@ -81,6 +81,13 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.faturaGetir(id));
     }
 
+    @GetMapping("/{id}/para-izi")
+    @Operation(summary = "Faturanın para izi",
+            description = "Faturaya bağlı kasa/banka hareketlerini, iadeleri ve irsaliye bağını getirir")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaParaIziDTO> faturaParaIzi(@PathVariable Long id) {
+        return ResponseEntity.ok(faturaService.faturaParaIzi(id));
+    }
+
     @GetMapping("/stok/{stokId}/fiyat-gecmisi")
     @Operation(summary = "Stok fiyat gecmisi", description = "Bir stogun son 5 alis fiyatini ve trend yonunu dondurur")
     public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatGecmisiDTO> stokFiyatGecmisi(
