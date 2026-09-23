@@ -4,6 +4,7 @@ import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaParaIziDTO;
+import com.raspel.erp.dto.ticaret.FaturaTopluHesaplaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.CariSonUrunDTO;
 import com.raspel.erp.dto.ticaret.CariUrunFiyatDTO;
@@ -825,6 +826,133 @@ public class FaturaService {
         log.info("Fatura yeniden hesaplandı - ID: {}, eski genelToplam: {}, yeni: {}",
                 id, oncekiSnapshot, belge.genelToplam());
         return entityDTOyeCevir(kaydedilen);
+    }
+
+    /**
+     * Geçmiş faturaları KDV-dahil modele göre toplu yeniden hesaplar. {@code kaydet=false}
+     * iken yalnızca önizleme döner (dry-run); hiçbir kayıt değişmez. {@code kaydet=true}
+     * iken yalnızca tutarı değişen ve dönemi kilitli olmayan faturalar güncellenir; her
+     * güncelleme için geçmiş kaydı (snapshot) alınır (geri alınabilirlik).
+     *
+     * @param tur yalnızca belirli fatura türü (SATIS/ALIS); null ise tümü
+     */
+    @Transactional
+    public FaturaTopluHesaplaDTO faturaTopluYenidenHesapla(Long sirketId, LocalDate bas, LocalDate bit,
+                                                            String tur, boolean kaydet) {
+        if (sirketId == null) {
+            throw new BusinessException("Şirket bağlamı bulunamadı");
+        }
+        Fatura.FaturaTur turEnum = null;
+        if (tur != null && !tur.isBlank()) {
+            try {
+                turEnum = Fatura.FaturaTur.valueOf(tur.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException("Geçersiz fatura türü: " + tur);
+            }
+        }
+
+        long taranan = 0, degisecek = 0, kilitli = 0, odemeAsan = 0;
+        BigDecimal eskiToplam = BigDecimal.ZERO;
+        BigDecimal yeniToplam = BigDecimal.ZERO;
+        List<FaturaTopluHesaplaDTO.Ornek> ornekler = new ArrayList<>();
+        boolean degisti = false;
+
+        int sayfa = 0;
+        int boyut = 500;
+        while (true) {
+            Page<Long> idSayfa = faturaRepository.faturaIdleriniGetir(
+                    sirketId, bas, bit, turEnum, org.springframework.data.domain.PageRequest.of(sayfa, boyut));
+            if (idSayfa.isEmpty()) break;
+
+            List<Fatura> faturalar = faturaRepository.kalemlerleGetir(idSayfa.getContent());
+            for (Fatura fatura : faturalar) {
+                taranan++;
+
+                List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new ArrayList<>();
+                for (FaturaKalem k : fatura.getKalemler()) {
+                    satirlar.add(com.raspel.erp.util.FaturaTutar.satir(
+                            k.getBirimFiyat(), k.getAdet(), k.getIskontoOrani(), k.getKdvOrani()));
+                }
+                BigDecimal genelIskonto = fatura.getGenelIskontoTutari() != null
+                        ? fatura.getGenelIskontoTutari() : BigDecimal.ZERO;
+                com.raspel.erp.util.FaturaTutar.Belge belge =
+                        com.raspel.erp.util.FaturaTutar.belge(satirlar, genelIskonto);
+
+                BigDecimal mevcutAra = fatura.getAraToplam() != null ? fatura.getAraToplam() : BigDecimal.ZERO;
+                BigDecimal mevcutKdv = fatura.getKdv() != null ? fatura.getKdv() : BigDecimal.ZERO;
+                BigDecimal mevcutGenel = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
+
+                boolean degisir = mevcutGenel.compareTo(belge.genelToplam()) != 0
+                        || mevcutAra.compareTo(belge.araToplam()) != 0
+                        || mevcutKdv.compareTo(belge.kdv()) != 0;
+                if (!degisir) continue;
+
+                if (donemService.tarihKilitliMi(sirketId, fatura.getTarih())) {
+                    kilitli++;
+                    continue;
+                }
+
+                degisecek++;
+                eskiToplam = eskiToplam.add(mevcutGenel);
+                yeniToplam = yeniToplam.add(belge.genelToplam());
+
+                BigDecimal odenen = fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO;
+                if (odenen.compareTo(belge.genelToplam()) > 0) odemeAsan++;
+
+                if (ornekler.size() < 20) {
+                    ornekler.add(FaturaTopluHesaplaDTO.Ornek.builder()
+                            .id(fatura.getId())
+                            .faturaNumarasi(fatura.getFaturaNumarasi())
+                            .tarih(fatura.getTarih() != null ? fatura.getTarih().toString() : null)
+                            .eskiGenelToplam(mevcutGenel)
+                            .yeniGenelToplam(belge.genelToplam())
+                            .build());
+                }
+
+                if (kaydet) {
+                    String oncekiSnapshot = faturaGecmisService.snapshot(fatura);
+                    int i = 0;
+                    for (FaturaKalem k : fatura.getKalemler()) {
+                        k.setTutar(satirlar.get(i++).brut());
+                    }
+                    BigDecimal yeniOdenen = odenen.compareTo(belge.genelToplam()) > 0 ? belge.genelToplam() : odenen;
+                    BigDecimal yeniKalan = belge.genelToplam().subtract(yeniOdenen);
+                    String odemeDurumu = yeniKalan.signum() <= 0 ? "ODENDI"
+                            : yeniOdenen.signum() > 0 ? "KISMI_ODENDI" : "ODENMEDI";
+                    fatura.setAraToplam(belge.araToplam());
+                    fatura.setKdv(belge.kdv());
+                    fatura.setGenelToplam(belge.genelToplam());
+                    fatura.setOdenenTutar(yeniOdenen);
+                    fatura.setKalanTutar(yeniKalan);
+                    fatura.setOdemeDurumu(odemeDurumu);
+                    Fatura kaydedilen = faturaRepository.save(fatura);
+                    faturaGecmisService.kaydet(kaydedilen, FaturaGecmisService.GUNCELLE,
+                            "Toplu yeniden hesaplama (KDV dahil model)",
+                            oncekiSnapshot, faturaGecmisService.snapshot(kaydedilen));
+                    degisti = true;
+                }
+            }
+
+            if (!idSayfa.hasNext()) break;
+            sayfa++;
+        }
+
+        if (kaydet && degisti) {
+            cacheYardimci.temizle("faturalar", "dashboard");
+        }
+        log.info("Toplu yeniden hesaplama - sirket: {}, kaydet: {}, taranan: {}, degisecek: {}, kilitli: {}",
+                sirketId, kaydet, taranan, degisecek, kilitli);
+
+        return FaturaTopluHesaplaDTO.builder()
+                .kaydet(kaydet)
+                .taranan(taranan)
+                .degisecek(degisecek)
+                .kilitliAtlanan(kilitli)
+                .odemeAsan(odemeAsan)
+                .eskiToplam(eskiToplam)
+                .yeniToplam(yeniToplam)
+                .ornekler(ornekler)
+                .build();
     }
 
     @CacheEvict(value = "faturalar", allEntries = true)

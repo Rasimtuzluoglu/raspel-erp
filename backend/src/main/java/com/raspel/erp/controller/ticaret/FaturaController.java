@@ -224,6 +224,34 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.faturaYenidenHesapla(id, kaydet));
     }
 
+    @GetMapping("/yeniden-hesapla/toplu")
+    @Operation(summary = "Geçmiş faturaları toplu yeniden hesapla (önizleme)",
+            description = "KDV-dahil modele göre tüm eşleşen faturaları tarar ve özet döner (dry-run). " +
+                    "Hiçbir kayıt değişmez. Yalnızca ADMIN.")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaTopluHesaplaDTO> topluYenidenHesaplaOnizleme(
+            HttpServletRequest request,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bas,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit,
+            @RequestParam(required = false) String tur) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.faturaTopluYenidenHesapla(sirketId, bas, bit, tur, false));
+    }
+
+    @PostMapping("/yeniden-hesapla/toplu")
+    @Operation(summary = "Geçmiş faturaları toplu yeniden hesapla (uygula)",
+            description = "Değişen ve dönemi kilitli olmayan faturaları KDV-dahil modele göre günceller; " +
+                    "her biri için geçmiş kaydı alınır. Yalnızca ADMIN.")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaTopluHesaplaDTO> topluYenidenHesaplaUygula(
+            HttpServletRequest request,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bas,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit,
+            @RequestParam(required = false) String tur) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.faturaTopluYenidenHesapla(sirketId, bas, bit, tur, true));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Fatura sil", description = "Faturayı siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")

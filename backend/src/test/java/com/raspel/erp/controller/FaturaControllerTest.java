@@ -74,6 +74,18 @@ class FaturaControllerTest {
     }
 
     @Test
+    void shouldTopluYenidenHesaplaOnizleme() throws Exception {
+        var ozet = com.raspel.erp.dto.ticaret.FaturaTopluHesaplaDTO.builder()
+                .kaydet(false).taranan(10).degisecek(2).build();
+        when(faturaService.faturaTopluYenidenHesapla(eq(1L), isNull(), isNull(), isNull(), eq(false)))
+                .thenReturn(ozet);
+
+        mockMvc.perform(get("/api/faturalar/yeniden-hesapla/toplu").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.degisecek").value(2));
+    }
+
+    @Test
     void shouldGetById() throws Exception {
         var dto = FaturaDTO.builder().id(1L).faturaNumarasi("FTR-001").tur("SATIS").build();
         when(faturaService.faturaGetir(1L)).thenReturn(dto);

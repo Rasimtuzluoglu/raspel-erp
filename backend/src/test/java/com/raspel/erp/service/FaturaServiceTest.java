@@ -647,6 +647,75 @@ class FaturaServiceTest {
         assertEquals(30L, sonuc.getIrsaliyeId());
     }
 
+    private Fatura topluTestFaturasi() {
+        Fatura f = createFatura(1L);
+        f.setGenelToplam(BigDecimal.valueOf(100));
+        f.setAraToplam(BigDecimal.valueOf(100));
+        f.setKdv(BigDecimal.ZERO);
+        FaturaKalem k = FaturaKalem.builder().fatura(f).aciklama("Kalem")
+                .adet(BigDecimal.ONE).birimFiyat(BigDecimal.valueOf(120))
+                .kdvOrani(BigDecimal.valueOf(20)).build();
+        f.setKalemler(new ArrayList<>(List.of(k)));
+        return f;
+    }
+
+    private void topluRepoHazirla(Fatura f) {
+        when(faturaRepository.faturaIdleriniGetir(eq(1L), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(1L)));
+        when(faturaRepository.kalemlerleGetir(List.of(1L))).thenReturn(List.of(f));
+    }
+
+    @Test
+    void topluYenidenHesapla_dryRun_degisecekleriRaporlar() {
+        Fatura f = topluTestFaturasi();
+        topluRepoHazirla(f);
+        when(donemService.tarihKilitliMi(eq(1L), any(LocalDate.class))).thenReturn(false);
+
+        var sonuc = faturaService.faturaTopluYenidenHesapla(1L, null, null, null, false);
+
+        assertFalse(sonuc.isKaydet());
+        assertEquals(1, sonuc.getDegisecek());
+        assertEquals(0, sonuc.getKilitliAtlanan());
+        assertEquals(0, BigDecimal.valueOf(120).compareTo(sonuc.getYeniToplam()));
+        verify(faturaRepository, never()).save(any());
+    }
+
+    @Test
+    void topluYenidenHesapla_kaydet_uygularVeGecmisYazar() {
+        Fatura f = topluTestFaturasi();
+        topluRepoHazirla(f);
+        when(donemService.tarihKilitliMi(eq(1L), any(LocalDate.class))).thenReturn(false);
+        when(faturaGecmisService.snapshot(any())).thenReturn("{}");
+        when(faturaRepository.save(any(Fatura.class))).thenAnswer(i -> i.getArgument(0));
+
+        var sonuc = faturaService.faturaTopluYenidenHesapla(1L, null, null, null, true);
+
+        assertTrue(sonuc.isKaydet());
+        assertEquals(1, sonuc.getDegisecek());
+        assertEquals(0, BigDecimal.valueOf(120).compareTo(f.getGenelToplam()));
+        verify(faturaRepository).save(any(Fatura.class));
+        verify(faturaGecmisService).kaydet(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void topluYenidenHesapla_kilitliDonemAtlanir() {
+        Fatura f = topluTestFaturasi();
+        topluRepoHazirla(f);
+        when(donemService.tarihKilitliMi(eq(1L), any(LocalDate.class))).thenReturn(true);
+
+        var sonuc = faturaService.faturaTopluYenidenHesapla(1L, null, null, null, true);
+
+        assertEquals(1, sonuc.getKilitliAtlanan());
+        assertEquals(0, sonuc.getDegisecek());
+        verify(faturaRepository, never()).save(any());
+    }
+
+    @Test
+    void topluYenidenHesapla_gecersizTurHataVerir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> faturaService.faturaTopluYenidenHesapla(1L, null, null, "GECERSIZ", false));
+    }
+
     @Test
     void faturaParaIzi_bulunamazsaHata() {
         when(faturaRepository.findById(99L)).thenReturn(Optional.empty());

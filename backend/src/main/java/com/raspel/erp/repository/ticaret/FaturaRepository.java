@@ -31,6 +31,21 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
+    /** Toplu yeniden hesaplama icin sayfali ID taramasi (kalem yuku olmadan). */
+    @Query("SELECT f.id FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND (:bas IS NULL OR f.tarih >= :bas) AND (:bit IS NULL OR f.tarih <= :bit) " +
+            "AND (:tur IS NULL OR f.tur = :tur) ORDER BY f.id")
+    Page<Long> faturaIdleriniGetir(@Param("sirketId") Long sirketId,
+                                   @Param("bas") java.time.LocalDate bas,
+                                   @Param("bit") java.time.LocalDate bit,
+                                   @Param("tur") Fatura.FaturaTur tur,
+                                   Pageable pageable);
+
+    /** Toplu yeniden hesaplama icin kalemleriyle birlikte fatura yukleme. */
+    @EntityGraph(attributePaths = {"kalemler", "cariHesap"})
+    @Query("SELECT DISTINCT f FROM Fatura f WHERE f.id IN :ids ORDER BY f.id")
+    List<Fatura> kalemlerleGetir(@Param("ids") java.util.Collection<Long> ids);
+
     /** Benzersiz fatura numarasından erişim (tenant bazlı). */
     Optional<Fatura> findFirstBySirketIdAndFaturaNumarasiIgnoreCase(Long sirketId, String faturaNumarasi);
 
