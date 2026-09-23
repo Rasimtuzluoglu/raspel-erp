@@ -458,6 +458,7 @@
     "ipucuMetin": "Use 'New Invoice' to issue a sales/purchase invoice. A sales invoice reduces stock, a purchase invoice adds incoming goods to stock and maps the supplier to the product.",
     "yeniFatura": "New Invoice",
     "aramaPlaceholder": "Search invoice no or customer...",
+    "numaraBulunamadi": "Invoice \"{no}\" not found",
     "kayitSecildi": "record(s) selected",
     "secilenleriSil": "Delete Selected",
     "colFaturaNo": "Invoice No",

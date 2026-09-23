@@ -28,6 +28,9 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
+    /** Benzersiz fatura numarasından erişim (tenant bazlı). */
+    Optional<Fatura> findFirstBySirketIdAndFaturaNumarasiIgnoreCase(Long sirketId, String faturaNumarasi);
+
     /**
      * Yalnızca fatura başlıklarının gerektiği raporlar için (KDV, BA-BS, nakit akışı):
      * kalemler lazy bırakılır, cari hesap eager yüklenir. N+1 ve gereksiz kalem yükü önlenir.

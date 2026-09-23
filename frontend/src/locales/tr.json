@@ -458,6 +458,7 @@
     "ipucuMetin": "'Yeni Fatura' ile satış/alış faturası kesin. Satış faturası stok düşer, alış faturası fabrikadan/tedarikçiden gelen ürünleri stoğa ekler ve tedarikçiyi ürüne işler. Cari seçince son aldığı ürünler önerilir.",
     "yeniFatura": "Yeni Fatura",
     "aramaPlaceholder": "Fatura no veya cari ara...",
+    "numaraBulunamadi": "\"{no}\" numaralı fatura bulunamadı",
     "kayitSecildi": "kayıt seçildi",
     "secilenleriSil": "Seçilenleri Sil",
     "colFaturaNo": "Fatura No",

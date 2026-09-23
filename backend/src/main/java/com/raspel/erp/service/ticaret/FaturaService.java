@@ -119,6 +119,25 @@ public class FaturaService {
     }
 
     /**
+     * Benzersiz fatura numarasından fatura getirir (tenant bazlı). Bir satış fişinde
+     * sorun olduğunda fiş üzerindeki numaradan kayda ulaşmak için kullanılır.
+     */
+    @Transactional(readOnly = true)
+    public FaturaDTO faturaNumarasiIleGetir(String faturaNumarasi, Long sirketId) {
+        if (faturaNumarasi == null || faturaNumarasi.isBlank()) {
+            throw new BusinessException("Fatura numarası gereklidir");
+        }
+        if (sirketId == null) {
+            throw new BusinessException("Şirket bağlamı bulunamadı");
+        }
+        Fatura fatura = faturaRepository
+                .findFirstBySirketIdAndFaturaNumarasiIgnoreCase(sirketId, faturaNumarasi.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Fatura bulunamadı: " + faturaNumarasi));
+        tenantChecker.check(fatura.getSirketId(), "Fatura");
+        return entityDTOyeCevir(fatura);
+    }
+
+    /**
      * Bir cari hesabin son faturasini dondurur (kopyalama icin). Fatura yoksa null.
      */
     @Transactional(readOnly = true)

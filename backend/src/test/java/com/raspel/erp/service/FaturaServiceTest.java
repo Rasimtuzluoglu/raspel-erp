@@ -556,4 +556,25 @@ class FaturaServiceTest {
 
         verify(taksitService).planOlustur(any(com.raspel.erp.dto.finans.TaksitPlanDTO.class), eq(1L));
     }
+
+    @Test
+    void faturaNumarasiIleGetir_bulur() {
+        Fatura fatura = createFatura(1L);
+        fatura.setFaturaNumarasi("FTR-1-2026-000001");
+        when(faturaRepository.findFirstBySirketIdAndFaturaNumarasiIgnoreCase(1L, "FTR-1-2026-000001"))
+                .thenReturn(Optional.of(fatura));
+
+        var dto = faturaService.faturaNumarasiIleGetir("FTR-1-2026-000001", 1L);
+
+        assertEquals("FTR-1-2026-000001", dto.getFaturaNumarasi());
+    }
+
+    @Test
+    void faturaNumarasiIleGetir_bulunamazsaHata() {
+        when(faturaRepository.findFirstBySirketIdAndFaturaNumarasiIgnoreCase(1L, "YOK"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> faturaService.faturaNumarasiIleGetir("YOK", 1L));
+    }
 }

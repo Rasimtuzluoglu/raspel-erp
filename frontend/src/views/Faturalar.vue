@@ -621,7 +621,7 @@ const aramaDebounce = () => {
   aramaZamanlayici = setTimeout(async () => {
     loading.value = true
     try {
-      await faturaStore.getAllFaturalar(arama.value.trim() || undefined)
+      await faturaStore.getAllFaturalar({ search: arama.value.trim() || undefined })
     } catch {
       /* toast yok */
     }
@@ -725,6 +725,15 @@ onMounted(async () => {
       openCreateDialog()
       seciliCariNesnesi.value = cari
       form.value.cariHesapId = cariId
+    }
+  }
+  // Fatura numarasından derin bağlantı: /faturalar?no=FTR-... -> ilgili fatura detayına git
+  if (route.query.no) {
+    try {
+      const r = await faturaAPI.getByNumara(String(route.query.no))
+      if (r.data?.id) router.push(`/faturalar/${r.data.id}`)
+    } catch {
+      toastBildirim.hata(t('faturalar.numaraBulunamadi', { no: route.query.no }))
     }
   }
 })

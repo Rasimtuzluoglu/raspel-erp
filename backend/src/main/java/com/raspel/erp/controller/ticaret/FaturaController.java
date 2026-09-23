@@ -66,6 +66,15 @@ public class FaturaController {
         return sayfa;
     }
 
+    @GetMapping("/numara/{faturaNumarasi}")
+    @Operation(summary = "Fatura numarasına göre getir",
+            description = "Benzersiz fatura numarasından faturayı getirir (fişteki numaradan kayda ulaşma)")
+    public ResponseEntity<FaturaDTO> faturaNumarasiIleGetir(@PathVariable String faturaNumarasi,
+                                                            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.faturaNumarasiIleGetir(faturaNumarasi, sirketId));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre fatura getir", description = "Fatura ID'sine göre detayları getirir")
     public ResponseEntity<FaturaDTO> faturaGetir(@PathVariable Long id) {

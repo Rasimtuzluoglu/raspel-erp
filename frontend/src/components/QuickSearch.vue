@@ -390,8 +390,10 @@ const navigate = (item) => {
     router.push(item.route)
     return
   }
-  if (item.type === 'cari' || item.type === 'fatura' || item.type === 'proje' || item.type === 'siparis') {
-    router.push(`${typeConfig[item.type].route}/${item.id}`)
+  // Yalnızca fatura için ayrıntı rotası vardır (/faturalar/:id). Diğerleri liste
+  // rotasına gider; aksi halde var olmayan /cari-hesaplar/:id gibi yollar 404 verir.
+  if (item.type === 'fatura') {
+    router.push(`/faturalar/${item.id}`)
   } else {
     router.push(typeConfig[item.type].route)
   }
@@ -468,10 +470,9 @@ watch(query, (val) => {
           )
           .catch(() => { aramaKismiHata = true; return [] }),
         faturaAPI
-          .getAll({ size: 100 })
+          .getAll({ search: q, size: 10 })
           .then((r) =>
             (unwrapList(r))
-              .filter((f) => icindeAra(f.faturaNumarasi, q) || icindeAra(f.cariHesapAd, q))
               .slice(0, 5)
               .map((d) => ({
                 ...d,
