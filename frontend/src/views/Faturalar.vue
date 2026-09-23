@@ -111,6 +111,33 @@
           </template>
         </Column>
         <Column
+          field="odemeDurumu"
+          :header="t('faturalar.colOdemeDurumu')"
+          style="width: 130px"
+        >
+          <template #body="s">
+            <span :class="['odeme-badge', (s.data.odemeDurumu || '').toLowerCase()]">
+              {{ odemeDurumEtiket(s.data.odemeDurumu) }}
+            </span>
+          </template>
+        </Column>
+        <Column
+          field="kalanTutar"
+          :header="t('faturalar.colKalan')"
+          style="width: 120px"
+        >
+          <template #body="s">
+            <span
+              v-if="s.data.kalanTutar && s.data.kalanTutar > 0"
+              class="kalan-tutar"
+            >{{ formatCurrency(s.data.kalanTutar) }}</span>
+            <span
+              v-else
+              class="islem-yapan-bos"
+            >-</span>
+          </template>
+        </Column>
+        <Column
           field="durum"
           :header="t('common.status')"
           style="width: 110px"
@@ -1296,6 +1323,12 @@ const durumLabel = (d) => {
   return lbl[d] || d
 }
 
+const odemeDurumEtiket = (d) => ({
+  ODENDI: t('faturaDetay.odendi'),
+  KISMI_ODENDI: t('faturaDetay.kismiOdedi'),
+  ODENMEDI: t('faturaDetay.odenmedi')
+})[d] || '-'
+
 const excelIndir = async () => {
   try {
     const res = await excelAPI.faturalar()
@@ -1476,6 +1509,29 @@ h1 {
 .durum-badge.iptal {
   background: rgba(148, 163, 184, 0.1);
   color: #94a3b8;
+}
+.odeme-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.odeme-badge.odendi {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.odeme-badge.kismi_odendi {
+  background: rgba(255, 152, 0, 0.15);
+  color: #fb923c;
+}
+.odeme-badge.odenmedi {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+.kalan-tutar {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f87171;
 }
 .islem-yapan {
   font-size: 12px;

@@ -1,8 +1,8 @@
 import { apiClient } from '../client.js'
 
 export const bankaAPI = {
-  getAll() {
-    return apiClient.get('/bankalar')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/bankalar', { params })
   },
   getById(id) {
     return apiClient.get(`/bankalar/${id}`)
@@ -44,8 +44,8 @@ export const bankaMutabakatAPI = {
 }
 
 export const kasaAPI = {
-  getAll() {
-    return apiClient.get('/kasalar')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/kasalar', { params })
   },
   getById(id) {
     return apiClient.get(`/kasalar/${id}`)
@@ -83,8 +83,8 @@ export const kasaAPI = {
 }
 
 export const butceAPI = {
-  getAll() {
-    return apiClient.get('/butceler')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/butceler', { params })
   },
   getById(id) {
     return apiClient.get(`/butceler/${id}`)
@@ -101,8 +101,8 @@ export const butceAPI = {
 }
 
 export const masrafAPI = {
-  getAll() {
-    return apiClient.get('/masraflar')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/masraflar', { params })
   },
   getById(id) {
     return apiClient.get(`/masraflar/${id}`)

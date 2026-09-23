@@ -175,9 +175,11 @@ import { ref, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { posAPI, bankaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const confirm = useConfirm()
 const { t } = useI18n()
 
 const terminaller = ref([])
@@ -248,14 +250,24 @@ const kaydet = async () => {
   }
 }
 
-const sil = async (p) => {
-  try {
-    await posAPI.sil(p.id)
-    toastBildirim.basarili(t('posTerminalleri.silindi'))
-    yukle()
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('posTerminalleri.silinemedi'))
-  }
+const sil = (p) => {
+  confirm.require({
+    message: t('posTerminalleri.silmeOnayi', { ad: p.ad || '' }),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
+    accept: async () => {
+      try {
+        await posAPI.sil(p.id)
+        toastBildirim.basarili(t('posTerminalleri.silindi'))
+        yukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('posTerminalleri.silinemedi'))
+      }
+    },
+    reject: () => {}
+  })
 }
 
 const musteriDetayAc = async (p) => {

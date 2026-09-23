@@ -247,7 +247,7 @@ const formatNumber = (v) => {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [sR, stR] = await Promise.all([stokSayimAPI.getAll(), stokAPI.getAll()])
+    const [sR, stR] = await Promise.all([stokSayimAPI.getAll(), stokAPI.getAll({ size: 5000 })])
     list.value = unwrapList(sR)
     stokListesi.value = stR.data.content || stR.data
   } catch (err) {

@@ -233,8 +233,8 @@ export const stokDuzeltmeAPI = {
 }
 
 export const stokSayimAPI = {
-  getAll() {
-    return apiClient.get('/stok-sayim')
+  getAll(params = { size: 500 }) {
+    return apiClient.get('/stok-sayim', { params })
   },
   getById(id) {
     return apiClient.get(`/stok-sayim/${id}`)

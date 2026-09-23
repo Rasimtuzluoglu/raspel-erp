@@ -303,6 +303,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useConfirm } from 'primevue/useconfirm'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import SelectButton from 'primevue/selectbutton'
 import { useYakinZamanda } from '../composables/useYakinZamanda.js'
@@ -353,6 +354,7 @@ onUnmounted(() => {
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const confirm = useConfirm()
 const dosyaInput = ref(null)
 const belgeler = ref([])
 const belgeYukleniyor = ref(false)
@@ -412,14 +414,24 @@ const belgeIndir = async (b) => {
   }
 }
 
-const belgeSil = async (id) => {
-  try {
-    await belgeAPI.sil(id)
-    belgeler.value = belgeler.value.filter((b) => b.id !== id)
-    toast.add({ severity: 'success', summary: t('faturaDetay.silindi'), detail: t('faturaDetay.belgeSilindi'), life: 3000 })
-  } catch {
-    toastBildirim.hata(t('faturaDetay.silmeBasarisiz'))
-  }
+const belgeSil = (id) => {
+  confirm.require({
+    message: t('faturaDetay.belgeSilmeOnayi'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
+    accept: async () => {
+      try {
+        await belgeAPI.sil(id)
+        belgeler.value = belgeler.value.filter((b) => b.id !== id)
+        toast.add({ severity: 'success', summary: t('faturaDetay.silindi'), detail: t('faturaDetay.belgeSilindi'), life: 3000 })
+      } catch {
+        toastBildirim.hata(t('faturaDetay.silmeBasarisiz'))
+      }
+    },
+    reject: () => {}
+  })
 }
 
 const faturaFiyatli = ref(true)
