@@ -98,6 +98,10 @@ public class FaturaService {
     private final com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
 
+    /** Toplu islemlerde bellek yukunu sinirlamak icin persistence context temizligi. */
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
 
@@ -857,14 +861,17 @@ public class FaturaService {
         List<FaturaTopluHesaplaDTO.Ornek> ornekler = new ArrayList<>();
         boolean degisti = false;
 
-        int sayfa = 0;
+        // Kilitli donemleri tek seferde al (fatura basina sorgu = N+1 onlenir).
+        List<com.raspel.erp.entity.sistem.Donem> kilitliDonemler = donemService.kilitliDonemler(sirketId);
+
+        long sonId = 0L;
         int boyut = 500;
         while (true) {
-            Page<Long> idSayfa = faturaRepository.faturaIdleriniGetir(
-                    sirketId, bas, bit, turEnum, org.springframework.data.domain.PageRequest.of(sayfa, boyut));
-            if (idSayfa.isEmpty()) break;
+            List<Long> idler = faturaRepository.faturaIdleriniGetir(
+                    sirketId, sonId, bas, bit, turEnum, org.springframework.data.domain.PageRequest.of(0, boyut));
+            if (idler.isEmpty()) break;
 
-            List<Fatura> faturalar = faturaRepository.kalemlerleGetir(idSayfa.getContent());
+            List<Fatura> faturalar = faturaRepository.kalemlerleGetir(idler);
             for (Fatura fatura : faturalar) {
                 taranan++;
 
@@ -887,7 +894,9 @@ public class FaturaService {
                         || mevcutKdv.compareTo(belge.kdv()) != 0;
                 if (!degisir) continue;
 
-                if (donemService.tarihKilitliMi(sirketId, fatura.getTarih())) {
+                if (fatura.getTarih() != null && kilitliDonemler.stream().anyMatch(d ->
+                        !fatura.getTarih().isBefore(d.getBaslangic())
+                                && !fatura.getTarih().isAfter(d.getBitis()))) {
                     kilitli++;
                     continue;
                 }
@@ -933,8 +942,10 @@ public class FaturaService {
                 }
             }
 
-            if (!idSayfa.hasNext()) break;
-            sayfa++;
+            sonId = idler.get(idler.size() - 1);
+            entityManager.flush();
+            entityManager.clear();
+            if (idler.size() < boyut) break;
         }
 
         if (kaydet && degisti) {

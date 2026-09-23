@@ -71,7 +71,13 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private com.raspel.erp.service.finans.TaksitService taksitService;
     @Mock private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+    @Mock private jakarta.persistence.EntityManager entityManager;
     @InjectMocks private FaturaService faturaService;
+
+    @org.junit.jupiter.api.BeforeEach
+    void entityManagerBagla() {
+        org.springframework.test.util.ReflectionTestUtils.setField(faturaService, "entityManager", entityManager);
+    }
 
     private CariHesap createCariHesap() {
         CariHesap c = new CariHesap();
@@ -660,16 +666,16 @@ class FaturaServiceTest {
     }
 
     private void topluRepoHazirla(Fatura f) {
-        when(faturaRepository.faturaIdleriniGetir(eq(1L), isNull(), isNull(), isNull(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(1L)));
+        when(faturaRepository.faturaIdleriniGetir(eq(1L), eq(0L), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(List.of(1L));
         when(faturaRepository.kalemlerleGetir(List.of(1L))).thenReturn(List.of(f));
+        when(donemService.kilitliDonemler(1L)).thenReturn(List.of());
     }
 
     @Test
     void topluYenidenHesapla_dryRun_degisecekleriRaporlar() {
         Fatura f = topluTestFaturasi();
         topluRepoHazirla(f);
-        when(donemService.tarihKilitliMi(eq(1L), any(LocalDate.class))).thenReturn(false);
 
         var sonuc = faturaService.faturaTopluYenidenHesapla(1L, null, null, null, false);
 
@@ -684,7 +690,6 @@ class FaturaServiceTest {
     void topluYenidenHesapla_kaydet_uygularVeGecmisYazar() {
         Fatura f = topluTestFaturasi();
         topluRepoHazirla(f);
-        when(donemService.tarihKilitliMi(eq(1L), any(LocalDate.class))).thenReturn(false);
         when(faturaGecmisService.snapshot(any())).thenReturn("{}");
         when(faturaRepository.save(any(Fatura.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -700,8 +705,14 @@ class FaturaServiceTest {
     @Test
     void topluYenidenHesapla_kilitliDonemAtlanir() {
         Fatura f = topluTestFaturasi();
-        topluRepoHazirla(f);
-        when(donemService.tarihKilitliMi(eq(1L), any(LocalDate.class))).thenReturn(true);
+        when(faturaRepository.faturaIdleriniGetir(eq(1L), eq(0L), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(List.of(1L));
+        when(faturaRepository.kalemlerleGetir(List.of(1L))).thenReturn(List.of(f));
+        when(donemService.kilitliDonemler(1L)).thenReturn(List.of(
+                com.raspel.erp.entity.sistem.Donem.builder()
+                        .baslangic(LocalDate.of(2020, 1, 1))
+                        .bitis(LocalDate.of(2030, 12, 31))
+                        .build()));
 
         var sonuc = faturaService.faturaTopluYenidenHesapla(1L, null, null, null, true);
 

@@ -31,11 +31,15 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
-    /** Toplu yeniden hesaplama icin sayfali ID taramasi (kalem yuku olmadan). */
-    @Query("SELECT f.id FROM Fatura f WHERE f.sirketId = :sirketId " +
+    /**
+     * Toplu yeniden hesaplama icin keyset (id > sonId) ID taramasi. OFFSET/COUNT yerine
+     * keyset kullanildigi icin buyuk tablolarda dogrusal ve hizlidir.
+     */
+    @Query("SELECT f.id FROM Fatura f WHERE f.sirketId = :sirketId AND f.id > :sonId " +
             "AND (:bas IS NULL OR f.tarih >= :bas) AND (:bit IS NULL OR f.tarih <= :bit) " +
             "AND (:tur IS NULL OR f.tur = :tur) ORDER BY f.id")
-    Page<Long> faturaIdleriniGetir(@Param("sirketId") Long sirketId,
+    List<Long> faturaIdleriniGetir(@Param("sirketId") Long sirketId,
+                                   @Param("sonId") Long sonId,
                                    @Param("bas") java.time.LocalDate bas,
                                    @Param("bit") java.time.LocalDate bit,
                                    @Param("tur") Fatura.FaturaTur tur,

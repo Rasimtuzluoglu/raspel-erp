@@ -144,6 +144,13 @@ public class DonemService {
                 .anyMatch(d -> !tarih.isBefore(d.getBaslangic()) && !tarih.isAfter(d.getBitis()));
     }
 
+    /** Kilitli dönemleri tek seferde döndürür (toplu işlemlerde N+1 önlemek için). */
+    @Transactional(readOnly = true)
+    public List<Donem> kilitliDonemler(Long sirketId) {
+        if (sirketId == null) return List.of();
+        return donemRepository.findBySirketIdAndKilitliTrue(sirketId);
+    }
+
     /** Tarih kilitliyse açık hata fırlatır. */
     @Transactional(readOnly = true)
     public void kilitKontrol(Long sirketId, LocalDate tarih, String islemAdi) {
