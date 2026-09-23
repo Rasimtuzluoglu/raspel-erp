@@ -677,7 +677,7 @@
                     :label="t('hizliSatis.yazdirF9')"
                     icon="pi pi-print"
                     size="small"
-                    @click="fisiYazdir"
+                    @click="fisiYazdir(sonSatis?.faturaNumarasi)"
                   />
                   <Button
                     :label="t('hizliSatis.termal')"
@@ -1924,9 +1924,11 @@ const sepetSil = (idx) => {
   sepet.value.splice(idx, 1)
 }
 
-const fisiYazdir = () => {
+const fisiYazdir = (gercekFaturaNo) => {
   if (!sepet.value.length) return
-  fisNo.value = 'F-' + Date.now().toString(36).toUpperCase()
+  // Gerçek fatura numarası varsa fişe o yazılır (fişten faturaya ulaşılabilir).
+  // Yalnızca çevrimdışı/henüz oluşmamış satışlarda geçici numara üretilir.
+  fisNo.value = gercekFaturaNo || ('F-' + Date.now().toString(36).toUpperCase())
   yazdirmaKaydet('TERMAL80')
 
   const fiyatli = fisFiyatli.value
@@ -2196,7 +2198,7 @@ const satisiTamamlaOnaysiz = async () => {
     }
     toastBildirim.basarili(t('hizliSatis.satisTamamlandi') + ' - ' + formatCurrency(genelToplam.value))
     try {
-      fisiYazdir()
+      fisiYazdir(yanit.data?.faturaNumarasi)
     } catch {
       /* empty */
     }
