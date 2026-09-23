@@ -54,6 +54,12 @@
     <!-- POS Listesi -->
     <div class="pos-listesi">
       <div
+        v-if="!terminaller.length && !yukleniyor"
+        class="bos"
+      >
+        {{ t('posTerminalleri.empty') }}
+      </div>
+      <div
         v-for="p in terminaller"
         :key="p.id"
         class="pos-kart"

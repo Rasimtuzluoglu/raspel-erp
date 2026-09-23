@@ -1103,6 +1103,8 @@ import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { formatCurrency, formatDate, formatDateTime, getLocalDateString } from '../utils/format.js'
 import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
+import { escapeHtml } from '../utils/escapeHtml.js'
+import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -2017,22 +2019,10 @@ const fisiYazdir = (gercekFaturaNo) => {
 </body>
 </html>`
 
-  const win = window.open('', '_blank', 'width=400,height=600')
-  if (!win) {
+  const pencere = fisPenceresiAcVeYazdir(html)
+  if (!pencere) {
     toastBildirim.hata(t('hizliSatis.pencereEngellendi'))
-    return
   }
-  win.document.open()
-  win.document.write(html)
-  win.document.close()
-  setTimeout(() => {
-    try {
-      win.focus()
-      win.print()
-    } catch (e) {
-      console.error('Termal yazıcı hatası:', e)
-    }
-  }, 300)
 }
 
 const termalYazdir = async () => {
@@ -2065,15 +2055,6 @@ const yazdirmaKaydet = (format, yaziciAdi) => {
   const id = sonSatis.value?.id
   if (!id) return
   faturaAPI.yazdirmaKaydet(id, { format, yaziciAdi }).catch(() => {})
-}
-
-const escapeHtml = (metin) => {
-  return String(metin ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 const teslimDurumEtiketi = (d) => ({ BEKLIYOR: t('faturalar.durumBekliyor'), YOLDA: t('faturalar.durumYolda'), TESLIM_EDILDI: t('faturalar.durumTeslimEdildi') })[d] || d

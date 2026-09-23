@@ -109,11 +109,6 @@
           </template>
         </Column>
       </DataTable>
-      <Message
-        v-if="filtrelenmisSatislar && filtrelenmisSatislar.length === 0"
-        severity="info"
-        :text="t('satis.satisBulunamadi')"
-      />
     </div>
 
     <Dialog
@@ -385,6 +380,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useMarka } from '../composables/useMarka.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
+import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
@@ -568,11 +564,6 @@ const durumLabel = (d) => ({ TASLAK: t('faturalar.durumTaslak'), TEKLIF: t('fatu
 import { formatTarih as formatDate } from '../utils/format.js'
 const printTermalFis = (satisData) => {
   if (satisData?.id) faturaAPI.yazdirmaKaydet(satisData.id, { format: 'TERMAL80' }).catch(() => {})
-  const fisWindow = window.open('', '_blank', 'width=400,height=600')
-  if (!fisWindow) {
-    toastBildirim.hata(t('satis.pencereAcılmadi'))
-    return
-  }
 
   const kalemlerHtml = (satisData.kalemler || [])
     .map(
@@ -661,17 +652,10 @@ const printTermalFis = (satisData) => {
     </body>
     </html>
   `
-  fisWindow.document.open()
-  fisWindow.document.write(content)
-  fisWindow.document.close()
-  setTimeout(() => {
-    try {
-      fisWindow.focus()
-      fisWindow.print()
-    } catch (e) {
-      console.error('Termal yazıcı hatası:', e)
-    }
-  }, 300)
+  const pencere = fisPenceresiAcVeYazdir(content)
+  if (!pencere) {
+    toastBildirim.hata(t('satis.pencereAcılmadi'))
+  }
 }
 </script>
 
