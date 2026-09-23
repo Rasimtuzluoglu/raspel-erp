@@ -12,8 +12,11 @@ import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import com.raspel.erp.repository.sistem.SirketRepository;
+import com.raspel.erp.entity.sistem.Sirket;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -69,6 +72,15 @@ class PostgresEntegrasyonTest {
     private IadeRepository iadeRepository;
     @Autowired
     private IadeKalemRepository iadeKalemRepository;
+    @Autowired
+    private SirketRepository sirketRepository;
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    /** Tenant FK nedeniyle cari/stok kaydetmeden once sirket satiri gerekir. */
+    private Long sirketOlustur(String ad) {
+        return sirketRepository.save(Sirket.builder().ad(ad).aktif(true).build()).getId();
+    }
 
     @Test
     void flywayMigrasyonlariBasarili() {
@@ -76,21 +88,48 @@ class PostgresEntegrasyonTest {
     }
 
     @Test
-    void cariHesap_tenantFiltreliSorguCalisir() {
-        cariHesapRepository.save(ornekCari(1L, "Firma A Cari"));
-        cariHesapRepository.save(ornekCari(2L, "Firma B Cari"));
+    void veriButunluguFkVeNotNullKisitlariVar() {
+        Integer fkSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND conname IN (" +
+                        "'fk_fatura_cari','fk_fatura_sirket','fk_banka_hareketi_kaynak_fatura'," +
+                        "'fk_kasa_hareket_fatura','fk_taksit_fatura','fk_siparis_cari','fk_irsaliye_cari'," +
+                        "'fk_cari_hesap_sirket')", Integer.class);
+        assertEquals(8, fkSayisi);
 
-        var firmaA = cariHesapRepository.findBySirketId(1L, org.springframework.data.domain.Pageable.unpaged());
+        Integer notNullSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns WHERE is_nullable = 'NO' AND (" +
+                        "(table_schema='fatura' AND table_name='fatura' AND column_name='sirket_id') OR " +
+                        "(table_schema='stok' AND table_name='stok' AND column_name='sirket_id') OR " +
+                        "(table_schema='cari' AND table_name='cari_hesap' AND column_name='sirket_id'))",
+                Integer.class);
+        assertEquals(3, notNullSayisi);
+
+        // V119 sonrasi dogrulanmamis (NOT VALID) FK kalmamali.
+        Integer notValidSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND NOT convalidated", Integer.class);
+        assertEquals(0, notValidSayisi);
+    }
+
+    @Test
+    void cariHesap_tenantFiltreliSorguCalisir() {
+        Long firmaAId = sirketOlustur("Firma A");
+        Long firmaBId = sirketOlustur("Firma B");
+        cariHesapRepository.save(ornekCari(firmaAId, "Firma A Cari"));
+        cariHesapRepository.save(ornekCari(firmaBId, "Firma B Cari"));
+
+        var firmaA = cariHesapRepository.findBySirketId(firmaAId, org.springframework.data.domain.Pageable.unpaged());
         assertEquals(1, firmaA.getContent().size());
         assertEquals("Firma A Cari", firmaA.getContent().get(0).getAd());
     }
 
     @Test
     void cariHesap_aynıTenantlarKarismaz() {
-        cariHesapRepository.save(ornekCari(10L, "Tenant 10 Cari"));
-        cariHesapRepository.save(ornekCari(20L, "Tenant 20 Cari"));
+        Long tenant10 = sirketOlustur("Tenant 10");
+        Long tenant20 = sirketOlustur("Tenant 20");
+        cariHesapRepository.save(ornekCari(tenant10, "Tenant 10 Cari"));
+        cariHesapRepository.save(ornekCari(tenant20, "Tenant 20 Cari"));
 
-        var firma10 = cariHesapRepository.findBySirketId(10L, org.springframework.data.domain.Pageable.unpaged());
+        var firma10 = cariHesapRepository.findBySirketId(tenant10, org.springframework.data.domain.Pageable.unpaged());
         assertEquals(1, firma10.getContent().size());
         assertEquals("Tenant 10 Cari", firma10.getContent().get(0).getAd());
     }
@@ -113,7 +152,7 @@ class PostgresEntegrasyonTest {
 
     @Test
     void stokAnalizSorgulariCalisir() {
-        Long sirket = 77L;
+        Long sirket = sirketOlustur("Analiz Firma");
         CariHesap tedarikci = cariHesapRepository.save(ornekCari(sirket, "Tedarikçi Test"));
         CariHesap musteri = cariHesapRepository.save(ornekCari(sirket, "Müşteri Test"));
         Stok stok = stokRepository.save(Stok.builder()
