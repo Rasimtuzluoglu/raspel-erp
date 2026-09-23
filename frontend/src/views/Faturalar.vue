@@ -602,6 +602,7 @@ import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
+import { satisPayloadUret } from '../utils/satisPayload.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -1192,29 +1193,23 @@ const saveFatura = async () => {
     return
   }
 
-  const payload = {
+  const payload = satisPayloadUret({
     cariHesapId: form.value.cariHesapId,
     tur: form.value.tur,
     tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null,
-    teslimEden: form.value.teslimEden || null,
-    teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
-    teslimNotu: form.value.teslimNotu || null,
-    depoId: form.value.depoId || null,
-    paraBirimi: form.value.paraBirimi || 'TRY',
     aciklama: form.value.aciklama,
     genelIskontoTutari: 0,
     odenenTutar: 0,
     odemeDurumu: 'ODENMEDI',
-    kalemler: form.value.kalemler.map((k) => ({
-      id: k.id || null,
-      aciklama: k.aciklama,
-      adet: k.adet,
-      birimFiyat: k.birimFiyat,
-      iskontoOrani: k.iskontoOrani || 0,
-      kdvOrani: kdvOrani(k),
-      stokId: k.stokId || null
-    }))
-  }
+    kalemler: form.value.kalemler,
+    ekstra: {
+      teslimEden: form.value.teslimEden || null,
+      teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
+      teslimNotu: form.value.teslimNotu || null,
+      depoId: form.value.depoId || null,
+      paraBirimi: form.value.paraBirimi || 'TRY'
+    }
+  })
 
   saving.value = true
   try {

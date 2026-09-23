@@ -385,7 +385,8 @@ import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
-import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
+import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
+import { satisPayloadUret } from '../utils/satisPayload.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -529,20 +530,14 @@ const satisiTamamla = async () => {
   saving.value = true
   try {
     const durum = satisModu.value === 'TEKLIF' ? 'TEKLIF' : 'KESILDI'
-    const payload = {
+    const payload = satisPayloadUret({
       cariHesapId: satisForm.value.cariHesapId,
       tur: 'SATIS',
       durum,
       tarih: getLocalDateString(satisForm.value.tarih),
       aciklama: satisForm.value.aciklama,
-      kalemler: satisForm.value.kalemler.map((k) => ({
-        aciklama: k.aciklama,
-        adet: k.adet,
-        birimFiyat: k.birimFiyat,
-        kdvOrani: kdvOrani(k),
-        stokId: k.stokId
-      }))
-    }
+      kalemler: satisForm.value.kalemler
+    })
     await faturaAPI.create(payload)
     const msg = durum === 'TEKLIF' ? t('satis.teklifKaydedildi') : t('satis.satisTamamlandi')
     toastBildirim.basarili(msg)

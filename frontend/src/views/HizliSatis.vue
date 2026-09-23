@@ -1105,6 +1105,7 @@ import { formatCurrency, formatDate, formatDateTime, getLocalDateString } from '
 import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
+import { satisPayloadUret } from '../utils/satisPayload.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -2135,37 +2136,30 @@ const satisiTamamlaOnaysiz = async () => {
     return
   }
   kaydediliyor.value = true
-  const satisVerisi = {
+  const satisVerisi = satisPayloadUret({
     cariHesapId: anlikMusteri.value ? null : seciliMusteri.value.id,
     cariHesapAdi: anlikMusteri.value ? t('hizliSatis.perakendeMusteri') : seciliMusteri.value.ad,
     tur: 'SATIS',
     durum: 'KESILDI',
     tarih: getLocalDateString(),
-    teslimEden: teslimEden.value || null,
-    teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
-    teslimNotu: teslimNotu.value || null,
     aciklama: t('hizliSatis.hizliSatisAciklama'),
-    araToplam: toplam.value,
     indirim: indirimTutari.value,
-    genelToplam: genelToplam.value,
     odenenTutar: odenenTutar.value,
     odemeDurumu: odemeDurumEnum.value,
     odemeYontemi: odemeYontemi.value,
-    taksitKurum: odemeYontemi.value === 'TAKSIT' ? taksitKurum.value : null,
-    taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
-    taksitSayisi: odemeYontemi.value === 'TAKSIT' ? taksitSayisi.value : null,
-    kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
-    bankaId: (odemeYontemi.value === 'KART' || odemeYontemi.value === 'HAVALE') ? (seciliBanka.value || null) : null,
-    kartaBankaAktar: odemeYontemi.value === 'KART' && !!seciliBanka.value,
-    kalemler: sepet.value.map((i) => ({
-      stokId: i.id,
-      aciklama: i.ad,
-      adet: i.miktar,
-      birimFiyat: i.fiyat,
-      kdvOrani: 20,
-      tutar: Math.round(i.miktar * i.fiyat * 100) / 100
-    }))
-  }
+    kalemler: sepet.value.map((i) => ({ stokId: i.id, aciklama: i.ad, adet: i.miktar, birimFiyat: i.fiyat })),
+    ekstra: {
+      teslimEden: teslimEden.value || null,
+      teslimDurumu: teslimDurumu.value || 'BEKLIYOR',
+      teslimNotu: teslimNotu.value || null,
+      taksitKurum: odemeYontemi.value === 'TAKSIT' ? taksitKurum.value : null,
+      taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
+      taksitSayisi: odemeYontemi.value === 'TAKSIT' ? taksitSayisi.value : null,
+      kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
+      bankaId: (odemeYontemi.value === 'KART' || odemeYontemi.value === 'HAVALE') ? (seciliBanka.value || null) : null,
+      kartaBankaAktar: odemeYontemi.value === 'KART' && !!seciliBanka.value
+    }
+  })
   try {
     const yanit = await faturaAPI.create(satisVerisi)
     sonSatis.value = yanit.data
