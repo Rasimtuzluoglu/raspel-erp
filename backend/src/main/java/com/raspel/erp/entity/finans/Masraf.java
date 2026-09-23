@@ -42,6 +42,10 @@ public class Masraf {
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
+    /** İyimser kilitleme. */
+    @Version
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();

@@ -109,7 +109,7 @@ class PostgresEntegrasyonTest {
                 "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND NOT convalidated", Integer.class);
         assertEquals(0, notValidSayisi);
 
-        // V120: iyimser kilitleme version kolonlari.
+        // V120 + V121: iyimser kilitleme version kolonlari (20 tablo).
         Integer versionSayisi = jdbc.queryForObject(
                 "SELECT count(*) FROM information_schema.columns WHERE column_name = 'version' AND (" +
                         "(table_schema='muhasebe' AND table_name='kasa_hareket') OR " +
@@ -119,8 +119,26 @@ class PostgresEntegrasyonTest {
                         "(table_schema='siparis' AND table_name='siparis') OR " +
                         "(table_schema='muhasebe' AND table_name='irsaliye') OR " +
                         "(table_schema='finans' AND table_name='taksit') OR " +
-                        "(table_schema='stok' AND table_name='stok_hareket'))", Integer.class);
-        assertEquals(8, versionSayisi);
+                        "(table_schema='stok' AND table_name='stok_hareket') OR " +
+                        "(table_schema='fatura' AND table_name='fatura_kalem') OR " +
+                        "(table_schema='ticaret' AND table_name='iade_kalem') OR " +
+                        "(table_schema='siparis' AND table_name='siparis_kalem') OR " +
+                        "(table_schema='muhasebe' AND table_name='irsaliye_kalem') OR " +
+                        "(table_schema='envanter' AND table_name='stok_seri') OR " +
+                        "(table_schema='envanter' AND table_name='stok_sayim') OR " +
+                        "(table_schema='maliyet' AND table_name='stok_maliyet_hareket') OR " +
+                        "(table_schema='stok' AND table_name='stok_fiyat') OR " +
+                        "(table_schema='cari' AND table_name='cari_fiyat') OR " +
+                        "(table_schema='muhasebe' AND table_name='cek_senet') OR " +
+                        "(table_schema='finans' AND table_name='masraf') OR " +
+                        "(table_schema='finans' AND table_name='butce'))", Integer.class);
+        assertEquals(20, versionSayisi);
+
+        // V122: sirket_id tasiyan tablolarin tamaminda tenant FK olmali.
+        Integer tenantFkSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND conname LIKE 'fk_%_sirket'",
+                Integer.class);
+        assertTrue(tenantFkSayisi >= 60, "tenant FK sayisi beklenenden az: " + tenantFkSayisi);
     }
 
     @Test
