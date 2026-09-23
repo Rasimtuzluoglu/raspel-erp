@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import com.raspel.erp.entity.ticaret.Fatura;
 
@@ -199,6 +201,21 @@ public class EFaturaService {
         String saticiUnvan = sirket != null ? sirket.getAd() : "SATICI";
         String saticiVkn = sirket != null && sirket.getVergiNo() != null ? sirket.getVergiNo() : "22222222222";
         String saticiAdres = sirket != null && sirket.getAdres() != null ? sirket.getAdres() : "İSTANBUL";
+        String doviz = fatura.getParaBirimi() != null && !fatura.getParaBirimi().isBlank() ? fatura.getParaBirimi() : "TRY";
+
+        // Satır bazında KDV-dahil modelden net/KDV ayrıştır (tek kanonik kaynak).
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new ArrayList<>();
+        if (fatura.getKalemler() != null) {
+            for (FaturaKalemDTO k : fatura.getKalemler()) {
+                satirlar.add(com.raspel.erp.util.FaturaTutar.satir(
+                        k.getBirimFiyat(), k.getAdet(), k.getIskontoOrani(), k.getKdvOrani()));
+            }
+        }
+        BigDecimal netToplam = fatura.getAraToplam() != null ? fatura.getAraToplam()
+                : satirlar.stream().map(com.raspel.erp.util.FaturaTutar.Satir::net).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal kdvToplam = fatura.getKdv() != null ? fatura.getKdv()
+                : satirlar.stream().map(com.raspel.erp.util.FaturaTutar.Satir::kdv).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal genelToplam = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : netToplam.add(kdvToplam);
 
         StringBuilder xml = new StringBuilder();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -207,59 +224,77 @@ public class EFaturaService {
         xml.append("         xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">\n");
         xml.append("    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>\n");
         xml.append("    <cbc:CustomizationID>TR1.2</cbc:CustomizationID>\n");
-        xml.append("    <cbc:ProfileID>").append(senaryo != null ? senaryo : "TEMELFATURA").append("</cbc:ProfileID>\n");
-        xml.append("    <cbc:ID>").append(fatura.getFaturaNumarasi()).append("</cbc:ID>\n");
-        xml.append("    <cbc:UUID>").append(ettn).append("</cbc:UUID>\n");
+        xml.append("    <cbc:ProfileID>").append(esc(senaryo != null ? senaryo : "TEMELFATURA")).append("</cbc:ProfileID>\n");
+        xml.append("    <cbc:ID>").append(esc(fatura.getFaturaNumarasi())).append("</cbc:ID>\n");
+        xml.append("    <cbc:UUID>").append(esc(ettn)).append("</cbc:UUID>\n");
         xml.append("    <cbc:IssueDate>").append(fatura.getTarih()).append("</cbc:IssueDate>\n");
-        xml.append("    <cbc:InvoiceTypeCode>").append(tip != null ? tip : "SATIS").append("</cbc:InvoiceTypeCode>\n");
-        xml.append("    <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>\n");
+        xml.append("    <cbc:InvoiceTypeCode>").append(esc(tip != null ? tip : "SATIS")).append("</cbc:InvoiceTypeCode>\n");
+        xml.append("    <cbc:DocumentCurrencyCode>").append(esc(doviz)).append("</cbc:DocumentCurrencyCode>\n");
 
         xml.append("    <cac:AccountingSupplierParty>\n");
         xml.append("        <cac:Party>\n");
-        xml.append("            <cac:PartyIdentification><cbc:ID schemeID=\"VKN\">").append(saticiVkn).append("</cbc:ID></cac:PartyIdentification>\n");
-        xml.append("            <cac:PartyName><cbc:Name>").append(saticiUnvan).append("</cbc:Name></cac:PartyName>\n");
-        xml.append("            <cac:PostalAddress><cbc:CityName>İSTANBUL</cbc:CityName><cbc:StreetName>").append(saticiAdres).append("</cbc:StreetName></cac:PostalAddress>\n");
+        xml.append("            <cac:PartyIdentification><cbc:ID schemeID=\"VKN\">").append(esc(saticiVkn)).append("</cbc:ID></cac:PartyIdentification>\n");
+        xml.append("            <cac:PartyName><cbc:Name>").append(esc(saticiUnvan)).append("</cbc:Name></cac:PartyName>\n");
+        xml.append("            <cac:PostalAddress><cbc:CityName>İSTANBUL</cbc:CityName><cbc:StreetName>").append(esc(saticiAdres)).append("</cbc:StreetName></cac:PostalAddress>\n");
         xml.append("        </cac:Party>\n");
         xml.append("    </cac:AccountingSupplierParty>\n");
 
         xml.append("    <cac:AccountingCustomerParty>\n");
         xml.append("        <cac:Party>\n");
-        xml.append("            <cac:PartyIdentification><cbc:ID schemeID=\"VKN\">").append(aliciVknTckn).append("</cbc:ID></cac:PartyIdentification>\n");
-        xml.append("            <cac:PartyName><cbc:Name>").append(aliciUnvan).append("</cbc:Name></cac:PartyName>\n");
+        xml.append("            <cac:PartyIdentification><cbc:ID schemeID=\"VKN\">").append(esc(aliciVknTckn)).append("</cbc:ID></cac:PartyIdentification>\n");
+        xml.append("            <cac:PartyName><cbc:Name>").append(esc(aliciUnvan)).append("</cbc:Name></cac:PartyName>\n");
         xml.append("        </cac:Party>\n");
         xml.append("    </cac:AccountingCustomerParty>\n");
 
-        BigDecimal toplamKdv = BigDecimal.ZERO;
+        // Belge düzeyi KDV toplamı.
+        xml.append("    <cac:TaxTotal>\n");
+        xml.append("        <cbc:TaxAmount currencyID=\"").append(esc(doviz)).append("\">").append(kdvToplam.toPlainString()).append("</cbc:TaxAmount>\n");
+        xml.append("    </cac:TaxTotal>\n");
+
         if (fatura.getKalemler() != null) {
             int sira = 1;
             for (FaturaKalemDTO k : fatura.getKalemler()) {
                 String aciklama = k.getAciklama() != null ? k.getAciklama() : ("Kalem " + sira);
-                BigDecimal kdvTutar = BigDecimal.ZERO;
-                if (k.getTutar() != null) {
-                    BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
-                    kdvTutar = k.getTutar().multiply(kdvOrani)
-                            .divide(BigDecimal.valueOf(100).add(kdvOrani), 2, java.math.RoundingMode.HALF_UP);
-                }
-                toplamKdv = toplamKdv.add(kdvTutar);
+                com.raspel.erp.util.FaturaTutar.Satir s = satirlar.get(sira - 1);
+                BigDecimal adet = k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO;
+                BigDecimal netBirim = adet.signum() > 0
+                        ? s.net().divide(adet, 4, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
+                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
+
                 xml.append("    <cac:InvoiceLine>\n");
                 xml.append("        <cbc:ID>").append(sira).append("</cbc:ID>\n");
-                xml.append("        <cbc:InvoicedQuantity unitCode=\"C62\">").append(k.getAdet()).append("</cbc:InvoicedQuantity>\n");
-                xml.append("        <cbc:LineExtensionAmount currencyID=\"TRY\">").append(k.getTutar() != null ? k.getTutar() : "0.00").append("</cbc:LineExtensionAmount>\n");
-                xml.append("        <cac:Item><cbc:Name>").append(aciklama).append("</cbc:Name></cac:Item>\n");
-                xml.append("        <cac:Price><cbc:PriceAmount currencyID=\"TRY\">").append(k.getBirimFiyat() != null ? k.getBirimFiyat() : "0.00").append("</cbc:PriceAmount></cac:Price>\n");
+                xml.append("        <cbc:InvoicedQuantity unitCode=\"C62\">").append(adet.toPlainString()).append("</cbc:InvoicedQuantity>\n");
+                xml.append("        <cbc:LineExtensionAmount currencyID=\"").append(esc(doviz)).append("\">").append(s.net().toPlainString()).append("</cbc:LineExtensionAmount>\n");
+                xml.append("        <cac:TaxTotal>\n");
+                xml.append("            <cbc:TaxAmount currencyID=\"").append(esc(doviz)).append("\">").append(s.kdv().toPlainString()).append("</cbc:TaxAmount>\n");
+                xml.append("            <cac:TaxSubtotal>\n");
+                xml.append("                <cbc:TaxableAmount currencyID=\"").append(esc(doviz)).append("\">").append(s.net().toPlainString()).append("</cbc:TaxableAmount>\n");
+                xml.append("                <cbc:TaxAmount currencyID=\"").append(esc(doviz)).append("\">").append(s.kdv().toPlainString()).append("</cbc:TaxAmount>\n");
+                xml.append("                <cbc:Percent>").append(kdvOrani.toPlainString()).append("</cbc:Percent>\n");
+                xml.append("            </cac:TaxSubtotal>\n");
+                xml.append("        </cac:TaxTotal>\n");
+                xml.append("        <cac:Item><cbc:Name>").append(esc(aciklama)).append("</cbc:Name></cac:Item>\n");
+                xml.append("        <cac:Price><cbc:PriceAmount currencyID=\"").append(esc(doviz)).append("\">").append(netBirim.toPlainString()).append("</cbc:PriceAmount></cac:Price>\n");
                 xml.append("    </cac:InvoiceLine>\n");
                 sira++;
             }
         }
 
         xml.append("    <cac:LegalMonetaryTotal>\n");
-        xml.append("        <cbc:LineExtensionAmount currencyID=\"TRY\">").append(fatura.getAraToplam() != null ? fatura.getAraToplam() : "0.00").append("</cbc:LineExtensionAmount>\n");
-        xml.append("        <cbc:TaxExclusiveAmount currencyID=\"TRY\">").append(fatura.getAraToplam() != null ? fatura.getAraToplam() : "0.00").append("</cbc:TaxExclusiveAmount>\n");
-        xml.append("        <cbc:TaxInclusiveAmount currencyID=\"TRY\">").append(fatura.getGenelToplam() != null ? fatura.getGenelToplam() : "0.00").append("</cbc:TaxInclusiveAmount>\n");
-        xml.append("        <cbc:PayableAmount currencyID=\"TRY\">").append(fatura.getGenelToplam() != null ? fatura.getGenelToplam() : "0.00").append("</cbc:PayableAmount>\n");
+        xml.append("        <cbc:LineExtensionAmount currencyID=\"").append(esc(doviz)).append("\">").append(netToplam.toPlainString()).append("</cbc:LineExtensionAmount>\n");
+        xml.append("        <cbc:TaxExclusiveAmount currencyID=\"").append(esc(doviz)).append("\">").append(netToplam.toPlainString()).append("</cbc:TaxExclusiveAmount>\n");
+        xml.append("        <cbc:TaxInclusiveAmount currencyID=\"").append(esc(doviz)).append("\">").append(genelToplam.toPlainString()).append("</cbc:TaxInclusiveAmount>\n");
+        xml.append("        <cbc:PayableAmount currencyID=\"").append(esc(doviz)).append("\">").append(genelToplam.toPlainString()).append("</cbc:PayableAmount>\n");
         xml.append("    </cac:LegalMonetaryTotal>\n");
         xml.append("</Invoice>");
         return xml.toString();
+    }
+
+    /** XML özel karakterlerini kaçırır (metin/attribute güvenliği). */
+    private static String esc(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&apos;");
     }
 
     private EFaturaDTO entityToDTO(EFatura ef) {
