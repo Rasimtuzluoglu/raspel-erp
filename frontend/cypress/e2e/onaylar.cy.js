@@ -22,7 +22,7 @@ describe('Onay Merkezi', () => {
       body: { toplamCariSayisi: 0, toplamBakiye: 0, toplamFatura: 0, toplamStok: 0, sonHareketler: [], enCokSatanlar: [] }
     }).as('dashboard')
     cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
-    cy.intercept('GET', '/api/personel-izin', {
+    cy.intercept('GET', '/api/personel-izin*', {
       statusCode: 200,
       body: [
         { id: 10, personelId: 5, personelAdi: 'Ayşe Yılmaz', izinTuru: 'Yıllık İzin', baslangic: '2026-09-01', bitis: '2026-09-05', gunSayisi: 5, durum: 'BEKLEMEDE' }
@@ -30,7 +30,7 @@ describe('Onay Merkezi', () => {
     }).as('izinler')
     cy.intercept('GET', '/api/personel-masraf-talepler/bekleyenler', { statusCode: 200, body: [] }).as('masraflar')
     cy.intercept('GET', '/api/satinalma-talepler', { statusCode: 200, body: [] }).as('talepler')
-    cy.intercept('GET', '/api/siparisler?size=100', {
+    cy.intercept('GET', '/api/siparisler*', {
       statusCode: 200,
       body: [
         { id: 30, siparisNo: 'SIP-2026-000030', cariHesapAd: 'Saha Müşteri A.Ş.', aciklama: 'Saha siparişi', genelToplam: 7500, durum: 'BEKLIYOR' }

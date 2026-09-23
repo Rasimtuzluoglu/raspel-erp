@@ -27,7 +27,7 @@ describe('Fatura Yönetimi', () => {
       body: { toplamCariSayisi: 0, toplamBakiye: 0, toplamFatura: 0, toplamStok: 0, sonHareketler: [], enCokSatanlar: [] }
     }).as('dashboard')
     cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
-    cy.intercept('GET', '/api/faturalar', { statusCode: 200, body: faturalarMock }).as('faturalar')
+    cy.intercept('GET', '/api/faturalar?*', { statusCode: 200, body: faturalarMock }).as('faturalar')
     cy.intercept('GET', '/api/faturalar/1', {
       statusCode: 200,
       body: { id: 1, faturaNumarasi: 'FTR-2026-000001', tarih: '2026-08-15', tur: 'SATIS', cariHesapAd: 'Acme Ltd. Şti.', genelToplam: 15000, durum: 'TAMAMLANDI', kalemler: [] }
