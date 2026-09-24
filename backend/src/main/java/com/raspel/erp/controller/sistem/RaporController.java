@@ -29,6 +29,7 @@ public class RaporController {
     private final RaporService raporService;
     private final PdfRaporService pdfRaporService;
     private final KarlilikService karlilikService;
+    private final com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
     private final com.raspel.erp.service.ticaret.FaturaGecmisService faturaGecmisService;
     private final com.raspel.erp.service.sistem.ExcelExportService excelExportService;
     private final com.raspel.erp.service.sistem.EmailService emailService;
@@ -78,6 +79,35 @@ public class RaporController {
             @RequestParam(required = false, defaultValue = "KATEGORI") String grup) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(karlilikService.karlilikAnalizi(sirketId, baslangic, bitis, grup));
+    }
+
+    @GetMapping("/stok-kar-360")
+    @Operation(summary = "Stok kâr 360 görünümü",
+            description = "Ürün bazında ciro, maliyet, brüt kâr ve marj özeti (stok kâr durumu).")
+    public ResponseEntity<com.raspel.erp.dto.sistem.Gorunum360DTO.StokKar> stokKar360(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(gorunum360Service.stokKar360(sirketId, baslangic, bitis));
+    }
+
+    @GetMapping("/calisan-performans-360")
+    @Operation(summary = "Çalışan performans 360 görünümü",
+            description = "Teslimat bazında çalışan (şoför) performans özeti: toplam/tamamlanan/bekleyen teslimat.")
+    public ResponseEntity<com.raspel.erp.dto.sistem.Gorunum360DTO.CalisanPerformans> calisanPerformans360(
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(gorunum360Service.calisanPerformans360(sirketId));
+    }
+
+    @GetMapping("/musteri-segment")
+    @Operation(summary = "Müşteri segmentasyonu",
+            description = "Kural tabanlı müşteri segmentleri (VIP/DÜZENLİ/YENİ/RİSKLİ/PASİF) ve gerekçeleri.")
+    public ResponseEntity<com.raspel.erp.dto.sistem.Gorunum360DTO.MusteriSegment> musteriSegment(
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(gorunum360Service.musteriSegmentasyon(sirketId));
     }
 
     @GetMapping("/cari-ekstre")

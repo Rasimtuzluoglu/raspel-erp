@@ -88,6 +88,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/raporlar/gorunumler-360',
+    name: 'Gorunumler360',
+    component: () => import('../views/Gorunumler360.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/kategoriler',
     name: 'Kategoriler',
     component: () => import('../views/Kategoriler.vue'),

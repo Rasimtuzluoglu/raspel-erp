@@ -481,6 +481,7 @@ const tumMenuler = [
   { path: '/yedekler', labelKey: 'nav.yedek', icon: 'pi pi-save', grupKey: 'nav.sistem', admin: true, gelismis: true },
   { path: '/yonetici-kokpiti', labelKey: 'nav.yoneticiKokpiti', icon: 'pi pi-bolt', grupKey: 'nav.rapor', admin: true },
     { path: '/raporlar', labelKey: 'nav.rapor', icon: 'pi pi-chart-bar', grupKey: 'nav.rapor' },
+    { path: '/raporlar/gorunumler-360', labelKey: 'nav.gorunum360', icon: 'pi pi-compass', grupKey: 'nav.rapor' },
     { path: '/raporlar/karlilik-analizi', labelKey: 'nav.karlilikAnalizi', icon: 'pi pi-chart-pie', grupKey: 'nav.rapor' },
     { path: '/raporlar/fatura-gecmis', labelKey: 'nav.faturaGecmisRaporu', icon: 'pi pi-history', grupKey: 'nav.rapor' },
   { path: '/vergi-raporlari', labelKey: 'nav.vergiRaporlari', icon: 'pi pi-file-edit', grupKey: 'nav.rapor', gelismis: true },
