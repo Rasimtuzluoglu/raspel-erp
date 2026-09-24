@@ -1999,10 +1999,10 @@ const fisiYazdir = (gercekFaturaNo) => {
     <button class="iptal" onclick="window.close()">${t('hizliSatis.kapat')}</button>
   </div>
   <div class="fis">
-    ${sirketLogosu.value ? `<img class="logo" src="${sirketLogosu.value}" alt="logo" />` : ''}
+    ${sirketLogosu.value ? `<img class="logo" src="${escapeHtml(sirketLogosu.value)}" alt="logo" />` : ''}
     <div class="baslik">${escapeHtml(sirketAdi.value || 'RASPEL ERP')}</div>
     <div class="tarih">${simdikiTarih.value}</div>
-    <div class="fisno">${t('hizliSatis.fisNo')} ${fisNo.value}</div>
+    <div class="fisno">${t('hizliSatis.fisNo')} ${escapeHtml(fisNo.value || '')}</div>
     ${musteriHtml}
     ${teslimEden.value ? `<div class="musteri">${t('hizliSatis.teslimEden')}: ${escapeHtml(teslimEden.value)}</div>` : ''}
     ${teslimDurumu.value && teslimDurumu.value !== 'BEKLIYOR' ? `<div class="musteri">${t('hizliSatis.teslimEtiketi')}: ${teslimDurumEtiketi(teslimDurumu.value)}</div>` : ''}

@@ -43,6 +43,15 @@ public class AktifOturumService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Redis erisilemezken oturum kontrollerinde fail-open (izin ver) yerine fail-closed
+     * (reddet) davranisini secmek icin. Guvenli varsayilan true'dur; kisa Redis kesintisi
+     * tum oturumlari kilitlemesin diye isletme ortaminda APP_OTURUM_FAIL_CLOSED=false
+     * yapilabilir (o durumda iptallerin aninda etkisi Redis'e baglidir).
+     */
+    @org.springframework.beans.factory.annotation.Value("${app.oturum.redis-fail-closed:true}")
+    private boolean redisFailClosed;
+
     /** Oturumu Redis'e kaydeder. TTL, token ömrü ile aynı tutulur. */
     public void oturumKaydet(String jti, Long kullaniciId, String kullaniciAdi, Long sirketId, String ip, Duration ttl) {
         if (jti == null || kullaniciId == null) return;
@@ -160,7 +169,9 @@ public class AktifOturumService {
 
     /**
      * Verilen jti kullanıcının geçerli oturumu mu?
-     * Redis erişilemezse fail-open (true) döner ki kesinti tüm oturumları kilitlemesin.
+     * Redis erişilemezse varsayılan olarak fail-closed (false) döner; böylece Redis
+     * kesintisinde sonlandırılmış oturumlar yeniden geçerli hale gelmez. Kesintinin
+     * tüm oturumları kilitlememesi isteniyorsa `app.oturum.redis-fail-closed=false`.
      */
     public boolean aktifOturumMu(Long kullaniciId, String jti) {
         if (kullaniciId == null || jti == null) return true;
@@ -168,8 +179,8 @@ public class AktifOturumService {
             String aktif = redisTemplate.opsForValue().get(AKTIF_JTI_KEY + kullaniciId);
             return aktif == null || aktif.equals(jti);
         } catch (Exception e) {
-            log.warn("Aktif oturum kontrolu yapilamadi (fail-open): {}", e.getMessage());
-            return true;
+            log.warn("Aktif oturum kontrolu yapilamadi (redis-fail-closed={}): {}", redisFailClosed, e.getMessage());
+            return !redisFailClosed;
         }
     }
 
@@ -203,10 +214,10 @@ public class AktifOturumService {
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(REVOKED_KEY + jti));
         } catch (Exception e) {
-            // Redis erişilemezse yalnızca yerel iptal listesi uygulanır; aksi halde
-            // Redis kesintisi tüm oturumları kilitleyeceği için burada fail-open kalınır.
-            log.warn("Iptal kontrolu yapilamadi (yerel liste kullanildi): {}", e.getMessage());
-            return false;
+            // Redis erisilemezse yerel iptal listesi uygulanir. Varsayilan fail-closed:
+            // iptallerin Redis'te tutulup yerelde bulunamadigi durumda token reddedilir.
+            log.warn("Iptal kontrolu yapilamadi (redis-fail-closed={}): {}", redisFailClosed, e.getMessage());
+            return redisFailClosed;
         }
     }
 

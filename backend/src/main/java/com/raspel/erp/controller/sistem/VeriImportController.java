@@ -35,6 +35,9 @@ import com.raspel.erp.entity.envanter.Stok;
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class VeriImportController {
 
+    /** Bellek/Doppler korumasi: tek import islemi icin ust satir siniri. */
+    private static final int MAKS_SATIR = 50_000;
+
     private final StokService stokService;
     private final CariHesapService cariHesapService;
     private final FaturaService faturaService;
@@ -64,6 +67,7 @@ public class VeriImportController {
             int satirNo = 1;
             while ((line = br.readLine()) != null) {
                 satirNo++;
+                if (satirNo > MAKS_SATIR) { hatalar.add("Dosya cok buyuk: en fazla " + MAKS_SATIR + " satir islenir"); break; }
                 if (line.trim().isEmpty()) continue;
                 String[] cols = line.split(";", -1);
                 try {
@@ -82,11 +86,11 @@ public class VeriImportController {
                     }
                     gecerliKayitlar.add(dto);
                 } catch (Exception e) {
-                    hatalar.add("Satır " + satirNo + ": " + e.getMessage());
+                    hatalar.add("Satır " + satirNo + ": geçersiz değer");
                 }
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı"));
         }
 
         int basarili = 0;
@@ -94,7 +98,7 @@ public class VeriImportController {
             try {
                 basarili = stokService.topluOlustur(gecerliKayitlar, sirketId);
             } catch (Exception e) {
-                hatalar.add("Toplu kayıt hatası: " + e.getMessage());
+                log.warn("Toplu stok kayıt hatası: {}", e.getMessage()); hatalar.add("Toplu kayıt sırasında hata oluştu");
             }
         }
 
@@ -127,6 +131,7 @@ public class VeriImportController {
             int satirNo = 1;
             while ((line = br.readLine()) != null) {
                 satirNo++;
+                if (satirNo > MAKS_SATIR) { hatalar.add("Dosya cok buyuk: en fazla " + MAKS_SATIR + " satir islenir"); break; }
                 if (line.trim().isEmpty()) continue;
                 String[] cols = line.split(";", -1);
                 try {
@@ -146,11 +151,11 @@ public class VeriImportController {
                     cariHesapService.cariHesapOlustur(dto, sirketId);
                     basarili++;
                 } catch (Exception e) {
-                    hatalar.add("Satır " + satirNo + ": " + e.getMessage());
+                    hatalar.add("Satır " + satirNo + ": geçersiz değer");
                 }
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı"));
         }
 
         result.put("basarili", basarili);
@@ -190,6 +195,7 @@ public class VeriImportController {
             }
             while ((line = br.readLine()) != null) {
                 satirNo++;
+                if (satirNo > MAKS_SATIR) { hatalar.add("Dosya cok buyuk: en fazla " + MAKS_SATIR + " satir islenir"); break; }
                 if (line.trim().isEmpty()) continue;
                 String[] cols = line.split(";", -1);
                 try {
@@ -215,11 +221,11 @@ public class VeriImportController {
                     gruplar.computeIfAbsent(faturaNo, k -> new ArrayList<>()).add(kalem);
                     grupMeta.putIfAbsent(faturaNo, new Object[]{kolonDeger(cols, kolonIndex, "tarih", satirNo, null), kolonDeger(cols, kolonIndex, "cariid", satirNo, null)});
                 } catch (Exception e) {
-                    hatalar.add("Satır " + satirNo + ": " + e.getMessage());
+                    hatalar.add("Satır " + satirNo + ": geçersiz değer");
                 }
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı"));
         }
 
         int basarili = 0;
@@ -241,7 +247,7 @@ public class VeriImportController {
                 faturaService.faturaOlustur(dto, sirketId, kullaniciId, displayName);
                 basarili++;
             } catch (Exception e) {
-                hatalar.add("Fatura " + g.getKey() + ": " + e.getMessage());
+                log.warn("Fatura import hatası ({}): {}", g.getKey(), e.getMessage()); hatalar.add("Fatura " + g.getKey() + ": işlenemedi");
             }
         }
 

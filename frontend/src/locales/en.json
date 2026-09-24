@@ -264,6 +264,11 @@
     "refresh": "Refresh",
     "add": "Add",
     "upload": "Upload",
+    "dosya": {
+      "dosyaSecilmedi": "No file selected",
+      "boyutAsildi": "File is too large (max {mb} MB)",
+      "gecersizResimTipi": "Invalid file type. Only JPG, PNG, WEBP or GIF allowed"
+    },
     "copy": "Copy",
     "searchAction": "Search",
     "notifications": "Notifications",

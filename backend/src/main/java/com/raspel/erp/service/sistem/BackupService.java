@@ -523,7 +523,8 @@ public class BackupService {
             String guvenlikYedegi = manualBackup("DAILY");
             log.warn("Geri yükleme öncesi güvenlik yedeği alındı: {} (geri yüklenecek: {})", guvenlikYedegi, filename);
         } catch (Exception e) {
-            throw new BusinessException("Geri yükleme öncesi güvenlik yedeği alınamadı, işlem iptal edildi: " + e.getMessage());
+            log.error("Geri yükleme öncesi güvenlik yedeği alınamadı: {}", e.getMessage(), e);
+            throw new BusinessException("Geri yükleme öncesi güvenlik yedeği alınamadı, işlem iptal edildi");
         }
 
         try {
@@ -895,7 +896,7 @@ public class BackupService {
             throw e;
         } catch (Exception e) {
             log.error("Bulut senkronizasyonu başarısız", e);
-            throw new BusinessException("Bulut senkronizasyonu başarısız: " + e.getMessage());
+            throw new BusinessException("Bulut senkronizasyonu başarısız");
         }
         sonSenkronGuncelle();
         Map<String, Object> cfg = mevcutConfig();

@@ -71,12 +71,54 @@ public class WebPushService {
         return vapidPublicKey;
     }
 
+    /**
+     * Web Push servis saglayicilarinin bilinen host son ekleri. Kullanici tarafindan
+     * verilen endpoint yalnizca bu host'lara isaret edebilir; aksi halde SSRF olusur.
+     */
+    private static final List<String> IZINLI_PUSH_HOSTLARI = List.of(
+            ".googleapis.com",            // FCM (Chrome/Edge/Android)
+            ".googleusercontent.com",
+            ".push.apple.com",            // Safari
+            ".push.services.mozilla.com", // Firefox
+            ".notify.windows.com",        // Edge (legacy)
+            ".windows.com",
+            ".mozaws.net");
+
+    /** Endpoint SSRF/private-network korumasini dogrular. Gecersizse hata firlatir. */
+    private void endpointDogrula(String endpoint) {
+        java.net.URI uri;
+        try {
+            uri = java.net.URI.create(endpoint);
+        } catch (Exception e) {
+            throw new BusinessException("Gecersiz push endpoint");
+        }
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || !scheme.equalsIgnoreCase("https") || host == null || host.isBlank()) {
+            throw new BusinessException("Push endpoint https olmalidir");
+        }
+        String h = host.toLowerCase();
+        // Ozel/link-local/loopback adresleri acikca reddet.
+        if (h.equals("localhost") || h.endsWith(".local") || h.startsWith("127.") || h.equals("0.0.0.0")
+                || h.startsWith("10.") || h.startsWith("192.168.") || h.startsWith("169.254.")
+                || h.startsWith("172.16.") || h.startsWith("172.17.") || h.startsWith("172.18.")
+                || h.startsWith("172.19.") || h.startsWith("172.2") || h.startsWith("172.30.")
+                || h.startsWith("172.31.") || h.startsWith("[") || h.contains(":")) {
+            throw new BusinessException("Push endpoint ozel bir adrese isaret edemez");
+        }
+        boolean izinli = IZINLI_PUSH_HOSTLARI.stream().anyMatch(h::endsWith);
+        if (!izinli) {
+            throw new BusinessException("Push endpoint bilinen bir push servisine ait olmalidir");
+        }
+    }
+
     @Transactional
     public PushAbonelikDTO aboneOl(PushAbonelikDTO dto, Long kullaniciId, Long sirketId, String userAgent) {
         if (dto == null || bosMu(dto.getEndpoint()) || dto.getKeys() == null
                 || bosMu(dto.getKeys().getP256dh()) || bosMu(dto.getKeys().getAuth())) {
             throw new BusinessException("Gecersiz push aboneligi");
         }
+        endpointDogrula(dto.getEndpoint());
         PushAbonelik abonelik = pushAbonelikRepository.findByEndpoint(dto.getEndpoint())
                 .orElseGet(PushAbonelik::new);
         abonelik.setEndpoint(dto.getEndpoint());

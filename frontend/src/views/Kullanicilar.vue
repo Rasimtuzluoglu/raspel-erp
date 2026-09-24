@@ -316,6 +316,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
+import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -361,6 +362,8 @@ const avatarPreview = computed(() => {
 const avatarDosyaSec = (e) => {
   const file = e.target.files?.[0]
   if (!file) return
+  const hata = resimDogrula(file)
+  if (hata) { toastBildirim.hata(t(hata.key, hata.params)); e.target.value = ''; return }
   avatarDosya.value = file
   avatarDosyaAdi.value = file.name
 }

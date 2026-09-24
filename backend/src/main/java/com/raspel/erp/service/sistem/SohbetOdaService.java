@@ -209,11 +209,15 @@ public class SohbetOdaService {
         if (!IZINLI_SOHBET_UZANTILARI.contains(ext)) {
             throw new BusinessException("Bu dosya tipi desteklenmiyor: " + (ext.isBlank() ? "(uzantısız)" : ext));
         }
+        // Resim uzantilari icin icerik imzasi dogrulanir (stored XSS/polyglot engeli).
+        boolean resim = java.util.Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif").contains(ext);
         try {
-            String filename = dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+            String filename = resim
+                    ? dosyaDepolama.kaydetResimDogrulamali(DOSYA_KLASOR, file)
+                    : dosyaDepolama.kaydet(DOSYA_KLASOR, file);
             return "/api/uploads/sohbet/" + filename;
         } catch (IOException e) {
-            throw new BusinessException("Dosya yüklenemedi: " + e.getMessage());
+            throw new BusinessException("Dosya yüklenemedi");
         }
     }
 

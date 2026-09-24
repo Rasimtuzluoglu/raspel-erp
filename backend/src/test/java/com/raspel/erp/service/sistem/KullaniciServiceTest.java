@@ -51,6 +51,8 @@ class KullaniciServiceTest {
     private com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
     @Mock
     private EmailService emailService;
+    @Mock
+    private com.raspel.erp.service.sistem.AuditLogService auditLogService;
 
     @InjectMocks
     private KullaniciService kullaniciService;

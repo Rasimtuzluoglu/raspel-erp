@@ -55,6 +55,7 @@ public class KullaniciService {
     private final com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
     private final EmailService emailService;
     private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
+    private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
@@ -427,10 +428,15 @@ public class KullaniciService {
 
         if (!passwordEncoder.matches(req.getPassword(), k.getPassword())) {
             log.warn("BAŞARISIZ GİRİŞ - hatalı şifre: {}", req.getUsername());
+            auditLogService.log(k.getId(), k.getSirketId(), "LOGIN_FAILED", "Kullanici", k.getId(),
+                    "Başarısız giriş (hatalı şifre): " + k.getUsername(), null);
             throw new BusinessException("Kullanıcı adı veya şifre hatalı");
         }
 
         log.info("Başarılı giriş: {}", req.getUsername());
+        // Kalıcı denetim izi: kimlik doğrulama olayları audit_log'a yazılır (forensics/uyum).
+        auditLogService.log(k.getId(), k.getSirketId(), "LOGIN", "Kullanici", k.getId(),
+                "Başarılı giriş: " + k.getUsername(), null);
 
         boolean twoFactorAktif = k.getTwoFactorEnabled() != null && k.getTwoFactorEnabled();
 
@@ -540,6 +546,8 @@ public class KullaniciService {
             }
         }
 
+        auditLogService.log(k.getId(), secilenSirketId, "LOGIN", "Kullanici", k.getId(),
+                "Oturum açıldı: " + k.getUsername(), null);
         return tokenOlusturVeDon(k, null, sirketId);
     }
 

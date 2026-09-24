@@ -74,22 +74,17 @@ title = "RasPel ERP Gitleaks Config"
     '''(^|/)node_modules/''',
     '''(^|/)target/''',
     '''(^|/)dist/''',
-    '''\.env\.example$''',
     '''\.gitleaks\.toml$''',
-    '''docker-compose\.dev\.yml$''',
     '''SECURITY\.md$''',
-    '''docs/KURULUM\.md$''',
     '''scripts/disaster-recovery-test\.ps1$''',
     '''backend/src/test/''',
-    '''frontend/cypress/visual/screenshots\.cy\.js$''',
-    '''frontend/cypress/e2e/screenshots\.cy\.js$'''
+    '''docker-compose\.dev\.yml$'''
   ]
   regexes = [
     '''(?i)changeme''',
     '''(?i)degistir''',
     '''(?i)ornek@example\.com''',
     '''(?i)^(your-|my-|<|example)''',
-    '''\$apr1\$''',
     '''dGhpcyBpcyBhIHZlcnkgbG9uZyBzZWNyZXQga2V5''',
     '''cmFzcGVsLWVycC1qd3Qtc2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtYW5kLXRlc3RpbmctcHVycG9zZXMtMjAyNg==''',
     '''raspel_pat_test''',

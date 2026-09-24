@@ -42,6 +42,14 @@ public class TcmbKurService {
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            // XXE sertlestirme: DOCTYPE/external entity'leri kapat, secure processing zorla.
+            dbFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            dbFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            dbFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            dbFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            dbFactory.setXIncludeAware(false);
+            dbFactory.setExpandEntityReferences(false);
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc;
             try (InputStream is = conn.getInputStream()) {

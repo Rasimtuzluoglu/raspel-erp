@@ -38,8 +38,13 @@ http:
         accessControlAllowCredentials: true
         accessControlMaxAge: 3600
 
-    # DASHBOARD_BASIC_AUTH tanimliysa Traefik dashboard'u ayrica acilabilir.
-    # Varsayilan dosyada dashboard router'i yer almaz (bos basicAuth parse hatasi verir).
+    # Traefik dashboard icin Basic Auth. DASHBOARD_BASIC_AUTH tanimliysa (htpasswd
+    # formati) dashboard erisimi korunur; tanimli degilse users bos kalir ve dashboard
+    # router'i fail-closed olarak 401 doner. Sifre asla varsayilan/committed degildir.
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "{{ env \"DASHBOARD_BASIC_AUTH\" }}"
 
   routers:
     # HTTP (port 80) — gercek domainler HTTPS'e yonlendirilir. localhost/127.0.0.1
@@ -83,6 +88,7 @@ http:
         - websecure
       middlewares:
         - cors-headers
+        - security-headers
       tls:
         certResolver: letsencrypt
       priority: 1

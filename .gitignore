@@ -61,6 +61,13 @@ frontend/cypress/downloads/
 
 # Misc
 *.pem
+*.key
+*.jks
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
 
 # Runtime uploads (user data)
 backend/uploads/

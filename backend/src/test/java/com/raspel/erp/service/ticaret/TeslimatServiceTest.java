@@ -119,7 +119,7 @@ class TeslimatServiceTest {
         Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).durum("BEKLEMEDE").build();
         when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));
         when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").build()));
-        when(dosyaDepolama.kaydet(anyString(), any())).thenReturn("foto.jpg");
+        when(dosyaDepolama.kaydetResimDogrulamali(anyString(), any())).thenReturn("foto.jpg");
         when(teslimatRepository.save(any(Teslimat.class))).thenReturn(t);
 
         MockMultipartFile file = new MockMultipartFile("file", "f.jpg", "image/jpeg", new byte[]{1, 2, 3});
@@ -193,7 +193,7 @@ class TeslimatServiceTest {
         Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).faturaId(10L).durum("YOLDA").build();
         when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));
         when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").displayName("Ali").build()));
-        when(dosyaDepolama.kaydet(eq("teslimat-imzalari"), any())).thenReturn("imza.png");
+        when(dosyaDepolama.kaydetResimDogrulamali(eq("teslimat-imzalari"), any())).thenReturn("imza.png");
         when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> inv.getArgument(0));
         Fatura f = Fatura.builder().id(10L).sirketId(1L).build();
         when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
@@ -225,7 +225,7 @@ class TeslimatServiceTest {
         Teslimat kayitli = Teslimat.builder().id(1L).sirketId(1L).siparisId(10L).driverId(5L).durum("BEKLEMEDE").build();
         when(teslimatRepository.findById(1L)).thenReturn(Optional.of(kayitli));
         when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(Kullanici.builder().id(5L).role("DRIVER").displayName("Ali").build()));
-        when(dosyaDepolama.kaydet(eq("teslimat-imzalari"), any())).thenReturn("imza.png");
+        when(dosyaDepolama.kaydetResimDogrulamali(eq("teslimat-imzalari"), any())).thenReturn("imza.png");
         when(siparisRepository.save(any(com.raspel.erp.entity.ticaret.Siparis.class))).thenAnswer(inv -> inv.getArgument(0));
         MockMultipartFile imza = new MockMultipartFile("file", "i.png", "image/png", new byte[]{1, 2, 3});
 

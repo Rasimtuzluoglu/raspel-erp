@@ -235,10 +235,10 @@ public class TeslimatService {
             throw new BusinessException("Fotoğraf dosyası boş");
         }
         try {
-            String filename = dosyaDepolama.kaydet(FOTO_KLASOR, file);
+            String filename = dosyaDepolama.kaydetResimDogrulamali(FOTO_KLASOR, file);
             t.setTeslimatFoto("/api/uploads/teslimat-fotolari/" + filename);
         } catch (IOException e) {
-            throw new BusinessException("Fotoğraf yüklenemedi: " + e.getMessage());
+            throw new BusinessException("Fotoğraf yüklenemedi");
         }
         t = teslimatRepository.save(t);
         return toDTO(t, null);
@@ -334,10 +334,10 @@ public class TeslimatService {
         }
         String oncekiDurum = t.getDurum();
         try {
-            String filename = dosyaDepolama.kaydet(IMZA_KLASOR, imza);
+            String filename = dosyaDepolama.kaydetResimDogrulamali(IMZA_KLASOR, imza);
             t.setTeslimImzaUrl("/api/uploads/teslimat-imzalari/" + filename);
         } catch (IOException e) {
-            throw new BusinessException("İmza kaydedilemedi: " + e.getMessage());
+            throw new BusinessException("İmza kaydedilemedi");
         }
         t.setTeslimAlanAd(istek.teslimAlanAd().trim());
         if (istek.teslimNotu() != null) t.setTeslimNotu(istek.teslimNotu());

@@ -56,18 +56,38 @@ public class DosyaDepolamaService {
      */
     public String presignedUrl(String klasor, String filename, int saniye) {
         if (!minioAktif()) return null;
+        // Path traversal ve anahtar kacisi engeli: klasor/dosya adi '..' veya '/'
+        // iceremez; sure MaxIO siniri olan 7 gune (604800 sn) kisitlanir.
+        String k = guvenliNesneParcasi(klasor);
+        String d = guvenliNesneParcasi(filename);
+        if (k == null || d == null) {
+            log.warn("İmzalı URL reddedildi (geçersiz nesne yolu)");
+            return null;
+        }
+        int sure = Math.max(60, Math.min(saniye, 604800));
         try {
             bucketOlustur();
             return minioClient.getPresignedObjectUrl(io.minio.GetPresignedObjectUrlArgs.builder()
                     .method(io.minio.http.Method.GET)
                     .bucket(bucket)
-                    .object(klasor + "/" + filename)
-                    .expiry(saniye)
+                    .object(k + "/" + d)
+                    .expiry(sure)
                     .build());
         } catch (Exception e) {
             log.warn("İmzalı URL üretilemedi: {}", e.getMessage());
             return null;
         }
+    }
+
+    /** Klasor/dosya adi icin tek segment ve '..'-guvenli deger dondurur; gecersizse null. */
+    private static String guvenliNesneParcasi(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        if (t.isEmpty() || t.contains("..") || t.contains("/") || t.contains("\\")
+                || t.contains("\u0000") || t.startsWith(".")) {
+            return null;
+        }
+        return t;
     }
 
     /**
@@ -128,7 +148,38 @@ public class DosyaDepolamaService {
     }
 
     /**
+     * Resim içerik imzası (magic byte) doğrulaması. Tarayıcı-beyanlı MIME/uzantıya
+     * güvenmek yerine içerik gerçekten resim mi diye kontrol eder (polyglot/stored XSS engeli).
+     */
+    public static boolean resimMagicByteGecerli(byte[] b) {
+        if (b == null || b.length < 12) return false;
+        // JPEG: FF D8 FF
+        if ((b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8 && (b[2] & 0xFF) == 0xFF) return true;
+        // PNG: 89 50 4E 47
+        if ((b[0] & 0xFF) == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47) return true;
+        // GIF: "GIF8"
+        if (b[0] == 0x47 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x38) return true;
+        // WEBP: "RIFF"...."WEBP"
+        if (b[0] == 0x52 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x46
+                && b[8] == 0x57 && b[9] == 0x45 && b[10] == 0x42 && b[11] == 0x50) return true;
+        return false;
+    }
+
+    /** İçerik imzası geçerli resim değilse hata fırlatan kaydetme (upload uçları için). */
+    public String kaydetResimDogrulamali(String klasor, MultipartFile file) throws IOException {
+        byte[] bas;
+        try (InputStream in = file.getInputStream()) {
+            bas = in.readNBytes(12);
+        }
+        if (!resimMagicByteGecerli(bas)) {
+            throw new IOException("Dosya içeriği geçerli bir resim değil");
+        }
+        return kaydet(klasor, file);
+    }
+
+    /**
      * Dosyayı ilgili klasör altına kaydeder ve üretilen benzersiz dosya adını döndürür.
+     * Sunucu tarafında content-type'ı uzantıya göre belirler (istemci beyanına güvenmez).
      */
     public String kaydet(String klasor, MultipartFile file) throws IOException {
         String orjinalAd = file.getOriginalFilename() != null ? file.getOriginalFilename() : "dosya";
@@ -138,6 +189,8 @@ public class DosyaDepolamaService {
         }
         String filename = UUID.randomUUID().toString() + uzanti;
 
+        // Sunucu-tarafi content-type: uzantidan turetilir (istemci Content-Type'ina guvenilmez).
+        String sunucuMime = mimeFromUzanti(uzanti);
         if (minioAktif()) {
             bucketOlustur();
             try (InputStream is = file.getInputStream()) {
@@ -145,7 +198,7 @@ public class DosyaDepolamaService {
                         .bucket(bucket)
                         .object(klasor + "/" + filename)
                         .stream(is, file.getSize(), -1)
-                        .contentType(file.getContentType())
+                        .contentType(sunucuMime)
                         .build());
             } catch (Exception e) {
                 throw new IOException("MinIO'ya yüklenemedi: " + e.getMessage(), e);
@@ -162,6 +215,27 @@ public class DosyaDepolamaService {
             }
         }
         return filename;
+    }
+
+    /** Uzantiya karsilik gelen MIME turu (bilinmeyenler octet-stream). */
+    private static String mimeFromUzanti(String uzanti) {
+        if (uzanti == null) return "application/octet-stream";
+        return switch (uzanti.toLowerCase()) {
+            case ".jpg", ".jpeg" -> "image/jpeg";
+            case ".png" -> "image/png";
+            case ".webp" -> "image/webp";
+            case ".gif" -> "image/gif";
+            case ".sv\u0067" -> "image/svg+xml";
+            case ".pdf" -> "application/pdf";
+            case ".txt" -> "text/plain";
+            case ".csv" -> "text/csv";
+            case ".doc" -> "application/msword";
+            case ".docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case ".xls" -> "application/vnd.ms-excel";
+            case ".xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case ".zip" -> "application/zip";
+            default -> "application/octet-stream";
+        };
     }
 
     /**

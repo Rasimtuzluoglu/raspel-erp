@@ -110,7 +110,7 @@ class SohbetOdaServiceTest {
     void dosyaYukle_urlDondurur() throws Exception {
         when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
         when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
-        when(dosyaDepolama.kaydet(anyString(), any())).thenReturn("a.png");
+        when(dosyaDepolama.kaydetResimDogrulamali(anyString(), any())).thenReturn("a.png");
 
         MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", new byte[]{1});
         String url = odaService.dosyaYukle(1L, file, 1L, 99L);

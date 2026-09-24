@@ -264,6 +264,11 @@
     "refresh": "Yenile",
     "add": "Ekle",
     "upload": "Yükle",
+    "dosya": {
+      "dosyaSecilmedi": "Dosya seçilmedi",
+      "boyutAsildi": "Dosya boyutu çok büyük (en fazla {mb} MB)",
+      "gecersizResimTipi": "Geçersiz dosya tipi. Yalnızca JPG, PNG, WEBP veya GIF yükleyebilirsiniz"
+    },
     "copy": "Kopyala",
     "searchAction": "Ara",
     "notifications": "Bildirimler",

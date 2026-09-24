@@ -58,6 +58,8 @@ class PostgresEntegrasyonTest {
         registry.add("spring.flyway.enabled", () -> "true");
         // H2 icin yazilmis schema.sql PostgreSQL'de calismaz; devre disi birakilir
         registry.add("spring.sql.init.mode", () -> "never");
+        // V123 least-privilege rol olusturma migrasyonu placeholder'i (testte bos).
+        registry.add("spring.flyway.placeholders.app-db-password", () -> "");
     }
 
     @Autowired

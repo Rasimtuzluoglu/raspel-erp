@@ -791,6 +791,7 @@ import BarkodEtiketDialog from '../components/BarkodEtiketDialog.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
+import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 
 const toast = useToast()
@@ -1158,6 +1159,8 @@ const fiyatlariKaydet = async (stokId) => {
 const fotoSec = async (e) => {
   const file = e.target.files[0]
   if (!file) return
+  const hata = resimDogrula(file)
+  if (hata) { toastBildirim.hata(t(hata.key, hata.params)); e.target.value = ''; return }
   try {
     const r = await uploadAPI.foto(file)
     form.value.fotoUrl = r.data?.url || ''

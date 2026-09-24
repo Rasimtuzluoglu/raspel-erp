@@ -505,10 +505,15 @@ public class SohbetService {
             throw new com.raspel.erp.exception.BusinessException("Bu dosya tipi desteklenmiyor: "
                     + (ext.isBlank() ? "(uzantısız)" : ext));
         }
+        // Resim uzantilari icin icerik imzasi dogrulanir (stored XSS/polyglot engeli).
+        boolean resim = java.util.Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif").contains(ext);
         try {
-            return "/api/uploads/sohbet/" + dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+            String filename = resim
+                    ? dosyaDepolama.kaydetResimDogrulamali(DOSYA_KLASOR, file)
+                    : dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+            return "/api/uploads/sohbet/" + filename;
         } catch (java.io.IOException e) {
-            throw new com.raspel.erp.exception.BusinessException("Dosya yüklenemedi: " + e.getMessage());
+            throw new com.raspel.erp.exception.BusinessException("Dosya yüklenemedi");
         }
     }
 

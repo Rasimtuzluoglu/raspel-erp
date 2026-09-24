@@ -515,7 +515,7 @@ const printTermalFis = (satisData) => {
         <button onclick="window.close()" style="background:#64748b; margin-left:6px;">Kapat</button>
       </div>
       <div class="header text-center">
-        ${sirketLogosu.value ? `<img class="logo" src="${sirketLogosu.value}" alt="logo" />` : ''}
+        ${sirketLogosu.value ? `<img class="logo" src="${escapeHtml(sirketLogosu.value)}" alt="logo" />` : ''}
         <h2>${escapeHtml(authStore?.sirketAdi || 'RASPEL ERP')}</h2>
         <p class="raspel-mini">RasPel ERP</p>
         <p>SATIŞ FİŞİ</p>

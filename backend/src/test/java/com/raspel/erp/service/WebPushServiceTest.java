@@ -34,10 +34,10 @@ class WebPushServiceTest {
 
     @Test
     void aboneOl_yeniAbonelikKaydeder() {
-        when(pushAbonelikRepository.findByEndpoint("https://push/x")).thenReturn(Optional.empty());
+        when(pushAbonelikRepository.findByEndpoint("https://fcm.googleapis.com/fcm/send/x")).thenReturn(Optional.empty());
         when(pushAbonelikRepository.save(any(PushAbonelik.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        webPushService.aboneOl(dto("https://push/x"), 5L, 1L, "UA");
+        webPushService.aboneOl(dto("https://fcm.googleapis.com/fcm/send/x"), 5L, 1L, "UA");
 
         ArgumentCaptor<PushAbonelik> captor = ArgumentCaptor.forClass(PushAbonelik.class);
         verify(pushAbonelikRepository).save(captor.capture());
@@ -48,11 +48,11 @@ class WebPushServiceTest {
 
     @Test
     void aboneOl_mevcutAbonelikGunceller() {
-        PushAbonelik mevcut = PushAbonelik.builder().id(9L).endpoint("https://push/x").build();
-        when(pushAbonelikRepository.findByEndpoint("https://push/x")).thenReturn(Optional.of(mevcut));
+        PushAbonelik mevcut = PushAbonelik.builder().id(9L).endpoint("https://fcm.googleapis.com/fcm/send/x").build();
+        when(pushAbonelikRepository.findByEndpoint("https://fcm.googleapis.com/fcm/send/x")).thenReturn(Optional.of(mevcut));
         when(pushAbonelikRepository.save(any(PushAbonelik.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        webPushService.aboneOl(dto("https://push/x"), 5L, 1L, "UA");
+        webPushService.aboneOl(dto("https://fcm.googleapis.com/fcm/send/x"), 5L, 1L, "UA");
 
         assertEquals(9L, mevcut.getId());
         assertEquals("auth", mevcut.getAuth());
@@ -66,8 +66,8 @@ class WebPushServiceTest {
 
     @Test
     void aboneSil_endpointIleSiler() {
-        webPushService.aboneSil("https://push/x");
-        verify(pushAbonelikRepository).deleteByEndpoint("https://push/x");
+        webPushService.aboneSil("https://fcm.googleapis.com/fcm/send/x");
+        verify(pushAbonelikRepository).deleteByEndpoint("https://fcm.googleapis.com/fcm/send/x");
     }
 
     @Test

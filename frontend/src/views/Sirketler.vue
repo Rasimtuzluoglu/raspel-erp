@@ -370,6 +370,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { sirketAPI, uploadAPI } from '../api/index.js'
+import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -476,6 +477,8 @@ const logoKaldir = async () => {
 const logoSec = async (event) => {
   const file = event.target.files?.[0]
   if (!file) return
+  const hata = resimDogrula(file)
+  if (hata) { toastBildirim.hata(t(hata.key, hata.params)); event.target.value = ''; return }
   logoYukleniyor.value = true
   try {
     const res = await uploadAPI.uploadSirketLogo(file)

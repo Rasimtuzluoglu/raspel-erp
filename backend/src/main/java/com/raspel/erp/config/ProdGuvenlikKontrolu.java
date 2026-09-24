@@ -64,7 +64,12 @@ public class ProdGuvenlikKontrolu {
     /** Repoda/varsayilanlarda bulunan zayif parolalar prod'da kabul edilmez. */
     private static final Set<String> ZAYIF_PAROLALAR = Set.of(
             "postgres", "raspel", "raspelredis2026", "raspel123", "password", "passw0rd",
-            "admin", "admin123", "root", "123456", "12345678", "changeme", "secret", "test");
+            "admin", "admin123", "root", "123456", "12345678", "changeme", "secret", "test",
+            "minioadmin", "minioadmin123", "raspeldev2026", "test1234!");
+
+    /** Varsayilan/zayif MinIO kullanici adlari prod'da kabul edilmez. */
+    private static final Set<String> ZAYIF_KULLANICI_ADLARI = Set.of(
+            "minioadmin", "admin", "root", "test", "raspel");
 
     @PostConstruct
     public void kontrol() {
@@ -74,6 +79,10 @@ public class ProdGuvenlikKontrolu {
         if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.length() < 32) {
             throw new IllegalStateException(
                     "prod profilinde JWT_SECRET guclu bir degerle (en az 32 karakter) ayarlanmalidir.");
+        }
+        if (zayifEntropi(jwtSecret)) {
+            throw new IllegalStateException(
+                    "prod profilinde JWT_SECRET yeterli entropiye sahip degil (tekrar eden/ardisik karakterler kullanmayin).");
         }
         if (aiEncryptionKey == null || aiEncryptionKey.isBlank() || aiEncryptionKey.length() < 16) {
             throw new IllegalStateException(
@@ -105,6 +114,10 @@ public class ProdGuvenlikKontrolu {
         zayifParolaKontrol("RABBITMQ_PASSWORD", rabbitmqPassword);
         if ("minio".equalsIgnoreCase(storageType)) {
             zayifParolaKontrol("MINIO_ROOT_PASSWORD", minioSecretKey);
+            if (minioAccessKey != null && ZAYIF_KULLANICI_ADLARI.contains(minioAccessKey.trim().toLowerCase())) {
+                throw new IllegalStateException(
+                        "prod profilinde MINIO_ROOT_USER varsayilan/zayif bir deger olamaz. Ozel bir hesap kullanin.");
+            }
         }
         if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {
             throw new IllegalStateException("prod profilinde APP_CORS_ALLOWED_ORIGINS zorunludur.");
@@ -127,6 +140,20 @@ public class ProdGuvenlikKontrolu {
             }
         }
         log.info("Prod guvenlik kontrolu tamam: JWT_SECRET, AI_ENCRYPTION_KEY, depolama kredileri ve CORS dogrulandi.");
+    }
+
+    /** Basit entropi sezgisi: cok az farkli karakter veya ardisik tekrar zayif sayilir. */
+    private boolean zayifEntropi(String deger) {
+        if (deger == null) return true;
+        long farkli = deger.chars().distinct().count();
+        if (farkli < 16) return true;
+        // Ayni karakterin 8+ kez ardisik tekrari (ör. "aaaa...") zayiftir.
+        int tekrar = 1;
+        for (int i = 1; i < deger.length(); i++) {
+            tekrar = deger.charAt(i) == deger.charAt(i - 1) ? tekrar + 1 : 1;
+            if (tekrar >= 8) return true;
+        }
+        return false;
     }
 
     private void zayifParolaKontrol(String ad, String deger) {

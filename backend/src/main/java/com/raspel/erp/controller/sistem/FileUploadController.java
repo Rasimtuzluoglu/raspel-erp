@@ -236,6 +236,11 @@ public class FileUploadController {
         return null;
     }
 
+    /**
+     * Guvenli dosya yaniti. SVG gibi script calistirabilen "aktif" resim turleri ve
+     * resim disi icerikler her zaman attachment olarak indirilir; yalnizca guvenli
+     * raster resimler (jpeg/png/gif/webp) inline sunulur. Boylece stored XSS engellenir.
+     */
     private ResponseEntity<byte[]> dosyaYanitla(String filename, DosyaDepolamaService.DepolananDosya dosya, boolean resimDegilseIndir) {
         MediaType mediaType;
         try {
@@ -243,12 +248,16 @@ public class FileUploadController {
         } catch (Exception e) {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;
         }
-        boolean resim = "image".equalsIgnoreCase(mediaType.getType());
-        String disposition = (resimDegilseIndir && !resim ? "attachment" : "inline")
+        String tip = mediaType.getType() + "/" + mediaType.getSubtype();
+        boolean guvenliRasterResim = java.util.Set.of(
+                "image/jpeg", "image/png", "image/gif", "image/webp").contains(tip.toLowerCase());
+        boolean attachment = !guvenliRasterResim || resimDegilseIndir && !"image".equalsIgnoreCase(mediaType.getType());
+        String disposition = (attachment ? "attachment" : "inline")
                 + "; filename=\"" + filename.replace("\"", "") + "\"";
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
+                .header("X-Content-Type-Options", "nosniff")
                 .body(dosya.icerik());
     }
 

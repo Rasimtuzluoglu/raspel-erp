@@ -195,7 +195,7 @@ public class BankaMutabakatService {
             }
             return parseExcel(dosya);
         } catch (Exception e) {
-            throw new BusinessException("Dosya okunamadı: " + e.getMessage());
+            throw new BusinessException("Dosya okunamadı");
         }
     }
 
@@ -279,6 +279,13 @@ public class BankaMutabakatService {
 
     private List<String[]> parseExcel(MultipartFile dosya) throws Exception {
         List<String[]> satirlar = new ArrayList<>();
+        // Zip-bomb ve XXE karsiti: sikistirma orani tabanini ve XML external entity'leri kisitla.
+        try {
+            org.apache.poi.openxml4j.util.ZipSecureFile.setMinInflateRatio(0.01d);
+        } catch (Exception ignored) {
+            // POI surum farkinda sessizce gecebilir; varsayilan koruma devam eder.
+        }
+
         try (InputStream is = dosya.getInputStream();
              Workbook workbook = new XSSFWorkbook(is)) {
             Sheet sayfa = workbook.getSheetAt(0);

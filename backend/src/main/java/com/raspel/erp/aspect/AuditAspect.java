@@ -73,7 +73,7 @@ public class AuditAspect {
             HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
             Long kullaniciId = (Long) req.getAttribute("kullaniciId");
             Long sirketId = (Long) req.getAttribute("sirketId");
-            String ip = req.getRemoteAddr();
+            String ip = com.raspel.erp.util.IstekYardimci.istemciIp(req);
             String entityAdi = jp.getTarget().getClass().getSimpleName().replace("Controller", "");
             Long entityId = null;
             Object[] args = jp.getArgs();

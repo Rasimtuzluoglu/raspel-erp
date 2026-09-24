@@ -42,7 +42,8 @@ public class AuditLogService {
             HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
             Long kullaniciId = (Long) req.getAttribute("kullaniciId");
             Long sirketId = (Long) req.getAttribute("sirketId");
-            log(kullaniciId, sirketId, "SIL", entityAdi, entityId, detay, req.getRemoteAddr());
+            log(kullaniciId, sirketId, "SIL", entityAdi, entityId, detay,
+                    com.raspel.erp.util.IstekYardimci.istemciIp(req));
         } catch (Exception ignored) {
             // Request context yoksa (test/dahili çağrı) denetim kaydı atlanır
         }
