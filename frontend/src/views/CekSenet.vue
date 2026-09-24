@@ -92,6 +92,13 @@
             @click="durumGuncelle(data, 'CIRO_EDILDI')"
           />
           <Button
+            v-if="data.durum === 'PORTFOY'"
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-text"
+            :title="t('common.edit')"
+            @click="dialogAc(data)"
+          />
+          <Button
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
@@ -114,9 +121,9 @@
 
     <Dialog
       v-model:visible="dialog"
-      :header="t('cekSenet.yeniCekSenet')"
+      :header="duzenlenenId ? t('cekSenet.duzenle') : t('cekSenet.yeniCekSenet')"
       modal
-      :style="{ width: '500px' }"
+      :style="{ width: '560px' }"
     >
       <div class="form-grid">
         <div class="field-row">
@@ -124,7 +131,9 @@
             <label>{{ t('cekSenet.turZorunlu') }}</label>
             <Dropdown
               v-model="form.tur"
-              :options="['CEK', 'SENET']"
+              :options="turSecenekleri"
+              option-label="label"
+              option-value="value"
               class="w-full"
             />
           </div>
@@ -148,8 +157,22 @@
             />
           </div>
           <div class="field">
+            <label>{{ t('cekSenet.sube') }}</label><InputText
+              v-model="form.sube"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
             <label>{{ t('cekSenet.cekNo') }}</label><InputText
               v-model="form.cekNo"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>{{ t('cekSenet.hesapNo') }}</label><InputText
+              v-model="form.hesapNo"
               class="w-full"
             />
           </div>
@@ -167,6 +190,16 @@
               v-model="form.tutar"
               mode="currency"
               currency="TRY"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>{{ t('cekSenet.kesinmeTarihi') }}</label><DatePicker
+              v-model="form.kesinmeTarihi"
+              date-format="dd.mm.yy"
+              show-clear
               class="w-full"
             />
           </div>
@@ -291,15 +324,24 @@ const tahsilHesapSecenekleri = computed(() => [
   { label: t('cekSenet.kasa'), value: 'KASA' },
   { label: t('cekSenet.bankaHesabi'), value: 'BANKA' }
 ])
-const form = ref({
+const duzenlenenId = ref(null)
+const bosForm = () => ({
   tur: 'CEK',
   cariHesapId: null,
   bankaAdi: '',
+  sube: '',
   cekNo: '',
+  hesapNo: '',
   vadeTarihi: new Date(),
+  kesinmeTarihi: null,
   tutar: null,
   aciklama: ''
 })
+const form = ref(bosForm())
+const turSecenekleri = computed(() => [
+  { label: t('cekSenet.cek'), value: 'CEK' },
+  { label: t('cekSenet.senet'), value: 'SENET' }
+])
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -319,23 +361,38 @@ onMounted(async () => {
   yukleniyor.value = false
 })
 
-const dialogAc = () => {
-  form.value = {
-    tur: 'CEK',
-    cariHesapId: null,
-    bankaAdi: '',
-    cekNo: '',
-    vadeTarihi: new Date(),
-    tutar: null,
-    aciklama: ''
-  }
+const dialogAc = (kayit = null) => {
+  duzenlenenId.value = kayit?.id || null
+  form.value = kayit
+    ? {
+        tur: kayit.tur,
+        cariHesapId: kayit.cariHesapId ?? null,
+        bankaAdi: kayit.bankaAdi || '',
+        sube: kayit.sube || '',
+        cekNo: kayit.cekNo || '',
+        hesapNo: kayit.hesapNo || '',
+        vadeTarihi: kayit.vadeTarihi ? new Date(kayit.vadeTarihi) : new Date(),
+        kesinmeTarihi: kayit.kesinmeTarihi ? new Date(kayit.kesinmeTarihi) : null,
+        tutar: kayit.tutar ?? null,
+        aciklama: kayit.aciklama || ''
+      }
+    : bosForm()
   dialog.value = true
 }
 
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    await cekSenetAPI.create({ ...form.value, vadeTarihi: getLocalDateString(form.value.vadeTarihi) })
+    const payload = {
+      ...form.value,
+      vadeTarihi: getLocalDateString(form.value.vadeTarihi),
+      kesinmeTarihi: form.value.kesinmeTarihi ? getLocalDateString(form.value.kesinmeTarihi) : null
+    }
+    if (duzenlenenId.value) {
+      await cekSenetAPI.update(duzenlenenId.value, payload)
+    } else {
+      await cekSenetAPI.create(payload)
+    }
     dialog.value = false
     const r = await cekSenetAPI.getAll()
     list.value = unwrapList(r)

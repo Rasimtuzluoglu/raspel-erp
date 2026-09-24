@@ -79,10 +79,9 @@
         <label>{{ t('kategoriler.turZorunlu') }}</label>
         <Dropdown
           v-model="form.tur"
-          :options="[
-            { label: t('kategoriler.gelir'), value: 'GELIR' },
-            { label: t('kategoriler.gider'), value: 'GIDER' }
-          ]"
+          :options="turSecenekleri"
+          option-label="label"
+          option-value="value"
           :placeholder="t('common.select')"
           class="w-full"
         />
@@ -106,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -121,6 +120,11 @@ const kategoriStore = useKategoriStore()
 const showDialog = ref(false)
 const saving = ref(false)
 const form = ref({ ad: '', tur: '' })
+
+const turSecenekleri = computed(() => [
+  { label: t('kategoriler.gelir'), value: 'GELIR' },
+  { label: t('kategoriler.gider'), value: 'GIDER' }
+])
 
 onMounted(() => {
   kategoriStore.getAllKategoriler().catch(() => { /* hata global olarak bildirilir */ })

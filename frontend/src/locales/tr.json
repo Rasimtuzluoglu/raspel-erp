@@ -1657,6 +1657,12 @@
   "cekSenet": {
     "title": "Çek / Senet Portföyü",
     "yeniCekSenet": "Yeni Çek/Senet",
+    "duzenle": "Çek/Senet Düzenle",
+    "cek": "Çek",
+    "senet": "Senet",
+    "sube": "Şube",
+    "hesapNo": "Hesap No",
+    "kesinmeTarihi": "Kesinme Tarihi",
     "tur": "Tür",
     "cariHesap": "Cari Hesap",
     "cekNo": "Çek No",
@@ -2011,6 +2017,7 @@
   },
   "crmMerkezi": {
     "title": "CRM Merkezi",
+    "cariSecin": "Dönüştürülecek Cari Hesabı Seçin",
     "leadYeni": "Yeni",
     "leadNitelikli": "Nitelikli",
     "leadDonusturuldu": "Dönüştürüldü",
@@ -2165,6 +2172,7 @@
   "hesapAyarlari": {
     "title": "Hesap Ayarları",
     "introText": "Profil bilgilerinizi güncelleyin, şifrenizi değiştirin ve iki faktörlü doğrulama (2FA) ile hesabınızı güvenceye alın.",
+    "qrAlt": "2FA kurulum QR kodu",
     "marka": "Marka",
     "adminGerekli": "Bu bölüm yalnızca yönetici (ADMIN) kullanıcılar içindir.",
     "markaBaslik": "Kurumsal Marka / Logo",

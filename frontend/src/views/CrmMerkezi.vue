@@ -504,6 +504,40 @@
         />
       </template>
     </Dialog>
+
+    <!-- Lead -> Cari donusum: cari secimi -->
+    <Dialog
+      v-model:visible="donusturDialog"
+      :header="t('crmMerkezi.donustur')"
+      modal
+      :style="{ width: '440px' }"
+    >
+      <div class="form-group">
+        <label>{{ t('crmMerkezi.cariSecin') }}</label>
+        <Dropdown
+          v-model="donusturCariId"
+          :options="cariler"
+          option-label="ad"
+          option-value="id"
+          filter
+          :placeholder="t('common.select')"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.vazgec')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="donusturDialog = false"
+        />
+        <Button
+          :label="t('crmMerkezi.donustur')"
+          icon="pi pi-arrow-right"
+          @click="donusturCariSec"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -654,11 +688,22 @@ const leadSil = (data) => {
     reject: () => {}
   })
 }
+// Lead -> cari donusumu: lead'de cari yoksa kullaniciya cari sectirilir.
+const donusturDialog = ref(false)
+const donusturLead = ref(null)
+const donusturCariId = ref(null)
+
 const leadDonustur = (data) => {
-  if (!data.cariHesapId) {
-    toastBildirim.uyari(t('crmMerkezi.donusturmekIcinCari'))
+  if (data.cariHesapId) {
+    donusturOnayla(data, data.cariHesapId)
     return
   }
+  donusturLead.value = data
+  donusturCariId.value = null
+  donusturDialog.value = true
+}
+
+const donusturOnayla = (data, cariId) => {
   confirm.require({
     message: t('crmMerkezi.donusturOnay'),
     header: t('crmMerkezi.donustur'),
@@ -667,7 +712,8 @@ const leadDonustur = (data) => {
     rejectLabel: t('common.vazgec'),
     accept: async () => {
       try {
-        await crmAPI.leadDonustur(data.id, data.cariHesapId)
+        await crmAPI.leadDonustur(data.id, cariId)
+        donusturDialog.value = false
         await yukle()
         toastBildirim.basarili(t('crmMerkezi.donusturuldu'))
       } catch (err) {
@@ -678,6 +724,14 @@ const leadDonustur = (data) => {
   })
 }
 
+const donusturCariSec = () => {
+  if (!donusturCariId.value) {
+    toastBildirim.uyari(t('crmMerkezi.donusturmekIcinCari'))
+    return
+  }
+  donusturOnayla(donusturLead.value, donusturCariId.value)
+}
+
 // Aktivite
 const aktiviteKaydet = async () => {
   if (!aktiviteForm.value.baslik?.trim()) {
@@ -686,7 +740,17 @@ const aktiviteKaydet = async () => {
   }
   kaydediliyor.value = true
   try {
-    await crmAPI.aktiviteOlustur(aktiviteForm.value)
+    const payload = { ...aktiviteForm.value }
+    // DatePicker Date doner; DTO LocalDateTime bekler. Yerel saatle ISO (offset'siz) uret.
+    if (payload.planlananTarih instanceof Date) {
+      const d = payload.planlananTarih
+      const p = (n) => String(n).padStart(2, '0')
+      payload.planlananTarih =
+        `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`
+    } else if (payload.planlananTarih === '') {
+      payload.planlananTarih = null
+    }
+    await crmAPI.aktiviteOlustur(payload)
     aktiviteDialog.value = false
     aktiviteForm.value = bosAktivite()
     await yukle()

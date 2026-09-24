@@ -46,6 +46,9 @@ export const kullaniciAPI = {
   setup2fa() {
     return apiClient.post('/kullanicilar/setup-2fa')
   },
+  twoFactorQr(icerik) {
+    return apiClient.get('/kullanicilar/2fa-qr', { params: { icerik }, responseType: 'blob' })
+  },
   enable2fa(data) {
     return apiClient.post('/kullanicilar/enable-2fa', data)
   },

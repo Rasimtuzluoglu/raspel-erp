@@ -1657,6 +1657,12 @@
   "cekSenet": {
     "title": "Cheque / Promissory Note Portfolio",
     "yeniCekSenet": "New Cheque/Note",
+    "duzenle": "Edit Cheque/Note",
+    "cek": "Cheque",
+    "senet": "Promissory Note",
+    "sube": "Branch",
+    "hesapNo": "Account No",
+    "kesinmeTarihi": "Settlement Date",
     "tur": "Type",
     "cariHesap": "Account",
     "cekNo": "Cheque No",
@@ -2011,6 +2017,7 @@
   },
   "crmMerkezi": {
     "title": "CRM Center",
+    "cariSecin": "Select the Account to Convert Into",
     "leadYeni": "New",
     "leadNitelikli": "Qualified",
     "leadDonusturuldu": "Converted",
@@ -2165,6 +2172,7 @@
   "hesapAyarlari": {
     "title": "Account Settings",
     "introText": "Update your profile, change your password and secure your account with two-factor authentication (2FA).",
+    "qrAlt": "2FA setup QR code",
     "marka": "Brand",
     "adminGerekli": "This section is only available to administrators (ADMIN).",
     "markaBaslik": "Corporate Brand / Logo",

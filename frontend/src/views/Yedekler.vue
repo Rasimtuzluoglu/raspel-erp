@@ -242,191 +242,192 @@
           <div class="ozet-satir">
             <span>{{ t('yedekler.saklama') }}</span><strong>{{ t('yedekler.sinirsiz') }}</strong>
           </div>
-          <!-- Bulut Yedekleme (Cloud Storage) Kartı -->
-          <Card class="bulut-kart">
-            <template #title>
-              <div class="bulut-baslik">
-                <span><i
-                  class="pi pi-cloud"
-                  style="margin-right: 8px; color: #3b82f6"
-                />{{ t('yedekler.bulutYedekleme') }}</span>
-                <Tag
-                  :value="cloudConfig.encryptionEnabled ? t('yedekler.aesSifreli') : t('yedekler.sifresiz')"
-                  :severity="cloudConfig.encryptionEnabled ? 'success' : 'warn'"
-                />
-              </div>
-            </template>
-            <template #content>
-              <div class="bulut-grid">
-                <div class="field">
-                  <label>{{ t('yedekler.bulutSaglayici') }}</label>
-                  <Select
-                    v-model="cloudConfig.provider"
-                    :options="[
-                      { label: 'MinIO (S3 uyumlu)', value: 'MINIO' }
-                    ]"
-                    option-label="label"
-                    option-value="value"
-                    class="w-full"
-                  />
-                </div>
-                <div class="field">
-                  <label>{{ t('yedekler.hedefDizin') }}</label>
-                  <InputText
-                    v-model="cloudConfig.bucketName"
-                    :placeholder="t('yedekler.hedefDizinPlaceholder')"
-                    class="w-full"
-                  />
-                </div>
-                <div class="field">
-                  <label>{{ t('yedekler.bolge') }}</label>
-                  <InputText
-                    v-model="cloudConfig.region"
-                    :placeholder="t('yedekler.bolgePlaceholder')"
-                    class="w-full"
-                  />
-                </div>
-                <div class="field">
-                  <label>{{ t('yedekler.otomatikSenkron') }}</label>
-                  <ToggleSwitch v-model="cloudConfig.autoSync" />
-                  <small class="alan-aciklama">{{ t('yedekler.otomatikSenkronAciklama') }}</small>
-                </div>
-                <div class="field">
-                  <label>{{ t('yedekler.sifrele') }}</label>
-                  <ToggleSwitch v-model="cloudConfig.encryptionEnabled" />
-                  <small class="alan-aciklama">{{ t('yedekler.sifreleAciklama') }}</small>
-                </div>
-                <div class="bulut-aksiyonlar">
-                  <Button
-                    :label="t('yedekler.bulutAyarlariKaydet')"
-                    icon="pi pi-save"
-                    size="small"
-                    class="p-button-outlined"
-                    :loading="cloudKaydediliyor"
-                    @click="bulutAyarlariKaydet"
-                  />
-                  <Button
-                    :label="t('yedekler.bulutaSenkronize')"
-                    icon="pi pi-cloud-upload"
-                    size="small"
-                    class="p-button-primary"
-                    :loading="cloudSenkronizeEdiliyor"
-                    @click="bulutaEsitle(null)"
-                  />
-                </div>
-              </div>
-            </template>
-          </Card>
-
-          <Card class="yedek-listesi">
-            <template #title>
-              <i
-                class="pi pi-list"
-                style="margin-right: 8px"
-              />{{ t('yedekler.yedekDosyalari') }}
-            </template>
-            <template #content>
-              <DataTable
-                :value="yedekler"
-                :loading="yedeklerYukleniyor"
-                striped-rows
-                size="small"
-                :rows="10"
-                :paginator="yedekler.length > 10"
-                sort-field="lastModified"
-                :sort-order="-1"
-              >
-                <template #empty>
-                  <EmptyState />
-                </template>
-                <Column
-                  field="filename"
-                  :header="t('yedekler.dosyaAdi')"
-                  sortable
-                >
-                  <template #body="s">
-                    <i
-                      class="pi pi-file"
-                      style="margin-right: 8px; color: #3b82f6"
-                    />{{ s.data.filename }}
-                  </template>
-                </Column>
-                <Column
-                  field="type"
-                  :header="t('yedekler.tur')"
-                  sortable
-                  style="width: 100px"
-                >
-                  <template #body="s">
-                    <Tag
-                      :value="typeLabel(s.data.type)"
-                      :severity="typeSeverity(s.data.type)"
-                    />
-                  </template>
-                </Column>
-                <Column
-                  field="size"
-                  :header="t('yedekler.boyut')"
-                  sortable
-                  style="width: 100px"
-                >
-                  <template #body="s">
-                    {{ formatSize(s.data.size) }}
-                  </template>
-                </Column>
-                <Column
-                  field="lastModified"
-                  :header="t('common.date')"
-                  sortable
-                  style="width: 170px"
-                >
-                  <template #body="s">
-                    {{ formatDate(s.data.lastModified) }}
-                  </template>
-                </Column>
-                <Column
-                  :header="t('yedekler.islem')"
-                  style="width: 100px"
-                >
-                  <template #body="s">
-                    <Button
-                      icon="pi pi-folder-open"
-                      class="p-button-sm p-button-text p-button-info"
-                      :title="klasorAdi ? t('yedekler.klasoreKaydet') : t('yedekler.bilgisayaraKaydet')"
-                      @click="bilgisayaraKaydet(s.data.filename)"
-                    />
-                    <Button
-                      icon="pi pi-download"
-                      class="p-button-sm p-button-text"
-                      :title="t('yedekler.indir')"
-                      @click="indir(s.data.filename)"
-                    />
-                    <Button
-                      icon="pi pi-upload"
-                      class="p-button-sm p-button-text p-button-warning"
-                      :title="t('yedekler.geriYukle')"
-                      @click="geriYukle(s.data.filename)"
-                    />
-                    <Button
-                      icon="pi pi-trash"
-                      class="p-button-sm p-button-text p-button-danger"
-                      :title="t('common.delete')"
-                      @click="sil(s.data.filename)"
-                    />
-                  </template>
-                </Column>
-              </DataTable>
-              <div
-                v-if="(!yedekler || !yedekler.length) && !yedeklerYukleniyor"
-                class="empty-state"
-              >
-                {{ t('yedekler.yedekYok') }}
-              </div>
-            </template>
-          </Card>
         </template>
       </Card>
     </div>
+
+    <!-- Bulut Yedekleme (Cloud Storage) Kartı — tam genislik -->
+    <Card class="bulut-kart">
+      <template #title>
+        <div class="bulut-baslik">
+          <span><i
+            class="pi pi-cloud"
+            style="margin-right: 8px; color: #3b82f6"
+          />{{ t('yedekler.bulutYedekleme') }}</span>
+          <Tag
+            :value="cloudConfig.encryptionEnabled ? t('yedekler.aesSifreli') : t('yedekler.sifresiz')"
+            :severity="cloudConfig.encryptionEnabled ? 'success' : 'warn'"
+          />
+        </div>
+      </template>
+      <template #content>
+        <div class="bulut-grid">
+          <div class="field">
+            <label>{{ t('yedekler.bulutSaglayici') }}</label>
+            <Select
+              v-model="cloudConfig.provider"
+              :options="[
+                { label: 'MinIO (S3 uyumlu)', value: 'MINIO' }
+              ]"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>{{ t('yedekler.hedefDizin') }}</label>
+            <InputText
+              v-model="cloudConfig.bucketName"
+              :placeholder="t('yedekler.hedefDizinPlaceholder')"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>{{ t('yedekler.bolge') }}</label>
+            <InputText
+              v-model="cloudConfig.region"
+              :placeholder="t('yedekler.bolgePlaceholder')"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>{{ t('yedekler.otomatikSenkron') }}</label>
+            <ToggleSwitch v-model="cloudConfig.autoSync" />
+            <small class="alan-aciklama">{{ t('yedekler.otomatikSenkronAciklama') }}</small>
+          </div>
+          <div class="field">
+            <label>{{ t('yedekler.sifrele') }}</label>
+            <ToggleSwitch v-model="cloudConfig.encryptionEnabled" />
+            <small class="alan-aciklama">{{ t('yedekler.sifreleAciklama') }}</small>
+          </div>
+          <div class="bulut-aksiyonlar">
+            <Button
+              :label="t('yedekler.bulutAyarlariKaydet')"
+              icon="pi pi-save"
+              size="small"
+              class="p-button-outlined"
+              :loading="cloudKaydediliyor"
+              @click="bulutAyarlariKaydet"
+            />
+            <Button
+              :label="t('yedekler.bulutaSenkronize')"
+              icon="pi pi-cloud-upload"
+              size="small"
+              class="p-button-primary"
+              :loading="cloudSenkronizeEdiliyor"
+              @click="bulutaEsitle(null)"
+            />
+          </div>
+        </div>
+      </template>
+    </Card>
+
+    <Card class="yedek-listesi">
+      <template #title>
+        <i
+          class="pi pi-list"
+          style="margin-right: 8px"
+        />{{ t('yedekler.yedekDosyalari') }}
+      </template>
+      <template #content>
+        <DataTable
+          :value="yedekler"
+          :loading="yedeklerYukleniyor"
+          striped-rows
+          size="small"
+          :rows="10"
+          :paginator="yedekler.length > 10"
+          sort-field="lastModified"
+          :sort-order="-1"
+        >
+          <template #empty>
+            <EmptyState />
+          </template>
+          <Column
+            field="filename"
+            :header="t('yedekler.dosyaAdi')"
+            sortable
+          >
+            <template #body="s">
+              <i
+                class="pi pi-file"
+                style="margin-right: 8px; color: #3b82f6"
+              />{{ s.data.filename }}
+            </template>
+          </Column>
+          <Column
+            field="type"
+            :header="t('yedekler.tur')"
+            sortable
+            style="width: 100px"
+          >
+            <template #body="s">
+              <Tag
+                :value="typeLabel(s.data.type)"
+                :severity="typeSeverity(s.data.type)"
+              />
+            </template>
+          </Column>
+          <Column
+            field="size"
+            :header="t('yedekler.boyut')"
+            sortable
+            style="width: 100px"
+          >
+            <template #body="s">
+              {{ formatSize(s.data.size) }}
+            </template>
+          </Column>
+          <Column
+            field="lastModified"
+            :header="t('common.date')"
+            sortable
+            style="width: 170px"
+          >
+            <template #body="s">
+              {{ formatDate(s.data.lastModified) }}
+            </template>
+          </Column>
+          <Column
+            :header="t('yedekler.islem')"
+            style="width: 100px"
+          >
+            <template #body="s">
+              <Button
+                icon="pi pi-folder-open"
+                class="p-button-sm p-button-text p-button-info"
+                :title="klasorAdi ? t('yedekler.klasoreKaydet') : t('yedekler.bilgisayaraKaydet')"
+                @click="bilgisayaraKaydet(s.data.filename)"
+              />
+              <Button
+                icon="pi pi-download"
+                class="p-button-sm p-button-text"
+                :title="t('yedekler.indir')"
+                @click="indir(s.data.filename)"
+              />
+              <Button
+                icon="pi pi-upload"
+                class="p-button-sm p-button-text p-button-warning"
+                :title="t('yedekler.geriYukle')"
+                @click="geriYukle(s.data.filename)"
+              />
+              <Button
+                icon="pi pi-trash"
+                class="p-button-sm p-button-text p-button-danger"
+                :title="t('common.delete')"
+                @click="sil(s.data.filename)"
+              />
+            </template>
+          </Column>
+        </DataTable>
+        <div
+          v-if="(!yedekler || !yedekler.length) && !yedeklerYukleniyor"
+          class="empty-state"
+        >
+          {{ t('yedekler.yedekYok') }}
+        </div>
+      </template>
+    </Card>
   </div>
 </template>
 

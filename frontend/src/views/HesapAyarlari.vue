@@ -169,6 +169,17 @@
                             @click="kopyala(kurulumData.secret)"
                           />
                         </div>
+                        <div
+                          v-if="qrGorselUrl"
+                          class="qr-gorsel"
+                        >
+                          <img
+                            :src="qrGorselUrl"
+                            :alt="t('hesapAyarlari.qrAlt')"
+                            width="180"
+                            height="180"
+                          >
+                        </div>
                         <p class="otpauth-satir">
                           <small>{{ kurulumData.qrCodeUri }}</small>
                         </p>
@@ -921,6 +932,7 @@ const sifreForm = ref({ mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' })
 
 const twoFactorDurum = ref('KAPALI') // ACIK / KAPALI / KURULUM
 const kurulumData = ref(null)
+const qrGorselUrl = ref('')
 const dogrulamaKodu = ref('')
 const kapatmaKodu = ref('')
 
@@ -1045,7 +1057,9 @@ const aiBaglantiTestEt = async () => {
   aiTestEdiliyor.value = true
   try {
     const res = await aiConfigAPI.testConnection()
-    if (res.data && res.data.status === 'SUCCESS') {
+    // Backend { success: boolean, message } dondurur (status degil).
+    const basarili = res.data && (res.data.success === true || res.data.status === 'SUCCESS')
+    if (basarili) {
       toast.add({
         severity: 'success',
       summary: t('hesapAyarlari.baglantiBasarili'),
@@ -1207,6 +1221,16 @@ const kurulumBaslat = async () => {
     const r = await kullaniciAPI.setup2fa()
     kurulumData.value = r.data
     twoFactorDurum.value = 'KURULUM'
+    // otpauth URI'sini taranabilir QR PNG'ye cevir (authenticator icin).
+    qrGorselUrl.value = ''
+    if (r.data?.qrCodeUri) {
+      try {
+        const qr = await kullaniciAPI.twoFactorQr(r.data.qrCodeUri)
+        qrGorselUrl.value = window.URL.createObjectURL(new Blob([qr.data], { type: 'image/png' }))
+      } catch {
+        qrGorselUrl.value = ''
+      }
+    }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.ikiFaKurulumBaslatilamadi'))
   }
@@ -1223,6 +1247,7 @@ const ikiFakAktifEt = async () => {
     await kullaniciAPI.enable2fa({ code: dogrulamaKodu.value })
     twoFactorDurum.value = 'ACIK'
     kurulumData.value = null
+    qrGorselUrl.value = ''
     dogrulamaKodu.value = ''
     toastBildirim.basarili(t('hesapAyarlari.ikifaAktifEdildi'))
   } catch (err) {

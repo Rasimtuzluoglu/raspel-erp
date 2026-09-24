@@ -40,6 +40,7 @@ public class KullaniciController {
 
     private final KullaniciService kullaniciService;
     private final AktifOturumService aktifOturumService;
+    private final com.raspel.erp.service.sistem.QRService qrService;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
@@ -119,6 +120,21 @@ public class KullaniciController {
     public ResponseEntity<com.raspel.erp.dto.sistem.TwoFactorDTO> setup2FA(HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(kullaniciService.setupTwoFactor(kullaniciId));
+    }
+
+    @GetMapping("/2fa-qr")
+    @Operation(summary = "2FA QR görseli",
+            description = "otpauth URI'sini taranabilir QR PNG olarak döndürür (authenticator uygulamaları için).")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<byte[]> ikiFaQr(@RequestParam String icerik) {
+        if (icerik == null || !icerik.startsWith("otpauth://")) {
+            return ResponseEntity.badRequest().build();
+        }
+        byte[] png = qrService.qrPng(icerik, 220);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.IMAGE_PNG)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(png);
     }
 
     @PostMapping("/enable-2fa")

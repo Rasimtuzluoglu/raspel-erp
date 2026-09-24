@@ -128,6 +128,9 @@ export const cekSenetAPI = {
   create(data) {
     return apiClient.post('/cek-senet', data)
   },
+  update(id, data) {
+    return apiClient.put(`/cek-senet/${id}`, data)
+  },
   durumGuncelle(id, durum) {
     return apiClient.put(`/cek-senet/${id}/durum`, { durum })
   },

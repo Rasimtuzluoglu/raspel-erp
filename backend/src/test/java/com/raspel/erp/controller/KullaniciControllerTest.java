@@ -48,6 +48,9 @@ class KullaniciControllerTest {
     @MockBean
     private AktifOturumService aktifOturumService;
 
+    @MockBean
+    private com.raspel.erp.service.sistem.QRService qrService;
+
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(KullaniciDTO.builder().id(1L).username("admin").displayName("Admin").build());

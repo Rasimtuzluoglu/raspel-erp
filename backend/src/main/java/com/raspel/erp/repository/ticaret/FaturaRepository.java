@@ -68,7 +68,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                                 @Param("baslangic") java.time.LocalDate baslangic,
                                                 @Param("bitis") java.time.LocalDate bitis);
 
-    @EntityGraph(attributePaths = {"cariHesap"})
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
     List<Fatura> findBySirketIdAndTarihBetween(Long sirketId, java.time.LocalDate baslangic, java.time.LocalDate bitis);
 
     @EntityGraph(attributePaths = {"cariHesap"})
