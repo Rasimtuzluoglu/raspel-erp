@@ -53,10 +53,10 @@ class NotControllerTest {
 
     @Test
     void shouldGetAll() throws Exception {
-        when(notService.tumunuGetir(anyLong(), any(Pageable.class)))
+        when(notService.kullaniciNotlariSayfali(anyLong(), anyLong(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ornekNot())));
 
-        mockMvc.perform(get("/api/notlar").requestAttr("sirketId", 1L))
+        mockMvc.perform(get("/api/notlar").requestAttr("sirketId", 1L).requestAttr("kullaniciId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].baslik").value("Toplantı Notu"))
                 .andExpect(jsonPath("$.content[0].renk").value("MAVI"));

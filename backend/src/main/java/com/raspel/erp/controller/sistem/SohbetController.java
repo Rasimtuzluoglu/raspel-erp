@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/api/sohbet")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
 public class SohbetController {
 
     private final SohbetService sohbetService;

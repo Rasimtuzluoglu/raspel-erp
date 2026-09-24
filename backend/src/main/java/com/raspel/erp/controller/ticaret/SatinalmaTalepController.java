@@ -40,8 +40,10 @@ public class SatinalmaTalepController {
 
     @PostMapping
     @Operation(summary = "Yeni satın alma talebi oluştur", description = "Yeni bir satın alma talebi oluşturur")
-    public ResponseEntity<SatinalmaTalepDTO> olustur(@Valid @RequestBody SatinalmaTalepDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(satinalmaTalepService.olustur(dto));
+    public ResponseEntity<SatinalmaTalepDTO> olustur(@Valid @RequestBody SatinalmaTalepDTO dto,
+                                                     jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.status(HttpStatus.CREATED).body(satinalmaTalepService.olustur(dto, sirketId));
     }
 
     @PutMapping("/{id}")

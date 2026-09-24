@@ -29,6 +29,17 @@ public class NotService {
                 .map(this::entityToDTO);
     }
 
+    /**
+     * Kullanıcıya özel kişisel notlar (her kullanıcı yalnızca kendi notlarını görür).
+     * Cari notları hariç tutulur; onlar cari detayında gösterilir.
+     */
+    @Transactional(readOnly = true)
+    public Page<NotDTO> kullaniciNotlariSayfali(Long sirketId, Long kullaniciId, Pageable pageable) {
+        return notRepository.findBySirketIdAndKullaniciIdAndCariHesapIdIsNullOrderByOlusturmaTarihiDesc(
+                        sirketId, kullaniciId, pageable)
+                .map(this::entityToDTO);
+    }
+
     @Cacheable(value = "lookup", sync = true, key = "'not:sirket:' + #sirketId + ':kullanici:' + #kullaniciId")
     @Transactional(readOnly = true)
     public List<NotDTO> kullaniciNotlari(Long sirketId, Long kullaniciId) {

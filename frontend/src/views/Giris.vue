@@ -816,6 +816,8 @@ const tumAdimlariSifirla = () => {
   justify-content: center;
   background: radial-gradient(circle at 50% 0%, #0a1620 0%, #0b0f14 62%);
   overflow-x: hidden;
+  /* Uzun icerik (ilk kurulum) dikeyde kaydirilabilsin. */
+  overflow-y: auto;
   padding:
     calc(30px + env(safe-area-inset-top))
     calc(20px + env(safe-area-inset-right))
@@ -1304,8 +1306,13 @@ const tumAdimlariSifirla = () => {
   flex: 0.95;
   padding: 44px 40px;
   display: flex;
-  align-items: center;
+  /* Icerik alandan uzun oldugunda 'safe center' sayesinde ustten kirpilmaz ve
+     kaydirma dogru calisir; kisa icerikte dikey ortalanir. */
+  align-items: safe center;
   justify-content: center;
+  overflow-y: auto;
+  max-height: calc(100dvh - 40px);
+  scrollbar-width: thin;
 }
 .giris-kutu {
   width: 100%;
@@ -1910,6 +1917,9 @@ const tumAdimlariSifirla = () => {
   }
   .giris-form-alani {
     padding: 32px 24px;
+    max-height: none;
+    overflow-y: visible;
+    align-items: flex-start;
   }
   /* iOS: odaklaninca otomatik zoom'u engelle (16px alti zoom tetikler) */
   .input-wrapper :deep(.p-inputtext) {

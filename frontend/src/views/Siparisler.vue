@@ -237,7 +237,7 @@ onMounted(async () => {
   try {
     const [sR, cR] = await Promise.all([siparisAPI.getAll(), cariHesapAPI.getAll()])
     siparisler.value = unwrapList(sR)
-    cariler.value = cR.data
+    cariler.value = unwrapList(cR)
     personelleriYukle()
     suruculeriYukle()
   } catch (err) {

@@ -217,6 +217,17 @@ public class KullaniciService {
         // getir() ile aynı esnek kontrol: aktif şirket home'dan farklı olsa da ADMIN/
         // atanmış kullanıcı düzenleyebilir (self-lock ve gereksiz 404 önlenir).
         tenantErisimiDogrula(k);
+        // Kullanıcı adı yalnızca ADMIN tarafından ve benzersizlik kontrolüyle değiştirilebilir.
+        if (dto.getUsername() != null && !dto.getUsername().isBlank()
+                && !dto.getUsername().equals(k.getUsername())) {
+            String yeniAd = dto.getUsername().trim();
+            kullaniciRepository.findByUsername(yeniAd).ifPresent(mevcut -> {
+                if (!mevcut.getId().equals(k.getId())) {
+                    throw new DuplicateResourceException("Bu kullanıcı adı zaten kullanılıyor: " + yeniAd);
+                }
+            });
+            k.setUsername(yeniAd);
+        }
         if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());

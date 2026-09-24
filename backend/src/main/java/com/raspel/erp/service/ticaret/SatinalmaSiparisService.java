@@ -69,6 +69,14 @@ public class SatinalmaSiparisService {
     }
 
     public SatinalmaSiparisDTO olustur(SatinalmaSiparisDTO dto) {
+        return olustur(dto, null);
+    }
+
+    public SatinalmaSiparisDTO olustur(SatinalmaSiparisDTO dto, Long sirketId) {
+        // Tenant baglami request'ten gelir; DTO'da yoksa/null ise buradan set edilir.
+        if (sirketId != null) {
+            dto.setSirketId(sirketId);
+        }
         SatinalmaSiparis s = SatinalmaSiparis.builder()
                 .siparisNo(dto.getSiparisNo())
                 .tarih(dto.getTarih())

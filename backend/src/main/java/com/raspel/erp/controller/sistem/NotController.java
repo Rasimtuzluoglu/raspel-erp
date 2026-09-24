@@ -28,11 +28,13 @@ public class NotController {
     private final NotService notService;
 
     @GetMapping
-    @Operation(summary = "Tüm notları getir", description = "Şirkete ait tüm notları listeler")
+    @Operation(summary = "Kişisel notları getir",
+            description = "Yalnızca oturum açan kullanıcının kişisel notlarını listeler (cari notları hariç).")
     public ResponseEntity<Page<NotDTO>> tumu(HttpServletRequest request,
                                              @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(notService.tumunuGetir(sirketId, pageable));
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(notService.kullaniciNotlariSayfali(sirketId, kullaniciId, pageable));
     }
 
     @GetMapping("/{id}")

@@ -83,7 +83,7 @@ class SatinalmaTalepControllerTest {
     @Test
     void shouldCreate() throws Exception {
         var dto = SatinalmaTalepDTO.builder().id(1L).talepNo("TALEP-001").tarih(LocalDate.now()).talepEden("Ahmet").build();
-        when(satinalmaTalepService.olustur(any(SatinalmaTalepDTO.class))).thenReturn(dto);
+        when(satinalmaTalepService.olustur(any(SatinalmaTalepDTO.class), any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/satinalma-talepler")
                         .contentType(MediaType.APPLICATION_JSON)

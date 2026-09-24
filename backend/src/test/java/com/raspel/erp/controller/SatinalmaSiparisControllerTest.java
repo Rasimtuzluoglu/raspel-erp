@@ -83,7 +83,7 @@ class SatinalmaSiparisControllerTest {
     @Test
     void shouldCreate() throws Exception {
         var dto = SatinalmaSiparisDTO.builder().id(1L).siparisNo("SAT-001").tarih(LocalDate.now()).build();
-        when(satinalmaSiparisService.olustur(any(SatinalmaSiparisDTO.class))).thenReturn(dto);
+        when(satinalmaSiparisService.olustur(any(SatinalmaSiparisDTO.class), any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/satinalma-siparisler")
                         .contentType(MediaType.APPLICATION_JSON)

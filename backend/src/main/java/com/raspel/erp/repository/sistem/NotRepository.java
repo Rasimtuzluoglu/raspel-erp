@@ -13,6 +13,10 @@ public interface NotRepository extends JpaRepository<Not, Long> {
     List<Not> findBySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(Long sirketId, Long kullaniciId);
     List<Not> findByCariHesapIdOrderByOlusturmaTarihiDesc(Long cariHesapId);
 
+    /** Kullanıcının kişisel notları: cari notlarını hariç tutar (gizlilik + kirlilik önleme). */
+    Page<Not> findBySirketIdAndKullaniciIdAndCariHesapIdIsNullOrderByOlusturmaTarihiDesc(
+            Long sirketId, Long kullaniciId, Pageable pageable);
+
     long countByCariHesapId(Long cariHesapId);
     void deleteByCariHesapId(Long cariHesapId);
 }

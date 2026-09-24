@@ -141,6 +141,14 @@ class PostgresEntegrasyonTest {
                 "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND conname LIKE 'fk_%_sirket'",
                 Integer.class);
         assertTrue(tenantFkSayisi >= 60, "tenant FK sayisi beklenenden az: " + tenantFkSayisi);
+
+        // V124: satinalma tablolarinda sirket_id NOT NULL.
+        Integer satinalmaNotNull = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns WHERE is_nullable='NO' AND (" +
+                        "(table_schema='satinalma' AND table_name='satinalma_talep' AND column_name='sirket_id') OR " +
+                        "(table_schema='satinalma' AND table_name='satinalma_siparis' AND column_name='sirket_id'))",
+                Integer.class);
+        assertEquals(2, satinalmaNotNull);
     }
 
     @Test

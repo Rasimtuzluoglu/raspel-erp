@@ -108,8 +108,11 @@
           v-model="form.username"
           :placeholder="t('kullanicilar.kullaniciAdiPlaceholder')"
           class="w-full"
-          :disabled="!!editingId"
         />
+        <small
+          v-if="editingId"
+          class="form-hint"
+        >{{ t('kullanicilar.kullaniciAdiDegistirmeUyari') }}</small>
       </div>
       <div class="form-grup">
         <label>{{ t('kullanicilar.gorunenAd') }}</label>

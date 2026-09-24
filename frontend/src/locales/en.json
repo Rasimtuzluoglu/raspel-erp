@@ -2426,6 +2426,7 @@
     "bosDurumIpucu": "Click New User to add the first user",
     "kullaniciAdi": "Username *",
     "kullaniciAdiPlaceholder": "Username",
+    "kullaniciAdiDegistirmeUyari": "Only an administrator can change the username.",
     "gorunenAd": "Display Name *",
     "gorunenAdPlaceholder": "Full name",
     "email": "Email",

@@ -44,6 +44,14 @@ public class SatinalmaTalepService {
     }
 
     public SatinalmaTalepDTO olustur(SatinalmaTalepDTO dto) {
+        return olustur(dto, null);
+    }
+
+    public SatinalmaTalepDTO olustur(SatinalmaTalepDTO dto, Long sirketId) {
+        // Tenant baglami request'ten gelir; DTO'da yoksa/null ise buradan set edilir.
+        if (sirketId != null) {
+            dto.setSirketId(sirketId);
+        }
         SatinalmaTalep t = SatinalmaTalep.builder()
                 .talepNo(dto.getTalepNo())
                 .tarih(dto.getTarih())

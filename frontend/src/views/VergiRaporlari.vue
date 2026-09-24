@@ -225,8 +225,6 @@ const aktifBs = ref(true)
 
 import { formatTarih as formatDate } from '../utils/format.js'
 
-onMounted(yukle)
-
 const yukle = async () => {
   if (!/^\d{4}-\d{2}$/.test(donem.value)) {
     toastBildirim.uyari(t('vergiRaporlari.donemFormatUyari'))
@@ -246,6 +244,8 @@ const yukle = async () => {
     toastBildirim.hata(hata.reason?.response?.data?.message || t('vergiRaporlari.hataRapor'))
   }
 }
+
+onMounted(yukle)
 </script>
 
 <style scoped>

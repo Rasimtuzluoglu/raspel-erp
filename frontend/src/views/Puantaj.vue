@@ -162,6 +162,7 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { puantajAPI, personelAPI } from '../api/index.js'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
@@ -182,8 +183,8 @@ const form = ref({ personelId: null, tarih: new Date(), durum: 'GELDI', aciklama
 
 onMounted(async () => {
   try {
-    const personelRes = await personelAPI.getAll()
-    personelList.value = personelRes.data || []
+    const personelRes = await personelAPI.getAll({ size: 500 })
+    personelList.value = unwrapList(personelRes)
     if (personelList.value.length) seciliPersonelId.value = personelList.value[0].id
     await loadData()
   } catch {

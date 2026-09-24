@@ -19,7 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/sohbet/odalar")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
 public class SohbetOdaController {
 
     private final SohbetOdaService odaService;

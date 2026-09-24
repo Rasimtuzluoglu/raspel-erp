@@ -2426,6 +2426,7 @@
     "bosDurumIpucu": "İlk kullanıcıyı eklemek için Yeni Kullanıcı butonuna tıklayın",
     "kullaniciAdi": "Kullanıcı Adı *",
     "kullaniciAdiPlaceholder": "Kullanıcı adı",
+    "kullaniciAdiDegistirmeUyari": "Kullanıcı adını yalnızca yönetici değiştirebilir.",
     "gorunenAd": "Görünen Ad *",
     "gorunenAdPlaceholder": "Ad soyad",
     "email": "E-posta",
