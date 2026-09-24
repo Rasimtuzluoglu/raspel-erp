@@ -655,6 +655,7 @@ h1 {
 }
 
 .form-group :deep(.p-inputtext),
+.form-group :deep(.p-select),
 .form-group :deep(.p-dropdown),
 .form-group :deep(.p-inputnumber),
 .form-group :deep(.p-datepicker),

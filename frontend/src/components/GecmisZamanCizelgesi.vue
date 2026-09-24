@@ -4,14 +4,14 @@
       v-if="yukleniyor"
       class="timeline-loading"
     >
-      <i class="pi pi-spin pi-spinner" /> Geçmiş yükleniyor...
+      <i class="pi pi-spin pi-spinner" /> {{ $t('gecmisZaman.yukleniyor') }}
     </div>
     <div
       v-else-if="!loglar.length"
       class="timeline-bos"
     >
       <i class="pi pi-history" />
-      <p>Henüz işlem geçmişi kaydı bulunmuyor.</p>
+      <p>{{ $t('gecmisZaman.bos') }}</p>
     </div>
     <Timeline
       v-else
@@ -35,7 +35,7 @@
           <template #subtitle>
             <div class="timeline-meta">
               <span><i class="pi pi-user" />
-                {{ slotProps.item?.kullaniciAdi || slotProps.item?.kullanici || 'Sistem' }}</span>
+                {{ slotProps.item?.kullaniciAdi || slotProps.item?.kullanici || $t('gecmisZaman.sistem') }}</span>
               <span><i class="pi pi-clock" />
                 {{ formatTarih(slotProps.item?.tarih || slotProps.item?.olusturmaTarihi) }}</span>
             </div>

@@ -1,8 +1,8 @@
 <template>
   <div class="fade-in-section">
     <div class="section-title-row">
-      <h3><i class="pi pi-truck text-primary mr-2" />Aktif Saha Siparişleri</h3>
-      <span class="count-pill">{{ siparisler ? siparisler.length : 0 }} Sipariş</span>
+      <h3><i class="pi pi-truck text-primary mr-2" />{{ $t('sahaPortali.aktifSahaSiparisleri') }}</h3>
+      <span class="count-pill">{{ siparisler ? siparisler.length : 0 }} {{ $t('sahaPortali.siparisKisa') }}</span>
     </div>
 
     <div
@@ -37,7 +37,7 @@
 
         <div class="amount-box">
           <div class="date-col">
-            <small>Tarih</small>
+            <small>{{ $t('sahaPortali.tarih') }}</small>
             <strong>{{ formatTarih(s.tarih) }}</strong>
           </div>
           <div class="price-col text-right">
@@ -52,7 +52,7 @@
             :href="'tel:' + s.telefon"
             class="call-btn"
           >
-            <i class="pi pi-phone" /> Ara
+            <i class="pi pi-phone" /> {{ $t('sahaPortali.ara') }}
           </a>
           <button
             v-if="s.telefon || s.cariHesapAdi"
@@ -68,7 +68,7 @@
             target="_blank"
             class="map-btn"
           >
-            <i class="pi pi-map" /> Yol Tarifi
+            <i class="pi pi-map" /> {{ $t('sahaPortali.yolTarifi') }}
           </a>
         </div>
 
@@ -97,7 +97,7 @@
       class="empty-box"
     >
       <i class="pi pi-inbox empty-icon" />
-      <p>Henüz atanmış aktif bir saha siparişi bulunmuyor.</p>
+      <p>{{ $t('sahaPortali.bosSaha') }}</p>
     </div>
   </div>
 </template>

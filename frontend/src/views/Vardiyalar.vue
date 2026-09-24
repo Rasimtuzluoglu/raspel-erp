@@ -55,7 +55,7 @@
       >
         <template #body="{ data }">
           <Tag
-            :value="data.tur"
+            :value="turEtiket(data.tur)"
             :severity="data.tur === 'SABAH' ? 'info' : data.tur === 'AKSAM' ? 'warn' : 'contrast'"
           />
         </template>
@@ -122,6 +122,8 @@
           <Dropdown
             v-model="form.tur"
             :options="turSecenekleri"
+            option-label="label"
+            option-value="value"
             :placeholder="t('common.select')"
             class="w-full"
           />
@@ -165,7 +167,16 @@ const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
 const form = ref({ personelId: null, tarih: new Date(), baslangic: '08:00', bitis: '16:00', tur: 'SABAH' })
-const turSecenekleri = ['SABAH', 'AKSAM', 'GECE']
+const turSecenekleri = computed(() => [
+  { label: t('vardiyalar.turSabah'), value: 'SABAH' },
+  { label: t('vardiyalar.turAksam'), value: 'AKSAM' },
+  { label: t('vardiyalar.turGece'), value: 'GECE' }
+])
+const turEtiket = (tur) => ({
+  SABAH: t('vardiyalar.turSabah'),
+  AKSAM: t('vardiyalar.turAksam'),
+  GECE: t('vardiyalar.turGece')
+})[tur] || tur
 
 const dialogHeader = computed(() => (duzenleme.value ? t('vardiyalar.duzenle') : t('vardiyalar.yeniVardiya')))
 

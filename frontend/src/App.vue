@@ -35,13 +35,12 @@
           class="offline-banner"
         >
           <i class="pi pi-wifi" />
-          <span>Cevrimdisi Mod — Internet baglantisi kesildi. Kayitli veriler gosteriliyor, yeni degisiklikler
-            kaydedilmeyecek.</span>
+          <span>{{ $t('app.cevrimdisiMod') }}</span>
           <button
             class="offline-tekrar-dene"
             @click="window.location.reload()"
           >
-            <i class="pi pi-refresh" /> Tekrar Baglan
+            <i class="pi pi-refresh" /> {{ $t('app.tekrarBaglan') }}
           </button>
         </div>
       </transition>

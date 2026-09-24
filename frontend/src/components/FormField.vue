@@ -63,6 +63,7 @@ defineProps({
   color: var(--text-muted);
 }
 .has-error :deep(.p-inputtext),
+.has-error :deep(.p-select),
 .has-error :deep(.p-dropdown),
 .has-error :deep(.p-textarea),
 .has-error :deep(.p-multiselect),
@@ -70,6 +71,7 @@ defineProps({
   border-color: var(--danger, #ef4444) !important;
 }
 .has-error :deep(.p-inputtext:focus),
+.has-error :deep(.p-select:focus),
 .has-error :deep(.p-dropdown:focus),
 .has-error :deep(.p-textarea:focus) {
   box-shadow: 0 0 0 3px var(--danger-soft, rgba(239, 68, 68, 0.2)) !important;

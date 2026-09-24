@@ -25,7 +25,7 @@
               :options="islemTipleri"
               :placeholder="t('denetim.tumu')"
               class="w-full"
-              allow-clear
+              show-clear
               clear-icon="pi pi-times"
               @change="filtrele"
             />
@@ -37,7 +37,7 @@
               :options="entityListesi"
               :placeholder="t('denetim.tumu')"
               class="w-full"
-              allow-clear
+              show-clear
               clear-icon="pi pi-times"
               @change="filtrele"
             />

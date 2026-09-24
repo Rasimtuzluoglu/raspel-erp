@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import GecmisZamanCizelgesi from '../GecmisZamanCizelgesi.vue'
+import i18n from '../../i18n.js'
 
 describe('GecmisZamanCizelgesi.vue', () => {
   it('renders empty state when no logs exist', () => {
     const wrapper = mount(GecmisZamanCizelgesi, {
       global: {
+        plugins: [i18n],
         stubs: {
           Timeline: true,
           Card: true
@@ -22,6 +24,7 @@ describe('GecmisZamanCizelgesi.vue', () => {
   it('renders timeline when logs are provided', () => {
     const wrapper = mount(GecmisZamanCizelgesi, {
       global: {
+        plugins: [i18n],
         stubs: {
           Timeline: {
             template: `<div class="custom-timeline"><slot name="content" :item="{ islem: 'Test' }" /></div>`

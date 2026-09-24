@@ -1,7 +1,9 @@
 {
   "app": {
     "title": "RasPel ERP",
-    "subtitle": "Yeni Nesil Kurumsal Kaynak Planlama Sistemi"
+    "subtitle": "Yeni Nesil Kurumsal Kaynak Planlama Sistemi",
+    "cevrimdisiMod": "Çevrimdışı Mod — İnternet bağlantısı kesildi. Kayıtlı veriler gösteriliyor, yeni değişiklikler kaydedilmeyecek.",
+    "tekrarBaglan": "Tekrar Bağlan"
   },
   "marjHesap": {
     "baslik": "Kâr Marjı Hesaplayıcı",
@@ -2582,7 +2584,7 @@
     "netKar": "Net Kâr",
     "tutar": "Tutar",
     "hataHesapPlani": "Hesap planı yüklenemedi",
-    "kopya": ", ad: data.ad +",
+    "kopya": "(Kopya)",
     "kodAdZorunlu": "Kod ve ad zorunludur",
     "hesapKaydedildi": "Hesap kaydedildi",
     "islemBasarisiz": "İşlem başarısız",
@@ -2835,6 +2837,10 @@
   },
   "puantaj": {
     "title": "Personel Puantaj Yönetimi",
+    "durumGeldi": "Geldi",
+    "durumGelmedi": "Gelmedi",
+    "durumIzinli": "İzinli",
+    "durumMazeretli": "Mazeretli",
     "yeniKayit": "Yeni Kayıt",
     "personelSecin": "Personel seçin",
     "baslangic": "Başlangıç",
@@ -2982,6 +2988,13 @@
     "ipucu": "İmzalamak için parmağınızı veya fareyi kullanın."
   },
   "sahaPortali": {
+    "aktifSahaSiparisleri": "Aktif Saha Siparişleri",
+    "siparisKisa": "Sipariş",
+    "ara": "Ara",
+    "tarih": "Tarih",
+    "tutar": "Tutar",
+    "yolTarifi": "Yol Tarifi",
+    "bosSaha": "Henüz atanmış aktif bir saha siparişi bulunmuyor.",
     "sahaPersoneli": "Saha Personeli",
     "portalBaslik": "Saha & Personel Mobil Portalı",
     "hizliSiparis": "Hızlı Sipariş Al",
@@ -3798,6 +3811,9 @@
   },
   "vardiyalar": {
     "title": "Vardiya Yönetimi",
+    "turSabah": "Sabah",
+    "turAksam": "Akşam",
+    "turGece": "Gece",
     "yeniVardiya": "Yeni Vardiya",
     "personel": "Personel",
     "baslangic": "Başlangıç",
@@ -4553,7 +4569,14 @@
     "topluFiyatHeader": "Toplu Fiyat Güncelleme",
     "tumKategoriler": "Tüm kategoriler",
     "tumGruplar": "Tüm gruplar",
-    "manuelOkuma": "Açıksa her okumada ekran kapanmaz, art arda okuma yapılır."
+    "manuelOkuma": "Açıksa her okumada ekran kapanmaz, art arda okuma yapılır.",
+    "manuelBarkodGirin": "Veya Manuel Barkod Girin:",
+    "surekliOkumaModu": "Sürekli Okuma Modu"
+  },
+  "gecmisZaman": {
+    "yukleniyor": "Geçmiş yükleniyor...",
+    "bos": "Henüz işlem geçmişi kaydı bulunmuyor.",
+    "sistem": "Sistem"
   },
   "faturaKalemleri": {
     "aciklamaZorunlu": "Açıklama *",

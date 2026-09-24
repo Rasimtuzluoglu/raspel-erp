@@ -573,6 +573,7 @@ const printTermalFis = (satisData) => {
 }
 .kalem-girdi :deep(.p-inputtext),
 .kalem-girdi :deep(.p-inputnumber-input),
+.kalem-girdi :deep(.p-select-label),
 .kalem-girdi :deep(.p-dropdown-label) {
   padding: 0.3rem 0.5rem;
   font-size: 13px;

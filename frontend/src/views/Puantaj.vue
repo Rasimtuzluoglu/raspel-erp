@@ -64,7 +64,7 @@
       >
         <template #body="{ data }">
           <Tag
-            :value="data.durum || 'GELMEDI'"
+            :value="durumEtiket(data.durum)"
             :severity="data.durum === 'GELDI' ? 'success' : data.durum === 'IZINLI' ? 'warn' : 'danger'"
           />
         </template>
@@ -127,6 +127,8 @@
           <label>{{ t('common.status') }}</label><Dropdown
             v-model="form.durum"
             :options="durumList"
+            option-label="label"
+            option-value="value"
             class="w-full"
           />
         </div>
@@ -157,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -178,7 +180,18 @@ const duzenleme = ref(false)
 const seciliPersonelId = ref(null)
 const filtreBaslangic = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
 const filtreBitis = ref(new Date())
-const durumList = ['GELDI', 'GELMEDI', 'IZINLI', 'MAZERETLI']
+const durumList = computed(() => [
+  { label: t('puantaj.durumGeldi'), value: 'GELDI' },
+  { label: t('puantaj.durumGelmedi'), value: 'GELMEDI' },
+  { label: t('puantaj.durumIzinli'), value: 'IZINLI' },
+  { label: t('puantaj.durumMazeretli'), value: 'MAZERETLI' }
+])
+const durumEtiket = (d) => ({
+  GELDI: t('puantaj.durumGeldi'),
+  GELMEDI: t('puantaj.durumGelmedi'),
+  IZINLI: t('puantaj.durumIzinli'),
+  MAZERETLI: t('puantaj.durumMazeretli')
+})[d] || d
 const form = ref({ personelId: null, tarih: new Date(), durum: 'GELDI', aciklama: '' })
 
 onMounted(async () => {

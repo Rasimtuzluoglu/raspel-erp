@@ -1,7 +1,9 @@
 {
   "app": {
     "title": "RasPel ERP",
-    "subtitle": "Next-Gen Enterprise Resource Planning System"
+    "subtitle": "Next-Gen Enterprise Resource Planning System",
+    "cevrimdisiMod": "Offline Mode — Internet connection lost. Cached data is shown, new changes will not be saved.",
+    "tekrarBaglan": "Reconnect"
   },
   "marjHesap": {
     "baslik": "Profit Margin Calculator",
@@ -2582,7 +2584,7 @@
     "netKar": "Net Profit",
     "tutar": "Amount",
     "hataHesapPlani": "Failed to load chart of accounts",
-    "kopya": ", ad: data.ad +",
+    "kopya": "(Copy)",
     "kodAdZorunlu": "Code and name are required",
     "hesapKaydedildi": "Account saved",
     "islemBasarisiz": "Operation failed",
@@ -2834,6 +2836,10 @@
     "gorevTamamlandi": "Task completed"
   },
   "puantaj": {
+    "durumGeldi": "Present",
+    "durumGelmedi": "Absent",
+    "durumIzinli": "On Leave",
+    "durumMazeretli": "Excused",
     "title": "Employee Timesheet Management",
     "yeniKayit": "New Record",
     "personelSecin": "Select employee",
@@ -2982,6 +2988,13 @@
     "ipucu": "Use your finger or mouse to sign."
   },
   "sahaPortali": {
+    "aktifSahaSiparisleri": "Active Field Orders",
+    "siparisKisa": "Order",
+    "ara": "Call",
+    "tarih": "Date",
+    "tutar": "Amount",
+    "yolTarifi": "Directions",
+    "bosSaha": "No assigned active field order yet.",
     "sahaPersoneli": "Field Staff",
     "portalBaslik": "Field & Staff Mobile Portal",
     "hizliSiparis": "Take Quick Order",
@@ -3798,6 +3811,9 @@
   },
   "vardiyalar": {
     "title": "Shift Management",
+    "turSabah": "Morning",
+    "turAksam": "Evening",
+    "turGece": "Night",
     "yeniVardiya": "New Shift",
     "personel": "Employee",
     "baslangic": "Start",
@@ -4553,7 +4569,14 @@
     "topluFiyatHeader": "Bulk Price Update",
     "tumKategoriler": "All categories",
     "tumGruplar": "All groups",
-    "manuelOkuma": "When on, the screen does not close on each scan; consecutive scanning is enabled."
+    "manuelOkuma": "When on, the screen does not close on each scan; consecutive scanning is enabled.",
+    "manuelBarkodGirin": "Or Enter Barcode Manually:",
+    "surekliOkumaModu": "Continuous Scan Mode"
+  },
+  "gecmisZaman": {
+    "yukleniyor": "Loading history...",
+    "bos": "No transaction history yet.",
+    "sistem": "System"
   },
   "faturaKalemleri": {
     "aciklamaZorunlu": "Description *",

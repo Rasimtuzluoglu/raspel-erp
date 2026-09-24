@@ -2689,10 +2689,12 @@ const sepetiTemizle = () => {
   height: 42px;
   width: 100%;
 }
+.pos-arac-cubugu .arac-dropdown :deep(.p-select),
 .pos-arac-cubugu .arac-dropdown :deep(.p-dropdown) {
   width: 100%;
   height: 42px;
 }
+.pos-arac-cubugu .arac-dropdown :deep(.p-select-label),
 .pos-arac-cubugu .arac-dropdown :deep(.p-dropdown-label) {
   line-height: 42px;
   padding-top: 0;

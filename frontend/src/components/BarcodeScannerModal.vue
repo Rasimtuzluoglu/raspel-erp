@@ -32,7 +32,7 @@
       </div>
 
       <div class="manual-input-box">
-        <label>Veya Manuel Barkod Girin:</label>
+        <label>{{ $t('cmp.manuelBarkodGirin') }}</label>
         <div class="input-group">
           <InputText
             v-model="manualBarcode"
@@ -49,7 +49,7 @@
       </div>
 
       <div class="continuous-toggle">
-        <label>Sürekli Okuma Modu</label>
+        <label>{{ $t('cmp.surekliOkumaModu') }}</label>
         <InputSwitch
           v-model="continuousMode"
         />

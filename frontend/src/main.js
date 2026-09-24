@@ -90,6 +90,17 @@ app.component('SatirEylemleri', SatirEylemleri)
 app.directive('permission', permissionDirective)
 app.directive('tablo-etiket', tabloEtiketDirective)
 
+// PrimeVue 4'te bazi bilesenler yeniden adlandirildi (Dropdown->Select,
+// InputSwitch->ToggleSwitch, TabView->Tabs...). Eski adlar hala calisir ancak
+// her mount'ta "Deprecated since v4" uyarisi basar. Konsolu temiz tutmak icin
+// yalnizca bu bilinen deprecation mesajlari filtrelenir.
+const _orijinalWarn = console.warn
+console.warn = (...args) => {
+  const ilk = typeof args[0] === 'string' ? args[0] : ''
+  if (ilk.includes('Deprecated since v4')) return
+  _orijinalWarn.apply(console, args)
+}
+
 // Vue genel hata yakalayici: bir gorunum cokerse beyaz ekran yerine
 // kullaniciya bilgi ver ve gerekiyorsa onbellek kurtarmasini tetikle.
 app.config.errorHandler = (err, instance, info) => {

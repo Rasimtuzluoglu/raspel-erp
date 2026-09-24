@@ -217,9 +217,11 @@
 [data-theme='light'] .p-toolbar {
   background: #ffffff !important;
 }
+[data-theme='light'] .p-select,
 [data-theme='light'] .p-dropdown {
   background: #ffffff !important;
 }
+[data-theme='light'] .p-select-overlay,
 [data-theme='light'] .p-dropdown-panel {
   background: #ffffff !important;
 }
@@ -951,33 +953,43 @@ img {
   min-width: 0;
 }
 
+/* PrimeVue 4 'Select' bileseni .p-select siniflarini kullanir (eski .p-dropdown
+   v3 idi). Her iki sinif birlikte hedeflenir; boylece gecis sirasinda kirilma olmaz. */
+.p-select,
 .p-dropdown {
   background: var(--bg-card) !important;
   border-color: var(--border) !important;
   color: var(--text-primary) !important;
 }
+.p-select:not(.p-disabled).p-focus,
 .p-dropdown:not(.p-disabled).p-focus {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 3px var(--accent-soft-strong) !important;
 }
+.p-select .p-select-label,
 .p-dropdown .p-dropdown-label {
   color: var(--text-primary) !important;
 }
+.p-select .p-select-label.p-placeholder,
 .p-dropdown .p-dropdown-label.p-placeholder {
   color: var(--text-muted) !important;
 }
+.p-select-overlay,
 .p-dropdown-panel {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 10px !important;
 }
+.p-select-option,
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
   color: var(--text-primary) !important;
   padding: 10px 14px !important;
 }
+.p-select-option:hover,
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
   background: rgba(148, 163, 184, 0.08) !important;
 }
+.p-select-option.p-select-option-selected,
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
   background: var(--accent-soft-strong) !important;
   color: var(--accent) !important;
@@ -1421,15 +1433,19 @@ img {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
 }
+[data-theme='light'] .p-select,
 [data-theme='light'] .p-dropdown {
   background: var(--bg-card) !important;
 }
+[data-theme='light'] .p-select-overlay,
 [data-theme='light'] .p-dropdown-panel {
   background: var(--bg-card) !important;
 }
+[data-theme='light'] .p-select .p-select-label,
 [data-theme='light'] .p-dropdown .p-dropdown-label {
   color: var(--text-primary) !important;
 }
+[data-theme='light'] .p-select-option,
 [data-theme='light'] .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
   color: var(--text-primary) !important;
 }
@@ -1764,6 +1780,7 @@ img {
     min-height: 44px;
   }
   .p-inputtext,
+  .p-select,
   .p-dropdown,
   .p-multiselect,
   .p-textarea {
@@ -1799,6 +1816,8 @@ body,
 .p-toolbar,
 .p-inputtext,
 .p-textarea,
+.p-select,
+.p-select-overlay,
 .p-dropdown,
 .p-dropdown-panel,
 .p-datatable,
@@ -2066,6 +2085,7 @@ h3 {
   white-space: nowrap;
 }
 .p-inputtext,
+.p-select,
 .p-dropdown,
 .p-multiselect,
 .p-calendar,
@@ -2080,6 +2100,7 @@ h3 {
   overflow-x: hidden;
 }
 .p-overlaypanel,
+.p-select-overlay,
 .p-dropdown-panel,
 .p-datepicker,
 .p-autocomplete-panel {

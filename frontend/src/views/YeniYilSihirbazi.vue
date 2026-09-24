@@ -454,6 +454,7 @@ const tamamla = async () => {
 }
 .field :deep(.p-inputtext),
 .field :deep(.p-inputnumber),
+.field :deep(.p-select),
 .field :deep(.p-dropdown) {
   width: 100%;
 }
