@@ -536,8 +536,11 @@
         :ara-toplam="araToplam"
         :kdv-toplam="kdvToplam"
         :genel-toplam="genelToplam"
+        stok-arama
+        :kdv-secenekleri="[0, 1, 8, 10, 18, 20]"
         @add="addKalem"
         @remove="removeKalem"
+        @stok-sec="stokSatirSecildi"
       />
 
       <template #footer>
@@ -746,7 +749,7 @@ onMounted(async () => {
     await Promise.all([
       loadFaturalar(0, sayfaBoyutu.value),
       cariHesapStore.getAllCariHesaplar(),
-      stokStore.getAll(),
+      stokStore.getAll({ size: 1000 }),
       personelListesiniYukle(),
       depolarıYukle(),
       suruculeriYukle()
@@ -824,6 +827,18 @@ const addKalem = () => {
   form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })
 }
 
+// Satir icinde stok secilince satiri stok bilgisiyle doldur (fiyat = satis fiyati).
+const stokSatirSecildi = ({ index, stok }) => {
+  const kalem = form.value.kalemler[index]
+  if (!kalem || !stok) return
+  kalem.stokId = stok.id
+  kalem.aciklama = stok.ad
+  if (!kalem.birimFiyat || kalem.birimFiyat === 0) {
+    kalem.birimFiyat = stok.satisFiyati || stok.fiyat || 0
+  }
+  if (stok.kdvOrani != null) kalem.kdvOrani = Number(stok.kdvOrani)
+}
+
 const urunSecildi = () => {
   if (!urunSecimi.value) return
   const u = stokStore.stoklar.find((s) => s.id === urunSecimi.value)
@@ -865,7 +880,8 @@ const cariUrunFiyatiYukle = async () => {
     fiyatlariTemizle()
     return
   }
-  const stokFiyat = stokStore.stoklar.find((s) => s.id === stokId)?.fiyat
+  const stokObj = stokStore.stoklar.find((s) => s.id === stokId)
+  const stokFiyat = stokObj?.satisFiyati || stokObj?.fiyat
   if (!cariId) {
     cariUrunFiyati.value = null
   } else {
@@ -892,7 +908,7 @@ const urunEkleKalem = () => {
   form.value.kalemler.push({
     aciklama: u.ad,
     adet: urunAdet.value,
-    birimFiyat: cariFiyatOverride.value != null ? cariFiyatOverride.value : u.fiyat,
+    birimFiyat: cariFiyatOverride.value != null ? cariFiyatOverride.value : (u.satisFiyati || u.fiyat),
     iskontoOrani: 0,
     kdvOrani: 20,
     stokId: u.id
@@ -971,7 +987,7 @@ const sonUrunuEkle = (urun) => {
   form.value.kalemler.push({
     aciklama: urun.stokAd || (u ? u.ad : t('faturalar.urun')),
     adet: 1,
-    birimFiyat: urun.sonBirimFiyat || (u ? u.fiyat : 0),
+    birimFiyat: urun.sonBirimFiyat || (u ? (u.satisFiyati || u.fiyat) : 0),
     iskontoOrani: 0,
     kdvOrani: 20,
     stokId: urun.stokId || null
@@ -1111,7 +1127,7 @@ const openCreateDialog = () => {
     beklenenTeslimTarihi: null,
     teslimatAdresi: '',
     teslimatNotu: '',
-    kalemler: [{ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 }]
+    kalemler: []
   }
   formTemizle()
   showDialog.value = true

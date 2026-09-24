@@ -17,7 +17,22 @@
       </Column>
       <Column :header="$t('faturaKalemleri.aciklamaZorunlu')">
         <template #body="s">
+          <!-- Stok arama destegi verilirse (stokArama prop) AutoComplete ile stok
+               kodu/adi aranir; secilince satir stok bilgisiyle (emit) doldurulur. -->
+          <AutoComplete
+            v-if="stokArama"
+            v-model="s.data.aciklama"
+            :suggestions="oneriler"
+            option-label="etiket"
+            :placeholder="$t('faturaKalemleri.aciklamaPlaceholder')"
+            class="w-full"
+            :force-selection="false"
+            dropdown
+            @complete="onAra($event, s.index)"
+            @option-select="(e) => $emit('stok-sec', { index: s.index, stok: e.value.stok })"
+          />
           <InputText
+            v-else
             v-model="s.data.aciklama"
             :placeholder="$t('faturaKalemleri.aciklamaPlaceholder')"
             class="w-full"
@@ -123,8 +138,10 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { formatCurrency } from '../utils/format.js'
 import { kalemTutar } from '../utils/faturaHesapla.js'
+import { stokAPI } from '../api/index.js'
 
 defineProps({
   kalemler: { type: Array, required: true },
@@ -132,10 +149,38 @@ defineProps({
   kdvToplam: { type: Number, default: 0 },
   genelToplam: { type: Number, default: 0 },
   /** KDV orani secenekleri (varsayilan [0,10,20]). */
-  kdvSecenekleri: { type: Array, default: () => [0, 10, 20] }
+  kdvSecenekleri: { type: Array, default: () => [0, 10, 20] },
+  /** true ise aciklama alani satir-ici stok arama (AutoComplete) olur. */
+  stokArama: { type: Boolean, default: false }
 })
 
-defineEmits(['add', 'remove'])
+defineEmits(['add', 'remove', 'stok-sec'])
+
+const oneriler = ref([])
+let aramaZamanlayici = null
+
+// Sunucu tarafi stok arama (debounce). Oneri etiketi stok kodu + ad.
+const onAra = (event, index) => {
+  const q = (event.query || '').trim()
+  if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
+  if (q.length < 2) {
+    oneriler.value = []
+    return
+  }
+  aramaZamanlayici = setTimeout(async () => {
+    try {
+      const r = await stokAPI.ara(q)
+      const liste = Array.isArray(r.data) ? r.data : (r.data?.content || [])
+      oneriler.value = liste.map((s) => ({
+        etiket: `${s.stokKodu ? '[' + s.stokKodu + '] ' : ''}${s.ad}`,
+        stok: s
+      }))
+    } catch {
+      oneriler.value = []
+    }
+    void index
+  }, 250)
+}
 </script>
 
 <style scoped>
