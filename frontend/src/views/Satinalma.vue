@@ -71,6 +71,13 @@
                 @click="talepDurumGuncelle(data, 'REDDEDILDI')"
               />
               <Button
+                v-if="data.durum === 'ONAYLANDI'"
+                icon="pi pi-cart-plus"
+                class="p-button-rounded p-button-text p-button-info"
+                :title="t('satinalma.sipariseCevir')"
+                @click="talebiSipariseCevir(data)"
+              />
+              <Button
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-text"
                 :title="t('common.delete')"
@@ -219,11 +226,92 @@
           <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="talepForm.aciklama"
-            rows="3"
+            rows="2"
             class="w-full"
           />
         </div>
       </div>
+
+      <div class="kalem-baslik">
+        <strong>{{ t('satinalma.kalemler') }}</strong>
+        <Button
+          :label="t('satinalma.kalemEkle')"
+          icon="pi pi-plus"
+          size="small"
+          class="p-button-outlined"
+          @click="kalemEkle(talepForm)"
+        />
+      </div>
+      <DataTable
+        :value="talepForm.kalemler"
+        size="small"
+      >
+        <template #empty>
+          <small class="bos-kalem">{{ t('satinalma.kalemYok') }}</small>
+        </template>
+        <Column
+          :header="t('satinalma.stok')"
+          style="min-width: 180px"
+        >
+          <template #body="{ data }">
+            <Dropdown
+              v-model="data.stokId"
+              :options="stokSecenekleri"
+              option-label="label"
+              option-value="value"
+              filter
+              :placeholder="t('satinalma.stokSecin')"
+              class="w-full"
+              @change="stokSecildi(talepForm, data)"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satinalma.aciklama')"
+          style="min-width: 140px"
+        >
+          <template #body="{ data }">
+            <InputText
+              v-model="data.aciklama"
+              class="w-full"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satinalma.miktar')"
+          style="width: 100px"
+        >
+          <template #body="{ data }">
+            <InputNumber
+              v-model="data.miktar"
+              :min="0"
+              class="w-full"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satinalma.birimFiyat')"
+          style="width: 130px"
+        >
+          <template #body="{ data }">
+            <InputNumber
+              v-model="data.birimFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
+          </template>
+        </Column>
+        <Column style="width: 50px">
+          <template #body="{ index }">
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              @click="kalemSil(talepForm, index)"
+            />
+          </template>
+        </Column>
+      </DataTable>
       <template #footer>
         <Button
           :label="t('common.cancel')"
@@ -277,10 +365,95 @@
           <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="siparisForm.aciklama"
-            rows="3"
+            rows="2"
             class="w-full"
           />
         </div>
+      </div>
+
+      <div class="kalem-baslik">
+        <strong>{{ t('satinalma.kalemler') }}</strong>
+        <Button
+          :label="t('satinalma.kalemEkle')"
+          icon="pi pi-plus"
+          size="small"
+          class="p-button-outlined"
+          @click="kalemEkle(siparisForm)"
+        />
+      </div>
+      <DataTable
+        :value="siparisForm.kalemler"
+        size="small"
+      >
+        <template #empty>
+          <small class="bos-kalem">{{ t('satinalma.kalemYok') }}</small>
+        </template>
+        <Column
+          :header="t('satinalma.stok')"
+          style="min-width: 180px"
+        >
+          <template #body="{ data }">
+            <Dropdown
+              v-model="data.stokId"
+              :options="stokSecenekleri"
+              option-label="label"
+              option-value="value"
+              filter
+              :placeholder="t('satinalma.stokSecin')"
+              class="w-full"
+              @change="stokSecildi(siparisForm, data)"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satinalma.aciklama')"
+          style="min-width: 140px"
+        >
+          <template #body="{ data }">
+            <InputText
+              v-model="data.aciklama"
+              class="w-full"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satinalma.miktar')"
+          style="width: 100px"
+        >
+          <template #body="{ data }">
+            <InputNumber
+              v-model="data.miktar"
+              :min="0"
+              class="w-full"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satinalma.birimFiyat')"
+          style="width: 130px"
+        >
+          <template #body="{ data }">
+            <InputNumber
+              v-model="data.birimFiyat"
+              :min="0"
+              :min-fraction-digits="2"
+              class="w-full"
+            />
+          </template>
+        </Column>
+        <Column style="width: 50px">
+          <template #body="{ index }">
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              @click="kalemSil(siparisForm, index)"
+            />
+          </template>
+        </Column>
+      </DataTable>
+      <div class="siparis-toplam">
+        <span>{{ t('satinalma.toplam') }}</span>
+        <strong>{{ formatCurrency(formToplam(siparisForm.kalemler)) }}</strong>
       </div>
       <template #footer>
         <Button
@@ -301,11 +474,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI } from '../api/index.js'
+import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI, stokAPI } from '../api/index.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
@@ -315,17 +488,50 @@ const { t } = useI18n()
 const talepler = ref([])
 const siparisler = ref([])
 const cariler = ref([])
+const stoklar = ref([])
 const taleplerYukleniyor = ref(false)
 const siparislerYukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const talepDialog = ref(false)
 const siparisDialog = ref(false)
-const talepForm = ref({ talepNo: '', tarih: new Date(), talepEden: '', departman: '', aciklama: '' })
-const siparisForm = ref({ siparisNo: '', tarih: new Date(), cariHesapId: null, aciklama: '' })
+const bosTalepForm = () => ({ talepNo: 'TAL-' + Date.now(), tarih: new Date(), talepEden: '', departman: '', aciklama: '', kalemler: [] })
+const bosSiparisForm = () => ({ siparisNo: 'SIP-' + Date.now(), tarih: new Date(), cariHesapId: null, talepId: null, aciklama: '', kalemler: [] })
+const talepForm = ref(bosTalepForm())
+const siparisForm = ref(bosSiparisForm())
+
+const stokSecenekleri = computed(() => stoklar.value.map((s) => ({ label: s.ad, value: s.id })))
+
+// İskontosuz KDV-dahil satır toplamı (backend ile uyumlu basit önizleme).
+const kalemTutar = (k) => Number(k.miktar || 0) * Number(k.birimFiyat || 0)
+const formToplam = (kalemler) => kalemler.reduce((t, k) => t + kalemTutar(k), 0)
+
+const kalemEkle = (form) => {
+  form.kalemler.push({ stokId: null, aciklama: '', miktar: 1, birim: 'Adet', birimFiyat: 0 })
+}
+const kalemSil = (form, idx) => {
+  form.kalemler.splice(idx, 1)
+}
+const stokSecildi = (form, kalem) => {
+  const s = stoklar.value.find((x) => x.id === kalem.stokId)
+  if (s) {
+    kalem.aciklama = s.ad
+    kalem.birim = s.birim || 'Adet'
+    if (!kalem.birimFiyat) kalem.birimFiyat = s.fiyat || 0
+  }
+}
 
 onMounted(async () => {
-  await Promise.all([talepleriYukle(), siparisleriYukle(), carieleriYukle()])
+  await Promise.all([talepleriYukle(), siparisleriYukle(), carieleriYukle(), stoklariYukle()])
 })
+
+const stoklariYukle = async () => {
+  try {
+    const r = await stokAPI.getAll({ size: 1000 })
+    stoklar.value = unwrapList(r)
+  } catch {
+    stoklar.value = []
+  }
+}
 
 const talepleriYukle = async () => {
   taleplerYukleniyor.value = true
@@ -359,16 +565,21 @@ const carieleriYukle = async () => {
 }
 
 const talepDialogAc = () => {
-  talepForm.value = { talepNo: 'TAL-' + Date.now(), tarih: new Date(), talepEden: '', departman: '', aciklama: '' }
+  talepForm.value = bosTalepForm()
   talepDialog.value = true
 }
 
 const talepKaydet = async () => {
   kaydediliyor.value = true
   try {
-    await satinalmaTalepAPI.create({ ...talepForm.value, tarih: getLocalDateString(talepForm.value.tarih) })
+    await satinalmaTalepAPI.create({
+      ...talepForm.value,
+      tarih: getLocalDateString(talepForm.value.tarih),
+      kalemler: talepForm.value.kalemler.filter((k) => k.aciklama && k.miktar > 0)
+    })
     talepDialog.value = false
     await talepleriYukle()
+    toastBildirim.basarili(t('satinalma.talepKaydedildi'))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataTalepKaydet'))
   }
@@ -404,19 +615,45 @@ const talepSil = (data) => {
 }
 
 const siparisDialogAc = () => {
-  siparisForm.value = { siparisNo: 'SIP-' + Date.now(), tarih: new Date(), cariHesapId: null, aciklama: '' }
+  siparisForm.value = bosSiparisForm()
+  siparisDialog.value = true
+}
+
+// Onaylı talebi siparişe dönüştür: tedarikçi seçilir, kalemler devralınır.
+const talebiSipariseCevir = (talep) => {
+  siparisForm.value = {
+    siparisNo: 'SIP-' + Date.now(),
+    tarih: new Date(),
+    cariHesapId: null,
+    talepId: talep.id,
+    aciklama: t('satinalma.talepAciklama', { no: talep.talepNo }),
+    kalemler: (talep.kalemler || []).map((k) => ({
+      stokId: k.stokId || null,
+      aciklama: k.aciklama || '',
+      miktar: k.miktar || 1,
+      birim: k.birim || 'Adet',
+      birimFiyat: k.tahminiBirimFiyat || 0
+    }))
+  }
   siparisDialog.value = true
 }
 
 const siparisKaydet = async () => {
   kaydediliyor.value = true
   try {
+    const kalemler = siparisForm.value.kalemler.filter((k) => k.aciklama && k.miktar > 0)
+    const genelToplam = formToplam(kalemler)
     await satinalmaSiparisAPI.create({
       ...siparisForm.value,
-      tarih: getLocalDateString(siparisForm.value.tarih)
+      tarih: getLocalDateString(siparisForm.value.tarih),
+      araToplam: genelToplam,
+      kdv: 0,
+      genelToplam,
+      kalemler
     })
     siparisDialog.value = false
     await siparisleriYukle()
+    toastBildirim.basarili(t('satinalma.siparisKaydedildi'))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('satinalma.hataSiparisKaydet'))
   }
@@ -507,5 +744,26 @@ const siparisSil = (data) => {
 }
 .w-full {
   width: 100%;
+}
+.kalem-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 8px;
+  color: var(--text-primary);
+}
+.bos-kalem {
+  color: var(--text-muted);
+}
+.siparis-toplam {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+.siparis-toplam strong {
+  color: var(--text-primary);
 }
 </style>

@@ -33,6 +33,9 @@ public class StokDTO {
     private String birim2;
     private BigDecimal cevrimKatsayisi;
     private Long tedarikciId;
+
+    private Long varsayilanDepoId;
+    private String varsayilanDepoAd;
     private String tedarikciAd;
     private String tedarikciStokKodu;
     private BigDecimal tedarikciFiyat;
@@ -80,6 +83,10 @@ public class StokDTO {
     public void setCevrimKatsayisi(BigDecimal cevrimKatsayisi) { this.cevrimKatsayisi = cevrimKatsayisi; }
     public Long getTedarikciId() { return tedarikciId; }
     public void setTedarikciId(Long tedarikciId) { this.tedarikciId = tedarikciId; }
+    public Long getVarsayilanDepoId() { return varsayilanDepoId; }
+    public void setVarsayilanDepoId(Long varsayilanDepoId) { this.varsayilanDepoId = varsayilanDepoId; }
+    public String getVarsayilanDepoAd() { return varsayilanDepoAd; }
+    public void setVarsayilanDepoAd(String varsayilanDepoAd) { this.varsayilanDepoAd = varsayilanDepoAd; }
     public String getTedarikciAd() { return tedarikciAd; }
     public void setTedarikciAd(String tedarikciAd) { this.tedarikciAd = tedarikciAd; }
     public String getTedarikciStokKodu() { return tedarikciStokKodu; }

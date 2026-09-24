@@ -147,10 +147,14 @@
             </template>
           </Column>
           <Column
-            field="kullaniciId"
-            :header="t('denetim.kullaniciId')"
-            style="width: 100px"
-          />
+            field="kullaniciAdi"
+            :header="t('denetim.kullanici')"
+            style="width: 150px"
+          >
+            <template #body="s">
+              {{ s.data.kullaniciAdi || (s.data.kullaniciId ? '#' + s.data.kullaniciId : '-') }}
+            </template>
+          </Column>
           <Column
             field="islem"
             :header="t('denetim.islem')"
@@ -223,8 +227,23 @@
           <span>{{ seciliDetay?.entityAdi }} #{{ seciliDetay?.entityId }}</span>
         </div>
         <div class="detay-dialog-satir">
+          <span class="detay-dialog-etiket">{{ t('denetim.kullanici') }}</span>
+          <span>{{ seciliDetay?.kullaniciAdi || (seciliDetay?.kullaniciId ? '#' + seciliDetay.kullaniciId : '-') }}</span>
+        </div>
+        <div class="detay-dialog-satir">
+          <span class="detay-dialog-etiket">{{ t('denetim.ipAdresi') }}</span>
+          <span>{{ seciliDetay?.ipAdresi || '-' }}</span>
+        </div>
+        <div class="detay-dialog-satir">
           <span class="detay-dialog-etiket">{{ t('common.date') }}</span>
           <span>{{ seciliDetay?.tarih ? formatDate(seciliDetay.tarih) : '-' }}</span>
+        </div>
+        <div
+          v-if="seciliDetay?.aciklama"
+          class="detay-dialog-satir"
+        >
+          <span class="detay-dialog-etiket">{{ t('denetim.aciklama') }}</span>
+          <span>{{ seciliDetay.aciklama }}</span>
         </div>
         <pre class="detay-json">{{ detayFormatli }}</pre>
       </div>

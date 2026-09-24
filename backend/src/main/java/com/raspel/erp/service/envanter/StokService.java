@@ -251,7 +251,8 @@ public class StokService {
                 .aciklama(dto.getAciklama()).fotoUrl(dto.getFotoUrl()).birim2(dto.getBirim2())
                 .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
                 .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
-                .maliyetYontemi(dto.getMaliyetYontemi()).sirketId(sirketId).build();
+                .maliyetYontemi(dto.getMaliyetYontemi()).varsayilanDepoId(dto.getVarsayilanDepoId())
+                .sirketId(sirketId).build();
         Stok kaydedilen = stokRepository.save(s);
         return entityToDTO(kaydedilen, tekTedarikciAdi(kaydedilen));
     }
@@ -296,6 +297,7 @@ public class StokService {
         if (dto.getTedarikciStokKodu() != null) s.setTedarikciStokKodu(dto.getTedarikciStokKodu());
         if (dto.getTedarikciFiyat() != null) s.setTedarikciFiyat(dto.getTedarikciFiyat());
         if (dto.getMaliyetYontemi() != null) s.setMaliyetYontemi(dto.getMaliyetYontemi());
+        if (dto.getVarsayilanDepoId() != null) s.setVarsayilanDepoId(dto.getVarsayilanDepoId());
 
         // Miktar doğrudan ezilmez: stok hareket defterine "DUZELTME" kaydı düşülür
         BigDecimal yeniMiktar = dto.getMiktar() != null ? dto.getMiktar() : s.getMiktar();
@@ -594,6 +596,7 @@ public class StokService {
                 .tedarikciAd(s.getTedarikciId() != null ? tedarikciAdlari.get(s.getTedarikciId()) : null)
                 .tedarikciStokKodu(s.getTedarikciStokKodu()).tedarikciFiyat(s.getTedarikciFiyat())
                 .maliyetYontemi(s.getMaliyetYontemi())
+                .varsayilanDepoId(s.getVarsayilanDepoId())
                 .fiyatlar(fiyatlar)
                 .olusturmaTarihi(s.getOlusturmaTarihi()).build();
     }

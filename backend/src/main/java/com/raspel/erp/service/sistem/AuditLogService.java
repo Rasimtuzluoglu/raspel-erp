@@ -22,6 +22,7 @@ import java.util.List;
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
 
     public void log(Long kullaniciId, Long sirketId, String islem, String entityAdi, Long entityId, String aciklama, String ipAdresi) {
         log(kullaniciId, sirketId, islem, entityAdi, entityId, aciklama, ipAdresi, null);
@@ -59,6 +60,29 @@ public class AuditLogService {
         LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;
         LocalDateTime bitis = bitisTarih != null ? bitisTarih.atTime(LocalTime.MAX) : null;
         return auditLogRepository.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangic, bitis, pageable);
+    }
+
+    /** Denetim kayıtlarını kullanıcı adıyla zenginleştirerek DTO döndürür. */
+    public Page<com.raspel.erp.dto.sistem.AuditLogDTO> filtreliGetirDTO(Long sirketId, Long kullaniciId, String islem,
+                                                                        String entityAdi, LocalDate baslangicTarih,
+                                                                        LocalDate bitisTarih, Pageable pageable) {
+        Page<AuditLog> sayfa = filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable);
+        // Görünen adları tek sorguda çöz.
+        java.util.Set<Long> idler = sayfa.getContent().stream()
+                .map(AuditLog::getKullaniciId).filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.Map<Long, String> adlar = idler.isEmpty() ? java.util.Map.of()
+                : kullaniciRepository.findAllById(idler).stream()
+                    .collect(java.util.stream.Collectors.toMap(
+                            com.raspel.erp.entity.sistem.Kullanici::getId,
+                            u -> u.getDisplayName() != null && !u.getDisplayName().isBlank()
+                                    ? u.getDisplayName() : u.getUsername()));
+        return sayfa.map(a -> com.raspel.erp.dto.sistem.AuditLogDTO.builder()
+                .id(a.getId()).kullaniciId(a.getKullaniciId())
+                .kullaniciAdi(a.getKullaniciId() != null ? adlar.get(a.getKullaniciId()) : null)
+                .sirketId(a.getSirketId()).islem(a.getIslem()).entityAdi(a.getEntityAdi())
+                .entityId(a.getEntityId()).aciklama(a.getAciklama()).detay(a.getDetay())
+                .ipAdresi(a.getIpAdresi()).tarih(a.getTarih()).build());
     }
 
     public List<String> islemTipleri() {

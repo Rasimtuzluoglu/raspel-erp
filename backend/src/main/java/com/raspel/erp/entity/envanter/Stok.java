@@ -80,6 +80,10 @@ public class Stok {
     @Column(name = "tedarikci_fiyat", precision = 19, scale = 2)
     private BigDecimal tedarikciFiyat;
 
+    /** Varsayılan depo (stok giriş/çıkışında ön seçili gelir). */
+    @Column(name = "varsayilan_depo_id")
+    private Long varsayilanDepoId;
+
     /** Ağırlıklı ortalama birim maliyet (COGS motoru). */
     @Column(name = "ortalama_maliyet", precision = 19, scale = 4)
     private BigDecimal ortalamaMaliyet;

@@ -544,7 +544,16 @@
             />
           </div>
           <div class="form-grup">
-            <label />
+            <label>{{ t('stoklar.varsayilanDepo') }}</label>
+            <Dropdown
+              v-model="form.varsayilanDepoId"
+              :options="depolar"
+              option-label="ad"
+              option-value="id"
+              show-clear
+              :placeholder="t('stoklar.varsayilanDepoSecin')"
+              class="w-full"
+            />
           </div>
         </div>
       </div>
@@ -903,6 +912,7 @@ const form = ref({
   tedarikciStokKodu: '',
   tedarikciFiyat: null,
   maliyetYontemi: 'ORTALAMA',
+  varsayilanDepoId: null,
   aciklama: '',
   fotoUrl: '',
   fiyatlar: []
@@ -1051,6 +1061,7 @@ const openDialog = () => {
     tedarikciStokKodu: '',
     tedarikciFiyat: null,
     maliyetYontemi: 'ORTALAMA',
+    varsayilanDepoId: null,
     aciklama: '',
     fiyatlar: [
       { ad: 'Perakende', fiyat: 0 },
@@ -1090,6 +1101,7 @@ const editStok = (s) => {
     tedarikciStokKodu: s.tedarikciStokKodu || '',
     tedarikciFiyat: s.tedarikciFiyat || null,
     maliyetYontemi: s.maliyetYontemi || 'ORTALAMA',
+    varsayilanDepoId: s.varsayilanDepoId || null,
     aciklama: s.aciklama || '',
     fotoUrl: s.fotoUrl || '',
     fiyatlar: (s.fiyatlar || []).map((f) => ({ ...f }))

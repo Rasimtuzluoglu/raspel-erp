@@ -28,8 +28,9 @@ public class AuditLogController {
     private final AuditLogService auditLogService;
 
     @GetMapping
-    @Operation(summary = "Denetim loglarını getir", description = "Denetim log kayıtlarını filtreleyerek listeler")
-    public ResponseEntity<Page<AuditLog>> tumu(
+    @Operation(summary = "Denetim loglarını getir",
+            description = "Denetim log kayıtlarını filtreleyerek listeler; kullanıcı adı da döner.")
+    public ResponseEntity<Page<com.raspel.erp.dto.sistem.AuditLogDTO>> tumu(
             HttpServletRequest request,
             @RequestParam(required = false) Long kullaniciId,
             @RequestParam(required = false) String islem,
@@ -38,7 +39,7 @@ public class AuditLogController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitisTarih,
             @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable));
+        return ResponseEntity.ok(auditLogService.filtreliGetirDTO(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable));
     }
 
     @GetMapping("/islem-tipleri")
