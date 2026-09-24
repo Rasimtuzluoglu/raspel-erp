@@ -56,6 +56,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
     # PITR (point-in-time recovery): WAL arsivleme aciktir. Base backup + WAL ile
     # istenen ana geri donulebilir. archive_command basarisizsa WAL silinmez (test !).
     command:
@@ -101,6 +107,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
     # Tehlikeli komutlar kapatilir; parola argv'ye yazilmaz (REDIS_PASSWORD env'den).
     command: >
       redis-server
@@ -144,6 +155,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     ports:
       - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
@@ -179,6 +196,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
@@ -212,6 +235,10 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
     ports:
       - "127.0.0.1:8081:8081"
     environment:
@@ -223,7 +250,11 @@ services:
       # onceden olusturulmus kabul eder (docker-entrypoint-initdb ile veya manuel).
       DB_USERNAME: ${APP_DB_USER:-raspelerp_app}
       DB_PASSWORD: ${APP_DB_PASSWORD:-}
-      # Flyway'in V123 ile app rolunu olusturmasi icin (superuser gerekir; opsiyonel).
+      # Flyway migration'lari superuser ile calisir (V123 app rolunu olusturur),
+      # uygulama ise app rolu ile baglanir.
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/raspelerp
+      FLYWAY_USER: ${POSTGRES_USER:-postgres}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:-}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -301,6 +332,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
     depends_on:
       backend:
         condition: service_started
@@ -354,6 +390,10 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
     ports:
       - "127.0.0.1:9090:9090"
     command:
@@ -398,6 +438,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     ports:
       - "127.0.0.1:3000:3000"
     environment:
@@ -431,6 +477,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     entrypoint: ["/bin/sh", "/etc/alertmanager/entrypoint.sh"]
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
@@ -467,6 +519,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     profiles: ["loadtest"]
     environment:
       BASE_URL: http://raspel-backend:8081
