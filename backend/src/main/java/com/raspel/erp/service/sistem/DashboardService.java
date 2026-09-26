@@ -139,8 +139,8 @@ public class DashboardService {
         Long kritikStokSayisi = safeGet(() -> stokRepository.countKritikStokBySirketId(sirketId), 0L);
 
         List<DashboardDTO.KritikStokDTO> kritikStoklar = safeGetList(
-                () -> stokRepository.kritikStoklar(sirketId).stream()
-                        .limit(6)
+                // Limit DB'de uygulanir; tum kritik stoklarin entity olarak yuklenmesi onlenir.
+                () -> stokRepository.kritikStoklar(sirketId, org.springframework.data.domain.PageRequest.of(0, 6)).stream()
                         .map(s -> DashboardDTO.KritikStokDTO.builder()
                                 .id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
                                 .miktar(s.getMiktar()).birim(s.getBirim()).minMiktar(s.getMinMiktar()).build())
@@ -217,11 +217,9 @@ public class DashboardService {
 
         List<DashboardDTO.AlacakYasDTO> alacakYaslandirma = alacakYaslandirmaHesapla(sirketId);
 
+        // Stok degeri tek SQL toplaminda hesaplanir; tum stoklarin yuklenmesi onlenir (bellek).
         BigDecimal toplamStokDegeri = safeGet(
-                () -> stokRepository.findBySirketIdOrderByAd(sirketId).stream()
-                        .map(s -> (s.getMiktar() != null ? s.getMiktar() : BigDecimal.ZERO)
-                                .multiply(s.getFiyat() != null ? s.getFiyat() : BigDecimal.ZERO))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                () -> stokRepository.toplamStokDegeriBySirketId(sirketId),
                 BigDecimal.ZERO);
 
         String ozet = ozetOlustur(gerceklesenCiro, kritikStokSayisi, vadesiGecenFaturalar, enCokBorcCariler);

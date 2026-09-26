@@ -33,18 +33,18 @@ Parametreler (ortam değişkeni): `BASE_URL` (varsayılan `http://raspel-backend
 100.000 fatura + 300.000 kalem, 150.000 cari hareket, 200.000 stok hareket
 (izole `sirket_id`). Yaklaşık 20 saniyede üretilir.
 
-Temizlemek için:
+Temizlemek için `scripts/delete-load-test-company.sql` kullanılır (idempotent;
+fatura/fatura_kalem, cari hareket, stok hareket, seri sayaç, maliyet hareketi ve
+audit kayıtlarını birlikte temizler):
 
-```sql
-DELETE FROM fatura.fatura_kalem k USING fatura.fatura f, sistem.sirket s
-  WHERE k.fatura_id=f.id AND f.sirket_id=s.id AND s.ad='YUK TESTI';
-DELETE FROM fatura.fatura f USING sistem.sirket s WHERE f.sirket_id=s.id AND s.ad='YUK TESTI';
-DELETE FROM cari.hareket h USING sistem.sirket s WHERE h.sirket_id=s.id AND s.ad='YUK TESTI';
-DELETE FROM stok.stok_hareket sh USING stok.stok st, sistem.sirket s
-  WHERE sh.stok_id=st.id AND st.sirket_id=s.id AND s.ad='YUK TESTI';
-DELETE FROM cari.cari_hesap c USING sistem.sirket s WHERE c.sirket_id=s.id AND s.ad='YUK TESTI';
-DELETE FROM stok.stok st USING sistem.sirket s WHERE st.sirket_id=s.id AND s.ad='YUK TESTI';
+```bash
+docker exec -i raspel-postgres psql -U postgres -d raspelerp -f /dev/stdin \
+  < scripts/delete-load-test-company.sql
 ```
+
+> Tek doğru kaynak bu script'tir; dokümana gömülü kısmi SQL kopyası kaldırılmıştır
+> (eksik kalan `fatura_gecmis`/`stok_maliyet_hareket`/`seri_sayac`/`audit_log`
+> temizliği script'te mevcuttur).
 
 ## Ölçülen Sonuçlar (tek makine, Docker Desktop)
 

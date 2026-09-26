@@ -1,5 +1,8 @@
 <template>
-  <div class="dashboard-container">
+  <div
+    class="dashboard-container"
+    :class="{ 'icerik-hazir': !loading }"
+  >
     <Message
       v-if="dashboardStore.veriEksik"
       severity="warn"
@@ -1103,20 +1106,20 @@ const dashboardStore = useDashboardStore()
 const authStore = useAuthStore()
 const loading = ref(true)
 
-const refresh = async () => {
-  loading.value = true
-  try {
-    await Promise.all([
-      dashboardStore.getDashboardData(),
-      dovizStore?.kurlariYukle ? dovizStore.kurlariYukle() : Promise.resolve()
-    ])
-    grafikleriHesapla()
-    guncellemeZamaniAyarla()
-  } catch (error) {
-    console.error('Dashboard yenilenirken hata:', error)
+  const refresh = async () => {
+    loading.value = true
+    try {
+      // Kritik yol: yalnizca dashboard verisi beklenir. Doviz kurlari ikincil bilgidir;
+      // bloklamaz, arka planda yuklenir (giriste algilanan takilmayi azaltir).
+      dovizStore?.kurlariYukle?.().catch(() => {})
+      await dashboardStore.getDashboardData()
+      grafikleriHesapla()
+      guncellemeZamaniAyarla()
+    } catch (error) {
+      console.error('Dashboard yenilenirken hata:', error)
+    }
+    loading.value = false
   }
-  loading.value = false
-}
 
 const bakiyeChart = ref({ labels: [], datasets: [] })
 const aylikKarsilastirmaChart = ref({ labels: [], datasets: [] })
@@ -1667,6 +1670,19 @@ const whatsappLink = (f) => {
 <style scoped>
 .dashboard-container {
   padding: 0;
+}
+/* Veri gelince icerik sert bir sekilde belirmesin; yumusak gecisle gorunur. */
+.dashboard-container.icerik-hazir {
+  animation: icerikFade 0.3s ease-out;
+}
+@keyframes icerikFade {
+  from { opacity: 0.45; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-container.icerik-hazir {
+    animation: none;
+  }
 }
 .dashboard-header {
   position: relative;

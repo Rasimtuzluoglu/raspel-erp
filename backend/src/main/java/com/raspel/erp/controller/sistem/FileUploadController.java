@@ -30,6 +30,15 @@ public class FileUploadController {
     private final DosyaDepolamaService dosyaDepolama;
     private final TenantChecker tenantChecker;
 
+    /**
+     * Logo gibi public dosyalarda "dosya adi -> tenant klasoru" cozumunun kisa sureli
+     * onbellegi. Aksi halde her istekte MinIO'da tum klasor listelenir (yuksek gecikme).
+     */
+    private static final long COZUM_TTL_MS = 10 * 60 * 1000L;
+    private record KlasorCozumu(String klasor, long zaman) {}
+    private final java.util.concurrent.ConcurrentHashMap<String, KlasorCozumu> klasorCozumCache =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public FileUploadController(DosyaDepolamaService dosyaDepolama, TenantChecker tenantChecker) {
         this.dosyaDepolama = dosyaDepolama;
         this.tenantChecker = tenantChecker;
@@ -75,7 +84,9 @@ public class FileUploadController {
     @Operation(summary = "Şirket logosu yükle", description = "Şirket logosu yükler (ADMIN/USER/MUHASEBE, kendi şirketi)")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<Map<String, String>> uploadSirketLogo(@RequestParam("file") MultipartFile file) {
-        return dosyaYukle(file, tenantKlasor(LOGO_KLASOR), "/api/uploads/sirket-logos/");
+        // Logolar public oldugu icin tenant alt klasoru yerine duz klasore yazilir; okuma
+        // dogrudan tek MinIO cagrisiyla yapilir (eski dosyalar fallback ile bulunur).
+        return dosyaYukle(file, LOGO_KLASOR, "/api/uploads/sirket-logos/");
     }
 
     @PostMapping("/upload/foto")
@@ -99,7 +110,19 @@ public class FileUploadController {
         // bilinmediği için tüm şirket klasörleri taranır.
         for (String aday : List.of(LOGO_KLASOR)) {
             ResponseEntity<byte[]> r = dosyaGetirAnyTenant(filename, aday);
-            if (r != null) return r;
+            if (r != null) {
+                // Dosya adlari UUID'dir ve icerik degismez: uzun sureli tarayici onbellegi
+                // guvenlidir. Boylece her giriste logo yeniden indirilmez (1sn -> aninda).
+                return ResponseEntity.status(r.getStatusCode())
+                        .contentType(r.getHeaders().getContentType() != null
+                                ? r.getHeaders().getContentType() : MediaType.APPLICATION_OCTET_STREAM)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename.replace("\"", "") + "\"")
+                        .header("X-Content-Type-Options", "nosniff")
+                        .cacheControl(org.springframework.http.CacheControl
+                                .maxAge(java.time.Duration.ofDays(7)).cachePublic().immutable())
+                        .eTag("\"" + filename + "\"")
+                        .body(r.getBody());
+            }
         }
         return ResponseEntity.notFound().build();
     }
@@ -217,18 +240,34 @@ public class FileUploadController {
     }
 
     /**
-     * Logo gibi public dosyalar için tüm tenant klasörlerini tarar.
+     * Logo gibi public dosyalar için tüm tenant klasörlerini tarar. Çözülen klasör
+     * kısa süreli bellekte tutulur; böylece her istekte MinIO list çağrısı yapılmaz.
      */
     private ResponseEntity<byte[]> dosyaGetirAnyTenant(String filename, String klasor) {
+        String anahtar = klasor + "/" + filename;
+        KlasorCozumu cozum = klasorCozumCache.get(anahtar);
+        if (cozum != null) {
+            if (System.currentTimeMillis() - cozum.zaman() < COZUM_TTL_MS) {
+                DosyaDepolamaService.DepolananDosya onbellekli = dosyaDepolama.getir(cozum.klasor(), filename);
+                if (onbellekli != null) {
+                    return dosyaYanitla(filename, onbellekli, false);
+                }
+            }
+            klasorCozumCache.remove(anahtar);
+        }
+
         DosyaDepolamaService.DepolananDosya dogrudan = dosyaDepolama.getir(klasor, filename);
         if (dogrudan != null) {
+            klasorCozumCache.put(anahtar, new KlasorCozumu(klasor, System.currentTimeMillis()));
             return dosyaYanitla(filename, dogrudan, false);
         }
         for (DosyaDepolamaService.NesneBilgi nesne : dosyaDepolama.listele(klasor)) {
             String ad = nesne.ad();
             if (ad.startsWith("s") && ad.contains("/") && ad.substring(ad.indexOf('/') + 1).equals(filename)) {
-                DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(klasor + "/" + ad.substring(0, ad.indexOf('/')), filename);
+                String cozulenKlasor = klasor + "/" + ad.substring(0, ad.indexOf('/'));
+                DosyaDepolamaService.DepolananDosya dosya = dosyaDepolama.getir(cozulenKlasor, filename);
                 if (dosya != null) {
+                    klasorCozumCache.put(anahtar, new KlasorCozumu(cozulenKlasor, System.currentTimeMillis()));
                     return dosyaYanitla(filename, dosya, false);
                 }
             }

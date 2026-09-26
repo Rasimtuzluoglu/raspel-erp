@@ -218,29 +218,22 @@ public class SirketService {
         List<com.raspel.erp.dto.sistem.KonsolideOzetDTO.SirketOzetDTO> sirketOzetleri = new java.util.ArrayList<>();
 
         for (Sirket s : tumGrup) {
-            List<com.raspel.erp.entity.envanter.Stok> stoklar = stokRepository.findBySirketIdOrderByAd(s.getId(), Pageable.unpaged()).getContent();
-            java.math.BigDecimal sirketStokDeger = stoklar.stream()
-                    .map(stok -> {
-                        java.math.BigDecimal miktar = stok.getMiktar() != null ? stok.getMiktar() : java.math.BigDecimal.ZERO;
-                        java.math.BigDecimal fiyat = stok.getFiyat() != null ? stok.getFiyat() : java.math.BigDecimal.ZERO;
-                        return miktar.multiply(fiyat);
-                    })
-                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            // Stok degeri ve cari bakiyeler tek SQL toplaminda hesaplanir; tum kayitlarin
+            // entity olarak yuklenmesi (Pageable.unpaged) bellek riski olusturuyordu.
+            java.math.BigDecimal sirketStokDeger = stokRepository.toplamStokDegeriBySirketId(s.getId());
+            if (sirketStokDeger == null) sirketStokDeger = java.math.BigDecimal.ZERO;
 
-            List<com.raspel.erp.entity.finans.CariHesap> cariler = cariHesapRepository.findBySirketId(s.getId(), Pageable.unpaged()).getContent();
-            java.math.BigDecimal sirketBakiye = cariler.stream()
-                    .map(c -> c.getBakiye() != null ? c.getBakiye() : java.math.BigDecimal.ZERO)
-                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            java.math.BigDecimal sirketAlacak = cariHesapRepository.toplamPozitifBakiyeBySirketId(s.getId());
+            java.math.BigDecimal sirketBorc = cariHesapRepository.toplamNegatifBakiyeBySirketId(s.getId());
+            if (sirketAlacak == null) sirketAlacak = java.math.BigDecimal.ZERO;
+            if (sirketBorc == null) sirketBorc = java.math.BigDecimal.ZERO;
 
             java.math.BigDecimal sirketCiro = faturaRepository.sumKesilmisSatisCiro(s.getId());
 
             toplamStokDegeri = toplamStokDegeri.add(sirketStokDeger);
             toplamCiro = toplamCiro.add(sirketCiro != null ? sirketCiro : java.math.BigDecimal.ZERO);
-            if (sirketBakiye.compareTo(java.math.BigDecimal.ZERO) >= 0) {
-                toplamAlacak = toplamAlacak.add(sirketBakiye);
-            } else {
-                toplamBorc = toplamBorc.add(sirketBakiye.abs());
-            }
+            toplamAlacak = toplamAlacak.add(sirketAlacak);
+            toplamBorc = toplamBorc.add(sirketBorc.abs());
 
             sirketOzetleri.add(com.raspel.erp.dto.sistem.KonsolideOzetDTO.SirketOzetDTO.builder()
                     .sirketId(s.getId())
@@ -248,9 +241,9 @@ public class SirketService {
                     .tur(s.getTur())
                     .yil(s.getYil())
                     .stokDegeri(sirketStokDeger)
-                    .bakiye(sirketBakiye)
-                    .stokSayisi(stoklar.size())
-                    .cariSayisi(cariler.size())
+                    .bakiye(sirketAlacak.subtract(sirketBorc.abs()))
+                    .stokSayisi(stokRepository.countBySirketId(s.getId()))
+                    .cariSayisi(cariHesapRepository.countBySirketId(s.getId()))
                     .build());
         }
 

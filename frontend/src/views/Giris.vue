@@ -665,6 +665,19 @@ onMounted(async () => {
   }
   beniHatirla.value = localStorage.getItem('raspel_erp_beni_hatirla') === 'true'
   await kurulumDurumKontrol()
+
+  // Giris sonrasi gecisi hizlandirmak icin Dashboard chunk'i bos zamaninda onden
+  // yuklenir; kullanici "Giris"e bastiginda sayfa aninda acilir. Veri tasarrufu
+  // modunda veya yavas baglantida atlanir.
+  try {
+    const tasarruf = navigator.connection && navigator.connection.saveData === true
+    if (!tasarruf) {
+      const bosZaman = window.requestIdleCallback || ((fn) => setTimeout(fn, 1200))
+      bosZaman(() => { import('./Dashboard.vue').catch(() => {}) })
+    }
+  } catch {
+    /* yoksay */
+  }
 })
 
 const klavyeKontrol = (event) => {

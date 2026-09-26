@@ -32,8 +32,20 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
     @Query("SELECT SUM(s.miktar) FROM Stok s WHERE s.sirketId = :sirketId")
     BigDecimal toplamMiktarBySirketId(@Param("sirketId") Long sirketId);
 
+    /**
+     * Stok degeri (miktar x birim fiyat) tek sorguda hesaplanir. Tum stoklarin
+     * entity olarak yuklenmesini (bellek + N+1) onler.
+     */
+    @Query("SELECT COALESCE(SUM(COALESCE(s.miktar, 0) * COALESCE(s.fiyat, 0)), 0) " +
+           "FROM Stok s WHERE s.sirketId = :sirketId")
+    BigDecimal toplamStokDegeriBySirketId(@Param("sirketId") Long sirketId);
+
     @Query("SELECT s FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar ORDER BY s.miktar ASC")
     List<Stok> kritikStoklar(Long sirketId);
+
+    /** Kritik stoklar, DB'de sayfalanarak doner (tumunu cekip Java'da kesmek yerine). */
+    @Query("SELECT s FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar ORDER BY s.miktar ASC")
+    List<Stok> kritikStoklar(Long sirketId, Pageable pageable);
 
     @Query("SELECT COUNT(s) FROM Stok s WHERE s.sirketId = :sirketId AND s.minMiktar IS NOT NULL AND s.miktar <= s.minMiktar")
     long countKritikStokBySirketId(@Param("sirketId") Long sirketId);

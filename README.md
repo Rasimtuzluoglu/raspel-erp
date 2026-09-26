@@ -182,7 +182,7 @@ raspel-erp/
 ## 🤝 Katkı & Destek
 
 - 🐛 Hata bildirimi / öneri: [Issues](https://github.com/Rasimtuzluoglu/raspel-erp/issues)
-- 📚 Dokümantasyon: [`docs/`](docs) — [Kurulum](docs/KURULUM.md) · [Kullanım](docs/KULLANIM.md) · [Mimari](docs/MIMARI.md) · [API](docs/API.md)
+- 📚 Dokümantasyon: [`docs/`](docs) — [Kurulum](docs/KURULUM.md) · [Kullanım](docs/KULLANIM.md) · [Mimari](docs/MIMARI.md) · [API](docs/API.md) · [Operasyon](docs/OPERASYON.md) · [Yol Haritası](docs/ROADMAP.md)
 
 ---
 

@@ -16,4 +16,4 @@ RUN addgroup -S raspel && adduser -S raspel -G raspel && \
 USER raspel
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
   CMD curl -fsS http://localhost:8081/actuator/health || exit 1
-ENTRYPOINT ["java", "-Xms256m", "-Xmx1280m", "-Xss512k", "-XX:MaxMetaspaceSize=256m", "-XX:MaxDirectMemorySize=128m", "-XX:+UseG1GC", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=/tmp/heapdump.hprof", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=65", "-XX:InitialRAMPercentage=25", "-Xss512k", "-XX:MaxMetaspaceSize=160m", "-XX:MaxDirectMemorySize=96m", "-XX:ReservedCodeCacheSize=96m", "-XX:+UseG1GC", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=/tmp/heapdump.hprof", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]

@@ -44,6 +44,9 @@ services:
     depends_on:
       - backend
       - frontend
+    # 8GB VPS: izleme/proxy konteynerleri de sinirlanir (limitsiz kalirsa backend'i ac birakabilir).
+    mem_limit: ${TRAEFIK_MEM_LIMIT:-256m}
+    memswap_limit: ${TRAEFIK_MEM_LIMIT:-256m}
     logging:
       options:
         max-size: "10m"
@@ -74,6 +77,17 @@ services:
       - "archive_timeout=60"
       - "-c"
       - "archive_command=test ! -f /wal-archive/%f && cp %p /wal-archive/%f"
+      # 8GB VPS hedefi: DB bellegi paylasimli arabelleklere ayrilir (varsayilan 128MB yerine).
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=2GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "max_connections=100"
     environment:
       POSTGRES_DB: raspelerp
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -93,7 +107,7 @@ services:
       retries: 5
     deploy:
       resources:
-        limits: { memory: 1g }
+        limits: { memory: 1500m }
         reservations: { memory: 256m }
     logging:
       options:
@@ -399,6 +413,9 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      # 256GB SSD hedefi: metrik gecmisi 15 gun ile sinirlanir (varsayilan sinirsiz buyume yerine).
+      - '--storage.tsdb.retention.time=15d'
+      - '--storage.tsdb.retention.size=2GB'
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./config/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
@@ -411,7 +428,7 @@ services:
       - |
         cp /run/secrets/metrics_scrape_token /etc/prometheus/metrics_token
         chmod 0400 /etc/prometheus/metrics_token
-        exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
+        exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=15d --storage.tsdb.retention.size=2GB
     restart: unless-stopped
     depends_on:
       - backend
@@ -422,6 +439,8 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    mem_limit: ${PROMETHEUS_MEM_LIMIT:-512m}
+    memswap_limit: ${PROMETHEUS_MEM_LIMIT:-512m}
     deploy:
       resources:
         limits: { memory: 512m }
@@ -461,6 +480,8 @@ services:
       - prometheus
     networks:
       - backend-net
+    mem_limit: ${GRAFANA_MEM_LIMIT:-384m}
+    memswap_limit: ${GRAFANA_MEM_LIMIT:-384m}
     deploy:
       resources:
         limits: { memory: 512m }
@@ -501,6 +522,8 @@ services:
     restart: unless-stopped
     networks:
       - backend-net
+    mem_limit: ${ALERTMANAGER_MEM_LIMIT:-128m}
+    memswap_limit: ${ALERTMANAGER_MEM_LIMIT:-128m}
     deploy:
       resources:
         limits: { memory: 256m }

@@ -82,10 +82,8 @@ class DashboardServiceTest {
 
     @Test
     void dashboard_toplamStokDegeriniHesaplar() {
-        com.raspel.erp.entity.envanter.Stok s1 = new com.raspel.erp.entity.envanter.Stok();
-        s1.setMiktar(BigDecimal.valueOf(10));
-        s1.setFiyat(BigDecimal.valueOf(50));
-        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(s1));
+        // Stok degeri artik tek SQL toplaminda hesaplanir (tum stoklar yuklenmez).
+        when(stokRepository.toplamStokDegeriBySirketId(1L)).thenReturn(BigDecimal.valueOf(500));
         when(faturaRepository.findVadesiGecen(any(), any(), any(), any(), any())).thenReturn(List.of());
         when(faturaRepository.toplamVadesiGecenKalan(any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);
         when(faturaRepository.toplamKalanVadeAraliginda(any(), any(), any(), any(), any())).thenReturn(BigDecimal.ZERO);

@@ -2,6 +2,14 @@
 
 > Sürüm geçmişi için `CHANGELOG.md` dosyasına bakın. Bu belge planlanan çalışmaları takip eder.
 
+## Güncel Durum (v1.35.0)
+
+- Testler: **1248 backend** (JUnit 5 + H2/Postgres entegrasyon) + **771 frontend** (Vitest) — tümü yeşil; JaCoCo/Vitest coverage gate aktif.
+- Migration: **V1..V132** (121 dosya) uygulanıyor.
+- E2E: **9 Cypress spec** CI'da (dev-server üzerinde).
+- Hedef kurulum: 8GB RAM VPS / 10 kullanıcı / ~5000 işlem-gün; backend bellek tavanı `BACKEND_MEM_LIMIT` (öneri 2g, min 1.5g).
+- Aşağıdaki epikler tarihsel kayıttır; tamamlanan kalemler işaretlidir.
+
 ## Planlı Epikler (v2.0)
 
 ### Epik 1 — Ürün Maliyet/ Kârlılık Analiz Sistemi (YARININ ODAĞI)
