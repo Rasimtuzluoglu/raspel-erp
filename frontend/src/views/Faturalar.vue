@@ -1492,9 +1492,9 @@ h1 {
   color: var(--text-muted);
 }
 .kitlik-rozeti {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
   border-radius: 20px;
   padding: 1px 8px;
   font-size: 11px;
@@ -1502,8 +1502,8 @@ h1 {
   white-space: nowrap;
 }
 .urun-ekleme {
-  background: rgba(59, 130, 246, 0.05);
-  border: 1px solid var(--accent-soft-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   border-radius: 10px;
   padding: 14px;
   margin: 15px 0;
@@ -1519,8 +1519,8 @@ h1 {
   color: var(--accent);
 }
 .badge.alis {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .durum-badge {
   padding: 4px 12px;
@@ -1529,20 +1529,20 @@ h1 {
   font-weight: 700;
 }
 .durum-badge.taslak {
-  background: rgba(255, 152, 0, 0.15);
-  color: #fb923c;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .durum-badge.teklif {
-  background: rgba(96, 165, 250, 0.15);
-  color: var(--accent);
+  background: var(--info-soft);
+  color: var(--info);
 }
 .durum-badge.kesildi {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .durum-badge.iptal {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
+  background: var(--bg-muted);
+  color: var(--text-muted);
 }
 .odeme-badge {
   padding: 4px 12px;
@@ -1551,21 +1551,21 @@ h1 {
   font-weight: 700;
 }
 .odeme-badge.odendi {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .odeme-badge.kismi_odendi {
-  background: rgba(255, 152, 0, 0.15);
-  color: #fb923c;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .odeme-badge.odenmedi {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .kalan-tutar {
   font-size: 12px;
   font-weight: 700;
-  color: #f87171;
+  color: var(--danger);
 }
 .islem-yapan {
   font-size: 12px;

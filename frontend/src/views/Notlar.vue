@@ -306,13 +306,13 @@ const geriAl = async () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
   border-radius: 10px;
   padding: 10px 16px;
   margin-bottom: 1rem;
   font-size: 0.9rem;
-  color: #fbbf24;
+  color: var(--warning);
 }
 .geri-al-banner i {
   font-size: 16px;
@@ -327,7 +327,7 @@ const geriAl = async () => {
 }
 .empty-icon {
   font-size: 3.5rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-bottom: 1rem;
 }
 .not-grid {
@@ -349,16 +349,16 @@ const geriAl = async () => {
   border-color: var(--accent-border);
 }
 .not-card.yuksek {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid var(--warning);
 }
 .not-card.kritik {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--danger);
 }
 .not-card.dusuk {
   border-left: 4px solid var(--accent);
 }
 .not-card.normal {
-  border-left: 4px solid #64748b;
+  border-left: 4px solid var(--text-muted);
 }
 [data-theme='light'] .not-card {
   background: #ffffff;
@@ -381,28 +381,28 @@ const geriAl = async () => {
   color: var(--accent);
 }
 .onem-badge.normal {
-  background: rgba(100, 116, 139, 0.2);
-  color: #94a3b8;
+  background: var(--bg-muted);
+  color: var(--text-muted);
 }
 .onem-badge.yuksek {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .onem-badge.kritik {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .not-card.renk-mavi {
   border-left: 4px solid var(--accent);
 }
 .not-card.renk-yesil {
-  border-left: 4px solid #22c55e;
+  border-left: 4px solid var(--success);
 }
 .not-card.renk-sari {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid var(--warning);
 }
 .not-card.renk-kirmizi {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--danger);
 }
 .not-card.renk-mor {
   border-left: 4px solid #8b5cf6;
@@ -411,7 +411,7 @@ const geriAl = async () => {
   border-left: 4px solid #ec4899;
 }
 .not-card.renk-gri {
-  border-left: 4px solid #64748b;
+  border-left: 4px solid var(--text-muted);
 }
 .renk-secici {
   display: flex;

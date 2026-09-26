@@ -11,7 +11,7 @@
       <span
         v-if="trend !== null && trend !== undefined"
         class="kpi-trend gizli-veri"
-        :class="trend >= 0 ? 'yukselis' : 'dusus'"
+        :class="trendIyiMi ? 'yukselis' : 'dusus'"
         :title="$t('dashboard.gecenAyaGore')"
       >
         <i :class="trend >= 0 ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'" />
@@ -49,8 +49,15 @@ const props = defineProps({
   renk: { type: String, default: '#10b981' },
   trend: { type: Number, default: null },
   sparkline: { type: Array, default: () => [] },
-  paraBirimi: { type: Boolean, default: true }
+  paraBirimi: { type: Boolean, default: true },
+  // Trend rengi icin "iyi" yonu: maliyet/gecikme gibi metriklerde artis kotudur.
+  trendIyiYonu: { type: String, default: 'yukari' } // 'yukari' | 'asagi'
 })
+
+/** Trend degeri iyi mi? Artis iyiyse trend>=0, dusus iyiyse trend<0 iyidir. */
+const trendIyiMi = computed(() =>
+  props.trendIyiYonu === 'asagi' ? props.trend < 0 : props.trend >= 0
+)
 
 const sayisalDeger = computed(() => Number(props.deger) || 0)
 const { gosterilen } = useSayac(sayisalDeger)

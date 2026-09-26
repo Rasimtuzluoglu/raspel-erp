@@ -23,17 +23,19 @@ public class BildirimController {
     private final BildirimService bildirimService;
 
     @GetMapping
-    @Operation(summary = "Bildirimleri getir", description = "Şirketin son 50 bildirimini getirir")
+    @Operation(summary = "Bildirimleri getir", description = "Kullanıcının kendi + şirket genel bildirimlerini getirir")
     public ResponseEntity<List<BildirimDTO>> liste(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(bildirimService.liste(sirketId));
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(bildirimService.liste(sirketId, kullaniciId));
     }
 
     @GetMapping("/okunmamis")
     @Operation(summary = "Okunmamış bildirim sayısı", description = "Okunmamış bildirim sayısını getirir")
     public ResponseEntity<Map<String, Object>> okunmamis(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(Map.of("adet", bildirimService.okunmamisSayisi(sirketId)));
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(Map.of("adet", bildirimService.okunmamisSayisi(sirketId, kullaniciId)));
     }
 
     @PutMapping("/{id}/okundu")

@@ -10,6 +10,16 @@
       <i :class="m.icon" />
       <span>{{ m.label }}</span>
     </router-link>
+    <!-- Diger moduller icin kenar menu cekmecesini acar. -->
+    <button
+      type="button"
+      class="mam-item mam-daha"
+      :aria-label="t('mobilMenu.dahaFazla')"
+      @click="menuAc"
+    >
+      <i class="pi pi-ellipsis-h" />
+      <span>{{ t('mobilMenu.dahaFazla') }}</span>
+    </button>
   </nav>
 </template>
 
@@ -43,6 +53,11 @@ const menu = computed(() => {
 const aktif = (path) => {
   if (path === '/') return route.path === '/'
   return route.path.startsWith(path)
+}
+
+/** Kenar menu cekmecesini acar (AppSidebar bu olayi dinler). */
+const menuAc = () => {
+  window.dispatchEvent(new CustomEvent('raspel:menu-ac'))
 }
 </script>
 
@@ -109,5 +124,12 @@ const aktif = (path) => {
 }
 .mam-item:active {
   transform: scale(0.95);
+}
+.mam-daha {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
 }
 </style>

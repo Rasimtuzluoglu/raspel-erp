@@ -1740,12 +1740,12 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
   font-weight: 700;
 }
 .bakiye-rozet.alacak {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .bakiye-rozet.borc {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .cari-filtreler {
   display: flex;
@@ -1889,7 +1889,7 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
 .fg-kapat {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--text-muted);
   cursor: pointer;
 }
 .fg-satir {
@@ -1947,12 +1947,12 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
   font-weight: 700;
 }
 .not-onem-rozet.yuksek {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .not-onem-rozet.kritik {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .cari-not-ekle .p-inputtext {
   flex: 1;
@@ -2058,7 +2058,7 @@ h3 {
   font-size: 13px;
 }
 .form-group .required {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .form-group :deep(.p-inputtext),
@@ -2078,12 +2078,12 @@ h3 {
 }
 .form-group :deep(.p-inputtext.p-invalid),
 .form-group :deep(.p-textarea.p-invalid) {
-  border-color: #f87171 !important;
+  border-color: var(--danger) !important;
 }
 
 .error {
   display: block;
-  color: #f87171;
+  color: var(--danger);
   font-size: 11px;
   margin-top: 4px;
 }
@@ -2126,7 +2126,7 @@ h3 {
 }
 
 .hareket-info {
-  background: #f5f5f5;
+  background: var(--bg-muted);
   padding: 15px;
   border-radius: 4px;
   margin-bottom: 15px;

@@ -600,6 +600,7 @@
     "kartGorunumu": "Kart Görünümü",
     "tabloGorunumu": "Tablo Görünümü",
     "filtreArama": "Ürün adı, kod, barkod...",
+    "filtreler": "Filtreler",
     "filtreKategori": "Kategori",
     "filtreMarka": "Marka",
     "filtreStokGrubu": "Stok Grubu",
@@ -2317,6 +2318,7 @@
     "bildirimTahsilat": "Tahsilatlar",
     "bildirimOdeme": "Ödemeler",
     "bildirimMasraf": "Masraf Talepleri",
+    "bildirimAjanda": "Ajanda Hatırlatıcıları",
     "tercihlerGuncellendi": "Bildirim tercihleri güncellendi",
     "tercihlerKaydedilemedi": "Tercihler kaydedilemedi",
     "profilGuncellendi": "Profil güncellendi",
@@ -4759,6 +4761,7 @@
     "fatura": "Fatura",
     "hesap": "Hesap",
     "portal": "Portal",
-    "sohbet": "Sohbet"
+    "sohbet": "Sohbet",
+    "dahaFazla": "Daha Fazla"
   }
 }

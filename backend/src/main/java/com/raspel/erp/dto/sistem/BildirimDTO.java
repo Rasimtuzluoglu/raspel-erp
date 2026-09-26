@@ -12,6 +12,7 @@ public class BildirimDTO {
     private Long sirketId;
     private String tur;
     private String kullaniciAdi;
+    private Long kullaniciId;
     private String baslik;
     private String mesaj;
     private Boolean okundu;

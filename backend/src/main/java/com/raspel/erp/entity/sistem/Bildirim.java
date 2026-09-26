@@ -25,6 +25,10 @@ public class Bildirim {
     @Column(name = "kullanici_adi", length = 100)
     private String kullaniciAdi;
 
+    /** Kişisel bildirim hedefi; NULL ise şirkete/tüm kullanıcılara ait genel bildirimdir. */
+    @Column(name = "kullanici_id")
+    private Long kullaniciId;
+
     @Column(length = 200)
     private String baslik;
 

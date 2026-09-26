@@ -38,6 +38,29 @@ function applyMode(m) {
   root.setAttribute('data-theme', etkin)
   root.classList.toggle('p-dark', etkin === 'dark')
   localStorage.setItem(MODE_KEY, mode.value)
+  temaRengiSenkron(etkin)
+}
+
+/**
+ * PWA/mobil tarayici chrome rengini (adres cubugu, durum cubugu) uygulama temasiyla
+ * senkronlar. Boylece PWA'da yukleniyor ekrani/splash ve cerceve, masaustundeki
+ * uygulama gorunumuyle ayni zemini kullanir.
+ */
+function temaRengiSenkron(etkinTema) {
+  try {
+    const renk = etkinTema === 'light' ? '#f1f5f9' : '#0a0e14'
+    let meta = document.querySelector('meta[name="theme-color"]:not([media])')
+    if (!meta) {
+      // media'li eski meta etiketlerini kaldir; tek otorite runtime deger olsun.
+      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove())
+      meta = document.createElement('meta')
+      meta.setAttribute('name', 'theme-color')
+      document.head.appendChild(meta)
+    }
+    meta.setAttribute('content', renk)
+  } catch {
+    /* yoksay */
+  }
 }
 
 /** Aksan renginin parlaklığına göre okunabilir metin/ikon rengi döndürür. */

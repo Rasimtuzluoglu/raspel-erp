@@ -1,6 +1,7 @@
 <template>
   <div
     class="giris-sayfasi"
+    :class="{ 'pwa-modu': pwaModu }"
     :style="parallax"
   >
     <!-- Sinematik sahne: CSS mesh katmanlari (canvas / agir blur yok) -->
@@ -132,11 +133,19 @@
                 {{ $t('giris.mobileTagline') }}
               </p>
             </div>
+            <!-- PWA/mobil vitrin: donen deger onerisi -->
+            <p class="mobil-rotate">
+              <i class="pi pi-bolt" /> {{ rotateItems[rotateIndex] }}
+            </p>
             <div class="mobil-chips">
               <span><i class="pi pi-sparkles" /> {{ $t('giris.previewTabAi') }}</span>
               <span><i class="pi pi-file-check" /> {{ $t('giris.previewTabInvoice') }}</span>
               <span><i class="pi pi-box" /> {{ $t('giris.previewTabStock') }}</span>
               <span><i class="pi pi-chart-bar" /> {{ $t('giris.previewTabProfit') }}</span>
+            </div>
+            <!-- Tablet/genis mobil PWA: urun vitrini gorunsun -->
+            <div class="mobil-preview">
+              <LoginPreview />
             </div>
             <div class="mobil-chips mobil-trust">
               <span><i class="pi pi-shield" /> {{ $t('giris.trustKvkk') }}</span>
@@ -530,6 +539,9 @@ const sifirlaGonderiliyor = ref(false)
 const sifirlaMesaj = ref('')
 const sifirlaHata = ref('')
 
+// PWA (standalone/fullscreen) modunda mi?
+const pwaModu = ref(false)
+
 const sifreSifirlamaTalepEt = async () => {
   sifirlaMesaj.value = ''
   sifirlaHata.value = ''
@@ -639,6 +651,14 @@ const kurulumForm = ref({
 const sifremiUnuttumAdimi = ref(false)
 
 onMounted(async () => {
+  // PWA (yuklenmis uygulama) modunda mi? Tanitim/vitrin ve safe-area buna gore ayarlanir.
+  try {
+    pwaModu.value = window.matchMedia('(display-mode: standalone)').matches
+      || window.matchMedia('(display-mode: fullscreen)').matches
+      || window.navigator.standalone === true
+  } catch {
+    pwaModu.value = false
+  }
   if (authStore.isLoggedIn) {
     router.push('/')
     return
@@ -789,9 +809,9 @@ const tumAdimlariSifirla = () => {
 
 <style scoped>
 .giris-sayfasi {
-  --giris-aksan: var(--accent, #10b981);
-  --giris-aksan-koyu: #059669;
-  --giris-aksan-parlak: #34d399;
+  --giris-aksan: var(--accent, #14b8a6);
+  --giris-aksan-koyu: #0d9488;
+  --giris-aksan-parlak: #2dd4bf;
   --giris-tint-05: rgba(16, 185, 129, 0.05);
   --giris-tint-08: rgba(16, 185, 129, 0.08);
   --giris-tint-14: rgba(16, 185, 129, 0.14);
@@ -1806,6 +1826,28 @@ const tumAdimlariSifirla = () => {
   color: var(--giris-aksan);
   font-size: 10px;
 }
+.mobil-rotate {
+  width: 100%;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--giris-aksan, var(--accent));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mobil-rotate i {
+  font-size: 11px;
+}
+/* Urun vitrini yalnizca tablet/genis mobilde (dar ekranda chips yeterli). */
+.mobil-preview {
+  display: none;
+  width: 100%;
+}
+.mobil-preview :deep(.login-preview) {
+  max-width: 420px;
+  margin: 4px auto 0;
+}
 
 /* Selamlama + son firma */
 .giris-selam {
@@ -1910,6 +1952,13 @@ const tumAdimlariSifirla = () => {
   .giris-mobil-hero {
     display: flex;
   }
+  /* Mobil hero zaten marka gosteriyor; formdaki buyuk logo tekrarini kaldir.
+     (Sirket logosu varsa korunur.) */
+  .giris-logo .marka-tam-logo,
+  .giris-logo .marka-mini-logo,
+  .giris-logo h2 {
+    display: none;
+  }
   .giris-split-wrapper {
     max-width: 480px;
     border-radius: 20px;
@@ -1924,6 +1973,29 @@ const tumAdimlariSifirla = () => {
   /* iOS: odaklaninca otomatik zoom'u engelle (16px alti zoom tetikler) */
   .input-wrapper :deep(.p-inputtext) {
     font-size: 16px;
+  }
+}
+
+/* Tablet / genis mobil (PWA dahil): urun vitrini gorunsun. */
+@media (min-width: 560px) and (max-width: 960px) {
+  .mobil-preview {
+    display: block;
+  }
+}
+
+/* Yuklenmis PWA: durum cubugu/notch icin safe-area boslugu. */
+.giris-sayfasi.pwa-modu {
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+/* Cok kisa ekranlar: vitrin yerine baslik + guven rozetleri kalsin. */
+@media (max-height: 620px) {
+  .hero-features {
+    display: none;
+  }
+  .mobil-preview {
+    display: none;
   }
 }
 

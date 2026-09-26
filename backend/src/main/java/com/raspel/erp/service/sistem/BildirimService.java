@@ -26,17 +26,26 @@ public class BildirimService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RabbitTemplate rabbitTemplate;
     private final BildirimRepository bildirimRepository;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
 
     public void bildirimGonder(Long sirketId, String tur, String baslik, String mesaj) {
         bildirimGonder(sirketId, tur, baslik, mesaj, null);
     }
 
     public void bildirimGonder(Long sirketId, String tur, String baslik, String mesaj, String kullaniciAdi) {
+        Long kullaniciId = kullaniciAdi != null ? kullaniciIdCoz(kullaniciAdi) : null;
+        bildirimGonder(sirketId, tur, baslik, mesaj, kullaniciAdi, kullaniciId);
+    }
+
+    /** Kişisel hedefli bildirim: yalnızca ilgili kullanıcı id'sine ulaşır (WebSocket filtreli). */
+    public void bildirimGonder(Long sirketId, String tur, String baslik, String mesaj,
+                               String kullaniciAdi, Long kullaniciId) {
         var bildirim = Map.of(
                 "tur", tur,
                 "baslik", baslik,
                 "mesaj", mesaj,
                 "kullaniciAdi", kullaniciAdi != null ? kullaniciAdi : "",
+                "kullaniciId", kullaniciId != null ? kullaniciId : 0L,
                 "tarih", LocalDateTime.now().toString()
         );
         String destination = "/topic/bildirimler/" + sirketId;
@@ -45,13 +54,22 @@ public class BildirimService {
 
         try {
             bildirimRepository.save(Bildirim.builder()
-                    .sirketId(sirketId).tur(tur).kullaniciAdi(kullaniciAdi)
+                    .sirketId(sirketId).tur(tur).kullaniciAdi(kullaniciAdi).kullaniciId(kullaniciId)
                     .baslik(baslik).mesaj(mesaj).okundu(false).build());
         } catch (Exception e) {
             log.warn("Bildirim kaydedilemedi: {}", e.getMessage());
         }
 
         kuyrugaGonder(sirketId, tur, baslik, mesaj);
+    }
+
+    /** Kullanıcı adından id çözer; bulunamazsa null. */
+    private Long kullaniciIdCoz(String kullaniciAdi) {
+        try {
+            return kullaniciRepository.findByUsername(kullaniciAdi).map(k -> k.getId()).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -76,9 +94,27 @@ public class BildirimService {
                 .map(this::toDTO).collect(Collectors.toList());
     }
 
+    /** Kullanıcıya özel liste: kendi bildirimleri + genel bildirimler. */
+    @Transactional(readOnly = true)
+    public List<BildirimDTO> liste(Long sirketId, Long kullaniciId) {
+        if (kullaniciId == null) {
+            return liste(sirketId);
+        }
+        return bildirimRepository.kullaniciBildirimleri(sirketId, kullaniciId).stream()
+                .limit(50).map(this::toDTO).collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public long okunmamisSayisi(Long sirketId) {
         return bildirimRepository.countBySirketIdAndOkunduFalse(sirketId);
+    }
+
+    @Transactional(readOnly = true)
+    public long okunmamisSayisi(Long sirketId, Long kullaniciId) {
+        if (kullaniciId == null) {
+            return okunmamisSayisi(sirketId);
+        }
+        return bildirimRepository.kullaniciOkunmamisSayisi(sirketId, kullaniciId);
     }
 
     @Transactional
@@ -102,7 +138,7 @@ public class BildirimService {
     private BildirimDTO toDTO(Bildirim b) {
         return BildirimDTO.builder()
                 .id(b.getId()).sirketId(b.getSirketId()).tur(b.getTur())
-                .kullaniciAdi(b.getKullaniciAdi())
+                .kullaniciAdi(b.getKullaniciAdi()).kullaniciId(b.getKullaniciId())
                 .baslik(b.getBaslik()).mesaj(b.getMesaj()).okundu(b.getOkundu())
                 .olusturmaTarihi(b.getOlusturmaTarihi()).build();
     }

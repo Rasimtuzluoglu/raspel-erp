@@ -154,6 +154,14 @@ public class WebPushService {
         return gonderAbonelikler(pushAbonelikRepository.findBySirketId(sirketId), tur, baslik, mesaj, url);
     }
 
+    /** Belirli bir kullanicinin tum cihazlarina bildirim gonderir (kisisel hatirlaticilar icin). */
+    public int gonderKullanici(Long kullaniciId, String tur, String baslik, String mesaj, String url) {
+        if (!hazir || kullaniciId == null) {
+            return 0;
+        }
+        return gonderAbonelikler(pushAbonelikRepository.findByKullaniciId(kullaniciId), tur, baslik, mesaj, url);
+    }
+
     private int gonderAbonelikler(List<PushAbonelik> abonelikler, String tur, String baslik, String mesaj, String url) {
         if (abonelikler == null || abonelikler.isEmpty()) {
             return 0;

@@ -70,12 +70,12 @@
                   >
                     <stop
                       offset="0%"
-                      stop-color="var(--giris-aksan, #10b981)"
+                      stop-color="var(--giris-aksan, #14b8a6)"
                       stop-opacity="0.35"
                     />
                     <stop
                       offset="100%"
-                      stop-color="var(--giris-aksan, #10b981)"
+                      stop-color="var(--giris-aksan, #14b8a6)"
                       stop-opacity="0"
                     />
                   </linearGradient>
@@ -88,7 +88,7 @@
                   class="mock-chart-line"
                   d="M0,72 C40,52 62,60 92,40 C122,20 152,46 182,30 C212,14 244,36 300,12"
                   fill="none"
-                  stroke="var(--giris-aksan, #10b981)"
+                  stroke="var(--giris-aksan, #14b8a6)"
                   stroke-width="2.5"
                   stroke-linecap="round"
                 />
@@ -635,7 +635,7 @@ const sec = (id) => {
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--giris-aksan, #10b981), var(--giris-aksan-parlak, #34d399));
+  background: linear-gradient(90deg, var(--giris-aksan, #14b8a6), var(--giris-aksan-parlak, #34d399));
 }
 .mock-qty {
   font-size: 11px;
@@ -821,7 +821,7 @@ const sec = (id) => {
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--giris-aksan, #10b981), var(--giris-aksan-parlak, #34d399));
+  background: linear-gradient(90deg, var(--giris-aksan, #14b8a6), var(--giris-aksan-parlak, #34d399));
   transition: width 0.4s ease;
 }
 

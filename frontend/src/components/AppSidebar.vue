@@ -319,7 +319,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { onaySayilariAPI } from '../api/index.js'
@@ -574,7 +574,17 @@ onMounted(() => {
   if (!authStore.isDriver && !authStore.isSaha) {
     onaySayisiniYukle()
   }
+  // Mobil alt menüdeki "Daha fazla" öğesi menü çekmecesini bu olayla açar.
+  window.addEventListener('raspel:menu-ac', menuCekmecesiniAc)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('raspel:menu-ac', menuCekmecesiniAc)
+})
+
+const menuCekmecesiniAc = () => {
+  mobilMenuAcik.value = true
+}
 
 const onaySayisi = ref(0)
 

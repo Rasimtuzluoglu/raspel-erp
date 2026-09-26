@@ -600,6 +600,7 @@
     "kartGorunumu": "Card View",
     "tabloGorunumu": "Table View",
     "filtreArama": "Product name, code, barcode...",
+    "filtreler": "Filters",
     "filtreKategori": "Category",
     "filtreMarka": "Brand",
     "filtreStokGrubu": "Stock Group",
@@ -2317,6 +2318,7 @@
     "bildirimTahsilat": "Collections",
     "bildirimOdeme": "Payments",
     "bildirimMasraf": "Expense Requests",
+    "bildirimAjanda": "Calendar Reminders",
     "tercihlerGuncellendi": "Notification preferences updated",
     "tercihlerKaydedilemedi": "Could not save preferences",
     "profilGuncellendi": "Profile updated",
@@ -4759,6 +4761,7 @@
     "fatura": "Invoice",
     "hesap": "Account",
     "portal": "Portal",
-    "sohbet": "Chat"
+    "sohbet": "Chat",
+    "dahaFazla": "More"
   }
 }

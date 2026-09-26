@@ -48,6 +48,19 @@
       </template>
       <template #end>
         <Button
+          icon="pi pi-filter"
+          class="p-button-text p-button-sm filtre-toggle"
+          :class="{ 'filtre-aktif': aktifFiltreSayisi > 0 }"
+          :title="t('stoklar.filtreler')"
+          :aria-label="t('stoklar.filtreler')"
+          @click="filtreAcik = !filtreAcik"
+        >
+          <span
+            v-if="aktifFiltreSayisi > 0"
+            class="filtre-rozet"
+          >{{ aktifFiltreSayisi }}</span>
+        </Button>
+        <Button
           label="Excel"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
@@ -59,13 +72,17 @@
             :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'"
             class="p-button-text p-button-sm"
             :title="gosterim === 'tablo' ? t('stoklar.kartGorunumu') : t('stoklar.tabloGorunumu')"
+            :aria-label="gosterim === 'tablo' ? t('stoklar.kartGorunumu') : t('stoklar.tabloGorunumu')"
             @click="gosterim = gosterim === 'tablo' ? 'kart' : 'tablo'"
           />
         </div>
       </template>
     </Toolbar>
 
-    <div class="filter-bar">
+    <div
+      class="filter-bar"
+      :class="{ 'filtre-gizli': !filtreAcik }"
+    >
       <span class="p-input-icon-left">
         <i class="pi pi-search" />
         <InputText
@@ -841,6 +858,20 @@ const hareketlerYukleniyor = ref(false)
 const saving = ref(false)
 const gosterim = ref('tablo')
 
+// Mobil/PWA: filtre paneli varsayilan kapali, masaustunde her zaman acik (CSS ile).
+const filtreAcik = ref(true)
+const aktifFiltreSayisi = computed(() => {
+  let n = 0
+  if (filtreArama.value) n++
+  if (filtreKategori.value) n++
+  if (filtreMarka.value) n++
+  if (filtreStokGrubu.value) n++
+  if (filtreDepo.value) n++
+  if (filtreMinFiyat.value != null && filtreMinFiyat.value !== '') n++
+  if (filtreMaxFiyat.value != null && filtreMaxFiyat.value !== '') n++
+  return n
+})
+
 const etiketDialog = ref(false)
 const etiketStok = ref(null)
 
@@ -1420,7 +1451,7 @@ h2 {
   font-size: 13px;
 }
 .kritik-bilgi {
-  color: #f87171;
+  color: var(--danger);
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -1579,5 +1610,76 @@ h2 {
   font-size: 12px;
   color: var(--accent);
   font-weight: 600;
+}
+
+/* Mobil/PWA filtre toggle (masaustunde gizli). */
+.filtre-toggle {
+  display: none;
+  position: relative;
+}
+.filtre-rozet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+}
+
+/* Mobil/PWA: toolbar ve filtreler duzenli tek kolona iner. */
+@media (max-width: 768px) {
+  .filtre-toggle {
+    display: inline-flex;
+  }
+  /* Filtre paneli yalnizca mobilde katlanir; masaustunde her zaman acik. */
+  .filter-bar.filtre-gizli {
+    display: none;
+  }
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .filter-bar > .p-input-icon-left {
+    grid-column: 1 / -1;
+  }
+  .filter-bar > .p-input-icon-left .p-inputtext {
+    width: 100%;
+  }
+  .filter-input,
+  .filter-input-sm,
+  .filter-dropdown {
+    width: 100% !important;
+  }
+  /* Temizle butonu tam genislik */
+  .filter-bar > .p-button {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+  .toolbar :deep(.p-toolbar-group-start),
+  .toolbar :deep(.p-toolbar-group-end) {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .toolbar :deep(.p-toolbar-group-start) {
+    width: 100%;
+  }
+  .batch-actions {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-top: 8px;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
 }
 </style>

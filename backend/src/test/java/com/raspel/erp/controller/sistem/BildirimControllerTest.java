@@ -39,7 +39,7 @@ class BildirimControllerTest {
 
     @Test
     void liste_donar() throws Exception {
-        when(bildirimService.liste(null)).thenReturn(List.of(
+        when(bildirimService.liste(null, null)).thenReturn(List.of(
                 BildirimDTO.builder().id(1L).baslik("Bildirim").okundu(false).build()));
 
         mockMvc.perform(get("/api/bildirimler"))
@@ -49,7 +49,7 @@ class BildirimControllerTest {
 
     @Test
     void okunmamis_sayisiDonar() throws Exception {
-        when(bildirimService.okunmamisSayisi(null)).thenReturn(5L);
+        when(bildirimService.okunmamisSayisi(null, null)).thenReturn(5L);
 
         mockMvc.perform(get("/api/bildirimler/okunmamis"))
                 .andExpect(status().isOk())

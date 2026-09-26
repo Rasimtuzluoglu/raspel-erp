@@ -31,6 +31,8 @@ public class HatirlaticiService {
     private final EmailService emailService;
     private final BildirimService bildirimService;
     private final AjandaHatirlaticiRepository ajandaHatirlaticiRepository;
+    private final WebPushService webPushService;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
 
     @Scheduled(cron = "0 0 8 * * *")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "hatirlatici", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
@@ -67,6 +69,10 @@ public class HatirlaticiService {
                 bildirimService.bildirimGonder(fatura.getSirketId(), "VADE",
                         "Vadesi geçen fatura: " + fatura.getFaturaNumarasi(),
                         cari.getAd() + " - Kalan: " + fatura.getKalanTutar() + " ₺");
+                // PWA tarayıcı bildirimi (sirketteki tüm abonelikler).
+                webPushService.gonder(fatura.getSirketId(), "VADE",
+                        "Vadesi geçen fatura: " + fatura.getFaturaNumarasi(),
+                        cari.getAd() + " - Kalan: " + fatura.getKalanTutar() + " ₺", "/faturalar");
             }
             gonderilen++;
         }
@@ -92,11 +98,15 @@ public class HatirlaticiService {
         int gonderilen = 0;
         for (AjandaHatirlatici h : bekleyenler) {
             try {
+                String baslik = "Hatırlatıcı: " + h.getBaslik();
+                String mesaj = "Belirlediğiniz hatırlatıcı zamanı geldi.";
+                // 1) Uygulama içi bildirim (zil + WebSocket) — yalnızca ilgili kullanıcıya.
                 if (h.getSirketId() != null) {
-                    bildirimService.bildirimGonder(h.getSirketId(), "AJANDA",
-                            "Hatırlatıcı: " + h.getBaslik(),
-                            "Belirlediğiniz hatırlatıcı zamanı geldi.");
+                    bildirimService.bildirimGonder(h.getSirketId(), "AJANDA", baslik, mesaj,
+                            kullaniciAdiCoz(h.getKullaniciId()));
                 }
+                // 2) Gerçek tarayıcı bildirimi (PWA Web Push) — kullanıcının tüm cihazlarına.
+                webPushService.gonderKullanici(h.getKullaniciId(), "AJANDA", baslik, mesaj, "/ajanda");
                 h.setBildirildi(true);
                 ajandaHatirlaticiRepository.save(h);
                 gonderilen++;
@@ -105,5 +115,16 @@ public class HatirlaticiService {
             }
         }
         log.info("Ajanda hatırlatıcı tamamlandı - Gönderilen: {}", gonderilen);
+    }
+
+    /** Kullanıcı adını (bildirim hedeflemesi için) çözer; bulunamazsa null döner. */
+    private String kullaniciAdiCoz(Long kullaniciId) {
+        if (kullaniciId == null) return null;
+        try {
+            return kullaniciRepository.findById(kullaniciId).map(com.raspel.erp.entity.sistem.Kullanici::getUsername)
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

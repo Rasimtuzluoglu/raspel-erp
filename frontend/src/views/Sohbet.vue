@@ -1051,13 +1051,13 @@ onUnmounted(() => {
 }
 .bagli-durum {
   font-size: 12px;
-  color: #22c55e;
+  color: var(--success);
   display: flex;
   align-items: center;
   gap: 4px;
 }
 .bagli-durum.bagli-degil {
-  color: #f59e0b;
+  color: var(--warning);
 }
 .ai-oneriler {
   display: flex;
@@ -1268,8 +1268,8 @@ onUnmounted(() => {
   border-color: var(--accent-border);
 }
 .mesaj.ai-cevap {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.25);
+  background: var(--success-soft);
+  border-color: var(--success-border);
   max-width: 85%;
 }
 .mesaj-ust {
@@ -1347,7 +1347,7 @@ onUnmounted(() => {
 }
 .ai-rozet strong {
   font-size: 13px;
-  color: #10b981;
+  color: var(--success);
 }
 .ai-loading {
   display: flex;
@@ -1434,8 +1434,8 @@ onUnmounted(() => {
   padding: 2px 6px;
 }
 .uye-cikar:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 .uye-ekle {
   display: flex;

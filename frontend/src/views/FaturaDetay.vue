@@ -647,10 +647,11 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
 .loading {
   text-align: center;
   padding: 60px;
-  color: #666;
+  color: var(--text-muted);
 }
 .fatura-kagit {
   background: var(--bg-card);
+  color: var(--text-primary);
   padding: 40px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -661,16 +662,16 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   display: flex;
   justify-content: space-between;
   margin-bottom: 30px;
-  border-bottom: 2px solid #1976d2;
+  border-bottom: 2px solid var(--accent);
   padding-bottom: 20px;
 }
 .fatura-baslik h1 {
-  color: #1976d2;
+  color: var(--accent);
   font-size: 22px;
   margin: 0 0 10px 0;
 }
 .fatura-baslik h2 {
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 10px 0;
 }
 .firma-bilgi p,
@@ -679,7 +680,7 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   font-size: 13px;
 }
 .cari-bilgi {
-  background: #f5f5f5;
+  background: var(--bg-muted);
   padding: 15px;
   border-radius: 4px;
   margin-bottom: 20px;
@@ -687,7 +688,7 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
 .cari-bilgi h3 {
   margin: 0 0 8px 0;
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
 }
 .cari-bilgi p {
   margin: 0;
@@ -699,19 +700,19 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   margin-bottom: 20px;
 }
 .fatura-tablo th {
-  background: #1976d2;
-  color: white;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
   padding: 10px;
   text-align: left;
   font-size: 13px;
 }
 .fatura-tablo td {
   padding: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
 .fatura-tablo tr:nth-child(even) {
-  background: #f9f9f9;
+  background: var(--bg-muted);
 }
 .text-right {
   text-align: right;
@@ -719,7 +720,7 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
 .fatura-ozet {
   margin-left: auto;
   width: 300px;
-  background: #f8f9fa;
+  background: var(--bg-muted);
   padding: 15px;
   border-radius: 8px;
 }
@@ -732,24 +733,25 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
 .ozet-row.total {
   font-weight: bold;
   font-size: 18px;
-  border-top: 2px solid #1976d2;
+  border-top: 2px solid var(--accent);
   margin-top: 5px;
   padding-top: 10px;
 }
 .ozet-row.odeme {
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
 }
 .ozet-row .negative {
-  color: #f44336;
+  color: var(--danger);
 }
 .ozet-row .positive {
-  color: #4caf50;
+  color: var(--success);
 }
 .fatura-yazi {
   margin-top: 20px;
   padding: 15px;
-  background: #fff8e1;
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
   border-radius: 4px;
 }
 .belgeler {
@@ -880,12 +882,12 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   border-radius: 8px;
 }
 .hareket-tur.giris {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .hareket-tur.cikis {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .durum-badge {
   padding: 4px 12px;
@@ -900,16 +902,16 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   font-weight: 600;
 }
 .teslim-badge.bekliyor {
-  background: rgba(255, 152, 0, 0.15);
-  color: #fb923c;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .teslim-badge.yolda {
-  background: rgba(96, 165, 250, 0.15);
-  color: var(--accent);
+  background: var(--info-soft);
+  color: var(--info);
 }
 .teslim-badge.teslim_edildi {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .teslim-fotograf {
   margin-top: 10px;
@@ -919,20 +921,20 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   border: 1px solid var(--border);
 }
 .durum-badge.taslak {
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .durum-badge.teklif {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--info-soft);
+  color: var(--info);
 }
 .durum-badge.kesildi {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .durum-badge.iptal {
-  background: #f5f5f5;
-  color: #9e9e9e;
+  background: var(--bg-muted);
+  color: var(--text-muted);
 }
 .error-card {
   text-align: center;
@@ -959,6 +961,20 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
     max-width: 100%;
     border: none;
     border-radius: 0;
+    /* Yazdırmada tema ne olursa olsun beyaz kağıt + koyu metin. */
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  .fatura-kagit .cari-bilgi,
+  .fatura-kagit .fatura-ozet,
+  .fatura-kagit .fatura-yazi,
+  .fatura-kagit .fatura-tablo tr:nth-child(even) {
+    background: #f5f5f5 !important;
+  }
+  .fatura-kagit .fatura-baslik h2,
+  .fatura-kagit .cari-bilgi h3,
+  .fatura-kagit .ozet-row.odeme {
+    color: #374151 !important;
   }
   .fatura-detay {
     padding: 0;

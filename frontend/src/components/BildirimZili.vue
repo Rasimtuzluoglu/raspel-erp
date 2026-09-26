@@ -183,12 +183,14 @@ import { useRouter } from 'vue-router'
 import { useWebSocket } from '../composables/useWebSocket.js'
 import { useMasaustuBildirim } from '../composables/useMasaustuBildirim.js'
 import { usePushBildirim } from '../composables/usePushBildirim.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { bildirimAPI, kullaniciAPI } from '../api/index.js'
 import { safeGet, safeSet } from '../utils/safeStorage.js'
 import { formatGunSaat as formatTarih } from '../utils/format.js'
 
 const router = useRouter()
 const { t } = useI18n()
+const authStore = useAuthStore()
 const panelAcik = ref(false)
 const tercihPaneli = ref(false)
 const bildirimler = ref([])
@@ -249,7 +251,8 @@ const tercihListesi = computed(() => [
   { tur: 'VADE', etiket: t('hesapAyarlari.bildirimVade') },
   { tur: 'TAKSILAT', etiket: t('hesapAyarlari.bildirimTahsilat') },
   { tur: 'ODEME', etiket: t('hesapAyarlari.bildirimOdeme') },
-  { tur: 'MASRAF_TALEBI', etiket: t('hesapAyarlari.bildirimMasraf') }
+  { tur: 'MASRAF_TALEBI', etiket: t('hesapAyarlari.bildirimMasraf') },
+  { tur: 'AJANDA', etiket: t('hesapAyarlari.bildirimAjanda') }
 ])
 const tercihler = ref(safeGet(TERCIH_ANAHTAR, {}))
 
@@ -280,12 +283,15 @@ const tercihDegistir = (tur, val) => {
 }
 
 watch(sonBildirim, (yeni) => {
-  if (yeni) {
-    bildirimler.value.unshift(yeni)
-    okunmamis.value++
-    if (tercihler.value[yeni.tur] !== false) {
-      masaustu.goster(yeni.baslik || t('bildirim.baslik'), yeni.mesaj || '')
-    }
+  if (!yeni) return
+  // Kişisel bildirim (kullaniciId > 0) yalnızca ilgili kullanıcıya gösterilir.
+  const hedefKullanici = Number(yeni.kullaniciId) || 0
+  const mevcutKullanici = Number(authStore.kullanici?.id) || 0
+  if (hedefKullanici > 0 && hedefKullanici !== mevcutKullanici) return
+  bildirimler.value.unshift(yeni)
+  okunmamis.value++
+  if (tercihler.value[yeni.tur] !== false) {
+    masaustu.goster(yeni.baslik || t('bildirim.baslik'), yeni.mesaj || '')
   }
 })
 
