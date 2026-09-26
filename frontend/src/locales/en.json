@@ -266,6 +266,8 @@
     "edit": "Edit",
     "refresh": "Refresh",
     "add": "Add",
+    "yuklenemedi": "Could not load data",
+    "tekrarDene": "Try Again",
     "upload": "Upload",
     "dosya": {
       "dosyaSecilmedi": "No file selected",

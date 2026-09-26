@@ -2020,6 +2020,40 @@ h3 {
   color: var(--text-secondary);
 }
 
+/* Form standardi: tek tip etiket, zorunlu alan isareti ve satir ici hata.
+   Gorunume ozel scoped stiller daha yuksek oncelige sahip oldugu icin
+   mevcut tasarimlari bozmaz; yalnizca tutarlilik saglar. */
+.field label,
+.form-field label,
+.form-grup label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.field label .required,
+.form-field label .required,
+.form-grup label .required,
+label .required,
+.required {
+  color: var(--danger);
+  margin-left: 2px;
+}
+.form-error,
+.field-error,
+.field .hata-mesaji {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--danger);
+}
+/* Gecersiz alan: tutarli kirmizi cerceve (PrimeVue p-invalid zaten var). */
+.field .p-invalid,
+.form-field .p-invalid {
+  border-color: var(--danger) !important;
+}
+
 /* Sunum modu: hassas verileri gizle (musteriye gosterirken).
    Varsayilan "bulanik"; "gizle" modunda alan tamamen kaldirilir. */
 [data-sunum='on'] .gizli-veri,

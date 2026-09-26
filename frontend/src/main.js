@@ -123,6 +123,33 @@ app.mount('#app')
 
 initTabloEtiketleri()
 
+// Erisilebilirlik guvenlik agi: `title` (veya tooltip) tasiyip `aria-label`'i olmayan
+// butonlara aria-label kopyala. Boylece mevcut tum gorunumlerdeki ikon-only butonlar
+// ekran okuyucularda anlamli etiket kazanir; tek tek gorunum duzenlemek gerekmez.
+;(function () {
+  const duzelt = () => {
+    try {
+      document.querySelectorAll('button[title]:not([aria-label])').forEach((b) => {
+        const baslik = b.getAttribute('title')
+        if (baslik) b.setAttribute('aria-label', baslik)
+      })
+    } catch {
+      /* yoksay */
+    }
+  }
+  duzelt()
+  let zamanlayici = null
+  const observer = new MutationObserver(() => {
+    if (zamanlayici) return
+    // DOM toplu guncellemelerinde tek seferde calis (kisa debounce).
+    zamanlayici = setTimeout(() => {
+      zamanlayici = null
+      duzelt()
+    }, 150)
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+})()
+
 // Legacy (surumsuz) service worker kayitlarini temizle: takili kalan eski SW
 // beyaz ekrana yol acabiliyor. Surum degistiginde eski kayit kaldirilir.
 ;(function () {

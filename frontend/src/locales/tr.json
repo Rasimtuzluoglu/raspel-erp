@@ -266,6 +266,8 @@
     "edit": "Düzenle",
     "refresh": "Yenile",
     "add": "Ekle",
+    "yuklenemedi": "Veriler yüklenemedi",
+    "tekrarDene": "Tekrar Dene",
     "upload": "Yükle",
     "dosya": {
       "dosyaSecilmedi": "Dosya seçilmedi",

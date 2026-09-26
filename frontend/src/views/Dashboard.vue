@@ -1739,13 +1739,13 @@ const whatsappLink = (f) => {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  background: var(--success);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 60%, transparent);
   animation: canli-nabiz 1.8s infinite;
 }
 @keyframes canli-nabiz {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);
   }
   70% {
     box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
@@ -2454,7 +2454,7 @@ const whatsappLink = (f) => {
   background: var(--danger);
 }
 .dot.kasa {
-  background: #f59e0b;
+  background: var(--warning);
 }
 .dot.banka {
   background: var(--accent);

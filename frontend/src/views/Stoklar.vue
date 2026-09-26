@@ -150,7 +150,26 @@
       <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
     </div>
 
-    <template v-if="!stokStore.loading && gosterim === 'tablo'">
+    <!-- Yukleme hatasi: "veri yok" ile karismamasi icin ayri hata durumu + tekrar dene. -->
+    <div
+      v-if="!stokStore.loading && stokStore.error"
+      class="yukleme-hatasi"
+      role="alert"
+    >
+      <i class="pi pi-exclamation-triangle" />
+      <div class="yukleme-hatasi-metin">
+        <strong>{{ t('common.yuklenemedi') }}</strong>
+        <span>{{ stokStore.error }}</span>
+      </div>
+      <Button
+        :label="t('common.tekrarDene')"
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-outlined"
+        @click="stoklariYukle"
+      />
+    </div>
+
+    <template v-if="!stokStore.loading && !stokStore.error && gosterim === 'tablo'">
       <AppDataTable
         v-model:selection="seciliStoklar"
         v-model:expanded-rows="expandedRows"
@@ -344,7 +363,7 @@
     </template>
 
     <div
-      v-if="!stokStore.loading && gosterim === 'kart'"
+      v-if="!stokStore.loading && !stokStore.error && gosterim === 'kart'"
       class="stok-kartlar"
     >
       <StokKart
@@ -1610,6 +1629,39 @@ h2 {
   font-size: 12px;
   color: var(--accent);
   font-weight: 600;
+}
+
+/* Yukleme hatasi kutusu (veri yok durumundan ayri). */
+.yukleme-hatasi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+  border-radius: 12px;
+  color: var(--danger);
+}
+.yukleme-hatasi > i {
+  font-size: 20px;
+}
+.yukleme-hatasi-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.yukleme-hatasi-metin strong {
+  font-size: 13px;
+}
+.yukleme-hatasi-metin span {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Mobil/PWA filtre toggle (masaustunde gizli). */

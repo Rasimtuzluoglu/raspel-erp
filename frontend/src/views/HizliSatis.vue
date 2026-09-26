@@ -2800,8 +2800,8 @@ const sepetiTemizle = () => {
   gap: 4px;
   font-size: 12px;
   font-weight: 700;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+  background: var(--success-soft);
   padding: 2px 8px;
   border-radius: 12px;
   white-space: nowrap;
@@ -2930,7 +2930,7 @@ const sepetiTemizle = () => {
   padding: 2px;
 }
 .secili-musteri-sil:hover {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .sepet-bolum {
@@ -2959,7 +2959,7 @@ const sepetiTemizle = () => {
   border-bottom: 1px solid var(--border);
 }
 .sepet-item.aktif-satir {
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--info-soft);
   box-shadow: inset 3px 0 0 var(--accent, var(--accent));
   border-radius: 8px;
 }
@@ -3022,8 +3022,8 @@ const sepetiTemizle = () => {
   font-size: 19px;
 }
 .sepet-sil:hover {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .sepet-kontroller {
   display: flex;
@@ -3138,13 +3138,13 @@ const sepetiTemizle = () => {
   align-items: center;
   margin-top: 8px;
   padding: 8px 12px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: var(--success-soft);
+  border: 1px solid var(--success-border);
   border-radius: 8px;
   font-size: 14px;
 }
 .para-ustu strong {
-  color: #34d399;
+  color: var(--success);
   font-size: 16px;
 }
 .satis-ozet {
@@ -3158,7 +3158,7 @@ const sepetiTemizle = () => {
   gap: 8px;
   font-size: 16px;
   font-weight: 700;
-  color: #34d399;
+  color: var(--success);
   margin-bottom: 8px;
 }
 .satis-ozet-baslik i {
@@ -3176,10 +3176,10 @@ const sepetiTemizle = () => {
   color: var(--text-muted);
 }
 .satis-ozet-satir .borc {
-  color: #f87171;
+  color: var(--danger);
 }
 .satis-ozet-satir .para {
-  color: #34d399;
+  color: var(--success);
 }
 .musteri-bakiye-uyari {
   display: flex;
@@ -3191,13 +3191,13 @@ const sepetiTemizle = () => {
   font-weight: 600;
 }
 .musteri-bakiye-uyari.danger {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
 }
 .musteri-bakiye-uyari.warn {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
+  background: var(--warning-soft);
+  color: var(--warning);
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
 .musteri-bakiye-uyari.info {
@@ -3257,13 +3257,13 @@ const sepetiTemizle = () => {
   padding: 5px 8px;
   font-size: 12px;
   color: var(--text-secondary);
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
   border-radius: 8px;
 }
 .sepet-son-alis i {
   font-size: 12px;
-  color: #f59e0b;
+  color: var(--warning);
 }
 .sepet-son-alis strong {
   color: var(--accent);
@@ -3525,7 +3525,7 @@ const sepetiTemizle = () => {
   margin-bottom: 6px;
 }
 .required {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .fiyat-tip-select {
