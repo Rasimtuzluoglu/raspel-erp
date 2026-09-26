@@ -308,6 +308,31 @@
                 </div>
               </div>
               <div class="form-field">
+                <label>{{ tahsilatForm.odemeYontemi === 'NAKIT' ? t('sahaPortali.kasa') : t('sahaPortali.banka') }}</label>
+                <Dropdown
+                  v-if="tahsilatForm.odemeYontemi === 'NAKIT'"
+                  v-model="tahsilatForm.kasaId"
+                  :options="kasalar"
+                  option-label="ad"
+                  option-value="id"
+                  :placeholder="t('sahaPortali.hesapSecinOpsiyonel')"
+                  filter
+                  show-clear
+                  class="w-full"
+                />
+                <Dropdown
+                  v-else
+                  v-model="tahsilatForm.bankaId"
+                  :options="bankalar"
+                  option-label="ad"
+                  option-value="id"
+                  :placeholder="t('sahaPortali.hesapSecinOpsiyonel')"
+                  filter
+                  show-clear
+                  class="w-full"
+                />
+              </div>
+              <div class="form-field">
                 <label>{{ t('common.description') }}</label>
                 <Textarea
                   v-model="tahsilatForm.aciklama"
@@ -845,7 +870,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI, teslimatAPI, tahsilatAPI, ajandaAPI } from '../api/index.js'
+import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI, teslimatAPI, tahsilatAPI, ajandaAPI, kasaAPI, bankaAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
 import ImzaPad from '../components/ImzaPad.vue'
@@ -910,9 +935,11 @@ const yeniSiparisForm = ref({
 })
 
 // Saha modülleri: tahsilat, görev/not, fotoğraflar
-const tahsilatForm = ref({ cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', aciklama: '' })
+const tahsilatForm = ref({ cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', kasaId: null, bankaId: null, aciklama: '' })
 const tahsilatGonderiliyor = ref(false)
 const tahsilatToplam = ref(0)
+const kasalar = ref([])
+const bankalar = ref([])
 const odemeYontemleri = computed(() => [
   { label: t('sahaPortali.nakit'), value: 'NAKIT' },
   { label: t('sahaPortali.havale'), value: 'HAVALE' },
@@ -957,14 +984,16 @@ onMounted(async () => {
 const tumunuYukle = async () => {
   yukleniyor.value = true
   try {
-    const [sipRes, izinRes, masrafRes, cariRes, stokRes, notRes, gorevRes] = await Promise.allSettled([
+    const [sipRes, izinRes, masrafRes, cariRes, stokRes, notRes, gorevRes, kasaRes, bankaRes] = await Promise.allSettled([
       siparisAPI.getAll({ size: 500 }),
       personelIzinAPI.getAll({ size: 500 }),
       personelMasrafTalepAPI.getKullaniciTalepleri(),
       cariHesapAPI.getAll({ size: 500 }),
       stokAPI.getAll({ size: 500 }),
       notAPI.getAll({ size: 200 }),
-      ajandaAPI.gorevler()
+      ajandaAPI.gorevler(),
+      kasaAPI.getAll({ size: 500 }),
+      bankaAPI.getAll({ size: 500 })
     ])
     if (sipRes.status === 'fulfilled') siparisler.value = unwrapList(sipRes.value)
     if (izinRes.status === 'fulfilled') izinler.value = unwrapList(izinRes.value)
@@ -973,6 +1002,8 @@ const tumunuYukle = async () => {
     if (stokRes.status === 'fulfilled') stoklar.value = unwrapList(stokRes.value)
     if (notRes.status === 'fulfilled') notlar.value = unwrapList(notRes.value)
     if (gorevRes.status === 'fulfilled') gorevler.value = unwrapList(gorevRes.value)
+    if (kasaRes.status === 'fulfilled') kasalar.value = unwrapList(kasaRes.value)
+    if (bankaRes.status === 'fulfilled') bankalar.value = unwrapList(bankaRes.value)
   } finally {
     yukleniyor.value = false
   }
@@ -1254,12 +1285,14 @@ const tahsilatKaydet = async () => {
       cariId: tahsilatForm.value.cariHesapId,
       tutar: tahsilatForm.value.tutar,
       odemeYontemi: tahsilatForm.value.odemeYontemi,
+      kasaId: tahsilatForm.value.kasaId,
+      bankaId: tahsilatForm.value.bankaId,
       aciklama: tahsilatForm.value.aciklama || t('sahaPortali.sahaTahsilati'),
       hareketTarihi: new Date().toISOString().substring(0, 10)
     })
     tahsilatToplam.value += Number(tahsilatForm.value.tutar) || 0
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.tahsilatKaydedildi'), life: 3000 })
-    tahsilatForm.value = { cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', aciklama: '' }
+    tahsilatForm.value = { cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', kasaId: null, bankaId: null, aciklama: '' }
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   } finally {

@@ -23,6 +23,7 @@ public class SatinalmaSiparisDTO {
     private BigDecimal genelToplam;
     private String aciklama;
     private Long sirketId;
+    private Boolean stokIslendi;
     private LocalDateTime olusturmaTarihi;
     private List<SatinalmaSiparisKalemDTO> kalemler;
 }

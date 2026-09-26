@@ -90,9 +90,8 @@ public class TeklifService {
                 ? dto.getTeklifNo()
                 : seriNoServisi.teklifNoUret(sirketId);
 
-        BigDecimal araToplam = BigDecimal.ZERO;
-        BigDecimal kdvToplam = BigDecimal.ZERO;
-
+        // Birim fiyat KDV DAHİL kabul edilir (fatura/retail etiket modeli ile birebir aynı).
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new java.util.ArrayList<>();
         if (dto.getKalemler() != null) {
             for (TeklifKalemDTO k : dto.getKalemler()) {
                 BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE;
@@ -100,22 +99,21 @@ public class TeklifService {
                 BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : new BigDecimal("20");
 
-                BigDecimal brut = miktar.multiply(birimFiyat);
-                BigDecimal iskontoTutar = brut.multiply(iskontoOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-                BigDecimal net = brut.subtract(iskontoTutar);
-                // Teklifte satır iskontosu yalnız netten düşer; KDV brüt üzerinden hesaplanır.
-                BigDecimal kalemKdv = brut.multiply(kdvOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-
-                k.setTutar(net);
-                araToplam = araToplam.add(net);
-                kdvToplam = kdvToplam.add(kalemKdv);
+                com.raspel.erp.util.FaturaTutar.Satir satir =
+                        com.raspel.erp.util.FaturaTutar.satir(birimFiyat, miktar, iskontoOrani, kdvOrani);
+                satirlar.add(satir);
+                // Satır neti (KDV hariç) fatura ile aynı olsun diye kanonik hesapla yazılır.
+                k.setTutar(satir.net());
             }
         }
 
         BigDecimal iskontoOrani = dto.getIskontoOrani() != null ? dto.getIskontoOrani() : BigDecimal.ZERO;
-        BigDecimal genelIskontoTutari = araToplam.multiply(iskontoOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-        BigDecimal netAraToplam = araToplam.subtract(genelIskontoTutari);
-        BigDecimal genelToplam = netAraToplam.add(kdvToplam);
+        BigDecimal genelIskontoTutari = dto.getIskontoTutari() != null ? dto.getIskontoTutari() : BigDecimal.ZERO;
+        com.raspel.erp.util.FaturaTutar.Belge belge =
+                com.raspel.erp.util.FaturaTutar.belge(satirlar, genelIskontoTutari);
+        BigDecimal araToplam = belge.araToplam();
+        BigDecimal kdvToplam = belge.kdv();
+        BigDecimal genelToplam = belge.genelToplam();
 
         Teklif t = Teklif.builder()
                 .teklifNo(teklifNo)
@@ -188,8 +186,7 @@ public class TeklifService {
 
         kalemRepository.deleteByTeklifId(t.getId());
 
-        BigDecimal araToplam = BigDecimal.ZERO;
-        BigDecimal kdvToplam = BigDecimal.ZERO;
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new java.util.ArrayList<>();
 
         if (dto.getKalemler() != null) {
             for (TeklifKalemDTO k : dto.getKalemler()) {
@@ -201,14 +198,12 @@ public class TeklifService {
                 BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : new BigDecimal("20");
 
-                BigDecimal brut = miktar.multiply(birimFiyat);
-                BigDecimal iskontoTutar = brut.multiply(iskontoOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-                BigDecimal net = brut.subtract(iskontoTutar);
-                BigDecimal kalemKdv = brut.multiply(kdvOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                com.raspel.erp.util.FaturaTutar.Satir satir =
+                        com.raspel.erp.util.FaturaTutar.satir(birimFiyat, miktar, iskontoOrani, kdvOrani);
+                satirlar.add(satir);
+                BigDecimal net = satir.net();
 
                 k.setTutar(net);
-                araToplam = araToplam.add(net);
-                kdvToplam = kdvToplam.add(kalemKdv);
 
                 kalemRepository.save(TeklifKalem.builder()
                         .teklifId(t.getId())
@@ -225,9 +220,18 @@ public class TeklifService {
         }
 
         BigDecimal iskontoOrani = dto.getIskontoOrani() != null ? dto.getIskontoOrani() : BigDecimal.ZERO;
-        BigDecimal genelIskontoTutari = araToplam.multiply(iskontoOrani).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-        BigDecimal netAraToplam = araToplam.subtract(genelIskontoTutari);
-        BigDecimal genelToplam = netAraToplam.add(kdvToplam);
+        BigDecimal genelIskontoTutari = dto.getIskontoTutari() != null ? dto.getIskontoTutari() : BigDecimal.ZERO;
+        com.raspel.erp.util.FaturaTutar.Belge belge =
+                com.raspel.erp.util.FaturaTutar.belge(satirlar, genelIskontoTutari);
+        BigDecimal araToplam = belge.araToplam();
+        BigDecimal kdvToplam = belge.kdv();
+        BigDecimal genelToplam = belge.genelToplam();
+
+        t.setAraToplam(araToplam);
+        t.setIskontoOrani(iskontoOrani);
+        t.setIskontoTutari(genelIskontoTutari);
+        t.setKdv(kdvToplam);
+        t.setGenelToplam(genelToplam);
 
         t.setAraToplam(araToplam);
         t.setIskontoOrani(iskontoOrani);

@@ -5,6 +5,7 @@ import com.raspel.erp.dto.ticaret.FaturaDTO;
 import com.raspel.erp.dto.ticaret.FaturaKalemDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisDTO;
 import com.raspel.erp.dto.ticaret.SatinalmaSiparisKalemDTO;
+import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.ticaret.SatinalmaSiparis;
@@ -39,6 +40,7 @@ public class SatinalmaSiparisService {
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
     private final FaturaService faturaService;
+    private final com.raspel.erp.service.envanter.StokService stokService;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -140,8 +142,39 @@ public class SatinalmaSiparisService {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("TESLIM_ALINDI".equals(durum)) {
+            teslimAlStokGirisi(s);
+        }
         s.setDurum(durum);
         return entityToDTO(siparisRepository.save(s));
+    }
+
+    /**
+     * "Teslim Al" adımında satış/alış siparişinin kalemlerini gerçek stok girişi olarak işler.
+     * Aynı sipariş için tekrar çalışmaz (stokIslendi bayrağı). Faturaya dönüşümde çift giriş önlenir.
+     */
+    private void teslimAlStokGirisi(SatinalmaSiparis s) {
+        if (Boolean.TRUE.equals(s.getStokIslendi())) {
+            return;
+        }
+        List<SatinalmaSiparisKalem> kalemler = kalemRepository.findBySiparisId(s.getId());
+        for (SatinalmaSiparisKalem k : kalemler) {
+            if (k.getStokId() == null || k.getMiktar() == null
+                    || k.getMiktar().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            stokService.hareketEkle(StokHareketDTO.builder()
+                    .stokId(k.getStokId())
+                    .tur("GIRIS")
+                    .miktar(k.getMiktar())
+                    .hareketTarihi(LocalDate.now())
+                    .cariHesapId(s.getCariHesapId())
+                    .aciklama("Satınalma teslim: " + s.getSiparisNo())
+                    .kaynakTip("SATINALMA")
+                    .kaynakId(s.getId())
+                    .build());
+        }
+        s.setStokIslendi(true);
     }
 
     /**
@@ -183,6 +216,8 @@ public class SatinalmaSiparisService {
                 .cariHesapId(s.getCariHesapId())
                 .aciklama(s.getAciklama() != null ? s.getAciklama() : "Sipariş: " + s.getSiparisNo())
                 .kalemler(faturaKalemleri)
+                // Teslim alınmışsa stok girişi orada işlendi; fatura tekrar giriş yapmasın.
+                .stokIslemeAtla(Boolean.TRUE.equals(s.getStokIslendi()))
                 .build();
 
         FaturaDTO olusturulan = faturaService.faturaOlustur(faturaDTO, s.getSirketId(), kullaniciId, displayName);
@@ -255,6 +290,7 @@ public class SatinalmaSiparisService {
                 .talepId(s.getTalepId()).durum(s.getDurum())
                 .araToplam(s.getAraToplam()).kdv(s.getKdv()).genelToplam(s.getGenelToplam())
                 .aciklama(s.getAciklama()).sirketId(s.getSirketId())
+                .stokIslendi(s.getStokIslendi())
                 .olusturmaTarihi(s.getOlusturmaTarihi()).kalemler(kalemlerDto).build();
     }
 }

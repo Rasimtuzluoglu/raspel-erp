@@ -48,6 +48,11 @@ public class SatinalmaSiparis {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /** Mal teslim alındığında stok girişi işlendi mi? Çift girişi önler. */
+    @Column(name = "stok_islendi", nullable = false)
+    @Builder.Default
+    private Boolean stokIslendi = false;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 

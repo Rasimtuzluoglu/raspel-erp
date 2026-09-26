@@ -77,6 +77,9 @@ public class FaturaDTO {
     /** Faturanın oluştuğu sipariş. */
     private Long siparisId;
 
+    /** true ise stok hareketi işlenmez (stok başka bir adımda —örn. satınalma teslimi— yapılmışsa). */
+    private Boolean stokIslemeAtla;
+
     /** Fatura kesilirken e-posta bildiriminin durumu: GONDERILDI / GONDERILEMEDI / null (gönderilmedi). */
     private String emailGonderimDurumu;
 

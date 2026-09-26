@@ -507,7 +507,9 @@ public class FaturaService {
 
         if (faturaDurum == Fatura.FaturaDurum.KESILDI) {
             // İrsaliye zaten stok çıkışı yaptıysa fatura tekrar düşmemeli (çift düşüm önlenir).
-            if (!irsaliyeStokIslenmisMi(dto.getIrsaliyeId())) {
+            if (Boolean.TRUE.equals(dto.getStokIslemeAtla())) {
+                log.info("Fatura #{} stok işleme atlandı (stok başka adımda işlendi)", fatura.getFaturaNumarasi());
+            } else if (!irsaliyeStokIslenmisMi(dto.getIrsaliyeId())) {
                 List<Long> kritik = stokHareketleriIsle(fatura, stokYonu(tur), "Fatura #" + fatura.getFaturaNumarasi());
                 if (tur == Fatura.FaturaTur.SATIS) {
                     kritikStokUyarisiGonder(kritik, sirketId);

@@ -61,6 +61,7 @@ public class PersonelMasrafTalepController {
 
     @PatchMapping("/{id}/onayla")
     @Operation(summary = "Talebi onayla ve finans masraflarına aktar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<PersonelMasrafTalepDTO> onayla(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body,
@@ -72,6 +73,7 @@ public class PersonelMasrafTalepController {
 
     @PatchMapping("/{id}/reddet")
     @Operation(summary = "Talebi reddet")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<PersonelMasrafTalepDTO> reddet(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body,
@@ -83,6 +85,7 @@ public class PersonelMasrafTalepController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Talebi sil")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         talepService.sil(id);
         return ResponseEntity.noContent().build();

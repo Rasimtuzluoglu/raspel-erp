@@ -62,6 +62,7 @@ public class PersonelIzinController {
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "İzin durum güncelle", description = "İzin durumunu günceller (onayla/reddet)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<PersonelIzinDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(personelIzinService.durumGuncelle(id, body.getDurum(), body.getOnaylayan()));
     }
