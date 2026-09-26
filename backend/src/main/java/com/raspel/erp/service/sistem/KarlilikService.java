@@ -94,6 +94,9 @@ public class KarlilikService {
                     .stream().collect(java.util.stream.Collectors.groupingBy(IadeKalem::getIadeId));
         for (Iade iade : iadeler) {
             String ay = iade.getTarih() != null ? YearMonth.from(iade.getTarih()).toString() : null;
+            // Kaynak fatura iade bazında sabittir; kalem döngüsünde tekrar sorgulanmaz (N+1 önlenir).
+            Fatura kaynakFatura = iade.getFaturaId() != null
+                    ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
             for (IadeKalem ik : iadeKalemMap.getOrDefault(iade.getId(), List.of())) {
                 BigDecimal miktar = ik.getMiktar() != null ? ik.getMiktar() : BigDecimal.ZERO;
                 if (miktar.signum() == 0) continue;
@@ -102,8 +105,6 @@ public class KarlilikService {
                 BigDecimal birimM = stok != null ? maliyetService.ortalamaMaliyet(stok) : BigDecimal.ZERO;
                 if (birimM == null) birimM = BigDecimal.ZERO;
                 BigDecimal maliyet = birimM.multiply(miktar).setScale(OLCEK, RoundingMode.HALF_UP);
-                Fatura kaynakFatura = iade.getFaturaId() != null
-                        ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
                 iadeKirilim(kirilim, grp, iade, ik, stok, kaynakFatura, ciro, maliyet);
                 if (ay != null) {
                     BigDecimal[] agg = aylik.computeIfAbsent(ay, x -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});

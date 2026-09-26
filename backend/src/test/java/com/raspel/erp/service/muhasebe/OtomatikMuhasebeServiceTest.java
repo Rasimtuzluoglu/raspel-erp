@@ -92,4 +92,74 @@ class OtomatikMuhasebeServiceTest {
 
         assertDoesNotThrow(() -> otomatikMuhasebeService.bordroIsle(bordro()));
     }
+
+    private com.raspel.erp.entity.ticaret.Fatura fatura(String tur, String ara, String kdv, String toplam) {
+        return com.raspel.erp.entity.ticaret.Fatura.builder()
+                .id(9L).faturaNumarasi("FTR-9").sirketId(1L)
+                .tur(com.raspel.erp.entity.ticaret.Fatura.FaturaTur.valueOf(tur))
+                .tarih(LocalDate.of(2026, 7, 15))
+                .araToplam(new BigDecimal(ara)).kdv(new BigDecimal(kdv)).genelToplam(new BigDecimal(toplam))
+                .build();
+    }
+
+    @Test
+    void satisFaturaIsle_120Borc600Alacak391Alacak() {
+        when(muhasebeFisiRepository.findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(hesapPlaniRepository.findBySirketIdAndKod(anyLong(), any())).thenReturn(Optional.empty());
+
+        otomatikMuhasebeService.satisFaturaIsle(fatura("SATIS", "1000", "200", "1200"));
+
+        ArgumentCaptor<MuhasebeFisiDTO> captor = ArgumentCaptor.forClass(MuhasebeFisiDTO.class);
+        verify(muhasebeService).fisOlustur(captor.capture());
+        MuhasebeFisiDTO dto = captor.getValue();
+        assertEquals("SATIS_FATURA", dto.getKaynakTip());
+        assertTrue(dto.getKalemler().stream().anyMatch(k -> "120".equals(k.getHesapKodu())
+                && k.getBorc() != null && k.getBorc().compareTo(new BigDecimal("1200")) == 0));
+        assertTrue(dto.getKalemler().stream().anyMatch(k -> "600".equals(k.getHesapKodu())
+                && k.getAlacak() != null && k.getAlacak().compareTo(new BigDecimal("1000")) == 0));
+        assertTrue(dto.getKalemler().stream().anyMatch(k -> "391".equals(k.getHesapKodu())
+                && k.getAlacak() != null && k.getAlacak().compareTo(new BigDecimal("200")) == 0));
+    }
+
+    @Test
+    void alisFaturaIsle_153Ve191Borc320Alacak() {
+        when(muhasebeFisiRepository.findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(hesapPlaniRepository.findBySirketIdAndKod(anyLong(), any())).thenReturn(Optional.empty());
+
+        otomatikMuhasebeService.alisFaturaIsle(fatura("ALIS", "1000", "200", "1200"));
+
+        ArgumentCaptor<MuhasebeFisiDTO> captor = ArgumentCaptor.forClass(MuhasebeFisiDTO.class);
+        verify(muhasebeService).fisOlustur(captor.capture());
+        MuhasebeFisiDTO dto = captor.getValue();
+        assertEquals("ALIS_FATURA", dto.getKaynakTip());
+        assertTrue(dto.getKalemler().stream().anyMatch(k -> "153".equals(k.getHesapKodu()) && k.getBorc() != null));
+        assertTrue(dto.getKalemler().stream().anyMatch(k -> "191".equals(k.getHesapKodu()) && k.getBorc() != null));
+        assertTrue(dto.getKalemler().stream().anyMatch(k -> "320".equals(k.getHesapKodu())
+                && k.getAlacak() != null && k.getAlacak().compareTo(new BigDecimal("1200")) == 0));
+    }
+
+    @Test
+    void tahsilatIsle_kasaSecilirse100Borc() {
+        when(muhasebeFisiRepository.findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(hesapPlaniRepository.findBySirketIdAndKod(anyLong(), any())).thenReturn(Optional.empty());
+
+        otomatikMuhasebeService.tahsilatIsle(1L, 77L, new BigDecimal("500"), LocalDate.of(2026, 7, 20),
+                3L, null, "Acme");
+
+        ArgumentCaptor<MuhasebeFisiDTO> captor = ArgumentCaptor.forClass(MuhasebeFisiDTO.class);
+        verify(muhasebeService).fisOlustur(captor.capture());
+        assertTrue(captor.getValue().getKalemler().stream().anyMatch(k -> "100".equals(k.getHesapKodu())));
+        assertTrue(captor.getValue().getKalemler().stream().anyMatch(k -> "120".equals(k.getHesapKodu())));
+    }
+
+    @Test
+    void tahsilatIsle_nakitHesapYoksaFisUretmez() {
+        otomatikMuhasebeService.tahsilatIsle(1L, 78L, new BigDecimal("500"), LocalDate.of(2026, 7, 20),
+                null, null, "Acme");
+
+        verify(muhasebeService, never()).fisOlustur(any());
+    }
 }

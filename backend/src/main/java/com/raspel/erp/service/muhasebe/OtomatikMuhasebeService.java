@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Operasyonel belgelerden otomatik yevmiye fişi üretir.
  *
- * <p>Şu an kapsam: yalnızca <b>bordro</b>. Fatura/tahsilat entegrasyonu ayrı fazdadır.
+ * <p>Kapsam: bordro, satış faturası, alış faturası ve tahsilat.
  * Fiş üretimi iş akışını bloklamaz: hata durumunda loglanır, ilgili işlem devam eder.
  * Aynı kaynak için mükerrer fiş oluşturulmaz (kaynakTip + kaynakId).
  */
@@ -109,7 +109,8 @@ public class OtomatikMuhasebeService {
 
     /** Bordro silindiğinde/güncellendiğinde bağlı aktif fişi iptal eder (audit için kaydı korur). */
     @Transactional
-    public void bordroIptal(Long bordroId, Long sirketId) {        if (bordroId == null || sirketId == null) return;
+    public void bordroIptal(Long bordroId, Long sirketId) {
+        if (bordroId == null || sirketId == null) return;
         try {
             muhasebeFisiRepository
                     .findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(sirketId, KAYNAK_BORDRO, bordroId, "IPTAL")
@@ -185,18 +186,22 @@ public class OtomatikMuhasebeService {
     }
 
     /**
-     * Tahsilat yevmiye fişi: Borç 100/102 (Kasa/Banka) / Alacak 120 (Alıcılar).
-     * kasaId/bankaId verilmezse yalnız cari tahsilatı (120) kaydedilir.
+     * Tahsilat yevmiye fişi: Borç 100 (Kasa) veya 102 (Banka) / Alacak 120 (Alıcılar).
+     * Nakit hesabı (kasa veya banka) seçilmemişse karşı hesap bilinmediğinden fiş üretilmez
+     * (yalnız cari hareket kaydedilir).
      */
     @Transactional
     public void tahsilatIsle(Long sirketId, Long kaynakId, BigDecimal tutar, LocalDate tarih,
                              Long kasaId, Long bankaId, String cariAd) {
         if (sirketId == null || kaynakId == null || tutar == null || tutar.signum() == 0) return;
+        // Karşı hesap (kasa/banka) yoksa dengeli bir yevmiye fişi kurulamaz.
+        if (kasaId == null && bankaId == null) return;
         try {
             if (fisVarMi(sirketId, KAYNAK_TAHSILAT, kaynakId)) return;
 
-            String borcHesap = kasaId != null ? HESAP_KASA : HESAP_BANKA;
-            String borcAd = kasaId != null ? "Kasa" : "Bankalar";
+            boolean kasaMi = kasaId != null;
+            String borcHesap = kasaMi ? HESAP_KASA : HESAP_BANKA;
+            String borcAd = kasaMi ? "Kasa" : "Bankalar";
             hesapGaranti(sirketId, borcHesap, borcAd, "AKTIF");
             hesapGaranti(sirketId, HESAP_ALICILAR, "Alıcılar", "AKTIF");
 

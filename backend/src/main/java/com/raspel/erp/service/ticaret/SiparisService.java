@@ -143,6 +143,7 @@ public class SiparisService {
         s.setCariHesapId(dto.getCariHesapId());
         if (dto.getTur() != null) s.setTur(dto.getTur());
         if (dto.getDurum() != null) s.setDurum(dto.getDurum());
+        if (dto.getTeslimatAdresi() != null) s.setTeslimatAdresi(dto.getTeslimatAdresi());
         s.setAciklama(dto.getAciklama());
         s.setAraToplam(dto.getAraToplam());
         s.setKdv(dto.getKdv());

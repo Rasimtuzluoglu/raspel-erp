@@ -29,6 +29,9 @@ class MaasBordroServiceTest {
     @Mock private PersonelRepository personelRepository;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private MaasBordroService maasBordroService;
 
     private Personel createPersonel() {
@@ -90,5 +93,39 @@ class MaasBordroServiceTest {
         when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(createBordro(1L)));
         maasBordroService.sil(1L);
         verify(maasBordroRepository).delete(any(MaasBordro.class));
+    }
+
+    @Test
+    void onayla_kilitlerveOnayBilgisiYazar() {
+        MaasBordro bordro = createBordro(1L);
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(bordro));
+        when(maasBordroRepository.save(any(MaasBordro.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var result = maasBordroService.onayla(1L, "Yonetici", null);
+
+        assertEquals("ONAYLANDI", result.getDurum());
+        assertEquals("Yonetici", result.getOnaylayan());
+        assertNotNull(result.getOnayTarihi());
+    }
+
+    @Test
+    void onayla_zatenOnayliysaHata() {
+        MaasBordro bordro = createBordro(1L);
+        bordro.setDurum("ONAYLANDI");
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(bordro));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> maasBordroService.onayla(1L, "Yonetici", null));
+    }
+
+    @Test
+    void guncelle_onayliBordroDuzenlenemez() {
+        MaasBordro bordro = createBordro(1L);
+        bordro.setDurum("ONAYLANDI");
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(bordro));
+
+        MaasBordroDTO dto = MaasBordroDTO.builder().brutMaas(new BigDecimal("100")).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> maasBordroService.guncelle(1L, dto));
     }
 }

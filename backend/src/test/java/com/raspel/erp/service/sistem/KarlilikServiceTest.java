@@ -125,6 +125,30 @@ class KarlilikServiceTest {
     }
 
     @Test
+    void iadeSatistaOlmayanKategorideNegatifKirilimSatiriOlusturur() {
+        // Satış yalnız "Elektronik" kategorisinde; iade ise "Gida" kategorisinde.
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT))
+                .thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "100", "40")))));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
+        when(stokRepository.findById(20L)).thenReturn(Optional.of(stok(20L, "Gida")));
+        when(maliyetService.ortalamaMaliyet(any(Stok.class))).thenReturn(new BigDecimal("40"));
+        Iade iade = Iade.builder().id(6L).tur("SATIS").durum("TAMAMLANDI")
+                .tarih(LocalDate.of(2026, 9, 13)).sirketId(SIRKET).build();
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(SIRKET, "SATIS", "TAMAMLANDI", BAS, BIT))
+                .thenReturn(List.of(iade));
+        when(iadeKalemRepository.findByIadeIdIn(any())).thenReturn(List.of(
+                IadeKalem.builder().id(2L).iadeId(6L).stokId(20L).miktar(BigDecimal.ONE)
+                        .birimFiyat(new BigDecimal("50")).build()));
+
+        var r = service.karlilikAnalizi(SIRKET, BAS, BIT, "KATEGORI");
+
+        // İade, satışta olmayan "Gida" kategorisinde negatif satır oluşturmalı.
+        var gida = r.getKirilim().stream().filter(k -> "Gida".equals(k.getAd())).findFirst().orElse(null);
+        assertNotNull(gida, "İade kategorisi kırılımda görünmeli");
+        assertTrue(gida.getCiro().signum() < 0, "İade kırılım cirosu negatif olmalı");
+    }
+
+    @Test
     void negatifMarjliKalemlerListelenir() {
         when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "50", "80"),
                 kalem(11L, "1", "200", "150")))));
