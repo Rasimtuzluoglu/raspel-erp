@@ -56,8 +56,8 @@ public class AjandaController {
     }
 
     @PutMapping("/tasks/{id}")
-    @Operation(summary = "Görev güncelle", description = "Kişisel görevi günceller")
-    public ResponseEntity<AjandaGorevDTO> gorevGuncelle(@PathVariable Long id, @jakarta.validation.Valid @RequestBody AjandaGorevDTO dto, HttpServletRequest request) {
+    @Operation(summary = "Görev güncelle", description = "Kişisel görevi günceller (kısmi güncelleme destekler)")
+    public ResponseEntity<AjandaGorevDTO> gorevGuncelle(@PathVariable Long id, @RequestBody AjandaGorevDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(ajandaService.gorevGuncelle(id, dto, kullaniciId));
     }

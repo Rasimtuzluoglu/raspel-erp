@@ -317,6 +317,14 @@ const gunler = computed(() => {
   return liste
 })
 
+// "YYYY-MM-DD" (LocalDate) değerini yerel gece yarısına çevirir; UTC kaymasını önler.
+const yerelTarihe = (v) => {
+  if (!v) return null
+  if (v instanceof Date) return v
+  const s = String(v).slice(0, 10)
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
 const ayniGun = (a, b) => a && b && a.toDateString() === b.toDateString()
 
 const ayDegistir = (delta) => {
@@ -334,7 +342,7 @@ const gunuSec = (gun) => {
   seciliGun.value = gun
 }
 
-const gunOlaylari = (gun) => olaylar.value.filter((o) => ayniGun(new Date(o.tarih), gun))
+const gunOlaylari = (gun) => olaylar.value.filter((o) => ayniGun(yerelTarihe(o.tarih), gun))
 
 const seciliOlaylar = computed(() => (seciliGun.value ? gunOlaylari(seciliGun.value) : []))
 
@@ -403,7 +411,7 @@ const gorevKaydet = async () => {
   try {
     await ajandaAPI.gorevOlustur({
       ...gorevForm.value,
-      bitisTarihi: gorevForm.value.bitisTarihi ? gorevForm.value.bitisTarihi.toISOString().slice(0, 10) : null
+      bitisTarihi: gorevForm.value.bitisTarihi ? getLocalDateString(gorevForm.value.bitisTarihi) : null
     })
     toastBildirim.basarili(t('ajanda.gorevOlusturuldu'))
     gorevDialogAc.value = false

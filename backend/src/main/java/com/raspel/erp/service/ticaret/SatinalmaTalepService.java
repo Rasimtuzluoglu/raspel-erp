@@ -104,9 +104,20 @@ public class SatinalmaTalepService {
         SatinalmaTalep t = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
         tenantChecker.check(t.getSirketId(), "Talep");
+        if (!GECERLI_DURUMLAR.contains(durum)) {
+            throw new com.raspel.erp.exception.BusinessException("Geçersiz talep durumu: " + durum);
+        }
+        // Faturası/siparişi oluşmuş talep geri alınamaz.
+        if ("SIPARISE_DONUSTU".equals(t.getDurum()) && !"SIPARISE_DONUSTU".equals(durum)) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Siparişe dönüştürülmüş talep başka duruma alınamaz.");
+        }
         t.setDurum(durum);
         return entityToDTO(talepRepository.save(t));
     }
+
+    private static final java.util.Set<String> GECERLI_DURUMLAR =
+            java.util.Set.of("TASLAK", "ONAYLANDI", "REDDEDILDI", "SIPARISE_DONUSTU");
 
     public void sil(Long id) {
         SatinalmaTalep t = talepRepository.findById(id)

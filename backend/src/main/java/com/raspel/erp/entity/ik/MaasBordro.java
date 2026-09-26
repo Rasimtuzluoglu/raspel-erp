@@ -50,9 +50,21 @@ public class MaasBordro {
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
+    /** Bordro durumu: TASLAK | ONAYLANDI. ONAYLANDI sonrası düzenleme/silme kilitlenir. */
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String durum = "TASLAK";
+
+    @Column(name = "onay_tarihi")
+    private LocalDateTime onayTarihi;
+
+    @Column(name = "onaylayan", length = 100)
+    private String onaylayan;
+
     @PrePersist
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();
         if (kesintiler == null) kesintiler = BigDecimal.ZERO;
+        if (durum == null) durum = "TASLAK";
     }
 }

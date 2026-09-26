@@ -66,6 +66,12 @@ export const maasBordroAPI = {
   },
   delete(id) {
     return apiClient.delete(`/maas-bordro/${id}`)
+  },
+  onayla(id, kasaId = null) {
+    return apiClient.post(`/maas-bordro/${id}/onayla`, null, { params: kasaId ? { kasaId } : {} })
+  },
+  onayKaldir(id) {
+    return apiClient.post(`/maas-bordro/${id}/onay-kaldir`)
   }
 }
 

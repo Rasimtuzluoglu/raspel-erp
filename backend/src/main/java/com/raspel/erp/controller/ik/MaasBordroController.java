@@ -58,4 +58,21 @@ public class MaasBordroController {
         maasBordroService.sil(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/onayla")
+    @Operation(summary = "Bordroyu onayla", description = "Bordroyu onaylar ve kilitler; kasaId verilirse net tutar kasadan ödenir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<MaasBordroDTO> onayla(@PathVariable Long id,
+                                                @RequestParam(required = false) Long kasaId,
+                                                HttpServletRequest request) {
+        String onaylayan = (String) request.getAttribute("username");
+        return ResponseEntity.ok(maasBordroService.onayla(id, onaylayan != null ? onaylayan : "Yönetici", kasaId));
+    }
+
+    @PostMapping("/{id}/onay-kaldir")
+    @Operation(summary = "Bordro onayını kaldır", description = "Onaylanmış bordroyu yeniden düzenlenebilir yapar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<MaasBordroDTO> onayKaldir(@PathVariable Long id) {
+        return ResponseEntity.ok(maasBordroService.onayKaldir(id));
+    }
 }

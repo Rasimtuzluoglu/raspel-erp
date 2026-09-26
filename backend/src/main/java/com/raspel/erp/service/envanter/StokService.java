@@ -422,7 +422,10 @@ public class StokService {
                 .miktar(dto.getMiktar()).hareketTarihi(dto.getHareketTarihi())
                 .aciklama(dto.getAciklama()).cariHesap(cari)
                 .depoId(depoId)
-                .kaynakTip("MANUEL").build();
+                .kaynakTip(dto.getKaynakTip() != null && !dto.getKaynakTip().isBlank()
+                        ? dto.getKaynakTip() : "MANUEL")
+                .kaynakId(dto.getKaynakId())
+                .build();
 
         stokRepository.save(stok);
         depoStokService.guncelle(depoId, stok.getId(),

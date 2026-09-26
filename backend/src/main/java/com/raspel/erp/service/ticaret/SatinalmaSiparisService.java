@@ -147,6 +147,10 @@ public class SatinalmaSiparisService {
         tenantChecker.check(s.getSirketId(), "Sipariş");
         if ("TESLIM_ALINDI".equals(durum)) {
             teslimAlStokGirisi(s);
+        } else if (Boolean.TRUE.equals(s.getStokIslendi())) {
+            // Stok girisi islenmis siparis, stok tersine cevrilmeden geri alinamaz.
+            throw new BusinessException(
+                    "Teslim alınmış (stoğu işlenmiş) sipariş başka duruma alınamaz. Önce irsaliye/fatura iptal edin.");
         }
         s.setDurum(durum);
         return entityToDTO(siparisRepository.save(s));

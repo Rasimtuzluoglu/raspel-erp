@@ -1,15 +1,19 @@
 package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.sistem.AjandaHatirlatici;
 import com.raspel.erp.entity.ticaret.Fatura;
+import com.raspel.erp.repository.sistem.AjandaHatirlaticiRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.sistem.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -26,6 +30,7 @@ public class HatirlaticiService {
     private final FaturaRepository faturaRepository;
     private final EmailService emailService;
     private final BildirimService bildirimService;
+    private final AjandaHatirlaticiRepository ajandaHatirlaticiRepository;
 
     @Scheduled(cron = "0 0 8 * * *")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "hatirlatici", lockAtMostFor = "PT20M", lockAtLeastFor = "PT1M")
@@ -66,5 +71,39 @@ public class HatirlaticiService {
             gonderilen++;
         }
         log.info("Vadesi geçen hatırlatıcı tamamlandı - Gönderilen: {}", gonderilen);
+    }
+
+    /**
+     * Zamanı gelmiş kişisel ajanda hatırlatıcıları için bildirim üretir ve
+     * hatırlatıcıyı "bildirildi" olarak işaretler. Her 15 dakikada bir çalışır.
+     */
+    @Scheduled(cron = "0 */15 * * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "ajandaHatirlatici", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
+    @Transactional
+    public void ajandaHatirlaticiGonder() {
+        List<AjandaHatirlatici> bekleyenler;
+        try {
+            bekleyenler = ajandaHatirlaticiRepository
+                    .findByBildirildiFalseAndHatirlatmaZamaniLessThanEqual(LocalDateTime.now());
+        } catch (Exception e) {
+            log.warn("Ajanda hatırlatıcıları listelenemedi: {}", e.getMessage());
+            return;
+        }
+        int gonderilen = 0;
+        for (AjandaHatirlatici h : bekleyenler) {
+            try {
+                if (h.getSirketId() != null) {
+                    bildirimService.bildirimGonder(h.getSirketId(), "AJANDA",
+                            "Hatırlatıcı: " + h.getBaslik(),
+                            "Belirlediğiniz hatırlatıcı zamanı geldi.");
+                }
+                h.setBildirildi(true);
+                ajandaHatirlaticiRepository.save(h);
+                gonderilen++;
+            } catch (Exception e) {
+                log.warn("Ajanda hatırlatıcı bildirimi gönderilemedi (id: {}): {}", h.getId(), e.getMessage());
+            }
+        }
+        log.info("Ajanda hatırlatıcı tamamlandı - Gönderilen: {}", gonderilen);
     }
 }

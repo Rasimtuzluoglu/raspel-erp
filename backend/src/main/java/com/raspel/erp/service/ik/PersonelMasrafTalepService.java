@@ -126,13 +126,19 @@ public class PersonelMasrafTalepService {
         PersonelMasrafTalep talep = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Personel Masraf Talebi", id));
         tenantChecker.check(talep.getSirketId(), "Personel Masraf Talebi");
+        if ("ONAYLANDI".equals(talep.getDurum())) {
+            throw new BusinessException("Bu talep zaten onaylanmış.");
+        }
+        if ("REDDEDILDI".equals(talep.getDurum())) {
+            throw new BusinessException("Reddedilmiş talep onaylanamaz.");
+        }
 
         talep.setDurum("ONAYLANDI");
         talep.setOnaylayan(onaylayan);
         talep.setOnayNotu(onayNotu);
         talep = talepRepository.save(talep);
 
-        // Eğer MASRAF ise otomatik Finans Masraflar modülüne işle
+        // Eğer MASRAF ise otomatik Finans Masraflar modülüne işle.
         if ("MASRAF".equalsIgnoreCase(talep.getTur())) {
             try {
                 masrafIleEsle(talep);
@@ -148,6 +154,12 @@ public class PersonelMasrafTalepService {
         PersonelMasrafTalep talep = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Personel Masraf Talebi", id));
         tenantChecker.check(talep.getSirketId(), "Personel Masraf Talebi");
+        if ("ONAYLANDI".equals(talep.getDurum())) {
+            throw new BusinessException("Onaylanmış talep reddedilemez.");
+        }
+        if ("REDDEDILDI".equals(talep.getDurum())) {
+            throw new BusinessException("Bu talep zaten reddedilmiş.");
+        }
 
         talep.setDurum("REDDEDILDI");
         talep.setOnaylayan(onaylayan);

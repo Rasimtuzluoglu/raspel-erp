@@ -114,14 +114,18 @@ public class AjandaService {
         if (dto.getBaslik() == null || dto.getBaslik().isBlank()) {
             throw new BusinessException("Görev başlığı zorunludur");
         }
+        String oncelik = dto.getOncelik() != null ? dto.getOncelik() : "ORTA";
+        String durum = dto.getDurum() != null ? dto.getDurum() : "BEKLIYOR";
+        oncelikDogrula(oncelik);
+        durumDogrula(durum);
         AjandaGorev g = AjandaGorev.builder()
                 .kullaniciId(kullaniciId)
                 .sirketId(sirketId)
                 .baslik(dto.getBaslik().trim())
                 .aciklama(dto.getAciklama())
                 .bitisTarihi(dto.getBitisTarihi())
-                .oncelik(dto.getOncelik() != null ? dto.getOncelik() : "ORTA")
-                .durum(dto.getDurum() != null ? dto.getDurum() : "BEKLIYOR")
+                .oncelik(oncelik)
+                .durum(durum)
                 .build();
         return gorevToDTO(ajandaGorevRepository.save(g));
     }
@@ -131,12 +135,38 @@ public class AjandaService {
         AjandaGorev g = ajandaGorevRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Görev", id));
         yetkiKontrol(g.getKullaniciId(), kullaniciId);
-        if (dto.getBaslik() != null) g.setBaslik(dto.getBaslik().trim());
+        if (dto.getBaslik() != null) {
+            if (dto.getBaslik().isBlank()) {
+                throw new BusinessException("Görev başlığı boş olamaz");
+            }
+            g.setBaslik(dto.getBaslik().trim());
+        }
         if (dto.getAciklama() != null) g.setAciklama(dto.getAciklama());
         if (dto.getBitisTarihi() != null) g.setBitisTarihi(dto.getBitisTarihi());
-        if (dto.getOncelik() != null) g.setOncelik(dto.getOncelik());
-        if (dto.getDurum() != null) g.setDurum(dto.getDurum());
+        if (dto.getOncelik() != null) {
+            oncelikDogrula(dto.getOncelik());
+            g.setOncelik(dto.getOncelik());
+        }
+        if (dto.getDurum() != null) {
+            durumDogrula(dto.getDurum());
+            g.setDurum(dto.getDurum());
+        }
         return gorevToDTO(ajandaGorevRepository.save(g));
+    }
+
+    private static final java.util.Set<String> ONCELIKLER = java.util.Set.of("DUSUK", "ORTA", "YUKSEK");
+    private static final java.util.Set<String> DURUMLAR = java.util.Set.of("BEKLIYOR", "TAMAMLANDI", "IPTAL");
+
+    private void oncelikDogrula(String oncelik) {
+        if (!ONCELIKLER.contains(oncelik)) {
+            throw new BusinessException("Geçersiz öncelik: " + oncelik);
+        }
+    }
+
+    private void durumDogrula(String durum) {
+        if (!DURUMLAR.contains(durum)) {
+            throw new BusinessException("Geçersiz görev durumu: " + durum);
+        }
     }
 
     @Transactional

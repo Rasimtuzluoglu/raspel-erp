@@ -20,7 +20,7 @@
         <EmptyState />
       </template>
       <Column
-        field="personelAd"
+        field="personelAdi"
         :header="t('maasBordro.personel')"
         sortable
       />
@@ -67,17 +67,47 @@
         </template>
       </Column>
       <Column
+        field="durum"
+        :header="t('maasBordro.durum')"
+        style="width: 130px"
+      >
+        <template #body="{ data }">
+          <span
+            class="durum-rozet"
+            :class="data.durum === 'ONAYLANDI' ? 'durum-onayli' : 'durum-taslak'"
+          >
+            {{ data.durum === 'ONAYLANDI' ? t('maasBordro.onaylandi') : t('maasBordro.taslak') }}
+          </span>
+        </template>
+      </Column>
+      <Column
         :header="t('maasBordro.islem')"
-        style="width: 120px"
+        style="width: 180px"
       >
         <template #body="{ data }">
           <Button
+            v-if="data.durum !== 'ONAYLANDI'"
             icon="pi pi-pencil"
             :aria-label="$t('common.edit')"
             class="p-button-rounded p-button-text"
             @click="dialogAc(data)"
           />
           <Button
+            v-if="data.durum !== 'ONAYLANDI'"
+            icon="pi pi-check"
+            :aria-label="t('maasBordro.onayla')"
+            class="p-button-rounded p-button-text p-button-success"
+            @click="onayla(data)"
+          />
+          <Button
+            v-if="data.durum === 'ONAYLANDI'"
+            icon="pi pi-lock-open"
+            :aria-label="t('maasBordro.onayKaldir')"
+            class="p-button-rounded p-button-text p-button-warning"
+            @click="onayKaldir(data)"
+          />
+          <Button
+            v-if="data.durum !== 'ONAYLANDI'"
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
@@ -204,6 +234,7 @@ const form = ref({
 const dialogHeader = computed(() => (duzenleme.value ? t('maasBordro.bordroDuzenle') : t('maasBordro.yeniBordro')))
 
 import { formatTarih as formatDate } from '../utils/format.js'
+import { getLocalDateString } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -242,7 +273,7 @@ const kaydet = async () => {
     const payload = {
       ...form.value,
       netMaas,
-      odemeTarihi: form.value.odemeTarihi?.toISOString?.().split('T')[0] ?? form.value.odemeTarihi
+      odemeTarihi: form.value.odemeTarihi ? getLocalDateString(form.value.odemeTarihi) : null
     }
     if (duzenleme.value) {
       await maasBordroAPI.update(form.value.id, payload)
@@ -261,7 +292,7 @@ const kaydet = async () => {
 }
 
 const sil = (data) => {
-  const personelAd = data.personelAd || data.id
+  const personelAd = data.personelAdi || data.id
   confirm.require({
     message: t('maasBordro.silOnayMesaj', { ad: personelAd }),
     header: t('common.silmeOnayi'),
@@ -279,11 +310,47 @@ const sil = (data) => {
     }
   })
 }
+
+const onayla = async (data) => {
+  try {
+    await maasBordroAPI.onayla(data.id)
+    toast.add({ severity: 'success', summary: t('maasBordro.onaylandi'), detail: t('maasBordro.onayBasarili'), life: 3000 })
+    const r = await maasBordroAPI.getAll()
+    list.value = unwrapList(r)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
+  }
+}
+
+const onayKaldir = async (data) => {
+  try {
+    await maasBordroAPI.onayKaldir(data.id)
+    toast.add({ severity: 'success', summary: t('maasBordro.onayKaldir'), detail: t('maasBordro.onayKaldirildi'), life: 3000 })
+    const r = await maasBordroAPI.getAll()
+    list.value = unwrapList(r)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
+  }
+}
 </script>
 
 <style scoped>
 .maas-container {
   padding: 0;
+}
+.durum-rozet {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.durum-onayli {
+  background: var(--green-100, #dcfce7);
+  color: var(--green-700, #15803d);
+}
+.durum-taslak {
+  background: var(--yellow-100, #fef9c3);
+  color: var(--yellow-700, #a16207);
 }
 .sayfa-baslik {
   display: flex;
