@@ -790,7 +790,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { teklifAPI, cariHesapAPI, stokAPI, sirketAPI, faturaAPI } from '../api/index.js'
-import { formatCurrency, formatPara, formatDate } from '../utils/format.js'
+import { formatCurrency, formatPara, formatDate, getLocalDateString } from '../utils/format.js'
 import { kdvOrani, teklifOzet } from '../utils/faturaHesapla.js'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -837,7 +837,7 @@ const durumSecenekleri = computed(() => [
 const varsayilanForm = {
   id: null,
   cariHesapId: null,
-  tarih: new Date().toISOString().substring(0, 10),
+      tarih: getLocalDateString(),
   gecerlilikTarihi: '',
   durum: 'TASLAK',
   paraBirimi: 'TRY',
@@ -1035,7 +1035,7 @@ const kalemSil = (idx) => {
 const yeniTeklifAc = () => {
   duzenlemeModu.value = false
   form.value = JSON.parse(JSON.stringify(varsayilanForm))
-  form.value.tarih = new Date().toISOString().substring(0, 10)
+  form.value.tarih = getLocalDateString()
   formDialog.value = true
 }
 

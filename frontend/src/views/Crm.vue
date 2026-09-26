@@ -390,7 +390,7 @@ const dialogHeader = computed(() => (duzenleme.value ? t('crm.firsatDuzenle') : 
 const toplamDeger = computed(() => firsatlar.value.reduce((t, f) => t + (Number(f.deger) || 0), 0))
 const kazananSayisi = computed(() => firsatlar.value.filter((f) => f.durum === 'KAZANILDI').length)
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 const durumEtiketi = (d) => durumlar.value.find((x) => x.value === d)?.label || d
 const durumSeverity = (d) =>
   ({ YENI: 'info', TEMAS: 'primary', TEKLIF: 'warning', KAZANILDI: 'success', KAYBEDILDI: 'danger' })[d] || 'secondary'
@@ -467,7 +467,7 @@ const kaydet = async () => {
     const payload = {
       ...form.value,
       tahminiKapanis: form.value.tahminiKapanis
-        ? (form.value.tahminiKapanis.toISOString?.().split('T')[0] ?? form.value.tahminiKapanis)
+        ? getLocalDateString(form.value.tahminiKapanis)
         : null
     }
     if (duzenleme.value) await crmAPI.firsatGuncelle(form.value.id, payload)

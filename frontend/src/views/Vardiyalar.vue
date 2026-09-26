@@ -20,7 +20,7 @@
         <EmptyState />
       </template>
       <Column
-        field="personelAd"
+        field="personelAdi"
         :header="t('vardiyalar.personel')"
         sortable
       />
@@ -180,7 +180,7 @@ const turEtiket = (tur) => ({
 
 const dialogHeader = computed(() => (duzenleme.value ? t('vardiyalar.duzenle') : t('vardiyalar.yeniVardiya')))
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -210,7 +210,7 @@ const kaydet = async () => {
   try {
     const payload = {
       ...form.value,
-      tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih
+      tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null
     }
     if (duzenleme.value) {
       await vardiyaAPI.update(form.value.id, payload)
@@ -229,7 +229,7 @@ const kaydet = async () => {
 }
 
 const sil = (data) => {
-  const personelAd = data.personelAd || data.id
+  const personelAd = data.personelAdi || data.id
   confirm.require({
     message: t('vardiyalar.silOnayMesaj', { ad: personelAd }),
     header: t('common.silmeOnayi'),

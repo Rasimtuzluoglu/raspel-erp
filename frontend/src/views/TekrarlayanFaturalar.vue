@@ -338,7 +338,7 @@ const kalemEkle = () => {
   form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20, iskontoOrani: 0, stokId: null })
 }
 
-const tarihParam = (d) => (d ? (d.toISOString?.().split('T')[0] ?? d) : null)
+const tarihParam = (d) => (d ? getLocalDateString(d) : null)
 
 const kaydet = async () => {
   if (!form.value.cariHesapId) {
@@ -411,7 +411,7 @@ const suretiUret = (k) => {
   })
 }
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 onMounted(() => {
   yukle()

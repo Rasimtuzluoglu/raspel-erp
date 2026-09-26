@@ -184,7 +184,7 @@ const form = ref({
 
 const dialogHeader = computed(() => (duzenleme.value ? t('fiyatListesi.duzenle') : t('fiyatListesi.yeniFiyat')))
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -217,7 +217,7 @@ const dialogAc = (data) => {
   dialog.value = true
 }
 
-const formatDateForApi = (d) => d?.toISOString?.().split('T')[0] ?? d
+const formatDateForApi = (d) => (d ? getLocalDateString(d) : d)
 
 const kaydet = async () => {
   kaydediliyor.value = true

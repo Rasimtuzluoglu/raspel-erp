@@ -166,7 +166,7 @@ public class KullaniciController {
     @PutMapping("/ben")
     @Operation(summary = "Profil güncelle", description = "Oturum açmış kullanıcının kendi profilini güncellemesine izin verir")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<KullaniciDTO> beniGuncelle(@Valid @RequestBody KullaniciDTO dto, HttpServletRequest request) {
+    public ResponseEntity<KullaniciDTO> beniGuncelle(@RequestBody KullaniciDTO dto, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(kullaniciService.profilGuncelle(kullaniciId, dto));
     }

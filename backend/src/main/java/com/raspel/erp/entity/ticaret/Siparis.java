@@ -54,6 +54,10 @@ public class Siparis {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /** Saha siparişlerinde teslimat adresi. */
+    @Column(name = "teslimat_adresi", length = 500)
+    private String teslimatAdresi;
+
     /** İyimser kilitleme. */
     @Version
     private Long version;

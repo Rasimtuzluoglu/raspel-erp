@@ -202,7 +202,7 @@ function depoAdi(id) {
   return depoListesi.value.find((d) => d.id === id)?.ad || '-'
 }
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -241,7 +241,7 @@ const kaydet = async () => {
     const s = form.value.sonKullanmaTarihi
     const payload = {
       ...form.value,
-      sonKullanmaTarihi: s ? (s.toISOString?.().split('T')[0] ?? s) : null,
+      sonKullanmaTarihi: s ? getLocalDateString(s) : null,
       miktar: form.value.miktar ?? 1
     }
     if (duzenleme.value) {

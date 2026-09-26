@@ -287,7 +287,7 @@ const kalemToplam = computed(() => {
   return form.value.kalemler.reduce((t, k) => t + (k.miktar || 0) * (k.birimFiyat || 0), 0)
 })
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 const faturaList = ref([])
 
@@ -348,7 +348,7 @@ const kaydet = async () => {
   try {
     const payload = {
       ...form.value,
-      tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih,
+      tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null,
       tutar: kalemToplam.value,
       kalemler: form.value.kalemler.map((k) => ({
         stokId: k.stokId,

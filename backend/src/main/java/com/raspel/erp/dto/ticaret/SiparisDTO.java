@@ -25,6 +25,7 @@ public class SiparisDTO {
     private Long driverId;
     private String driverAd;
     private Long sirketId;
+    private String teslimatAdresi;
     private LocalDateTime olusturmaTarihi;
     private List<SiparisKalemDTO> kalemler;
 }

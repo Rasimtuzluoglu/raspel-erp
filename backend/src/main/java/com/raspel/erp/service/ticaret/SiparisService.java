@@ -101,6 +101,7 @@ public class SiparisService {
                 .cariHesapId(dto.getCariHesapId()).tur("SATIS")
                 .durum(dto.getDurum() != null && !dto.getDurum().isBlank() ? dto.getDurum() : "TEKLIF")
                 .aciklama(dto.getAciklama())
+                .teslimatAdresi(dto.getTeslimatAdresi())
                 .araToplam(dto.getAraToplam()).kdv(dto.getKdv())
                 .genelToplam(dto.getGenelToplam()).sirketId(sirketId)
                 .build();
@@ -336,6 +337,7 @@ public class SiparisService {
         return SiparisDTO.builder().id(s.getId()).siparisNo(s.getSiparisNo()).tarih(s.getTarih())
                 .cariHesapId(s.getCariHesapId()).cariHesapAdi(cariAdi)
                 .tur(s.getTur()).durum(s.getDurum()).aciklama(s.getAciklama())
+                .teslimatAdresi(s.getTeslimatAdresi())
                 .driverId(s.getDriverId()).driverAd(s.getDriverAd())
                 .araToplam(s.getAraToplam()).kdv(s.getKdv()).genelToplam(s.getGenelToplam())
                 .sirketId(s.getSirketId()).olusturmaTarihi(s.getOlusturmaTarihi()).kalemler(kalemler).build();

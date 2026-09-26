@@ -164,7 +164,7 @@ const form = ref({ tarih: new Date(), kategori: '', aciklama: '', tutar: 0, belg
 
 const dialogHeader = computed(() => (duzenleme.value ? t('masraflar.duzenle') : t('masraflar.yeniMasraf')))
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 onMounted(async () => {
   yukleniyor.value = true
@@ -188,7 +188,7 @@ const dialogAc = (data) => {
 const kaydet = async () => {
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih }
+    const payload = { ...form.value, tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null }
     if (duzenleme.value) {
       await masrafAPI.update(form.value.id, payload)
       toastBildirim.basarili(t('masraflar.guncellendi'))

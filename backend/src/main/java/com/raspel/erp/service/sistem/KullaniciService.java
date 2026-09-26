@@ -248,7 +248,12 @@ public class KullaniciService {
     public KullaniciDTO profilGuncelle(Long id, KullaniciDTO dto) {
         Kullanici k = kullaniciRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", id));
-        if (dto.getDisplayName() != null) k.setDisplayName(dto.getDisplayName());
+        if (dto.getDisplayName() != null) {
+            if (dto.getDisplayName().isBlank()) {
+                throw new com.raspel.erp.exception.BusinessException("Görünüm adı boş olamaz");
+            }
+            k.setDisplayName(dto.getDisplayName());
+        }
         if (dto.getAvatarUrl() != null) k.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCompanyName() != null) k.setCompanyName(dto.getCompanyName());
         return entityToDTO(kullaniciRepository.save(k));

@@ -238,7 +238,7 @@ const form = ref({ tarih: new Date(), stokId: null, beklenenMiktar: 0, sayilanMi
 
 const dialogHeader = computed(() => (duzenleme.value ? t('stokSayim.sayimDuzenle') : t('stokSayim.yeniSayim')))
 
-import { formatTarih as formatDate } from '../utils/format.js'
+import { formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 const formatNumber = (v) => {
   if (v === null || v === undefined) return '0'
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
@@ -289,7 +289,7 @@ const kaydet = async () => {
     const fark = form.value.sayilanMiktar - form.value.beklenenMiktar
     const payload = {
       ...form.value,
-      tarih: form.value.tarih?.toISOString?.().split('T')[0] ?? form.value.tarih,
+      tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null,
       fark
     }
     if (duzenleme.value) {

@@ -457,9 +457,20 @@ public class IadeService {
                             .build();
                 }).collect(Collectors.toList());
 
+        // Bağlı faturadan cari bilgisini çöz (liste ekranında cari adı görünür).
+        Long cariId = null;
+        String cariAd = null;
+        if (i.getFaturaId() != null) {
+            Fatura f = faturaRepository.findById(i.getFaturaId()).orElse(null);
+            if (f != null && f.getCariHesap() != null) {
+                cariId = f.getCariHesap().getId();
+                cariAd = f.getCariHesap().getAd();
+            }
+        }
         return IadeDTO.builder()
                 .id(i.getId()).faturaId(i.getFaturaId()).tur(i.getTur()).tarih(i.getTarih())
                 .tutar(i.getTutar()).aciklama(i.getAciklama()).durum(i.getDurum())
+                .cariHesapId(cariId).cariHesapAd(cariAd)
                 .sirketId(i.getSirketId()).olusturmaTarihi(i.getOlusturmaTarihi())
                 .kalemler(kalemler)
                 .build();

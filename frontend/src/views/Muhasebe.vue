@@ -821,7 +821,7 @@ import { formatTarih as formatDate } from '../utils/format.js'
 const tipEtiketi = (tip) => ({ AKTIF: t('muhasebe.tipAktif'), PASIF: t('muhasebe.tipPasif'), GELIR: t('muhasebe.tipGelir'), GIDER: t('muhasebe.tipGider') })[tip] || tip
 const tipSeverity = (tip) => ({ AKTIF: 'info', PASIF: 'warning', GELIR: 'success', GIDER: 'danger' })[tip] || 'secondary'
 
-const tarihParam = (d) => (d ? (d.toISOString?.().split('T')[0] ?? d) : null)
+const tarihParam = (d) => (d ? getLocalDateString(d) : null)
 
 onMounted(() => {
   hesaplariYukle()

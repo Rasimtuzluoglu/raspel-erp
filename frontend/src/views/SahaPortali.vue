@@ -875,7 +875,7 @@ import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
 import ImzaPad from '../components/ImzaPad.vue'
 import { useI18n } from 'vue-i18n'
-import { formatTarih } from '../utils/format.js'
+import { formatTarih, getLocalDateString } from '../utils/format.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -906,8 +906,8 @@ const siparisKaydediliyor = ref(false)
 const imzaForm = ref({ teslimAlan: '', notlar: '' })
 const izinForm = ref({
   izinTuru: t('sahaPortali.izinYillik'),
-  baslangic: new Date().toISOString().substring(0, 10),
-  bitis: new Date().toISOString().substring(0, 10),
+  baslangic: getLocalDateString(),
+  bitis: getLocalDateString(),
   aciklama: ''
 })
 const masrafForm = ref({
@@ -1146,7 +1146,7 @@ const masrafTalepGonder = async () => {
       kategori: masrafForm.value.kategori,
       tutar: masrafForm.value.tutar,
       aciklama: masrafForm.value.aciklama,
-      tarih: new Date().toISOString().substring(0, 10)
+      tarih: getLocalDateString()
     })
     if (masrafFoto.value && olusan?.data?.id) {
       try {
@@ -1288,7 +1288,7 @@ const tahsilatKaydet = async () => {
       kasaId: tahsilatForm.value.kasaId,
       bankaId: tahsilatForm.value.bankaId,
       aciklama: tahsilatForm.value.aciklama || t('sahaPortali.sahaTahsilati'),
-      hareketTarihi: new Date().toISOString().substring(0, 10)
+      hareketTarihi: getLocalDateString()
     })
     tahsilatToplam.value += Number(tahsilatForm.value.tutar) || 0
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.tahsilatKaydedildi'), life: 3000 })
@@ -1377,7 +1377,7 @@ const hizliSiparisKaydet = async () => {
   try {
     await siparisAPI.create({
       cariHesapId: form.cariHesapId,
-      tarih: new Date().toISOString().substring(0, 10),
+      tarih: getLocalDateString(),
       durum: 'BEKLIYOR',
       aciklama: t('sahaPortali.sahaSiparisi'),
       teslimatAdresi: form.adres || '',
