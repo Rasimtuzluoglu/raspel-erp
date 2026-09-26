@@ -51,6 +51,7 @@ public class CekSenetService {
     public CekSenetDTO olustur(CekSenetDTO dto) {
         CekSenet cs = CekSenet.builder()
                 .tur(dto.getTur()).cariHesapId(dto.getCariHesapId())
+                .faturaId(dto.getFaturaId())
                 .bankaAdi(dto.getBankaAdi()).sube(dto.getSube())
                 .cekNo(dto.getCekNo()).hesapNo(dto.getHesapNo())
                 .vadeTarihi(dto.getVadeTarihi()).tutar(dto.getTutar())
@@ -87,12 +88,17 @@ public class CekSenetService {
         return durumGuncelle(id, durum, null, null);
     }
 
+    public CekSenetDTO durumGuncelle(Long id, String durum, Long kasaId, Long bankaId) {
+        return durumGuncelle(id, durum, kasaId, bankaId, null);
+    }
+
     /**
      * Durum günceller. {@code TAHSIL_EDILDI} durumuna geçişte cari hesaba TAHSILAT hareketi
      * yazılır ve (seçildiyse) kasa/banka hesabına giriş işlenir; böylece tahsilat cari/kasa/
-     * hareket kayıtlarına yansır. Tahsil edilmiş kayıt geri alınamaz.
+     * hareket kayıtlarına yansır. {@code faturaId} verilirse tahsilat o faturaya bağlanır ve
+     * faturanın kalan/ödeme durumu güncellenir. Tahsil edilmiş kayıt geri alınamaz.
      */
-    public CekSenetDTO durumGuncelle(Long id, String durum, Long kasaId, Long bankaId) {
+    public CekSenetDTO durumGuncelle(Long id, String durum, Long kasaId, Long bankaId, Long faturaId) {
         CekSenet cs = cekSenetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cek/Senet", id));
         tenantChecker.check(cs.getSirketId(), "Cek/Senet");
@@ -106,19 +112,21 @@ public class CekSenetService {
         cs.setDurum(durum);
         CekSenet kaydedilen = cekSenetRepository.save(cs);
         if (yeniTahsil) {
-            tahsilatiIsle(kaydedilen, kasaId, bankaId);
+            tahsilatiIsle(kaydedilen, kasaId, bankaId, faturaId != null ? faturaId : kaydedilen.getFaturaId());
         }
         return entityToDTO(kaydedilen);
     }
 
-    private void tahsilatiIsle(CekSenet cs, Long kasaId, Long bankaId) {
+    private void tahsilatiIsle(CekSenet cs, Long kasaId, Long bankaId, Long faturaId) {
         if (cs.getTutar() == null || cs.getTutar().signum() <= 0) return;
         if (kasaId != null && bankaId != null) {
             throw new BusinessException("Aynı tahsilat hem kasaya hem bankaya işlenemez; tek hesap seçin");
         }
         if (cs.getCariHesapId() != null) {
+            // faturaId verilirse tahsilat o faturaya bağlanır; fatura kalan/ödeme durumu güncellenir.
             hareketService.hareketOlustur(com.raspel.erp.dto.finans.HareketDTO.builder()
                     .cariHesapId(cs.getCariHesapId())
+                    .faturaId(faturaId)
                     .tur("TAHSILAT")
                     .tutar(cs.getTutar())
                     .hareketTarihi(java.time.LocalDate.now())
@@ -196,6 +204,7 @@ public class CekSenetService {
         return CekSenetDTO.builder()
                 .id(cs.getId()).tur(cs.getTur())
                 .cariHesapId(cs.getCariHesapId())
+                .faturaId(cs.getFaturaId())
                 .cariHesapAdi(cariAdi)
                 .bankaAdi(cs.getBankaAdi()).sube(cs.getSube())
                 .cekNo(cs.getCekNo()).hesapNo(cs.getHesapNo())

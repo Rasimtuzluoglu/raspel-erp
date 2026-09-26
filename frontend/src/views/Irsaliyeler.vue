@@ -59,6 +59,13 @@
             @click="durumGuncelle(data, 'KESILDI')"
           />
           <Button
+            v-if="data.durum === 'KESILDI' && !data.faturaId"
+            icon="pi pi-file"
+            class="p-button-rounded p-button-text p-button-warning"
+            :title="t('irsaliyeler.faturayaDonustur')"
+            @click="faturayaDonustur(data)"
+          />
+          <Button
             v-if="data.durum !== 'IPTAL'"
             icon="pi pi-times"
             class="p-button-rounded p-button-text p-button-danger"
@@ -317,6 +324,27 @@ const durumGuncelle = async (data, durum) => {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataDurum'))
   }
 }
+const faturayaDonustur = (data) => {
+  confirm.require({
+    message: t('irsaliyeler.faturayaDonusturOnay', { no: data.irsaliyeNo }),
+    header: t('irsaliyeler.faturayaDonustur'),
+    icon: 'pi pi-file',
+    acceptLabel: t('common.onayla'),
+    rejectLabel: t('common.vazgec'),
+    accept: async () => {
+      try {
+        await irsaliyeAPI.faturayaDonustur(data.id)
+        toastBildirim.basarili(t('irsaliyeler.faturayaDonusturuldu'))
+        const r = await irsaliyeAPI.getAll()
+        list.value = unwrapList(r)
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || err?.message || t('irsaliyeler.hataDurum'))
+      }
+    },
+    reject: () => {}
+  })
+}
+
 const pdfIndir = async (data) => {
   try {
     const res = await pdfAPI.irsaliye(data.id)

@@ -25,6 +25,10 @@ public class CekSenet {
     @Column(name = "cari_hesap_id", nullable = true)
     private Long cariHesapId;
 
+    /** Tahsil edilecek fatura (opsiyonel). Verilirse tahsilat bu faturaya bağlanır. */
+    @Column(name = "fatura_id")
+    private Long faturaId;
+
     @Column(name = "banka_adi", length = 100)
     private String bankaAdi;
 

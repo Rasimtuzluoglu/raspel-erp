@@ -58,6 +58,7 @@ public class SiparisService {
     private final KullaniciRepository kullaniciRepository;
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
+    private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -159,7 +160,30 @@ public class SiparisService {
         tenantChecker.check(s.getSirketId(), "Sipariş");
         String eskiDurum = s.getDurum();
 
+        // Sipariş geri alınıyorsa (FATURA_KESILDI -> başka durum): bağlı fatura varsa iptal et,
+        // aksi halde yeniden faturalama çift fatura + çift stok düşümüne yol açar.
+        if ("FATURA_KESILDI".equals(eskiDurum) && !"FATURA_KESILDI".equals(durum)) {
+            var bagliFaturalar = faturaRepository.findBySiparisId(s.getId()).stream()
+                    .filter(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL)
+                    .collect(java.util.stream.Collectors.toList());
+            for (Fatura bf : bagliFaturalar) {
+                try {
+                    faturaService.faturaDurumGuncelle(bf.getId(), "IPTAL");
+                } catch (Exception e) {
+                    throw new com.raspel.erp.exception.BusinessException(
+                            "Siparişe bağlı fatura iptal edilemedi (" + bf.getFaturaNumarasi() + "): " + e.getMessage());
+                }
+            }
+        }
+
         if ("FATURA_KESILDI".equals(durum) && !"FATURA_KESILDI".equals(eskiDurum)) {
+            // Aynı sipariş için hâlihazırda (iptal olmayan) fatura varsa tekrar kesme.
+            boolean mevcutFatura = faturaRepository.findBySiparisId(s.getId()).stream()
+                    .anyMatch(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL);
+            if (mevcutFatura) {
+                throw new com.raspel.erp.exception.BusinessException(
+                        "Bu sipariş için zaten fatura kesilmiş. Önce mevcut faturayı iptal edin.");
+            }
             List<SiparisKalem> kalemler = kalemRepository.findBySiparisId(s.getId());
             List<FaturaKalemDTO> faturaKalemler = new java.util.ArrayList<>();
             for (SiparisKalem k : kalemler) {
@@ -178,6 +202,7 @@ public class SiparisService {
                     .tur("SATIS")
                     .durum("KESILDI")
                     .cariHesapId(s.getCariHesapId())
+                    .siparisId(s.getId())
                     .aciklama("Sipariş #" + s.getSiparisNo() + " dönüşümü")
                     .araToplam(s.getAraToplam())
                     .kdv(s.getKdv())

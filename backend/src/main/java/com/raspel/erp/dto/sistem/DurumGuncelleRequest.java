@@ -18,4 +18,7 @@ public class DurumGuncelleRequest {
 
     /** Tahsilat için opsiyonel banka hesabı (yalnızca çek/senet tahsilinde kullanılır). */
     private Long bankaId;
+
+    /** Çek/senet tahsilatında bağlanacak fatura (opsiyonel). */
+    private Long faturaId;
 }

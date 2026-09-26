@@ -58,6 +58,15 @@ public class IrsaliyeController {
         return ResponseEntity.ok(irsaliyeService.durumGuncelle(id, body.getDurum()));
     }
 
+    @PostMapping("/{id}/faturaya-donustur")
+    @Operation(summary = "İrsaliyeyi faturaya dönüştür",
+            description = "Kesilmiş irsaliyeyi faturaya çevirir; stok tekrar düşülmez (irsaliyeId bağı).")
+    public ResponseEntity<IrsaliyeDTO> faturayaDonustur(@PathVariable Long id,
+                                                        jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(irsaliyeService.faturayaDonustur(id, sirketId));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "İrsaliye sil", description = "İrsaliyeyi siler (yalnızca ADMIN)")
     @PreAuthorize("hasRole('ADMIN')")

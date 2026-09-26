@@ -16,6 +16,9 @@ public class CekSenetDTO {
     @NotBlank(message = "Çek/senet türü seçilmelidir")
     private String tur;
     private Long cariHesapId;
+
+    /** Tahsil edilecek fatura (opsiyonel). */
+    private Long faturaId;
     private String cariHesapAdi;
     private String bankaAdi;
     private String sube;

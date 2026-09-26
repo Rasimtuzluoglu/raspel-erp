@@ -74,6 +74,9 @@ public class FaturaDTO {
     /** Faturanın dayandığı irsaliye; verilirse stok çift düşümü önlenir. */
     private Long irsaliyeId;
 
+    /** Faturanın oluştuğu sipariş. */
+    private Long siparisId;
+
     /** Fatura kesilirken e-posta bildiriminin durumu: GONDERILDI / GONDERILEMEDI / null (gönderilmedi). */
     private String emailGonderimDurumu;
 

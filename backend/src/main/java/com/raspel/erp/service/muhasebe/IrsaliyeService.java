@@ -6,6 +6,7 @@ import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
 import com.raspel.erp.entity.muhasebe.IrsaliyeKalem;
+import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.exception.BusinessException;
@@ -47,6 +48,8 @@ public class IrsaliyeService {
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    private final com.raspel.erp.service.ticaret.FaturaService faturaService;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -79,6 +82,61 @@ public class IrsaliyeService {
                         .birim(k.getBirim()).build());
             }
         }
+        return entityToDTO(i);
+    }
+
+    /**
+     * Kesilmiş irsaliyeyi faturaya dönüştürür. İrsaliye stoğu zaten işlediği için
+     * faturaya {@code irsaliyeId} bağlanır; böylece fatura kesilirken stok tekrar
+     * düşülmez (çift düşüm önlenir). İrsaliyeye oluşan fatura bağlanır.
+     */
+    @Transactional
+    public IrsaliyeDTO faturayaDonustur(Long id, Long sirketId) {
+        Irsaliye i = irsaliyeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
+        if (!"KESILDI".equals(i.getDurum())) {
+            throw new BusinessException("Yalnızca kesilmiş irsaliye faturaya dönüştürülebilir.");
+        }
+        if (i.getFaturaId() != null) {
+            var mevcut = faturaRepository.findById(i.getFaturaId()).orElse(null);
+            if (mevcut != null && mevcut.getDurum() != Fatura.FaturaDurum.IPTAL) {
+                throw new BusinessException("Bu irsaliye zaten faturaya dönüştürülmüş: " + mevcut.getFaturaNumarasi());
+            }
+        }
+        List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
+        List<com.raspel.erp.dto.ticaret.FaturaKalemDTO> faturaKalemler = new java.util.ArrayList<>();
+        for (IrsaliyeKalem k : kalemler) {
+            // İrsaliye kaleminde fiyat/KDV yok; stok kartından satış fiyatı ve KDV oranı çözülür.
+            java.math.BigDecimal birimFiyat = java.math.BigDecimal.ZERO;
+            java.math.BigDecimal kdv = new java.math.BigDecimal("20");
+            if (k.getStokId() != null) {
+                var stok = stokRepository.findById(k.getStokId()).orElse(null);
+                if (stok != null) {
+                    birimFiyat = stok.getSatisFiyati() != null ? stok.getSatisFiyati()
+                            : (stok.getFiyat() != null ? stok.getFiyat() : java.math.BigDecimal.ZERO);
+                    if (stok.getKdvOrani() != null) kdv = stok.getKdvOrani();
+                }
+            }
+            faturaKalemler.add(com.raspel.erp.dto.ticaret.FaturaKalemDTO.builder()
+                    .aciklama(k.getAciklama() != null ? k.getAciklama() : "")
+                    .adet(k.getMiktar() != null ? k.getMiktar() : java.math.BigDecimal.ONE)
+                    .birimFiyat(birimFiyat).kdvOrani(kdv).stokId(k.getStokId()).build());
+        }
+        com.raspel.erp.dto.ticaret.FaturaDTO faturaDTO = com.raspel.erp.dto.ticaret.FaturaDTO.builder()
+                .tarih(java.time.LocalDate.now())
+                .tur("SATIS").durum("KESILDI")
+                .cariHesapId(i.getCariHesapId())
+                .irsaliyeId(i.getId())
+                .siparisId(i.getSiparisId())
+                .depoId(i.getDepoId())
+                .aciklama("İrsaliye #" + i.getIrsaliyeNo() + " dönüşümü")
+                .kalemler(faturaKalemler)
+                .build();
+        var olusan = faturaService.faturaOlustur(faturaDTO, i.getSirketId(), null, null);
+        i.setFaturaId(olusan.getId());
+        irsaliyeRepository.save(i);
+        cacheYardimci.temizle("dashboard");
         return entityToDTO(i);
     }
 
@@ -157,6 +215,15 @@ public class IrsaliyeService {
                         "SATIS".equals(i.getTur()) ? adet.negate() : adet);
             }
         } else if (("IPTAL".equals(durum) || "TASLAK".equals(durum)) && "KESILDI".equals(i.getDurum())) {
+            // Bağlı (iptal olmayan) fatura varsa irsaliye geri alınamaz; aksi halde stok geri
+            // eklenirken fatura kesilmiş kalır ve çift/eksik stok oluşur.
+            if (i.getFaturaId() != null) {
+                var bagliFatura = faturaRepository.findById(i.getFaturaId()).orElse(null);
+                if (bagliFatura != null && bagliFatura.getDurum() != Fatura.FaturaDurum.IPTAL) {
+                    throw new BusinessException(
+                            "Bu irsaliyeye bağlı kesilmiş fatura var. Önce faturayı iptal edin.");
+                }
+            }
             // Kesilmis irsaliyeden geri donus (TASLAK/IPTAL): stok etkisi geri alinir.
             String sebep = "IPTAL".equals(durum) ? "İrsaliye iptal" : "İrsaliye geri alındı";
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());

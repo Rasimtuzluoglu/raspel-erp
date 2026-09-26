@@ -128,6 +128,10 @@ public class Fatura {
     @Column(name = "irsaliye_id")
     private Long irsaliyeId;
 
+    /** Faturanın oluştuğu sipariş (varsa). Sipariş geri alınınca bağlı fatura iptal edilir. */
+    @Column(name = "siparis_id")
+    private Long siparisId;
+
     /** Taksit olarak çekilen tutar */
     @Column(name = "taksit_tutar", precision = 19, scale = 2)
     private BigDecimal taksitTutar;

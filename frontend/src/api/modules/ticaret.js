@@ -191,6 +191,9 @@ export const irsaliyeAPI = {
   durumGuncelle(id, durum) {
     return apiClient.put(`/irsaliyeler/${id}/durum`, { durum })
   },
+  faturayaDonustur(id) {
+    return apiClient.post(`/irsaliyeler/${id}/faturaya-donustur`)
+  },
   delete(id) {
     return apiClient.delete(`/irsaliyeler/${id}`)
   }

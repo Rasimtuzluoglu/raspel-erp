@@ -2372,6 +2372,9 @@
   },
   "irsaliyeler": {
     "title": "Delivery Notes",
+    "faturayaDonustur": "Convert to Invoice",
+    "faturayaDonusturOnay": "Convert delivery note {no} to an invoice?",
+    "faturayaDonusturuldu": "Delivery note converted to invoice",
     "pdf": "PDF",
     "pdfIndirilemedi": "Could not download PDF",
     "yeniIrsaliye": "New Delivery Note",

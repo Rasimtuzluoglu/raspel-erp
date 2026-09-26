@@ -493,6 +493,7 @@ public class FaturaService {
                 .bankaId(dto.getBankaId())
                 .kartaBankaAktar(dto.getKartaBankaAktar())
                 .irsaliyeId(dto.getIrsaliyeId())
+                .siparisId(dto.getSiparisId())
                 .build();
 
         kalemler.forEach(k -> k.setFatura(fatura));
@@ -758,7 +759,11 @@ public class FaturaService {
             // Peşin tahsilat varsa kasa/banka girişini (idempotent) kaydet.
             tahsilatKaydetGerekirse(fatura);
         } else if (geriAliniyor) {
-            stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura geri alındı #" + fatura.getFaturaNumarasi());
+            // İrsaliye stoğu zaten işlediyse ve bu fatura irsaliyeye bağlıysa ters kayıt yapma
+            // (irsaliye iptalinde stok geri eklenir; burada tekrar eklenirse şişer).
+            if (!irsaliyeStokIslenmisMi(fatura.getIrsaliyeId())) {
+                stokHareketleriIsle(fatura, tersStokYonu(fatura.getTur()), "Fatura geri alındı #" + fatura.getFaturaNumarasi());
+            }
             cariBakiyeGuncelle(fatura, true);
             // Peşin tahsilat kasa/banka hareketini de geri al.
             kasaBankaTersKayit(fatura);
@@ -1537,6 +1542,7 @@ public class FaturaService {
                 .kasaId(fatura.getKasaId())
                 .kasaAd(fatura.getKasaId() != null ? kasaHaritasi.get(fatura.getKasaId()) : null)
                 .irsaliyeId(fatura.getIrsaliyeId())
+                .siparisId(fatura.getSiparisId())
                 .build();
     }
 }

@@ -2372,6 +2372,9 @@
   },
   "irsaliyeler": {
     "title": "İrsaliyeler",
+    "faturayaDonustur": "Faturaya Dönüştür",
+    "faturayaDonusturOnay": "{no} irsaliyesini faturaya dönüştürmek istiyor musunuz?",
+    "faturayaDonusturuldu": "İrsaliye faturaya dönüştürüldü",
     "pdf": "PDF",
     "pdfIndirilemedi": "PDF indirilemedi",
     "yeniIrsaliye": "Yeni İrsaliye",
