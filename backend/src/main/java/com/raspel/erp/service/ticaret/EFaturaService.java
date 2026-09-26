@@ -48,6 +48,26 @@ public class EFaturaService {
     @Value("${app.efatura.gib-endpoint:}")
     private String gibEndpoint;
 
+    /**
+     * E-Fatura zorunluluk eşiği (KDV hariç tutar). Bu tutarın üzerindeki satışlar e-Fatura,
+     * altındakiler e-Arşiv kapsamındadır. 2026 için 3.000 TL varsayılan.
+     */
+    @Value("${app.efatura.esik-tutar:3000}")
+    private BigDecimal efaturaEsikTutar;
+
+    /**
+     * Fatura tutarına göre varsayılan e-belge senaryosunu çözer. Çağıran açıkça senaryo
+     * vermediyse kullanılır: eşik üstü TEMELFATURA, eşik altı EARSIVEFATURA.
+     */
+    private String senaryoCoz(String verilenSenaryo, FaturaDTO fatura) {
+        if (verilenSenaryo != null && !verilenSenaryo.isBlank()) {
+            return verilenSenaryo;
+        }
+        BigDecimal matrah = fatura.getAraToplam() != null ? fatura.getAraToplam()
+                : (fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO);
+        return matrah.compareTo(efaturaEsikTutar) >= 0 ? "TEMELFATURA" : "EARSIVEFATURA";
+    }
+
     @Transactional(readOnly = true)
     public Page<EFaturaDTO> eFaturalariGetir(Long sirketId, Pageable pageable) {
         return eFaturaRepository.findBySirketIdOrderByOlusturmaTarihiDesc(sirketId, pageable)
@@ -83,16 +103,19 @@ public class EFaturaService {
             }
         }
 
-        String ublXml = generateUblXml(fatura, ettn, senaryo, tip, sirketId, aliciVkn);
+        String senaryoKarar = senaryoCoz(senaryo, fatura);
+        String ublXml = generateUblXml(fatura, ettn, senaryoKarar, tip, sirketId, aliciVkn);
 
         EFatura eFatura = EFatura.builder()
                 .faturaId(faturaId)
                 .ettn(ettn)
                 .faturaNo(fatura.getFaturaNumarasi())
-                .senaryo(senaryo != null ? senaryo : "TEMELFATURA")
+                .senaryo(senaryoKarar)
                 .tip(tip != null ? tip : "SATIS")
                 .gibDurumKodu(1000) // Hazırlandı
-                .gibDurumAciklama("E-Fatura taslağı hazırlandı, GİB gönderimine hazır.")
+                .gibDurumAciklama("EARSIVEFATURA".equals(senaryoKarar)
+                        ? "E-Arşiv taslağı hazırlandı (e-Fatura eşiği altı)."
+                        : "E-Fatura taslağı hazırlandı, GİB gönderimine hazır.")
                 .aliciVknTckn(aliciVkn)
                 .aliciUnvan(fatura.getCariHesapAd())
                 .odenecekTutar(fatura.getGenelToplam())

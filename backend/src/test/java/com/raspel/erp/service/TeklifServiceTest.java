@@ -10,6 +10,7 @@ import com.raspel.erp.repository.ticaret.TeklifKalemRepository;
 import com.raspel.erp.repository.ticaret.TeklifRepository;
 import com.raspel.erp.service.sistem.BildirimService;
 import com.raspel.erp.service.sistem.SeriNoServisi;
+import com.raspel.erp.service.sistem.DonemService;
 import com.raspel.erp.service.ticaret.FaturaService;
 import com.raspel.erp.service.ticaret.SiparisService;
 import com.raspel.erp.service.ticaret.TeklifService;
@@ -44,6 +45,7 @@ class TeklifServiceTest {
     @Mock private SeriNoServisi seriNoServisi;
     @Mock private BildirimService bildirimService;
     @Mock private TenantChecker tenantChecker;
+    @Mock private DonemService donemService;
     @InjectMocks private TeklifService teklifService;
 
     @BeforeEach

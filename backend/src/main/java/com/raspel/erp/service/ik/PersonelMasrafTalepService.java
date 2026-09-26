@@ -39,6 +39,7 @@ public class PersonelMasrafTalepService {
     private final BildirimService bildirimService;
         private final TenantChecker tenantChecker;
     private final OnayAyariService onayAyariService;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @Transactional(readOnly = true)
     public Page<PersonelMasrafTalepDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -58,6 +59,7 @@ public class PersonelMasrafTalepService {
     }
 
     public PersonelMasrafTalepDTO talepOlustur(PersonelMasrafTalepDTO dto, Long sirketId, Long kullaniciId) {
+        donemService.kilitKontrol(sirketId, dto.getTarih() != null ? dto.getTarih() : LocalDate.now(), "masraf talebi oluşturma");
         PersonelMasrafTalep talep = PersonelMasrafTalep.builder()
                 .personelId(dto.getPersonelId())
                 .kullaniciId(kullaniciId)

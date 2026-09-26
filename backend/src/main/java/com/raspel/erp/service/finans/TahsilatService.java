@@ -49,6 +49,7 @@ public class TahsilatService {
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.config.TenantChecker tenantChecker;
+    private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
     private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
@@ -174,13 +175,14 @@ public class TahsilatService {
 
         BigDecimal kalan = tutar;
         List<Long> uygulananFaturalar = new ArrayList<>();
+        Long ilkHareketId = null;
         for (Fatura f : acikFaturalar) {
             if (kalan.compareTo(BigDecimal.ZERO) <= 0) break;
             BigDecimal faturaKalan = f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO;
             if (faturaKalan.compareTo(BigDecimal.ZERO) <= 0) continue;
             BigDecimal tahsis = kalan.min(faturaKalan);
 
-            hareketService.hareketOlustur(HareketDTO.builder()
+            HareketDTO olusan = hareketService.hareketOlustur(HareketDTO.builder()
                             .cariHesapId(cariId)
                             .tur("TAHSILAT")
                             .tutar(tahsis)
@@ -197,6 +199,7 @@ public class TahsilatService {
                             .faturaId(f.getId())
                             .build(), sirketId);
 
+            if (ilkHareketId == null && olusan != null) ilkHareketId = olusan.getId();
             kalan = kalan.subtract(tahsis);
             uygulananFaturalar.add(f.getId());
         }
@@ -204,7 +207,7 @@ public class TahsilatService {
         if (kalan.compareTo(BigDecimal.ZERO) > 0) {
             // Fazla ödeme veya faturasız (avans) tahsilat: cariye alacak olarak kaydedilir.
             boolean faturasiz = uygulananFaturalar.isEmpty();
-            hareketService.hareketOlustur(HareketDTO.builder()
+            HareketDTO olusanFazla = hareketService.hareketOlustur(HareketDTO.builder()
                     .cariHesapId(cariId)
                     .tur("TAHSILAT")
                     .tutar(kalan)
@@ -221,6 +224,7 @@ public class TahsilatService {
                     .valorTarihi(valorTarihi)
                     .faturaId(null)
                     .build(), sirketId);
+            if (ilkHareketId == null && olusanFazla != null) ilkHareketId = olusanFazla.getId();
         }
 
         // Kasa/banka hesabina giris (secildiyse). Ayni tutar iki hesaba birden yazilamaz.
@@ -233,6 +237,14 @@ public class TahsilatService {
             // POS tahsilatı gün sonunda POS'un banka hesabına aktarılır; burada ayrıca
             // bankaya yazılırsa tutar iki kez sayılır (çift yazım).
             bankaGirisiIsle(bankaId, tutar, cari, hareketTarihi, sirketId);
+        }
+
+        // Muhasebe entegrasyonu (iskelet): cari tahsilatı için yevmiye fişi.
+        // Kaynak: ilk cari hareket id'si; idempotenttir, hata akışı bloklamaz.
+        if (ilkHareketId != null && sirketId != null) {
+            otomatikMuhasebeService.tahsilatIsle(sirketId, ilkHareketId, tutar,
+                    hareketTarihi != null ? hareketTarihi : LocalDate.now(),
+                    kasaId, bankaId, cari.getAd());
         }
 
         log.info("Tahsilat kaydedildi -> Cari: {}, Tutar: {}, Yöntem: {}, Fatura sayısı: {}",

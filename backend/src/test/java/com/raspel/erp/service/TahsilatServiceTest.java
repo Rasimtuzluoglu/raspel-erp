@@ -43,6 +43,8 @@ class TahsilatServiceTest {
     private PosTerminaliRepository posTerminaliRepository;
     @Mock
     private com.raspel.erp.service.finans.TaksitService taksitService;
+    @Mock
+    private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks
     private TahsilatService tahsilatService;
 

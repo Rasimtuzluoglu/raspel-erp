@@ -39,6 +39,8 @@ class SatinalmaSiparisServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private FaturaService faturaService;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.service.envanter.StokService stokService;
     @InjectMocks private SatinalmaSiparisService satinalmaSiparisService;
 
     private SatinalmaSiparis createSiparis(Long id) {

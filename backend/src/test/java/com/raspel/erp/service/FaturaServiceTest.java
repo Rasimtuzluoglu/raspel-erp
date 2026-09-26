@@ -72,6 +72,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.service.finans.TaksitService taksitService;
     @Mock private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
     @Mock private jakarta.persistence.EntityManager entityManager;
+    @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private FaturaService faturaService;
 
     @org.junit.jupiter.api.BeforeEach

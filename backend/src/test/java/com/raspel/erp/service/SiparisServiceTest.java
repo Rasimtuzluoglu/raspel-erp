@@ -46,6 +46,7 @@ class SiparisServiceTest {
     @Mock private com.raspel.erp.repository.sistem.GorevRepository gorevRepository;
     @Mock private com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {

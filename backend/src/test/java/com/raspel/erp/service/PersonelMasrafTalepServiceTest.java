@@ -37,6 +37,7 @@ class PersonelMasrafTalepServiceTest {
     @Mock private BildirimService bildirimService;
     @Mock private TenantChecker tenantChecker;
     @Mock private OnayAyariService onayAyariService;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks private PersonelMasrafTalepService talepService;
 
     @Test

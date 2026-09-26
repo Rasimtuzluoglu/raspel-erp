@@ -72,6 +72,7 @@ public class FaturaService {
     private final FaturaKalemRepository faturaKalemRepository;
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
+    private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
     private final DepoRepository depoRepository;
@@ -531,6 +532,16 @@ public class FaturaService {
                         fatura.getFaturaNumarasi(), dto.getIrsaliyeId());
             }
             cariBakiyeGuncelle(fatura, false);
+
+            // Muhasebe entegrasyonu (iskelet): satış/alış faturası yevmiye fişi üretir.
+            // Hata iş akışını bloklamaz; OtomatikMuhasebeService içinde loglanır.
+            if (kaydedilen.getSirketId() != null) {
+                if (tur == Fatura.FaturaTur.SATIS) {
+                    otomatikMuhasebeService.satisFaturaIsle(kaydedilen);
+                } else if (tur == Fatura.FaturaTur.ALIS) {
+                    otomatikMuhasebeService.alisFaturaIsle(kaydedilen);
+                }
+            }
         }
 
         // E-posta, DB transaction'ı commit edildikten SONRA gönderilir; boylece SMTP
@@ -671,7 +682,7 @@ public class FaturaService {
             kasaRepository.save(kasa);
             kasaHareketRepository.save(KasaHareket.builder()
                     .kasa(kasa).tur("GIDER").tutar(tutar)
-                    .hareketTarihi(LocalDate.now())
+                    .hareketTarihi(fatura.getTarih() != null ? fatura.getTarih() : LocalDate.now())
                     .aciklama("Fatura iptal: " + fatura.getFaturaNumarasi())
                     .faturaId(fatura.getId()).kaynakTip("FATURA_IPTAL")
                     .build());
@@ -772,6 +783,13 @@ public class FaturaService {
             cariBakiyeGuncelle(fatura, false);
             // Peşin tahsilat varsa kasa/banka girişini (idempotent) kaydet.
             tahsilatKaydetGerekirse(fatura);
+            if (fatura.getSirketId() != null) {
+                if (fatura.getTur() == Fatura.FaturaTur.SATIS) {
+                    otomatikMuhasebeService.satisFaturaIsle(fatura);
+                } else if (fatura.getTur() == Fatura.FaturaTur.ALIS) {
+                    otomatikMuhasebeService.alisFaturaIsle(fatura);
+                }
+            }
         } else if (geriAliniyor) {
             // İrsaliye stoğu zaten işlediyse ve bu fatura irsaliyeye bağlıysa ters kayıt yapma
             // (irsaliye iptalinde stok geri eklenir; burada tekrar eklenirse şişer).
@@ -781,6 +799,14 @@ public class FaturaService {
             cariBakiyeGuncelle(fatura, true);
             // Peşin tahsilat kasa/banka hareketini de geri al.
             kasaBankaTersKayit(fatura);
+            // Oluşturulmuş otomatik yevmiye fişini iptal et.
+            if (fatura.getSirketId() != null) {
+                otomatikMuhasebeService.kaynakFisIptal(fatura.getSirketId(),
+                        fatura.getTur() == Fatura.FaturaTur.ALIS
+                                ? com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_ALIS_FATURA
+                                : com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_SATIS_FATURA,
+                        fatura.getId());
+            }
         }
 
         fatura.setDurum(durum);
@@ -1287,7 +1313,7 @@ public class FaturaService {
             hareketler.add(StokHareket.builder()
                     .stok(stok).tur(hareketTuru)
                     .miktar(stokDegisim.abs())
-                    .hareketTarihi(LocalDate.now())
+                    .hareketTarihi(fatura.getTarih() != null ? fatura.getTarih() : LocalDate.now())
                     .aciklama("Fatura revize #" + fatura.getFaturaNumarasi())
                     .cariHesap(fatura.getCariHesap())
                     .depoId(fatura.getDepoId())
@@ -1320,6 +1346,11 @@ public class FaturaService {
     }
 
     private List<Long> stokHareketleriIsle(Fatura fatura, String tur, String aciklama) {
+        java.time.LocalDate hareketTarihi = fatura.getTarih() != null ? fatura.getTarih() : LocalDate.now();
+        return stokHareketleriIsle(fatura, tur, aciklama, hareketTarihi);
+    }
+
+    private List<Long> stokHareketleriIsle(Fatura fatura, String tur, String aciklama, java.time.LocalDate hareketTarihi) {
         List<Long> kritikStokIds = new ArrayList<>();
         List<StokHareket> hareketler = new ArrayList<>();
         // Depo bazli senkron: faturada depo secilmisse o, yoksa varsayilan aktif depo.
@@ -1400,7 +1431,7 @@ public class FaturaService {
             hareketler.add(StokHareket.builder()
                     .stok(stok).tur(tur)
                     .miktar((k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO))
-                    .hareketTarihi(LocalDate.now())
+                    .hareketTarihi(hareketTarihi)
                     .aciklama(aciklama)
                     .cariHesap(fatura.getCariHesap())
                     .depoId(depoId)

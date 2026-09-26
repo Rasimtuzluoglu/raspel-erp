@@ -42,6 +42,7 @@ public class TeklifService {
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
         private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -114,6 +115,7 @@ public class TeklifService {
         String teklifNo = dto.getTeklifNo() != null && !dto.getTeklifNo().isBlank()
                 ? dto.getTeklifNo()
                 : seriNoServisi.teklifNoUret(sirketId);
+        donemService.kilitKontrol(sirketId, dto.getTarih() != null ? dto.getTarih() : java.time.LocalDate.now(), "teklif oluşturma");
 
         // Birim fiyat KDV DAHİL kabul edilir (fatura/retail etiket modeli ile birebir aynı).
         List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new java.util.ArrayList<>();
@@ -194,6 +196,10 @@ public class TeklifService {
         Teklif t = teklifRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teklif", id));
         tenantChecker.check(t.getSirketId(), "Teklif");
+        donemService.kilitKontrol(t.getSirketId(), t.getTarih() != null ? t.getTarih() : java.time.LocalDate.now(), "teklif güncelleme");
+        if (dto.getTarih() != null) {
+            donemService.kilitKontrol(t.getSirketId(), dto.getTarih(), "teklif güncelleme");
+        }
 
         if ("SIPARISE_DONUSTU".equals(t.getDurum()) || "FATURALASTI".equals(t.getDurum())) {
             throw new BusinessException("Siparişe veya faturaya dönüştürülmüş teklifler güncellenemez.");

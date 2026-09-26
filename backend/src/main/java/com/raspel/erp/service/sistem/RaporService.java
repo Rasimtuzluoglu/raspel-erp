@@ -53,6 +53,13 @@ public class RaporService {
     private final MasrafRepository masrafRepository;
     private final PdfRaporService pdfRaporService;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+    private final com.raspel.erp.repository.ticaret.IadeKalemRepository iadeKalemRepository;
+
+    /** TAMAMLANDI durumdaki iadeler (KDV/BA-BS düzeltmesi için). */
+    private List<com.raspel.erp.entity.ticaret.Iade> tamamlanmisIadeler(Long sirketId, LocalDate bas, LocalDate bit) {
+        return iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(sirketId, "SATIS", "TAMAMLANDI", bas, bit);
+    }
 
     public RaporDTO.CariEkstreDTO cariEkstreGetir(Long cariHesapId, LocalDate baslangic, LocalDate bitis) {
         CariHesap cari = cariHesapRepository.findById(cariHesapId)
@@ -180,9 +187,30 @@ public class RaporService {
                 .filter(f -> f.getTur() == Fatura.FaturaTur.ALIS)
                 .map(Fatura::getKdv).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Satış iadeleri çıkış KDV'yi, alış iadeleri giriş KDV'yi azaltır.
+        BigDecimal iadeSatisKdv = iadeKdv(sirketId, "SATIS", baslangic, bitis);
+        BigDecimal iadeAlisKdv = iadeKdv(sirketId, "ALIS", baslangic, bitis);
+        cikisKdv = cikisKdv.subtract(iadeSatisKdv);
+        girisKdv = girisKdv.subtract(iadeAlisKdv);
+
         return RaporDTO.KdvRaporDTO.builder()
                 .toplamKdvCikis(cikisKdv).toplamKdvGiris(girisKdv)
                 .kdvFarki(cikisKdv.subtract(girisKdv)).build();
+    }
+
+    /** TAMAMLANDI durumdaki iadelerin kalemlerinden toplam KDV tutarını hesaplar. */
+    private BigDecimal iadeKdv(Long sirketId, String tur, LocalDate bas, LocalDate bit) {
+        List<com.raspel.erp.entity.ticaret.Iade> iadeler = iadeRepository
+                .findBySirketIdAndTurAndDurumAndTarihBetween(sirketId, tur, "TAMAMLANDI", bas, bit);
+        if (iadeler.isEmpty()) return BigDecimal.ZERO;
+        List<Long> idler = iadeler.stream().map(com.raspel.erp.entity.ticaret.Iade::getId).collect(Collectors.toList());
+        return iadeKalemRepository.findByIadeIdIn(idler).stream()
+                .map(k -> {
+                    BigDecimal oran = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
+                    return com.raspel.erp.util.FaturaTutar
+                            .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, oran).kdv();
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu(Long sirketId) {
@@ -242,6 +270,10 @@ public class RaporService {
             }
         }
 
+        // İadeler beyannameyi düzeltir: satış iadesi satış matrah/KDV'sinden, alış iadesi alıştan düşülür.
+        iadeBeyannameUygula(satisMap, sirketId, "SATIS", bas, bit);
+        iadeBeyannameUygula(alisMap, sirketId, "ALIS", bas, bit);
+
         List<RaporDTO.KdvBeyannameSatiriDTO> satislar = satisMap.entrySet().stream()
                 .map(e -> RaporDTO.KdvBeyannameSatiriDTO.builder().kdvOrani(e.getKey()).matrah(e.getValue()[0]).kdv(e.getValue()[1]).build())
                 .collect(Collectors.toList());
@@ -260,15 +292,35 @@ public class RaporService {
                 .build();
     }
 
+    /**
+     * TAMAMLANDI iadelerin KDV-dahil kalem tutarlarını oran bazında matrah/KDV'ye ayrıştırıp
+     * ilgili haritadan (satış/alış) düşer. Böylece beyanname iadeyi de yansıtır.
+     */
+    private void iadeBeyannameUygula(Map<BigDecimal, BigDecimal[]> hedefMap, Long sirketId,
+                                     String tur, LocalDate bas, LocalDate bit) {
+        List<com.raspel.erp.entity.ticaret.Iade> iadeler = iadeRepository
+                .findBySirketIdAndTurAndDurumAndTarihBetween(sirketId, tur, "TAMAMLANDI", bas, bit);
+        if (iadeler.isEmpty()) return;
+        List<Long> idler = iadeler.stream().map(com.raspel.erp.entity.ticaret.Iade::getId).collect(Collectors.toList());
+        for (com.raspel.erp.entity.ticaret.IadeKalem k : iadeKalemRepository.findByIadeIdIn(idler)) {
+            BigDecimal oran = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
+            com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar
+                    .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, oran);
+            BigDecimal[] dizi = hedefMap.computeIfAbsent(oran, o -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            dizi[0] = dizi[0].subtract(satir.net());
+            dizi[1] = dizi[1].subtract(satir.kdv());
+        }
+    }
+
     /** Belirtilen ay (YYYY-MM) için BA (alış) veya BS (satış) bildirimi listesi üretir. */
-    public RaporDTO.BaBsDTO baBsGetir(String donem, String tur, BigDecimal esik, Long sirketId) {
-        YearMonth ay = donemAyCoz(donem);
+    public RaporDTO.BaBsDTO baBsGetir(String donem, String tur, BigDecimal esik, Long sirketId) {        YearMonth ay = donemAyCoz(donem);
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
         BigDecimal limit = esik != null ? esik : new BigDecimal("5000");
 
         Fatura.FaturaTur faturaTur = "BA".equalsIgnoreCase(tur) ? Fatura.FaturaTur.ALIS : Fatura.FaturaTur.SATIS;
-        List<RaporDTO.BaBsSatiriDTO> kayitlar = faturaRepository.basliklariTarihAraligindaGetir(sirketId, bas, bit).stream()
+        List<RaporDTO.BaBsSatiriDTO> kayitlar = new java.util.ArrayList<>(faturaRepository
+                .basliklariTarihAraligindaGetir(sirketId, bas, bit).stream()
                 .filter(f -> f.getTur() == faturaTur && f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .filter(f -> f.getGenelToplam() != null && f.getGenelToplam().compareTo(limit) > 0)
                 .map(f -> RaporDTO.BaBsSatiriDTO.builder()
@@ -277,8 +329,41 @@ public class RaporService {
                         .cariVkn(f.getCariHesap() != null ? f.getCariHesap().getVergiNumarasi() : null)
                         .matrah(f.getAraToplam()).kdv(f.getKdv()).tutar(f.getGenelToplam())
                         .build())
-                .sorted(Comparator.comparing(RaporDTO.BaBsSatiriDTO::getTarih))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+
+        // TAMAMLANDI iadeler BA/BS'e negatif satır olarak eklenir (bildirim tutarını azaltır).
+        String iadeTur = faturaTur == Fatura.FaturaTur.ALIS ? "ALIS" : "SATIS";
+        List<com.raspel.erp.entity.ticaret.Iade> iadeler = iadeRepository
+                .findBySirketIdAndTurAndDurumAndTarihBetween(sirketId, iadeTur, "TAMAMLANDI", bas, bit);
+        for (com.raspel.erp.entity.ticaret.Iade iade : iadeler) {
+            BigDecimal tutar = iade.getTutar() != null ? iade.getTutar() : BigDecimal.ZERO;
+            if (tutar.abs().compareTo(limit) <= 0) continue;
+            String cariAd = null;
+            String cariVkn = null;
+            BigDecimal matrahToplam = BigDecimal.ZERO;
+            BigDecimal kdvToplam = BigDecimal.ZERO;
+            List<com.raspel.erp.entity.ticaret.IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
+            for (com.raspel.erp.entity.ticaret.IadeKalem k : kalemler) {
+                BigDecimal oran = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
+                com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar
+                        .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, oran);
+                matrahToplam = matrahToplam.add(satir.net());
+                kdvToplam = kdvToplam.add(satir.kdv());
+            }
+            if (iade.getFaturaId() != null) {
+                Fatura f = faturaRepository.findById(iade.getFaturaId()).orElse(null);
+                if (f != null && f.getCariHesap() != null) {
+                    cariAd = f.getCariHesap().getAd();
+                    cariVkn = f.getCariHesap().getVergiNumarasi();
+                }
+            }
+            kayitlar.add(RaporDTO.BaBsSatiriDTO.builder()
+                    .faturaNo("İADE #" + iade.getId()).tarih(iade.getTarih())
+                    .cariAd(cariAd).cariVkn(cariVkn)
+                    .matrah(matrahToplam.negate()).kdv(kdvToplam.negate()).tutar(tutar.negate())
+                    .build());
+        }
+        kayitlar.sort(Comparator.comparing(RaporDTO.BaBsSatiriDTO::getTarih));
 
         BigDecimal toplam = kayitlar.stream().map(RaporDTO.BaBsSatiriDTO::getTutar).reduce(BigDecimal.ZERO, BigDecimal::add);
         return RaporDTO.BaBsDTO.builder()

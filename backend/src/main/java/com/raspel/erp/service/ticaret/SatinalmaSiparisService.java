@@ -41,6 +41,7 @@ public class SatinalmaSiparisService {
     private final TenantChecker tenantChecker;
     private final FaturaService faturaService;
     private final com.raspel.erp.service.envanter.StokService stokService;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -79,6 +80,7 @@ public class SatinalmaSiparisService {
         if (sirketId != null) {
             dto.setSirketId(sirketId);
         }
+        donemService.kilitKontrol(sirketId, dto.getTarih() != null ? dto.getTarih() : LocalDate.now(), "satınalma siparişi oluşturma");
         SatinalmaSiparis s = SatinalmaSiparis.builder()
                 .siparisNo(dto.getSiparisNo())
                 .tarih(dto.getTarih())
@@ -114,6 +116,7 @@ public class SatinalmaSiparisService {
         if ("FATURALANDI".equals(s.getDurum())) {
             throw new BusinessException("Faturası oluşturulmuş satınalma siparişi doğrudan düzenlenemez");
         }
+        donemService.kilitKontrol(s.getSirketId(), s.getTarih() != null ? s.getTarih() : LocalDate.now(), "satınalma siparişi güncelleme");
         s.setSiparisNo(dto.getSiparisNo());
         s.setTarih(dto.getTarih());
         s.setCariHesapId(dto.getCariHesapId());

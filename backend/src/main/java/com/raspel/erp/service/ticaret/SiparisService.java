@@ -59,6 +59,7 @@ public class SiparisService {
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
     private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -91,6 +92,7 @@ public class SiparisService {
     }
 
     public SiparisDTO olustur(SiparisDTO dto, Long sirketId) {
+        donemService.kilitKontrol(sirketId, dto.getTarih() != null ? dto.getTarih() : java.time.LocalDate.now(), "sipariş oluşturma");
         String siparisNo = dto.getSiparisNo() != null && !dto.getSiparisNo().isBlank()
                 ? dto.getSiparisNo()
                 : seriNoServisi.siparisNoUret(sirketId);
@@ -129,6 +131,11 @@ public class SiparisService {
         tenantChecker.check(s.getSirketId(), "Sipariş");
         if ("FATURA_KESILDI".equals(s.getDurum())) {
             throw new BusinessException("Faturası kesilmiş sipariş doğrudan düzenlenemez");
+        }
+        // Hem mevcut hem yeni tarih kilitli dönemde olmamalı.
+        donemService.kilitKontrol(s.getSirketId(), s.getTarih() != null ? s.getTarih() : java.time.LocalDate.now(), "sipariş güncelleme");
+        if (dto.getTarih() != null) {
+            donemService.kilitKontrol(s.getSirketId(), dto.getTarih(), "sipariş güncelleme");
         }
         s.setSiparisNo(dto.getSiparisNo());
         s.setTarih(dto.getTarih());

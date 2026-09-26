@@ -362,7 +362,7 @@ public class IadeService {
             stokHareketRepository.save(StokHareket.builder()
                     .stok(stok).tur(alisIadesi ? "GIRIS" : "CIKIS")
                     .miktar(k.getMiktar())
-                    .hareketTarihi(LocalDate.now())
+                    .hareketTarihi(iade.getTarih() != null ? iade.getTarih() : LocalDate.now())
                     .aciklama("İade iptal #" + iade.getId())
                     .depoId(depoId)
                     .kaynakTip("IADE").kaynakId(iade.getId())
