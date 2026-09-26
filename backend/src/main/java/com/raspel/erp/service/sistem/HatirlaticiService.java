@@ -81,9 +81,10 @@ public class HatirlaticiService {
 
     /**
      * Zamanı gelmiş kişisel ajanda hatırlatıcıları için bildirim üretir ve
-     * hatırlatıcıyı "bildirildi" olarak işaretler. Her 15 dakikada bir çalışır.
+     * hatırlatıcıyı "bildirildi" olarak işaretler. Her 5 dakikada bir çalışır;
+     * böylece hatırlatıcı zamanı en fazla 5 dakika gecikmeyle bildirilir.
      */
-    @Scheduled(cron = "0 */15 * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "ajandaHatirlatici", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
     @Transactional
     public void ajandaHatirlaticiGonder() {
