@@ -75,9 +75,9 @@ public class IadeService {
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
             for (IadeKalemDTO k : dto.getKalemler()) {
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
-                BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
-                BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                BigDecimal kalemTutar = netTutar.add(kdvTutari);
+                // Birim fiyat KDV DAHİL kabul edilir (fatura ile aynı kanonik model).
+                BigDecimal kalemTutar = com.raspel.erp.util.FaturaTutar
+                        .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, kdvOrani).brut();
                 toplamTutar = toplamTutar.add(kalemTutar);
             }
         } else if (dto.getTutar() != null) {
@@ -99,13 +99,13 @@ public class IadeService {
             for (IadeKalemDTO k : dto.getKalemler()) {
                 stokTenantDogrula(k.getStokId(), sirketId);
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
-                BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
-                BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal kalemTutar = com.raspel.erp.util.FaturaTutar
+                        .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, kdvOrani).brut();
                 iadeKalemRepository.save(IadeKalem.builder()
                         .iadeId(iade.getId()).stokId(k.getStokId())
                         .aciklama(k.getAciklama()).miktar(k.getMiktar())
                         .birim(k.getBirim()).birimFiyat(k.getBirimFiyat())
-                        .kdvOrani(kdvOrani).tutar(netTutar.add(kdvTutari))
+                        .kdvOrani(kdvOrani).tutar(kalemTutar)
                         .build());
             }
         }
@@ -170,9 +170,9 @@ public class IadeService {
             yeniTutar = BigDecimal.ZERO;
             for (IadeKalemDTO k : dto.getKalemler()) {
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
-                BigDecimal net = k.getBirimFiyat().multiply(k.getMiktar());
-                BigDecimal kdv = net.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                yeniTutar = yeniTutar.add(net.add(kdv));
+                // İade tutarı, fatura ile aynı KDV DAHİL modelle hesaplanır.
+                yeniTutar = yeniTutar.add(com.raspel.erp.util.FaturaTutar
+                        .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, kdvOrani).brut());
             }
         }
         BigDecimal oncekiIadeler = oncekiIadeListesi.stream()
@@ -218,9 +218,9 @@ public class IadeService {
             for (IadeKalemDTO k : dto.getKalemler()) {
                 stokTenantDogrula(k.getStokId(), iade.getSirketId());
                 BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
-                BigDecimal netTutar = k.getBirimFiyat().multiply(k.getMiktar());
-                BigDecimal kdvTutari = netTutar.multiply(kdvOrani).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                BigDecimal kalemTutar = netTutar.add(kdvTutari);
+                // Birim fiyat KDV DAHİL kabul edilir (fatura ile aynı kanonik model).
+                BigDecimal kalemTutar = com.raspel.erp.util.FaturaTutar
+                        .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, kdvOrani).brut();
                 toplamTutar = toplamTutar.add(kalemTutar);
                 iadeKalemRepository.save(IadeKalem.builder()
                         .iadeId(iade.getId()).stokId(k.getStokId())
@@ -304,7 +304,7 @@ public class IadeService {
             stokHareketRepository.save(StokHareket.builder()
                     .stok(stok).tur(alisIadesi ? "CIKIS" : "GIRIS")
                     .miktar(k.getMiktar())
-                    .hareketTarihi(LocalDate.now())
+                    .hareketTarihi(iade.getTarih() != null ? iade.getTarih() : LocalDate.now())
                     .aciklama("İade #" + iade.getId())
                     .depoId(depoId)
                     .kaynakTip("IADE").kaynakId(iade.getId())

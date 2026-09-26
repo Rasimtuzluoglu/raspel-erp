@@ -283,6 +283,7 @@ const form = ref({
 const dialogHeader = computed(() => (duzenleme.value ? t('iadeler.duzenle') : t('iadeler.yeniIade')))
 
 const kalemToplam = computed(() => {
+  // Birim fiyat KDV dahildir; kalem tutarı miktar x fiyat olarak (KDV dahil) gösterilir.
   return form.value.kalemler.reduce((t, k) => t + (k.miktar || 0) * (k.birimFiyat || 0), 0)
 })
 

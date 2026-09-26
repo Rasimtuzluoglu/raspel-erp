@@ -100,8 +100,8 @@ class IadeServiceTest {
 
         var sonuc = iadeService.olustur(dto, 1L);
 
-        // 2 x 100 = 200 + %20 KDV = 240
-        assertEquals(0, sonuc.getTutar().compareTo(new BigDecimal("240")));
+        // Birim fiyat KDV DAHİL: 2 x 100 = 200 (KDV bu tutarın içinde ayrıştırılır).
+        assertEquals(0, sonuc.getTutar().compareTo(new BigDecimal("200")));
     }
 
     @Test

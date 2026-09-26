@@ -412,23 +412,35 @@ public class FaturaService {
         List<FaturaKalem> kalemler = new ArrayList<>();
         List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new ArrayList<>();
         for (FaturaKalemDTO k : dto.getKalemler()) {
-            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
+            Stok kalemStok = k.getStokId() != null ? stokHaritasi.get(k.getStokId()) : null;
+            // KDV oranı verilmediyse stok kartındaki oran, o da yoksa varsayılan kullanılır.
+            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani()
+                    : (kalemStok != null && kalemStok.getKdvOrani() != null ? kalemStok.getKdvOrani() : varsayilanKdvOrani);
+            // Birim fiyat verilmediyse/sıfırsa stok satış fiyatı, o da yoksa stok alış fiyatı kullanılır.
+            BigDecimal birimFiyat = k.getBirimFiyat();
+            if ((birimFiyat == null || birimFiyat.signum() == 0) && kalemStok != null) {
+                if (kalemStok.getSatisFiyati() != null) {
+                    birimFiyat = kalemStok.getSatisFiyati();
+                } else if (kalemStok.getFiyat() != null) {
+                    birimFiyat = kalemStok.getFiyat();
+                }
+            }
+            if (birimFiyat == null) birimFiyat = BigDecimal.ZERO;
             BigDecimal iskontoOrani = k.getIskontoOrani();
             if (iskontoOrani == null) {
-                Stok stok = k.getStokId() != null ? stokHaritasi.get(k.getStokId()) : null;
                 iskontoOrani = iskontoMotoruService.iskontoHesapla(
                         sirketId, k.getStokId(), cariId,
-                        stok != null ? stok.getKategori() : null,
+                        kalemStok != null ? kalemStok.getKategori() : null,
                         k.getAdet(), iskontoTarihi);
                 if (iskontoOrani == null) iskontoOrani = BigDecimal.ZERO;
             }
             com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar.satir(
-                    k.getBirimFiyat(), k.getAdet(), iskontoOrani, kdvOrani);
+                    birimFiyat, k.getAdet(), iskontoOrani, kdvOrani);
             satirlar.add(satir);
             kalemler.add(FaturaKalem.builder()
                     .aciklama(k.getAciklama())
                     .adet(k.getAdet())
-                    .birimFiyat(k.getBirimFiyat())
+                    .birimFiyat(birimFiyat)
                     .kdvOrani(kdvOrani)
                     .iskontoOrani(iskontoOrani)
                     .tutar(satir.brut())
@@ -1037,6 +1049,9 @@ public class FaturaService {
                 : stokRepository.findAllById(stokIdler).stream()
                         .filter(s -> s.getAgirlik() != null)
                         .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
+        Map<Long, Stok> stokHaritasi = stokIdler.isEmpty() ? Map.of()
+                : stokRepository.findAllById(stokIdler).stream()
+                        .collect(Collectors.toMap(Stok::getId, s -> s, (a, b) -> a));
         // Güvenlik: güncellenen faturanın şirketi dışındaki stoklar reddedilir.
         for (Stok s : stokRepository.findAllById(stokIdler)) {
             tenantChecker.check(s.getSirketId(), "Stok");
@@ -1049,15 +1064,26 @@ public class FaturaService {
         List<FaturaKalem> yeniKalemler = new ArrayList<>();
         List<com.raspel.erp.util.FaturaTutar.Satir> yeniSatirlar = new ArrayList<>();
         for (FaturaKalemDTO k : dto.getKalemler()) {
-            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
+            Stok kalemStok = k.getStokId() != null ? stokHaritasi.get(k.getStokId()) : null;
+            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani()
+                    : (kalemStok != null && kalemStok.getKdvOrani() != null ? kalemStok.getKdvOrani() : varsayilanKdvOrani);
+            BigDecimal birimFiyat = k.getBirimFiyat();
+            if ((birimFiyat == null || birimFiyat.signum() == 0) && kalemStok != null) {
+                if (kalemStok.getSatisFiyati() != null) {
+                    birimFiyat = kalemStok.getSatisFiyati();
+                } else if (kalemStok.getFiyat() != null) {
+                    birimFiyat = kalemStok.getFiyat();
+                }
+            }
+            if (birimFiyat == null) birimFiyat = BigDecimal.ZERO;
             BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
             com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar.satir(
-                    k.getBirimFiyat(), k.getAdet(), iskontoOrani, kdvOrani);
+                    birimFiyat, k.getAdet(), iskontoOrani, kdvOrani);
             yeniSatirlar.add(satir);
             yeniKalemler.add(FaturaKalem.builder()
                     .aciklama(k.getAciklama())
                     .adet(k.getAdet())
-                    .birimFiyat(k.getBirimFiyat())
+                    .birimFiyat(birimFiyat)
                     .kdvOrani(kdvOrani)
                     .iskontoOrani(iskontoOrani)
                     .tutar(satir.brut())

@@ -43,6 +43,31 @@ public class TeklifService {
     private final BildirimService bildirimService;
         private final TenantChecker tenantChecker;
 
+    @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
+    private BigDecimal varsayilanKdvOrani;
+
+    /** Kalemde KDV/birim fiyat verilmediyse stok kartından çözer. */
+    private BigDecimal kalemKdvOrani(TeklifKalemDTO k) {
+        if (k.getKdvOrani() != null) return k.getKdvOrani();
+        if (k.getStokId() != null) {
+            Stok stok = stokRepository.findById(k.getStokId()).orElse(null);
+            if (stok != null && stok.getKdvOrani() != null) return stok.getKdvOrani();
+        }
+        return varsayilanKdvOrani;
+    }
+
+    private BigDecimal kalemBirimFiyat(TeklifKalemDTO k) {
+        if (k.getBirimFiyat() != null && k.getBirimFiyat().signum() != 0) return k.getBirimFiyat();
+        if (k.getStokId() != null) {
+            Stok stok = stokRepository.findById(k.getStokId()).orElse(null);
+            if (stok != null) {
+                if (stok.getSatisFiyati() != null) return stok.getSatisFiyati();
+                if (stok.getFiyat() != null) return stok.getFiyat();
+            }
+        }
+        return k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
+    }
+
     @Transactional(readOnly = true)
     public Page<TeklifDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         Page<Teklif> sayfa = teklifRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable);
@@ -95,9 +120,9 @@ public class TeklifService {
         if (dto.getKalemler() != null) {
             for (TeklifKalemDTO k : dto.getKalemler()) {
                 BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE;
-                BigDecimal birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
+                BigDecimal birimFiyat = kalemBirimFiyat(k);
                 BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
-                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : new BigDecimal("20");
+                BigDecimal kdvOrani = kalemKdvOrani(k);
 
                 com.raspel.erp.util.FaturaTutar.Satir satir =
                         com.raspel.erp.util.FaturaTutar.satir(birimFiyat, miktar, iskontoOrani, kdvOrani);
@@ -194,9 +219,9 @@ public class TeklifService {
                     throw new BusinessException("Kalem açıklaması boş olamaz");
                 }
                 BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE;
-                BigDecimal birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
+                BigDecimal birimFiyat = kalemBirimFiyat(k);
                 BigDecimal iskontoOrani = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
-                BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : new BigDecimal("20");
+                BigDecimal kdvOrani = kalemKdvOrani(k);
 
                 com.raspel.erp.util.FaturaTutar.Satir satir =
                         com.raspel.erp.util.FaturaTutar.satir(birimFiyat, miktar, iskontoOrani, kdvOrani);
