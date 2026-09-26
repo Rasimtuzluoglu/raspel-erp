@@ -123,7 +123,7 @@
       v-model:visible="dialog"
       :header="duzenlenenId ? t('cekSenet.duzenle') : t('cekSenet.yeniCekSenet')"
       modal
-      :style="{ width: '560px' }"
+      :style="{ width: '520px' }"
     >
       <div class="form-grid">
         <div class="field-row">

@@ -74,7 +74,7 @@
       v-model:visible="geriYukleDialog"
       :header="t('yedekler.geriYuklemeOnayi')"
       modal
-      :style="{ width: '420px' }"
+      :style="{ width: '440px' }"
       :closable="!geriYuklemeSuruyor"
     >
       <Message

@@ -46,9 +46,13 @@
 
     <div
       v-if="loading"
-      class="loading"
+      class="loading-iskelet"
+      :aria-label="t('common.loading')"
     >
-      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
+      <SkeletonLoader
+        :count="6"
+        height="44px"
+      />
     </div>
 
     <div
@@ -107,6 +111,7 @@
         <Column
           field="genelToplam"
           :header="t('faturalar.colToplam')"
+          class="sayisal"
           style="width: 130px"
         >
           <template #body="s">
@@ -127,6 +132,7 @@
         <Column
           field="kalanTutar"
           :header="t('faturalar.colKalan')"
+          class="sayisal"
           style="width: 120px"
         >
           <template #body="s">

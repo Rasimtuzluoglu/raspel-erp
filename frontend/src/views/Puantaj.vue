@@ -102,7 +102,7 @@
       v-model:visible="dialog"
       :header="duzenleme ? t('puantaj.duzenle') : t('puantaj.yeni')"
       modal
-      :style="{ width: '500px' }"
+      :style="{ width: '520px' }"
     >
       <div class="form-grid">
         <div class="field">

@@ -3,7 +3,7 @@
     :visible="visible"
     modal
     :header="header"
-    :style="{ width: '640px' }"
+    :style="{ width: '720px' }"
     @update:visible="$emit('update:visible', $event)"
   >
     <div

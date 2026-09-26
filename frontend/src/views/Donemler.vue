@@ -132,7 +132,7 @@
       v-model:visible="kapanisDialog"
       :header="t('donemler.yilSonuKapat')"
       modal
-      :style="{ width: '460px' }"
+      :style="{ width: '440px' }"
     >
       <Message
         severity="warn"
@@ -200,7 +200,7 @@
       v-model:visible="dialog"
       :header="duzenleme ? t('donemler.donemDuzenle') : t('donemler.yeniDonem')"
       modal
-      :style="{ width: '450px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-grid">
         <div class="field">

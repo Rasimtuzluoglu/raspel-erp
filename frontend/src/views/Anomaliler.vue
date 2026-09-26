@@ -155,7 +155,7 @@
           v-model:visible="ipModalAcik"
           :header="t('anomaliler.yeniIpBaslik')"
           :modal="true"
-          :style="{ width: '450px' }"
+          :style="{ width: '440px' }"
         >
           <div class="p-fluid">
             <div class="field mb-3">

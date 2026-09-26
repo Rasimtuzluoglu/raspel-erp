@@ -520,7 +520,7 @@
       v-model:visible="tamamlaDialog"
       :header="t('uretim.tamamlaBaslik')"
       modal
-      :style="{ width: '480px' }"
+      :style="{ width: '440px' }"
     >
       <div
         v-if="seciliEmir"
@@ -589,7 +589,7 @@
       v-model:visible="iptalDialog"
       :header="t('uretim.iptalEt')"
       modal
-      :style="{ width: '420px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form">
         <p>{{ t('uretim.iptalOnay') }}</p>
@@ -624,7 +624,7 @@
       v-model:visible="detayDialog"
       :header="t('uretim.emirDetay')"
       modal
-      :style="{ width: '640px' }"
+      :style="{ width: '720px' }"
     >
       <div v-if="seciliEmir">
         <div class="detay-grid">
@@ -731,7 +731,7 @@
       v-model:visible="receteDialog"
       :header="receteForm.id ? t('uretim.duzenle') : t('uretim.yeniRecete')"
       modal
-      :style="{ width: '640px' }"
+      :style="{ width: '720px' }"
     >
       <div class="form">
         <div class="field-row">

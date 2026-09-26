@@ -110,7 +110,7 @@
       v-model:visible="dialog"
       :header="t('siparisler.dialogTitle')"
       modal
-      :style="{ width: '550px' }"
+      :style="{ width: '520px' }"
     >
       <div class="form-grid">
         <div class="field">

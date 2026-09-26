@@ -173,7 +173,7 @@
       v-model:visible="personelDialog"
       :header="duzenleme ? t('personel.personelDuzenle') : t('personel.yeniPersonel')"
       modal
-      :style="{ width: '600px' }"
+      :style="{ width: '720px' }"
     >
       <div class="form-grid">
         <div class="field-row">
@@ -316,7 +316,7 @@
       v-model:visible="izinDialog"
       :header="t('personel.izinEkle')"
       modal
-      :style="{ width: '450px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-grid">
         <div class="field">

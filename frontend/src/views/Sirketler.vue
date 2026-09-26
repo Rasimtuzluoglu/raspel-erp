@@ -103,7 +103,7 @@
       v-model:visible="dialog"
       :header="duzenleme ? t('sirketler.sirketDuzenle') : t('sirketler.yeniSirket')"
       modal
-      :style="{ width: '500px' }"
+      :style="{ width: '520px' }"
     >
       <Message
         v-if="uyariMesaji"
@@ -282,7 +282,7 @@
       v-model:visible="konsolideModal"
       :header="konsolideVeri?.anaSirketAdi + ' - ' + t('sirketler.grupKonsolideOzeti')"
       modal
-      :style="{ width: '700px' }"
+      :style="{ width: '720px' }"
     >
       <div
         v-if="konsolideYukleniyor"

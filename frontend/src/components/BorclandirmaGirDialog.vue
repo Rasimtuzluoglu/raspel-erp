@@ -3,7 +3,7 @@
     :visible="visible"
     modal
     :header="$t('cariHesaplar.borclandirma')"
-    :style="{ width: '480px', maxWidth: 'calc(100vw - 24px)' }"
+    :style="{ width: '440px', maxWidth: 'calc(100vw - 24px)' }"
     :dismissable-mask="false"
     @update:visible="$emit('update:visible', $event)"
   >

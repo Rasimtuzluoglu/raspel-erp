@@ -3,7 +3,7 @@
     :visible="visible"
     :header="$t('cmp.barkodOkuyucu')"
     modal
-    :style="{ width: '500px' }"
+    :style="{ width: '520px' }"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="scanner-container">

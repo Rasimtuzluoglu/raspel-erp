@@ -82,7 +82,7 @@
       v-model:visible="yukleDialog"
       :header="t('belgeler.belgeYukle')"
       modal
-      :style="{ width: '480px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-grup">
         <label>{{ t('belgeler.bagliKayitTuru') }}</label>
@@ -128,7 +128,7 @@
       v-model:visible="onizleDialog"
       :header="onizleBelge?.dosyaAdi"
       modal
-      :style="{ width: '700px' }"
+      :style="{ width: '720px' }"
     >
       <div
         v-if="resimMi(onizleBelge?.dosyaAdi)"

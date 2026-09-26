@@ -171,7 +171,7 @@
       v-model:visible="planDialog"
       :header="t('taksitTakvimi.planBaslik')"
       modal
-      :style="{ width: '480px' }"
+      :style="{ width: '440px' }"
     >
       <div class="plan-form">
         <div class="form-satir">

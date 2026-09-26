@@ -2020,6 +2020,11 @@ h3 {
   color: var(--text-secondary);
 }
 
+/* Liste yukleme iskeleti: spinner yerine icerik yer tutucu (algilanan hiz + kararlilik). */
+.loading-iskelet {
+  padding: 8px 0 16px;
+}
+
 /* Form standardi: tek tip etiket, zorunlu alan isareti ve satir ici hata.
    Gorunume ozel scoped stiller daha yuksek oncelige sahip oldugu icin
    mevcut tasarimlari bozmaz; yalnizca tutarlilik saglar. */

@@ -53,9 +53,13 @@
 
     <div
       v-if="loading"
-      class="loading"
+      class="loading-iskelet"
+      :aria-label="t('common.loading')"
     >
-      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
+      <SkeletonLoader
+        :count="6"
+        height="44px"
+      />
     </div>
 
     <div
@@ -203,6 +207,7 @@
           v-if="kolonlar[7].visible"
           field="bakiye"
           :header="t('cariHesaplar.bakiye')"
+          class="sayisal"
           style="width: 140px"
         >
           <template #body="slotProps">

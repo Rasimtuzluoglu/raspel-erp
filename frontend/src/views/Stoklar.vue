@@ -1,6 +1,6 @@
 <template>
   <div class="stoklar-container">
-    <h1>{{ t('stoklar.title') }}</h1>
+    <PageHeader :title="t('stoklar.title')" />
     <IlkZiyaretIpuclari
       anahtar="stoklar"
       :baslik="t('stoklar.ipucuBaslik')"
@@ -145,9 +145,13 @@
 
     <div
       v-if="stokStore.loading"
-      class="loading"
+      class="loading-iskelet"
+      :aria-label="t('common.loading')"
     >
-      <p><i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}</p>
+      <SkeletonLoader
+        :count="6"
+        height="44px"
+      />
     </div>
 
     <!-- Yukleme hatasi: "veri yok" ile karismamasi icin ayri hata durumu + tekrar dene. -->
@@ -261,6 +265,7 @@
           field="miktar"
           :header="t('stoklar.colMiktar')"
           sortable
+          class="sayisal"
           style="width: 110px"
         >
           <template #body="s">
@@ -294,6 +299,7 @@
           field="fiyat"
           :header="t('stoklar.colBirimFiyat')"
           sortable
+          class="sayisal"
           style="width: 130px"
         >
           <template #body="s">

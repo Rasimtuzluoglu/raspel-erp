@@ -3,7 +3,7 @@
     :visible="visible"
     :header="t('cariKart.baslik')"
     modal
-    :style="{ width: '900px', maxWidth: '95vw' }"
+    :style="{ width: '960px', maxWidth: '95vw' }"
     @update:visible="emit('update:visible', $event)"
   >
     <div

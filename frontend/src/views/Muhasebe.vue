@@ -523,7 +523,7 @@
       v-model:visible="hesapDialog"
       :header="hesapDialogBaslik"
       modal
-      :style="{ width: '480px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -587,7 +587,7 @@
       v-model:visible="fisDialog"
       :header="t('muhasebe.yeniYevmiyeFisi')"
       modal
-      :style="{ width: '640px' }"
+      :style="{ width: '720px' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -672,7 +672,7 @@
       v-model:visible="fisDetayDialog"
       :header="t('muhasebe.fisDetayi')"
       modal
-      :style="{ width: '560px' }"
+      :style="{ width: '520px' }"
     >
       <div class="fis-detay-baslik">
         <strong>{{ fisDetay?.fisNo }}</strong> — {{ formatDate(fisDetay?.tarih) }}

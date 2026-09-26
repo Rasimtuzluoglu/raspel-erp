@@ -600,7 +600,7 @@
       v-model:visible="onizlemeDialog"
       :modal="true"
       :header="t('teklifler.mektupBaslik')"
-      :style="{ width: '850px', maxWidth: '95vw' }"
+      :style="{ width: '960px', maxWidth: '95vw' }"
     >
       <div
         id="teklif-mektubu-alani"

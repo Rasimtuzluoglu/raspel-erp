@@ -99,7 +99,7 @@
       v-model:visible="dialog"
       :header="dialogHeader"
       modal
-      :style="{ width: '500px' }"
+      :style="{ width: '520px' }"
     >
       <div class="form-grid">
         <div class="field">

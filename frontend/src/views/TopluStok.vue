@@ -1,6 +1,6 @@
 <template>
   <div class="toplu-stok-container">
-    <h1>{{ t('topluStok.title') }}</h1>
+    <PageHeader :title="t('topluStok.title')" />
 
     <div class="islem-grid">
       <Card>

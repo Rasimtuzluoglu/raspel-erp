@@ -354,7 +354,7 @@
       v-model:visible="aktiviteDialog"
       :header="t('crmMerkezi.yeniAktivite')"
       modal
-      :style="{ width: '480px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-grid">
         <div class="field">

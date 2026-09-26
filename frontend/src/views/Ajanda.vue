@@ -164,7 +164,7 @@
       v-model:visible="gorevDialogAc"
       :header="t('ajanda.gorevEkle')"
       :modal="true"
-      :style="{ width: '460px' }"
+      :style="{ width: '440px' }"
     >
       <div class="ajanda-form">
         <div class="field">
@@ -223,7 +223,7 @@
       v-model:visible="hatirlaticiDialogAc"
       :header="t('ajanda.hatirlaticiEkle')"
       :modal="true"
-      :style="{ width: '460px' }"
+      :style="{ width: '440px' }"
     >
       <div class="ajanda-form">
         <div class="field">

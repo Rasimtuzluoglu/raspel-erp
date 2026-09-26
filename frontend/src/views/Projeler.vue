@@ -153,7 +153,7 @@
       v-model:visible="dialog"
       :header="t('projeler.yeniProje')"
       modal
-      :style="{ width: '500px' }"
+      :style="{ width: '520px' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -214,7 +214,7 @@
       v-model:visible="gorevDialog"
       :header="t('projeler.gorevEkle')"
       modal
-      :style="{ width: '450px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-grid">
         <div class="field">

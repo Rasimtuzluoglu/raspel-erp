@@ -1002,7 +1002,7 @@
       v-model:visible="epostaDialog"
       :header="t('raporlar.epostaGonder')"
       modal
-      :style="{ width: '430px' }"
+      :style="{ width: '440px' }"
     >
       <div class="form-group">
         <label>{{ t('raporlar.aliciEposta') }}</label>

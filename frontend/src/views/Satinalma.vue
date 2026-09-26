@@ -190,7 +190,7 @@
       v-model:visible="talepDialog"
       :header="t('satinalma.yeniTalepBaslik')"
       modal
-      :style="{ width: '600px' }"
+      :style="{ width: '720px' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -332,7 +332,7 @@
       v-model:visible="siparisDialog"
       :header="t('satinalma.yeniSiparisBaslik')"
       modal
-      :style="{ width: '600px' }"
+      :style="{ width: '720px' }"
     >
       <div class="form-grid">
         <div class="field">

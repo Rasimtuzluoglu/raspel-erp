@@ -18,7 +18,7 @@
       v-model:visible="topluMesajDialog"
       :header="t('tahsilat.topluMesajBaslik')"
       modal
-      :style="{ width: '680px', maxWidth: '95vw' }"
+      :style="{ width: '720px', maxWidth: '95vw' }"
     >
       <p class="toplu-mesaj-ipucu">
         {{ t('tahsilat.topluMesajIpucu') }}
