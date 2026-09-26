@@ -2335,6 +2335,10 @@
   "iadeler": {
     "title": "İade Yönetimi",
     "yeniIade": "Yeni İade",
+    "tamamla": "Tamamla",
+    "tamamlandi": "Tamamlandı",
+    "kaynakFatura": "Kaynak Fatura",
+    "kaynakFaturaSecin": "Kaynak fatura seçin (stok/cari için)",
     "cariHesap": "Cari Hesap",
     "kalem": "Kalem",
     "islem": "İşlem",

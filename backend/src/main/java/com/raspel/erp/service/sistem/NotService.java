@@ -69,6 +69,7 @@ public class NotService {
                 .onemDerecesi(dto.getOnemDerecesi() != null ? dto.getOnemDerecesi() : "NORMAL")
                 .renk(dto.getRenk() != null ? dto.getRenk() : "MAVI")
                 .cariHesapId(dto.getCariHesapId())
+                .kategori(dto.getKategori())
                 .kullaniciId(kullaniciId)
                 .sirketId(sirketId)
                 .build();
@@ -103,6 +104,7 @@ public class NotService {
                 .onemDerecesi(not.getOnemDerecesi())
                 .renk(not.getRenk())
                 .cariHesapId(not.getCariHesapId())
+                .kategori(not.getKategori())
                 .kullaniciId(not.getKullaniciId())
                 .olusturmaTarihi(not.getOlusturmaTarihi())
                 .guncellemeTarihi(not.getGuncellemeTarihi())

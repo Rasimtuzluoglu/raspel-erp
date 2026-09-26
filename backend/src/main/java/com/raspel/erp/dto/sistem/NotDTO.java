@@ -23,6 +23,9 @@ public class NotDTO {
 
     private Long cariHesapId;
 
+    /** Not kategorisi (ör. SAHA_ZIYARET, SAHA_NOT). Serbest metin. */
+    private String kategori;
+
     private Long kullaniciId;
 
     private LocalDateTime olusturmaTarihi;

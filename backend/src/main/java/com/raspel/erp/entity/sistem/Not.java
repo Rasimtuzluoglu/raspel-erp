@@ -31,6 +31,10 @@ public class Not {
     @Column(name = "cari_hesap_id")
     private Long cariHesapId;
 
+    /** Not kategorisi (ör. SAHA_ZIYARET, SAHA_NOT). */
+    @Column(length = 40)
+    private String kategori;
+
     @Column(name = "kullanici_id")
     private Long kullaniciId;
 

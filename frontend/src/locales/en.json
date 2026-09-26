@@ -2335,6 +2335,10 @@
   "iadeler": {
     "title": "Returns Management",
     "yeniIade": "New Return",
+    "tamamla": "Complete",
+    "tamamlandi": "Completed",
+    "kaynakFatura": "Source Invoice",
+    "kaynakFaturaSecin": "Select source invoice (for stock/account)",
     "cariHesap": "Account",
     "kalem": "Items",
     "islem": "Actions",

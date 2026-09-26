@@ -127,8 +127,11 @@ public class BankaMutabakatService {
 
         List<BankaHareketi> degisenler = new ArrayList<>();
         for (BankaHareketi h : eslesmesiz) {
-            BigDecimal tutar = h.getBorc().signum() > 0 ? h.getBorc() : h.getAlacak();
-            if (tutar == null) continue;
+            if (h.getTarih() == null) continue;
+            BigDecimal borc = h.getBorc() != null ? h.getBorc() : BigDecimal.ZERO;
+            BigDecimal alacak = h.getAlacak() != null ? h.getAlacak() : BigDecimal.ZERO;
+            BigDecimal tutar = borc.signum() > 0 ? borc : alacak;
+            if (tutar.signum() <= 0) continue;
             List<Fatura> adaylar = tutarIndeks.get(tutarAnahtari(tutar));
             if (adaylar == null) continue;
             for (Fatura f : adaylar) {

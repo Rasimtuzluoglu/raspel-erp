@@ -206,7 +206,7 @@ const dialogGoster = ref(false)
 const duzenlemeModu = ref(false)
 const kaydediliyor = ref(false)
 const gonderildi = ref(false)
-const form = ref({ baslik: '', icerik: '', onemDerecesi: 'NORMAL' })
+const form = ref({ baslik: '', icerik: '', onemDerecesi: 'NORMAL', renk: 'MAVI' })
 const geriAlGoster = ref(false)
 const silinenSon = ref(null)
 let geriAlZamanlayici = null
@@ -237,7 +237,10 @@ const dialogDuzenle = (item) => {
 
 const kaydet = async () => {
   gonderildi.value = true
-  if (!form.value.baslik?.trim()) return
+  if (!form.value.baslik?.trim()) {
+    toastBildirim.uyari(t('notlar.baslikZorunlu'))
+    return
+  }
   kaydediliyor.value = true
   try {
     if (duzenlemeModu.value) {

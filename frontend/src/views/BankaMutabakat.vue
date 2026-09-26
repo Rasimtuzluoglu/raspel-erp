@@ -36,6 +36,7 @@
           @change="dosyaSecildi"
         >
         <Button
+          v-if="duzenleyebilir"
           :label="t('bankaMutabakat.hesapOzetiYukle')"
           icon="pi pi-upload"
           :disabled="!seciliBanka"
@@ -43,6 +44,7 @@
           @click="dosyaInput.click()"
         />
         <Button
+          v-if="duzenleyebilir"
           :label="t('bankaMutabakat.otomatikEslestir')"
           icon="pi pi-link"
           severity="secondary"
@@ -193,7 +195,9 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { bankaAPI, bankaMutabakatAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
+import { useAuthStore } from '../stores/authStore.js'
 import { useI18n } from 'vue-i18n'
+const authStore = useAuthStore()
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -206,6 +210,10 @@ const seciliBanka = ref(null)
 const hareketler = ref([])
 const yukleniyor = ref(false)
 const dosyaInput = ref(null)
+
+// Mutasyon uçları (yükle/eşleştir) ADMIN veya MUHASEBE gerektirir.
+const duzenleyebilir = computed(() =>
+  ['ADMIN', 'MUHASEBE'].includes(authStore?.kullanici?.role))
 
 const eslesenSayisi = computed(() => hareketler.value.filter((h) => h.eslestirildi).length)
 const eslesmeyenSayisi = computed(() => hareketler.value.length - eslesenSayisi.value)
@@ -223,7 +231,8 @@ import { formatTarih as formatDate } from '../utils/format.js'
 onMounted(async () => {
   try {
     const r = await bankaAPI.getAll()
-    bankalar.value = r.data || []
+    // Banka endpoint'i Page döndürür; dropdown'un düz diziye ihtiyacı var.
+    bankalar.value = unwrapList(r)
   } catch {
     /* empty */
   }

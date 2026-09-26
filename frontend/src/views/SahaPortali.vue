@@ -1199,6 +1199,8 @@ const ziyaretKaydet = async () => {
     await notAPI.create({
       baslik: t('sahaPortali.sahaZiyareti', { musteri: cari?.ad || t('sahaPortali.musteri'), amac: ziyaretForm.value.amac }),
       icerik: ziyaretForm.value.notlar,
+      // Cariye bağla ki not cari görüşme notlarında görünsün (önce eksikti).
+      cariHesapId: ziyaretForm.value.cariHesapId,
       kategori: 'SAHA_ZIYARET'
     })
     if (ziyaretFoto.value) {

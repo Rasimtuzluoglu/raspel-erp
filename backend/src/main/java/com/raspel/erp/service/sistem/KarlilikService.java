@@ -102,7 +102,9 @@ public class KarlilikService {
                 BigDecimal birimM = stok != null ? maliyetService.ortalamaMaliyet(stok) : BigDecimal.ZERO;
                 if (birimM == null) birimM = BigDecimal.ZERO;
                 BigDecimal maliyet = birimM.multiply(miktar).setScale(OLCEK, RoundingMode.HALF_UP);
-                iadeKirilim(kirilim, grp, iade, ik, stok, ciro, maliyet);
+                Fatura kaynakFatura = iade.getFaturaId() != null
+                        ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
+                iadeKirilim(kirilim, grp, iade, ik, stok, kaynakFatura, ciro, maliyet);
                 if (ay != null) {
                     BigDecimal[] agg = aylik.computeIfAbsent(ay, x -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
                     agg[0] = agg[0].subtract(ciro);
@@ -181,13 +183,25 @@ public class KarlilikService {
     }
 
     private void iadeKirilim(Map<String, KirilimAcc> map, String grp, Iade iade, IadeKalem ik,
-                             Stok stok, BigDecimal ciro, BigDecimal maliyet) {
-        String[] anahtar = anahtarIade(grp, ik, stok);
-        KirilimAcc acc = map.get(anahtar[0]);
+                             Stok stok, Fatura kaynakFatura, BigDecimal ciro, BigDecimal maliyet) {
+        // Anahtar, satış kırılımıyla aynı olmalı: URUN -> stokId, CARI -> kaynak faturanın cariId'si.
+        String key;
+        switch (grp) {
+            case "URUN" -> key = "U:" + ik.getStokId();
+            case "CARI" -> key = "C:" + (kaynakFatura != null && kaynakFatura.getCariHesap() != null
+                    ? kaynakFatura.getCariHesap().getId() : "genel");
+            default -> {
+                String kat = stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
+                        ? stok.getKategori() : "Kategorisiz";
+                key = "K:" + kat;
+            }
+        }
+        KirilimAcc acc = map.get(key);
         if (acc == null) return;
         acc.ciro = acc.ciro.subtract(ciro);
         acc.maliyet = acc.maliyet.subtract(maliyet);
     }
+
 
     private String[] anahtar(String grp, Fatura f, FaturaKalem k, Map<Long, Stok> cache) {
         Stok stok = k.getStokId() != null ? stokGetir(k.getStokId(), cache) : null;
@@ -197,18 +211,6 @@ public class KarlilikService {
             case "CARI" -> new String[]{"C:" + (f.getCariHesap() != null ? f.getCariHesap().getId() : "genel"),
                     f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel",
                     f.getCariHesap() != null ? f.getCariHesap().getId().toString() : null};
-            default -> {
-                String kat = stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
-                        ? stok.getKategori() : "Kategorisiz";
-                yield new String[]{"K:" + kat, kat, null};
-            }
-        };
-    }
-
-    private String[] anahtarIade(String grp, IadeKalem ik, Stok stok) {
-        return switch (grp) {
-            case "URUN" -> new String[]{"U:" + ik.getStokId(), stok != null ? stok.getAd() : null, null};
-            case "CARI" -> new String[]{"C:genel", null, null};
             default -> {
                 String kat = stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
                         ? stok.getKategori() : "Kategorisiz";

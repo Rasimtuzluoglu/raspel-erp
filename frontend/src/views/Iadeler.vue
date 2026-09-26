@@ -58,8 +58,8 @@
       >
         <template #body="{ data }">
           <Tag
-            :value="data.durum"
-            :severity="data.durum === 'ONAYLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
+            :value="durumLabel(data.durum)"
+            :severity="data.durum === 'TAMAMLANDI' ? 'success' : data.durum === 'IPTAL' ? 'danger' : 'warn'"
           />
         </template>
       </Column>
@@ -73,11 +73,11 @@
       >
         <template #body="{ data }">
           <Button
-            v-if="data.durum !== 'ONAYLANDI'"
+            v-if="data.durum !== 'TAMAMLANDI' && data.durum !== 'IPTAL'"
             icon="pi pi-check-circle"
             class="p-button-rounded p-button-text p-button-success"
-            :title="t('iadeler.onayla')"
-            @click="durumGuncelle(data, 'ONAYLANDI')"
+            :title="t('iadeler.tamamla')"
+            @click="durumGuncelle(data, 'TAMAMLANDI')"
           />
           <Button
             v-if="data.durum !== 'IPTAL'"
@@ -138,6 +138,20 @@
             class="w-full"
             filter
             @change="cariSecildi"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('iadeler.kaynakFatura') }}</label>
+          <Dropdown
+            v-model="form.faturaId"
+            :options="faturaList"
+            option-label="etiket"
+            option-value="id"
+            :placeholder="t('iadeler.kaynakFaturaSecin')"
+            class="w-full"
+            filter
+            show-clear
+            @change="faturaSecildi"
           />
         </div>
         <div class="field">
@@ -239,7 +253,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { iadeAPI, stokAPI, cariHesapAPI } from '../api/index.js'
+import { iadeAPI, stokAPI, cariHesapAPI, faturaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -258,6 +272,7 @@ const duzenleme = ref(false)
 const form = ref({
   cariHesapId: null,
   cariHesapAd: '',
+  faturaId: null,
   tur: 'SATIS',
   tarih: new Date(),
   tutar: 0,
@@ -273,18 +288,37 @@ const kalemToplam = computed(() => {
 
 import { formatTarih as formatDate } from '../utils/format.js'
 
+const faturaList = ref([])
+
+const durumLabel = (d) =>
+  ({ TASLAK: t('faturalar.durumTaslak'), TAMAMLANDI: t('iadeler.tamamlandi'), IPTAL: t('faturalar.durumIptal') })[d] || d
+
 const cariSecildi = () => {
   const secilen = cariList.value.find((c) => c.id === form.value.cariHesapId)
   if (secilen) form.value.cariHesapAd = secilen.ad
 }
 
+const faturaSecildi = () => {
+  const f = faturaList.value.find((x) => x.id === form.value.faturaId)
+  if (f && !form.value.cariHesapId) {
+    form.value.cariHesapId = f.cariHesapId || null
+    cariSecildi()
+  }
+}
+
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [r, stokRes, cariRes] = await Promise.all([iadeAPI.getAll(), stokAPI.getAll(), cariHesapAPI.getAll()])
+    const [r, stokRes, cariRes, fatRes] = await Promise.all([
+      iadeAPI.getAll(), stokAPI.getAll({ size: 1000 }), cariHesapAPI.getAll({ size: 500 }), faturaAPI.getAll({ size: 500 })
+    ])
     list.value = unwrapList(r)
     stokList.value = unwrapList(stokRes)
     cariList.value = unwrapList(cariRes)
+    faturaList.value = unwrapList(fatRes).map((f) => ({
+      ...f,
+      etiket: `${f.faturaNumarasi} (${f.cariHesapAd || '-'}) - ${formatCurrency(f.genelToplam)}`
+    }))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('iadeler.hataYukleme'))
   }
@@ -304,7 +338,7 @@ const dialogAc = (data) => {
         tur: data.tur || 'SATIS',
         kalemler: data.kalemler?.map((k) => ({ ...k })) || []
       }
-    : { cariHesapId: null, cariHesapAd: '', tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
+    : { cariHesapId: null, cariHesapAd: '', faturaId: null, tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
   dialog.value = true
 }
 
