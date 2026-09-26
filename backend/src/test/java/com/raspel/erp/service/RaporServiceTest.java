@@ -145,11 +145,12 @@ class RaporServiceTest {
     @Test
     void yaslandirmaRaporu_returnsYaslandirma() {
         CariHesap cari1 = createCariHesap();
-        cari1.setBakiye(BigDecimal.valueOf(3000));
+        // Bakiye konvansiyonu: negatif = bize borçlu (alacaklı olduğumuz taraf).
+        cari1.setBakiye(BigDecimal.valueOf(-3000));
         CariHesap cari2 = createCariHesap();
         cari2.setId(2L);
         cari2.setAd("Cari 2");
-        cari2.setBakiye(BigDecimal.valueOf(1000));
+        cari2.setBakiye(BigDecimal.valueOf(-1000));
 
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari1, cari2));
         // DB'de cari bazinda hesaplanan maks gecikme gunleri (Object[]{cariId, gun}).
@@ -181,7 +182,7 @@ class RaporServiceTest {
         alis.setTarih(ayIci);
         alis.setKalemler(List.of(FaturaKalem.builder().kdvOrani(new BigDecimal("20")).tutar(BigDecimal.valueOf(1200)).build()));
 
-        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of(satis, alis));
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any())).thenReturn(List.of(satis, alis));
 
         var result = raporService.kdvBeyannameGetir("2026-07", 1L);
 
@@ -277,12 +278,14 @@ class RaporServiceTest {
         fSatis.setTur(Fatura.FaturaTur.SATIS);
         fSatis.setDurum(Fatura.FaturaDurum.KESILDI);
         fSatis.setGenelToplam(BigDecimal.valueOf(15000));
+        fSatis.setKalanTutar(BigDecimal.valueOf(15000));
         fSatis.setVadeTarihi(LocalDate.now().plusDays(5));
 
         Fatura fAlis = new Fatura();
         fAlis.setTur(Fatura.FaturaTur.ALIS);
         fAlis.setDurum(Fatura.FaturaDurum.KESILDI);
         fAlis.setGenelToplam(BigDecimal.valueOf(5000));
+        fAlis.setKalanTutar(BigDecimal.valueOf(5000));
         fAlis.setVadeTarihi(LocalDate.now().plusDays(10));
 
         when(faturaRepository.basliklariGetir(1L)).thenReturn(List.of(fSatis, fAlis));

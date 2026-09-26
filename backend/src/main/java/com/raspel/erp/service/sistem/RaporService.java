@@ -157,6 +157,8 @@ public class RaporService {
 
         Map<String, BigDecimal> aylik = new LinkedHashMap<>();
         for (var h : hareketler) {
+            // Yalnızca nakit akışı hareketleri (tahsilat/ödeme); BORC bir nakit hareketi değildir.
+            if (h.getTur() != Hareket.HareketTuru.TAHSILAT && h.getTur() != Hareket.HareketTuru.ODEME) continue;
             String ay = h.getHareketTarihi().getYear() + "-" + String.format("%02d", h.getHareketTarihi().getMonthValue());
             BigDecimal ek = h.getTur() == Hareket.HareketTuru.TAHSILAT ? h.getTutar() : h.getTutar().negate();
             aylik.merge(ay, ek, BigDecimal::add);
@@ -227,7 +229,9 @@ public class RaporService {
         }
 
         return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) > 0)
+                // Bakiye konvansiyonu: negatif = bize borçlu (alacak), pozitif = biz borçluyuz.
+                // Yaşlandırma tahsil edilecek alacakları gösterir; borçlu cariler seçilir.
+                .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) < 0)
                 .map(c -> {
                     int gun = cariGecikme.getOrDefault(c.getId(), 0);
                     return RaporDTO.YaslandirmaDTO.builder()
@@ -251,7 +255,7 @@ public class RaporService {
         LocalDate bas = ay.atDay(1);
         LocalDate bit = ay.atEndOfMonth();
 
-        List<Fatura> kesilmis = faturaRepository.findBySirketIdAndTarihBetween(sirketId, bas, bit).stream()
+        List<Fatura> kesilmis = faturaRepository.findBySirketIdAndTarihBetweenKalemli(sirketId, bas, bit).stream()
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .collect(Collectors.toList());
 
@@ -322,7 +326,8 @@ public class RaporService {
         List<RaporDTO.BaBsSatiriDTO> kayitlar = new java.util.ArrayList<>(faturaRepository
                 .basliklariTarihAraligindaGetir(sirketId, bas, bit).stream()
                 .filter(f -> f.getTur() == faturaTur && f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                .filter(f -> f.getGenelToplam() != null && f.getGenelToplam().compareTo(limit) > 0)
+                // BA/BS eşiği KDV hariç matrah üzerinden uygulanır.
+                .filter(f -> f.getAraToplam() != null && f.getAraToplam().compareTo(limit) > 0)
                 .map(f -> RaporDTO.BaBsSatiriDTO.builder()
                         .faturaNo(f.getFaturaNumarasi()).tarih(f.getTarih())
                         .cariAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
@@ -392,7 +397,7 @@ public class RaporService {
      * Maliyet, kalemin bağlı olduğu stoğun tedarikçi fiyatı (yoksa alış fiyatı) üzerinden hesaplanır.
      */
     public RaporDTO.CariKarlilikDTO cariKarlilikRaporu(LocalDate baslangic, LocalDate bitis, Long sirketId) {
-        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetween(sirketId, baslangic, bitis).stream()
+        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetweenKalemli(sirketId, baslangic, bitis).stream()
                 .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
                 .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .collect(Collectors.toList());
@@ -422,7 +427,8 @@ public class RaporService {
                         .build();
                 satirMap.put(cariId, satir);
             }
-            BigDecimal hasila = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
+            // Hasılat için KDV hariç matrah kullanılır (genelToplam KDV dahildir).
+            BigDecimal hasila = f.getAraToplam() != null ? f.getAraToplam() : BigDecimal.ZERO;
             satir.setToplamSatis(satir.getToplamSatis().add(hasila));
             satir.setToplamMaliyet(satir.getToplamMaliyet().add(faturaMaliyet));
             satir.setFaturaSayisi(satir.getFaturaSayisi() + 1);
@@ -577,13 +583,18 @@ public class RaporService {
         Map<LocalDate, BigDecimal> gunlukCikis = new HashMap<>();
 
         for (Fatura f : faturalar) {
+            // Yalnızca ödenmemiş bakiye projeksiyona girer; tam ödenmiş fatura dahil edilmez.
+            BigDecimal kalan = f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO;
+            if (kalan.signum() <= 0) continue;
             LocalDate vade = f.getVadeTarihi() != null ? f.getVadeTarihi() : f.getTarih();
-            if (vade != null && !vade.isBefore(bugun) && !vade.isAfter(bitis)) {
-                BigDecimal tutar = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
+            if (vade == null) continue;
+            // Vadesi geçmiş alacaklar da bugüne (ilk gün) yansıtılır.
+            LocalDate projeksiyonGun = vade.isBefore(bugun) ? bugun : vade;
+            if (!projeksiyonGun.isBefore(bugun) && !projeksiyonGun.isAfter(bitis)) {
                 if (f.getTur() == Fatura.FaturaTur.SATIS) {
-                    gunlukGiris.merge(vade, tutar, BigDecimal::add);
+                    gunlukGiris.merge(projeksiyonGun, kalan, BigDecimal::add);
                 } else if (f.getTur() == Fatura.FaturaTur.ALIS) {
-                    gunlukCikis.merge(vade, tutar, BigDecimal::add);
+                    gunlukCikis.merge(projeksiyonGun, kalan, BigDecimal::add);
                 }
             }
         }

@@ -91,11 +91,11 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
     /**
      * Pivot tablo için tarih aralığındaki kesilmiş fatura kalemlerini düz satır olarak döndürür.
      */
-    @Query("SELECT f.cariHesap.id AS cariHesapId, f.cariHesap.ad AS cariAd, " +
+    @Query("SELECT c.id AS cariHesapId, c.ad AS cariAd, " +
            "k.stokId AS stokId, s.ad AS stokAd, s.kategori AS kategori, " +
            "f.tur AS tur, f.odemeDurumu AS odemeDurumu, f.tarih AS tarih, " +
            "k.tutar AS tutar, k.adet AS adet " +
-           "FROM FaturaKalem k JOIN k.fatura f LEFT JOIN Stok s ON s.id = k.stokId " +
+           "FROM FaturaKalem k JOIN k.fatura f LEFT JOIN f.cariHesap c LEFT JOIN Stok s ON s.id = k.stokId " +
            "WHERE f.sirketId = :sirketId AND f.durum = :durum " +
            "AND f.tarih BETWEEN :baslangic AND :bitis")
     List<PivotSatirProjeksiyon> pivotSatirlari(@Param("sirketId") Long sirketId,

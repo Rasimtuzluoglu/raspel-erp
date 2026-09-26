@@ -1132,8 +1132,8 @@ const pivotYukle = async () => {
   try {
     const params = { satir: pivotSatir.value, sutun: pivotSutun.value, deger: pivotDeger.value }
     if (pivotTarih.value && pivotTarih.value.length === 2) {
-      params.baslangic = pivotTarih.value[0]
-      params.bitis = pivotTarih.value[1]
+      params.baslangic = formatDateForApi(pivotTarih.value[0])
+      params.bitis = formatDateForApi(pivotTarih.value[1])
     }
     const r = await raporAPI.pivot(params)
     pivotVerisi.value = r.data
@@ -1482,10 +1482,10 @@ const ckPdfIndir = () =>
   )
 
 const vadeClass = (aralik) => {
-  if (aralik.startsWith('0')) return 'risk-yok'
+  if (aralik.startsWith('Vadesi Gelmemiş') || aralik.startsWith('0')) return 'risk-yok'
   if (aralik.startsWith('31')) return 'risk-az'
   if (aralik.startsWith('61')) return 'risk-orta'
-  return 'risk-yuksek'
+  return 'risk-yuksek' // 90+ Gün
 }
 
 const formatCurrency = (v) => {

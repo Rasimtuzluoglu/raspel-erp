@@ -186,18 +186,41 @@ public class KarlilikService {
                              Stok stok, Fatura kaynakFatura, BigDecimal ciro, BigDecimal maliyet) {
         // Anahtar, satış kırılımıyla aynı olmalı: URUN -> stokId, CARI -> kaynak faturanın cariId'si.
         String key;
+        Long accId;
+        String ad;
         switch (grp) {
-            case "URUN" -> key = "U:" + ik.getStokId();
-            case "CARI" -> key = "C:" + (kaynakFatura != null && kaynakFatura.getCariHesap() != null
-                    ? kaynakFatura.getCariHesap().getId() : "genel");
+            case "URUN" -> {
+                key = "U:" + ik.getStokId();
+                accId = ik.getStokId();
+                ad = stok != null ? stok.getAd() : "Bilinmeyen ürün";
+            }
+            case "CARI" -> {
+                Long cariId = kaynakFatura != null && kaynakFatura.getCariHesap() != null
+                        ? kaynakFatura.getCariHesap().getId() : null;
+                key = "C:" + (cariId != null ? cariId : "genel");
+                accId = cariId;
+                ad = kaynakFatura != null && kaynakFatura.getCariHesap() != null
+                        ? kaynakFatura.getCariHesap().getAd() : "Genel";
+            }
             default -> {
                 String kat = stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
                         ? stok.getKategori() : "Kategorisiz";
                 key = "K:" + kat;
+                accId = null;
+                ad = kat;
             }
         }
         KirilimAcc acc = map.get(key);
-        if (acc == null) return;
+        if (acc == null) {
+            // Dönem içinde eşleşen ileri satış yoksa da iade kırılımda negatif satır olarak görünmeli;
+            // aksi halde kırılım toplamı ile özet toplam tutarsız kalır.
+            acc = new KirilimAcc();
+            acc.id = accId;
+            acc.ad = ad;
+            acc.ciro = BigDecimal.ZERO;
+            acc.maliyet = BigDecimal.ZERO;
+            map.put(key, acc);
+        }
         acc.ciro = acc.ciro.subtract(ciro);
         acc.maliyet = acc.maliyet.subtract(maliyet);
     }
