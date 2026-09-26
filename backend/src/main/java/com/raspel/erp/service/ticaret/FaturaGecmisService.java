@@ -226,6 +226,78 @@ public class FaturaGecmisService {
         return sonuc;
     }
 
+    /**
+     * Rapor (sayfalı): fatura geçmişi kayıtlarını sunucu tarafında sayfalar.
+     * {@code tur} ve {@code q} filtreleri fatura tablosuna JOIN ile SQL'de uygulanır;
+     * böylece tüm tablo belleğe yüklenmez.
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO> raporSayfali(
+            Long sirketId, LocalDate baslangic, LocalDate bitis, String olay, Long kullaniciId,
+            String tur, String q, org.springframework.data.domain.Pageable pageable) {
+        if (sirketId == null) return org.springframework.data.domain.Page.empty(pageable);
+        java.time.LocalDateTime bas = baslangic != null ? baslangic.atStartOfDay() : null;
+        java.time.LocalDateTime bit = bitis != null ? bitis.atTime(java.time.LocalTime.MAX) : null;
+        String turFiltre = tur != null && !tur.isBlank() ? tur.trim().toUpperCase() : null;
+        String arama = q != null && !q.isBlank() ? "%" + q.trim().toLowerCase() + "%" : null;
+
+        var spec = org.springframework.data.jpa.domain.Specification.<FaturaGecmis>where(
+                (root, query, cb) -> cb.equal(root.get("sirketId"), sirketId));
+        if (olay != null && !olay.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("olay"), olay));
+        }
+        if (kullaniciId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("kullaniciId"), kullaniciId));
+        }
+        if (bas != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("tarih"), bas));
+        }
+        if (bit != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("tarih"), bit));
+        }
+        if (turFiltre != null || arama != null) {
+            spec = spec.and((root, query, cb) -> {
+                var sub = query.subquery(Long.class);
+                var fRoot = sub.from(Fatura.class);
+                var cJoin = fRoot.join("cariHesap", jakarta.persistence.criteria.JoinType.LEFT);
+                var kosul = cb.equal(fRoot.get("id"), root.get("faturaId"));
+                if (turFiltre != null) {
+                    kosul = cb.and(kosul, cb.equal(cb.upper(fRoot.get("tur").as(String.class)), turFiltre));
+                }
+                if (arama != null) {
+                    kosul = cb.and(kosul, cb.or(
+                            cb.like(cb.lower(fRoot.get("faturaNumarasi")), arama),
+                            cb.like(cb.lower(cJoin.get("ad")), arama),
+                            cb.like(cb.lower(root.get("aciklama")), arama),
+                            cb.like(cb.lower(root.get("kullaniciAdi")), arama)));
+                }
+                sub.select(fRoot.get("id")).where(kosul);
+                return cb.exists(sub);
+            });
+        }
+        var sirala = org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Order.desc("tarih"),
+                org.springframework.data.domain.Sort.Order.desc("id"));
+        var sayfa = faturaGecmisRepository.findAll(spec,
+                org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sirala));
+        List<Long> faturaIds = sayfa.getContent().stream().map(FaturaGecmis::getFaturaId).distinct().toList();
+        Map<Long, Fatura> faturaMap = faturaIds.isEmpty() ? Map.of()
+                : faturaRepository.findAllById(faturaIds).stream().collect(Collectors.toMap(Fatura::getId, f -> f));
+        return sayfa.map(g -> {
+            Fatura f = faturaMap.get(g.getFaturaId());
+            return com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO.builder()
+                    .id(g.getId()).faturaId(g.getFaturaId())
+                    .faturaNumarasi(f != null ? f.getFaturaNumarasi() : null)
+                    .faturaTur(f != null && f.getTur() != null ? f.getTur().name() : null)
+                    .faturaDurum(f != null && f.getDurum() != null ? f.getDurum().name() : null)
+                    .cariHesapAd(f != null && f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
+                    .olay(g.getOlay()).aciklama(g.getAciklama())
+                    .kullaniciAdi(g.getKullaniciAdi()).ipAdresi(g.getIpAdresi())
+                    .yazdirmaFormat(g.getYazdirmaFormat()).yaziciAdi(g.getYaziciAdi()).kopyaNo(g.getKopyaNo())
+                    .tarih(g.getTarih()).build();
+        });
+    }
+
     /** Liste için: her fatura id'sine karşılık yazdırma sayısı + son yazdırma bilgisi. */
     @Transactional(readOnly = true)
     public Map<Long, com.raspel.erp.dto.ticaret.FaturaYazdirmaOzetDTO> yazdirmaOzetleri(List<Long> faturaIds) {

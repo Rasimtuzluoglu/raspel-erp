@@ -62,7 +62,7 @@ class Gorunum360ServiceTest {
         Fatura fRisk = Fatura.builder().id(2L).tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
                 .cariHesap(riskli).genelToplam(BigDecimal.valueOf(20000)).kalanTutar(BigDecimal.valueOf(15000))
                 .tarih(LocalDate.now().minusDays(3)).build();
-        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of(fVip, fRisk));
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any())).thenReturn(List.of(fVip, fRisk));
 
         var sonuc = service.musteriSegmentasyon(1L);
 
@@ -80,7 +80,7 @@ class Gorunum360ServiceTest {
         Fatura f = Fatura.builder().id(1L).tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
                 .cariHesap(eski).genelToplam(BigDecimal.valueOf(5000)).kalanTutar(BigDecimal.ZERO)
                 .tarih(LocalDate.now().minusDays(200)).build();
-        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of(f));
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any())).thenReturn(List.of(f));
 
         var sonuc = service.musteriSegmentasyon(1L);
 
@@ -89,7 +89,7 @@ class Gorunum360ServiceTest {
 
     @Test
     void stokKar_bosVeri() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any())).thenReturn(List.of());
         var sonuc = service.stokKar360(1L, null, null);
         assertEquals(0, sonuc.getToplamUrun());
         assertEquals(0, sonuc.getToplamCiro().compareTo(BigDecimal.ZERO));

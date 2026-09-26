@@ -24,6 +24,7 @@
           option-value="value"
           :allow-empty="false"
           size="small"
+          @change="filtrele"
         />
         <Dropdown
           v-model="olay"
@@ -32,20 +33,21 @@
           option-value="value"
           size="small"
           class="olay-sec"
+          @change="filtrele"
         />
         <span class="p-input-icon-left arama">
           <i class="pi pi-search" />
           <InputText
             v-model="arama"
             :placeholder="t('faturaGecmisRapor.arama')"
-            @keyup.enter="yukle"
+            @keyup.enter="filtrele"
           />
         </span>
         <Button
           icon="pi pi-refresh"
           :aria-label="$t('common.refresh')"
           :loading="yukleniyor"
-          @click="yukle"
+          @click="filtrele"
         />
         <Button
           icon="pi pi-file-pdf"
@@ -67,7 +69,7 @@
     <div class="ozet-grid">
       <div class="ozet-kart">
         <span>{{ t('faturaGecmisRapor.toplam') }}</span>
-        <strong>{{ kayitlar.length }}</strong>
+        <strong>{{ toplamKayit }}</strong>
       </div>
       <div class="ozet-kart">
         <span>{{ t('faturaGecmisRapor.olusturma') }}</span>
@@ -94,11 +96,15 @@
       <DataTable
         :value="kayitlar"
         :loading="yukleniyor"
-        :rows="20"
+        lazy
+        :total-records="toplamKayit"
+        :rows="sayfaBoyutu"
+        :first="sayfa * sayfaBoyutu"
         paginator
         striped-rows
         size="small"
         scrollable
+        @page="sayfaDegisti"
       >
         <template #empty>
           <EmptyState />
@@ -202,11 +208,15 @@ const toast = useToast()
 const bugun = new Date()
 const kayitlar = ref([])
 const yukleniyor = ref(false)
-const baslangic = ref(new Date(bugun.getFullYear(), bugun.getMonth(), 1))
+// Varsayilan aralik yil basi: gecmis olaylar bos gorunmesin.
+const baslangic = ref(new Date(bugun.getFullYear(), 0, 1))
 const bitis = ref(bugun)
 const tur = ref('TUM')
 const olay = ref('TUM')
 const arama = ref('')
+const sayfa = ref(0)
+const sayfaBoyutu = ref(20)
+const toplamKayit = ref(0)
 
 const turSecenekleri = computed(() => [
   { label: t('faturaGecmisRapor.tumTur'), value: 'TUM' },
@@ -228,24 +238,40 @@ const iso = (d) => {
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
 }
 
-const params = () => ({
+const params = (ekstra = {}) => ({
   baslangic: iso(baslangic.value),
   bitis: iso(bitis.value),
   tur: tur.value === 'TUM' ? undefined : tur.value,
   olay: olay.value === 'TUM' ? undefined : olay.value,
-  q: arama.value || undefined
+  q: arama.value || undefined,
+  ...ekstra
 })
 
-const yukle = async () => {
+const yukle = async (s = sayfa.value, boyut = sayfaBoyutu.value) => {
   yukleniyor.value = true
   try {
-    const r = await raporAPI.faturaGecmis(params())
-    kayitlar.value = r.data || []
+    const r = await raporAPI.faturaGecmis(params({ page: s, size: boyut }))
+    // Spring Page donusu: { content, totalElements }
+    const veri = r.data || {}
+    kayitlar.value = veri.content || []
+    toplamKayit.value = veri.totalElements ?? kayitlar.value.length
   } catch (err) {
     toast.add({ severity: 'error', summary: t('common.unexpectedError'), detail: err?.response?.data?.message || t('faturaGecmisRapor.hata'), life: 4000 })
   } finally {
     yukleniyor.value = false
   }
+}
+
+const sayfaDegisti = (e) => {
+  sayfa.value = e.page
+  sayfaBoyutu.value = e.rows
+  yukle(e.page, e.rows)
+}
+
+// Filtre degisince ilk sayfaya don.
+const filtrele = () => {
+  sayfa.value = 0
+  yukle(0, sayfaBoyutu.value)
 }
 
 const sayim = (o) => kayitlar.value.filter((k) => k.olay === o).length

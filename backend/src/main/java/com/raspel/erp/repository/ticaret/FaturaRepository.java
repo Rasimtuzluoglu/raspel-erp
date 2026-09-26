@@ -68,8 +68,16 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                                 @Param("baslangic") java.time.LocalDate baslangic,
                                                 @Param("bitis") java.time.LocalDate bitis);
 
-    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    /** Genel raporlar icin baslik sorgusu; kalemler lazy (dashboard/rapor performansi). */
+    @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdAndTarihBetween(Long sirketId, java.time.LocalDate baslangic, java.time.LocalDate bitis);
+
+    /** Karlilik/360 gibi kalem bazli hesaplama yapan yerler icin: kalemler eager yuklenir. */
+    @EntityGraph(attributePaths = {"cariHesap", "kalemler"})
+    @Query("SELECT DISTINCT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.tarih BETWEEN :baslangic AND :bitis ORDER BY f.tarih DESC")
+    List<Fatura> findBySirketIdAndTarihBetweenKalemli(@Param("sirketId") Long sirketId,
+                                                      @Param("baslangic") java.time.LocalDate baslangic,
+                                                      @Param("bitis") java.time.LocalDate bitis);
 
     @EntityGraph(attributePaths = {"cariHesap"})
     Optional<Fatura> findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);

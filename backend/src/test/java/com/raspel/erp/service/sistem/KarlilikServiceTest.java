@@ -72,7 +72,7 @@ class KarlilikServiceTest {
 
     @Test
     void kategoriKirilimi_veOzetHesaplanir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "2", "100", "40"),
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "2", "100", "40"),
                 kalem(11L, "1", "200", "150")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
         when(stokRepository.findById(11L)).thenReturn(Optional.of(stok(11L, "Gıda")));
@@ -92,7 +92,7 @@ class KarlilikServiceTest {
 
     @Test
     void snapshotMaliyetOrtalamadanOnceKullanilir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT))
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT))
                 .thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "100", "25")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "X")));
         bosIade();
@@ -104,7 +104,7 @@ class KarlilikServiceTest {
 
     @Test
     void iadeCiroVeMaliyetiDuser() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT))
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT))
                 .thenReturn(List.of(satis(1L, List.of(kalem(10L, "2", "100", "40")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
         when(maliyetService.ortalamaMaliyet(any(Stok.class))).thenReturn(new BigDecimal("40"));
@@ -126,7 +126,7 @@ class KarlilikServiceTest {
 
     @Test
     void negatifMarjliKalemlerListelenir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "50", "80"),
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "50", "80"),
                 kalem(11L, "1", "200", "150")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Zarar")));
         when(stokRepository.findById(11L)).thenReturn(Optional.of(stok(11L, "Kar")));
@@ -141,7 +141,7 @@ class KarlilikServiceTest {
 
     @Test
     void urunGruplamaStokAdiniKullanir() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT))
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT))
                 .thenReturn(List.of(satis(1L, List.of(kalem(10L, "1", "100", "40")))));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "X")));
         bosIade();
@@ -158,7 +158,7 @@ class KarlilikServiceTest {
                 .durum(Fatura.FaturaDurum.TASLAK).tarih(LocalDate.of(2026, 9, 10)).sirketId(SIRKET).build();
         Fatura alis = Fatura.builder().id(3L).tur(Fatura.FaturaTur.ALIS)
                 .durum(Fatura.FaturaDurum.KESILDI).tarih(LocalDate.of(2026, 9, 10)).sirketId(SIRKET).build();
-        when(faturaRepository.findBySirketIdAndTarihBetween(SIRKET, BAS, BIT)).thenReturn(List.of(taslak, alis));
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of(taslak, alis));
         bosIade();
 
         var r = service.karlilikAnalizi(SIRKET, BAS, BIT, null);
@@ -170,7 +170,7 @@ class KarlilikServiceTest {
 
     @Test
     void bosVeriSifirDoner() {
-        when(faturaRepository.findBySirketIdAndTarihBetween(anyLong(), any(), any())).thenReturn(List.of());
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(anyLong(), any(), any())).thenReturn(List.of());
         bosIade();
 
         var r = service.karlilikAnalizi(SIRKET, BAS, BIT, "KATEGORI");

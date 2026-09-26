@@ -55,7 +55,7 @@ public class Gorunum360Service {
         Map<Long, Stok> stokCache = new HashMap<>();
         Map<Long, Gorunum360DTO.Satir> map = new LinkedHashMap<>();
 
-        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetween(sirketId, bas, bit);
+        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetweenKalemli(sirketId, bas, bit);
         for (Fatura f : faturalar) {
             if (f.getTur() != Fatura.FaturaTur.SATIS || f.getDurum() != Fatura.FaturaDurum.KESILDI) continue;
             for (FaturaKalem k : f.getKalemler()) {
@@ -159,7 +159,7 @@ public class Gorunum360Service {
         LocalDate simdi = LocalDate.now();
         LocalDate birYilOnce = simdi.minusDays(365);
 
-        List<Fatura> satislar = faturaRepository.findBySirketIdAndTarihBetween(sirketId, birYilOnce, simdi).stream()
+        List<Fatura> satislar = faturaRepository.findBySirketIdAndTarihBetweenKalemli(sirketId, birYilOnce, simdi).stream()
                 .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .collect(Collectors.toList());
 

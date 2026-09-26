@@ -60,7 +60,7 @@ public class KarlilikService {
         BigDecimal[] toplam = {BigDecimal.ZERO, BigDecimal.ZERO};
         int[] kalemSayisi = {0};
 
-        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetween(sirketId, bas, bit);
+        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetweenKalemli(sirketId, bas, bit);
         for (Fatura f : faturalar) {
             if (f.getTur() != Fatura.FaturaTur.SATIS || f.getDurum() != Fatura.FaturaDurum.KESILDI) continue;
             String ay = f.getTarih() != null ? YearMonth.from(f.getTarih()).toString() : null;

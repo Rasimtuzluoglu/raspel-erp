@@ -330,18 +330,20 @@ public class RaporController {
     };
 
     @GetMapping("/fatura-gecmis")
-    @Operation(summary = "Fatura işlem/yazdırma geçmişi",
-            description = "Oluşturma/düzenleme/durum/silme/yazdırma olaylarını filtreli olarak listeler")
-    public ResponseEntity<java.util.List<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO>> faturaGecmis(
+    @Operation(summary = "Fatura işlem/yazdırma geçmişi (sayfalı)",
+            description = "Oluşturma/düzenleme/durum/silme/yazdırma olaylarını filtreli ve sayfalı olarak listeler")
+    public ResponseEntity<org.springframework.data.domain.Page<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO>> faturaGecmis(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
             @RequestParam(required = false) String olay,
             @RequestParam(required = false) Long kullaniciId,
             @RequestParam(required = false) String tur,
-            @RequestParam(required = false) String q) {
+            @RequestParam(required = false) String q,
+            @org.springframework.data.web.PageableDefault(size = 50) org.springframework.data.domain.Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(faturaGecmisService.rapor(sirketId, baslangic, bitis, olay, kullaniciId, tur, q));
+        return ResponseEntity.ok(faturaGecmisService.raporSayfali(
+                sirketId, baslangic, bitis, olay, kullaniciId, tur, q, pageable));
     }
 
     @GetMapping("/fatura-gecmis/pdf")
