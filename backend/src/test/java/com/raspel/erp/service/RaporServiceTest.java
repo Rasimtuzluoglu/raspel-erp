@@ -48,6 +48,7 @@ class RaporServiceTest {
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @Mock private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
     @Mock private com.raspel.erp.repository.ticaret.IadeKalemRepository iadeKalemRepository;
+    @Mock private com.raspel.erp.repository.envanter.StokMaliyetHareketRepository stokMaliyetHareketRepository;
     @InjectMocks private RaporService raporService;
 
     private CariHesap createCariHesap() {
@@ -321,5 +322,64 @@ class RaporServiceTest {
         assertEquals(BigDecimal.valueOf(600), result.get(0).getGerceklesen());
         assertEquals(BigDecimal.valueOf(-400), result.get(0).getSapma());
         assertNotNull(result.get(0).getKullanimYuzdesi());
+    }
+
+    @Test
+    void stokDegerleme_fifoKatmanlariDogruTuketir() {
+        com.raspel.erp.entity.envanter.Stok stok = com.raspel.erp.entity.envanter.Stok.builder()
+                .id(1L).stokKodu("STK-1").ad("Ürün").miktar(new BigDecimal("5")).sirketId(1L).build();
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(stok));
+        when(maliyetService.ortalamaMaliyet(stok)).thenReturn(new BigDecimal("6"));
+        when(stokMaliyetHareketRepository.findByStokIdOrderByTarihAscIdAsc(1L)).thenReturn(List.of(
+                com.raspel.erp.entity.envanter.StokMaliyetHareket.builder()
+                        .tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("5")).build(),
+                com.raspel.erp.entity.envanter.StokMaliyetHareket.builder()
+                        .tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("7")).build(),
+                com.raspel.erp.entity.envanter.StokMaliyetHareket.builder()
+                        .tur("CIKIS").miktar(new BigDecimal("15")).build()));
+
+        var sonuc = raporService.stokDegerleme(1L);
+
+        assertEquals(1, sonuc.getKalemSayisi());
+        // Ağırlıklı ortalama: 5 x 6 = 30; FIFO: ilk katman tükendi, kalan 5 x 7 = 35.
+        assertEquals(0, sonuc.getToplamOrtalamaDeger().compareTo(new BigDecimal("30.00")));
+        assertEquals(0, sonuc.getToplamFifoDeger().compareTo(new BigDecimal("35.00")));
+        assertEquals(0, sonuc.getSatirlar().get(0).getFifoBirimMaliyet().compareTo(new BigDecimal("7.00")));
+    }
+
+    @Test
+    void siparisOnerisi_hedefeTamamlar() {
+        com.raspel.erp.entity.envanter.Stok stok = com.raspel.erp.entity.envanter.Stok.builder()
+                .id(1L).stokKodu("STK-1").ad("Ürün")
+                .miktar(new BigDecimal("2")).minMiktar(new BigDecimal("5")).sirketId(1L).build();
+        when(stokRepository.kritikStoklar(1L)).thenReturn(List.of(stok));
+        when(maliyetService.ortalamaMaliyet(stok)).thenReturn(new BigDecimal("10"));
+
+        var sonuc = raporService.siparisOnerisi(1L);
+
+        assertEquals(1, sonuc.size());
+        // Hedef = 5 x 2 = 10; öneri = 10 - 2 = 8; tahmini tutar = 80.
+        assertEquals(0, sonuc.get(0).getOneriMiktar().compareTo(new BigDecimal("8")));
+        assertEquals(0, sonuc.get(0).getTahminiTutar().compareTo(new BigDecimal("80.00")));
+    }
+
+    @Test
+    void temsilciPerformans_toplamlariHesaplar() {
+        com.raspel.erp.repository.ticaret.TemsilciPerformansProjeksiyon p1 =
+                org.mockito.Mockito.mock(com.raspel.erp.repository.ticaret.TemsilciPerformansProjeksiyon.class);
+        when(p1.getTemsilciId()).thenReturn(3L);
+        when(p1.getTemsilciAd()).thenReturn("Ali");
+        when(p1.getFaturaSayisi()).thenReturn(2L);
+        when(p1.getToplamSatis()).thenReturn(new BigDecimal("1000"));
+        when(faturaRepository.temsilciPerformans(eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(p1));
+
+        var sonuc = raporService.temsilciPerformans(1L,
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        assertEquals(1, sonuc.getSatirlar().size());
+        assertEquals(0, sonuc.getToplamSatis().compareTo(new BigDecimal("1000")));
+        assertEquals(2, sonuc.getToplamFatura());
+        assertEquals(0, sonuc.getSatirlar().get(0).getOrtalamaFatura().compareTo(new BigDecimal("500.00")));
     }
 }

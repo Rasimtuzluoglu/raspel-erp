@@ -118,6 +118,19 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     List<Fatura> findBySirketIdAndDurumAndParaBirimiNotAndKalanTutarGreaterThan(
             Long sirketId, Fatura.FaturaDurum durum, String paraBirimi, java.math.BigDecimal kalanTutar);
 
+    /** Temsilci bazlı satış performansı (cari kartındaki temsilciye göre). */
+    @Query("SELECT f.cariHesap.temsilciId AS temsilciId, f.cariHesap.temsilciAd AS temsilciAd, "
+            + "COUNT(f) AS faturaSayisi, COALESCE(SUM(f.genelToplam), 0) AS toplamSatis "
+            + "FROM Fatura f WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum "
+            + "AND f.tarih >= :baslangic AND f.tarih <= :bitis "
+            + "GROUP BY f.cariHesap.temsilciId, f.cariHesap.temsilciAd "
+            + "ORDER BY SUM(f.genelToplam) DESC")
+    List<TemsilciPerformansProjeksiyon> temsilciPerformans(@Param("sirketId") Long sirketId,
+                                                           @Param("tur") Fatura.FaturaTur tur,
+                                                           @Param("durum") Fatura.FaturaDurum durum,
+                                                           @Param("baslangic") java.time.LocalDate baslangic,
+                                                           @Param("bitis") java.time.LocalDate bitis);
+
     /**
      * Vadesi geçmiş faturaların kalan tutar toplamı (yalnızca toplam gerektiğinde;
      * entity listesi yüklenmez, bellek/OOM riski oluşmaz).

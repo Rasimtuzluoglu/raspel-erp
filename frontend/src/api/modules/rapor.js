@@ -34,6 +34,15 @@ export const raporAPI = {
   urunKarlilik() {
     return apiClient.get('/raporlar/urun-karlilik')
   },
+  stokDegerleme() {
+    return apiClient.get('/raporlar/stok-degerleme')
+  },
+  siparisOnerisi() {
+    return apiClient.get('/raporlar/siparis-onerisi')
+  },
+  temsilciPerformans(params) {
+    return apiClient.get('/raporlar/temsilci-performans', { params })
+  },
   nakitAkisiProjeksiyonu(gun = 30) {
     return apiClient.get('/raporlar/nakit-akisi-projeksiyonu', { params: { gun } })
   },

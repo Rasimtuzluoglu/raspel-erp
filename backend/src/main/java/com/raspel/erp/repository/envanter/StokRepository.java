@@ -22,8 +22,7 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
     Optional<Stok> findByIdForUpdate(@Param("id") Long id);
 
     Page<Stok> findBySirketIdOrderByAd(Long sirketId, Pageable pageable);
-    List<Stok> findBySirketIdOrderByAd(Long sirketId);
-    List<Stok> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String q);
+    List<Stok> findBySirketIdOrderByAd(Long sirketId);    List<Stok> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String q);
     List<Stok> findBySirketIdAndBarkod(Long sirketId, String barkod);
     Optional<Stok> findBySirketIdAndStokKodu(Long sirketId, String stokKodu);
 

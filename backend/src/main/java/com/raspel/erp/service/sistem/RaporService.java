@@ -55,6 +55,7 @@ public class RaporService {
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
     private final com.raspel.erp.repository.ticaret.IadeKalemRepository iadeKalemRepository;
+    private final com.raspel.erp.repository.envanter.StokMaliyetHareketRepository stokMaliyetHareketRepository;
 
     /** TAMAMLANDI durumdaki iadeler (KDV/BA-BS düzeltmesi için). */
     private List<com.raspel.erp.entity.ticaret.Iade> tamamlanmisIadeler(Long sirketId, LocalDate bas, LocalDate bit) {
@@ -749,5 +750,130 @@ public class RaporService {
             return BigDecimal.valueOf(p.getAdet() != null ? p.getAdet() : 0);
         }
         return p.getTutar() != null ? p.getTutar() : BigDecimal.ZERO;
+    }
+
+    /**
+     * Stok değerleme: her stok için ağırlıklı ortalama maliyet ve FIFO (katman bazlı)
+     * değer. FIFO katmanları maliyet defterindeki giriş/çıkış hareketlerinden yeniden
+     * oluşturulur (giriş = katman, çıkış = eski katmanlardan tüketim).
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.sistem.StokAnalizDTO.Degerleme stokDegerleme(Long sirketId) {
+        List<com.raspel.erp.entity.envanter.Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId);
+        List<com.raspel.erp.dto.sistem.StokAnalizDTO.DegerlemeSatiri> satirlar = new java.util.ArrayList<>();
+        BigDecimal toplamOrtalama = BigDecimal.ZERO;
+        BigDecimal toplamFifo = BigDecimal.ZERO;
+        for (com.raspel.erp.entity.envanter.Stok s : stoklar) {
+            BigDecimal miktar = nz(s.getMiktar());
+            if (miktar.signum() <= 0) continue;
+
+            BigDecimal ortBirim = nz(maliyetService.ortalamaMaliyet(s));
+            BigDecimal ortDeger = ortBirim.multiply(miktar).setScale(2, java.math.RoundingMode.HALF_UP);
+
+            // FIFO katmanları: GIRIS katman ekler, CIKIS en eski katmandan tüketir.
+            java.util.Deque<BigDecimal[]> katmanlar = new java.util.ArrayDeque<>();
+            for (var m : stokMaliyetHareketRepository.findByStokIdOrderByTarihAscIdAsc(s.getId())) {
+                BigDecimal mh = nz(m.getMiktar());
+                if ("GIRIS".equals(m.getTur())) {
+                    katmanlar.addLast(new BigDecimal[]{mh, nz(m.getBirimMaliyet())});
+                } else if ("CIKIS".equals(m.getTur())) {
+                    BigDecimal kalan = mh;
+                    while (kalan.signum() > 0 && !katmanlar.isEmpty()) {
+                        BigDecimal[] katman = katmanlar.peekFirst();
+                        if (katman[0].compareTo(kalan) <= 0) {
+                            kalan = kalan.subtract(katman[0]);
+                            katmanlar.removeFirst();
+                        } else {
+                            katman[0] = katman[0].subtract(kalan);
+                            kalan = BigDecimal.ZERO;
+                        }
+                    }
+                }
+            }
+            BigDecimal fifoMiktar = BigDecimal.ZERO;
+            BigDecimal fifoDeger = BigDecimal.ZERO;
+            for (BigDecimal[] katman : katmanlar) {
+                fifoMiktar = fifoMiktar.add(katman[0]);
+                fifoDeger = fifoDeger.add(katman[0].multiply(katman[1]));
+            }
+            fifoDeger = fifoDeger.setScale(2, java.math.RoundingMode.HALF_UP);
+            BigDecimal fifoBirim = fifoMiktar.signum() > 0
+                    ? fifoDeger.divide(fifoMiktar, 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+            satirlar.add(com.raspel.erp.dto.sistem.StokAnalizDTO.DegerlemeSatiri.builder()
+                    .stokId(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
+                    .miktar(miktar)
+                    .ortalamaBirimMaliyet(ortBirim.setScale(2, java.math.RoundingMode.HALF_UP))
+                    .ortalamaDeger(ortDeger)
+                    .fifoBirimMaliyet(fifoBirim)
+                    .fifoDeger(fifoDeger)
+                    .build());
+            toplamOrtalama = toplamOrtalama.add(ortDeger);
+            toplamFifo = toplamFifo.add(fifoDeger);
+        }
+        return com.raspel.erp.dto.sistem.StokAnalizDTO.Degerleme.builder()
+                .toplamOrtalamaDeger(toplamOrtalama)
+                .toplamFifoDeger(toplamFifo)
+                .kalemSayisi(satirlar.size())
+                .satirlar(satirlar)
+                .build();
+    }
+
+    /** Sipariş önerisi: minimum seviyenin altındaki stoklar için hedefe (min x2) tamamlama. */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.sistem.StokAnalizDTO.OneriSatiri> siparisOnerisi(Long sirketId) {
+        List<com.raspel.erp.dto.sistem.StokAnalizDTO.OneriSatiri> satirlar = new java.util.ArrayList<>();
+        for (com.raspel.erp.entity.envanter.Stok s : stokRepository.kritikStoklar(sirketId)) {
+            BigDecimal mevcut = nz(s.getMiktar());
+            BigDecimal min = nz(s.getMinMiktar());
+            BigDecimal hedef = min.multiply(BigDecimal.valueOf(2));
+            BigDecimal oneri = hedef.subtract(mevcut);
+            if (oneri.signum() <= 0) continue;
+            BigDecimal birim = nz(maliyetService.ortalamaMaliyet(s));
+            satirlar.add(com.raspel.erp.dto.sistem.StokAnalizDTO.OneriSatiri.builder()
+                    .stokId(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
+                    .mevcut(mevcut).minMiktar(min).hedefMiktar(hedef).oneriMiktar(oneri)
+                    .birimMaliyet(birim.setScale(2, java.math.RoundingMode.HALF_UP))
+                    .tahminiTutar(oneri.multiply(birim).setScale(2, java.math.RoundingMode.HALF_UP))
+                    .tedarikciId(s.getTedarikciId())
+                    .build());
+        }
+        return satirlar;
+    }
+
+    /** Satış temsilcisi performansı: cari kartındaki temsilciye göre satış toplamı. */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.sistem.StokAnalizDTO.TemsilciPerformans temsilciPerformans(
+            Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        List<com.raspel.erp.repository.ticaret.TemsilciPerformansProjeksiyon> kayitlar =
+                faturaRepository.temsilciPerformans(sirketId,
+                        com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS,
+                        com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI,
+                        baslangic, bitis);
+        List<com.raspel.erp.dto.sistem.StokAnalizDTO.TemsilciSatiri> satirlar = new java.util.ArrayList<>();
+        BigDecimal toplam = BigDecimal.ZERO;
+        long toplamFatura = 0;
+        for (var k : kayitlar) {
+            BigDecimal satis = k.getToplamSatis() != null ? k.getToplamSatis() : BigDecimal.ZERO;
+            long adet = k.getFaturaSayisi() != null ? k.getFaturaSayisi() : 0;
+            satirlar.add(com.raspel.erp.dto.sistem.StokAnalizDTO.TemsilciSatiri.builder()
+                    .temsilciId(k.getTemsilciId())
+                    .temsilciAd(k.getTemsilciAd() != null ? k.getTemsilciAd() : "Atanmamış")
+                    .faturaSayisi(adet)
+                    .toplamSatis(satis)
+                    .ortalamaFatura(adet > 0 ? satis.divide(BigDecimal.valueOf(adet), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO)
+                    .build());
+            toplam = toplam.add(satis);
+            toplamFatura += adet;
+        }
+        return com.raspel.erp.dto.sistem.StokAnalizDTO.TemsilciPerformans.builder()
+                .toplamSatis(toplam)
+                .toplamFatura(toplamFatura)
+                .satirlar(satirlar)
+                .build();
+    }
+
+    private BigDecimal nz(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 }

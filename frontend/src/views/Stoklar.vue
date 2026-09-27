@@ -21,6 +21,20 @@
           style="margin-left: 8px"
           @click="batchFiyatDialog = true"
         />
+        <Button
+          :label="t('stoklar.degerleme')"
+          icon="pi pi-chart-line"
+          class="p-button-outlined"
+          style="margin-left: 8px"
+          @click="degerlemeAc"
+        />
+        <Button
+          :label="t('stoklar.siparisOnerisi')"
+          icon="pi pi-shopping-cart"
+          class="p-button-outlined"
+          style="margin-left: 8px"
+          @click="oneriAc"
+        />
         <div
           v-if="seciliStoklar && seciliStoklar.length > 0"
           class="batch-actions"
@@ -819,6 +833,140 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="degerlemeDialog"
+      :header="t('stoklar.degerleme')"
+      modal
+      :style="{ width: '860px' }"
+    >
+      <div
+        v-if="degerlemeVerisi"
+        class="degerleme-ozet"
+      >
+        <span>{{ t('stoklar.ortalamaDeger') }}: <strong>{{ formatCurrency(degerlemeVerisi.toplamOrtalamaDeger) }}</strong></span>
+        <span>{{ t('stoklar.fifoDeger') }}: <strong>{{ formatCurrency(degerlemeVerisi.toplamFifoDeger) }}</strong></span>
+      </div>
+      <DataTable
+        :value="degerlemeVerisi?.satirlar || []"
+        striped-rows
+        :paginator="true"
+        :rows="15"
+        scrollable
+        scroll-height="420px"
+      >
+        <template #empty>
+          <EmptyState />
+        </template>
+        <Column
+          field="stokKodu"
+          :header="t('stoklar.kod')"
+          style="width: 120px"
+        />
+        <Column
+          field="ad"
+          :header="t('common.description')"
+        />
+        <Column
+          field="miktar"
+          :header="t('stoklar.stokMiktar')"
+          style="width: 100px"
+        />
+        <Column
+          field="ortalamaBirimMaliyet"
+          :header="t('stoklar.ortalamaMaliyet')"
+          style="width: 140px"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.ortalamaBirimMaliyet) }}
+          </template>
+        </Column>
+        <Column
+          field="ortalamaDeger"
+          :header="t('stoklar.ortalamaDeger')"
+          style="width: 140px"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.ortalamaDeger) }}
+          </template>
+        </Column>
+        <Column
+          field="fifoBirimMaliyet"
+          :header="t('stoklar.fifoMaliyet')"
+          style="width: 140px"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.fifoBirimMaliyet) }}
+          </template>
+        </Column>
+        <Column
+          field="fifoDeger"
+          :header="t('stoklar.fifoDeger')"
+          style="width: 140px"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.fifoDeger) }}
+          </template>
+        </Column>
+      </DataTable>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="oneriDialog"
+      :header="t('stoklar.siparisOnerisi')"
+      modal
+      :style="{ width: '760px' }"
+    >
+      <DataTable
+        :value="oneriVerisi"
+        striped-rows
+        :paginator="true"
+        :rows="15"
+        scrollable
+        scroll-height="420px"
+      >
+        <template #empty>
+          <EmptyState />
+        </template>
+        <Column
+          field="stokKodu"
+          :header="t('stoklar.kod')"
+          style="width: 120px"
+        />
+        <Column
+          field="ad"
+          :header="t('common.description')"
+        />
+        <Column
+          field="mevcut"
+          :header="t('stoklar.mevcut')"
+          style="width: 100px"
+        />
+        <Column
+          field="minMiktar"
+          :header="t('stoklar.minMiktar')"
+          style="width: 100px"
+        />
+        <Column
+          field="oneriMiktar"
+          :header="t('stoklar.oneriMiktar')"
+          style="width: 110px"
+        >
+          <template #body="{ data }">
+            <strong>{{ data.oneriMiktar }}</strong>
+          </template>
+        </Column>
+        <Column
+          field="tahminiTutar"
+          :header="t('stoklar.tahminiTutar')"
+          style="width: 130px"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.tahminiTutar) }}
+          </template>
+        </Column>
+      </DataTable>
+    </Dialog>
   </div>
 </template>
 
@@ -830,7 +978,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { useStokStore } from '../stores/stokStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { stokAPI, excelAPI, uploadAPI, depoAPI } from '../api/index.js'
+import { stokAPI, excelAPI, uploadAPI, depoAPI, raporAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
@@ -877,6 +1025,32 @@ const seciliStok = ref(null)
 const seciliStokId = ref(null)
 const seciliStoklar = ref([])
 const stokHareketler = ref([])
+// Stok değerleme (ortalama + FIFO) ve sipariş önerisi raporları.
+const degerlemeDialog = ref(false)
+const degerlemeVerisi = ref(null)
+const oneriDialog = ref(false)
+const oneriVerisi = ref([])
+
+const degerlemeAc = async () => {
+  degerlemeDialog.value = true
+  try {
+    const r = await raporAPI.stokDegerleme()
+    degerlemeVerisi.value = r.data || null
+  } catch {
+    degerlemeVerisi.value = null
+  }
+}
+
+const oneriAc = async () => {
+  oneriDialog.value = true
+  try {
+    const r = await raporAPI.siparisOnerisi()
+    oneriVerisi.value = Array.isArray(r.data) ? r.data : []
+  } catch {
+    oneriVerisi.value = []
+  }
+}
+
 const showDetailDialog = ref(false)
 const detailStok = ref(null)
 const hareketler = ref([])
@@ -1458,6 +1632,13 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 18px;
+}
+.degerleme-ozet {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 .toolbar-end {
   display: flex;

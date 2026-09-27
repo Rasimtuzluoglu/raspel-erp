@@ -188,6 +188,35 @@ public class RaporController {
         return ResponseEntity.ok(raporService.urunKarlilikRaporu(sirketId));
     }
 
+    @GetMapping("/stok-degerleme")
+    @Operation(summary = "Stok değerleme raporu",
+            description = "Stokların ağırlıklı ortalama ve FIFO (katman bazlı) değerini karşılaştırmalı getirir")
+    public ResponseEntity<com.raspel.erp.dto.sistem.StokAnalizDTO.Degerleme> stokDegerleme(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.stokDegerleme(sirketId));
+    }
+
+    @GetMapping("/siparis-onerisi")
+    @Operation(summary = "Sipariş önerisi",
+            description = "Minimum seviyenin altına düşen stoklar için hedefe tamamlama önerisi (min x2) üretir")
+    public ResponseEntity<List<com.raspel.erp.dto.sistem.StokAnalizDTO.OneriSatiri>> siparisOnerisi(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(raporService.siparisOnerisi(sirketId));
+    }
+
+    @GetMapping("/temsilci-performans")
+    @Operation(summary = "Temsilci performans raporu",
+            description = "Tarih aralığında cari kartındaki satış temsilcisine göre satış toplamlarını getirir")
+    public ResponseEntity<com.raspel.erp.dto.sistem.StokAnalizDTO.TemsilciPerformans> temsilciPerformans(
+            HttpServletRequest request,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        java.time.LocalDate bas = baslangic != null ? baslangic : java.time.LocalDate.now().withDayOfYear(1);
+        java.time.LocalDate bit = bitis != null ? bitis : java.time.LocalDate.now();
+        return ResponseEntity.ok(raporService.temsilciPerformans(sirketId, bas, bit));
+    }
+
     @GetMapping("/nakit-akisi-projeksiyonu")
     @Operation(summary = "Nakit akışı projeksiyonu", description = "30/60/90 günlük tahmini nakit akışı ve kasa projeksiyonunu getirir")
     public ResponseEntity<com.raspel.erp.dto.sistem.NakitAkisiProjeksiyonDTO> nakitAkisiProjeksiyonu(
