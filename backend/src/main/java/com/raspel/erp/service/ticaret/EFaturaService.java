@@ -43,6 +43,9 @@ public class EFaturaService {
     private final SirketRepository sirketRepository;
     private final TenantChecker tenantChecker;
     private final RestTemplate restTemplate;
+    private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+    private final com.raspel.erp.repository.ticaret.IadeKalemRepository iadeKalemRepository;
+    private final EEntegratorAdaptoru entegratorAdaptoru;
 
     /** GİB/entegratör uç noktası. Boş ise gönderim/sorgulama yapılamaz (sahte onay üretilmez). */
     @Value("${app.efatura.gib-endpoint:}")
@@ -104,14 +107,16 @@ public class EFaturaService {
         }
 
         String senaryoKarar = senaryoCoz(senaryo, fatura);
-        String ublXml = generateUblXml(fatura, ettn, senaryoKarar, tip, sirketId, aliciVkn);
+        String tipKarar = tip != null ? tip : "SATIS";
+        String ublXml = generateUblXml(fatura, ettn, senaryoKarar, tipKarar, sirketId, aliciVkn);
 
         EFatura eFatura = EFatura.builder()
                 .faturaId(faturaId)
                 .ettn(ettn)
                 .faturaNo(fatura.getFaturaNumarasi())
                 .senaryo(senaryoKarar)
-                .tip(tip != null ? tip : "SATIS")
+                .tip(tipKarar)
+                .belgeTuru(belgeTuruCoz(senaryoKarar, tipKarar))
                 .gibDurumKodu(1000) // Hazırlandı
                 .gibDurumAciklama("EARSIVEFATURA".equals(senaryoKarar)
                         ? "E-Arşiv taslağı hazırlandı (e-Fatura eşiği altı)."
@@ -125,6 +130,83 @@ public class EFaturaService {
 
         EFatura saved = eFaturaRepository.save(eFatura);
         log.info("E-Fatura taslağı oluşturuldu - ETTN: {}, Fatura No: {}", ettn, fatura.getFaturaNumarasi());
+        return entityToDTO(saved);
+    }
+
+    /** Senaryo ve tipe göre belge türünü çözer: EFATURA, EARSIV veya EIADE. */
+    private String belgeTuruCoz(String senaryo, String tip) {
+        if ("IADE".equalsIgnoreCase(tip)) return "EIADE";
+        return senaryo != null && senaryo.toUpperCase().contains("EARSIV") ? "EARSIV" : "EFATURA";
+    }
+
+    /**
+     * Kredi notu (e-Arşiv iade belgesi) üretir: tamamlanmış iade kaydından e-Arşiv
+     * senaryosunda IADE tipinde e-belge oluşturur ve iadeye bağlar. Aynı iade için
+     * mükerrer belge üretilmez.
+     */
+    public EFaturaDTO krediNotuOlustur(Long iadeId, Long sirketId) {
+        var iade = iadeRepository.findById(iadeId)
+                .orElseThrow(() -> new ResourceNotFoundException("İade", iadeId));
+        tenantChecker.check(iade.getSirketId(), "İade");
+        if (!"TAMAMLANDI".equals(iade.getDurum())) {
+            throw new BusinessException("Yalnızca tamamlanmış iadeler için kredi notu düzenlenebilir");
+        }
+        if (iade.getFaturaId() != null) {
+            eFaturaRepository.findByFaturaId(iade.getFaturaId()).ifPresent(ef -> {
+                if ("EIADE".equals(ef.getBelgeTuru())) {
+                    throw new BusinessException("Bu iade için zaten kredi notu oluşturulmuş. ETTN: " + ef.getEttn());
+                }
+            });
+        }
+
+        String ettn = UUID.randomUUID().toString();
+        String aliciVkn = null;
+        String aliciUnvan = null;
+        if (iade.getCariHesapId() != null) {
+            var cari = cariHesapRepository.findById(iade.getCariHesapId()).orElse(null);
+            if (cari != null) {
+                aliciVkn = cari.getVergiNumarasi();
+                aliciUnvan = cari.getAd();
+            }
+        }
+
+        // İade kalemlerinden UBL üretimi için fatura benzeri DTO kurulur.
+        FaturaDTO iadeDto = new FaturaDTO();
+        iadeDto.setFaturaNumarasi("IADE-" + iade.getId());
+        iadeDto.setTarih(iade.getTarih());
+        iadeDto.setCariHesapId(iade.getCariHesapId());
+        iadeDto.setCariHesapAd(aliciUnvan);
+        iadeDto.setParaBirimi("TRY");
+        List<FaturaKalemDTO> kalemler = new ArrayList<>();
+        for (var k : iadeKalemRepository.findByIadeId(iade.getId())) {
+            kalemler.add(FaturaKalemDTO.builder()
+                    .aciklama(k.getAciklama()).adet(k.getMiktar())
+                    .birimFiyat(k.getBirimFiyat()).kdvOrani(k.getKdvOrani())
+                    .build());
+        }
+        iadeDto.setKalemler(kalemler);
+        iadeDto.setGenelToplam(iade.getTutar());
+
+        String ublXml = generateUblXml(iadeDto, ettn, "EARSIVEFATURA", "IADE", sirketId, aliciVkn);
+
+        EFatura eFatura = EFatura.builder()
+                .faturaId(iade.getFaturaId())
+                .iadeId(iade.getId())
+                .ettn(ettn)
+                .faturaNo("IADE-" + iade.getId())
+                .senaryo("EARSIVEFATURA")
+                .tip("IADE")
+                .belgeTuru("EIADE")
+                .gibDurumKodu(1000)
+                .gibDurumAciklama("Kredi notu (e-Arşiv iade) taslağı hazırlandı.")
+                .aliciVknTckn(aliciVkn)
+                .aliciUnvan(aliciUnvan)
+                .odenecekTutar(iade.getTutar())
+                .ublXml(ublXml)
+                .sirketId(sirketId != null ? sirketId : iade.getSirketId())
+                .build();
+        EFatura saved = eFaturaRepository.save(eFatura);
+        log.info("Kredi notu taslağı oluşturuldu - ETTN: {}, İade ID: {}", ettn, iadeId);
         return entityToDTO(saved);
     }
 
@@ -150,6 +232,13 @@ public class EFaturaService {
                 log.info("E-Fatura GİB uç noktasına iletildi - ETTN: {}", eFatura.getEttn());
             } catch (Exception ex) {
                 log.warn("GİB uç noktasına gönderim başarısız: {}", ex.getMessage());
+            }
+        } else if (entegratorAdaptoru.tanimliMi()) {
+            // Doğrudan uç nokta tanımlı değilse entegratör adaptörü üzerinden gönderilir.
+            if (entegratorAdaptoru.gonder(eFatura.getEttn(), eFatura.getBelgeTuru(), eFatura.getUblXml())) {
+                eFatura.setGibDurumKodu(1200);
+                eFatura.setGibDurumAciklama("GİB'e iletildi (entegratör onay bekliyor).");
+                iletildi = true;
             }
         }
 
@@ -183,6 +272,17 @@ public class EFaturaService {
             return entityToDTO(eFatura); // zaten nihai durumda
         }
         if (gibEndpoint == null || gibEndpoint.isBlank()) {
+            // Doğrudan uç nokta yoksa entegratör adaptörü denenir.
+            if (entegratorAdaptoru.tanimliMi()) {
+                Integer kod = entegratorAdaptoru.durumSorgula(eFatura.getEttn());
+                if (kod == null) {
+                    throw new BusinessException("GİB durum sorgulaması başarısız: entegratörden geçerli yanıt alınamadı.");
+                }
+                eFatura.setGibDurumKodu(kod);
+                eFatura.setGibDurumAciklama("Entegratör durumu");
+                log.info("E-Fatura durumu (entegratör) güncellendi - ETTN: {}, Kod: {}", eFatura.getEttn(), kod);
+                return entityToDTO(eFaturaRepository.save(eFatura));
+            }
             throw new BusinessException("GİB entegratör uç noktası tanımlı değil. Durum sorgulaması yapılamaz.");
         }
 
@@ -247,10 +347,15 @@ public class EFaturaService {
         xml.append("         xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">\n");
         xml.append("    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>\n");
         xml.append("    <cbc:CustomizationID>TR1.2</cbc:CustomizationID>\n");
-        xml.append("    <cbc:ProfileID>").append(esc(senaryo != null ? senaryo : "TEMELFATURA")).append("</cbc:ProfileID>\n");
+        // GİB e-Arşiv profil kodu EARSIVFATURA'dır (senaryo adındaki fazladan E düzeltilir).
+        String profil = senaryo != null && senaryo.toUpperCase().contains("EARSIV")
+                ? "EARSIVFATURA" : (senaryo != null ? senaryo : "TEMELFATURA");
+        xml.append("    <cbc:ProfileID>").append(esc(profil)).append("</cbc:ProfileID>\n");
         xml.append("    <cbc:ID>").append(esc(fatura.getFaturaNumarasi())).append("</cbc:ID>\n");
         xml.append("    <cbc:UUID>").append(esc(ettn)).append("</cbc:UUID>\n");
-        xml.append("    <cbc:IssueDate>").append(fatura.getTarih()).append("</cbc:IssueDate>\n");
+        java.time.LocalDate belgeTarihi = fatura.getTarih() != null ? fatura.getTarih() : java.time.LocalDate.now();
+        xml.append("    <cbc:IssueDate>").append(belgeTarihi).append("</cbc:IssueDate>\n");
+        xml.append("    <cbc:IssueTime>").append(java.time.LocalTime.now().withNano(0)).append("</cbc:IssueTime>\n");
         xml.append("    <cbc:InvoiceTypeCode>").append(esc(tip != null ? tip : "SATIS")).append("</cbc:InvoiceTypeCode>\n");
         xml.append("    <cbc:DocumentCurrencyCode>").append(esc(doviz)).append("</cbc:DocumentCurrencyCode>\n");
 
@@ -334,6 +439,8 @@ public class EFaturaService {
                 .aliciUnvan(ef.getAliciUnvan())
                 .odenecekTutar(ef.getOdenecekTutar())
                 .ublXml(ef.getUblXml())
+                .belgeTuru(ef.getBelgeTuru())
+                .iadeId(ef.getIadeId())
                 .sirketId(ef.getSirketId())
                 .olusturmaTarihi(ef.getOlusturmaTarihi())
                 .build();

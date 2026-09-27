@@ -59,6 +59,15 @@ public class EFaturaController {
         return ResponseEntity.ok(eFaturaService.gibGonder(id));
     }
 
+    @PostMapping("/kredi-notu/{iadeId}")
+    @Operation(summary = "Kredi notu (e-Arşiv iade) oluştur",
+            description = "Tamamlanmış iade kaydından e-Arşiv IADE tipinde kredi notu taslağı üretir ve iadeye bağlar")
+    public ResponseEntity<EFaturaDTO> krediNotu(@PathVariable Long iadeId, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        EFaturaDTO dto = eFaturaService.krediNotuOlustur(iadeId, sirketId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+
     @PostMapping("/{id}/durum-sorgula")
     @Operation(summary = "GİB durumunu sorgula", description = "GİB/entegratörden güncel durum kodunu sorgular ve kaydı günceller")
     public ResponseEntity<EFaturaDTO> durumSorgula(@PathVariable Long id) {

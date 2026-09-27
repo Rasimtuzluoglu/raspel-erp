@@ -50,6 +50,14 @@ public class EFatura {
     @Column(name = "ubl_xml", columnDefinition = "TEXT")
     private String ublXml;
 
+    /** Belge türü: EFATURA, EARSIV, EIRSALIYE, EIADE (kredi notu). */
+    @Column(name = "belge_turu", length = 20)
+    private String belgeTuru;
+
+    /** Kredi notu belgesinin bağlı olduğu iade kaydı. */
+    @Column(name = "iade_id")
+    private Long iadeId;
+
     @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 

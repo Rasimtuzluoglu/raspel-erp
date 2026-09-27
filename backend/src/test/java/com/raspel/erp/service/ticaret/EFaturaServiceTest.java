@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,6 +46,15 @@ class EFaturaServiceTest {
 
     @Mock
     private org.springframework.web.client.RestTemplate restTemplate;
+
+    @Mock
+    private EEntegratorAdaptoru entegratorAdaptoru;
+
+    @Mock
+    private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+
+    @Mock
+    private com.raspel.erp.repository.ticaret.IadeKalemRepository iadeKalemRepository;
 
     @InjectMocks
     private EFaturaService eFaturaService;
@@ -99,6 +109,7 @@ class EFaturaServiceTest {
     @Test
     void testGibGonder_EndpointYoksaIletilemez() {
         when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(entegratorAdaptoru.tanimliMi()).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> eFaturaService.gibGonder(10L));
         assertEquals(1000, mockEFatura.getGibDurumKodu());
@@ -169,9 +180,56 @@ class EFaturaServiceTest {
     void testDurumSorgula_EndpointYoksaHataVerir() {
         mockEFatura.setGibDurumKodu(1200);
         when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(entegratorAdaptoru.tanimliMi()).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> eFaturaService.durumSorgula(10L));
         verify(eFaturaRepository, never()).save(any());
+    }
+
+    @Test
+    void testGibGonder_EntegratorAdaptoruIleIletilir() {
+        when(eFaturaRepository.findById(10L)).thenReturn(Optional.of(mockEFatura));
+        when(entegratorAdaptoru.tanimliMi()).thenReturn(true);
+        when(entegratorAdaptoru.gonder(any(), any(), any())).thenReturn(true);
+        when(eFaturaRepository.save(any(EFatura.class))).thenReturn(mockEFatura);
+
+        eFaturaService.gibGonder(10L);
+
+        assertEquals(1200, mockEFatura.getGibDurumKodu());
+        verify(entegratorAdaptoru).gonder(eq("123e4567-e89b-12d3-a456-426614174000"), any(), any());
+    }
+
+    @Test
+    void testKrediNotu_TamamlanmisIadedenOlusturulur() {
+        var iade = com.raspel.erp.entity.ticaret.Iade.builder()
+                .id(5L).faturaId(1L).cariHesapId(2L).tur("SATIS")
+                .tarih(java.time.LocalDate.now()).tutar(BigDecimal.valueOf(120))
+                .durum("TAMAMLANDI").sirketId(100L).build();
+        when(iadeRepository.findById(5L)).thenReturn(Optional.of(iade));
+        when(eFaturaRepository.findByFaturaId(1L)).thenReturn(Optional.empty());
+        when(iadeKalemRepository.findByIadeId(5L)).thenReturn(List.of(
+                com.raspel.erp.entity.ticaret.IadeKalem.builder().iadeId(5L).aciklama("Ürün")
+                        .miktar(BigDecimal.ONE).birimFiyat(BigDecimal.valueOf(120))
+                        .kdvOrani(BigDecimal.valueOf(20)).build()));
+        when(cariHesapRepository.findById(2L)).thenReturn(Optional.empty());
+        when(eFaturaRepository.save(any(EFatura.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        EFaturaDTO sonuc = eFaturaService.krediNotuOlustur(5L, 100L);
+
+        assertEquals("EIADE", sonuc.getBelgeTuru());
+        assertEquals("IADE", sonuc.getTip());
+        assertEquals(5L, sonuc.getIadeId());
+        assertTrue(sonuc.getUblXml().contains("EARSIVFATURA"));
+    }
+
+    @Test
+    void testKrediNotu_TamamlanmamisIadeReddedilir() {
+        var iade = com.raspel.erp.entity.ticaret.Iade.builder()
+                .id(6L).tur("SATIS").tutar(BigDecimal.valueOf(100))
+                .durum("TASLAK").sirketId(100L).build();
+        when(iadeRepository.findById(6L)).thenReturn(Optional.of(iade));
+
+        assertThrows(BusinessException.class, () -> eFaturaService.krediNotuOlustur(6L, 100L));
     }
 
     @Test

@@ -24,6 +24,10 @@ public class EFaturaDTO {
     private String aliciUnvan;
     private BigDecimal odenecekTutar;
     private String ublXml;
+    /** Belge türü: EFATURA, EARSIV, EIRSALIYE, EIADE (kredi notu). */
+    private String belgeTuru;
+    /** Kredi notu belgesinin bağlı olduğu iade kaydı. */
+    private Long iadeId;
     private Long sirketId;
     private LocalDateTime olusturmaTarihi;
 }
