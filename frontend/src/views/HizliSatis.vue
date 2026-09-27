@@ -545,6 +545,31 @@
                 />
               </div>
 
+              <div
+                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
+                class="odenen-satir pos-secim"
+              >
+                <label>{{ t('hizliSatis.posTerminali') }}</label>
+                <Dropdown
+                  v-model="seciliPos"
+                  :options="posTerminalleri"
+                  option-label="ad"
+                  option-value="id"
+                  :placeholder="t('hizliSatis.posSecin')"
+                  show-clear
+                  class="w-full"
+                />
+                <small
+                  v-if="seciliPosBilgi"
+                  class="pos-komisyon-not"
+                >
+                  {{ t('hizliSatis.posKomisyonNot', {
+                    oran: seciliPosBilgi.komisyonOrani ?? 0,
+                    komisyon: formatCurrency(hesaplananKomisyon)
+                  }) }}
+                </small>
+              </div>
+
               <div class="odeme-durum">
                 <Tag
                   :value="odemeDurumText"
@@ -1096,7 +1121,7 @@ import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useKategoriStore } from '../stores/kategoriStore.js'
-import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
@@ -1434,6 +1459,19 @@ const kasalar = ref([])
 const seciliBanka = ref(null)
 const bankalar = ref([])
 
+// Kart için POS terminali (perakende satış; gün sonunda komisyon düşülerek bankaya geçer)
+const seciliPos = ref(null)
+const posTerminalleri = ref([])
+
+const seciliPosBilgi = computed(
+  () => posTerminalleri.value.find((p) => p.id === seciliPos.value) || null
+)
+const hesaplananKomisyon = computed(() => {
+  const oran = Number(seciliPosBilgi.value?.komisyonOrani || 0)
+  if (!oran || !odenenTutar.value) return 0
+  return Math.round(odenenTutar.value * oran) / 100
+})
+
 // Para üstü
 const alinanNakit = ref(0)
 const paraUstu = computed(() => {
@@ -1467,6 +1505,15 @@ const bankalariYukle = async () => {
     bankalar.value = unwrapList(r)
   } catch {
     bankalar.value = []
+  }
+}
+
+const poslariYukle = async () => {
+  try {
+    const r = await posAPI.aktif()
+    posTerminalleri.value = Array.isArray(r.data) ? r.data : unwrapList(r)
+  } catch {
+    posTerminalleri.value = []
   }
 }
 
@@ -1700,6 +1747,7 @@ onMounted(async () => {
       cokSatanlariYukle(),
       kasalariYukle(),
       bankalariYukle(),
+      poslariYukle(),
       gunlukSatislariYukle()
     ])
     kayitliSepetVar.value = !!localStorage.getItem('raspel_kayitli_sepet')
@@ -2156,8 +2204,14 @@ const satisiTamamlaOnaysiz = async () => {
       taksitTutar: odemeYontemi.value === 'TAKSIT' ? taksitTutar.value : null,
       taksitSayisi: odemeYontemi.value === 'TAKSIT' ? taksitSayisi.value : null,
       kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
-      bankaId: (odemeYontemi.value === 'KART' || odemeYontemi.value === 'HAVALE') ? (seciliBanka.value || null) : null,
-      kartaBankaAktar: odemeYontemi.value === 'KART' && !!seciliBanka.value
+      bankaId: odemeYontemi.value === 'HAVALE' || (odemeYontemi.value === 'KART' && !seciliPos.value)
+        ? (seciliBanka.value || null)
+        : null,
+      kartaBankaAktar: odemeYontemi.value === 'KART' && !seciliPos.value && !!seciliBanka.value,
+      // POS terminali seçilirse tutar anında bankaya yazılmaz; POS gün sonunda komisyon
+      // düşülerek terminalin bankasına aktarılır (çift giriş önlenir).
+      posTerminaliId: odemeYontemi.value === 'KART' ? (seciliPos.value || null) : null,
+      komisyonTutar: odemeYontemi.value === 'KART' && seciliPos.value ? hesaplananKomisyon.value : null
     }
   })
   try {
@@ -3339,6 +3393,13 @@ const sepetiTemizle = () => {
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 4px;
+}
+.pos-komisyon-not {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 .odeme-durum {
   margin-top: 8px;

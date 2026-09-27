@@ -31,6 +31,7 @@ class PosGunSonuServiceTest {
     @Mock private BankaRepository bankaRepository;
     @Mock private PosGunSonuRepository gunSonuRepository;
     @Mock private SirketRepository sirketRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     @InjectMocks private PosGunSonuService gunSonuService;
 
     @Test
@@ -42,6 +43,7 @@ class PosGunSonuServiceTest {
                 .thenReturn(List.of(
                         Hareket.builder().tutar(new BigDecimal("1000")).komisyonTutar(new BigDecimal("20")).hareketTarihi(LocalDate.now()).build(),
                         Hareket.builder().tutar(new BigDecimal("500")).hareketTarihi(LocalDate.now().minusDays(1)).build()));
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of());
         Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.ZERO).sirketId(1L).build();
         when(bankaRepository.findById(3L)).thenReturn(Optional.of(banka));
 
@@ -50,6 +52,31 @@ class PosGunSonuServiceTest {
         assertEquals(1, sonuc.size());
         // Bankaya komisyon düşülerek NET tutar geçer: 1000 - 20 = 980.
         assertEquals(new BigDecimal("980"), banka.getBakiye());
+        verify(gunSonuRepository).saveAndFlush(any());
+    }
+
+    @Test
+    void gunSonuIsle_perakendeFaturaKartSatislariniKapsar() {
+        PosTerminali p = PosTerminali.builder().id(1L).sirketId(1L).ad("Halkbank POS").bankaId(3L).aktif(true).build();
+        when(posRepository.findBySirketIdAndAktifTrueOrderByAd(1L)).thenReturn(List.of(p));
+        when(gunSonuRepository.existsByPosIdAndTarih(1L, LocalDate.now())).thenReturn(false);
+        when(hareketRepository.findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(1L, 1L))
+                .thenReturn(List.of());
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of(
+                com.raspel.erp.entity.ticaret.Fatura.builder()
+                        .id(50L).sirketId(1L).posTerminaliId(1L)
+                        .tur(com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS)
+                        .durum(com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI)
+                        .odemeYontemi("KART").odenenTutar(new BigDecimal("2000"))
+                        .komisyonTutar(new BigDecimal("40"))
+                        .tarih(LocalDate.now()).build()));
+        Banka banka = Banka.builder().id(3L).ad("Halkbank").bakiye(BigDecimal.ZERO).sirketId(1L).build();
+        when(bankaRepository.findById(3L)).thenReturn(Optional.of(banka));
+
+        var sonuc = gunSonuService.gunSonuIsle(1L);
+
+        assertEquals(1, sonuc.size());
+        assertEquals(new BigDecimal("1960"), banka.getBakiye());
         verify(gunSonuRepository).saveAndFlush(any());
     }
 
@@ -72,6 +99,7 @@ class PosGunSonuServiceTest {
         when(gunSonuRepository.existsByPosIdAndTarih(1L, LocalDate.now())).thenReturn(false);
         when(hareketRepository.findBySirketIdAndPosTerminaliIdOrderByHareketTarihiDesc(1L, 1L))
                 .thenReturn(List.of(Hareket.builder().tutar(new BigDecimal("1000")).hareketTarihi(LocalDate.now()).build()));
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of());
         when(bankaRepository.findById(3L)).thenReturn(java.util.Optional.empty());
 
         com.raspel.erp.exception.BusinessException ex = assertThrows(

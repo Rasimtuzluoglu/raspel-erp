@@ -36,6 +36,7 @@ public class PosGunSonuService {
     private final BankaRepository bankaRepository;
     private final PosGunSonuRepository gunSonuRepository;
     private final SirketRepository sirketRepository;
+    private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     // Self-invocation'da @Transactional proxy'si devreye girmediği için programatik tx kullanılır.
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
@@ -52,12 +53,37 @@ public class PosGunSonuService {
                     .filter(h -> bugun.equals(h.getHareketTarihi()) && h.getTutar() != null)
                     .map(Hareket::getTutar)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (tutar.compareTo(BigDecimal.ZERO) <= 0) continue;
 
             BigDecimal komisyon = hareketler.stream()
                     .filter(h -> bugun.equals(h.getHareketTarihi()) && h.getKomisyonTutar() != null)
                     .map(Hareket::getKomisyonTutar)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Perakende (hızlı satış) kart tahsilatları cari hareket oluşturmaz; POS bağlı
+            // faturalardan toplanır. Aynı faturaya bağlı cari tahsilat varsa çift sayılmaz.
+            java.util.Set<Long> cariTahsilatliFaturaIdler = hareketler.stream()
+                    .filter(h -> h.getFaturaId() != null)
+                    .map(Hareket::getFaturaId)
+                    .collect(java.util.stream.Collectors.toSet());
+            List<com.raspel.erp.entity.ticaret.Fatura> posFaturalar =
+                    faturaRepository.findBySirketIdAndTarihBetween(sirketId, bugun, bugun).stream()
+                            .filter(f -> p.getId().equals(f.getPosTerminaliId())
+                                    && f.getTur() == com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS
+                                    && f.getDurum() != com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.IPTAL
+                                    && "KART".equalsIgnoreCase(f.getOdemeYontemi())
+                                    && f.getOdenenTutar() != null && f.getOdenenTutar().signum() > 0
+                                    && !cariTahsilatliFaturaIdler.contains(f.getId()))
+                            .toList();
+            BigDecimal faturaTutar = posFaturalar.stream()
+                    .map(f -> f.getOdenenTutar() != null ? f.getOdenenTutar() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal faturaKomisyon = posFaturalar.stream()
+                    .map(f -> f.getKomisyonTutar() != null ? f.getKomisyonTutar() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            tutar = tutar.add(faturaTutar);
+            komisyon = komisyon.add(faturaKomisyon);
+
+            if (tutar.compareTo(BigDecimal.ZERO) <= 0) continue;
 
             // Banka tanımlı olmayan POS atlanır; banka tanımlı ama kayıt yoksa işlem açıkça reddedilir
             // (sessizce "başarılı" görünüp bankaya aktarılmaması finansal tutarsızlığa yol açar).

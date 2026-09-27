@@ -139,6 +139,22 @@ public class Fatura {
     @Column(name = "kasa_id")
     private Long kasaId;
 
+    /** Kart tahsilatının geçtiği POS terminali (perakende hızlı satış). */
+    @Column(name = "pos_terminali_id")
+    private Long posTerminaliId;
+
+    /** POS terminali adı (görüntüleme için denormalize). */
+    @Column(name = "pos_ad", length = 150)
+    private String posAd;
+
+    /** Kart komisyon tutarı (POS gün sonunda net aktarım için). */
+    @Column(name = "komisyon_tutar", precision = 19, scale = 2)
+    private BigDecimal komisyonTutar;
+
+    /** Valör (bankaya geçiş) tarihi. */
+    @Column(name = "valor_tarihi")
+    private LocalDate valorTarihi;
+
     @Version
     private Long version;
 

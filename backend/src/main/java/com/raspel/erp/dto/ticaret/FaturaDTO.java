@@ -71,6 +71,12 @@ public class FaturaDTO {
     private Long bankaId;
     /** KART tahsilatı banka hesabına aktarılsın mı (POS gün sonu beklenmeden). */
     private Boolean kartaBankaAktar;
+    /** Kart tahsilatının geçtiği POS terminali (perakende hızlı satış). */
+    private Long posTerminaliId;
+    private String posAd;
+    /** Kart komisyon tutarı; verilmezse POS terminalinin komisyon oranından hesaplanır. */
+    private BigDecimal komisyonTutar;
+    private java.time.LocalDate valorTarihi;
     /** Faturanın dayandığı irsaliye; verilirse stok çift düşümü önlenir. */
     private Long irsaliyeId;
 

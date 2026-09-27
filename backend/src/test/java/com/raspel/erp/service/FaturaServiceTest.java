@@ -67,6 +67,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
     @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    @Mock private com.raspel.erp.repository.finans.PosTerminaliRepository posTerminaliRepository;
     @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private com.raspel.erp.service.finans.TaksitService taksitService;

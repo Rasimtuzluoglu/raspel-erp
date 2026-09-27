@@ -98,6 +98,7 @@ public class FaturaService {
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+    private final com.raspel.erp.repository.finans.PosTerminaliRepository posTerminaliRepository;
 
     /** Toplu islemlerde bellek yukunu sinirlamak icin persistence context temizligi. */
     @jakarta.persistence.PersistenceContext
@@ -475,6 +476,25 @@ public class FaturaService {
             throw new BusinessException("Geçersiz durum: " + dto.getDurum());
         }
 
+        // POS terminali: kart tahsilatının geçtiği terminal kaydedilir; komisyon terminal
+        // oranından hesaplanır ve tutar bankaya doğrudan aktarılmaz (POS gün sonu net aktarır).
+        Long posTerminaliId = dto.getPosTerminaliId();
+        String posAd = null;
+        BigDecimal komisyonTutar = dto.getKomisyonTutar();
+        if (posTerminaliId != null) {
+            var pos = posTerminaliRepository.findById(posTerminaliId)
+                    .orElseThrow(() -> new ResourceNotFoundException("POS Terminali", posTerminaliId));
+            if (pos.getSirketId() != null && sirketId != null && !pos.getSirketId().equals(sirketId)) {
+                throw new BusinessException("POS terminali bu şirkete ait değil");
+            }
+            posAd = pos.getAd();
+            if (komisyonTutar == null && pos.getKomisyonOrani() != null && odenenTutar.signum() > 0) {
+                komisyonTutar = odenenTutar
+                        .multiply(pos.getKomisyonOrani())
+                        .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            }
+        }
+
         Fatura fatura = Fatura.builder()
                 .faturaNumarasi(faturaNo)
                 .tarih(dto.getTarih() != null ? dto.getTarih() : LocalDate.now())
@@ -505,6 +525,10 @@ public class FaturaService {
                 .kasaId(dto.getKasaId())
                 .bankaId(dto.getBankaId())
                 .kartaBankaAktar(dto.getKartaBankaAktar())
+                .posTerminaliId(posTerminaliId)
+                .posAd(posAd)
+                .komisyonTutar(komisyonTutar)
+                .valorTarihi(dto.getValorTarihi())
                 .irsaliyeId(dto.getIrsaliyeId())
                 .siparisId(dto.getSiparisId())
                 .build();
@@ -582,8 +606,10 @@ public class FaturaService {
         if (odenenTutar.compareTo(BigDecimal.ZERO) > 0) {
             if (kaydedilen.getKasaId() != null) {
                 kasaGirisi(kaydedilen, odenenTutar);
-            } else if (kaydedilen.getBankaId() != null) {
+            } else if (kaydedilen.getBankaId() != null && kaydedilen.getPosTerminaliId() == null) {
                 // HAVALE ve (POS gün sonu dışı) KART tahsilatı banka hesabına aktarılır.
+                // POS terminaline bağlı kart satışı bekler: tutar POS gün sonunda komisyon
+                // düşülerek bankaya aktarılır; burada bankaya yazılırsa çift giriş olur.
                 bankaGirisi(kaydedilen, odenenTutar);
             }
         }
@@ -1615,6 +1641,10 @@ public class FaturaService {
                 .taksitKurum(fatura.getTaksitKurum())
                 .bankaId(fatura.getBankaId())
                 .kartaBankaAktar(fatura.getKartaBankaAktar())
+                .posTerminaliId(fatura.getPosTerminaliId())
+                .posAd(fatura.getPosAd())
+                .komisyonTutar(fatura.getKomisyonTutar())
+                .valorTarihi(fatura.getValorTarihi())
                 .taksitTutar(fatura.getTaksitTutar())
                 .kasaId(fatura.getKasaId())
                 .kasaAd(fatura.getKasaId() != null ? kasaHaritasi.get(fatura.getKasaId()) : null)
