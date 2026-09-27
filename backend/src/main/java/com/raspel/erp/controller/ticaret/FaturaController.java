@@ -262,8 +262,8 @@ public class FaturaController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Fatura sil", description = "Faturayı siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Fatura sil", description = "Faturayı siler (ADMIN veya FATURA_DELETE yetkisi)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_DELETE')")
     public ResponseEntity<Void> faturaSil(@PathVariable Long id) {
         faturaService.faturaSil(id);
         return ResponseEntity.noContent().build();

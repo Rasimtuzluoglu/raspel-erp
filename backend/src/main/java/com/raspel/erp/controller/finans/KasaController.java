@@ -55,8 +55,8 @@ public class KasaController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Kasa sil", description = "Kasayı siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Kasa sil", description = "Kasayı siler (ADMIN veya FINANS_DELETE yetkisi)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) { kasaService.kasaSil(id); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/{id}/hareketler")

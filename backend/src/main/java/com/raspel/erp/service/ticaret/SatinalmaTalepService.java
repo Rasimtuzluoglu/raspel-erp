@@ -11,6 +11,7 @@ import com.raspel.erp.repository.ticaret.SatinalmaTalepKalemRepository;
 import com.raspel.erp.repository.ticaret.SatinalmaTalepRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +24,14 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class SatinalmaTalepService {
 
     private final SatinalmaTalepRepository talepRepository;
     private final SatinalmaTalepKalemRepository kalemRepository;
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.OnayAyariService onayAyariService;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaTalepDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -72,6 +75,26 @@ public class SatinalmaTalepService {
                         .birim(k.getBirim()).tahminiBirimFiyat(k.getTahminiBirimFiyat())
                         .build());
             }
+        }
+
+        // Otomatik onay kuralı: eşiğin altındaki talepler doğrudan onaylanır.
+        try {
+            BigDecimal toplam = BigDecimal.ZERO;
+            if (dto.getKalemler() != null) {
+                for (SatinalmaTalepKalemDTO k : dto.getKalemler()) {
+                    BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
+                    BigDecimal fiyat = k.getTahminiBirimFiyat() != null ? k.getTahminiBirimFiyat() : BigDecimal.ZERO;
+                    toplam = toplam.add(miktar.multiply(fiyat));
+                }
+            }
+            if (toplam.signum() > 0
+                    && onayAyariService.otomatikOnayGecerli(t.getSirketId(), "SATINALMA", toplam)) {
+                t.setDurum("ONAYLANDI");
+                t = talepRepository.save(t);
+                log.info("Satınalma talebi otomatik onaylandı - Talep #{} ({} ₺)", t.getId(), toplam);
+            }
+        } catch (Exception e) {
+            log.warn("Otomatik onay kontrolü yapılamadı (talep #{}): {}", t.getId(), e.getMessage());
         }
         return entityToDTO(t);
     }

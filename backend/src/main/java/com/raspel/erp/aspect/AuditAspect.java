@@ -48,6 +48,25 @@ public class AuditAspect {
     @Pointcut("execution(* com.raspel.erp.controller..*.durumGuncelle(..))")
     public void durumGuncellePointcut() {}
 
+    // Belge yaşam döngüsü işlemleri (kes/iptal/ödeme/tamamlama/eşleştirme/kilit) de izlenir.
+    @Pointcut("execution(* com.raspel.erp.controller..*.*kes(..))")
+    public void kesPointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.*iptal(..))")
+    public void iptalPointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.*ode(..))")
+    public void odePointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.*tamamla(..))")
+    public void tamamlaPointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.*eslestir(..))")
+    public void eslestirPointcut() {}
+
+    @Pointcut("execution(* com.raspel.erp.controller..*.*kilit(..))")
+    public void kilitPointcut() {}
+
     @AfterReturning("createPointcut()")
     public void logCreate(JoinPoint jp) {
         log(jp, "OLUSTUR");
@@ -58,12 +77,18 @@ public class AuditAspect {
         log(jp, "GUNCELLE");
     }
 
+    @AfterReturning("kesPointcut() || iptalPointcut() || odePointcut() || tamamlaPointcut() || eslestirPointcut() || kilitPointcut()")
+    public void logIslem(JoinPoint jp) {
+        log(jp, "ISLEM");
+    }
+
     @AfterReturning("deletePointcut()")
     public void logDelete(JoinPoint jp) {
         log(jp, "SIL");
     }
 
-    @AfterThrowing(pointcut = "createPointcut() || updatePointcut() || deletePointcut() || durumGuncellePointcut()", throwing = "ex")
+    @AfterThrowing(pointcut = "createPointcut() || updatePointcut() || deletePointcut() || durumGuncellePointcut() "
+            + "|| kesPointcut() || iptalPointcut() || odePointcut() || tamamlaPointcut() || eslestirPointcut() || kilitPointcut()", throwing = "ex")
     public void logError(JoinPoint jp, Throwable ex) {
         log(jp, "HATA");
     }

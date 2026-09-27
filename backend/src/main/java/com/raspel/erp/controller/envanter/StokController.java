@@ -253,8 +253,8 @@ public class StokController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Stok sil", description = "Stoku siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Stok sil", description = "Stoku siler (ADMIN veya STOK_DELETE yetkisi)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) { stokService.sil(id); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/{id}/hareketler")

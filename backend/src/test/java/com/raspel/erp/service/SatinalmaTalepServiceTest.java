@@ -33,6 +33,7 @@ class SatinalmaTalepServiceTest {
     @Mock private SatinalmaTalepKalemRepository kalemRepository;
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.sistem.OnayAyariService onayAyariService;
     @InjectMocks private SatinalmaTalepService satinalmaTalepService;
 
     private SatinalmaTalep createTalep(Long id) {
@@ -78,6 +79,26 @@ class SatinalmaTalepServiceTest {
         when(talepRepository.save(any(SatinalmaTalep.class))).thenReturn(saved);
         var result = satinalmaTalepService.olustur(dto);
         assertNotNull(result);
+    }
+
+    @Test
+    void olustur_esikAltindaOtomatikOnaylanir() {
+        SatinalmaTalepKalemDTO kalem = SatinalmaTalepKalemDTO.builder().stokId(1L)
+                .aciklama("K").miktar(BigDecimal.valueOf(2)).birim("Adet")
+                .tahminiBirimFiyat(BigDecimal.valueOf(100)).build();
+        SatinalmaTalepDTO dto = SatinalmaTalepDTO.builder().talepNo("TLP-100").tarih(LocalDate.now())
+                .talepEden("Mehmet").sirketId(1L).kalemler(List.of(kalem)).build();
+        when(talepRepository.save(any(SatinalmaTalep.class))).thenAnswer(inv -> {
+            SatinalmaTalep t = inv.getArgument(0);
+            if (t.getId() == null) t.setId(1L);
+            return t;
+        });
+        // 200 TL toplam, eşik altı ve otomatik onay açık.
+        when(onayAyariService.otomatikOnayGecerli(eq(1L), eq("SATINALMA"), any())).thenReturn(true);
+
+        var result = satinalmaTalepService.olustur(dto, 1L);
+
+        assertEquals("ONAYLANDI", result.getDurum());
     }
 
     @Test
