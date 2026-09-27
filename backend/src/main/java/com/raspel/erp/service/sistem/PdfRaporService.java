@@ -700,14 +700,27 @@ public class PdfRaporService {
                                 FaturaSablonu sablon, String baslik, String altBaslik) throws IOException {
         float solGenislik = PAGE_WIDTH - 100f;
         PDImageXObject logo = logoYukle(doc, sablon, s);
+        float logoAlt = y + 16f;
+        float logoGenislik = 0f;
         if (logo != null) {
             try {
-                float lg = 84f;
-                float ly = lg * logo.getHeight() / logo.getWidth();
+                // Logo yüksekliği sınırlanır: kare/uzun logolarda başlık metninin ve
+                // ayırıcı çizginin üzerine taşmasını önler (en-boy oranı korunur).
+                float maxYuk = 46f;
+                float maxGen = 84f;
+                float oran = (float) logo.getHeight() / (float) logo.getWidth();
+                float ly = Math.min(maxYuk, maxGen * oran);
+                float lg = ly / oran;
                 cs.drawImage(logo, MARGIN + PAGE_WIDTH - lg, y - ly + 16f, lg, ly);
+                logoAlt = y - ly + 16f;
+                logoGenislik = lg;
             } catch (Exception ignored) {
                 // logo çizilemezse başlık yine üretilir
             }
+        }
+        // Logo varsa şirket bilgisi metni logo alanına girmeyecek şekilde daraltılır.
+        if (logoGenislik > 0) {
+            solGenislik = Math.max(200f, solGenislik - logoGenislik - 12f);
         }
 
         // Urun (RasPel) logosu kucuk olarak sol ustte; sirket logosu sag ustte kalir.
@@ -746,6 +759,10 @@ public class PdfRaporService {
             }
         }
 
+        // Ayırıcı çizgi hem metnin hem logonun altında kalır.
+        if (logoAlt < yy) {
+            yy = logoAlt - 6f;
+        }
         yy -= 8f;
         float[] rgb = hexToRgb(sablon != null && sablon.renk != null ? sablon.renk : "#1e40af");
         cs.setNonStrokingColor(rgb[0], rgb[1], rgb[2]);

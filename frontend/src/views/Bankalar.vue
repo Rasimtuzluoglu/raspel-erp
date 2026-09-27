@@ -88,9 +88,15 @@
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 140px"
+          style="width: 180px"
         >
           <template #body="s">
+            <Button
+              icon="pi pi-list"
+              class="p-button-rounded p-button-help p-button-sm"
+              :title="t('bankalar.hareketler')"
+              @click="detayAc(s.data)"
+            />
             <Button
               icon="pi pi-pencil"
               class="p-button-rounded p-button-info p-button-sm"
@@ -183,17 +189,133 @@
       severity="error"
       :text="bankaStore.error"
     />
+
+    <!-- Banka detayı: bakiye kartı ve hareket (mutabakat) geçmişi -->
+    <Drawer
+      v-model:visible="detayDialog"
+      position="right"
+      :header="detayBanka?.ad || t('bankalar.title')"
+      :style="{ width: '640px', maxWidth: '96vw' }"
+    >
+      <div
+        v-if="detayBanka"
+        class="detay-bilgi"
+      >
+        <div class="detay-kutu">
+          <span>{{ t('bankalar.colBakiye') }}</span>
+          <strong :class="detayBanka.bakiye >= 0 ? 'positive' : 'negative'">
+            {{ formatCurrency(detayBanka.bakiye) }}
+          </strong>
+        </div>
+        <div class="detay-kutu">
+          <span>{{ t('bankalar.colHesapNo') }}</span>
+          <strong>{{ detayBanka.hesapNo || '-' }}</strong>
+        </div>
+        <div class="detay-kutu genis">
+          <span>IBAN</span>
+          <strong
+            class="kopyalanabilir"
+            @click="detayBanka.iban && kopyala(detayBanka.iban, t('bankalar.ibanKopyalandi'))"
+          >
+            {{ detayBanka.iban || '-' }} <i
+              v-if="detayBanka.iban"
+              class="pi pi-copy kopyala-ikon"
+            />
+          </strong>
+        </div>
+      </div>
+
+      <div class="detay-baslik">
+        <span><i class="pi pi-list" /> {{ t('bankalar.hareketler') }}</span>
+        <Button
+          :label="t('bankalar.mutabakataGit')"
+          icon="pi pi-link"
+          class="p-button-sm p-button-outlined"
+          @click="mutabakataGit"
+        />
+      </div>
+
+      <DataTable
+        :value="hareketler"
+        :loading="hareketYukleniyor"
+        striped-rows
+        size="small"
+        scrollable
+        scroll-height="52vh"
+        :paginator="hareketler.length > 20"
+        :rows="20"
+      >
+        <template #empty>
+          <EmptyState :message="t('bankalar.hareketYok')" />
+        </template>
+        <Column
+          field="tarih"
+          :header="t('common.date')"
+          style="width: 110px"
+        />
+        <Column
+          field="aciklama"
+          :header="t('common.description')"
+        />
+        <Column
+          field="borc"
+          :header="t('bankalar.borc')"
+          style="width: 110px"
+        >
+          <template #body="s">
+            <span v-if="s.data.borc">{{ formatCurrency(s.data.borc) }}</span>
+          </template>
+        </Column>
+        <Column
+          field="alacak"
+          :header="t('bankalar.alacak')"
+          style="width: 110px"
+        >
+          <template #body="s">
+            <span v-if="s.data.alacak">{{ formatCurrency(s.data.alacak) }}</span>
+          </template>
+        </Column>
+        <Column
+          field="bakiye"
+          :header="t('bankalar.colBakiye')"
+          style="width: 120px"
+        >
+          <template #body="s">
+            <span class="gizli-veri">{{ formatCurrency(s.data.bakiye) }}</span>
+          </template>
+        </Column>
+        <Column
+          field="eslestirildi"
+          :header="t('bankalar.durum')"
+          style="width: 120px"
+        >
+          <template #body="s">
+            <Tag
+              v-if="s.data.eslestirildi"
+              severity="success"
+              :value="t('bankalar.eslesti')"
+            />
+            <Tag
+              v-else
+              severity="warn"
+              :value="t('bankalar.bekliyor')"
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </Drawer>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
-import { excelAPI } from '../api/index.js'
+import { excelAPI, bankaMutabakatAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -201,6 +323,7 @@ import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const { t } = useI18n()
 const confirm = useConfirm()
+const router = useRouter()
 const bankaStore = useBankaStore()
 const { kopyala } = usePanoyaKopyala()
 
@@ -208,6 +331,32 @@ const showDialog = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
+
+// Banka detayı: hareket (mutabakat) geçmişi
+const detayDialog = ref(false)
+const detayBanka = ref(null)
+const hareketler = ref([])
+const hareketYukleniyor = ref(false)
+
+const detayAc = async (banka) => {
+  detayBanka.value = banka
+  detayDialog.value = true
+  hareketYukleniyor.value = true
+  hareketler.value = []
+  try {
+    const r = await bankaMutabakatAPI.listele(banka.id)
+    hareketler.value = Array.isArray(r.data) ? r.data : []
+  } catch {
+    hareketler.value = []
+  } finally {
+    hareketYukleniyor.value = false
+  }
+}
+
+const mutabakataGit = () => {
+  detayDialog.value = false
+  router.push({ name: 'BankaMutabakat' })
+}
 
 const form = ref({ ad: '', hesapNo: '', iban: '', bakiye: 0 })
 const { temizle: formTemizle } = useFormKorumasi(form)
@@ -356,6 +505,39 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.detay-bilgi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.detay-kutu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.detay-kutu span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.detay-kutu.genis {
+  grid-column: 1 / -1;
+}
+.detay-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 .kopyalanabilir:hover {
   color: var(--accent);

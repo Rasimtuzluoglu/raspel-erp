@@ -1378,7 +1378,15 @@
     "islemBasarisiz": "İşlem başarısız",
     "silOnayMesaj": "Bu banka hesabını silmek istediğinizden emin misiniz?",
     "silindi": "Banka hesabı silindi",
-    "silmeBasarisiz": "Silme başarısız"
+    "silmeBasarisiz": "Silme başarısız",
+    "hareketler": "Hareket Geçmişi",
+    "hareketYok": "Bu hesap için hareket bulunamadı",
+    "mutabakataGit": "Mutabakata Git",
+    "borc": "Borç",
+    "alacak": "Alacak",
+    "durum": "Durum",
+    "eslesti": "Eşleşti",
+    "bekliyor": "Bekliyor"
   },
   "masraflar": {
     "title": "Masraf Takibi",
@@ -4050,6 +4058,12 @@
   },
   "karlilik": {
     "title": "Kârlılık Analizi",
+    "detay": "Detay",
+    "altKirilim": "Alt Kırılım",
+    "belgeler": "Belgeler",
+    "belgeNo": "Belge No",
+    "adet": "Adet",
+    "ipucuDetay": "Satıra tıklayarak alt kırılım ve belge dökümünü görebilirsiniz.",
     "veriYok": "Seçilen aralıkta kesilmiş satış faturası bulunamadı.",
     "baslangic": "Başlangıç",
     "bitis": "Bitiş",

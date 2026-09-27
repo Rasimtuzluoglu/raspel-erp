@@ -715,6 +715,23 @@ h1 {
 .form-grup {
   margin-bottom: 18px;
 }
+/* Saha kullanıcısı: etiket ve anahtar aynı hizada, ipucu alt satırda tam genişlik. */
+.saha-grup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.saha-grup label {
+  margin-bottom: 0;
+}
+.saha-grup .saha-ipucu {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted, #94a3b8);
+}
 .form-grup label {
   display: block;
   margin-bottom: 6px;

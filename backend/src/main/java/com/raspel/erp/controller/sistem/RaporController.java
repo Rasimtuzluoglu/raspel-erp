@@ -81,6 +81,20 @@ public class RaporController {
         return ResponseEntity.ok(karlilikService.karlilikAnalizi(sirketId, baslangic, bitis, grup));
     }
 
+    @GetMapping("/karlilik-detay")
+    @Operation(summary = "Kârlılık satır detayı (drill-down)",
+            description = "Seçilen kategori/ürün/cari için alt kırılım ve belge (fatura kalemi) bazlı kâr dökümü")
+    public ResponseEntity<com.raspel.erp.dto.sistem.KarlilikDetayDTO> karlilikDetay(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false, defaultValue = "KATEGORI") String grup,
+            @RequestParam(required = false) String deger,
+            @RequestParam(required = false) Long degerId) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(karlilikService.karlilikDetay(sirketId, baslangic, bitis, grup, deger, degerId));
+    }
+
     @GetMapping("/stok-kar-360")
     @Operation(summary = "Stok kâr 360 görünümü",
             description = "Ürün bazında ciro, maliyet, brüt kâr ve marj özeti (stok kâr durumu).")

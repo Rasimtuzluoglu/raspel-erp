@@ -88,9 +88,10 @@ class NotControllerTest {
     @Test
     void shouldUpdate() throws Exception {
         NotDTO dto = ornekNot();
-        when(notService.guncelle(eq(1L), any(NotDTO.class))).thenReturn(dto);
+        when(notService.guncelle(eq(1L), any(NotDTO.class), any(), anyBoolean())).thenReturn(dto);
 
         mockMvc.perform(put("/api/notlar/1")
+                        .requestAttr("kullaniciId", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -99,9 +100,10 @@ class NotControllerTest {
 
     @Test
     void shouldDelete() throws Exception {
-        doNothing().when(notService).sil(1L);
+        doNothing().when(notService).sil(eq(1L), any(), anyBoolean());
 
-        mockMvc.perform(delete("/api/notlar/1"))
+        mockMvc.perform(delete("/api/notlar/1")
+                        .requestAttr("kullaniciId", 1L))
                 .andExpect(status().isNoContent());
     }
 

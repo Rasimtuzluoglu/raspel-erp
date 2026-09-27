@@ -2340,3 +2340,87 @@ label .required,
 .p-menu .p-menuitem-icon {
   color: var(--text-muted) !important;
 }
+
+/* ==========================================================================
+   Premium cila katmanı (yalnızca ek kural; mevcut görünümü bozmaz)
+   - sayısal hizalama, buton mikro etkileşimi, dialog giriş animasyonu,
+     satır vurgusu ve temalı ince kaydırma çubukları
+   ========================================================================== */
+.p-datatable td.sayisal,
+.sayisal,
+.gizli-veri,
+.kpi-kart strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.p-button {
+  transition: transform var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    box-shadow var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    background-color var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    border-color var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.p-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+.p-button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.p-dialog-mask {
+  backdrop-filter: blur(3px);
+  background: rgba(2, 6, 12, 0.45) !important;
+}
+.p-dialog {
+  animation: premium-dialog-in var(--dur-slow, 0.3s) var(--ease-emphasized, ease);
+}
+@keyframes premium-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.p-datatable .p-datatable-tbody > tr:hover > td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.p-datatable-wrapper::-webkit-scrollbar,
+.p-dialog-content::-webkit-scrollbar,
+.p-drawer-content::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.p-datatable-wrapper::-webkit-scrollbar-track,
+.p-dialog-content::-webkit-scrollbar-track,
+.p-drawer-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.p-datatable-wrapper::-webkit-scrollbar-thumb,
+.p-dialog-content::-webkit-scrollbar-thumb,
+.p-drawer-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: var(--radius-pill, 999px);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.p-datatable-wrapper::-webkit-scrollbar-thumb:hover,
+.p-dialog-content::-webkit-scrollbar-thumb:hover,
+.p-drawer-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-soft-strong, rgba(20, 184, 166, 0.28));
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-button:not(:disabled):hover,
+  .p-button:not(:disabled):active {
+    transform: none;
+  }
+  .p-dialog {
+    animation: none;
+  }
+}

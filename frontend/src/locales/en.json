@@ -1378,7 +1378,15 @@
     "islemBasarisiz": "Operation failed",
     "silOnayMesaj": "Are you sure you want to delete this bank account?",
     "silindi": "Bank account deleted",
-    "silmeBasarisiz": "Delete failed"
+    "silmeBasarisiz": "Delete failed",
+    "hareketler": "Transaction History",
+    "hareketYok": "No transactions found for this account",
+    "mutabakataGit": "Go to Reconciliation",
+    "borc": "Debit",
+    "alacak": "Credit",
+    "durum": "Status",
+    "eslesti": "Matched",
+    "bekliyor": "Pending"
   },
   "masraflar": {
     "title": "Expense Tracking",
@@ -4050,6 +4058,12 @@
   },
   "karlilik": {
     "title": "Profitability Analysis",
+    "detay": "Detail",
+    "altKirilim": "Sub-breakdown",
+    "belgeler": "Documents",
+    "belgeNo": "Document No",
+    "adet": "Quantity",
+    "ipucuDetay": "Click a row to see the sub-breakdown and document detail.",
     "veriYok": "No finalized sales invoices found in the selected range.",
     "baslangic": "Start",
     "bitis": "End",

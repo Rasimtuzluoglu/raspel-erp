@@ -11,18 +11,21 @@
           option-label="label"
           option-value="value"
           size="small"
+          @change="yukle"
         />
         <DatePicker
           v-model="baslangic"
           date-format="dd.mm.yy"
           :placeholder="t('karlilik.baslangic')"
           class="tarih-girdi"
+          @date-select="yukle"
         />
         <DatePicker
           v-model="bitis"
           date-format="dd.mm.yy"
           :placeholder="t('karlilik.bitis')"
           class="tarih-girdi"
+          @date-select="yukle"
         />
         <Button
           icon="pi pi-refresh"
@@ -145,6 +148,8 @@
           size="small"
           sort-field="brutKar"
           :sort-order="-1"
+          class="kirilim-tablo"
+          @row-click="detayAc($event.data)"
         >
           <template #empty>
             <EmptyState />
@@ -202,6 +207,149 @@
         </DataTable>
       </Card>
     </template>
+
+    <Dialog
+      v-model:visible="detayDialog"
+      :header="detayBaslik"
+      modal
+      :style="{ width: '900px', maxWidth: '96vw' }"
+    >
+      <div
+        v-if="detayYukleniyor"
+        class="yukleniyor"
+      >
+        <i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}
+      </div>
+      <template v-else-if="detayVeri">
+        <div class="detay-ozet">
+          <span>{{ t('karlilik.ciro') }}: <strong>{{ formatCurrency(detayVeri.ciro) }}</strong></span>
+          <span>{{ t('karlilik.maliyet') }}: <strong>{{ formatCurrency(detayVeri.maliyet) }}</strong></span>
+          <span>{{ t('karlilik.brutKar') }}:
+            <strong :class="detayVeri.brutKar < 0 ? 'negatif' : 'pozitif'">{{ formatCurrency(detayVeri.brutKar) }}</strong>
+          </span>
+          <span>{{ t('karlilik.marj') }}:
+            <strong :class="detayVeri.marj < 0 ? 'negatif' : 'pozitif'">%{{ fmt(detayVeri.marj) }}</strong>
+          </span>
+        </div>
+        <TabView>
+          <TabPanel :header="t('karlilik.altKirilim')">
+            <DataTable
+              :value="detayVeri.altKirilim"
+              striped-rows
+              size="small"
+              scrollable
+              scroll-height="360px"
+            >
+              <template #empty>
+                <EmptyState />
+              </template>
+              <Column
+                field="ad"
+                :header="altGrupBasligi"
+              />
+              <Column
+                field="ciro"
+                :header="t('karlilik.ciro')"
+              >
+                <template #body="{ data }">
+                  {{ formatCurrency(data.ciro) }}
+                </template>
+              </Column>
+              <Column
+                field="maliyet"
+                :header="t('karlilik.maliyet')"
+              >
+                <template #body="{ data }">
+                  {{ formatCurrency(data.maliyet) }}
+                </template>
+              </Column>
+              <Column
+                field="brutKar"
+                :header="t('karlilik.brutKar')"
+              >
+                <template #body="{ data }">
+                  <span :class="data.brutKar < 0 ? 'negatif' : 'pozitif'">{{ formatCurrency(data.brutKar) }}</span>
+                </template>
+              </Column>
+              <Column
+                field="marj"
+                :header="t('karlilik.marj')"
+              >
+                <template #body="{ data }">
+                  <span :class="data.marj < 0 ? 'negatif' : 'pozitif'">%{{ fmt(data.marj) }}</span>
+                </template>
+              </Column>
+              <Column
+                field="pay"
+                :header="t('karlilik.pay')"
+              >
+                <template #body="{ data }">
+                  %{{ fmt(data.pay) }}
+                </template>
+              </Column>
+            </DataTable>
+          </TabPanel>
+          <TabPanel :header="t('karlilik.belgeler')">
+            <DataTable
+              :value="detayVeri.belgeler"
+              striped-rows
+              size="small"
+              scrollable
+              scroll-height="360px"
+              :paginator="detayVeri.belgeler.length > 12"
+              :rows="12"
+            >
+              <template #empty>
+                <EmptyState />
+              </template>
+              <Column
+                field="tarih"
+                :header="t('common.date')"
+                style="width: 110px"
+              >
+                <template #body="{ data }">
+                  {{ data.tarih ? formatDate(data.tarih) : '-' }}
+                </template>
+              </Column>
+              <Column
+                field="faturaNumarasi"
+                :header="t('karlilik.belgeNo')"
+                style="width: 150px"
+              />
+              <Column
+                field="cariAd"
+                :header="t('cariHesaplar.title')"
+              />
+              <Column
+                field="urunAd"
+                :header="t('stoklar.title')"
+              />
+              <Column
+                field="adet"
+                :header="t('karlilik.adet')"
+                style="width: 90px"
+              />
+              <Column
+                field="ciro"
+                :header="t('karlilik.ciro')"
+              >
+                <template #body="{ data }">
+                  <span :class="data.iade ? 'negatif' : ''">{{ formatCurrency(data.ciro) }}</span>
+                </template>
+              </Column>
+              <Column
+                field="brutKar"
+                :header="t('karlilik.brutKar')"
+              >
+                <template #body="{ data }">
+                  <span :class="data.brutKar < 0 ? 'negatif' : 'pozitif'">{{ formatCurrency(data.brutKar) }}</span>
+                </template>
+              </Column>
+            </DataTable>
+          </TabPanel>
+        </TabView>
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -226,7 +374,7 @@ import {
 } from 'chart.js'
 import KpiKart from '../components/KpiKart.vue'
 import { useChartTema } from '../composables/useChartTema.js'
-import { formatCurrency } from '../utils/format.js'
+import { formatCurrency, formatTarih as formatDate } from '../utils/format.js'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement, Filler)
 
@@ -279,6 +427,43 @@ const yukle = async () => {
 
 const renkler = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#a3e635']
 
+// ---- Drill-down: satıra tıklayınca alt kırılım + belge dökümü ----
+const detayDialog = ref(false)
+const detayVeri = ref(null)
+const detayYukleniyor = ref(false)
+
+const detayBaslik = computed(() => detayVeri.value
+  ? `${t('karlilik.detay')}: ${detayVeri.value.deger}`
+  : t('karlilik.detay'))
+
+const altGrupBasligi = computed(() => ({
+  URUN: t('karlilik.grupUrun'),
+  CARI: t('karlilik.grupCari'),
+  KATEGORI: t('karlilik.grupKategori')
+}[detayVeri.value?.altGrup] || t('karlilik.grupUrun')))
+
+const detayAc = async (satir) => {
+  if (!satir) return
+  detayDialog.value = true
+  detayYukleniyor.value = true
+  detayVeri.value = null
+  try {
+    const params = {
+      baslangic: iso(baslangic.value),
+      bitis: iso(bitis.value),
+      grup: grup.value,
+      deger: satir.ad
+    }
+    if (satir.id != null) params.degerId = satir.id
+    const r = await raporAPI.karlilikDetay(params)
+    detayVeri.value = r.data
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('common.unexpectedError'), detail: err?.response?.data?.message || t('karlilik.hata'), life: 4000 })
+  } finally {
+    detayYukleniyor.value = false
+  }
+}
+
 const trendData = computed(() => {
   const tr = veri.value?.aylikTrend || []
   return {
@@ -312,6 +497,7 @@ const payData = computed(() => {
 const lineOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: { duration: 300 },
   plugins: { legend: lejant() },
   scales: {
     x: { ticks: { color: palet.value.metin }, grid: { color: palet.value.izgara } },
@@ -321,6 +507,7 @@ const lineOptions = computed(() => ({
 const barOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: { duration: 300 },
   plugins: { legend: { display: false } },
   scales: {
     x: { ticks: { color: palet.value.metin }, grid: { display: false } },
@@ -330,6 +517,7 @@ const barOptions = computed(() => ({
 const pieOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: { duration: 300 },
   plugins: { legend: lejant() }
 }))
 
@@ -432,5 +620,22 @@ onMounted(yukle)
 .negatif {
   color: #ef4444;
   font-weight: 600;
+}
+.kirilim-tablo :deep(.p-datatable-tbody > tr) {
+  cursor: pointer;
+}
+.kirilim-tablo :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--surface-hover, rgba(148, 163, 184, 0.12));
+}
+.detay-ozet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--surface-100, rgba(148, 163, 184, 0.08));
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 </style>

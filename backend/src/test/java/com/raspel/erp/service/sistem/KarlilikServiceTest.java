@@ -203,4 +203,44 @@ class KarlilikServiceTest {
         assertEquals(0, r.getOzet().getBrutKar().compareTo(BigDecimal.ZERO));
         assertTrue(r.getAylikTrend().isEmpty());
     }
+
+    @Test
+    void detay_kategoriSecilinceAltKirilimVeBelgeDoner() {
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of(
+                satis(1L, List.of(kalem(10L, "2", "100", "40"), kalem(11L, "1", "200", "150")))));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
+        when(stokRepository.findById(11L)).thenReturn(Optional.of(stok(11L, "Gıda")));
+        bosIade();
+
+        var r = service.karlilikDetay(SIRKET, BAS, BIT, "KATEGORI", "Elektronik", null);
+
+        // Yalnızca Elektronik kategorisindeki kalem: 2 x 100 = 200 ciro, 2 x 40 = 80 maliyet.
+        assertEquals("Elektronik", r.getDeger());
+        assertEquals(0, r.getCiro().compareTo(new BigDecimal("200.00")));
+        assertEquals(0, r.getMaliyet().compareTo(new BigDecimal("80.00")));
+        assertEquals(0, r.getBrutKar().compareTo(new BigDecimal("120.00")));
+        assertEquals(1, r.getBelgeler().size());
+        assertEquals("Ürün10", r.getBelgeler().get(0).getUrunAd());
+        assertEquals(1, r.getAltKirilim().size());
+        assertEquals("URUN", r.getAltGrup());
+    }
+
+    @Test
+    void detay_urunSecilinceCariAltKirilimiDoner() {
+        Fatura f = satis(1L, List.of(kalem(10L, "1", "100", "40")));
+        com.raspel.erp.entity.finans.CariHesap cari = new com.raspel.erp.entity.finans.CariHesap();
+        cari.setId(7L);
+        cari.setAd("Müşteri A");
+        f.setCariHesap(cari);
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of(f));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
+        bosIade();
+
+        var r = service.karlilikDetay(SIRKET, BAS, BIT, "URUN", null, 10L);
+
+        assertEquals("Ürün10", r.getDeger());
+        assertEquals("CARI", r.getAltGrup());
+        assertEquals(1, r.getAltKirilim().size());
+        assertEquals("Müşteri A", r.getAltKirilim().get(0).getAd());
+    }
 }

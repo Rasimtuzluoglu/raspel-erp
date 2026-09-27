@@ -98,4 +98,28 @@ class NotServiceTest {
         notService.sil(1L);
         verify(notRepository).deleteById(1L);
     }
+
+    @Test
+    void sil_baskasininNotuReddedilir() {
+        when(notRepository.findById(1L)).thenReturn(Optional.of(createNot(1L)));
+        // Not sahibi kullaniciId=1; başka kullanıcı (2) ADMIN değilse silemez.
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> notService.sil(1L, 2L, false));
+        verify(notRepository, never()).deleteById(1L);
+    }
+
+    @Test
+    void sil_adminBaskasininNotunuSilebilir() {
+        when(notRepository.findById(1L)).thenReturn(Optional.of(createNot(1L)));
+        notService.sil(1L, 2L, true);
+        verify(notRepository).deleteById(1L);
+    }
+
+    @Test
+    void guncelle_baskasininNotuReddedilir() {
+        when(notRepository.findById(1L)).thenReturn(Optional.of(createNot(1L)));
+        NotDTO dto = NotDTO.builder().baslik("Güncel").icerik("Yeni").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> notService.guncelle(1L, dto, 2L, false));
+    }
 }

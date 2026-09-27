@@ -163,6 +163,171 @@ public class KarlilikService {
 
     // ---------- yardımcılar ----------
 
+    /**
+     * Drill-down: seçilen kırılım değeri (kategori adı / ürün / cari) için alt kırılım
+     * ve belge bazlı (fatura kalemi) kâr dökümü üretir. Satış iadeleri negatif satır
+     * olarak düşülür; böylece detay toplamı ana ekranla tutarlı kalır.
+     */
+    public com.raspel.erp.dto.sistem.KarlilikDetayDTO karlilikDetay(Long sirketId, LocalDate baslangic,
+                                                                    LocalDate bitis, String grup,
+                                                                    String deger, Long degerId) {
+        String grp = normalizeGrup(grup);
+        String altGrup = switch (grp) {
+            case "KATEGORI" -> "URUN";
+            case "URUN" -> "CARI";
+            default -> "URUN";
+        };
+        LocalDate bas = baslangic != null ? baslangic : LocalDate.now().withDayOfMonth(1);
+        LocalDate bit = bitis != null ? bitis : LocalDate.now();
+
+        Map<Long, Stok> stokCache = new java.util.HashMap<>();
+        Map<String, KirilimAcc> altKirilim = new LinkedHashMap<>();
+        List<com.raspel.erp.dto.sistem.KarlilikDetayDTO.Belge> belgeler = new ArrayList<>();
+        BigDecimal[] toplam = {BigDecimal.ZERO, BigDecimal.ZERO};
+        String[] hedefAd = {deger};
+
+        List<Fatura> faturalar = faturaRepository.findBySirketIdAndTarihBetweenKalemli(sirketId, bas, bit);
+        for (Fatura f : faturalar) {
+            if (f.getTur() != Fatura.FaturaTur.SATIS || f.getDurum() != Fatura.FaturaDurum.KESILDI) continue;
+            for (FaturaKalem k : f.getKalemler()) {
+                BigDecimal adet = k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO;
+                if (adet.signum() == 0) continue;
+                Stok stok = k.getStokId() != null ? stokGetir(k.getStokId(), stokCache) : null;
+                if (!eslesiyorMu(grp, f, stok, k.getStokId(), degerId, deger)) continue;
+                if (hedefAd[0] == null) hedefAd[0] = gorunenAd(grp, f, stok);
+
+                BigDecimal ciro = netBirim(k).multiply(adet);
+                BigDecimal maliyet = birimMaliyet(k, stokCache).multiply(adet).setScale(OLCEK, RoundingMode.HALF_UP);
+                String[] alt = altAnahtar(altGrup, f, k.getStokId(), stok);
+                KirilimAcc acc = altKirilim.computeIfAbsent(alt[0], x -> {
+                    KirilimAcc a = new KirilimAcc();
+                    a.ad = alt[1];
+                    a.id = alt[2] != null ? Long.valueOf(alt[2]) : null;
+                    return a;
+                });
+                acc.ciro = acc.ciro.add(ciro);
+                acc.maliyet = acc.maliyet.add(maliyet);
+                toplam[0] = toplam[0].add(ciro);
+                toplam[1] = toplam[1].add(maliyet);
+
+                belgeler.add(com.raspel.erp.dto.sistem.KarlilikDetayDTO.Belge.builder()
+                        .faturaId(f.getId()).faturaNumarasi(f.getFaturaNumarasi()).tarih(f.getTarih())
+                        .cariAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel")
+                        .urunAd(stok != null ? stok.getAd() : "Bilinmeyen ürün")
+                        .adet(adet).ciro(ciro).maliyet(maliyet)
+                        .brutKar(ciro.subtract(maliyet)).iade(false)
+                        .build());
+            }
+        }
+
+        // İadeler negatif satır olarak düşülür.
+        List<Iade> iadeler = iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(
+                sirketId, "SATIS", "TAMAMLANDI", bas, bit);
+        for (Iade iade : iadeler) {
+            Fatura kaynakFatura = iade.getFaturaId() != null
+                    ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
+            for (IadeKalem ik : iadeKalemRepository.findByIadeId(iade.getId())) {
+                BigDecimal miktar = ik.getMiktar() != null ? ik.getMiktar() : BigDecimal.ZERO;
+                if (miktar.signum() == 0) continue;
+                Stok stok = ik.getStokId() != null ? stokGetir(ik.getStokId(), stokCache) : null;
+                if (!eslesiyorMu(grp, kaynakFatura, stok, ik.getStokId(), degerId, deger)) continue;
+                if (hedefAd[0] == null) hedefAd[0] = gorunenAd(grp, kaynakFatura, stok);
+
+                BigDecimal ciro = (ik.getBirimFiyat() != null ? ik.getBirimFiyat() : BigDecimal.ZERO).multiply(miktar);
+                BigDecimal birimM = stok != null ? maliyetService.ortalamaMaliyet(stok) : BigDecimal.ZERO;
+                if (birimM == null) birimM = BigDecimal.ZERO;
+                BigDecimal maliyet = birimM.multiply(miktar).setScale(OLCEK, RoundingMode.HALF_UP);
+                String[] alt = altAnahtar(altGrup, kaynakFatura, ik.getStokId(), stok);
+                KirilimAcc acc = altKirilim.computeIfAbsent(alt[0], x -> {
+                    KirilimAcc a = new KirilimAcc();
+                    a.ad = alt[1];
+                    a.id = alt[2] != null ? Long.valueOf(alt[2]) : null;
+                    return a;
+                });
+                acc.ciro = acc.ciro.subtract(ciro);
+                acc.maliyet = acc.maliyet.subtract(maliyet);
+                toplam[0] = toplam[0].subtract(ciro);
+                toplam[1] = toplam[1].subtract(maliyet);
+
+                belgeler.add(com.raspel.erp.dto.sistem.KarlilikDetayDTO.Belge.builder()
+                        .faturaId(iade.getFaturaId()).faturaNumarasi("İade #" + iade.getId()).tarih(iade.getTarih())
+                        .cariAd(kaynakFatura != null && kaynakFatura.getCariHesap() != null
+                                ? kaynakFatura.getCariHesap().getAd() : "Genel")
+                        .urunAd(stok != null ? stok.getAd() : "Bilinmeyen ürün")
+                        .adet(miktar).ciro(ciro).maliyet(maliyet)
+                        .brutKar(ciro.subtract(maliyet)).iade(true)
+                        .build());
+            }
+        }
+
+        BigDecimal toplamCiro = para(toplam[0]);
+        BigDecimal brutKar = toplamCiro.subtract(para(toplam[1]));
+        List<KarlilikAnalizDTO.Kirilim> altListe = new ArrayList<>();
+        for (KirilimAcc a : altKirilim.values()) {
+            BigDecimal ciro = para(a.ciro);
+            BigDecimal maliyet = para(a.maliyet);
+            BigDecimal kar = ciro.subtract(maliyet);
+            altListe.add(KarlilikAnalizDTO.Kirilim.builder()
+                    .id(a.id).ad(a.ad).ciro(ciro).maliyet(maliyet).brutKar(kar)
+                    .marj(marj(kar, ciro)).pay(pay(ciro, toplamCiro)).build());
+        }
+        altListe.sort(Comparator.comparing(KarlilikAnalizDTO.Kirilim::getBrutKar).reversed());
+        belgeler.sort(Comparator.comparing(com.raspel.erp.dto.sistem.KarlilikDetayDTO.Belge::getTarih,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+
+        return com.raspel.erp.dto.sistem.KarlilikDetayDTO.builder()
+                .grup(grp).deger(hedefAd[0]).altGrup(altGrup)
+                .ciro(toplamCiro).maliyet(para(toplam[1])).brutKar(brutKar)
+                .marj(marj(brutKar, toplamCiro))
+                .altKirilim(altListe)
+                .belgeler(belgeler)
+                .build();
+    }
+
+    /** Satır seçilen kırılım değeriyle eşleşiyor mu? (id veya ad eşleşmesi) */
+    private boolean eslesiyorMu(String grp, Fatura f, Stok stok, Long stokId, Long degerId, String deger) {
+        switch (grp) {
+            case "URUN":
+                if (degerId != null && stokId != null && degerId.equals(stokId)) return true;
+                return deger != null && stok != null && deger.equalsIgnoreCase(stok.getAd());
+            case "CARI":
+                Long cariId = f != null && f.getCariHesap() != null ? f.getCariHesap().getId() : null;
+                if (degerId != null && cariId != null && degerId.equals(cariId)) return true;
+                String cariAd = f != null && f.getCariHesap() != null ? f.getCariHesap().getAd() : null;
+                return deger != null && cariAd != null && deger.equalsIgnoreCase(cariAd);
+            default:
+                String kat = stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
+                        ? stok.getKategori() : "Kategorisiz";
+                return deger != null && deger.equalsIgnoreCase(kat);
+        }
+    }
+
+    private String gorunenAd(String grp, Fatura f, Stok stok) {
+        return switch (grp) {
+            case "URUN" -> stok != null ? stok.getAd() : "Bilinmeyen ürün";
+            case "CARI" -> f != null && f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel";
+            default -> stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
+                    ? stok.getKategori() : "Kategorisiz";
+        };
+    }
+
+    private String[] altAnahtar(String altGrup, Fatura f, Long stokId, Stok stok) {
+        return switch (altGrup) {
+            case "CARI" -> new String[]{"C:" + (f != null && f.getCariHesap() != null ? f.getCariHesap().getId() : "genel"),
+                    f != null && f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel",
+                    f != null && f.getCariHesap() != null ? f.getCariHesap().getId().toString() : null};
+            case "URUN" -> new String[]{"U:" + stokId,
+                    stok != null ? stok.getAd() : "Bilinmeyen ürün",
+                    stokId != null ? stokId.toString() : null};
+            default -> {
+                String kat = stok != null && stok.getKategori() != null && !stok.getKategori().isBlank()
+                        ? stok.getKategori() : "Kategorisiz";
+                yield new String[]{"K:" + kat, kat, null};
+            }
+        };
+    }
+
+
     private static final class KirilimAcc {
         Long id;
         String ad;

@@ -104,7 +104,9 @@
         striped-rows
         size="small"
         scrollable
+        class="gecmis-tablo"
         @page="sayfaDegisti"
+        @row-click="faturaGecmisiAc($event.data)"
       >
         <template #empty>
           <EmptyState />
@@ -188,6 +190,11 @@
         />
       </DataTable>
     </Card>
+
+    <FaturaGecmisDialog
+      v-model:visible="gecmisDialog"
+      :fatura="seciliFatura"
+    />
   </div>
 </template>
 
@@ -217,6 +224,15 @@ const arama = ref('')
 const sayfa = ref(0)
 const sayfaBoyutu = ref(20)
 const toplamKayit = ref(0)
+
+// Satıra tıklayınca belgenin tam zaman çizelgesi (durum değişiklikleri, yazdırmalar) açılır.
+const gecmisDialog = ref(false)
+const seciliFatura = ref(null)
+const faturaGecmisiAc = (satir) => {
+  if (!satir?.faturaId) return
+  seciliFatura.value = { id: satir.faturaId, faturaNumarasi: satir.faturaNumarasi }
+  gecmisDialog.value = true
+}
 
 const turSecenekleri = computed(() => [
   { label: t('faturaGecmisRapor.tumTur'), value: 'TUM' },
@@ -293,6 +309,7 @@ const olayData = computed(() => {
 const barOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  animation: { duration: 300 },
   plugins: { legend: { display: false } },
   scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
 }
@@ -330,6 +347,12 @@ onMounted(yukle)
 </script>
 
 <style scoped>
+.gecmis-tablo :deep(.p-datatable-tbody > tr) {
+  cursor: pointer;
+}
+.gecmis-tablo :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--surface-hover, rgba(148, 163, 184, 0.12));
+}
 .fgr-container {
   padding: 0;
 }

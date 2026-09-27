@@ -22,7 +22,7 @@ import java.time.Duration;
 @Configuration
 @EnableCaching
 @Slf4j
-public class RedisConfig {
+public class RedisConfig implements org.springframework.cache.annotation.CachingConfigurer {
 
     private static GenericJackson2JsonRedisSerializer jsonSerializer() {
         ObjectMapper mapper = new ObjectMapper();
@@ -55,13 +55,25 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheManagerBuilderCustomizer cacheManagerCustomizer(
-            RedisCacheConfiguration defaultCacheConfig) {
+            RedisCacheConfiguration defaultCacheConfig,
+            org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory) {
         return builder -> builder
+                // KEYS komutu kapalı Redis'te temizliğin SCAN ile yapılmasını sağlar.
+                .cacheWriter(new ScanRedisCacheWriter(connectionFactory))
                 .withCacheConfiguration("dashboard", defaultCacheConfig.entryTtl(Duration.ofMinutes(2)))
                 .withCacheConfiguration("cariHesaplar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
                 .withCacheConfiguration("faturalar", defaultCacheConfig.entryTtl(Duration.ofMinutes(5)))
                 .withCacheConfiguration("stoklar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
                 .withCacheConfiguration("lookup", defaultCacheConfig.entryTtl(Duration.ofMinutes(30)));
+    }
+
+    /**
+     * Cache hatalarının isteği düşürmemesi için error handler'ın Spring cache
+     * altyapısına kaydedilmesi gerekir (düz @Bean olarak tanımlamak yetmez).
+     */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return cacheErrorHandler();
     }
 
     /**

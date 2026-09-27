@@ -67,6 +67,9 @@ export const raporAPI = {
   karlilikAnalizi(params) {
     return apiClient.get('/raporlar/karlilik-analizi', { params })
   },
+  karlilikDetay(params) {
+    return apiClient.get('/raporlar/karlilik-detay', { params })
+  },
   stokKar360(params) {
     return apiClient.get('/raporlar/stok-kar-360', { params })
   },

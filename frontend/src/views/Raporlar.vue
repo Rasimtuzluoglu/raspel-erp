@@ -181,7 +181,7 @@
             <Column
               field="tur"
               :header="t('raporlar.tur')"
-              style="width: 120px"
+              style="width: 150px"
             >
               <template #body="s">
                 <span :class="['badge', ekstreTurSinif(s.data.tur)]">
@@ -1752,6 +1752,11 @@ h1 {
   border-radius: 20px;
   font-size: 12px;
   font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 .badge.tahsilat {
   background: var(--success-soft);

@@ -3,6 +3,7 @@ package com.raspel.erp.service.sistem;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.sistem.NotDTO;
 import com.raspel.erp.entity.sistem.Not;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.NotRepository;
 import lombok.RequiredArgsConstructor;
@@ -78,9 +79,18 @@ public class NotService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public NotDTO guncelle(Long id, NotDTO dto) {
+        return guncelle(id, dto, null, true);
+    }
+
+    /**
+     * Not güncelleme. Kullanıcı yalnızca kendi notunu, ADMIN tüm notları güncelleyebilir;
+     * aksi halde 403 yerine açık iş kuralı hatası döner.
+     */
+    public NotDTO guncelle(Long id, NotDTO dto, Long kullaniciId, boolean admin) {
         Not not = notRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not", id));
         tenantChecker.check(not.getSirketId(), "Not");
+        sahiplikKontrol(not, kullaniciId, admin);
         not.setBaslik(dto.getBaslik());
         not.setIcerik(dto.getIcerik());
         not.setOnemDerecesi(dto.getOnemDerecesi() != null ? dto.getOnemDerecesi() : "NORMAL");
@@ -90,10 +100,24 @@ public class NotService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public void sil(Long id) {
+        sil(id, null, true);
+    }
+
+    /** Not silme. Kullanıcı yalnızca kendi notunu, ADMIN tüm notları silebilir. */
+    public void sil(Long id, Long kullaniciId, boolean admin) {
         Not not = notRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not", id));
         tenantChecker.check(not.getSirketId(), "Not");
+        sahiplikKontrol(not, kullaniciId, admin);
         notRepository.deleteById(id);
+    }
+
+    private void sahiplikKontrol(Not not, Long kullaniciId, boolean admin) {
+        if (admin) return;
+        if (not.getKullaniciId() != null && kullaniciId != null
+                && !not.getKullaniciId().equals(kullaniciId)) {
+            throw new BusinessException("Bu not size ait değil");
+        }
     }
 
     private NotDTO entityToDTO(Not not) {

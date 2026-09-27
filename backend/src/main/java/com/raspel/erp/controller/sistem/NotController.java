@@ -60,17 +60,20 @@ public class NotController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Not güncelle", description = "Not bilgilerini günceller")
+    @Operation(summary = "Not güncelle", description = "Not bilgilerini günceller (sahibi veya ADMIN)")
     public ResponseEntity<NotDTO> guncelle(@PathVariable Long id,
-                                            @Valid @RequestBody NotDTO dto) {
-        return ResponseEntity.ok(notService.guncelle(id, dto));
+                                            @Valid @RequestBody NotDTO dto,
+                                            HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(notService.guncelle(id, dto, kullaniciId, request.isUserInRole("ADMIN")));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Not sil", description = "Notu siler")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> sil(@PathVariable Long id) {
-        notService.sil(id);
+    @Operation(summary = "Not sil", description = "Notu siler (sahibi veya ADMIN)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Void> sil(@PathVariable Long id, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        notService.sil(id, kullaniciId, request.isUserInRole("ADMIN"));
         return ResponseEntity.noContent().build();
     }
 }
