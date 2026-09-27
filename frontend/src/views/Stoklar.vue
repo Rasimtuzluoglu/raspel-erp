@@ -1289,8 +1289,7 @@ const topluEtiketAdet = ref(1)
 const topluEtiketYukleniyor = ref(false)
 const etiketTipSecenekleri = computed(() => [
   { etiket: t('stoklar.etiketBarkod'), value: 'BARKOD' },
-  { etiket: t('stoklar.etiketQr'), value: 'QR' },
-  { etiket: t('stoklar.etiketIkisi'), value: 'IKISI' }
+  { etiket: t('stoklar.etiketQr'), value: 'QR' }
 ])
 
 const topluEtiketIndir = async () => {

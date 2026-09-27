@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { tabloEtiketle } from '../tabloEtiket.js'
 
 const tablo = (thead, tbody) => {
@@ -11,8 +11,23 @@ const tablo = (thead, tbody) => {
     </div>`
 }
 
+const matchMediaMock = (matches) => vi.fn(() => ({
+  matches,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn()
+}))
+
 describe('tabloEtiket', () => {
+  let orijinalMatchMedia
+
+  beforeEach(() => {
+    orijinalMatchMedia = window.matchMedia
+    // Etiketler yalnizca mobilde kullanilir; testler mobil genisligi taklit eder.
+    window.matchMedia = matchMediaMock(true)
+  })
+
   afterEach(() => {
+    window.matchMedia = orijinalMatchMedia
     document.body.innerHTML = ''
   })
 
@@ -41,5 +56,12 @@ describe('tabloEtiket', () => {
     const tdler = document.querySelectorAll('.p-datatable-tbody td')
     expect(tdler[0].getAttribute('data-label')).toBe('A')
     expect(tdler[1].getAttribute('data-label')).toBe('A')
+  })
+
+  it('masaustunde (matchMedia uyusmazsa) hic etiket yazmaz', () => {
+    window.matchMedia = matchMediaMock(false)
+    tablo('<th>A</th>', '<tr><td>x</td></tr>')
+    tabloEtiketle(document)
+    expect(document.querySelector('.p-datatable-tbody td').hasAttribute('data-label')).toBe(false)
   })
 })

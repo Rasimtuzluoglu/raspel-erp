@@ -88,6 +88,18 @@ describe('api/client.js interceptors', () => {
     window.removeEventListener('api-error', dinleyici)
   })
 
+  it('yanit: ayni URL icin tekrar eden hatalarda tek api-error yayilir', async () => {
+    const dinleyici = vi.fn()
+    window.addEventListener('api-error', dinleyici)
+    const hata = () => ({ config: { url: '/stoklar' }, response: { status: 500, data: { message: 'Sunucu hatasi' } } })
+
+    await expect(responseHandlers[0].rejected(hata())).rejects.toBeDefined()
+    await expect(responseHandlers[0].rejected(hata())).rejects.toBeDefined()
+
+    expect(dinleyici).toHaveBeenCalledTimes(1)
+    window.removeEventListener('api-error', dinleyici)
+  })
+
   it('yanit: 401 oturumu kapatir ve giris sayfasina yonlendirir', async () => {
     const error = { response: { status: 401, data: {} } }
 

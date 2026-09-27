@@ -5,6 +5,7 @@ import com.raspel.erp.repository.sistem.SirketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,6 +26,11 @@ public class HataBildirimService {
     private volatile long sonBildirimZamani = 0;
     private static final long MIN_ARALIK_MS = 5 * 60 * 1000;
 
+    /**
+     * E-posta gonderimi SMTP gecikmesinde istek thread'ini bloklamamasi icin
+     * ayri iplikte calisir (AsyncConfig @EnableAsync).
+     */
+    @Async
     public void hataBildir(Long sirketId, String tur, String mesaj, String endpoint) {
         long simdi = System.currentTimeMillis();
         if (simdi - sonBildirimZamani < MIN_ARALIK_MS) {

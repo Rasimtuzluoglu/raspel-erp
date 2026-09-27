@@ -135,10 +135,12 @@ initTabloEtiketleri()
 // Erisilebilirlik guvenlik agi: `title` (veya tooltip) tasiyip `aria-label`'i olmayan
 // butonlara aria-label kopyala. Boylece mevcut tum gorunumlerdeki ikon-only butonlar
 // ekran okuyucularda anlamli etiket kazanir; tek tek gorunum duzenlemek gerekmez.
+// Performans: gozlemci tum dokumani degil yalnizca eklenen dugumleri isler; ilk
+// yuklemede bir kez tam tarama yapilir.
 ;(function () {
-  const duzelt = () => {
+  const etiketle = (kok) => {
     try {
-      document.querySelectorAll('button[title]:not([aria-label])').forEach((b) => {
+      kok.querySelectorAll('button[title]:not([aria-label])').forEach((b) => {
         const baslik = b.getAttribute('title')
         if (baslik) b.setAttribute('aria-label', baslik)
       })
@@ -146,15 +148,36 @@ initTabloEtiketleri()
       /* yoksay */
     }
   }
+  const duzelt = () => etiketle(document)
   duzelt()
   let zamanlayici = null
-  const observer = new MutationObserver(() => {
+  let bekleyenler = []
+  const planla = (dugumler) => {
+    if (dugumler && dugumler.length) bekleyenler.push(...dugumler)
     if (zamanlayici) return
     // DOM toplu guncellemelerinde tek seferde calis (kisa debounce).
     zamanlayici = setTimeout(() => {
       zamanlayici = null
-      duzelt()
-    }, 150)
+      const dugumler = bekleyenler
+      bekleyenler = []
+      if (!dugumler.length) {
+        duzelt()
+        return
+      }
+      for (const d of dugumler) {
+        if (!d || d.nodeType !== 1) continue
+        if (d.matches && d.matches('button[title]:not([aria-label])')) {
+          const baslik = d.getAttribute('title')
+          if (baslik) d.setAttribute('aria-label', baslik)
+        }
+        etiketle(d)
+      }
+    }, 300)
+  }
+  const observer = new MutationObserver((kayitlar) => {
+    const eklenenler = []
+    for (const kayit of kayitlar) kayit.addedNodes.forEach((n) => eklenenler.push(n))
+    if (eklenenler.length) planla(eklenenler)
   })
   observer.observe(document.body, { childList: true, subtree: true })
 })()

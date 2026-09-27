@@ -1256,10 +1256,14 @@ img {
   position: relative !important;
   overflow: hidden !important;
   border-radius: 14px !important;
-  backdrop-filter: blur(16px) !important;
+  /* backdrop-filter kaldirildi: toast animasyonu boyunca her karede arka plani
+     yeniden bulaniklastirmak tum arayuzu yavaslatiyordu. Tema uyumlu opak zemin
+     + renk tonu katmani kullanilir. */
+  background-color: var(--bg-card) !important;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35) !important;
   margin-bottom: 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  contain: content;
 }
 .p-toast .p-toast-message .p-toast-message-content {
   color: var(--text-primary) !important;
@@ -1274,39 +1278,42 @@ img {
   height: 3px;
   width: 100%;
   opacity: 0.85;
-  animation: toast-countdown 5s linear forwards;
+  transform-origin: left center;
+  will-change: transform;
+  /* width yerine transform: layout tetiklemez, compositor'da calisir. */
+  animation: toast-countdown 3s linear forwards;
 }
 @keyframes toast-countdown {
   0% {
-    width: 100%;
+    transform: scaleX(1);
   }
   100% {
-    width: 0%;
+    transform: scaleX(0);
   }
 }
 .p-toast .p-toast-message.p-toast-message-success {
-  background: rgba(16, 185, 129, 0.18) !important;
+  background-image: linear-gradient(rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.18)) !important;
   border-color: rgba(16, 185, 129, 0.35) !important;
 }
 .p-toast .p-toast-message.p-toast-message-success::after {
   background: linear-gradient(90deg, #10b981, #34d399);
 }
 .p-toast .p-toast-message.p-toast-message-info {
-  background: var(--accent-soft-strong) !important;
+  background-image: linear-gradient(var(--accent-soft-strong), var(--accent-soft-strong)) !important;
   border-color: var(--accent-border) !important;
 }
 .p-toast .p-toast-message.p-toast-message-info::after {
   background: linear-gradient(90deg, var(--accent), var(--accent));
 }
 .p-toast .p-toast-message.p-toast-message-warn {
-  background: rgba(245, 158, 11, 0.18) !important;
+  background-image: linear-gradient(rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.18)) !important;
   border-color: rgba(245, 158, 11, 0.35) !important;
 }
 .p-toast .p-toast-message.p-toast-message-warn::after {
   background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 .p-toast .p-toast-message.p-toast-message-error {
-  background: rgba(239, 68, 68, 0.18) !important;
+  background-image: linear-gradient(rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.18)) !important;
   border-color: rgba(239, 68, 68, 0.35) !important;
 }
 .p-toast .p-toast-message.p-toast-message-error::after {

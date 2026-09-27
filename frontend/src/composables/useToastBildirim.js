@@ -3,8 +3,9 @@ import { useI18n } from 'vue-i18n'
 
 // Ayni hata mesajinin kisa sure icinde tekrar gosterilmesini engeller.
 // Global (App.vue) ve view-level toast'lar ayni kayit defterini paylastigi icin
-// ayni API hatasi iki kez (farkli basliklarla) gorunmez.
-const DEDUPE_MS = 1500
+// ayni API hatasi iki kez (farkli basliklarla) gorunmez. Pencere, retry dalgalari
+// ve ardisik hatalarda toast yagmurunu onlemek icin genis tutulur.
+const DEDUPE_MS = 4000
 const sonHatalar = new Map()
 
 function tekrarHataMi(mesaj) {

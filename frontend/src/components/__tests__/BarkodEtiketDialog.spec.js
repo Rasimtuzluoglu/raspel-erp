@@ -77,6 +77,22 @@ describe('BarkodEtiketDialog.vue', () => {
     expect(wrapper.find('img.etiket-qr').exists()).toBe(true)
   })
 
+  it('QR önizlemesi CSP uyumlu data URL kullanır', async () => {
+    const wrapper = await mountDialog({ id: 7, ad: 'MDF Lam', stokKodu: 'MDF-18', barkod: '' })
+
+    await wrapper.findAll('.etiket-tip-secim button')[1].trigger('click')
+    await vi.waitFor(() => {
+      const src = wrapper.find('img.etiket-qr').attributes('src') || ''
+      expect(src.startsWith('data:')).toBe(true)
+    })
+  })
+
+  it('fiyat satisFiyati yoksa fiyat alanına düşer', async () => {
+    const wrapper = await mountDialog({ id: 7, ad: 'MDF Lam', stokKodu: 'MDF-18', barkod: '', fiyat: 75 })
+
+    expect(wrapper.find('.etiket-fiyat').text()).toContain('75')
+  })
+
   it('kapanınca QR nesne URLini serbest bırakır', async () => {
     const wrapper = await mountDialog({ id: 7, ad: 'MDF', stokKodu: 'MDF-18', barkod: '' })
 

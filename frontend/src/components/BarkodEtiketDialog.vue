@@ -20,13 +20,6 @@
       >
         {{ t('stoklar.etiketQr') }}
       </button>
-      <button
-        type="button"
-        :class="{ aktif: tip === 'ikisi' }"
-        @click="tipSec('ikisi')"
-      >
-        {{ t('stoklar.etiketIkisi') }}
-      </button>
     </div>
 
     <div class="etiket-kart">
@@ -61,13 +54,13 @@
         {{ t('stoklar.barkodCizilemedi') }}
       </div>
       <img
-        v-if="qrGoster && qrUrl"
-        :src="qrUrl"
+        v-if="qrGoster && (qrDataUrl || qrUrl)"
+        :src="qrDataUrl || qrUrl"
         alt="QR"
         class="etiket-qr"
       >
       <div class="etiket-fiyat">
-        {{ formatCurrency(stok?.satisFiyati) }}
+        {{ formatCurrency(stok?.satisFiyati ?? stok?.fiyat) }}
       </div>
     </div>
     <template #footer>
@@ -118,10 +111,12 @@ const barkodHata = ref(false)
 // Etikette kodlanacak icerik: barkod varsa barkod, yoksa stok kodu (backend ile ayni).
 const icerik = computed(() => (props.stok ? barkodIcerik(props.stok) : ''))
 
-// Son seçilen etiket türü hatırlanır; ilk kullanımda barkod.
-const tip = ref(localStorage.getItem(TIP_ANAHTAR) || 'barkod')
-const barkodGoster = computed(() => tip.value === 'barkod' || tip.value === 'ikisi')
-const qrGoster = computed(() => tip.value === 'qr' || tip.value === 'ikisi')
+// Son seçilen etiket türü hatırlanır; ilk kullanımda barkod. Eski sürümlerdeki
+// "ikisi" seçimi artık desteklenmiyor; barkoda düşer.
+const kayitliTip = localStorage.getItem(TIP_ANAHTAR)
+const tip = ref(kayitliTip === 'qr' ? 'qr' : 'barkod')
+const barkodGoster = computed(() => tip.value === 'barkod')
+const qrGoster = computed(() => tip.value === 'qr')
 
 const qrTemizle = () => {
   if (qrUrl.value) {
@@ -197,7 +192,7 @@ watch(visible, async (acik) => {
   hazirla()
 })
 
-const tipKodu = () => (tip.value === 'qr' ? 'QR' : tip.value === 'ikisi' ? 'IKISI' : 'BARKOD')
+const tipKodu = () => (tip.value === 'qr' ? 'QR' : 'BARKOD')
 
 const escapeHtml = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -221,7 +216,7 @@ const etiketYazdir = () => {
       ${props.stok?.rafNo ? `<div style="font-size: 14px; color: #555;">${escapeHtml(t('stoklar.raf'))}: ${escapeHtml(props.stok.rafNo)}</div>` : ''}
       ${barkodSvg ? `<div style="margin-top: 10px;">${barkodSvg}</div>` : ''}
       ${qrGoster.value && qrKaynak ? `<img src="${qrKaynak}" width="180" height="180" />` : ''}
-      <div style="font-size: 20px; font-weight: 700; margin-top: 10px;">${formatCurrency(props.stok?.satisFiyati)}</div>
+      <div style="font-size: 22px; font-weight: 700; margin-top: 10px;">${formatCurrency(props.stok?.satisFiyati ?? props.stok?.fiyat)}</div>
     </body></html>
   `)
   win.document.close()
@@ -341,7 +336,8 @@ const etiketPdfIndir = async () => {
   height: 70px;
 }
 .etiket-fiyat {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
 }
 </style>

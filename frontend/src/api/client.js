@@ -85,6 +85,23 @@ apiClient.interceptors.request.use(
 
 let redirectKorumasi = false
 
+// Ayni istek/URL icin kisa sure icinde tekrar eden bildirimleri bastirir.
+// axios-retry ayni GET'i 2 kez denedigi icin hata toast'i defalarca tetiklenip
+// arayuzu mesgul ediyordu.
+const SON_HATA_YAYINI = new Map()
+const HATA_YAYIN_ARALIGI_MS = 5000
+
+const hataYayinlanabilir = (anahtar) => {
+  const simdi = Date.now()
+  const onceki = SON_HATA_YAYINI.get(anahtar)
+  if (onceki != null && simdi - onceki < HATA_YAYIN_ARALIGI_MS) return false
+  SON_HATA_YAYINI.set(anahtar, simdi)
+  for (const [k, zaman] of SON_HATA_YAYINI) {
+    if (simdi - zaman > 60000) SON_HATA_YAYINI.delete(k)
+  }
+  return true
+}
+
 apiClient.interceptors.response.use(
   (response) => {
     handleNProgress(false)
@@ -118,7 +135,8 @@ apiClient.interceptors.response.use(
     // hata hem global hem view toast'i olarak iki kez gorunmez.
     if (status >= 400 && status !== 401) {
       const errorMsg = data?.message || data?.error
-      if (errorMsg) {
+      const anahtar = `${status}:${error.config?.url || ''}:${errorMsg || ''}`
+      if (errorMsg && hataYayinlanabilir(anahtar)) {
         window.dispatchEvent(new CustomEvent('api-error', { detail: { status, message: errorMsg } }))
       }
     }

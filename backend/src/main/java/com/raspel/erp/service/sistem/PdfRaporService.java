@@ -883,7 +883,6 @@ public class PdfRaporService {
             String barkod = EtiketIcerikUtil.gosterim(stok);
             boolean barkodYerineKod = stok.getBarkod() == null || stok.getBarkod().isBlank();
             String raf = stok.getRafNo() != null ? stok.getRafNo() : "-";
-            String fiyat = stok.getSatisFiyati() != null ? para(stok.getSatisFiyati(), "TL") : "-";
 
             cs.setFont(font.bold, 20f);
             for (String p : sar(ad, font.bold, 20f, PAGE_WIDTH)) {
@@ -898,10 +897,11 @@ public class PdfRaporService {
             cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod + (barkodYerineKod ? " (stok kodu)" : "")); cs.endText();
             y -= 20f;
             cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Raf No: " + raf); cs.endText();
-            y -= 20f;
-            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Fiyat: " + fiyat); cs.endText();
             y -= 30f;
 
+            // Kod gorselleri (barkod/QR) ayni tabandan cizilir; fiyat hepsinin altina gelir.
+            float kodTaban = y;
+            float kodAlt = y;
             if (barkodGoster) {
                 PDImageXObject b = PDImageXObject.createFromByteArray(doc, v.barkodPng(), "barkod");
                 // En-boy orani korunur; yuksek cozunurluklu PNG baskiya kucultulur.
@@ -910,20 +910,36 @@ public class PdfRaporService {
                 float olcek = Math.min(kutuGenislik / b.getWidth(), kutuYukseklik / b.getHeight());
                 float bGenislik = b.getWidth() * olcek;
                 float bYukseklik = b.getHeight() * olcek;
-                cs.drawImage(b, MARGIN, y - bYukseklik, bGenislik, bYukseklik);
-                y -= (bYukseklik + 18);
+                cs.drawImage(b, MARGIN, kodTaban - bYukseklik, bGenislik, bYukseklik);
+                kodAlt = Math.min(kodAlt, kodTaban - bYukseklik);
             }
 
             if (qrGoster) {
                 PDImageXObject qr = PDImageXObject.createFromByteArray(doc, v.qrPng(), "qr");
-                float qrBoyut = 140;
-                cs.drawImage(qr, PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut, qrBoyut, qrBoyut);
+                float qrBoyut = 150;
+                // Barkodla birlikteyse sagda, tek basina ise sayfada ortada.
+                float qrX = barkodGoster
+                        ? (PAGE_WIDTH - qrBoyut + MARGIN)
+                        : ((PDRectangle.A4.getWidth() - qrBoyut) / 2f);
+                cs.drawImage(qr, qrX, kodTaban - qrBoyut, qrBoyut, qrBoyut);
                 cs.setFont(font.regular, 9f);
                 cs.beginText();
-                cs.newLineAtOffset(PAGE_WIDTH - qrBoyut + MARGIN, y - qrBoyut - 12);
+                cs.newLineAtOffset(qrX, kodTaban - qrBoyut - 12);
                 cs.showText("Karekod ile tarayıp say");
                 cs.endText();
+                kodAlt = Math.min(kodAlt, kodTaban - qrBoyut - 16);
             }
+
+            // Fiyat: kodun/QR'in altinda, buyuk ve ortali (raf etiketi duzeni).
+            java.math.BigDecimal fiyatDeger = stok.getSatisFiyati() != null ? stok.getSatisFiyati() : stok.getFiyat();
+            String fiyat = fiyatDeger != null ? para(fiyatDeger, "TL") : "-";
+            y = kodAlt - 34f;
+            cs.setFont(font.bold, 24f);
+            float fiyatGenislik = metinGenislik(fiyat, font.bold, 24f);
+            cs.beginText();
+            cs.newLineAtOffset((PDRectangle.A4.getWidth() - fiyatGenislik) / 2f, y);
+            cs.showText(fiyat);
+            cs.endText();
             cs.setFont(font.regular, 9f);
             cs.beginText(); cs.newLineAtOffset(MARGIN, MARGIN - 18); cs.showText("RasPel ERP - Otomatik Oluşturulmuştur"); cs.endText();
         }
