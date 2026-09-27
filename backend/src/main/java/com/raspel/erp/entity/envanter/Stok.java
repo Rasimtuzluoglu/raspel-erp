@@ -65,6 +65,10 @@ public class Stok {
     @Column(name = "foto_url", length = 500)
     private String fotoUrl;
 
+    /** Küçük (thumbnail) görsel adresi; liste/kart görünümleri bunu kullanır. */
+    @Column(name = "foto_thumb_url", length = 500)
+    private String fotoThumbUrl;
+
     @Column(length = 50)
     private String birim2;
 

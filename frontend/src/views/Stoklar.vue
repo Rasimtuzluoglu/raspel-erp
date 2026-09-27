@@ -259,6 +259,25 @@
           header-style="width: 2.5rem"
         />
         <Column
+          :header="t('stoklar.colGorsel')"
+          style="width: 64px"
+        >
+          <template #body="s">
+            <img
+              v-if="s.data.fotoThumbUrl || s.data.fotoUrl"
+              :src="s.data.fotoThumbUrl || s.data.fotoUrl"
+              class="satir-thumb"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            >
+            <span
+              v-else
+              class="satir-thumb-yok"
+            ><i class="pi pi-image" /></span>
+          </template>
+        </Column>
+        <Column
           field="stokKodu"
           :header="t('stoklar.colStokKodu')"
           sortable
@@ -662,10 +681,12 @@
           <label>{{ t('stoklar.urunFotografi') }}</label>
           <div class="foto-satir">
             <img
-              v-if="form.fotoUrl"
-              :src="form.fotoUrl"
+              v-if="form.fotoUrl || form.fotoThumbUrl"
+              :src="form.fotoThumbUrl || form.fotoUrl"
               class="foto-onizle"
               alt="foto"
+              loading="lazy"
+              decoding="async"
             >
             <input
               ref="fotoInput"
@@ -681,11 +702,11 @@
               @click="$refs.fotoInput.click()"
             />
             <Button
-              v-if="form.fotoUrl"
+              v-if="form.fotoUrl || form.fotoThumbUrl"
               :label="t('stoklar.kaldir')"
               icon="pi pi-times"
               class="p-button-text p-button-danger"
-              @click="form.fotoUrl = ''"
+              @click="form.fotoUrl = ''; form.fotoThumbUrl = ''"
             />
           </div>
         </div>
@@ -992,6 +1013,7 @@ import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
 import { resimDogrula } from '../utils/dosyaDogrula.js'
+import { resimSikistir } from '../utils/resimSikistir.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 
 const toast = useToast()
@@ -1146,6 +1168,7 @@ const form = ref({
   varsayilanDepoId: null,
   aciklama: '',
   fotoUrl: '',
+  fotoThumbUrl: '',
   fiyatlar: []
 })
 
@@ -1335,6 +1358,7 @@ const editStok = (s) => {
     varsayilanDepoId: s.varsayilanDepoId || null,
     aciklama: s.aciklama || '',
     fotoUrl: s.fotoUrl || '',
+    fotoThumbUrl: s.fotoThumbUrl || '',
     fiyatlar: (s.fiyatlar || []).map((f) => ({ ...f }))
   }
   formTemizle()
@@ -1405,11 +1429,16 @@ const fotoSec = async (e) => {
   const hata = resimDogrula(file)
   if (hata) { toastBildirim.hata(t(hata.key, hata.params)); e.target.value = ''; return }
   try {
-    const r = await uploadAPI.foto(file)
+    // Yükleme öncesi tarayıcıda sıkıştır (telefon fotoğrafları 10MB'a kadar kabul edilir).
+    const kucuk = await resimSikistir(file)
+    const r = await uploadAPI.foto(kucuk)
     form.value.fotoUrl = r.data?.url || ''
+    form.value.fotoThumbUrl = r.data?.thumbUrl || ''
     toastBildirim.basarili(t('stoklar.fotografYuklendi'))
   } catch (err) {
-    toastBildirim.hata(t('stoklar.fotografYuklenemedi'))
+    toastBildirim.hata(err?.response?.data?.error || err?.response?.data?.message || t('stoklar.fotografYuklenemedi'))
+  } finally {
+    e.target.value = ''
   }
 }
 
@@ -1608,6 +1637,25 @@ const stokHareketleriYukle = async (stokId) => {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--border);
+}
+.satir-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.satir-thumb-yok {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .stoklar-container {

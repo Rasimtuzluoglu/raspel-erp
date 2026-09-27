@@ -30,6 +30,8 @@ public class StokDTO {
     private String kategori;
     private String aciklama;
     private String fotoUrl;
+    /** Küçük (thumbnail) görsel adresi; liste/kart görünümleri bunu kullanır. */
+    private String fotoThumbUrl;
     private String birim2;
     private BigDecimal cevrimKatsayisi;
     private Long tedarikciId;

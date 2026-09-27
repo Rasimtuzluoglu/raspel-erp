@@ -276,7 +276,8 @@
     "dosya": {
       "dosyaSecilmedi": "No file selected",
       "boyutAsildi": "File is too large (max {mb} MB)",
-      "gecersizResimTipi": "Invalid file type. Only JPG, PNG, WEBP or GIF allowed"
+      "gecersizResimTipi": "Invalid file type. Only JPG, PNG, WEBP or GIF allowed",
+      "heicDesteklenmiyor": "HEIC/HEIF (iPhone) format is not supported. Please upload the photo as JPG"
     },
     "copy": "Copy",
     "searchAction": "Search",
@@ -611,6 +612,7 @@
     "yeniUrun": "New Product",
     "topluFiyatGuncelle": "Bulk Price Update",
     "degerleme": "Stock Valuation",
+    "colGorsel": "Image",
     "siparisOnerisi": "Reorder Suggestions",
     "ortalamaDeger": "Average Value",
     "fifoDeger": "FIFO Value",
@@ -1583,6 +1585,10 @@
   },
   "cariHesaplar": {
     "title": "Customer & Vendor Management",
+    "fotograf": "Account Photo",
+    "fotografYukle": "Upload Photo",
+    "fotografYuklendi": "Photo uploaded (compressed)",
+    "fotografYuklenemedi": "Photo could not be uploaded",
     "ipucuBaslik": "Customers & Vendors",
     "ipucuMetin": "Manage your customers and vendors here. Track balances, credit limits and terms. When creating an invoice you select the accounts saved here.",
     "yeniCariHesap": "New Account",

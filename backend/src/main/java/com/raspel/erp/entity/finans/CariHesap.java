@@ -71,6 +71,10 @@ public class CariHesap {
     @Column(name = "foto_url", length = 500)
     private String fotoUrl;
 
+    /** Küçük (thumbnail) görsel adresi; liste/kart görünümleri bunu kullanır. */
+    @Column(name = "foto_thumb_url", length = 500)
+    private String fotoThumbUrl;
+
     @Column(nullable = false)
     private Boolean aktif;
 

@@ -29,6 +29,7 @@ public class FileUploadController {
 
     private final DosyaDepolamaService dosyaDepolama;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.ResimIslemeService resimIslemeService;
 
     /**
      * Logo gibi public dosyalarda "dosya adi -> tenant klasoru" cozumunun kisa sureli
@@ -39,9 +40,11 @@ public class FileUploadController {
     private final java.util.concurrent.ConcurrentHashMap<String, KlasorCozumu> klasorCozumCache =
             new java.util.concurrent.ConcurrentHashMap<>();
 
-    public FileUploadController(DosyaDepolamaService dosyaDepolama, TenantChecker tenantChecker) {
+    public FileUploadController(DosyaDepolamaService dosyaDepolama, TenantChecker tenantChecker,
+                                com.raspel.erp.service.sistem.ResimIslemeService resimIslemeService) {
         this.dosyaDepolama = dosyaDepolama;
         this.tenantChecker = tenantChecker;
+        this.resimIslemeService = resimIslemeService;
     }
 
     /**
@@ -90,15 +93,40 @@ public class FileUploadController {
     }
 
     @PostMapping("/upload/foto")
-    @Operation(summary = "Cari/ürün fotoğrafı yükle", description = "Cari hesap veya ürün fotoğrafı yükler")
+    @Operation(summary = "Cari/ürün fotoğrafı yükle",
+            description = "Cari hesap veya ürün fotoğrafı yükler; görsel sunucuda sıkıştırılır ve küçük thumbnail üretilir")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Map<String, String>> uploadFoto(@RequestParam("file") MultipartFile file) {
-        return dosyaYukle(file, tenantKlasor(FOTO_KLASOR), "/api/uploads/fotolar/");
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !IZIN_VERILEN_MIME.contains(contentType.toLowerCase())) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Geçersiz dosya tipi. Yalnızca resim yükleyebilirsiniz (JPG, PNG, WEBP)."));
+        }
+        try {
+            byte[] kaynak = file.getBytes();
+            if (!DosyaDepolamaService.resimMagicByteGecerli(kaynak)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Dosya içeriği geçerli bir resim değil."));
+            }
+            var islenmis = resimIslemeService.isle(kaynak, java.util.UUID.randomUUID().toString(),
+                    1600, 320, 0.80f);
+            String klasor = tenantKlasor(FOTO_KLASOR);
+            dosyaDepolama.kaydetBytes(klasor, islenmis.dosyaAdi(), islenmis.icerik(), islenmis.contentType());
+            dosyaDepolama.kaydetBytes(klasor, islenmis.thumbDosyaAdi(), islenmis.thumbIcerik(), islenmis.thumbContentType());
+            java.util.Map<String, String> yanit = new java.util.LinkedHashMap<>();
+            yanit.put("url", "/api/uploads/fotolar/" + islenmis.dosyaAdi());
+            yanit.put("thumbUrl", "/api/uploads/fotolar/" + islenmis.thumbDosyaAdi());
+            return ResponseEntity.ok(yanit);
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Görsel işlenemedi: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/uploads/fotolar/{filename}")
     @Operation(summary = "Fotoğraf getir", description = "Cari/ürün fotoğrafını döndürür")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER', 'SATIS', 'DEPO', 'PERSONEL')")
     public ResponseEntity<byte[]> getFoto(@PathVariable String filename) {
         return dosyaGetirTenantli(filename, FOTO_KLASOR);
     }

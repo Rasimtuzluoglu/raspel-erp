@@ -86,109 +86,113 @@
     </div>
 
     <Card class="grafik-kart">
-      <Bar
-        :data="olayData"
-        :options="barOptions"
-      />
+      <template #content>
+        <Bar
+          :data="olayData"
+          :options="barOptions"
+        />
+      </template>
     </Card>
 
     <Card class="tablo-kart">
-      <DataTable
-        :value="kayitlar"
-        :loading="yukleniyor"
-        lazy
-        :total-records="toplamKayit"
-        :rows="sayfaBoyutu"
-        :first="sayfa * sayfaBoyutu"
-        paginator
-        striped-rows
-        size="small"
-        scrollable
-        class="gecmis-tablo"
-        @page="sayfaDegisti"
-        @row-click="faturaGecmisiAc($event.data)"
-      >
-        <template #empty>
-          <EmptyState />
-        </template>
-        <Column
-          field="tarih"
-          :header="t('faturaGecmisRapor.tarih')"
-          style="width: 160px"
+      <template #content>
+        <DataTable
+          :value="kayitlar"
+          :loading="yukleniyor"
+          lazy
+          :total-records="toplamKayit"
+          :rows="sayfaBoyutu"
+          :first="sayfa * sayfaBoyutu"
+          paginator
+          striped-rows
+          size="small"
+          scrollable
+          class="gecmis-tablo"
+          @page="sayfaDegisti"
+          @row-click="faturaGecmisiAc($event.data)"
         >
-          <template #body="{ data }">
-            {{ formatDateTime(data.tarih) }}
+          <template #empty>
+            <EmptyState />
           </template>
-        </Column>
-        <Column
-          field="faturaNumarasi"
-          :header="t('faturaGecmisRapor.faturaNo')"
-          style="width: 140px"
-        />
-        <Column
-          field="faturaTur"
-          :header="t('faturaGecmisRapor.tur')"
-          style="width: 90px"
-        />
-        <Column
-          field="cariHesapAd"
-          :header="t('faturaGecmisRapor.cari')"
-          style="width: 170px"
-        >
-          <template #body="{ data }">
-            {{ data.cariHesapAd || '-' }}
-          </template>
-        </Column>
-        <Column
-          field="olay"
-          :header="t('faturaGecmisRapor.olay')"
-          style="width: 120px"
-        >
-          <template #body="{ data }">
-            <span :class="['olay-badge', data.olay.toLowerCase()]">{{ olayEtiket(data.olay) }}</span>
-          </template>
-        </Column>
-        <Column
-          field="kullaniciAdi"
-          :header="t('faturaGecmisRapor.kullanici')"
-          style="width: 130px"
-        >
-          <template #body="{ data }">
-            {{ data.kullaniciAdi || '-' }}
-          </template>
-        </Column>
-        <Column
-          field="yazdirmaFormat"
-          :header="t('faturaGecmisRapor.bicim')"
-          style="width: 110px"
-        >
-          <template #body="{ data }">
-            {{ data.yazdirmaFormat || '-' }}
-          </template>
-        </Column>
-        <Column
-          field="yaziciAdi"
-          :header="t('faturaGecmisRapor.yazici')"
-          style="width: 150px"
-        >
-          <template #body="{ data }">
-            {{ data.yaziciAdi || '-' }}
-          </template>
-        </Column>
-        <Column
-          field="kopyaNo"
-          :header="t('faturaGecmisRapor.kopya')"
-          style="width: 80px"
-        >
-          <template #body="{ data }">
-            {{ data.kopyaNo || '-' }}
-          </template>
-        </Column>
-        <Column
-          field="aciklama"
-          :header="t('faturaGecmisRapor.aciklama')"
-        />
-      </DataTable>
+          <Column
+            field="tarih"
+            :header="t('faturaGecmisRapor.tarih')"
+            style="width: 160px"
+          >
+            <template #body="{ data }">
+              {{ formatDateTime(data.tarih) }}
+            </template>
+          </Column>
+          <Column
+            field="faturaNumarasi"
+            :header="t('faturaGecmisRapor.faturaNo')"
+            style="width: 140px"
+          />
+          <Column
+            field="faturaTur"
+            :header="t('faturaGecmisRapor.tur')"
+            style="width: 90px"
+          />
+          <Column
+            field="cariHesapAd"
+            :header="t('faturaGecmisRapor.cari')"
+            style="width: 170px"
+          >
+            <template #body="{ data }">
+              {{ data.cariHesapAd || '-' }}
+            </template>
+          </Column>
+          <Column
+            field="olay"
+            :header="t('faturaGecmisRapor.olay')"
+            style="width: 120px"
+          >
+            <template #body="{ data }">
+              <span :class="['olay-badge', data.olay.toLowerCase()]">{{ olayEtiket(data.olay) }}</span>
+            </template>
+          </Column>
+          <Column
+            field="kullaniciAdi"
+            :header="t('faturaGecmisRapor.kullanici')"
+            style="width: 130px"
+          >
+            <template #body="{ data }">
+              {{ data.kullaniciAdi || '-' }}
+            </template>
+          </Column>
+          <Column
+            field="yazdirmaFormat"
+            :header="t('faturaGecmisRapor.bicim')"
+            style="width: 110px"
+          >
+            <template #body="{ data }">
+              {{ data.yazdirmaFormat || '-' }}
+            </template>
+          </Column>
+          <Column
+            field="yaziciAdi"
+            :header="t('faturaGecmisRapor.yazici')"
+            style="width: 150px"
+          >
+            <template #body="{ data }">
+              {{ data.yaziciAdi || '-' }}
+            </template>
+          </Column>
+          <Column
+            field="kopyaNo"
+            :header="t('faturaGecmisRapor.kopya')"
+            style="width: 80px"
+          >
+            <template #body="{ data }">
+              {{ data.kopyaNo || '-' }}
+            </template>
+          </Column>
+          <Column
+            field="aciklama"
+            :header="t('faturaGecmisRapor.aciklama')"
+          />
+        </DataTable>
+      </template>
     </Card>
 
     <FaturaGecmisDialog

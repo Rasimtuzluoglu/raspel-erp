@@ -149,8 +149,26 @@
           field="ad"
           :header="t('cariHesaplar.ad')"
           sortable
-          style="width: 200px"
-        />
+          style="width: 240px"
+        >
+          <template #body="s">
+            <div class="cari-ad-hucre">
+              <img
+                v-if="s.data.fotoThumbUrl || s.data.fotoUrl"
+                :src="s.data.fotoThumbUrl || s.data.fotoUrl"
+                class="cari-thumb"
+                alt=""
+                loading="lazy"
+                decoding="async"
+              >
+              <span
+                v-else
+                class="cari-thumb-yok"
+              ><i class="pi pi-user" /></span>
+              <span>{{ s.data.ad }}</span>
+            </div>
+          </template>
+        </Column>
         <Column
           v-if="kolonlar[2].visible"
           field="tur"
@@ -302,6 +320,39 @@
               :placeholder="t('cariHesaplar.adPlaceholder')"
               class="w-full"
             />
+          </div>
+          <div class="form-group">
+            <label>{{ t('cariHesaplar.fotograf') }}</label>
+            <div class="foto-satir">
+              <img
+                v-if="form.fotoUrl || form.fotoThumbUrl"
+                :src="form.fotoThumbUrl || form.fotoUrl"
+                class="foto-onizle"
+                alt="foto"
+                loading="lazy"
+                decoding="async"
+              >
+              <input
+                ref="fotoInput"
+                type="file"
+                accept="image/*"
+                hidden
+                @change="fotoSec"
+              >
+              <Button
+                :label="t('cariHesaplar.fotografYukle')"
+                icon="pi pi-image"
+                class="p-button-outlined"
+                @click="$refs.fotoInput.click()"
+              />
+              <Button
+                v-if="form.fotoUrl || form.fotoThumbUrl"
+                :label="t('stoklar.kaldir')"
+                icon="pi pi-times"
+                class="p-button-text p-button-danger"
+                @click="form.fotoUrl = ''; form.fotoThumbUrl = ''"
+              />
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1008,7 +1059,9 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter } from 'vue-router'
-import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI } from '../api/index.js'
+import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI } from '../api/index.js'
+import { resimDogrula } from '../utils/dosyaDogrula.js'
+import { resimSikistir } from '../utils/resimSikistir.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -1222,8 +1275,30 @@ const form = ref({
   krediLimiti: null,
   odemeVadesi: 0,
   notlar: '',
+  fotoUrl: '',
+  fotoThumbUrl: '',
   aktif: true
 })
+
+const fotoInput = ref(null)
+
+const fotoSec = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  const hata = resimDogrula(file)
+  if (hata) { toastBildirim.hata(t(hata.key, hata.params)); e.target.value = ''; return }
+  try {
+    const kucuk = await resimSikistir(file)
+    const r = await uploadAPI.foto(kucuk)
+    form.value.fotoUrl = r.data?.url || ''
+    form.value.fotoThumbUrl = r.data?.thumbUrl || ''
+    toastBildirim.basarili(t('cariHesaplar.fotografYuklendi'))
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.error || err?.response?.data?.message || t('cariHesaplar.fotografYuklenemedi'))
+  } finally {
+    e.target.value = ''
+  }
+}
 
 const { temizle: formTemizle } = useFormKorumasi(form)
 
@@ -1332,6 +1407,8 @@ const editCariHesap = (cariHesap) => {
     krediLimiti: cariHesap.krediLimiti || null,
     odemeVadesi: cariHesap.odemeVadesi ?? 0,
     notlar: cariHesap.notlar || '',
+    fotoUrl: cariHesap.fotoUrl || '',
+    fotoThumbUrl: cariHesap.fotoThumbUrl || '',
     aktif: cariHesap.aktif !== false
   }
   submitted.value = false
@@ -1696,6 +1773,44 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
 </script>
 
 <style scoped>
+.cari-ad-hucre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cari-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.cari-thumb-yok {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px dashed var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+.foto-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.foto-onizle {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
 .fatura-link {
   color: var(--accent);
   cursor: pointer;

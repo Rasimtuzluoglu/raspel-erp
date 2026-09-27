@@ -87,34 +87,40 @@
           <template #title>
             {{ t('karlilik.aylikTrend') }}
           </template>
-          <div class="grafik-yukseklik">
-            <Line
-              :data="trendData"
-              :options="lineOptions"
-            />
-          </div>
+          <template #content>
+            <div class="grafik-yukseklik">
+              <Line
+                :data="trendData"
+                :options="lineOptions"
+              />
+            </div>
+          </template>
         </Card>
         <Card class="grafik-kart">
           <template #title>
             {{ t('karlilik.kirilimGrafik') }}
           </template>
-          <div class="grafik-yukseklik">
-            <Bar
-              :data="kirilimData"
-              :options="barOptions"
-            />
-          </div>
+          <template #content>
+            <div class="grafik-yukseklik">
+              <Bar
+                :data="kirilimData"
+                :options="barOptions"
+              />
+            </div>
+          </template>
         </Card>
         <Card class="grafik-kart">
           <template #title>
             {{ t('karlilik.ciroPayi') }}
           </template>
-          <div class="grafik-yukseklik">
-            <Doughnut
-              :data="payData"
-              :options="pieOptions"
-            />
-          </div>
+          <template #content>
+            <div class="grafik-yukseklik">
+              <Doughnut
+                :data="payData"
+                :options="pieOptions"
+              />
+            </div>
+          </template>
         </Card>
       </div>
 
@@ -125,86 +131,90 @@
         <template #title>
           <span class="uyari-baslik"><i class="pi pi-exclamation-triangle" /> {{ t('karlilik.negatifMarj') }}</span>
         </template>
-        <div
-          v-for="n in veri.negatifMarjli"
-          :key="n.ad"
-          class="uyari-satir"
-        >
-          <span class="uyari-ad">{{ n.ad }}</span>
-          <span class="uyari-marj">%{{ fmt(n.marj) }}</span>
-          <span class="uyari-tutar">{{ formatCurrency(n.brutKar) }}</span>
-        </div>
+        <template #content>
+          <div
+            v-for="n in veri.negatifMarjli"
+            :key="n.ad"
+            class="uyari-satir"
+          >
+            <span class="uyari-ad">{{ n.ad }}</span>
+            <span class="uyari-marj">%{{ fmt(n.marj) }}</span>
+            <span class="uyari-tutar">{{ formatCurrency(n.brutKar) }}</span>
+          </div>
+        </template>
       </Card>
 
       <Card class="tablo-kart">
         <template #title>
           {{ t('karlilik.kirilim') }}
         </template>
-        <DataTable
-          :value="veri.kirilim"
-          :rows="15"
-          paginator
-          striped-rows
-          size="small"
-          sort-field="brutKar"
-          :sort-order="-1"
-          class="kirilim-tablo"
-          @row-click="detayAc($event.data)"
-        >
-          <template #empty>
-            <EmptyState />
-          </template>
-          <Column
-            field="ad"
-            :header="alanBasligi"
-            sortable
-          />
-          <Column
-            field="ciro"
-            :header="t('karlilik.ciro')"
-            sortable
+        <template #content>
+          <DataTable
+            :value="veri.kirilim"
+            :rows="15"
+            paginator
+            striped-rows
+            size="small"
+            sort-field="brutKar"
+            :sort-order="-1"
+            class="kirilim-tablo"
+            @row-click="detayAc($event.data)"
           >
-            <template #body="{ data }">
-              {{ formatCurrency(data.ciro) }}
+            <template #empty>
+              <EmptyState />
             </template>
-          </Column>
-          <Column
-            field="maliyet"
-            :header="t('karlilik.maliyet')"
-            sortable
-          >
-            <template #body="{ data }">
-              {{ formatCurrency(data.maliyet) }}
-            </template>
-          </Column>
-          <Column
-            field="brutKar"
-            :header="t('karlilik.brutKar')"
-            sortable
-          >
-            <template #body="{ data }">
-              <span :class="data.brutKar < 0 ? 'negatif' : 'pozitif'">{{ formatCurrency(data.brutKar) }}</span>
-            </template>
-          </Column>
-          <Column
-            field="marj"
-            :header="t('karlilik.marj')"
-            sortable
-          >
-            <template #body="{ data }">
-              <span :class="data.marj < 0 ? 'negatif' : 'pozitif'">%{{ fmt(data.marj) }}</span>
-            </template>
-          </Column>
-          <Column
-            field="pay"
-            :header="t('karlilik.pay')"
-            sortable
-          >
-            <template #body="{ data }">
-              %{{ fmt(data.pay) }}
-            </template>
-          </Column>
-        </DataTable>
+            <Column
+              field="ad"
+              :header="alanBasligi"
+              sortable
+            />
+            <Column
+              field="ciro"
+              :header="t('karlilik.ciro')"
+              sortable
+            >
+              <template #body="{ data }">
+                {{ formatCurrency(data.ciro) }}
+              </template>
+            </Column>
+            <Column
+              field="maliyet"
+              :header="t('karlilik.maliyet')"
+              sortable
+            >
+              <template #body="{ data }">
+                {{ formatCurrency(data.maliyet) }}
+              </template>
+            </Column>
+            <Column
+              field="brutKar"
+              :header="t('karlilik.brutKar')"
+              sortable
+            >
+              <template #body="{ data }">
+                <span :class="data.brutKar < 0 ? 'negatif' : 'pozitif'">{{ formatCurrency(data.brutKar) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="marj"
+              :header="t('karlilik.marj')"
+              sortable
+            >
+              <template #body="{ data }">
+                <span :class="data.marj < 0 ? 'negatif' : 'pozitif'">%{{ fmt(data.marj) }}</span>
+              </template>
+            </Column>
+            <Column
+              field="pay"
+              :header="t('karlilik.pay')"
+              sortable
+            >
+              <template #body="{ data }">
+                %{{ fmt(data.pay) }}
+              </template>
+            </Column>
+          </DataTable>
+        </template>
       </Card>
     </template>
 

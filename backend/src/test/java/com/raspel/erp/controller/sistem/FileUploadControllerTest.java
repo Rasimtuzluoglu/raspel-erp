@@ -34,6 +34,9 @@ class FileUploadControllerTest {
     @MockBean
     private TenantChecker tenantChecker;
 
+    @MockBean
+    private com.raspel.erp.service.sistem.ResimIslemeService resimIslemeService;
+
     @Test
     void uploadAvatar_bosDosyaReddedilir() throws Exception {
         MockMultipartFile bos = new MockMultipartFile("file", "bos.png", "image/png", new byte[0]);

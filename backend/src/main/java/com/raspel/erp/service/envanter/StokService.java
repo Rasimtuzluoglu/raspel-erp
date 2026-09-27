@@ -248,7 +248,7 @@ public class StokService {
                 .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
                 .barkod(barkod).rafNo(dto.getRafNo()).marka(dto.getMarka())
                 .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
-                .aciklama(dto.getAciklama()).fotoUrl(dto.getFotoUrl()).birim2(dto.getBirim2())
+                .aciklama(dto.getAciklama()).fotoUrl(dto.getFotoUrl()).fotoThumbUrl(dto.getFotoThumbUrl()).birim2(dto.getBirim2())
                 .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
                 .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
                 .maliyetYontemi(dto.getMaliyetYontemi()).varsayilanDepoId(dto.getVarsayilanDepoId())
@@ -291,6 +291,7 @@ public class StokService {
         s.setAgirlik(dto.getAgirlik()); s.setKategori(dto.getKategori());
         s.setAciklama(dto.getAciklama());
         if (dto.getFotoUrl() != null) s.setFotoUrl(dto.getFotoUrl());
+        if (dto.getFotoThumbUrl() != null) s.setFotoThumbUrl(dto.getFotoThumbUrl());
         if (dto.getBirim2() != null) s.setBirim2(dto.getBirim2());
         if (dto.getCevrimKatsayisi() != null) s.setCevrimKatsayisi(dto.getCevrimKatsayisi());
         if (dto.getTedarikciId() != null) s.setTedarikciId(dto.getTedarikciId());
@@ -594,7 +595,7 @@ public class StokService {
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar()).kdvOrani(s.getKdvOrani())
                 .stokGrubu(s.getStokGrubu()).barkod(s.getBarkod()).rafNo(s.getRafNo())
                 .marka(s.getMarka()).agirlik(s.getAgirlik()).kategori(s.getKategori())
-                .aciklama(s.getAciklama()).fotoUrl(s.getFotoUrl()).birim2(s.getBirim2())
+                .aciklama(s.getAciklama()).fotoUrl(s.getFotoUrl()).fotoThumbUrl(s.getFotoThumbUrl()).birim2(s.getBirim2())
                 .cevrimKatsayisi(s.getCevrimKatsayisi()).tedarikciId(s.getTedarikciId())
                 .tedarikciAd(s.getTedarikciId() != null ? tedarikciAdlari.get(s.getTedarikciId()) : null)
                 .tedarikciStokKodu(s.getTedarikciStokKodu()).tedarikciFiyat(s.getTedarikciFiyat())

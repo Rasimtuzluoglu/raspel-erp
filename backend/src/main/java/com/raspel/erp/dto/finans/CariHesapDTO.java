@@ -39,6 +39,8 @@ public class CariHesapDTO {
     private String iban;
     private String notlar;
     private String fotoUrl;
+    /** Küçük (thumbnail) görsel adresi; liste/kart görünümleri bunu kullanır. */
+    private String fotoThumbUrl;
     private Boolean aktif;
 
     private BigDecimal krediLimiti;

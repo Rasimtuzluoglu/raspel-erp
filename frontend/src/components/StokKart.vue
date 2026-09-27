@@ -4,6 +4,22 @@
     :class="{ 'dusuk-stok': stok.minMiktar && stok.miktar <= stok.minMiktar }"
     @click="$emit('sec', stok)"
   >
+    <div
+      class="kart-gorsel"
+      :class="{ 'gorsel-yok': !(stok.fotoThumbUrl || stok.fotoUrl) }"
+    >
+      <img
+        v-if="stok.fotoThumbUrl || stok.fotoUrl"
+        :src="stok.fotoThumbUrl || stok.fotoUrl"
+        :alt="stok.ad"
+        loading="lazy"
+        decoding="async"
+      >
+      <i
+        v-else
+        class="pi pi-image"
+      />
+    </div>
     <div class="kart-ust">
       <div
         v-if="stok.stokKodu"
@@ -81,6 +97,26 @@ const { t } = useI18n()
 }
 .stok-kart.dusuk-stok:hover {
   border-color: rgba(239, 68, 68, 0.5);
+}
+.kart-gorsel {
+  height: 120px;
+  margin: -6px -4px 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+}
+.kart-gorsel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.kart-gorsel.gorsel-yok {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 28px;
 }
 .kart-ust {
   display: flex;

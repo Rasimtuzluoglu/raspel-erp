@@ -454,36 +454,38 @@
           />
         </div>
       </template>
-      <div
-        v-if="karlilik && karlilik.ozet"
-        class="karlilik-mini-grid"
-      >
-        <div class="ko-mini">
-          <span>{{ t('karlilik.ciro') }}</span>
-          <strong>{{ formatPara(karlilik.ozet.ciro) }}</strong>
+      <template #content>
+        <div
+          v-if="karlilik && karlilik.ozet"
+          class="karlilik-mini-grid"
+        >
+          <div class="ko-mini">
+            <span>{{ t('karlilik.ciro') }}</span>
+            <strong>{{ formatPara(karlilik.ozet.ciro) }}</strong>
+          </div>
+          <div class="ko-mini">
+            <span>{{ t('karlilik.brutKar') }}</span>
+            <strong :class="karlilik.ozet.brutKar < 0 ? 'text-red-500' : 'text-green-500'">{{ formatPara(karlilik.ozet.brutKar) }}</strong>
+          </div>
+          <div class="ko-mini">
+            <span>{{ t('karlilik.brutKarMarji') }}</span>
+            <strong>%{{ karlilik.ozet.brutKarMarji }}</strong>
+          </div>
+          <div class="ko-mini">
+            <span>{{ t('karlilik.negatifMarj') }}</span>
+            <strong>{{ karlilik.ozet.negatifMarjliAdet }}</strong>
+          </div>
         </div>
-        <div class="ko-mini">
-          <span>{{ t('karlilik.brutKar') }}</span>
-          <strong :class="karlilik.ozet.brutKar < 0 ? 'text-red-500' : 'text-green-500'">{{ formatPara(karlilik.ozet.brutKar) }}</strong>
+        <div
+          v-if="karlilik && karlilik.aylikTrend && karlilik.aylikTrend.length"
+          style="height: 240px"
+        >
+          <Line
+            :data="karlilikTrend"
+            :options="karlilikLineOptions"
+          />
         </div>
-        <div class="ko-mini">
-          <span>{{ t('karlilik.brutKarMarji') }}</span>
-          <strong>%{{ karlilik.ozet.brutKarMarji }}</strong>
-        </div>
-        <div class="ko-mini">
-          <span>{{ t('karlilik.negatifMarj') }}</span>
-          <strong>{{ karlilik.ozet.negatifMarjliAdet }}</strong>
-        </div>
-      </div>
-      <div
-        v-if="karlilik && karlilik.aylikTrend && karlilik.aylikTrend.length"
-        style="height: 240px"
-      >
-        <Line
-          :data="karlilikTrend"
-          :options="karlilikLineOptions"
-        />
-      </div>
+      </template>
     </Card>
   </div>
 </template>

@@ -276,7 +276,8 @@
     "dosya": {
       "dosyaSecilmedi": "Dosya seçilmedi",
       "boyutAsildi": "Dosya boyutu çok büyük (en fazla {mb} MB)",
-      "gecersizResimTipi": "Geçersiz dosya tipi. Yalnızca JPG, PNG, WEBP veya GIF yükleyebilirsiniz"
+      "gecersizResimTipi": "Geçersiz dosya tipi. Yalnızca JPG, PNG, WEBP veya GIF yükleyebilirsiniz",
+      "heicDesteklenmiyor": "HEIC/HEIF (iPhone) formatı desteklenmiyor. Fotoğrafı JPG olarak yükleyin"
     },
     "copy": "Kopyala",
     "searchAction": "Ara",
@@ -611,6 +612,7 @@
     "yeniUrun": "Yeni Ürün",
     "topluFiyatGuncelle": "Toplu Fiyat Güncelle",
     "degerleme": "Stok Değerleme",
+    "colGorsel": "Görsel",
     "siparisOnerisi": "Sipariş Önerisi",
     "ortalamaDeger": "Ortalama Değer",
     "fifoDeger": "FIFO Değer",
@@ -1583,6 +1585,10 @@
   },
   "cariHesaplar": {
     "title": "Cari Hesaplar Yönetimi",
+    "fotograf": "Cari Fotoğrafı",
+    "fotografYukle": "Fotoğraf Yükle",
+    "fotografYuklendi": "Fotoğraf yüklendi (sıkıştırıldı)",
+    "fotografYuklenemedi": "Fotoğraf yüklenemedi",
     "ipucuBaslik": "Cari Hesaplar",
     "ipucuMetin": "Müşteri ve tedarikçilerinizi buradan yönetin. Bakiye, kredi limiti ve vade takibi yapın. Fatura keserken buradaki kayıtlı cari hesapları seçersiniz.",
     "yeniCariHesap": "Yeni Cari Hesap",
