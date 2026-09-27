@@ -36,6 +36,10 @@ public class StokDuzeltme {
     @Column(length = 500)
     private String neden;
 
+    /** Düzeltmenin işlendiği depo; boşsa varsayılan depo kullanılır. */
+    @Column(name = "depo_id")
+    private Long depoId;
+
     @Column(name = "kullanici_id")
     private Long kullaniciId;
 

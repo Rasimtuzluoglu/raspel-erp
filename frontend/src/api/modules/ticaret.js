@@ -436,8 +436,8 @@ export const teslimatAPI = {
   olustur(data) {
     return apiClient.post('/deliveries', data)
   },
-  durumGuncelle(id, durum) {
-    return apiClient.patch(`/deliveries/${id}/status`, { durum })
+  durumGuncelle(id, durum, sebep = null) {
+    return apiClient.patch(`/deliveries/${id}/status`, { durum, sebep })
   },
   fotoYukle(id, file) {
     const form = new FormData()

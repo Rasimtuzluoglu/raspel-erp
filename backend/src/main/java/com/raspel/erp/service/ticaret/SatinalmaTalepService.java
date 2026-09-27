@@ -123,6 +123,15 @@ public class SatinalmaTalepService {
         SatinalmaTalep t = talepRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Talep", id));
         tenantChecker.check(t.getSirketId(), "Talep");
+        // Onaylanmis/donusturulmus talep silinemez; denetim izi ve siparis bagi kopmasin.
+        if ("SIPARISE_DONUSTU".equals(t.getDurum())) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Siparişe dönüştürülmüş talep silinemez.");
+        }
+        if ("ONAYLANDI".equals(t.getDurum())) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Onaylanmış talep silinemez; önce durumunu TASLAK'a alın.");
+        }
         kalemRepository.deleteByTalepId(id);
         talepRepository.deleteById(id);
     }

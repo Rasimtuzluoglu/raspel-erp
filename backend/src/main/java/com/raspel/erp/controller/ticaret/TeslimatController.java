@@ -61,14 +61,17 @@ public class TeslimatController {
     }
 
     @PatchMapping("/api/deliveries/{id}/status")
-    @Operation(summary = "Teslimat durumunu güncelle", description = "Teslimat durumunu günceller (BEKLEMEDE, YOLDA, TESLIM_EDILDI, IPTAL)")
+    @Operation(summary = "Teslimat durumunu güncelle", description = "Teslimat durumunu günceller (BEKLEMEDE, YOLDA, TESLIM_EDILDI, IPTAL). İptalde sebep zorunludur.")
     public ResponseEntity<TeslimatDTO> durumGuncelle(
             @PathVariable Long id,
             @RequestBody DurumRequest body,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
-        return ResponseEntity.ok(teslimatService.durumGuncelle(id, body != null ? body.durum() : null, sirketId, kullaniciId));
+        return ResponseEntity.ok(teslimatService.durumGuncelle(id,
+                body != null ? body.durum() : null,
+                body != null ? body.sebep() : null,
+                sirketId, kullaniciId));
     }
 
     @PostMapping("/api/deliveries/{id}/foto")
@@ -142,5 +145,5 @@ public class TeslimatController {
                 .body(pdf);
     }
 
-    record DurumRequest(String durum) {}
+    record DurumRequest(String durum, String sebep) {}
 }

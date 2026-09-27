@@ -331,8 +331,15 @@ const siparisEylemleri = (d) => {
   if (d.durum === 'TEKLIF') {
     items.push({ etiket: t('siparisler.sipariseCevir'), ikon: 'pi pi-check-circle', islem: () => durumGuncelle(d, 'SIPARIS') })
   }
-  if (d.durum === 'SIPARIS') {
-    items.push({ etiket: t('siparisler.faturalastir'), ikon: 'pi pi-file', islem: () => durumGuncelle(d, 'FATURA_KESILDI') })
+  // Saha/operasyon akışı: ofis tarafı da durumu ilerletebilir (ölü kayıt kalmasın).
+  if (d.durum === 'BEKLIYOR') {
+    items.push({ etiket: t('siparisler.hazirlaniyor'), ikon: 'pi pi-box', islem: () => durumGuncelle(d, 'HAZIRLANIYOR') })
+  }
+  if (d.durum === 'HAZIRLANIYOR') {
+    items.push({ etiket: t('siparisler.yolaCikti'), ikon: 'pi pi-truck', islem: () => durumGuncelle(d, 'YOLDA') })
+  }
+  if (d.durum === 'SIPARIS' || d.durum === 'TESLIM_EDILDI') {
+    items.push({ etiket: t('siparisler.faturalastir'), ikon: 'pi pi-file', islem: () => faturaKesOnay(d) })
   }
   if (d.durum === 'FATURA_KESILDI' || d.durum === 'IPTAL') {
     items.push({ etiket: t('siparisler.sipariseGeriAl'), ikon: 'pi pi-undo', islem: () => durumGuncelle(d, 'SIPARIS') })
@@ -347,6 +354,18 @@ const siparisEylemleri = (d) => {
   }
   items.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => sil(d) })
   return items
+}
+
+// Faturalaştırma yanlış tıkla yapılmamalı: onay ister; müşteriye otomatik e-posta gitmez.
+const faturaKesOnay = (d) => {
+  confirm.require({
+    message: t('siparisler.faturalastirOnay', { no: d.siparisNo || d.id }),
+    header: t('siparisler.faturalastir'),
+    icon: 'pi pi-file',
+    acceptLabel: t('common.evet'),
+    rejectLabel: t('common.vazgec'),
+    accept: () => durumGuncelle(d, 'FATURA_KESILDI')
+  })
 }
 
 const uretimEmriOlustur = (siparis) => {

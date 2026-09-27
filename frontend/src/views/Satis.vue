@@ -284,7 +284,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { faturaAPI } from '../api/index.js'
+import { faturaAPI, teklifAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -441,7 +441,29 @@ const satisiTamamla = async () => {
   }
   saving.value = true
   try {
-    const durum = satisModu.value === 'TEKLIF' ? 'TEKLIF' : 'KESILDI'
+    // Teklif modu: fatura yerine GERÇEK Teklif kaydı oluşturulur; böylece teklif
+    // Teklifler modülünde görünür ve siparişe/faturaya dönüştürülebilir (eski
+    // "durum=TEKLIF" faturası çıkmaz sokaktı).
+    if (satisModu.value === 'TEKLIF') {
+      await teklifAPI.create({
+        cariHesapId: satisForm.value.cariHesapId,
+        tarih: getLocalDateString(satisForm.value.tarih),
+        tur: 'SATIS',
+        durum: 'TASLAK',
+        aciklama: satisForm.value.aciklama,
+        kalemler: satisForm.value.kalemler.map((k) => ({
+          stokId: k.stokId,
+          aciklama: k.ad || k.aciklama || '',
+          miktar: k.miktar,
+          birimFiyat: k.birimFiyat,
+          kdvOrani: k.kdvOrani
+        }))
+      })
+      toastBildirim.basarili(t('satis.teklifKaydedildiTekliflerde'))
+      showSatisDialog.value = false
+      return
+    }
+    const durum = 'KESILDI'
     const payload = satisPayloadUret({
       cariHesapId: satisForm.value.cariHesapId,
       tur: 'SATIS',
@@ -451,8 +473,7 @@ const satisiTamamla = async () => {
       kalemler: satisForm.value.kalemler
     })
     await faturaAPI.create(payload)
-    const msg = durum === 'TEKLIF' ? t('satis.teklifKaydedildi') : t('satis.satisTamamlandi')
-    toastBildirim.basarili(msg)
+    toastBildirim.basarili(t('satis.satisTamamlandi'))
     showSatisDialog.value = false
     await satislariYukle()
   } catch (err) {

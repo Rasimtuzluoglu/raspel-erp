@@ -246,8 +246,16 @@ public class TeslimatService {
 
     @Transactional
     public TeslimatDTO durumGuncelle(Long id, String durum, Long sirketId, Long kullaniciId) {
+        return durumGuncelle(id, durum, null, sirketId, kullaniciId);
+    }
+
+    public TeslimatDTO durumGuncelle(Long id, String durum, String sebep, Long sirketId, Long kullaniciId) {
         if (durum == null || !gecerliDurum(durum)) {
             throw new BusinessException("Geçersiz teslimat durumu");
+        }
+        // Başarısız teslimat (iptal) sebebi zorunlu: iade/dönüş kararı bu bilgiye dayanır.
+        if ("IPTAL".equals(durum) && (sebep == null || sebep.isBlank())) {
+            throw new BusinessException("Teslimat iptali için sebep girilmelidir.");
         }
         Teslimat t = teslimatRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teslimat", id));
@@ -259,6 +267,10 @@ public class TeslimatService {
         }
         String oncekiDurum = t.getDurum();
         t.setDurum(durum);
+        if ("IPTAL".equals(durum) && sebep != null && !sebep.isBlank()) {
+            t.setNotlar((t.getNotlar() != null && !t.getNotlar().isBlank() ? t.getNotlar() + " | " : "")
+                    + "İptal sebebi: " + sebep.trim());
+        }
         if (Teslimat.Durum.TESLIM_EDILDI.name().equals(durum)) {
             t.setTeslimTarihi(LocalDateTime.now());
         } else {

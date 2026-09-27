@@ -867,7 +867,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI, teslimatAPI, tahsilatAPI, ajandaAPI, kasaAPI, bankaAPI } from '../api/index.js'
@@ -979,7 +979,38 @@ const imzaPadRef = ref(null)
 
 onMounted(async () => {
   await tumunuYukle()
+  sahaKuyruguSenkronizeEt()
+  window.addEventListener('online', sahaKuyruguSenkronizeEt)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('online', sahaKuyruguSenkronizeEt)
+})
+
+// ---- Saha çevrimdışı kuyruğu (ziyaret notları) ----
+// Finansal işlemler (tahsilat) çevrimdışı kaydedilmez; ziyaret notları kuyruğa alınır
+// ve bağlantı gelince otomatik gönderilir.
+const SAHA_KUYRUK_KEY = 'raspel_saha_kuyrugu'
+const sahaKuyruk = ref(JSON.parse(localStorage.getItem(SAHA_KUYRUK_KEY) || '[]'))
+const sahaKuyrukKaydet = () => localStorage.setItem(SAHA_KUYRUK_KEY, JSON.stringify(sahaKuyruk.value))
+const sahaKuyruguSenkronizeEt = async () => {
+  if (!sahaKuyruk.value.length || !navigator.onLine) return
+  const kalan = []
+  let gonderilen = 0
+  for (const kayit of sahaKuyruk.value) {
+    try {
+      await notAPI.create(kayit)
+      gonderilen++
+    } catch {
+      kalan.push(kayit)
+    }
+  }
+  sahaKuyruk.value = kalan
+  sahaKuyrukKaydet()
+  if (gonderilen > 0) {
+    toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.cevrimdisiZiyaretGonderildi', { n: gonderilen }), life: 4000 })
+  }
+}
 
 const tumunuYukle = async () => {
   yukleniyor.value = true
@@ -1087,7 +1118,8 @@ const durumSecModalAc = (siparis) => {
 }
 
 const durumKaydediliyor = ref(false)
-const durumSecenekleri = ['BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'TESLIM_EDILDI', 'IPTAL']
+// TESLIM_EDILDI burada yok: imzalı teslim akışıyla tamamlanır (teslim ispatı zorunlu).
+const durumSecenekleri = ['BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'IPTAL']
 
 const durumKaydet = async () => {
   if (!seciliSiparis.value) return
@@ -1227,13 +1259,23 @@ const ziyaretKaydet = async () => {
   ziyaretKaydediliyor.value = true
   try {
     const cari = cariHesaplar.value.find(c => c?.id === ziyaretForm.value.cariHesapId)
-    await notAPI.create({
+    const notKaydi = {
       baslik: t('sahaPortali.sahaZiyareti', { musteri: cari?.ad || t('sahaPortali.musteri'), amac: ziyaretForm.value.amac }),
       icerik: ziyaretForm.value.notlar,
       // Cariye bağla ki not cari görüşme notlarında görünsün (önce eksikti).
       cariHesapId: ziyaretForm.value.cariHesapId,
       kategori: 'SAHA_ZIYARET'
-    })
+    }
+    if (!navigator.onLine) {
+      // Çevrimdışı: ziyaret notu kuyruğa alınır; bağlantı gelince otomatik gönderilir.
+      sahaKuyruk.value.push(notKaydi)
+      sahaKuyrukKaydet()
+      toast.add({ severity: 'info', summary: t('sahaPortali.cevrimdisi'), detail: t('sahaPortali.cevrimdisiZiyaretKuyruk'), life: 4000 })
+      ziyaretForm.value.notlar = ''
+      ziyaretForm.value.cariHesapId = null
+      return
+    }
+    await notAPI.create(notKaydi)
     if (ziyaretFoto.value) {
       try {
         await belgeAPI.yukle('CariHesap', ziyaretForm.value.cariHesapId, ziyaretFoto.value)
@@ -1277,6 +1319,11 @@ const kalemSil = (i) => {
 const tahsilatKaydet = async () => {
   if (!tahsilatForm.value.cariHesapId || !tahsilatForm.value.tutar || tahsilatForm.value.tutar <= 0) {
     toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.cariTutarZorunlu'), life: 3000 })
+    return
+  }
+  // Finansal işlem çevrimdışı kaydedilmez: mükerrer/eksik tahsilat riski alınmaz.
+  if (!navigator.onLine) {
+    toast.add({ severity: 'warn', summary: t('sahaPortali.cevrimdisi'), detail: t('sahaPortali.cevrimdisiTahsilatOlmaz'), life: 4000 })
     return
   }
   tahsilatGonderiliyor.value = true

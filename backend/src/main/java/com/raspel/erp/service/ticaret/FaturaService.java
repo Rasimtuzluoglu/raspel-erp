@@ -547,8 +547,12 @@ public class FaturaService {
         // E-posta, DB transaction'ı commit edildikten SONRA gönderilir; boylece SMTP
         // gecikmesi transaction'i/kilitleri acik tutmaz. (Testte aktif transaction
         // yoksa AfterCommitExecutor gorevi hemen calistirir.)
+        // Yalnizca KESILDI durumundaki faturalarda ve isteniyorsa gonderilir; TASLAK/TEKLIF
+        // icin musteriye e-posta gitmez (yanlislikla kesilmemis belge bildirilmez).
         String emailGonderimDurumu = null;
-        if (sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
+        boolean emailIsteniyor = !Boolean.FALSE.equals(dto.getEmailGonder())
+                && faturaDurum == Fatura.FaturaDurum.KESILDI;
+        if (emailIsteniyor && sirketId != null && cariHesap != null && cariHesap.getEmail() != null && !cariHesap.getEmail().isBlank()) {
             final String[] durum = new String[1];
             final String emailAdres = cariHesap.getEmail();
             final String emailFaturaNo = faturaNo;

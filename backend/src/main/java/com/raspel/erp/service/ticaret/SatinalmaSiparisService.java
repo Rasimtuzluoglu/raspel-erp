@@ -42,6 +42,10 @@ public class SatinalmaSiparisService {
     private final FaturaService faturaService;
     private final com.raspel.erp.service.envanter.StokService stokService;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.repository.ticaret.SatinalmaTalepRepository talepRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
+    private BigDecimal varsayilanKdvOrani;
 
     @Transactional(readOnly = true)
     public Page<SatinalmaSiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -81,6 +85,24 @@ public class SatinalmaSiparisService {
             dto.setSirketId(sirketId);
         }
         donemService.kilitKontrol(sirketId, dto.getTarih() != null ? dto.getTarih() : LocalDate.now(), "satınalma siparişi oluşturma");
+
+        // Talepten donusum: talep dogrulanir ve ayni islemde SIPARISE_DONUSTU yapilir.
+        // Aksi halde ayni talep icin sinirsiz siparis uretilebiliyordu.
+        com.raspel.erp.entity.ticaret.SatinalmaTalep talep = null;
+        if (dto.getTalepId() != null) {
+            talep = talepRepository.findById(dto.getTalepId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Talep", dto.getTalepId()));
+            tenantChecker.check(talep.getSirketId(), "Talep");
+            if (dto.getSirketId() != null && talep.getSirketId() != null
+                    && !dto.getSirketId().equals(talep.getSirketId())) {
+                throw new ResourceNotFoundException("Talep bu sirkete ait degil");
+            }
+            if (!"ONAYLANDI".equals(talep.getDurum())) {
+                throw new BusinessException(
+                        "Yalnızca onaylanmış talep siparişe dönüştürülebilir (talep durumu: " + talep.getDurum() + ").");
+            }
+        }
+
         SatinalmaSiparis s = SatinalmaSiparis.builder()
                 .siparisNo(dto.getSiparisNo())
                 .tarih(dto.getTarih())
@@ -88,11 +110,10 @@ public class SatinalmaSiparisService {
                 .talepId(dto.getTalepId())
                 .durum("TASLAK")
                 .aciklama(dto.getAciklama())
-                .araToplam(dto.getAraToplam())
-                .kdv(dto.getKdv())
-                .genelToplam(dto.getGenelToplam())
                 .sirketId(dto.getSirketId())
                 .build();
+        // Toplamlar kalemlerden KDV-dahil kanonik modelle hesaplanir (fatura ile uyumlu).
+        toplamlariHesapla(s, dto.getKalemler());
         tenantChecker.checkSirketId(dto.getSirketId(), "Satınalma Siparişi");
         s = siparisRepository.save(s);
 
@@ -105,6 +126,10 @@ public class SatinalmaSiparisService {
                         .kdvOrani(k.getKdvOrani()).tutar(k.getTutar())
                         .build());
             }
+        }
+        if (talep != null) {
+            talep.setDurum("SIPARISE_DONUSTU");
+            talepRepository.save(talep);
         }
         return entityToDTO(s);
     }
@@ -123,9 +148,10 @@ public class SatinalmaSiparisService {
         s.setTalepId(dto.getTalepId());
         if (dto.getDurum() != null) s.setDurum(dto.getDurum());
         s.setAciklama(dto.getAciklama());
-        s.setAraToplam(dto.getAraToplam());
-        s.setKdv(dto.getKdv());
-        s.setGenelToplam(dto.getGenelToplam());
+        if (dto.getKalemler() != null) {
+            // Kalemler verildiyse toplamlar sunucuda yeniden hesaplanir (istemciye guvenilmez).
+            toplamlariHesapla(s, dto.getKalemler());
+        }
         s = siparisRepository.save(s);
         if (dto.getKalemler() != null) {
             kalemRepository.deleteBySiparisId(s.getId());
@@ -141,19 +167,76 @@ public class SatinalmaSiparisService {
         return entityToDTO(s);
     }
 
+    /** Kalemlerden KDV-dahil kanonik modelle toplamlari hesaplar; bos kalem reddedilir. */
+    private void toplamlariHesapla(SatinalmaSiparis s, List<SatinalmaSiparisKalemDTO> kalemler) {
+        if (kalemler == null || kalemler.isEmpty()) {
+            throw new BusinessException("Satınalma siparişine en az bir kalem eklenmelidir");
+        }
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new java.util.ArrayList<>();
+        for (SatinalmaSiparisKalemDTO k : kalemler) {
+            BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE;
+            if (miktar.signum() <= 0) {
+                throw new BusinessException("Kalem miktarı 0'dan büyük olmalıdır");
+            }
+            BigDecimal birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
+            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
+            com.raspel.erp.util.FaturaTutar.Satir satir =
+                    com.raspel.erp.util.FaturaTutar.satir(birimFiyat, miktar, BigDecimal.ZERO, kdvOrani);
+            satirlar.add(satir);
+            k.setMiktar(miktar);
+            k.setKdvOrani(kdvOrani);
+            k.setTutar(satir.brut());
+        }
+        com.raspel.erp.util.FaturaTutar.Belge belge =
+                com.raspel.erp.util.FaturaTutar.belge(satirlar, BigDecimal.ZERO);
+        s.setAraToplam(belge.araToplam());
+        s.setKdv(belge.kdv());
+        s.setGenelToplam(belge.genelToplam());
+    }
+
     public SatinalmaSiparisDTO durumGuncelle(Long id, String durum) {
         SatinalmaSiparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if ("FATURALANDI".equals(s.getDurum()) && !"FATURALANDI".equals(durum)) {
+            throw new BusinessException(
+                    "Faturası oluşturulmuş satınalma siparişi geri alınamaz; önce alış faturasını iptal edin.");
+        }
         if ("TESLIM_ALINDI".equals(durum)) {
             teslimAlStokGirisi(s);
         } else if (Boolean.TRUE.equals(s.getStokIslendi())) {
-            // Stok girisi islenmis siparis, stok tersine cevrilmeden geri alinamaz.
-            throw new BusinessException(
-                    "Teslim alınmış (stoğu işlenmiş) sipariş başka duruma alınamaz. Önce irsaliye/fatura iptal edin.");
+            // Stok girişi işlenmiş sipariş geri alınırsa stok ters kaydedilir; böylece
+            // yanlış "Teslim Al" tıklaması kalıcı stok şişmesi bırakmaz.
+            teslimAlStokTersKayit(s);
         }
         s.setDurum(durum);
         return entityToDTO(siparisRepository.save(s));
+    }
+
+    /**
+     * "Teslim Al" ile işlenen stok girişini tersine çevirir. Stok yetersizse
+     * (mal satılmış/tüketilmişse) geri alma engellenir; kullanıcı alış faturası/iade
+     * akışını kullanmalıdır.
+     */
+    private void teslimAlStokTersKayit(SatinalmaSiparis s) {
+        List<SatinalmaSiparisKalem> kalemler = kalemRepository.findBySiparisId(s.getId());
+        for (SatinalmaSiparisKalem k : kalemler) {
+            if (k.getStokId() == null || k.getMiktar() == null
+                    || k.getMiktar().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            stokService.hareketEkle(StokHareketDTO.builder()
+                    .stokId(k.getStokId())
+                    .tur("CIKIS")
+                    .miktar(k.getMiktar())
+                    .hareketTarihi(LocalDate.now())
+                    .cariHesapId(s.getCariHesapId())
+                    .aciklama("Satınalma teslim geri alındı: " + s.getSiparisNo())
+                    .kaynakTip("SATINALMA_IPTAL")
+                    .kaynakId(s.getId())
+                    .build());
+        }
+        s.setStokIslendi(false);
     }
 
     /**

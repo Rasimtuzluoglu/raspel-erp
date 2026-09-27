@@ -388,11 +388,55 @@
         />
       </template>
     </Dialog>
+
+    <!-- Başarısız teslimat: sebep zorunlu; iade akışına yönlendirme sunulur. -->
+    <Dialog
+      v-model:visible="iptalDialog"
+      :modal="true"
+      :header="t('teslimatlar.iptalBaslik')"
+      :style="{ width: '94%', maxWidth: '440px' }"
+    >
+      <div class="imza-modal-icerik">
+        <div class="imza-alan-grup">
+          <label>{{ t('teslimatlar.iptalSebebi') }}</label>
+          <Textarea
+            v-model="iptalSebebi"
+            rows="3"
+            class="w-full"
+            :placeholder="t('teslimatlar.iptalSebebiOrnek')"
+          />
+        </div>
+        <p class="iptal-bilgi">
+          {{ t('teslimatlar.iptalBilgi') }}
+        </p>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('teslimatlar.iadeOlustur')"
+          icon="pi pi-undo"
+          class="p-button-outlined"
+          @click="iadeOlustur"
+        />
+        <Button
+          :label="t('common.vazgec')"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="iptalDialog = false"
+        />
+        <Button
+          :label="t('teslimatlar.iptalEt')"
+          icon="pi pi-ban"
+          class="p-button-danger"
+          @click="iptalKaydet"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { teslimatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -401,6 +445,7 @@ import { formatTarih } from '../utils/format.js'
 import ImzaPad from '../components/ImzaPad.vue'
 
 const toastBildirim = useToastBildirim()
+const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
@@ -516,9 +561,16 @@ const surucuSec = async (s) => {
   await teslimatlarYukle(s.id)
 }
 
-const durumGuncelle = async (teslim, yeniDurum) => {
+const durumGuncelle = async (teslim, yeniDurum, sebep = null) => {
+  // İptal (başarısız teslimat) sebebi zorunlu: iade/dönüş kararı bu bilgiye dayanır.
+  if (yeniDurum === 'IPTAL' && !sebep) {
+    iptalSebebi.value = ''
+    iptalTeslimat.value = teslim
+    iptalDialog.value = true
+    return
+  }
   try {
-    await teslimatAPI.durumGuncelle(teslim.id, yeniDurum)
+    await teslimatAPI.durumGuncelle(teslim.id, yeniDurum, sebep)
     teslim.durum = yeniDurum
     toastBildirim.basarili(t('teslimatlar.durumGuncellendi'))
     if (seciliSurucu.value) {
@@ -527,6 +579,26 @@ const durumGuncelle = async (teslim, yeniDurum) => {
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.hataDurumGuncelleme'))
   }
+}
+
+// Başarısız teslimat: sebep alınır; ardından iade oluşturmak için İadeler'e yönlendirilebilir.
+const iptalDialog = ref(false)
+const iptalTeslimat = ref(null)
+const iptalSebebi = ref('')
+const iptalKaydet = async () => {
+  if (!iptalSebebi.value.trim()) {
+    toastBildirim.uyari(t('teslimatlar.iptalSebebiZorunlu'))
+    return
+  }
+  const teslim = iptalTeslimat.value
+  iptalDialog.value = false
+  await durumGuncelle(teslim, 'IPTAL', iptalSebebi.value.trim())
+}
+const iadeOlustur = () => {
+  const teslim = iptalTeslimat.value
+  iptalDialog.value = false
+  const query = teslim?.faturaId ? { faturaId: teslim.faturaId } : {}
+  router.push({ name: 'Iadeler', query })
 }
 
 const fotoYukle = async (teslim, event) => {

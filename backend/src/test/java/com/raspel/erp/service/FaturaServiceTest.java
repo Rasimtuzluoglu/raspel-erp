@@ -207,7 +207,7 @@ class FaturaServiceTest {
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
         FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
-        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").durum("KESILDI").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
         Fatura saved = createFatura(1L);
         when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
@@ -226,7 +226,7 @@ class FaturaServiceTest {
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
         FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(java.math.BigDecimal.valueOf(2))
                 .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
-        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").durum("KESILDI").tarih(LocalDate.now())
                 .cariHesapId(1L).kalemler(List.of(kalem)).build();
         Fatura saved = createFatura(1L);
         when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);

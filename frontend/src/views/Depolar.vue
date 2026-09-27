@@ -6,9 +6,11 @@
       </h1>
       <div class="toolbar-end">
         <Button
+          v-if="authStore.isAdmin"
           :label="t('depolar.depolarArasiTransfer')"
           icon="pi pi-sync"
           class="p-button-info p-button-outlined"
+          :title="t('depolar.hizliTransferIpucu')"
           @click="transferDialog = true"
         />
         <Button
@@ -346,7 +348,8 @@
           style="width: 100px"
         >
           <template #body="{ data }">
-            <template v-if="data.durum === 'BEKLIYOR'">
+            <!-- Onay/red yalnızca ADMIN yetkisinde; aksi halde buton 403 üretiyordu. -->
+            <template v-if="data.durum === 'BEKLIYOR' && authStore.isAdmin">
               <Button
                 icon="pi pi-check"
                 :aria-label="$t('common.onayla')"
@@ -361,6 +364,10 @@
                 @click="talepReddet(data)"
               />
             </template>
+            <span
+              v-else-if="data.durum === 'BEKLIYOR'"
+              class="beklemede-metin"
+            >{{ t('depolar.yoneticiOnayiBekliyor') }}</span>
           </template>
         </Column>
       </DataTable>
@@ -376,12 +383,14 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { depoAPI, subeAPI, stokAPI, depoTransferAPI } from '../api/index.js'
+import { useAuthStore } from '../stores/authStore.js'
 import EmptyState from '../components/EmptyState.vue'
 
 const { t } = useI18n()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const authStore = useAuthStore()
 const list = ref([])
 const subeListesi = ref([])
 const stokListesi = ref([])

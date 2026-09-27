@@ -31,6 +31,7 @@ public class DepoTransferService {
     private final DepoRepository depoRepository;
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.repository.sube.DepoStokRepository depoStokRepository;
 
     @Transactional(readOnly = true)
     public List<DepoTransferDTO> listele(Long sirketId) {
@@ -46,8 +47,47 @@ public class DepoTransferService {
 
     @Transactional
     public DepoTransferDTO talepOlustur(DepoTransferDTO dto, Long sirketId, Long kullaniciId) {
+        if (dto.getKaynakDepoId() == null || dto.getHedefDepoId() == null) {
+            throw new BusinessException("Kaynak ve hedef depo seçilmelidir");
+        }
         if (dto.getKaynakDepoId().equals(dto.getHedefDepoId())) {
             throw new BusinessException("Kaynak ve hedef depo aynı olamaz");
+        }
+        if (dto.getStokId() == null) {
+            throw new BusinessException("Transfer edilecek ürün seçilmelidir");
+        }
+        if (dto.getMiktar() == null || dto.getMiktar().signum() <= 0) {
+            throw new BusinessException("Transfer miktarı 0'dan büyük olmalıdır");
+        }
+        // Talep aninda dogrulama: depolar ve stok bu sirkete ait olmali; kaynak depoda
+        // yeterli miktar bulunmali. Aksi halde hata yalnizca onay aninda goruluyordu.
+        var kaynak = depoRepository.findById(dto.getKaynakDepoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Depo", dto.getKaynakDepoId()));
+        var hedef = depoRepository.findById(dto.getHedefDepoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Depo", dto.getHedefDepoId()));
+        tenantChecker.check(kaynak.getSirketId(), "Depo");
+        tenantChecker.check(hedef.getSirketId(), "Depo");
+        var stok = stokRepository.findById(dto.getStokId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        if (sirketId != null) {
+            if (kaynak.getSirketId() != null && !sirketId.equals(kaynak.getSirketId())) {
+                throw new ResourceNotFoundException("Depo bu sirkete ait degil");
+            }
+            if (hedef.getSirketId() != null && !sirketId.equals(hedef.getSirketId())) {
+                throw new ResourceNotFoundException("Depo bu sirkete ait degil");
+            }
+            if (stok.getSirketId() != null && !sirketId.equals(stok.getSirketId())) {
+                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+            }
+        }
+        java.math.BigDecimal kaynakMiktar = depoStokRepository
+                .findByDepoIdAndStokIdForUpdate(dto.getKaynakDepoId(), dto.getStokId())
+                .map(ds -> ds.getMiktar() != null ? ds.getMiktar() : java.math.BigDecimal.ZERO)
+                .orElse(java.math.BigDecimal.ZERO);
+        if (kaynakMiktar.compareTo(dto.getMiktar()) < 0) {
+            throw new BusinessException("Kaynak depoda yeterli stok yok. Mevcut: " + kaynakMiktar
+                    + ", istenen: " + dto.getMiktar());
         }
         DepoTransfer t = DepoTransfer.builder()
                 .sirketId(sirketId)

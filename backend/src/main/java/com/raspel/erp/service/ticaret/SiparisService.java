@@ -178,6 +178,13 @@ public class SiparisService {
         tenantChecker.check(s.getSirketId(), "Sipariş");
         String eskiDurum = s.getDurum();
 
+        // Sofurlu siparislerde teslim, imzali teslimat akisiyla tamamlanmalidir; durum
+        // menusunden dogrudan TESLIM_EDILDI yapilirsa teslim ispati kaybolur.
+        if ("TESLIM_EDILDI".equals(durum) && s.getDriverId() != null && !"TESLIM_EDILDI".equals(eskiDurum)) {
+            throw new BusinessException(
+                    "Şoförlü siparişlerde imzalı teslim zorunludur. Teslimatı Saha Portalı / Teslimatlar ekranından imza ile tamamlayın.");
+        }
+
         // Sipariş geri alınıyorsa (FATURA_KESILDI -> başka durum): bağlı fatura varsa iptal et,
         // aksi halde yeniden faturalama çift fatura + çift stok düşümüne yol açar.
         if ("FATURA_KESILDI".equals(eskiDurum) && !"FATURA_KESILDI".equals(durum)) {
@@ -237,6 +244,9 @@ public class SiparisService {
                     .cariHesapId(s.getCariHesapId())
                     .siparisId(s.getId())
                     .irsaliyeId(bagliIrsaliyeId)
+                    // Sipariş dönüşümünde müşteriye otomatik e-posta gönderilmez; kullanıcı
+                    // Faturalar ekranından bilinçli olarak "Gönder" diyebilir.
+                    .emailGonder(false)
                     .aciklama("Sipariş #" + s.getSiparisNo() + " dönüşümü")
                     .araToplam(s.getAraToplam())
                     .kdv(s.getKdv())

@@ -26,6 +26,7 @@ public class StokDuzeltmeDTO {
     @NotBlank(message = "Düzeltme nedeni zorunludur")
     @Size(max = 500, message = "Neden en fazla 500 karakter olabilir")
     private String neden;
+    private Long depoId;
     private Long kullaniciId;
     private LocalDateTime olusturmaTarihi;
 }

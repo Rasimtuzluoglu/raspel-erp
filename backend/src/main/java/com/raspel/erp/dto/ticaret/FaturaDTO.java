@@ -80,6 +80,9 @@ public class FaturaDTO {
     /** true ise stok hareketi işlenmez (stok başka bir adımda —örn. satınalma teslimi— yapılmışsa). */
     private Boolean stokIslemeAtla;
 
+    /** Müşteriye fatura e-postası gönderilsin mi? null = evet (yalnızca KESİLDİ faturada). */
+    private Boolean emailGonder;
+
     /** Fatura kesilirken e-posta bildiriminin durumu: GONDERILDI / GONDERILEMEDI / null (gönderilmedi). */
     private String emailGonderimDurumu;
 

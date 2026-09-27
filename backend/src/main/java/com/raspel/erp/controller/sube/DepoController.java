@@ -96,7 +96,10 @@ public class DepoController {
     }
 
     @PostMapping("/transfer")
-    @Operation(summary = "Depolar arası stok transferi", description = "İki depo arasında stok transferi yapar")
+    @Operation(summary = "Depolar arası stok transferi",
+            description = "İki depo arasında anında (onaysız) stok transferi yapar. Onay akışını " +
+                    "atladığı için yalnızca ADMIN kullanabilir.")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> stokTransfer(@RequestBody Map<String, Object> body) {
         Long kaynakDepoId = Long.valueOf(body.get("kaynakDepoId").toString());
         Long hedefDepoId = Long.valueOf(body.get("hedefDepoId").toString());

@@ -39,6 +39,9 @@ class DepoTransferServiceTest {
     private StokRepository stokRepository;
 
     @Mock
+    private com.raspel.erp.repository.sube.DepoStokRepository depoStokRepository;
+
+    @Mock
     private com.raspel.erp.config.TenantChecker tenantChecker;
 
     @InjectMocks
@@ -71,6 +74,16 @@ class DepoTransferServiceTest {
     void talepOlustur_bekliyorDurumundaKaydeder() {
         DepoTransferDTO dto = DepoTransferDTO.builder()
                 .kaynakDepoId(1L).hedefDepoId(2L).stokId(10L).miktar(BigDecimal.valueOf(5)).build();
+        // Talep aninda dogrulama: depolar/stok tenant'a ait ve kaynak depoda yeterli miktar olmali.
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(com.raspel.erp.entity.sube.Depo.builder()
+                .id(1L).ad("Kaynak").sirketId(4L).build()));
+        when(depoRepository.findById(2L)).thenReturn(Optional.of(com.raspel.erp.entity.sube.Depo.builder()
+                .id(2L).ad("Hedef").sirketId(4L).build()));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(com.raspel.erp.entity.envanter.Stok.builder()
+                .id(10L).ad("Ürün").sirketId(4L).build()));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 10L))
+                .thenReturn(Optional.of(com.raspel.erp.entity.sube.DepoStok.builder()
+                        .depoId(1L).stokId(10L).miktar(BigDecimal.valueOf(100)).build()));
         when(transferRepository.save(any(DepoTransfer.class))).thenAnswer(inv -> inv.getArgument(0));
 
         DepoTransferDTO sonuc = depoTransferService.talepOlustur(dto, 4L, 1L);
@@ -78,6 +91,23 @@ class DepoTransferServiceTest {
         assertNotNull(sonuc);
         assertEquals("BEKLIYOR", sonuc.getDurum());
         verify(transferRepository).save(any(DepoTransfer.class));
+    }
+
+    @Test
+    void talepOlustur_yetersizKaynakStoktaHataFirlatir() {
+        DepoTransferDTO dto = DepoTransferDTO.builder()
+                .kaynakDepoId(1L).hedefDepoId(2L).stokId(10L).miktar(BigDecimal.valueOf(50)).build();
+        when(depoRepository.findById(1L)).thenReturn(Optional.of(com.raspel.erp.entity.sube.Depo.builder()
+                .id(1L).ad("Kaynak").sirketId(4L).build()));
+        when(depoRepository.findById(2L)).thenReturn(Optional.of(com.raspel.erp.entity.sube.Depo.builder()
+                .id(2L).ad("Hedef").sirketId(4L).build()));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(com.raspel.erp.entity.envanter.Stok.builder()
+                .id(10L).ad("Ürün").sirketId(4L).build()));
+        when(depoStokRepository.findByDepoIdAndStokIdForUpdate(1L, 10L))
+                .thenReturn(Optional.of(com.raspel.erp.entity.sube.DepoStok.builder()
+                        .depoId(1L).stokId(10L).miktar(BigDecimal.valueOf(5)).build()));
+
+        assertThrows(BusinessException.class, () -> depoTransferService.talepOlustur(dto, 4L, 1L));
     }
 
     @Test

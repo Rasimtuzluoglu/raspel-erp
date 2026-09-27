@@ -54,6 +54,7 @@ public class StokDuzeltmeService {
                 .stokAd(stok.getAd())
                 .eskiMiktar(eski)
                 .yeniMiktar(dto.getYeniMiktar())
+                .depoId(dto.getDepoId())
                 .neden(dto.getNeden())
                 .kullaniciId(kullaniciId)
                 .build());
@@ -64,7 +65,8 @@ public class StokDuzeltmeService {
             } else {
                 maliyetService.cikisIsle(stok, fark.abs(), dto.getYeniMiktar(), sirketId, "DUZELTME", d.getId());
             }
-            Long depoId = depoStokService.coz(null, sirketId);
+            // Duzeltme secilen depoya islenir; secilmediyse varsayilan depo kullanilir.
+            Long depoId = depoStokService.coz(dto.getDepoId(), sirketId);
             stokHareketRepository.save(StokHareket.builder()
                     .stok(stok)
                     .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
@@ -91,6 +93,7 @@ public class StokDuzeltmeService {
         return StokDuzeltmeDTO.builder()
                 .id(d.getId()).sirketId(d.getSirketId()).stokId(d.getStokId())
                 .stokAd(d.getStokAd()).eskiMiktar(d.getEskiMiktar()).yeniMiktar(d.getYeniMiktar())
+                .depoId(d.getDepoId())
                 .neden(d.getNeden()).kullaniciId(d.getKullaniciId()).olusturmaTarihi(d.getOlusturmaTarihi())
                 .build();
     }

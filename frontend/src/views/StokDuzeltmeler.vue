@@ -24,6 +24,15 @@
           :placeholder="t('stokDuzeltmeler.yeniMiktar')"
           class="miktar-input"
         />
+        <Dropdown
+          v-model="form.depoId"
+          :options="depolar"
+          option-label="ad"
+          option-value="id"
+          :placeholder="t('stokDuzeltmeler.depoSecin')"
+          show-clear
+          class="w-full"
+        />
         <InputText
           v-model="form.neden"
           :placeholder="t('stokDuzeltmeler.nedenOpsiyonel')"
@@ -76,7 +85,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
-import { stokDuzeltmeAPI, stokAPI } from '../api/index.js'
+import { stokDuzeltmeAPI, stokAPI, depoAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatTarihSaat } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -85,15 +94,21 @@ const toastBildirim = useToastBildirim()
 const { t } = useI18n()
 
 const stoklar = ref([])
+const depolar = ref([])
 const gecmis = ref([])
 const kaydediliyor = ref(false)
-const form = ref({ stokId: null, yeniMiktar: null, neden: '' })
+const form = ref({ stokId: null, yeniMiktar: null, depoId: null, neden: '' })
 
 const yukle = async () => {
   try {
-    const [g, s] = await Promise.all([stokDuzeltmeAPI.gecmis(), stokAPI.getAll({ size: 500 })])
+    const [g, s, d] = await Promise.all([
+      stokDuzeltmeAPI.gecmis(),
+      stokAPI.getAll({ size: 500 }),
+      depoAPI.getAll({ size: 200 })
+    ])
     gecmis.value = g.data || []
     stoklar.value = unwrapList(s)
+    depolar.value = unwrapList(d)
   } catch (err) {
     toastBildirim.hata(t('stokDuzeltmeler.hataYukleme'))
   }
@@ -109,10 +124,11 @@ const duzelt = async () => {
     await stokDuzeltmeAPI.duzelt({
       stokId: form.value.stokId,
       yeniMiktar: form.value.yeniMiktar,
+      depoId: form.value.depoId,
       neden: form.value.neden || null
     })
     toastBildirim.basarili(t('stokDuzeltmeler.duzeltildi'))
-    form.value = { stokId: null, yeniMiktar: null, neden: '' }
+    form.value = { stokId: null, yeniMiktar: null, depoId: null, neden: '' }
     yukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokDuzeltmeler.islemBasarisiz'))

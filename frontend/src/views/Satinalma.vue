@@ -480,6 +480,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI, stokAPI } from '../api/index.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
+import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -641,14 +642,24 @@ const talebiSipariseCevir = (talep) => {
 const siparisKaydet = async () => {
   kaydediliyor.value = true
   try {
-    const kalemler = siparisForm.value.kalemler.filter((k) => k.aciklama && k.miktar > 0)
-    const genelToplam = formToplam(kalemler)
+    const kalemler = siparisForm.value.kalemler
+      .filter((k) => k.aciklama && k.miktar > 0)
+      .map((k) => ({
+        ...k,
+        // Birim fiyat KDV dahildir; satır KDV oranı gönderilir (varsayılan %20).
+        kdvOrani: k.kdvOrani ?? 20,
+        tutar: kalemTutar(k)
+      }))
+    // Toplamlar KDV-dahil kanonik modelle hesaplanır (alış faturası ile birebir uyum).
+    const araToplam = kalemler.reduce((t, k) => t + kalemNetTutar(k), 0)
+    const kdv = kalemler.reduce((t, k) => t + kalemKdv(k), 0)
+    const genelToplam = araToplam + kdv
     await satinalmaSiparisAPI.create({
       ...siparisForm.value,
       tarih: getLocalDateString(siparisForm.value.tarih),
-      araToplam: genelToplam,
-      kdv: 0,
-      genelToplam,
+      araToplam: Number(araToplam.toFixed(2)),
+      kdv: Number(kdv.toFixed(2)),
+      genelToplam: Number(genelToplam.toFixed(2)),
       kalemler
     })
     siparisDialog.value = false
@@ -661,6 +672,22 @@ const siparisKaydet = async () => {
 }
 
 const siparisDurumGuncelle = async (data, durum) => {
+  // "Teslim Al" stoğa gerçek giriş yapar; yanlış tık kalıcı stok değiştirmesin diye onay ister.
+  if (durum === 'TESLIM_ALINDI' && data.durum !== 'TESLIM_ALINDI') {
+    confirm.require({
+      message: t('satinalma.teslimAlOnay', { no: data.siparisNo }),
+      header: t('satinalma.teslimAl'),
+      icon: 'pi pi-box',
+      acceptLabel: t('common.evet'),
+      rejectLabel: t('common.vazgec'),
+      accept: () => siparisDurumUygula(data, durum)
+    })
+    return
+  }
+  await siparisDurumUygula(data, durum)
+}
+
+const siparisDurumUygula = async (data, durum) => {
   try {
     await satinalmaSiparisAPI.durumGuncelle(data.id, durum)
     await siparisleriYukle()
