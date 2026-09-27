@@ -853,6 +853,7 @@
     "posTerminali": "POS Terminal",
     "posSecin": "Select POS terminal (optional)",
     "posKomisyonNot": "Commission: {oran}% (~{komisyon}). Amount is transferred to the bank net of commission at POS day-end.",
+    "degisimBilgi": "Exchange return #{id}: complete the new sale; amounts are netted in the customer balance.",
     "kalan": "Remaining",
     "satisiTamamla": "Complete Sale",
     "sonSatisiIptal": "Cancel Last Sale",
@@ -2404,6 +2405,9 @@
     "silmeBasarisiz": "Delete failed",
     "nKalem": "{n} items",
     "alisIadesi": "Purchase Return (to Supplier)",
+    "degisimIadesi": "Exchange (Return + New Sale)",
+    "degisimYeniSatisMesaj": "Exchange return completed. Start a new sale for this customer?",
+    "yeniSatisaGec": "Go to New Sale",
     "cariHesapZorunlu": "Account (Customer/Supplier) *",
     "toplam": "Total",
     "duzenle": "Edit Return"

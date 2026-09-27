@@ -87,6 +87,13 @@
             @click="durumGuncelle(data, 'IPTAL')"
           />
           <Button
+            v-if="data.durum === 'TAMAMLANDI' && data.tur === 'DEGISIM'"
+            icon="pi pi-shopping-cart"
+            class="p-button-rounded p-button-text p-button-info"
+            :title="t('iadeler.yeniSatisaGec')"
+            @click="yeniSatisaGec(data)"
+          />
+          <Button
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
@@ -120,7 +127,8 @@
             v-model="form.tur"
             :options="[
               { label: t('iadeler.satisIadesi'), value: 'SATIS' },
-              { label: t('iadeler.alisIadesi'), value: 'ALIS' }
+              { label: t('iadeler.alisIadesi'), value: 'ALIS' },
+              { label: t('iadeler.degisimIadesi'), value: 'DEGISIM' }
             ]"
             option-label="label"
             option-value="value"
@@ -286,11 +294,13 @@ import { iadeAPI, stokAPI, cariHesapAPI, faturaAPI, kasaAPI, bankaAPI } from '..
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
+const router = useRouter()
 const list = ref([])
 const stokList = ref([])
 const cariList = ref([])
@@ -434,9 +444,30 @@ const durumUygula = async (data, durum) => {
     const r = await iadeAPI.getAll()
     list.value = unwrapList(r)
     toastBildirim.basarili(t('iadeler.durumGuncellendi', { durum }))
+    // Değişim iadesi tamamlandı: müşteri adına yeni satış başlatmayı teklif et.
+    if (durum === 'TAMAMLANDI' && data.tur === 'DEGISIM') {
+      confirm.require({
+        message: t('iadeler.degisimYeniSatisMesaj'),
+        header: t('iadeler.degisimIadesi'),
+        icon: 'pi pi-shopping-cart',
+        acceptLabel: t('iadeler.yeniSatisaGec'),
+        rejectLabel: t('common.vazgec'),
+        accept: () => yeniSatisaGec(data)
+      })
+    }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('iadeler.hataDurum'))
   }
+}
+
+const yeniSatisaGec = (data) => {
+  router.push({
+    path: '/hizli-satis',
+    query: {
+      ...(data.cariHesapId ? { cariHesapId: data.cariHesapId } : {}),
+      degisim: data.id
+    }
+  })
 }
 
 const sil = (data) => {

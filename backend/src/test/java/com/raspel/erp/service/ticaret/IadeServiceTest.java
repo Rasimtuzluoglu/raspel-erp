@@ -163,6 +163,48 @@ class IadeServiceTest {
     }
 
     @Test
+    void olustur_degisimIadesi_stokGirerVeCariAlacaklanir() {
+        hazirla();
+        IadeDTO dto = IadeDTO.builder()
+                .tur("DEGISIM").cariHesapId(7L).tarih(LocalDate.now()).durum("TAMAMLANDI")
+                .kalemler(List.of(IadeKalemDTO.builder()
+                        .stokId(1L).aciklama("Ürün").miktar(new BigDecimal("2"))
+                        .birimFiyat(new BigDecimal("50")).kdvOrani(new BigDecimal("20"))
+                        .build()))
+                .build();
+        Stok stok = Stok.builder().id(1L).ad("Test Ürün").miktar(new BigDecimal("10")).build();
+        when(iadeRepository.save(any(Iade.class))).thenAnswer(inv -> {
+            Iade i = inv.getArgument(0);
+            i.setId(1L);
+            return i;
+        });
+        when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of(
+                IadeKalem.builder().iadeId(1L).stokId(1L)
+                        .miktar(new BigDecimal("2")).build()
+        ));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        iadeService.olustur(dto, 1L);
+
+        // Değişim satış iadesi yönündedir: stok geri girer (10 + 2 = 12).
+        assertEquals(0, stok.getMiktar().compareTo(new BigDecimal("12")));
+        // Cari müşteri lehine (pozitif) güncellenir: alış iadesindeki negatif yön uygulanmaz.
+        verify(cariHesapService).bakiyeGuncelle(eq(7L),
+                argThat(t -> t.compareTo(new BigDecimal("100")) == 0));
+    }
+
+    @Test
+    void olustur_gecersizTur_reddedilir() {
+        hazirla();
+        IadeDTO dto = IadeDTO.builder()
+                .tur("HATALI").tarih(LocalDate.now()).durum("TASLAK")
+                .build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.olustur(dto, 1L));
+    }
+
+    @Test
     void sil_deletes() {
         when(iadeRepository.findById(1L)).thenReturn(Optional.of(ornekIade(1L)));
         iadeService.sil(1L);

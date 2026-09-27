@@ -238,6 +238,21 @@
                     <i :class="musteriBakiyeUyarisi.seviye === 'danger' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'" />
                     {{ musteriBakiyeUyarisi.mesaj }}
                   </div>
+                  <div
+                    v-if="degisimIadeId"
+                    class="degisim-bilgi"
+                  >
+                    <i class="pi pi-shopping-cart" />
+                    <span>{{ t('hizliSatis.degisimBilgi', { id: degisimIadeId }) }}</span>
+                    <button
+                      type="button"
+                      class="degisim-kapat"
+                      :title="t('common.close')"
+                      @click="degisimIadeId = null"
+                    >
+                      <i class="pi pi-times" />
+                    </button>
+                  </div>
                   <Button
                     :label="t('hizliSatis.yeni')"
                     severity="secondary"
@@ -1131,6 +1146,7 @@ import { escPosFisiUret, escPosYazdir } from '../utils/escpos.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
+import { useRoute, useRouter } from 'vue-router'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -1140,6 +1156,11 @@ const stokStore = useStokStore()
 const kategoriStore = useKategoriStore()
 const offlineKuyruk = useOfflineSatisKuyrugu()
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+
+// Değişim akışı: İadeler ekranından "Yeni Satışa Geç" ile gelindiğinde gösterilir.
+const degisimIadeId = ref(null)
 const { sirketLogosu } = useMarka()
 
 const offlineKuyruguSenkronizeEt = async () => {
@@ -1752,10 +1773,24 @@ onMounted(async () => {
     ])
     kayitliSepetVar.value = !!localStorage.getItem('raspel_kayitli_sepet')
     await fisAyarlariSunucudanYukle()
+    degisimSorgusunuUygula()
   } catch (e) {
     console.error('Yukleme hatasi', e)
   }
 })
+
+const degisimSorgusunuUygula = () => {
+  const qCari = route.query.cariHesapId
+  if (qCari) {
+    const c = cariHesapStore.cariHesaplar?.find((x) => String(x.id) === String(qCari))
+    if (c) seciliMusteri.value = c
+  }
+  if (route.query.degisim) {
+    degisimIadeId.value = route.query.degisim
+    // Sorgu temizlenir; sayfa yenilenince banner tekrar açılmasın.
+    router.replace({ path: route.path })
+  }
+}
 
 const fisAyarlariSunucudanYukle = async () => {
   const sirketId = authStore?.sirketId
@@ -3258,6 +3293,30 @@ const sepetiTemizle = () => {
   background: var(--accent-soft);
   color: var(--accent);
   border: 1px solid var(--accent-soft-strong);
+}
+.degisim-bilgi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft-strong);
+}
+.degisim-bilgi span {
+  flex: 1;
+}
+.degisim-kapat {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
 }
 .gunluk-baslik {
   display: flex;

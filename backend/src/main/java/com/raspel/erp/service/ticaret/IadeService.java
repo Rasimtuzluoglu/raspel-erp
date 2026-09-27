@@ -74,6 +74,12 @@ public class IadeService {
     public IadeDTO olustur(IadeDTO dto, Long sirketId) {
         donemService.kilitKontrol(sirketId,
                 dto.getTarih() != null ? dto.getTarih() : LocalDate.now(), "iade oluşturma");
+        // Değişim, satış iadesi yönündedir (stok geri girer, cari alacaklanır); yeni satış ayrıca yapılır.
+        String tur = dto.getTur() != null ? dto.getTur().toUpperCase() : "SATIS";
+        if (!"SATIS".equals(tur) && !"ALIS".equals(tur) && !"DEGISIM".equals(tur)) {
+            throw new BusinessException("Geçersiz iade türü: " + dto.getTur());
+        }
+        dto.setTur(tur);
         iadeSiniriDogrula(dto);
         BigDecimal toplamTutar = BigDecimal.ZERO;
         if (dto.getKalemler() != null && !dto.getKalemler().isEmpty()) {
@@ -471,7 +477,7 @@ public class IadeService {
         }
 
         BigDecimal tutar = iadeTutar;
-        if (!"SATIS".equals(iade.getTur())) {
+        if (!"SATIS".equals(iade.getTur()) && !"DEGISIM".equals(iade.getTur())) {
             tutar = tutar.negate();
         }
         if (ters) {
