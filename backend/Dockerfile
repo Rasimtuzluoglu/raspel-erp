@@ -10,10 +10,12 @@ ENV TZ=Europe/Istanbul
 RUN apk add --no-cache postgresql16-client curl tzdata
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 EXPOSE 8081
 RUN addgroup -S raspel && adduser -S raspel -G raspel && \
-    mkdir -p /app/backups && chown -R raspel:raspel /app
+    mkdir -p /app/backups && chmod +x /app/docker-entrypoint.sh && chown -R raspel:raspel /app
 USER raspel
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
   CMD curl -fsS http://localhost:8081/actuator/health || exit 1
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=65", "-XX:InitialRAMPercentage=25", "-Xss512k", "-XX:MaxMetaspaceSize=160m", "-XX:MaxDirectMemorySize=96m", "-XX:ReservedCodeCacheSize=96m", "-XX:+UseG1GC", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=/tmp/heapdump.hprof", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+# Heap, konteyner cgroup limitinden hesaplanir (bkz. docker-entrypoint.sh).
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

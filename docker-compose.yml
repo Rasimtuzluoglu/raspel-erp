@@ -484,7 +484,7 @@ services:
     memswap_limit: ${GRAFANA_MEM_LIMIT:-384m}
     deploy:
       resources:
-        limits: { memory: 512m }
+        limits: { memory: 384m }
         reservations: { memory: 128m }
     logging:
       options:
@@ -526,7 +526,7 @@ services:
     memswap_limit: ${ALERTMANAGER_MEM_LIMIT:-128m}
     deploy:
       resources:
-        limits: { memory: 256m }
+        limits: { memory: 128m }
         reservations: { memory: 64m }
     logging:
       options:
