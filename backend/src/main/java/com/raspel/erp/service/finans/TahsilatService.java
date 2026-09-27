@@ -173,6 +173,14 @@ public class TahsilatService {
                 .sorted(Comparator.comparing(this::vade, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
 
+        // Kasa/banka hesabina giris (secildiyse). Ayni tutar iki hesaba birden yazilamaz.
+        if (kasaId != null && bankaId != null) {
+            throw new BusinessException("Aynı tahsilat hem kasaya hem bankaya işlenemez; tek hesap seçin");
+        }
+        // POS tahsilati gun sonunda POS'un banka hesabina aktarilir; burada bankaya
+        // yazilirsa tutar iki kez sayilir (cift yazim).
+        boolean bankaYazilir = bankaId != null && posTerminaliId == null;
+
         BigDecimal kalan = tutar;
         List<Long> uygulananFaturalar = new ArrayList<>();
         Long ilkHareketId = null;
@@ -199,7 +207,16 @@ public class TahsilatService {
                             .faturaId(f.getId())
                             .build(), sirketId);
 
-            if (ilkHareketId == null && olusan != null) ilkHareketId = olusan.getId();
+            if (olusan != null) {
+                if (ilkHareketId == null) ilkHareketId = olusan.getId();
+                // Kasa/banka girisi fatura bazli tahsisle birebir eslesir ve cari harekete
+                // baglanir; tahsilat silinince yalnizca ilgili kasa/banka hareketi ters kaydedilir.
+                if (kasaId != null) {
+                    kasaGirisiIsle(kasaId, tahsis, cari, hareketTarihi, sirketId, olusan.getId());
+                } else if (bankaYazilir) {
+                    bankaGirisiIsle(bankaId, tahsis, cari, hareketTarihi, sirketId, olusan.getId());
+                }
+            }
             kalan = kalan.subtract(tahsis);
             uygulananFaturalar.add(f.getId());
         }
@@ -224,19 +241,14 @@ public class TahsilatService {
                     .valorTarihi(valorTarihi)
                     .faturaId(null)
                     .build(), sirketId);
-            if (ilkHareketId == null && olusanFazla != null) ilkHareketId = olusanFazla.getId();
-        }
-
-        // Kasa/banka hesabina giris (secildiyse). Ayni tutar iki hesaba birden yazilamaz.
-        if (kasaId != null && bankaId != null) {
-            throw new BusinessException("Aynı tahsilat hem kasaya hem bankaya işlenemez; tek hesap seçin");
-        }
-        if (kasaId != null) {
-            kasaGirisiIsle(kasaId, tutar, cari, hareketTarihi, sirketId);
-        } else if (bankaId != null && posTerminaliId == null) {
-            // POS tahsilatı gün sonunda POS'un banka hesabına aktarılır; burada ayrıca
-            // bankaya yazılırsa tutar iki kez sayılır (çift yazım).
-            bankaGirisiIsle(bankaId, tutar, cari, hareketTarihi, sirketId);
+            if (olusanFazla != null) {
+                if (ilkHareketId == null) ilkHareketId = olusanFazla.getId();
+                if (kasaId != null) {
+                    kasaGirisiIsle(kasaId, kalan, cari, hareketTarihi, sirketId, olusanFazla.getId());
+                } else if (bankaYazilir) {
+                    bankaGirisiIsle(bankaId, kalan, cari, hareketTarihi, sirketId, olusanFazla.getId());
+                }
+            }
         }
 
         // Muhasebe entegrasyonu (iskelet): cari tahsilatı için yevmiye fişi.
@@ -379,8 +391,8 @@ public class TahsilatService {
         return "90+ Gün";
     }
 
-    /** Tahsilat tutarini secili kasaya GELIR hareketi olarak isler. */
-    private void kasaGirisiIsle(Long kasaId, BigDecimal tutar, CariHesap cari, LocalDate tarih, Long sirketId) {
+    /** Tahsilat tutarini secili kasaya GELIR hareketi olarak isler; cari harekete baglar. */
+    private void kasaGirisiIsle(Long kasaId, BigDecimal tutar, CariHesap cari, LocalDate tarih, Long sirketId, Long kaynakHareketId) {
         com.raspel.erp.entity.finans.Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
@@ -390,11 +402,13 @@ public class TahsilatService {
                 .kasa(kasa).tur("GELIR").tutar(tutar)
                 .hareketTarihi(tarih != null ? tarih : LocalDate.now())
                 .aciklama("Tahsilat: " + (cari != null ? cari.getAd() : ""))
+                .kaynakTip("TAHSILAT")
+                .kaynakId(kaynakHareketId)
                 .build());
     }
 
-    /** Tahsilat tutarini secili banka hesabina alacak hareketi olarak isler. */
-    private void bankaGirisiIsle(Long bankaId, BigDecimal tutar, CariHesap cari, LocalDate tarih, Long sirketId) {
+    /** Tahsilat tutarini secili banka hesabina alacak hareketi olarak isler; cari harekete baglar. */
+    private void bankaGirisiIsle(Long bankaId, BigDecimal tutar, CariHesap cari, LocalDate tarih, Long sirketId, Long kaynakHareketId) {
         com.raspel.erp.entity.finans.Banka banka = bankaRepository.findByIdForUpdate(bankaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
         tenantChecker.check(banka.getSirketId(), "Banka");
@@ -406,6 +420,8 @@ public class TahsilatService {
                 .aciklama("Tahsilat: " + (cari != null ? cari.getAd() : ""))
                 .borc(BigDecimal.ZERO)
                 .alacak(tutar)
+                .kaynakTip("TAHSILAT")
+                .kaynakId(kaynakHareketId)
                 .bakiye(banka.getBakiye())
                 .eslestirildi(false)
                 .sirketId(sirketId)

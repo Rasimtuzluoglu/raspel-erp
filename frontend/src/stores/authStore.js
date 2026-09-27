@@ -216,7 +216,8 @@ export const useAuthStore = defineStore('auth', () => {
   /** Çıkışta cihazda kalan hassas iş verilerini ve servis çalışan önbelleğini temizler. */
   const hassasYerelVerileriTemizle = () => {
     try {
-      localStorage.removeItem('raspel_offline_satis_kuyrugu')
+      // Cevrimdisi SATIS KUYRUGU is verisidir; cikista silinmez (senkronize edilmemis
+      // satislar kaybolmasin). Kuyruk, terminalde tekrar giris yapildiginda gonderilir.
       localStorage.removeItem('raspel_kayitli_sepet')
       Object.keys(localStorage)
         .filter((k) => k.startsWith('raspel_taslak_'))

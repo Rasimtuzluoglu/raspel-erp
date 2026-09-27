@@ -47,6 +47,10 @@ public class KasaHareket {
     @Column(name = "kaynak_tip", length = 20)
     private String kaynakTip;
 
+    /** Kaynak belge kimligi (or. tahsilatin cari hareket id'si). */
+    @Column(name = "kaynak_id")
+    private Long kaynakId;
+
     /** İyimser kilitleme. */
     @Version
     private Long version;

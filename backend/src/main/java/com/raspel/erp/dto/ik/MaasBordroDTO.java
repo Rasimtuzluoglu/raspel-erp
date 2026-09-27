@@ -45,4 +45,6 @@ public class MaasBordroDTO {
     private String durum;
     private LocalDateTime onayTarihi;
     private String onaylayan;
+    private String odemeDurumu;
+    private Long odemeKasaId;
 }

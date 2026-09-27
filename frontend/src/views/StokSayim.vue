@@ -309,6 +309,24 @@ const kaydet = async () => {
 }
 
 const durumGuncelle = async (data, durum) => {
+  // Stok ve cari etkisi olan durumlar onay ister (yanlis tikla stok degismesin).
+  if (durum === 'TAMAMLANDI' || (data.durum === 'TAMAMLANDI' && durum !== 'TAMAMLANDI')) {
+    confirm.require({
+      message: durum === 'TAMAMLANDI'
+        ? t('stokSayim.tamamlaOnayMesaj')
+        : t('stokSayim.geriAlOnayMesaj'),
+      header: t('common.onay'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: t('common.evet'),
+      rejectLabel: t('common.vazgec'),
+      accept: () => durumUygula(data, durum)
+    })
+    return
+  }
+  await durumUygula(data, durum)
+}
+
+const durumUygula = async (data, durum) => {
   try {
     await stokSayimAPI.durumGuncelle(data.id, durum)
     const r = await stokSayimAPI.getAll()

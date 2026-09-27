@@ -95,6 +95,9 @@ public class StokSayimService {
         StokSayim s = stokSayimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
         tenantChecker.check(s.getSirketId(), "StokSayim");
+        if ("TAMAMLANDI".equals(s.getDurum())) {
+            throw new BusinessException("Tamamlanmış sayım doğrudan silinemez; önce iptal edin (stok geri alınır).");
+        }
         stokSayimRepository.deleteById(id);
     }
 
@@ -105,44 +108,94 @@ public class StokSayimService {
         if (yeniDurum == null || !java.util.List.of("TASLAK", "TAMAMLANDI", "IPTAL").contains(yeniDurum)) {
             throw new com.raspel.erp.exception.BusinessException("Geçersiz durum: " + yeniDurum);
         }
-        if ("TAMAMLANDI".equals(yeniDurum) && sayim.getStok() != null) {
-            BigDecimal fark = (sayim.getSayilanMiktar() != null ? sayim.getSayilanMiktar() : BigDecimal.ZERO)
-                    .subtract(sayim.getBeklenenMiktar() != null ? sayim.getBeklenenMiktar() : BigDecimal.ZERO);
-            sayim.setFark(fark);
-            if (fark.compareTo(BigDecimal.ZERO) != 0) {
-                Stok stok = stokRepository.findByIdForUpdate(sayim.getStok().getId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Stok", sayim.getStok().getId()));
-                // Güvenlik: sayımın şirketi dışındaki stoklara dokunulamaz.
-                tenantChecker.check(stok.getSirketId(), "Stok");
-                if (sayim.getSirketId() != null && stok.getSirketId() != null && !sayim.getSirketId().equals(stok.getSirketId())) {
-                    throw new ResourceNotFoundException("Stok bu sirkete ait degil");
-                }
-                BigDecimal sayimEskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
-                stok.setMiktar(stok.getMiktar().add(fark));
-                stokRepository.save(stok);
-                if (fark.signum() > 0) {
-                    maliyetService.girisIsle(stok, sayimEskiMiktar, fark, null, sayim.getSirketId(), "SAYIM", sayim.getId());
+        String eskiDurum = sayim.getDurum();
+
+        // Idempotency: tamamlanmis sayim tekrar tamamlanamaz; aksi halde fark stoga
+        // ikinci kez uygulanir (API'nin iki kez cagrilmasi durumu).
+        if ("TAMAMLANDI".equals(eskiDurum) && "TAMAMLANDI".equals(yeniDurum)) {
+            throw new BusinessException("Bu sayım zaten tamamlanmış.");
+        }
+
+        if ("TAMAMLANDI".equals(yeniDurum) && !"TAMAMLANDI".equals(eskiDurum) && sayim.getStok() != null) {
+            Stok stok = sayimStoguKilitle(sayim);
+            BigDecimal sayilan = nz(sayim.getSayilanMiktar());
+            BigDecimal guncel = nz(stok.getMiktar());
+            // Sayim, stogu SAYILAN degere esitler; arada yapilan satislar korunur.
+            // Uygulanan fark (guncel -> sayilan) hareket olarak kaydedilir.
+            BigDecimal uygulananFark = sayilan.subtract(guncel);
+            stok.setMiktar(sayilan);
+            stokRepository.save(stok);
+            sayim.setFark(uygulananFark);
+            if (uygulananFark.signum() != 0) {
+                if (uygulananFark.signum() > 0) {
+                    maliyetService.girisIsle(stok, guncel, uygulananFark, null, sayim.getSirketId(), "SAYIM", sayim.getId());
                 } else {
-                    maliyetService.cikisIsle(stok, fark.abs(), stok.getMiktar(), sayim.getSirketId(), "SAYIM", sayim.getId());
+                    maliyetService.cikisIsle(stok, uygulananFark.abs(), sayilan, sayim.getSirketId(), "SAYIM", sayim.getId());
                 }
                 Long depoId = depoStokService.coz(null, sayim.getSirketId());
                 stokHareketRepository.save(StokHareket.builder()
                         .stok(stok)
-                        .tur(fark.compareTo(BigDecimal.ZERO) > 0 ? "GIRIS" : "CIKIS")
-                        .miktar(fark.abs())
-                    .hareketTarihi(java.time.LocalDate.now())
-                    .aciklama("Stok sayımı #" + sayim.getId() + " farkı")
-                    .depoId(depoId)
-                    .kaynakTip("SAYIM")
-                    .kaynakId(sayim.getId())
-                    .build());
-                depoStokService.guncelle(depoId, stok.getId(), fark);
+                        .tur(uygulananFark.signum() > 0 ? "GIRIS" : "CIKIS")
+                        .miktar(uygulananFark.abs())
+                        .hareketTarihi(java.time.LocalDate.now())
+                        .aciklama("Stok sayımı #" + sayim.getId() + " farkı")
+                        .depoId(depoId)
+                        .kaynakTip("SAYIM")
+                        .kaynakId(sayim.getId())
+                        .build());
+                depoStokService.guncelle(depoId, stok.getId(), uygulananFark);
                 kritikStokBildirimiGonder(stok);
                 cacheYardimci.temizle("stoklar", "dashboard");
             }
+        } else if ("TAMAMLANDI".equals(eskiDurum) && !"TAMAMLANDI".equals(yeniDurum) && sayim.getStok() != null) {
+            // Tamamlanmis sayimdan geri donus (IPTAL/TASLAK): uygulanan fark tersine cevrilir.
+            Stok stok = sayimStoguKilitle(sayim);
+            BigDecimal uygulananFark = nz(sayim.getFark());
+            if (uygulananFark.signum() != 0) {
+                BigDecimal guncel = nz(stok.getMiktar());
+                BigDecimal yeniMiktar = guncel.subtract(uygulananFark);
+                stok.setMiktar(yeniMiktar);
+                stokRepository.save(stok);
+                if (uygulananFark.signum() > 0) {
+                    maliyetService.cikisIsle(stok, uygulananFark, yeniMiktar, sayim.getSirketId(), "SAYIM_IPTAL", sayim.getId());
+                } else {
+                    maliyetService.girisIsle(stok, guncel, uygulananFark.abs(), null, sayim.getSirketId(), "SAYIM_IPTAL", sayim.getId());
+                }
+                Long depoId = depoStokService.coz(null, sayim.getSirketId());
+                stokHareketRepository.save(StokHareket.builder()
+                        .stok(stok)
+                        .tur(uygulananFark.signum() > 0 ? "CIKIS" : "GIRIS")
+                        .miktar(uygulananFark.abs())
+                        .hareketTarihi(java.time.LocalDate.now())
+                        .aciklama("Stok sayımı #" + sayim.getId() + " geri alındı")
+                        .depoId(depoId)
+                        .kaynakTip("SAYIM_IPTAL")
+                        .kaynakId(sayim.getId())
+                        .build());
+                depoStokService.guncelle(depoId, stok.getId(), uygulananFark.negate());
+                kritikStokBildirimiGonder(stok);
+                cacheYardimci.temizle("stoklar", "dashboard");
+            }
+            // Ters kayit uygulandi; tekrar uygulanmamasi icin fark sifirlanir.
+            sayim.setFark(BigDecimal.ZERO);
         }
         sayim.setDurum(yeniDurum);
         return entityToDTO(stokSayimRepository.save(sayim));
+    }
+
+    /** Sayim stogunu kilitler ve tenant dogrulamasini yapar. */
+    private Stok sayimStoguKilitle(StokSayim sayim) {
+        Stok stok = stokRepository.findByIdForUpdate(sayim.getStok().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", sayim.getStok().getId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        if (sayim.getSirketId() != null && stok.getSirketId() != null && !sayim.getSirketId().equals(stok.getSirketId())) {
+            throw new ResourceNotFoundException("Stok bu sirkete ait degil");
+        }
+        return stok;
+    }
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 
     /**

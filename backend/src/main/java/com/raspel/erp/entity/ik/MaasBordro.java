@@ -61,10 +61,19 @@ public class MaasBordro {
     @Column(name = "onaylayan", length = 100)
     private String onaylayan;
 
+    /** Odeme durumu: ODENMEDI | ODENDI. Onaydan bagimsizdir; cift odemeyi engeller. */
+    @Column(name = "odeme_durumu", nullable = false, length = 20)
+    @Builder.Default
+    private String odemeDurumu = "ODENMEDI";
+
+    @Column(name = "odeme_kasa_id")
+    private Long odemeKasaId;
+
     @PrePersist
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();
         if (kesintiler == null) kesintiler = BigDecimal.ZERO;
         if (durum == null) durum = "TASLAK";
+        if (odemeDurumu == null) odemeDurumu = "ODENMEDI";
     }
 }

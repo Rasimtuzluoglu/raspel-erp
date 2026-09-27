@@ -59,6 +59,7 @@ public class SiparisService {
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
     private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    private final com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
     private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
@@ -96,15 +97,18 @@ public class SiparisService {
         String siparisNo = dto.getSiparisNo() != null && !dto.getSiparisNo().isBlank()
                 ? dto.getSiparisNo()
                 : seriNoServisi.siparisNoUret(sirketId);
+        String durum = dto.getDurum() != null && !dto.getDurum().isBlank() ? dto.getDurum() : "SIPARIS";
+        durumDogrula(durum);
         Siparis s = Siparis.builder()
                 .siparisNo(siparisNo).tarih(dto.getTarih())
                 .cariHesapId(dto.getCariHesapId()).tur("SATIS")
-                .durum(dto.getDurum() != null && !dto.getDurum().isBlank() ? dto.getDurum() : "TEKLIF")
+                .durum(durum)
                 .aciklama(dto.getAciklama())
                 .teslimatAdresi(dto.getTeslimatAdresi())
-                .araToplam(dto.getAraToplam()).kdv(dto.getKdv())
-                .genelToplam(dto.getGenelToplam()).sirketId(sirketId)
+                .sirketId(sirketId)
                 .build();
+        // Toplamlar istemciye guvenilmez; kalemlerden sunucuda hesaplanir.
+        toplamlariHesapla(s, dto.getKalemler());
         s = siparisRepository.save(s);
         if (dto.getKalemler() != null) {
             for (SiparisKalemDTO k : dto.getKalemler()) {
@@ -117,7 +121,7 @@ public class SiparisService {
         }
         if (sirketId != null) {
             Long bildirimSirketId = sirketId;
-            java.math.BigDecimal bildirimTutar = dto.getGenelToplam();
+            java.math.BigDecimal bildirimTutar = s.getGenelToplam();
             com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(bildirimSirketId, "SIPARIS",
                     "Yeni Sipariş: " + siparisNo,
                     "Tutar: " + bildirimTutar + " ₺"));
@@ -142,12 +146,16 @@ public class SiparisService {
         s.setTarih(dto.getTarih());
         s.setCariHesapId(dto.getCariHesapId());
         if (dto.getTur() != null) s.setTur(dto.getTur());
-        if (dto.getDurum() != null) s.setDurum(dto.getDurum());
+        if (dto.getDurum() != null) {
+            durumDogrula(dto.getDurum());
+            s.setDurum(dto.getDurum());
+        }
         if (dto.getTeslimatAdresi() != null) s.setTeslimatAdresi(dto.getTeslimatAdresi());
         s.setAciklama(dto.getAciklama());
-        s.setAraToplam(dto.getAraToplam());
-        s.setKdv(dto.getKdv());
-        s.setGenelToplam(dto.getGenelToplam());
+        if (dto.getKalemler() != null) {
+            // Kalemler verildiyse toplamlar sunucuda yeniden hesaplanir (istemciye guvenilmez).
+            toplamlariHesapla(s, dto.getKalemler());
+        }
         s = siparisRepository.save(s);
         if (dto.getKalemler() != null) {
             kalemRepository.deleteBySiparisId(s.getId());
@@ -164,6 +172,7 @@ public class SiparisService {
     }
 
     public SiparisDTO durumGuncelle(Long id, String durum) {
+        durumDogrula(durum);
         Siparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
@@ -193,6 +202,21 @@ public class SiparisService {
                 throw new com.raspel.erp.exception.BusinessException(
                         "Bu sipariş için zaten fatura kesilmiş. Önce mevcut faturayı iptal edin.");
             }
+
+            // Siparişe bağlı kesilmiş irsaliye varsa fatura ona bağlanır; böylece stok
+            // ikinci kez düşülmez (irsaliye stoğu zaten işledi). Birden fazla kesilmiş
+            // irsaliye varsa hangisinin faturalanacağı belirsizdir; kullanıcı irsaliyeden
+            // fatura kesmelidir.
+            var kesilmisIrsaliyeler = irsaliyeRepository
+                    .findBySirketIdAndSiparisId(s.getSirketId(), s.getId()).stream()
+                    .filter(x -> "KESILDI".equals(x.getDurum()))
+                    .collect(java.util.stream.Collectors.toList());
+            if (kesilmisIrsaliyeler.size() > 1) {
+                throw new com.raspel.erp.exception.BusinessException(
+                        "Bu siparişe ait birden fazla kesilmiş irsaliye var; fatura irsaliye ekranından kesilmelidir.");
+            }
+            Long bagliIrsaliyeId = kesilmisIrsaliyeler.isEmpty() ? null : kesilmisIrsaliyeler.get(0).getId();
+
             List<SiparisKalem> kalemler = kalemRepository.findBySiparisId(s.getId());
             List<FaturaKalemDTO> faturaKalemler = new java.util.ArrayList<>();
             for (SiparisKalem k : kalemler) {
@@ -212,6 +236,7 @@ public class SiparisService {
                     .durum("KESILDI")
                     .cariHesapId(s.getCariHesapId())
                     .siparisId(s.getId())
+                    .irsaliyeId(bagliIrsaliyeId)
                     .aciklama("Sipariş #" + s.getSiparisNo() + " dönüşümü")
                     .araToplam(s.getAraToplam())
                     .kdv(s.getKdv())
@@ -220,6 +245,13 @@ public class SiparisService {
                     .build();
 
             FaturaDTO olusanFatura = faturaService.faturaOlustur(faturaDTO, s.getSirketId(), null, null);
+            if (bagliIrsaliyeId != null) {
+                // İrsaliyeye oluşan fatura bağlanır; irsaliye→fatura dönüşümüyle aynı iz.
+                irsaliyeRepository.findById(bagliIrsaliyeId).ifPresent(ir -> {
+                    ir.setFaturaId(olusanFatura.getId());
+                    irsaliyeRepository.save(ir);
+                });
+            }
             log.info("Sipariş #{} için fatura oluşturuldu", s.getSiparisNo());
             if (s.getDriverId() != null) {
                 try {
@@ -259,6 +291,14 @@ public class SiparisService {
         tenantChecker.check(s.getSirketId(), "Sipariş");
         if ("FATURA_KESILDI".equals(s.getDurum())) {
             throw new BusinessException("Faturası kesilmiş sipariş doğrudan silinemez");
+        }
+        // Bağlı (iptal olmayan) irsaliye varsa sipariş silinemez; aksi halde irsaliye
+        // siparişsiz kalır ve stok/cari izi kopar.
+        boolean bagliIrsaliyeVar = irsaliyeRepository
+                .findBySirketIdAndSiparisId(s.getSirketId(), s.getId()).stream()
+                .anyMatch(x -> !"IPTAL".equals(x.getDurum()));
+        if (bagliIrsaliyeVar) {
+            throw new BusinessException("Bu siparişe bağlı irsaliye var; önce irsaliyeyi iptal edin.");
         }
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
@@ -389,5 +429,47 @@ public class SiparisService {
                     "Şoför: " + bildirimSoforAd));
         }
         return entityToDTO(s);
+    }
+
+    /** Gecerli siparis durumlari. Serbest metin kabul edilmez; rapor/onay sayaclari bozulmaz. */
+    private static final java.util.Set<String> GECERLI_DURUMLAR = java.util.Set.of(
+            "TEKLIF", "SIPARIS", "BEKLIYOR", "HAZIRLANIYOR", "YOLDA",
+            "TESLIM_EDILDI", "FATURA_KESILDI", "IPTAL");
+
+    private void durumDogrula(String durum) {
+        if (durum == null || !GECERLI_DURUMLAR.contains(durum)) {
+            throw new BusinessException("Geçersiz sipariş durumu: " + durum);
+        }
+    }
+
+    /**
+     * Siparis toplamlarini kalemlerden KDV-dahil kanonik modelle (FaturaTutar) hesaplar
+     * ve kalem tutarlarini yazar. Bos kalem listesi reddedilir; boylece sifir tutarli
+     * siparis/fatura olusmaz.
+     */
+    private void toplamlariHesapla(Siparis s, List<SiparisKalemDTO> kalemler) {
+        if (kalemler == null || kalemler.isEmpty()) {
+            throw new BusinessException("Siparişe en az bir kalem eklenmelidir");
+        }
+        List<com.raspel.erp.util.FaturaTutar.Satir> satirlar = new java.util.ArrayList<>();
+        for (SiparisKalemDTO k : kalemler) {
+            BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ONE;
+            if (miktar.signum() <= 0) {
+                throw new BusinessException("Kalem miktarı 0'dan büyük olmalıdır");
+            }
+            BigDecimal birimFiyat = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
+            BigDecimal kdvOrani = k.getKdvOrani() != null ? k.getKdvOrani() : varsayilanKdvOrani;
+            com.raspel.erp.util.FaturaTutar.Satir satir =
+                    com.raspel.erp.util.FaturaTutar.satir(birimFiyat, miktar, BigDecimal.ZERO, kdvOrani);
+            satirlar.add(satir);
+            k.setMiktar(miktar);
+            k.setKdvOrani(kdvOrani);
+            k.setTutar(satir.brut());
+        }
+        com.raspel.erp.util.FaturaTutar.Belge belge =
+                com.raspel.erp.util.FaturaTutar.belge(satirlar, BigDecimal.ZERO);
+        s.setAraToplam(belge.araToplam());
+        s.setKdv(belge.kdv());
+        s.setGenelToplam(belge.genelToplam());
     }
 }

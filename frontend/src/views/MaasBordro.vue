@@ -81,8 +81,22 @@
         </template>
       </Column>
       <Column
+        field="odemeDurumu"
+        :header="t('maasBordro.odemeDurumu')"
+        style="width: 120px"
+      >
+        <template #body="{ data }">
+          <span
+            class="durum-rozet"
+            :class="data.odemeDurumu === 'ODENDI' ? 'durum-onayli' : 'durum-taslak'"
+          >
+            {{ data.odemeDurumu === 'ODENDI' ? t('maasBordro.odendi') : t('maasBordro.odenmedi') }}
+          </span>
+        </template>
+      </Column>
+      <Column
         :header="t('maasBordro.islem')"
-        style="width: 180px"
+        style="width: 200px"
       >
         <template #body="{ data }">
           <Button
@@ -98,6 +112,13 @@
             :aria-label="t('maasBordro.onayla')"
             class="p-button-rounded p-button-text p-button-success"
             @click="onayla(data)"
+          />
+          <Button
+            v-if="data.durum === 'ONAYLANDI' && data.odemeDurumu !== 'ODENDI'"
+            icon="pi pi-wallet"
+            :aria-label="t('maasBordro.ode')"
+            class="p-button-rounded p-button-text p-button-success"
+            @click="odemeDialogAc(data)"
           />
           <Button
             v-if="data.durum === 'ONAYLANDI'"
@@ -116,6 +137,45 @@
         </template>
       </Column>
     </DataTable>
+
+    <!-- Bordro ödemesi: kasa seçimi -->
+    <Dialog
+      v-model:visible="odemeDialog"
+      :header="t('maasBordro.ode')"
+      modal
+      :style="{ width: '440px' }"
+    >
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ t('maasBordro.odemeKasa') }}</label>
+          <Dropdown
+            v-model="odemeKasaId"
+            :options="kasaListesi"
+            option-label="ad"
+            option-value="id"
+            :placeholder="t('maasBordro.kasaSec')"
+            class="w-full"
+          />
+        </div>
+        <p class="odeme-bilgi">
+          {{ t('maasBordro.odemeAciklama', { tutar: formatCurrency(odemeBordro?.netMaas || 0) }) }}
+        </p>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="odemeDialog = false"
+        />
+        <Button
+          :label="t('maasBordro.ode')"
+          icon="pi pi-wallet"
+          :loading="odemeGonderiliyor"
+          :disabled="!odemeKasaId"
+          @click="odemeYap"
+        />
+      </template>
+    </Dialog>
 
     <Dialog
       v-model:visible="dialog"
@@ -233,18 +293,53 @@ const form = ref({
 
 const dialogHeader = computed(() => (duzenleme.value ? t('maasBordro.bordroDuzenle') : t('maasBordro.yeniBordro')))
 
+// Bordro ödemesi (kasa seçimi)
+const odemeDialog = ref(false)
+const odemeBordro = ref(null)
+const odemeKasaId = ref(null)
+const odemeGonderiliyor = ref(false)
+const kasaListesi = ref([])
+
+const odemeDialogAc = (data) => {
+  odemeBordro.value = data
+  odemeKasaId.value = null
+  odemeDialog.value = true
+}
+
+const odemeYap = async () => {
+  if (!odemeKasaId.value) return
+  odemeGonderiliyor.value = true
+  try {
+    await maasBordroAPI.ode(odemeBordro.value.id, odemeKasaId.value)
+    toastBildirim.basarili(t('maasBordro.odemeBasarili'))
+    odemeDialog.value = false
+    const r = await maasBordroAPI.getAll()
+    list.value = unwrapList(r)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
+  } finally {
+    odemeGonderiliyor.value = false
+  }
+}
+
 import { formatTarih as formatDate } from '../utils/format.js'
 import { getLocalDateString } from '../utils/format.js'
+import { kasaAPI } from '../api/index.js'
 
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [mR, pR] = await Promise.all([maasBordroAPI.getAll(), personelAPI.getAll()])
+    const [mR, pR, kR] = await Promise.all([
+      maasBordroAPI.getAll(),
+      personelAPI.getAll(),
+      kasaAPI.getAll({ size: 200 })
+    ])
     list.value = unwrapList(mR)
     personelListesi.value = pR.data.map((p) => ({
       ...p,
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
     }))
+    kasaListesi.value = unwrapList(kR)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('maasBordro.hataYukleme'))
   }

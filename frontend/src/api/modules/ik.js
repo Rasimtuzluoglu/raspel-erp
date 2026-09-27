@@ -72,6 +72,9 @@ export const maasBordroAPI = {
   },
   onayKaldir(id) {
     return apiClient.post(`/maas-bordro/${id}/onay-kaldir`)
+  },
+  ode(id, kasaId) {
+    return apiClient.post(`/maas-bordro/${id}/ode`, null, { params: { kasaId } })
   }
 }
 

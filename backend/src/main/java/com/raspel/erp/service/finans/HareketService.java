@@ -44,6 +44,10 @@ public class HareketService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
 
     /**
      * Faturanın ödenen tutarını ve ödeme durumunu günceller.
@@ -328,14 +332,52 @@ public class HareketService {
         if (hareket.getFaturaId() != null) {
             faturaOdemeUygula(hareket.getFaturaId(), hareket.getTutar().negate(), "Hareket #" + hareket.getId() + " silindi");
         }
+
+        // Tahsilata bağlı kasa/banka hareketi varsa ters kaydet; aksi halde cari düzelirken
+        // kasa/banka bakiyesi şişer (mutabakat bozulur).
+        int tersKasaBanka = kasaBankaTersKaydet(hareket);
         
         auditLogService.finansalSilmeLog("Hareket", id,
                 "Hareket silindi: " + hareket.getTur() + " " + hareket.getTutar() + " TL - Cari: "
                         + hareket.getCariHesap().getAd() + " (bakiye terslendi)"
-                        + (hareket.getFaturaId() != null ? " - Fatura: " + hareket.getFaturaId() : ""));
+                        + (hareket.getFaturaId() != null ? " - Fatura: " + hareket.getFaturaId() : "")
+                        + (tersKasaBanka > 0 ? " - Bağlı kasa/banka hareketi ters kaydedildi (" + tersKasaBanka + ")" : ""));
         
         hareketRepository.deleteById(id);
         log.info("Hareket başarıyla silindi - ID: {}", id);
+    }
+
+    /**
+     * Cari harekete bağlı kasa/banka hareketlerini siler ve bakiyeleri düzeltir.
+     * Bağlantı: kaynakTip='TAHSILAT', kaynakId=<cari hareket id>.
+     */
+    private int kasaBankaTersKaydet(Hareket hareket) {
+        int sayi = 0;
+        try {
+            for (var kh : kasaHareketRepository.findByKaynakTipAndKaynakId("TAHSILAT", hareket.getId())) {
+                var kasa = kh.getKasa();
+                if (kasa != null) {
+                    BigDecimal tutar = kh.getTutar() != null ? kh.getTutar() : BigDecimal.ZERO;
+                    kasa.setBakiye((kasa.getBakiye() != null ? kasa.getBakiye() : BigDecimal.ZERO).subtract(tutar));
+                    kasaRepository.save(kasa);
+                }
+                kasaHareketRepository.delete(kh);
+                sayi++;
+            }
+            for (var bh : bankaHareketiRepository.findByKaynakTipAndKaynakId("TAHSILAT", hareket.getId())) {
+                var banka = bh.getBankaId() != null ? bankaRepository.findById(bh.getBankaId()).orElse(null) : null;
+                if (banka != null) {
+                    BigDecimal tutar = bh.getAlacak() != null ? bh.getAlacak() : BigDecimal.ZERO;
+                    banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).subtract(tutar));
+                    bankaRepository.save(banka);
+                }
+                bankaHareketiRepository.delete(bh);
+                sayi++;
+            }
+        } catch (Exception e) {
+            log.warn("Bağlı kasa/banka hareketi ters kaydedilemedi (hareket id: {}): {}", hareket.getId(), e.getMessage());
+        }
+        return sayi;
     }
     
     /**

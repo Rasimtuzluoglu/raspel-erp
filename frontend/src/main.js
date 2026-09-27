@@ -49,12 +49,21 @@ initTheme()
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
         navigator.serviceWorker.getRegistrations().then((r) => r.forEach((x) => x.unregister()))
       }
-      // Surum atlarken sema degismis olabilir; kalici is verilerini temizle.
-      localStorage.removeItem('raspel_offline_satis_kuyrugu')
+      // Surum atlarken gecici arayuz verileri temizlenir. Ancak cevrimdisi SATIS KUYRUGU
+      // is verisidir; ASLA silinmez (senkronize edilmemis satislar kaybolmasin).
       localStorage.removeItem('raspel_kayitli_sepet')
       Object.keys(localStorage)
         .filter((k) => k.startsWith('raspel_taslak_'))
         .forEach((k) => localStorage.removeItem(k))
+      try {
+        const bekleyen = JSON.parse(localStorage.getItem('raspel_offline_satis_kuyrugu') || '[]')
+        if (bekleyen.length > 0) {
+          // eslint-disable-next-line no-console
+          console.warn(`[RasPel] Senkronize edilmemis ${bekleyen.length} cevrimdisi satis kuyrukta bekliyor.`)
+        }
+      } catch {
+        /* yoksay */
+      }
     }
     localStorage.setItem(ANAHTAR, SURUM)
   } catch (e) { /* yoksay */ }

@@ -94,8 +94,8 @@ public class MaasBordroService {
     }
 
     /**
-     * Bordroyu onaylar ve kilitler. İstenirse net tutar kasadan ödenir (kasaId verilirse).
-     * Onay sonrası bordro düzenlenemez/silinemez.
+     * Bordroyu onaylar ve kilitler. kasaId verilirse onayla birlikte odeme de yapilir
+     * (geriye uyumlu); aksi halde odeme ayri "ode" aksiyonuyla yapilir.
      */
     public MaasBordroDTO onayla(Long id, String onaylayan, Long kasaId) {
         MaasBordro bordro = maasBordroRepository.findById(id)
@@ -109,12 +109,30 @@ public class MaasBordroService {
         bordro.setOnaylayan(onaylayan);
         MaasBordro kaydedilen = maasBordroRepository.save(bordro);
         if (kasaId != null) {
-            kasaOdemeYap(kaydedilen, kasaId, onaylayan);
+            kasaOdemeYap(kaydedilen, kasaId);
         }
         return entityToDTO(kaydedilen);
     }
 
-    /** Onaylanmış bordroyu yeniden düzenlenebilir hale getirir (fiş iptal edilir). */
+    /**
+     * Onaylanmis bordronun net tutarini kasadan oder. Cift odeme engellenir; odeme
+     * kasa hareketi kaynakTip=BORDRO + kaynakId=bordroId ile izlenir.
+     */
+    public MaasBordroDTO ode(Long id, Long kasaId) {
+        MaasBordro bordro = maasBordroRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id));
+        tenantChecker.check(bordro.getSirketId(), "MaasBordro");
+        if (!"ONAYLANDI".equals(bordro.getDurum())) {
+            throw new com.raspel.erp.exception.BusinessException("Ödeme için bordro önce onaylanmalıdır.");
+        }
+        if (kasaId == null) {
+            throw new com.raspel.erp.exception.BusinessException("Ödeme için kasa seçilmelidir.");
+        }
+        MaasBordro kaydedilen = kasaOdemeYap(bordro, kasaId);
+        return entityToDTO(kaydedilen);
+    }
+
+    /** Onaylanmış bordroyu yeniden düzenlenebilir hale getirir (fiş iptal edilir, ödeme varsa geri alınır). */
     public MaasBordroDTO onayKaldir(Long id) {
         MaasBordro bordro = maasBordroRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", id));
@@ -122,6 +140,9 @@ public class MaasBordroService {
         if (!"ONAYLANDI".equals(bordro.getDurum())) {
             throw new com.raspel.erp.exception.BusinessException("Bordro onaylı değil.");
         }
+        // Odeme yapildiysa once kasa hareketi ters kaydedilir; aksi halde onay kaldirilinca
+        // tekrar onaylanip yeniden odendiginde cift cikis olusur.
+        kasaOdemeTersKaydet(bordro);
         bordro.setDurum("TASLAK");
         bordro.setOnayTarihi(null);
         bordro.setOnaylayan(null);
@@ -135,13 +156,16 @@ public class MaasBordroService {
         return net.signum() < 0 ? BigDecimal.ZERO : net;
     }
 
-    private void kasaOdemeYap(MaasBordro bordro, Long kasaId, String onaylayan) {
-        com.raspel.erp.entity.finans.Kasa kasa = kasaRepository.findById(kasaId)
+    /** Kasadan net maas odemesi yapar; idempotenttir (zaten odendiyse tekrar odemez). */
+    private MaasBordro kasaOdemeYap(MaasBordro bordro, Long kasaId) {
+        if ("ODENDI".equals(bordro.getOdemeDurumu())) {
+            throw new com.raspel.erp.exception.BusinessException("Bu bordro zaten ödenmiş.");
+        }
+        com.raspel.erp.entity.finans.Kasa kasa = kasaRepository.findByIdForUpdate(kasaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId));
         tenantChecker.check(kasa.getSirketId(), "Kasa");
-        donemService.kilitKontrol(bordro.getSirketId(),
-                bordro.getOdemeTarihi() != null ? bordro.getOdemeTarihi() : java.time.LocalDate.now(),
-                "bordro ödemesi");
+        java.time.LocalDate odemeTarihi = bordro.getOdemeTarihi() != null ? bordro.getOdemeTarihi() : java.time.LocalDate.now();
+        donemService.kilitKontrol(bordro.getSirketId(), odemeTarihi, "bordro ödemesi");
         BigDecimal tutar = bordro.getNetMaas() != null ? bordro.getNetMaas() : BigDecimal.ZERO;
         kasa.setBakiye((kasa.getBakiye() != null ? kasa.getBakiye() : BigDecimal.ZERO).subtract(tutar));
         kasaRepository.save(kasa);
@@ -149,9 +173,38 @@ public class MaasBordroService {
                 ? bordro.getPersonel().getAd() + " " + bordro.getPersonel().getSoyad() : "";
         kasaHareketRepository.save(com.raspel.erp.entity.finans.KasaHareket.builder()
                 .kasa(kasa).tur("GIDER").tutar(tutar)
-                .hareketTarihi(bordro.getOdemeTarihi() != null ? bordro.getOdemeTarihi() : java.time.LocalDate.now())
+                .hareketTarihi(odemeTarihi)
                 .aciklama("Bordro ödemesi " + bordro.getYil() + "-" + bordro.getAy() + " - " + personel)
-                .kaynakTip("BORDRO").build());
+                .kaynakTip("BORDRO")
+                .kaynakId(bordro.getId())
+                .build());
+        bordro.setOdemeDurumu("ODENDI");
+        bordro.setOdemeKasaId(kasaId);
+        return maasBordroRepository.save(bordro);
+    }
+
+    /** Bordroya bagli kasa odeme hareketini siler ve kasa bakiyesini geri yukler. */
+    private void kasaOdemeTersKaydet(MaasBordro bordro) {
+        if (!"ODENDI".equals(bordro.getOdemeDurumu())) {
+            return;
+        }
+        try {
+            var hareketler = kasaHareketRepository.findByKaynakTipAndKaynakId("BORDRO", bordro.getId());
+            for (var kh : hareketler) {
+                var kasa = kh.getKasa();
+                if (kasa != null) {
+                    BigDecimal tutar = kh.getTutar() != null ? kh.getTutar() : BigDecimal.ZERO;
+                    kasa.setBakiye((kasa.getBakiye() != null ? kasa.getBakiye() : BigDecimal.ZERO).add(tutar));
+                    kasaRepository.save(kasa);
+                }
+                kasaHareketRepository.delete(kh);
+            }
+        } catch (Exception e) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Bordro ödemesi geri alınamadı: " + e.getMessage());
+        }
+        bordro.setOdemeDurumu("ODENMEDI");
+        bordro.setOdemeKasaId(null);
     }
 
     public void sil(Long id) {
@@ -161,6 +214,10 @@ public class MaasBordroService {
         if ("ONAYLANDI".equals(bordro.getDurum())) {
             throw new com.raspel.erp.exception.BusinessException(
                     "Onaylanmış bordro silinemez. Önce onayı kaldırın.");
+        }
+        if ("ODENDI".equals(bordro.getOdemeDurumu())) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Ödenmiş bordro silinemez. Önce onayı kaldırın (ödeme geri alınır).");
         }
         otomatikMuhasebeService.bordroIptal(bordro.getId(), bordro.getSirketId());
         maasBordroRepository.delete(bordro);
@@ -176,6 +233,7 @@ public class MaasBordroService {
                 .odemeTarihi(m.getOdemeTarihi()).sirketId(m.getSirketId())
                 .aciklama(m.getAciklama()).olusturmaTarihi(m.getOlusturmaTarihi())
                 .durum(m.getDurum()).onayTarihi(m.getOnayTarihi()).onaylayan(m.getOnaylayan())
+                .odemeDurumu(m.getOdemeDurumu()).odemeKasaId(m.getOdemeKasaId())
                 .build();
     }
 }

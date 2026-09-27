@@ -1119,7 +1119,7 @@ const { sirketLogosu } = useMarka()
 
 const offlineKuyruguSenkronizeEt = async () => {
   try {
-    const gonderilen = await offlineKuyruk.senkronizeEt((s) => faturaAPI.create(s))
+    const gonderilen = await offlineKuyruk.senkronizeEt((s, anahtar) => faturaAPI.create(s, anahtar))
     if (gonderilen > 0) {
       toast.add({ severity: 'success', summary: t('hizliSatis.senkronizeEdildi'), detail: t('hizliSatis.satisGonderildi', { n: gonderilen }), life: 3000 })
     }

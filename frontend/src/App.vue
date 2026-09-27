@@ -44,6 +44,26 @@
           </button>
         </div>
       </transition>
+      <!-- Çevrimdışı alınan ve henüz gönderilemeyen satışlar: kaybolmasın, görünür olsun. -->
+      <transition name="slide-down">
+        <div
+          v-if="bekleyenSatis > 0"
+          class="offline-banner bekleyen-satis-banner"
+        >
+          <i class="pi pi-cloud-upload" />
+          <span>{{ $t('app.bekleyenSatis', { sayi: bekleyenSatis }) }}</span>
+          <button
+            class="offline-tekrar-dene"
+            :disabled="kuyrukGonderiliyor"
+            @click="kuyruguGonder"
+          >
+            <i
+              class="pi pi-refresh"
+              :class="{ 'pi-spin': kuyrukGonderiliyor }"
+            /> {{ $t('app.simdiGonder') }}
+          </button>
+        </div>
+      </transition>
       <transition name="slide-down">
         <div
           v-if="authStore.isLoggedIn && sunumAktif"
@@ -151,6 +171,8 @@ import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } fr
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
+import { faturaAPI } from './api/index.js'
+import { useOfflineSatisKuyrugu } from './composables/useOfflineSatisKuyrugu.js'
 import { useSunumModu } from './composables/useSunumModu.js'
 import { useToastBildirim } from './composables/useToastBildirim.js'
 import { useI18n } from 'vue-i18n'
@@ -201,6 +223,28 @@ const marjAcik = ref(false)
 const ibanAcik = ref(false)
 const tcAcik = ref(false)
 const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
+
+// Çevrimdışı satış kuyruğu: bekleyen sayısı görünür ve elle gönderilebilir.
+const { bekleyen: bekleyenSatis, senkronizeEt: kuyrukSenkronizeEt, yenile: kuyrukYenile } = useOfflineSatisKuyrugu()
+const kuyrukGonderiliyor = ref(false)
+const kuyruguGonder = async () => {
+  if (kuyrukGonderiliyor.value) return
+  kuyrukGonderiliyor.value = true
+  try {
+    const gonderilen = await kuyrukSenkronizeEt((s, anahtar) => faturaAPI.create(s, anahtar))
+    if (gonderilen > 0) {
+      toastBildirim.basarili(t('app.bekleyenSatisGonderildi', { sayi: gonderilen }))
+    }
+  } catch {
+    toastBildirim.hata(t('app.bekleyenSatisGonderilemedi'))
+  } finally {
+    kuyrukGonderiliyor.value = false
+  }
+}
+// Sekmeler arasi senkron: baska sekmede kuyruk degisirse sayaci tazele.
+const kuyrukDepoDinleyici = (e) => {
+  if (e.key === 'raspel_offline_satis_kuyrugu') kuyrukYenile()
+}
 
 // Klavye Kisayollari (Ctrl+K / Cmd+K aramayi acar)
 watch([ctrl_k, cmd_k], ([ctrl, cmd]) => {
@@ -257,11 +301,15 @@ const handleGlobalShortcuts = (e) => {
 onMounted(() => {
   window.addEventListener('api-error', handleApiError)
   window.addEventListener('keydown', handleGlobalShortcuts)
+  window.addEventListener('storage', kuyrukDepoDinleyici)
+  // Giris oncesi kuyrukta bekleyen satis olabilir (onceki oturumdan); sayaci tazele.
+  kuyrukYenile()
 })
 
 onUnmounted(() => {
   window.removeEventListener('api-error', handleApiError)
   window.removeEventListener('keydown', handleGlobalShortcuts)
+  window.removeEventListener('storage', kuyrukDepoDinleyici)
 })
 
 const sirketRenkPaletleri = [
@@ -309,6 +357,24 @@ watch(
   border-radius: 10px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+/* Bekleyen çevrimdışı satışlar: bilgi tonunda (mavi) ikinci şerit. */
+.bekleyen-satis-banner {
+  background: #e0f2fe;
+  color: #075985;
+  border-bottom-color: #0ea5e9;
+}
+[data-theme='dark'] .bekleyen-satis-banner {
+  background: rgba(14, 165, 233, 0.15);
+  color: #7dd3fc;
+  border-bottom-color: rgba(14, 165, 233, 0.3);
+}
+.bekleyen-satis-banner .offline-tekrar-dene {
+  background: #0ea5e9;
+}
+.bekleyen-satis-banner .offline-tekrar-dene:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 [data-theme='dark'] .offline-banner {
   background: rgba(245, 158, 11, 0.15);

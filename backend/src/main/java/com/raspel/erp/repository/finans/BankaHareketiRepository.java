@@ -12,4 +12,5 @@ public interface BankaHareketiRepository extends JpaRepository<BankaHareketi, Lo
     List<BankaHareketi> findByBankaIdAndEslestirildiFalse(Long bankaId);
     long countByBankaId(Long bankaId);
     List<BankaHareketi> findByKaynakFaturaId(Long kaynakFaturaId);
+    List<BankaHareketi> findByKaynakTipAndKaynakId(String kaynakTip, Long kaynakId);
 }

@@ -592,6 +592,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { useFaturaStore } from '../stores/faturaStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
@@ -620,6 +621,7 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
 const faturaStore = useFaturaStore()
+const authStore = useAuthStore()
 
 const tasarimModalAcik = ref(false)
 const seciliFaturaId = ref(null)
@@ -1316,8 +1318,26 @@ const confirmIptal = (id) => {
       try {
         await faturaStore.updateDurum(id, 'IPTAL')
         toastBildirim.basarili(t('faturalar.faturaIptalEdildi'))
-      } catch {
-        toastBildirim.hata(t('faturalar.islemBasarisiz'))
+      } catch (err) {
+        // Ödeme blokajı gibi durumlarda sunucu mesajı yol gösterir; ham mesajı göster.
+        toastBildirim.hata(err?.response?.data?.message || t('faturalar.islemBasarisiz'))
+      }
+    }
+  })
+}
+
+const confirmIptaliGeriAl = (id) => {
+  confirm.require({
+    message: t('faturalar.iptaliGeriAlOnayMesaj'),
+    header: t('faturalar.iptaliGeriAl'),
+    icon: 'pi pi-undo',
+    accept: async () => {
+      try {
+        await faturaAPI.iptaliGeriAl(id)
+        await faturaStore.getAllFaturalar()
+        toastBildirim.basarili(t('faturalar.iptaliGeriAlindi'))
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('faturalar.islemBasarisiz'))
       }
     }
   })
@@ -1349,6 +1369,10 @@ const faturaEylemleri = (f) => {  const items = [
   }
   if (f.durum !== 'IPTAL') {
     items.push({ etiket: t('common.cancel'), ikon: 'pi pi-ban', sinif: 'eylem-sil', islem: () => confirmIptal(f.id) })
+  }
+  // Yanlışlıkla iptal edilen fatura yeniden kesilebilir (yalnızca ADMIN; stok/cari geri uygulanır).
+  if (f.durum === 'IPTAL' && authStore.isAdmin) {
+    items.push({ etiket: t('faturalar.iptaliGeriAl'), ikon: 'pi pi-undo', islem: () => confirmIptaliGeriAl(f.id) })
   }
   return items
 }

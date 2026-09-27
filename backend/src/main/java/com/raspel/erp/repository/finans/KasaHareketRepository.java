@@ -10,4 +10,5 @@ public interface KasaHareketRepository extends JpaRepository<KasaHareket, Long> 
     List<KasaHareket> findByKasaIdOrderByHareketTarihiDesc(Long kasaId);
     long countByKasaId(Long kasaId);
     List<KasaHareket> findByFaturaId(Long faturaId);
+    List<KasaHareket> findByKaynakTipAndKaynakId(String kaynakTip, Long kaynakId);
 }

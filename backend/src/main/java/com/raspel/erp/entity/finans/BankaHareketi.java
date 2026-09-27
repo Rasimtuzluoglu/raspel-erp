@@ -47,6 +47,10 @@ public class BankaHareketi {
     @Column(name = "kaynak_tip", length = 20)
     private String kaynakTip;
 
+    /** Kaynak belge kimligi (or. tahsilatin cari hareket id'si). */
+    @Column(name = "kaynak_id")
+    private Long kaynakId;
+
     @Column(nullable = false)
     private Boolean eslestirildi;
 

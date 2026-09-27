@@ -656,8 +656,21 @@ public class FaturaService {
     private void tahsilatKaydetGerekirse(Fatura fatura) {
         BigDecimal odenen = fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO;
         if (odenen.signum() <= 0 || fatura.getId() == null) return;
-        if (!kasaHareketRepository.findByFaturaId(fatura.getId()).isEmpty()) return;
-        if (!bankaHareketiRepository.findByKaynakFaturaId(fatura.getId()).isEmpty()) return;
+        // Net kasa/banka etkisi: iptal ters kayitlari da ayni faturaya bagli oldugu icin
+        // "kayit var mi" yerine NET tutar kontrol edilir; boylece iptalden geri alinan
+        // faturada pesin tahsilat yeniden kaydedilir, mukerrer kayit olusmaz.
+        BigDecimal kasaNet = BigDecimal.ZERO;
+        for (KasaHareket kh : kasaHareketRepository.findByFaturaId(fatura.getId())) {
+            BigDecimal t = kh.getTutar() != null ? kh.getTutar() : BigDecimal.ZERO;
+            kasaNet = kasaNet.add("GELIR".equals(kh.getTur()) ? t : t.negate());
+        }
+        BigDecimal bankaNet = BigDecimal.ZERO;
+        for (com.raspel.erp.entity.finans.BankaHareketi bh : bankaHareketiRepository.findByKaynakFaturaId(fatura.getId())) {
+            BigDecimal alacak = bh.getAlacak() != null ? bh.getAlacak() : BigDecimal.ZERO;
+            BigDecimal borc = bh.getBorc() != null ? bh.getBorc() : BigDecimal.ZERO;
+            bankaNet = bankaNet.add(alacak.subtract(borc));
+        }
+        if (kasaNet.signum() > 0 || bankaNet.signum() > 0) return;
         if (fatura.getKasaId() != null) {
             kasaGirisi(fatura, odenen);
         } else if (fatura.getBankaId() != null) {
@@ -757,8 +770,9 @@ public class FaturaService {
         String eskiDurum = fatura.getDurum() != null ? fatura.getDurum().name() : null;
         String durumOncekiSnapshot = faturaGecmisService.snapshot(fatura);
 
-        if (fatura.getDurum() == Fatura.FaturaDurum.IPTAL) {
-            throw new BusinessException("İptal edilmiş fatura güncellenemez");
+        if (fatura.getDurum() == Fatura.FaturaDurum.IPTAL && durum != Fatura.FaturaDurum.KESILDI) {
+            throw new BusinessException(
+                    "İptal edilmiş fatura yalnızca 'İptali Geri Al' (yeniden kes) işlemiyle değiştirilebilir");
         }
 
         // Kesilmiş faturadan geri donus (TASLAK/IPTAL): stok ve cari etkisi geri alinir.

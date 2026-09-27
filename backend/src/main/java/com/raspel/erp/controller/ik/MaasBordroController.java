@@ -70,9 +70,16 @@ public class MaasBordroController {
     }
 
     @PostMapping("/{id}/onay-kaldir")
-    @Operation(summary = "Bordro onayını kaldır", description = "Onaylanmış bordroyu yeniden düzenlenebilir yapar")
+    @Operation(summary = "Bordro onayını kaldır", description = "Onaylanmış bordroyu yeniden düzenlenebilir yapar (ödeme varsa geri alınır)")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<MaasBordroDTO> onayKaldir(@PathVariable Long id) {
         return ResponseEntity.ok(maasBordroService.onayKaldir(id));
+    }
+
+    @PostMapping("/{id}/ode")
+    @Operation(summary = "Bordroyu öde", description = "Onaylanmış bordronun net tutarını seçilen kasadan öder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<MaasBordroDTO> ode(@PathVariable Long id, @RequestParam Long kasaId) {
+        return ResponseEntity.ok(maasBordroService.ode(id, kasaId));
     }
 }

@@ -214,6 +214,15 @@ public class FaturaController {
         return ResponseEntity.ok(faturaService.faturaDurumGuncelle(id, request.durum));
     }
 
+    @PostMapping("/{id}/iptali-geri-al")
+    @Operation(summary = "İptal edilen faturayı yeniden kes",
+            description = "Yanlışlıkla iptal edilen faturayı yeniden KESİLDİ durumuna alır; " +
+                    "stok/cari/muhasebe etkileri yeniden uygulanır. Yalnızca ADMIN.")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<FaturaDTO> iptaliGeriAl(@PathVariable Long id) {
+        return ResponseEntity.ok(faturaService.faturaDurumGuncelle(id, "KESILDI"));
+    }
+
     @PostMapping("/{id}/yeniden-hesapla")
     @Operation(summary = "Faturayı yeniden hesapla",
             description = "KDV dahil modele göre ara toplam/KDV/genel toplamı yeniden üretir. " +

@@ -92,10 +92,12 @@ export const faturaAPI = {
   yenidenHesapla(id, kaydet = false) {
     return apiClient.post(`/faturalar/${id}/yeniden-hesapla`, null, { params: { kaydet } })
   },
-  create(data) {
+  create(data, idempotencyKey) {
     // Idempotency anahtari: ag tekrarinda/çift tıklamada mükerrer fatura oluşmasını engeller.
+    // Çevrimdışı kuyruk, kaydın kendi kalıcı anahtarını geçirir; böylece yeniden denemeler
+    // sunucuda aynı kayda düşer (mükerrer fatura oluşmaz).
     return apiClient.post('/faturalar', data, {
-      headers: { 'X-Idempotency-Key': idempotencyAnahtari() }
+      headers: { 'X-Idempotency-Key': idempotencyKey || idempotencyAnahtari() }
     })
   },
   update(id, data) {
@@ -103,6 +105,9 @@ export const faturaAPI = {
   },
   updateDurum(id, durum) {
     return apiClient.put(`/faturalar/${id}/durum`, { durum })
+  },
+  iptaliGeriAl(id) {
+    return apiClient.post(`/faturalar/${id}/iptali-geri-al`)
   },
   delete(id) {
     return apiClient.delete(`/faturalar/${id}`)

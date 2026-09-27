@@ -94,20 +94,26 @@ class StokSayimServiceTest {
 
     @Test
     void durumGuncelle_tamamlandiFarksizStokDegismez() {
+        // Sayim stogu SAYILAN degere esitler; guncel stok zaten sayilana esitse fark 0'dir.
         StokSayim s = sayim(1L, new BigDecimal("10"), new BigDecimal("10"));
+        Stok stok = Stok.builder().id(10L).ad("Ürün").sirketId(1L).miktar(new BigDecimal("10")).build();
         when(stokSayimRepository.findById(1L)).thenReturn(Optional.of(s));
         doNothing().when(tenantChecker).check(any(), anyString());
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
         when(stokSayimRepository.save(any(StokSayim.class))).thenReturn(s);
 
         StokSayimDTO sonuc = stokSayimService.durumGuncelle(1L, "TAMAMLANDI");
 
         assertEquals("TAMAMLANDI", sonuc.getDurum());
-        assertEquals(BigDecimal.ZERO, sonuc.getFark());
-        verify(stokRepository, never()).findByIdForUpdate(any());
+        assertEquals(0, BigDecimal.ZERO.compareTo(sonuc.getFark()));
+        assertEquals(0, new BigDecimal("10").compareTo(stok.getMiktar()));
+        verify(stokHareketRepository, never()).save(any());
     }
 
     @Test
-    void durumGuncelle_tamamlandiFarkIleStokGunceller() {
+    void durumGuncelle_tamamlandiStoguSayilanDegereEsitler() {
+        // Arada satis olsa bile sayim stogu sayilan degere esitler; uygulanan fark
+        // guncel stok ile sayilan arasindaki farktir (eski "delta ekle" davranisi degil).
         StokSayim s = sayim(1L, new BigDecimal("10"), new BigDecimal("13"));
         Stok stok = Stok.builder().id(10L).ad("Ürün").sirketId(1L).miktar(new BigDecimal("100")).build();
         when(stokSayimRepository.findById(1L)).thenReturn(Optional.of(s));
@@ -119,9 +125,41 @@ class StokSayimServiceTest {
         StokSayimDTO sonuc = stokSayimService.durumGuncelle(1L, "TAMAMLANDI");
 
         assertEquals("TAMAMLANDI", sonuc.getDurum());
-        assertEquals(0, new BigDecimal("3").compareTo(sonuc.getFark()));
-        assertEquals(0, new BigDecimal("103").compareTo(stok.getMiktar()));
+        // 100 -> 13: uygulanan fark -87
+        assertEquals(0, new BigDecimal("-87").compareTo(sonuc.getFark()));
+        assertEquals(0, new BigDecimal("13").compareTo(stok.getMiktar()));
         verify(stokHareketRepository).save(any());
+    }
+
+    @Test
+    void durumGuncelle_zatenTamamlandiysaHataFirlatir() {
+        // Idempotency: tamamlanmis sayim tekrar tamamlanamaz (cift stok uygulamasi engellenir).
+        StokSayim s = sayim(1L, new BigDecimal("10"), new BigDecimal("13"));
+        s.setDurum("TAMAMLANDI");
+        when(stokSayimRepository.findById(1L)).thenReturn(Optional.of(s));
+        doNothing().when(tenantChecker).check(any(), anyString());
+
+        assertThrows(BusinessException.class, () -> stokSayimService.durumGuncelle(1L, "TAMAMLANDI"));
+    }
+
+    @Test
+    void durumGuncelle_tamamlandidanIptaleTersKayitYapar() {
+        StokSayim s = sayim(1L, new BigDecimal("10"), new BigDecimal("13"));
+        s.setDurum("TAMAMLANDI");
+        s.setFark(new BigDecimal("-87")); // daha once uygulanan fark
+        Stok stok = Stok.builder().id(10L).ad("Ürün").sirketId(1L).miktar(new BigDecimal("13")).build();
+        when(stokSayimRepository.findById(1L)).thenReturn(Optional.of(s));
+        doNothing().when(tenantChecker).check(any(), anyString());
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
+        when(stokRepository.save(any(Stok.class))).thenReturn(stok);
+        when(stokSayimRepository.save(any(StokSayim.class))).thenReturn(s);
+
+        StokSayimDTO sonuc = stokSayimService.durumGuncelle(1L, "IPTAL");
+
+        assertEquals("IPTAL", sonuc.getDurum());
+        // -87 fark ters cevrilir: 13 -> 100
+        assertEquals(0, new BigDecimal("100").compareTo(stok.getMiktar()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(sonuc.getFark()));
     }
 
     @Test

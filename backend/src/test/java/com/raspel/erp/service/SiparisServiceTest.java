@@ -47,6 +47,7 @@ class SiparisServiceTest {
     @Mock private com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {
@@ -103,14 +104,14 @@ class SiparisServiceTest {
         Siparis siparis = createSiparis(1L);
         when(siparisRepository.findById(1L)).thenReturn(Optional.of(siparis));
         when(siparisRepository.save(any(Siparis.class))).thenReturn(siparis);
-        var result = siparisService.durumGuncelle(1L, "ONAYLANDI");
-        assertEquals("ONAYLANDI", result.getDurum());
+        var result = siparisService.durumGuncelle(1L, "SIPARIS");
+        assertEquals("SIPARIS", result.getDurum());
     }
 
     @Test
     void durumGuncelle_throwsWhenNotFound() {
         when(siparisRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> siparisService.durumGuncelle(99L, "ONAYLANDI"));
+        assertThrows(RuntimeException.class, () -> siparisService.durumGuncelle(99L, "SIPARIS"));
     }
 
     @Test

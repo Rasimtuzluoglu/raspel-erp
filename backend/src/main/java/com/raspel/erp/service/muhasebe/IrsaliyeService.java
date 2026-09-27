@@ -152,6 +152,7 @@ public class IrsaliyeService {
         i.setTarih(dto.getTarih());
         i.setCariHesapId(dto.getCariHesapId());
         i.setFaturaId(dto.getFaturaId());
+        if (dto.getSiparisId() != null) i.setSiparisId(dto.getSiparisId());
         if (dto.getDurum() != null) i.setDurum(dto.getDurum());
         if (dto.getTur() != null) i.setTur(dto.getTur());
         if (dto.getDepoId() != null) i.setDepoId(dto.getDepoId());
@@ -176,6 +177,25 @@ public class IrsaliyeService {
         donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye durum güncelleme");
 
         if ("KESILDI".equals(durum) && !"KESILDI".equals(i.getDurum())) {
+            // Siparişe bağlı irsaliye: siparişin canlı (iptal olmayan) faturası varsa stok
+            // ikinci kez düşer ve cari çift borçlanır. Fatura irsaliyeden kesilmişse
+            // (irsaliye.faturaId dolu) da aynı risk vardır; ikisi de engellenir.
+            if (i.getSiparisId() != null) {
+                boolean canliFatura = faturaRepository.findBySiparisId(i.getSiparisId()).stream()
+                        .anyMatch(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL);
+                if (canliFatura) {
+                    throw new BusinessException(
+                            "Bu sipariş için zaten fatura kesilmiş. İrsaliye kesmek stoğu ikinci kez düşürür; "
+                                    + "önce bağlı faturayı iptal edin.");
+                }
+            }
+            if (i.getFaturaId() != null) {
+                var bagli = faturaRepository.findById(i.getFaturaId()).orElse(null);
+                if (bagli != null && bagli.getDurum() != Fatura.FaturaDurum.IPTAL) {
+                    throw new BusinessException(
+                            "Bu irsaliyeye bağlı kesilmiş fatura var; irsaliye yeniden kesilemez.");
+                }
+            }
             List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
             Long depoId = depoStokService.coz(i.getDepoId(), i.getSirketId());
             for (IrsaliyeKalem k : kalemler) {
@@ -302,6 +322,7 @@ public class IrsaliyeService {
                 .cariHesapId(i.getCariHesapId())
                 .cariHesapAdi(cariAdi)
                 .faturaId(i.getFaturaId()).durum(i.getDurum()).tur(i.getTur())
+                .siparisId(i.getSiparisId())
                 .aciklama(i.getAciklama()).sirketId(i.getSirketId()).depoId(i.getDepoId())
                 .olusturmaTarihi(i.getOlusturmaTarihi()).kalemler(kalemler).build();
     }

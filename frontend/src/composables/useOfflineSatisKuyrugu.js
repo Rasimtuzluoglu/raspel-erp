@@ -2,6 +2,15 @@ import { ref } from 'vue'
 
 const KUYRUK_KEY = 'raspel_offline_satis_kuyrugu'
 
+function anahtarUret() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  } catch {
+    /* yoksay */
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 function kuyruguOku() {
   try {
     return JSON.parse(localStorage.getItem(KUYRUK_KEY) || '[]')
@@ -12,14 +21,31 @@ function kuyruguOku() {
 
 function kuyruguYaz(kuyruk) {
   localStorage.setItem(KUYRUK_KEY, JSON.stringify(kuyruk))
+  bekleyen.value = kuyruk.length
 }
 
-export function useOfflineSatisKuyrugu() {
-  const bekleyen = ref(kuyruguOku().length)
+/** Tum bilesenler ayni sayaci gorur (App.vue banner'i ile POS ekrani senkron kalsin). */
+const bekleyen = ref(kuyruguOku().length)
 
+export function useOfflineSatisKuyrugu() {
+  /** Kuyrugu localStorage'dan yeniden okur (baska sekme/oturum degisikligi sonrasi). */
+  function yenile() {
+    bekleyen.value = kuyruguOku().length
+  }
+
+  /**
+   * Satisi kuyruga ekler. Idempotency anahtari BURADA uretilir ve kayitla birlikte
+   * saklanir; boylece her yeniden deneme ayni anahtarla gider ve sunucu mükerrer
+   * fatura olusturmaz (ag tekrari/timeout sonrasi cift kayit engellenir).
+   */
   function ekle(satis) {
     const kuyruk = kuyruguOku()
-    kuyruk.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), satis, olusturma: Date.now() })
+    kuyruk.push({
+      id: anahtarUret(),
+      anahtar: anahtarUret(),
+      satis,
+      olusturma: Date.now()
+    })
     kuyruguYaz(kuyruk)
     bekleyen.value = kuyruk.length
   }
@@ -34,13 +60,17 @@ export function useOfflineSatisKuyrugu() {
     bekleyen.value = kuyruk.length
   }
 
+  /**
+   * Kuyrugu sirayla gonderir. `gonder(satis, anahtar)` imzasi beklenir; anahtar
+   * sabittir. Ag tekrar koparsa dongu durur; gonderilen kayitlar kuyruktan cikar.
+   */
   async function senkronizeEt(gonder) {
     const kuyruk = kuyruguOku()
     if (kuyruk.length === 0) return 0
     let gonderilen = 0
     for (const k of kuyruk) {
       try {
-        await gonder(k.satis)
+        await gonder(k.satis, k.anahtar)
         kaldir(k.id)
         gonderilen++
       } catch {
@@ -50,5 +80,5 @@ export function useOfflineSatisKuyrugu() {
     return gonderilen
   }
 
-  return { bekleyen, ekle, hepsi, kaldir, senkronizeEt }
+  return { bekleyen, ekle, hepsi, kaldir, senkronizeEt, yenile }
 }
