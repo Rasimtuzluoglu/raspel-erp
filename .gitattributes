@@ -1,0 +1,7 @@
+# Shell script'ler Linux konteynerlerinde calisir; CRLF satir sonu shebang'i bozar
+# ("/bin/sh^M: not found"). Windows'ta checkout edilse bile LF kalmalidir.
+*.sh text eol=lf
+# Konteyner entrypoint'leri ve config dosyalari daima LF ile saklanir.
+backend/docker-entrypoint.sh text eol=lf
+config/**/*.sh text eol=lf
+scripts/**/*.sh text eol=lf
