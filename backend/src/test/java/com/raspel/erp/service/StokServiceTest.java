@@ -46,6 +46,7 @@ class StokServiceTest {
     @Mock private com.raspel.erp.repository.sube.DepoRepository depoRepository;
     @Mock private com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    @Mock private com.raspel.erp.service.envanter.BarkodUretService barkodUretService;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -97,9 +98,11 @@ class StokServiceTest {
         Stok saved = createStok(1L);
         saved.setStokKodu("STK999");
         saved.setAd("Yeni Urun");
+        when(barkodUretService.ean13Uret(1L)).thenReturn("8690000000005");
         when(stokRepository.save(any(Stok.class))).thenReturn(saved);
         var result = stokService.olustur(dto, 1L);
         assertEquals("STK999", result.getStokKodu());
+        verify(barkodUretService).ean13Uret(1L);
     }
 
     @Test
@@ -141,11 +144,13 @@ class StokServiceTest {
     void olustur_blankStokKoduIcinKodUretirVeBarkodNormalizeEder() {
         StokDTO dto = StokDTO.builder().stokKodu("   ").ad("Kodsuz Urun").birim("Adet")
                 .fiyat(BigDecimal.valueOf(50)).barkod("  ").build();
+        when(barkodUretService.ean13Uret(1L)).thenReturn("8690000000005");
         when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
         var result = stokService.olustur(dto, 1L);
         assertNotNull(result.getStokKodu());
         assertTrue(result.getStokKodu().startsWith("STK-"));
-        assertNull(result.getBarkod());
+        // Bos barkod artik otomatik EAN-13 ile doldurulur.
+        assertEquals("8690000000005", result.getBarkod());
     }
 
     @Test

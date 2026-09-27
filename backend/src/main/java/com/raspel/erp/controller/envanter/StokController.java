@@ -8,6 +8,7 @@ import com.raspel.erp.service.envanter.StokAnalizService;
 import com.raspel.erp.service.sistem.QRService;
 import com.raspel.erp.service.sistem.BarkodService;
 import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.util.EtiketIcerikUtil;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -67,11 +68,11 @@ public class StokController {
     @Operation(summary = "Stok QR kodu (PNG)", description = "Stoğun barkod/kod bilgisini içeren QR kodu görüntüsü üretir")
     public ResponseEntity<byte[]> etiketQr(@PathVariable Long id) {
         Stok stok = stokService.entityGetir(id);
-        String icerik = qrIcerik(stok);
+        String icerik = EtiketIcerikUtil.qrIcerik(stok);
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                .body(qrService.qrPng(icerik, 220));
+                .body(qrService.qrPng(icerik, 300));
     }
 
     @GetMapping("/{id}/etiket")
@@ -80,8 +81,8 @@ public class StokController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "IKISI") String tip) {
         Stok stok = stokService.entityGetir(id);
-        byte[] qr = qrService.qrPng(qrIcerik(stok), 200);
-        byte[] barkod = barkodService.barkodPng(barkodIcerik(stok), 300, 90);
+        byte[] qr = qrService.qrPng(EtiketIcerikUtil.qrIcerik(stok), 600);
+        byte[] barkod = barkodService.barkodPng(EtiketIcerikUtil.barkodIcerik(stok), 1200, 300);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etiket-" + stok.getId() + ".pdf")
@@ -101,8 +102,8 @@ public class StokController {
                 Stok stok = stokService.entityGetir(k.stokId());
                 if (sirketId != null && !sirketId.equals(stok.getSirketId())) continue;
                 int adet = k.adet() != null ? Math.max(1, Math.min(k.adet(), 100)) : 1;
-                byte[] qr = qrService.qrPng(qrIcerik(stok), 200);
-                byte[] barkod = barkodService.barkodPng(barkodIcerik(stok), 300, 90);
+                byte[] qr = qrService.qrPng(EtiketIcerikUtil.qrIcerik(stok), 600);
+                byte[] barkod = barkodService.barkodPng(EtiketIcerikUtil.barkodIcerik(stok), 1200, 300);
                 for (int i = 0; i < adet && veriler.size() < limit; i++) {
                     veriler.add(new PdfRaporService.EtiketVeri(stok, qr, barkod, tip));
                 }
@@ -118,23 +119,24 @@ public class StokController {
                 .body(pdf);
     }
 
+    @GetMapping("/barkod-onerisi")
+    @Operation(summary = "Yeni barkod önerisi", description = "Yeni ürün formu için sıradaki EAN-13 barkodu önerir (kayıtta boş bırakılırsa otomatik üretilir)")
+    public ResponseEntity<Map<String, String>> barkodOnerisi(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(Map.of("barkod", stokService.barkodOnerisi(sirketId)));
+    }
+
+    @PostMapping("/barkod-uret")
+    @Operation(summary = "Otomatik barkod üret", description = "Barkodu boş olan seçili stoklara EAN-13 barkod üretir ve kaydeder")
+    public ResponseEntity<Map<String, Object>> barkodUret(@RequestBody BarkodUretIstek istek, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        int uretildi = stokService.barkodUret(istek != null ? istek.idler() : null, sirketId);
+        return ResponseEntity.ok(Map.of("uretildi", uretildi));
+    }
+
     record EtiketKalem(Long stokId, Integer adet) {}
     record EtiketIstek(String tip, List<EtiketKalem> kalemler) {}
-
-    private String qrIcerik(Stok stok) {
-        if (stok.getBarkod() != null && !stok.getBarkod().isBlank()) return stok.getBarkod();
-        if (stok.getStokKodu() != null && !stok.getStokKodu().isBlank()) return stok.getStokKodu();
-        return "STK" + stok.getId();
-    }
-
-    /** CODE128 yalnızca ASCII destekler; barkod/kod ASCII değilse güvenli bir değere düşer. */
-    private String barkodIcerik(Stok stok) {
-        String ham = (stok.getBarkod() != null && !stok.getBarkod().isBlank()) ? stok.getBarkod()
-                : (stok.getStokKodu() != null && !stok.getStokKodu().isBlank()) ? stok.getStokKodu()
-                : ("STK" + stok.getId());
-        String ascii = ham.replaceAll("[^\\x20-\\x7E]", "");
-        return ascii.isBlank() ? ("STK" + stok.getId()) : ascii;
-    }
+    record BarkodUretIstek(List<Long> idler) {}
 
     @GetMapping("/filtreli")
     @Operation(summary = "Stokları filtrele (sayfalı)", description = "Arama, kategori, marka, stok grubu ve fiyat aralığına göre sunucu tarafında filtreler")

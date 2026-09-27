@@ -7,7 +7,10 @@ describe('Hızlı Satış (POS)', () => {
     fiyat: 100,
     satisFiyati: 100,
     miktar: 50,
-    birim: 'Adet'
+    birim: 'Adet',
+    kategori: 'Gıda',
+    marka: 'Güneş',
+    stokGrubu: 'Mamul'
   }
 
   const stoksuzUrun = {
@@ -18,7 +21,25 @@ describe('Hızlı Satış (POS)', () => {
     fiyat: 50,
     satisFiyati: 50,
     miktar: 0,
-    birim: 'Adet'
+    birim: 'Adet',
+    kategori: 'Ambalaj',
+    marka: 'Marmara',
+    stokGrubu: 'Aksesuar'
+  }
+
+  // Barkodu olmayan urun: etikette stok kodu kodlanir, tarama stok koduyla bulmali.
+  const kodluUrun = {
+    id: 3,
+    ad: 'Kodlu Ürün',
+    stokKodu: 'MDF-18',
+    barkod: '',
+    fiyat: 75,
+    satisFiyati: 75,
+    miktar: 10,
+    birim: 'Adet',
+    kategori: 'Yapı',
+    marka: 'VidaSan',
+    stokGrubu: 'Hammadde'
   }
 
   const tusGonder = (key, ek = {}) => {
@@ -29,7 +50,7 @@ describe('Hızlı Satış (POS)', () => {
 
   beforeEach(() => {
     cy.girisYap()
-    cy.intercept('GET', '/api/stoklar*', { statusCode: 200, body: { content: [urun, stoksuzUrun] } }).as('stoklar')
+    cy.intercept('GET', '/api/stoklar*', { statusCode: 200, body: { content: [urun, stoksuzUrun, kodluUrun] } }).as('stoklar')
     cy.intercept('POST', '/api/faturalar', {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }
@@ -96,7 +117,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('ürün kartları stok adedi, fiyat ve KDV notunu gösterir', () => {
-    cy.get('.product-card').should('have.length', 2)
+    cy.get('.product-card').should('have.length', 3)
     cy.contains('.product-card', 'Test Ürün').within(() => {
       cy.get('.product-stok-satir').should('be.visible').and('contain', 'Stok: 50 Adet')
       cy.get('.product-price').should('contain', '100')
@@ -116,6 +137,13 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('stok kalmadı').should('exist')
   })
 
+  it('barkodsuz üründe stok kodu ile tarama ürünü bulur', () => {
+    // Etiketlerde barkod yerine stok kodu kodlanır; arama stok kodunu da kapsar.
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('MDF-18{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.contains('.sepet-item', 'Kodlu Ürün').should('exist')
+  })
+
   it('fiş modu (fiyatlı/fiyatsız) satış için geçici değiştirilebilir', () => {
     // Fiş modu, sipariş özeti sağ kolonda görünürken erişilebilir olmalı.
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
@@ -133,11 +161,25 @@ describe('Hızlı Satış (POS)', () => {
     cy.get('.filtre-panel').should('be.visible')
     cy.contains('.filtre-panel', 'Kategori').should('exist')
     cy.contains('.filtre-panel', 'Marka').should('exist')
+    cy.contains('.filtre-panel', 'Stok Grubu').should('exist')
     cy.get('body').type('{esc}')
 
     // Tercihler tek menüde: büyük yazı, onay iste, kısayol ipucu
     cy.get('.pos-tercih-btn').click()
     cy.get('.tercih-panel').should('be.visible')
     cy.get('.tercih-satir').should('have.length', 3)
+  })
+
+  it('filtre seçenekleri ürün verisinden türetilir (tanım gerekmez)', () => {
+    // Kategori hızlı çipleri ürünlerde yazılı değerlerden gelir.
+    cy.contains('.kategori-cipler .kategori-cip', 'Gıda').should('exist')
+    cy.contains('.kategori-cipler .kategori-cip', 'Yapı').should('exist')
+
+    // Marka filtresi de ürün alanından türetilir.
+    cy.get('.filtre-btn').click()
+    cy.get('.filtre-panel .p-select').eq(1).click()
+    cy.contains('.p-select-overlay .p-select-option', 'VidaSan').should('exist')
+    cy.get('body').type('{esc}')
+    cy.get('body').type('{esc}')
   })
 })

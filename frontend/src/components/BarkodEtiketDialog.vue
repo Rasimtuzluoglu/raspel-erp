@@ -9,7 +9,6 @@
       <button
         type="button"
         :class="{ aktif: tip === 'barkod' }"
-        :disabled="!stok?.barkod"
         @click="tipSec('barkod')"
       >
         {{ t('stoklar.etiketBarkod') }}
@@ -24,7 +23,6 @@
       <button
         type="button"
         :class="{ aktif: tip === 'ikisi' }"
-        :disabled="!stok?.barkod"
         @click="tipSec('ikisi')"
       >
         {{ t('stoklar.etiketIkisi') }}
@@ -45,15 +43,22 @@
         {{ t('stoklar.raf') }}: {{ stok.rafNo }}
       </div>
       <svg
-        v-show="barkodGoster && stok?.barkod"
+        v-show="barkodGoster && icerik"
         ref="barkodSvgRef"
         class="etiket-barkod"
       />
+      <!-- Barkod alani bos urunlerde de etiket uretilir; cubuklar stok kodunu kodlar. -->
       <div
-        v-if="tip !== 'qr' && stok && !stok.barkod"
+        v-if="stok && !stok.barkod"
         class="etiket-uyari"
       >
-        {{ t('stoklar.barkodYok') }}
+        {{ t('stoklar.barkodYerineKod') }}
+      </div>
+      <div
+        v-else-if="barkodHata && barkodGoster"
+        class="etiket-uyari"
+      >
+        {{ t('stoklar.barkodCizilemedi') }}
       </div>
       <img
         v-if="qrGoster && qrUrl"
@@ -93,6 +98,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency } from '../utils/format.js'
+import { barkodIcerik } from '../utils/barkodIcerik.js'
 import { stokAPI } from '../api/index.js'
 
 const { t } = useI18n()
@@ -105,7 +111,12 @@ const props = defineProps({
 
 const barkodSvgRef = ref(null)
 const qrUrl = ref(null)
+const qrDataUrl = ref(null)
 const pdfYukleniyor = ref(false)
+const barkodHata = ref(false)
+
+// Etikette kodlanacak icerik: barkod varsa barkod, yoksa stok kodu (backend ile ayni).
+const icerik = computed(() => (props.stok ? barkodIcerik(props.stok) : ''))
 
 // Son seçilen etiket türü hatırlanır; ilk kullanımda barkod.
 const tip = ref(localStorage.getItem(TIP_ANAHTAR) || 'barkod')
@@ -117,15 +128,29 @@ const qrTemizle = () => {
     URL.revokeObjectURL(qrUrl.value)
     qrUrl.value = null
   }
+  qrDataUrl.value = null
 }
 
+const blobToDataUrl = (blob) =>
+  new Promise((resolve) => {
+    try {
+      const okuyucu = new FileReader()
+      okuyucu.onload = () => resolve(okuyucu.result)
+      okuyucu.onerror = () => resolve(null)
+      okuyucu.readAsDataURL(blob)
+    } catch {
+      resolve(null)
+    }
+  })
+
 const barkodCiz = async () => {
-  if (!barkodGoster.value || !props.stok?.barkod) return
+  if (!barkodGoster.value || !icerik.value) return
   await nextTick()
+  barkodHata.value = false
   try {
     const { default: JsBarcode } = await import('jsbarcode')
     if (barkodSvgRef.value) {
-      JsBarcode(barkodSvgRef.value, props.stok.barkod, {
+      JsBarcode(barkodSvgRef.value, icerik.value, {
         format: 'CODE128',
         width: 2,
         height: 60,
@@ -134,7 +159,8 @@ const barkodCiz = async () => {
       })
     }
   } catch {
-    /* jsbarcode yuklenemedi */
+    // Cizim basarisizsa kullaniciya bilgi verilir (sessiz kalmaz).
+    barkodHata.value = true
   }
 }
 
@@ -144,6 +170,8 @@ const qrYukle = async () => {
     const { data } = await stokAPI.etiketQr(props.stok.id)
     qrTemizle()
     qrUrl.value = URL.createObjectURL(data)
+    // Yazdirma penceresi blob URL'e bagimli kalmasin; data URL'e de cevrilir.
+    qrDataUrl.value = await blobToDataUrl(data)
   } catch {
     qrTemizle()
   }
@@ -155,7 +183,6 @@ const hazirla = async () => {
 }
 
 const tipSec = (yeni) => {
-  if (yeni !== 'qr' && !props.stok?.barkod) return
   tip.value = yeni
   localStorage.setItem(TIP_ANAHTAR, yeni)
   nextTick(() => hazirla())
@@ -179,22 +206,50 @@ const etiketYazdir = () => {
   const win = window.open('', '_blank', 'width=400,height=520')
   if (!win) return
   const barkodSvg = barkodGoster.value && barkodSvgRef.value ? barkodSvgRef.value.outerHTML : ''
+  const qrKaynak = qrDataUrl.value || qrUrl.value || ''
   win.document.write(`
-    <html><head><title>${escapeHtml(props.stok?.ad || '')}</title></head>
-    <body style="font-family: sans-serif; text-align: center; padding: 20px;">
+    <html><head><title>${escapeHtml(props.stok?.ad || '')}</title>
+    <style>
+      body { font-family: sans-serif; text-align: center; padding: 20px; }
+      svg { max-width: 100%; height: auto; }
+      img { display: block; margin: 10px auto 0; }
+    </style>
+    </head>
+    <body>
       <div style="font-size: 22px; font-weight: 700;">${escapeHtml(props.stok?.ad || '')}</div>
       <div style="font-size: 16px; color: #555;">${escapeHtml(props.stok?.stokKodu || props.stok?.barkod || '')}</div>
       ${props.stok?.rafNo ? `<div style="font-size: 14px; color: #555;">${escapeHtml(t('stoklar.raf'))}: ${escapeHtml(props.stok.rafNo)}</div>` : ''}
       ${barkodSvg ? `<div style="margin-top: 10px;">${barkodSvg}</div>` : ''}
-      ${qrGoster.value && qrUrl.value ? `<img src="${qrUrl.value}" width="180" height="180" style="margin-top:10px;" />` : ''}
+      ${qrGoster.value && qrKaynak ? `<img src="${qrKaynak}" width="180" height="180" />` : ''}
       <div style="font-size: 20px; font-weight: 700; margin-top: 10px;">${formatCurrency(props.stok?.satisFiyati)}</div>
     </body></html>
   `)
   win.document.close()
-  setTimeout(() => {
-    win.focus()
-    win.print()
-  }, 800)
+  // Gorsellerin yuklenmesini bekleyip yazdir; kacak load olayina karsi emniyet
+  // zamanlayicisi da kurulur (cift yazdirmayi bayrak engeller).
+  let yazildi = false
+  const yazdir = () => {
+    if (yazildi) return
+    yazildi = true
+    try {
+      win.focus()
+      win.print()
+    } catch {
+      /* yoksay */
+    }
+  }
+  try {
+    if (win.document && win.document.readyState === 'complete') {
+      setTimeout(yazdir, 250)
+    } else if (typeof win.addEventListener === 'function') {
+      win.addEventListener('load', () => setTimeout(yazdir, 150), { once: true })
+      setTimeout(yazdir, 2500)
+    } else {
+      setTimeout(yazdir, 800)
+    }
+  } catch {
+    setTimeout(yazdir, 800)
+  }
 }
 
 const etiketPdfIndir = async () => {
@@ -275,6 +330,7 @@ const etiketPdfIndir = async () => {
   font-size: 0.8rem;
   color: var(--text-muted);
   font-style: italic;
+  text-align: center;
 }
 .etiket-qr {
   width: 160px;

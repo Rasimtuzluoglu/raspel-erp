@@ -53,6 +53,7 @@ public class StokService {
     private final com.raspel.erp.repository.sube.DepoRepository depoRepository;
     private final com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    private final BarkodUretService barkodUretService;
 
     // ---------- ÇOKLU FİYAT ----------
 
@@ -199,8 +200,13 @@ public class StokService {
             log.warn("Barkod '{}' sirket '{}' icin {} stok ile eslesiyor; ilki secildi (V88 unique kısıt sonrası bu durum olmamalı)",
                     barkod, sirketId, eslesenler.size());
         }
-        return eslesenler.stream().findFirst()
-                .map(s -> entityToDTO(s, tekTedarikciAdi(s))).orElse(null);
+        Stok bulunan = eslesenler.stream().findFirst().orElse(null);
+        if (bulunan == null) {
+            // Barkodu bos urunlerin etiketinde stok kodu kodlanir; etiket taramasi
+            // (QR/barkod) stok koduyla da urunu bulabilmeli.
+            bulunan = stokRepository.findBySirketIdAndStokKodu(sirketId, barkod).orElse(null);
+        }
+        return bulunan != null ? entityToDTO(bulunan, tekTedarikciAdi(bulunan)) : null;
     }
 
     /** Boş/null stok kodunu trim eder; zorunlu olduğundan eksikse STK-<8hex> üretir. */
@@ -242,6 +248,8 @@ public class StokService {
     public StokDTO olustur(StokDTO dto, Long sirketId) {
         String stokKodu = normalizeStokKodu(dto.getStokKodu());
         String barkod = normalizeBarkod(dto.getBarkod());
+        // Barkod opsiyonel; bos birakilirsa sirket ici EAN-13 otomatik uretilir.
+        if (barkod == null) barkod = barkodUretService.ean13Uret(sirketId);
         Stok s = Stok.builder().stokKodu(stokKodu).ad(dto.getAd())
                 .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
                 .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
@@ -259,20 +267,59 @@ public class StokService {
 
     @CacheEvict(value = "stoklar", allEntries = true)
     public int topluOlustur(List<StokDTO> dtolar, Long sirketId) {
+        // Ayni toplu islemde uretilen barkodlar henuz DB'de olmadigindan
+        // mukerrer uretimi onlemek icin ayrica takip edilir.
+        Set<String> uretilenler = new java.util.HashSet<>();
         List<Stok> stoklar = dtolar.stream()
-                .map(dto -> Stok.builder().stokKodu(normalizeStokKodu(dto.getStokKodu())).ad(dto.getAd())
-                        .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
-                        .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
-                        .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
-                        .barkod(normalizeBarkod(dto.getBarkod())).rafNo(dto.getRafNo()).marka(dto.getMarka())
-                        .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
-                        .aciklama(dto.getAciklama()).birim2(dto.getBirim2())
-                        .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
-                        .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
-                        .maliyetYontemi(dto.getMaliyetYontemi()).sirketId(sirketId).build())
+                .map(dto -> {
+                    String barkod = normalizeBarkod(dto.getBarkod());
+                    if (barkod == null) {
+                        barkod = barkodUretService.ean13Uret(sirketId, uretilenler);
+                        uretilenler.add(barkod);
+                    }
+                    return Stok.builder().stokKodu(normalizeStokKodu(dto.getStokKodu())).ad(dto.getAd())
+                            .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
+                            .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
+                            .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
+                            .barkod(barkod).rafNo(dto.getRafNo()).marka(dto.getMarka())
+                            .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
+                            .aciklama(dto.getAciklama()).birim2(dto.getBirim2())
+                            .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
+                            .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
+                            .maliyetYontemi(dto.getMaliyetYontemi()).sirketId(sirketId).build();
+                })
                 .collect(Collectors.toList());
         stokRepository.saveAll(stoklar);
         return stoklar.size();
+    }
+
+    /**
+     * Barkodu bos olan stoklara otomatik EAN-13 barkod uretir (tekli veya toplu).
+     * Barkodu dolu kayitlara dokunulmaz.
+     */
+    @CacheEvict(value = "stoklar", allEntries = true)
+    public int barkodUret(List<Long> idler, Long sirketId) {
+        if (idler == null || idler.isEmpty()) return 0;
+        int uretildi = 0;
+        Set<String> uretilenler = new java.util.HashSet<>();
+        for (Long id : idler.stream().filter(java.util.Objects::nonNull).distinct().limit(1000).toList()) {
+            Stok stok = stokRepository.findById(id).orElse(null);
+            if (stok == null) continue;
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            if (stok.getBarkod() != null && !stok.getBarkod().isBlank()) continue;
+            String yeni = barkodUretService.ean13Uret(stok.getSirketId(), uretilenler);
+            uretilenler.add(yeni);
+            stok.setBarkod(yeni);
+            stokRepository.save(stok);
+            uretildi++;
+        }
+        return uretildi;
+    }
+
+    /** Kaydetmeden once kullaniciya onerilecek yeni barkod. */
+    @Transactional(readOnly = true)
+    public String barkodOnerisi(Long sirketId) {
+        return barkodUretService.ean13Uret(sirketId);
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)

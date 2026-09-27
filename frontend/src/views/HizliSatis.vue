@@ -142,12 +142,13 @@
               <div class="filtre-panel-baslik">
                 {{ t('hizliSatis.filtreler') }}
               </div>
+              <!-- Secenekler urun kartlarindaki degerlerden turetilir; ayrica
+                   kategori/stok grubu tanimi yapmak gerekmez. -->
               <div class="filtre-alan">
                 <label>{{ t('hizliSatis.kategori') }}</label>
                 <Dropdown
                   v-model="filtreKategori"
                   :options="kategoriler"
-                  option-label="ad"
                   :placeholder="t('hizliSatis.tumu')"
                   class="w-full"
                   show-clear
@@ -156,8 +157,18 @@
               <div class="filtre-alan">
                 <label>{{ t('hizliSatis.marka') }}</label>
                 <Dropdown
-                  v-model="filtreArac"
-                  :options="aracListesi"
+                  v-model="filtreMarka"
+                  :options="markalar"
+                  :placeholder="t('hizliSatis.tumu')"
+                  class="w-full"
+                  show-clear
+                />
+              </div>
+              <div class="filtre-alan">
+                <label>{{ t('hizliSatis.stokGrubu') }}</label>
+                <Dropdown
+                  v-model="filtreStokGrubu"
+                  :options="stokGruplari"
                   :placeholder="t('hizliSatis.tumu')"
                   class="w-full"
                   show-clear
@@ -176,7 +187,7 @@
             v-if="filtreKategori"
             class="aktif-filtre-cip"
           >
-            <i class="pi pi-tag" /> {{ filtreKategori.ad }}
+            <i class="pi pi-tag" /> {{ filtreKategori }}
             <button
               type="button"
               :aria-label="t('hizliSatis.filtreKaldir')"
@@ -186,14 +197,27 @@
             </button>
           </span>
           <span
-            v-if="filtreArac"
+            v-if="filtreMarka"
             class="aktif-filtre-cip"
           >
-            <i class="pi pi-car" /> {{ filtreArac }}
+            <i class="pi pi-star" /> {{ filtreMarka }}
             <button
               type="button"
               :aria-label="t('hizliSatis.filtreKaldir')"
-              @click="filtreArac = null"
+              @click="filtreMarka = null"
+            >
+              <i class="pi pi-times" />
+            </button>
+          </span>
+          <span
+            v-if="filtreStokGrubu"
+            class="aktif-filtre-cip"
+          >
+            <i class="pi pi-box" /> {{ filtreStokGrubu }}
+            <button
+              type="button"
+              :aria-label="t('hizliSatis.filtreKaldir')"
+              @click="filtreStokGrubu = null"
             >
               <i class="pi pi-times" />
             </button>
@@ -201,7 +225,7 @@
           <button
             type="button"
             class="aktif-filtre-temizle"
-            @click="filtreKategori = null; filtreArac = null"
+            @click="filtreTemizle"
           >
             {{ t('hizliSatis.filtreTemizle') }}
           </button>
@@ -264,13 +288,13 @@
             </button>
             <button
               v-for="k in kategoriCipleri"
-              :key="k.id || k.ad"
+              :key="k"
               type="button"
               class="kategori-cip"
-              :class="{ aktif: filtreKategori && filtreKategori.ad === k.ad }"
+              :class="{ aktif: filtreKategori === k }"
               @click="filtreKategori = k"
             >
-              {{ k.ad }}
+              {{ k }}
             </button>
           </div>
 
@@ -1365,7 +1389,6 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
-import { useKategoriStore } from '../stores/kategoriStore.js'
 import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
@@ -1384,7 +1407,6 @@ const toastBildirim = useToastBildirim()
 const authStore = useAuthStore()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
-const kategoriStore = useKategoriStore()
 const offlineKuyruk = useOfflineSatisKuyrugu()
 const { t } = useI18n()
 const route = useRoute()
@@ -1624,7 +1646,10 @@ const globalBarkodEkle = () => {
 
 const barkodTarandi = async (barkod) => {
   if (!barkod) return
-  let urun = stokStore.stoklar.find((s) => s.barkod === barkod || s.seriNo === barkod)
+  // Etiketlerde barkod alani bos urunlerde stok kodu kodlanir; arama her ikisini
+  // ve seri numarasini kapsar.
+  const eslesir = (s) => s.barkod === barkod || s.seriNo === barkod || s.stokKodu === barkod
+  let urun = stokStore.stoklar.find(eslesir)
   if (urun) {
     sepeteEkle(urun)
     toast.add({ severity: 'success', summary: t('hizliSatis.urunEklendi'), detail: urun.ad, life: 2000 })
@@ -1632,7 +1657,7 @@ const barkodTarandi = async (barkod) => {
     // Sunucuda ara (büyük envanterde tümü yüklenmemiş olabilir)
     try {
       const r = await stokAPI.ara(barkod)
-      const bulunan = (r.data || []).find((s) => s.barkod === barkod || s.seriNo === barkod)
+      const bulunan = (r.data || []).find(eslesir)
       if (bulunan) {
         sepeteEkle(bulunan)
         toast.add({ severity: 'success', summary: t('hizliSatis.urunEklendi'), detail: bulunan.ad, life: 2000 })
@@ -1648,10 +1673,19 @@ const barkodTarandi = async (barkod) => {
 }
 
 const filtreKategori = ref(null)
-const filtreArac = ref(null)
+const filtreMarka = ref(null)
+const filtreStokGrubu = ref(null)
+
+const filtreTemizle = () => {
+  filtreKategori.value = null
+  filtreMarka.value = null
+  filtreStokGrubu.value = null
+}
 
 // Araç çubuğundaki filtre rozeti: kaç filtre aktif?
-const aktifFiltreSayisiPos = computed(() => (filtreKategori.value ? 1 : 0) + (filtreArac.value ? 1 : 0))
+const aktifFiltreSayisiPos = computed(
+  () => (filtreKategori.value ? 1 : 0) + (filtreMarka.value ? 1 : 0) + (filtreStokGrubu.value ? 1 : 0)
+)
 
 const seciliMusteri = ref(null)
 const musteriGiris = ref('')
@@ -1812,7 +1846,19 @@ const gunlukSatislariYukle = async () => {
   }
 }
 
-const kategoriler = computed(() => kategoriStore.kategoriler || [])
+// POS filtre secenekleri ayri tanim tablolarindan degil, dogrudan urun
+// kartlarindaki degerlerden turetilir (kategori/marka/stok grubu tanimi gerekmez).
+const benzersizDegerler = (alan) => {
+  const degerler = new Set()
+  ;(stokStore.stoklar || []).forEach((s) => {
+    const d = (s?.[alan] || '').trim()
+    if (d) degerler.add(d)
+  })
+  return [...degerler].sort((a, b) => a.localeCompare(b, 'tr'))
+}
+const kategoriler = computed(() => benzersizDegerler('kategori'))
+const markalar = computed(() => benzersizDegerler('marka'))
+const stokGruplari = computed(() => benzersizDegerler('stokGrubu'))
 const cokSatanlar = ref([])
 
 // Ürün başına çoklu fiyat listesi (stok fiyatları endpoint'inden)
@@ -1893,14 +1939,6 @@ const sepetYukle = () => {
     /* empty */
   }
 }
-
-const aracListesi = computed(() => {
-  const araclar = new Set()
-  stokStore.stoklar.forEach((s) => {
-    if (s.marka) araclar.add(s.marka)
-  })
-  return [...araclar].sort()
-})
 
 const toplam = computed(() => sepet.value.reduce((t, i) => t + i.miktar * i.fiyat, 0))
 
@@ -1986,11 +2024,15 @@ const filtrelenmisUrunler = computed(() => {
   let list = stokStore.stoklar || []
 
   if (filtreKategori.value) {
-    list = list.filter((u) => u.kategori === filtreKategori.value.ad)
+    list = list.filter((u) => (u.kategori || '').trim() === filtreKategori.value)
   }
 
-  if (filtreArac.value) {
-    list = list.filter((u) => u.marka === filtreArac.value)
+  if (filtreMarka.value) {
+    list = list.filter((u) => (u.marka || '').trim() === filtreMarka.value)
+  }
+
+  if (filtreStokGrubu.value) {
+    list = list.filter((u) => (u.stokGrubu || '').trim() === filtreStokGrubu.value)
   }
 
   if (seriNoArama.value) {
@@ -2016,7 +2058,7 @@ const filtrelenmisUrunler = computed(() => {
 const gorunenUrunler = computed(() => filtrelenmisUrunler.value.slice(0, gosterilenAdet.value))
 
 // Filtre/sıralama değişince kademeli gösterim baştan başlar.
-watch([seriNoArama, filtreKategori, filtreArac, siralama], () => {
+watch([seriNoArama, filtreKategori, filtreMarka, filtreStokGrubu, siralama], () => {
   gosterilenAdet.value = 60
 })
 
@@ -2077,7 +2119,6 @@ onMounted(async () => {
     await Promise.all([
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
-      kategoriStore.getAllKategoriler(),
       personelListesiniYukle(),
       cokSatanlariYukle(),
       kasalariYukle(),

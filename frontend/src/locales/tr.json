@@ -810,7 +810,15 @@
     "topluEtiketBaslik": "Toplu Etiket",
     "topluEtiketAciklama": "Seçili ürünler için adetli etiket PDF'i üretilir.",
     "etiketIndir": "Etiketleri İndir",
-    "adetEtiket": "Adet"
+    "adetEtiket": "Adet",
+    "barkodYerineKod": "Barkod yok; etikette stok kodu kodlanır",
+    "barkodCizilemedi": "Barkod çizilemedi; Etiket PDF'i kullanın",
+    "barkodUret": "Barkod Üret",
+    "barkodUretToplu": "Barkod Üret",
+    "barkodUretildi": "{n} ürüne barkod üretildi",
+    "barkodZatenVar": "Seçili ürünlerin barkodu zaten var",
+    "barkodIpucu": "Boş bırakılırsa kaydederken otomatik EAN-13 barkod üretilir",
+    "uret": "Üret"
   },
   "hizliSatis": {
     "breadcrumb": "Anasayfa / POS / Yeni Satış",
@@ -818,6 +826,7 @@
     "aramaPlaceholder": "Ürün / kod / seri ara...",
     "kategori": "Kategori",
     "marka": "Marka",
+    "stokGrubu": "Stok Grubu",
     "barkod": "Barkod",
     "cokSatanlar": "Çok Satanlar",
     "mevcutUrunler": "Mevcut Ürünler",

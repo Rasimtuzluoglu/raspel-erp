@@ -30,6 +30,7 @@ import com.raspel.erp.entity.muhasebe.IrsaliyeKalem;
 import com.raspel.erp.repository.muhasebe.IrsaliyeKalemRepository;
 import com.raspel.erp.repository.muhasebe.IrsaliyeRepository;
 import com.raspel.erp.exception.ResourceNotFoundException;
+import com.raspel.erp.util.EtiketIcerikUtil;
 import com.raspel.erp.entity.ticaret.Siparis;
 import com.raspel.erp.entity.ticaret.SiparisKalem;
 import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
@@ -877,7 +878,10 @@ public class PdfRaporService {
 
             String ad = stok.getAd() != null ? stok.getAd() : "-";
             String kod = stok.getStokKodu() != null ? stok.getStokKodu() : "-";
-            String barkod = stok.getBarkod() != null ? stok.getBarkod() : "-";
+            // Barkod alani bos urunlerde etikette stok kodu kodlanir; metin de
+            // kodlanan gercek degeri gosterir ("-" yerine).
+            String barkod = EtiketIcerikUtil.gosterim(stok);
+            boolean barkodYerineKod = stok.getBarkod() == null || stok.getBarkod().isBlank();
             String raf = stok.getRafNo() != null ? stok.getRafNo() : "-";
             String fiyat = stok.getSatisFiyati() != null ? para(stok.getSatisFiyati(), "TL") : "-";
 
@@ -891,7 +895,7 @@ public class PdfRaporService {
             cs.setFont(font.regular, 14f);
             cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Kod: " + kod); cs.endText();
             y -= 20f;
-            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod); cs.endText();
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod + (barkodYerineKod ? " (stok kodu)" : "")); cs.endText();
             y -= 20f;
             cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Raf No: " + raf); cs.endText();
             y -= 20f;
@@ -900,8 +904,12 @@ public class PdfRaporService {
 
             if (barkodGoster) {
                 PDImageXObject b = PDImageXObject.createFromByteArray(doc, v.barkodPng(), "barkod");
-                float bGenislik = 240;
-                float bYukseklik = 80;
+                // En-boy orani korunur; yuksek cozunurluklu PNG baskiya kucultulur.
+                float kutuGenislik = 250;
+                float kutuYukseklik = 80;
+                float olcek = Math.min(kutuGenislik / b.getWidth(), kutuYukseklik / b.getHeight());
+                float bGenislik = b.getWidth() * olcek;
+                float bYukseklik = b.getHeight() * olcek;
                 cs.drawImage(b, MARGIN, y - bYukseklik, bGenislik, bYukseklik);
                 y -= (bYukseklik + 18);
             }

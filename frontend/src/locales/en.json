@@ -810,7 +810,15 @@
     "topluEtiketBaslik": "Bulk Labels",
     "topluEtiketAciklama": "A multi-copy label PDF is generated for the selected products.",
     "etiketIndir": "Download Labels",
-    "adetEtiket": "Copies"
+    "adetEtiket": "Quantity",
+    "barkodYerineKod": "No barcode; the stock code is encoded on the label",
+    "barkodCizilemedi": "Barcode could not be drawn; use Label PDF",
+    "barkodUret": "Generate Barcode",
+    "barkodUretToplu": "Generate Barcodes",
+    "barkodUretildi": "{n} products got barcodes",
+    "barkodZatenVar": "Selected products already have barcodes",
+    "barkodIpucu": "If left empty, an EAN-13 barcode is generated automatically on save",
+    "uret": "Generate"
   },
   "hizliSatis": {
     "breadcrumb": "Home / POS / New Sale",
@@ -818,6 +826,7 @@
     "aramaPlaceholder": "Search product / code / serial...",
     "kategori": "Category",
     "marka": "Brand",
+    "stokGrubu": "Stock Group",
     "barkod": "Barcode",
     "cokSatanlar": "Best Sellers",
     "sirala": "Sort:",

@@ -59,6 +59,12 @@
             class="p-button-sm p-button-outlined"
             @click="topluEtiketDialog = true"
           />
+          <Button
+            :label="t('stoklar.barkodUretToplu')"
+            icon="pi pi-sparkles"
+            class="p-button-sm p-button-outlined"
+            @click="barkodUretToplu"
+          />
         </div>
       </template>
       <template #end>
@@ -605,11 +611,22 @@
           </div>
           <div class="form-grup">
             <label>{{ t('stoklar.barkod') }}</label>
-            <InputText
-              v-model="form.barkod"
-              :placeholder="t('stoklar.barkodPlaceholder')"
-              class="w-full"
-            />
+            <div class="barkod-alan">
+              <InputText
+                v-model="form.barkod"
+                :placeholder="t('stoklar.barkodPlaceholder')"
+                class="w-full"
+              />
+              <Button
+                :label="t('stoklar.uret')"
+                icon="pi pi-sparkles"
+                class="p-button-sm p-button-outlined"
+                :loading="barkodOneriYukleniyor"
+                :title="t('stoklar.barkodUret')"
+                @click="barkodOnerForma"
+              />
+            </div>
+            <small class="alan-ipucu">{{ t('stoklar.barkodIpucu') }}</small>
           </div>
         </div>
         <div class="form-row">
@@ -1231,6 +1248,40 @@ const barkodEtiket = (stok) => {
   etiketDialog.value = true
 }
 
+// Otomatik barkod: barkodu bos urunlere sirket ici EAN-13 uretir/kaydeder.
+const barkodUretTek = async (stok) => {
+  try {
+    const { data } = await stokAPI.barkodUret([stok.id])
+    const adet = data?.uretildi || 0
+    if (adet > 0) {
+      toastBildirim.basarili(t('stoklar.barkodUretildi', { n: adet }))
+      await stokStore.getAll({ size: 1000 })
+    } else {
+      toastBildirim.uyari(t('stoklar.barkodZatenVar'))
+    }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('stoklar.islemBasarisiz'))
+  }
+}
+
+const barkodUretToplu = async () => {
+  const secili = seciliStoklar.value || []
+  if (!secili.length) return
+  try {
+    const { data } = await stokAPI.barkodUret(secili.map((s) => s.id))
+    const adet = data?.uretildi || 0
+    if (adet > 0) {
+      toastBildirim.basarili(t('stoklar.barkodUretildi', { n: adet }))
+      await stokStore.getAll({ size: 1000 })
+      seciliStoklar.value = []
+    } else {
+      toastBildirim.uyari(t('stoklar.barkodZatenVar'))
+    }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('stoklar.islemBasarisiz'))
+  }
+}
+
 // Faz 5: toplu etiket (seçili ürünler, adetli, tip seçimli)
 const topluEtiketDialog = ref(false)
 const topluEtiketTip = ref('BARKOD')
@@ -1499,10 +1550,16 @@ const openDialog = () => {
   showDialog.value = true
 }
 
-const stokEylemleri = (s) => [
-  { etiket: t('stoklar.barkodEtiket'), ikon: 'pi pi-barcode', islem: () => barkodEtiket(s) },
-  { etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDel(s.id) }
-]
+const stokEylemleri = (s) => {
+  const eylemler = [
+    { etiket: t('stoklar.barkodEtiket'), ikon: 'pi pi-barcode', islem: () => barkodEtiket(s) }
+  ]
+  if (!s.barkod) {
+    eylemler.push({ etiket: t('stoklar.barkodUret'), ikon: 'pi pi-sparkles', islem: () => barkodUretTek(s) })
+  }
+  eylemler.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDel(s.id) })
+  return eylemler
+}
 
 const editStok = (s) => {
   editingId.value = s.id
@@ -1552,6 +1609,21 @@ const fiyatSil = async (f) => {
     }
   }
   form.value.fiyatlar = form.value.fiyatlar.filter((x) => x !== f)
+}
+
+const barkodOneriYukleniyor = ref(false)
+
+// Formda barkod alanini sunucunun onerdigi yeni EAN-13 ile doldurur.
+const barkodOnerForma = async () => {
+  barkodOneriYukleniyor.value = true
+  try {
+    const { data } = await stokAPI.barkodOnerisi()
+    if (data?.barkod) form.value.barkod = data.barkod
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('stoklar.islemBasarisiz'))
+  } finally {
+    barkodOneriYukleniyor.value = false
+  }
 }
 
 const saveStok = async () => {
@@ -1989,6 +2061,14 @@ h2 {
   font-size: 11.5px;
   color: var(--text-muted);
   line-height: 1.4;
+}
+.barkod-alan {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.barkod-alan .p-button {
+  flex-shrink: 0;
 }
 .depo-dagilim-liste {
   display: flex;

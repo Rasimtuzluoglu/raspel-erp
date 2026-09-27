@@ -19,6 +19,12 @@ export const stokAPI = {
   topluEtiket(payload) {
     return apiClient.post('/stoklar/etiketler', payload, { responseType: 'blob' })
   },
+  barkodOnerisi() {
+    return apiClient.get('/stoklar/barkod-onerisi')
+  },
+  barkodUret(idler) {
+    return apiClient.post('/stoklar/barkod-uret', { idler })
+  },
   filtreli(params) {
     return apiClient.get('/stoklar/filtreli', { params })
   },
