@@ -60,6 +60,8 @@ class ExcelExportControllerTest {
     private AuditLogService auditLogService;
     @MockBean
     private MuhasebeService muhasebeService;
+    @MockBean
+    private com.raspel.erp.service.sistem.RaporService raporService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {

@@ -258,5 +258,8 @@ export const muhasebeAPI = {
   },
   getKarZarar(params) {
     return apiClient.get('/muhasebe/kar-zarar', { params })
+  },
+  fxDegerleme(tarih) {
+    return apiClient.post('/muhasebe/fx-degerleme', null, { params: { tarih } })
   }
 }

@@ -14,4 +14,7 @@ public interface StokMaliyetHareketRepository extends JpaRepository<StokMaliyetH
 
     @Query("SELECT m FROM StokMaliyetHareket m WHERE m.stokId = :stokId ORDER BY m.tarih DESC, m.id DESC")
     List<StokMaliyetHareket> sonHareketler(@Param("stokId") Long stokId);
+
+    /** Belgeye bağlı maliyet hareketleri (COGS fişi için). */
+    List<StokMaliyetHareket> findByKaynakTipAndKaynakId(String kaynakTip, Long kaynakId);
 }

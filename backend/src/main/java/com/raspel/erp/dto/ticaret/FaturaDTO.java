@@ -59,6 +59,8 @@ public class FaturaDTO {
     private Long depoId;
     private String depoAd;
     private String paraBirimi;
+    /** Dövizli faturada kayıt anındaki kur; verilmezse TCMB satış kuru kullanılır. */
+    private BigDecimal kur;
     private String odemeYontemi;
     private String taksitKurum;
     private BigDecimal taksitTutar;

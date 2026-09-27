@@ -32,6 +32,7 @@ class DonemServiceTest {
     @Mock private DonemRepository donemRepository;
     @Mock private DonemKapanisRepository donemKapanisRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private DonemService donemService;
 
     private Donem createDonem(Long id) {

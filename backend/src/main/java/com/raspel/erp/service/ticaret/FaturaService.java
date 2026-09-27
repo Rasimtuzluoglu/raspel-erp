@@ -519,6 +519,7 @@ public class FaturaService {
                 .teslimFotograf(dto.getTeslimFotograf())
                 .depoId(dto.getDepoId())
                 .paraBirimi(dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY")
+                .kur(kurCoz(dto))
                 .odemeYontemi(dto.getOdemeYontemi())
                 .taksitKurum(dto.getTaksitKurum())
                 .taksitTutar(dto.getTaksitTutar())
@@ -1405,6 +1406,20 @@ public class FaturaService {
         return tlKarsiliginaCevir(tutar, fatura.getParaBirimi());
     }
 
+    /** Dövizli faturada kayıt kuru: DTO'da verilmişse o, yoksa TCMB satış kuru; TL'de null. */
+    private BigDecimal kurCoz(FaturaDTO dto) {
+        String pb = dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY";
+        if ("TRY".equalsIgnoreCase(pb)) return null;
+        if (dto.getKur() != null && dto.getKur().signum() > 0) return dto.getKur();
+        try {
+            BigDecimal kur = tcmbKurService.cevir(BigDecimal.ONE, pb, "TRY");
+            return kur != null && kur.signum() > 0 ? kur : null;
+        } catch (Exception e) {
+            log.warn("Kayıt kuru alınamadı ({}): {}", pb, e.getMessage());
+            return null;
+        }
+    }
+
     private BigDecimal tlKarsiliginaCevir(BigDecimal tutar, String paraBirimi) {
         if (tutar == null) return BigDecimal.ZERO;
         if (paraBirimi == null || "TRY".equalsIgnoreCase(paraBirimi)) return tutar;
@@ -1672,6 +1687,7 @@ public class FaturaService {
                 .posAd(fatura.getPosAd())
                 .komisyonTutar(fatura.getKomisyonTutar())
                 .valorTarihi(fatura.getValorTarihi())
+                .kur(fatura.getKur())
                 .taksitTutar(fatura.getTaksitTutar())
                 .kasaId(fatura.getKasaId())
                 .kasaAd(fatura.getKasaId() != null ? kasaHaritasi.get(fatura.getKasaId()) : null)

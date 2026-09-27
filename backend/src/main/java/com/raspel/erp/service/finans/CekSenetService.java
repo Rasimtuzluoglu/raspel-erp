@@ -31,6 +31,7 @@ public class CekSenetService {
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
 
     @Transactional(readOnly = true)
     public Page<CekSenetDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -113,6 +114,7 @@ public class CekSenetService {
         CekSenet kaydedilen = cekSenetRepository.save(cs);
         if (yeniTahsil) {
             tahsilatiIsle(kaydedilen, kasaId, bankaId, faturaId != null ? faturaId : kaydedilen.getFaturaId());
+            otomatikMuhasebeService.cekSenetTahsilIsle(kaydedilen, kasaId, bankaId);
         }
         return entityToDTO(kaydedilen);
     }

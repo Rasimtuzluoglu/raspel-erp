@@ -22,5 +22,13 @@ public interface MuhasebeFisKalemRepository extends JpaRepository<MuhasebeFisKal
                                                             @Param("baslangic") LocalDate baslangic,
                                                             @Param("bitis") LocalDate bitis);
 
+    /** Dönem içi, iptal edilmemiş fişlerin kalemleri (yıl sonu kapanışı için). */
+    @Query("SELECT k FROM MuhasebeFisKalem k WHERE k.fisId IN "
+            + "(SELECT f.id FROM MuhasebeFisi f WHERE f.sirketId = :sirketId AND f.durum <> 'IPTAL' "
+            + "AND f.tarih >= :baslangic AND f.tarih <= :bitis) ORDER BY k.hesapKodu, k.id")
+    List<MuhasebeFisKalem> aktifKalemler(@Param("sirketId") Long sirketId,
+                                         @Param("baslangic") LocalDate baslangic,
+                                         @Param("bitis") LocalDate bitis);
+
     void deleteByFisId(Long fisId);
 }

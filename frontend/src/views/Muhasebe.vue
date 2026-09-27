@@ -16,6 +16,14 @@
         icon="pi pi-plus"
         @click="fisDialogAc()"
       />
+      <Button
+        v-if="aktifSekme === 1"
+        :label="t('muhasebe.fxDegerleme')"
+        icon="pi pi-dollar"
+        class="p-button-outlined"
+        :loading="fxYukleniyor"
+        @click="fxDegerlemeCalistir"
+      />
     </div>
 
     <IlkZiyaretIpuclari
@@ -912,6 +920,29 @@ const fisleriYukle = async () => {
     toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataFisler'))
   }
   fisYukleniyor.value = false
+}
+
+const fxYukleniyor = ref(false)
+const fxDegerlemeCalistir = () => {
+  confirm.require({
+    message: t('muhasebe.fxOnayMesaj'),
+    header: t('muhasebe.fxDegerleme'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('common.evet'),
+    rejectLabel: t('common.vazgec'),
+    accept: async () => {
+      fxYukleniyor.value = true
+      try {
+        await muhasebeAPI.fxDegerleme(getLocalDateString())
+        toastBildirim.basarili(t('muhasebe.fxTamam'))
+        await fisleriYukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('muhasebe.fxHata'))
+      } finally {
+        fxYukleniyor.value = false
+      }
+    }
+  })
 }
 
 const kalemEkle = () => fisForm.value.kalemler.push({ hesapKodu: null, borc: 0, alacak: 0 })

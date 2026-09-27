@@ -37,6 +37,7 @@ class CekSenetServiceTest {
     @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private CekSenetService cekSenetService;
 
     private CekSenet createCekSenet(Long id) {

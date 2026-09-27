@@ -30,6 +30,12 @@ class MasrafServiceTest {
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
+    @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private MasrafService masrafService;
 
     private Masraf ornekMasraf(Long id) {
@@ -72,6 +78,38 @@ class MasrafServiceTest {
         var sonuc = masrafService.olustur(dto, 1L);
         assertEquals("Yakıt", sonuc.getAciklama());
         assertEquals(1L, sonuc.getSirketId());
+    }
+
+    @Test
+    void olustur_kdvAyristirilirVeKasadanOdemeIslenir() {
+        MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now())
+                .tutar(new BigDecimal("120")).kdvOrani(new BigDecimal("20"))
+                .kasaId(5L).aciklama("Yakıt").build();
+        when(masrafRepository.save(any(Masraf.class))).thenAnswer(inv -> {
+            Masraf m = inv.getArgument(0);
+            m.setId(1L);
+            return m;
+        });
+        com.raspel.erp.entity.finans.Kasa kasa = com.raspel.erp.entity.finans.Kasa.builder()
+                .id(5L).ad("Merkez").bakiye(new BigDecimal("1000")).sirketId(1L).build();
+        when(kasaRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(kasa));
+
+        var sonuc = masrafService.olustur(dto, 1L);
+
+        // 120 TL KDV dahil: matrah 100, KDV 20; kasa 880'e düşer.
+        assertEquals(0, sonuc.getMatrah().compareTo(new BigDecimal("100")));
+        assertEquals(0, sonuc.getKdvTutar().compareTo(new BigDecimal("20")));
+        assertEquals(0, kasa.getBakiye().compareTo(new BigDecimal("880")));
+        verify(kasaHareketRepository).save(any(com.raspel.erp.entity.finans.KasaHareket.class));
+        verify(otomatikMuhasebeService).masrafIsle(any(Masraf.class));
+    }
+
+    @Test
+    void olustur_hemKasaHemBankaReddedilir() {
+        MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now())
+                .tutar(new BigDecimal("100")).kasaId(5L).bankaId(6L).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> masrafService.olustur(dto, 1L));
     }
 
     @Test

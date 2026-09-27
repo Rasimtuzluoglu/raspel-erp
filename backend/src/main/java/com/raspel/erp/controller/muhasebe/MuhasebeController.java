@@ -25,9 +25,22 @@ import com.raspel.erp.entity.muhasebe.HesapPlani;
 public class MuhasebeController {
 
     private final MuhasebeService muhasebeService;
+    private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
 
     private Long sirketId(HttpServletRequest request) {
         return (Long) request.getAttribute("sirketId");
+    }
+
+    @PostMapping("/fx-degerleme")
+    @Operation(summary = "Dönem sonu kur değerlemesi",
+            description = "Kalanı olan dövizli faturalar için kayıt kuru ile güncel TCMB kuru arasındaki farkı kambiyo kâr/zararı olarak işler (idempotent).")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<java.util.Map<String, Object>> fxDegerleme(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tarih) {
+        Long sirketId = sirketId(request);
+        otomatikMuhasebeService.fxDegerlemeFisi(sirketId, tarih);
+        return ResponseEntity.ok(java.util.Map.of("durum", "TAMAM"));
     }
 
     // HESAP PLANI

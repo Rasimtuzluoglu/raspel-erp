@@ -32,6 +32,12 @@
     >
       <h2 class="seksiyon-baslik">
         <i class="pi pi-file-edit" /> {{ t('vergiRaporlari.kdvBeyannamesi') }} — {{ kdvBeyanname.donem }}
+        <Button
+          icon="pi pi-file-excel"
+          :label="t('vergiRaporlari.excelIndir')"
+          class="p-button-sm p-button-outlined seksiyon-excel"
+          @click="excelIndir('kdv')"
+        />
       </h2>
       <div class="kdv-ozet">
         <div class="ozet-kutu">
@@ -129,6 +135,12 @@
     >
       <h2 class="seksiyon-baslik">
         <i class="pi pi-chart-bar" /> {{ t('vergiRaporlari.baBsForm') }} ({{ t('vergiRaporlari.esik') }}: <span class="gizli-veri">{{ formatCurrency(bsRapor?.esik || baRapor?.esik) }}</span>)
+        <Button
+          icon="pi pi-file-excel"
+          :label="t('vergiRaporlari.excelIndir')"
+          class="p-button-sm p-button-outlined seksiyon-excel"
+          @click="excelIndir('babs')"
+        />
       </h2>
       <div class="ba-bs-secim">
         <SelectButton
@@ -207,7 +219,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { raporAPI } from '../api/index.js'
+import { raporAPI, excelAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import SelectButton from 'primevue/selectbutton'
 import { formatCurrency } from '../utils/format.js'
@@ -246,6 +258,25 @@ const yukle = async () => {
 }
 
 onMounted(yukle)
+
+// KDV beyannamesi ve BA/BS formunu Excel (.xlsx) olarak indirir.
+const excelIndir = async (tip) => {
+  try {
+    const res = tip === 'kdv'
+      ? await excelAPI.kdvBeyannameExcel(donem.value)
+      : await excelAPI.baBsExcel({ donem: donem.value, tur: aktifBs.value ? 'BS' : 'BA' })
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = tip === 'kdv'
+      ? `KDV-Beyanname-${donem.value}.xlsx`
+      : `BA-BS-${aktifBs.value ? 'BS' : 'BA'}-${donem.value}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+  } catch {
+    toastBildirim.hata(t('vergiRaporlari.excelHata'))
+  }
+}
 </script>
 
 <style scoped>
@@ -282,6 +313,9 @@ onMounted(yukle)
   font-size: 18px;
   margin-bottom: 16px;
   color: var(--text-primary);
+}
+.seksiyon-excel {
+  margin-left: auto;
 }
 .seksiyon-baslik i {
   color: var(--accent);

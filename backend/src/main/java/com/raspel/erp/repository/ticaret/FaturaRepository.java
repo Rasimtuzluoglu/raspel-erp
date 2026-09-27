@@ -113,6 +113,11 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdAndDurumNotAndOdemeDurumuNotIn(Long sirketId, Fatura.FaturaDurum durum, java.util.List<String> odemeDurumlari);
 
+    /** Kalanı olan dövizli faturalar (dönem sonu kur değerlemesi için). */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findBySirketIdAndDurumAndParaBirimiNotAndKalanTutarGreaterThan(
+            Long sirketId, Fatura.FaturaDurum durum, String paraBirimi, java.math.BigDecimal kalanTutar);
+
     /**
      * Vadesi geçmiş faturaların kalan tutar toplamı (yalnızca toplam gerektiğinde;
      * entity listesi yüklenmez, bellek/OOM riski oluşmaz).

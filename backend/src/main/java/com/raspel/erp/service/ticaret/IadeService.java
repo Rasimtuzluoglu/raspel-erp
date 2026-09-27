@@ -54,6 +54,7 @@ public class IadeService {
     private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
+    private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -125,6 +126,7 @@ public class IadeService {
 
         if ("TAMAMLANDI".equals(iade.getDurum())) {
             stokHareketleriIsle(iade);
+            otomatikMuhasebeService.iadeIsle(iade);
         }
 
         return entityToDTO(iade);
@@ -251,9 +253,12 @@ public class IadeService {
         boolean iptalEdildi = "IPTAL".equals(iade.getDurum()) && "TAMAMLANDI".equals(eskiDurum);
         if (yeniTamamlandi) {
             stokHareketleriIsle(iade);
+            otomatikMuhasebeService.iadeIsle(iade);
             cacheYardimci.temizle("stoklar", "dashboard");
         } else if (iptalEdildi) {
             stokHareketleriniTersineCevir(iade);
+            otomatikMuhasebeService.kaynakFisIptal(iade.getSirketId(),
+                    com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_IADE, iade.getId());
             cacheYardimci.temizle("stoklar", "dashboard");
         }
 
@@ -281,9 +286,13 @@ public class IadeService {
         }
         if ("TAMAMLANDI".equals(yeniDurum) && !"TAMAMLANDI".equals(iade.getDurum())) {
             stokHareketleriIsle(iade);
+            iade.setDurum(yeniDurum);
+            otomatikMuhasebeService.iadeIsle(iade);
             cacheYardimci.temizle("stoklar", "dashboard");
         } else if ("IPTAL".equals(yeniDurum) && "TAMAMLANDI".equals(iade.getDurum())) {
             stokHareketleriniTersineCevir(iade);
+            otomatikMuhasebeService.kaynakFisIptal(iade.getSirketId(),
+                    com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_IADE, iade.getId());
             cacheYardimci.temizle("stoklar", "dashboard");
         }
         iade.setDurum(yeniDurum);

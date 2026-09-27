@@ -111,6 +111,10 @@ public class Fatura {
     @Column(name = "para_birimi", length = 10)
     private String paraBirimi;
 
+    /** Kayıt anındaki kur (1 birim döviz = ? TL); dönem sonu değerlemesi için. */
+    @Column(precision = 19, scale = 6)
+    private BigDecimal kur;
+
     @Column(name = "odeme_yontemi", length = 20)
     private String odemeYontemi;
 

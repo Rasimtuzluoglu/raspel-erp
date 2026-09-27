@@ -80,6 +80,12 @@ export const excelAPI = {
   },
   karZarar(params) {
     return apiClient.get('/exports/kar-zarar', { params, responseType: 'blob' })
+  },
+  kdvBeyannameExcel(donem) {
+    return apiClient.get('/exports/kdv-beyanname', { params: { donem }, responseType: 'blob' })
+  },
+  baBsExcel(params) {
+    return apiClient.get('/exports/ba-bs', { params, responseType: 'blob' })
   }
 }
 

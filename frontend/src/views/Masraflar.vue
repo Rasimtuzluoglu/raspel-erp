@@ -116,10 +116,48 @@
           />
         </div>
         <div class="field">
+          <label>{{ t('masraflar.kdvOrani') }}</label><InputNumber
+            v-model="form.kdvOrani"
+            :min="0"
+            :max="100"
+            :suffix="' %'"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
           <label>{{ t('masraflar.belgeNo') }}</label><InputText
             v-model="form.belgeNo"
             class="w-full"
           />
+        </div>
+        <div class="field">
+          <label>{{ t('masraflar.odemeKasa') }}</label><Dropdown
+            v-model="form.kasaId"
+            :options="kasalar"
+            option-label="ad"
+            option-value="id"
+            :placeholder="t('masraflar.opsiyonel')"
+            show-clear
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('masraflar.odemeBanka') }}</label><Dropdown
+            v-model="form.bankaId"
+            :options="bankalar"
+            option-label="ad"
+            option-value="id"
+            :placeholder="t('masraflar.opsiyonel')"
+            show-clear
+            class="w-full"
+          />
+        </div>
+        <div
+          v-if="!duzenleme && form.tutar > 0"
+          class="field full-width kdv-ozet"
+        >
+          <span>{{ t('masraflar.matrah') }}: <strong>{{ formatCurrency(matrah) }}</strong></span>
+          <span>{{ t('masraflar.kdvTutar') }}: <strong>{{ formatCurrency(kdvTutar) }}</strong></span>
         </div>
       </div>
       <template #footer>
@@ -146,7 +184,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { masrafAPI } from '../api/index.js'
+import { masrafAPI, kasaAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -160,7 +198,23 @@ const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
-const form = ref({ tarih: new Date(), kategori: '', aciklama: '', tutar: 0, belgeNo: '' })
+const kasalar = ref([])
+const bankalar = ref([])
+const bosForm = () => ({
+  tarih: new Date(), kategori: '', aciklama: '', tutar: 0, belgeNo: '',
+  kdvOrani: 20, kasaId: null, bankaId: null
+})
+const form = ref(bosForm())
+
+// Tutar KDV DAHİL kabul edilir; matrah ve KDV kullanıcıya gösterilir.
+const kdvTutar = computed(() => {
+  const tutar = Number(form.value.tutar || 0)
+  const oran = Number(form.value.kdvOrani || 0)
+  if (!tutar || !oran) return 0
+  const net = tutar / (1 + oran / 100)
+  return Math.round((tutar - net) * 100) / 100
+})
+const matrah = computed(() => Math.round((Number(form.value.tutar || 0) - kdvTutar.value) * 100) / 100)
 
 const dialogHeader = computed(() => (duzenleme.value ? t('masraflar.duzenle') : t('masraflar.yeniMasraf')))
 
@@ -174,6 +228,15 @@ onMounted(async () => {
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('masraflar.hataYukleme'))
   }
+  // Kasa/banka listeleri hata verse bile masraf listesi gösterilir.
+  try {
+    const [kasaRes, bankaRes] = await Promise.all([kasaAPI.getAllKasalar(), bankaAPI.getAll()])
+    kasalar.value = unwrapList(kasaRes)
+    bankalar.value = unwrapList(bankaRes)
+  } catch {
+    kasalar.value = []
+    bankalar.value = []
+  }
   yukleniyor.value = false
 })
 
@@ -181,14 +244,23 @@ const dialogAc = (data) => {
   duzenleme.value = !!data
   form.value = data
     ? { ...data, tarih: data.tarih ? new Date(data.tarih) : new Date() }
-    : { tarih: new Date(), kategori: '', aciklama: '', tutar: 0, belgeNo: '' }
+    : bosForm()
   dialog.value = true
 }
 
 const kaydet = async () => {
+  if (form.value.kasaId && form.value.bankaId) {
+    toastBildirim.uyari(t('masraflar.tekHesap'))
+    return
+  }
   kaydediliyor.value = true
   try {
-    const payload = { ...form.value, tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null }
+    const payload = {
+      ...form.value,
+      tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null,
+      // Ödeme hesabı yalnızca oluşturmada işlenir; güncellemede değiştirilmez.
+      ...(duzenleme.value ? { kasaId: undefined, bankaId: undefined, odemeYontemi: undefined } : {})
+    }
     if (duzenleme.value) {
       await masrafAPI.update(form.value.id, payload)
       toastBildirim.basarili(t('masraflar.guncellendi'))
@@ -239,6 +311,15 @@ const sil = (data) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.kdv-ozet {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--surface-100, rgba(148, 163, 184, 0.08));
+  border-radius: 8px;
+  padding: 8px 12px;
 }
 .field {
   display: flex;

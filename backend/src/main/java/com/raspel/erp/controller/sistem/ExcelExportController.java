@@ -51,6 +51,57 @@ public class ExcelExportController {
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
     private final MuhasebeService muhasebeService;
+    private final com.raspel.erp.service.sistem.RaporService raporService;
+
+    @GetMapping("/kdv-beyanname")
+    @Operation(summary = "KDV beyannamesini Excel dışa aktar",
+            description = "YYYY-MM dönemi KDV beyanname hazırlığını (matrah + KDV oran bazlı) Excel (.xlsx) olarak dışa aktarır")
+    public ResponseEntity<byte[]> kdvBeyanname(HttpServletRequest req, @RequestParam String donem) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var kdv = raporService.kdvBeyannameGetir(donem, sirketId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (var s : kdv.getSatislar()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Tablo", "HESAPLANAN"); m.put("Oran", s.getKdvOrani()); m.put("Matrah", s.getMatrah()); m.put("KDV", s.getKdv());
+            rows.add(m);
+        }
+        for (var s : kdv.getAlislar()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Tablo", "INDIRILECEK"); m.put("Oran", s.getKdvOrani()); m.put("Matrah", s.getMatrah()); m.put("KDV", s.getKdv());
+            rows.add(m);
+        }
+        Map<String, Object> ozet = new LinkedHashMap<>();
+        ozet.put("Tablo", "OZET"); ozet.put("Oran", "");
+        ozet.put("Matrah", "Hesaplanan: " + kdv.getToplamHesaplananKdv()
+                + " | İndirilecek: " + kdv.getToplamIndirilecekKdv()
+                + " | Ödenecek: " + kdv.getOdenecekKdv()
+                + " | Devreden: " + kdv.getDevredenKdv());
+        ozet.put("KDV", "");
+        rows.add(ozet);
+        return excel("KDVBeyanname-" + donem, new String[]{"Tablo", "Oran", "Matrah", "KDV"}, rows);
+    }
+
+    @GetMapping("/ba-bs")
+    @Operation(summary = "BA/BS formunu Excel dışa aktar",
+            description = "Belirtilen dönem için BA (alış) veya BS (satış) formu kayıtlarını Excel (.xlsx) olarak dışa aktarır")
+    public ResponseEntity<byte[]> baBs(
+            HttpServletRequest req,
+            @RequestParam String donem,
+            @RequestParam(defaultValue = "BS") String tur,
+            @RequestParam(required = false) java.math.BigDecimal esik) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var babs = raporService.baBsGetir(donem, tur, esik, sirketId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (var k : babs.getKayitlar()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Fatura No", k.getFaturaNo()); m.put("Tarih", k.getTarih());
+            m.put("Cari", k.getCariAd()); m.put("VKN", k.getCariVkn());
+            m.put("Matrah", k.getMatrah()); m.put("KDV", k.getKdv()); m.put("Tutar", k.getTutar());
+            rows.add(m);
+        }
+        return excel("BA-BS-" + babs.getTur() + "-" + donem,
+                new String[]{"Fatura No", "Tarih", "Cari", "VKN", "Matrah", "KDV", "Tutar"}, rows);
+    }
 
     @GetMapping("/cari-hesaplar")
     @Operation(summary = "Cari hesapları Excel dışa aktar", description = "Cari hesapları Excel (.xlsx) dosyası olarak dışa aktarır")

@@ -36,6 +36,7 @@ class MuhasebeControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean private MuhasebeService muhasebeService;
+    @MockBean private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
 
     private HesapPlaniDTO hesapOrnek() {
         return HesapPlaniDTO.builder().id(1L).kod("100").ad("Kasa").tip("AKTIF").sirketId(1L).aktif(true).build();

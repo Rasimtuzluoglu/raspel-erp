@@ -36,6 +36,30 @@ public class Masraf {
     @Column(name = "belge_no", length = 50)
     private String belgeNo;
 
+    /** KDV oranı (%). Tutar KDV DAHİL kabul edilir. */
+    @Column(name = "kdv_orani", precision = 5, scale = 2)
+    private BigDecimal kdvOrani;
+
+    /** KDV tutarı (tutardan ayrıştırılır). */
+    @Column(name = "kdv_tutar", precision = 19, scale = 2)
+    private BigDecimal kdvTutar;
+
+    /** KDV hariç matrah. */
+    @Column(precision = 19, scale = 2)
+    private BigDecimal matrah;
+
+    /** Ödeme yöntemi: NAKIT, HAVALE, KART vb. */
+    @Column(name = "odeme_yontemi", length = 20)
+    private String odemeYontemi;
+
+    /** Ödeme yapılan kasa (varsa masraf anında çıkış işlenir). */
+    @Column(name = "kasa_id")
+    private Long kasaId;
+
+    /** Ödeme yapılan banka (varsa masraf anında çıkış işlenir). */
+    @Column(name = "banka_id")
+    private Long bankaId;
+
     @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 

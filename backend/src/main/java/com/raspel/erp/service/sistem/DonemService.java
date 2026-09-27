@@ -28,6 +28,7 @@ public class DonemService {
     private final DonemRepository donemRepository;
     private final DonemKapanisRepository donemKapanisRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
 
     @Transactional(readOnly = true)
     public Page<DonemDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -214,6 +215,10 @@ public class DonemService {
         }
 
         Long kilitKullaniciId = kullaniciId != null ? kullaniciId : tenantChecker.getCurrentKullaniciId();
+
+        // Kapanış fişi dönem kilitlenmeden önce üretilir (6xx hesaplar 690'a aktarılır).
+        otomatikMuhasebeService.yilSonuKapanisFisi(sirketId, yil);
+
         for (Donem d : kapsanan) {
             d.setKilitli(true);
             d.setKilitTarihi(LocalDateTime.now());
