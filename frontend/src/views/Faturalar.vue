@@ -230,6 +230,7 @@
         </Column>
         <template #batch-actions>
           <Button
+            v-permission="'FATURA_DELETE'"
             :label="t('faturalar.secilenleriSil')"
             icon="pi pi-trash"
             class="p-button-danger p-button-sm"

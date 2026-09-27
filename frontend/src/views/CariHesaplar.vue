@@ -254,6 +254,7 @@
           />
           <Button
             v-if="isAdmin"
+            v-permission="'CARI_DELETE'"
             :label="t('cariHesaplar.topluSil')"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"

@@ -83,6 +83,7 @@
             @click.stop="editKasa(kasa)"
           />
           <Button
+            v-permission="'FINANS_DELETE'"
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-danger p-button-sm"

@@ -15,6 +15,9 @@ import java.util.List;
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<AuditLog> findByKullaniciIdOrderByTarihDesc(Long kullaniciId);
 
+    /** Saklama süresi dolan denetim kayıtlarını siler (retention job). */
+    long deleteByTarihBefore(java.time.LocalDateTime tarih);
+
     @Query(value = "SELECT DISTINCT a.islem FROM sistem.audit_log a ORDER BY a.islem", nativeQuery = true)
     List<String> findDistinctIslem();
 

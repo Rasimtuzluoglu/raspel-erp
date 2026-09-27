@@ -36,12 +36,18 @@ public class SistemDurumService {
     private final HataLogRepository hataLogRepository;
     private final BackupService backupService;
     private final DosyaDepolamaService dosyaDepolama;
+    private final com.raspel.erp.repository.sistem.AuditLogRepository auditLogRepository;
+    private final com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
 
     @Value("${app.version:1.15.0}")
     private String surum;
 
     @Value("${app.hata-log.retention-days:30}")
     private long hataLogRetentionGun;
+
+    /** Denetim kayıtlarının saklama süresi (gün). Varsayılan 2 yıl. */
+    @Value("${app.audit.retention-days:730}")
+    private long auditRetentionGun;
 
     /**
      * Hata loglarının sınırsız büyümesini önler. Varsayılan olarak 30 günden eski
@@ -59,6 +65,34 @@ public class SistemDurumService {
             }
         } catch (Exception e) {
             log.warn("Eski hata logları temizlenemedi: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Denetim (audit) kayıtları ve süresi dolmuş/kullanılmış şifre sıfırlama token'ları
+     * sınırsız büyümesin diye her gece temizlenir. Saklama süresi app.audit.retention-days
+     * (varsayılan 730 gün) ile ayarlanır; token'lar süresi dolunca/kullanılınca silinir.
+     */
+    @Scheduled(cron = "0 15 4 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "eskiDenetimKayitlariTemizligi", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
+    @Transactional
+    public void eskiDenetimKayitlariniTemizle() {
+        try {
+            long silinen = auditLogRepository.deleteByTarihBefore(
+                    LocalDateTime.now().minusDays(auditRetentionGun));
+            if (silinen > 0) {
+                log.info("Eski denetim kayıtları temizlendi: {} kayıt ({} günden eski)", silinen, auditRetentionGun);
+            }
+        } catch (Exception e) {
+            log.warn("Eski denetim kayıtları temizlenemedi: {}", e.getMessage());
+        }
+        try {
+            int token = sifreSifirlaTokenRepository.eskiTokenlariTemizle(LocalDateTime.now());
+            if (token > 0) {
+                log.info("Süresi dolmuş/kullanılmış şifre sıfırlama token'ları temizlendi: {}", token);
+            }
+        } catch (Exception e) {
+            log.warn("Şifre sıfırlama token'ları temizlenemedi: {}", e.getMessage());
         }
     }
 

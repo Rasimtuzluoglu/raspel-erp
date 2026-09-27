@@ -27,6 +27,7 @@
         >
           <span class="batch-count">{{ seciliStoklar ? seciliStoklar.length : 0 }} {{ t('stoklar.secili') }}</span>
           <Button
+            v-permission="'STOK_DELETE'"
             :label="t('stoklar.topluSil')"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"

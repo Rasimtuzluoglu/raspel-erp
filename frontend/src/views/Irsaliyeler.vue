@@ -79,6 +79,7 @@
             @click="pdfIndir(data)"
           />
           <Button
+            v-permission="'IRSALIYE_DELETE'"
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"

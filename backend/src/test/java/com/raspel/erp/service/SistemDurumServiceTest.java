@@ -29,6 +29,8 @@ class SistemDurumServiceTest {
     @Mock private HataLogRepository hataLogRepository;
     @Mock private BackupService backupService;
     @Mock private DosyaDepolamaService dosyaDepolama;
+    @Mock private com.raspel.erp.repository.sistem.AuditLogRepository auditLogRepository;
+    @Mock private com.raspel.erp.repository.sistem.SifreSifirlaTokenRepository sifreSifirlaTokenRepository;
     @InjectMocks private SistemDurumService sistemDurumService;
 
     private void adminOlarakGiris() {
@@ -89,5 +91,17 @@ class SistemDurumServiceTest {
         } finally {
             SecurityContextHolder.clearContext();
         }
+    }
+
+    @Test
+    void eskiDenetimKayitlariniTemizle_auditVeTokenTemizler() {
+        ReflectionTestUtils.setField(sistemDurumService, "auditRetentionGun", 730L);
+        when(auditLogRepository.deleteByTarihBefore(any())).thenReturn(5L);
+        when(sifreSifirlaTokenRepository.eskiTokenlariTemizle(any())).thenReturn(3);
+
+        sistemDurumService.eskiDenetimKayitlariniTemizle();
+
+        verify(auditLogRepository).deleteByTarihBefore(any(java.time.LocalDateTime.class));
+        verify(sifreSifirlaTokenRepository).eskiTokenlariTemizle(any(java.time.LocalDateTime.class));
     }
 }
