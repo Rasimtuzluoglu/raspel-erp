@@ -17,27 +17,47 @@
         <button
           type="button"
           class="pos-tercih-btn"
-          :class="{ aktif: buyukYazi }"
-          :title="t('hizliSatis.buyukYazi')"
-          :aria-pressed="buyukYazi"
-          @click="buyukYaziToggle"
+          :class="{ aktif: buyukYazi || onayIste }"
+          :title="t('hizliSatis.tercihler')"
+          :aria-label="t('hizliSatis.tercihler')"
+          @click="tercihPopover.toggle($event)"
         >
-          <i class="pi pi-search-plus" />
+          <i class="pi pi-cog" />
         </button>
-        <button
-          type="button"
-          class="pos-tercih-btn"
-          :class="{ aktif: onayIste }"
-          :title="t('hizliSatis.onayIste')"
-          :aria-pressed="onayIste"
-          @click="onayIsteToggle"
-        >
-          <i class="pi pi-check-square" />
-        </button>
+        <Popover ref="tercihPopover">
+          <div class="tercih-panel">
+            <div class="tercih-baslik">
+              {{ t('hizliSatis.tercihler') }}
+            </div>
+            <label class="tercih-satir">
+              <span class="tercih-metin">{{ t('hizliSatis.buyukYazi') }}</span>
+              <ToggleSwitch
+                v-model="buyukYazi"
+                @change="buyukYaziKaydet"
+              />
+            </label>
+            <label class="tercih-satir">
+              <span class="tercih-metin">{{ t('hizliSatis.onayIste') }}</span>
+              <ToggleSwitch
+                v-model="onayIste"
+                @change="onayIsteKaydet"
+              />
+            </label>
+            <label class="tercih-satir">
+              <span class="tercih-metin">{{ t('hizliSatis.kisayolIpucu') }}</span>
+              <ToggleSwitch
+                v-model="ipucuAcik"
+                @change="ipucuKaydet"
+              />
+            </label>
+          </div>
+        </Popover>
         <button
           type="button"
           class="pos-ipucu-btn"
           :title="t('hizliSatis.kisayolIpucu')"
+          :aria-label="t('hizliSatis.kisayolIpucu')"
+          :aria-pressed="ipucuAcik"
           @click="ipucuToggle"
         >
           <i class="pi pi-question-circle" />
@@ -73,7 +93,7 @@
     <div class="pos-body">
       <div class="pos-left">
         <div class="pos-arac-cubugu">
-          <span class="p-input-icon-left arama-kutusu">
+          <span class="p-input-icon-left arama-kutusu barkod-kutu">
             <i class="pi pi-barcode" />
             <InputText
               ref="barkodInputRef"
@@ -83,6 +103,15 @@
               autofocus
               @keyup.enter="globalBarkodEkle"
             />
+            <button
+              type="button"
+              class="alan-ikon-sag"
+              :title="t('hizliSatis.barkodKamera')"
+              :aria-label="t('hizliSatis.barkodKamera')"
+              @click="scannerAcik = true"
+            >
+              <i class="pi pi-camera" />
+            </button>
           </span>
           <span class="p-input-icon-left arama-kutusu">
             <i class="pi pi-search" />
@@ -93,28 +122,89 @@
               class="w-full"
             />
           </span>
-          <Dropdown
-            v-model="filtreKategori"
-            :options="kategoriler"
-            option-label="ad"
-            :placeholder="t('hizliSatis.kategori')"
-            class="arac-dropdown"
-            show-clear
-          />
-          <Dropdown
-            v-model="filtreArac"
-            :options="aracListesi"
-            :placeholder="t('hizliSatis.marka')"
-            class="arac-dropdown"
-            show-clear
-          />
-          <Button
-            icon="pi pi-camera"
-            :label="t('hizliSatis.barkod')"
-            severity="secondary"
-            outlined
-            @click="scannerAcik = true"
-          />
+          <button
+            type="button"
+            class="filtre-btn"
+            :class="{ 'filtre-aktif': aktifFiltreSayisiPos > 0 }"
+            :title="t('hizliSatis.filtreler')"
+            :aria-label="t('hizliSatis.filtreler')"
+            @click="filtrePopover.toggle($event)"
+          >
+            <i class="pi pi-filter" />
+            <span class="filtre-btn-metin">{{ t('hizliSatis.filtreler') }}</span>
+            <span
+              v-if="aktifFiltreSayisiPos > 0"
+              class="filtre-rozet"
+            >{{ aktifFiltreSayisiPos }}</span>
+          </button>
+          <Popover ref="filtrePopover">
+            <div class="filtre-panel">
+              <div class="filtre-panel-baslik">
+                {{ t('hizliSatis.filtreler') }}
+              </div>
+              <div class="filtre-alan">
+                <label>{{ t('hizliSatis.kategori') }}</label>
+                <Dropdown
+                  v-model="filtreKategori"
+                  :options="kategoriler"
+                  option-label="ad"
+                  :placeholder="t('hizliSatis.tumu')"
+                  class="w-full"
+                  show-clear
+                />
+              </div>
+              <div class="filtre-alan">
+                <label>{{ t('hizliSatis.marka') }}</label>
+                <Dropdown
+                  v-model="filtreArac"
+                  :options="aracListesi"
+                  :placeholder="t('hizliSatis.tumu')"
+                  class="w-full"
+                  show-clear
+                />
+              </div>
+            </div>
+          </Popover>
+        </div>
+
+        <!-- Aktif filtreler: tek tıkla temizlenebilir çipler -->
+        <div
+          v-if="aktifFiltreSayisiPos > 0"
+          class="aktif-filtreler"
+        >
+          <span
+            v-if="filtreKategori"
+            class="aktif-filtre-cip"
+          >
+            <i class="pi pi-tag" /> {{ filtreKategori.ad }}
+            <button
+              type="button"
+              :aria-label="t('hizliSatis.filtreKaldir')"
+              @click="filtreKategori = null"
+            >
+              <i class="pi pi-times" />
+            </button>
+          </span>
+          <span
+            v-if="filtreArac"
+            class="aktif-filtre-cip"
+          >
+            <i class="pi pi-car" /> {{ filtreArac }}
+            <button
+              type="button"
+              :aria-label="t('hizliSatis.filtreKaldir')"
+              @click="filtreArac = null"
+            >
+              <i class="pi pi-times" />
+            </button>
+          </span>
+          <button
+            type="button"
+            class="aktif-filtre-temizle"
+            @click="filtreKategori = null; filtreArac = null"
+          >
+            {{ t('hizliSatis.filtreTemizle') }}
+          </button>
         </div>
 
         <div
@@ -218,15 +308,16 @@
               <div class="product-icerik">
                 <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
                 <span class="product-name">{{ u.ad }}</span>
-                <div class="product-alt-satir">
-                  <span
-                    v-if="u.stokGrubu"
-                    class="product-grup"
-                  >{{ u.stokGrubu }}</span>
-                  <Tag
-                    :value="stokEtiketi(u)"
-                    :severity="stokYokMu(u) ? 'danger' : (kritikStokMu(u) ? 'warn' : 'success')"
-                  />
+                <span
+                  v-if="u.stokGrubu"
+                  class="product-grup"
+                >{{ u.stokGrubu }}</span>
+                <div
+                  class="product-stok-satir"
+                  :class="stokRenkSinifi(u)"
+                >
+                  <i class="pi pi-warehouse" />
+                  <span>{{ stokEtiketi(u) }}</span>
                 </div>
                 <div class="product-fiyat-satir">
                   <span class="product-price">{{ formatCurrency(satisFiyati(u)) }}</span>
@@ -267,10 +358,22 @@
         <Card class="siparis-kart">
           <template #content>
             <div class="pos-bolum">
-              <div class="pos-bolum-baslik">
+              <div
+                class="pos-bolum-baslik katlanir-baslik"
+                :aria-expanded="musteriAcik"
+                :title="musteriAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                @click="musteriAcikDegistir"
+              >
                 <i class="pi pi-user" /> {{ t('hizliSatis.musteri') }}
+                <i
+                  class="pi katlanir-ok"
+                  :class="musteriAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                />
               </div>
-              <div class="customer-field">
+              <div
+                v-show="musteriAcik"
+                class="customer-field"
+              >
                 <SelectButton
                   v-model="musteriModu"
                   :options="musteriModlari"
@@ -373,228 +476,189 @@
                     icon="pi pi-trash"
                     severity="danger"
                     size="small"
-                    @click="sepet = []"
+                    @click.stop="sepet = []"
                   />
-                </div>
-              </div>
-              <div
-                v-if="sepet && sepet.length === 0"
-                class="sepet-bos"
-              >
-                {{ t('hizliSatis.sepeteUrunEkle') }}
-              </div>
-              <div
-                v-for="(item, idx) in sepet"
-                :key="idx"
-                class="sepet-item"
-                :class="{ 'aktif-satir': aktifSatir === idx }"
-                @click="aktifSatir = idx"
-              >
-                <div class="sepet-ust">
-                  <span
-                    class="sepet-kod"
-                    :title="item.barkod"
-                  >{{ item.barkod || item.stokKodu }}</span>
-                  <span class="sepet-ad">{{ item.ad }}</span>
-                  <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
                   <button
                     type="button"
-                    class="sepet-sil"
-                    :title="t('hizliSatis.kaldir')"
-                    @click="sepetSil(idx)"
+                    class="katlanir-ikon-btn"
+                    :aria-expanded="sepetAcik"
+                    :title="sepetAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                    :aria-label="sepetAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                    @click="sepetAcikDegistir"
                   >
-                    <i class="pi pi-times" />
+                    <i
+                      class="pi katlanir-ok"
+                      :class="sepetAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                    />
                   </button>
                 </div>
-                <div class="sepet-kontroller">
-                  <div class="sepet-adet-grup">
-                    <button
-                      type="button"
-                      class="adet-btn"
-                      :aria-label="t('hizliSatis.miktarAzalt')"
-                      :title="t('hizliSatis.miktarAzalt')"
-                      @click="miktarAzalt(idx)"
-                    >
-                      −
-                    </button>
-                    <input
-                      v-model.number="item.miktar"
-                      type="number"
-                      min="1"
-                      class="sepet-adet-input"
-                      :aria-label="t('hizliSatis.adet')"
-                      :title="t('hizliSatis.adet')"
-                    >
-                    <button
-                      type="button"
-                      class="adet-btn"
-                      :aria-label="t('hizliSatis.miktarArtir')"
-                      :title="t('hizliSatis.miktarArtir')"
-                      @click="item.miktar++"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <select
-                    v-model="item.fiyatTipi"
-                    class="fiyat-tip-select"
-                    @change="fiyatTipiDegisti(item)"
-                  >
-                    <option
-                      v-for="f in item.fiyatlar"
-                      :key="f.ad"
-                      :value="f.ad"
-                    >
-                      {{ f.ad }}
-                    </option>
-                  </select>
-                  <input
-                    v-model.number="item.fiyat"
-                    type="number"
-                    step="0.01"
-                    class="fiyat-giris-input"
-                    :title="t('hizliSatis.birimFiyati')"
-                  >
+              </div>
+              <div
+                v-show="sepetAcik"
+                class="sepet-icerik"
+              >
+                <div
+                  v-if="sepet && sepet.length === 0"
+                  class="sepet-bos"
+                >
+                  {{ t('hizliSatis.sepeteUrunEkle') }}
                 </div>
                 <div
-                  v-if="item.sonAldigiFiyat"
-                  class="sepet-son-alis"
+                  v-for="(item, idx) in sepet"
+                  :key="idx"
+                  class="sepet-item"
+                  :class="{ 'aktif-satir': aktifSatir === idx }"
+                  @click="aktifSatir = idx"
                 >
-                  <i class="pi pi-history" />
-                  {{ seciliMusteri?.ad || $t('hizliSatis.musteri') }} {{ $t('hizliSatis.sonAlisOncesi') }}
-                  <strong>{{ formatCurrency(item.sonAldigiFiyat) }}</strong>
-                  {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} {{ $t('hizliSatis.sonAlisSonrasi') }}
+                  <div class="sepet-ust">
+                    <span
+                      class="sepet-kod"
+                      :title="item.barkod"
+                    >{{ item.barkod || item.stokKodu }}</span>
+                    <span class="sepet-ad">{{ item.ad }}</span>
+                    <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
+                    <button
+                      type="button"
+                      class="sepet-sil"
+                      :title="t('hizliSatis.kaldir')"
+                      @click="sepetSil(idx)"
+                    >
+                      <i class="pi pi-times" />
+                    </button>
+                  </div>
+                  <div class="sepet-kontroller">
+                    <div class="sepet-adet-grup">
+                      <button
+                        type="button"
+                        class="adet-btn"
+                        :aria-label="t('hizliSatis.miktarAzalt')"
+                        :title="t('hizliSatis.miktarAzalt')"
+                        @click="miktarAzalt(idx)"
+                      >
+                        −
+                      </button>
+                      <input
+                        v-model.number="item.miktar"
+                        type="number"
+                        min="1"
+                        class="sepet-adet-input"
+                        :aria-label="t('hizliSatis.adet')"
+                        :title="t('hizliSatis.adet')"
+                      >
+                      <button
+                        type="button"
+                        class="adet-btn"
+                        :aria-label="t('hizliSatis.miktarArtir')"
+                        :title="t('hizliSatis.miktarArtir')"
+                        @click="item.miktar++"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <select
+                      v-model="item.fiyatTipi"
+                      class="fiyat-tip-select"
+                      @change="fiyatTipiDegisti(item)"
+                    >
+                      <option
+                        v-for="f in item.fiyatlar"
+                        :key="f.ad"
+                        :value="f.ad"
+                      >
+                        {{ f.ad }}
+                      </option>
+                    </select>
+                    <input
+                      v-model.number="item.fiyat"
+                      type="number"
+                      step="0.01"
+                      class="fiyat-giris-input"
+                      :title="t('hizliSatis.birimFiyati')"
+                    >
+                  </div>
+                  <div
+                    v-if="item.sonAldigiFiyat"
+                    class="sepet-son-alis"
+                  >
+                    <i class="pi pi-history" />
+                    {{ seciliMusteri?.ad || $t('hizliSatis.musteri') }} {{ $t('hizliSatis.sonAlisOncesi') }}
+                    <strong>{{ formatCurrency(item.sonAldigiFiyat) }}</strong>
+                    {{ item.sonAldigiTarih ? '(' + formatDate(item.sonAldigiTarih) + ')' : '' }} {{ $t('hizliSatis.sonAlisSonrasi') }}
+                  </div>
                 </div>
-              </div>
-              <hr class="ozet-ayrac">
-              <button
-                type="button"
-                class="ozet-detay-btn"
-                :aria-expanded="detayAcik"
-                @click="detayAcikDegistir"
-              >
-                <i
-                  class="pi katlanir-ok"
-                  :class="detayAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                />
-                {{ detayAcik ? t('hizliSatis.detayGizle') : t('hizliSatis.detayGoster') }}
-              </button>
-              <div
-                v-show="detayAcik"
-                class="ozet-satir"
-              >
-                <span>{{ t('hizliSatis.toplamFt3') }}</span>
-                <span>{{ toplamFt3.toFixed(2) }} ft³</span>
-              </div>
-              <div class="ozet-satir ozet-indirim-satir">
-                <span>{{ t('hizliSatis.indirim') }}</span>
-                <div class="ozet-indirim">
-                  <SelectButton
-                    v-model="indirimTipi"
-                    :options="indirimTipleri"
-                    option-label="label"
-                    option-value="value"
+                <hr class="ozet-ayrac">
+                <button
+                  type="button"
+                  class="ozet-detay-btn"
+                  :aria-expanded="detayAcik"
+                  @click="detayAcikDegistir"
+                >
+                  <i
+                    class="pi katlanir-ok"
+                    :class="detayAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
                   />
-                  <InputNumber
-                    v-model="indirimDegeri"
-                    :min="0"
-                    :max="indirimTipi === 'yuzde' ? 100 : toplam"
-                    :suffix="indirimTipi === 'yuzde' ? '%' : ' ₺'"
-                    class="indirim-input"
-                  />
+                  {{ detayAcik ? t('hizliSatis.detayGizle') : t('hizliSatis.detayGoster') }}
+                </button>
+                <div
+                  v-show="detayAcik"
+                  class="ozet-satir"
+                >
+                  <span>{{ t('hizliSatis.toplamFt3') }}</span>
+                  <span>{{ toplamFt3.toFixed(2) }} ft³</span>
                 </div>
-              </div>
-              <div class="ozet-satir ozet-genel">
-                <span>{{ t('hizliSatis.genelToplam') }}</span>
-                <span class="genel-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
+                <div class="ozet-satir ozet-indirim-satir">
+                  <span>{{ t('hizliSatis.indirim') }}</span>
+                  <div class="ozet-indirim">
+                    <SelectButton
+                      v-model="indirimTipi"
+                      :options="indirimTipleri"
+                      option-label="label"
+                      option-value="value"
+                    />
+                    <InputNumber
+                      v-model="indirimDegeri"
+                      :min="0"
+                      :max="indirimTipi === 'yuzde' ? 100 : toplam"
+                      :suffix="indirimTipi === 'yuzde' ? '%' : ' ₺'"
+                      class="indirim-input"
+                    />
+                  </div>
+                </div>
+                <div class="ozet-satir ozet-genel">
+                  <span>{{ t('hizliSatis.genelToplam') }}</span>
+                  <span class="genel-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
+                </div>
               </div>
             </div>
 
             <div class="pos-bolum">
-              <div class="pos-bolum-baslik">
-                <i class="pi pi-wallet" /> {{ t('hizliSatis.odeme') }}
-              </div>
-              <SelectButton
-                v-model="odemeDurumu"
-                :options="odemeTipleri"
-                option-label="label"
-                option-value="value"
-                class="w-full"
-              />
               <div
-                v-if="odemeDurumu !== 'yok'"
-                class="odenen-satir"
+                class="pos-bolum-baslik katlanir-baslik"
+                :aria-expanded="odemeAcik"
+                :title="odemeAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                @click="odemeAcikDegistir"
               >
-                <label>{{ t('hizliSatis.odenenTutar') }}</label>
-                <InputNumber
-                  v-model="odenenTutar"
-                  :min="0"
-                  :max="genelToplam"
-                  mode="currency"
-                  currency="TRY"
-                  locale="tr-TR"
-                  class="w-full"
+                <i class="pi pi-wallet" /> {{ t('hizliSatis.odeme') }}
+                <i
+                  class="pi katlanir-ok"
+                  :class="odemeAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
                 />
               </div>
-
-              <div
-                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
-                class="odenen-satir"
-              >
-                <label>{{ t('hizliSatis.alinanNakit') }}</label>
-                <InputNumber
-                  v-model="alinanNakit"
-                  :min="0"
-                  mode="currency"
-                  currency="TRY"
-                  locale="tr-TR"
+              <div v-show="odemeAcik">
+                <SelectButton
+                  v-model="odemeDurumu"
+                  :options="odemeTipleri"
+                  option-label="label"
+                  option-value="value"
                   class="w-full"
                 />
                 <div
-                  v-if="paraUstu > 0"
-                  class="para-ustu"
+                  v-if="odemeDurumu !== 'yok'"
+                  class="odenen-satir"
                 >
-                  <span>{{ t('hizliSatis.paraUstu') }}:</span>
-                  <strong>{{ formatCurrency(paraUstu) }}</strong>
-                </div>
-              </div>
-
-              <div
-                v-if="odemeDurumu !== 'yok'"
-                class="odenen-satir"
-              >
-                <label>{{ t('hizliSatis.odemeYontemi') }}</label>
-                <div class="odeme-yontem-grid">
-                  <button
-                    v-for="y in odemeYontemleri"
-                    :key="y.value"
-                    type="button"
-                    class="odeme-yontem-btn"
-                    :class="{ active: odemeYontemi === y.value }"
-                    @click="odemeYontemi = y.value"
-                  >
-                    <i :class="y.icon" />
-                    {{ y.label }}
-                  </button>
-                </div>
-              </div>
-
-              <div
-                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
-                class="taksit-panel"
-              >
-                <div class="odenen-satir">
-                  <label>{{ t('hizliSatis.taksitKurum') }}</label>
-                  <InputText
-                    v-model="taksitKurum"
-                    :placeholder="t('hizliSatis.taksitKurumPlaceholder')"
-                    class="w-full"
-                  />
-                </div>
-                <div class="odenen-satir">
-                  <label>{{ t('hizliSatis.taksitTutar') }}</label>
+                  <label>{{ t('hizliSatis.odenenTutar') }}</label>
                   <InputNumber
-                    v-model="taksitTutar"
+                    v-model="odenenTutar"
                     :min="0"
                     :max="genelToplam"
                     mode="currency"
@@ -603,84 +667,152 @@
                     class="w-full"
                   />
                 </div>
-                <div class="odenen-satir">
-                  <label>{{ t('hizliSatis.taksitSayisi') }}</label>
+
+                <div
+                  v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
+                  class="odenen-satir"
+                >
+                  <label>{{ t('hizliSatis.alinanNakit') }}</label>
                   <InputNumber
-                    v-model="taksitSayisi"
-                    :min="1"
-                    :max="60"
-                    show-buttons
+                    v-model="alinanNakit"
+                    :min="0"
+                    mode="currency"
+                    currency="TRY"
+                    locale="tr-TR"
+                    class="w-full"
+                  />
+                  <div
+                    v-if="paraUstu > 0"
+                    class="para-ustu"
+                  >
+                    <span>{{ t('hizliSatis.paraUstu') }}:</span>
+                    <strong>{{ formatCurrency(paraUstu) }}</strong>
+                  </div>
+                </div>
+
+                <div
+                  v-if="odemeDurumu !== 'yok'"
+                  class="odenen-satir"
+                >
+                  <label>{{ t('hizliSatis.odemeYontemi') }}</label>
+                  <div class="odeme-yontem-grid">
+                    <button
+                      v-for="y in odemeYontemleri"
+                      :key="y.value"
+                      type="button"
+                      class="odeme-yontem-btn"
+                      :class="{ active: odemeYontemi === y.value }"
+                      @click="odemeYontemi = y.value"
+                    >
+                      <i :class="y.icon" />
+                      {{ y.label }}
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
+                  class="taksit-panel"
+                >
+                  <div class="odenen-satir">
+                    <label>{{ t('hizliSatis.taksitKurum') }}</label>
+                    <InputText
+                      v-model="taksitKurum"
+                      :placeholder="t('hizliSatis.taksitKurumPlaceholder')"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="odenen-satir">
+                    <label>{{ t('hizliSatis.taksitTutar') }}</label>
+                    <InputNumber
+                      v-model="taksitTutar"
+                      :min="0"
+                      :max="genelToplam"
+                      mode="currency"
+                      currency="TRY"
+                      locale="tr-TR"
+                      class="w-full"
+                    />
+                  </div>
+                  <div class="odenen-satir">
+                    <label>{{ t('hizliSatis.taksitSayisi') }}</label>
+                    <InputNumber
+                      v-model="taksitSayisi"
+                      :min="1"
+                      :max="60"
+                      show-buttons
+                      class="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div class="odenen-satir">
+                  <label>{{ t('hizliSatis.kasa') }}</label>
+                  <Dropdown
+                    v-model="seciliKasa"
+                    :options="kasalar"
+                    option-label="ad"
+                    option-value="id"
+                    :placeholder="t('hizliSatis.kasaSecin')"
                     class="w-full"
                   />
                 </div>
-              </div>
 
-              <div class="odenen-satir">
-                <label>{{ t('hizliSatis.kasa') }}</label>
-                <Dropdown
-                  v-model="seciliKasa"
-                  :options="kasalar"
-                  option-label="ad"
-                  option-value="id"
-                  :placeholder="t('hizliSatis.kasaSecin')"
-                  class="w-full"
-                />
-              </div>
-
-              <div
-                v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
-                class="odenen-satir"
-              >
-                <label>{{ odemeYontemi === 'KART' ? t('hizliSatis.kartBankaAktar') : t('hizliSatis.havaleBanka') }}</label>
-                <Dropdown
-                  v-model="seciliBanka"
-                  :options="bankalar"
-                  option-label="ad"
-                  option-value="id"
-                  :placeholder="t('hizliSatis.bankaSecin')"
-                  show-clear
-                  class="w-full"
-                />
-              </div>
-
-              <div
-                v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
-                class="odenen-satir pos-secim"
-              >
-                <label>{{ t('hizliSatis.posTerminali') }}</label>
-                <Dropdown
-                  v-model="seciliPos"
-                  :options="posTerminalleri"
-                  option-label="ad"
-                  option-value="id"
-                  :placeholder="t('hizliSatis.posSecin')"
-                  show-clear
-                  class="w-full"
-                />
-                <small
-                  v-if="seciliPosBilgi"
-                  class="pos-komisyon-not"
+                <div
+                  v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
+                  class="odenen-satir"
                 >
-                  {{ t('hizliSatis.posKomisyonNot', {
-                    oran: seciliPosBilgi.komisyonOrani ?? 0,
-                    komisyon: formatCurrency(hesaplananKomisyon)
-                  }) }}
-                </small>
-              </div>
+                  <label>{{ odemeYontemi === 'KART' ? t('hizliSatis.kartBankaAktar') : t('hizliSatis.havaleBanka') }}</label>
+                  <Dropdown
+                    v-model="seciliBanka"
+                    :options="bankalar"
+                    option-label="ad"
+                    option-value="id"
+                    :placeholder="t('hizliSatis.bankaSecin')"
+                    show-clear
+                    class="w-full"
+                  />
+                </div>
 
-              <div class="odeme-durum">
-                <Tag
-                  :value="odemeDurumText"
-                  :severity="odemeDurumSeverity"
-                  class="w-full"
-                />
-              </div>
-              <div
-                v-if="kalanTutar > 0"
-                class="odeme-kalan"
-              >
-                <span>{{ t('hizliSatis.kalan') }}:</span>
-                <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
+                <div
+                  v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
+                  class="odenen-satir pos-secim"
+                >
+                  <label>{{ t('hizliSatis.posTerminali') }}</label>
+                  <Dropdown
+                    v-model="seciliPos"
+                    :options="posTerminalleri"
+                    option-label="ad"
+                    option-value="id"
+                    :placeholder="t('hizliSatis.posSecin')"
+                    show-clear
+                    class="w-full"
+                  />
+                  <small
+                    v-if="seciliPosBilgi"
+                    class="pos-komisyon-not"
+                  >
+                    {{ t('hizliSatis.posKomisyonNot', {
+                      oran: seciliPosBilgi.komisyonOrani ?? 0,
+                      komisyon: formatCurrency(hesaplananKomisyon)
+                    }) }}
+                  </small>
+                </div>
+
+                <div class="odeme-durum">
+                  <Tag
+                    :value="odemeDurumText"
+                    :severity="odemeDurumSeverity"
+                    class="w-full"
+                  />
+                </div>
+                <div
+                  v-if="kalanTutar > 0"
+                  class="odeme-kalan"
+                >
+                  <span>{{ t('hizliSatis.kalan') }}:</span>
+                  <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
+                </div>
               </div>
             </div>
 
@@ -1383,11 +1515,16 @@ const odaklaAktifAdet = () => {
 
 const ipucuToggle = () => {
   ipucuAcik.value = !ipucuAcik.value
+  localStorage.setItem('raspel_pos_ipucu_acik', String(ipucuAcik.value))
+}
+
+const ipucuKaydet = () => {
+  localStorage.setItem('raspel_pos_ipucu_acik', String(ipucuAcik.value))
 }
 
 const ipucuKapat = () => {
   ipucuAcik.value = false
-  localStorage.setItem('raspel_pos_ipucu_kapali', 'true')
+  localStorage.setItem('raspel_pos_ipucu_acik', 'false')
 }
 
 // POS kullanılabilirlik tercihleri (varsayılan: kapalı). Yaşlı/uzak mesafeden
@@ -1395,12 +1532,28 @@ const ipucuKapat = () => {
 const buyukYazi = ref(localStorage.getItem('raspel_pos_buyuk_yazi') === 'true')
 const onayIste = ref(localStorage.getItem('raspel_pos_onay_iste') === 'true')
 
-// Katlanabilir bolum tercihleri (varsayilanlar: fis ACik, teslimat ve gunluk KAPALI).
+// Katlanabilir bolum tercihleri (varsayilan: yalnizca musteri ACik; sepet/odeme/
+// teslimat/fis/gunluk KAPALI; kullanici secimi hatirlanir).
+const musteriAcik = ref(localStorage.getItem('raspel_pos_musteri_acik') !== 'false')
+const sepetAcik = ref(localStorage.getItem('raspel_pos_sepet_acik') === 'true')
+const odemeAcik = ref(localStorage.getItem('raspel_pos_odeme_acik') === 'true')
 const teslimatAcik = ref(localStorage.getItem('raspel_pos_teslimat_acik') === 'true')
-const fisAcik = ref(localStorage.getItem('raspel_pos_fis_acik') !== 'false')
+const fisAcik = ref(localStorage.getItem('raspel_pos_fis_acik') === 'true')
 const gunlukAcik = ref(localStorage.getItem('raspel_pos_gunluk_acik') === 'true')
 const detayAcik = ref(localStorage.getItem('raspel_pos_detay_acik') === 'true')
 
+const musteriAcikDegistir = () => {
+  musteriAcik.value = !musteriAcik.value
+  localStorage.setItem('raspel_pos_musteri_acik', String(musteriAcik.value))
+}
+const sepetAcikDegistir = () => {
+  sepetAcik.value = !sepetAcik.value
+  localStorage.setItem('raspel_pos_sepet_acik', String(sepetAcik.value))
+}
+const odemeAcikDegistir = () => {
+  odemeAcik.value = !odemeAcik.value
+  localStorage.setItem('raspel_pos_odeme_acik', String(odemeAcik.value))
+}
 const teslimatAcikDegistir = () => {
   teslimatAcik.value = !teslimatAcik.value
   localStorage.setItem('raspel_pos_teslimat_acik', String(teslimatAcik.value))
@@ -1418,13 +1571,11 @@ const detayAcikDegistir = () => {
   localStorage.setItem('raspel_pos_detay_acik', String(detayAcik.value))
 }
 
-const buyukYaziToggle = () => {
-  buyukYazi.value = !buyukYazi.value
+const buyukYaziKaydet = () => {
   localStorage.setItem('raspel_pos_buyuk_yazi', String(buyukYazi.value))
 }
 
-const onayIsteToggle = () => {
-  onayIste.value = !onayIste.value
+const onayIsteKaydet = () => {
   localStorage.setItem('raspel_pos_onay_iste', String(onayIste.value))
 }
 
@@ -1449,12 +1600,15 @@ const siralama = ref('ad')
 const gosterilenAdet = ref(60)
 const globalBarkod = ref('')
 const scannerAcik = ref(false)
+// Araç çubuğu popover'ları (filtreler + tercihler)
+const filtrePopover = ref(null)
+const tercihPopover = ref(null)
 const barkodInputRef = ref(null)
 const aramaInputRef = ref(null)
 const musteriAutoRef = ref(null)
 const aktifSatir = ref(-1)
 const sepetListeRef = ref(null)
-const ipucuAcik = ref(localStorage.getItem('raspel_pos_ipucu_kapali') !== 'true')
+const ipucuAcik = ref(localStorage.getItem('raspel_pos_ipucu_acik') === 'true')
 const hizliUrunDialog = ref(false)
 const hizliUrun = ref({ barkod: '', ad: '', fiyat: 0, miktar: 1 })
 const hizliUrunKaydediliyor = ref(false)
@@ -1495,6 +1649,9 @@ const barkodTarandi = async (barkod) => {
 
 const filtreKategori = ref(null)
 const filtreArac = ref(null)
+
+// Araç çubuğundaki filtre rozeti: kaç filtre aktif?
+const aktifFiltreSayisiPos = computed(() => (filtreKategori.value ? 1 : 0) + (filtreArac.value ? 1 : 0))
 
 const seciliMusteri = ref(null)
 const musteriGiris = ref('')
@@ -1888,9 +2045,12 @@ const stokYokMu = (u) => Number(u?.miktar || 0) <= 0
 
 const stokEtiketi = (u) => {
   if (stokYokMu(u)) return t('hizliSatis.stokYok')
-  if (kritikStokMu(u)) return t('hizliSatis.son', { n: Math.floor(u.miktar) })
-  return (u.miktar || 0) + ' ' + (u.birim || 'adet')
+  const birim = u?.birim || t('hizliSatis.adetBirimi')
+  if (kritikStokMu(u)) return t('hizliSatis.stokSon', { n: Math.floor(u.miktar), birim })
+  return t('hizliSatis.stokAdet', { n: u.miktar, birim })
 }
+
+const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik' : 'normal'))
 
 // Sepetteki adet: kart üzerinde rozet olarak gösterilir.
 const sepetteAdet = (id) => sepet.value.find((i) => i.id === id)?.miktar || 0
@@ -2166,8 +2326,8 @@ const sepetSil = (idx) => {
 
 const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
   if (!sepet.value.length) return
-  // Ger��ek fatura numaras�� varsa fi�Ye o yaz��l��r (fi�Yten faturaya ula�Y��labilir).
-  // Yaln��zca ��evrimd��Y��/henǬz olu�Ymam��Y sat��Ylarda ge�ici numara Ǭretilir.
+  // Gerçek fatura numarası varsa fişe o yazılır (fişten faturaya ulaşılabilir).
+  // Yalnızca çevrimdışı/henüz oluşmamış satışlarda geçici numara üretilir.
   fisNo.value = gercekFaturaNo || ('F-' + Date.now().toString(36).toUpperCase())
   yazdirmaKaydet('TERMAL80')
 
@@ -2950,7 +3110,7 @@ const sepetiTemizle = () => {
 
 .pos-arac-cubugu {
   display: grid;
-  grid-template-columns: 1.4fr 1.6fr 1fr 1fr auto;
+  grid-template-columns: 1.2fr 1.4fr auto;
   gap: 8px;
   align-items: stretch;
   margin-bottom: 12px;
@@ -2964,6 +3124,9 @@ const sepetiTemizle = () => {
   height: 42px;
   padding-left: 2.75rem !important;
 }
+.pos-arac-cubugu .barkod-kutu .p-inputtext {
+  padding-right: 2.75rem !important;
+}
 .pos-arac-cubugu .arama-kutusu > i {
   position: absolute;
   left: 0.9rem;
@@ -2973,6 +3136,160 @@ const sepetiTemizle = () => {
   font-size: 15px;
   color: var(--text-muted);
   z-index: 1;
+}
+/* Barkod alanı içindeki kamera düğmesi (ayrı buton kalabalığını önler) */
+.alan-ikon-sag {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.12));
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.alan-ikon-sag:hover {
+  background: var(--accent-soft-strong);
+  color: var(--accent);
+}
+/* Filtreler popover düğmesi */
+.filtre-btn {
+  position: relative;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.filtre-btn:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+.filtre-btn.filtre-aktif {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.filtre-rozet {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.filtre-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+}
+.filtre-panel-baslik {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.filtre-alan label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+/* Aktif filtre çipleri */
+.aktif-filtreler {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -4px 0 10px;
+}
+.aktif-filtre-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.aktif-filtre-cip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 2px;
+}
+.aktif-filtre-temizle {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* Tercihler popover paneli */
+.tercih-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 240px;
+}
+.tercih-baslik {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.tercih-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+.tercih-metin {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.katlanir-ikon-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+}
+.katlanir-ikon-btn:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 .pos-arac-cubugu .arac-dropdown {
   height: 42px;
@@ -2997,10 +3314,17 @@ const sepetiTemizle = () => {
   .pos-arac-cubugu {
     grid-template-columns: 1fr 1fr;
   }
+  .filtre-btn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
 }
 @media (max-width: 520px) {
   .pos-arac-cubugu {
     grid-template-columns: 1fr;
+  }
+  .filtre-btn-metin {
+    display: none;
   }
 }
 
@@ -3182,15 +3506,27 @@ const sepetiTemizle = () => {
   overflow: hidden;
   min-height: 34px;
 }
-.product-alt-satir {
+.product-stok-satir {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 6px;
+  min-height: 18px;
+  font-size: 11px;
 }
-.product-alt-satir :deep(.p-tag) {
-  font-size: 10.5px;
-  padding: 1px 8px;
+.product-stok-satir i {
+  font-size: 11px;
+}
+.product-stok-satir.normal {
+  color: var(--success);
+  font-weight: 600;
+}
+.product-stok-satir.kritik {
+  color: var(--warning);
+  font-weight: 700;
+}
+.product-stok-satir.yok {
+  color: var(--danger);
+  font-weight: 700;
 }
 .product-grup {
   font-size: 10.5px;

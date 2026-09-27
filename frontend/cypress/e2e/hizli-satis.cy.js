@@ -51,14 +51,19 @@ describe('Hızlı Satış (POS)', () => {
   it('POS ekranı yüklenir', () => {
     cy.get('.pos-container').should('exist')
     cy.contains('Hızlı Satış').should('exist')
+    // Bölüm varsayılanları: müşteri açık; sepet ve ödeme kapalı gelir.
+    cy.contains('.pos-bolum-baslik', 'Müşteri').should('have.attr', 'aria-expanded', 'true')
+    cy.get('.sepet-baslik .katlanir-ikon-btn').should('have.attr', 'aria-expanded', 'false')
+    cy.contains('.pos-bolum-baslik', 'Ödeme').should('have.attr', 'aria-expanded', 'false')
   })
 
-  it('kısayol ipucu şeridi kapatılıp yeniden açılabilir', () => {
-    cy.get('.pos-ipucu').should('be.visible')
-    cy.get('.pos-ipucu-kapat').click()
+  it('kısayol ipucu şeridi açılıp kapatılabilir', () => {
+    // Şerit varsayılan olarak gizlidir; "?" ile açılır, çarpı ile kapanır.
     cy.get('.pos-ipucu').should('not.exist')
     cy.get('.pos-ipucu-btn').click()
     cy.get('.pos-ipucu').should('be.visible')
+    cy.get('.pos-ipucu-kapat').click()
+    cy.get('.pos-ipucu').should('not.exist')
   })
 
   it('F2 sepeti temizler', () => {
@@ -90,14 +95,18 @@ describe('Hızlı Satış (POS)', () => {
     cy.get('@satisOlustur.all').should('have.length', 0)
   })
 
-  it('ürün kartları fiyat, KDV notu ve stok durumunu gösterir', () => {
+  it('ürün kartları stok adedi, fiyat ve KDV notunu gösterir', () => {
     cy.get('.product-card').should('have.length', 2)
     cy.contains('.product-card', 'Test Ürün').within(() => {
+      cy.get('.product-stok-satir').should('be.visible').and('contain', 'Stok: 50 Adet')
       cy.get('.product-price').should('contain', '100')
       cy.get('.kdv-not').should('be.visible')
       cy.get('.product-gorsel').should('exist')
     })
-    // Stokta olmayan ürün görsel olarak işaretli olmalı
+    // Stokta olmayan ürün görsel olarak işaretli ve stok satırı kırmızı olmalı
+    cy.contains('.product-card', 'Zzz Stoksuz Ürün').within(() => {
+      cy.get('.product-stok-satir').should('contain', 'Stok yok').and('have.class', 'yok')
+    })
     cy.contains('.product-card', 'Zzz Stoksuz Ürün').should('have.class', 'stok-yok')
   })
 
@@ -116,5 +125,19 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('.fis-modu-satir button', 'Fiyatsız').scrollIntoView().click({ force: true })
     cy.contains('.fis-modu-satir button', 'Fiyatsız').should('have.attr', 'aria-pressed', 'true')
     cy.contains('.fis-modu-satir button', 'Fiyatlı').should('have.attr', 'aria-pressed', 'false')
+  })
+
+  it('filtreler ve tercihler popover ile yönetilir', () => {
+    // Filtreler tek bir popover'da toplanır (araç çubuğu sade kalır)
+    cy.get('.filtre-btn').click()
+    cy.get('.filtre-panel').should('be.visible')
+    cy.contains('.filtre-panel', 'Kategori').should('exist')
+    cy.contains('.filtre-panel', 'Marka').should('exist')
+    cy.get('body').type('{esc}')
+
+    // Tercihler tek menüde: büyük yazı, onay iste, kısayol ipucu
+    cy.get('.pos-tercih-btn').click()
+    cy.get('.tercih-panel').should('be.visible')
+    cy.get('.tercih-satir').should('have.length', 3)
   })
 })
