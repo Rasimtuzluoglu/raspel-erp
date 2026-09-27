@@ -53,6 +53,21 @@ class TeslimatControllerTest {
     }
 
     @Test
+    void shouldListAtanabilirFaturalar() throws Exception {
+        when(teslimatService.atanabilirFaturalar(1L, "f", 20))
+                .thenReturn(List.of(com.raspel.erp.dto.ticaret.AtanabilirFaturaDTO.builder()
+                        .id(3L).faturaNumarasi("F-3").build()));
+
+        mockMvc.perform(get("/api/deliveries/atanabilir-faturalar")
+                        .param("q", "f")
+                        .param("limit", "20")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 2L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].faturaNumarasi").value("F-3"));
+    }
+
+    @Test
     void shouldGetTeslimatById() throws Exception {
         when(teslimatService.getir(5L, 1L, 2L)).thenReturn(TeslimatDTO.builder().id(5L).build());
 

@@ -407,8 +407,8 @@ public class SiparisService {
         if (driverId != null) {
             Kullanici surucu = kullaniciRepository.findById(driverId)
                     .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", driverId));
-            if (!"DRIVER".equalsIgnoreCase(surucu.getRole())) {
-                throw new BusinessException("Seçilen kullanıcı şoför (DRIVER) değil");
+            if (!teslimatService.gecerliSurucu(surucu)) {
+                throw new BusinessException("Seçilen kullanıcı şoför değil (DRIVER rolü veya aktif şoför personeli olmalı)");
             }
             driverAd = surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername();
         }

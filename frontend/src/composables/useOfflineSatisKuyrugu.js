@@ -37,13 +37,16 @@ export function useOfflineSatisKuyrugu() {
    * Satisi kuyruga ekler. Idempotency anahtari BURADA uretilir ve kayitla birlikte
    * saklanir; boylece her yeniden deneme ayni anahtarla gider ve sunucu mükerrer
    * fatura olusturmaz (ag tekrari/timeout sonrasi cift kayit engellenir).
+   * `meta` (opsiyonel): fatura olustuktan sonra acilacak teslimat bilgileri
+   * (driverId, teslimatAdresi, notlar, durum).
    */
-  function ekle(satis) {
+  function ekle(satis, meta = null) {
     const kuyruk = kuyruguOku()
     kuyruk.push({
       id: anahtarUret(),
       anahtar: anahtarUret(),
       satis,
+      meta,
       olusturma: Date.now()
     })
     kuyruguYaz(kuyruk)
@@ -63,14 +66,23 @@ export function useOfflineSatisKuyrugu() {
   /**
    * Kuyrugu sirayla gonderir. `gonder(satis, anahtar)` imzasi beklenir; anahtar
    * sabittir. Ag tekrar koparsa dongu durur; gonderilen kayitlar kuyruktan cikar.
+   * `teslimatKaydet(meta, yanit)` verilirse, fatura olustuktan sonra teslimat
+   * kaydi acilir; teslimat hatasi satisi kuyrukta birakmaz (mukerrer onlenir).
    */
-  async function senkronizeEt(gonder) {
+  async function senkronizeEt(gonder, teslimatKaydet) {
     const kuyruk = kuyruguOku()
     if (kuyruk.length === 0) return 0
     let gonderilen = 0
     for (const k of kuyruk) {
       try {
-        await gonder(k.satis, k.anahtar)
+        const yanit = await gonder(k.satis, k.anahtar)
+        if (k.meta && typeof teslimatKaydet === 'function') {
+          try {
+            await teslimatKaydet(k.meta, yanit)
+          } catch {
+            /* teslimat kaydi basarisiz olsa da satis tamamlandi */
+          }
+        }
         kaldir(k.id)
         gonderilen++
       } catch {

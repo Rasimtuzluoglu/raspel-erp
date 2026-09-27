@@ -16,6 +16,19 @@
         </div>
         <button
           type="button"
+          class="pos-ikon-btn bugunku-btn"
+          :title="t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length })"
+          :aria-label="t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length })"
+          @click="bugunkuDialog = true"
+        >
+          <i class="pi pi-clock" />
+          <span
+            v-if="gunlukSatislar.length > 0"
+            class="bugunku-rozet"
+          >{{ gunlukSatislar.length }}</span>
+        </button>
+        <button
+          type="button"
           class="pos-tercih-btn"
           :class="{ aktif: buyukYazi || onayIste }"
           :title="t('hizliSatis.tercihler')"
@@ -473,6 +486,104 @@
               </div>
             </div>
 
+            <!-- Teslimat (opsiyonel): sofor secilirse satistan sonra teslimat kaydi acilir -->
+            <div class="pos-bolum">
+              <button
+                type="button"
+                class="pos-bolum-baslik katlanir-baslik"
+                :aria-expanded="teslimatAcik"
+                :title="teslimatAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
+                @click="teslimatAcikDegistir"
+              >
+                <span class="katlanir-sol">
+                  <i
+                    class="pi katlanir-ok"
+                    :class="teslimatAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
+                  />
+                  <i class="pi pi-truck" /> {{ t('hizliSatis.teslimat') }}
+                </span>
+                <span
+                  v-if="!teslimatAcik && seciliSofor"
+                  class="katlanir-rozet"
+                >{{ teslimEdenEtiketi }}</span>
+              </button>
+              <template v-if="teslimatAcik">
+                <p class="teslimat-ipucu">
+                  {{ t('hizliSatis.teslimatIpucu') }}
+                </p>
+                <div class="teslim-eden-alan">
+                  <label for="hizli-teslim-sofor">{{ t('hizliSatis.sofor') }}</label>
+                  <Dropdown
+                    id="hizli-teslim-sofor"
+                    v-model="seciliSofor"
+                    :options="soforler"
+                    option-label="ad"
+                    :loading="soforlerYukleniyor"
+                    filter
+                    :show-clear="true"
+                    :placeholder="t('hizliSatis.soforSecin')"
+                    class="w-full"
+                  >
+                    <template #option="s">
+                      <div class="personel-opsiyon">
+                        <i class="pi pi-user" />
+                        <span>{{ s.option.ad }}</span>
+                        <span
+                          v-if="s.option.rol && s.option.rol !== 'DRIVER'"
+                          class="sofor-rol-uyari"
+                          :title="t('hizliSatis.soforRolUyari')"
+                        >
+                          <i class="pi pi-exclamation-triangle" />
+                        </span>
+                        <span
+                          v-if="s.option.bekleyenTeslimatSayisi"
+                          class="sofor-bekleyen"
+                        >{{ s.option.bekleyenTeslimatSayisi }}</span>
+                      </div>
+                    </template>
+                  </Dropdown>
+                </div>
+                <div
+                  v-if="seciliSofor"
+                  class="teslim-eden-alan"
+                >
+                  <label for="hizli-teslim-adres">
+                    {{ t('hizliSatis.teslimatAdresi') }} <span class="zorunlu">*</span>
+                  </label>
+                  <InputText
+                    id="hizli-teslim-adres"
+                    v-model="teslimatAdresi"
+                    :placeholder="t('hizliSatis.adresPlaceholder')"
+                    class="w-full"
+                  />
+                </div>
+                <div
+                  v-if="seciliSofor"
+                  class="teslim-eden-alan"
+                >
+                  <label>{{ t('hizliSatis.teslimDurumu') }}</label>
+                  <SelectButton
+                    v-model="teslimDurumu"
+                    :options="teslimDurumSecenekleri"
+                    option-label="label"
+                    option-value="value"
+                    :allow-empty="false"
+                    class="w-full teslim-durum-secim"
+                  />
+                </div>
+                <div
+                  v-if="seciliSofor"
+                  class="teslim-eden-alan"
+                >
+                  <InputText
+                    v-model="teslimNotu"
+                    :placeholder="t('hizliSatis.teslimNotuPlaceholder')"
+                    class="w-full"
+                  />
+                </div>
+              </template>
+            </div>
+
             <div
               ref="sepetListeRef"
               class="pos-bolum sepet-bolum"
@@ -873,75 +984,6 @@
               />
             </div>
 
-            <div class="pos-bolum">
-              <button
-                type="button"
-                class="pos-bolum-baslik katlanir-baslik"
-                :aria-expanded="teslimatAcik"
-                :title="teslimatAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
-                @click="teslimatAcikDegistir"
-              >
-                <span class="katlanir-sol">
-                  <i
-                    class="pi katlanir-ok"
-                    :class="teslimatAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                  />
-                  <i class="pi pi-truck" /> {{ t('hizliSatis.teslimat') }}
-                </span>
-                <span
-                  v-if="!teslimatAcik && teslimEden"
-                  class="katlanir-rozet"
-                >{{ teslimEdenEtiketi }}</span>
-              </button>
-              <template v-if="teslimatAcik">
-                <div class="teslim-eden-alan">
-                  <label for="hizli-teslim-eden">{{ t('hizliSatis.teslimEden') }}</label>
-                  <Dropdown
-                    id="hizli-teslim-eden"
-                    v-model="teslimEden"
-                    :options="personelSecenekleri"
-                    option-label="label"
-                    option-value="value"
-                    filter
-                    editable
-                    :placeholder="t('hizliSatis.personelSecinYaz')"
-                    class="w-full"
-                    :show-clear="true"
-                  >
-                    <template #option="s">
-                      <div class="personel-opsiyon">
-                        <i class="pi pi-user" />
-                        <span>{{ s.option.label }}</span>
-                      </div>
-                    </template>
-                  </Dropdown>
-                </div>
-
-                <div class="teslim-eden-alan">
-                  <label for="hizli-teslim-durum">{{ t('hizliSatis.teslimDurumu') }}</label>
-                  <Dropdown
-                    id="hizli-teslim-durum"
-                    v-model="teslimDurumu"
-                    :options="teslimDurumSecenekleri"
-                    option-label="label"
-                    option-value="value"
-                    class="w-full"
-                  />
-                </div>
-
-                <div class="teslim-eden-alan">
-                  <label for="hizli-teslim-not">{{ t('hizliSatis.teslimNotu') }}</label>
-                  <Textarea
-                    id="hizli-teslim-not"
-                    v-model="teslimNotu"
-                    rows="2"
-                    :placeholder="t('hizliSatis.teslimNotuPlaceholder')"
-                    class="w-full"
-                  />
-                </div>
-              </template>
-            </div>
-
             <div
               v-if="sepet.length > 0"
               class="pos-bolum"
@@ -1094,56 +1136,12 @@
                 </div>
               </div>
             </div>
-
-            <div class="pos-bolum">
-              <div class="gunluk-baslik">
-                <button
-                  type="button"
-                  class="katlanir-baslik katlanir-baslik-inline"
-                  :aria-expanded="gunlukAcik"
-                  :title="gunlukAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
-                  @click="gunlukAcikDegistir"
-                >
-                  <span class="katlanir-sol">
-                    <i
-                      class="pi katlanir-ok"
-                      :class="gunlukAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                    />
-                    <i class="pi pi-clock" /> {{ t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length }) }}
-                  </span>
-                </button>
-                <Button
-                  icon="pi pi-refresh"
-                  :aria-label="$t('common.refresh')"
-                  class="p-button-sm p-button-text"
-                  @click="gunlukSatislariYukle"
-                />
-              </div>
-              <template v-if="gunlukAcik">
-                <div
-                  v-if="gunlukSatislar.length === 0"
-                  class="sepet-bos"
-                >
-                  {{ t('hizliSatis.bugunSatisYok') }}
-                </div>
-                <div
-                  v-for="s in gunlukSatislar"
-                  :key="s.id"
-                  class="gunluk-satis-satir"
-                >
-                  <div class="gunluk-satis-bilgi">
-                    <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
-                    <span class="gunluk-satis-cari">{{ s.cariHesapAd || t('hizliSatis.anlik') }}</span>
-                  </div>
-                  <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
-                </div>
-              </template>
-            </div>
           </template>
         </Card>
       </div>
     </div>
   </div>
+
 
   <Dialog
     v-model:visible="yeniMusteriDialog"
@@ -1262,6 +1260,45 @@
         :label="t('hizliSatis.onayOnayla')"
         icon="pi pi-check"
         @click="satisOnayla"
+      />
+    </template>
+  </Dialog>
+
+  <Dialog
+    v-model:visible="bugunkuDialog"
+    :header="t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length })"
+    :modal="true"
+    style="width: 420px"
+  >
+    <div
+      v-if="gunlukSatislar.length === 0"
+      class="sepet-bos"
+    >
+      {{ t('hizliSatis.bugunSatisYok') }}
+    </div>
+    <div
+      v-for="s in gunlukSatislar"
+      :key="s.id"
+      class="gunluk-satis-satir"
+    >
+      <div class="gunluk-satis-bilgi">
+        <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
+        <span class="gunluk-satis-cari">{{ s.cariHesapAd || t('hizliSatis.anlik') }}</span>
+      </div>
+      <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
+    </div>
+    <template #footer>
+      <Button
+        :label="t('common.refresh')"
+        icon="pi pi-refresh"
+        class="p-button-text"
+        @click="gunlukSatislariYukle"
+      />
+      <Button
+        :label="t('common.close')"
+        icon="pi pi-times"
+        class="p-button-text"
+        @click="bugunkuDialog = false"
       />
     </template>
   </Dialog>
@@ -1389,7 +1426,7 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
-import { faturaAPI, cariHesapAPI, personelAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI } from '../api/index.js'
+import { faturaAPI, cariHesapAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
@@ -1419,7 +1456,10 @@ const { sirketLogosu } = useMarka()
 
 const offlineKuyruguSenkronizeEt = async () => {
   try {
-    const gonderilen = await offlineKuyruk.senkronizeEt((s, anahtar) => faturaAPI.create(s, anahtar))
+    const gonderilen = await offlineKuyruk.senkronizeEt(
+      (s, anahtar) => faturaAPI.create(s, anahtar),
+      (meta, yanit) => teslimatKaydiniOlustur(yanit?.data?.id, meta)
+    )
     if (gonderilen > 0) {
       toast.add({ severity: 'success', summary: t('hizliSatis.senkronizeEdildi'), detail: t('hizliSatis.satisGonderildi', { n: gonderilen }), life: 3000 })
     }
@@ -1555,14 +1595,16 @@ const buyukYazi = ref(localStorage.getItem('raspel_pos_buyuk_yazi') === 'true')
 const onayIste = ref(localStorage.getItem('raspel_pos_onay_iste') === 'true')
 
 // Katlanabilir bolum tercihleri (varsayilan: yalnizca musteri ACik; sepet/odeme/
-// teslimat/fis/gunluk KAPALI; kullanici secimi hatirlanir).
+// teslimat/fis KAPALI; kullanici secimi hatirlanir).
 const musteriAcik = ref(localStorage.getItem('raspel_pos_musteri_acik') !== 'false')
 const sepetAcik = ref(localStorage.getItem('raspel_pos_sepet_acik') === 'true')
 const odemeAcik = ref(localStorage.getItem('raspel_pos_odeme_acik') === 'true')
 const teslimatAcik = ref(localStorage.getItem('raspel_pos_teslimat_acik') === 'true')
 const fisAcik = ref(localStorage.getItem('raspel_pos_fis_acik') === 'true')
-const gunlukAcik = ref(localStorage.getItem('raspel_pos_gunluk_acik') === 'true')
 const detayAcik = ref(localStorage.getItem('raspel_pos_detay_acik') === 'true')
+
+// Bugunku satislar: sag sutunda yer kaplamasin diye dialog'da gosterilir.
+const bugunkuDialog = ref(false)
 
 const musteriAcikDegistir = () => {
   musteriAcik.value = !musteriAcik.value
@@ -1583,10 +1625,6 @@ const teslimatAcikDegistir = () => {
 const fisAcikDegistir = () => {
   fisAcik.value = !fisAcik.value
   localStorage.setItem('raspel_pos_fis_acik', String(fisAcik.value))
-}
-const gunlukAcikDegistir = () => {
-  gunlukAcik.value = !gunlukAcik.value
-  localStorage.setItem('raspel_pos_gunluk_acik', String(gunlukAcik.value))
 }
 const detayAcikDegistir = () => {
   detayAcik.value = !detayAcik.value
@@ -1689,10 +1727,12 @@ const aktifFiltreSayisiPos = computed(
 
 const seciliMusteri = ref(null)
 const musteriGiris = ref('')
-const teslimEden = ref('')
+const seciliSofor = ref(null)
+const soforler = ref([])
+const soforlerYukleniyor = ref(false)
+const teslimatAdresi = ref('')
 const teslimDurumu = ref('BEKLIYOR')
 const teslimNotu = ref('')
-const personelListesi = ref([])
 const musteriModu = ref('musteri')
 const cariTurSecenekleri = computed(() => [
   { label: t('cariTur.musteri'), value: 'Musteri' },
@@ -2119,7 +2159,7 @@ onMounted(async () => {
     await Promise.all([
       cariHesapStore.getAllCariHesaplar(),
       stokStore.getAll(),
-      personelListesiniYukle(),
+      soforleriYukle(),
       cokSatanlariYukle(),
       kasalariYukle(),
       bankalariYukle(),
@@ -2172,34 +2212,60 @@ const fisAyarlariSunucudanYukle = async () => {
   }
 }
 
-const personelSecenekleri = computed(() =>
-  personelListesi.value
-    .filter((p) => p.aktif !== false)
-    .map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
-)
-
 const teslimDurumSecenekleri = computed(() => [
   { label: t('faturalar.durumBekliyor'), value: 'BEKLIYOR' },
   { label: t('faturalar.durumYolda'), value: 'YOLDA' },
   { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
 ])
 
-// Teslimat bolumu katliyken secili personeli rozet olarak gosterir.
-const teslimEdenEtiketi = computed(() => {
-  const v = teslimEden.value
-  if (!v) return ''
-  const bulunan = personelSecenekleri.value.find((p) => p.value === v)
-  return bulunan ? bulunan.label : v
-})
+// POS'ta secilen soforun adi; fis/fatura uzerine "Teslim Eden" olarak yazilir.
+const teslimEden = computed(() => seciliSofor.value?.ad || '')
 
-const personelListesiniYukle = async () => {
+// Teslimat bolumu katliyken secili soforu rozet olarak gosterir.
+const teslimEdenEtiketi = computed(() => seciliSofor.value?.ad || '')
+
+const soforleriYukle = async () => {
+  soforlerYukleniyor.value = true
   try {
-    const r = await personelAPI.getAll({ size: 500 })
-    personelListesi.value = unwrapList(r)
+    const r = await teslimatAPI.suruculer()
+    soforler.value = unwrapList(r)
   } catch {
-    personelListesi.value = []
+    soforler.value = []
+  } finally {
+    soforlerYukleniyor.value = false
   }
 }
+
+// POS teslim durumu -> Teslimat kaydi durumu eslemesi.
+const TESLIMAT_DURUM_ESLEME = { BEKLIYOR: 'BEKLEMEDE', YOLDA: 'YOLDA', TESLIM_EDILDI: 'TESLIM_EDILDI' }
+
+const teslimatMetaUret = () => {
+  if (!seciliSofor.value?.id) return null
+  return {
+    driverId: seciliSofor.value.id,
+    teslimatAdresi: teslimatAdresi.value.trim(),
+    notlar: teslimNotu.value?.trim() || null,
+    durum: TESLIMAT_DURUM_ESLEME[teslimDurumu.value] || 'BEKLEMEDE'
+  }
+}
+
+const teslimatKaydiniOlustur = async (faturaId, meta = null) => {
+  const veri = meta || teslimatMetaUret()
+  if (!veri || !faturaId) return
+  try {
+    await teslimatAPI.olustur({ faturaId, ...veri })
+  } catch (e) {
+    // Satis tamamlandi; teslimat kaydi acilamazsa kullanici bilgilendirilir.
+    toastBildirim.uyari(e?.response?.data?.message || t('hizliSatis.teslimatKaydedilemedi'))
+  }
+}
+
+// Sofor secilince cari adresi otomatik dolar (kullanici elle degistirebilir).
+watch([seciliSofor, seciliMusteri], () => {
+  if (!seciliSofor.value || teslimatAdresi.value.trim()) return
+  const adres = seciliMusteri.value?.adres
+  if (adres) teslimatAdresi.value = adres
+})
 
 const musteriAra = (event) => {
   const query = event.query
@@ -2573,6 +2639,12 @@ const satisiTamamlaOnaysiz = async () => {
     toastBildirim.uyari(t('hizliSatis.taksitZorunlu'))
     return
   }
+  // Sofor secildiyse teslimat adresi zorunlu; soforsuz satista adres sorulmaz.
+  if (seciliSofor.value && !teslimatAdresi.value.trim()) {
+    teslimatAcik.value = true
+    toastBildirim.uyari(t('hizliSatis.teslimatAdresiGerekli'))
+    return
+  }
   kaydediliyor.value = true
   const satisVerisi = satisPayloadUret({
     cariHesapId: anlikMusteri.value ? null : seciliMusteri.value.id,
@@ -2608,9 +2680,10 @@ const satisiTamamlaOnaysiz = async () => {
     const yanit = await faturaAPI.create(satisVerisi)
     satisBasarili(yanit)
   } catch (e) {
-    // Ağ yoksa satışı kuyruğa al (offline satış)
+    // Ağ yoksa satışı kuyruğa al (offline satış). Şoför ataması da kuyrukla
+    // taşınır; bağlantı gelince fatura oluşup teslimat kaydı otomatik açılır.
     if (!e?.response) {
-      offlineKuyruk.ekle(satisVerisi)
+      offlineKuyruk.ekle(satisVerisi, teslimatMetaUret())
       toast.add({
         severity: 'warn',
         summary: t('hizliSatis.cevrimdisiKuyruk'),
@@ -2664,6 +2737,8 @@ const satisBasarili = (yanit) => {
   } catch {
     /* empty */
   }
+  // Sofor secildiyse teslimat kaydi acilir (fatura olustuktan sonra).
+  teslimatKaydiniOlustur(yanit.data?.id, teslimatMetaUret())
   sepetiTemizle()
   alinanNakit.value = 0
   // Fiş modu satış başına geçiciydi: sunucu ayarına dön.
@@ -2695,7 +2770,8 @@ const sepetiTemizle = () => {
   sepet.value = []
   seciliMusteri.value = null
   musteriGiris.value = ''
-  teslimEden.value = ''
+  seciliSofor.value = null
+  teslimatAdresi.value = ''
   teslimDurumu.value = 'BEKLIYOR'
   teslimNotu.value = ''
   musteriModu.value = 'musteri'
@@ -2710,6 +2786,8 @@ const sepetiTemizle = () => {
   padding: 0;
   min-height: 0;
   max-width: 100%;
+  /* Yatay tasmalara karsi emniyet: icerik kolonlari kendi icinde kaydirilir. */
+  overflow-x: clip;
 }
 /* Buyuk yazi modu: yasli/uzak mesafeden kullanan personel icin olcekler */
 .pos-buyuk {
@@ -2820,7 +2898,8 @@ const sepetiTemizle = () => {
 .pos-buyuk .sticky-tutar strong {
   font-size: 24px;
 }
-.pos-tercih-btn {
+.pos-tercih-btn,
+.pos-ikon-btn {
   border: 1px solid var(--border);
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -2834,7 +2913,8 @@ const sepetiTemizle = () => {
   font-size: 15px;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.pos-tercih-btn:hover {
+.pos-tercih-btn:hover,
+.pos-ikon-btn:hover {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -2842,6 +2922,26 @@ const sepetiTemizle = () => {
   background: var(--accent, var(--primary-color));
   border-color: var(--accent, var(--primary-color));
   color: var(--accent-contrast, #ffffff);
+}
+/* Bugunku satislar butonu + sayac rozeti */
+.bugunku-btn {
+  position: relative;
+}
+.bugunku-rozet {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 10.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .satis-onay {
   text-align: center;
@@ -2971,17 +3071,16 @@ const sepetiTemizle = () => {
 }
 
 .pos-body {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 420px);
   gap: 16px;
   align-items: stretch;
 }
 .pos-left {
-  flex: 1 1 0;
   min-width: 0;
 }
 .pos-right {
-  flex: 0 0 400px;
-  max-width: 400px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -3151,7 +3250,7 @@ const sepetiTemizle = () => {
 
 .pos-arac-cubugu {
   display: grid;
-  grid-template-columns: 1.2fr 1.4fr auto;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) auto;
   gap: 8px;
   align-items: stretch;
   margin-bottom: 12px;
@@ -3682,10 +3781,11 @@ const sepetiTemizle = () => {
   gap: 8px;
 }
 .teslim-eden-alan {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 .teslim-eden-alan label {
   font-size: 12px;
@@ -3694,14 +3794,56 @@ const sepetiTemizle = () => {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+.teslim-eden-alan .zorunlu {
+  color: var(--danger);
+}
+.teslimat-ipucu {
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.teslim-durum-secim :deep(.p-selectbutton) {
+  display: flex;
+  flex-wrap: wrap;
+}
 .personel-opsiyon {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.personel-opsiyon > span:not(.sofor-bekleyen):not(.sofor-rol-uyari) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .personel-opsiyon i {
   font-size: 12px;
   color: var(--text-muted);
+}
+.personel-opsiyon .sofor-bekleyen {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.personel-opsiyon .sofor-rol-uyari {
+  margin-left: auto;
+  color: var(--warning);
+  font-size: 12px;
+}
+.personel-opsiyon .sofor-rol-uyari + .sofor-bekleyen {
+  margin-left: 0;
 }
 .anlik-musteri {
   margin-bottom: 4px;
@@ -3849,6 +3991,9 @@ const sepetiTemizle = () => {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
 }
 .sepet-adet-grup {
   display: flex;
@@ -3876,7 +4021,7 @@ const sepetiTemizle = () => {
   color: var(--accent);
 }
 .sepet-adet-input {
-  width: 52px;
+  width: clamp(44px, 7vw, 52px);
   text-align: center;
   font-weight: 700;
   font-size: 14px;
@@ -3895,7 +4040,7 @@ const sepetiTemizle = () => {
   font-size: 19px;
 }
 .pos-buyuk .sepet-adet-input {
-  width: 62px;
+  width: clamp(52px, 8vw, 62px);
   height: 42px;
   font-size: 17px;
 }
@@ -4404,15 +4549,13 @@ const sepetiTemizle = () => {
   outline: none;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
+  /* Dar dizustu/tablet: sag sutun alta iner; sabit 400px yerine tam genislik. */
   .pos-body {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .pos-left,
-  .pos-right {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
+}
+@media (max-width: 1100px) {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
   }

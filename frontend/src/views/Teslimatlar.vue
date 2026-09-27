@@ -16,7 +16,10 @@
       />
     </div>
 
-    <div class="nasil-kart">
+    <div
+      v-if="!soforMu"
+      class="nasil-kart"
+    >
       <button
         type="button"
         class="nasil-baslik"
@@ -151,6 +154,7 @@
             v-for="teslim in filtreliTeslimatlar"
             :key="teslim.id"
             class="teslimat-kart"
+            :class="{ 'sofor-gorunum': soforMu }"
           >
             <div class="teslimat-ust">
               <span class="fatura-no">
@@ -193,6 +197,7 @@
               <i class="pi pi-receipt" /> {{ t('teslimatlar.siparisEtiketi') }} #{{ teslim.siparisId }}
             </div>
             <button
+              v-if="!soforMu"
               type="button"
               class="gecmis-toggle"
               @click="gecmisToggle(teslim)"
@@ -200,7 +205,7 @@
               <i class="pi pi-history" /> {{ t('teslimatlar.gecmis') }}
             </button>
             <div
-              v-if="gecmisAcik[teslim.id]"
+              v-if="!soforMu && gecmisAcik[teslim.id]"
               class="gecmis-liste"
             >
               <div
@@ -286,6 +291,7 @@
                 </button>
               </div>
               <Dropdown
+                v-if="!soforMu"
                 :model-value="teslim.durum"
                 :options="durumSecenekleri"
                 option-label="label"
@@ -303,7 +309,7 @@
                   <i class="pi pi-truck" /> {{ t('teslimatlar.durumYolda') }}
                 </button>
                 <button
-                  v-if="teslim.durum !== 'TESLIM_EDILDI'"
+                  v-if="!soforMu && teslim.durum !== 'TESLIM_EDILDI'"
                   type="button"
                   class="durum-btn teslim"
                   @click="teslimModalAc(teslim)"
@@ -454,7 +460,7 @@ const teslimatlar = ref([])
 const seciliSurucu = ref(null)
 const yukleniyor = ref(false)
 const teslimatYukleniyor = ref(false)
-const filtre = ref('TUMU')
+const filtre = ref(authStore?.kullanici?.role === 'DRIVER' ? 'BUGUN' : 'TUMU')
 const rehberAcik = ref(false)
 const gecmisAcik = ref({})
 const gecmisler = ref({})
@@ -1037,6 +1043,23 @@ onMounted(() => {
 .hizli-durum {
   display: flex;
   gap: 8px;
+}
+/* Sofor gorunumu: buyuk dokunma hedefleri (sahada tek elle kullanim) */
+.teslimat-kart.sofor-gorunum .durum-btn {
+  min-height: 46px;
+  font-size: 14.5px;
+  padding: 10px 16px;
+}
+.teslimat-kart.sofor-gorunum .durum-btn.imzala {
+  width: 100%;
+  justify-content: center;
+}
+.teslimat-kart.sofor-gorunum .hizli-durum {
+  width: 100%;
+}
+.teslimat-kart.sofor-gorunum .hizli-durum .durum-btn {
+  flex: 1;
+  justify-content: center;
 }
 .durum-btn {
   display: inline-flex;

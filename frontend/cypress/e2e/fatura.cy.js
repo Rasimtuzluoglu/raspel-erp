@@ -70,4 +70,28 @@ describe('Fatura Yönetimi', () => {
   it('Yeni Fatura butonunu gösterir', () => {
     cy.contains('Yeni Fatura').should('be.visible')
   })
+
+  it('teslimatsız faturaya şoför atanır', () => {
+    cy.wait('@faturalar')
+    cy.intercept('GET', '/api/drivers', {
+      statusCode: 200,
+      body: [{ id: 5, ad: 'Ali Şoför', rol: 'DRIVER', bekleyenTeslimatSayisi: 0 }]
+    }).as('suruculer')
+    cy.intercept('POST', '/api/deliveries', { statusCode: 201, body: { id: 1 } }).as('teslimatOlustur')
+
+    cy.get('.p-datatable-tbody tr').first().find('.satir-eylemler button').first().click()
+    cy.contains('.eylem-item', 'Şoför Ata').click()
+    cy.contains('.p-dialog', 'Fişe Şoför Ata').should('be.visible')
+
+    cy.get('.p-dialog .p-select').click()
+    cy.contains('.p-select-overlay .p-select-option', 'Ali Şoför').click()
+    cy.get('.p-dialog textarea').type('Test Mah. 5. Sok No:1')
+    cy.contains('.p-dialog button', 'Şoför Ata').click()
+
+    cy.wait('@teslimatOlustur').its('request.body').then((body) => {
+      expect(body.faturaId).to.eq(1)
+      expect(body.driverId).to.eq(5)
+      expect(body.teslimatAdresi).to.contain('Test Mah')
+    })
+  })
 })

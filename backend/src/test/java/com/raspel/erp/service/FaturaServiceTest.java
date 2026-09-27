@@ -72,6 +72,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private com.raspel.erp.service.finans.TaksitService taksitService;
     @Mock private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+    @Mock private com.raspel.erp.repository.ticaret.TeslimatRepository teslimatRepository;
     @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private FaturaService faturaService;
@@ -126,6 +127,18 @@ class FaturaServiceTest {
         when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createFatura(1L))));
         var result = faturaService.tumFaturalariGetir(1L, Pageable.unpaged());
         assertEquals(1, result.getContent().size());
+    }
+
+    @Test
+    void tumFaturalariGetir_teslimatVarBayraginiDoldurur() {
+        when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L), createFatura(2L))));
+        when(teslimatRepository.findFaturaIdByFaturaIdIn(anyCollection())).thenReturn(List.of(1L));
+
+        var result = faturaService.tumFaturalariGetir(1L, Pageable.unpaged());
+
+        assertTrue(result.getContent().stream().filter(f -> f.getId().equals(1L)).findFirst().orElseThrow().getTeslimatVar());
+        assertFalse(result.getContent().stream().filter(f -> f.getId().equals(2L)).findFirst().orElseThrow().getTeslimatVar());
     }
 
     @Test

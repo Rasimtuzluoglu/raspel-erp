@@ -171,7 +171,7 @@ import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } fr
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/authStore.js'
 import { networkStatus } from './api/index.js'
-import { faturaAPI } from './api/index.js'
+import { faturaAPI, teslimatAPI } from './api/index.js'
 import { useOfflineSatisKuyrugu } from './composables/useOfflineSatisKuyrugu.js'
 import { useSunumModu } from './composables/useSunumModu.js'
 import { useToastBildirim } from './composables/useToastBildirim.js'
@@ -231,7 +231,11 @@ const kuyruguGonder = async () => {
   if (kuyrukGonderiliyor.value) return
   kuyrukGonderiliyor.value = true
   try {
-    const gonderilen = await kuyrukSenkronizeEt((s, anahtar) => faturaAPI.create(s, anahtar))
+    const gonderilen = await kuyrukSenkronizeEt(
+      (s, anahtar) => faturaAPI.create(s, anahtar),
+      // Kuyruktaki sofor atamasi, fatura olustuktan sonra teslimat kaydina donusur.
+      (meta, yanit) => teslimatAPI.olustur({ faturaId: yanit?.data?.id, ...meta })
+    )
     if (gonderilen > 0) {
       toastBildirim.basarili(t('app.bekleyenSatisGonderildi', { sayi: gonderilen }))
     }

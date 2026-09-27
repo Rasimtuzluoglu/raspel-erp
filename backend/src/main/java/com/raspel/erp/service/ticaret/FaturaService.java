@@ -98,6 +98,7 @@ public class FaturaService {
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
+    private final com.raspel.erp.repository.ticaret.TeslimatRepository teslimatRepository;
     private final com.raspel.erp.repository.finans.PosTerminaliRepository posTerminaliRepository;
 
     /** Toplu islemlerde bellek yukunu sinirlamak icin persistence context temizligi. */
@@ -1587,7 +1588,8 @@ public class FaturaService {
         Map<Long, String> kasaHaritasi = fatura.getKasaId() == null ? Map.of()
                 : kasaRepository.findAllById(List.of(fatura.getKasaId())).stream()
                         .collect(Collectors.toMap(Kasa::getId, Kasa::getAd, (a, b) -> a));
-        return entityDTOyeCevir(fatura, stokHaritasi, depoHaritasi, kasaHaritasi);
+        return entityDTOyeCevir(fatura, stokHaritasi, depoHaritasi, kasaHaritasi,
+                teslimatRepository.existsByFaturaId(fatura.getId()) ? Set.of(fatura.getId()) : Set.of());
     }
 
     /**
@@ -1615,11 +1617,16 @@ public class FaturaService {
         Map<Long, String> kasaHaritasi = kasaIdler.isEmpty() ? Map.of()
                 : kasaRepository.findAllById(kasaIdler).stream()
                         .collect(Collectors.toMap(Kasa::getId, Kasa::getAd, (a, b) -> a));
-        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi, depoHaritasi, kasaHaritasi));
+        // "Teslimati var" bayragi sayfa basina tek sorguda (fatura basina sorgu yok).
+        Set<Long> faturaIdler = sayfa.getContent().stream().map(Fatura::getId).collect(Collectors.toSet());
+        Set<Long> teslimatliFaturalar = faturaIdler.isEmpty() ? Set.of()
+                : new HashSet<>(teslimatRepository.findFaturaIdByFaturaIdIn(faturaIdler));
+        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi, depoHaritasi, kasaHaritasi, teslimatliFaturalar));
     }
 
     private FaturaDTO entityDTOyeCevir(Fatura fatura, Map<Long, Stok> stokHaritasi,
-                                       Map<Long, String> depoHaritasi, Map<Long, String> kasaHaritasi) {
+                                       Map<Long, String> depoHaritasi, Map<Long, String> kasaHaritasi,
+                                       Set<Long> teslimatliFaturalar) {
 
         List<FaturaKalemDTO> kalemDTO = fatura.getKalemler().stream().map(k -> {
             String stokAd = null;
@@ -1676,6 +1683,7 @@ public class FaturaService {
                 .teslimDurumu(fatura.getTeslimDurumu())
                 .teslimNotu(fatura.getTeslimNotu())
                 .teslimFotograf(fatura.getTeslimFotograf())
+                .teslimatVar(fatura.getId() != null && teslimatliFaturalar.contains(fatura.getId()))
                 .depoId(fatura.getDepoId())
                 .depoAd(fatura.getDepoId() != null ? depoHaritasi.get(fatura.getDepoId()) : null)
                 .paraBirimi(fatura.getParaBirimi())

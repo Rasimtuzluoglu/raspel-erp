@@ -55,6 +55,12 @@ describe('Hızlı Satış (POS)', () => {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }
     }).as('satisOlustur')
+    // Sofor listesi + teslimat kaydi (POS'tan sofor atama akisi)
+    cy.intercept('GET', '/api/drivers', {
+      statusCode: 200,
+      body: [{ id: 5, ad: 'Ali Şoför', rol: 'DRIVER', bekleyenTeslimatSayisi: 0 }]
+    }).as('suruculer')
+    cy.intercept('POST', '/api/deliveries', { statusCode: 201, body: { id: 1 } }).as('teslimatOlustur')
     // Fiş yazdırma izi: mock'lanmazsa 401 döner ve global oturum kapatma devreye girer.
     cy.intercept('POST', '/api/faturalar/*/yazdirma', { statusCode: 200, body: {} }).as('yazdirmaKaydet')
     cy.visit('/hizli-satis')
@@ -181,5 +187,54 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('.p-select-overlay .p-select-option', 'VidaSan').should('exist')
     cy.get('body').type('{esc}')
     cy.get('body').type('{esc}')
+  })
+
+  it('şoför seçilmeden satış tamamlanır ve teslimat kaydı açılmaz', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.musteri-modu').contains('Perakende').click()
+    cy.contains('Satışı Tamamla').click()
+    cy.wait('@satisOlustur')
+    cy.get('@teslimatOlustur.all').should('have.length', 0)
+  })
+
+  it('şoför seçilince teslimat adresi zorunludur', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('.musteri-modu').contains('Perakende').click()
+    cy.contains('.pos-bolum-baslik', 'Teslimat').click()
+    cy.get('#hizli-teslim-sofor').click()
+    cy.contains('.p-select-overlay .p-select-option', 'Ali Şoför').click()
+    cy.contains('Satışı Tamamla').click()
+    cy.contains('teslimat adresi zorunludur').should('exist')
+    cy.get('@satisOlustur.all').should('have.length', 0)
+  })
+
+  it('şoför ve adres ile satışta teslimat kaydı açılır', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('.musteri-modu').contains('Perakende').click()
+    cy.contains('.pos-bolum-baslik', 'Teslimat').click()
+    cy.get('#hizli-teslim-sofor').click()
+    cy.contains('.p-select-overlay .p-select-option', 'Ali Şoför').click()
+    cy.get('#hizli-teslim-adres').type('Test Mah. 1. Sok No:5')
+    cy.contains('Satışı Tamamla').click()
+    cy.wait('@satisOlustur')
+    cy.wait('@teslimatOlustur').its('request.body').then((body) => {
+      expect(body.faturaId).to.eq(99)
+      expect(body.driverId).to.eq(5)
+      expect(body.teslimatAdresi).to.contain('Test Mah')
+      expect(body.durum).to.eq('BEKLEMEDE')
+    })
+  })
+
+  it('POS dar ekranlarda yatay taşma yapmaz', () => {
+    cy.viewport(1280, 800)
+    cy.visit('/hizli-satis')
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.at.most(win.document.documentElement.clientWidth + 1)
+    })
+    cy.viewport(1024, 768)
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.at.most(win.document.documentElement.clientWidth + 1)
+    })
   })
 })

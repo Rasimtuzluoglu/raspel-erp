@@ -256,4 +256,17 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
             "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
             "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI")
     BigDecimal sumKesilmisSatisCiro(@Param("sirketId") Long sirketId);
+
+    /**
+     * Sofor atanabilir faturalar: satis faturalari arasindan teslimati olmayanlar
+     * (Faturalar "Sofor Ata" aramasi). Iptal faturalar haric tutulur.
+     */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum <> com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.IPTAL " +
+            "AND NOT EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id) " +
+            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
+            "ORDER BY f.tarih DESC, f.id DESC")
+    List<Fatura> atanabilirFaturalar(@Param("sirketId") Long sirketId, @Param("q") String q, Pageable pageable);
 }

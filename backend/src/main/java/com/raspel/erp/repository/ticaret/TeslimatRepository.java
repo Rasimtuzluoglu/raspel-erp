@@ -2,6 +2,8 @@ package com.raspel.erp.repository.ticaret;
 
 import com.raspel.erp.entity.ticaret.Teslimat;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -16,4 +18,12 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
     List<Teslimat> findBySirketIdAndSiparisId(Long sirketId, Long siparisId);
 
     List<Teslimat> findBySirketIdAndSiparisIdIn(Long sirketId, java.util.Collection<Long> siparisIdler);
+
+    List<Teslimat> findBySirketIdAndFaturaId(Long sirketId, Long faturaId);
+
+    boolean existsByFaturaId(Long faturaId);
+
+    /** Fatura listelerinde "teslimati var" bayragi icin tek sorguda fatura id'leri. */
+    @Query("SELECT t.faturaId FROM Teslimat t WHERE t.faturaId IN :faturaIdler")
+    List<Long> findFaturaIdByFaturaIdIn(@Param("faturaIdler") java.util.Collection<Long> faturaIdler);
 }

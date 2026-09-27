@@ -47,4 +47,43 @@ describe('useOfflineSatisKuyrugu', () => {
     const { senkronizeEt } = useOfflineSatisKuyrugu()
     expect(await senkronizeEt(async () => {})).toBe(0)
   })
+
+  it('meta kaydedilir ve senkron sonrasi teslimat callback\'i cagrilir', async () => {
+    const { ekle, senkronizeEt, hepsi } = useOfflineSatisKuyrugu()
+    const meta = { driverId: 5, teslimatAdresi: 'Adres 1', durum: 'BEKLEMEDE' }
+    ekle({ a: 1 }, meta)
+
+    const teslimatCagrilari = []
+    const gonderilen = await senkronizeEt(
+      async () => ({ data: { id: 42 } }),
+      async (m, yanit) => { teslimatCagrilari.push({ m, yanit }) }
+    )
+
+    expect(gonderilen).toBe(1)
+    expect(hepsi()).toHaveLength(0)
+    expect(teslimatCagrilari).toHaveLength(1)
+    expect(teslimatCagrilari[0].m).toEqual(meta)
+    expect(teslimatCagrilari[0].yanit.data.id).toBe(42)
+  })
+
+  it('teslimat callback hatasi satisi kuyrukta birakmaz', async () => {
+    const { ekle, senkronizeEt, hepsi } = useOfflineSatisKuyrugu()
+    ekle({ a: 1 }, { driverId: 5 })
+
+    const gonderilen = await senkronizeEt(
+      async () => ({ data: { id: 42 } }),
+      async () => { throw new Error('teslimat hatasi') }
+    )
+
+    expect(gonderilen).toBe(1)
+    expect(hepsi()).toHaveLength(0)
+  })
+
+  it('meta yoksa teslimat callback\'i cagrilmaz', async () => {
+    const { ekle, senkronizeEt } = useOfflineSatisKuyrugu()
+    ekle({ a: 1 })
+    let cagri = 0
+    await senkronizeEt(async () => ({ data: { id: 1 } }), async () => { cagri++ })
+    expect(cagri).toBe(0)
+  })
 })

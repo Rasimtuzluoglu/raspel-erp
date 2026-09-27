@@ -102,6 +102,75 @@ class TeslimatServiceTest {
     }
 
     @Test
+    void olustur_soforPersonelineBagliKullaniciyiKabulEder() {
+        Fatura f = Fatura.builder().id(10L).sirketId(1L).faturaNumarasi("F-1").build();
+        Kullanici surucu = Kullanici.builder().id(7L).sirketId(1L).displayName("Personelli Sofor").role("USER").build();
+        when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
+        when(kullaniciRepository.findById(7L)).thenReturn(Optional.of(surucu));
+        when(personelRepository.findBySirketIdAndRolAndAktifTrue(1L, "SOFOR"))
+                .thenReturn(List.of(com.raspel.erp.entity.ik.Personel.builder().id(3L).kullaniciId(7L).build()));
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+            Teslimat t = inv.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+
+        TeslimatDTO dto = TeslimatDTO.builder().faturaId(10L).driverId(7L).teslimatAdresi("Adres").build();
+        TeslimatDTO sonuc = teslimatService.olustur(dto, 1L);
+
+        assertEquals(1L, sonuc.getId());
+    }
+
+    @Test
+    void olustur_ayniFaturayaIkinciTeslimatReddedilir() {
+        Fatura f = Fatura.builder().id(10L).sirketId(1L).faturaNumarasi("F-1").build();
+        Kullanici surucu = Kullanici.builder().id(5L).displayName("Ali").role("DRIVER").build();
+        when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(surucu));
+        when(teslimatRepository.findBySirketIdAndFaturaId(1L, 10L))
+                .thenReturn(List.of(Teslimat.builder().id(9L).build()));
+
+        TeslimatDTO dto = TeslimatDTO.builder().faturaId(10L).driverId(5L).teslimatAdresi("Adres").build();
+        assertThrows(BusinessException.class, () -> teslimatService.olustur(dto, 1L));
+    }
+
+    @Test
+    void olustur_fisTeslimEdenAdiniSenkronlar() {
+        Fatura f = Fatura.builder().id(10L).sirketId(1L).faturaNumarasi("F-1").build();
+        Kullanici surucu = Kullanici.builder().id(5L).displayName("Ali Veli").role("DRIVER").build();
+        when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(surucu));
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+            Teslimat t = inv.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+
+        TeslimatDTO dto = TeslimatDTO.builder().faturaId(10L).driverId(5L).teslimatAdresi("Adres").build();
+        teslimatService.olustur(dto, 1L);
+
+        assertEquals("Ali Veli", f.getTeslimEden());
+        verify(faturaRepository).save(f);
+    }
+
+    @Test
+    void atanabilirFaturalar_dtoMapler() {
+        Fatura f = Fatura.builder().id(10L).sirketId(1L).faturaNumarasi("F-1")
+                .tarih(LocalDate.now()).genelToplam(java.math.BigDecimal.valueOf(120))
+                .cariHesap(com.raspel.erp.entity.finans.CariHesap.builder().id(2L).ad("A Ltd").adres("Adres 1").build())
+                .build();
+        when(faturaRepository.atanabilirFaturalar(eq(1L), isNull(), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(List.of(f));
+
+        var sonuc = teslimatService.atanabilirFaturalar(1L, null, 50);
+
+        assertEquals(1, sonuc.size());
+        assertEquals("F-1", sonuc.get(0).getFaturaNumarasi());
+        assertEquals("A Ltd", sonuc.get(0).getCariHesapAd());
+        assertEquals("Adres 1", sonuc.get(0).getCariAdres());
+    }
+
+    @Test
     void durumGuncelle_durumLoguYazar() {
         Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).durum("BEKLEMEDE").build();
         when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));

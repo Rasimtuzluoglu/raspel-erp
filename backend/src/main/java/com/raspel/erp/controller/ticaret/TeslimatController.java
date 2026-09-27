@@ -42,6 +42,16 @@ public class TeslimatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(teslimatService.olustur(dto, sirketId));
     }
 
+    @GetMapping("/api/deliveries/atanabilir-faturalar")
+    @Operation(summary = "Şoför atanabilir faturalar", description = "Teslimatı olmayan satış faturalarını arar (Faturalar > Şoför Ata)")
+    public ResponseEntity<List<com.raspel.erp.dto.ticaret.AtanabilirFaturaDTO>> atanabilirFaturalar(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "50") int limit,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(teslimatService.atanabilirFaturalar(sirketId, q, limit));
+    }
+
     @GetMapping("/api/deliveries/by-driver")
     @Operation(summary = "Şoför bazlı özet", description = "Tüm şoförleri bekleyen teslimat sayılarıyla getirir")
     public ResponseEntity<List<SurucuDTO>> byDriver(HttpServletRequest request) {

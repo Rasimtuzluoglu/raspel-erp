@@ -74,6 +74,7 @@ public class TeslimatService {
                 .map(s -> SurucuDTO.builder()
                         .id(s.getId())
                         .ad(s.getDisplayName() != null ? s.getDisplayName() : s.getUsername())
+                        .rol(s.getRole())
                         .bekleyenTeslimatSayisi(teslimatRepository
                                 .countBySirketIdAndDriverIdAndDurumIn(sirketId, s.getId(), BEKLEYEN_DURUMLAR))
                         .build())
@@ -99,6 +100,28 @@ public class TeslimatService {
                 .collect(Collectors.toList());
     }
 
+    /** Sofor atanabilir faturalar: teslimati olmayan satis faturalari (hafif DTO). */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.ticaret.AtanabilirFaturaDTO> atanabilirFaturalar(Long sirketId, String q, int limit) {
+        if (sirketId == null) return List.of();
+        String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
+        int boyut = Math.max(1, Math.min(limit, 100));
+        return faturaRepository
+                .atanabilirFaturalar(sirketId, like, org.springframework.data.domain.PageRequest.of(0, boyut))
+                .stream()
+                .map(f -> com.raspel.erp.dto.ticaret.AtanabilirFaturaDTO.builder()
+                        .id(f.getId())
+                        .faturaNumarasi(f.getFaturaNumarasi())
+                        .tarih(f.getTarih())
+                        .cariHesapId(f.getCariHesap() != null ? f.getCariHesap().getId() : null)
+                        .cariHesapAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
+                        .cariAdres(f.getCariHesap() != null ? f.getCariHesap().getAdres() : null)
+                        .genelToplam(f.getGenelToplam())
+                        .teslimEden(f.getTeslimEden())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public TeslimatDTO olustur(TeslimatDTO dto, Long sirketId) {
         if (dto.getFaturaId() == null) {
@@ -114,8 +137,11 @@ public class TeslimatService {
         }
         Kullanici surucu = kullaniciRepository.findById(dto.getDriverId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", dto.getDriverId()));
-        if (!"DRIVER".equalsIgnoreCase(surucu.getRole())) {
-            throw new BusinessException("Seçilen kullanıcı şoför (DRIVER) değil");
+        if (!gecerliSurucu(surucu)) {
+            throw new BusinessException("Seçilen kullanıcı şoför değil (DRIVER rolü veya aktif şoför personeli olmalı)");
+        }
+        if (!teslimatRepository.findBySirketIdAndFaturaId(sirketId, fatura.getId()).isEmpty()) {
+            throw new BusinessException("Bu fiş için zaten teslimat kaydı var");
         }
         if (dto.getTeslimatAdresi() == null || dto.getTeslimatAdresi().isBlank()) {
             throw new BusinessException("Teslimat adresi zorunludur");
@@ -140,6 +166,13 @@ public class TeslimatService {
                 .notlar(dto.getNotlar())
                 .build();
         t = teslimatRepository.save(t);
+
+        // Fis uzerindeki "Teslim Eden" bos ise sofor adiyla senkronlanir; boylece
+        // fis/fatura ciktisinda goturen kisi gorunur (geriye uyum).
+        if (fatura.getTeslimEden() == null || fatura.getTeslimEden().isBlank()) {
+            fatura.setTeslimEden(surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername());
+            faturaRepository.save(fatura);
+        }
 
         if (sirketId != null) {
             Long bildirimSirketId = sirketId;
@@ -430,8 +463,20 @@ public class TeslimatService {
     private boolean driverMi(Long kullaniciId) {
         if (kullaniciId == null) return false;
         return kullaniciRepository.findById(kullaniciId)
-                .map(k -> "DRIVER".equalsIgnoreCase(k.getRole()))
+                .map(this::gecerliSurucu)
                 .orElse(false);
+    }
+
+    /**
+     * Sofor olarak atanabilir kullanici: DRIVER rolu VEYA aktif SOFOR personeline
+     * bagli kullanici. suruculer() listesi ile ayni kural (tutarlilik).
+     */
+    public boolean gecerliSurucu(Kullanici k) {
+        if (k == null) return false;
+        if ("DRIVER".equalsIgnoreCase(k.getRole())) return true;
+        if (k.getId() == null || k.getSirketId() == null) return false;
+        return personelRepository.findBySirketIdAndRolAndAktifTrue(k.getSirketId(), "SOFOR").stream()
+                .anyMatch(p -> k.getId().equals(p.getKullaniciId()));
     }
 
     private TeslimatDTO toDTO(Teslimat t, String driverAd) {
