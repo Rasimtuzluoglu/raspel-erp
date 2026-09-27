@@ -10,4 +10,7 @@ import java.util.List;
 @Repository
 public interface MaasBordroRepository extends JpaRepository<MaasBordro, Long> {
     Page<MaasBordro> findBySirketIdOrderByYilDescAyDesc(Long sirketId, Pageable pageable);
+
+    /** Toplu üretimde aynı personel/ay için mükerrer bordro engeli. */
+    boolean existsBySirketIdAndYilAndAyAndPersonelId(Long sirketId, Integer yil, Integer ay, Long personelId);
 }

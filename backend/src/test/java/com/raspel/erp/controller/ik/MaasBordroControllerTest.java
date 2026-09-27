@@ -33,6 +33,7 @@ class MaasBordroControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean private MaasBordroService maasBordroService;
+    @MockBean private com.raspel.erp.service.ik.BordroHesaplamaService bordroHesaplamaService;
 
     private MaasBordroDTO ornek() {
         return MaasBordroDTO.builder().id(1L).personelId(1L).personelAdi("Ahmet Yilmaz")

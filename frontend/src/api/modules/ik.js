@@ -75,6 +75,18 @@ export const maasBordroAPI = {
   },
   ode(id, kasaId) {
     return apiClient.post(`/maas-bordro/${id}/ode`, null, { params: { kasaId } })
+  },
+  ayar(yil) {
+    return apiClient.get('/maas-bordro/ayar', { params: { yil } })
+  },
+  ayarKaydet(data) {
+    return apiClient.put('/maas-bordro/ayar', data)
+  },
+  hesapla(data) {
+    return apiClient.post('/maas-bordro/hesapla', data)
+  },
+  topluUret(yil, ay) {
+    return apiClient.post('/maas-bordro/toplu-uret', null, { params: { yil, ay } })
   }
 }
 

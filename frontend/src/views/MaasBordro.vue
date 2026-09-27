@@ -9,6 +9,18 @@
         icon="pi pi-plus"
         @click="dialogAc()"
       />
+      <Button
+        :label="t('maasBordro.bordroAyarlari')"
+        icon="pi pi-cog"
+        class="p-button-outlined"
+        @click="ayarDialogAc"
+      />
+      <Button
+        :label="t('maasBordro.topluUret')"
+        icon="pi pi-users"
+        class="p-button-outlined"
+        @click="topluDialog = true"
+      />
     </div>
 
     <DataTable
@@ -259,6 +271,139 @@
         />
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="ayarDialog"
+      :header="t('maasBordro.bordroAyarlari')"
+      modal
+      :style="{ width: '520px' }"
+    >
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ t('maasBordro.yil') }}</label><InputNumber
+            v-model="ayarForm.yil"
+            :use-grouping="false"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.asgariUcret') }}</label><InputNumber
+            v-model="ayarForm.asgariUcret"
+            mode="currency"
+            currency="TRY"
+            locale="tr-TR"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.sgkIsciOrani') }}</label><InputNumber
+            v-model="ayarForm.sgkIsciOrani"
+            :min="0"
+            :max="100"
+            suffix=" %"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.issizlikIsciOrani') }}</label><InputNumber
+            v-model="ayarForm.issizlikIsciOrani"
+            :min="0"
+            :max="100"
+            suffix=" %"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.sgkIsverenOrani') }}</label><InputNumber
+            v-model="ayarForm.sgkIsverenOrani"
+            :min="0"
+            :max="100"
+            suffix=" %"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.issizlikIsverenOrani') }}</label><InputNumber
+            v-model="ayarForm.issizlikIsverenOrani"
+            :min="0"
+            :max="100"
+            suffix=" %"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.damgaOrani') }}</label><InputNumber
+            v-model="ayarForm.damgaOrani"
+            :min="0"
+            :max="100"
+            :max-fraction-digits="3"
+            suffix=" %"
+            class="w-full"
+          />
+        </div>
+        <div class="field full-width">
+          <label>{{ t('maasBordro.vergiDilimleri') }}</label><Textarea
+            v-model="ayarForm.gelirVergisiDilimleri"
+            rows="4"
+            class="w-full"
+            :placeholder="dilimOrnek"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="ayarDialog = false"
+        />
+        <Button
+          :label="t('common.save')"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="ayarKaydet"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="topluDialog"
+      :header="t('maasBordro.topluUret')"
+      modal
+      :style="{ width: '380px' }"
+    >
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ t('maasBordro.yil') }}</label><InputNumber
+            v-model="topluForm.yil"
+            :use-grouping="false"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('maasBordro.ay') }}</label><InputNumber
+            v-model="topluForm.ay"
+            :min="1"
+            :max="12"
+            show-buttons
+            class="w-full"
+          />
+        </div>
+        <small class="toplu-not">{{ t('maasBordro.topluNot') }}</small>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="topluDialog = false"
+        />
+        <Button
+          :label="t('maasBordro.uret')"
+          icon="pi pi-users"
+          :loading="kaydediliyor"
+          @click="topluUret"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -292,6 +437,64 @@ const form = ref({
 })
 
 const dialogHeader = computed(() => (duzenleme.value ? t('maasBordro.bordroDuzenle') : t('maasBordro.yeniBordro')))
+
+// Bordro hesaplama ayarları (yıl bazlı asgari ücret, oranlar, vergi dilimleri).
+const ayarDialog = ref(false)
+const topluDialog = ref(false)
+const dilimOrnek = '[{"limit":158000,"oran":15},{"limit":null,"oran":20}]'
+const buYil = new Date().getFullYear()
+const ayarForm = ref({
+  yil: buYil, asgariUcret: 0,
+  sgkIsciOrani: 14, issizlikIsciOrani: 1,
+  sgkIsverenOrani: 20.5, issizlikIsverenOrani: 2,
+  damgaOrani: 0.759, gelirVergisiDilimleri: ''
+})
+const topluForm = ref({ yil: buYil, ay: new Date().getMonth() + 1 })
+
+const listeyiYenile = async () => {
+  const r = await maasBordroAPI.getAll()
+  list.value = unwrapList(r)
+}
+
+const ayarDialogAc = async () => {
+  ayarDialog.value = true
+  try {
+    const r = await maasBordroAPI.ayar(buYil)
+    if (r.data) ayarForm.value = { ...ayarForm.value, ...r.data }
+  } catch {
+    // Ayarlar yüklenemezse varsayılanlar gösterilir.
+  }
+}
+
+const ayarKaydet = async () => {
+  kaydediliyor.value = true
+  try {
+    await maasBordroAPI.ayarKaydet(ayarForm.value)
+    toastBildirim.basarili(t('maasBordro.ayarKaydedildi'))
+    ayarDialog.value = false
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
+  } finally {
+    kaydediliyor.value = false
+  }
+}
+
+const topluUret = async () => {
+  kaydediliyor.value = true
+  try {
+    const r = await maasBordroAPI.topluUret(topluForm.value.yil, topluForm.value.ay)
+    toastBildirim.basarili(t('maasBordro.topluSonuc', {
+      uretilen: r.data?.uretilen ?? 0,
+      atlanan: r.data?.atlanan ?? 0
+    }))
+    topluDialog.value = false
+    await listeyiYenile()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('maasBordro.islemBasarisiz'))
+  } finally {
+    kaydediliyor.value = false
+  }
+}
 
 // Bordro ödemesi (kasa seçimi)
 const odemeDialog = ref(false)
@@ -477,5 +680,10 @@ const onayKaldir = async (data) => {
 }
 .w-full {
   width: 100%;
+}
+.toplu-not {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 </style>

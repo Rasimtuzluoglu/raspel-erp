@@ -24,6 +24,50 @@ import org.springframework.data.web.PageableDefault;
 public class MaasBordroController {
 
     private final MaasBordroService maasBordroService;
+    private final com.raspel.erp.service.ik.BordroHesaplamaService bordroHesaplamaService;
+
+    @GetMapping("/ayar")
+    @Operation(summary = "Bordro hesaplama ayarlarını getir",
+            description = "Yıl bazlı asgari ücret, SGK/işsizlik, damga ve gelir vergisi dilimlerini getirir (yoksa varsayılan oluşturulur)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<com.raspel.erp.entity.ik.BordroAyar> ayar(
+            HttpServletRequest request,
+            @RequestParam(required = false) Integer yil) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bordroHesaplamaService.ayarGetirVeyaOlustur(sirketId, yil));
+    }
+
+    @PutMapping("/ayar")
+    @Operation(summary = "Bordro hesaplama ayarlarını kaydet",
+            description = "Asgari ücret, SGK/işsizlik/damga oranları ve gelir vergisi dilimlerini kaydeder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<com.raspel.erp.entity.ik.BordroAyar> ayarKaydet(
+            @RequestBody com.raspel.erp.entity.ik.BordroAyar dto, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bordroHesaplamaService.ayarKaydet(sirketId, dto));
+    }
+
+    @PostMapping("/hesapla")
+    @Operation(summary = "Bordro hesapla (kaydetmeden)",
+            description = "Brüt maaştan SGK, gelir ve damga vergisi kesintileri ile net ve işveren maliyetini hesaplar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<com.raspel.erp.dto.ik.BordroHesaplamaDTO> hesapla(
+            @RequestBody com.raspel.erp.dto.ik.BordroHesaplamaDTO dto, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bordroHesaplamaService.hesapla(dto, sirketId));
+    }
+
+    @PostMapping("/toplu-uret")
+    @Operation(summary = "Toplu bordro üret",
+            description = "Aktif personel için verilen ayın TASLAK bordrolarını hesaplayıp üretir; mevcut kayıtlar atlanır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<java.util.Map<String, Object>> topluUret(
+            HttpServletRequest request,
+            @RequestParam Integer yil,
+            @RequestParam Integer ay) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bordroHesaplamaService.topluUret(sirketId, yil, ay));
+    }
 
     @GetMapping
     @Operation(summary = "Tüm maaş bordrolarını getir", description = "Tüm maaş bordro kayıtlarını listeler")
