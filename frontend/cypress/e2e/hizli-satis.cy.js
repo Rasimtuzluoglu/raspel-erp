@@ -23,6 +23,8 @@ describe('Hızlı Satış (POS)', () => {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }
     }).as('satisOlustur')
+    // Fiş yazdırma izi: mock'lanmazsa 401 döner ve global oturum kapatma devreye girer.
+    cy.intercept('POST', '/api/faturalar/*/yazdirma', { statusCode: 200, body: {} }).as('yazdirmaKaydet')
     cy.visit('/hizli-satis')
     // Yazdirma penceresini etkisiz kil
     cy.window().then((win) => {
