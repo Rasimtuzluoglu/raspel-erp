@@ -50,6 +50,10 @@ public class IadeService {
     private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
+    private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
+    private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
@@ -86,6 +90,9 @@ public class IadeService {
 
         Iade iade = Iade.builder()
                 .faturaId(dto.getFaturaId())
+                .cariHesapId(dto.getCariHesapId())
+                .kasaId(dto.getKasaId())
+                .bankaId(dto.getBankaId())
                 .tur(dto.getTur() != null ? dto.getTur() : "SATIS")
                 .tarih(dto.getTarih())
                 .tutar(toplamTutar)
@@ -313,6 +320,76 @@ public class IadeService {
                     alisIadesi ? k.getMiktar().negate() : k.getMiktar());
         }
         cariBakiyeUygula(iade, false);
+        iadeOdemeYap(iade);
+    }
+
+    /**
+     * Tamamlanan iadede müşteriye/tedarikçiye para iadesi (kasa veya banka çıkışı).
+     * Yalnızca kasaId/bankaId seçilmişse ve tutar > 0 ise uygulanır.
+     */
+    private void iadeOdemeYap(Iade iade) {
+        BigDecimal tutar = iade.getTutar() != null ? iade.getTutar() : BigDecimal.ZERO;
+        if (tutar.signum() <= 0) return;
+        java.time.LocalDate tarih = iade.getTarih() != null ? iade.getTarih() : LocalDate.now();
+        try {
+            if (iade.getKasaId() != null) {
+                var kasa = kasaRepository.findByIdForUpdate(iade.getKasaId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Kasa", iade.getKasaId()));
+                tenantChecker.check(kasa.getSirketId(), "Kasa");
+                kasa.setBakiye((kasa.getBakiye() != null ? kasa.getBakiye() : BigDecimal.ZERO).subtract(tutar));
+                kasaRepository.save(kasa);
+                kasaHareketRepository.save(com.raspel.erp.entity.finans.KasaHareket.builder()
+                        .kasa(kasa).tur("GIDER").tutar(tutar)
+                        .hareketTarihi(tarih)
+                        .aciklama("İade ödemesi #" + iade.getId())
+                        .kaynakTip("IADE").kaynakId(iade.getId())
+                        .build());
+            } else if (iade.getBankaId() != null) {
+                var banka = bankaRepository.findByIdForUpdate(iade.getBankaId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Banka", iade.getBankaId()));
+                tenantChecker.check(banka.getSirketId(), "Banka");
+                banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).subtract(tutar));
+                bankaRepository.save(banka);
+                bankaHareketiRepository.save(com.raspel.erp.entity.finans.BankaHareketi.builder()
+                        .bankaId(banka.getId())
+                        .tarih(tarih)
+                        .aciklama("İade ödemesi #" + iade.getId())
+                        .borc(tutar).alacak(BigDecimal.ZERO)
+                        .bakiye(banka.getBakiye())
+                        .kaynakTip("IADE").kaynakId(iade.getId())
+                        .build());
+            }
+        } catch (BusinessException | ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("İade para iadesi işlenemedi (iade id: {}): {}", iade.getId(), e.getMessage());
+        }
+    }
+
+    /** İade iptalinde kasa/banka para iadesini geri alır (bağlı hareketi siler, bakiyeyi düzeltir). */
+    private void iadeOdemeTersKaydet(Iade iade) {
+        try {
+            for (var kh : kasaHareketRepository.findByKaynakTipAndKaynakId("IADE", iade.getId())) {
+                var kasa = kh.getKasa();
+                if (kasa != null) {
+                    BigDecimal tutar = kh.getTutar() != null ? kh.getTutar() : BigDecimal.ZERO;
+                    kasa.setBakiye((kasa.getBakiye() != null ? kasa.getBakiye() : BigDecimal.ZERO).add(tutar));
+                    kasaRepository.save(kasa);
+                }
+                kasaHareketRepository.delete(kh);
+            }
+            for (var bh : bankaHareketiRepository.findByKaynakTipAndKaynakId("IADE", iade.getId())) {
+                var banka = bh.getBankaId() != null ? bankaRepository.findById(bh.getBankaId()).orElse(null) : null;
+                if (banka != null) {
+                    BigDecimal tutar = bh.getBorc() != null ? bh.getBorc() : BigDecimal.ZERO;
+                    banka.setBakiye((banka.getBakiye() != null ? banka.getBakiye() : BigDecimal.ZERO).add(tutar));
+                    bankaRepository.save(banka);
+                }
+                bankaHareketiRepository.delete(bh);
+            }
+        } catch (Exception e) {
+            log.warn("İade para iadesi geri alınamadı (iade id: {}): {}", iade.getId(), e.getMessage());
+        }
     }
 
     /** İade kaleminde gönderilen stoğun iade şirketine ait olduğunu doğrular. */
@@ -371,22 +448,27 @@ public class IadeService {
                     alisIadesi ? k.getMiktar() : k.getMiktar().negate());
         }
         cariBakiyeUygula(iade, true);
+        iadeOdemeTersKaydet(iade);
     }
 
     /**
      * Iade tamamlandiginda cari bakiyeye etki uygular; iptal edilince tersine cevirir.
      * Satis iadesi musterinin borcunu azaltir (+), alis iadesi tedarikci alacagini azaltir (-).
-     * Yalnizca faturaya bagli iadelerde uygulanir.
+     * Faturaya bagli iadelerde cari faturadan cozulur; faturasiz iadelerde iade.cariHesapId kullanilir.
      */
     private void cariBakiyeUygula(Iade iade, boolean ters) {
-        if (iade.getFaturaId() == null) return;
-        Fatura fatura = faturaRepository.findById(iade.getFaturaId()).orElse(null);
-        if (fatura == null || fatura.getCariHesap() == null) return;
+        Fatura fatura = iade.getFaturaId() != null
+                ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
+        Long cariId = fatura != null && fatura.getCariHesap() != null
+                ? fatura.getCariHesap().getId() : iade.getCariHesapId();
+        if (cariId == null) return;
         BigDecimal iadeTutar = iade.getTutar() != null ? iade.getTutar() : BigDecimal.ZERO;
 
         // Bağlı faturanın kalan/ödenen tutarını da güncelle; aksi halde iade sonrası
         // fatura hâlâ tam borçlu görünür.
-        faturaKalanGuncelle(fatura, ters ? iadeTutar.negate() : iadeTutar);
+        if (fatura != null) {
+            faturaKalanGuncelle(fatura, ters ? iadeTutar.negate() : iadeTutar);
+        }
 
         BigDecimal tutar = iadeTutar;
         if (!"SATIS".equals(iade.getTur())) {
@@ -395,7 +477,7 @@ public class IadeService {
         if (ters) {
             tutar = tutar.negate();
         }
-        cariHesapService.bakiyeGuncelle(fatura.getCariHesap().getId(), tutar);
+        cariHesapService.bakiyeGuncelle(cariId, tutar);
     }
 
     /**
@@ -467,10 +549,17 @@ public class IadeService {
                 cariAd = f.getCariHesap().getAd();
             }
         }
+        // Faturasız iade: cari bilgisi iade kaydından çözülür.
+        if (cariId == null && i.getCariHesapId() != null) {
+            cariId = i.getCariHesapId();
+            com.raspel.erp.dto.finans.CariHesapDTO cari = cariHesapService.cariHesapGetir(cariId);
+            cariAd = cari != null ? cari.getAd() : null;
+        }
         return IadeDTO.builder()
                 .id(i.getId()).faturaId(i.getFaturaId()).tur(i.getTur()).tarih(i.getTarih())
                 .tutar(i.getTutar()).aciklama(i.getAciklama()).durum(i.getDurum())
                 .cariHesapId(cariId).cariHesapAd(cariAd)
+                .kasaId(i.getKasaId()).bankaId(i.getBankaId())
                 .sirketId(i.getSirketId()).olusturmaTarihi(i.getOlusturmaTarihi())
                 .kalemler(kalemler)
                 .build();

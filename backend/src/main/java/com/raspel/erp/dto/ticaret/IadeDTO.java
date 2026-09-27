@@ -15,6 +15,10 @@ public class IadeDTO {
     private Long faturaId;
     private Long cariHesapId;
     private String cariHesapAd;
+    /** İade tamamlandığında para iadesi yapılacak kasa (opsiyonel). */
+    private Long kasaId;
+    /** İade tamamlandığında para iadesi yapılacak banka (opsiyonel). */
+    private Long bankaId;
     private String tur;
     private LocalDate tarih;
     private BigDecimal tutar;

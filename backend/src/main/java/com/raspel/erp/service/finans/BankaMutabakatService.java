@@ -44,6 +44,7 @@ public class BankaMutabakatService {
     private final FaturaRepository faturaRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    private final com.raspel.erp.service.finans.HareketService hareketService;
 
     private static final DateTimeFormatter[] TARIH_FORMATLARI = {
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),
@@ -68,11 +69,11 @@ public class BankaMutabakatService {
                         .collect(Collectors.toMap(Fatura::getId, Fatura::getFaturaNumarasi));
 
         // Eşleşmemiş hareketler için öneri skorları hesapla (yalnızca isteğin şirketi).
+        // Satış (tahsilat) ve alış (ödeme) faturaları birlikte önerilir.
         List<Fatura> acikFaturalar = hareketler.stream().anyMatch(h -> !Boolean.TRUE.equals(h.getEslestirildi()))
                 && sirketId != null
                 ? faturaRepository.findBySirketIdAndDurumNotAndOdemeDurumuNotIn(
                         sirketId, Fatura.FaturaDurum.IPTAL, List.of("ODENDI", "IPTAL")).stream()
-                        .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
                         .collect(Collectors.toList())
                 : List.of();
 
@@ -165,6 +166,35 @@ public class BankaMutabakatService {
         if (h.getSirketId() == null || !h.getSirketId().equals(fatura.getSirketId())) {
             throw new ResourceNotFoundException("Fatura bu sirkete ait degil");
         }
+        if (Boolean.TRUE.equals(h.getEslestirildi()) && h.getKaynakId() != null) {
+            throw new BusinessException("Bu banka hareketi zaten eşleştirilmiş; önce eşleştirmeyi kaldırın.");
+        }
+        // Eşleştirme yalnız işaretleme değildir: cari hareket oluşturulur ve faturanın
+        // kalan/ödeme durumu güncellenir. Aksi halde mutabakat muhasebeye yansımaz.
+        BigDecimal tutar = h.getAlacak() != null && h.getAlacak().signum() > 0
+                ? h.getAlacak()
+                : (h.getBorc() != null ? h.getBorc() : BigDecimal.ZERO);
+        if (tutar.signum() > 0 && fatura.getCariHesap() != null) {
+            BigDecimal faturaKalan = fatura.getKalanTutar() != null
+                    ? fatura.getKalanTutar() : fatura.getGenelToplam();
+            BigDecimal uygulanacak = faturaKalan != null ? tutar.min(faturaKalan) : tutar;
+            if (uygulanacak.signum() > 0) {
+                boolean alis = fatura.getTur() == Fatura.FaturaTur.ALIS;
+                var cariHareket = hareketService.hareketOlustur(com.raspel.erp.dto.finans.HareketDTO.builder()
+                        .cariHesapId(fatura.getCariHesap().getId())
+                        .tur(alis ? "ODEME" : "TAHSILAT")
+                        .tutar(uygulanacak)
+                        .hareketTarihi(h.getTarih() != null ? h.getTarih() : java.time.LocalDate.now())
+                        .aciklama("Banka mutabakatı: " + fatura.getFaturaNumarasi())
+                        .odemeYontemi("HAVALE")
+                        .faturaId(fatura.getId())
+                        .build(), h.getSirketId());
+                if (cariHareket != null && cariHareket.getId() != null) {
+                    h.setKaynakTip("MUTABAKAT");
+                    h.setKaynakId(cariHareket.getId());
+                }
+            }
+        }
         h.setEslestirildi(true);
         h.setEslesenFaturaId(faturaId);
         return entityToDTO(bankaHareketiRepository.save(h));
@@ -174,8 +204,19 @@ public class BankaMutabakatService {
         BankaHareketi h = bankaHareketiRepository.findById(hareketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka hareketi", hareketId));
         tenantChecker.check(h.getSirketId(), "Banka hareketi");
+        // Eşleştirme sırasında oluşturulan cari hareket varsa geri alınır (cari + fatura senkronu).
+        if ("MUTABAKAT".equals(h.getKaynakTip()) && h.getKaynakId() != null) {
+            try {
+                hareketService.hareketSil(h.getKaynakId());
+            } catch (Exception e) {
+                log.warn("Mutabakat cari hareketi geri alınamadı ({}): {}", h.getKaynakId(), e.getMessage());
+                throw new BusinessException("Eşleştirme kaldırılamadı: " + e.getMessage());
+            }
+        }
         h.setEslestirildi(false);
         h.setEslesenFaturaId(null);
+        h.setKaynakTip(null);
+        h.setKaynakId(null);
         return entityToDTO(bankaHareketiRepository.save(h));
     }
 

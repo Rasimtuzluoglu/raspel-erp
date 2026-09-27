@@ -23,6 +23,17 @@ public class Iade {
     @Column(name = "fatura_id")
     private Long faturaId;
 
+    /** Faturasız iadelerde cari bağı; doluysa cari bakiye bu hesaba işlenir. */
+    @Column(name = "cari_hesap_id")
+    private Long cariHesapId;
+
+    /** Tamamlanınca para iadesi yapılan kasa/banka (yalnızca biri dolu olur). */
+    @Column(name = "kasa_id")
+    private Long kasaId;
+
+    @Column(name = "banka_id")
+    private Long bankaId;
+
     @Column(nullable = false, length = 20)
     private String tur;
 

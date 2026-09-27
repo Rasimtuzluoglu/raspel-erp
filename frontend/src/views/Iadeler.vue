@@ -154,6 +154,35 @@
             @change="faturaSecildi"
           />
         </div>
+        <!-- Para iadesi: tamamlanınca seçilen kasa/bankadan çıkış yapılır (opsiyonel). -->
+        <div class="form-row-2">
+          <div class="field">
+            <label>{{ t('iadeler.paraIadesiKasa') }}</label>
+            <Dropdown
+              v-model="form.kasaId"
+              :options="kasalar"
+              option-label="ad"
+              option-value="id"
+              :placeholder="t('iadeler.opsiyonel')"
+              class="w-full"
+              filter
+              show-clear
+            />
+          </div>
+          <div class="field">
+            <label>{{ t('iadeler.paraIadesiBanka') }}</label>
+            <Dropdown
+              v-model="form.bankaId"
+              :options="bankalar"
+              option-label="ad"
+              option-value="id"
+              :placeholder="t('iadeler.opsiyonel')"
+              class="w-full"
+              filter
+              show-clear
+            />
+          </div>
+        </div>
         <div class="field">
           <label>{{ t('iadeler.tarihZorunlu') }}</label><DatePicker
             v-model="form.tarih"
@@ -253,7 +282,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { iadeAPI, stokAPI, cariHesapAPI, faturaAPI } from '../api/index.js'
+import { iadeAPI, stokAPI, cariHesapAPI, faturaAPI, kasaAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -276,9 +305,14 @@ const form = ref({
   tur: 'SATIS',
   tarih: new Date(),
   tutar: 0,
+  kasaId: null,
+  bankaId: null,
   aciklama: '',
   kalemler: []
 })
+
+const kasalar = ref([])
+const bankalar = ref([])
 
 const dialogHeader = computed(() => (duzenleme.value ? t('iadeler.duzenle') : t('iadeler.yeniIade')))
 
@@ -310,12 +344,15 @@ const faturaSecildi = () => {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [r, stokRes, cariRes, fatRes] = await Promise.all([
-      iadeAPI.getAll(), stokAPI.getAll({ size: 1000 }), cariHesapAPI.getAll({ size: 500 }), faturaAPI.getAll({ size: 500 })
+    const [r, stokRes, cariRes, fatRes, kasaRes, bankaRes] = await Promise.all([
+      iadeAPI.getAll(), stokAPI.getAll({ size: 1000 }), cariHesapAPI.getAll({ size: 500 }), faturaAPI.getAll({ size: 500 }),
+      kasaAPI.getAll({ size: 200 }), bankaAPI.getAll({ size: 200 })
     ])
     list.value = unwrapList(r)
     stokList.value = unwrapList(stokRes)
     cariList.value = unwrapList(cariRes)
+    kasalar.value = unwrapList(kasaRes)
+    bankalar.value = unwrapList(bankaRes)
     faturaList.value = unwrapList(fatRes).map((f) => ({
       ...f,
       etiket: `${f.faturaNumarasi} (${f.cariHesapAd || '-'}) - ${formatCurrency(f.genelToplam)}`
@@ -339,7 +376,7 @@ const dialogAc = (data) => {
         tur: data.tur || 'SATIS',
         kalemler: data.kalemler?.map((k) => ({ ...k })) || []
       }
-    : { cariHesapId: null, cariHesapAd: '', faturaId: null, tur: 'SATIS', tarih: new Date(), tutar: 0, aciklama: '', kalemler: [] }
+    : { cariHesapId: null, cariHesapAd: '', faturaId: null, tur: 'SATIS', tarih: new Date(), tutar: 0, kasaId: null, bankaId: null, aciklama: '', kalemler: [] }
   dialog.value = true
 }
 
@@ -374,6 +411,24 @@ const kaydet = async () => {
 }
 
 const durumGuncelle = async (data, durum) => {
+  // Tamamlama stok + cari (+ para iadesi) etkisi yapar; onay ister.
+  if (durum === 'TAMAMLANDI' || (data.durum === 'TAMAMLANDI' && durum === 'IPTAL')) {
+    confirm.require({
+      message: durum === 'TAMAMLANDI'
+        ? t('iadeler.tamamlaOnayMesaj')
+        : t('iadeler.iptalOnayMesaj'),
+      header: durum === 'TAMAMLANDI' ? t('iadeler.tamamla') : t('common.cancel'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: t('common.evet'),
+      rejectLabel: t('common.vazgec'),
+      accept: () => durumUygula(data, durum)
+    })
+    return
+  }
+  await durumUygula(data, durum)
+}
+
+const durumUygula = async (data, durum) => {
   try {
     await iadeAPI.durumGuncelle(data.id, durum)
     const r = await iadeAPI.getAll()
