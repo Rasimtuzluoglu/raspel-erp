@@ -105,6 +105,27 @@ class PdfRaporServiceTest {
     }
 
     @Test
+    void stokEtiketi_fiyatiKodunAltindaGosterirVeQrIcerir() throws Exception {
+        com.raspel.erp.entity.envanter.Stok stok = new com.raspel.erp.entity.envanter.Stok();
+        stok.setId(2L);
+        stok.setAd("Raf Ürünü");
+        stok.setStokKodu("MDF-18");
+        stok.setSatisFiyati(BigDecimal.valueOf(620));
+
+        byte[] barkod = new com.raspel.erp.service.sistem.BarkodService().barkodPng("MDF-18", 600, 150);
+        byte[] qr = new com.raspel.erp.service.sistem.QRService().qrPng("MDF-18", 200);
+        byte[] pdf = pdfRaporService.stokEtiketi(stok, qr, barkod, "QR");
+
+        try (var doc = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            String metin = new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+            // Fiyat artik kodun altinda buyuk puntoyla; eski "Fiyat:" etiketi kaldirildi.
+            assertTrue(metin.contains("620,00"), "Fiyat metni bulunamadi: " + metin);
+            assertFalse(metin.contains("Fiyat:"), "Eski fiyat satiri hala var: " + metin);
+            assertTrue(metin.contains("MDF-18"), "Kod metni bulunamadi: " + metin);
+        }
+    }
+
+    @Test
     void faturaRaporu_lazyCariProxySiniSessionDisindaCozer() {
         com.raspel.erp.entity.ticaret.Fatura fatura = new com.raspel.erp.entity.ticaret.Fatura();
         fatura.setId(2L);
