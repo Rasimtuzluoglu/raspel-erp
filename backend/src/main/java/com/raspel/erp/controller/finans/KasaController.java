@@ -65,6 +65,20 @@ public class KasaController {
         return ResponseEntity.ok(kasaService.kasaHareketleriGetir(id));
     }
 
+    @GetMapping("/gun-sonu")
+    @Operation(summary = "Kasa gün sonu (Z raporu)",
+            description = "Seçilen tarih için kasa nakit akışı, ödeme yöntemi kırılımı ve günün satışları. "
+                    + "kasaId verilmezse şirketin tüm kasaları döner.")
+    public ResponseEntity<List<com.raspel.erp.dto.finans.KasaGunSonuDTO>> gunSonu(
+            HttpServletRequest request,
+            @RequestParam(required = false) Long kasaId,
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate tarih) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(kasaService.gunSonu(sirketId, kasaId, tarih));
+    }
+
     @PostMapping("/{id}/hareketler")
     @Operation(summary = "Kasa hareketi ekle", description = "Kasaya yeni bir hareket (giriş/çıkış) ekler")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")

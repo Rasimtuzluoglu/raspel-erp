@@ -77,6 +77,9 @@ export const kasaAPI = {
   bankadanAktar(data) {
     return apiClient.post('/kasalar/bankadan-aktar', data)
   },
+  gunSonu(params = {}) {
+    return apiClient.get('/kasalar/gun-sonu', { params })
+  },
   getAllKasalar() {
     return apiClient.get('/kasalar', { params: { size: 500 } })
   }

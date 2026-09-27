@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.raspel.erp.entity.sistem.GelirGiderKategori;
 import com.raspel.erp.entity.finans.Banka;
@@ -44,6 +45,8 @@ public class KasaService {
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.repository.finans.HareketRepository hareketRepository;
+    private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
 
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
@@ -96,6 +99,131 @@ public class KasaService {
         tenantChecker.check(kasa.getSirketId(), "Kasa");
         return kasaHareketRepository.findByKasaIdOrderByHareketTarihiDesc(kasaId)
                 .stream().map(this::hareketToDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * Kasa gün sonu (Z raporu): gün başı/gün içi/gün sonu nakit akışı, tahsilatların
+     * ödeme yöntemi kırılımı ve günün satışları. Sunucu tarafında hesaplanır;
+     * istemci tarafındaki eksik/sayfalı liste hesaplarına güvenilmez.
+     */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.finans.KasaGunSonuDTO> gunSonu(Long sirketId, Long kasaId, java.time.LocalDate tarih) {
+        java.time.LocalDate gun = tarih != null ? tarih : java.time.LocalDate.now();
+        List<Kasa> kasalar = kasaId != null
+                ? List.of(kasaRepository.findById(kasaId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Kasa", kasaId)))
+                : kasaRepository.findBySirketIdOrderByAd(sirketId);
+        if (kasalar.isEmpty()) return List.of();
+
+        List<com.raspel.erp.entity.ticaret.Fatura> gunFaturalari =
+                faturaRepository.findBySirketIdAndTarihBetween(sirketId, gun, gun).stream()
+                        .filter(f -> f.getTur() == com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS
+                                && f.getDurum() != com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.IPTAL)
+                        .collect(Collectors.toList());
+
+        List<com.raspel.erp.dto.finans.KasaGunSonuDTO> sonuc = new java.util.ArrayList<>();
+        for (Kasa kasa : kasalar) {
+            tenantChecker.check(kasa.getSirketId(), "Kasa");
+            List<KasaHareket> tumu = kasaHareketRepository.findByKasaIdOrderByHareketTarihiDesc(kasa.getId());
+
+            BigDecimal acilis = BigDecimal.ZERO;
+            BigDecimal giris = BigDecimal.ZERO;
+            BigDecimal cikis = BigDecimal.ZERO;
+            List<KasaHareket> gunun = new java.util.ArrayList<>();
+            for (KasaHareket kh : tumu) {
+                if (kh.getHareketTarihi() == null) continue;
+                BigDecimal t = kh.getTutar() != null ? kh.getTutar() : BigDecimal.ZERO;
+                boolean gelir = "GELIR".equals(kh.getTur());
+                if (kh.getHareketTarihi().isBefore(gun)) {
+                    acilis = acilis.add(gelir ? t : t.negate());
+                } else if (gun.equals(kh.getHareketTarihi())) {
+                    if (gelir) giris = giris.add(t);
+                    else cikis = cikis.add(t);
+                    gunun.add(kh);
+                }
+            }
+
+            // Ödeme yöntemi çözümü: kaynakTip=TAHSILAT -> cari hareket, fatura bağlı satır -> fatura.
+            List<Long> cariIdler = gunun.stream()
+                    .filter(kh -> "TAHSILAT".equals(kh.getKaynakTip()) && kh.getKaynakId() != null)
+                    .map(KasaHareket::getKaynakId).distinct().collect(Collectors.toList());
+            Map<Long, String> cariYontem = cariIdler.isEmpty() ? Map.of()
+                    : hareketRepository.findAllById(cariIdler).stream()
+                            .collect(Collectors.toMap(Hareket::getId,
+                                    h -> h.getOdemeYontemi() != null
+                                            ? h.getOdemeYontemi().toUpperCase(java.util.Locale.ROOT) : "DIGER",
+                                    (a, b) -> a));
+            List<Long> faturaIdler = gunun.stream()
+                    .filter(kh -> kh.getFaturaId() != null)
+                    .map(KasaHareket::getFaturaId).distinct().collect(Collectors.toList());
+            Map<Long, String> faturaYontem = faturaIdler.isEmpty() ? Map.of()
+                    : faturaRepository.findAllById(faturaIdler).stream()
+                            .collect(Collectors.toMap(com.raspel.erp.entity.ticaret.Fatura::getId,
+                                    f -> f.getOdemeYontemi() != null
+                                            ? f.getOdemeYontemi().toUpperCase(java.util.Locale.ROOT) : "DIGER",
+                                    (a, b) -> a));
+
+            BigDecimal tahsilatToplam = BigDecimal.ZERO;
+            BigDecimal nakit = BigDecimal.ZERO;
+            BigDecimal kart = BigDecimal.ZERO;
+            BigDecimal havale = BigDecimal.ZERO;
+            BigDecimal taksit = BigDecimal.ZERO;
+            BigDecimal diger = BigDecimal.ZERO;
+            long tahsilatAdedi = 0;
+            BigDecimal giderToplam = BigDecimal.ZERO;
+            long giderAdedi = 0;
+            List<com.raspel.erp.dto.finans.KasaGunSonuDTO.Satir> satirlar = new java.util.ArrayList<>();
+            for (KasaHareket kh : gunun) {
+                BigDecimal t = kh.getTutar() != null ? kh.getTutar() : BigDecimal.ZERO;
+                String yontem = null;
+                if ("TAHSILAT".equals(kh.getKaynakTip()) && kh.getKaynakId() != null) {
+                    yontem = cariYontem.get(kh.getKaynakId());
+                } else if (kh.getFaturaId() != null) {
+                    yontem = faturaYontem.get(kh.getFaturaId());
+                }
+                if ("GELIR".equals(kh.getTur())
+                        && ("TAHSILAT".equals(kh.getKaynakTip()) || kh.getFaturaId() != null)) {
+                    tahsilatToplam = tahsilatToplam.add(t);
+                    tahsilatAdedi++;
+                    switch (yontem != null ? yontem : "DIGER") {
+                        case "NAKIT" -> nakit = nakit.add(t);
+                        case "KART" -> kart = kart.add(t);
+                        case "HAVALE" -> havale = havale.add(t);
+                        case "TAKSIT" -> taksit = taksit.add(t);
+                        default -> diger = diger.add(t);
+                    }
+                } else if ("GIDER".equals(kh.getTur())) {
+                    giderToplam = giderToplam.add(t);
+                    giderAdedi++;
+                }
+                satirlar.add(com.raspel.erp.dto.finans.KasaGunSonuDTO.Satir.builder()
+                        .id(kh.getId()).tur(kh.getTur()).tutar(t)
+                        .aciklama(kh.getAciklama()).kaynakTip(kh.getKaynakTip())
+                        .odemeYontemi(yontem).build());
+            }
+
+            long satisAdedi = 0;
+            BigDecimal satisToplam = BigDecimal.ZERO;
+            for (com.raspel.erp.entity.ticaret.Fatura f : gunFaturalari) {
+                if (f.getKasaId() != null && f.getKasaId().equals(kasa.getId())) {
+                    satisAdedi++;
+                    satisToplam = satisToplam.add(f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO);
+                }
+            }
+
+            sonuc.add(com.raspel.erp.dto.finans.KasaGunSonuDTO.builder()
+                    .tarih(gun).kasaId(kasa.getId()).kasaAd(kasa.getAd())
+                    .acilisBakiye(acilis).gunIciGiris(giris).gunIciCikis(cikis)
+                    .kapanisBakiye(acilis.add(giris).subtract(cikis))
+                    .tahsilatToplam(tahsilatToplam).tahsilatAdedi(tahsilatAdedi)
+                    .nakitTahsilat(nakit).kartTahsilat(kart).havaleTahsilat(havale)
+                    .taksitTahsilat(taksit).digerTahsilat(diger)
+                    .giderToplam(giderToplam).giderAdedi(giderAdedi)
+                    .satisAdedi(satisAdedi).satisToplam(satisToplam)
+                    .hareketler(satirlar)
+                    .build());
+        }
+        return sonuc;
     }
 
     public KasaHareketDTO hareketEkle(KasaHareketDTO dto) {

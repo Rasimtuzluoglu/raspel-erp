@@ -41,6 +41,8 @@ class KasaServiceTest {
     @Mock private TenantChecker tenantChecker;
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.repository.finans.HareketRepository hareketRepository;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     @InjectMocks private KasaService kasaService;
 
     private Kasa createKasa(Long id) {
@@ -294,5 +296,43 @@ class KasaServiceTest {
 
         assertThrows(RuntimeException.class, () ->
                 kasaService.bankaKasayaAktar(3L, 1L, BigDecimal.valueOf(500), null, 1L));
+    }
+
+    @Test
+    void gunSonu_nakitTahsilatKirilimiVeBakiyeHesaplanir() {
+        Kasa kasa = createKasa(1L);
+        kasa.setSirketId(1L);
+        when(kasaRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(kasa));
+
+        KasaHareket oncekiGun = KasaHareket.builder().id(10L).kasa(kasa).tur("GELIR")
+                .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.of(2026, 9, 20)).build();
+        KasaHareket tahsilat = KasaHareket.builder().id(11L).kasa(kasa).tur("GELIR")
+                .tutar(BigDecimal.valueOf(500)).hareketTarihi(LocalDate.of(2026, 9, 21))
+                .kaynakTip("TAHSILAT").kaynakId(77L).build();
+        KasaHareket gider = KasaHareket.builder().id(12L).kasa(kasa).tur("GIDER")
+                .tutar(BigDecimal.valueOf(100)).hareketTarihi(LocalDate.of(2026, 9, 21)).build();
+        when(kasaHareketRepository.findByKasaIdOrderByHareketTarihiDesc(1L))
+                .thenReturn(List.of(gider, tahsilat, oncekiGun));
+        when(hareketRepository.findAllById(anyList())).thenReturn(List.of(
+                com.raspel.erp.entity.finans.Hareket.builder().id(77L).odemeYontemi("NAKIT").build()));
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of());
+
+        var sonuc = kasaService.gunSonu(1L, null, LocalDate.of(2026, 9, 21));
+
+        assertEquals(1, sonuc.size());
+        var z = sonuc.get(0);
+        assertEquals(BigDecimal.valueOf(1000), z.getAcilisBakiye());
+        assertEquals(BigDecimal.valueOf(500), z.getGunIciGiris());
+        assertEquals(BigDecimal.valueOf(100), z.getGunIciCikis());
+        assertEquals(BigDecimal.valueOf(1400), z.getKapanisBakiye());
+        assertEquals(BigDecimal.valueOf(500), z.getNakitTahsilat());
+        assertEquals(BigDecimal.valueOf(100), z.getGiderToplam());
+        assertEquals(1, z.getTahsilatAdedi());
+    }
+
+    @Test
+    void gunSonu_kasaYoksaBosListeDoner() {
+        when(kasaRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
+        assertTrue(kasaService.gunSonu(1L, null, LocalDate.now()).isEmpty());
     }
 }
