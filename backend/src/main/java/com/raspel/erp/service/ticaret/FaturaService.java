@@ -536,6 +536,33 @@ public class FaturaService {
         kalemler.forEach(k -> k.setFatura(fatura));
         fatura.setKalemler(kalemler);
 
+        // Kredi limiti sunucu tarafında zorlanır: açık hesap satışında müşterinin borcu
+        // (negatif bakiye) + faturanın kalanı limiti aşamaz. Aşım yalnızca açık onay
+        // bayrağı ile geçilebilir; bu durumda denetim izi için uyarı loglanır.
+        if (tur == Fatura.FaturaTur.SATIS && faturaDurum == Fatura.FaturaDurum.KESILDI
+                && cariHesap != null && cariHesap.getKrediLimiti() != null
+                && cariHesap.getKrediLimiti().signum() > 0) {
+            if (Boolean.TRUE.equals(dto.getKrediLimitiGormezdenGel())) {
+                log.warn("Kredi limiti onayla aşılıyor: cari={}, kullanıcı={}, limit={}",
+                        cariHesap.getId(), kullaniciId, cariHesap.getKrediLimiti());
+            } else {
+                BigDecimal kalanTL = tlKarsiliginaCevir(fatura, kalanTutar);
+                BigDecimal mevcutBakiye = cariHesap.getBakiye() != null
+                        ? cariHesap.getBakiye() : BigDecimal.ZERO;
+                BigDecimal yeniBakiye = mevcutBakiye.subtract(kalanTL);
+                BigDecimal borc = yeniBakiye.signum() < 0 ? yeniBakiye.negate() : BigDecimal.ZERO;
+                if (borc.compareTo(cariHesap.getKrediLimiti()) > 0) {
+                    BigDecimal mevcutBorc = mevcutBakiye.signum() < 0
+                            ? mevcutBakiye.negate() : BigDecimal.ZERO;
+                    throw new BusinessException("Kredi limiti aşıldı: " + cariHesap.getAd()
+                            + " - Mevcut borç: " + mevcutBorc
+                            + " TL, bu fatura ile: " + borc
+                            + " TL, limit: " + cariHesap.getKrediLimiti()
+                            + " TL. Devam etmek için kredi limiti onayı gerekir.");
+                }
+            }
+        }
+
         Fatura kaydedilen = faturaRepository.save(fatura);
 
         faturaGecmisService.kaydet(kaydedilen, FaturaGecmisService.OLUSTUR,

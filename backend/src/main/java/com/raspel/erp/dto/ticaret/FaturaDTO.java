@@ -77,6 +77,8 @@ public class FaturaDTO {
     /** Kart komisyon tutarı; verilmezse POS terminalinin komisyon oranından hesaplanır. */
     private BigDecimal komisyonTutar;
     private java.time.LocalDate valorTarihi;
+    /** true ise kredi limiti aşımı onaylanmış sayılır (açık onay; denetim için loglanır). */
+    private Boolean krediLimitiGormezdenGel;
     /** Faturanın dayandığı irsaliye; verilirse stok çift düşümü önlenir. */
     private Long irsaliyeId;
 

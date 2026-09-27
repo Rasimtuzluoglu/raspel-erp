@@ -1206,7 +1206,7 @@ const closeDialog = () => {
   showDialog.value = false
 }
 
-const saveFatura = async () => {
+const saveFatura = async (krediOnayli = false) => {
   if (!form.value.tur) {
     toastBildirim.uyari(t('faturalar.faturaTuruSeciniz'))
     return
@@ -1235,7 +1235,8 @@ const saveFatura = async () => {
       teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
       teslimNotu: form.value.teslimNotu || null,
       depoId: form.value.depoId || null,
-      paraBirimi: form.value.paraBirimi || 'TRY'
+      paraBirimi: form.value.paraBirimi || 'TRY',
+      krediLimitiGormezdenGel: krediOnayli
     }
   })
 
@@ -1268,7 +1269,19 @@ const saveFatura = async () => {
     closeDialog()
   } catch (err) {
     const msg = err.response?.data?.message || t('faturalar.islemBasarisiz')
-    toastBildirim.hata(msg)
+    // Kredi limiti aşımı: sunucu engelledi; kullanıcı açık onay verirse bayrakla tekrar denenir.
+    if (!editingId.value && !krediOnayli && msg.includes('Kredi limiti')) {
+      confirm.require({
+        message: msg + ' ' + t('faturalar.krediLimitiDevam'),
+        header: t('faturalar.krediLimitiBaslik'),
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: t('faturalar.krediLimitiOnayla'),
+        rejectLabel: t('common.vazgec'),
+        accept: () => saveFatura(true)
+      })
+    } else {
+      toastBildirim.hata(msg)
+    }
   } finally {
     saving.value = false
   }

@@ -182,6 +182,45 @@ class FaturaServiceTest {
     }
 
     @Test
+    void faturaOlustur_krediLimitiAsilirsaReddedilir() {
+        CariHesap cari = createCariHesap();
+        cari.setKrediLimiti(BigDecimal.valueOf(500));
+        cari.setBakiye(BigDecimal.ZERO);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(BigDecimal.valueOf(6))
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now()).durum("KESILDI")
+                .emailGonder(false)
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+
+        // 600 TL açık hesap borcu, 500 TL limiti aşar: sunucu faturanın oluşmasını engeller.
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> faturaService.faturaOlustur(dto, 1L, null, null));
+        verify(faturaRepository, never()).save(any(Fatura.class));
+    }
+
+    @Test
+    void faturaOlustur_krediLimitiOnayliGecirir() {
+        CariHesap cari = createCariHesap();
+        cari.setKrediLimiti(BigDecimal.valueOf(500));
+        cari.setBakiye(BigDecimal.ZERO);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("Kalem 1").adet(BigDecimal.valueOf(6))
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now()).durum("KESILDI")
+                .emailGonder(false).krediLimitiGormezdenGel(true)
+                .cariHesapId(1L).kalemler(List.of(kalem)).build();
+        Fatura saved = createFatura(1L);
+        saved.setDurum(Fatura.FaturaDurum.KESILDI);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
+
+        var result = faturaService.faturaOlustur(dto, 1L, null, null);
+
+        assertNotNull(result);
+        verify(faturaRepository).save(any(Fatura.class));
+    }
+
+    @Test
     void faturaOlustur_baskaSirketStoguReddedilir() {
         CariHesap cari = createCariHesap();
         cari.setSirketId(1L);

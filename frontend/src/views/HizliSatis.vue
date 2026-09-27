@@ -1147,6 +1147,7 @@ import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
 import { useRoute, useRouter } from 'vue-router'
+import { useConfirm } from 'primevue/useconfirm'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
@@ -1158,6 +1159,7 @@ const offlineKuyruk = useOfflineSatisKuyrugu()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const confirm = useConfirm()
 
 // Değişim akışı: İadeler ekranından "Yeni Satışa Geç" ile gelindiğinde gösterilir.
 const degisimIadeId = ref(null)
@@ -2251,26 +2253,7 @@ const satisiTamamlaOnaysiz = async () => {
   })
   try {
     const yanit = await faturaAPI.create(satisVerisi)
-    sonSatis.value = yanit.data
-    satisOzet.value = {
-      faturaNo: yanit.data?.faturaNumarasi,
-      toplam: genelToplam.value,
-      odenen: odenenTutar.value,
-      kalan: kalanTutar.value,
-      yontem: odemeYontemi.value,
-      paraUstu: paraUstu.value
-    }
-    toastBildirim.basarili(t('hizliSatis.satisTamamlandi') + ' - ' + formatCurrency(genelToplam.value))
-    try {
-      fisiYazdir(yanit.data?.faturaNumarasi)
-    } catch {
-      /* empty */
-    }
-    sepetiTemizle()
-    alinanNakit.value = 0
-    satisOzetDialog.value = true
-    gunlukSatislariYukle()
-    kasalariYukle()
+    satisBasarili(yanit)
   } catch (e) {
     // Ağ yoksa satışı kuyruğa al (offline satış)
     if (!e?.response) {
@@ -2287,11 +2270,51 @@ const satisiTamamlaOnaysiz = async () => {
         /* empty */
       }
       sepetiTemizle()
+    } else if ((e?.response?.data?.message || '').includes('Kredi limiti')) {
+      // Kredi limiti sunucu tarafında engellendi; açık onayla bayrak gönderilerek tekrar denenir.
+      confirm.require({
+        message: e.response.data.message + ' ' + t('faturalar.krediLimitiDevam'),
+        header: t('faturalar.krediLimitiBaslik'),
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: t('faturalar.krediLimitiOnayla'),
+        rejectLabel: t('common.vazgec'),
+        accept: async () => {
+          try {
+            satisBasarili(await faturaAPI.create({ ...satisVerisi, krediLimitiGormezdenGel: true }))
+          } catch (e2) {
+            toastBildirim.hata(e2?.response?.data?.message || t('hizliSatis.satisBasarisiz'))
+          }
+        }
+      })
     } else {
       toastBildirim.hata(e?.response?.data?.message || t('hizliSatis.satisBasarisiz'))
     }
   }
   kaydediliyor.value = false
+}
+
+// Başarılı satış sonrası ortak işlemler (normal ve kredi limiti onaylı akış).
+const satisBasarili = (yanit) => {
+  sonSatis.value = yanit.data
+  satisOzet.value = {
+    faturaNo: yanit.data?.faturaNumarasi,
+    toplam: genelToplam.value,
+    odenen: odenenTutar.value,
+    kalan: kalanTutar.value,
+    yontem: odemeYontemi.value,
+    paraUstu: paraUstu.value
+  }
+  toastBildirim.basarili(t('hizliSatis.satisTamamlandi') + ' - ' + formatCurrency(genelToplam.value))
+  try {
+    fisiYazdir(yanit.data?.faturaNumarasi)
+  } catch {
+    /* empty */
+  }
+  sepetiTemizle()
+  alinanNakit.value = 0
+  satisOzetDialog.value = true
+  gunlukSatislariYukle()
+  kasalariYukle()
 }
 
 // Son satışı iptal et (stok geri alınır)
