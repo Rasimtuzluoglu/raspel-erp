@@ -10,6 +10,17 @@ describe('Hızlı Satış (POS)', () => {
     birim: 'Adet'
   }
 
+  const stoksuzUrun = {
+    id: 2,
+    ad: 'Zzz Stoksuz Ürün',
+    stokKodu: 'STK-2',
+    barkod: '2222222222',
+    fiyat: 50,
+    satisFiyati: 50,
+    miktar: 0,
+    birim: 'Adet'
+  }
+
   const tusGonder = (key, ek = {}) => {
     cy.window().then((win) => {
       win.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...ek }))
@@ -18,7 +29,7 @@ describe('Hızlı Satış (POS)', () => {
 
   beforeEach(() => {
     cy.girisYap()
-    cy.intercept('GET', '/api/stoklar*', { statusCode: 200, body: { content: [urun] } }).as('stoklar')
+    cy.intercept('GET', '/api/stoklar*', { statusCode: 200, body: { content: [urun, stoksuzUrun] } }).as('stoklar')
     cy.intercept('POST', '/api/faturalar', {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }
@@ -77,5 +88,33 @@ describe('Hızlı Satış (POS)', () => {
     tusGonder('F9')
     cy.contains('Müşteri gerekli').should('exist')
     cy.get('@satisOlustur.all').should('have.length', 0)
+  })
+
+  it('ürün kartları fiyat, KDV notu ve stok durumunu gösterir', () => {
+    cy.get('.product-card').should('have.length', 2)
+    cy.contains('.product-card', 'Test Ürün').within(() => {
+      cy.get('.product-price').should('contain', '100')
+      cy.get('.kdv-not').should('be.visible')
+      cy.get('.product-gorsel').should('exist')
+    })
+    // Stokta olmayan ürün görsel olarak işaretli olmalı
+    cy.contains('.product-card', 'Zzz Stoksuz Ürün').should('have.class', 'stok-yok')
+  })
+
+  it('stokta olmayan ürün sepete eklenmez', () => {
+    cy.contains('.product-card', 'Zzz Stoksuz Ürün').click()
+    cy.get('.sepet-item').should('have.length', 0)
+    cy.contains('stok kalmadı').should('exist')
+  })
+
+  it('fiş modu (fiyatlı/fiyatsız) satış için geçici değiştirilebilir', () => {
+    // Fiş modu, sipariş özeti sağ kolonda görünürken erişilebilir olmalı.
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.fis-modu-satir').should('exist')
+    cy.contains('.fis-modu-satir button', 'Fiyatlı').should('have.attr', 'aria-pressed', 'true')
+    cy.contains('.fis-modu-satir button', 'Fiyatsız').scrollIntoView().click({ force: true })
+    cy.contains('.fis-modu-satir button', 'Fiyatsız').should('have.attr', 'aria-pressed', 'true')
+    cy.contains('.fis-modu-satir button', 'Fiyatlı').should('have.attr', 'aria-pressed', 'false')
   })
 })

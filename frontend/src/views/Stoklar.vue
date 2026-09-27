@@ -84,6 +84,16 @@
         />
         <div class="toolbar-end">
           <Button
+            v-if="gosterim === 'tablo'"
+            :icon="'pi pi-sitemap'"
+            class="p-button-text p-button-sm"
+            :class="{ 'grupla-aktif': grupla }"
+            :title="t('stoklar.grupla')"
+            :aria-label="t('stoklar.grupla')"
+            :severity="grupla ? 'primary' : undefined"
+            @click="grupla = !grupla"
+          />
+          <Button
             :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'"
             class="p-button-text p-button-sm"
             :title="gosterim === 'tablo' ? t('stoklar.kartGorunumu') : t('stoklar.tabloGorunumu')"
@@ -93,6 +103,32 @@
         </div>
       </template>
     </Toolbar>
+
+    <!-- Stok grubu hızlı filtre çipleri: grubun ne işe yaradığını görünür kılar -->
+    <div
+      v-if="gosterim === 'tablo' && stokGruplari.length > 1"
+      class="grup-cipler"
+    >
+      <span class="grup-cip-etiket">{{ t('stoklar.grup') }}:</span>
+      <button
+        type="button"
+        class="grup-cip"
+        :class="{ aktif: !filtreStokGrubu }"
+        @click="grubaFiltrele('')"
+      >
+        {{ t('stoklar.tumGruplar') }}
+      </button>
+      <button
+        v-for="g in stokGruplari"
+        :key="g"
+        type="button"
+        class="grup-cip"
+        :class="{ aktif: filtreStokGrubu === g }"
+        @click="grubaFiltrele(g)"
+      >
+        {{ g }}
+      </button>
+    </div>
 
     <div
       class="filter-bar"
@@ -198,6 +234,7 @@
         :rows-per-page-options="[15, 25, 50, 100]"
         :lazy="true"
         :total-records="stokStore.toplamKayit"
+        v-bind="grupla ? { rowGroupMode: 'subheader', groupRowsBy: 'stokGrubu' } : {}"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
         :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
         data-key="id"
@@ -208,8 +245,16 @@
         :global-filter-fields="['ad', 'stokKodu', 'birim']"
         gorunum-anahtari="stoklar"
         @page="stokSayfaDegisti"
+        @row-toggle="fiyatlariYukle($event.data)"
         @row-click="stokSec($event.data)"
       >
+        <template #groupheader="slotProps">
+          <span class="grup-baslik">
+            <i class="pi pi-sitemap" />
+            {{ slotProps.data.stokGrubu || t('stoklar.grupsuz') }}
+            <span class="grup-adet">{{ grupAdetleri[slotProps.data.stokGrubu || ''] || 0 }}</span>
+          </span>
+        </template>
         <template #header>
           <div class="table-header">
             <span class="toplam-bilgi">{{ stokStore.toplamKayit }} {{ t('stoklar.urun') }}</span>
@@ -230,24 +275,61 @@
           />
         </template>
         <template #expansion="slotProps">
-          <div class="depo-dagilim">
-            <strong>{{ t('stoklar.depoDagilimi') }}</strong>
-            <div
-              v-if="depoDagilim[slotProps.data.id] && depoDagilim[slotProps.data.id].length"
-              class="depo-dagilim-liste"
-            >
-              <span
-                v-for="d in depoDagilim[slotProps.data.id]"
-                :key="d.depoId"
-                class="depo-chip"
-              >
-                {{ d.depoAdi || '-' }}: <b>{{ d.miktar }} {{ slotProps.data.birim || '' }}</b>
-              </span>
+          <div class="sira-detay">
+            <div class="sira-detay-bolum">
+              <strong>{{ t('stoklar.fiyatOzeti') }}</strong>
+              <div class="fiyat-ozet-grid">
+                <span>{{ t('stoklar.alisFiyati') }}: <b>{{ formatCurrency(slotProps.data.fiyat) }}</b></span>
+                <span>{{ t('stoklar.satisFiyati') }}: <b>{{ formatCurrency(slotProps.data.satisFiyati) }}</b></span>
+                <span>
+                  {{ t('stoklar.karMarji') }}:
+                  <b :class="marjHesapla(slotProps.data) < 0 ? 'negatif' : 'pozitif'">
+                    {{ marjHesapla(slotProps.data) == null ? '-' : '%' + marjHesapla(slotProps.data) }}
+                  </b>
+                </span>
+                <span v-if="slotProps.data.tedarikciFiyat">
+                  {{ t('stoklar.tedarikciFiyati') }}: <b>{{ formatCurrency(slotProps.data.tedarikciFiyat) }}</b>
+                </span>
+              </div>
             </div>
-            <span
-              v-else
-              class="text-muted"
-            >{{ t('stoklar.depoYok') }}</span>
+            <div class="sira-detay-bolum">
+              <strong>{{ t('stoklar.depoDagilimi') }}</strong>
+              <div
+                v-if="depoDagilim[slotProps.data.id] && depoDagilim[slotProps.data.id].length"
+                class="depo-dagilim-liste"
+              >
+                <span
+                  v-for="d in depoDagilim[slotProps.data.id]"
+                  :key="d.depoId"
+                  class="depo-chip"
+                >
+                  {{ d.depoAdi || '-' }}: <b>{{ d.miktar }} {{ slotProps.data.birim || '' }}</b>
+                </span>
+              </div>
+              <span
+                v-else
+                class="text-muted"
+              >{{ t('stoklar.depoYok') }}</span>
+            </div>
+            <div class="sira-detay-bolum">
+              <strong>{{ t('stoklar.fiyatlar') }}</strong>
+              <div
+                v-if="fiyatListeleri[slotProps.data.id] && fiyatListeleri[slotProps.data.id].length"
+                class="depo-dagilim-liste"
+              >
+                <span
+                  v-for="f in fiyatListeleri[slotProps.data.id]"
+                  :key="f.id || f.ad"
+                  class="depo-chip"
+                >
+                  {{ f.ad }}: <b>{{ formatCurrency(f.fiyat) }}</b>
+                </span>
+              </div>
+              <span
+                v-else
+                class="text-muted"
+              >{{ t('stoklar.ozelFiyatYok') }}</span>
+            </div>
           </div>
         </template>
         <Column
@@ -290,6 +372,24 @@
           style="min-width: 180px"
         />
         <Column
+          v-if="!grupla"
+          field="stokGrubu"
+          :header="t('stoklar.stokGrubu')"
+          sortable
+          style="width: 130px"
+        >
+          <template #body="s">
+            <span
+              v-if="s.data.stokGrubu"
+              class="grup-chip"
+            >{{ s.data.stokGrubu }}</span>
+            <span
+              v-else
+              class="text-muted"
+            >-</span>
+          </template>
+        </Column>
+        <Column
           field="birim"
           :header="t('stoklar.colBirim')"
           sortable
@@ -331,13 +431,40 @@
         </Column>
         <Column
           field="fiyat"
-          :header="t('stoklar.colBirimFiyat')"
+          :header="t('stoklar.alisFiyati')"
           sortable
           class="sayisal"
-          style="width: 130px"
+          style="width: 120px"
         >
           <template #body="s">
             <span class="gizli-veri">{{ formatCurrency(s.data.fiyat) }}</span>
+          </template>
+        </Column>
+        <Column
+          field="satisFiyati"
+          :header="t('stoklar.satisFiyati')"
+          sortable
+          class="sayisal"
+          style="width: 120px"
+        >
+          <template #body="s">
+            <span class="gizli-veri">{{ s.data.satisFiyati ? formatCurrency(s.data.satisFiyati) : '-' }}</span>
+          </template>
+        </Column>
+        <Column
+          :header="t('stoklar.karMarji')"
+          class="sayisal"
+          style="width: 90px"
+        >
+          <template #body="s">
+            <span
+              v-if="marjHesapla(s.data) != null"
+              :class="marjHesapla(s.data) < 0 ? 'negatif' : 'pozitif'"
+            >%{{ marjHesapla(s.data) }}</span>
+            <span
+              v-else
+              class="text-muted"
+            >-</span>
           </template>
         </Column>
         <Column
@@ -511,6 +638,7 @@
               :placeholder="t('stoklar.stokGrubuPlaceholder')"
               class="w-full"
             />
+            <small class="alan-ipucu">{{ t('stoklar.stokGrubuIpucu') }}</small>
           </div>
           <div class="form-grup">
             <label>{{ t('stoklar.rafNo') }}</label>
@@ -794,6 +922,7 @@
       v-model:oran="batchFiyatForm.oran"
       v-model:kategori="batchFiyatForm.kategori"
       v-model:stok-grubu="batchFiyatForm.stokGrubu"
+      :gruplar="stokGrubuOnerileri"
       :loading="batchLoading"
       @uygula="batchFiyatUygula"
     />
@@ -992,7 +1121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -1183,6 +1312,49 @@ const hareketForm = ref({ miktar: null, hareketTarihi: new Date(), cariHesapId: 
 const depolar = ref([])
 const expandedRows = ref({})
 const depoDagilim = ref({})
+// Gruplama ve özel fiyat listesi görünümü
+const grupla = ref(localStorage.getItem('raspel_stok_grupla') === 'true')
+watch(grupla, (v) => {
+  try { localStorage.setItem('raspel_stok_grupla', String(v)) } catch { /* yoksay */ }
+})
+const fiyatListeleri = ref({})
+
+// Stok grubu: aynı grup adındaki ürünler toplu fiyat güncellemede hedeflenir.
+const stokGruplari = computed(() =>
+  [...new Set((stokStore.stoklar || []).map((s) => s.stokGrubu).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'tr'))
+)
+const grupAdetleri = computed(() => {
+  const harita = {}
+  for (const s of (stokStore.stoklar || [])) {
+    const anahtar = s.stokGrubu || ''
+    harita[anahtar] = (harita[anahtar] || 0) + 1
+  }
+  return harita
+})
+
+const grubaFiltrele = (g) => {
+  filtreStokGrubu.value = g || ''
+  filtreDegisti()
+}
+
+// Satış - alış üzerinden kâr marjı (%)
+const marjHesapla = (s) => {
+  const alis = Number(s?.fiyat || 0)
+  const satis = Number(s?.satisFiyati || 0)
+  if (!alis || !satis) return null
+  return Math.round(((satis - alis) / alis) * 1000) / 10
+}
+
+const fiyatlariYukle = async (s) => {
+  if (!s?.id || fiyatListeleri.value[s.id]) return
+  try {
+    const r = await stokAPI.getFiyatlar(s.id)
+    fiyatListeleri.value = { ...fiyatListeleri.value, [s.id]: r.data || [] }
+  } catch {
+    fiyatListeleri.value = { ...fiyatListeleri.value, [s.id]: [] }
+  }
+}
 
 const depoDagilimYukle = async () => {
   try {
@@ -1720,6 +1892,103 @@ h2 {
   flex-wrap: wrap;
   color: var(--text-secondary);
   font-size: 13px;
+}
+/* Stok grubu: hızlı filtre çipleri, satır çipi ve gruplu görünüm başlığı */
+.grup-cipler {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -8px 0 14px;
+}
+.grup-cip-etiket {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.grup-cip {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.grup-cip:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+.grup-cip.aktif {
+  background: var(--accent-soft-strong);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-weight: 600;
+}
+.grup-chip {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+}
+.grup-baslik {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.grup-baslik i {
+  color: var(--accent);
+}
+.grup-adet {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+/* Satır detayı: fiyat özeti + depo dağılımı + özel fiyat listesi */
+.sira-detay {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.sira-detay-bolum {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sira-detay-bolum > strong {
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+.fiyat-ozet-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fiyat-ozet-grid .pozitif {
+  color: #4ade80;
+}
+.fiyat-ozet-grid .negatif {
+  color: #f87171;
+}
+.alan-ipucu {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 .depo-dagilim-liste {
   display: flex;

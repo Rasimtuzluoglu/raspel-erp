@@ -28,6 +28,10 @@
         {{ stok.stokKodu }}
       </div>
       <span
+        v-if="stok.stokGrubu"
+        class="grup-eti"
+      >{{ stok.stokGrubu }}</span>
+      <span
         v-if="stok.minMiktar && stok.miktar <= stok.minMiktar"
         class="uyari-eti"
       ><i class="pi pi-exclamation-triangle" /> {{ t('stoklar.colKritik') }}</span>
@@ -44,9 +48,24 @@
         </span>
       </div>
       <div class="bilgi-item">
-        <span class="bilgi-label">{{ t('stoklar.colBirimFiyat') }}</span>
-        <span class="bilgi-deger">{{ formatCurrency(stok.fiyat) }}</span>
+        <span class="bilgi-label">{{ t('stoklar.alisFiyati') }}</span>
+        <span class="bilgi-deger fiyat">{{ formatCurrency(stok.fiyat) }}</span>
       </div>
+      <div class="bilgi-item">
+        <span class="bilgi-label">{{ t('stoklar.satisFiyati') }}</span>
+        <span class="bilgi-deger fiyat">{{ stok.satisFiyati ? formatCurrency(stok.satisFiyati) : '-' }}</span>
+      </div>
+    </div>
+    <div class="kart-alt-bilgi">
+      <span
+        v-if="marj != null"
+        class="marj-eti"
+        :class="marj < 0 ? 'negatif' : 'pozitif'"
+      >{{ t('stoklar.karMarji') }}: %{{ marj }}</span>
+      <span
+        v-if="stok.tedarikciAd"
+        class="tedarikci-eti"
+      ><i class="pi pi-building" /> {{ stok.tedarikciAd }}</span>
     </div>
     <div class="kart-islem">
       <Button
@@ -68,14 +87,23 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency } from '../utils/format.js'
 
-defineProps({
+const props = defineProps({
   stok: { type: Object, required: true }
 })
 defineEmits(['sec', 'duzenle', 'sil'])
 const { t } = useI18n()
+
+// Satış - alış üzerinden kâr marjı (%)
+const marj = computed(() => {
+  const alis = Number(props.stok?.fiyat || 0)
+  const satis = Number(props.stok?.satisFiyati || 0)
+  if (!alis || !satis) return null
+  return Math.round(((satis - alis) / alis) * 1000) / 10
+})
 </script>
 
 <style scoped>
@@ -140,6 +168,42 @@ const { t } = useI18n()
   display: flex;
   align-items: center;
   gap: 3px;
+}
+.grup-eti {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-right: auto;
+}
+.kart-alt-bilgi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.marj-eti.negatif {
+  color: #f87171;
+  font-weight: 600;
+}
+.marj-eti.pozitif {
+  color: #4ade80;
+  font-weight: 600;
+}
+.tedarikci-eti {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+.bilgi-deger.fiyat {
+  font-size: 14px;
 }
 .stok-kart h3 {
   margin: 0 0 12px;

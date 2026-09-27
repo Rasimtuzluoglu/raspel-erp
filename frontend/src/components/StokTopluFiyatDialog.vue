@@ -33,10 +33,13 @@
     </div>
     <div class="form-grup">
       <label>{{ $t('stoklar.stokGrubuFiltreOps') }}</label>
-      <InputText
+      <AutoComplete
         v-model="stokGrubu"
+        :suggestions="gruplar"
         :placeholder="$t('cmp.tumGruplar')"
+        dropdown
         class="w-full"
+        input-class="w-full"
       />
     </div>
     <template #footer>
@@ -58,7 +61,8 @@
 
 <script setup>
 defineProps({
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  gruplar: { type: Array, default: () => [] }
 })
 
 defineEmits(['uygula'])

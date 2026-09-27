@@ -130,44 +130,116 @@
               :key="u.id"
               type="button"
               class="cok-satan-chip"
+              :class="{ 'stok-yok': stokYokMu(u) }"
+              :disabled="stokYokMu(u)"
               @click="sepeteEkle(u)"
             >
               <span class="cok-satan-ad">{{ u.ad }}</span>
-              <span class="cok-satan-fiyat">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
+              <span class="cok-satan-fiyat">{{ formatCurrency(satisFiyati(u)) }}</span>
             </button>
           </div>
         </div>
 
         <div class="product-section">
           <div class="product-header">
-            <h3>{{ t('hizliSatis.mevcutUrunler') }} <span class="urun-sayaci">{{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }}</span></h3>
+            <h3>
+              <i class="pi pi-box" />
+              {{ t('hizliSatis.mevcutUrunler') }}
+              <span class="urun-sayaci">{{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }}</span>
+            </h3>
+            <div class="product-header-sag">
+              <span class="siralama-etiket">{{ t('hizliSatis.sirala') }}</span>
+              <Dropdown
+                v-model="siralama"
+                :options="siralamaSecenekleri"
+                option-label="label"
+                option-value="value"
+                class="siralama-dropdown"
+              />
+            </div>
           </div>
+
+          <!-- Kategori hızlı filtre çipleri -->
+          <div
+            v-if="kategoriCipleri.length > 1"
+            class="kategori-cipler"
+          >
+            <button
+              type="button"
+              class="kategori-cip"
+              :class="{ aktif: !filtreKategori }"
+              @click="filtreKategori = null"
+            >
+              {{ t('hizliSatis.tumu') }}
+            </button>
+            <button
+              v-for="k in kategoriCipleri"
+              :key="k.id || k.ad"
+              type="button"
+              class="kategori-cip"
+              :class="{ aktif: filtreKategori && filtreKategori.ad === k.ad }"
+              @click="filtreKategori = k"
+            >
+              {{ k.ad }}
+            </button>
+          </div>
+
           <div class="product-grid">
             <div
-              v-for="u in filtrelenmisUrunler"
+              v-for="u in gorunenUrunler"
               :key="u.id"
               class="product-card"
+              :class="{ 'stok-yok': stokYokMu(u), sepette: sepetteAdet(u.id) > 0 }"
               role="button"
               tabindex="0"
               :aria-label="u.ad"
-              @click="sepeteEkle(u)"
-              @keydown.enter.prevent="sepeteEkle(u)"
-              @keydown.space.prevent="sepeteEkle(u)"
+              :aria-disabled="stokYokMu(u)"
+              @click="urunKartiTikla(u)"
+              @keydown.enter.prevent="urunKartiTikla(u)"
+              @keydown.space.prevent="urunKartiTikla(u)"
             >
-              <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
-              <span class="product-name">{{ u.ad }}</span>
-              <Tag
-                :value="kritikStokMu(u) ? t('hizliSatis.son', { n: Math.floor(u.miktar) }) : (u.miktar || 0) + ' ' + (u.birim || 'adet')"
-                :severity="kritikStokMu(u) ? 'danger' : 'info'"
-              />
-              <span class="product-price">{{ formatCurrency(u.fiyat || u.satisFiyati || 0) }}</span>
-              <span
-                v-if="cariFiyati(u.id)"
-                class="product-cari-fiyat"
-                :title="t('hizliSatis.cariOzelFiyat')"
-              >
-                <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
-              </span>
+              <div class="product-gorsel">
+                <img
+                  v-if="u.fotoThumbUrl || u.fotoUrl"
+                  :src="u.fotoThumbUrl || u.fotoUrl"
+                  :alt="u.ad"
+                  loading="lazy"
+                  decoding="async"
+                >
+                <i
+                  v-else
+                  class="pi pi-box"
+                />
+                <span
+                  v-if="sepetteAdet(u.id) > 0"
+                  class="sepette-rozet"
+                >{{ sepetteAdet(u.id) }}</span>
+              </div>
+              <div class="product-icerik">
+                <span class="product-kod">{{ u.barkod || u.stokKodu || '-' }}</span>
+                <span class="product-name">{{ u.ad }}</span>
+                <div class="product-alt-satir">
+                  <span
+                    v-if="u.stokGrubu"
+                    class="product-grup"
+                  >{{ u.stokGrubu }}</span>
+                  <Tag
+                    :value="stokEtiketi(u)"
+                    :severity="stokYokMu(u) ? 'danger' : (kritikStokMu(u) ? 'warn' : 'success')"
+                  />
+                </div>
+                <div class="product-fiyat-satir">
+                  <span class="product-price">{{ formatCurrency(satisFiyati(u)) }}</span>
+                  <span class="kdv-not">{{ t('hizliSatis.kdvDahil') }}</span>
+                </div>
+                <span
+                  v-if="cariFiyati(u.id)"
+                  class="product-cari-fiyat"
+                  :title="t('hizliSatis.cariOzelFiyat')"
+                >
+                  <i class="pi pi-user" /> {{ formatCurrency(cariFiyati(u.id)) }}
+                </span>
+              </div>
             </div>
             <div
               v-if="filtrelenmisUrunler && filtrelenmisUrunler.length === 0"
@@ -176,6 +248,17 @@
               <i class="pi pi-inbox" />
               <p>{{ t('hizliSatis.urunBulunamadi') }}</p>
             </div>
+          </div>
+          <div
+            v-if="filtrelenmisUrunler.length > gorunenUrunler.length"
+            class="daha-fazla"
+          >
+            <Button
+              :label="t('hizliSatis.dahaFazlaGoster', { n: Math.min(60, filtrelenmisUrunler.length - gorunenUrunler.length) })"
+              icon="pi pi-angle-down"
+              class="p-button-outlined"
+              @click="gosterilenAdet += 60"
+            />
           </div>
         </div>
       </div>
@@ -602,6 +685,17 @@
             </div>
 
             <div class="sticky-tamamla">
+              <div class="fis-modu-satir">
+                <span class="fis-modu-etiket"><i class="pi pi-print" /> {{ t('hizliSatis.fisModu') }}</span>
+                <SelectButton
+                  v-model="fisFiyatliGecici"
+                  :options="fisModuSecenekleri"
+                  option-label="label"
+                  option-value="value"
+                  size="small"
+                  :allow-empty="false"
+                />
+              </div>
               <div class="sticky-tutar">
                 <span>{{ t('hizliSatis.genelToplam') }}</span>
                 <strong>{{ formatCurrency(genelToplam) }}</strong>
@@ -717,7 +811,7 @@
                     :label="t('hizliSatis.yazdirF9')"
                     icon="pi pi-print"
                     size="small"
-                    @click="fisiYazdir(sonSatis?.faturaNumarasi)"
+                    @click="fisiYazdir(sonSatis?.faturaNumarasi, satisOzet?.fisModu)"
                   />
                   <Button
                     :label="t('hizliSatis.termal')"
@@ -1056,6 +1150,10 @@
         <span>{{ t('hizliSatis.paraUstu') }}</span>
         <strong class="para">{{ formatCurrency(satisOzet.paraUstu) }}</strong>
       </div>
+      <div class="satis-ozet-satir">
+        <span>{{ t('hizliSatis.fisModu') }}</span>
+        <strong>{{ satisOzet.fisModu === false ? t('hizliSatis.fiyatsizFis') : t('hizliSatis.fiyatliFis') }}</strong>
+      </div>
     </div>
     <template #footer>
       <Button
@@ -1347,6 +1445,8 @@ onUnmounted(() => {
 const sirketAdi = computed(() => authStore.sirketAdi || '')
 
 const seriNoArama = ref('')
+const siralama = ref('ad')
+const gosterilenAdet = ref(60)
 const globalBarkod = ref('')
 const scannerAcik = ref(false)
 const barkodInputRef = ref(null)
@@ -1429,6 +1529,8 @@ const sepet = ref([])
 const kaydediliyor = ref(false)
 const fisNo = ref('')
 const fisFiyatli = ref(localStorage.getItem('raspel_fis_fiyatli') !== 'false')
+// Fiş fiyatlı/fiyatsız seçimi satış başına geçicidir; satış tamamlanınca sunucu ayarına döner.
+const fisFiyatliGecici = ref(fisFiyatli.value)
 const fisAltNotu = ref(localStorage.getItem('raspel_fis_notu') || t('hizliSatis.fisAltNotVarsayilan'))
 const fisGenislik = ref(localStorage.getItem('raspel_fis_genislik') || '80')
 
@@ -1436,6 +1538,8 @@ const fisGenislik = ref(localStorage.getItem('raspel_fis_genislik') || '80')
 const dinleyici = (e) => {
   if (e.key === 'raspel_fis_fiyatli' && e.newValue !== null) {
     fisFiyatli.value = e.newValue !== 'false'
+    // Kullanıcı bu satış için farklı bir mod seçmediyse varsayılan güncellenir.
+    if (fisFiyatliGecici.value === !fisFiyatli.value) fisFiyatliGecici.value = fisFiyatli.value
   } else if (e.key === 'raspel_fis_notu' && e.newValue !== null) {
     fisAltNotu.value = e.newValue
   } else if (e.key === 'raspel_fis_genislik' && e.newValue !== null) {
@@ -1739,17 +1843,65 @@ const filtrelenmisUrunler = computed(() => {
         u.ad?.toLowerCase().includes(q) ||
         u.stokKodu?.toLowerCase().includes(q) ||
         u.barkod?.toLowerCase().includes(q) ||
-        u.seriNo?.toLowerCase().includes(q)
+        u.seriNo?.toLowerCase().includes(q) ||
+        u.stokGrubu?.toLowerCase().includes(q)
     )
   }
 
-  return list.slice(0, 100)
+  return [...list].sort((a, b) => {
+    if (siralama.value === 'fiyat') return (satisFiyati(b) || 0) - (satisFiyati(a) || 0)
+    if (siralama.value === 'stok') return (b.miktar || 0) - (a.miktar || 0)
+    return (a.ad || '').localeCompare(b.ad || '', 'tr')
+  })
+})
+
+// Kademeli gösterim: binlerce üründe ilk 60 kart çizilir, "Daha fazla" ile artırılır.
+const gorunenUrunler = computed(() => filtrelenmisUrunler.value.slice(0, gosterilenAdet.value))
+
+// Filtre/sıralama değişince kademeli gösterim baştan başlar.
+watch([seriNoArama, filtreKategori, filtreArac, siralama], () => {
+  gosterilenAdet.value = 60
 })
 
 // Görünen ürünler değiştiğinde çoklu fiyat listelerini besle
-watch(filtrelenmisUrunler, (list) => {
+watch(gorunenUrunler, (list) => {
   if (list && list.length) urunFiyatlariniYukle(list)
 }, { immediate: true })
+
+const siralamaSecenekleri = computed(() => [
+  { label: t('hizliSatis.siralaAd'), value: 'ad' },
+  { label: t('hizliSatis.siralaFiyat'), value: 'fiyat' },
+  { label: t('hizliSatis.siralaStok'), value: 'stok' }
+])
+
+const fisModuSecenekleri = computed(() => [
+  { label: t('hizliSatis.fiyatliFis'), value: true },
+  { label: t('hizliSatis.fiyatsizFis'), value: false }
+])
+
+const kategoriCipleri = computed(() => kategoriler.value.slice(0, 12))
+
+// POS'ta satış fiyatı önceliklidir; tanımlı değilse alış fiyatına düşülür.
+const satisFiyati = (u) => Number(u?.satisFiyati || u?.fiyat || 0)
+
+const stokYokMu = (u) => Number(u?.miktar || 0) <= 0
+
+const stokEtiketi = (u) => {
+  if (stokYokMu(u)) return t('hizliSatis.stokYok')
+  if (kritikStokMu(u)) return t('hizliSatis.son', { n: Math.floor(u.miktar) })
+  return (u.miktar || 0) + ' ' + (u.birim || 'adet')
+}
+
+// Sepetteki adet: kart üzerinde rozet olarak gösterilir.
+const sepetteAdet = (id) => sepet.value.find((i) => i.id === id)?.miktar || 0
+
+const urunKartiTikla = (u) => {
+  if (stokYokMu(u)) {
+    toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: u.ad }))
+    return
+  }
+  sepeteEkle(u)
+}
 
 const kritikStokMu = (u) => {
   if (!u?.miktar) return false
@@ -1917,7 +2069,7 @@ const sepeteEkle = async (u) => {
     varOlan.miktar++
     return
   }
-  const stdFiyat = u.fiyat || u.satisFiyati || 0
+  const stdFiyat = u.satisFiyati || u.fiyat || 0
   // Çoklu fiyat tanımlıysa onları kullan, yoksa stoğun fiyat listesini çek, yoksa sabit kademelere düş
   let fiyatlar = (u.fiyatlar && u.fiyatlar.length > 0)
     ? u.fiyatlar.map((f) => ({ ad: f.ad, fiyat: f.fiyat }))
@@ -2012,14 +2164,14 @@ const sepetSil = (idx) => {
   sepet.value.splice(idx, 1)
 }
 
-const fisiYazdir = (gercekFaturaNo) => {
+const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
   if (!sepet.value.length) return
-  // Gerçek fatura numarası varsa fişe o yazılır (fişten faturaya ulaşılabilir).
-  // Yalnızca çevrimdışı/henüz oluşmamış satışlarda geçici numara üretilir.
+  // Ger��ek fatura numaras�� varsa fi�Ye o yaz��l��r (fi�Yten faturaya ula�Y��labilir).
+  // Yaln��zca ��evrimd��Y��/henǬz olu�Ymam��Y sat��Ylarda ge�ici numara Ǭretilir.
   fisNo.value = gercekFaturaNo || ('F-' + Date.now().toString(36).toUpperCase())
   yazdirmaKaydet('TERMAL80')
 
-  const fiyatli = fisFiyatli.value
+  const fiyatli = fiyatliOverride !== null ? fiyatliOverride : fisFiyatliGecici.value
   const kalemHtml = sepet.value
     .map((i) => {
       const ad = escapeHtml(i.ad || '')
@@ -2302,7 +2454,8 @@ const satisBasarili = (yanit) => {
     odenen: odenenTutar.value,
     kalan: kalanTutar.value,
     yontem: odemeYontemi.value,
-    paraUstu: paraUstu.value
+    paraUstu: paraUstu.value,
+    fisModu: fisFiyatliGecici.value
   }
   toastBildirim.basarili(t('hizliSatis.satisTamamlandi') + ' - ' + formatCurrency(genelToplam.value))
   try {
@@ -2312,6 +2465,8 @@ const satisBasarili = (yanit) => {
   }
   sepetiTemizle()
   alinanNakit.value = 0
+  // Fiş modu satış başına geçiciydi: sunucu ayarına dön.
+  fisFiyatliGecici.value = fisFiyatli.value
   satisOzetDialog.value = true
   gunlukSatislariYukle()
   kasalariYukle()
@@ -2752,6 +2907,28 @@ const sepetiTemizle = () => {
   font-weight: 800;
   color: var(--accent);
 }
+.fis-modu-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fis-modu-etiket {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.fis-modu-satir :deep(.p-selectbutton) {
+  flex: 1;
+  justify-content: flex-end;
+}
+.fis-modu-satir :deep(.p-selectbutton .p-button) {
+  padding: 4px 10px;
+  font-size: 12px;
+}
 
 .filter-card :deep(.p-card-content) {
   padding-top: 0;
@@ -2830,10 +3007,18 @@ const sepetiTemizle = () => {
 .product-section {
   margin-top: 4px;
 }
+.product-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
 .product-header h3 {
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 8px 0;
+  margin: 0;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -2841,6 +3026,18 @@ const sepetiTemizle = () => {
 }
 .product-header h3 i {
   color: var(--accent);
+}
+.product-header-sag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.siralama-etiket {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.siralama-dropdown {
+  min-width: 130px;
 }
 .urun-sayaci {
   font-size: 11px;
@@ -2850,78 +3047,204 @@ const sepetiTemizle = () => {
   padding: 1px 8px;
   border-radius: 10px;
 }
-.product-grid {
+.kategori-cipler {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: calc(100vh - 200px);
-  max-height: calc(100dvh - 200px);
-  overflow-y: auto;
-  padding-bottom: 8px;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  scrollbar-width: thin;
 }
-
+.kategori-cip {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.kategori-cip:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+.kategori-cip.aktif {
+  background: var(--accent-soft-strong);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-weight: 700;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 12px;
+  max-height: calc(100vh - 230px);
+  max-height: calc(100dvh - 230px);
+  overflow-y: auto;
+  padding: 2px 2px 10px;
+}
 .product-card {
   position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: transform var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    box-shadow var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    border-color var(--dur-fast, 0.15s) var(--ease-standard, ease);
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  overflow: hidden;
 }
 .product-card:hover {
+  border-color: var(--accent-border);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  transform: translateY(-3px);
+}
+.product-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.product-card.stok-yok {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.product-card.stok-yok .product-gorsel img {
+  filter: grayscale(0.7);
+}
+.product-card.sepette {
   border-color: var(--accent);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--accent-soft-strong);
+}
+.product-gorsel {
+  position: relative;
+  height: 96px;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-gorsel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.product-gorsel > i {
+  font-size: 30px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.sepette-rozet {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.product-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  flex: 1;
 }
 .product-kod {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--text-muted);
-  min-width: 90px;
   font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .product-name {
-  flex: 1;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 34px;
+}
+.product-alt-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.product-alt-satir :deep(.p-tag) {
+  font-size: 10.5px;
+  padding: 1px 8px;
+}
+.product-grup {
+  font-size: 10.5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  max-width: 60%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.product-fiyat-satir {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+}
 .product-price {
   display: inline-block;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: var(--accent);
-  padding: 2px 10px;
-  background: var(--accent-soft);
-  border-radius: 12px;
   white-space: nowrap;
+}
+.kdv-not {
+  font-size: 10px;
+  color: var(--text-muted);
 }
 .product-cari-fiyat {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--success);
   background: var(--success-soft);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: 999px;
   white-space: nowrap;
+  align-self: flex-start;
 }
 .product-cari-fiyat i {
-  font-size: 11px;
+  font-size: 10px;
+}
+.daha-fazla {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
 }
 .empty-products {
+  grid-column: 1 / -1;
   text-align: center;
   padding: 40px;
   color: var(--text-muted);
@@ -2951,6 +3274,14 @@ const sepetiTemizle = () => {
 .cok-satan-chip:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
+}
+.cok-satan-chip.stok-yok {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cok-satan-chip.stok-yok:hover {
+  border-color: var(--border);
+  transform: none;
 }
 .cok-satan-ad {
   font-size: 13px;

@@ -3,59 +3,90 @@
     :visible="visible"
     :header="stok?.ad || $t('stokDetay.urunDetayi')"
     :modal="true"
-    style="width: 920px"
+    class="stok-detay-dialog"
     @update:visible="$emit('update:visible', $event)"
   >
     <TabView>
       <TabPanel :header="t('stoklar.analiz.genel')">
         <div
           v-if="stok"
-          class="detail-grid"
+          class="detay-ust"
         >
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.stokKodu') }}</span>
-            <span class="detail-value">{{ stok.stokKodu || '-' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.barkod') }}</span>
-            <span class="detail-value">{{ stok.barkod || '-' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.birim') }}</span>
-            <span class="detail-value">{{ stok.birim || '-' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.analiz.miktar') }}</span>
-            <span
-              class="detail-value"
-              :class="stok.minMiktar && stok.miktar <= stok.minMiktar ? 'kritik' : 'normal'"
+          <div class="detay-gorsel">
+            <img
+              v-if="stok.fotoUrl || stok.fotoThumbUrl"
+              :src="stok.fotoUrl || stok.fotoThumbUrl"
+              :alt="stok.ad"
+              loading="lazy"
+              decoding="async"
             >
-              {{ stok.miktar }} {{ stok.birim || '' }}
-            </span>
+            <i
+              v-else
+              class="pi pi-box"
+            />
           </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.alisFiyati') }}</span>
-            <span class="detail-value gizli-veri">{{ formatCurrency(stok.fiyat) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.satisFiyati') }}</span>
-            <span class="detail-value">{{ formatCurrency(stok.satisFiyati) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.kategori') }}</span>
-            <span class="detail-value">{{ stok.kategori || '-' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.marka') }}</span>
-            <span class="detail-value">{{ stok.marka || '-' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.minStok') }}</span>
-            <span class="detail-value">{{ stok.minMiktar || '-' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">{{ $t('stoklar.rafNo') }}</span>
-            <span class="detail-value">{{ stok.rafNo || '-' }}</span>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.stokKodu') }}</span>
+              <span class="detail-value">{{ stok.stokKodu || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.barkod') }}</span>
+              <span class="detail-value">{{ stok.barkod || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.birim') }}</span>
+              <span class="detail-value">{{ stok.birim || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.analiz.miktar') }}</span>
+              <span
+                class="detail-value"
+                :class="stok.minMiktar && stok.miktar <= stok.minMiktar ? 'kritik' : 'normal'"
+              >
+                {{ stok.miktar }} {{ stok.birim || '' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.alisFiyati') }}</span>
+              <span class="detail-value gizli-veri">{{ formatCurrency(stok.fiyat) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.satisFiyati') }}</span>
+              <span class="detail-value gizli-veri">{{ formatCurrency(stok.satisFiyati) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.karMarji') }}</span>
+              <span
+                v-if="karMarji != null"
+                class="detail-value"
+                :class="karMarji < 0 ? 'kritik' : 'normal'"
+              >%{{ karMarji }}</span>
+              <span
+                v-else
+                class="detail-value"
+              >-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.stokGrubu') }}</span>
+              <span class="detail-value">{{ stok.stokGrubu || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.kategori') }}</span>
+              <span class="detail-value">{{ stok.kategori || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.marka') }}</span>
+              <span class="detail-value">{{ stok.marka || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.minStok') }}</span>
+              <span class="detail-value">{{ stok.minMiktar || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ $t('stoklar.rafNo') }}</span>
+              <span class="detail-value">{{ stok.rafNo || '-' }}</span>
+            </div>
           </div>
         </div>
         <div class="form-section-title">
@@ -113,6 +144,35 @@
             </template>
           </Column>
         </AppDataTable>
+
+        <div class="form-section-title">
+          {{ $t('stoklar.fiyatlar') }}
+        </div>
+        <AppDataTable
+          v-if="ozelFiyatlar.length"
+          :value="ozelFiyatlar"
+          size="small"
+          striped-rows
+          :paginator="false"
+        >
+          <Column
+            field="ad"
+            :header="$t('stoklar.fiyatAdi')"
+          />
+          <Column
+            field="fiyat"
+            :header="$t('stoklar.satisFiyati')"
+            style="width: 150px"
+          >
+            <template #body="s">
+              <span class="gizli-veri">{{ formatCurrency(s.data.fiyat) }}</span>
+            </template>
+          </Column>
+        </AppDataTable>
+        <span
+          v-else
+          class="text-muted"
+        >{{ $t('stoklar.ozelFiyatYok') }}</span>
       </TabPanel>
       <TabPanel :header="t('stoklar.analiz.urunAnalizi')">
         <div class="analiz-filtre">
@@ -432,6 +492,7 @@ defineEmits(['update:visible'])
 const { t } = useI18n()
 
 const analiz = ref(null)
+const ozelFiyatlar = ref([])
 const islemler = ref([])
 const aylik = ref([])
 const musteriler = ref([])
@@ -446,6 +507,24 @@ const baslangicTarih = ref(new Date(new Date().getFullYear(), 0, 1))
 const bitisTarih = ref(new Date())
 
 const sayi = (v) => (v == null ? 0 : v)
+
+// Kâr marjı: satış - alış üzerinden (%)
+const karMarji = computed(() => {
+  const alis = Number(props.stok?.fiyat || 0)
+  const satis = Number(props.stok?.satisFiyati || 0)
+  if (!alis || !satis) return null
+  return Math.round(((satis - alis) / alis) * 1000) / 10
+})
+
+const ozelFiyatlariYukle = async () => {
+  if (!props.stok?.id) return
+  try {
+    const r = await stokAPI.getFiyatlar(props.stok.id)
+    ozelFiyatlar.value = Array.isArray(r?.data) ? r.data : []
+  } catch {
+    ozelFiyatlar.value = []
+  }
+}
 
 const tarihParam = (d) => {
   if (!d) return undefined
@@ -602,20 +681,59 @@ const islemSayfaDegisti = (e) => {
 watch(
   () => props.visible,
   (v) => {
-    if (v) analiziYukle()
+    if (v) {
+      analiziYukle()
+      ozelFiyatlariYukle()
+    }
   }
 )
 </script>
 
 <style scoped>
+.stok-detay-dialog {
+  width: 980px;
+  max-width: 96vw;
+}
+/* Genel sekmesi: ürün görseli + bilgi kartları */
+.detay-ust {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  margin-bottom: 18px;
+}
+.detay-gorsel {
+  width: 150px;
+  height: 150px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detay-gorsel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.detay-gorsel i {
+  font-size: 40px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 16px;
 }
 .detail-item {
-  padding: 6px 0;
+  padding: 4px 0;
 }
 .detail-label {
   display: block;
@@ -659,15 +777,19 @@ watch(
 }
 .analiz-ozet {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
   margin-bottom: 24px;
 }
 .analiz-kart {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-card);
+  transition: border-color var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.analiz-kart:hover {
+  border-color: var(--accent-border);
 }
 .analiz-kart-label {
   display: block;
@@ -675,10 +797,10 @@ watch(
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 .analiz-kart-deger {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -688,6 +810,18 @@ watch(
   gap: 16px;
   margin-bottom: 8px;
 }
+@media (max-width: 860px) {
+  .cari-tablolar {
+    grid-template-columns: 1fr;
+  }
+  .detay-ust {
+    grid-template-columns: 1fr;
+  }
+  .detay-gorsel {
+    width: 100%;
+    height: 180px;
+  }
+}
 .cari-tablo {
   min-width: 0;
 }
@@ -695,10 +829,15 @@ watch(
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
 }
 .analiz-filtre-grup {
-  min-width: 160px;
+  min-width: 170px;
+  flex: 1;
 }
 .analiz-filtre-grup label {
   display: block;
@@ -711,6 +850,10 @@ watch(
 .chart-container {
   position: relative;
   width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--bg-card);
 }
 .badge {
   padding: 4px 10px;
