@@ -1173,99 +1173,18 @@
     </template>
   </Dialog>
 
-  <Dialog
-    v-model:visible="bugunkuDialog"
-    :header="t('hizliSatis.bugunkuSatislar', { n: gunlukSatislar.length })"
-    :modal="true"
-    style="width: 420px"
-  >
-    <div
-      v-if="gunlukSatislar.length === 0"
-      class="sepet-bos"
-    >
-      {{ t('hizliSatis.bugunSatisYok') }}
-    </div>
-    <div
-      v-for="s in gunlukSatislar"
-      :key="s.id"
-      class="gunluk-satis-satir"
-    >
-      <div class="gunluk-satis-bilgi">
-        <span class="gunluk-satis-no">{{ s.faturaNumarasi }}</span>
-        <span class="gunluk-satis-cari">{{ s.cariHesapAd || t('hizliSatis.anlik') }}</span>
-      </div>
-      <span class="gunluk-satis-tutar">{{ formatCurrency(s.genelToplam) }}</span>
-    </div>
-    <template #footer>
-      <Button
-        :label="t('common.refresh')"
-        icon="pi pi-refresh"
-        class="p-button-text"
-        @click="gunlukSatislariYukle"
-      />
-      <Button
-        :label="t('common.close')"
-        icon="pi pi-times"
-        class="p-button-text"
-        @click="bugunkuDialog = false"
-      />
-    </template>
-  </Dialog>
+  <PosBugunkuSatislarDialog
+    :visible="bugunkuDialog"
+    :satislar="gunlukSatislar"
+    @update:visible="bugunkuDialog = $event"
+    @yenile="gunlukSatislariYukle"
+  />
 
-  <Dialog
-    v-model:visible="satisOzetDialog"
-    :header="t('hizliSatis.satisTamamlandi')"
-    :modal="true"
-    style="width: 420px"
-  >
-    <div
-      v-if="satisOzet"
-      class="satis-ozet"
-    >
-      <div class="satis-ozet-baslik">
-        <i class="pi pi-check-circle" />
-        <span>{{ t('hizliSatis.islemBasarili') }}</span>
-      </div>
-      <div class="satis-ozet-satir">
-        <span>{{ t('hizliSatis.faturaNo') }}</span>
-        <strong>{{ satisOzet.faturaNo }}</strong>
-      </div>
-      <div class="satis-ozet-satir">
-        <span>{{ t('hizliSatis.toplam') }}</span>
-        <strong>{{ formatCurrency(satisOzet.toplam) }}</strong>
-      </div>
-      <div class="satis-ozet-satir">
-        <span>{{ t('hizliSatis.fisOdenen') }}</span>
-        <strong>{{ formatCurrency(satisOzet.odenen) }}</strong>
-      </div>
-      <div
-        v-if="satisOzet.kalan > 0"
-        class="satis-ozet-satir"
-      >
-        <span>{{ t('hizliSatis.fisKalan') }}</span>
-        <strong class="borc">{{ formatCurrency(satisOzet.kalan) }}</strong>
-      </div>
-      <div
-        v-if="satisOzet.paraUstu > 0"
-        class="satis-ozet-satir"
-      >
-        <span>{{ t('hizliSatis.paraUstu') }}</span>
-        <strong class="para">{{ formatCurrency(satisOzet.paraUstu) }}</strong>
-      </div>
-      <div class="satis-ozet-satir">
-        <span>{{ t('hizliSatis.fisModu') }}</span>
-        <strong>{{ satisOzet.fisModu === false ? t('hizliSatis.fiyatsizFis') : t('hizliSatis.fiyatliFis') }}</strong>
-      </div>
-    </div>
-    <template #footer>
-      <Button
-        :label="t('hizliSatis.kapat')"
-        icon="pi pi-check"
-        class="p-button-primary"
-        @click="satisOzetDialog = false"
-      />
-    </template>
-  </Dialog>
+  <PosSatisOzetDialog
+    :visible="satisOzetDialog"
+    :satis-ozet="satisOzet"
+    @update:visible="satisOzetDialog = $event"
+  />
 
   <Dialog
     v-model:visible="hizliUrunDialog"
@@ -1336,6 +1255,8 @@ import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import PosFisOnizleme from '../components/PosFisOnizleme.vue'
+import PosSatisOzetDialog from '../components/PosSatisOzetDialog.vue'
+import PosBugunkuSatislarDialog from '../components/PosBugunkuSatislarDialog.vue'
 import { faturaAPI, cariHesapAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
@@ -2789,13 +2710,13 @@ const sepetiTemizle = () => {
   font-size: 13px;
 }
 /* Gunluk satislar */
-.pos-buyuk .gunluk-satis-cari {
+.pos-buyuk :deep(.gunluk-satis-cari) {
   font-size: 14px;
 }
-.pos-buyuk .gunluk-satis-tutar {
+.pos-buyuk :deep(.gunluk-satis-tutar) {
   font-size: 16px;
 }
-.pos-buyuk .gunluk-satis-no {
+.pos-buyuk :deep(.gunluk-satis-no) {
   font-size: 15px;
 }
 /* Kisa yol ipucu */
@@ -4023,40 +3944,6 @@ const sepetiTemizle = () => {
   color: var(--success);
   font-size: 16px;
 }
-.satis-ozet {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.satis-ozet-baslik {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--success);
-  margin-bottom: 8px;
-}
-.satis-ozet-baslik i {
-  font-size: 22px;
-}
-.satis-ozet-satir {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-}
-.satis-ozet-satir span {
-  color: var(--text-muted);
-}
-.satis-ozet-satir .borc {
-  color: var(--danger);
-}
-.satis-ozet-satir .para {
-  color: var(--success);
-}
 .musteri-bakiye-uyari {
   display: flex;
   align-items: center;
@@ -4112,31 +3999,6 @@ const sepetiTemizle = () => {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 10px;
-}
-.gunluk-satis-satir {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-}
-.gunluk-satis-bilgi {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.gunluk-satis-no {
-  font-size: 12px;
-  font-weight: 600;
-}
-.gunluk-satis-cari {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.gunluk-satis-tutar {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--accent);
 }
 .sepet-birimfiyat {
   font-size: 11px;
