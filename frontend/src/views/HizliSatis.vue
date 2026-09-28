@@ -2170,7 +2170,8 @@ onMounted(async () => {
     await fisAyarlariSunucudanYukle()
     degisimSorgusunuUygula()
   } catch (e) {
-    console.error('Yukleme hatasi', e)
+    // Kullanici bos urun listesi gorup "urun yok" sanmasin; yukleme hatasini bildir.
+    toastBildirim.hata(e?.response?.data?.message || t('hizliSatis.yuklemeHatasi'))
   }
 })
 

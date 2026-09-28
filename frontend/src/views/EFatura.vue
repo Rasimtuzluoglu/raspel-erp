@@ -31,6 +31,15 @@
       :arama-placeholder="t('efatura.aramaPlaceholder')"
       gorunum-anahtari="efatura_liste"
     >
+      <template #empty>
+        <EmptyState
+          :message="t('efatura.bosBaslik')"
+          :sub-message="t('efatura.bosAciklama')"
+          :action-label="t('efatura.faturadanOlustur')"
+          action-icon="pi pi-plus"
+          @action="olusturDialogAc"
+        />
+      </template>
       <Column
         field="faturaNo"
         :header="t('efatura.faturaNo')"

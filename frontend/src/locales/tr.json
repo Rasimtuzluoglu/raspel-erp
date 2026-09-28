@@ -847,6 +847,7 @@
     "teslimatAdresiGerekli": "Şoför seçildiğinde teslimat adresi zorunludur",
     "teslimatIpucu": "Şoför seçerseniz satıştan sonra teslimat kaydı açılır; şoför teslim ederken imza alır.",
     "teslimatKaydedilemedi": "Satış tamamlandı ancak teslimat kaydı açılamadı",
+    "yuklemeHatasi": "Veriler yüklenemedi; bağlantınızı kontrol edip tekrar deneyin",
     "barkod": "Barkod",
     "cokSatanlar": "Çok Satanlar",
     "mevcutUrunler": "Mevcut Ürünler",
@@ -1957,6 +1958,8 @@
     },
   "efatura": {
     "title": "E-Fatura",
+    "bosBaslik": "Henüz e-fatura yok",
+    "bosAciklama": "Bir satış faturasından e-fatura taslağı oluşturabilirsiniz.",
     "faturadanOlustur": "Faturadan Oluştur",
     "ipucuBaslik": "E-Fatura",
     "ipucuMetin": "Satış faturanızdan UBL-TR 2.1 e-fatura taslağı oluşturun, GİB'e gönderin ve XML belgesini indirin. GİB entegratör uç noktası tanımlı değilse gönderimler yerel onay olarak işaretlenir.",

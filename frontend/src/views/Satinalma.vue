@@ -307,6 +307,8 @@
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              :title="t('common.delete')"
+              :aria-label="t('common.delete')"
               @click="kalemSil(talepForm, index)"
             />
           </template>
@@ -446,6 +448,8 @@
             <Button
               icon="pi pi-trash"
               class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              :title="t('common.delete')"
+              :aria-label="t('common.delete')"
               @click="kalemSil(siparisForm, index)"
             />
           </template>

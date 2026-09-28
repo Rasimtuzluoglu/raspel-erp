@@ -847,6 +847,7 @@
     "teslimatAdresiGerekli": "Delivery address is required when a driver is selected",
     "teslimatIpucu": "If you select a driver, a delivery record is created after the sale; the driver collects a signature on delivery.",
     "teslimatKaydedilemedi": "Sale completed but the delivery record could not be created",
+    "yuklemeHatasi": "Data could not be loaded; check your connection and try again",
     "barkod": "Barcode",
     "cokSatanlar": "Best Sellers",
     "sirala": "Sort:",
@@ -1957,6 +1958,8 @@
     },
   "efatura": {
     "title": "E-Invoice",
+    "bosBaslik": "No e-invoices yet",
+    "bosAciklama": "You can create an e-invoice draft from a sales invoice.",
     "faturadanOlustur": "Create from Invoice",
     "ipucuBaslik": "E-Invoice",
     "ipucuMetin": "Create a UBL-TR 2.1 e-invoice draft from your sales invoice, submit it to GİB (Turkish Revenue Administration) and download the XML document. If no GİB integrator endpoint is configured, submissions are marked as local approval.",

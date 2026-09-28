@@ -74,7 +74,7 @@
           style="width: 100px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.kdv) }}
+            {{ formatPara(s.data.kdv, s.data.paraBirimi) }}
           </template>
         </Column>
         <Column
@@ -83,7 +83,7 @@
           style="width: 120px"
         >
           <template #body="s">
-            {{ formatCurrency(s.data.genelToplam) }}
+            {{ formatPara(s.data.genelToplam, s.data.paraBirimi) }}
           </template>
         </Column>
         <Column
@@ -93,7 +93,7 @@
         >
           <template #body="s">
             <span :class="{ 'kalan-var': Number(s.data.kalanTutar || 0) > 0 }">
-              {{ formatCurrency(s.data.kalanTutar) }}
+              {{ formatPara(s.data.kalanTutar, s.data.paraBirimi) }}
             </span>
           </template>
         </Column>
@@ -344,7 +344,7 @@ import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
-import { formatCurrency, getLocalDateString } from '../utils/format.js'
+import { formatCurrency, formatPara, getLocalDateString, durumLabel as durumLabelUtil } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
 import { useI18n } from 'vue-i18n'
@@ -630,7 +630,7 @@ const printFatura = (id) => {
   if (id) faturaAPI.yazdirmaKaydet(id, { format: 'A4' }).catch(() => {})
   window.open(`/faturalar/${id}?print=true`, '_blank')
 }
-const durumLabel = (d) => ({ TASLAK: t('faturalar.durumTaslak'), TEKLIF: t('faturalar.durumTeklif'), KESILDI: t('faturalar.durumKesildi'), IPTAL: t('faturalar.durumIptal') })[d] || d
+const durumLabel = (d) => durumLabelUtil(d, t)
 
 const odemeDurumEtiketi = (d) => ({
   ODENDI: t('faturaDetay.odendi'),
@@ -684,7 +684,7 @@ const printTermalFis = (satisData) => {
     <body>
       <div class="no-print">
         <button onclick="window.print()">Yazdır (Termal 80mm)</button>
-        <button onclick="window.close()" style="background:#64748b; margin-left:6px;">Kapat</button>
+        <button onclick="window.close()" style="background:#64748b; margin-left:6px;">${t('common.close')}</button>
       </div>
       <div class="header text-center">
         ${sirketLogosu.value ? `<img class="logo" src="${escapeHtml(sirketLogosu.value)}" alt="logo" />` : ''}
