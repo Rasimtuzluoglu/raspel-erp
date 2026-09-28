@@ -419,15 +419,11 @@ img {
   width: 100%;
 }
 .theme-btn:hover {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(148, 163, 184, 0.15);
   color: var(--slate-100);
 }
 .theme-btn i {
   font-size: 14px;
-}
-.theme-btn:hover {
-  background: rgba(148, 163, 184, 0.15);
-  color: var(--slate-100);
 }
 
 .brand-icon {
@@ -1402,9 +1398,6 @@ img {
 [data-theme='light'] .page-title {
   color: var(--slate-900) !important;
 }
-[data-theme='light'] h1 {
-  color: var(--text-primary, var(--slate-900)) !important;
-}
 [data-theme='light'] .kullanici-kart {
   background: var(--bg-card, var(--white)) !important;
   border-color: var(--border) !important;
@@ -1433,21 +1426,9 @@ img {
 [data-theme='light'] .p-datatable .p-datatable-tbody > tr > td {
   color: var(--text-primary) !important;
 }
-[data-theme='light'] .stat-value {
-  color: var(--text-primary) !important;
-}
-[data-theme='light'] .stat-label {
-  color: var(--text-secondary) !important;
-}
 [data-theme='light'] h1,
 [data-theme='light'] h2,
 [data-theme='light'] h3 {
-  color: var(--text-primary) !important;
-}
-[data-theme='light'] .p-datatable .p-datatable-tbody > tr {
-  color: var(--text-primary) !important;
-}
-[data-theme='light'] .p-datatable .p-datatable-tbody > tr > td {
   color: var(--text-primary) !important;
 }
 [data-theme='light'] .field label {
@@ -1455,18 +1436,6 @@ img {
 }
 [data-theme='light'] .form-section-title {
   color: var(--text-primary) !important;
-}
-[data-theme='light'] .page-title {
-  color: var(--slate-900) !important;
-}
-[data-theme='light'] .card {
-  background: var(--bg-card) !important;
-}
-[data-theme='light'] .p-card .p-card-title {
-  color: var(--text-primary) !important;
-}
-[data-theme='light'] .p-card .p-card-content {
-  color: var(--text-secondary) !important;
 }
 [data-theme='light'] .p-dialog-header {
   background: var(--bg-card) !important;
