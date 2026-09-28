@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,7 @@ import java.util.regex.Pattern;
  * Kapsam: giriş, 2FA tamamlama ve şifre sıfırlama uçları.
  */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 20)
 public class LoginRateLimitFilter implements Filter {
 
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();
@@ -46,7 +49,10 @@ public class LoginRateLimitFilter implements Filter {
                 || uri.endsWith("/kullanicilar/giris-2fa")
                 || uri.endsWith("/kullanicilar/giris-sirket")
                 || uri.endsWith("/kullanicilar/sifre-sifirlama-talebi")
-                || uri.endsWith("/kullanicilar/sifre-sifirlama-onayla");
+                || uri.endsWith("/kullanicilar/sifre-sifirlama-onayla")
+                // Ilk kurulum ucu da korunur: anonim erise acik oldugu icin
+                // admin hesabini ilk ele gecirme denemelerini sinirlar.
+                || uri.endsWith("/kurulum/baslat");
     }
 
     private boolean girisYolu(String uri) {

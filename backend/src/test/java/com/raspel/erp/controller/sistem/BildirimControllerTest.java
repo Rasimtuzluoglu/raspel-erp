@@ -60,7 +60,7 @@ class BildirimControllerTest {
     void okundu_isaretler() throws Exception {
         mockMvc.perform(put("/api/bildirimler/1/okundu"))
                 .andExpect(status().isOk());
-        verify(bildirimService).okunduIsaretle(1L);
+        verify(bildirimService).okunduIsaretle(1L, null, null);
     }
 
     @Test

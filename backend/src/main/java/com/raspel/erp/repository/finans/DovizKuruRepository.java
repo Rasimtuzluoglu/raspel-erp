@@ -13,5 +13,7 @@ public interface DovizKuruRepository extends JpaRepository<DovizKuru, Long> {
     List<DovizKuru> findByTarihOrderByDovizKoduAsc(LocalDate tarih);
     Optional<DovizKuru> findByDovizKoduAndTarih(String dovizKodu, LocalDate tarih);
     Optional<DovizKuru> findByDovizKodu(String dovizKodu);
+    /** Ayni kodun birden cok tarihi olabilir; en yeni kaydi guvenle secer. */
+    Optional<DovizKuru> findFirstByDovizKoduOrderByTarihDesc(String dovizKodu);
     long countByTarih(LocalDate tarih);
 }

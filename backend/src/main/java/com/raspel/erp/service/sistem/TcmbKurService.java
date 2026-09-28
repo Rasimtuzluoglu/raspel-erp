@@ -29,6 +29,7 @@ public class TcmbKurService {
     private final DovizKuruRepository dovizKuruRepository;
 
     @Scheduled(cron = "0 0 9,12,16 * * ?")
+    @org.springframework.transaction.annotation.Transactional
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "tcmbKurGuncelle", lockAtMostFor = "PT10M", lockAtLeastFor = "PT1M")
     public void tcmbKurlariniGuncelle() {
         log.info("TCMB Güncel Döviz Kurları çekiliyor...");
@@ -109,7 +110,7 @@ public class TcmbKurService {
 
         rates.forEach((kod, vals) -> {
             String[] meta = metadata.get(kod);
-            DovizKuru kuru = dovizKuruRepository.findByDovizKodu(kod)
+            DovizKuru kuru = dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc(kod)
                 .orElse(DovizKuru.builder().dovizKodu(kod).tarih(java.time.LocalDate.now()).build());
 
             kuru.setDovizAdi(meta[0]);
@@ -137,22 +138,28 @@ public class TcmbKurService {
         if (tutar == null || tutar.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
         if (kaynakKod.equalsIgnoreCase(hedefKod)) return tutar;
 
-        List<DovizKuru> kurlar = tumKurlariGetir();
-        BigDecimal kaynakRateInTry = BigDecimal.ONE;
-        BigDecimal hedefRateInTry = BigDecimal.ONE;
-
-        if (!kaynakKod.equalsIgnoreCase("TRY")) {
-            Optional<DovizKuru> kOpt = kurlar.stream().filter(k -> k.getDovizKodu().equalsIgnoreCase(kaynakKod)).findFirst();
-            if (kOpt.isPresent()) kaynakRateInTry = kOpt.get().getSatisKuru();
+        // Bugunun kuru yoksa tazele (liste ekranindaki garantiyle ayni).
+        if (dovizKuruRepository.countByTarih(LocalDate.now()) == 0) {
+            tcmbKurlariniGuncelle();
         }
 
-        if (!hedefKod.equalsIgnoreCase("TRY")) {
-            Optional<DovizKuru> hOpt = kurlar.stream().filter(k -> k.getDovizKodu().equalsIgnoreCase(hedefKod)).findFirst();
-            if (hOpt.isPresent()) hedefRateInTry = hOpt.get().getSatisKuru();
-        }
+        BigDecimal kaynakRateInTry = kurTry(kaynakKod);
+        BigDecimal hedefRateInTry = kurTry(hedefKod);
+        if (hedefRateInTry.signum() == 0) hedefRateInTry = BigDecimal.ONE;
 
         BigDecimal tryValue = tutar.multiply(kaynakRateInTry);
         return tryValue.divide(hedefRateInTry, 4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Bir doviz kodunun TRY karsiligi (en yeni tarihli kayit). Tüm tabloyu belleğe
+     * yuklemek yerine yalnizca ilgili kodu sorgular; kayit yoksa 1 (TRY gibi) doner.
+     */
+    private BigDecimal kurTry(String kod) {
+        if (kod == null || kod.equalsIgnoreCase("TRY")) return BigDecimal.ONE;
+        return dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc(kod.toUpperCase(Locale.ROOT))
+                .map(k -> k.getSatisKuru() != null ? k.getSatisKuru() : BigDecimal.ONE)
+                .orElse(BigDecimal.ONE);
     }
 
     private String getTagValue(String tag, Element element) {

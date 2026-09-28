@@ -118,9 +118,17 @@ public class BildirimService {
     }
 
     @Transactional
-    public void okunduIsaretle(Long id) {
+    public void okunduIsaretle(Long id, Long sirketId, Long kullaniciId) {
         Bildirim b = bildirimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bildirim", id));
+        // Tenant izolasyonu: yalnizca kendi sirketinin (ve hedefliyse kendi)
+        // bildirimini okundu isaretleyebilir.
+        boolean sirketUygun = sirketId != null && sirketId.equals(b.getSirketId());
+        boolean kullaniciUygun = b.getKullaniciId() == null
+                || b.getKullaniciId().equals(kullaniciId);
+        if (!sirketUygun || !kullaniciUygun) {
+            throw new ResourceNotFoundException("Bildirim", id);
+        }
         b.setOkundu(true);
         bildirimRepository.save(b);
     }

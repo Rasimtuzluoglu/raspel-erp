@@ -5,7 +5,13 @@
     <springProfile name="prod">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
-                <pattern>{"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}","level":"%level","logger":"%logger{40}","correlationId":"%X{correlationId}","message":"%replace(%msg){'"','\\"'}"}%n</pattern>
+                <!--
+                  Tek satir JSON log. Mesaj icindeki backslash/tirnak/satir sonlari
+                  kacirilir (log injection ve bozuk JSON onlenir). Istisna (stack trace)
+                  ayri bir alanda, satir sonlari kacirilarak basilir; aksi halde prod'da
+                  hatalarin izi hicbir yere dusmez.
+                -->
+                <pattern>{"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}","level":"%level","logger":"%logger{40}","correlationId":"%X{correlationId}","message":"%replace(%replace(%replace(%msg){'\\','\\\\'}){'"','\"'}){'[\r\n]+','\\n'}","exception":"%replace(%replace(%replace(%ex){'\\','\\\\'}){'"','\"'}){'[\r\n]+','\\n'}"}%n</pattern>
                 <charset>UTF-8</charset>
             </encoder>
         </appender>
@@ -20,7 +26,8 @@
     <springProfile name="!prod">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
-                <pattern>%d{HH:mm:ss.SSS} %-5level [%X{correlationId:-}] %logger{36} - %msg%n</pattern>
+                <!-- %ex: istisna stack trace'i (aksi halde hatalar yalnizca mesajla sinirli kalir). -->
+                <pattern>%d{HH:mm:ss.SSS} %-5level [%X{correlationId:-}] %logger{36} - %msg%n%ex</pattern>
                 <charset>UTF-8</charset>
             </encoder>
         </appender>

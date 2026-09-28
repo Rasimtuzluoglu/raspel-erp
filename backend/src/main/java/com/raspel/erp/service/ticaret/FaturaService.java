@@ -1274,6 +1274,14 @@ public class FaturaService {
         if (fatura.getDurum() == Fatura.FaturaDurum.KESILDI) {
             throw new BusinessException("Kesilmiş fatura silinemez");
         }
+        // Bağlı kasa/banka/cari hareketi varsa silme tutarsızlık (yetim hareket)
+        // yaratır; durum güncellemede olduğu gibi burada da engellenir.
+        boolean bagliHareketVar = !kasaHareketRepository.findByFaturaId(id).isEmpty()
+                || !bankaHareketiRepository.findByKaynakFaturaId(id).isEmpty()
+                || hareketRepository.countByFaturaId(id) > 0;
+        if (bagliHareketVar) {
+            throw new BusinessException("Bu fişe bağlı kasa/banka/cari hareketleri var; fişi silmeden önce ilgili hareketleri iptal edin.");
+        }
         String silmeOncesiSnapshot = faturaGecmisService.snapshot(fatura);
         faturaRepository.deleteById(id);
         faturaGecmisService.kaydet(fatura, FaturaGecmisService.SIL, "Fatura silindi", silmeOncesiSnapshot, null);
@@ -1417,7 +1425,16 @@ public class FaturaService {
      * Kur servisi başarısız olursa ham fiyat korunur.
      */
     private BigDecimal tlKarsiliginaCevir(Fatura fatura, BigDecimal tutar) {
-        return tlKarsiliginaCevir(tutar, fatura.getParaBirimi());
+        if (tutar == null) return BigDecimal.ZERO;
+        String paraBirimi = fatura.getParaBirimi();
+        if (paraBirimi == null || "TRY".equalsIgnoreCase(paraBirimi)) return tutar;
+        // Fatura kaydinda saklanan kur varsa onu kullan: iptal/revizyon gibi ters
+        // kayitlar ayni kurla hesaplanmali; canli kur degisince TL tarafi sapmasin.
+        BigDecimal kayitliKur = fatura.getKur();
+        if (kayitliKur != null && kayitliKur.signum() > 0) {
+            return tutar.multiply(kayitliKur).setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+        return tlKarsiliginaCevir(tutar, paraBirimi);
     }
 
     /** Dövizli faturada kayıt kuru: DTO'da verilmişse o, yoksa TCMB satış kuru; TL'de null. */

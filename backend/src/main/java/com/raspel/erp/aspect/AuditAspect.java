@@ -36,61 +36,47 @@ public class AuditAspect {
             "token", "twostepsecret", "twofactorsecret", "two_factor_secret"
     );
 
-    @Pointcut("execution(* com.raspel.erp.controller..*.olustur(..))")
-    public void createPointcut() {}
+    /**
+     * Kritik mutasyon noktalari. Controller metot adlari buyuk harfle bitebildigi
+     * icin (faturaOlustur, faturaSil, iptaliGeriAl, bankayaAktar...) hem eski hem
+     * yeni adlar kapsanir. TEK advice kullanildigi icin bir metot birden fazla
+     * desene uysa bile yalnizca bir kez denetim izine yazilir.
+     */
+    @Pointcut("execution(* com.raspel.erp.controller..*.olustur(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Olustur(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.guncelle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Guncelle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.durumGuncelle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*DurumGuncelle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.sil(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Sil(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*kes(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*iptal(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*GeriAl(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Aktar(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*ode(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*tamamla(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*eslestir(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*kilit(..))")
+    public void kritikPointcut() {}
 
-    @Pointcut("execution(* com.raspel.erp.controller..*.guncelle(..))")
-    public void updatePointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.sil(..))")
-    public void deletePointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.durumGuncelle(..))")
-    public void durumGuncellePointcut() {}
-
-    // Belge yaşam döngüsü işlemleri (kes/iptal/ödeme/tamamlama/eşleştirme/kilit) de izlenir.
-    @Pointcut("execution(* com.raspel.erp.controller..*.*kes(..))")
-    public void kesPointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.*iptal(..))")
-    public void iptalPointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.*ode(..))")
-    public void odePointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.*tamamla(..))")
-    public void tamamlaPointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.*eslestir(..))")
-    public void eslestirPointcut() {}
-
-    @Pointcut("execution(* com.raspel.erp.controller..*.*kilit(..))")
-    public void kilitPointcut() {}
-
-    @AfterReturning("createPointcut()")
-    public void logCreate(JoinPoint jp) {
-        log(jp, "OLUSTUR");
-    }
-
-    @AfterReturning("updatePointcut() || durumGuncellePointcut()")
-    public void logUpdate(JoinPoint jp) {
-        log(jp, "GUNCELLE");
-    }
-
-    @AfterReturning("kesPointcut() || iptalPointcut() || odePointcut() || tamamlaPointcut() || eslestirPointcut() || kilitPointcut()")
+    @AfterReturning("kritikPointcut()")
     public void logIslem(JoinPoint jp) {
-        log(jp, "ISLEM");
+        log(jp, islemEtiketi(jp));
     }
 
-    @AfterReturning("deletePointcut()")
-    public void logDelete(JoinPoint jp) {
-        log(jp, "SIL");
-    }
-
-    @AfterThrowing(pointcut = "createPointcut() || updatePointcut() || deletePointcut() || durumGuncellePointcut() "
-            + "|| kesPointcut() || iptalPointcut() || odePointcut() || tamamlaPointcut() || eslestirPointcut() || kilitPointcut()", throwing = "ex")
+    @AfterThrowing(pointcut = "kritikPointcut()", throwing = "ex")
     public void logError(JoinPoint jp, Throwable ex) {
         log(jp, "HATA");
+    }
+
+    /** Metot adindan denetim islem etiketi turetir (OLUSTUR/GUNCELLE/SIL/ISLEM). */
+    private String islemEtiketi(JoinPoint jp) {
+        String ad = jp.getSignature().getName();
+        if ("olustur".equals(ad) || ad.endsWith("Olustur")) return "OLUSTUR";
+        if ("guncelle".equals(ad) || ad.endsWith("Guncelle")) return "GUNCELLE";
+        if ("sil".equals(ad) || ad.endsWith("Sil")) return "SIL";
+        return "ISLEM";
     }
 
     private void log(JoinPoint jp, String islem) {

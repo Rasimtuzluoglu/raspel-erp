@@ -54,31 +54,33 @@ class TcmbKurServiceTest {
 
     @Test
     void cevir_usdToTry() {
-        when(dovizKuruRepository.findAll()).thenReturn(List.of(kur("USD", "34.50")));
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("USD"))
+                .thenReturn(java.util.Optional.of(kur("USD", "34.50")));
         BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "USD", "TRY");
         assertEquals(0, new BigDecimal("3450.0000").compareTo(sonuc));
     }
 
     @Test
     void cevir_tryToUsd() {
-        when(dovizKuruRepository.findAll()).thenReturn(List.of(kur("USD", "34.50")));
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("USD"))
+                .thenReturn(java.util.Optional.of(kur("USD", "34.50")));
         BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("3450"), "TRY", "USD");
         assertEquals(0, new BigDecimal("100.0000").compareTo(sonuc));
     }
 
     @Test
     void cevir_eurToUsd() {
-        when(dovizKuruRepository.findAll()).thenReturn(List.of(
-                kur("USD", "34.50"),
-                kur("EUR", "38.00")
-        ));
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("EUR"))
+                .thenReturn(java.util.Optional.of(kur("EUR", "38.00")));
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("USD"))
+                .thenReturn(java.util.Optional.of(kur("USD", "34.50")));
         BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "EUR", "USD");
         assertEquals(0, new BigDecimal("110.1449").compareTo(sonuc));
     }
 
     @Test
     void cevir_bilinmeyenKodBireDoner() {
-        when(dovizKuruRepository.findAll()).thenReturn(List.of(kur("USD", "34.50")));
+        // Kaynak kod bulunamazsa 1 (TRY gibi) kabul edilir; hedef TRY -> tutar aynen doner.
         BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "XXX", "TRY");
         assertEquals(0, new BigDecimal("100.0000").compareTo(sonuc));
     }

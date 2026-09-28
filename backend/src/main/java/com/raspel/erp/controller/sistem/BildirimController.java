@@ -40,8 +40,10 @@ public class BildirimController {
 
     @PutMapping("/{id}/okundu")
     @Operation(summary = "Bildirimi okundu işaretle", description = "Belirtilen bildirimi okundu olarak işaretler")
-    public ResponseEntity<Void> okundu(@PathVariable Long id) {
-        bildirimService.okunduIsaretle(id);
+    public ResponseEntity<Void> okundu(@PathVariable Long id, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        bildirimService.okunduIsaretle(id, sirketId, kullaniciId);
         return ResponseEntity.ok().build();
     }
 
