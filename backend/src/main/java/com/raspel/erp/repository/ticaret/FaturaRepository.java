@@ -23,9 +23,20 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
             "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
             "AND (:bas IS NULL OR f.tarih >= :bas) AND (:bit IS NULL OR f.tarih <= :bit) " +
-            "ORDER BY f.tarih DESC")
+            "AND (:tur IS NULL OR f.tur = :tur) " +
+            "AND (:durum IS NULL OR f.durum = :durum) " +
+            "AND (:odemeDurumu IS NULL OR f.odemeDurumu = :odemeDurumu) " +
+            "AND (:vadesiGecen IS NULL OR :vadesiGecen = false OR (f.kalanTutar > 0 AND f.vadeTarihi < :bugun)) " +
+            "AND (:teslimatVar IS NULL OR (:teslimatVar = true AND EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id)) " +
+            "     OR (:teslimatVar = false AND NOT EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id))) " +
+            "ORDER BY f.tarih DESC, f.id DESC")
     Page<Fatura> ara(@Param("sirketId") Long sirketId, @Param("q") String q,
                      @Param("bas") java.time.LocalDate bas, @Param("bit") java.time.LocalDate bit,
+                     @Param("tur") Fatura.FaturaTur tur, @Param("durum") Fatura.FaturaDurum durum,
+                     @Param("odemeDurumu") String odemeDurumu,
+                     @Param("vadesiGecen") Boolean vadesiGecen,
+                     @Param("teslimatVar") Boolean teslimatVar,
+                     @Param("bugun") java.time.LocalDate bugun,
                      Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})

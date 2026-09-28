@@ -37,16 +37,25 @@ public class FaturaController {
     private final com.raspel.erp.service.sistem.IdempotencyService idempotencyService;
 
     @GetMapping
-    @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler. search ile fatura no/cari adı araması yapılır.")
+    @Operation(summary = "Tüm faturaları getir (sayfalı)", description = "Şirkete ait tüm faturaları sayfalı olarak listeler. search/filtre parametreleri opsiyoneldir.")
     public ResponseEntity<Page<FaturaDTO>> tumFaturalariGetir(
             HttpServletRequest request,
             @PageableDefault(size = 50) Pageable pageable,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "bas", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bas,
-            @RequestParam(value = "bit", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit) {
+            @RequestParam(value = "bit", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit,
+            @RequestParam(value = "tur", required = false) Fatura.FaturaTur tur,
+            @RequestParam(value = "durum", required = false) Fatura.FaturaDurum durum,
+            @RequestParam(value = "odemeDurumu", required = false) String odemeDurumu,
+            @RequestParam(value = "vadesiGecen", required = false) Boolean vadesiGecen,
+            @RequestParam(value = "teslimatVar", required = false) Boolean teslimatVar) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        if ((search != null && !search.isBlank()) || bas != null || bit != null) {
-            return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.ara(sirketId, search, bas, bit, pageable)));
+        boolean filtreVar = (search != null && !search.isBlank()) || bas != null || bit != null
+                || tur != null || durum != null || odemeDurumu != null
+                || Boolean.TRUE.equals(vadesiGecen) || teslimatVar != null;
+        if (filtreVar) {
+            return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.ara(sirketId, search, bas, bit,
+                    tur, durum, odemeDurumu, vadesiGecen, teslimatVar, pageable)));
         }
         return ResponseEntity.ok(yazdirmaOzetiEkle(faturaService.tumFaturalariGetir(sirketId, pageable)));
     }

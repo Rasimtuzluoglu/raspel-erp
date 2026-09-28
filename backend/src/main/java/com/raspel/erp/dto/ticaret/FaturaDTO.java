@@ -58,6 +58,10 @@ public class FaturaDTO {
     private String teslimFotograf;
     /** Bu fis icin teslimat kaydi var mi (Faturalar > Sofor Ata gorunurlugu). */
     private Boolean teslimatVar;
+    /** Teslimat durumu (varsa): BEKLEMEDE/YOLDA/TESLIM_EDILDI/IPTAL. */
+    private String teslimatDurum;
+    /** Teslimati goturen sofor adi (varsa). */
+    private String driverAd;
     private Long depoId;
     private String depoAd;
     private String paraBirimi;

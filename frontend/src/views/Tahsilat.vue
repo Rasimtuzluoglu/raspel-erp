@@ -373,9 +373,11 @@ import { tahsilatAPI, cariHesapAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const route = useRoute()
 const { t } = useI18n()
 const yukleniyor = ref(false)
 const ozet = ref(null)
@@ -527,14 +529,21 @@ const ara = (cari) => {
 }
 
 onMounted(async () => {
-  yukle()
-  gecmisYukle()
-  try {
-    const r = await cariHesapAPI.getAll({ size: 1000 })
-    tumCariler.value = unwrapList(r)
-  } catch {
-    tumCariler.value = []
-  }
+  await Promise.allSettled([
+    yukle(),
+    gecmisYukle(),
+    cariHesapAPI
+      .getAll({ size: 1000 })
+      .then((r) => {
+        tumCariler.value = unwrapList(r)
+      })
+      .catch(() => {
+        tumCariler.value = []
+      })
+  ])
+  // Faturlar/Satislar satirindan "Tahsilat Al" ile gelindiyse cari on secili acilir.
+  const qCari = Number(route?.query?.cariId)
+  if (qCari) tahsilatGir({ cariId: qCari })
 })
 </script>
 

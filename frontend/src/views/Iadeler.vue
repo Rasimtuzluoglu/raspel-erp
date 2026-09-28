@@ -294,13 +294,14 @@ import { iadeAPI, stokAPI, cariHesapAPI, faturaAPI, kasaAPI, bankaAPI } from '..
 import EmptyState from '../components/EmptyState.vue'
 import { formatCurrency } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const list = ref([])
 const stokList = ref([])
 const cariList = ref([])
@@ -371,7 +372,40 @@ onMounted(async () => {
     toastBildirim.hata(err?.response?.data?.message || t('iadeler.hataYukleme'))
   }
   yukleniyor.value = false
+  // Satislar satirindan "Iade Olustur" ile gelindiyse form faturayla on dolu acilir.
+  const qFatura = Number(route?.query?.faturaId)
+  if (qFatura) await iadeFaturasindanAc(qFatura)
 })
+
+/** Secili satisin kalemlerini iade formuna aktarir (yeni iade). */
+const iadeFaturasindanAc = async (id) => {
+  try {
+    const r = await faturaAPI.getById(id)
+    const f = r.data || {}
+    duzenleme.value = false
+    form.value = {
+      cariHesapId: f.cariHesapId || null,
+      cariHesapAd: f.cariHesapAd || '',
+      faturaId: f.id,
+      tur: f.tur || 'SATIS',
+      tarih: new Date(),
+      tutar: 0,
+      kasaId: null,
+      bankaId: null,
+      aciklama: '',
+      kalemler: (f.kalemler || []).map((k) => ({
+        stokId: k.stokId || null,
+        miktar: k.adet || 1,
+        birimFiyat: k.birimFiyat || 0,
+        kdvOrani: k.kdvOrani ?? 20,
+        aciklama: k.aciklama || ''
+      }))
+    }
+    dialog.value = true
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('iadeler.hataYukleme'))
+  }
+}
 
 const kalemEkle = () => {
   form.value.kalemler.push({ stokId: null, miktar: 1, birimFiyat: 0, kdvOrani: 20 })

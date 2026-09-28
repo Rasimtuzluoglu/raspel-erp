@@ -21,6 +21,8 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
 
     List<Teslimat> findBySirketIdAndFaturaId(Long sirketId, Long faturaId);
 
+    List<Teslimat> findByFaturaIdIn(java.util.Collection<Long> faturaIdler);
+
     boolean existsByFaturaId(Long faturaId);
 
     /** Fatura listelerinde "teslimati var" bayragi icin tek sorguda fatura id'leri. */

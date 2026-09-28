@@ -44,6 +44,78 @@
       </template>
     </Toolbar>
 
+    <!-- Liste filtreleri: tur segmenti + durum cipleri + gelismis popover -->
+    <div class="filtre-cubugu">
+      <SelectButton
+        v-model="turFiltre"
+        :options="turFiltreSecenekleri"
+        option-label="label"
+        option-value="value"
+        :allow-empty="false"
+        class="tur-filtre-secim"
+      />
+      <div class="durum-cipleri">
+        <button
+          v-for="d in durumFiltreSecenekleri"
+          :key="d.value ?? 'tumu'"
+          type="button"
+          class="durum-cip"
+          :class="{ aktif: durumFiltre === d.value }"
+          @click="durumFiltre = d.value"
+        >
+          {{ d.label }}
+        </button>
+      </div>
+      <button
+        type="button"
+        class="filtre-gelismis-btn"
+        :class="{ aktif: gelismisFiltreSayisi > 0 }"
+        :title="t('faturalar.gelismisFiltre')"
+        :aria-label="t('faturalar.gelismisFiltre')"
+        @click="filtrePopover.toggle($event)"
+      >
+        <i class="pi pi-filter" />
+        <span class="filtre-gelismis-metin">{{ t('faturalar.gelismisFiltre') }}</span>
+        <span
+          v-if="gelismisFiltreSayisi > 0"
+          class="filtre-rozet"
+        >{{ gelismisFiltreSayisi }}</span>
+      </button>
+      <Popover ref="filtrePopover">
+        <div class="filtre-panel">
+          <div class="filtre-panel-baslik">
+            {{ t('faturalar.gelismisFiltre') }}
+          </div>
+          <div class="filtre-alan">
+            <label>{{ t('faturalar.colOdemeDurumu') }}</label>
+            <Dropdown
+              v-model="odemeFiltre"
+              :options="odemeFiltreSecenekleri"
+              option-label="label"
+              option-value="value"
+              show-clear
+              :placeholder="t('faturalar.filtreTumu')"
+              class="w-full"
+            />
+          </div>
+          <label class="filtre-switch">
+            <span>{{ t('faturalar.vadesiGecen') }}</span>
+            <ToggleSwitch v-model="vadesiGecenFiltre" />
+          </label>
+          <label class="filtre-switch">
+            <span>{{ t('faturalar.teslimatiOlan') }}</span>
+            <ToggleSwitch v-model="teslimatiOlanFiltre" />
+          </label>
+          <Button
+            :label="t('faturalar.filtreTemizle')"
+            icon="pi pi-filter-slash"
+            class="p-button-text p-button-sm"
+            @click="filtreTemizle"
+          />
+        </div>
+      </Popover>
+    </div>
+
     <div
       v-if="loading"
       class="loading-iskelet"
@@ -155,6 +227,12 @@
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">
               {{ durumLabel(s.data.durum) }}
             </span>
+            <Tag
+              v-if="gecikmisGun(s.data) > 0"
+              class="gecikme-rozet"
+              :value="t('faturalar.gunGecikti', { n: gecikmisGun(s.data) })"
+              severity="danger"
+            />
           </template>
         </Column>
         <Column
@@ -203,6 +281,25 @@
               v-if="s.data.teslimEden"
               class="teslim-eden-list"
             ><i class="pi pi-truck" /> {{ s.data.teslimEden }}</span>
+            <span
+              v-else
+              class="islem-yapan-bos"
+            >-</span>
+          </template>
+        </Column>
+        <Column
+          :header="t('faturalar.colTeslimatDurum')"
+          style="width: 130px"
+        >
+          <template #body="s">
+            <Tag
+              v-if="s.data.teslimatVar"
+              :value="teslimatDurumEtiket(s.data.teslimatDurum)"
+              :severity="TESLIMAT_DURUM_SEVERITY[s.data.teslimatDurum] || 'secondary'"
+              :title="s.data.driverAd || ''"
+              style="cursor: pointer"
+              @click="router.push({ name: 'Teslimatlar' })"
+            />
             <span
               v-else
               class="islem-yapan-bos"
@@ -745,6 +842,14 @@ let aramaZamanlayici = null
 const sayfa = ref(0)
 const sayfaBoyutu = ref(10)
 
+// Liste filtreleri (sunucu tarafli): tur/durum/odeme/vadesi gecen/teslimat.
+const turFiltre = ref(null)
+const durumFiltre = ref(null)
+const odemeFiltre = ref(null)
+const vadesiGecenFiltre = ref(false)
+const teslimatiOlanFiltre = ref(false)
+const filtrePopover = ref(null)
+
 const tarihParametreleri = () => {
   const params = {}
   const aralik = tarihAraligi.value
@@ -760,6 +865,11 @@ const loadFaturalar = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.va
   try {
     const params = { page: yeniSayfa, size: yeniBoyut, ...tarihParametreleri() }
     if (arama.value.trim()) params.search = arama.value.trim()
+    if (turFiltre.value) params.tur = turFiltre.value
+    if (durumFiltre.value) params.durum = durumFiltre.value
+    if (odemeFiltre.value) params.odemeDurumu = odemeFiltre.value
+    if (vadesiGecenFiltre.value) params.vadesiGecen = true
+    if (teslimatiOlanFiltre.value) params.teslimatVar = true
     await faturaStore.getAllFaturalar(params)
   } catch {
     /* toast yok */
@@ -786,6 +896,40 @@ const turSecenekler = computed(() => [
   { label: t('faturalar.satis'), value: 'SATIS' },
   { label: t('faturalar.alis'), value: 'ALIS' }
 ])
+
+// --- Liste filtre cubugu (tur / durum / gelismis) ---
+const turFiltreSecenekleri = computed(() => [
+  { label: t('faturalar.filtreTumu'), value: null },
+  { label: t('faturalar.satis'), value: 'SATIS' },
+  { label: t('faturalar.alis'), value: 'ALIS' }
+])
+const durumFiltreSecenekleri = computed(() => [
+  { label: t('faturalar.filtreTumu'), value: null },
+  { label: t('faturalar.durumTaslak'), value: 'TASLAK' },
+  { label: t('faturalar.durumKesildi'), value: 'KESILDI' },
+  { label: t('faturalar.durumIptal'), value: 'IPTAL' }
+])
+const odemeFiltreSecenekleri = computed(() => [
+  { label: t('faturaDetay.odenmedi'), value: 'ODENMEDI' },
+  { label: t('faturaDetay.kismiOdedi'), value: 'KISMI_ODENDI' },
+  { label: t('faturaDetay.odendi'), value: 'ODENDI' }
+])
+const gelismisFiltreSayisi = computed(
+  () => (odemeFiltre.value ? 1 : 0) + (vadesiGecenFiltre.value ? 1 : 0) + (teslimatiOlanFiltre.value ? 1 : 0)
+)
+const filtreTemizle = () => {
+  turFiltre.value = null
+  durumFiltre.value = null
+  odemeFiltre.value = null
+  vadesiGecenFiltre.value = false
+  teslimatiOlanFiltre.value = false
+  loadFaturalar(0, sayfaBoyutu.value)
+}
+
+watch([turFiltre, durumFiltre, odemeFiltre, vadesiGecenFiltre, teslimatiOlanFiltre], () => {
+  sayfa.value = 0
+  loadFaturalar(0, sayfaBoyutu.value)
+})
 
 const form = ref({
   cariHesapId: null,
@@ -1556,6 +1700,14 @@ const faturaEylemleri = (f) => {  const items = [
   if (f.teslimatVar) {
     items.push({ etiket: t('faturalar.teslimatta'), ikon: 'pi pi-check-circle', islem: () => router.push({ name: 'Teslimatlar' }) })
   }
+  // Tahsilat kisa yolu: kesilmis, kalani olan satis faturasi icin.
+  if (f.tur === 'SATIS' && f.durum === 'KESILDI' && Number(f.kalanTutar || 0) > 0) {
+    items.push({
+      etiket: t('faturalar.tahsilatAl'),
+      ikon: 'pi pi-money-bill',
+      islem: () => router.push({ name: 'Tahsilat', query: { cariId: f.cariHesapId } })
+    })
+  }
   // Yanlışlıkla iptal edilen fatura yeniden kesilebilir (yalnızca ADMIN; stok/cari geri uygulanır).
   if (f.durum === 'IPTAL' && authStore.isAdmin) {
     items.push({ etiket: t('faturalar.iptaliGeriAl'), ikon: 'pi pi-undo', islem: () => confirmIptaliGeriAl(f.id) })
@@ -1578,6 +1730,27 @@ const odemeDurumEtiket = (d) => ({
   KISMI_ODENDI: t('faturaDetay.kismiOdedi'),
   ODENMEDI: t('faturaDetay.odenmedi')
 })[d] || '-'
+
+// Vadesi gecen kesilmis faturalarda gecikme gunu (rozet).
+const gecikmisGun = (f) => {
+  if (f.durum !== 'KESILDI' || !f.vadeTarihi || Number(f.kalanTutar || 0) <= 0) return 0
+  const vade = new Date(f.vadeTarihi)
+  if (isNaN(vade.getTime())) return 0
+  const bugun = new Date()
+  vade.setHours(0, 0, 0, 0)
+  bugun.setHours(0, 0, 0, 0)
+  const gun = Math.floor((bugun - vade) / 86400000)
+  return gun > 0 ? gun : 0
+}
+
+const TESLIMAT_DURUM_SEVERITY = { BEKLEMEDE: 'warn', YOLDA: 'info', TESLIM_EDILDI: 'success', IPTAL: 'danger' }
+const teslimatDurumEtiket = (d) =>
+  ({
+    BEKLEMEDE: t('teslimatlar.durumBeklemede'),
+    YOLDA: t('teslimatlar.durumYolda'),
+    TESLIM_EDILDI: t('teslimatlar.durumTeslimEdildi'),
+    IPTAL: t('teslimatlar.durumIptal')
+  })[d] || d
 
 const excelIndir = async () => {
   try {
@@ -1879,5 +2052,99 @@ h1 {
 }
 .w-full {
   width: 100% !important;
+}
+/* Liste filtre cubugu */
+.filtre-cubugu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.tur-filtre-secim :deep(.p-selectbutton) {
+  display: flex;
+}
+.durum-cipleri {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.durum-cip {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.durum-cip.aktif {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.filtre-gelismis-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filtre-gelismis-btn.aktif {
+  border-color: var(--accent-border);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.filtre-gelismis-btn .filtre-rozet {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.filtre-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 250px;
+}
+.filtre-panel-baslik {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.filtre-alan label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.filtre-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.gecikme-rozet {
+  margin-left: 6px;
 }
 </style>

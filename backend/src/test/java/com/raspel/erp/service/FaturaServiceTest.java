@@ -73,6 +73,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.service.finans.TaksitService taksitService;
     @Mock private com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
     @Mock private com.raspel.erp.repository.ticaret.TeslimatRepository teslimatRepository;
+    @Mock private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
     @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @InjectMocks private FaturaService faturaService;
@@ -133,36 +134,63 @@ class FaturaServiceTest {
     void tumFaturalariGetir_teslimatVarBayraginiDoldurur() {
         when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createFatura(1L), createFatura(2L))));
-        when(teslimatRepository.findFaturaIdByFaturaIdIn(anyCollection())).thenReturn(List.of(1L));
+        when(teslimatRepository.findByFaturaIdIn(anyCollection()))
+                .thenReturn(List.of(com.raspel.erp.entity.ticaret.Teslimat.builder()
+                        .id(9L).faturaId(1L).driverId(5L).durum("YOLDA").build()));
+        when(kullaniciRepository.findAllById(anyCollection()))
+                .thenReturn(List.of(com.raspel.erp.entity.sistem.Kullanici.builder()
+                        .id(5L).displayName("Ali Şoför").build()));
 
         var result = faturaService.tumFaturalariGetir(1L, Pageable.unpaged());
 
-        assertTrue(result.getContent().stream().filter(f -> f.getId().equals(1L)).findFirst().orElseThrow().getTeslimatVar());
-        assertFalse(result.getContent().stream().filter(f -> f.getId().equals(2L)).findFirst().orElseThrow().getTeslimatVar());
+        var f1 = result.getContent().stream().filter(f -> f.getId().equals(1L)).findFirst().orElseThrow();
+        var f2 = result.getContent().stream().filter(f -> f.getId().equals(2L)).findFirst().orElseThrow();
+        assertTrue(f1.getTeslimatVar());
+        assertEquals("YOLDA", f1.getTeslimatDurum());
+        assertEquals("Ali Şoför", f1.getDriverAd());
+        assertFalse(f2.getTeslimatVar());
+        assertNull(f2.getTeslimatDurum());
     }
 
     @Test
     void ara_tarihAraligiIleRepoCagirir() {
         LocalDate bas = LocalDate.of(2026, 1, 1);
         LocalDate bit = LocalDate.of(2026, 1, 31);
-        when(faturaRepository.ara(eq(1L), isNull(), eq(bas), eq(bit), any(Pageable.class)))
+        when(faturaRepository.ara(eq(1L), isNull(), eq(bas), eq(bit), isNull(), isNull(), isNull(),
+                isNull(), isNull(), any(LocalDate.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
 
         var result = faturaService.ara(1L, null, bas, bit, Pageable.unpaged());
 
         assertEquals(1, result.getContent().size());
-        verify(faturaRepository).ara(eq(1L), isNull(), eq(bas), eq(bit), any(Pageable.class));
+        verify(faturaRepository).ara(eq(1L), isNull(), eq(bas), eq(bit), isNull(), isNull(), isNull(),
+                isNull(), isNull(), any(LocalDate.class), any(Pageable.class));
     }
 
     @Test
     void ara_ucArgOverload_tarihsizRepoCagirir() {
-        when(faturaRepository.ara(eq(1L), eq("%x%"), isNull(), isNull(), any(Pageable.class)))
+        when(faturaRepository.ara(eq(1L), eq("%x%"), isNull(), isNull(), isNull(), isNull(), isNull(),
+                isNull(), isNull(), any(LocalDate.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
 
         var result = faturaService.ara(1L, "x", Pageable.unpaged());
 
         assertEquals(1, result.getContent().size());
-        verify(faturaRepository).ara(eq(1L), eq("%x%"), isNull(), isNull(), any(Pageable.class));
+        verify(faturaRepository).ara(eq(1L), eq("%x%"), isNull(), isNull(), isNull(), isNull(), isNull(),
+                isNull(), isNull(), any(LocalDate.class), any(Pageable.class));
+    }
+
+    @Test
+    void ara_turVeDurumFiltreleriniRepoYaGecirir() {
+        when(faturaRepository.ara(eq(1L), isNull(), isNull(), isNull(),
+                eq(Fatura.FaturaTur.SATIS), eq(Fatura.FaturaDurum.KESILDI), isNull(),
+                eq(true), eq(false), any(LocalDate.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+
+        var result = faturaService.ara(1L, null, null, null,
+                Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, null, true, false, Pageable.unpaged());
+
+        assertEquals(1, result.getContent().size());
     }
 
     @Test

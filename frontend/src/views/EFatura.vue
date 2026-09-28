@@ -178,10 +178,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { eFaturaAPI, faturaAPI } from '../api/index.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import { formatCurrency, formatTarihKisa as formatDateTime } from '../utils/format.js'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const route = useRoute()
 const { t } = useI18n()
 
 const list = ref([])
@@ -196,9 +198,14 @@ const durumEtiketi = (k) =>
   ({ 1000: t('efatura.durumHazirlandi'), 1200: t('efatura.durumGonderildi'), 1300: t('efatura.durumOnaylandi'), 1350: t('efatura.durumReddedildi') })[k] || k
 const durumSeverity = (k) => (k >= 1300 ? 'success' : k === 1200 ? 'warning' : k === 1350 ? 'danger' : 'info')
 
-onMounted(() => {
-  yukle()
-  faturalariYukle()
+onMounted(async () => {
+  await Promise.allSettled([yukle(), faturalariYukle()])
+  // Satislar satirindan "E-Fatura" ile gelindiyse olustur diyalogu faturayla acilir.
+  const qFatura = Number(route?.query?.faturaId)
+  if (qFatura) {
+    olusturForm.value.faturaId = qFatura
+    olusturDialog.value = true
+  }
 })
 
 const yukle = async () => {

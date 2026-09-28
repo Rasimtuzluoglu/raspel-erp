@@ -46,6 +46,13 @@
           @click="yenidenHesapla"
         />
         <Button
+          v-if="fatura && fatura.tur === 'SATIS' && fatura.durum === 'KESILDI' && Number(fatura.kalanTutar || 0) > 0"
+          :label="t('faturalar.tahsilatAl')"
+          icon="pi pi-money-bill"
+          class="p-button-success"
+          @click="$router.push({ name: 'Tahsilat', query: { cariId: fatura.cariHesapId } })"
+        />
+        <Button
           :label="t('faturaDetay.sablonTasarlaYazdir')"
           icon="pi pi-palette"
           class="p-button-primary"

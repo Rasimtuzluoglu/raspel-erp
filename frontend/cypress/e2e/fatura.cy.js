@@ -94,4 +94,13 @@ describe('Fatura Yönetimi', () => {
       expect(body.teslimatAdresi).to.contain('Test Mah')
     })
   })
+
+  it('tur ve durum filtreleri sunucuya gönderilir', () => {
+    cy.wait('@faturalar')
+    cy.contains('.durum-cip', 'Kesildi').click()
+    cy.wait('@faturalar').its('request.url').should('include', 'durum=KESILDI')
+
+    cy.get('.tur-filtre-secim').contains('button', 'Satış').click()
+    cy.wait('@faturalar').its('request.url').should('include', 'tur=SATIS')
+  })
 })

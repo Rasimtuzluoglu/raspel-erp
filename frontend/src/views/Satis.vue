@@ -30,14 +30,17 @@
 
     <div class="table-container">
       <DataTable
-        :value="filtrelenmisSatislar"
+        :value="satislar"
+        :lazy="true"
         :paginator="true"
-        :rows="15"
+        :rows="sayfaBoyutu"
+        :first="sayfa * sayfaBoyutu"
+        :total-records="toplamKayit"
+        :loading="loading"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
         :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
         striped-rows
-        sort-field="tarih"
-        :sort-order="-1"
+        @page="sayfaDegisti"
       >
         <template #empty>
           <EmptyState />
@@ -45,12 +48,12 @@
         <Column
           field="faturaNumarasi"
           :header="t('satis.colFaturaNo')"
-          style="width: 160px"
+          style="width: 150px"
         />
         <Column
           field="tarih"
           :header="t('common.date')"
-          style="width: 110px"
+          style="width: 105px"
         >
           <template #body="s">
             {{ formatDate(s.data.tarih) }}
@@ -59,52 +62,96 @@
         <Column
           field="cariHesapAd"
           :header="t('satis.colMusteri')"
-          style="width: 200px"
+          style="width: 180px"
         >
           <template #body="s">
             {{ s.data.cariHesapAd || '-' }}
           </template>
         </Column>
         <Column
+          field="kdv"
+          :header="t('satis.colKdv')"
+          style="width: 100px"
+        >
+          <template #body="s">
+            {{ formatCurrency(s.data.kdv) }}
+          </template>
+        </Column>
+        <Column
           field="genelToplam"
           :header="t('common.amount')"
-          style="width: 130px"
+          style="width: 120px"
         >
           <template #body="s">
             {{ formatCurrency(s.data.genelToplam) }}
           </template>
         </Column>
         <Column
+          field="kalanTutar"
+          :header="t('satis.colKalan')"
+          style="width: 110px"
+        >
+          <template #body="s">
+            <span :class="{ 'kalan-var': Number(s.data.kalanTutar || 0) > 0 }">
+              {{ formatCurrency(s.data.kalanTutar) }}
+            </span>
+          </template>
+        </Column>
+        <Column
+          field="odemeDurumu"
+          :header="t('satis.colOdeme')"
+          style="width: 120px"
+        >
+          <template #body="s">
+            <Tag
+              v-if="s.data.odemeDurumu"
+              :value="odemeDurumEtiketi(s.data.odemeDurumu)"
+              :severity="odemeDurumSeverity(s.data.odemeDurumu)"
+            />
+          </template>
+        </Column>
+        <Column
           field="durum"
           :header="t('common.status')"
-          style="width: 100px"
+          style="width: 150px"
         >
           <template #body="s">
             <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">{{ durumLabel(s.data.durum) }}</span>
+            <Tag
+              v-if="gecikmisGun(s.data) > 0"
+              class="gecikme-rozet"
+              :value="t('satis.gunGecikti', { n: gecikmisGun(s.data) })"
+              severity="danger"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('satis.colTeslimat')"
+          style="width: 130px"
+        >
+          <template #body="s">
+            <Tag
+              v-if="s.data.teslimatVar"
+              :value="teslimatDurumEtiketi(s.data.teslimatDurum)"
+              :severity="TESLIMAT_DURUM_SEVERITY[s.data.teslimatDurum] || 'secondary'"
+              :title="s.data.driverAd || ''"
+              style="cursor: pointer"
+              @click="router.push({ name: 'Teslimatlar' })"
+            />
+            <span
+              v-else
+              class="teslimat-yok"
+            >—</span>
           </template>
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 180px"
+          style="width: 120px"
         >
           <template #body="s">
-            <Button
-              icon="pi pi-eye"
-              class="p-button-rounded p-button-sm p-button-info"
-              :title="t('satis.goruntule')"
-              @click="$router.push(`/faturalar/${s.data.id}`)"
-            />
-            <Button
-              icon="pi pi-print"
-              class="p-button-rounded p-button-sm p-button-help"
-              :title="t('satis.a4Yazdir')"
-              @click="printFatura(s.data.id)"
-            />
-            <Button
-              icon="pi pi-receipt"
-              class="p-button-rounded p-button-sm p-button-warning"
-              :title="t('satis.termalYazdir')"
-              @click="printTermalFis(s.data)"
+            <SatirEylemleri
+              :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+              :items="satisEylemleri(s.data)"
             />
           </template>
         </Column>
@@ -281,13 +328,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useConfirm } from 'primevue/useconfirm'
 import { faturaAPI, teklifAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { useRouter } from 'vue-router'
 import { useMarka } from '../composables/useMarka.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
@@ -301,6 +350,8 @@ import { satisPayloadUret } from '../utils/satisPayload.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
+const confirm = useConfirm()
+const router = useRouter()
 const { t } = useI18n()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
@@ -317,6 +368,14 @@ const yeniUrunAdet = ref(1)
 const yeniUrunFiyat = ref(0)
 const kdvOranlari = [0, 1, 8, 10, 18, 20]
 
+// Sunucu tarafli sayfalama (tum fatura listesini cekip istemcide filtrelemek
+// ilk 50 kayitla sinirliydi; eski satislar gorunmuyordu).
+const sayfa = ref(0)
+const sayfaBoyutu = ref(25)
+const toplamKayit = ref(0)
+const loading = ref(false)
+let aramaZamanlayici = null
+
 const satisForm = ref({
   cariHesapId: null,
   tarih: new Date(),
@@ -326,37 +385,120 @@ const satisForm = ref({
 
 const tarihAraligi = ref(null)
 
+const tarihParametreleri = () => {
+  if (!tarihAraligi.value || tarihAraligi.value.length !== 2 || !tarihAraligi.value[0]) return {}
+  return { bas: getLocalDateString(tarihAraligi.value[0]), bit: getLocalDateString(tarihAraligi.value[1]) }
+}
+
 onMounted(async () => {
   // Store'lar hata firlatir; bir hata digerlerini engellemesin.
   await Promise.allSettled([satislariYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
 })
 
-const satislariYukle = async () => {
+const satislariYukle = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
+  loading.value = true
   try {
-    const r = await faturaAPI.getAll()
-    satislar.value = (unwrapList(r)).filter((f) => f.tur === 'SATIS')
+    const params = { page: yeniSayfa, size: yeniBoyut, tur: 'SATIS', ...tarihParametreleri() }
+    if (filtre.value.trim()) params.search = filtre.value.trim()
+    const r = await faturaAPI.getAll(params)
+    satislar.value = unwrapList(r)
+    toplamKayit.value = r.data?.totalElements ?? satislar.value.length
+    sayfa.value = yeniSayfa
+    sayfaBoyutu.value = yeniBoyut
   } catch {
     toastBildirim.hata(t('satis.satislarYuklenemedi'))
+  } finally {
+    loading.value = false
   }
 }
 
-const filtrelenmisSatislar = computed(() => {
-  let list = satislar.value
-  if (tarihAraligi.value && tarihAraligi.value.length === 2 && tarihAraligi.value[0]) {
-    const bas = new Date(tarihAraligi.value[0])
-    bas.setHours(0, 0, 0, 0)
-    const bit = new Date(tarihAraligi.value[1])
-    bit.setHours(23, 59, 59, 999)
-    list = list.filter((f) => {
-      if (!f.tarih) return false
-      const t = new Date(f.tarih)
-      return t >= bas && t <= bit
-    })
-  }
-  if (!filtre.value.trim()) return list
-  const q = filtre.value.toLowerCase()
-  return list.filter((s) => s.faturaNumarasi?.toLowerCase().includes(q) || s.cariHesapAd?.toLowerCase().includes(q))
+const sayfaDegisti = (e) => satislariYukle(e.page, e.rows)
+
+watch(tarihAraligi, () => satislariYukle(0, sayfaBoyutu.value))
+watch(filtre, () => {
+  clearTimeout(aramaZamanlayici)
+  aramaZamanlayici = setTimeout(() => satislariYukle(0, sayfaBoyutu.value), 300)
 })
+
+// Vadesi gecen kesilmis satislar icin gecikme gunu (rozet).
+const gecikmisGun = (s) => {
+  if (s.durum !== 'KESILDI' || !s.vadeTarihi || Number(s.kalanTutar || 0) <= 0) return 0
+  const vade = new Date(s.vadeTarihi)
+  if (isNaN(vade.getTime())) return 0
+  const bugun = new Date()
+  vade.setHours(0, 0, 0, 0)
+  bugun.setHours(0, 0, 0, 0)
+  const gun = Math.floor((bugun - vade) / 86400000)
+  return gun > 0 ? gun : 0
+}
+
+const TESLIMAT_DURUM_SEVERITY = { BEKLEMEDE: 'warn', YOLDA: 'info', TESLIM_EDILDI: 'success', IPTAL: 'danger' }
+const teslimatDurumEtiketi = (d) =>
+  ({ BEKLEMEDE: t('teslimatlar.durumBeklemede'), YOLDA: t('teslimatlar.durumYolda'), TESLIM_EDILDI: t('teslimatlar.durumTeslimEdildi'), IPTAL: t('teslimatlar.durumIptal') })[d] || d
+
+const tahsilataGit = (s) => router.push({ name: 'Tahsilat', query: { cariId: s.cariHesapId } })
+
+const satisIptal = (s) => {
+  confirm.require({
+    message: t('satis.iptalOnay', { no: s.faturaNumarasi }),
+    header: t('satis.iptalBaslik'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('common.onay'),
+    rejectLabel: t('common.cancel'),
+    accept: async () => {
+      try {
+        await faturaAPI.updateDurum(s.id, 'IPTAL')
+        toastBildirim.basarili(t('satis.iptalEdildi'))
+        await satislariYukle()
+      } catch (e) {
+        toastBildirim.hata(e?.response?.data?.message || t('satis.iptalBasarisiz'))
+      }
+    }
+  })
+}
+
+// Mevcut satisi kopyalayarak yeni satis diyalogu acar.
+const satisCogalt = async (s) => {
+  try {
+    const r = await faturaAPI.getById(s.id)
+    const f = r.data || {}
+    satisModu.value = 'SATIS'
+    satisForm.value = {
+      cariHesapId: f.cariHesapId || null,
+      tarih: new Date(),
+      aciklama: f.aciklama || '',
+      kalemler: (f.kalemler || []).map((k) => ({
+        aciklama: k.aciklama || '',
+        adet: k.adet || 1,
+        birimFiyat: k.birimFiyat || 0,
+        iskontoOrani: k.iskontoOrani || 0,
+        kdvOrani: k.kdvOrani ?? 20,
+        stokId: k.stokId || null
+      }))
+    }
+    showSatisDialog.value = true
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('satis.satislarYuklenemedi'))
+  }
+}
+
+const satisEylemleri = (s) => {
+  const items = [
+    { etiket: t('satis.goruntule'), ikon: 'pi pi-eye', islem: () => router.push(`/faturalar/${s.id}`) },
+    { etiket: t('satis.a4Yazdir'), ikon: 'pi pi-print', islem: () => printFatura(s.id) },
+    { etiket: t('satis.termalYazdir'), ikon: 'pi pi-receipt', islem: () => printTermalFis(s) },
+    { etiket: t('satis.cogalt'), ikon: 'pi pi-copy', islem: () => satisCogalt(s) }
+  ]
+  if (s.durum === 'KESILDI' && Number(s.kalanTutar || 0) > 0) {
+    items.push({ etiket: t('satis.tahsilatAl'), ikon: 'pi pi-money-bill', islem: () => tahsilataGit(s) })
+  }
+  if (s.durum === 'KESILDI') {
+    items.push({ etiket: t('satis.iadeOlustur'), ikon: 'pi pi-replay', islem: () => router.push({ name: 'Iadeler', query: { faturaId: s.id } }) })
+    items.push({ etiket: t('satis.efatura'), ikon: 'pi pi-send', islem: () => router.push({ name: 'EFatura', query: { faturaId: s.id } }) })
+    items.push({ etiket: t('common.cancel'), ikon: 'pi pi-ban', sinif: 'eylem-sil', islem: () => satisIptal(s) })
+  }
+  return items
+}
 
 const stokAdi = (id) => {
   const u = stokStore.stoklar.find((s) => s.id === id)
@@ -489,6 +631,15 @@ const printFatura = (id) => {
   window.open(`/faturalar/${id}?print=true`, '_blank')
 }
 const durumLabel = (d) => ({ TASLAK: t('faturalar.durumTaslak'), TEKLIF: t('faturalar.durumTeklif'), KESILDI: t('faturalar.durumKesildi'), IPTAL: t('faturalar.durumIptal') })[d] || d
+
+const odemeDurumEtiketi = (d) => ({
+  ODENDI: t('faturaDetay.odendi'),
+  KISMI_ODENDI: t('faturaDetay.kismiOdedi'),
+  ODENMEDI: t('faturaDetay.odenmedi')
+})[d] || '-'
+
+const odemeDurumSeverity = (d) =>
+  ({ ODENDI: 'success', KISMI_ODENDI: 'warn', ODENMEDI: 'danger' })[d] || 'secondary'
 import { formatTarih as formatDate } from '../utils/format.js'
 const printTermalFis = (satisData) => {
   if (satisData?.id) faturaAPI.yazdirmaKaydet(satisData.id, { format: 'TERMAL80' }).catch(() => {})
@@ -740,5 +891,16 @@ h1 {
 }
 .w-full {
   width: 100% !important;
+}
+/* Kalan tutar, gecikme ve teslimat rozetleri */
+.kalan-var {
+  color: var(--danger);
+  font-weight: 700;
+}
+.gecikme-rozet {
+  margin-left: 6px;
+}
+.teslimat-yok {
+  color: var(--text-muted);
 }
 </style>

@@ -30,10 +30,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -45,6 +47,7 @@ import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.ticaret.FaturaKalem;
+import com.raspel.erp.entity.ticaret.Teslimat;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
 import com.raspel.erp.repository.ticaret.CariSonUrunProjeksiyon;
@@ -99,6 +102,7 @@ public class FaturaService {
     private final com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     private final com.raspel.erp.repository.ticaret.IadeRepository iadeRepository;
     private final com.raspel.erp.repository.ticaret.TeslimatRepository teslimatRepository;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
     private final com.raspel.erp.repository.finans.PosTerminaliRepository posTerminaliRepository;
 
     /** Toplu islemlerde bellek yukunu sinirlamak icin persistence context temizligi. */
@@ -115,13 +119,22 @@ public class FaturaService {
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> ara(Long sirketId, String q, Pageable pageable) {
-        return ara(sirketId, q, null, null, pageable);
+        return ara(sirketId, q, null, null, null, null, null, null, null, pageable);
     }
 
     @Transactional(readOnly = true)
     public Page<FaturaDTO> ara(Long sirketId, String q, LocalDate bas, LocalDate bit, Pageable pageable) {
+        return ara(sirketId, q, bas, bit, null, null, null, null, null, pageable);
+    }
+
+    /** Filtreli fatura arama: tur/durum/odeme/vadesi gecen/teslimat secenekleri opsiyoneldir. */
+    @Transactional(readOnly = true)
+    public Page<FaturaDTO> ara(Long sirketId, String q, LocalDate bas, LocalDate bit,
+                               Fatura.FaturaTur tur, Fatura.FaturaDurum durum, String odemeDurumu,
+                               Boolean vadesiGecen, Boolean teslimatVar, Pageable pageable) {
         String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
-        return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, bas, bit, pageable));
+        return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, bas, bit, tur, durum, odemeDurumu,
+                vadesiGecen, teslimatVar, LocalDate.now(), pageable));
     }
 
     @Transactional(readOnly = true)
@@ -1588,8 +1601,30 @@ public class FaturaService {
         Map<Long, String> kasaHaritasi = fatura.getKasaId() == null ? Map.of()
                 : kasaRepository.findAllById(List.of(fatura.getKasaId())).stream()
                         .collect(Collectors.toMap(Kasa::getId, Kasa::getAd, (a, b) -> a));
+        Map<Long, Teslimat> teslimatlar = teslimatHaritasi(List.of(fatura.getId()));
         return entityDTOyeCevir(fatura, stokHaritasi, depoHaritasi, kasaHaritasi,
-                teslimatRepository.existsByFaturaId(fatura.getId()) ? Set.of(fatura.getId()) : Set.of());
+                teslimatlar, driverAdHaritasi(teslimatlar.values()));
+    }
+
+    /** Fatura id'leri icin teslimat kayitlarini tek sorguda getirir. */
+    private Map<Long, Teslimat> teslimatHaritasi(Collection<Long> faturaIdler) {
+        if (faturaIdler == null || faturaIdler.isEmpty()) return Map.of();
+        return teslimatRepository.findByFaturaIdIn(faturaIdler).stream()
+                .collect(Collectors.toMap(Teslimat::getFaturaId, t -> t, (a, b) -> a));
+    }
+
+    /** Teslimatlarin sofor adlarini tek sorguda getirir. */
+    private Map<Long, String> driverAdHaritasi(Collection<Teslimat> teslimatlar) {
+        Set<Long> driverIdler = teslimatlar.stream()
+                .map(Teslimat::getDriverId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (driverIdler.isEmpty()) return Map.of();
+        return kullaniciRepository.findAllById(driverIdler).stream()
+                .collect(Collectors.toMap(
+                        com.raspel.erp.entity.sistem.Kullanici::getId,
+                        k -> k.getDisplayName() != null ? k.getDisplayName() : k.getUsername(),
+                        (a, b) -> a));
     }
 
     /**
@@ -1617,16 +1652,17 @@ public class FaturaService {
         Map<Long, String> kasaHaritasi = kasaIdler.isEmpty() ? Map.of()
                 : kasaRepository.findAllById(kasaIdler).stream()
                         .collect(Collectors.toMap(Kasa::getId, Kasa::getAd, (a, b) -> a));
-        // "Teslimati var" bayragi sayfa basina tek sorguda (fatura basina sorgu yok).
+        // Teslimat durumu + sofor adi sayfa basina tek sorguyla (fatura basina sorgu yok).
         Set<Long> faturaIdler = sayfa.getContent().stream().map(Fatura::getId).collect(Collectors.toSet());
-        Set<Long> teslimatliFaturalar = faturaIdler.isEmpty() ? Set.of()
-                : new HashSet<>(teslimatRepository.findFaturaIdByFaturaIdIn(faturaIdler));
-        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi, depoHaritasi, kasaHaritasi, teslimatliFaturalar));
+        Map<Long, Teslimat> teslimatHaritasi = teslimatHaritasi(faturaIdler);
+        Map<Long, String> driverAdlari = driverAdHaritasi(teslimatHaritasi.values());
+        return sayfa.map(f -> entityDTOyeCevir(f, stokHaritasi, depoHaritasi, kasaHaritasi, teslimatHaritasi, driverAdlari));
     }
 
     private FaturaDTO entityDTOyeCevir(Fatura fatura, Map<Long, Stok> stokHaritasi,
                                        Map<Long, String> depoHaritasi, Map<Long, String> kasaHaritasi,
-                                       Set<Long> teslimatliFaturalar) {
+                                       Map<Long, Teslimat> teslimatHaritasi,
+                                       Map<Long, String> driverAdlari) {
 
         List<FaturaKalemDTO> kalemDTO = fatura.getKalemler().stream().map(k -> {
             String stokAd = null;
@@ -1657,6 +1693,8 @@ public class FaturaService {
                         : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        Teslimat teslimat = fatura.getId() != null ? teslimatHaritasi.get(fatura.getId()) : null;
+
         return FaturaDTO.builder()
                 .id(fatura.getId())
                 .faturaNumarasi(fatura.getFaturaNumarasi())
@@ -1683,7 +1721,11 @@ public class FaturaService {
                 .teslimDurumu(fatura.getTeslimDurumu())
                 .teslimNotu(fatura.getTeslimNotu())
                 .teslimFotograf(fatura.getTeslimFotograf())
-                .teslimatVar(fatura.getId() != null && teslimatliFaturalar.contains(fatura.getId()))
+                .teslimatVar(teslimat != null)
+                .teslimatDurum(teslimat != null ? teslimat.getDurum() : null)
+                .driverAd(teslimat != null && teslimat.getDriverId() != null
+                        ? driverAdlari.get(teslimat.getDriverId())
+                        : null)
                 .depoId(fatura.getDepoId())
                 .depoAd(fatura.getDepoId() != null ? depoHaritasi.get(fatura.getDepoId()) : null)
                 .paraBirimi(fatura.getParaBirimi())
