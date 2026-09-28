@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -440,8 +441,18 @@ public class StokService {
 
     @Transactional(readOnly = true)
     public List<StokHareketDTO> tumHareketler(Long sirketId) {
-        List<StokHareket> hareketler = stokHareketRepository.findByStokSirketIdOrderByHareketTarihiDesc(sirketId);
-        // Depo ve seri adlarını tek sorguda toplu çöz (N+1 önlenir).
+        return zenginlestir(stokHareketRepository.findByStokSirketIdOrderByHareketTarihiDesc(sirketId));
+    }
+
+    /** Opt-in sunucu taraflı sayfalama (page/size verildiğinde çağrılır). */
+    @Transactional(readOnly = true)
+    public Page<StokHareketDTO> tumHareketler(Long sirketId, Pageable pageable) {
+        Page<StokHareket> sayfa = stokHareketRepository.findByStokSirketId(sirketId, pageable);
+        return new PageImpl<>(zenginlestir(sayfa.getContent()), pageable, sayfa.getTotalElements());
+    }
+
+    /** Depo ve seri adlarını tek sorguda toplu çözerek DTO'ya çevirir (N+1 önlenir). */
+    private List<StokHareketDTO> zenginlestir(List<StokHareket> hareketler) {
         Set<Long> depoIdler = hareketler.stream().map(StokHareket::getDepoId)
                 .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
         Set<Long> seriIdler = hareketler.stream().map(StokHareket::getSeriId)

@@ -16,8 +16,16 @@
 
     <DataTable
       :value="liste"
-      striped-rows
+      lazy
+      paginator
+      :rows="sayfaBoyutu"
+      :first="sayfa * sayfaBoyutu"
+      :total-records="toplamKayit"
       :loading="yukleniyor"
+      paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+      :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
+      striped-rows
+      @page="sayfaDegisti"
     >
       <template #empty>
         <EmptyState />
@@ -171,6 +179,9 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const liste = ref([])
 const yukleniyor = ref(false)
+const sayfa = ref(0)
+const sayfaBoyutu = ref(25)
+const toplamKayit = ref(0)
 const yukleDialog = ref(false)
 const onizleDialog = ref(false)
 const onizleBelge = ref(null)
@@ -209,16 +220,24 @@ const dosyaSec = (e) => {
   yukleForm.value.file = e.target.files[0]
 }
 
-const yukleListe = async () => {
+// Sunucu tarafli sayfalama: yalnizca gorunen sayfa cekilir.
+const yukleListe = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
+  if (typeof yeniSayfa !== 'number') yeniSayfa = sayfa.value
+  if (typeof yeniBoyut !== 'number') yeniBoyut = sayfaBoyutu.value
   yukleniyor.value = true
   try {
-    const r = await belgeAPI.tumBelgeler()
-    liste.value = r.data || []
+    const r = await belgeAPI.tumBelgeler({ page: yeniSayfa, size: yeniBoyut })
+    liste.value = r.data?.content || r.data || []
+    toplamKayit.value = r.data?.totalElements ?? liste.value.length
+    sayfa.value = yeniSayfa
+    sayfaBoyutu.value = yeniBoyut
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('belgeler.listelenemedi'))
   }
   yukleniyor.value = false
 }
+
+const sayfaDegisti = (e) => yukleListe(e.page, e.rows)
 
 const indir = async (belge) => {
   const dosyaAdi = belge.url ? belge.url.split('/').pop() : null

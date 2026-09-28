@@ -133,8 +133,8 @@ export const belgeAPI = {
     formData.append('entityId', entityId)
     return apiClient.post('/belgeler/yukle', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
-  tumBelgeler() {
-    return apiClient.get('/belgeler')
+  tumBelgeler(params) {
+    return apiClient.get('/belgeler', { params })
   },
   kayitBelgeleri(entityAdi, entityId) {
     return apiClient.get(`/belgeler/kayit/${entityAdi}/${entityId}`)

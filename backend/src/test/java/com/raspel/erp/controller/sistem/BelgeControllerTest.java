@@ -10,6 +10,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,6 +47,25 @@ class BelgeControllerTest {
         mockMvc.perform(get("/api/belgeler/kayit/Fatura/5").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].dosyaAdi").value("fatura.pdf"));
+    }
+
+    @Test
+    void shouldListTumBelgeler() throws Exception {
+        when(belgeRepository.findBySirketIdOrderByOlusturmaTarihiDesc(1L)).thenReturn(List.of(ornek()));
+        mockMvc.perform(get("/api/belgeler").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].dosyaAdi").value("fatura.pdf"));
+    }
+
+    @Test
+    void shouldListTumBelgelerSayfali() throws Exception {
+        when(belgeRepository.findBySirketId(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(ornek())));
+        mockMvc.perform(get("/api/belgeler")
+                        .param("page", "0").param("size", "20")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].dosyaAdi").value("fatura.pdf"));
     }
 
     @Test

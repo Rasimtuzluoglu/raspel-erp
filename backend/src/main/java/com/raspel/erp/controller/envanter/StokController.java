@@ -9,12 +9,14 @@ import com.raspel.erp.service.sistem.QRService;
 import com.raspel.erp.service.sistem.BarkodService;
 import com.raspel.erp.service.sistem.PdfRaporService;
 import com.raspel.erp.util.EtiketIcerikUtil;
+import com.raspel.erp.util.SayfalamaUtil;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -266,9 +268,17 @@ public class StokController {
     }
 
     @GetMapping("/hareketler/tum")
-    @Operation(summary = "Tüm stok hareketlerini getir", description = "Tüm stok hareketlerini listeler")
-    public ResponseEntity<List<StokHareketDTO>> tumHareketler(HttpServletRequest request) {
+    @Operation(summary = "Tüm stok hareketlerini getir",
+            description = "Sayfalama için page/size gönderilebilir; gönderilmezse tam liste döner")
+    public ResponseEntity<?> tumHareketler(
+            HttpServletRequest request,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        if (SayfalamaUtil.sayfaliMi(page, size)) {
+            return ResponseEntity.ok(stokService.tumHareketler(sirketId,
+                    SayfalamaUtil.coz(page, size, Sort.by(Sort.Direction.DESC, "hareketTarihi"))));
+        }
         return ResponseEntity.ok(stokService.tumHareketler(sirketId));
     }
 

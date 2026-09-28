@@ -19,8 +19,8 @@ export const bankaAPI = {
 }
 
 export const bankaMutabakatAPI = {
-  listele(bankaId) {
-    return apiClient.get(`/bankalar/${bankaId}/mutabakat`)
+  listele(bankaId, params) {
+    return apiClient.get(`/bankalar/${bankaId}/mutabakat`, { params })
   },
   yukle(bankaId, dosya) {
     const formData = new FormData()

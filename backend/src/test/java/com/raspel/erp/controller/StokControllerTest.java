@@ -180,6 +180,18 @@ class StokControllerTest {
     }
 
     @Test
+    void shouldGetAllHareketlerSayfali() throws Exception {
+        var list = List.of(StokHareketDTO.builder().id(1L).tur("CIKIS").miktar(BigDecimal.valueOf(5)).build());
+        when(stokService.tumHareketler(anyLong(), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(list));
+
+        mockMvc.perform(get("/api/stoklar/hareketler/tum")
+                        .param("page", "0").param("size", "20")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].tur").value("CIKIS"));
+    }
+
+    @Test
     void shouldAddHareket() throws Exception {
         var dto = StokHareketDTO.builder().id(1L).stokId(1L).tur("GIRIS").miktar(BigDecimal.valueOf(10)).hareketTarihi(LocalDate.now()).build();
         when(stokService.hareketEkle(any(StokHareketDTO.class))).thenReturn(dto);

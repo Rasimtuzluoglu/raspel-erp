@@ -104,13 +104,21 @@
             icon="pi pi-refresh"
             :label="t('muhasebe.yenile')"
             class="p-button-sm p-button-text"
-            @click="fisleriYukle"
+            @click="fisleriYukle(0)"
           />
         </div>
         <DataTable
           :value="fisler"
-          striped-rows
+          lazy
+          paginator
+          :rows="fisSayfaBoyutu"
+          :first="fisSayfa * fisSayfaBoyutu"
+          :total-records="fisToplamKayit"
           :loading="fisYukleniyor"
+          paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+          :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
+          striped-rows
+          @page="fisSayfaDegisti"
         >
           <template #empty>
             <EmptyState />
@@ -769,6 +777,9 @@ const hesapDialogBaslik = computed(() => (hesapDuzenleme.value ? t('muhasebe.hes
 // Fişler
 const fisler = ref([])
 const fisYukleniyor = ref(false)
+const fisSayfa = ref(0)
+const fisSayfaBoyutu = ref(25)
+const fisToplamKayit = ref(0)
 const fisDialog = ref(false)
 const fisDetayDialog = ref(false)
 const fisDetay = ref(null)
@@ -908,19 +919,27 @@ const hesapSil = (data) => {
   })
 }
 
-const fisleriYukle = async () => {
+// Sunucu tarafli sayfalama: yalnizca gorunen sayfa cekilir.
+const fisleriYukle = async (yeniSayfa = fisSayfa.value, yeniBoyut = fisSayfaBoyutu.value) => {
+  if (typeof yeniSayfa !== 'number') yeniSayfa = fisSayfa.value
+  if (typeof yeniBoyut !== 'number') yeniBoyut = fisSayfaBoyutu.value
   fisYukleniyor.value = true
   try {
-    const params = {}
+    const params = { page: yeniSayfa, size: yeniBoyut }
     if (filtreBaslangic.value) params.baslangic = tarihParam(filtreBaslangic.value)
     if (filtreBitis.value) params.bitis = tarihParam(filtreBitis.value)
     const r = await muhasebeAPI.getFisler(params)
-    fisler.value = r.data || []
+    fisler.value = r.data?.content || r.data || []
+    fisToplamKayit.value = r.data?.totalElements ?? fisler.value.length
+    fisSayfa.value = yeniSayfa
+    fisSayfaBoyutu.value = yeniBoyut
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('muhasebe.hataFisler'))
   }
   fisYukleniyor.value = false
 }
+
+const fisSayfaDegisti = (e) => fisleriYukle(e.page, e.rows)
 
 const fxYukleniyor = ref(false)
 const fxDegerlemeCalistir = () => {

@@ -17,7 +17,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import com.raspel.erp.util.SayfalamaUtil;
 import java.time.LocalDate;
 import java.util.List;
 import com.raspel.erp.entity.finans.Hareket;
@@ -40,9 +42,17 @@ public class HareketController {
     private final HareketService hareketService;
     
     @GetMapping("/cari/{cariHesapId}")
-    @Operation(summary = "Cari hesap hareketlerini getir", description = "Belirli bir cari hesaba ait hareketleri listeler")
-    public ResponseEntity<List<HareketDTO>> cariHesapHareketleriGetir(@PathVariable Long cariHesapId) {
+    @Operation(summary = "Cari hesap hareketlerini getir",
+            description = "Sayfalama için page/size gönderilebilir; gönderilmezse tam liste döner")
+    public ResponseEntity<?> cariHesapHareketleriGetir(
+            @PathVariable Long cariHesapId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         log.info("GET /api/hareketler/cari/{} - Cari hesap hareketleri getiriliyor", cariHesapId);
+        if (SayfalamaUtil.sayfaliMi(page, size)) {
+            return ResponseEntity.ok(hareketService.cariHesapHareketleriGetir(cariHesapId,
+                    SayfalamaUtil.coz(page, size, Sort.by(Sort.Direction.DESC, "hareketTarihi"))));
+        }
         List<HareketDTO> hareketler = hareketService.cariHesapHareketleriGetir(cariHesapId);
         return ResponseEntity.ok(hareketler);
     }

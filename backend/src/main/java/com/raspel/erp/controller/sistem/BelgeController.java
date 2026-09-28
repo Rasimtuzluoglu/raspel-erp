@@ -3,9 +3,11 @@ package com.raspel.erp.controller.sistem;
 import com.raspel.erp.entity.sistem.Belge;
 import com.raspel.erp.repository.sistem.BelgeRepository;
 import com.raspel.erp.service.sistem.DosyaDepolamaService;
+import com.raspel.erp.util.SayfalamaUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -96,9 +98,16 @@ public class BelgeController {
     }
 
     @GetMapping
-    @Operation(summary = "Tüm belgeleri getir", description = "Şirketin tüm belgelerini listeler")
-    public ResponseEntity<List<Belge>> tumBelgeler(HttpServletRequest request) {
+    @Operation(summary = "Tüm belgeleri getir",
+            description = "Şirketin tüm belgelerini listeler; sayfalama için page/size gönderilebilir")
+    public ResponseEntity<?> tumBelgeler(HttpServletRequest request,
+                                        @RequestParam(required = false) Integer page,
+                                        @RequestParam(required = false) Integer size) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        if (SayfalamaUtil.sayfaliMi(page, size)) {
+            return ResponseEntity.ok(belgeRepository.findBySirketId(sirketId,
+                    SayfalamaUtil.coz(page, size, Sort.by(Sort.Direction.DESC, "olusturmaTarihi"))));
+        }
         return ResponseEntity.ok(belgeRepository.findBySirketIdOrderByOlusturmaTarihiDesc(sirketId));
     }
 

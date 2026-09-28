@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -58,6 +61,20 @@ public class BankaMutabakatService {
         List<BankaHareketi> hareketler = bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId).stream()
                 .filter(h -> sirketId == null || sirketId.equals(h.getSirketId()))
                 .collect(Collectors.toList());
+        return zenginlestir(hareketler, sirketId);
+    }
+
+    /** Opt-in sunucu taraflı sayfalama (page/size verildiğinde çağrılır). */
+    public Page<BankaHareketiDTO> listele(Long bankaId, Long sirketId, Pageable pageable) {
+        bankaDogrula(bankaId);
+        Page<BankaHareketi> sayfa = sirketId == null
+                ? bankaHareketiRepository.findByBankaId(bankaId, pageable)
+                : bankaHareketiRepository.findByBankaIdAndSirketId(bankaId, sirketId, pageable);
+        return new PageImpl<>(zenginlestir(sayfa.getContent(), sirketId), pageable, sayfa.getTotalElements());
+    }
+
+    /** Eşleşen fatura numaralarını ve açık fatura önerilerini toplu çözerek DTO'ya çevirir. */
+    private List<BankaHareketiDTO> zenginlestir(List<BankaHareketi> hareketler, Long sirketId) {
         // N+1 önlemi: eşleşen fatura numaralarını tek sorguda topla
         Set<Long> faturaIds = hareketler.stream()
                 .map(BankaHareketi::getEslesenFaturaId)

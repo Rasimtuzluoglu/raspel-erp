@@ -90,6 +90,15 @@ public class HareketService {
                 .map(this::entityDTOyeCevir)
                 .collect(Collectors.toList());
     }
+
+    /** Opt-in sunucu taraflı sayfalama (page/size verildiğinde çağrılır). */
+    @Transactional(readOnly = true)
+    public Page<HareketDTO> cariHesapHareketleriGetir(Long cariHesapId, Pageable pageable) {
+        CariHesap cari = cariHesapRepository.findById(cariHesapId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
+        tenantChecker.check(cari.getSirketId(), "Cari Hesap");
+        return hareketRepository.findByCariHesapId(cariHesapId, pageable).map(this::entityDTOyeCevir);
+    }
     
     /**
      * Son n hareketi getir (tenant filtreli).

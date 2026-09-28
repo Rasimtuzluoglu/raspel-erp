@@ -77,6 +77,16 @@ class HareketControllerTest {
     }
 
     @Test
+    void shouldGetByCariHesapSayfali() throws Exception {
+        var list = List.of(HareketDTO.builder().id(1L).cariHesapId(1L).build());
+        when(hareketService.cariHesapHareketleriGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/hareketler/cari/1").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].cariHesapId").value(1L));
+    }
+
+    @Test
     void shouldGetSon() throws Exception {
         var list = List.of(HareketDTO.builder().id(1L).build());
         when(hareketService.sonHareketleriGetir(5, 1L)).thenReturn(list);

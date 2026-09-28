@@ -14,6 +14,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,6 +77,17 @@ class MuhasebeControllerTest {
         mockMvc.perform(get("/api/muhasebe/fisler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].fisNo").value("MUH-2024-000001"));
+    }
+
+    @Test
+    void shouldGetFislerSayfali() throws Exception {
+        when(muhasebeService.fisleriGetir(anyLong(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(fisOrnek())));
+        mockMvc.perform(get("/api/muhasebe/fisler")
+                        .param("page", "0").param("size", "20")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].fisNo").value("MUH-2024-000001"));
     }
 
     @Test

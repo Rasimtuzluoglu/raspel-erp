@@ -13,6 +13,8 @@ import com.raspel.erp.repository.muhasebe.MuhasebeFisKalemRepository;
 import com.raspel.erp.repository.muhasebe.MuhasebeFisiRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +96,19 @@ public class MuhasebeService {
                 .findBySirketIdAndFisTarihBetween(sirketId, bas, bit).stream()
                 .collect(Collectors.groupingBy(MuhasebeFisKalem::getFisId));
         return fisler.stream().map(f -> fisEntityToDTO(f, true, kalemHaritasi)).collect(Collectors.toList());
+    }
+
+    /** Opt-in sunucu taraflı sayfalama (page/size verildiğinde çağrılır). */
+    @Transactional(readOnly = true)
+    public Page<MuhasebeFisiDTO> fisleriGetir(Long sirketId, LocalDate baslangic, LocalDate bitis, Pageable pageable) {
+        LocalDate bas = baslangic != null ? baslangic : LocalDate.now().minusMonths(12);
+        LocalDate bit = bitis != null ? bitis : LocalDate.now();
+        Page<MuhasebeFisi> sayfa = muhasebeFisiRepository.findBySirketIdAndTarihBetween(sirketId, bas, bit, pageable);
+        List<Long> fisIdler = sayfa.getContent().stream().map(MuhasebeFisi::getId).collect(Collectors.toList());
+        Map<Long, List<MuhasebeFisKalem>> kalemHaritasi = fisIdler.isEmpty() ? Map.of()
+                : muhasebeFisKalemRepository.findByFisIdInOrderByIdAsc(fisIdler).stream()
+                        .collect(Collectors.groupingBy(MuhasebeFisKalem::getFisId));
+        return sayfa.map(f -> fisEntityToDTO(f, true, kalemHaritasi));
     }
 
     @Transactional(readOnly = true)

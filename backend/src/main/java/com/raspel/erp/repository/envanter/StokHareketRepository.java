@@ -1,6 +1,8 @@
 package com.raspel.erp.repository.envanter;
 
 import com.raspel.erp.entity.envanter.StokHareket;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -26,6 +28,9 @@ public interface StokHareketRepository extends JpaRepository<StokHareket, Long> 
 
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findByStokSirketIdOrderByHareketTarihiDesc(Long sirketId);
+
+    @EntityGraph(attributePaths = {"stok", "cariHesap"})
+    Page<StokHareket> findByStokSirketId(Long sirketId, Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = {"stok", "cariHesap"})

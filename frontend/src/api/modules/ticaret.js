@@ -53,8 +53,8 @@ export const cariHesapAPI = {
 }
 
 export const hareketAPI = {
-  getByCariHesap(cariHesapId) {
-    return apiClient.get(`/hareketler/cari/${cariHesapId}`)
+  getByCariHesap(cariHesapId, params) {
+    return apiClient.get(`/hareketler/cari/${cariHesapId}`, { params })
   },
   getSon(limit = 5) {
     return apiClient.get(`/hareketler/son/${limit}`)

@@ -2,10 +2,12 @@ package com.raspel.erp.controller.finans;
 
 import com.raspel.erp.dto.finans.BankaHareketiDTO;
 import com.raspel.erp.service.finans.BankaMutabakatService;
+import com.raspel.erp.util.SayfalamaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +27,16 @@ public class BankaMutabakatController {
     private final BankaMutabakatService bankaMutabakatService;
 
     @GetMapping
-    @Operation(summary = "Banka hareketlerini listele", description = "Bankaya yüklenen hareketleri ve eşleşme durumunu listeler")
-    public ResponseEntity<List<BankaHareketiDTO>> listele(@PathVariable Long bankaId, HttpServletRequest request) {
+    @Operation(summary = "Banka hareketlerini listele",
+            description = "Bankaya yüklenen hareketleri ve eşleşme durumunu listeler; sayfalama için page/size gönderilebilir")
+    public ResponseEntity<?> listele(@PathVariable Long bankaId, HttpServletRequest request,
+                                     @RequestParam(required = false) Integer page,
+                                     @RequestParam(required = false) Integer size) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        if (SayfalamaUtil.sayfaliMi(page, size)) {
+            return ResponseEntity.ok(bankaMutabakatService.listele(bankaId, sirketId,
+                    SayfalamaUtil.coz(page, size, Sort.by(Sort.Direction.DESC, "tarih"))));
+        }
         return ResponseEntity.ok(bankaMutabakatService.listele(bankaId, sirketId));
     }
 

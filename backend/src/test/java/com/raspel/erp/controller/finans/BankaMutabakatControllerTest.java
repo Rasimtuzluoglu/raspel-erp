@@ -9,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -43,6 +45,16 @@ class BankaMutabakatControllerTest {
         mockMvc.perform(get("/api/bankalar/1/mutabakat"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].aciklama").value("Hareket"));
+    }
+
+    @Test
+    void listele_sayfali_donar() throws Exception {
+        when(bankaMutabakatService.listele(eq(1L), any(), any(Pageable.class))).thenReturn(
+                new PageImpl<>(List.of(BankaHareketiDTO.builder().id(1L).aciklama("Hareket").build())));
+
+        mockMvc.perform(get("/api/bankalar/1/mutabakat").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].aciklama").value("Hareket"));
     }
 
     @Test

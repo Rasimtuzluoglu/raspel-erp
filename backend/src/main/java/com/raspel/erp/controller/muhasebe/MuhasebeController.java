@@ -2,11 +2,13 @@ package com.raspel.erp.controller.muhasebe;
 
 import com.raspel.erp.dto.muhasebe.*;
 import com.raspel.erp.service.muhasebe.MuhasebeService;
+import com.raspel.erp.util.SayfalamaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,12 +79,19 @@ public class MuhasebeController {
     // YEVMIYE FİŞLERİ
 
     @GetMapping("/fisler")
-    @Operation(summary = "Yevmiye fişlerini getir", description = "Tarih aralığına göre muhasebe fişlerini listeler")
+    @Operation(summary = "Yevmiye fişlerini getir",
+            description = "Tarih aralığına göre muhasebe fişlerini listeler; sayfalama için page/size gönderilebilir")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
-    public ResponseEntity<List<MuhasebeFisiDTO>> fisler(
+    public ResponseEntity<?> fisler(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (SayfalamaUtil.sayfaliMi(page, size)) {
+            return ResponseEntity.ok(muhasebeService.fisleriGetir(sirketId(request), baslangic, bitis,
+                    SayfalamaUtil.coz(page, size, Sort.by(Sort.Direction.ASC, "tarih"))));
+        }
         return ResponseEntity.ok(muhasebeService.fisleriGetir(sirketId(request), baslangic, bitis));
     }
 
