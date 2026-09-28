@@ -7,10 +7,10 @@
 ## Quick Commands
 
 ```bash
-# Backend (Java 21 + Spring Boot 3.2 + Maven)
+# Backend (Java 21 + Spring Boot 3.5 + Maven)
 cd backend
 mvn -B compile -q          # Compile
-mvn -B test -q             # Run 1161 tests (H2 in-memory)
+mvn -B test -q             # Run 1326 tests (H2 in-memory)
 mvn -B clean verify        # Full build with tests + JaCoCo gate
 mvn spring-boot:run        # Run dev server on :8081
 
@@ -20,13 +20,13 @@ npm ci                      # Install deps
 npm run dev                 # Dev server :5173
 npm run build               # Production build
 npm run build:analyze       # Bundle analiz raporu (dist/stats.html, dev-only)
-npm run test                # Run 720 tests (Vitest) + coverage gate
+npm run test                # Run 814 tests (Vitest) + coverage gate
 npm run lint                # ESLint
 npm run i18n:check          # i18n bütünlük kontrolü (scripts/check-i18n.mjs)
 npm run cypress:run         # E2E tests (dev server :5173 üzerinde)
 
 # Full stack with Docker
-docker-compose up -d        # Full production setup (9 containers)
+docker-compose up -d        # Full production setup (10 containers)
 docker-compose up -d postgres redis rabbitmq  # Dev minimum
 ```
 
@@ -34,15 +34,15 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Java 21, Spring Boot 3.2, Maven |
+| Backend | Java 21, Spring Boot 3.5, Maven |
 | Database | PostgreSQL 16 + Flyway migrations |
 | Cache | Redis 7 |
 | Queue | RabbitMQ 3 |
 | Frontend | Vue 3, Vite 5, PrimeVue 4, Pinia |
 | Auth | JWT + BCrypt + TOTP 2FA |
-| Container | Docker Compose (9 services) |
+| Container | Docker Compose (10 services; adminer/k6 profilli) |
 | CI/CD | GitHub Actions |
-| Tests | JUnit 5 (1161) + Vitest (720) + Cypress (9 E2E spec) |
+| Tests | JUnit 5 (1326) + Vitest (814) + Cypress (12 E2E spec) |
 
 ## Project Structure
 
@@ -112,8 +112,8 @@ raspel-erp/
 
 ## Code Quality
 
-- Backend: 1161 tests (JUnit 5, H2, Mockito) + JaCoCo coverage gate, must pass before commit
-- Frontend: 720 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
+- Backend: 1326 tests (JUnit 5, H2, Mockito) + JaCoCo coverage gate, must pass before commit
+- Frontend: 814 tests (Vitest) + coverage gate, zero ESLint warnings required; `npm run i18n:check` clean
 - CI runs on push/PR to main: backend (compile+test+coverage), frontend (lint+i18n+test+build), e2e (Cypress, dev-server), security (Trivy, Gitleaks)
 
 ## Dev Setup (Minimal)

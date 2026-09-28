@@ -2,7 +2,7 @@
 
 ## Genel Bakış
 
-- **Backend**: Java 21, Spring Boot 3.2, Spring Security (JWT), Spring Data JPA, Redis (cache), RabbitMQ (async), Flyway (DB migration)
+- **Backend**: Java 21, Spring Boot 3.5, Spring Security (JWT), Spring Data JPA, Redis (cache), RabbitMQ (async), Flyway (DB migration)
 - **Frontend**: Vue 3 (Composition API), Vite 6, PrimeVue 4, Pinia, Vue Router
 - **Veritabanı**: PostgreSQL 16, çok şemalı (`sistem`, `cari`, `stok`, `fatura`, `finans`, ...)
 

@@ -11,7 +11,9 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # main'e ard arda push'lar calisan deploy'u YARIDA KESMEMELI; aksi halde
+  # yarim docker build/deploy kalabilir. PR/feature dallarinda iptal serbest.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   backend:
@@ -169,7 +171,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check deploy secrets
         id: check
         env:
@@ -190,7 +192,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin main
+            git pull --ff-only origin main
             docker compose up -d --build --wait
             curl -fsS http://localhost/ >/dev/null
             echo "Deploy tamamlandi."

@@ -140,9 +140,9 @@ Canlıya geçiş için [`docs/GO-LIVE.md`](docs/GO-LIVE.md), günlük operasyon/
 
 | Katman | Kapsam |
 |---|---|
-| Backend | **1.236** test (JUnit 5 · H2 · Mockito) + JaCoCo kapsam eşiği |
-| Frontend | **763** test (Vitest) + kapsam eşiği |
-| Uçtan uca | **42** Cypress E2E senaryosu |
+| Backend | **1.326** test (JUnit 5 · H2 · Mockito) + JaCoCo kapsam eşiği |
+| Frontend | **814** test (Vitest) + kapsam eşiği |
+| Uçtan uca | **63** Cypress E2E senaryosu |
 | Kalite | Sıfır ESLint uyarısı · i18n bütünlük kontrolü · Trivy & Gitleaks güvenlik taraması |
 
 ```bash
@@ -159,17 +159,17 @@ Her `push` ve `PR`'da GitHub Actions ile backend, frontend, e2e, docs ve güvenl
 
 ```
 raspel-erp/
-├── backend/                 # Spring Boot 3.5 REST API (540 Java dosyası, 75 controller)
+├── backend/                 # Spring Boot 3.5 REST API (564 Java dosyası, 76 controller)
 │   └── src/main/
 │       ├── java/com/raspel/erp/   # controller · service · repository · entity · dto · config
-│       └── resources/db/migration # Flyway (111 migration)
+│       └── resources/db/migration # Flyway (132 migration)
 │
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4
 │   └── src/
-│       ├── views/           # 75 görünüm (lazy-loaded)
+│       ├── views/           # 76 görünüm (lazy-loaded)
 │       ├── components/      # 53 paylaşılan bileşen
 │       ├── stores/          # 13 Pinia store
-│       ├── composables/     # 20 composable
+│       ├── composables/     # 19 composable
 │       └── locales/         # tr.json / en.json
 │
 ├── config/                  # Traefik · Prometheus · Grafana

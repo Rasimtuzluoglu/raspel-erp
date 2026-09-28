@@ -34,10 +34,10 @@ const kurallar = [
   { dosya: 'AGENTS.md', re: /# \d+\+? shared components/g, yeni: `# ${stats.components} shared components`, ad: 'components' },
   { dosya: 'AGENTS.md', re: /# \d+ composables/g, yeni: `# ${stats.composables} composables`, ad: 'composables' },
   { dosya: 'AGENTS.md', re: /# (?:\d+ )?Pinia stores/g, yeni: `# ${stats.stores} Pinia stores`, ad: 'stores' },
-  { dosya: 'README.md', re: /# \d+\+? Görünüm/g, yeni: `# ${stats.views} Görünüm`, ad: 'views' },
-  { dosya: 'README.md', re: /# (?:\d+ )?Paylaşılan Bileşenler/g, yeni: `# ${stats.components} Paylaşılan Bileşenler`, ad: 'components' },
-  { dosya: 'README.md', re: /# (?:\d+ )?Pinia Durum Yönetimi/g, yeni: `# ${stats.stores} Pinia Durum Yönetimi`, ad: 'stores' },
-  { dosya: 'README.md', re: /# \d+\+? Composable Hook/g, yeni: `# ${stats.composables} Composable Hook`, ad: 'composables' }
+  { dosya: 'README.md', re: /# (?:\d+\+? )?görünüm \(lazy-loaded\)/gi, yeni: (m, n) => m.replace(/\d+/, stats.views), ad: 'views' },
+  { dosya: 'README.md', re: /# (?:\d+\+? )?paylaşılan bileşen/gi, yeni: (m, n) => m.replace(/\d+/, stats.components), ad: 'components' },
+  { dosya: 'README.md', re: /# (?:\d+ )?Pinia store/gi, yeni: (m) => m.replace(/\d+/, stats.stores), ad: 'stores' },
+  { dosya: 'README.md', re: /# (?:\d+\+? )?composable/gi, yeni: (m) => m.replace(/\d+/, stats.composables), ad: 'composables' }
 ]
 
 let drift = 0

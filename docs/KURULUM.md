@@ -2,7 +2,7 @@
 
 ## Gereksinimler
 - Docker + Docker Compose (v2)
-- En az 4GB RAM ayrılmış Docker
+- En az 8GB RAM ayrılmış Docker (compose bellek limitleri toplamı ~6GB)
 - Üretimde: alan adı (SSL için), e-posta SMTP hesabı
 
 ## 1. Hızlı Kurulum (Geliştirme)
@@ -114,16 +114,16 @@ Felaket kurtarma testi: `powershell -File scripts/disaster-recovery-test.ps1`
 ```bash
 git pull origin main
 docker-compose up -d --build
-# Flyway migration'ları otomatik uygulanır (V1..V132)
+# Flyway migration'ları otomatik uygulanır (V1..V143)
 ```
 
 ## 5. Testler
 
 ```bash
-# Backend (1248 test)
+# Backend (1326 test)
 cd backend && mvn test
 
-# Frontend (771 test)
+# Frontend (814 test)
 cd frontend && npm run test
 
 # Uçtan uca iş akışı (backend çalışırken)
