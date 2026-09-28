@@ -963,80 +963,10 @@
       </template>
     </Dialog>
 
-    <Dialog
+    <CariFaturaDetayDialog
       v-model:visible="faturaDetayDialog"
-      :header="t('cariHesaplar.faturaDetayi')"
-      :modal="true"
-      style="width: 620px"
-    >
-      <div
-        v-if="seciliFatura"
-        class="fatura-detay"
-      >
-        <div class="fatura-detay-ust">
-          <div>
-            <strong>{{ seciliFatura.faturaNumarasi }}</strong>
-            <span class="fatura-detay-tarih">{{ formatDate(seciliFatura.tarih) }}</span>
-          </div>
-          <Tag
-            :value="seciliFatura.tur === 'SATIS' ? t('cariHesaplar.satis') : t('cariHesaplar.alis')"
-            :severity="seciliFatura.tur === 'SATIS' ? 'success' : 'warning'"
-          />
-        </div>
-        <div
-          v-if="seciliFatura.cariHesapAd"
-          class="fatura-detay-cari"
-        >
-          {{ t('cariHesaplar.cari') }}: {{ seciliFatura.cariHesapAd }}
-        </div>
-        <AppDataTable
-          :value="seciliFatura.kalemler || []"
-          size="small"
-          striped-rows
-          :paginator="false"
-        >
-          <Column :header="t('common.description')">
-            <template #body="{ data }">
-              {{ data.aciklama }}
-            </template>
-          </Column>
-          <Column :header="t('cariHesaplar.adet')">
-            <template #body="{ data }">
-              {{ data.adet }}
-            </template>
-          </Column>
-          <Column :header="t('cariHesaplar.birimFiyat')">
-            <template #body="{ data }">
-              {{ formatCurrency(data.birimFiyat) }}
-            </template>
-          </Column>
-          <Column :header="t('common.amount')">
-            <template #body="{ data }">
-              {{ formatCurrency(data.tutar) }}
-            </template>
-          </Column>
-        </AppDataTable>
-        <div class="fatura-detay-ozet">
-          <div class="ozet-satir">
-            <span>{{ t('cariHesaplar.araToplam') }}</span><span>{{ formatCurrency(seciliFatura.araToplam) }}</span>
-          </div>
-          <div class="ozet-satir">
-            <span>{{ t('cariHesaplar.kdv') }}</span><span>{{ formatCurrency(seciliFatura.kdv) }}</span>
-          </div>
-          <div class="ozet-satir ozet-genel">
-            <span>{{ t('cariHesaplar.genelToplam') }}</span><strong>{{ formatCurrency(seciliFatura.genelToplam) }}</strong>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <Button
-          :label="t('stoklar.kapat')"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="faturaDetayDialog = false"
-        />
-      </template>
-    </Dialog>
+      :fatura="seciliFatura"
+    />
 
     <Message
       v-if="cariHesapStore.error"
@@ -1071,6 +1001,7 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
 import BorclandirmaGirDialog from '../components/BorclandirmaGirDialog.vue'
 import CariKart360Dialog from '../components/CariKart360Dialog.vue'
+import CariFaturaDetayDialog from '../components/CariFaturaDetayDialog.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import { formatCurrency } from '../utils/format.js'
@@ -1819,37 +1750,6 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
 }
 .fatura-link:hover {
   text-decoration: underline;
-}
-.fatura-detay-ust {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.fatura-detay-tarih {
-  margin-left: 12px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.fatura-detay-cari {
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.fatura-detay-ozet {
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--border);
-}
-.fatura-detay-ozet .ozet-satir {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-.fatura-detay-ozet .ozet-genel {
-  font-weight: 700;
-  font-size: 15px;
 }
 .bakiye-rozet {
   display: inline-flex;
