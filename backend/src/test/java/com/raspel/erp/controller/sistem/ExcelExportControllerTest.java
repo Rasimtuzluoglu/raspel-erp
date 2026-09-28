@@ -40,6 +40,9 @@ class ExcelExportControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ExcelExportController controller;
+
     @MockBean
     private ExcelExportService excelService;
     @MockBean
@@ -72,5 +75,35 @@ class ExcelExportControllerTest {
         mockMvc.perform(get("/api/exports/cari-hesaplar"))
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void excel_limitAsilincaUyariSatiriVeHeaderEkler() {
+        java.util.List<java.util.Map<String, Object>> rows = new java.util.ArrayList<>();
+        for (int i = 0; i < 10000; i++) rows.add(java.util.Map.of("A", "x"));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{9});
+
+        var resp = (org.springframework.http.ResponseEntity<byte[]>) org.springframework.test.util.ReflectionTestUtils
+                .invokeMethod(controller, "excel", "Test", new String[]{"A"}, rows);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(resp);
+        org.junit.jupiter.api.Assertions.assertEquals("true", resp.getHeaders().getFirst("X-Export-Truncated"));
+        // Servise gonderilen listede +1 gorunur uyari satiri olmali.
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("Test"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 10001));
+    }
+
+    @Test
+    void guvenliDosyaAdi_baslikBozanKarakterleriTemizler() {
+        String sonuc = org.springframework.test.util.ReflectionTestUtils
+                .invokeMethod(controller, "guvenliDosyaAdi", "BA-BS\"\r\n;../x");
+
+        org.junit.jupiter.api.Assertions.assertNotNull(sonuc);
+        org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("\""));
+        org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("\n"));
+        org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains(";"));
+        org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("/"));
     }
 }

@@ -274,13 +274,34 @@ public class ExcelExportController {
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {
-        if (rows.size() >= MAX_EXPORT_ROWS) {
-            log.warn("Excel dışa aktarım satır limitine ulaşıldı ({}); çıktı kesilmiş olabilir. Dosya: {}", MAX_EXPORT_ROWS, name);
+        boolean kesildi = rows.size() >= MAX_EXPORT_ROWS;
+        List<Map<String, Object>> hedef = rows;
+        if (kesildi) {
+            log.warn("Excel dışa aktarım satır limitine ulaşıldı ({}); çıktı kesildi. Dosya: {}", MAX_EXPORT_ROWS, name);
+            // Kullanıcı eksik dosyayı tam sanmasın: son satıra görünür uyarı eklenir.
+            hedef = new ArrayList<>(rows);
+            Map<String, Object> uyari = new LinkedHashMap<>();
+            for (String c : cols) uyari.put(c, "");
+            uyari.put(cols[0], "UYARI: " + MAX_EXPORT_ROWS
+                    + " kayıt sınırı nedeniyle liste kesildi. Lütfen filtreleyip tekrar deneyin.");
+            hedef.add(uyari);
         }
-        byte[] data = excelService.export(name, cols, rows);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "-" + java.time.LocalDate.now() + ".xlsx\"")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                .body(data);
+        byte[] data = excelService.export(name, cols, hedef);
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + guvenliDosyaAdi(name) + "-" + java.time.LocalDate.now() + ".xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        if (kesildi) {
+            builder.header("X-Export-Truncated", "true");
+        }
+        return builder.body(data);
+    }
+
+    /** Content-Disposition başlığına kullanıcı girdisi gömülürken başlık bozulmasını engeller. */
+    private String guvenliDosyaAdi(String name) {
+        if (name == null) return "export";
+        String s = name.replaceAll("[\\r\\n\"\\\\/;]", "_").trim();
+        if (s.isBlank()) return "export";
+        return s.length() > 60 ? s.substring(0, 60) : s;
     }
 }
