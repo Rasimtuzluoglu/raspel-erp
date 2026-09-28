@@ -87,7 +87,7 @@ class TeslimatServiceTest {
         Kullanici surucu = Kullanici.builder().id(5L).displayName("Ali").role("DRIVER").build();
         when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
         when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(surucu));
-        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+        when(teslimatRepository.saveAndFlush(any(Teslimat.class))).thenAnswer(inv -> {
             Teslimat t = inv.getArgument(0);
             t.setId(1L);
             return t;
@@ -109,7 +109,7 @@ class TeslimatServiceTest {
         when(kullaniciRepository.findById(7L)).thenReturn(Optional.of(surucu));
         when(personelRepository.findBySirketIdAndRolAndAktifTrue(1L, "SOFOR"))
                 .thenReturn(List.of(com.raspel.erp.entity.ik.Personel.builder().id(3L).kullaniciId(7L).build()));
-        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+        when(teslimatRepository.saveAndFlush(any(Teslimat.class))).thenAnswer(inv -> {
             Teslimat t = inv.getArgument(0);
             t.setId(1L);
             return t;
@@ -140,7 +140,7 @@ class TeslimatServiceTest {
         Kullanici surucu = Kullanici.builder().id(5L).displayName("Ali Veli").role("DRIVER").build();
         when(faturaRepository.findById(10L)).thenReturn(Optional.of(f));
         when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(surucu));
-        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> {
+        when(teslimatRepository.saveAndFlush(any(Teslimat.class))).thenAnswer(inv -> {
             Teslimat t = inv.getArgument(0);
             t.setId(1L);
             return t;

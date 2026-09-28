@@ -165,10 +165,13 @@ public class TeslimatService {
                 .durum(dto.getDurum() != null && gecerliDurum(dto.getDurum()) ? dto.getDurum() : Teslimat.Durum.BEKLEMEDE.name())
                 .notlar(dto.getNotlar())
                 .build();
-        t = teslimatRepository.save(t);
-
-        // Fis uzerindeki "Teslim Eden" bos ise sofor adiyla senkronlanir; boylece
-        // fis/fatura ciktisinda goturen kisi gorunur (geriye uyum).
+        try {
+            // saveAndFlush: unique kisit ihlali (eszamanli ikinci istek) burada
+            // yakalanip kullaniciya anlasilir mesajla doner.
+            t = teslimatRepository.saveAndFlush(t);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new BusinessException("Bu fiş için zaten teslimat kaydı var");
+        }
         if (fatura.getTeslimEden() == null || fatura.getTeslimEden().isBlank()) {
             fatura.setTeslimEden(surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername());
             faturaRepository.save(fatura);
