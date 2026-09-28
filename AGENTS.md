@@ -26,7 +26,7 @@ npm run i18n:check          # i18n bütünlük kontrolü (scripts/check-i18n.mjs
 npm run cypress:run         # E2E tests (dev server :5173 üzerinde)
 
 # Full stack with Docker
-docker-compose up -d        # Full production setup (10 containers)
+docker-compose up -d        # Full production setup (11 containers)
 docker-compose up -d postgres redis rabbitmq  # Dev minimum
 ```
 
@@ -40,7 +40,7 @@ docker-compose up -d postgres redis rabbitmq  # Dev minimum
 | Queue | RabbitMQ 3 |
 | Frontend | Vue 3, Vite 5, PrimeVue 4, Pinia |
 | Auth | JWT + BCrypt + TOTP 2FA |
-| Container | Docker Compose (10 services; adminer/k6 profilli) |
+| Container | Docker Compose (11 services; adminer/k6 profilli) |
 | CI/CD | GitHub Actions |
 | Tests | JUnit 5 (1346) + Vitest (814) + Cypress (12 E2E spec) |
 

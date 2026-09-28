@@ -66,19 +66,26 @@ groups:
           summary: "Kritik 5xx hata oranı (%2+)"
           description: "HTTP 5xx sunucu hata oranı son 5 dakikada %2'yi aştı; hata bütçesi tükeniyor."
 
-      # NOT: HighDiskUsage ve RabbitmqQueueBacklog kuralları, ilgili metrik
-      # kaynakları (node_exporter / rabbitmq_prometheus plugin) scrape edilmediği
-      # için HİÇ tetiklenemiyordu. Sessiz kalan alarm yerine, bu metrikler
-      # eklendiğinde aşağıdaki bloklar açılmalıdır.
-      #
-      # - alert: HighDiskUsage
-      #   expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes > 0.85
-      #   for: 5m
-      #   labels:
-      #     severity: warning
-      #   annotations:
-      #     summary: "Yüksek disk doluluk (%85+)"
-      #     description: "{{ $labels.mountpoint }} bağlama noktası %85 üzerinde dolu; yedek/log temizliği gerekebilir."
+      # Disk dolulugu: ayni fiziksel disk WSL/Docker Desktop'ta bircok baglama
+      # noktasindan gorunebildigi icin host (instance) basina tek (en dolu) deger
+      # alinir; aksi halde tek disk yuzunden alarm yagmuru olusur.
+      - alert: HighDiskUsage
+        expr: max by (instance) ((node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"} - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}) / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yüksek disk doluluk (%85+)"
+          description: "Sunucudaki en dolu dosya sistemi %85 üzerinde; yedek/log temizliği gerekebilir."
+
+      - alert: CriticalDiskUsage
+        expr: max by (instance) ((node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"} - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}) / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|ramfs|squashfs"}) > 0.93
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kritik disk doluluk (%93+)"
+          description: "Sunucudaki en dolu dosya sistemi %93 üzerinde; acil temizlik gerekli."
 
       - alert: HighGcPause
         expr: rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m]) > 1
@@ -89,11 +96,11 @@ groups:
           summary: "Yüksek JVM GC duraklaması (ort. > 1s)"
           description: "Ortalama GC duraklaması 1 saniyeyi aşıyor; bellek/ayar gözden geçirilmeli."
 
-      # - alert: RabbitmqQueueBacklog
-      #   expr: rabbitmq_queue_messages_ready > 1000
-      #   for: 5m
-      #   labels:
-      #     severity: warning
-      #   annotations:
-      #     summary: "RabbitMQ kuyruk birikmesi (> 1000 mesaj)"
+      - alert: RabbitmqQueueBacklog
+        expr: rabbitmq_queue_messages_ready > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RabbitMQ kuyruk birikmesi (> 1000 mesaj)"
           description: "Kuyrukta işlenmeyi bekleyen mesaj sayısı 1000'i aştı; tüketici yavaş olabilir."

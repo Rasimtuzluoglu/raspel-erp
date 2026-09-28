@@ -397,6 +397,38 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Host seviyesi metrikler (CPU/RAM/disk/ag) icin node_exporter.
+  # Docker Desktop (Windows) uyumu icin rslave/pid host yerine ayri yol eslemeleri kullanilir.
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: raspel-node-exporter
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "127.0.0.1:9100:9100"
+    restart: unless-stopped
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits: { memory: 64m }
+        reservations: { memory: 32m }
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: raspel-prometheus
