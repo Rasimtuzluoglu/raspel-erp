@@ -162,7 +162,7 @@ raspel-erp/
 ├── backend/                 # Spring Boot 3.5 REST API (564 Java dosyası, 76 controller)
 │   └── src/main/
 │       ├── java/com/raspel/erp/   # controller · service · repository · entity · dto · config
-│       └── resources/db/migration # Flyway (132 migration)
+│       └── resources/db/migration # Flyway (133 migration)
 │
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4
 │   └── src/

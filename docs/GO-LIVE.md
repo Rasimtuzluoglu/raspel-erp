@@ -45,7 +45,7 @@
 - [ ] `npm run i18n:check` temiz (eksik/cop anahtar yok)
 - [ ] Farkli sirket kullanicilariyla tenant izolasyonu test edildi (negatif senaryolar dahil)
 - [ ] Login/logout/2FA akisi test edildi
-- [ ] Flyway migration'lari bos bir PostgreSQL'de sifirdan calisti (V143 dahil)
+- [ ] Flyway migration'lari bos bir PostgreSQL'de sifirdan calisti (V144 dahil)
 
 ## Son Kontrol
 

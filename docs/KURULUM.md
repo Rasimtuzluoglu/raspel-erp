@@ -114,7 +114,7 @@ Felaket kurtarma testi: `powershell -File scripts/disaster-recovery-test.ps1`
 ```bash
 git pull origin main
 docker-compose up -d --build
-# Flyway migration'ları otomatik uygulanır (V1..V143)
+# Flyway migration'ları otomatik uygulanır (V1..V144)
 ```
 
 ## 5. Testler
