@@ -374,7 +374,8 @@ class StokServiceTest {
         ));
         Stok stok = createStok(1L);
         stok.setSirketId(1L);
-        when(stokRepository.findBySirketIdAndStokKodu(1L, "STK001")).thenReturn(Optional.of(stok));
+        when(stokRepository.findBySirketIdAndStokKoduIn(eq(1L), org.mockito.ArgumentMatchers.anyCollection()))
+                .thenReturn(List.of(stok));
 
         var result = stokService.enCokSatanlar(1L, 12);
 

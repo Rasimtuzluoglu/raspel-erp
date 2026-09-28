@@ -8,6 +8,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -63,5 +65,27 @@ class SecurityConfigTest {
                         .header("Access-Control-Request-Method", "GET")
                         .header("Origin", "http://evil.com"))
                 .andExpect(status().isForbidden());
+    }
+
+    // --- HTTP katmanı yetki (method security, filtreler acik) ---
+
+    @Test
+    void adminOnlyDelete_forbiddenForUserRole() throws Exception {
+        mockMvc.perform(delete("/api/stoklar/1").with(user("test-user").roles("USER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminOnlyDelete_forbiddenForDriverRole() throws Exception {
+        mockMvc.perform(delete("/api/stoklar/1").with(user("test-driver").roles("DRIVER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminOnlyDelete_allowedForAdminRole() throws Exception {
+        // Yetki kapisi gecilir; sonuc (404/200) onemli degil, 401/403 OLMAMALI.
+        mockMvc.perform(delete("/api/stoklar/1").with(user("test-admin").roles("ADMIN")))
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
     }
 }

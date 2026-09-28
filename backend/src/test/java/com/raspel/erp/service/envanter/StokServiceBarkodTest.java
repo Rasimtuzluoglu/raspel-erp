@@ -114,4 +114,17 @@ class StokServiceBarkodTest {
         assertNotNull(dto);
         assertEquals(2L, dto.getId());
     }
+
+    @Test
+    void tumunuGetir_fiyatlariTekSorgudaYukler() {
+        when(stokRepository.findBySirketIdOrderByAd(eq(4L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(stok(1L, null, "STK-1"), stok(2L, null, "STK-2"))));
+        when(stokFiyatRepository.findByStokIdInOrderByFiyatAsc(anyCollection())).thenReturn(List.of());
+
+        stokService.tumunuGetir(4L, org.springframework.data.domain.Pageable.unpaged());
+
+        // Fiyatlar sayfa basina TEK sorguda; stok basina sorgu (N+1) yok.
+        verify(stokFiyatRepository, times(1)).findByStokIdInOrderByFiyatAsc(anyCollection());
+        verify(stokFiyatRepository, never()).findByStokIdOrderByFiyatAsc(anyLong());
+    }
 }

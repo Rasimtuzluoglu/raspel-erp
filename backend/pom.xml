@@ -233,6 +233,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- HTTP katmanı yetki (401/403) testleri: MockMvc + sahte kimlik -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- H2 In-Memory Database for Tests -->
         <dependency>
             <groupId>com.h2database</groupId>

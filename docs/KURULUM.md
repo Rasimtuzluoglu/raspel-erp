@@ -120,7 +120,7 @@ docker-compose up -d --build
 ## 5. Testler
 
 ```bash
-# Backend (1330 test)
+# Backend (1334 test)
 cd backend && mvn test
 
 # Frontend (814 test)

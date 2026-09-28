@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -138,7 +139,8 @@ public class StokService {
     public Page<StokDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         Page<Stok> page = stokRepository.findBySirketIdOrderByAd(sirketId, pageable);
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
-        return page.map(s -> entityToDTO(s, tedarikciAdlari));
+        Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(page.getContent());
+        return page.map(s -> entityToDTO(s, tedarikciAdlari, fiyatlar));
     }
 
     /**
@@ -151,7 +153,8 @@ public class StokService {
         Page<Stok> page = stokRepository.filtreli(sirketId, likeDeseni(q), bosIseNull(kategori),
                 likeDeseni(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, depoId, pageable);
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
-        return page.map(s -> entityToDTO(s, tedarikciAdlari));
+        Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(page.getContent());
+        return page.map(s -> entityToDTO(s, tedarikciAdlari, fiyatlar));
     }
 
     private String bosIseNull(String s) {
@@ -171,7 +174,8 @@ public class StokService {
             sonuc = stokRepository.findBySirketIdAndAdContainingIgnoreCase(sirketId, q);
         }
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(sonuc);
-        return sonuc.stream().map(s -> entityToDTO(s, tedarikciAdlari)).collect(Collectors.toList());
+        Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(sonuc);
+        return sonuc.stream().map(s -> entityToDTO(s, tedarikciAdlari, fiyatlar)).collect(Collectors.toList());
     }
 
     /**
@@ -183,13 +187,21 @@ public class StokService {
         if (sirketId == null) return List.of();
         List<Map<String, Object>> satislar = stokHareketRepository.enCokSatanlarBySirket(sirketId);
         int cap = limit > 0 ? Math.min(limit, 50) : 12;
-        return satislar.stream().limit(cap).map(m -> {
-            Object kod = m.get("stokKodu");
-            if (kod == null) return null;
-            return stokRepository.findBySirketIdAndStokKodu(sirketId, kod.toString()).orElse(null);
-        }).filter(s -> s != null)
-                .map(s -> entityToDTO(s, tekTedarikciAdi(s)))
+        // Tek sorguda stok kodu -> stok eslesmesi (satir basina sorgu yok).
+        List<String> kodlar = satislar.stream().limit(cap)
+                .map(m -> m.get("stokKodu"))
+                .filter(java.util.Objects::nonNull)
+                .map(Object::toString)
+                .distinct()
                 .collect(Collectors.toList());
+        if (kodlar.isEmpty()) return List.of();
+        Map<String, Stok> stokHaritasi = stokRepository.findBySirketIdAndStokKoduIn(sirketId, kodlar)
+                .stream().collect(Collectors.toMap(Stok::getStokKodu, s -> s, (a, b) -> a));
+        List<Stok> secilen = kodlar.stream().map(stokHaritasi::get)
+                .filter(java.util.Objects::nonNull).collect(Collectors.toList());
+        Map<Long, String> tedarikciAdlari = tedarikciAdlari(secilen);
+        Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(secilen);
+        return secilen.stream().map(s -> entityToDTO(s, tedarikciAdlari, fiyatlar)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -630,13 +642,35 @@ public class StokService {
     }
 
     private StokDTO entityToDTO(Stok s, Map<Long, String> tedarikciAdlari) {
-        List<StokFiyatDTO> fiyatlar = null;
+        // Tekil donusum: yalnizca bu stok icin fiyatlar sorgulanir (liste akislari
+        // toplu fiyatHaritasi() ile N+1'den kacinir).
+        return entityToDTO(s, tedarikciAdlari, fiyatHaritasi(List.of(s)));
+    }
+
+    /** Birden cok stok icin fiyat listelerini TEK sorguda getirir. */
+    private Map<Long, List<StokFiyatDTO>> fiyatHaritasi(List<Stok> stoklar) {
+        List<Long> idler = stoklar.stream()
+                .map(Stok::getId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (idler.isEmpty()) return Map.of();
+        Map<Long, List<StokFiyatDTO>> sonuc = new HashMap<>();
         try {
-            fiyatlar = stokFiyatRepository.findByStokIdOrderByFiyatAsc(s.getId())
-                    .stream().map(this::fiyatEntityToDTO).collect(Collectors.toList());
+            stokFiyatRepository.findByStokIdInOrderByFiyatAsc(idler).forEach(f ->
+                    sonuc.computeIfAbsent(f.getStokId(), k -> new ArrayList<>()).add(fiyatEntityToDTO(f)));
         } catch (Exception ignored) {
-            // fiyat yüklenemezse boş bırakılır
+            // fiyatlar yuklenemezse bos doner; liste yine de gosterilir
         }
+        return sonuc;
+    }
+
+    private StokDTO entityToDTO(Stok s, Map<Long, String> tedarikciAdlari,
+                                Map<Long, List<StokFiyatDTO>> fiyatHaritasi) {
+        // Map.of() null anahtar aramasinda NPE firlatir; id null (henuz kaydedilmemis) olabilir.
+        List<StokFiyatDTO> fiyatlar = s.getId() != null
+                ? fiyatHaritasi.getOrDefault(s.getId(), List.of())
+                : List.of();
         return StokDTO.builder().id(s.getId()).stokKodu(s.getStokKodu()).ad(s.getAd())
                 .birim(s.getBirim()).fiyat(s.getFiyat()).satisFiyati(s.getSatisFiyati())
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar()).kdvOrani(s.getKdvOrani())

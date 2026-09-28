@@ -25,6 +25,9 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
     List<Stok> findBySirketIdOrderByAd(Long sirketId);    List<Stok> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String q);
     List<Stok> findBySirketIdAndBarkod(Long sirketId, String barkod);
     Optional<Stok> findBySirketIdAndStokKodu(Long sirketId, String stokKodu);
+
+    /** En cok satanlar gibi toplu akislarda tek sorguda stok kodu eslesmesi. */
+    List<Stok> findBySirketIdAndStokKoduIn(Long sirketId, java.util.Collection<String> stokKodlari);
     boolean existsBySirketIdAndBarkod(Long sirketId, String barkod);
 
     /** Otomatik barkod uretimi icin sirketteki en buyuk 869'lu EAN-13 barkod. */
