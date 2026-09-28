@@ -140,7 +140,7 @@ Canlıya geçiş için [`docs/GO-LIVE.md`](docs/GO-LIVE.md), günlük operasyon/
 
 | Katman | Kapsam |
 |---|---|
-| Backend | **1.326** test (JUnit 5 · H2 · Mockito) + JaCoCo kapsam eşiği |
+| Backend | **1.330** test (JUnit 5 · H2 · Mockito) + JaCoCo kapsam eşiği |
 | Frontend | **814** test (Vitest) + kapsam eşiği |
 | Uçtan uca | **63** Cypress E2E senaryosu |
 | Kalite | Sıfır ESLint uyarısı · i18n bütünlük kontrolü · Trivy & Gitleaks güvenlik taraması |

@@ -597,6 +597,57 @@ class FaturaServiceTest {
     }
 
     @Test
+    void faturaSil_bagliHareketVarsaReddeder() {
+        Fatura fatura = createFatura(1L);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(hareketRepository.countByFaturaId(1L)).thenReturn(1L);
+
+        assertThrows(RuntimeException.class, () -> faturaService.faturaSil(1L));
+        verify(faturaRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void faturaSil_bagliHareketYoksaSiler() {
+        Fatura fatura = createFatura(1L);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(kasaHareketRepository.findByFaturaId(1L)).thenReturn(List.of());
+        when(bankaHareketiRepository.findByKaynakFaturaId(1L)).thenReturn(List.of());
+        when(hareketRepository.countByFaturaId(1L)).thenReturn(0L);
+
+        faturaService.faturaSil(1L);
+
+        verify(faturaRepository).deleteById(1L);
+    }
+
+    @Test
+    void tlKarsiligi_kayitliKuruKullanir() {
+        Fatura fatura = createFatura(1L);
+        fatura.setParaBirimi("USD");
+        fatura.setKur(new BigDecimal("30"));
+
+        BigDecimal sonuc = org.springframework.test.util.ReflectionTestUtils
+                .invokeMethod(faturaService, "tlKarsiliginaCevir", fatura, new BigDecimal("10"));
+
+        assertNotNull(sonuc);
+        assertEquals(0, new BigDecimal("300.00").compareTo(sonuc));
+        // Kayitli kur varken canli kur servisine gidilmemeli.
+        verify(tcmbKurService, never()).cevir(any(), anyString(), anyString());
+    }
+
+    @Test
+    void tlKarsiligi_kayitliKurYoksaCanliKuruKullanir() {
+        Fatura fatura = createFatura(1L);
+        fatura.setParaBirimi("USD");
+        when(tcmbKurService.cevir(any(), eq("USD"), eq("TRY"))).thenReturn(new BigDecimal("320"));
+
+        BigDecimal sonuc = org.springframework.test.util.ReflectionTestUtils
+                .invokeMethod(faturaService, "tlKarsiliginaCevir", fatura, new BigDecimal("10"));
+
+        assertNotNull(sonuc);
+        assertEquals(0, new BigDecimal("320").compareTo(sonuc));
+    }
+
+    @Test
     void faturaSil_throwsWhenNotFound() {
         when(faturaRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> faturaService.faturaSil(99L));
