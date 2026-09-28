@@ -1001,139 +1001,12 @@
       </template>
     </Dialog>
 
-    <Dialog
-      v-model:visible="degerlemeDialog"
-      :header="t('stoklar.degerleme')"
-      modal
-      :style="{ width: '860px' }"
-    >
-      <div
-        v-if="degerlemeVerisi"
-        class="degerleme-ozet"
-      >
-        <span>{{ t('stoklar.ortalamaDeger') }}: <strong>{{ formatCurrency(degerlemeVerisi.toplamOrtalamaDeger) }}</strong></span>
-        <span>{{ t('stoklar.fifoDeger') }}: <strong>{{ formatCurrency(degerlemeVerisi.toplamFifoDeger) }}</strong></span>
-      </div>
-      <DataTable
-        :value="degerlemeVerisi?.satirlar || []"
-        striped-rows
-        :paginator="true"
-        :rows="15"
-        scrollable
-        scroll-height="420px"
-      >
-        <template #empty>
-          <EmptyState />
-        </template>
-        <Column
-          field="stokKodu"
-          :header="t('stoklar.kod')"
-          style="width: 120px"
-        />
-        <Column
-          field="ad"
-          :header="t('common.description')"
-        />
-        <Column
-          field="miktar"
-          :header="t('stoklar.stokMiktar')"
-          style="width: 100px"
-        />
-        <Column
-          field="ortalamaBirimMaliyet"
-          :header="t('stoklar.ortalamaMaliyet')"
-          style="width: 140px"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.ortalamaBirimMaliyet) }}
-          </template>
-        </Column>
-        <Column
-          field="ortalamaDeger"
-          :header="t('stoklar.ortalamaDeger')"
-          style="width: 140px"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.ortalamaDeger) }}
-          </template>
-        </Column>
-        <Column
-          field="fifoBirimMaliyet"
-          :header="t('stoklar.fifoMaliyet')"
-          style="width: 140px"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.fifoBirimMaliyet) }}
-          </template>
-        </Column>
-        <Column
-          field="fifoDeger"
-          :header="t('stoklar.fifoDeger')"
-          style="width: 140px"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.fifoDeger) }}
-          </template>
-        </Column>
-      </DataTable>
-    </Dialog>
-
-    <Dialog
-      v-model:visible="oneriDialog"
-      :header="t('stoklar.siparisOnerisi')"
-      modal
-      :style="{ width: '760px' }"
-    >
-      <DataTable
-        :value="oneriVerisi"
-        striped-rows
-        :paginator="true"
-        :rows="15"
-        scrollable
-        scroll-height="420px"
-      >
-        <template #empty>
-          <EmptyState />
-        </template>
-        <Column
-          field="stokKodu"
-          :header="t('stoklar.kod')"
-          style="width: 120px"
-        />
-        <Column
-          field="ad"
-          :header="t('common.description')"
-        />
-        <Column
-          field="mevcut"
-          :header="t('stoklar.mevcut')"
-          style="width: 100px"
-        />
-        <Column
-          field="minMiktar"
-          :header="t('stoklar.minMiktar')"
-          style="width: 100px"
-        />
-        <Column
-          field="oneriMiktar"
-          :header="t('stoklar.oneriMiktar')"
-          style="width: 110px"
-        >
-          <template #body="{ data }">
-            <strong>{{ data.oneriMiktar }}</strong>
-          </template>
-        </Column>
-        <Column
-          field="tahminiTutar"
-          :header="t('stoklar.tahminiTutar')"
-          style="width: 130px"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.tahminiTutar) }}
-          </template>
-        </Column>
-      </DataTable>
-    </Dialog>
+    <StokRaporDialoglari
+      v-model:degerleme-visible="degerlemeDialog"
+      v-model:oneri-visible="oneriDialog"
+      :degerleme-verisi="degerlemeVerisi"
+      :oneri-verisi="oneriVerisi"
+    />
   </div>
 </template>
 
@@ -1155,6 +1028,7 @@ import StokDetayDialog from '../components/StokDetayDialog.vue'
 import StokKart from '../components/StokKart.vue'
 import StokHareketBolum from '../components/StokHareketBolum.vue'
 import BarkodEtiketDialog from '../components/BarkodEtiketDialog.vue'
+import StokRaporDialoglari from '../components/StokRaporDialoglari.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import { useGeriAl } from '../composables/useGeriAl.js'
@@ -1923,13 +1797,6 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 18px;
-}
-.degerleme-ozet {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: var(--text-secondary);
 }
 .toolbar-end {
   display: flex;
