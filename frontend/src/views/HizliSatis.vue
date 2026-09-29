@@ -4,8 +4,12 @@
     :class="{ 'pos-buyuk': buyukYazi }"
   >
     <div class="pos-header">
-      <div class="breadcrumb">
-        <i class="pi pi-home" /> {{ t('hizliSatis.breadcrumb') }}
+      <div class="pos-marka">
+        <span class="pos-marka-ikon"><i class="pi pi-bolt" /></span>
+        <div class="pos-marka-metin">
+          <strong>{{ t('hizliSatis.breadcrumb') }}</strong>
+          <small>{{ authStore?.sirketAdi || 'RasPel ERP' }}</small>
+        </div>
       </div>
       <div class="pos-header-sag">
         <div
@@ -4077,6 +4081,123 @@ const sepetiTemizle = () => {
 }
 .empty-products {
   color: var(--text-muted);
+}
+
+/* Marka + baslik */
+.pos-marka {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pos-marka-ikon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.25));
+}
+.pos-marka-metin {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.pos-marka-metin strong {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.pos-marka-metin small {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Komut cubugu */
+.barkod-kutu :deep(.p-inputtext) {
+  font-weight: 600;
+}
+.arama-kutusu :deep(.p-inputtext) {
+  width: 100%;
+}
+.filtre-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) ease;
+}
+.filtre-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.filtre-btn.filtre-aktif {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+.filtre-rozet {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Kategori + cok satan cipleri */
+.kategori-cip {
+  border-radius: 999px;
+  transition: all var(--dur-fast, 0.15s) ease;
+}
+.kategori-cip.aktif {
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  border-color: var(--accent);
+}
+.cok-satan-chip {
+  border-radius: 12px;
+  transition: transform var(--dur-fast, 0.15s) ease, border-color var(--dur-fast, 0.15s) ease;
+}
+.cok-satan-chip:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--accent-border);
+}
+
+/* Sepet satiri */
+.sepet-icerik {
+  gap: 8px;
+}
+.sepet-item {
+  padding: 10px 12px;
+  border: 1px solid transparent;
+}
+.sepet-item:hover {
+  border-color: var(--border);
+}
+.sepet-tutar {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Odeme yontemi secili */
+.odeme-yontem-btn.aktif {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
 }
 </style>
 
