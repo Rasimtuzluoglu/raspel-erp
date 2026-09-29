@@ -215,13 +215,11 @@
       </DataTable>
     </div>
 
-    <Dialog
+    <AppDialog
       v-model:visible="showSatisDialog"
       :header="dialogBaslik"
-      :modal="true"
-      class="satis-dialogu"
-      :style="{ width: '860px', maxWidth: '96vw' }"
       :closable="false"
+      width="920px"
     >
       <div class="satis-modu">
         <label class="bolum-etiket">{{ t('satis.islemModu') }}</label>
@@ -240,11 +238,9 @@
           </div>
         </div>
       </div>
-      <div class="form-row">
-        <div
-          class="form-group"
-          style="flex: 2"
-        >
+
+      <div class="form-grid-2">
+        <div class="form-group">
           <label>{{ t('satis.musteri') }} <span v-if="satisModu === 'SATIS'">*</span></label>
           <Dropdown
             v-model="satisForm.cariHesapId"
@@ -255,10 +251,7 @@
             class="w-full"
           />
         </div>
-        <div
-          class="form-group"
-          style="flex: 1"
-        >
+        <div class="form-group">
           <label>{{ t('satis.tarihZorunlu') }}</label>
           <DatePicker
             v-model="satisForm.tarih"
@@ -269,11 +262,8 @@
       </div>
 
       <div class="urun-ekleme">
-        <div class="form-row">
-          <div
-            class="form-group"
-            style="flex: 3"
-          >
+        <div class="urun-ekle-satir">
+          <div class="form-group">
             <label>{{ t('satis.urunSec') }}</label>
             <Dropdown
               v-model="seciliUrun"
@@ -298,10 +288,7 @@
               </template>
             </Dropdown>
           </div>
-          <div
-            class="form-group"
-            style="flex: 1"
-          >
+          <div class="form-group">
             <label>{{ t('satis.miktar') }}</label>
             <InputNumber
               v-model="yeniUrunAdet"
@@ -309,10 +296,7 @@
               class="w-full"
             />
           </div>
-          <div
-            class="form-group"
-            style="flex: 1"
-          >
+          <div class="form-group">
             <label>{{ t('satis.birimFiyat') }}</label>
             <InputNumber
               v-model="yeniUrunFiyat"
@@ -321,10 +305,7 @@
               class="w-full"
             />
           </div>
-          <div
-            class="form-group"
-            style="flex: 0 0 auto; display: flex; align-items: flex-end"
-          >
+          <div class="form-group urun-ekle-btn">
             <Button
               icon="pi pi-plus"
               :aria-label="$t('common.add')"
@@ -339,23 +320,26 @@
           v-if="seciliUrun && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
           :fiyat-gecmisi="cariUrunFiyati"
           :secenekler="fiyatSecenekleri"
-          class="mt-2"
           @uygula="satisCariFiyatUygula"
         />
       </div>
 
-      <h3 class="bolum-baslik">
-        {{ t('satis.satisKalemleri') }}
-      </h3>
-      <FaturaKalemleri
-        :kalemler="satisForm.kalemler"
-        :ara-toplam="araToplam"
-        :kdv-toplam="kdvToplam"
-        :genel-toplam="genelToplam"
-        :kdv-secenekleri="kdvOranlari"
-        @add="satisForm.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })"
-        @remove="(i) => satisForm.kalemler.splice(i, 1)"
-      />
+      <div class="kalem-bolum">
+        <h3 class="bolum-baslik">
+          {{ t('satis.satisKalemleri') }}
+        </h3>
+        <div class="kalem-tablo">
+          <FaturaKalemleri
+            :kalemler="satisForm.kalemler"
+            :ara-toplam="araToplam"
+            :kdv-toplam="kdvToplam"
+            :genel-toplam="genelToplam"
+            :kdv-secenekleri="kdvOranlari"
+            @add="satisForm.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })"
+            @remove="(i) => satisForm.kalemler.splice(i, 1)"
+          />
+        </div>
+      </div>
 
       <div class="form-group">
         <label>{{ t('common.description') }}</label>
@@ -381,7 +365,7 @@
           @click="satisiTamamla"
         />
       </template>
-    </Dialog>
+    </AppDialog>
   </div>
 </template>
 
@@ -402,6 +386,7 @@ import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import KpiKart from '../components/KpiKart.vue'
+import AppDialog from '../components/AppDialog.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, formatPara, getLocalDateString, durumLabel as durumLabelUtil } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
@@ -826,14 +811,6 @@ const printTermalFis = (satisData) => {
   padding: 0;
   max-width: 100%;
 }
-.kalem-girdi :deep(.p-inputtext),
-.kalem-girdi :deep(.p-inputnumber-input),
-.kalem-girdi :deep(.p-select-label),
-.kalem-girdi :deep(.p-dropdown-label) {
-  padding: 0.3rem 0.5rem;
-  font-size: 13px;
-  width: 100%;
-}
 h1 {
   color: var(--text-primary);
   margin-bottom: 20px;
@@ -973,13 +950,13 @@ h1 {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.form-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
 }
 .form-group {
-  margin-bottom: 15px;
+  min-width: 0;
 }
 .form-group label {
   display: block;
@@ -991,11 +968,31 @@ h1 {
   letter-spacing: 0.5px;
 }
 .urun-ekleme {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background: var(--bg-muted, rgba(148, 163, 184, 0.08));
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 16px;
-  margin: 15px 0;
+}
+.urun-ekle-satir {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+.urun-ekle-btn {
+  display: flex;
+  align-items: flex-end;
+}
+.kalem-bolum {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kalem-tablo {
+  overflow-x: auto;
 }
 .bolum-etiket {
   color: var(--text-muted);
@@ -1003,30 +1000,15 @@ h1 {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-right: 12px;
 }
 .bolum-baslik {
-  margin: 18px 0 10px;
+  margin: 0;
   color: var(--text-primary);
   font-size: 15px;
   font-weight: 700;
 }
 .ipucu-metin {
   color: var(--text-muted);
-}
-.satis-dialogu :deep(.p-dialog-content) {
-  max-height: 66vh;
-  overflow-y: auto;
-  padding-top: 8px;
-}
-.satis-dialogu :deep(.p-dialog-footer) {
-  position: sticky;
-  bottom: 0;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border);
-}
-.satis-dialogu :deep(.p-dialog-footer button) {
-  min-width: 120px;
 }
 .urun-opsiyon {
   display: flex;
@@ -1047,28 +1029,6 @@ h1 {
   color: var(--text-secondary);
   font-size: 12px;
 }
-.summary-box {
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 15px;
-}
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-.summary-row.total {
-  font-weight: 700;
-  font-size: 18px;
-  border-top: 2px solid var(--accent);
-  margin-top: 5px;
-  padding-top: 10px;
-  color: var(--text-primary);
-}
 .durum-badge {
   padding: 4px 12px;
   border-radius: 20px;
@@ -1076,25 +1036,26 @@ h1 {
   font-weight: 700;
 }
 .durum-badge.taslak {
-  background: rgba(255, 152, 0, 0.15);
-  color: #fb923c;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .durum-badge.teklif {
   background: var(--accent-soft-strong);
   color: var(--accent);
 }
 .durum-badge.kesildi {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .durum-badge.iptal {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.1));
+  color: var(--text-muted);
 }
 .satis-modu {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .modu-radio-group {
   display: flex;
@@ -1120,7 +1081,7 @@ h1 {
 }
 .modu-option.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast);
 }
 .w-full {
   width: 100% !important;
