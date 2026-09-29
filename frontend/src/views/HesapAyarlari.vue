@@ -1,10 +1,9 @@
 <template>
   <div class="hesap-ayarlari">
-    <div class="sayfa-baslik">
-      <h1 class="page-title">
-        {{ t('hesapAyarlari.title') }}
-      </h1>
-    </div>
+    <PageHeader
+      :title="t('hesapAyarlari.title')"
+      icon="pi pi-cog"
+    />
 
     <IlkZiyaretIpuclari
       anahtar="hesap-ayarlari"
@@ -17,7 +16,10 @@
         v-model:active-index="aktifBolum"
         class="ayar-icerik"
       >
-        <TabPanel :header="bolumler[0].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[0].ikon" /> {{ bolumler[0].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -108,7 +110,10 @@
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[1].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[1].ikon" /> {{ bolumler[1].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -165,7 +170,8 @@
                           <Button
                             icon="pi pi-copy"
                             :aria-label="$t('common.copy')"
-                            class="p-button-rounded p-button-text"
+                            rounded
+                            text
                             @click="kopyala(kurulumData.secret)"
                           />
                         </div>
@@ -210,7 +216,8 @@
                     <Button
                       icon="pi pi-refresh"
                       :aria-label="$t('common.refresh')"
-                      class="p-button-sm p-button-text"
+                      size="small"
+                      text
                       @click="oturumlariYukle"
                     />
                   </div>
@@ -251,25 +258,24 @@
                           v-if="s.data.kullaniciId !== authStore?.kullanici?.id"
                           :label="t('hesapAyarlari.sonlandir')"
                           icon="pi pi-sign-out"
-                          class="p-button-sm p-button-danger p-button-text"
+                          size="small"
+                          severity="danger"
+                          text
                           @click="oturumSonlandir(s.data)"
                         />
                       </template>
                     </Column>
                   </DataTable>
-                  <div
-                    v-if="(!aktifOturumlar || !aktifOturumlar.length) && !oturumYukleniyor"
-                    class="empty-state"
-                  >
-                    {{ t('hesapAyarlari.aktifOturumYok') }}
-                  </div>
                 </template>
               </Card>
             </div>
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[2].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[2].ikon" /> {{ bolumler[2].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <Card class="ayar-kart">
               <template #title>
@@ -355,7 +361,10 @@
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[3].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[3].ikon" /> {{ bolumler[3].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <Card class="ayar-kart">
               <template #title>
@@ -364,7 +373,7 @@
                   <Button
                     icon="pi pi-save"
                     :label="t('common.save')"
-                    class="p-button-sm"
+                    size="small"
                     :loading="tercihKaydediliyor"
                     @click="tercihleriKaydet"
                   />
@@ -387,7 +396,10 @@
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[4].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[4].ikon" /> {{ bolumler[4].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <div
               v-if="authStore.isAdmin"
@@ -494,7 +506,7 @@
                     <Button
                       icon="pi pi-plus"
                       :label="t('hesapAyarlari.yeniToken')"
-                      class="p-button-sm"
+                      size="small"
                       @click="tokenOlustur"
                     />
                   </div>
@@ -530,7 +542,9 @@
                     <Button
                       icon="pi pi-trash"
                       :aria-label="$t('common.delete')"
-                      class="p-button-rounded p-button-text p-button-danger"
+                      rounded
+                      text
+                      severity="danger"
                       @click="tokenSil(token)"
                     />
                   </div>
@@ -546,7 +560,10 @@
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[5].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[5].ikon" /> {{ bolumler[5].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -578,7 +595,10 @@
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[6].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[6].ikon" /> {{ bolumler[6].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <div
               v-if="authStore.isAdmin"
@@ -649,7 +669,10 @@
           </div>
         </TabPanel>
 
-        <TabPanel :header="bolumler[7].label">
+        <TabPanel>
+          <template #header>
+            <span class="sekme-baslik"><i :class="bolumler[7].ikon" /> {{ bolumler[7].label }}</span>
+          </template>
           <div class="sekme-icerik">
             <div class="ayarlar-grid">
               <Card class="ayar-kart">
@@ -1203,14 +1226,22 @@ const kopyala = async (text) => {
 .ayar-icerik :deep(.p-tabview-tablist) {
   border-color: var(--border);
 }
+/* Tum sekmelerde ortak kart duzeni: sekme-icerik grid, ic grid'ler seffaf
+   (display:contents) olur; boylece tek kartli ve cok kartli sekmeler ayni
+   sutun sistemini kullanir ve genislik degismez. */
 .sekme-icerik {
-  padding-top: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+  gap: 16px;
+  align-items: start;
 }
 .ayarlar-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
-  gap: 20px;
-  align-items: start;
+  display: contents;
+}
+.sekme-baslik {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .ayar-kart {
   display: flex;
@@ -1253,7 +1284,7 @@ const kopyala = async (text) => {
   color: var(--accent);
 }
 .iki-fa-ok {
-  color: #10b981;
+  color: var(--success);
 }
 .iki-fa-kapat-alan {
   margin-top: 14px;
@@ -1262,6 +1293,12 @@ const kopyala = async (text) => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  align-items: stretch;
+}
+/* Kaydet butonlari kart genisligine yayilmasin; sola hizali kalsin. */
+.form-grid > button,
+.form-grid > .p-button {
+  align-self: flex-start;
 }
 .field {
   display: flex;
@@ -1312,7 +1349,7 @@ const kopyala = async (text) => {
   color: var(--text-primary);
 }
 .guncelleme-hata {
-  color: #ef4444;
+  color: var(--danger);
   font-size: 12px;
 }
 .guncelleme-ipucu {
@@ -1417,6 +1454,9 @@ const kopyala = async (text) => {
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
 }
+.tercih-satir:last-child {
+  border-bottom: none;
+}
 .token-uyari {
   display: flex;
   flex-direction: column;
@@ -1449,6 +1489,9 @@ const kopyala = async (text) => {
   flex-wrap: wrap;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
+}
+.token-satir:last-child {
+  border-bottom: none;
 }
 .token-ad {
   font-weight: 600;
