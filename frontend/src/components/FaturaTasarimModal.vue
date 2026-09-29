@@ -491,107 +491,10 @@
             </div>
 
             <!-- 3. KALEM TABLOSU -->
-            <table class="fatura-kalem-tablosu">
-              <thead>
-                <tr>
-                  <th
-                    v-if="ayarlar.kolonSiraNo"
-                    style="width: 35px"
-                  >
-                    #
-                  </th>
-                  <th
-                    v-if="ayarlar.kolonStokKodu"
-                    style="width: 100px"
-                  >
-                    {{ $t('faturaTasarim.urunKodu') }}
-                  </th>
-                  <th>{{ $t('faturaTasarim.malHizmetAciklamasi') }}</th>
-                  <th style="width: 65px; text-align: center">
-                    {{ $t('faturaTasarim.miktar') }}
-                  </th>
-                  <th style="width: 55px; text-align: center">
-                    {{ $t('faturaTasarim.birim') }}
-                  </th>
-                  <th
-                    v-if="ayarlar.fiyatGoster"
-                    style="width: 95px; text-align: right"
-                  >
-                    {{ $t('faturaTasarim.birimFiyat') }}
-                  </th>
-                  <th
-                    v-if="ayarlar.kolonIskonto && ayarlar.fiyatGoster"
-                    style="width: 65px; text-align: center"
-                  >
-                    {{ $t('faturaTasarim.iskontoKisa') }}
-                  </th>
-                  <th
-                    v-if="ayarlar.kolonKdvOrani && ayarlar.fiyatGoster"
-                    style="width: 60px; text-align: center"
-                  >
-                    {{ $t('faturaTasarim.kdvKisa') }}
-                  </th>
-                  <th
-                    v-if="ayarlar.fiyatGoster"
-                    style="width: 110px; text-align: right"
-                  >
-                    {{ $t('faturaTasarim.tutar') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(k, idx) in ornekKalemler"
-                  :key="idx"
-                >
-                  <td
-                    v-if="ayarlar.kolonSiraNo"
-                    class="text-center"
-                  >
-                    {{ idx + 1 }}
-                  </td>
-                  <td
-                    v-if="ayarlar.kolonStokKodu"
-                    class="kod-td"
-                  >
-                    {{ k.stokKodu || 'STK-' + (100 + idx) }}
-                  </td>
-                  <td>
-                    <span class="kalem-ad">{{ k.aciklama }}</span>
-                  </td>
-                  <td class="text-center font-bold">
-                    {{ k.adet }}
-                  </td>
-                  <td class="text-center">
-                    {{ k.birim || $t('faturaTasarim.adet') }}
-                  </td>
-                  <td
-                    v-if="ayarlar.fiyatGoster"
-                    class="text-right"
-                  >
-                    {{ formatCurrency(k.birimFiyat) }}
-                  </td>
-                  <td
-                    v-if="ayarlar.kolonIskonto && ayarlar.fiyatGoster"
-                    class="text-center"
-                  >
-                    {{ k.iskontoOrani ? `%${k.iskontoOrani}` : '-' }}
-                  </td>
-                  <td
-                    v-if="ayarlar.kolonKdvOrani && ayarlar.fiyatGoster"
-                    class="text-center"
-                  >
-                    %{{ kdvOrani(k) }}
-                  </td>
-                  <td
-                    v-if="ayarlar.fiyatGoster"
-                    class="text-right font-bold"
-                  >
-                    {{ formatCurrency(k.tutar) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <FaturaKalemTablosu
+              :ayarlar="ayarlar"
+              :kalemler="ornekKalemler"
+            />
 
             <!-- 4. ALT ÖZET & TOPLAMLAR ALANI -->
             <div class="fatura-alt-bolum">
@@ -709,7 +612,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '../stores/authStore.js'
 import { faturaAPI, sirketAPI } from '../api/index.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
-import { kdvOrani } from '../utils/faturaHesapla.js'
+import FaturaKalemTablosu from './FaturaKalemTablosu.vue'
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n'
 
@@ -1275,8 +1178,8 @@ const yazdir = async () => {
 }
 .kagit-a5.yon-portrait .fatura-ust-header h1 { font-size: 16px; }
 .kagit-a5.yon-portrait .firma-unvani { font-size: 15px; }
-.kagit-a5.yon-portrait .fatura-kalem-tablosu th,
-.kagit-a5.yon-portrait .fatura-kalem-tablosu td { padding: 4px 6px; font-size: 9.5px; }
+.kagit-a5.yon-portrait :deep(.fatura-kalem-tablosu th),
+.kagit-a5.yon-portrait :deep(.fatura-kalem-tablosu td) { padding: 4px 6px; font-size: 9.5px; }
 
 .kagit-a5.yon-landscape {
   width: 210mm;
@@ -1286,8 +1189,8 @@ const yazdir = async () => {
 }
 .kagit-a5.yon-landscape .fatura-ust-header h1 { font-size: 16px; }
 .kagit-a5.yon-landscape .firma-unvani { font-size: 14px; }
-.kagit-a5.yon-landscape .fatura-kalem-tablosu th,
-.kagit-a5.yon-landscape .fatura-kalem-tablosu td { padding: 3px 5px; font-size: 9px; }
+.kagit-a5.yon-landscape :deep(.fatura-kalem-tablosu th),
+.kagit-a5.yon-landscape :deep(.fatura-kalem-tablosu td) { padding: 3px 5px; font-size: 9px; }
 
 .kagit-letter.yon-portrait {
   width: 216mm;
@@ -1500,37 +1403,6 @@ const yazdir = async () => {
   text-align: right;
 }
 
-/* 3. KALEM TABLOSU */
-.fatura-kalem-tablosu {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 12px 0;
-  font-size: 11px;
-}
-.fatura-kalem-tablosu th {
-  background: var(--vurgu-renk, #1e40af);
-  color: #ffffff;
-  font-weight: 700;
-  padding: 7px 8px;
-  text-align: left;
-  font-size: 10.5px;
-}
-.fatura-kalem-tablosu td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #e2e8f0;
-  color: #1e293b;
-}
-.fatura-kalem-tablosu tr:nth-child(even) td {
-  background: #f8fafc;
-}
-.kod-td {
-  font-family: monospace;
-  font-size: 10px;
-  color: #475569;
-}
-.kalem-ad {
-  font-weight: 600;
-}
 
 /* 4. ALT BÖLÜM (ÖZET & BANKA) */
 .fatura-alt-bolum {
@@ -1669,10 +1541,10 @@ const yazdir = async () => {
 .tema-klasik .fatura-ust-header {
   border-bottom: 3px double var(--vurgu-renk, #1e40af);
 }
-.tema-klasik .fatura-kalem-tablosu th {
+.tema-klasik :deep(.fatura-kalem-tablosu th) {
   border: 1px solid #cbd5e1;
 }
-.tema-klasik .fatura-kalem-tablosu td {
+.tema-klasik :deep(.fatura-kalem-tablosu td) {
   border: 1px solid #e2e8f0;
 }
 
@@ -1680,7 +1552,7 @@ const yazdir = async () => {
 .tema-minimal .fatura-ust-header {
   border-bottom: 1px solid #0f172a;
 }
-.tema-minimal .fatura-kalem-tablosu th {
+.tema-minimal :deep(.fatura-kalem-tablosu th) {
   background: transparent;
   color: #0f172a;
   border-bottom: 2px solid #0f172a;
@@ -1695,8 +1567,8 @@ const yazdir = async () => {
   padding: 10mm 12mm;
   font-size: 10.5px;
 }
-.tema-kompakt .fatura-kalem-tablosu th,
-.tema-kompakt .fatura-kalem-tablosu td {
+.tema-kompakt :deep(.fatura-kalem-tablosu th),
+.tema-kompakt :deep(.fatura-kalem-tablosu td) {
   padding: 4px 6px;
 }
 
