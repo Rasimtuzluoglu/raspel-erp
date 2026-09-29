@@ -15,6 +15,24 @@
       <div class="sahne-parilti p2" />
     </div>
 
+    <!-- Giris yapiliyor: sirket logosuyla yumusak gecis (logo sicramasini onler) -->
+    <Transition name="gy-fade">
+      <div
+        v-if="girisYapiliyor"
+        class="giris-yukleniyor"
+      >
+        <div class="gy-kutu">
+          <img
+            :src="sirketLogo || markaLogoIcon"
+            class="gy-logo"
+            alt="RasPel"
+          >
+          <i class="pi pi-spin pi-spinner gy-spinner" />
+          <span>{{ $t('giris.girisYapiliyor') }}</span>
+        </div>
+      </div>
+    </Transition>
+
     <div class="giris-split-wrapper">
       <!-- SOL BÖLÜM: Kurumsal Hero & Özellik Vitrini (Masaüstü) -->
       <GirisHeroPaneli
@@ -306,7 +324,8 @@
               <Button
                 :label="$t('auth.login')"
                 icon="pi pi-sign-in"
-                :loading="authStore?.loading || false"
+                :loading="authStore?.loading || girisYapiliyor"
+                :disabled="girisYapiliyor"
                 class="giris-buton"
                 @click="girisYap"
               />
@@ -442,6 +461,8 @@ const ikiFaktorAdimi = ref(false)
 const sirketSecimAdimi = ref(false)
 const ikiFaktorKod = ref('')
 const girisToken = ref('')
+// Sirket secilip oturum acilirken gosterilen yumusak "Giris yapiliyor" durumu.
+const girisYapiliyor = ref(false)
 
 const sifirlaUsername = ref('')
 const sifirlaGonderiliyor = ref(false)
@@ -684,12 +705,16 @@ const sirketSecVeGirisYap = async (sirket) => {
   hata.value = ''
   sirketLogo.value = sirket.logoUrl || ''
   authStore.sirketLogosunuAyarla(sirket.logoUrl || '')
+  // Yumusak gecis: yonlendirmeye kadar "Giris yapiliyor" katmani gosterilir;
+  // boylece logo aniden gelip kaybolmaz.
+  girisYapiliyor.value = true
   try {
     await authStore.girisSirket(girisToken.value, sirket.id, beniHatirla.value)
     localStorage.setItem('raspel_erp_son_sirket', sirket.id)
     if (sirket.ad) localStorage.setItem('raspel_erp_son_sirket_ad', sirket.ad)
     router.push('/')
   } catch (err) {
+    girisYapiliyor.value = false
     hata.value = err.response?.data?.message || t('giris.companySelectFailed')
   }
 }
@@ -1669,5 +1694,48 @@ const tumAdimlariSifirla = () => {
     flex-direction: column;
     gap: 0;
   }
+}
+
+/* Giris yapiliyor katmani: sirket logosuyla yumusak gecis */
+.giris-yukleniyor {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-header, rgba(10, 14, 20, 0.82));
+  backdrop-filter: blur(6px);
+}
+.gy-kutu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 36px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.gy-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.gy-spinner {
+  font-size: 22px;
+  color: var(--accent);
+}
+.gy-fade-enter-active,
+.gy-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.gy-fade-enter-from,
+.gy-fade-leave-to {
+  opacity: 0;
 }
 </style>

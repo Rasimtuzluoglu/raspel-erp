@@ -151,6 +151,7 @@
   },
   "giris": {
     "subtitle": "KOBİ'nin Tek Panosu",
+    "girisYapiliyor": "Giriş yapılıyor…",
     "rememberMe": "Beni Hatırla",
     "forgotPassword": "Şifremi Unuttum",
     "twoFactorTitle": "İki Faktörlü Doğrulama",
