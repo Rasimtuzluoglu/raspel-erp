@@ -265,28 +265,25 @@
         <div class="urun-ekle-satir">
           <div class="form-group">
             <label>{{ t('satis.urunSec') }}</label>
-            <Dropdown
+            <AutoComplete
               v-model="seciliUrun"
-              :options="stokStore.stoklar"
-              filter
+              :suggestions="urunOnerileri"
               option-label="ad"
-              option-value="id"
               :placeholder="t('satis.urunAra')"
+              :empty-search-message="t('satis.urunBulunamadi')"
               class="w-full"
-              @change="urunSecildi"
+              @complete="urunAra"
+              @option-select="urunSecildi"
             >
-              <template #value="slotProps">
-                <span v-if="slotProps.value">{{ stokAdi(slotProps.value) }}</span>
-                <span v-else>{{ slotProps.placeholder }}</span>
-              </template>
               <template #option="slotProps">
                 <div class="urun-opsiyon">
+                  <span class="urun-kod">{{ slotProps.option.stokKodu || slotProps.option.barkod }}</span>
                   <span class="urun-ad">{{ slotProps.option.ad }}</span>
                   <span class="urun-stok">{{ slotProps.option.miktar }} {{ slotProps.option.birim || t('satis.adetBirim') }}</span>
                   <span class="urun-fiyat">{{ formatCurrency(slotProps.option.fiyat) }}</span>
                 </div>
               </template>
-            </Dropdown>
+            </AutoComplete>
           </div>
           <div class="form-group">
             <label>{{ t('satis.miktar') }}</label>
@@ -412,6 +409,7 @@ const sadeceVadesiGecen = ref(false)
 const durumCipleri = ['KESILDI', 'TASLAK', 'IPTAL']
 const ozet = ref({ adet: 0, ciro: 0, tahsilEdilen: 0, kalan: 0 })
 const seciliUrun = ref(null)
+const urunOnerileri = ref([])
 const yeniUrunAdet = ref(1)
 const yeniUrunFiyat = ref(0)
 const kdvOranlari = [0, 1, 8, 10, 18, 20]
@@ -568,26 +566,35 @@ const satisEylemleri = (s) => {
   return items
 }
 
-const stokAdi = (id) => {
-  const u = stokStore.stoklar.find((s) => s.id === id)
-  return u ? `${u.ad} (${u.miktar} ${u.birim || 'Adet'}) - ${formatCurrency(u.fiyat)}` : ''
+const urunAra = (e) => {
+  const q = (e.query || '').toLowerCase().trim()
+  const kaynak = stokStore.stoklar || []
+  urunOnerileri.value = !q
+    ? kaynak.slice(0, 30)
+    : kaynak
+        .filter((u) =>
+          (u.ad || '').toLowerCase().includes(q) ||
+          (u.stokKodu || '').toLowerCase().includes(q) ||
+          (u.barkod || '').toLowerCase().includes(q)
+        )
+        .slice(0, 30)
 }
 
 const urunSecildi = async () => {
-  if (!seciliUrun.value) return
-  const u = stokStore.stoklar.find((s) => s.id === seciliUrun.value)
-  if (u) yeniUrunFiyat.value = u.fiyat
+  const u = seciliUrun.value
+  if (!u) return
+  yeniUrunFiyat.value = u.fiyat
   cariUrunFiyati.value = null
   const cariId = satisForm.value.cariHesapId
-  if (cariId && seciliUrun.value) {
+  if (cariId && u.id) {
     try {
-      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, seciliUrun.value)
+      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, u.id)
       cariUrunFiyati.value = r.data || null
     } catch {
       cariUrunFiyati.value = null
     }
   }
-  await fiyatlariYukle(cariId, seciliUrun.value, u?.fiyat)
+  await fiyatlariYukle(cariId, u.id, u.fiyat)
 }
 
 // Faz 2: secilen cariye bu urunun son satis fiyati
@@ -598,9 +605,8 @@ const satisCariFiyatUygula = (f) => {
 }
 
 const urunEkle = () => {
-  if (!seciliUrun.value || !yeniUrunAdet.value) return
-  const u = stokStore.stoklar.find((s) => s.id === seciliUrun.value)
-  if (!u) return
+  const u = seciliUrun.value
+  if (!u || !yeniUrunAdet.value) return
   if (u.miktar < yeniUrunAdet.value) {
     toastBildirim.uyari(t('satis.yetersizStok', { miktar: u.miktar, birim: u.birim || t('satis.adetBirim') }))
     return
@@ -616,6 +622,7 @@ const urunEkle = () => {
     stokId: u.id
   })
   seciliUrun.value = null
+  urunOnerileri.value = []
   yeniUrunAdet.value = 1
   yeniUrunFiyat.value = 0
   fiyatlariTemizle()
@@ -1015,6 +1022,12 @@ h1 {
   align-items: center;
   gap: 10px;
   width: 100%;
+}
+.urun-kod {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 11px;
+  flex-shrink: 0;
 }
 .urun-ad {
   flex: 1;

@@ -1342,6 +1342,7 @@
     "tarihZorunlu": "Date *",
     "urunSec": "Select Product",
     "urunAra": "Search and select product...",
+    "urunBulunamadi": "Product not found",
     "miktar": "Quantity *",
     "birimFiyat": "Unit Price",
     "fiyatOtomatik": "Price is auto-filled when a product is selected, you can edit it",
