@@ -182,9 +182,28 @@ initTabloEtiketleri()
   observer.observe(document.body, { childList: true, subtree: true })
 })()
 
+// Yeni surum hazir oldugunda gosterilen hafif sabit bildirim (bagimliliksiz).
+let __guncellemeBannerVar = false
+function guncellemeBildir() {
+  if (__guncellemeBannerVar) return
+  __guncellemeBannerVar = true
+  const b = document.createElement('div')
+  b.setAttribute('role', 'status')
+  b.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:2147483000;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--accent,#14b8a6);color:#fff;font:600 13px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3);'
+  const span = document.createElement('span')
+  span.textContent = 'Yeni sürüm hazır'
+  const btn = document.createElement('button')
+  btn.textContent = 'Yenile'
+  btn.style.cssText = 'background:#fff;color:#0f766e;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;'
+  btn.onclick = () => window.location.reload()
+  b.appendChild(span)
+  b.appendChild(btn)
+  document.body.appendChild(b)
+}
+
 // Legacy (surumsuz) service worker kayitlarini temizle: takili kalan eski SW
 // beyaz ekrana yol acabiliyor. Surum degistiginde eski kayit kaldirilir.
-;(function () {
+(function () {
   if (!('serviceWorker' in navigator)) return
   const BEKLENEN = '/sw.js?v=' + __APP_VERSION__
   // Eski (surumsuz VEYA farkli surumlu) SW kaydini dusur. Farkli surumlu SW
@@ -209,10 +228,14 @@ initTabloEtiketleri()
 
   // Surumlu URL ile kaydet: surum degisince tarayici yeni SW'yi kesin yukler
   // (eski surumun onbelleginde takili kalma sorunu kalici olarak onlenir).
-  navigator.serviceWorker.register(BEKLENEN, { scope: '/' })
+  // updateViaCache:'none' ile sw.js hicbir zaman HTTP onbelleginden gelmez.
+  navigator.serviceWorker.register(BEKLENEN, { scope: '/', updateViaCache: 'none' })
     .then((reg) => {
-      reg.update().catch(() => {})
-      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000)
+      const kontrol = () => reg.update().then(() => {
+        if (reg.waiting && navigator.serviceWorker.controller) guncellemeBildir()
+      }).catch(() => {})
+      kontrol()
+      setInterval(kontrol, 60 * 60 * 1000)
     })
     .catch(() => {})
 
