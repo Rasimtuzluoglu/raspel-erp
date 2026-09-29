@@ -705,14 +705,18 @@ const sirketSecVeGirisYap = async (sirket) => {
   hata.value = ''
   sirketLogo.value = sirket.logoUrl || ''
   authStore.sirketLogosunuAyarla(sirket.logoUrl || '')
-  // Yumusak gecis: yonlendirmeye kadar "Giris yapiliyor" katmani gosterilir;
-  // boylece logo aniden gelip kaybolmaz.
+  // Yumusak, markali karsilama: yonlendirmeden once logo minimum sure gorunur;
+  // boylece "gelip hizla kaybolma" hissi olmaz, kisa bir "hos geldiniz" anı kalir.
   girisYapiliyor.value = true
+  const baslangic = Date.now()
   try {
     await authStore.girisSirket(girisToken.value, sirket.id, beniHatirla.value)
     localStorage.setItem('raspel_erp_son_sirket', sirket.id)
     if (sirket.ad) localStorage.setItem('raspel_erp_son_sirket_ad', sirket.ad)
-    router.push('/')
+    // Minimum gosterim suresi (0.9s) dolana kadar bekle.
+    const kalan = 900 - (Date.now() - baslangic)
+    if (kalan > 0) await new Promise((r) => setTimeout(r, kalan))
+    await router.push('/')
   } catch (err) {
     girisYapiliyor.value = false
     hata.value = err.response?.data?.message || t('giris.companySelectFailed')
