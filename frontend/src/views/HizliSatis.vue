@@ -61,6 +61,13 @@
               />
             </label>
             <label class="tercih-satir">
+              <span class="tercih-metin">{{ t('hizliSatis.otomatikYazdir') }}</span>
+              <ToggleSwitch
+                v-model="otomatikYazdir"
+                @change="otomatikYazdirKaydet"
+              />
+            </label>
+            <label class="tercih-satir">
               <span class="tercih-metin">{{ t('hizliSatis.kisayolIpucu') }}</span>
               <ToggleSwitch
                 v-model="ipucuAcik"
@@ -191,6 +198,10 @@
                   show-clear
                 />
               </div>
+              <label class="filtre-alan filtre-alan-toggle">
+                <span>{{ t('hizliSatis.sadeceStokta') }}</span>
+                <ToggleSwitch v-model="sadeceStokta" />
+              </label>
             </div>
           </Popover>
         </div>
@@ -313,6 +324,15 @@
             >
               {{ k }}
             </button>
+            <button
+              v-if="gizliKategoriSayisi > 0 || tumKategorilerGoster"
+              type="button"
+              class="kategori-cip kategori-cip-daha"
+              :class="{ aktif: tumKategorilerGoster }"
+              @click="tumKategorilerGoster = !tumKategorilerGoster"
+            >
+              {{ tumKategorilerGoster ? t('hizliSatis.dahaAz') : '+' + gizliKategoriSayisi }}
+            </button>
           </div>
 
           <div class="product-grid">
@@ -371,6 +391,7 @@
                   :options="musteriModlari"
                   option-label="label"
                   option-value="value"
+                  :allow-empty="false"
                   class="w-full musteri-modu"
                 />
                 <template v-if="musteriModu === 'musteri'">
@@ -544,7 +565,14 @@
               class="pos-bolum sepet-bolum"
             >
               <div class="pos-bolum-baslik sepet-baslik">
-                <span>{{ t('hizliSatis.siparisOzeti', { n: sepet ? sepet.length : 0 }) }}</span>
+                <button
+                  type="button"
+                  class="sepet-baslik-toggle"
+                  :aria-expanded="sepetAcik"
+                  @click="sepetAcikDegistir"
+                >
+                  {{ t('hizliSatis.siparisOzeti', { n: sepet ? sepet.length : 0 }) }}
+                </button>
                 <div class="sepet-baslik-btnler">
                   <Button
                     v-if="sepet && sepet.length"
@@ -566,7 +594,7 @@
                     icon="pi pi-trash"
                     severity="danger"
                     size="small"
-                    @click.stop="sepet = []"
+                    @click.stop="sepetiGeriAlinabilirTemizle()"
                   />
                   <button
                     type="button"
@@ -584,6 +612,18 @@
                 </div>
               </div>
               <div
+                v-if="geriAlSepet"
+                class="geri-al-bar"
+              >
+                <span><i class="pi pi-trash" /> {{ t('hizliSatis.sepetTemizlendi') }}</span>
+                <button
+                  type="button"
+                  @click="sepetGeriAl"
+                >
+                  <i class="pi pi-undo" /> {{ t('hizliSatis.geriAl') }}
+                </button>
+              </div>
+              <div
                 v-show="sepetAcik"
                 class="sepet-icerik"
               >
@@ -595,9 +635,9 @@
                 </div>
                 <div
                   v-for="(item, idx) in sepet"
-                  :key="idx"
+                  :key="item.id"
                   class="sepet-item"
-                  :class="{ 'aktif-satir': aktifSatir === idx }"
+                  :class="{ 'aktif-satir': aktifSatir === idx, 'yeni-satir': vurguluId === item.id }"
                   @click="aktifSatir = idx"
                 >
                   <div class="sepet-ust">
@@ -1133,12 +1173,14 @@
     :satislar="gunlukSatislar"
     @update:visible="bugunkuDialog = $event"
     @yenile="gunlukSatislariYukle"
+    @goruntule="bugunkuSatisGoruntule"
   />
 
   <PosSatisOzetDialog
     :visible="satisOzetDialog"
     :satis-ozet="satisOzet"
     @update:visible="satisOzetDialog = $event"
+    @yeni-satis="yeniSatisaBasla"
   />
 
   <Dialog
@@ -1284,8 +1326,7 @@ const handlePosKeys = (e) => {
   }
   if (e.key === 'F2') {
     e.preventDefault()
-    sepet.value = []
-    aktifSatir.value = -1
+    sepetiGeriAlinabilirTemizle()
     toast.add({ severity: 'info', summary: t('common.toastInfo'), detail: t('hizliSatis.sepetTemizlendi'), life: 2000 })
     return
   }
@@ -1380,12 +1421,18 @@ const ipucuKapat = () => {
 // kullanan personel için büyük yazı; kazara satışı önlemek için onay adımı.
 const buyukYazi = ref(localStorage.getItem('raspel_pos_buyuk_yazi') === 'true')
 const onayIste = ref(localStorage.getItem('raspel_pos_onay_iste') === 'true')
+// Satış sonrası fişin otomatik yazdırılması (varsayılan açık).
+const otomatikYazdir = ref(localStorage.getItem('raspel_pos_otomatik_yazdir') !== 'false')
+const otomatikYazdirKaydet = () => {
+  localStorage.setItem('raspel_pos_otomatik_yazdir', String(otomatikYazdir.value))
+}
 
 // Katlanabilir bolum tercihleri (varsayilan: yalnizca musteri ACik; sepet/odeme/
 // teslimat/fis KAPALI; kullanici secimi hatirlanir).
 const musteriAcik = ref(localStorage.getItem('raspel_pos_musteri_acik') !== 'false')
-const sepetAcik = ref(localStorage.getItem('raspel_pos_sepet_acik') === 'true')
-const odemeAcik = ref(localStorage.getItem('raspel_pos_odeme_acik') === 'true')
+// Varsayilan ACIK: kasiyer taradigi urunleri ve secili odeme yontemini gormeli.
+const sepetAcik = ref(localStorage.getItem('raspel_pos_sepet_acik') !== 'false')
+const odemeAcik = ref(localStorage.getItem('raspel_pos_odeme_acik') !== 'false')
 const teslimatAcik = ref(localStorage.getItem('raspel_pos_teslimat_acik') === 'true')
 const fisAcik = ref(localStorage.getItem('raspel_pos_fis_acik') === 'true')
 const detayAcik = ref(localStorage.getItem('raspel_pos_detay_acik') === 'true')
@@ -1500,6 +1547,8 @@ const barkodTarandi = async (barkod) => {
 const filtreKategori = ref(null)
 const filtreMarka = ref(null)
 const filtreStokGrubu = ref(null)
+const sadeceStokta = ref(false)
+const tumKategorilerGoster = ref(false)
 
 const filtreTemizle = () => {
   filtreKategori.value = null
@@ -1520,7 +1569,7 @@ const soforlerYukleniyor = ref(false)
 const teslimatAdresi = ref('')
 const teslimDurumu = ref('BEKLIYOR')
 const teslimNotu = ref('')
-const musteriModu = ref('musteri')
+const musteriModu = ref('perakende')
 const cariTurSecenekleri = computed(() => [
   { label: t('cariTur.musteri'), value: 'Musteri' },
   { label: t('cariTur.tedarikci'), value: 'Tedarikci' },
@@ -1665,12 +1714,18 @@ const poslariYukle = async () => {
 const gunlukSatislariYukle = async () => {
   try {
     const bugun = getLocalDateString()
-    const r = await faturaAPI.getAll({ size: 200, sort: 'tarih,desc' })
-    const list = unwrapList(r)
-    gunlukSatislar.value = list.filter((f) => f.tur === 'SATIS' && f.tarih === bugun)
+    // Sunucu tarafli filtre: bugun + SATIS. Istemci filtrelemesine gerek yok.
+    const r = await faturaAPI.getAll({ size: 200, tur: 'SATIS', bas: bugun, bit: bugun })
+    gunlukSatislar.value = unwrapList(r)
   } catch {
     gunlukSatislar.value = []
   }
+}
+
+// Gunluk satis listesinden faturayi acar (detay/yeniden yazdirma icin).
+const bugunkuSatisGoruntule = (s) => {
+  bugunkuDialog.value = false
+  if (s?.id) router.push(`/faturalar/${s.id}`)
 }
 
 // POS filtre secenekleri ayri tanim tablolarindan degil, dogrudan urun
@@ -1862,6 +1917,10 @@ const filtrelenmisUrunler = computed(() => {
     list = list.filter((u) => (u.stokGrubu || '').trim() === filtreStokGrubu.value)
   }
 
+  if (sadeceStokta.value) {
+    list = list.filter((u) => Number(u.miktar || 0) > 0)
+  }
+
   if (seriNoArama.value) {
     const q = seriNoArama.value.toLowerCase()
     list = list.filter(
@@ -1885,7 +1944,7 @@ const filtrelenmisUrunler = computed(() => {
 const gorunenUrunler = computed(() => filtrelenmisUrunler.value.slice(0, gosterilenAdet.value))
 
 // Filtre/sıralama değişince kademeli gösterim baştan başlar.
-watch([seriNoArama, filtreKategori, filtreMarka, filtreStokGrubu, siralama], () => {
+watch([seriNoArama, filtreKategori, filtreMarka, filtreStokGrubu, sadeceStokta, siralama], () => {
   gosterilenAdet.value = 60
 })
 
@@ -1905,7 +1964,10 @@ const fisModuSecenekleri = computed(() => [
   { label: t('hizliSatis.fiyatsizFis'), value: false }
 ])
 
-const kategoriCipleri = computed(() => kategoriler.value.slice(0, 12))
+const kategoriCipleri = computed(() =>
+  tumKategorilerGoster.value ? kategoriler.value : kategoriler.value.slice(0, 12)
+)
+const gizliKategoriSayisi = computed(() => Math.max(0, kategoriler.value.length - 12))
 
 // POS'ta satış fiyatı önceliklidir; tanımlı değilse alış fiyatına düşülür.
 const satisFiyati = (u) => Number(u?.satisFiyati || u?.fiyat || 0)
@@ -2104,35 +2166,43 @@ const musteriKaydet = async () => {
   musteriKaydediliyor.value = false
 }
 
+// Sepete eklenen satırı kısa süre vurgular (görsel geri bildirim).
+const vurguluId = ref(null)
+const satiriVurgula = (id) => {
+  vurguluId.value = id
+  setTimeout(() => {
+    if (vurguluId.value === id) vurguluId.value = null
+  }, 700)
+}
+
 const sepeteEkle = async (u) => {
   const varOlan = sepet.value.find((i) => i.id === u.id)
   if (varOlan) {
     varOlan.miktar++
+    satiriVurgula(u.id)
     return
   }
-  const stdFiyat = u.satisFiyati || u.fiyat || 0
-  // Çoklu fiyat tanımlıysa onları kullan, yoksa stoğun fiyat listesini çek, yoksa sabit kademelere düş
-  let fiyatlar = (u.fiyatlar && u.fiyatlar.length > 0)
+  const stdFiyat = Number(u.satisFiyati || u.fiyat || 0)
+  const cokluFiyatVar = !!(u.fiyatlar && u.fiyatlar.length > 0)
+  const temelFiyatlar = cokluFiyatVar
     ? u.fiyatlar.map((f) => ({ ad: f.ad, fiyat: f.fiyat }))
-    : null
-  if (!fiyatlar) {
-    const tckilen = await urunFiyatlariniYukleTek(u)
-    fiyatlar = (tckilen && tckilen.length > 0) ? tckilen : [
-      { ad: t('hizliSatis.fiyatPerakende'), fiyat: stdFiyat },
-      { ad: t('hizliSatis.fiyatToptan'), fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
-      { ad: t('hizliSatis.fiyatOzel'), fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
-    ]
-  }
+    : [
+        { ad: t('hizliSatis.fiyatPerakende'), fiyat: stdFiyat },
+        { ad: t('hizliSatis.fiyatToptan'), fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
+        { ad: t('hizliSatis.fiyatOzel'), fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
+      ]
 
+  // İYİMSER EKLEME: satır anında sepete girer (gecikme/çift tıklama sorunu yok);
+  // fiyat listesi ve cari geçmişi arka planda zenginleştirilir.
   const yeniItem = {
     id: u.id,
     ad: u.ad,
     stokKodu: u.stokKodu,
     barkod: u.barkod,
     miktar: 1,
-    fiyat: fiyatlar[0]?.fiyat ?? stdFiyat,
-    fiyatlar,
-    fiyatTipi: fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende'),
+    fiyat: temelFiyatlar[0]?.fiyat ?? stdFiyat,
+    fiyatlar: temelFiyatlar,
+    fiyatTipi: temelFiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende'),
     birim: u.birim || 'adet',
     birimHacim: u.birimHacim || 1,
     agirlik: Number(u.agirlik) || 0,
@@ -2140,31 +2210,48 @@ const sepeteEkle = async (u) => {
     sonAldigiTarih: null,
     sonAldigiBilgisiYukleniyor: false
   }
-
-  // Seçili müşteri varsa ürünü en son hangi fiyata aldığını sor
-  if (seciliMusteri.value?.id) {
-    yeniItem.sonAldigiBilgisiYukleniyor = true
-    try {
-      const r = await faturaAPI.cariUrunFiyatGecmisi(seciliMusteri.value.id, u.id)
-      const data = r.data
-      if (data && data.sonFiyat != null) {
-        yeniItem.sonAldigiFiyat = data.sonFiyat
-        const enSon = (data.gecmis || [])[0]
-        yeniItem.sonAldigiTarih = enSon?.tarih || null
-        // Müşteri daha önce almışsa son aldığı fiyat ile öner, fiyatlara da ekle
-        yeniItem.fiyat = data.sonFiyat
-        if (!fiyatlar.some((f) => f.ad === t('hizliSatis.fiyatSonAldigi'))) {
-          fiyatlar.unshift({ ad: t('hizliSatis.fiyatSonAldigi'), fiyat: data.sonFiyat })
-        }
-        yeniItem.fiyatTipi = fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende')
-      }
-    } catch {
-      /* cari fiyat geçmişi alınamadı */
-    }
-    yeniItem.sonAldigiBilgisiYukleniyor = false
-  }
-
   sepet.value.push(yeniItem)
+  satiriVurgula(u.id)
+
+  try {
+    let fiyatlar = temelFiyatlar
+    if (!cokluFiyatVar) {
+      const tckilen = await urunFiyatlariniYukleTek(u)
+      if (tckilen && tckilen.length > 0) fiyatlar = tckilen
+    }
+    // Kullanıcı bu arada satırı sildiyse dokunma.
+    const guncel = sepet.value.find((i) => i.id === u.id)
+    if (!guncel) return
+    guncel.fiyatlar = fiyatlar
+    if (!fiyatlar.some((f) => f.ad === guncel.fiyatTipi)) {
+      guncel.fiyat = fiyatlar[0]?.fiyat ?? stdFiyat
+      guncel.fiyatTipi = fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende')
+    }
+    // Seçili müşteri varsa ürünü en son hangi fiyata aldığını sor.
+    if (seciliMusteri.value?.id) {
+      guncel.sonAldigiBilgisiYukleniyor = true
+      try {
+        const r = await faturaAPI.cariUrunFiyatGecmisi(seciliMusteri.value.id, u.id)
+        const data = r.data
+        if (data && data.sonFiyat != null) {
+          guncel.sonAldigiFiyat = data.sonFiyat
+          const enSon = (data.gecmis || [])[0]
+          guncel.sonAldigiTarih = enSon?.tarih || null
+          guncel.fiyat = data.sonFiyat
+          if (!guncel.fiyatlar.some((f) => f.ad === t('hizliSatis.fiyatSonAldigi'))) {
+            guncel.fiyatlar.unshift({ ad: t('hizliSatis.fiyatSonAldigi'), fiyat: data.sonFiyat })
+          }
+          guncel.fiyatTipi = guncel.fiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende')
+        }
+      } catch {
+        /* cari fiyat geçmişi alınamadı */
+      } finally {
+        guncel.sonAldigiBilgisiYukleniyor = false
+      }
+    }
+  } catch {
+    /* zenginleştirme opsiyonel; temel fiyatla devam */
+  }
 }
 
 const fiyatTipiDegisti = (item) => {
@@ -2506,10 +2593,12 @@ const satisBasarili = (yanit) => {
     fisModu: fisFiyatliGecici.value
   }
   toastBildirim.basarili(t('hizliSatis.satisTamamlandi') + ' - ' + formatCurrency(genelToplam.value))
-  try {
-    fisiYazdir(yanit.data?.faturaNumarasi)
-  } catch {
-    /* empty */
+  if (otomatikYazdir.value) {
+    try {
+      fisiYazdir(yanit.data?.faturaNumarasi)
+    } catch {
+      /* empty */
+    }
   }
   // Sofor secildiyse teslimat kaydi acilir (fatura olustuktan sonra).
   teslimatKaydiniOlustur(yanit.data?.id, teslimatMetaUret())
@@ -2540,15 +2629,43 @@ const sonSatisiIptalEt = async () => {
   }
 }
 
+// Sepet temizleme: F2 ve "Temizle" için geri alınabilir (kısa süre).
+const geriAlSepet = ref(null)
+let geriAlZamanlayici = null
+const sepetiGeriAlinabilirTemizle = () => {
+  if (sepet.value.length) {
+    geriAlSepet.value = sepet.value.map((i) => ({ ...i }))
+    clearTimeout(geriAlZamanlayici)
+    geriAlZamanlayici = setTimeout(() => { geriAlSepet.value = null }, 8000)
+  }
+  sepet.value = []
+  aktifSatir.value = -1
+}
+const sepetGeriAl = () => {
+  if (!geriAlSepet.value) return
+  sepet.value = geriAlSepet.value.map((i) => ({ ...i }))
+  geriAlSepet.value = null
+  clearTimeout(geriAlZamanlayici)
+}
+
+// Satış özeti kapatılıp yeni satışa hazırlanır: barkod alanı odaklanır.
+const yeniSatisaBasla = () => {
+  satisOzetDialog.value = false
+  satisOzet.value = null
+  nextTick(() => odakla(barkodInputRef))
+}
+
+// Satış tamamlandıktan sonra: temizle (geri alınamaz) ve perakende moduna dön.
 const sepetiTemizle = () => {
   sepet.value = []
+  geriAlSepet.value = null
   seciliMusteri.value = null
   musteriGiris.value = ''
   seciliSofor.value = null
   teslimatAdresi.value = ''
   teslimDurumu.value = 'BEKLIYOR'
   teslimNotu.value = ''
-  musteriModu.value = 'musteri'
+  musteriModu.value = 'perakende'
   indirimDegeri.value = 0
   odemeDurumu.value = 'tam'
   odenenTutar.value = 0
@@ -4198,6 +4315,187 @@ const sepetiTemizle = () => {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 700;
+}
+
+/* ======================= C1: VIEWPORT'A BAGLI KASA =======================
+   Sayfa scroll'u kaldirilir; sol urun alani ve sag siparis paneli kendi
+   scroll'une sahip; toplam/odeme/tamamla sagda sabit (sticky) kalir. */
+.pos-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 52px);
+  min-height: 520px;
+  overflow: hidden;
+}
+.pos-header,
+.pos-ipucu {
+  flex: 0 0 auto;
+}
+.pos-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+.pos-left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.pos-arac-cubugu,
+.aktif-filtreler,
+.cok-satanlar-section {
+  flex: 0 0 auto;
+}
+.product-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.product-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+  align-content: start;
+}
+.pos-right {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+.pos-right :deep(.p-card),
+.siparis-kart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.siparis-kart :deep(.p-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.siparis-kart :deep(.p-card-content) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+.sepet-bolum {
+  max-height: none !important;
+}
+.sepet-icerik {
+  max-height: none !important;
+  overflow: visible;
+}
+.sticky-tamamla {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--bg-card);
+}
+@media (max-width: 1280px) {
+  /* Tek sutuna dusunce viewport kilidini kaldir; sayfa normal kaydirilsin. */
+  .pos-container {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .pos-body,
+  .pos-left,
+  .product-section,
+  .pos-right,
+  .siparis-kart :deep(.p-card-content) {
+    overflow: visible;
+  }
+  .product-grid {
+    overflow: visible;
+  }
+}
+
+/* C2: sepete yeni eklenen satir vurgusu */
+.sepet-item.yeni-satir {
+  animation: sepetPulse 0.7s ease;
+}
+@keyframes sepetPulse {
+  0% {
+    background: var(--accent-soft-strong);
+  }
+  100% {
+    background: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sepet-item.yeni-satir {
+    animation: none;
+  }
+}
+
+/* C3: dokunma hedefleri + sepet basligi + geri al */
+.sepet-baslik-toggle {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: left;
+}
+.sepet-baslik-toggle:hover {
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+}
+.geri-al-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.geri-al-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-border);
+  background: var(--bg-card);
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+.adet-btn,
+.sepet-adet-input,
+.fiyat-tip-select,
+.fiyat-giris-input {
+  min-height: 40px;
+}
+.adet-btn {
+  min-width: 40px;
+}
+.filtre-alan-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+.kategori-cip-daha {
+  border-style: dashed;
 }
 </style>
 

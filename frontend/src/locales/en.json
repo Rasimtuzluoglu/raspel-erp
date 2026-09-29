@@ -846,6 +846,10 @@
   },
   "hizliSatis": {
     "breadcrumb": "Home / POS / New Sale",
+    "sadeceStokta": "In stock only",
+    "dahaAz": "Show less",
+    "geriAl": "Undo",
+    "otomatikYazdir": "Auto-print receipt",
     "barkodPlaceholder": "Scan barcode (Enter)",
     "aramaPlaceholder": "Search product / code / serial...",
     "kategori": "Category",

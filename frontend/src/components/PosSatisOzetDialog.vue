@@ -48,9 +48,16 @@
     <template #footer>
       <Button
         :label="t('hizliSatis.kapat')"
-        icon="pi pi-check"
-        class="p-button-primary"
+        icon="pi pi-times"
+        class="p-button-text"
         @click="emit('update:visible', false)"
+      />
+      <Button
+        :label="t('satis.yeniSatis')"
+        icon="pi pi-plus"
+        class="p-button-success"
+        autofocus
+        @click="emit('yeni-satis')"
       />
     </template>
   </Dialog>
@@ -64,7 +71,7 @@ defineProps({
   visible: { type: Boolean, default: false },
   satisOzet: { type: Object, default: null }
 })
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'yeni-satis'])
 const { t } = useI18n()
 </script>
 

@@ -846,6 +846,10 @@
   },
   "hizliSatis": {
     "breadcrumb": "Anasayfa / POS / Yeni Satış",
+    "sadeceStokta": "Sadece stokta olanlar",
+    "dahaAz": "Daha az",
+    "geriAl": "Geri Al",
+    "otomatikYazdir": "Satış sonrası fişi yazdır",
     "barkodPlaceholder": "Barkod okutun (Enter)",
     "aramaPlaceholder": "Ürün / kod / seri ara...",
     "kategori": "Kategori",

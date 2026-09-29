@@ -78,10 +78,10 @@ describe('Hızlı Satış (POS)', () => {
   it('POS ekranı yüklenir', () => {
     cy.get('.pos-container').should('exist')
     cy.contains('Hızlı Satış').should('exist')
-    // Bölüm varsayılanları: müşteri açık; sepet ve ödeme kapalı gelir.
+    // Bölüm varsayılanları: müşteri, sepet ve ödeme AÇIK gelir (kasiyer her şeyi görür).
     cy.contains('.pos-bolum-baslik', 'Müşteri').should('have.attr', 'aria-expanded', 'true')
-    cy.get('.sepet-baslik .katlanir-ikon-btn').should('have.attr', 'aria-expanded', 'false')
-    cy.contains('.pos-bolum-baslik', 'Ödeme').should('have.attr', 'aria-expanded', 'false')
+    cy.get('.sepet-baslik .katlanir-ikon-btn').should('have.attr', 'aria-expanded', 'true')
+    cy.contains('.pos-bolum-baslik', 'Ödeme').should('have.attr', 'aria-expanded', 'true')
   })
 
   it('kısayol ipucu şeridi açılıp kapatılabilir', () => {
@@ -114,9 +114,11 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('FTR-TEST-0001').should('exist')
   })
 
-  it('müşteri seçili değilken uyarı gösterir (F9)', () => {
+  it('müşteri modu seçiliyken müşteri yoksa uyarı gösterir (F9)', () => {
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
+    // Varsayılan Perakende; uyarı senaryosu için Müşteri moduna geç.
+    cy.get('.musteri-modu').contains('Müşteri').click()
     tusGonder('F9')
     cy.contains('Müşteri gerekli').should('exist')
     cy.get('@satisOlustur.all').should('have.length', 0)
@@ -170,10 +172,10 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('.filtre-panel', 'Stok Grubu').should('exist')
     cy.get('body').type('{esc}')
 
-    // Tercihler tek menüde: büyük yazı, onay iste, kısayol ipucu
+    // Tercihler tek menüde: büyük yazı, onay iste, otomatik yazdırma, kısayol ipucu
     cy.get('.pos-tercih-btn').click()
     cy.get('.tercih-panel').should('be.visible')
-    cy.get('.tercih-satir').should('have.length', 3)
+    cy.get('.tercih-satir').should('have.length', 4)
   })
 
   it('filtre seçenekleri ürün verisinden türetilir (tanım gerekmez)', () => {
