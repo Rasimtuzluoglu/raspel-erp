@@ -1762,4 +1762,30 @@ public class FaturaService {
                 .siparisId(fatura.getSiparisId())
                 .build();
     }
+
+    /**
+     * Liste ekranı KPI şeridi için özet: gerçekleşmiş (KESİLDİ) faturaların
+     * adet / ciro / tahsil edilen / kalan toplamları.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.ticaret.FaturaOzetDTO ozet(Long sirketId, String tur, LocalDate baslangic, LocalDate bitis) {
+        Fatura.FaturaTur turEnum;
+        try {
+            turEnum = tur != null ? Fatura.FaturaTur.valueOf(tur) : Fatura.FaturaTur.SATIS;
+        } catch (IllegalArgumentException e) {
+            turEnum = Fatura.FaturaTur.SATIS;
+        }
+        Object[] r = faturaRepository.ozet(sirketId, turEnum, Fatura.FaturaDurum.KESILDI, baslangic, bitis);
+        if (r == null || r.length == 0) {
+            return com.raspel.erp.dto.ticaret.FaturaOzetDTO.builder()
+                    .adet(0L).ciro(BigDecimal.ZERO).tahsilEdilen(BigDecimal.ZERO).kalan(BigDecimal.ZERO).build();
+        }
+        Object[] satir = (r[0] instanceof Object[]) ? (Object[]) r[0] : r;
+        long adet = satir[0] != null ? ((Number) satir[0]).longValue() : 0L;
+        BigDecimal ciro = satir[1] != null ? (BigDecimal) satir[1] : BigDecimal.ZERO;
+        BigDecimal tahsil = satir[2] != null ? (BigDecimal) satir[2] : BigDecimal.ZERO;
+        BigDecimal kalan = satir[3] != null ? (BigDecimal) satir[3] : BigDecimal.ZERO;
+        return com.raspel.erp.dto.ticaret.FaturaOzetDTO.builder()
+                .adet(adet).ciro(ciro).tahsilEdilen(tahsil).kalan(kalan).build();
+    }
 }

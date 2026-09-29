@@ -42,6 +42,14 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId);
 
+    /** Liste ekranı KPI şeridi: adet / ciro / tahsil edilen / kalan toplamları (tek sorgu). */
+    @Query("SELECT COUNT(f), COALESCE(SUM(f.genelToplam), 0), COALESCE(SUM(f.odenenTutar), 0), COALESCE(SUM(f.kalanTutar), 0) " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+            "AND (:bas IS NULL OR f.tarih >= :bas) AND (:bit IS NULL OR f.tarih <= :bit)")
+    Object[] ozet(@Param("sirketId") Long sirketId, @Param("tur") Fatura.FaturaTur tur,
+                  @Param("durum") Fatura.FaturaDurum durum,
+                  @Param("bas") java.time.LocalDate bas, @Param("bit") java.time.LocalDate bit);
+
     /**
      * Toplu yeniden hesaplama icin keyset (id > sonId) ID taramasi. OFFSET/COUNT yerine
      * keyset kullanildigi icin buyuk tablolarda dogrusal ve hizlidir.

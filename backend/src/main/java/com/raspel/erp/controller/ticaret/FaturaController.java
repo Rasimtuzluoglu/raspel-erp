@@ -77,6 +77,18 @@ public class FaturaController {
         return sayfa;
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Fatura özeti (KPI şeridi)",
+            description = "Gerçekleşmiş (KESİLDİ) faturaların adet/ciro/tahsil edilen/kalan toplamlarını döndürür.")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaOzetDTO> ozet(
+            HttpServletRequest request,
+            @RequestParam(value = "tur", required = false) Fatura.FaturaTur tur,
+            @RequestParam(value = "bas", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bas,
+            @RequestParam(value = "bit", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(faturaService.ozet(sirketId, tur != null ? tur.name() : null, bas, bit));
+    }
+
     @GetMapping("/numara/{faturaNumarasi}")
     @Operation(summary = "Fatura numarasına göre getir",
             description = "Benzersiz fatura numarasından faturayı getirir (fişteki numaradan kayda ulaşma)")

@@ -866,4 +866,27 @@ class FaturaServiceTest {
         assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
                 () -> faturaService.faturaParaIzi(99L));
     }
+
+    @Test
+    void ozet_toplamlariDoner() {
+        when(faturaRepository.ozet(eq(1L), eq(Fatura.FaturaTur.SATIS), eq(Fatura.FaturaDurum.KESILDI), any(), any()))
+                .thenReturn(new Object[]{ 7L, new BigDecimal("125000"), new BigDecimal("90000"), new BigDecimal("35000") });
+
+        var ozet = faturaService.ozet(1L, "SATIS", LocalDate.now().minusMonths(1), LocalDate.now());
+
+        assertEquals(7L, ozet.getAdet());
+        assertEquals(0, ozet.getCiro().compareTo(new BigDecimal("125000")));
+        assertEquals(0, ozet.getTahsilEdilen().compareTo(new BigDecimal("90000")));
+        assertEquals(0, ozet.getKalan().compareTo(new BigDecimal("35000")));
+    }
+
+    @Test
+    void ozet_bosSonucSifirDoner() {
+        when(faturaRepository.ozet(anyLong(), any(), any(), any(), any())).thenReturn(new Object[]{});
+
+        var ozet = faturaService.ozet(1L, null, null, null);
+
+        assertEquals(0L, ozet.getAdet());
+        assertEquals(0, ozet.getCiro().compareTo(BigDecimal.ZERO));
+    }
 }
