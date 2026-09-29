@@ -637,10 +637,19 @@
                   v-for="(item, idx) in sepet"
                   :key="item.id"
                   class="sepet-item"
-                  :class="{ 'aktif-satir': aktifSatir === idx, 'yeni-satir': vurguluId === item.id }"
+                  :class="{ 'aktif-satir': aktifSatir === idx, 'yeni-satir': vurguluId === item.id, 'surukleniyor': suruklenenIdx === idx }"
                   @click="aktifSatir = idx"
+                  @dragover.prevent="suruklemeUzerine(idx)"
+                  @drop.prevent="suruklemeBirak(idx)"
                 >
                   <div class="sepet-ust">
+                    <span
+                      class="sepet-tutamac"
+                      draggable="true"
+                      :title="t('hizliSatis.siralaTutamac')"
+                      @dragstart="suruklemeBasla(idx)"
+                      @dragend="suruklemeBitir"
+                    ><i class="pi pi-bars" /></span>
                     <span
                       class="sepet-kod"
                       :title="item.barkod"
@@ -817,6 +826,24 @@
                   >
                     <span>{{ t('hizliSatis.paraUstu') }}:</span>
                     <strong>{{ formatCurrency(paraUstu) }}</strong>
+                  </div>
+                  <div class="hizli-nakit">
+                    <button
+                      v-for="n in hizliNakit"
+                      :key="n"
+                      type="button"
+                      class="hizli-nakit-btn"
+                      @click="alinanNakit = (alinanNakit || 0) + n"
+                    >
+                      {{ n }}
+                    </button>
+                    <button
+                      type="button"
+                      class="hizli-nakit-btn tam"
+                      @click="alinanNakit = genelToplam"
+                    >
+                      {{ t('hizliSatis.nakitTam') }}
+                    </button>
                   </div>
                 </div>
 
@@ -2173,6 +2200,29 @@ const satiriVurgula = (id) => {
   setTimeout(() => {
     if (vurguluId.value === id) vurguluId.value = null
   }, 700)
+}
+
+// Hizli nakit: kasa icin sik kullanilan banknot/kagit degerleri.
+const hizliNakit = [50, 100, 200, 500]
+
+// Sepet satirlarini surukle-birak ile siralama (tutamactan).
+const suruklenenIdx = ref(null)
+const surklenenUzerinde = ref(null)
+const suruklemeBasla = (idx) => { suruklenenIdx.value = idx }
+const suruklemeUzerine = (idx) => { surklenenUzerinde.value = idx }
+const suruklemeBitir = () => { suruklenenIdx.value = null; surklenenUzerinde.value = null }
+const suruklemeBirak = (hedefIdx) => {
+  const kaynak = suruklenenIdx.value
+  surklenenUzerinde.value = null
+  if (kaynak === null || kaynak === hedefIdx) {
+    suruklenenIdx.value = null
+    return
+  }
+  const arr = sepet.value
+  const [tasinan] = arr.splice(kaynak, 1)
+  arr.splice(hedefIdx, 0, tasinan)
+  aktifSatir.value = hedefIdx
+  suruklenenIdx.value = null
 }
 
 const sepeteEkle = async (u) => {
@@ -4496,6 +4546,51 @@ const sepetiTemizle = () => {
 }
 .kategori-cip-daha {
   border-style: dashed;
+}
+
+/* Hizli nakit + surukle-birak */
+.hizli-nakit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.hizli-nakit-btn {
+  flex: 1 1 auto;
+  min-width: 52px;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) ease;
+}
+.hizli-nakit-btn:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.hizli-nakit-btn.tam {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.sepet-tutamac {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  cursor: grab;
+}
+.sepet-tutamac:active {
+  cursor: grabbing;
+}
+.sepet-item.surukleniyor {
+  opacity: 0.5;
 }
 </style>
 
