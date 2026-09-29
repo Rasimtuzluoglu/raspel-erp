@@ -2,7 +2,7 @@
 
 > Sürüm geçmişi için `CHANGELOG.md` dosyasına bakın. Bu belge planlanan çalışmaları takip eder.
 
-## Güncel Durum (v1.35.0)
+## Güncel Durum (v1.36.0)
 
 - Testler: **1248 backend** (JUnit 5 + H2/Postgres entegrasyon) + **771 frontend** (Vitest) — tümü yeşil; JaCoCo/Vitest coverage gate aktif.
 - Migration: **V1..V132** (121 dosya) uygulanıyor.

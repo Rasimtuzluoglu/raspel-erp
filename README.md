@@ -11,7 +11,7 @@
 İnternet kesilse de satış yapan PWA · Yapay zeka destekli stok tahmini · Çok kiracılı (multi-tenant) veri izolasyonu · Kurumsal düzeyde güvenlik
 
 [![CI](https://github.com/Rasimtuzluoglu/raspel-erp/actions/workflows/ci.yml/badge.svg)](https://github.com/Rasimtuzluoglu/raspel-erp/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-1.35.0-6366f1)
+![Version](https://img.shields.io/badge/version-1.36.0-6366f1)
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)
 ![Vue](https://img.shields.io/badge/Vue-3-4FC08D?logo=vuedotjs&logoColor=white)
@@ -167,7 +167,7 @@ raspel-erp/
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4
 │   └── src/
 │       ├── views/           # 76 görünüm (lazy-loaded)
-│       ├── components/      # 53 paylaşılan bileşen
+│       ├── components/      # 68 paylaşılan bileşen
 │       ├── stores/          # 13 Pinia store
 │       ├── composables/     # 19 composable
 │       └── locales/         # tr.json / en.json

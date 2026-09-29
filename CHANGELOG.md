@@ -2,6 +2,17 @@
 
 Tüm önemli değişiklikler ve sürüm notları bu dosyada takip edilir.
 
+## [1.36.0] - 2026-09-29 (POS Kullanılabilirlik + Fatura Özeti + Segment Düzeltmesi)
+### Düzeltmeler
+- **Görünümler 360 segmentasyonu**: "Riskli" artık yalnızca **net borca** göre belirlenir (negatif bakiye ≥ kredi limiti, limit yoksa 10.000 ₺). Alacaklı (pozitif bakiyeli) cari yanlışlıkla riskli işaretlenmez.
+- **i18n**: eksik `common.durum*` anahtarları eklendi; `common.durumKesildi` gibi **ham anahtar görünümü** giderildi.
+### Yeni
+- **Fatura özet (KPI) endpoint'i** (`GET /api/faturalar/ozet`) ve Satışlar ekranında adet/ciro/tahsil/kalan KPI şeridi.
+### Satış (Satis.vue)
+- Durum çipleri + tarih/arama filtreleri + "vadesi geçenler"; müşteri avatarı; hizalı tutarlar; yeniden tasarlanmış "Yeni Satış" diyaloğu (tema değişkenli).
+### Hızlı Satış (POS)
+- **Viewport'a bağlı kasa** düzeni; sabit komut çubuğu; sepet ve ödeme yöntemi her zaman görünür; varsayılan **Perakende**; iyimser sepete ekleme ve geri bildirim; sepet satırı iyileştirmeleri; satış sonrası **Yeni Satış** ve **yeniden yazdırma**.
+
 ## [1.35.0] - 2026-09-21 (Hızlı Satış Kullanım Kolaylığı)
 ### Sağ Panel Düzeni ve Katlanabilir Bölümler
 - Bölüm sırası akışa göre düzenlendi: **Müşteri → Sipariş Özeti → Ödeme → Satışı Tamamla → Teslimat → Fiş Önizleme → Bugünkü Satışlar**.
