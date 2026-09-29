@@ -3983,6 +3983,101 @@ const sepetiTemizle = () => {
     grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
   }
 }
+
+/* ======================= POS TASARIM YENILEME =======================
+   Görsel iyileştirme katmanı; işlev/akış değişmez, tümü tema değişkenli. */
+.pos-container {
+  gap: 14px;
+}
+.pos-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 10px 16px;
+  background: var(--bg-header, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+}
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.pos-header-sag {
+  gap: 8px;
+}
+.pos-ikon-btn,
+.pos-tercih-btn,
+.pos-ipucu-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: color var(--dur-fast, 0.15s) ease, border-color var(--dur-fast, 0.15s) ease, background var(--dur-fast, 0.15s) ease;
+}
+.pos-ikon-btn:hover,
+.pos-tercih-btn:hover,
+.pos-ipucu-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.pos-tercih-btn.aktif {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+.pos-body {
+  gap: 14px;
+  align-items: start;
+}
+.pos-arac-cubugu {
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.product-grid {
+  gap: 12px;
+}
+.siparis-kart {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+:deep(.siparis-kart .p-card-body) {
+  padding: 14px;
+}
+:deep(.siparis-kart .p-card-content) {
+  padding: 0;
+}
+.sepet-item {
+  border-radius: 10px;
+}
+.sepet-item.aktif-satir {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.odeme-yontem-btn {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: border-color var(--dur-fast, 0.15s) ease, background var(--dur-fast, 0.15s) ease, transform var(--dur-fast, 0.15s) ease;
+}
+.odeme-yontem-btn:hover {
+  border-color: var(--accent-border);
+  transform: translateY(-1px);
+}
+.sticky-tamamla {
+  border-radius: 12px;
+  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+.empty-products {
+  color: var(--text-muted);
+}
 </style>
 
 <style>
