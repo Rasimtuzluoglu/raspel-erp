@@ -44,11 +44,12 @@ registerRoute(
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Aktivasyonda eski sayfa onbellegini temizle: yeni SW devreye girer girmez
-// taze index.html (ve guncel asset referanslari) alinir.
+// Aktivasyonda TUM onbellekleri temizle: eski (stale) index.html ve asset'ler
+// kalmasin; yeni SW devreye girer girmez taze uygulama kabugu sunulur.
+// (Asset'ler icerik-hash'li oldugu icin temizlemek guvenlidir; yeniden doldurulur.)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.delete('pages').catch(() => undefined)
+    caches.keys().then((anahtarlar) => Promise.all(anahtarlar.map((k) => caches.delete(k)))).catch(() => undefined)
   )
 })
 

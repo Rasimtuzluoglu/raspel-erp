@@ -187,14 +187,24 @@ initTabloEtiketleri()
 ;(function () {
   if (!('serviceWorker' in navigator)) return
   const BEKLENEN = '/sw.js?v=' + __APP_VERSION__
+  // Eski (surumsuz VEYA farkli surumlu) SW kaydini dusur. Farkli surumlu SW
+  // takili kalirsa tarayici eski arayuzu onbellekten servis edebiliyor; bu
+  // durumda kaydi kaldirip bir kez yenileriz (dongu korumali).
+  const SURUM_ANAHTARI = 'raspel_sw_surum_temizligi'
   navigator.serviceWorker.getRegistrations().then((kayitlar) => {
+    let eskiSurumVar = false
     kayitlar.forEach((r) => {
       const url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || ''
-      // Surum sorgusu olmayan eski sw.js kayitlarini kaldir.
-      if (url.endsWith('/sw.js') && !url.includes('?v=')) {
+      if (!url.includes('/sw.js')) return
+      if (!url.includes('?v=') || !url.includes('?v=' + __APP_VERSION__)) {
+        eskiSurumVar = true
         r.unregister().catch(() => {})
       }
     })
+    if (eskiSurumVar && sessionStorage.getItem(SURUM_ANAHTARI) !== __APP_VERSION__) {
+      sessionStorage.setItem(SURUM_ANAHTARI, __APP_VERSION__)
+      window.location.reload()
+    }
   }).catch(() => {})
 
   // Surumlu URL ile kaydet: surum degisince tarayici yeni SW'yi kesin yukler
