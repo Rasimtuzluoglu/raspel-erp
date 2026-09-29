@@ -74,18 +74,17 @@
     />
 
     <!-- TEKLİF OLUŞTURMA & DÜZENLEME DIALOG -->
-    <Dialog
+    <AppDialog
       v-model:visible="formDialog"
-      :modal="true"
       :header="duzenlemeModu ? t('teklifler.duzenle') : t('teklifler.yeniBaslik')"
-      class="teklif-form-dialog"
-      :style="{ width: '88vw', maxWidth: '1200px' }"
+      width="1100px"
+      content-max-height="min(72vh, 720px)"
     >
       <div class="form-layout-container flex flex-col gap-6 pt-2">
         <!-- ÜST BÖLÜM: Genel Bilgiler & Şartlar -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Sol Kolon: Temel Bilgiler -->
-          <div class="p-4 border rounded-xl bg-secondary/50 dark:bg-gray-800/50">
+          <div class="p-4 border rounded-xl bg-muted">
             <h3 class="text-sm font-bold text-secondary dark:text-gray-300 mb-4 flex items-center gap-2">
               <i class="pi pi-info-circle text-primary" /> {{ t('teklifler.temelBilgiler') }}
             </h3>
@@ -144,7 +143,7 @@
           </div>
 
           <!-- Sağ Kolon: Şartlar ve Notlar -->
-          <div class="p-4 border rounded-xl bg-secondary/50 dark:bg-gray-800/50">
+          <div class="p-4 border rounded-xl bg-muted">
             <h3 class="text-sm font-bold text-secondary dark:text-gray-300 mb-4 flex items-center gap-2">
               <i class="pi pi-file text-primary" /> {{ t('teklifler.kosullarNotlar') }}
             </h3>
@@ -182,9 +181,9 @@
         </div>
 
         <!-- ORTA BÖLÜM: Teklif Kalemleri (Ürünler) -->
-        <div class="p-4 border rounded-xl border-blue-100 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-900/10">
-          <div class="flex justify-between items-center mb-4 pb-2 border-b border-blue-100 dark:border-blue-800">
-            <h3 class="text-sm font-bold text-accent dark:text-blue-300 flex items-center gap-2">
+        <div class="p-4 border rounded-xl bg-muted">
+          <div class="flex justify-between items-center mb-4 pb-2 border-b">
+            <h3 class="text-sm font-bold text-accent flex items-center gap-2">
               <i class="pi pi-list" /> {{ t('teklifler.kalemler') }}
             </h3>
             <Button
@@ -203,26 +202,24 @@
             @uygula="teklifCariFiyatUygula"
           />
 
-          <div class="flex flex-col gap-3">
-            <div 
-              v-for="(k, idx) in form.kalemler" 
+          <div class="flex flex-col gap-3 pt-1">
+            <div
+              v-for="(k, idx) in form.kalemler"
               :key="idx"
-              class="p-3 bg-white dark:bg-gray-900 border rounded-lg shadow-sm flex flex-col md:flex-row items-center gap-3 transition hover:border-blue-300 relative"
+              class="teklif-kalem-satir"
             >
-              <!-- Kalem Sil Butonu (Mobilde üstte, Desktobta sağda) -->
-              <button 
+              <button
                 type="button"
-                class="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-sm"
+                class="tk-sil"
                 :title="t('teklifler.kalemiSil')"
                 @click="kalemSil(idx)"
               >
-                <i class="pi pi-times text-xs" />
+                <i class="pi pi-times" />
               </button>
 
-              <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-3 w-full">
-                <!-- Ürün Seçimi -->
-                <div class="md:col-span-3">
-                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.urunStok') }}</label>
+              <div class="teklif-kalem-grid">
+                <div class="tk-alan">
+                  <label class="tk-etiket">{{ t('teklifler.urunStok') }}</label>
                   <Dropdown
                     v-model="k.stokId"
                     :options="stoklar"
@@ -234,77 +231,67 @@
                     @change="stokSecildi(k)"
                   />
                 </div>
-                
-                <!-- Açıklama -->
-                <div class="md:col-span-3">
-                  <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('common.description') }}</label>
+                <div class="tk-alan">
+                  <label class="tk-etiket">{{ t('common.description') }}</label>
                   <InputText
                     v-model="k.aciklama"
                     :placeholder="t('teklifler.detay')"
                     class="w-full p-inputtext-sm"
                   />
                 </div>
-
-                <!-- Miktar & Birim -->
-                <div class="md:col-span-2 flex gap-2">
-                  <div class="w-1/2">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.miktar') }}</label>
-                    <input
-                      v-model.number="k.miktar"
-                      type="number"
-                      min="1"
-                      class="p-inputtext p-inputtext-sm w-full"
-                      @input="kalemHesapla(k)"
-                    >
-                  </div>
-                  <div class="w-1/2">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.birim') }}</label>
-                    <Dropdown
-                      v-model="k.birim"
-                      :options="['Adet', 'Kg', 'Metre', 'Paket', 'Koli', 'Saat', 'Ay']"
-                      class="w-full p-inputtext-sm"
-                    />
-                  </div>
+                <div class="tk-alan">
+                  <label class="tk-etiket">{{ t('teklifler.miktar') }}</label>
+                  <input
+                    v-model.number="k.miktar"
+                    type="number"
+                    min="1"
+                    class="p-inputtext p-inputtext-sm w-full"
+                    @input="kalemHesapla(k)"
+                  >
                 </div>
-
-                <!-- Fiyat, İskonto, KDV -->
-                <div class="md:col-span-4 flex gap-2">
-                  <div class="w-2/5">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block">{{ t('teklifler.birimFiyat') }}</label>
-                    <input
-                      v-model.number="k.birimFiyat"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      class="p-inputtext p-inputtext-sm w-full text-right"
-                      @input="kalemHesapla(k)"
-                    >
-                  </div>
-                  <div class="w-1/5">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">{{ t('teklifler.isk') }}</label>
-                    <input
-                      v-model.number="k.iskontoOrani"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="p-inputtext p-inputtext-sm w-full text-center"
-                      @input="kalemHesapla(k)"
-                    >
-                  </div>
-                  <div class="w-1/5">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-center">{{ t('teklifler.kdv') }}</label>
-                    <Dropdown
-                      v-model.number="k.kdvOrani"
-                      :options="[0, 1, 10, 20]"
-                      class="w-full p-inputtext-sm text-center"
-                      @change="kalemHesapla(k)"
-                    />
-                  </div>
-                  <div class="w-1/5 flex flex-col justify-end">
-                    <label class="text-[10px] uppercase font-bold text-muted mb-1 block text-right">{{ t('teklifler.tutar') }}</label>
-                    <div class="font-bold text-sm text-right text-primary dark:text-gray-200 mt-1 whitespace-nowrap">
-                      {{ formatPara(k.tutar, form.paraBirimi) }}
-                    </div>
+                <div class="tk-alan">
+                  <label class="tk-etiket">{{ t('teklifler.birim') }}</label>
+                  <Dropdown
+                    v-model="k.birim"
+                    :options="['Adet', 'Kg', 'Metre', 'Paket', 'Koli', 'Saat', 'Ay']"
+                    class="w-full p-inputtext-sm"
+                  />
+                </div>
+                <div class="tk-alan">
+                  <label class="tk-etiket tk-sag">{{ t('teklifler.birimFiyat') }}</label>
+                  <input
+                    v-model.number="k.birimFiyat"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="p-inputtext p-inputtext-sm w-full text-right"
+                    @input="kalemHesapla(k)"
+                  >
+                </div>
+                <div class="tk-alan">
+                  <label class="tk-etiket tk-orta">{{ t('teklifler.isk') }}</label>
+                  <input
+                    v-model.number="k.iskontoOrani"
+                    type="number"
+                    min="0"
+                    max="100"
+                    class="p-inputtext p-inputtext-sm w-full text-center"
+                    @input="kalemHesapla(k)"
+                  >
+                </div>
+                <div class="tk-alan">
+                  <label class="tk-etiket tk-orta">{{ t('teklifler.kdv') }}</label>
+                  <Dropdown
+                    v-model.number="k.kdvOrani"
+                    :options="[0, 1, 10, 20]"
+                    class="w-full p-inputtext-sm"
+                    @change="kalemHesapla(k)"
+                  />
+                </div>
+                <div class="tk-alan tk-tutar">
+                  <label class="tk-etiket tk-sag">{{ t('teklifler.tutar') }}</label>
+                  <div class="tk-tutar-deger">
+                    {{ formatPara(k.tutar, form.paraBirimi) }}
                   </div>
                 </div>
               </div>
@@ -312,7 +299,7 @@
 
             <div
               v-if="!form.kalemler || form.kalemler.length === 0"
-              class="p-6 text-center text-gray-400 border-2 border-dashed rounded-lg"
+              class="p-6 text-center text-muted border-2 border-dashed rounded-lg"
             >
               <i class="pi pi-shopping-cart text-3xl mb-2" /><br>
               {{ t('teklifler.kalemYok') }}
@@ -322,7 +309,7 @@
 
         <!-- ALT BÖLÜM: Fiyat Özeti -->
         <div class="flex justify-end">
-          <div class="w-full md:w-1/3 bg-secondary dark:bg-gray-800 rounded-xl p-4 border shadow-sm">
+          <div class="w-full md:w-1/3 bg-muted rounded-xl p-4 border shadow-sm">
             <h4 class="text-xs uppercase font-bold text-muted mb-3 border-b pb-2">
               {{ t('teklifler.hesapOzeti') }}
             </h4>
@@ -341,7 +328,7 @@
                 type="number"
                 min="0"
                 max="100"
-                class="p-inputtext p-inputtext-sm w-20 text-right bg-white dark:bg-gray-900 border-gray-300 group-hover:border-blue-400 transition"
+                class="p-inputtext p-inputtext-sm w-20 text-right"
                 :title="t('teklifler.genelIskontoTitle')"
               >
             </div>
@@ -376,14 +363,14 @@
           @click="teklifKaydet"
         />
       </template>
-    </Dialog>
+    </AppDialog>
 
     <!-- TEKLİF MEKTUBU & PROFORMA ÖNİZLEME MODAL -->
-    <Dialog
+    <AppDialog
       v-model:visible="onizlemeDialog"
-      :modal="true"
       :header="t('teklifler.mektupBaslik')"
-      :style="{ width: '960px', maxWidth: '95vw' }"
+      width="980px"
+      content-max-height="78vh"
     >
       <div
         id="teklif-mektubu-alani"
@@ -565,7 +552,7 @@
           @click="yazdirTeklif"
         />
       </template>
-    </Dialog>
+    </AppDialog>
   </div>
 </template>
 
@@ -580,6 +567,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import TeklifListesi from '../components/TeklifListesi.vue'
+import AppDialog from '../components/AppDialog.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 
 const toast = useToast()
@@ -1002,6 +990,15 @@ const whatsAppPaylas = () => {
   color: #1f2937;
   padding: 24px;
   border-radius: 8px;
+  /* Kagit kendi "ink" renklerini tanimlar; koyu temada da okunur kalir. */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --bg-secondary: #f1f5f9;
+  --bg-muted: #f1f5f9;
+  --border: #e2e8f0;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 .mektup-tablo th {
   font-size: 11px;
@@ -1010,21 +1007,112 @@ const whatsAppPaylas = () => {
   padding: 8px;
 }
 
+/* Kalem editor satiri (tasmasiz grid) */
+.teklif-kalem-satir {
+  position: relative;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  transition: border-color var(--dur-fast, 0.15s) ease;
+}
+.teklif-kalem-satir:hover {
+  border-color: var(--accent-border);
+}
+.teklif-kalem-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 2.4fr) minmax(0, 2.4fr) minmax(0, 1fr)
+    minmax(0, 1.2fr) minmax(0, 1.5fr) minmax(0, 1fr)
+    minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 10px;
+  align-items: end;
+}
+.tk-alan {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tk-etiket {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.tk-sag {
+  text-align: right;
+}
+.tk-orta {
+  text-align: center;
+}
+.tk-tutar-deger {
+  font-weight: 700;
+  font-size: 13px;
+  text-align: right;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-bottom: 6px;
+}
+.tk-sil {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) ease;
+}
+.tk-sil:hover {
+  background: var(--danger);
+  color: #fff;
+}
+@media (max-width: 1100px) {
+  .teklif-kalem-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .teklif-kalem-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media print {
-  body * {
+  :global(body *) {
     visibility: hidden;
   }
-  #teklif-mektubu-alani,
-  #teklif-mektubu-alani * {
+  :global(#teklif-mektubu-alani),
+  :global(#teklif-mektubu-alani *) {
     visibility: visible;
   }
-  #teklif-mektubu-alani {
+  :global(#teklif-mektubu-alani) {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     margin: 0;
     padding: 10mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
+  :global(.p-dialog),
+  :global(.p-dialog-content),
+  :global(.p-dialog-mask) {
+    overflow: visible !important;
+    transform: none !important;
+  }
+}
+@page {
+  size: A4;
+  margin: 10mm;
 }
 </style>
