@@ -1290,6 +1290,12 @@
   "satis": {
     "title": "Satış İşlemleri",
     "yeniSatis": "Yeni Satış",
+    "tumu": "Tümü",
+    "vadesiGecenler": "Vadesi Geçenler",
+    "kpiAdet": "Satış Adedi",
+    "kpiCiro": "Ciro",
+    "kpiTahsil": "Tahsil Edilen",
+    "kpiKalan": "Açık Kalan",
     "aramaPlaceholder": "Fatura no veya cari ara...",
     "colFaturaNo": "Fatura No",
     "colMusteri": "Müşteri",

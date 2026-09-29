@@ -1,32 +1,82 @@
 <template>
   <div class="satis-container">
-    <h1 class="page-title">
-      {{ t('satis.title') }}
-    </h1>
+    <div class="sayfa-baslik">
+      <h1 class="page-title">
+        {{ t('satis.title') }}
+      </h1>
+      <Button
+        :label="t('satis.yeniSatis')"
+        icon="pi pi-plus"
+        class="p-button-success"
+        @click="openSatis"
+      />
+    </div>
 
-    <Toolbar class="toolbar">
-      <template #start>
-        <Button
-          :label="t('satis.yeniSatis')"
-          icon="pi pi-plus"
-          class="p-button-success"
-          @click="openSatis"
+    <div class="kpi-serit">
+      <KpiKart
+        :baslik="t('satis.kpiAdet')"
+        :deger="ozet.adet"
+        :para-birimi="false"
+        icon="pi pi-receipt"
+        renk="#14b8a6"
+      />
+      <KpiKart
+        :baslik="t('satis.kpiCiro')"
+        :deger="ozet.ciro"
+        icon="pi pi-chart-line"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('satis.kpiTahsil')"
+        :deger="ozet.tahsilEdilen"
+        icon="pi pi-wallet"
+        renk="#10b981"
+      />
+      <KpiKart
+        :baslik="t('satis.kpiKalan')"
+        :deger="ozet.kalan"
+        icon="pi pi-exclamation-circle"
+        renk="#ef4444"
+      />
+    </div>
+
+    <div class="filtre-cubugu">
+      <span class="p-input-icon-left arama-kutu">
+        <i class="pi pi-search" />
+        <InputText
+          v-model="filtre"
+          :placeholder="t('satis.aramaPlaceholder')"
         />
-      </template>
-      <template #end>
-        <TarihHizliSecim
-          v-model="tarihAraligi"
-          style="margin-right: 8px"
+      </span>
+      <TarihHizliSecim v-model="tarihAraligi" />
+      <div class="durum-cipleri">
+        <button
+          type="button"
+          class="durum-cip"
+          :class="{ aktif: !seciliDurum }"
+          @click="seciliDurum = ''"
+        >
+          {{ t('satis.tumu') }}
+        </button>
+        <button
+          v-for="d in durumCipleri"
+          :key="d"
+          type="button"
+          class="durum-cip"
+          :class="[{ aktif: seciliDurum === d }, (d || '').toLowerCase()]"
+          @click="seciliDurum = d"
+        >
+          {{ durumLabelUtil(d) }}
+        </button>
+      </div>
+      <label class="vade-toggle">
+        <Checkbox
+          v-model="sadeceVadesiGecen"
+          binary
         />
-        <span class="p-input-icon-left">
-          <i class="pi pi-search" />
-          <InputText
-            v-model="filtre"
-            :placeholder="t('satis.aramaPlaceholder')"
-          />
-        </span>
-      </template>
-    </Toolbar>
+        <span>{{ t('satis.vadesiGecenler') }}</span>
+      </label>
+    </div>
 
     <div class="table-container">
       <DataTable
@@ -40,6 +90,7 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
         :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
         striped-rows
+        class="satis-tablo"
         @page="sayfaDegisti"
       >
         <template #empty>
@@ -62,16 +113,20 @@
         <Column
           field="cariHesapAd"
           :header="t('satis.colMusteri')"
-          style="width: 180px"
+          style="width: 200px"
         >
           <template #body="s">
-            {{ s.data.cariHesapAd || '-' }}
+            <div class="musteri-hucre">
+              <span class="musteri-avatar">{{ musteriBasHarfi(s.data.cariHesapAd) }}</span>
+              <span class="musteri-ad">{{ s.data.cariHesapAd || t('satis.perakendeMusteri') }}</span>
+            </div>
           </template>
         </Column>
         <Column
           field="kdv"
           :header="t('satis.colKdv')"
-          style="width: 100px"
+          style="width: 110px"
+          body-class="tutar-hucre"
         >
           <template #body="s">
             {{ formatPara(s.data.kdv, s.data.paraBirimi) }}
@@ -80,16 +135,18 @@
         <Column
           field="genelToplam"
           :header="t('common.amount')"
-          style="width: 120px"
+          style="width: 130px"
+          body-class="tutar-hucre"
         >
           <template #body="s">
-            {{ formatPara(s.data.genelToplam, s.data.paraBirimi) }}
+            <span class="genel-toplam-hucre">{{ formatPara(s.data.genelToplam, s.data.paraBirimi) }}</span>
           </template>
         </Column>
         <Column
           field="kalanTutar"
           :header="t('satis.colKalan')"
-          style="width: 110px"
+          style="width: 120px"
+          body-class="tutar-hucre"
         >
           <template #body="s">
             <span :class="{ 'kalan-var': Number(s.data.kalanTutar || 0) > 0 }">
@@ -162,11 +219,12 @@
       v-model:visible="showSatisDialog"
       :header="dialogBaslik"
       :modal="true"
-      style="width: 800px"
+      class="satis-dialogu"
+      :style="{ width: '860px', maxWidth: '96vw' }"
       :closable="false"
     >
       <div class="satis-modu">
-        <label style="color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-right: 12px">{{ t('satis.islemModu') }}</label>
+        <label class="bolum-etiket">{{ t('satis.islemModu') }}</label>
         <div class="modu-radio-group">
           <div
             :class="['modu-option', { active: satisModu === 'SATIS' }]"
@@ -276,7 +334,7 @@
             />
           </div>
         </div>
-        <small style="color: #64748b">{{ t('satis.fiyatOtomatik') }}</small>
+        <small class="ipucu-metin">{{ t('satis.fiyatOtomatik') }}</small>
         <CariUrunFiyatPaneli
           v-if="seciliUrun && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
           :fiyat-gecmisi="cariUrunFiyati"
@@ -286,7 +344,7 @@
         />
       </div>
 
-      <h3 style="margin: 18px 0 10px; color: #f1f5f9; font-size: 15px">
+      <h3 class="bolum-baslik">
         {{ t('satis.satisKalemleri') }}
       </h3>
       <FaturaKalemleri
@@ -343,6 +401,7 @@ import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
+import KpiKart from '../components/KpiKart.vue'
 import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, formatPara, getLocalDateString, durumLabel as durumLabelUtil } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
@@ -363,6 +422,10 @@ const showSatisDialog = ref(false)
 const saving = ref(false)
 const filtre = ref('')
 const satisModu = ref('SATIS')
+const seciliDurum = ref('')
+const sadeceVadesiGecen = ref(false)
+const durumCipleri = ['KESILDI', 'TASLAK', 'IPTAL']
+const ozet = ref({ adet: 0, ciro: 0, tahsilEdilen: 0, kalan: 0 })
 const seciliUrun = ref(null)
 const yeniUrunAdet = ref(1)
 const yeniUrunFiyat = ref(0)
@@ -392,7 +455,7 @@ const tarihParametreleri = () => {
 
 onMounted(async () => {
   // Store'lar hata firlatir; bir hata digerlerini engellemesin.
-  await Promise.allSettled([satislariYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
+  await Promise.allSettled([satislariYukle(), ozetiYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
 })
 
 const satislariYukle = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
@@ -400,6 +463,8 @@ const satislariYukle = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.v
   try {
     const params = { page: yeniSayfa, size: yeniBoyut, tur: 'SATIS', ...tarihParametreleri() }
     if (filtre.value.trim()) params.search = filtre.value.trim()
+    if (seciliDurum.value) params.durum = seciliDurum.value
+    if (sadeceVadesiGecen.value) params.vadesiGecen = true
     const r = await faturaAPI.getAll(params)
     satislar.value = unwrapList(r)
     toplamKayit.value = r.data?.totalElements ?? satislar.value.length
@@ -412,9 +477,27 @@ const satislariYukle = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.v
   }
 }
 
+// KPI şeridi: gerçekleşmiş (KESİLDİ) satışların özet toplamları.
+const ozetiYukle = async () => {
+  try {
+    const r = await faturaAPI.ozet({ tur: 'SATIS', ...tarihParametreleri() })
+    ozet.value = {
+      adet: r.data?.adet || 0,
+      ciro: r.data?.ciro || 0,
+      tahsilEdilen: r.data?.tahsilEdilen || 0,
+      kalan: r.data?.kalan || 0
+    }
+  } catch {
+    /* özet kritik değil; sessizce geç */
+  }
+}
+
+const musteriBasHarfi = (ad) => (ad || '?').trim().charAt(0).toUpperCase() || '?'
+
 const sayfaDegisti = (e) => satislariYukle(e.page, e.rows)
 
-watch(tarihAraligi, () => satislariYukle(0, sayfaBoyutu.value))
+watch(tarihAraligi, () => { satislariYukle(0, sayfaBoyutu.value); ozetiYukle() })
+watch([seciliDurum, sadeceVadesiGecen], () => { satislariYukle(0, sayfaBoyutu.value); ozetiYukle() })
 watch(filtre, () => {
   clearTimeout(aramaZamanlayici)
   aramaZamanlayici = setTimeout(() => satislariYukle(0, sayfaBoyutu.value), 300)
@@ -758,18 +841,137 @@ h1 {
   font-weight: 700;
   letter-spacing: -0.5px;
 }
-.toolbar {
-  margin-bottom: 20px;
+.sayfa-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.sayfa-baslik h1 {
+  margin: 0;
+}
+.kpi-serit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.filtre-cubugu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.arama-kutu {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+.arama-kutu :deep(.p-inputtext) {
+  width: 100%;
+}
+.durum-cipleri {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.durum-cip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur-fast, 0.15s) ease, color var(--dur-fast, 0.15s) ease, border-color var(--dur-fast, 0.15s) ease;
+}
+.durum-cip:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+}
+.durum-cip.aktif {
+  background: var(--accent-soft-strong);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.durum-cip.kesildi.aktif {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: var(--success-border);
+}
+.durum-cip.taslak.aktif {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-color: var(--warning-border);
+}
+.durum-cip.iptal.aktif {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+.vade-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
 }
 .table-container {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
+}
+.satis-tablo :deep(.p-datatable-thead > tr > th) {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+.satis-tablo :deep(.p-datatable-tbody > tr) {
+  transition: background var(--dur-fast, 0.15s) ease;
+}
+.tutar-hucre {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.genel-toplam-hucre {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.musteri-hucre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.musteri-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
+}
+.musteri-ad {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .form-row {
   display: flex;
@@ -789,11 +991,42 @@ h1 {
   letter-spacing: 0.5px;
 }
 .urun-ekleme {
-  background: rgba(59, 130, 246, 0.05);
-  border: 1px solid var(--accent-soft-strong);
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 16px;
   margin: 15px 0;
+}
+.bolum-etiket {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 12px;
+}
+.bolum-baslik {
+  margin: 18px 0 10px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+.ipucu-metin {
+  color: var(--text-muted);
+}
+.satis-dialogu :deep(.p-dialog-content) {
+  max-height: 66vh;
+  overflow-y: auto;
+  padding-top: 8px;
+}
+.satis-dialogu :deep(.p-dialog-footer) {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+.satis-dialogu :deep(.p-dialog-footer button) {
+  min-width: 120px;
 }
 .urun-opsiyon {
   display: flex;
@@ -806,7 +1039,7 @@ h1 {
   color: var(--text-primary);
 }
 .urun-stok {
-  color: #4ade80;
+  color: var(--success);
   font-size: 12px;
   font-weight: 600;
 }
@@ -883,7 +1116,7 @@ h1 {
   transition: all 0.2s;
 }
 .modu-option:hover {
-  color: #e2e8f0;
+  color: var(--text-primary);
 }
 .modu-option.active {
   background: var(--accent);

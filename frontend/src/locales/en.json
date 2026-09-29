@@ -1290,6 +1290,12 @@
   "satis": {
     "title": "Sales Transactions",
     "yeniSatis": "New Sale",
+    "tumu": "All",
+    "vadesiGecenler": "Overdue",
+    "kpiAdet": "Sales Count",
+    "kpiCiro": "Revenue",
+    "kpiTahsil": "Collected",
+    "kpiKalan": "Outstanding",
     "aramaPlaceholder": "Search invoice no or customer...",
     "colFaturaNo": "Invoice No",
     "colMusteri": "Customer",

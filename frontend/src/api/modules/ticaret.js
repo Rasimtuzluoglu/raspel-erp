@@ -80,6 +80,9 @@ export const faturaAPI = {
   getAll(params) {
     return apiClient.get('/faturalar', { params })
   },
+  ozet(params) {
+    return apiClient.get('/faturalar/ozet', { params })
+  },
   getById(id) {
     return apiClient.get(`/faturalar/${id}`)
   },
