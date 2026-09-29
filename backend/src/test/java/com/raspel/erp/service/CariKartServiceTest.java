@@ -112,7 +112,8 @@ class CariKartServiceTest {
 
     @Test
     void kartGetir_ozetVeKrediHesaplar() {
-        verileriHazirla(cari(new BigDecimal("10000"), new BigDecimal("3000")));
+        // Negatif bakiye = borç (3000). Pozitif olsaydı (alacak) borç 0 olurdu.
+        verileriHazirla(cari(new BigDecimal("10000"), new BigDecimal("-3000")));
 
         CariKartDTO kart = cariKartService.kartGetir(1L, 1L);
 
@@ -143,13 +144,25 @@ class CariKartServiceTest {
 
     @Test
     void kartGetir_limitAsimiTespitEder() {
-        verileriHazirla(cari(new BigDecimal("10000"), new BigDecimal("12000")));
+        verileriHazirla(cari(new BigDecimal("10000"), new BigDecimal("-12000")));
 
         CariKartDTO kart = cariKartService.kartGetir(1L, 1L);
 
         assertTrue(kart.getKredi().isLimitAsimi());
         assertEquals(new BigDecimal("-2000"), kart.getKredi().getKullanilabilirKredi());
         assertEquals(new BigDecimal("120.00"), kart.getKredi().getRiskOrani());
+    }
+
+    @Test
+    void kartGetir_alacakliCariRiskliDegil() {
+        // Pozitif bakiye = müşteri alacaklı -> borç 0, risk yok, limit aşımı yok.
+        verileriHazirla(cari(new BigDecimal("10000"), new BigDecimal("5000")));
+
+        CariKartDTO kart = cariKartService.kartGetir(1L, 1L);
+
+        assertEquals(0, kart.getKredi().getRiskOrani().compareTo(BigDecimal.ZERO));
+        assertFalse(kart.getKredi().isLimitAsimi());
+        assertEquals(new BigDecimal("10000"), kart.getKredi().getKullanilabilirKredi());
     }
 
     @Test

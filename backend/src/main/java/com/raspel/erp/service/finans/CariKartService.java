@@ -129,7 +129,10 @@ public class CariKartService {
     private CariKartDTO.KrediDurumu krediDurumu(CariHesap cari) {
         BigDecimal limit = cari.getKrediLimiti();
         BigDecimal bakiye = cari.getBakiye() != null ? cari.getBakiye() : BigDecimal.ZERO;
-        BigDecimal borc = bakiye.max(BigDecimal.ZERO);
+        // Isaret kurali (kod genelinde tutarli): negatif bakiye = musteri bize borclu,
+        // pozitif bakiye = musteri alacakli. Bu nedenle borc yalnizca negatif bakiyeden olusur;
+        // alacakli (pozitif) cari riskli/limit-asimi sayilmaz.
+        BigDecimal borc = bakiye.signum() < 0 ? bakiye.negate() : BigDecimal.ZERO;
         BigDecimal kullanilabilir = limit != null ? limit.subtract(borc) : null;
         BigDecimal risk = (limit != null && limit.signum() > 0)
                 ? borc.multiply(BigDecimal.valueOf(100)).divide(limit, 2, RoundingMode.HALF_UP)
