@@ -23,11 +23,11 @@ self.addEventListener('message', (event) => {
   }
 })
 
-precacheAndRoute(self.__WB_MANIFEST)
-
-// SPA gezinme istekleri: NetworkFirst. Boylece her yenilemede taze index.html
-// (ve guncel asset referanslari) alinir; yeni surum yayinlandiginda eski
-// onbellek takili kalmaz. Cevrimdisiyken precache'teki index.html'e duser.
+// SPA gezinme istekleri: NetworkFirst. ONEMLI: bu rota, precache rotasindan
+// ONCE kayitli olmalidir; aksi halde Workbox'un precache rotasi (cache-first),
+// '/index.html' uzerinden eski (stale) uygulama kabugunu servis edebilir ve
+// yeni surum yayinlandiginda tarayici eski arayuzde takilir kalir. Cevrimdisiyken
+// precache'teki index.html'e duser.
 registerRoute(
   new NavigationRoute(
     new NetworkFirst({
@@ -41,6 +41,16 @@ registerRoute(
     { denylist: [/^\/api\//, /^\/ws\//] }
   )
 )
+
+precacheAndRoute(self.__WB_MANIFEST)
+
+// Aktivasyonda eski sayfa onbellegini temizle: yeni SW devreye girer girmez
+// taze index.html (ve guncel asset referanslari) alinir.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.delete('pages').catch(() => undefined)
+  )
+})
 
 // Finansal API yanitlari NetworkFirst ile tazelenir; cache yalnizca kisa sureli
 // cevrimdisi tampon olarak tutulur (finansal veri guncelligi + gizlilik).
