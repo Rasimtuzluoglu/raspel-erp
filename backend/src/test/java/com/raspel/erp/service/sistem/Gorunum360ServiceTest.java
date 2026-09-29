@@ -51,26 +51,52 @@ class Gorunum360ServiceTest {
     }
 
     @Test
-    void musteriSegment_riskliVeVipKurallari() {
+    void musteriSegment_riskliNetBorcKurali() {
+        // Riskli: net borç (negatif bakiye) kredi limitini aşmış.
         CariHesap vip = CariHesap.builder().id(1L).ad("VIP A.Ş.").bakiye(BigDecimal.ZERO).build();
-        CariHesap riskli = CariHesap.builder().id(2L).ad("Riskli Ltd.").bakiye(BigDecimal.ZERO).build();
-        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(vip, riskli));
+        CariHesap riskli = CariHesap.builder().id(2L).ad("Riskli Ltd.")
+                .bakiye(BigDecimal.valueOf(-25000)).krediLimiti(BigDecimal.valueOf(20000)).build();
+        // Alacaklı (pozitif bakiye) ama ödenmemiş faturası var -> RISKLI olmamalı.
+        CariHesap alacakli = CariHesap.builder().id(3L).ad("Alacaklı A.Ş.")
+                .bakiye(BigDecimal.valueOf(8000)).build();
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(vip, riskli, alacakli));
 
         Fatura fVip = Fatura.builder().id(1L).tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
                 .cariHesap(vip).genelToplam(BigDecimal.valueOf(150000)).kalanTutar(BigDecimal.ZERO)
                 .tarih(LocalDate.now().minusDays(5)).build();
         Fatura fRisk = Fatura.builder().id(2L).tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
-                .cariHesap(riskli).genelToplam(BigDecimal.valueOf(20000)).kalanTutar(BigDecimal.valueOf(15000))
+                .cariHesap(riskli).genelToplam(BigDecimal.valueOf(30000)).kalanTutar(BigDecimal.valueOf(15000))
                 .tarih(LocalDate.now().minusDays(3)).build();
-        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any())).thenReturn(List.of(fVip, fRisk));
+        Fatura fAlacak = Fatura.builder().id(3L).tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
+                .cariHesap(alacakli).genelToplam(BigDecimal.valueOf(20000)).kalanTutar(BigDecimal.valueOf(15000))
+                .tarih(LocalDate.now().minusDays(3)).build();
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any()))
+                .thenReturn(List.of(fVip, fRisk, fAlacak));
 
         var sonuc = service.musteriSegmentasyon(1L);
 
         var vipSatir = sonuc.getMusteriler().stream().filter(m -> m.getCariId().equals(1L)).findFirst().orElseThrow();
         var riskSatir = sonuc.getMusteriler().stream().filter(m -> m.getCariId().equals(2L)).findFirst().orElseThrow();
+        var alacakSatir = sonuc.getMusteriler().stream().filter(m -> m.getCariId().equals(3L)).findFirst().orElseThrow();
         assertEquals("VIP", vipSatir.getSegment());
         assertEquals("RISKLI", riskSatir.getSegment());
-        assertTrue(riskSatir.getGerekce().contains("alacak"));
+        assertTrue(riskSatir.getGerekce().contains("Net borç"));
+        assertNotEquals("RISKLI", alacakSatir.getSegment());
+    }
+
+    @Test
+    void musteriSegment_limitAltindakiBorcRiskliDegil() {
+        CariHesap borclu = CariHesap.builder().id(4L).ad("Küçük Borçlu")
+                .bakiye(BigDecimal.valueOf(-3000)).build();
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(borclu));
+        Fatura f = Fatura.builder().id(1L).tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
+                .cariHesap(borclu).genelToplam(BigDecimal.valueOf(5000)).kalanTutar(BigDecimal.valueOf(3000))
+                .tarih(LocalDate.now().minusDays(3)).build();
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(eq(1L), any(), any())).thenReturn(List.of(f));
+
+        var sonuc = service.musteriSegmentasyon(1L);
+
+        assertNotEquals("RISKLI", sonuc.getMusteriler().get(0).getSegment());
     }
 
     @Test

@@ -184,7 +184,7 @@ public class Gorunum360Service {
                     .map(d -> (int) ChronoUnit.DAYS.between(d, simdi))
                     .orElse(null);
 
-            SegmentSonuc seg = segmentBul(ciro, adet, kalan, sonFaturaGun, bakiye);
+            SegmentSonuc seg = segmentBul(ciro, adet, sonFaturaGun, bakiye, c.getKrediLimiti());
             satirlar.add(Gorunum360DTO.MusteriSegmentSatir.builder()
                     .cariId(c.getId())
                     .ad(c.getAd())
@@ -224,8 +224,13 @@ public class Gorunum360Service {
     /**
      * Kural tabanlı segment + gerekçe.
      * Öncelik: PASIF > RISKLI > VIP > DUZENLI > YENI > GELISMEDE.
+     *
+     * <p>Bakiye işaret kuralı: negatif = müşteri bize borçlu, pozitif = müşteri alacaklı.
+     * Bu nedenle RISKLI yalnızca <b>net borç</b> üzerinden belirlenir; alacaklı (pozitif
+     * bakiye) bir cari, geçmiş bir faturası ödenmemiş görünse bile riskli sayılmaz.
+     * Eşik: tanımlı kredi limiti varsa o, yoksa 10.000 ₺.
      */
-    private SegmentSonuc segmentBul(BigDecimal ciro, long adet, BigDecimal kalan, Integer sonGun, BigDecimal bakiye) {
+    private SegmentSonuc segmentBul(BigDecimal ciro, long adet, Integer sonGun, BigDecimal bakiye, BigDecimal krediLimiti) {
         BigDecimal vipCiro = BigDecimal.valueOf(100000);
         BigDecimal duzenliCiro = BigDecimal.valueOf(25000);
 
@@ -233,9 +238,13 @@ public class Gorunum360Service {
             return new SegmentSonuc("PASIF",
                     "Son 6 aydır (" + sonGun + " gün) satış yok");
         }
-        if (kalan.signum() > 0 && kalan.compareTo(BigDecimal.valueOf(10000)) > 0) {
+        BigDecimal borc = bakiye.signum() < 0 ? bakiye.negate() : BigDecimal.ZERO;
+        BigDecimal riskEsigi = (krediLimiti != null && krediLimiti.signum() > 0)
+                ? krediLimiti : BigDecimal.valueOf(10000);
+        if (borc.signum() > 0 && borc.compareTo(riskEsigi) >= 0) {
             return new SegmentSonuc("RISKLI",
-                    "Ödenmemiş " + kalan.setScale(0, RoundingMode.HALF_UP) + " ₺ alacak var");
+                    "Net borç " + borc.setScale(0, RoundingMode.HALF_UP) + " ₺ (risk eşiği "
+                            + riskEsigi.setScale(0, RoundingMode.HALF_UP) + " ₺)");
         }
         if (ciro.compareTo(vipCiro) >= 0) {
             return new SegmentSonuc("VIP",
