@@ -152,6 +152,32 @@ class PostgresEntegrasyonTest {
     }
 
     @Test
+    void faturaAra_nullTarihParametreleriyleCalisir() {
+        Long sirket = sirketOlustur("Ara Firma");
+        CariHesap cari = cariHesapRepository.save(ornekCari(sirket, "Ara Cari"));
+        faturaRepository.save(Fatura.builder()
+                .faturaNumarasi("ARA-1").tarih(LocalDate.of(2026, 2, 1))
+                .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
+                .cariHesap(cari)
+                .araToplam(BigDecimal.valueOf(100)).kdv(BigDecimal.valueOf(20))
+                .genelToplam(BigDecimal.valueOf(100)).kalanTutar(BigDecimal.valueOf(100))
+                .sirketId(sirket).build());
+
+        // Regresyon: null bas/bit parametreleri Postgres'te 42P18
+        // ("could not determine data type of parameter") veriyordu.
+        var sayfa = faturaRepository.ara(sirket, null, null, null,
+                Fatura.FaturaTur.SATIS, null, null, null, null,
+                LocalDate.of(2026, 6, 1), org.springframework.data.domain.PageRequest.of(0, 10));
+        assertEquals(1, sayfa.getTotalElements());
+
+        var sayfaFiltreli = faturaRepository.ara(sirket, null,
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31),
+                Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI, null, Boolean.FALSE, null,
+                LocalDate.of(2026, 6, 1), org.springframework.data.domain.PageRequest.of(0, 10));
+        assertEquals(1, sayfaFiltreli.getTotalElements());
+    }
+
+    @Test
     void cariHesap_tenantFiltreliSorguCalisir() {
         Long firmaAId = sirketOlustur("Firma A");
         Long firmaBId = sirketOlustur("Firma B");

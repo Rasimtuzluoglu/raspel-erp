@@ -22,7 +22,9 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
             "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
-            "AND (:bas IS NULL OR f.tarih >= :bas) AND (:bit IS NULL OR f.tarih <= :bit) " +
+            // Tarih filtresi COALESCE ile: null parametrelerde Postgres'in parametre tipini
+            // cozememesi (42P18) hatasini onler.
+            "AND f.tarih >= COALESCE(:bas, f.tarih) AND f.tarih <= COALESCE(:bit, f.tarih) " +
             "AND (:tur IS NULL OR f.tur = :tur) " +
             "AND (:durum IS NULL OR f.durum = :durum) " +
             "AND (:odemeDurumu IS NULL OR f.odemeDurumu = :odemeDurumu) " +
@@ -45,7 +47,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     /** Liste ekranı KPI şeridi: adet / ciro / tahsil edilen / kalan toplamları (tek sorgu). */
     @Query("SELECT COUNT(f), COALESCE(SUM(f.genelToplam), 0), COALESCE(SUM(f.odenenTutar), 0), COALESCE(SUM(f.kalanTutar), 0) " +
             "FROM Fatura f WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
-            "AND (:bas IS NULL OR f.tarih >= :bas) AND (:bit IS NULL OR f.tarih <= :bit)")
+            "AND f.tarih >= COALESCE(:bas, f.tarih) AND f.tarih <= COALESCE(:bit, f.tarih)")
     Object[] ozet(@Param("sirketId") Long sirketId, @Param("tur") Fatura.FaturaTur tur,
                   @Param("durum") Fatura.FaturaDurum durum,
                   @Param("bas") java.time.LocalDate bas, @Param("bit") java.time.LocalDate bit);
