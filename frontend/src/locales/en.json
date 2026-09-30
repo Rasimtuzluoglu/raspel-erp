@@ -4904,7 +4904,13 @@
     "urun": "Product",
     "urunNo": "Product #{id}",
     "aciklamaPlaceholder": "Item description",
-    "kdvLabel": "VAT:"
+    "kdvLabel": "VAT:",
+    "cogalt": "Duplicate",
+    "bosKalem": "No items yet. Start with quick add below.",
+    "hizliEkle": "Quick Add Item",
+    "stokAra": "Search stock (code / name / barcode)",
+    "ekle": "Add",
+    "hizliEkleIpucu": "Selecting a stock fills price and VAT; press Enter to add."
   },
   "sifre": {
     "title": "Change Password",

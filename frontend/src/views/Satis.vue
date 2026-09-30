@@ -261,66 +261,6 @@
         </div>
       </div>
 
-      <div class="urun-ekleme">
-        <div class="urun-ekle-satir">
-          <div class="form-group">
-            <label>{{ t('satis.urunSec') }}</label>
-            <AutoComplete
-              v-model="seciliUrun"
-              :suggestions="urunOnerileri"
-              option-label="ad"
-              :placeholder="t('satis.urunAra')"
-              :empty-search-message="t('satis.urunBulunamadi')"
-              class="w-full"
-              @complete="urunAra"
-              @option-select="urunSecildi"
-            >
-              <template #option="slotProps">
-                <div class="urun-opsiyon">
-                  <span class="urun-kod">{{ slotProps.option.stokKodu || slotProps.option.barkod }}</span>
-                  <span class="urun-ad">{{ slotProps.option.ad }}</span>
-                  <span class="urun-stok">{{ slotProps.option.miktar }} {{ slotProps.option.birim || t('satis.adetBirim') }}</span>
-                  <span class="urun-fiyat">{{ formatCurrency(slotProps.option.fiyat) }}</span>
-                </div>
-              </template>
-            </AutoComplete>
-          </div>
-          <div class="form-group">
-            <label>{{ t('satis.miktar') }}</label>
-            <InputNumber
-              v-model="yeniUrunAdet"
-              :min="1"
-              class="w-full"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('satis.birimFiyat') }}</label>
-            <InputNumber
-              v-model="yeniUrunFiyat"
-              :min="0"
-              :min-fraction-digits="2"
-              class="w-full"
-            />
-          </div>
-          <div class="form-group urun-ekle-btn">
-            <Button
-              icon="pi pi-plus"
-              :aria-label="$t('common.add')"
-              class="p-button-success"
-              :disabled="!seciliUrun || !yeniUrunAdet"
-              @click="urunEkle"
-            />
-          </div>
-        </div>
-        <small class="ipucu-metin">{{ t('satis.fiyatOtomatik') }}</small>
-        <CariUrunFiyatPaneli
-          v-if="seciliUrun && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
-          :fiyat-gecmisi="cariUrunFiyati"
-          :secenekler="fiyatSecenekleri"
-          @uygula="satisCariFiyatUygula"
-        />
-      </div>
-
       <div class="kalem-bolum">
         <h3 class="bolum-baslik">
           {{ t('satis.satisKalemleri') }}
@@ -332,8 +272,11 @@
             :kdv-toplam="kdvToplam"
             :genel-toplam="genelToplam"
             :kdv-secenekleri="kdvOranlari"
-            @add="satisForm.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })"
+            :kdv-varsayilan="0"
+            stok-arama
+            @add="kalemEkle"
             @remove="(i) => satisForm.kalemler.splice(i, 1)"
+            @stok-sec="stokSatirSecildi"
           />
         </div>
       </div>
@@ -380,11 +323,9 @@ import { useMarka } from '../composables/useMarka.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
-import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import KpiKart from '../components/KpiKart.vue'
 import AppDialog from '../components/AppDialog.vue'
-import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
 import { formatCurrency, formatPara, getLocalDateString, durumLabel as durumLabelUtil } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
@@ -408,10 +349,6 @@ const seciliDurum = ref('')
 const sadeceVadesiGecen = ref(false)
 const durumCipleri = ['KESILDI', 'TASLAK', 'IPTAL']
 const ozet = ref({ adet: 0, ciro: 0, tahsilEdilen: 0, kalan: 0 })
-const seciliUrun = ref(null)
-const urunOnerileri = ref([])
-const yeniUrunAdet = ref(1)
-const yeniUrunFiyat = ref(0)
 const kdvOranlari = [0, 1, 8, 10, 18, 20]
 
 // Sunucu tarafli sayfalama (tum fatura listesini cekip istemcide filtrelemek
@@ -566,66 +503,18 @@ const satisEylemleri = (s) => {
   return items
 }
 
-const urunAra = (e) => {
-  const q = (e.query || '').toLowerCase().trim()
-  const kaynak = stokStore.stoklar || []
-  urunOnerileri.value = !q
-    ? kaynak.slice(0, 30)
-    : kaynak
-        .filter((u) =>
-          (u.ad || '').toLowerCase().includes(q) ||
-          (u.stokKodu || '').toLowerCase().includes(q) ||
-          (u.barkod || '').toLowerCase().includes(q)
-        )
-        .slice(0, 30)
-}
+// Kalem listesine yeni satir ekler (FaturaKalemleri hizli ekleme / cogaltma).
+const kalemEkle = (row) => satisForm.value.kalemler.push(row)
 
-const urunSecildi = async () => {
-  const u = seciliUrun.value
-  if (!u) return
-  yeniUrunFiyat.value = u.fiyat
-  cariUrunFiyati.value = null
-  const cariId = satisForm.value.cariHesapId
-  if (cariId && u.id) {
-    try {
-      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, u.id)
-      cariUrunFiyati.value = r.data || null
-    } catch {
-      cariUrunFiyati.value = null
-    }
-  }
-  await fiyatlariYukle(cariId, u.id, u.fiyat)
-}
-
-// Faz 2: secilen cariye bu urunun son satis fiyati
-const cariUrunFiyati = ref(null)
-const { secenekler: fiyatSecenekleri, yukle: fiyatlariYukle, temizle: fiyatlariTemizle } = useUrunFiyatlari()
-const satisCariFiyatUygula = (f) => {
-  yeniUrunFiyat.value = f
-}
-
-const urunEkle = () => {
-  const u = seciliUrun.value
-  if (!u || !yeniUrunAdet.value) return
-  if (u.miktar < yeniUrunAdet.value) {
-    toastBildirim.uyari(t('satis.yetersizStok', { miktar: u.miktar, birim: u.birim || t('satis.adetBirim') }))
-    return
-  }
-  const brf = yeniUrunFiyat.value || u.fiyat
-  const kalemKdvOrani = Number(u.kdvOrani ?? 20)
-  satisForm.value.kalemler.push({
-    aciklama: u.ad,
-    adet: yeniUrunAdet.value,
-    birimFiyat: brf,
-    iskontoOrani: 0,
-    kdvOrani: kalemKdvOrani,
-    stokId: u.id
-  })
-  seciliUrun.value = null
-  urunOnerileri.value = []
-  yeniUrunAdet.value = 1
-  yeniUrunFiyat.value = 0
-  fiyatlariTemizle()
+// Satir icinde stok secilince satiri stok bilgisiyle doldurur (KDV: stokta
+// tanimliysa o, tanimli degilse 0 kalir).
+const stokSatirSecildi = ({ index, stok }) => {
+  const k = satisForm.value.kalemler[index]
+  if (!k || !stok) return
+  k.stokId = stok.id
+  k.aciklama = stok.ad
+  if (!k.birimFiyat) k.birimFiyat = stok.satisFiyati || stok.fiyat || 0
+  if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
 }
 
 const araToplam = computed(() =>
@@ -640,9 +529,6 @@ const dialogBaslik = computed(() => (satisModu.value === 'TEKLIF' ? t('satis.yen
 
 const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
-  seciliUrun.value = null
-  yeniUrunAdet.value = 1
-  yeniUrunFiyat.value = 0
   satisModu.value = 'SATIS'
   showSatisDialog.value = true
 }

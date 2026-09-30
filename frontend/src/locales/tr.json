@@ -4904,7 +4904,13 @@
     "urun": "Ürün",
     "urunNo": "Ürün #{id}",
     "aciklamaPlaceholder": "Kalem açıklaması",
-    "kdvLabel": "KDV:"
+    "kdvLabel": "KDV:",
+    "cogalt": "Çoğalt",
+    "bosKalem": "Henüz kalem yok. Aşağıdaki hızlı ekleme ile başlayın.",
+    "hizliEkle": "Hızlı Kalem Ekle",
+    "stokAra": "Stok ara (kod / ad / barkod)",
+    "ekle": "Ekle",
+    "hizliEkleIpucu": "Stok seçince fiyat ve KDV otomatik dolar; Enter ile ekleyebilirsiniz."
   },
   "sifre": {
     "title": "Şifre Değiştir",

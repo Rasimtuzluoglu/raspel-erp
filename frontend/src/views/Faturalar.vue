@@ -982,8 +982,9 @@ const personelListesiniYukle = async () => {
   }
 }
 
-const addKalem = () => {
-  form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 20 })
+const addKalem = (row) => {
+  // FaturaKalemleri hizli ekleme/cogaltma tam satiri gonderir; yoksa KDV 0 ile bos satir.
+  form.value.kalemler.push(row || { aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 0 })
 }
 
 // Satir icinde stok secilince satiri stok bilgisiyle doldur (fiyat = satis fiyati).
@@ -1069,7 +1070,7 @@ const urunEkleKalem = () => {
     adet: urunAdet.value,
     birimFiyat: cariFiyatOverride.value != null ? cariFiyatOverride.value : (u.satisFiyati || u.fiyat),
     iskontoOrani: 0,
-    kdvOrani: 20,
+    kdvOrani: u.kdvOrani != null ? Number(u.kdvOrani) : 0,
     stokId: u.id
   })
   urunSecimi.value = null
@@ -1148,7 +1149,7 @@ const sonUrunuEkle = (urun) => {
     adet: 1,
     birimFiyat: urun.sonBirimFiyat || (u ? (u.satisFiyati || u.fiyat) : 0),
     iskontoOrani: 0,
-    kdvOrani: 20,
+    kdvOrani: u?.kdvOrani != null ? Number(u.kdvOrani) : 0,
     stokId: urun.stokId || null
   })
     toastBildirim.basarili(t('faturalar.kalemEklendi'))
@@ -1177,7 +1178,7 @@ const sonFaturayiKopyala = async () => {
       stokId: k.stokId || null
     }))
     if (form.value.kalemler.length === 0) {
-      form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 20 })
+      form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 0 })
     }
     toastBildirim.basarili(t('faturalar.sonFaturaKopyalandi'))
   } catch {
