@@ -369,196 +369,30 @@
       <div class="pos-right">
         <Card class="siparis-kart">
           <template #content>
-            <div class="pos-bolum">
-              <div
-                class="pos-bolum-baslik katlanir-baslik"
-                :aria-expanded="musteriAcik"
-                :title="musteriAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
-                @click="musteriAcikDegistir"
-              >
-                <i class="pi pi-user" /> {{ t('hizliSatis.musteri') }}
-                <i
-                  class="pi katlanir-ok"
-                  :class="musteriAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                />
-              </div>
-              <div
-                v-show="musteriAcik"
-                class="customer-field"
-              >
-                <SelectButton
-                  v-model="musteriModu"
-                  :options="musteriModlari"
-                  option-label="label"
-                  option-value="value"
-                  :allow-empty="false"
-                  class="w-full musteri-modu"
-                />
-                <template v-if="musteriModu === 'musteri'">
-                  <AutoComplete
-                    ref="musteriAutoRef"
-                    v-model="musteriGiris"
-                    :suggestions="musteriOnerileri"
-                    option-label="ad"
-                    :placeholder="t('hizliSatis.musteriAra')"
-                    class="w-full"
-                    @complete="musteriAra($event)"
-                    @option-select="musteriSec"
-                  >
-                    <template #option="slotProps">
-                      <div class="musteri-option">
-                        {{ slotProps.option.ad }}
-                        <span class="musteri-option-detay">{{
-                          slotProps.option.vergiNo || slotProps.option.telefon
-                        }}</span>
-                      </div>
-                    </template>
-                  </AutoComplete>
-                  <div
-                    v-if="seciliMusteri"
-                    class="secili-musteri-chip"
-                  >
-                    <i class="pi pi-user" />
-                    <span class="secili-musteri-ad">{{ seciliMusteri.ad }}</span>
-                    <button
-                      type="button"
-                      class="secili-musteri-sil"
-                      :title="t('hizliSatis.musteriyiKaldir')"
-                      @click="musteriTemizle"
-                    >
-                      <i class="pi pi-times" />
-                    </button>
-                  </div>
-                  <div
-                    v-if="musteriBakiyeUyarisi"
-                    class="musteri-bakiye-uyari"
-                    :class="musteriBakiyeUyarisi.seviye"
-                  >
-                    <i :class="musteriBakiyeUyarisi.seviye === 'danger' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'" />
-                    {{ musteriBakiyeUyarisi.mesaj }}
-                  </div>
-                  <div
-                    v-if="degisimIadeId"
-                    class="degisim-bilgi"
-                  >
-                    <i class="pi pi-shopping-cart" />
-                    <span>{{ t('hizliSatis.degisimBilgi', { id: degisimIadeId }) }}</span>
-                    <button
-                      type="button"
-                      class="degisim-kapat"
-                      :title="t('common.close')"
-                      @click="degisimIadeId = null"
-                    >
-                      <i class="pi pi-times" />
-                    </button>
-                  </div>
-                  <Button
-                    :label="t('hizliSatis.yeni')"
-                    severity="secondary"
-                    size="small"
-                    @click="yeniMusteriDialog = true"
-                  />
-                </template>
-              </div>
-            </div>
-
-            <!-- Teslimat (opsiyonel): sofor secilirse satistan sonra teslimat kaydi acilir -->
-            <div class="pos-bolum">
-              <button
-                type="button"
-                class="pos-bolum-baslik katlanir-baslik"
-                :aria-expanded="teslimatAcik"
-                :title="teslimatAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
-                @click="teslimatAcikDegistir"
-              >
-                <span class="katlanir-sol">
-                  <i
-                    class="pi katlanir-ok"
-                    :class="teslimatAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                  />
-                  <i class="pi pi-truck" /> {{ t('hizliSatis.teslimat') }}
-                </span>
-                <span
-                  v-if="!teslimatAcik && seciliSofor"
-                  class="katlanir-rozet"
-                >{{ teslimEdenEtiketi }}</span>
-              </button>
-              <template v-if="teslimatAcik">
-                <p class="teslimat-ipucu">
-                  {{ t('hizliSatis.teslimatIpucu') }}
-                </p>
-                <div class="teslim-eden-alan">
-                  <label for="hizli-teslim-sofor">{{ t('hizliSatis.sofor') }}</label>
-                  <Dropdown
-                    id="hizli-teslim-sofor"
-                    v-model="seciliSofor"
-                    :options="soforler"
-                    option-label="ad"
-                    :loading="soforlerYukleniyor"
-                    filter
-                    :show-clear="true"
-                    :placeholder="t('hizliSatis.soforSecin')"
-                    class="w-full"
-                  >
-                    <template #option="s">
-                      <div class="personel-opsiyon">
-                        <i class="pi pi-user" />
-                        <span>{{ s.option.ad }}</span>
-                        <span
-                          v-if="s.option.rol && s.option.rol !== 'DRIVER'"
-                          class="sofor-rol-uyari"
-                          :title="t('hizliSatis.soforRolUyari')"
-                        >
-                          <i class="pi pi-exclamation-triangle" />
-                        </span>
-                        <span
-                          v-if="s.option.bekleyenTeslimatSayisi"
-                          class="sofor-bekleyen"
-                        >{{ s.option.bekleyenTeslimatSayisi }}</span>
-                      </div>
-                    </template>
-                  </Dropdown>
-                </div>
-                <div
-                  v-if="seciliSofor"
-                  class="teslim-eden-alan"
-                >
-                  <label for="hizli-teslim-adres">
-                    {{ t('hizliSatis.teslimatAdresi') }} <span class="zorunlu">*</span>
-                  </label>
-                  <InputText
-                    id="hizli-teslim-adres"
-                    v-model="teslimatAdresi"
-                    :placeholder="t('hizliSatis.adresPlaceholder')"
-                    class="w-full"
-                  />
-                </div>
-                <div
-                  v-if="seciliSofor"
-                  class="teslim-eden-alan"
-                >
-                  <label>{{ t('hizliSatis.teslimDurumu') }}</label>
-                  <SelectButton
-                    v-model="teslimDurumu"
-                    :options="teslimDurumSecenekleri"
-                    option-label="label"
-                    option-value="value"
-                    :allow-empty="false"
-                    class="w-full teslim-durum-secim"
-                  />
-                </div>
-                <div
-                  v-if="seciliSofor"
-                  class="teslim-eden-alan"
-                >
-                  <InputText
-                    v-model="teslimNotu"
-                    :placeholder="t('hizliSatis.teslimNotuPlaceholder')"
-                    class="w-full"
-                  />
-                </div>
-              </template>
-            </div>
+            <PosMusteriPaneli
+              ref="musteriPaneliRef"
+              v-model:musteri-acik="musteriAcik"
+              v-model:musteri-modu="musteriModu"
+              v-model:musteri-giris="musteriGiris"
+              v-model:teslimat-acik="teslimatAcik"
+              v-model:secili-sofor="seciliSofor"
+              v-model:teslimat-adresi="teslimatAdresi"
+              v-model:teslim-durumu="teslimDurumu"
+              v-model:teslim-notu="teslimNotu"
+              :musteri-modlari="musteriModlari"
+              :musteri-onerileri="musteriOnerileri"
+              :secili-musteri="seciliMusteri"
+              :musteri-bakiye-uyarisi="musteriBakiyeUyarisi"
+              :degisim-iade-id="degisimIadeId"
+              :soforler="soforler"
+              :soforler-yukleniyor="soforlerYukleniyor"
+              :teslim-durum-secenekleri="teslimDurumSecenekleri"
+              @musteri-ara="musteriAra"
+              @musteri-sec="musteriSec"
+              @musteri-temizle="musteriTemizle"
+              @degisim-kapat="degisimIadeId = null"
+              @yeni-musteri="yeniMusteriDialog = true"
+            />
 
             <PosSepetPaneli
               ref="sepetListeRef"
@@ -925,9 +759,9 @@ import PosBugunkuSatislarDialog from '../components/PosBugunkuSatislarDialog.vue
 import PosUrunKarti from '../components/PosUrunKarti.vue'
 import PosOdemePaneli from '../components/PosOdemePaneli.vue'
 import PosSepetPaneli from '../components/PosSepetPaneli.vue'
+import PosMusteriPaneli from '../components/PosMusteriPaneli.vue'
 import { faturaAPI, cariHesapAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
-import AutoComplete from 'primevue/autocomplete'
 import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { formatCurrency, formatDateTime, getLocalDateString } from '../utils/format.js'
@@ -1006,7 +840,7 @@ const handlePosKeys = (e) => {
   if (e.key === 'F4') {
     e.preventDefault()
     musteriModu.value = 'musteri'
-    nextTick(() => odakla(musteriAutoRef))
+    nextTick(() => odakla(musteriPaneliRef.value?.musteriAutoRef))
     return
   }
   if (e.key === 'F5') {
@@ -1112,10 +946,6 @@ const detayAcik = ref(localStorage.getItem('raspel_pos_detay_acik') === 'true')
 // Bugunku satislar: sag sutunda yer kaplamasin diye dialog'da gosterilir.
 const bugunkuDialog = ref(false)
 
-const musteriAcikDegistir = () => {
-  musteriAcik.value = !musteriAcik.value
-  localStorage.setItem('raspel_pos_musteri_acik', String(musteriAcik.value))
-}
 const sepetAcikDegistir = () => {
   sepetAcik.value = !sepetAcik.value
   localStorage.setItem('raspel_pos_sepet_acik', String(sepetAcik.value))
@@ -1124,10 +954,6 @@ const odemeAcikDegistir = () => {
   odemeAcik.value = !odemeAcik.value
   localStorage.setItem('raspel_pos_odeme_acik', String(odemeAcik.value))
 }
-const teslimatAcikDegistir = () => {
-  teslimatAcik.value = !teslimatAcik.value
-  localStorage.setItem('raspel_pos_teslimat_acik', String(teslimatAcik.value))
-}
 const fisAcikKaydet = () => {
   localStorage.setItem('raspel_pos_fis_acik', String(fisAcik.value))
 }
@@ -1135,6 +961,10 @@ const detayAcikDegistir = () => {
   detayAcik.value = !detayAcik.value
   localStorage.setItem('raspel_pos_detay_acik', String(detayAcik.value))
 }
+
+// Katlanir bolum tercihleri v-model ile degistiginde kalici kaydet.
+watch(musteriAcik, (v) => localStorage.setItem('raspel_pos_musteri_acik', String(v)))
+watch(teslimatAcik, (v) => localStorage.setItem('raspel_pos_teslimat_acik', String(v)))
 
 const buyukYaziKaydet = () => {
   localStorage.setItem('raspel_pos_buyuk_yazi', String(buyukYazi.value))
@@ -1170,7 +1000,7 @@ const filtrePopover = ref(null)
 const tercihPopover = ref(null)
 const barkodInputRef = ref(null)
 const aramaInputRef = ref(null)
-const musteriAutoRef = ref(null)
+const musteriPaneliRef = ref(null)
 const aktifSatir = ref(-1)
 const sepetListeRef = ref(null)
 const ipucuAcik = ref(localStorage.getItem('raspel_pos_ipucu_acik') === 'true')
@@ -1727,9 +1557,6 @@ const teslimDurumSecenekleri = computed(() => [
 
 // POS'ta secilen soforun adi; fis/fatura uzerine "Teslim Eden" olarak yazilir.
 const teslimEden = computed(() => seciliSofor.value?.ad || '')
-
-// Teslimat bolumu katliyken secili soforu rozet olarak gosterir.
-const teslimEdenEtiketi = computed(() => seciliSofor.value?.ad || '')
 
 const soforleriYukle = async () => {
   soforlerYukleniyor.value = true
