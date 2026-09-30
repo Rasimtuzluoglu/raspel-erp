@@ -152,6 +152,8 @@
   "giris": {
     "subtitle": "KOBİ'nin Tek Panosu",
     "girisYapiliyor": "Giriş yapılıyor…",
+    "welcomeUser": "Hoş geldiniz, {ad}",
+    "yonlendiriliyor": "Sizi içeri alıyoruz…",
     "rememberMe": "Beni Hatırla",
     "forgotPassword": "Şifremi Unuttum",
     "twoFactorTitle": "İki Faktörlü Doğrulama",
@@ -4946,7 +4948,6 @@
     "yok": "Bildirim yok"
   },
   "onboarding": {
-    "demoYukle": "Demo Veriyi Yükle",
     "adim1Baslik": "Şirket Bilgileri",
     "adim1Aciklama": "Şirket adı, vergi no ve iletişim bilgilerinizi düzenleyin.",
     "adim1Buton": "Şirkete Git",
@@ -4956,12 +4957,8 @@
     "adim3Aciklama": "Stok ürünlerinizi, fiyatları ve birimlerini ekleyin.",
     "adim4Baslik": "İlk Faturanızı Kesin",
     "adim4Aciklama": "Satış veya alış faturanızı oluşturun.",
-    "demoYuklendi": "Demo Veri Yüklendi",
-    "demoYuklendiDetay": "Örnek cari, stok ve kategoriler eklendi.",
-    "demoHata": "Demo veri yüklenirken hata oluştu.",
     "hosGeldiniz": "RasPel ERP'ye Hoş Geldiniz!",
     "bosSistem": "Sisteminiz şu anda boş görünüyor. Başlamak için birkaç adım:",
-    "demoDoldur": "Demo verileriyle doldurulsun",
     "atla": "Atla, kendim kuracağım",
     "adim2Buton": "Cari Ekle",
     "adim3Buton": "Stok Ekle",

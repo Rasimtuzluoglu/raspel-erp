@@ -150,7 +150,6 @@
 
     <Onboarding
       v-if="!loading && bosSistem && onboardingGoster"
-      @demo-loaded="demoYuklendi"
       @atla="onboardingAtla"
     />
 
@@ -1278,17 +1277,6 @@ const onboardingGoster = ref(false)
 const onboardingAtla = () => {
   localStorage.setItem('raspel_erp_onboarding_atlandi', '1')
   onboardingGoster.value = false
-}
-
-const demoYuklendi = async () => {
-  localStorage.setItem('raspel_erp_onboarding_atlandi', '1')
-  onboardingGoster.value = false
-  try {
-    await dashboardStore.getDashboardData()
-    grafikleriHesapla()
-  } catch (e) {
-    console.error('Demo sonrası dashboard yenilenemedi:', e)
-  }
 }
 
 const toplamFatura = computed(() => dashboardStore.toplamFatura || 0)

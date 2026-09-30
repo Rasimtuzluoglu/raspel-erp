@@ -38,17 +38,6 @@
       </div>
 
       <div class="onboard-alt">
-        <div class="demo-secim">
-          <InputSwitch v-model="demoVeriIsteniyor" />
-          <span>{{ $t('onboarding.demoDoldur') }}</span>
-        </div>
-        <Button
-          :label="$t('onboarding.demoYukle')"
-          icon="pi pi-download"
-          class="p-button-success p-button-lg"
-          :loading="demoYukleniyor"
-          @click="demoYukle"
-        />
         <a
           class="onboard-atla"
           @click="atla"
@@ -59,20 +48,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'primevue/usetoast'
-import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { cariHesapAPI, stokAPI, kategoriAPI } from '../api/index.js'
 
 const router = useRouter()
 const { t } = useI18n()
-const toast = useToast()
-const toastBildirim = useToastBildirim()
-const demoVeriIsteniyor = ref(true)
-const demoYukleniyor = ref(false)
-const emit = defineEmits(['demo-loaded', 'atla'])
+const emit = defineEmits(['atla'])
 
 const adimlar = reactive([
   {
@@ -115,89 +97,6 @@ const adimTikla = (adim) => {
 
 const atla = () => {
   emit('atla')
-}
-
-const demoYukle = async () => {
-  demoYukleniyor.value = true
-  try {
-    // Demo kayitlari veri olarak saklanir; Turkce karakterler Unicode kacisi ile yazilir.
-    await kategoriAPI.create({ ad: 'Mobilya', tur: 'GIDER' })
-    await kategoriAPI.create({ ad: 'Sat\u0131\u015f', tur: 'GELIR' })
-
-    const ornekCariler = [
-      {
-        ad: 'Demo M\u00fc\u015fteri A',
-        vergiNo: '1111111111',
-        telefon: '0532 111 11 11',
-        email: 'musteria@demo.com',
-        il: '\u0130stanbul'
-      },
-      {
-        ad: 'Demo M\u00fc\u015fteri B',
-        vergiNo: '2222222222',
-        telefon: '0532 222 22 22',
-        email: 'musterib@demo.com',
-        il: 'Ankara'
-      },
-      {
-        ad: 'Demo Tedarik\u00e7i',
-        vergiNo: '3333333333',
-        telefon: '0532 333 33 33',
-        email: 'tedarikci@demo.com',
-        il: '\u0130zmir'
-      }
-    ]
-    for (const c of ornekCariler) await cariHesapAPI.create(c)
-
-    const ornekStoklar = [
-      {
-        ad: 'MDF 18mm',
-        stokKodu: 'MDF-18',
-        barkod: '8690001',
-        birim: 'Adet',
-        fiyat: 850,
-        satisFiyati: 1050,
-        miktar: 100,
-        minMiktar: 10
-      },
-      {
-        ad: 'PVC Bant Beyaz',
-        stokKodu: 'PVC-B01',
-        barkod: '8690002',
-        birim: 'Rulo',
-        fiyat: 45,
-        satisFiyati: 75,
-        miktar: 200,
-        minMiktar: 20
-      },
-      {
-        ad: 'Sunta 16mm',
-        stokKodu: 'SUNTA-16',
-        barkod: '8690003',
-        birim: 'Adet',
-        fiyat: 520,
-        satisFiyati: 690,
-        miktar: 80,
-        minMiktar: 10
-      }
-    ]
-    for (const s of ornekStoklar) await stokAPI.create(s)
-
-    toast.add({
-      severity: 'success',
-      summary: t('onboarding.demoYuklendi'),
-      detail: t('onboarding.demoYuklendiDetay'),
-      life: 5000
-    })
-    adimlar.forEach((a) => {
-      a.tamam = true
-    })
-    emit('demo-loaded')
-  } catch (e) {
-    toastBildirim.hata(t('onboarding.demoHata'))
-  } finally {
-    demoYukleniyor.value = false
-  }
 }
 </script>
 
@@ -280,17 +179,6 @@ const demoYukle = async () => {
   flex-direction: column;
   gap: 1rem;
   align-items: center;
-}
-.demo-secim {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-.p-button-lg {
-  font-size: 1.05rem;
-  padding: 0.7rem 1.8rem;
 }
 .onboard-atla {
   font-size: 0.8rem;

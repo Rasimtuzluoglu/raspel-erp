@@ -22,11 +22,13 @@
 - [ ] `ACME_EMAIL` ortam degiskeni gecerli bir e-posta (Let's Encrypt icin)
 - [ ] `app.backup.dir` erisilebilir bir dizine isaret ediyor
 - [ ] `app.admin.*` degiskenleri kontrol edildi, demo admin kullanicisi yok
+- [ ] Bos sistemde onboarding yalnizca firma + yonetici olusturuyor; demo veri yukleme ozelligi yok
 
 ## Veritabani
 
 - [ ] Flyway migration'lari hatasiz calisti
 - [ ] `sistem.kullanici` tablosunda demo hesaplar (admin/admin123 vb.) yok
+- [ ] Teslim oncesi DB sifirdan kuruldu (`docker-compose down -v`); `sistem.sirket`'te yalnizca musteri firmasi var, `RasPel Test`/`YUK TESTI` gibi kayitlar yok
 - [ ] Yedekleme calisiyor (`/actuator/health` uzerinden kontrol edin)
 - [ ] Otomatik yedekleme cron'u dogru zamana ayarlandi
 

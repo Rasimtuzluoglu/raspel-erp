@@ -28,11 +28,31 @@ docker-compose up -d --build
 | Grafana | http://localhost:3000 (admin/admin) |
 | Prometheus | http://localhost:9090 |
 
-**Varsayılan kullanıcılar (dev):**
-- `admin` / `admin123` (ADMIN)
-- `muhasebe` / `123456` (USER)
+**İlk giriş (kurulum sihirbazı):**
+- Hazır demo kullanıcı/veri **gelmez**. Sistemde hiç firma yokken giriş sayfası **İlk Kurulum** sihirbazını gösterir.
+- Firma bilgileri + yönetici hesabı (kendi belirlediğiniz kullanıcı adı/şifre) girilir; kayıt sonrası otomatik giriş yapılır.
+- Böylece teslim edilen sistemde uygulamanın eklediği hiçbir demo hesap/veri bulunmaz.
 
-> **Uyarı:** Varsayılan parolaları ilk girişte mutlaka değiştirin!
+> **Uyarı:** İlk kurulumda güçlü bir yönetici şifresi belirleyin.
+
+### 1.1 Sıfırdan Temiz Kurulum (Müşteri Teslimi)
+
+Sistemi müşteriye tamamen boş teslim etmek için:
+
+```bash
+# 1. Varsa eski veri/hacimleri temizle (DB, MinIO, yedekler dahil)
+docker-compose down -v
+
+# 2. Temiz stack'i başlat
+docker-compose up -d --build
+
+# 3. İlk kurulumun gerekli olduğunu doğrula
+curl -s http://localhost/api/kurulum/durum   # {"kurulumGerekli":true}
+```
+
+Ardından tarayıcıdan giriş yapın; **İlk Kurulum** ekranı açılır ve yalnızca müşteri firması + yönetici hesabı oluşturulur. Demo veri yüklenmez.
+
+> **Not:** `down -v` kalıcı hacimleri (postgres, minio, prometheus, grafana, rabbitmq, redis, letsencrypt, yedekler) siler. Canlı verisi olan bir sunucuda kullanmayın.
 
 ## 2. Üretim Kurulumu (SSL ile)
 

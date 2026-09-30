@@ -15,20 +15,51 @@
       <div class="sahne-parilti p2" />
     </div>
 
-    <!-- Giris yapiliyor: sirket logosuyla yumusak gecis (logo sicramasini onler) -->
+    <!-- Giris yapiliyor: sirket logolu markali karsilama (logo sicramasini onler) -->
     <Transition name="gy-fade">
       <div
         v-if="girisYapiliyor"
         class="giris-yukleniyor"
+        role="status"
+        aria-live="polite"
+        :aria-busy="!karsilamaHazir"
       >
         <div class="gy-kutu">
-          <img
-            :src="sirketLogo || markaLogoIcon"
-            class="gy-logo"
-            alt="RasPel"
+          <div
+            class="gy-logo-halka"
+            :class="{ 'gy-hazir': karsilamaHazir }"
           >
-          <i class="pi pi-spin pi-spinner gy-spinner" />
-          <span>{{ $t('giris.girisYapiliyor') }}</span>
+            <img
+              :src="sirketLogo || markaLogoIcon"
+              class="gy-logo"
+              alt="RasPel"
+            >
+            <Transition name="gy-tik">
+              <span
+                v-if="karsilamaHazir"
+                class="gy-tik"
+              >
+                <i class="pi pi-check" />
+              </span>
+            </Transition>
+          </div>
+          <div class="gy-metin">
+            <span
+              v-if="karsilamaSirketAdi"
+              class="gy-sirket"
+            >{{ karsilamaSirketAdi }}</span>
+            <span
+              v-if="karsilamaKullaniciAdi"
+              class="gy-selam"
+            >{{ $t('giris.welcomeUser', { ad: karsilamaKullaniciAdi }) }}</span>
+            <span class="gy-durum">{{ karsilamaHazir ? $t('giris.yonlendiriliyor') : $t('giris.girisYapiliyor') }}</span>
+          </div>
+          <div class="gy-cubuk">
+            <span
+              class="gy-cubuk-dolgu"
+              :style="{ width: karsilamaIlerleme + '%' }"
+            />
+          </div>
         </div>
       </div>
     </Transition>
@@ -461,8 +492,16 @@ const ikiFaktorAdimi = ref(false)
 const sirketSecimAdimi = ref(false)
 const ikiFaktorKod = ref('')
 const girisToken = ref('')
-// Sirket secilip oturum acilirken gosterilen yumusak "Giris yapiliyor" durumu.
+// Sirket secilip oturum acilirken gosterilen markali karsilama durumu.
 const girisYapiliyor = ref(false)
+// Markali karsilama aninin minimum gosterim suresi (ag hizindan bagimsiz).
+const KARSILAMA_MIN_MS = 1800
+// Basari tikinden sonra yonlendirme oncesi kisa bekleme.
+const KARSILAMA_CIKIS_MS = 280
+const karsilamaSirketAdi = ref('')
+const karsilamaKullaniciAdi = ref('')
+const karsilamaIlerleme = ref(0)
+const karsilamaHazir = ref(false)
 
 const sifirlaUsername = ref('')
 const sifirlaGonderiliyor = ref(false)
@@ -701,24 +740,46 @@ const girisYap = async () => {
   }
 }
 
+/** Karsilama katmanini sifirlar (hata veya tekrar deneme durumunda). */
+const karsilamaSifirla = () => {
+  girisYapiliyor.value = false
+  karsilamaSirketAdi.value = ''
+  karsilamaKullaniciAdi.value = ''
+  karsilamaIlerleme.value = 0
+  karsilamaHazir.value = false
+}
+
 const sirketSecVeGirisYap = async (sirket) => {
   hata.value = ''
   sirketLogo.value = sirket.logoUrl || ''
   authStore.sirketLogosunuAyarla(sirket.logoUrl || '')
-  // Yumusak, markali karsilama: yonlendirmeden once logo minimum sure gorunur;
-  // boylece "gelip hizla kaybolma" hissi olmaz, kisa bir "hos geldiniz" anı kalir.
+  // Markali karsilama: logo + sirket adi + kullanici selami ile "hos geldiniz" anı.
+  karsilamaSirketAdi.value = sirket.ad || ''
+  karsilamaKullaniciAdi.value = ''
+  karsilamaHazir.value = false
+  karsilamaIlerleme.value = 0
   girisYapiliyor.value = true
   const baslangic = Date.now()
+  // Ilk faz: cubuk hizla dolup yavaslar (bekleme hissini azaltir).
+  setTimeout(() => {
+    if (girisYapiliyor.value && !karsilamaHazir.value) karsilamaIlerleme.value = 85
+  }, 60)
   try {
     await authStore.girisSirket(girisToken.value, sirket.id, beniHatirla.value)
+    karsilamaKullaniciAdi.value = authStore.kullanici?.displayName || ''
     localStorage.setItem('raspel_erp_son_sirket', sirket.id)
     if (sirket.ad) localStorage.setItem('raspel_erp_son_sirket_ad', sirket.ad)
-    // Minimum gosterim suresi (0.9s) dolana kadar bekle.
-    const kalan = 900 - (Date.now() - baslangic)
+    // Minimum gosterim suresi dolana kadar bekle; azaltilmis hareket tercihinde kisa tut.
+    const minSure = hareketAzalt.value ? 700 : KARSILAMA_MIN_MS
+    const kalan = minSure - (Date.now() - baslangic)
     if (kalan > 0) await new Promise((r) => setTimeout(r, kalan))
+    // Basari fazi: cubuk %100 + tik; kisa bir "hos geldiniz" anindan sonra yonlendir.
+    karsilamaIlerleme.value = 100
+    karsilamaHazir.value = true
+    await new Promise((r) => setTimeout(r, KARSILAMA_CIKIS_MS))
     await router.push('/')
   } catch (err) {
-    girisYapiliyor.value = false
+    karsilamaSifirla()
     hata.value = err.response?.data?.message || t('giris.companySelectFailed')
   }
 }
@@ -1630,6 +1691,14 @@ const tumAdimlariSifirla = () => {
   :deep(.rotate-fade-leave-active) {
     transition: none;
   }
+  .gy-kutu,
+  .gy-logo,
+  .gy-logo-halka {
+    animation: none;
+  }
+  .gy-cubuk-dolgu {
+    transition: none;
+  }
 }
 
 /* Responsive Düzen */
@@ -1700,7 +1769,7 @@ const tumAdimlariSifirla = () => {
   }
 }
 
-/* Giris yapiliyor katmani: sirket logosuyla yumusak gecis */
+/* Giris yapiliyor katmani: sirket logolu markali karsilama */
 .giris-yukleniyor {
   position: fixed;
   inset: 0;
@@ -1708,31 +1777,108 @@ const tumAdimlariSifirla = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-header, rgba(10, 14, 20, 0.82));
-  backdrop-filter: blur(6px);
+  background:
+    radial-gradient(60% 60% at 50% 42%, var(--giris-tint-30, rgba(20, 184, 166, 0.3)), transparent 70%),
+    var(--bg-header, rgba(10, 14, 20, 0.86));
+  backdrop-filter: blur(8px);
 }
 .gy-kutu {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 28px 36px;
-  border-radius: 16px;
+  gap: 14px;
+  padding: 30px 40px 26px;
+  border-radius: 20px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
   color: var(--text-primary);
-  font-weight: 600;
+  text-align: center;
+  animation: gyKutuGiris 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.gy-logo-halka {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 45%, var(--giris-tint-20, rgba(20, 184, 166, 0.2)), transparent 70%);
+  box-shadow:
+    0 0 0 1px var(--giris-tint-30, rgba(20, 184, 166, 0.3)),
+    0 10px 30px var(--giris-tint-25, rgba(20, 184, 166, 0.25));
+  animation: gyHalkaNabiz 2.2s ease-in-out infinite;
+  transition: box-shadow 0.3s ease;
+}
+.gy-logo-halka.gy-hazir {
+  animation: none;
+  box-shadow:
+    0 0 0 2px var(--giris-aksan, #14b8a6),
+    0 10px 30px var(--giris-tint-35, rgba(20, 184, 166, 0.35));
 }
 .gy-logo {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 14px;
+  animation: gyLogoGiris 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.gy-spinner {
-  font-size: 22px;
-  color: var(--accent);
+.gy-tik {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--giris-aksan, #14b8a6);
+  color: var(--accent-contrast, #ffffff);
+  box-shadow: 0 4px 12px var(--giris-tint-40, rgba(20, 184, 166, 0.4));
+}
+.gy-tik i {
+  font-size: 14px;
+  font-weight: 700;
+}
+.gy-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.gy-sirket {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gy-selam {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--giris-aksan, var(--accent));
+}
+.gy-durum {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.gy-cubuk {
+  width: 180px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--giris-tint-15, rgba(20, 184, 166, 0.15));
+  overflow: hidden;
+}
+.gy-cubuk-dolgu {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--giris-aksan, #14b8a6), var(--giris-aksan-parlak, #2dd4bf));
+  transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .gy-fade-enter-active,
 .gy-fade-leave-active {
@@ -1741,5 +1887,24 @@ const tumAdimlariSifirla = () => {
 .gy-fade-enter-from,
 .gy-fade-leave-to {
   opacity: 0;
+}
+.gy-tik-enter-active {
+  animation: gyTikGiris 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes gyKutuGiris {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes gyLogoGiris {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes gyHalkaNabiz {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+@keyframes gyTikGiris {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

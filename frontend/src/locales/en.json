@@ -152,6 +152,8 @@
   "giris": {
     "subtitle": "The SME's Single Dashboard",
     "girisYapiliyor": "Signing in…",
+    "welcomeUser": "Welcome, {ad}",
+    "yonlendiriliyor": "Taking you in…",
     "rememberMe": "Remember Me",
     "forgotPassword": "Forgot Password",
     "twoFactorTitle": "Two-Factor Authentication",
@@ -4946,7 +4948,6 @@
     "yok": "No notifications"
   },
   "onboarding": {
-    "demoYukle": "Load Demo Data",
     "adim1Baslik": "Company Information",
     "adim1Aciklama": "Edit your company name, tax number and contact information.",
     "adim1Buton": "Go to Company",
@@ -4956,12 +4957,8 @@
     "adim3Aciklama": "Add your stock products, prices and units.",
     "adim4Baslik": "Issue Your First Invoice",
     "adim4Aciklama": "Create your sales or purchase invoice.",
-    "demoYuklendi": "Demo Data Loaded",
-    "demoYuklendiDetay": "Sample accounts, stock and categories have been added.",
-    "demoHata": "An error occurred while loading demo data.",
     "hosGeldiniz": "Welcome to RasPel ERP!",
     "bosSistem": "Your system looks empty right now. A few steps to get started:",
-    "demoDoldur": "Fill with demo data",
     "atla": "Skip, I will set it up myself",
     "adim2Buton": "Add Account",
     "adim3Buton": "Add Stock",
