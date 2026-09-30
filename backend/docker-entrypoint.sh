@@ -8,8 +8,14 @@
 # Linux VPS hem Docker Desktop'ta davranis aynidir.
 set -e
 
-# Oncelik: JAVA_MAX_HEAP env (or. "1500m" veya "1024") > cgroup limitinin %65'i.
+# Oncelik: JAVA_MAX_HEAP env (or. "1500m" veya "1024") > cgroup limitinin %60'i.
 HEAP_MB=""
+
+# Metaspace siniri: Spring Boot + Hibernate + cok sayida entity/controller icin
+# 160m yetmiyordu; 158m'e ulasinca "OutOfMemoryError: Metaspace" ile JVM
+# ExitOnOutOfMemoryError sayesinde cokup konteyner donguye giriyordu. Env ile
+# ayarlanabilir; varsayilan 320m (2g limitli konteynerde guvenli).
+METASPACE="${JAVA_MAX_METASPACE:-320m}"
 
 if [ -n "${JAVA_MAX_HEAP:-}" ]; then
   case "$JAVA_MAX_HEAP" in
@@ -33,7 +39,7 @@ if [ -z "$HEAP_MB" ]; then
     case "$v" in ''|*[!0-9]*) ;; *) LIMIT_BYTES="$v" ;; esac
   fi
   if [ -n "$LIMIT_BYTES" ]; then
-    HEAP_MB=$(( LIMIT_BYTES / 1048576 * 65 / 100 ))
+    HEAP_MB=$(( LIMIT_BYTES / 1048576 * 60 / 100 ))
   fi
 fi
 
@@ -44,14 +50,14 @@ if [ -n "$HEAP_MB" ]; then
   XMS_MB=$(( HEAP_MB / 3 ))
   echo "[entrypoint] Bellek limiti algilandi; heap -Xmx${HEAP_MB}m -Xms${XMS_MB}m"
   exec java -Xmx${HEAP_MB}m -Xms${XMS_MB}m -Xss512k \
-    -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=96m -XX:ReservedCodeCacheSize=96m \
+    -XX:MaxMetaspaceSize=${METASPACE} -XX:MaxDirectMemorySize=96m -XX:ReservedCodeCacheSize=96m \
     -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof \
     -XX:+ExitOnOutOfMemoryError -jar app.jar
 fi
 
 # Limit okunamadiysa yuzde tabanli geri donus (en azindan bir sinir koyar).
 echo "[entrypoint] Bellek limiti okunamadi; MaxRAMPercentage=65 kullaniliyor"
-exec java -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=25 -Xss512k \
-  -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=96m -XX:ReservedCodeCacheSize=96m \
+exec java -XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=25 -Xss512k \
+  -XX:MaxMetaspaceSize=${METASPACE} -XX:MaxDirectMemorySize=96m -XX:ReservedCodeCacheSize=96m \
   -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof \
   -XX:+ExitOnOutOfMemoryError -jar app.jar
