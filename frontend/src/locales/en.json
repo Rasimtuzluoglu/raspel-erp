@@ -1332,6 +1332,8 @@
     "duzenleBaslik": "Edit Sale",
     "duzenleEdildi": "Sale updated",
     "guncelle": "Update",
+    "tahsilatOpsiyon": "Payment (optional)",
+    "teslimatOpsiyon": "Delivery (optional)",
     "iptalOnay": "Do you want to cancel sale {no}?",
     "iptalBaslik": "Cancel Sale",
     "iptalEdildi": "Sale cancelled",

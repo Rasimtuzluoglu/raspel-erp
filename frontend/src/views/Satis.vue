@@ -293,6 +293,148 @@
         />
       </div>
 
+      <!-- Opsiyonel: Tahsilat (yoksa acik/vadeli hesap) -->
+      <details
+        v-if="satisModu === 'SATIS'"
+        class="opsiyon-bolum"
+      >
+        <summary><i class="pi pi-wallet" /> {{ t('satis.tahsilatOpsiyon') }}</summary>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>{{ t('hizliSatis.odeme') }}</label>
+            <SelectButton
+              v-model="odemeDurumu"
+              :options="odemeDurumSecenekleri"
+              option-label="label"
+              option-value="value"
+              :allow-empty="false"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group">
+            <label>{{ t('hizliSatis.odenenTutar') }}</label>
+            <InputNumber
+              v-model="odenenTutar"
+              :min="0"
+              :max="genelToplam"
+              mode="currency"
+              currency="TRY"
+              locale="tr-TR"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div
+          v-if="odemeDurumu !== 'yok'"
+          class="form-grid-2"
+        >
+          <div class="form-group">
+            <label>{{ t('hizliSatis.odemeYontemi') }}</label>
+            <Dropdown
+              v-model="odemeYontemi"
+              :options="odemeYontemListesi"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group">
+            <label>{{ t('hizliSatis.kasa') }}</label>
+            <Dropdown
+              v-model="seciliKasa"
+              :options="kasalar"
+              option-label="ad"
+              option-value="id"
+              show-clear
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div
+          v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
+          class="form-grid-2"
+        >
+          <div class="form-group">
+            <label>{{ t('hizliSatis.bankaSecin') }}</label>
+            <Dropdown
+              v-model="seciliBanka"
+              :options="bankalar"
+              option-label="ad"
+              option-value="id"
+              show-clear
+              class="w-full"
+            />
+          </div>
+          <div
+            v-if="odemeYontemi === 'KART'"
+            class="form-group"
+          >
+            <label>{{ t('hizliSatis.posTerminali') }}</label>
+            <Dropdown
+              v-model="seciliPos"
+              :options="posTerminalleri"
+              option-label="ad"
+              option-value="id"
+              show-clear
+              class="w-full"
+            />
+          </div>
+        </div>
+      </details>
+
+      <!-- Opsiyonel: Teslimat -->
+      <details
+        v-if="satisModu === 'SATIS'"
+        class="opsiyon-bolum"
+      >
+        <summary><i class="pi pi-truck" /> {{ t('satis.teslimatOpsiyon') }}</summary>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>{{ t('hizliSatis.sofor') }}</label>
+            <Dropdown
+              v-model="seciliSofor"
+              :options="soforler"
+              option-label="ad"
+              option-value="id"
+              filter
+              show-clear
+              :loading="soforlerYukleniyor"
+              class="w-full"
+            />
+          </div>
+          <div class="form-group">
+            <label>{{ t('hizliSatis.teslimDurumu') }}</label>
+            <Dropdown
+              v-model="teslimDurumu"
+              :options="teslimDurumSecenekleri"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div
+          v-if="seciliSofor"
+          class="form-group"
+        >
+          <label>{{ t('hizliSatis.teslimatAdresi') }} <span class="zorunlu">*</span></label>
+          <InputText
+            v-model="teslimatAdresi"
+            class="w-full"
+          />
+        </div>
+        <div
+          v-if="seciliSofor"
+          class="form-group"
+        >
+          <label>{{ t('hizliSatis.teslimNotu') }}</label>
+          <InputText
+            v-model="teslimNotu"
+            class="w-full"
+          />
+        </div>
+      </details>
+
       <template #footer>
         <Button
           :label="t('common.cancel')"
@@ -317,7 +459,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { faturaAPI, teklifAPI } from '../api/index.js'
+import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -373,6 +515,74 @@ const satisForm = ref({
   kalemler: []
 })
 
+// Opsiyonel tahsilat + teslimat (POS ile ayni payload alanlari).
+const odemeDurumu = ref('tam')
+const odemeDurumSecenekleri = computed(() => [
+  { label: t('hizliSatis.odemeTipTam'), value: 'tam' },
+  { label: t('hizliSatis.odemeTipYarim'), value: 'yarim' },
+  { label: t('hizliSatis.odemeTipYok'), value: 'yok' }
+])
+const odemeYontemi = ref('NAKIT')
+const odemeYontemListesi = computed(() => [
+  { label: t('hizliSatis.nakit'), value: 'NAKIT' },
+  { label: t('hizliSatis.kart'), value: 'KART' },
+  { label: t('hizliSatis.havale'), value: 'HAVALE' }
+])
+const odenenTutar = ref(0)
+const seciliKasa = ref(null)
+const kasalar = ref([])
+const seciliBanka = ref(null)
+const bankalar = ref([])
+const seciliPos = ref(null)
+const posTerminalleri = ref([])
+const seciliSofor = ref(null)
+const soforler = ref([])
+const soforlerYukleniyor = ref(false)
+const teslimatAdresi = ref('')
+const teslimDurumu = ref('BEKLIYOR')
+const teslimNotu = ref('')
+const teslimDurumSecenekleri = [
+  { label: 'Bekliyor', value: 'BEKLIYOR' },
+  { label: 'Yolda', value: 'YOLDA' },
+  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' }
+]
+
+// Odeme durumu -> backend enum'u (POS ile ayni kural).
+const odemeDurumEnum = computed(() => {
+  if (odemeDurumu.value === 'yok' || !odenenTutar.value) return 'ODENMEDI'
+  if (odenenTutar.value >= genelToplam.value) return 'ODENDI'
+  return 'KISMI_ODENDI'
+})
+
+const opsiyonlariSifirla = () => {
+  odemeDurumu.value = 'tam'
+  odemeYontemi.value = 'NAKIT'
+  odenenTutar.value = 0
+  seciliKasa.value = null
+  seciliBanka.value = null
+  seciliPos.value = null
+  seciliSofor.value = null
+  teslimatAdresi.value = ''
+  teslimDurumu.value = 'BEKLIYOR'
+  teslimNotu.value = ''
+}
+
+const opsiyonVerileriniYukle = async () => {
+  await Promise.allSettled([
+    kasaAPI.getAll().then((r) => { kasalar.value = unwrapList(r) }),
+    bankaAPI.getAll().then((r) => { bankalar.value = unwrapList(r) }),
+    posAPI.aktif().then((r) => { posTerminalleri.value = unwrapList(r) })
+  ])
+  soforlerYukleniyor.value = true
+  try {
+    soforler.value = unwrapList(await teslimatAPI.suruculer())
+  } catch {
+    soforler.value = []
+  } finally {
+    soforlerYukleniyor.value = false
+  }
+}
+
 const tarihAraligi = ref(null)
 
 const tarihParametreleri = () => {
@@ -383,6 +593,7 @@ const tarihParametreleri = () => {
 onMounted(async () => {
   // Store'lar hata firlatir; bir hata digerlerini engellemesin.
   await Promise.allSettled([satislariYukle(), ozetiYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
+  opsiyonVerileriniYukle()
   // FaturaDetay'dan "Duzenle" ile gelindiyse ilgili satisi duzenleme modunda ac.
   const duzenleId = Number(route.query.duzenle)
   if (duzenleId) {
@@ -554,6 +765,7 @@ const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
   duzenlenenId.value = null
   satisModu.value = 'SATIS'
+  opsiyonlariSifirla()
   showSatisDialog.value = true
 }
 
@@ -619,23 +831,60 @@ const satisiTamamla = async () => {
       showSatisDialog.value = false
       return
     }
+    // Duzenlemede tahsilat/teslimat opsiyonlari tekrar uygulanmaz (kayitli
+    // deger korunur); yalnizca yeni satista odeme/teslimat gonderilir.
+    const ekstra = duzenlenenId.value ? {} : {
+      odenenTutar: odemeDurumu.value === 'yok' ? 0 : odenenTutar.value,
+      odemeDurumu: odemeDurumEnum.value,
+      odemeYontemi: odemeDurumu.value === 'yok' ? '' : odemeYontemi.value,
+      kasaId: odemeYontemi.value === 'NAKIT' ? (seciliKasa.value || null) : null,
+      bankaId: (odemeYontemi.value === 'KART' || odemeYontemi.value === 'HAVALE') ? (seciliBanka.value || null) : null,
+      posTerminaliId: odemeYontemi.value === 'KART' ? (seciliPos.value || null) : null,
+      teslimEden: seciliSofor.value?.ad || null,
+      teslimDurumu: seciliSofor.value ? teslimDurumu.value : null,
+      teslimNotu: seciliSofor.value ? (teslimNotu.value || null) : null
+    }
     const payload = satisPayloadUret({
       cariHesapId: satisForm.value.cariHesapId,
       tur: 'SATIS',
       durum: duzenlenenId.value ? duzenlenenDurum.value : 'KESILDI',
       tarih: getLocalDateString(satisForm.value.tarih),
       aciklama: satisForm.value.aciklama,
-      kalemler: satisForm.value.kalemler
+      kalemler: satisForm.value.kalemler,
+      ekstra
     })
     if (duzenlenenId.value) {
       await faturaAPI.update(duzenlenenId.value, payload)
       toastBildirim.basarili(t('satis.duzenleEdildi'))
-    } else {
-      await faturaAPI.create(payload)
-      toastBildirim.basarili(t('satis.satisTamamlandi'))
+      showSatisDialog.value = false
+      duzenlenenId.value = null
+      await satislariYukle()
+      return
     }
+    // Teslimat adresi sofor secildiyse zorunlu.
+    if (seciliSofor.value && !teslimatAdresi.value.trim()) {
+      toastBildirim.uyari(t('hizliSatis.teslimatAdresiGerekli'))
+      saving.value = false
+      return
+    }
+    const yanit = await faturaAPI.create(payload)
     showSatisDialog.value = false
-    duzenlenenId.value = null
+    // Sofor secildiyse satis sonrasi teslimat kaydi acilir (POS ile ayni akis).
+    if (seciliSofor.value?.id && yanit?.data?.id) {
+      const mutabakat = { BEKLIYOR: 'BEKLEMEDE', YOLDA: 'YOLDA', TESLIM_EDILDI: 'TESLIM_EDILDI' }
+      try {
+        await teslimatAPI.olustur({
+          faturaId: yanit.data.id,
+          driverId: seciliSofor.value.id,
+          teslimatAdresi: teslimatAdresi.value.trim(),
+          notlar: teslimNotu.value?.trim() || null,
+          durum: mutabakat[teslimDurumu.value] || 'BEKLEMEDE'
+        })
+      } catch (e) {
+        toastBildirim.uyari(e?.response?.data?.message || t('hizliSatis.teslimatKaydedilemedi'))
+      }
+    }
+    toastBildirim.basarili(t('satis.satisTamamlandi'))
     await satislariYukle()
   } catch (err) {
     const msg = err.response?.data?.message || t('satis.satisBasarisiz')

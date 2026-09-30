@@ -1332,6 +1332,8 @@
     "duzenleBaslik": "Satışı Düzenle",
     "duzenleEdildi": "Satış güncellendi",
     "guncelle": "Güncelle",
+    "tahsilatOpsiyon": "Tahsilat (opsiyonel)",
+    "teslimatOpsiyon": "Teslimat (opsiyonel)",
     "iptalOnay": "{no} numaralı satışı iptal etmek istiyor musunuz?",
     "iptalBaslik": "Satışı İptal Et",
     "iptalEdildi": "Satış iptal edildi",
