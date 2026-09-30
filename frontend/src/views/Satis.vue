@@ -92,6 +92,7 @@
         striped-rows
         class="satis-tablo"
         @page="sayfaDegisti"
+        @row-click="(e) => detayAc(e.data)"
       >
         <template #empty>
           <EmptyState />
@@ -100,7 +101,11 @@
           field="faturaNumarasi"
           :header="t('satis.colFaturaNo')"
           style="width: 150px"
-        />
+        >
+          <template #body="s">
+            <span class="fatura-no-link">{{ s.data.faturaNumarasi }}</span>
+          </template>
+        </Column>
         <Column
           field="tarih"
           :header="t('common.date')"
@@ -214,6 +219,122 @@
         </Column>
       </DataTable>
     </div>
+
+    <Drawer
+      v-model:visible="detayGorunur"
+      position="right"
+      :header="detayFatura?.faturaNumarasi || t('satis.detayBaslik')"
+      class="satis-detay-drawer"
+      :style="{ width: 'min(440px, 100vw)' }"
+    >
+      <div
+        v-if="detayYukleniyor"
+        class="detay-yukleniyor"
+      >
+        <i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}
+      </div>
+      <div
+        v-else-if="detayFatura"
+        class="detay-icerik"
+      >
+        <div class="detay-ust">
+          <span :class="['durum-badge', (detayFatura.durum || '').toLowerCase()]">{{ durumLabel(detayFatura.durum) }}</span>
+          <Tag
+            v-if="detayFatura.odemeDurumu"
+            :value="odemeDurumEtiketi(detayFatura.odemeDurumu)"
+            :severity="odemeDurumSeverity(detayFatura.odemeDurumu)"
+          />
+        </div>
+        <div class="detay-satir">
+          <span>{{ t('satis.colMusteri') }}</span>
+          <strong>{{ detayFatura.cariHesapAd || t('satis.perakendeMusteri') }}</strong>
+        </div>
+        <div class="detay-satir">
+          <span>{{ t('common.date') }}</span>
+          <strong>{{ formatDate(detayFatura.tarih) }}</strong>
+        </div>
+        <div
+          v-if="detayFatura.vadeTarihi"
+          class="detay-satir"
+        >
+          <span>{{ t('satis.vade') }}</span>
+          <strong>{{ formatDate(detayFatura.vadeTarihi) }}</strong>
+        </div>
+
+        <h4 class="detay-baslik">
+          {{ t('satis.satisKalemleri') }}
+        </h4>
+        <div class="detay-kalemler">
+          <div
+            v-for="(k, i) in detayFatura.kalemler || []"
+            :key="i"
+            class="detay-kalem"
+          >
+            <span class="detay-kalem-ad">{{ k.aciklama || k.ad }}</span>
+            <span class="detay-kalem-adet">{{ k.adet }} × {{ formatCurrency(k.birimFiyat) }}</span>
+            <span class="detay-kalem-tutar">{{ formatCurrency(k.tutar || (k.adet * k.birimFiyat)) }}</span>
+          </div>
+        </div>
+
+        <div class="detay-toplamlar">
+          <div class="detay-satir">
+            <span>{{ t('faturaKalemleri.araToplam') }}</span>
+            <strong>{{ formatPara(detayFatura.araToplam, detayFatura.paraBirimi) }}</strong>
+          </div>
+          <div class="detay-satir">
+            <span>{{ t('satis.colKdv') }}</span>
+            <strong>{{ formatPara(detayFatura.kdv, detayFatura.paraBirimi) }}</strong>
+          </div>
+          <div class="detay-satir detay-genel">
+            <span>{{ t('common.amount') }}</span>
+            <strong>{{ formatPara(detayFatura.genelToplam, detayFatura.paraBirimi) }}</strong>
+          </div>
+          <div
+            v-if="Number(detayFatura.odenenTutar || 0) > 0"
+            class="detay-satir"
+          >
+            <span>{{ t('hizliSatis.odenenTutar') }}</span>
+            <strong>{{ formatPara(detayFatura.odenenTutar, detayFatura.paraBirimi) }}</strong>
+          </div>
+          <div
+            v-if="Number(detayFatura.kalanTutar || 0) > 0"
+            class="detay-satir kalan-var"
+          >
+            <span>{{ t('satis.colKalan') }}</span>
+            <strong>{{ formatPara(detayFatura.kalanTutar, detayFatura.paraBirimi) }}</strong>
+          </div>
+        </div>
+
+        <div class="detay-aksiyonlar">
+          <Button
+            v-if="detayFatura.durum !== 'IPTAL' && Number(detayFatura.odenenTutar || 0) === 0"
+            :label="t('satis.duzenle')"
+            icon="pi pi-pencil"
+            class="p-button-outlined"
+            @click="detayDuzenle"
+          />
+          <Button
+            :label="t('satis.goruntule')"
+            icon="pi pi-eye"
+            class="p-button-outlined"
+            @click="router.push(`/faturalar/${detayFatura.id}`)"
+          />
+          <Button
+            v-if="detayFatura.durum === 'KESILDI' && Number(detayFatura.kalanTutar || 0) > 0"
+            :label="t('satis.tahsilatAl')"
+            icon="pi pi-money-bill"
+            class="p-button-success"
+            @click="tahsilataGit(detayFatura)"
+          />
+          <Button
+            :label="t('satis.a4Yazdir')"
+            icon="pi pi-print"
+            class="p-button-text"
+            @click="printFatura(detayFatura.id)"
+          />
+        </div>
+      </div>
+    </Drawer>
 
     <AppDialog
       v-model:visible="showSatisDialog"
@@ -487,6 +608,10 @@ const authStore = useAuthStore()
 const { sirketLogosu } = useMarka()
 
 const satislar = ref([])
+// Sag panel detay drawer.
+const detayGorunur = ref(false)
+const detayFatura = ref(null)
+const detayYukleniyor = ref(false)
 const showSatisDialog = ref(false)
 const saving = ref(false)
 const filtre = ref('')
@@ -665,6 +790,28 @@ const teslimatDurumEtiketi = (d) =>
   ({ BEKLEMEDE: t('teslimatlar.durumBeklemede'), YOLDA: t('teslimatlar.durumYolda'), TESLIM_EDILDI: t('teslimatlar.durumTeslimEdildi'), IPTAL: t('teslimatlar.durumIptal') })[d] || d
 
 const tahsilataGit = (s) => router.push({ name: 'Tahsilat', query: { cariId: s.cariHesapId } })
+
+// Satira tiklayinca sag panelde detay acilir (sayfa degismeden).
+const detayAc = async (s) => {
+  if (!s?.id) return
+  detayGorunur.value = true
+  detayYukleniyor.value = true
+  detayFatura.value = s
+  try {
+    const r = await faturaAPI.getById(s.id)
+    detayFatura.value = r.data || s
+  } catch {
+    detayFatura.value = s
+  } finally {
+    detayYukleniyor.value = false
+  }
+}
+
+const detayDuzenle = () => {
+  if (!detayFatura.value) return
+  detayGorunur.value = false
+  openSatisDuzenle(detayFatura.value)
+}
 
 const satisIptal = (s) => {
   confirm.require({
@@ -1256,6 +1403,94 @@ h1 {
 .durum-badge.iptal {
   background: var(--bg-muted, rgba(148, 163, 184, 0.1));
   color: var(--text-muted);
+}
+.fatura-no-link {
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.satis-detay-drawer :deep(.p-drawer-content) {
+  padding-top: 0;
+}
+.detay-yukleniyor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  padding: 20px 0;
+}
+.detay-ust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.detay-satir {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+.detay-satir strong {
+  color: var(--text-primary);
+  text-align: right;
+}
+.detay-baslik {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.detay-kalemler {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+}
+.detay-kalem {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.detay-kalem-ad {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.detay-kalem-adet {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.detay-kalem-tutar {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.detay-toplamlar {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.detay-toplamlar .detay-genel strong {
+  font-size: 16px;
+}
+.detay-toplamlar .kalan-var strong {
+  color: var(--danger);
+}
+.detay-aksiyonlar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
 }
 .satis-modu {
   display: flex;

@@ -1335,6 +1335,8 @@
     "guncelle": "Update",
     "tahsilatOpsiyon": "Payment (optional)",
     "teslimatOpsiyon": "Delivery (optional)",
+    "detayBaslik": "Sale Detail",
+    "vade": "Due date",
     "iptalOnay": "Do you want to cancel sale {no}?",
     "iptalBaslik": "Cancel Sale",
     "iptalEdildi": "Sale cancelled",

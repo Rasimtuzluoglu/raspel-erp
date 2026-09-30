@@ -1335,6 +1335,8 @@
     "guncelle": "Güncelle",
     "tahsilatOpsiyon": "Tahsilat (opsiyonel)",
     "teslimatOpsiyon": "Teslimat (opsiyonel)",
+    "detayBaslik": "Satış Detayı",
+    "vade": "Vade",
     "iptalOnay": "{no} numaralı satışı iptal etmek istiyor musunuz?",
     "iptalBaslik": "Satışı İptal Et",
     "iptalEdildi": "Satış iptal edildi",
