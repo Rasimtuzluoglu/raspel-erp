@@ -1006,27 +1006,22 @@
               />
             </div>
 
-            <div
+            <details
               v-if="sepet.length > 0"
-              class="pos-bolum"
+              class="fis-detay pos-bolum"
+              @toggle="fisAcik = $event.target.open; fisAcikKaydet()"
             >
-              <div class="pos-bolum-baslik fis-baslik-satir">
-                <button
-                  type="button"
-                  class="katlanir-baslik katlanir-baslik-inline"
-                  :aria-expanded="fisAcik"
-                  :title="fisAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
-                  @click="fisAcikDegistir"
+              <summary class="fis-baslik-satir">
+                <span
+                  class="katlanir-sol fis-detay-ozet"
                 >
-                  <span class="katlanir-sol">
-                    <i
-                      class="pi katlanir-ok"
-                      :class="fisAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                    />
-                    <i class="pi pi-print" /> {{ t('hizliSatis.fisOnizleme') }}
-                  </span>
-                </button>
-                <div class="fis-ayarlar">
+                  <i class="pi pi-print" /> {{ t('hizliSatis.fisOnizleme') }}
+                  <i class="pi katlanir-ok pi-chevron-down" />
+                </span>
+                <div
+                  class="fis-ayarlar"
+                  @click.prevent.stop
+                >
                   <Button
                     :label="t('hizliSatis.yazdirF9')"
                     icon="pi pi-print"
@@ -1042,11 +1037,8 @@
                     @click="termalYazdir"
                   />
                 </div>
-              </div>
-              <div
-                v-show="fisAcik"
-                class="fis-onizleme-kapsam"
-              >
+              </summary>
+              <div class="fis-onizleme-kapsam">
                 <PosFisOnizleme
                   :sirket-logosu="sirketLogosu"
                   :sirket-adi="sirketAdi"
@@ -1066,7 +1058,7 @@
                   :fis-alt-notu="fisAltNotu"
                 />
               </div>
-            </div>
+            </details>
           </template>
         </Card>
       </div>
@@ -1454,10 +1446,11 @@ const otomatikYazdirKaydet = () => {
   localStorage.setItem('raspel_pos_otomatik_yazdir', String(otomatikYazdir.value))
 }
 
-// Katlanabilir bolum tercihleri (varsayilan: yalnizca musteri ACik; sepet/odeme/
-// teslimat/fis KAPALI; kullanici secimi hatirlanir).
+// Katlanabilir bolum tercihleri. Ana kasa akisi her zaman gorunur:
+//   Musteri (adim 1) -> Sepet (adim 2) -> Odeme (adim 3).
+// Gelismis alanlar (teslimat, fis onizleme, detay) varsayilan KAPALI gelir; boylece
+// sag panel sadelesir ve kasiyer akisi net olur. Kullanici secimi hatirlanir.
 const musteriAcik = ref(localStorage.getItem('raspel_pos_musteri_acik') !== 'false')
-// Varsayilan ACIK: kasiyer taradigi urunleri ve secili odeme yontemini gormeli.
 const sepetAcik = ref(localStorage.getItem('raspel_pos_sepet_acik') !== 'false')
 const odemeAcik = ref(localStorage.getItem('raspel_pos_odeme_acik') !== 'false')
 const teslimatAcik = ref(localStorage.getItem('raspel_pos_teslimat_acik') === 'true')
@@ -1483,8 +1476,7 @@ const teslimatAcikDegistir = () => {
   teslimatAcik.value = !teslimatAcik.value
   localStorage.setItem('raspel_pos_teslimat_acik', String(teslimatAcik.value))
 }
-const fisAcikDegistir = () => {
-  fisAcik.value = !fisAcik.value
+const fisAcikKaydet = () => {
   localStorage.setItem('raspel_pos_fis_acik', String(fisAcik.value))
 }
 const detayAcikDegistir = () => {
@@ -4058,7 +4050,29 @@ const sepetiTemizle = () => {
   padding: 0;
 }
 .fis-baslik-satir {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.fis-baslik-satir::-webkit-details-marker {
+  display: none;
+}
+.fis-detay-ozet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.fis-detay[open] .fis-detay-ozet .katlanir-ok {
+  transform: rotate(180deg);
+}
+.fis-detay-ozet .katlanir-ok {
+  transition: transform 0.15s ease;
 }
 .fis-card-header {
   display: flex;
