@@ -495,10 +495,10 @@ const girisToken = ref('')
 // Sirket secilip oturum acilirken gosterilen markali karsilama durumu.
 const girisYapiliyor = ref(false)
 // Markali karsilama aninin minimum gosterim suresi (ag hizindan bagimsiz).
-// Sirket logosu musteriye "ozel" hissettirecek sekilde uzun tutulur.
-const KARSILAMA_MIN_MS = 3000
+// Sirket logosu musteriye "ozel" hissettirecek kadar gorunur ama bekletmez.
+const KARSILAMA_MIN_MS = 1700
 // Basari tikinden sonra yonlendirme oncesi kisa bekleme.
-const KARSILAMA_CIKIS_MS = 500
+const KARSILAMA_CIKIS_MS = 300
 const karsilamaSirketAdi = ref('')
 const karsilamaKullaniciAdi = ref('')
 const karsilamaIlerleme = ref(0)
@@ -1879,7 +1879,7 @@ const tumAdimlariSifirla = () => {
   width: 0;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--giris-aksan, #14b8a6), var(--giris-aksan-parlak, #2dd4bf));
-  transition: width 2.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .gy-fade-enter-active,
 .gy-fade-leave-active {
