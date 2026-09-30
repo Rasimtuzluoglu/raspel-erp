@@ -770,208 +770,33 @@
               </div>
             </div>
 
-            <div class="pos-bolum">
-              <div
-                class="pos-bolum-baslik katlanir-baslik"
-                :aria-expanded="odemeAcik"
-                :title="odemeAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
-                @click="odemeAcikDegistir"
-              >
-                <i class="pi pi-wallet" /> {{ t('hizliSatis.odeme') }}
-                <i
-                  class="pi katlanir-ok"
-                  :class="odemeAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
-                />
-              </div>
-              <div v-show="odemeAcik">
-                <SelectButton
-                  v-model="odemeDurumu"
-                  :options="odemeTipleri"
-                  option-label="label"
-                  option-value="value"
-                  class="w-full"
-                />
-                <div
-                  v-if="odemeDurumu !== 'yok'"
-                  class="odenen-satir"
-                >
-                  <label>{{ t('hizliSatis.odenenTutar') }}</label>
-                  <InputNumber
-                    v-model="odenenTutar"
-                    :min="0"
-                    :max="genelToplam"
-                    mode="currency"
-                    currency="TRY"
-                    locale="tr-TR"
-                    class="w-full"
-                  />
-                </div>
-
-                <div
-                  v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
-                  class="odenen-satir"
-                >
-                  <label>{{ t('hizliSatis.alinanNakit') }}</label>
-                  <InputNumber
-                    v-model="alinanNakit"
-                    :min="0"
-                    mode="currency"
-                    currency="TRY"
-                    locale="tr-TR"
-                    class="w-full"
-                  />
-                  <div
-                    v-if="paraUstu > 0"
-                    class="para-ustu"
-                  >
-                    <span>{{ t('hizliSatis.paraUstu') }}:</span>
-                    <strong>{{ formatCurrency(paraUstu) }}</strong>
-                  </div>
-                  <div class="hizli-nakit">
-                    <button
-                      v-for="n in hizliNakit"
-                      :key="n"
-                      type="button"
-                      class="hizli-nakit-btn"
-                      @click="alinanNakit = (alinanNakit || 0) + n"
-                    >
-                      {{ n }}
-                    </button>
-                    <button
-                      type="button"
-                      class="hizli-nakit-btn tam"
-                      @click="alinanNakit = genelToplam"
-                    >
-                      {{ t('hizliSatis.nakitTam') }}
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  v-if="odemeDurumu !== 'yok'"
-                  class="odenen-satir"
-                >
-                  <label>{{ t('hizliSatis.odemeYontemi') }}</label>
-                  <div class="odeme-yontem-grid">
-                    <button
-                      v-for="y in odemeYontemleri"
-                      :key="y.value"
-                      type="button"
-                      class="odeme-yontem-btn"
-                      :class="{ active: odemeYontemi === y.value }"
-                      @click="odemeYontemi = y.value"
-                    >
-                      <i :class="y.icon" />
-                      {{ y.label }}
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
-                  class="taksit-panel"
-                >
-                  <div class="odenen-satir">
-                    <label>{{ t('hizliSatis.taksitKurum') }}</label>
-                    <InputText
-                      v-model="taksitKurum"
-                      :placeholder="t('hizliSatis.taksitKurumPlaceholder')"
-                      class="w-full"
-                    />
-                  </div>
-                  <div class="odenen-satir">
-                    <label>{{ t('hizliSatis.taksitTutar') }}</label>
-                    <InputNumber
-                      v-model="taksitTutar"
-                      :min="0"
-                      :max="genelToplam"
-                      mode="currency"
-                      currency="TRY"
-                      locale="tr-TR"
-                      class="w-full"
-                    />
-                  </div>
-                  <div class="odenen-satir">
-                    <label>{{ t('hizliSatis.taksitSayisi') }}</label>
-                    <InputNumber
-                      v-model="taksitSayisi"
-                      :min="1"
-                      :max="60"
-                      show-buttons
-                      class="w-full"
-                    />
-                  </div>
-                </div>
-
-                <div class="odenen-satir">
-                  <label>{{ t('hizliSatis.kasa') }}</label>
-                  <Dropdown
-                    v-model="seciliKasa"
-                    :options="kasalar"
-                    option-label="ad"
-                    option-value="id"
-                    :placeholder="t('hizliSatis.kasaSecin')"
-                    class="w-full"
-                  />
-                </div>
-
-                <div
-                  v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
-                  class="odenen-satir"
-                >
-                  <label>{{ odemeYontemi === 'KART' ? t('hizliSatis.kartBankaAktar') : t('hizliSatis.havaleBanka') }}</label>
-                  <Dropdown
-                    v-model="seciliBanka"
-                    :options="bankalar"
-                    option-label="ad"
-                    option-value="id"
-                    :placeholder="t('hizliSatis.bankaSecin')"
-                    show-clear
-                    class="w-full"
-                  />
-                </div>
-
-                <div
-                  v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
-                  class="odenen-satir pos-secim"
-                >
-                  <label>{{ t('hizliSatis.posTerminali') }}</label>
-                  <Dropdown
-                    v-model="seciliPos"
-                    :options="posTerminalleri"
-                    option-label="ad"
-                    option-value="id"
-                    :placeholder="t('hizliSatis.posSecin')"
-                    show-clear
-                    class="w-full"
-                  />
-                  <small
-                    v-if="seciliPosBilgi"
-                    class="pos-komisyon-not"
-                  >
-                    {{ t('hizliSatis.posKomisyonNot', {
-                      oran: seciliPosBilgi.komisyonOrani ?? 0,
-                      komisyon: formatCurrency(hesaplananKomisyon)
-                    }) }}
-                  </small>
-                </div>
-
-                <div class="odeme-durum">
-                  <Tag
-                    :value="odemeDurumText"
-                    :severity="odemeDurumSeverity"
-                    class="w-full"
-                  />
-                </div>
-                <div
-                  v-if="kalanTutar > 0"
-                  class="odeme-kalan"
-                >
-                  <span>{{ t('hizliSatis.kalan') }}:</span>
-                  <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
-                </div>
-              </div>
-            </div>
+            <PosOdemePaneli
+              v-model:odeme-durumu="odemeDurumu"
+              v-model:odeme-yontemi="odemeYontemi"
+              v-model:odenen-tutar="odenenTutar"
+              v-model:alinan-nakit="alinanNakit"
+              v-model:taksit-kurum="taksitKurum"
+              v-model:taksit-tutar="taksitTutar"
+              v-model:taksit-sayisi="taksitSayisi"
+              v-model:secili-kasa="seciliKasa"
+              v-model:secili-banka="seciliBanka"
+              v-model:secili-pos="seciliPos"
+              :acik="odemeAcik"
+              :odeme-tipleri="odemeTipleri"
+              :odeme-yontemleri="odemeYontemleri"
+              :para-ustu="paraUstu"
+              :hizli-nakit="hizliNakit"
+              :kasalar="kasalar"
+              :bankalar="bankalar"
+              :pos-terminalleri="posTerminalleri"
+              :secili-pos-bilgi="seciliPosBilgi"
+              :hesaplanan-komisyon="hesaplananKomisyon"
+              :genel-toplam="genelToplam"
+              :kalan-tutar="kalanTutar"
+              :odeme-durum-text="odemeDurumText"
+              :odeme-durum-severity="odemeDurumSeverity"
+              @toggle="odemeAcikDegistir"
+            />
 
             <div class="sticky-tamamla">
               <div class="fis-modu-satir">
@@ -1274,6 +1099,7 @@ import PosFisOnizleme from '../components/PosFisOnizleme.vue'
 import PosSatisOzetDialog from '../components/PosSatisOzetDialog.vue'
 import PosBugunkuSatislarDialog from '../components/PosBugunkuSatislarDialog.vue'
 import PosUrunKarti from '../components/PosUrunKarti.vue'
+import PosOdemePaneli from '../components/PosOdemePaneli.vue'
 import { faturaAPI, cariHesapAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import AutoComplete from 'primevue/autocomplete'
