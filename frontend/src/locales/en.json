@@ -876,6 +876,7 @@
     "siralaStok": "By Stock",
     "tumu": "All",
     "kdvDahil": "VAT incl.",
+    "kdvOranli": "VAT {oran}% incl.",
     "stokYok": "Out of stock",
     "stokYokUyari": "{ad} is out of stock",
     "stokAdet": "Stock: {n} {birim}",

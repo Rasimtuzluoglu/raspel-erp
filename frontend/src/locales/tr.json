@@ -878,6 +878,7 @@
     "siralaStok": "Stoğa Göre",
     "tumu": "Tümü",
     "kdvDahil": "KDV dahil",
+    "kdvOranli": "KDV %{oran} dahil",
     "stokYok": "Stok yok",
     "stokYokUyari": "{ad} için stok kalmadı",
     "stokAdet": "Stok: {n} {birim}",

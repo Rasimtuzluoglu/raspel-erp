@@ -2254,6 +2254,8 @@ const sepeteEkle = async (u) => {
     fiyatlar: temelFiyatlar,
     fiyatTipi: temelFiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende'),
     birim: u.birim || 'adet',
+    // Stogun KDV orani sepete tasinir; tanimli degilse 0 (varsayilan) kalir.
+    kdvOrani: u.kdvOrani != null ? Number(u.kdvOrani) : 0,
     birimHacim: u.birimHacim || 1,
     agirlik: Number(u.agirlik) || 0,
     sonAldigiFiyat: null,
@@ -2568,7 +2570,7 @@ const satisiTamamlaOnaysiz = async () => {
     odenenTutar: odenenTutar.value,
     odemeDurumu: odemeDurumEnum.value,
     odemeYontemi: odemeYontemi.value,
-    kalemler: sepet.value.map((i) => ({ stokId: i.id, aciklama: i.ad, adet: i.miktar, birimFiyat: i.fiyat })),
+    kalemler: sepet.value.map((i) => ({ stokId: i.id, aciklama: i.ad, adet: i.miktar, birimFiyat: i.fiyat, kdvOrani: i.kdvOrani ?? 0 })),
     ekstra: {
       teslimEden: teslimEden.value || null,
       teslimDurumu: teslimDurumu.value || 'BEKLIYOR',

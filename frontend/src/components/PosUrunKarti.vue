@@ -43,7 +43,7 @@
       </div>
       <div class="product-fiyat-satir">
         <span class="product-price">{{ formatCurrency(satisFiyati(urun)) }}</span>
-        <span class="kdv-not">{{ t('hizliSatis.kdvDahil') }}</span>
+        <span class="kdv-not">{{ kdvNotu(urun) }}</span>
       </div>
       <span
         v-if="cariFiyat"
@@ -70,6 +70,10 @@ const { t } = useI18n()
 
 const satisFiyati = (u) => Number(u?.satisFiyati || u?.fiyat || 0)
 const stokYokMu = (u) => Number(u?.miktar || 0) <= 0
+
+// Kartta stogun KDV orani gosterilir; tanimli degilse "KDV dahil" yazilir.
+const kdvNotu = (u) =>
+  u?.kdvOrani != null ? t('hizliSatis.kdvOranli', { oran: Number(u.kdvOrani) }) : t('hizliSatis.kdvDahil')
 
 const kritikStokMu = (u) => {
   if (!u?.miktar) return false
