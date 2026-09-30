@@ -128,7 +128,6 @@
             :model-value="seciliSofor"
             :options="soforler"
             option-label="ad"
-            option-value="id"
             :loading="soforlerYukleniyor"
             filter
             :show-clear="true"
