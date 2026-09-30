@@ -221,7 +221,10 @@
       :closable="false"
       width="920px"
     >
-      <div class="satis-modu">
+      <div
+        v-if="!duzenlenenId"
+        class="satis-modu"
+      >
         <label class="bolum-etiket">{{ t('satis.islemModu') }}</label>
         <div class="modu-radio-group">
           <div
@@ -298,7 +301,7 @@
           @click="showSatisDialog = false"
         />
         <Button
-          :label="satisModu === 'TEKLIF' ? t('satis.teklifiKaydet') : t('satis.satisiTamamla')"
+          :label="duzenlenenId ? t('satis.guncelle') : (satisModu === 'TEKLIF' ? t('satis.teklifiKaydet') : t('satis.satisiTamamla'))"
           icon="pi pi-check"
           :loading="saving"
           :disabled="satisForm.kalemler.length === 0 || (satisModu === 'SATIS' && !satisForm.cariHesapId)"
@@ -318,7 +321,7 @@ import { faturaAPI, teklifAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useMarka } from '../composables/useMarka.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
@@ -334,6 +337,7 @@ import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
@@ -345,6 +349,9 @@ const showSatisDialog = ref(false)
 const saving = ref(false)
 const filtre = ref('')
 const satisModu = ref('SATIS')
+// Dolu ise diyalog mevcut bir satisi duzenler (create yerine update).
+const duzenlenenId = ref(null)
+const duzenlenenDurum = ref('KESILDI')
 const seciliDurum = ref('')
 const sadeceVadesiGecen = ref(false)
 const durumCipleri = ['KESILDI', 'TASLAK', 'IPTAL']
@@ -376,6 +383,13 @@ const tarihParametreleri = () => {
 onMounted(async () => {
   // Store'lar hata firlatir; bir hata digerlerini engellemesin.
   await Promise.allSettled([satislariYukle(), ozetiYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
+  // FaturaDetay'dan "Duzenle" ile gelindiyse ilgili satisi duzenleme modunda ac.
+  const duzenleId = Number(route.query.duzenle)
+  if (duzenleId) {
+    await openSatisDuzenle({ id: duzenleId })
+    // Diyalog kapandiginda query'yi temizle ki yeniden acilmasin.
+    router.replace({ query: {} })
+  }
 })
 
 const satislariYukle = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
@@ -487,11 +501,17 @@ const satisCogalt = async (s) => {
 
 const satisEylemleri = (s) => {
   const items = [
-    { etiket: t('satis.goruntule'), ikon: 'pi pi-eye', islem: () => router.push(`/faturalar/${s.id}`) },
+    { etiket: t('satis.goruntule'), ikon: 'pi pi-eye', islem: () => router.push(`/faturalar/${s.id}`) }
+  ]
+  // Duzenleme: iptal edilmemis ve odeme alinmamis faturalar (backend kuraliyla uyumlu).
+  if (s.durum !== 'IPTAL' && Number(s.odenenTutar || 0) === 0) {
+    items.push({ etiket: t('satis.duzenle'), ikon: 'pi pi-pencil', islem: () => openSatisDuzenle(s) })
+  }
+  items.push(
     { etiket: t('satis.a4Yazdir'), ikon: 'pi pi-print', islem: () => printFatura(s.id) },
     { etiket: t('satis.termalYazdir'), ikon: 'pi pi-receipt', islem: () => printTermalFis(s) },
     { etiket: t('satis.cogalt'), ikon: 'pi pi-copy', islem: () => satisCogalt(s) }
-  ]
+  )
   if (s.durum === 'KESILDI' && Number(s.kalanTutar || 0) > 0) {
     items.push({ etiket: t('satis.tahsilatAl'), ikon: 'pi pi-money-bill', islem: () => tahsilataGit(s) })
   }
@@ -525,12 +545,45 @@ const kdvToplam = computed(() =>
 )
 const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
-const dialogBaslik = computed(() => (satisModu.value === 'TEKLIF' ? t('satis.yeniTeklif') : t('satis.yeniSatisDialog')))
+const dialogBaslik = computed(() => {
+  if (duzenlenenId.value) return t('satis.duzenleBaslik')
+  return satisModu.value === 'TEKLIF' ? t('satis.yeniTeklif') : t('satis.yeniSatisDialog')
+})
 
 const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
+  duzenlenenId.value = null
   satisModu.value = 'SATIS'
   showSatisDialog.value = true
+}
+
+// Mevcut bir satisi duzenlemek icin formu doldurur (kalem kimlikleri korunur;
+// backend stok/bakiye farkini faturaGuncelle ile otomatik duzeltir).
+const openSatisDuzenle = async (s) => {
+  try {
+    const r = await faturaAPI.getById(s.id)
+    const f = r.data || {}
+    duzenlenenId.value = f.id
+    duzenlenenDurum.value = f.durum || 'KESILDI'
+    satisModu.value = 'SATIS'
+    satisForm.value = {
+      cariHesapId: f.cariHesapId || null,
+      tarih: f.tarih ? new Date(f.tarih) : new Date(),
+      aciklama: f.aciklama || '',
+      kalemler: (f.kalemler || []).map((k) => ({
+        id: k.id,
+        stokId: k.stokId || null,
+        aciklama: k.aciklama || '',
+        adet: k.adet || 1,
+        birimFiyat: k.birimFiyat || 0,
+        iskontoOrani: k.iskontoOrani || 0,
+        kdvOrani: k.kdvOrani ?? 0
+      }))
+    }
+    showSatisDialog.value = true
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('satis.satislarYuklenemedi'))
+  }
 }
 
 const satisiTamamla = async () => {
@@ -566,18 +619,23 @@ const satisiTamamla = async () => {
       showSatisDialog.value = false
       return
     }
-    const durum = 'KESILDI'
     const payload = satisPayloadUret({
       cariHesapId: satisForm.value.cariHesapId,
       tur: 'SATIS',
-      durum,
+      durum: duzenlenenId.value ? duzenlenenDurum.value : 'KESILDI',
       tarih: getLocalDateString(satisForm.value.tarih),
       aciklama: satisForm.value.aciklama,
       kalemler: satisForm.value.kalemler
     })
-    await faturaAPI.create(payload)
-    toastBildirim.basarili(t('satis.satisTamamlandi'))
+    if (duzenlenenId.value) {
+      await faturaAPI.update(duzenlenenId.value, payload)
+      toastBildirim.basarili(t('satis.duzenleEdildi'))
+    } else {
+      await faturaAPI.create(payload)
+      toastBildirim.basarili(t('satis.satisTamamlandi'))
+    }
     showSatisDialog.value = false
+    duzenlenenId.value = null
     await satislariYukle()
   } catch (err) {
     const msg = err.response?.data?.message || t('satis.satisBasarisiz')

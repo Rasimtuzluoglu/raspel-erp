@@ -25,6 +25,13 @@
           @click="onizle"
         />
         <Button
+          v-if="fatura && fatura.durum !== 'IPTAL' && Number(fatura.odenenTutar || 0) === 0"
+          :label="t('satis.duzenle')"
+          icon="pi pi-pencil"
+          class="p-button-outlined no-print"
+          @click="$router.push({ name: 'Satislar', query: { duzenle: fatura.id } })"
+        />
+        <Button
           :label="t('faturaDetay.epostaGonder')"
           icon="pi pi-envelope"
           :loading="emailGonderiliyor"
