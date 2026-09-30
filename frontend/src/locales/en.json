@@ -1350,6 +1350,7 @@
     "teklifOlustur": "Create Quote",
     "musteri": "Customer",
     "musteriSeciniz": "Select customer",
+    "musteriBulunamadi": "No customer found",
     "tarihZorunlu": "Date *",
     "urunSec": "Select Product",
     "urunAra": "Search and select product...",

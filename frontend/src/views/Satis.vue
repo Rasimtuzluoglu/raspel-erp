@@ -366,14 +366,25 @@
       <div class="form-grid-2">
         <div class="form-group">
           <label>{{ t('satis.musteri') }} <span v-if="satisModu === 'SATIS'">*</span></label>
-          <Dropdown
-            v-model="satisForm.cariHesapId"
-            :options="cariHesapStore?.cariHesaplar || []"
+          <AutoComplete
+            v-model="musteriSecim"
+            :suggestions="musteriOnerileri"
             option-label="ad"
-            option-value="id"
             :placeholder="t('satis.musteriSeciniz')"
+            :empty-search-message="t('satis.musteriBulunamadi')"
             class="w-full"
-          />
+            dropdown
+            force-selection
+            @complete="musteriAra"
+            @option-select="musteriSecildi"
+          >
+            <template #option="slotProps">
+              <div class="musteri-opsiyon">
+                <span class="musteri-opsiyon-ad">{{ slotProps.option.ad }}</span>
+                <span class="musteri-opsiyon-detay">{{ slotProps.option.vergiNo || slotProps.option.telefon || '' }}</span>
+              </div>
+            </template>
+          </AutoComplete>
         </div>
         <div class="form-group">
           <label>{{ t('satis.tarihZorunlu') }}</label>
@@ -580,7 +591,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI } from '../api/index.js'
+import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI, cariHesapAPI } from '../api/index.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -639,6 +650,29 @@ const satisForm = ref({
   aciklama: '',
   kalemler: []
 })
+
+// Musteri secimi: sunucu tarafli arama (tum carileri yuklemek yerine).
+const musteriSecim = ref(null)
+const musteriOnerileri = ref([])
+let musteriAramaZamanlayici = null
+const musteriAra = (event) => {
+  const q = (event?.query || '').trim()
+  if (musteriAramaZamanlayici) clearTimeout(musteriAramaZamanlayici)
+  musteriAramaZamanlayici = setTimeout(async () => {
+    try {
+      const params = { page: 0, size: 20 }
+      if (q) params.search = q
+      const r = await cariHesapAPI.filtreli(params)
+      musteriOnerileri.value = unwrapList(r)
+    } catch {
+      musteriOnerileri.value = []
+    }
+  }, 250)
+}
+const musteriSecildi = (event) => {
+  const c = event?.value
+  if (c) satisForm.value.cariHesapId = c.id
+}
 
 // Opsiyonel tahsilat + teslimat (POS ile ayni payload alanlari).
 const odemeDurumu = ref('tam')
@@ -910,6 +944,8 @@ const dialogBaslik = computed(() => {
 
 const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
+  musteriSecim.value = null
+  musteriOnerileri.value = []
   duzenlenenId.value = null
   satisModu.value = 'SATIS'
   opsiyonlariSifirla()
@@ -939,6 +975,9 @@ const openSatisDuzenle = async (s) => {
         kdvOrani: k.kdvOrani ?? 0
       }))
     }
+    // Musteri AutoComplete secili kaydi gostersin.
+    musteriSecim.value = f.cariHesapAd ? { id: f.cariHesapId, ad: f.cariHesapAd } : null
+    musteriOnerileri.value = []
     showSatisDialog.value = true
   } catch (e) {
     toastBildirim.hata(e?.response?.data?.message || t('satis.satislarYuklenemedi'))
@@ -1408,6 +1447,23 @@ h1 {
   color: var(--accent);
   font-weight: 600;
   cursor: pointer;
+}
+.musteri-opsiyon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.musteri-opsiyon-ad {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.musteri-opsiyon-detay {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 .satis-detay-drawer :deep(.p-drawer-content) {
   padding-top: 0;
