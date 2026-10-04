@@ -25,4 +25,14 @@ public interface TaksitRepository extends JpaRepository<Taksit, Long>, JpaSpecif
     void deleteByPlanNoAndSirketId(String planNo, Long sirketId);
 
     long countByCariHesap_Id(Long cariHesapId);
+
+    /**
+     * REDTEAM/Faz1.6: Plan toptan silinmeden önce ödenmiş kalem var mı?
+     * {@code deleteByPlanNoAndSirketId} bu kontrolü atlayarak ödenmiş kalemleri
+     * sessizce siliyordu.
+     */
+    long countByPlanNoAndSirketIdAndOdemeDurumu(String planNo, Long sirketId, String odemeDurumu);
+
+    /** REDTEAM/Faz1.6: Tahsilat hareketine bağlı kalem sayısı (denetim izi). */
+    long countByPlanNoAndSirketIdAndHareketIdIsNotNull(String planNo, Long sirketId);
 }

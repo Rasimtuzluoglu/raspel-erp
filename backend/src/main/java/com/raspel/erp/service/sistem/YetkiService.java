@@ -37,12 +37,34 @@ public class YetkiService {
                 "STOK_READ", "SIPARIS_READ", "FATURA_READ", "CARI_READ", "IK_READ",
                 "Saha Portalı Kullanıcısı"
         });
-        // Şoför: teslimat akışı için sipariş ve cari okuma, stok görüntüleme.
-        EKSIK_ROL_TANIMLARI.put("DRIVER", new String[]{
-                "SIPARIS_READ", "CARI_READ", "STOK_READ",
-                "Şoför / Teslimat Kullanıcısı"
-        });
-    }
+// Şoför: teslimat akışı için sipariş ve cari okuma, stok görüntüleme.
+          EKSIK_ROL_TANIMLARI.put("DRIVER", new String[]{
+                  "SIPARIS_READ", "CARI_READ", "STOK_READ",
+                  "Şoför / Teslimat Kullanıcısı"
+          });
+      }
+
+      /**
+       * REDTEAM/Faz1.4: {@code MUHASEBE} rolünün yetki kapsamı.
+       * V153__muhasebe_rolu_ve_eksik_yetkiler.sql ile birebir aynı olmalıdır.
+       * DELETE ve EXPORT kapsam dışıdır (V149 kuralı: bu uçlar yalnızca
+       * Yetki Yönetimi ekranından atanır).
+       */
+      private static final java.util.Set<String> MUHASEBE_YETKI_KODLARI = java.util.Set.of(
+              "FINANS_READ", "FINANS_WRITE",
+              "IK_READ", "IK_WRITE",
+              "SIPARIS_READ", "SIPARIS_WRITE",
+              "SATINALMA_READ", "SATINALMA_WRITE",
+              "STOK_READ",
+              "CARI_READ", "CARI_WRITE",
+              "FATURA_READ", "FATURA_WRITE",
+              "IRSALIYE_READ", "IRSALIYE_WRITE",
+              "RAPOR_READ", "RAPOR_EXPORT",
+              "DEPO_READ", "DEPO_WRITE",
+              "KATEGORI_READ", "KATEGORI_WRITE",
+              "PROJE_READ", "PROJE_WRITE",
+              "SISTEM_READ"
+      );
 
 public List<Yetki> tumYetkileriGetir() {
         List<Yetki> yetkiler = yetkiRepository.findAll();
@@ -246,6 +268,24 @@ public List<Yetki> tumYetkileriGetir() {
         list.add(Yetki.builder().kod("SISTEM_DELETE").modul("Sistem").aciklama("Kullanıcı ve sistem kaydı silme").build());
         list.add(Yetki.builder().kod("SISTEM_EXPORT").modul("Sistem").aciklama("Sistem denetim ve yedekleme aktarımı").build());
 
+        // REDTEAM/Faz1.4: V149 bu KODLARI seed ETMIYORDU. Sonuc: MUHASEBE rolu
+        // sistem.rol'de hic olusmadigi icin YetkiKontrol (fail-closed) her
+        // yetki kontrolunde false donuyor ve Onaylar ekraninin 3/5 sekmesi
+        // kalici 403 veriyordu.
+        // NOT: IK_READ/WRITE/DELETE/EXPORT kodlari zaten V149'da ve
+        // varsayilanYetkiListesi'nin ust kisminda tanimliydi; tekrarlanmamalidir
+        // (sistem.yetki.kod UNIQUE -> seedKontrolu rollback olurdu).
+        // Eksik olan operasyon alt modulleri ekleniyor.
+        list.add(Yetki.builder().kod("DEPO_READ").modul("Depo").aciklama("Depoları görüntüleme").build());
+        list.add(Yetki.builder().kod("DEPO_WRITE").modul("Depo").aciklama("Depo ekleme ve düzenleme").build());
+        list.add(Yetki.builder().kod("DEPO_DELETE").modul("Depo").aciklama("Depo kaydı silme").build());
+        list.add(Yetki.builder().kod("KATEGORI_READ").modul("Kategori").aciklama("Stok kategorilerini görüntüleme").build());
+        list.add(Yetki.builder().kod("KATEGORI_WRITE").modul("Kategori").aciklama("Stok kategorisi ekleme ve düzenleme").build());
+        list.add(Yetki.builder().kod("KATEGORI_DELETE").modul("Kategori").aciklama("Stok kategorisi silme").build());
+        list.add(Yetki.builder().kod("PROJE_READ").modul("Proje").aciklama("Projeleri görüntüleme").build());
+        list.add(Yetki.builder().kod("PROJE_WRITE").modul("Proje").aciklama("Proje ekleme ve düzenleme").build());
+        list.add(Yetki.builder().kod("PROJE_DELETE").modul("Proje").aciklama("Proje silme").build());
+
         return list;
     }
 
@@ -269,6 +309,17 @@ public List<Yetki> tumYetkileriGetir() {
 
         list.add(Rol.builder().ad("ADMIN").aciklama("Tam Yetkili Sistem Yöneticisi").yetkiler(adminYetkileri).build());
         list.add(Rol.builder().ad("USER").aciklama("Standart Kullanıcı").yetkiler(userYetkileri).build());
+
+        // REDTEAM/Faz1.4: MUHASEBE rolu buruda da üretilir. UI'da seçilebilen
+        // ama sistem.rol'de hiç oluşturulmayan bir rol, YetkiKontrol'ün
+        // fail-closed davranışı yüzünden tüm yetki kontrollerinde reddediliyordu
+        // (Onaylar ekranının 3/5 sekmesi kalıcı 403). Kapsam V153 ile aynıdır:
+        // finans + ik + operasyon okuma/yazma; DELETE ve EXPORT verilmez.
+        Set<Yetki> muhasebeYetkileri = tumYetkiler.stream()
+                .filter(y -> MUHASEBE_YETKI_KODLARI.contains(y.getKod()))
+                .collect(Collectors.toCollection(HashSet::new));
+        list.add(Rol.builder().ad("MUHASEBE").aciklama("Muhasebe / Finans Kullanıcısı")
+                .yetkiler(muhasebeYetkileri).build());
 
         // Saha ve şoför rolleri operasyonel akışla uyumlu en az yetkiyle kurulur.
         for (Map.Entry<String, String[]> tanim : EKSIK_ROL_TANIMLARI.entrySet()) {

@@ -66,9 +66,9 @@ public class PersonelMasrafTalepController {
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body,
             HttpServletRequest request) {
-        String onaylayan = (String) request.getAttribute("username");
+        String onaylayan = onaylayanKisi(request);
         String not = (body != null) ? body.get("onayNotu") : null;
-        return ResponseEntity.ok(talepService.onayla(id, onaylayan != null ? onaylayan : "Yönetici", not));
+        return ResponseEntity.ok(talepService.onayla(id, onaylayan, not));
     }
 
     @PatchMapping("/{id}/reddet")
@@ -78,9 +78,9 @@ public class PersonelMasrafTalepController {
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body,
             HttpServletRequest request) {
-        String onaylayan = (String) request.getAttribute("username");
+        String onaylayan = onaylayanKisi(request);
         String not = (body != null) ? body.get("onayNotu") : null;
-        return ResponseEntity.ok(talepService.reddet(id, onaylayan != null ? onaylayan : "Yönetici", not));
+        return ResponseEntity.ok(talepService.reddet(id, onaylayan, not));
     }
 
     @DeleteMapping("/{id}")
@@ -89,5 +89,29 @@ public class PersonelMasrafTalepController {
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         talepService.sil(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * REDTEAM/Faz1.3: Onaylayan kimligi DAIMA dogrulanmis SecurityContext'ten
+     * alinir; istemci govdesinden ASLA alinmaz.
+     *
+     * <p>Eskiden {@code request.getAttribute("username")} okunuyordu ve bu
+     * nitelik JwtAuthFilter'da hic set edilmedigi icin her zaman {@code null}
+     * geliyor, kayit "Yonetici" yaziyordu — denetim izi hicbir kisiyi
+     * tanimlamiyordu. Ayrica istemcinin gonderdigi {@code onaylayan} alani
+     * kullanilsaydi sahte onay imzasi yazilabilirdi.
+     *
+     * @return onaylayan kullanici adi
+     */
+    private String onaylayanKisi(HttpServletRequest request) {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+            return auth.getName();
+        }
+        // JwtAuthFilter iki yolda da username set ediyor; bu yalnizca beklenmeyen
+        // durum (SecurityContext bos) icin guvenli yedektir.
+        Object attr = (request != null) ? request.getAttribute("username") : null;
+        return (attr instanceof String s && !s.isBlank()) ? s : "Bilinmiyor";
     }
 }

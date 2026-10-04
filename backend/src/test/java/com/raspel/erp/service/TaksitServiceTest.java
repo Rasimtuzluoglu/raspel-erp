@@ -11,6 +11,7 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.finans.TaksitRepository;
 import com.raspel.erp.service.finans.TaksitService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -187,7 +188,103 @@ class TaksitServiceTest {
 
     @Test
     void planSil_planaAitKalemleriSiler() {
+        when(taksitRepository.countByPlanNoAndSirketIdAndOdemeDurumu(anyString(), anyLong(), anyString()))
+                .thenReturn(0L);
+        when(taksitRepository.countByPlanNoAndSirketIdAndHareketIdIsNotNull(anyString(), anyLong()))
+                .thenReturn(0L);
         taksitService.planSil("TKS-1", 1L);
         verify(taksitRepository).deleteByPlanNoAndSirketId("TKS-1", 1L);
+    }
+
+    // ------------------------------------------------------------------
+    // REDTEAM/Faz1.6 regresyonlari
+    //
+    // CANLI KANIT: "Ode" ve "Sil" tek bayrakla (`yonetimYetkisi`) yonetiliyordu:
+    //   POST /taksitler/{id}/ode  -> ADMIN | MUHASEBE
+    //   DELETE /taksitler/{id}    -> ADMIN
+    // MUHASEBE rolunde "Sil" butonu gorunuyor ama 403 aliyordu. Ayrica odenmis
+    // kalem sessizce silinebiliyordu (denetim izi kaybi).
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("Faz1.6: odenmis taksit kalemi silinemez (denetim izi korunur)")
+    void sil_odemisTaksitiReddeder() {
+        CariHesap c = cari(1L, 1L);
+        Taksit t = kalem(5L, c, LocalDate.now(), "100", "ODENDI");
+        when(taksitRepository.findByIdAndSirketId(5L, 1L)).thenReturn(Optional.of(t));
+
+        BusinessException hata = assertThrows(BusinessException.class, () -> taksitService.sil(5L, 1L));
+
+        assertTrue(hata.getMessage().contains("Ödenmiş"),
+                "Hata mesaji odeme durumunu belirtmeli: " + hata.getMessage());
+        verify(taksitRepository, never()).delete(any(Taksit.class));
+    }
+
+    @Test
+    @DisplayName("Faz1.6: tahsilat hareketine bagli kalem silinemez (yetim hareket olurdu)")
+    void sil_hareketiBagliTaksitiReddeder() {
+        CariHesap c = cari(1L, 1L);
+        Taksit t = kalem(5L, c, LocalDate.now(), "100", "BEKLEMEDE");
+        t.setHareketId(777L);
+        when(taksitRepository.findByIdAndSirketId(5L, 1L)).thenReturn(Optional.of(t));
+
+        BusinessException hata = assertThrows(BusinessException.class, () -> taksitService.sil(5L, 1L));
+
+        assertTrue(hata.getMessage().contains("hareket"),
+                "Hata mesaji hareket bagini belirtmeli: " + hata.getMessage());
+        verify(taksitRepository, never()).delete(any(Taksit.class));
+    }
+
+    @Test
+    @DisplayName("Faz1.6: planSil odemis kalem varsa reddeder (toplu silme korumasi)")
+    void planSil_odemisKalemVarsaReddeder() {
+        when(taksitRepository.countByPlanNoAndSirketIdAndOdemeDurumu("TKS-1", 1L, "ODENDI"))
+                .thenReturn(3L);
+
+        BusinessException hata = assertThrows(BusinessException.class, () -> taksitService.planSil("TKS-1", 1L));
+
+        assertTrue(hata.getMessage().contains("3"),
+                "Hata mesaji odemis kalem adedini belirtmeli: " + hata.getMessage());
+        verify(taksitRepository, never()).deleteByPlanNoAndSirketId(anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("Faz1.6: planSil hareketli kalem varsa reddeder")
+    void planSil_hareketliKalemVarsaReddeder() {
+        when(taksitRepository.countByPlanNoAndSirketIdAndOdemeDurumu("TKS-1", 1L, "ODENDI"))
+                .thenReturn(0L);
+        when(taksitRepository.countByPlanNoAndSirketIdAndHareketIdIsNotNull("TKS-1", 1L))
+                .thenReturn(2L);
+
+        assertThrows(BusinessException.class, () -> taksitService.planSil("TKS-1", 1L));
+        verify(taksitRepository, never()).deleteByPlanNoAndSirketId(anyString(), anyLong());
+    }
+
+    // ------------------------------------------------------------------
+    // REDTEAM/Faz1.2: "Ode" ucu artik tahsilat ile birlikte cagrilir.
+    // TaksitTakvimi artik `POST /taksitler/{id}/ode` yerine
+    // `tahsilatAPI.gir({ taksitId })` cagriyor; backend'de
+    // TahsilatService:275-280 taksiti isaretliyor ve hareketi yaziyor.
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("Faz1.2: ode() durumu gunceller ve hareketId'yi kaydeder")
+    void ode_hareketIdKaydeder() {
+        CariHesap c = cari(1L, 1L);
+        Taksit t = kalem(5L, c, LocalDate.now(), "100", "BEKLEMEDE");
+        when(taksitRepository.findByIdAndSirketId(5L, 1L)).thenReturn(Optional.of(t));
+        when(taksitRepository.save(any(Taksit.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        TaksitDTO sonuc = taksitService.ode(5L,
+                TaksitOdeDTO.builder().odemeTarihi(LocalDate.of(2026, 10, 4))
+                        .hareketId(4242L).aciklama("Tahsilat ile odendi").build(),
+                1L);
+
+        assertEquals("ODENDI", sonuc.getOdemeDurumu());
+        assertEquals(LocalDate.of(2026, 10, 4), sonuc.getOdemeTarihi());
+        ArgumentCaptor<Taksit> captor = ArgumentCaptor.forClass(Taksit.class);
+        verify(taksitRepository).save(captor.capture());
+        assertEquals(4242L, captor.getValue().getHareketId(),
+                "Tahsilat hareketi taksite baglanmali (denetim izi)");
     }
 }

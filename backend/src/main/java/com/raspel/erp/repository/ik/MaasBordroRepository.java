@@ -14,6 +14,21 @@ import java.util.Optional;
 
 @Repository
 public interface MaasBordroRepository extends JpaRepository<MaasBordro, Long> {
+
+    /**
+     * REDTEAM/Faz1.7 (N+1 düzeltmesi): İlişki PERSONEL LAZY yüklendiği ve
+     * servis DTO dönüşümünde {@code b.getPersonel().getAd()} çağrıldığı için
+     * her bordro satırı için ayrı bir SELECT atılıyordu.
+     *
+     * <p>Frontend {@code size=500} istediğinden tek HTTP isteği içinde
+     * 1× COUNT + 1× SELECT + <b>500× SELECT personel ≈ 502 SQL sorgusu</b>
+     * oluşuyordu. Bu yüzden "Maaş ve Bordro" ekranı yavaş açılıyordu.
+     *
+     * <p>{@code @EntityGraph} ile personel JOIN'li tek sorguda gelir:
+     * <b>502 → 2 sorgu</b>. Projede aynı desen
+     * {@code PersonelPuantajService} ve {@code CariHesapService}'de kullanılıyor.
+     */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"personel"})
     Page<MaasBordro> findBySirketIdOrderByYilDescAyDesc(Long sirketId, Pageable pageable);
 
     /**

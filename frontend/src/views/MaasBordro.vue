@@ -534,19 +534,32 @@ onMounted(async () => {
   try {
     const [mR, pR, kR] = await Promise.all([
       maasBordroAPI.getAll(),
-      personelAPI.getAll(),
+      // Parametre verilmezse backend varsayilan @PageableDefault(size=50)
+      // doner ve personel dropdown'i 50 kisiyle kirpilir. Global max-page-size
+      // 200 oldugu icin en fazla o kadar istenebilir.
+      personelAPI.getAll({ size: 200 }),
       kasaAPI.getAll({ size: 200 })
     ])
     list.value = unwrapList(mR)
-    personelListesi.value = pR.data.map((p) => ({
+    // REDTEAM/Faz1.1: `pR.data.map` BURADA `.map` OLAN BIR DIZI UZERINDE
+    // CALISIYORDU. `/api/personel` bir Page<PersonelDTO> (yani NESNE:
+    // { content, totalElements, ... }) donduruyor, dizi degil. Bu yuzden
+    // `pR.data.map` TypeError firlatiyordu; catch'e dustugu icin
+    // asagidaki `kasaListesi` hic yuklenmiyor, odeme dialog'undaki kasa
+    // dropdown'u bos kaliyor ve "Ode" butonu kalici `disabled` oluyordu
+    // (bordro odemesi arayuzden hic yapilamiyordu). Ayrica her sayfa acilisinda
+    // kirmizi "Veriler yuklenemedi" toast'i cikiyordu.
+    // Diger 7 cagirida zaten dogru kullanilan `unwrapList` kullanilmalidir.
+    personelListesi.value = unwrapList(pR).map((p) => ({
       ...p,
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
     }))
     kasaListesi.value = unwrapList(kR)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('maasBordro.hataYukleme'))
+  } finally {
+    yukleniyor.value = false
   }
-  yukleniyor.value = false
 })
 
 const dialogAc = (data) => {

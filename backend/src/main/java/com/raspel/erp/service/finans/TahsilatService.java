@@ -275,6 +275,12 @@ public class TahsilatService {
         if (taksitId != null) {
             taksitService.ode(taksitId, com.raspel.erp.dto.finans.TaksitOdeDTO.builder()
                     .odemeTarihi(hareketTarihi != null ? hareketTarihi : LocalDate.now())
+                    // REDTEAM/Faz1.2: Oluşturulan tahsilat hareketinin id'si taksite
+                    // bağlanır. Bu alan daha önce HİÇ doldurulmuyordu; taksit ile
+                    // parasal hareket arasındaki tek bağ `aciklama` metnine
+                    // kalıyordu (denetim izi yoktu). Artık taksitten
+                    // doğrudan harekete gidilebilir.
+                    .hareketId(ilkHareketId)
                     .aciklama("Tahsilat ile odendi")
                     .build(), sirketId);
             sonuc.put("taksitId", taksitId);

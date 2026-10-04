@@ -185,16 +185,24 @@ import { formatTarih as formatDate, getLocalDateString } from '../utils/format.j
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [vR, pR] = await Promise.all([vardiyaAPI.getAll(), personelAPI.getAll()])
+    const [vR, pR] = await Promise.all([
+      vardiyaAPI.getAll(),
+      // Parametresiz cagri backend varsayilan size=50 doner ve dropdown
+      // kirpilir. Global max-page-size 200.
+      personelAPI.getAll({ size: 200 })
+    ])
     list.value = unwrapList(vR)
-    personelListesi.value = pR.data.map((p) => ({
+    // REDTEAM/Faz1.1: `/api/personel` Page (NESNE) donduruyor; `pR.data.map`
+    // TypeError firlatiyordu. MaasBordro.vue'daki ayni hatanin kopyasi.
+    personelListesi.value = unwrapList(pR).map((p) => ({
       ...p,
       displayName: p.ad && p.soyad ? `${p.ad} ${p.soyad}` : p.ad || p.id
     }))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('vardiyalar.hataYukleme'))
+  } finally {
+    yukleniyor.value = false
   }
-  yukleniyor.value = false
 })
 
 const dialogAc = (data) => {

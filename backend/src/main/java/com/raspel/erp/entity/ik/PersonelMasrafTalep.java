@@ -68,6 +68,23 @@ public class PersonelMasrafTalep {
     @Column(name = "guncelleme_tarihi")
     private LocalDateTime guncellemeTarihi;
 
+    /**
+     * REDTEAM/Faz1.5: İyimser kilitleme (optimistic locking).
+     *
+     * <p>Bu alan olmadan iki paralel {@code PATCH /personel-masraf-talep/{id}/onayla}
+     * isteği ikisi de {@code durum='BEKLEMEDE'} okur, ikisi de guard'ı geçer ve
+     * ikisi de {@code masrafIleEsle} çağırır → <b>iki Masraf satırı + iki
+     * otomatik muhasebe fişi</b> oluşur. {@code finans.masraf.belge_no} da
+     * UNIQUE olmadığı için veritabanı mükerreri yakalamaz.
+     *
+     * <p>{@code @Version} ile ikinci commit 409 (OptimisticLockException) alır.
+     * Projede aynı desen {@code Taksit}, {@code Siparis}, {@code Fatura}
+     * entity'lerinde zaten kullanılıyor.
+     */
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         olusturmaTarihi = LocalDateTime.now();

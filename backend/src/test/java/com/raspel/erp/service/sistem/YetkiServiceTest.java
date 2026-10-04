@@ -72,19 +72,40 @@ class YetkiServiceTest {
     @Test
     void tumRolleriGetir_RolTablosuBos_VarsayilanRolleriKurar() {
         when(rolRepository.findAll()).thenReturn(List.of());
-        when(yetkiRepository.findAll()).thenReturn(List.of(yetki("STOK_READ"), yetki("STOK_WRITE"), yetki("STOK_DELETE")));
+        // REDTEAM/Faz1.4: MUHASEBE rolunun yetki eşleşmesi doğrulanabilsin diye
+        // finans kapsamı da mock'a ekleniyor.
+        when(yetkiRepository.findAll()).thenReturn(List.of(
+                yetki("STOK_READ"), yetki("STOK_WRITE"), yetki("STOK_DELETE"),
+                yetki("FINANS_READ"), yetki("FINANS_WRITE"), yetki("IK_READ"),
+                yetki("IK_WRITE")));
         when(rolRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
         List<Rol> roller = yetkiService.tumRolleriGetir();
 
-        // ADMIN + USER + SAHA + DRIVER
-        assertEquals(4, roller.size());
+// ADMIN + USER + SAHA + DRIVER + MUHASEBE
+        // REDTEAM/Faz1.4: MUHASEBE rolu eklendi. UI'da secilebilen bu rol
+        // sistem.rol'de HICBIR YERDE olusmadigi icin YetkiKontrol (fail-closed)
+        // her kontrolunde false donuyor ve Onaylar ekraninin 3/5 sekmesi
+        // kalici 403 veriyordu.
+        assertEquals(5, roller.size());
         Rol admin = roller.stream().filter(r -> "ADMIN".equals(r.getAd())).findFirst().orElseThrow();
         Rol user = roller.stream().filter(r -> "USER".equals(r.getAd())).findFirst().orElseThrow();
-        assertEquals(3, admin.getYetkiler().size());
-        // USER yalnızca READ/WRITE alır; silme yetkisi verilmez.
-        assertEquals(2, user.getYetkiler().size());
+        // ADMIN: mock'taki TÜM yetkiler (7).
+        assertEquals(7, admin.getYetkiler().size());
+        // USER yalnızca READ/WRITE alır; silme yetkisi verilmez (6).
+        assertEquals(6, user.getYetkiler().size());
         assertTrue(user.getYetkiler().stream().allMatch(y -> y.getKod().endsWith("_READ") || y.getKod().endsWith("_WRITE")));
+
+        // MUHASEBE: finans/IK yazma kapsamı; DELETE ve EXPORT verilmez.
+        Rol muhasebe = roller.stream().filter(r -> "MUHASEBE".equals(r.getAd())).findFirst().orElseThrow();
+        assertFalse(muhasebe.getYetkiler().isEmpty(),
+                "MUHASEBE rolune yetki atanmaliydi; bos kalirsa YetkiKontrol 403 doner");
+        assertTrue(muhasebe.getYetkiler().stream()
+                        .anyMatch(y -> "FINANS_WRITE".equals(y.getKod())),
+                "MUHASEBE en az FINANS_WRITE almalı");
+        assertFalse(muhasebe.getYetkiler().stream()
+                        .anyMatch(y -> y.getKod().endsWith("_DELETE") || y.getKod().endsWith("_EXPORT")),
+                "MUHASEBE'ye DELETE/EXPORT verilmemeli (V149 kuralı)");
     }
 
     @Test

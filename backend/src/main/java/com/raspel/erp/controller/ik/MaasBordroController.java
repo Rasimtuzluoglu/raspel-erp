@@ -109,8 +109,23 @@ public class MaasBordroController {
     public ResponseEntity<MaasBordroDTO> onayla(@PathVariable Long id,
                                                 @RequestParam(required = false) Long kasaId,
                                                 HttpServletRequest request) {
-        String onaylayan = (String) request.getAttribute("username");
-        return ResponseEntity.ok(maasBordroService.onayla(id, onaylayan != null ? onaylayan : "Yönetici", kasaId));
+        String onaylayan = onaylayanKisi();
+        return ResponseEntity.ok(maasBordroService.onayla(id, onaylayan, kasaId));
+    }
+
+    /**
+     * REDTEAM/Faz1.3: Onaylayan adi dogrulanmis SecurityContext'ten alinir.
+     * Eskiden {@code request.getAttribute("username")} okunuyordu; bu nitelik
+     * JwtAuthFilter'da hic set edilmedigi icin kayit daima "Yonetici" idi.
+     *
+     * @return onaylayan kullanici adi
+     */
+    private String onaylayanKisi() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        return (auth != null && auth.getName() != null && !auth.getName().isBlank())
+                ? auth.getName()
+                : "Bilinmiyor";
     }
 
     @PostMapping("/{id}/onay-kaldir")

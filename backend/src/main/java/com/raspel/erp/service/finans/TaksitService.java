@@ -196,17 +196,51 @@ public class TaksitService {
     }
 
     @Transactional
-    public void sil(Long id, Long sirketId) {
-        Taksit taksit = taksitRepository.findByIdAndSirketId(id, sirketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Taksit", id));
-        taksitRepository.delete(taksit);
-    }
+public void sil(Long id, Long sirketId) {
+          Taksit taksit = taksitRepository.findByIdAndSirketId(id, sirketId)
+                  .orElseThrow(() -> new ResourceNotFoundException("Taksit", id));
+          // REDTEAM/Faz1.6: Ödenmiş taksit kalemi silinebiliyordu. Bu, para
+          // hareketi olan bir kaydın denetim izini yok eder: takvimden
+          // "ödendi" işaretlenmiş, bankada/cari defterinde karşılığı olan bir
+          // kalem sessizce kayboluyordu.
+          // REDTEAM/Faz1.2 sonrası taksitler gerçek tahsilat hareketine
+          // bağlandığı için (hareketId) bu koruma zorunludur: hareketi olan
+          // kalem silinirse hareket yetim (orphan) kalır.
+          if (DURUM_ODENDI.equals(taksit.getOdemeDurumu())) {
+              throw new BusinessException(
+                      "Ödenmiş taksit kalemi silinemez (ödeme durumu: ODENDI). "
+                      + "Önce ilgili tahsilat hareketini geri alın.");
+          }
+          if (taksit.getHareketId() != null) {
+              throw new BusinessException(
+                      "Bu taksit bir tahsilat hareketine bağlı (hareketId="
+                              + taksit.getHareketId() + "); önce hareketi geri alın.");
+          }
+          taksitRepository.delete(taksit);
+      }
 
-    @Transactional
+@Transactional
     public void planSil(String planNo, Long sirketId) {
-        taksitRepository.deleteByPlanNoAndSirketId(planNo, sirketId);
-        log.info("Taksit plani silindi -> plan: {}", planNo);
-    }
+          // REDTEAM/Faz1.6: planSil taksitleri toptan sildiği için tekil
+          // silmedeki korumayı baypas ediyordu; içinde ödenmiş kalem varsa
+          // sessizce kayboluyordu. Aynı iki kural burada da uygulanır.
+          long odenmisSayisi = taksitRepository.countByPlanNoAndSirketIdAndOdemeDurumu(
+                  planNo, sirketId, DURUM_ODENDI);
+          if (odenmisSayisi > 0) {
+              throw new BusinessException(
+                      "Bu planda " + odenmisSayisi + " adet ödenmiş taksit var. "
+                      + "Ödenmiş kalemler silinemez; önce ilgili tahsilat hareketlerini geri alın.");
+          }
+          long hareketliSayisi = taksitRepository.countByPlanNoAndSirketIdAndHareketIdIsNotNull(
+                  planNo, sirketId);
+          if (hareketliSayisi > 0) {
+              throw new BusinessException(
+                      "Bu planda " + hareketliSayisi
+                              + " adet taksit tahsilat hareketine bağlı; önce hareketleri geri alın.");
+          }
+          taksitRepository.deleteByPlanNoAndSirketId(planNo, sirketId);
+          log.info("Taksit plani silindi -> plan: {}", planNo);
+      }
 
     private TaksitDTO toDTO(Taksit t) {
         long gecikme = 0;

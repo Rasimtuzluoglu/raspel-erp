@@ -108,6 +108,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 if (userDetails != null && userDetails.isEnabled()) {
 request.setAttribute("kullaniciId", kullanici.getId());
                 request.setAttribute("sirketId", kullanici.getSirketId());
+                // REDTEAM/Faz1.3: "username" niteligi HICBIR YERDE set
+                // edilmiyordu. PersonelMasrafTalepController:69,81 ve
+                // MaasBordroController:112 bu niteligi okuyup null aliyor ve
+                // sabit "Yonetici" fallback'ine dustugu icin onaylayan kolonu
+                // HICBIR KISIYI tanimlamiyordu (denetim izi bozuk).
+                request.setAttribute("username", kullanici.getUsername());
                 MDC.put("kullaniciId", String.valueOf(kullanici.getId()));
                 MDC.put("sirketId", String.valueOf(kullanici.getSirketId()));
                     request.setAttribute("displayName", kullanici.getDisplayName());
@@ -150,6 +156,9 @@ request.setAttribute("kullaniciId", kullanici.getId());
             request.setAttribute("jti", jwtUtil.getJtiFromToken(token));
             MDC.put("jti", String.valueOf(jwtUtil.getJtiFromToken(token)));
             request.setAttribute("displayName", jwtUtil.getDisplayNameFromToken(token));
+            // REDTEAM/Faz1.3: bkz. API token kolu. Onaylayan kisi adi artik
+            // gercek JWT sahibini gosterir.
+            request.setAttribute("username", jwtUtil.getUsernameFromToken(token));
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 String username = jwtUtil.getUsernameFromToken(token);

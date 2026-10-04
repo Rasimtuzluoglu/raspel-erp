@@ -7,7 +7,7 @@
     >
       <template #actions>
         <Button
-          v-if="yonetimYetkisi"
+          v-if="odeYetkisi"
           :label="t('taksitTakvimi.yeniPlan')"
           icon="pi pi-plus"
           @click="planDialogAc"
@@ -146,7 +146,7 @@
         <Column :header="t('common.actions')">
           <template #body="{ data }">
             <Button
-              v-if="data.odemeDurumu !== 'ODENDI' && yonetimYetkisi"
+              v-if="data.odemeDurumu !== 'ODENDI' && odeYetkisi"
               icon="pi pi-check"
               text
               rounded
@@ -154,7 +154,7 @@
               @click="ode(data)"
             />
             <Button
-              v-if="yonetimYetkisi"
+              v-if="silYetkisi"
               icon="pi pi-trash"
               text
               rounded
@@ -258,6 +258,120 @@
         />
       </template>
     </Dialog>
+
+    <!--
+      REDTEAM/Faz1.2: Taksit "Ödendi" işaretleme penceresi.
+      Eskiden tek tıkla `POST /taksitler/{id}/ode` çağrılıyordu; bu uç YALNIZCA
+      `odemeDurumu='ODENDI'` yazıyor, hiçbir para hareketi üretmiyordu. Takvim
+      "ödendi" derken cari defter "ödenmedi" diyordu.
+
+      Doğru yol backend'de HAZIRDI: `POST /tahsilat` gövdesindeki `taksitId`
+      alanı tahsilat kaydettikten sonra ilgili kalemi işaretliyor
+      (TahsilatService:275-280). Bu yüzden burada kasa/banka seçilerek GERÇEK
+      tahsilat hareketi oluşturuluyor ve taksit onunla bağlanıyor.
+    -->
+    <Dialog
+      v-model:visible="odemeDialog"
+      :header="t('taksitTakvimi.odemeBaslik')"
+      :modal="true"
+      :style="{ width: '440px' }"
+      :breakpoints="{ '640px': '95vw' }"
+    >
+      <div
+        v-if="odemeKalemi"
+        class="odeme-ozet"
+      >
+        <div class="odeme-ozet-satir">
+          <span>{{ t('taksitTakvimi.cari') }}</span>
+          <strong>{{ odemeKalemi.cariAd || '-' }}</strong>
+        </div>
+        <div class="odeme-ozet-satir">
+          <span>{{ t('taksitTakvimi.taksitNo') }}</span>
+          <strong>
+            {{ odemeKalemi.taksitNo }} / {{ odemeKalemi.taksitSayisi }}
+          </strong>
+        </div>
+        <div class="odeme-ozet-satir">
+          <span>{{ t('taksitTakvimi.vadeTarihi') }}</span>
+          <strong>{{ formatDate(odemeKalemi.vadeTarihi) }}</strong>
+        </div>
+        <div class="odeme-ozet-satir toplam">
+          <span>{{ t('taksitTakvimi.tutar') }}</span>
+          <strong>{{ formatCurrency(odemeKalemi.tutar) }}</strong>
+        </div>
+      </div>
+
+      <div class="odeme-form">
+        <label :for="odemeYontemiId">{{ t('taksitTakvimi.odemeYontemi') }}</label>
+        <SelectButton
+          v-model="odemeForm.odemeYontemi"
+          :options="odemeYontemleri"
+          option-label="label"
+          option-value="value"
+          :allow-empty="false"
+        />
+
+        <label
+          v-if="odemeForm.odemeYontemi === 'NAKIT'"
+          :for="odemeKasaId"
+        >
+          {{ t('taksitTakvimi.kasa') }}
+        </label>
+        <Dropdown
+          v-if="odemeForm.odemeYontemi === 'NAKIT'"
+          :id="odemeKasaId"
+          v-model="odemeForm.kasaId"
+          :options="kasalar"
+          option-label="ad"
+          option-value="id"
+          :placeholder="t('taksitTakvimi.kasaSec')"
+          :filter="true"
+          class="w-full"
+        />
+
+        <label
+          v-if="odemeForm.odemeYontemi !== 'NAKIT'"
+          :for="odemeBankaId"
+        >
+          {{ t('taksitTakvimi.banka') }}
+        </label>
+        <Dropdown
+          v-if="odemeForm.odemeYontemi !== 'NAKIT'"
+          :id="odemeBankaId"
+          v-model="odemeForm.bankaId"
+          :options="bankalar"
+          option-label="ad"
+          option-value="id"
+          :placeholder="t('taksitTakvimi.bankaSec')"
+          :filter="true"
+          class="w-full"
+        />
+
+        <label :for="odemeTarihId">{{ t('taksitTakvimi.odemeTarihi') }}</label>
+        <DatePicker
+          :id="odemeTarihId"
+          v-model="odemeForm.hareketTarihi"
+          date-format="dd.mm.yy"
+          :max-date="new Date()"
+          show-icon
+        />
+      </div>
+
+      <template #footer>
+        <Button
+          :label="t('taksitTakvimi.vazgec')"
+          severity="secondary"
+          text
+          @click="odemeDialog = false"
+        />
+        <Button
+          :label="t('taksitTakvimi.tahsilatKaydet')"
+          icon="pi pi-check"
+          :loading="odemeKaydediliyor"
+          @click="tahsilatKaydet"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -267,17 +381,35 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { taksitAPI, cariHesapAPI } from '../api/index.js'
+import { taksitAPI, cariHesapAPI, tahsilatAPI, kasaAPI, bankaAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { formatCurrency, formatTarih as formatDate } from '../utils/format.js'
+
+// REDTEAM/Faz1.6: "YYYY-MM-DD" degerini YEREL olarak ayristirir.
+// utils/format.js icindeki parseDate ayni isi yapar ancak disa aktarilmamis;
+// burada tek kullanim icin yerel ve bagimsiz surum kullanilir (Saat dilimi
+// hatasinin duzeltilmis hali).
+const parseYerelTarih = (deger) => {
+  if (!deger) return null
+  if (typeof deger === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(deger)) {
+    const [y, ay, g] = deger.split('-').map(Number)
+    return new Date(y, ay - 1, g)
+  }
+  const d = new Date(deger)
+  return isNaN(d.getTime()) ? null : d
+}
 
 const { t, locale } = useI18n()
 const confirm = useConfirm()
 const toastBildirim = useToastBildirim()
 const authStore = useAuthStore()
-// Taksit ode/sil endpoint'leri ADMIN/MUHASEBE gerektirir; yetkisizde butonu
-// gizle ki 403 -> /yetki-reddi yonlendirmesi olmasin.
-const yonetimYetkisi = computed(() => ['ADMIN', 'MUHASEBE'].includes(authStore?.kullanici?.role))
+// REDTEAM/Faz1.6: "Ode" ve "Sil" backend'de FARKLI rollere acik:
+  //   POST /taksitler/{id}/ode   -> ADMIN | MUHASEBE
+  //   DELETE /taksitler/{id}     -> ADMIN
+  // Tek bayrak (`yonetimYetkisi`) ikisini birlikte yonetti; MUHASEBE rolunde
+  // "Sil" butonu gorunuyordu ama tiklaninca 403 aliyordu. Simdi ayridir.
+  const odeYetkisi = computed(() => ['ADMIN', 'MUHASEBE'].includes(authStore?.kullanici?.role))
+  const silYetkisi = computed(() => authStore?.kullanici?.role === 'ADMIN')
 
 const bugun = new Date()
 const seciliYil = ref(bugun.getFullYear())
@@ -309,6 +441,115 @@ const gunBasliklari = computed(() => {
   return isimler
 })
 
+// ---------------------------------------------------------------------
+// REDTEAM/Faz1.2: Taksit odemesi artik GERCEK tahsilat hareketi olusturur.
+// ---------------------------------------------------------------------
+
+const odemeDialog = ref(false)
+const odemeKalemi = ref(null)
+const odemeKaydediliyor = ref(false)
+const kasalar = ref([])
+const bankalar = ref([])
+const kasaBankaYuklendi = ref(false)
+
+const odemeYontemiId = 'taksit-odeme-yontemi'
+const odemeKasaId = 'taksit-odeme-kasa'
+const odemeBankaId = 'taksit-odeme-banka'
+const odemeTarihId = 'taksit-odeme-tarih'
+
+const odemeYontemleri = computed(() => [
+  { label: t('hizliSatis.nakit'), value: 'NAKIT' },
+  { label: t('hizliSatis.kart'), value: 'KART' },
+  { label: t('hizliSatis.havale'), value: 'HAVALE' }
+])
+
+const odemeForm = ref({
+  odemeYontemi: 'NAKIT',
+  kasaId: null,
+  bankaId: null,
+  hareketTarihi: null
+})
+
+/** Kasa/banka listeleri yalnizca ilk kez odeme penceresi acildiginda cekilir. */
+const kasaBankaYukle = async () => {
+  if (kasaBankaYuklendi.value) return
+  try {
+    const [kR, bR] = await Promise.all([
+      kasaAPI.getAll({ size: 200 }),
+      bankaAPI.getAll({ size: 200 })
+    ])
+    kasalar.value = unwrapList(kR)
+    bankalar.value = unwrapList(bR)
+    kasaBankaYuklendi.value = true
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
+  }
+}
+
+const ode = (k) => {
+  if (k.odemeDurumu === 'ODENDI') return
+  if (!odeYetkisi.value) return
+  odemeKalemi.value = k
+  odemeForm.value = {
+    odemeYontemi: 'NAKIT',
+    kasaId: null,
+    bankaId: null,
+    hareketTarihi: new Date()
+  }
+  odemeDialog.value = true
+  kasaBankaYukle()
+}
+
+/**
+ * Tahsilat kaydeder ve taksiti onunla bağlar.
+ * Backend'de `POST /tahsilat` gövdesindeki `taksitId` alanı, tahsilat
+ * yazıldıktan SONRA ilgili kalemi 'ODENDI' işaretler (TahsilatService:275-280).
+ * Önceki `POST /taksitler/{id}/ode` ucu yalnizca durum yaziyor, para
+ * hareketi üretmiyordu.
+ */
+const tahsilatKaydet = async () => {
+  const k = odemeKalemi.value
+  if (!k) return
+  if (!k.cariId) {
+    toastBildirim.hata(t('taksitTakvimi.cariBulunamadi'))
+    return
+  }
+  if (odemeForm.value.odemeYontemi === 'NAKIT' && !odemeForm.value.kasaId) {
+    toastBildirim.hata(t('taksitTakvimi.kasaZorunlu'))
+    return
+  }
+  if (odemeForm.value.odemeYontemi !== 'NAKIT' && !odemeForm.value.bankaId) {
+    toastBildirim.hata(t('taksitTakvimi.bankaZorunlu'))
+    return
+  }
+
+  odemeKaydediliyor.value = true
+  try {
+    await tahsilatAPI.gir({
+      cariId: k.cariId,
+      tutar: k.tutar,
+      odemeYontemi: odemeForm.value.odemeYontemi,
+      kasaId: odemeForm.value.odemeYontemi === 'NAKIT' ? odemeForm.value.kasaId : null,
+      bankaId: odemeForm.value.odemeYontemi !== 'NAKIT' ? odemeForm.value.bankaId : null,
+      hareketTarihi: odemeForm.value.hareketTarihi
+        ? (typeof odemeForm.value.hareketTarihi === 'string'
+            ? odemeForm.value.hareketTarihi
+            : odemeForm.value.hareketTarihi.toISOString().slice(0, 10))
+        : null,
+      taksitId: k.id,
+      aciklama: `${t('taksitTakvimi.taksitOdemesi')} #${k.taksitNo}/${k.taksitSayisi}`
+    })
+    toastBildirim.basarili(t('taksitTakvimi.tahsilatKaydedildi'))
+    odemeDialog.value = false
+    odemeKalemi.value = null
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
+  } finally {
+    odemeKaydediliyor.value = false
+  }
+}
+
 const ayAdi = computed(() => {
   const d = new Date(seciliYil.value, seciliAy.value - 1, 1)
   return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'tr-TR', {
@@ -329,8 +570,14 @@ const takvimHucreleri = computed(() => {
   const simdi = new Date()
   for (let g = 1; g <= gunSayisi; g++) {
     const gunKalemleri = kalemler.value.filter((k) => {
-      const d = new Date(k.vadeTarihi)
-      return d.getDate() === g
+      // REDTEAM/Faz1.6: `new Date(k.vadeTarihi).getDate()` saat dilimine
+      // bagliydi. Backend 'YYYY-MM-DD' gonderiyor; bu, JS'te UTC gece yarisi
+      // olarak ayristirilir ve getDate() YEREL saati dondurur. Negatif UTC
+      // ofsetli bir tarayicida (orn. America/*) HER KALEM bir gun once
+      // gorunurdu. Projenin kendi parseDate yardimcisi "YYYY-MM-DD"ni yerel
+      // olarak ayristiriyor; dosya zaten format.js'ten formatTarih aliyor.
+      const d = parseYerelTarih(k.vadeTarihi)
+      return d !== null && d.getDate() === g
     })
     hucreler.push({
       key: `gun-${g}`,
@@ -444,29 +691,15 @@ const formatYyyyMmDd = (d) => {
 }
 
 const kalemDetay = (k) => {
-  if (k.odemeDurumu !== 'ODENDI' && yonetimYetkisi.value) {
+  if (k.odemeDurumu !== 'ODENDI' && odeYetkisi.value) {
     ode(k)
   }
 }
 
-const ode = (k) => {
-  confirm.require({
-    message: t('taksitTakvimi.odendiOnay'),
-    header: t('taksitTakvimi.ode'),
-    icon: 'pi pi-check-circle',
-    acceptLabel: t('taksitTakvimi.evet'),
-    rejectLabel: t('common.vazgec'),
-    accept: async () => {
-      try {
-        await taksitAPI.ode(k.id)
-        toastBildirim.basarili(t('taksitTakvimi.odendiIsaretlendi'))
-        await yukle()
-      } catch (err) {
-        toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
-      }
-    }
-  })
-}
+// REDTEAM/Faz1.2: Eski `ode` fonksiyonu kaldırıldı. `POST /taksitler/{id}/ode`
+// ucu YALNIZCA odemeDurumu alanini yaziyor, hicbir para hareketi uretmiyordu;
+// takvim "odendi" derken cari defter "odenmedi" diyordu. Yerine yukarıdaki
+// `ode()` (odeme penceresi) + `tahsilatKaydet()` kullaniliyor.
 
 const sil = (k) => {
   confirm.require({
@@ -647,5 +880,52 @@ onMounted(yukle)
 
 .w-full {
   width: 100%;
+}
+
+/* REDTEAM/Faz1.2: Taksit odeme penceresi */
+.odeme-ozet {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--bg-subtle, rgba(148, 163, 184, 0.05));
+}
+.odeme-ozet-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.odeme-ozet-satir strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.odeme-ozet-satir.toplam {
+  padding-top: 6px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.odeme-ozet-satir.toplam strong {
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.odeme-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.odeme-form > label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 </style>
